@@ -1,0 +1,13 @@
+{
+    "name": "ESP8266-OCPP",
+    "version": "0.0.1",
+    "keywords": "OCPP, 1.6, OCPP 1.6, Smart Energy, Smart Charging, client",
+    "description": "OCPP 1.6 Smart Charging client for ESP8266/ESP32.",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/invalid"
+    },
+    "frameworks": "arduino",
+    "platforms": "esspressif8266"
+}
