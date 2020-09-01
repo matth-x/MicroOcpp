@@ -1,5 +1,5 @@
 # ESP8266-OCPP
-OCPP 1.6 Smart Charging client for ESP8266
+OCPP 1.6 Smart Charging client for the ESP8266
 
 ## Get the Smart Grid on your Home Charger :car::electric_plug::battery:
 
@@ -18,9 +18,10 @@ As the repository name indicates, this project is not limited to Smart Charging.
 
 ## Next development steps
 
-- introduce a timeout mechanism, proper offline behavior and package loss / fault detection
-- handle fragmented input messages correctly
-- some refactoring steps (encapsulate message object instantiation in a factory, maybe introduce a facade for the framework, etc.)
-- decouple the framework from the WebSockets library; This enables OCPP server operation (e.g. as Local Smart Charging controller) with only little extra effort
-- add support for multiple power connectors
-- reach full compliance to OCPP 1.6 Smart Charging Profile
+- [x] introduce a timeout mechanism
+- [x] some refactoring steps (e.g. separate RPC header from OCPP payload creation)
+- [ ] introduce proper offline behavior and package loss / fault detection
+- [ ] handle fragmented input messages correctly
+- [ ] add support for multiple power connectors
+- [ ] reach full compliance to OCPP 1.6 Smart Charging Profile
+- [ ] **get ready for OCPP 2.0.1**
