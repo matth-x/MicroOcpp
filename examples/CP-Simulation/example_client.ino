@@ -2,8 +2,6 @@
 // Copyright Matthias Akstaller 2019 - 2020
 // MIT License
 
-#if 1
-
 #include <Arduino.h>
 
 #include <WebSocketsClient.h>
@@ -230,5 +228,3 @@ void loop() {
   chargePointStatusService->loop();   //optional
   //meteringService->loop();          //optional
 }
-
-#endif

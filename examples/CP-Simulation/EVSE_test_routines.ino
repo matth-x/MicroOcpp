@@ -2,13 +2,11 @@
 // Copyright Matthias Akstaller 2019 - 2020
 // MIT License
 
-#include "EVSE.h"
-#include "ChargePointStatusService.h"
-#include "OcppEngine.h"
+#include <EVSE.h>
+#include <ChargePointStatusService.h>
+#include <OcppEngine.h>
 
 #include <Arduino.h>
-
-#if 1
 
 OnEvPlug onEvPlug;
 OnEvUnplug onEvUnplug;
@@ -136,5 +134,3 @@ char *EVSE_getChargePointVendor() {
 char *EVSE_getChargePointModel() {
   return "Greatest CP model";
 }
-
-#endif
