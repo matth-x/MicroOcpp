@@ -1,88 +1,41 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #include "Variants.h"
 
 #include "TriggerMessage.h"
 #include "SimpleOcppOperationFactory.h"
 #include "OcppEngine.h"
 
-TriggerMessage::TriggerMessage(WebSocketsClient *webSocket) 
-  : OcppOperation(webSocket) {
-  
+TriggerMessage::TriggerMessage(WebSocketsClient *webSocket) : webSocket(webSocket) {
+  statusMessage = "NotImplemented"; //default value if anything goes wrong
 }
 
-boolean TriggerMessage::receiveReq(JsonDocument *json) {
+const char* TriggerMessage::getOcppOperationType(){
+    return "TriggerMessage";
+}
 
-  this->setMessageID((*json)[1]);
+void TriggerMessage::processReq(JsonObject payload) {
 
-  /**
-   * Process the message
-   */
+  Serial.print(F("[TriggerMessage] Warning: TriggerMessage is not tested!\n"));
 
-  //(*json)[0] is MessageType
-  //(*json)[1] is MessageID
-  //(*json)[2] is Action
-  //(*json)[3] is Payload
-
-  triggeredOperation = makeFromTriggerMessage(webSocket, json);
+  triggeredOperation = makeFromTriggerMessage(webSocket, payload);
   if (triggeredOperation != NULL) {
     statusMessage = "Accepted";
   } else {
     Serial.print(F("[TriggerMessage] Couldn't make OppOperation from TriggerMessage. Ignore request.\n"));
     statusMessage = "NotImplemented";
   }
-  //After sending conf for TriggerMessage.req that will happen
-  //  initiateOcppOperation(triggeredOperation);
-
-  if (onReceiveReqListener != NULL){
-      onReceiveReqListener(json);
-      onReceiveReqListener = NULL; //just call once
-  }
-  
-  reqExecuted = true;
-  
-  return true; //Message has been consumed
 }
 
-boolean TriggerMessage::sendConf() {
-  if (!reqExecuted) {
-    //wait until req has been executed
-    return false;
-  }
+DynamicJsonDocument* TriggerMessage::createConf(){
+  DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + strlen(statusMessage));
+  JsonObject payload = doc->to<JsonObject>();
+  
+  payload["status"] = statusMessage;
 
-  /*
-   * Generate JSON object
-   */
-  const size_t capacity = JSON_ARRAY_SIZE(4) + JSON_OBJECT_SIZE(2);
-  const int OUT_LEN = 150;
+  Serial.print(F("[TriggerMessage] Triggering messages is not implemented!\n"));
 
-  DynamicJsonDocument doc(capacity);
-
-  doc.add(MESSAGE_TYPE_CALLRESULT);               //MessageType
-  doc.add(this->getMessageID());       //Unique message ID
-  JsonObject doc_2 = doc.createNestedObject(); //Payload
-  doc_2["status"] = statusMessage;
-
-  char out[OUT_LEN];  
-  size_t len = serializeJson(doc, out, OUT_LEN);
-
-  boolean success = webSocket->sendTXT(out, len);
-  if (success) {
-    if (DEBUG_APP_LAY) Serial.print(F("[TriggerMessage] (conf) JSON message: "));
-    if (DEBUG_APP_LAY) Serial.printf(out);
-    if (DEBUG_APP_LAY) Serial.print('\n');
-
-    /*
-     * When TriggerMessage.conf has successfully been sent, initiate the triggered OCPP Operation
-     */
-    if (triggeredOperation != NULL) {
-      initiateOcppOperation(triggeredOperation);
-      triggeredOperation = NULL;
-    }
-    
-    if (onCompleteListener != NULL){
-      onCompleteListener(&doc);
-      onCompleteListener = NULL; //just call once
-    }
-  }
-  doc.clear();
-  return success;
+  return doc;
 }

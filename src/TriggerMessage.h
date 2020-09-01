@@ -1,27 +1,30 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #ifndef TRIGGERMESSAGE_H
 #define TRIGGERMESSAGE_H
 
 #include "Variants.h"
 
+#include <WebSocketsClient.h>
+
+#include "OcppMessage.h"
 #include "OcppOperation.h"
 
-class TriggerMessage : public OcppOperation {
+class TriggerMessage : public OcppMessage {
 private:
-  boolean waitForConf = false;
-  boolean completed = false;
-  boolean reqExecuted = false;
+  WebSocketsClient *webSocket;
   OcppOperation *triggeredOperation;
-  char *statusMessage;
+  const char *statusMessage;
 public:
   TriggerMessage(WebSocketsClient *webSocket);
 
-  /**
-   * See OcppOperation.h for more information
-   */
-  boolean receiveReq(JsonDocument *json);
-  boolean sendConf();
+  const char* getOcppOperationType();
+
+  void processReq(JsonObject payload);
+
+  DynamicJsonDocument* createConf();
 };
-
-
 
 #endif

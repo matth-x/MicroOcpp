@@ -1,3 +1,7 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #include "Variants.h"
 
 #include "SimpleOcppOperationFactory.h"
@@ -6,22 +10,22 @@
 #include "BootNotification.h"
 #include "Heartbeat.h"
 #include "MeterValues.h"
-#include "TargetValues.h"
 #include "SetChargingProfile.h"
 #include "StatusNotification.h"
 #include "StartTransaction.h"
 #include "StopTransaction.h"
 #include "TriggerMessage.h"
+#include "RemoteStartTransaction.h"
+#include "Reset.h"
 
 #include "OcppEngine.h"
 
 #include <string.h>
 
-void (*onAuthorizeRequest)(JsonDocument *request);
-void setOnAuthorizeRequestListener(void (*listener)(JsonDocument *reqeust)){
+OnReceiveReqListener onAuthorizeRequest;
+void setOnAuthorizeRequestListener(OnReceiveReqListener listener){
   onAuthorizeRequest = listener;
 }
-
 
 OnReceiveReqListener onBootNotificationRequest;
 void setOnBootNotificationRequestListener(OnReceiveReqListener listener){
@@ -48,96 +52,103 @@ void setOnTriggerMessageRequestListener(OnReceiveReqListener listener){
   onTriggerMessageRequest = listener;
 }
 
-//TODO unify with makeFromJson
-OcppOperation* makeFromTriggerMessage(WebSocketsClient *ws, JsonDocument *json) {
-  
-  OcppOperation *result = NULL;
-  
-  JsonObject payload = (*json)[3];
-  //int connectorID = payload["connectorId"]; <-- not used in this implementation
-  const char *action = payload["requestedMessage"];
+OnReceiveReqListener onRemoteStartTransactionReceiveRequest;
+void setOnRemoteStartTransactionReceiveRequestListener(OnReceiveReqListener listener) {
+  onRemoteStartTransactionReceiveRequest = listener;
+}
 
-  if (DEBUG_OUTPUT) {
-    Serial.print(F("[SimpleOcppOperationFactory] makeFromTriggerMessage reads "));
-    Serial.print(action);
+OnSendConfListener onRemoteStartTransactionSendConf;
+void setOnRemoteStartTransactionSendConfListener(OnSendConfListener listener){
+  onRemoteStartTransactionSendConf = listener;
+}
+
+OnSendConfListener onResetSendConf;
+void setOnResetSendConfListener(OnSendConfListener listener){
+  onResetSendConf = listener;
+}
+
+OcppOperation* makeFromTriggerMessage(WebSocketsClient *ws, JsonObject payload) {
+
+  //int connectorID = payload["connectorId"]; <-- not used in this implementation
+  const char *messageType = payload["requestedMessage"];
+
+  if (DEBUG_OUT) {
+    Serial.print(F("[SimpleOcppOperationFactory] makeFromTriggerMessage for message type "));
+    Serial.print(messageType);
     Serial.print(F("\n"));
   }
 
-  if (!strcmp(action, "Authorize")) {
-    result = new Authorize(ws);
-    result->setOnReceiveReq(onAuthorizeRequest);
-  } else if (!strcmp(action, "BootNotification")) {
-    result = new BootNotification(ws);
-    result->setOnReceiveReq(onBootNotificationRequest);
-  } else if (!strcmp(action, "Heartbeat")) {
-    result = new Heartbeat(ws);
-    //result->setOnReceiveReq(onAuthorizeRequest); <-- no parallel functionality because Heartbeat instantiation is for dummy echo test server
-  } else if (!strcmp(action, "DataTransfer")) { //patch when more modifications are added
-    result = new TargetValues(ws);
-    result->setOnReceiveReq(onTargetValuesRequest);
-  } else if (!strcmp(action, "SetChargingProfile")) {
-    result = new SetChargingProfile(ws, getSmartChargingService());
-    result->setOnReceiveReq(onSetChargingProfileRequest);
-  } else if (!strcmp(action, "StatusNotification")) {
-    result = new StatusNotification(ws);
-    //result->setOnReceiveReq(onAuthorizeRequest);
-  } else if (!strcmp(action, "StartTransaction")) {
-    result = new StartTransaction(ws);
-    result->setOnReceiveReq(onStartTransactionRequest); //<-- no parallel functionality because Heartbeat instantiation is for dummy echo test server
-  } else if (!strcmp(action, "StopTransaction")) {
-    result = new StopTransaction(ws);
-    //result->setOnReceiveReq(onAuthorizeRequest); <-- no parallel functionality because Heartbeat instantiation is for dummy echo test server
-  } else if (!strcmp(action, "TriggerMessage")) {
-    result = new TriggerMessage(ws);
-    result->setOnReceiveReq(onTriggerMessageRequest);
-  } else {
-    Serial.print(F("[SimpleOcppOperationFactory] Operation not supported"));
-      //TODO reply error code
-  }
-
-  return result;
+  return makeOcppOperation(ws, messageType);
 }
 
-//TODO unify with makeFromTriggerMessage
-OcppOperation* makeFromJson(WebSocketsClient *ws, JsonDocument *json){
-  OcppOperation *result = NULL;
-  
-  const char* action = (*json)[2];
+OcppOperation *makeFromJson(WebSocketsClient *ws, JsonDocument *json) {
+  const char* messageType = (*json)[2];
+  return makeOcppOperation(ws, messageType);
+}
 
-  if (!strcmp(action, "Authorize")) {
-    result = new Authorize(ws);
-    result->setOnReceiveReq(onAuthorizeRequest);
-  } else if (!strcmp(action, "BootNotification")) {
-    result = new BootNotification(ws);
-    result->setOnReceiveReq(onBootNotificationRequest);
-  } else if (!strcmp(action, "Heartbeat")) {
-    result = new Heartbeat(ws);
-    //result->setOnReceiveReq(onAuthorizeRequest); <-- no parallel functionality because Heartbeat instantiation is for dummy echo test server
-  } else if (!strcmp(action, "MeterValues")) {
-    result = new MeterValues(ws);
-    //result->setOnReceiveReq(onTriggerMessageRequest); <-- no parallel functionality because Heartbeat instantiation is for dummy echo test server
-  } else if (!strcmp(action, "DataTransfer")) { //patch when more modifications are added
-    result = new TargetValues(ws);
-    result->setOnReceiveReq(onTargetValuesRequest);
-  } else if (!strcmp(action, "SetChargingProfile")) {
-    result = new SetChargingProfile(ws, getSmartChargingService());
-    result->setOnReceiveReq(onSetChargingProfileRequest);
-  } else if (!strcmp(action, "StatusNotification")) {
-    result = new StatusNotification(ws);
-    //result->setOnReceiveReq(onAuthorizeRequest);
-  } else if (!strcmp(action, "StartTransaction")) {
-    result = new StartTransaction(ws);
-    result->setOnReceiveReq(onStartTransactionRequest);// <-- no parallel functionality because Heartbeat instantiation is for dummy echo test server
-  } else if (!strcmp(action, "StopTransaction")) {
-    result = new StopTransaction(ws);
-    //result->setOnReceiveReq(onAuthorizeRequest); <-- no parallel functionality because Heartbeat instantiation is for dummy echo test server
-  } else if (!strcmp(action, "TriggerMessage")) {
-    result = new TriggerMessage(ws);
-    result->setOnReceiveReq(onTriggerMessageRequest);
+OcppOperation *makeOcppOperation(WebSocketsClient *ws, const char *messageType) {
+  OcppOperation *operation = makeOcppOperation(ws);
+  OcppMessage *msg = NULL;
+
+  if (!strcmp(messageType, "Authorize")) {
+    msg = new Authorize();
+    operation->setOnReceiveReqListener(onAuthorizeRequest);
+  } else if (!strcmp(messageType, "BootNotification")) {
+    msg = new BootNotification();
+    operation->setOnReceiveReqListener(onBootNotificationRequest);
+  } else if (!strcmp(messageType, "Heartbeat")) {
+    msg = new Heartbeat();
+  } else if (!strcmp(messageType, "MeterValues")) {
+    msg = new MeterValues();
+  } else if (!strcmp(messageType, "SetChargingProfile")) {
+    msg = new SetChargingProfile(getSmartChargingService());
+    operation->setOnReceiveReqListener(onSetChargingProfileRequest);
+  } else if (!strcmp(messageType, "StatusNotification")) {
+    msg = new StatusNotification();
+  } else if (!strcmp(messageType, "StartTransaction")) {
+    msg = new StartTransaction();
+    operation->setOnReceiveReqListener(onStartTransactionRequest);
+  } else if (!strcmp(messageType, "StopTransaction")) {
+    msg = new StopTransaction();
+  } else if (!strcmp(messageType, "TriggerMessage")) {
+    msg = new TriggerMessage(ws);
+    operation->setOnReceiveReqListener(onTriggerMessageRequest);
+  } else if (!strcmp(messageType, "RemoteStartTransaction")) {
+    msg = new RemoteStartTransaction();
+    operation->setOnReceiveReqListener(onRemoteStartTransactionReceiveRequest);
+    if (onRemoteStartTransactionSendConf == NULL) 
+      Serial.print(F("[SimpleOcppOperationFactory] Warning: RemoteStartTransaction is without effect when the sendConf listener is not set. Set a listener which initiates the StartTransaction operation.\n"));
+    operation->setOnSendConfListener(onRemoteStartTransactionSendConf);
+  } else if (!strcmp(messageType, "Reset")) {
+    msg = new Reset();
+    if (onResetSendConf == NULL)
+      Serial.print(F("[SimpleOcppOperationFactory] Warning: Reset is without effect when the sendConf listener is not set. Set a listener which resets your device.\n"));
+    operation->setOnSendConfListener(onResetSendConf);
   } else {
     Serial.print(F("[SimpleOcppOperationFactory] Operation not supported"));
       //TODO reply error code
   }
 
+  if (msg == NULL) {
+    delete operation;
+    return NULL;
+  } else {
+    operation->setOcppMessage(msg);
+    return operation;
+  }
+}
+
+OcppOperation* makeOcppOperation(WebSocketsClient *ws, OcppMessage *msg){
+  if (msg == NULL) {
+    Serial.print(F("[SimpleOcppOperationFactory] in makeOcppOperation(webSocket, ocppMessage): ocppMessage is null!\n"));
+    return NULL;
+  }
+  OcppOperation *operation = makeOcppOperation(ws);
+  operation->setOcppMessage(msg);
+  return operation;
+}
+
+OcppOperation* makeOcppOperation(WebSocketsClient *ws){
+  OcppOperation *result = new OcppOperation(ws);
   return result;
 }

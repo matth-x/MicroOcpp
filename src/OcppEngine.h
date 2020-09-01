@@ -1,3 +1,7 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #ifndef OCPPENGINE_H
 #define OCPPENGINE_H
 
@@ -21,8 +25,6 @@ void handleReqMessage(JsonDocument *json);
 void handleErrMessage(JsonDocument *json);
 
 void initiateOcppOperation(OcppOperation *o);
-
-void receiveOcppOperation(OcppOperation *o);
 
 void ocppEngine_loop();
 

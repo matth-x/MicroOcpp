@@ -2,16 +2,16 @@
 // Copyright Matthias Akstaller 2019 - 2020
 // MIT License
 
-#ifndef HEARTBEAT_H
-#define HEARTBEAT_H
-
-#include "Variants.h"
+#ifndef DATATRANSFER_H
+#define DATATRANSFER_H
 
 #include "OcppMessage.h"
 
-class Heartbeat : public OcppMessage {
+class DataTransfer : public OcppMessage {
+private:
+  String msg;
 public:
-  Heartbeat();
+  DataTransfer(String &msg);
 
   const char* getOcppOperationType();
 
@@ -19,9 +19,6 @@ public:
 
   void processConf(JsonObject payload);
 
-  void processReq(JsonObject payload);
-
-  DynamicJsonDocument* createConf();
 };
 
 #endif

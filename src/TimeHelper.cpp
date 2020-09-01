@@ -1,3 +1,7 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #include "TimeHelper.h"
 
 #include <Arduino.h>
@@ -6,7 +10,7 @@
 
 /**
  * Expects a date string like
- * 2013-02-01T20:53:32.486Z
+ * 2020-10-01T20:53:32.486Z
  * 
  * as generated in JavaScript by calling toJSON() on a Date object
  * 

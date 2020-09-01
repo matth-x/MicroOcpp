@@ -1,3 +1,7 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #include "Variants.h"
 
 #include "SmartChargingModel.h"
@@ -192,14 +196,14 @@ ChargingProfile::ChargingProfile(JsonObject *json){
   transactionId = (*json)["transactionId"] | -1;
   stackLevel = (*json)["stackLevel"];
 
-  if (DEBUG_OUTPUT) {
+  if (DEBUG_OUT) {
     Serial.print(F("[SmartChargingModel] ChargingProfile created with chargingProfileId = "));
     Serial.print(chargingProfileId);
     Serial.print(F("\n"));
   }
   
   const char *chargingProfilePurposeStr = (*json)["chargingProfilePurpose"] | "Invalid";
-  if (DEBUG_OUTPUT) {
+  if (DEBUG_OUT) {
     Serial.print(F("[SmartChargingModel] chargingProfilePurposeStr="));
     Serial.print(chargingProfilePurposeStr);
     Serial.print(F("\n"));
@@ -222,7 +226,7 @@ ChargingProfile::ChargingProfile(JsonObject *json){
     chargingProfileKind = ChargingProfileKindType::Relative;
   }
   const char *recurrencyKindStr = (*json)["recurrencyKind"] | "Invalid";
-  if (DEBUG_OUTPUT) {
+  if (DEBUG_OUT) {
     Serial.print(F("[SmartChargingModel] recurrencyKindStr="));
     Serial.print(recurrencyKindStr);
     Serial.print('\n');

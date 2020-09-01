@@ -2,16 +2,18 @@
 // Copyright Matthias Akstaller 2019 - 2020
 // MIT License
 
-#ifndef HEARTBEAT_H
-#define HEARTBEAT_H
+#ifndef REMOTESTARTTRANSACTION_H
+#define REMOTESTARTTRANSACTION_H
 
 #include "Variants.h"
 
 #include "OcppMessage.h"
 
-class Heartbeat : public OcppMessage {
+class RemoteStartTransaction : public OcppMessage {
+private:
+  String idTag;
 public:
-  Heartbeat();
+  RemoteStartTransaction();
 
   const char* getOcppOperationType();
 

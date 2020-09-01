@@ -1,3 +1,7 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #include "Variants.h"
 
 #include "StartTransaction.h"
@@ -6,157 +10,81 @@
 #include "MeteringService.h"
 
 
-StartTransaction::StartTransaction(WebSocketsClient *webSocket) 
-  : OcppOperation(webSocket) {
-  
+StartTransaction::StartTransaction() {
+    if (getChargePointStatusService() != NULL) {
+      if (!getChargePointStatusService()->getIdTag().isEmpty()) {
+        idTag = String(getChargePointStatusService()->getIdTag());
+      }
+    }
+    if (idTag.isEmpty())
+      idTag = String("fefed1d19876"); //Use a default payload. In the typical use case of this library, you probably you don't even need Authorization at all
 }
 
-boolean StartTransaction::sendReq() {
-  if (completed) {
-    //StartTransaction request has been conf'd and is therefore completed
-    return true;
-  }
-  if (waitForConf) {
-    //StartTransaction request is already pending; nothing to do here
-    return false;
-  }
-  
-  //Serial.print(F("StartTransaction request with dummy ID: fefed1d19876.\n"));
+StartTransaction::StartTransaction(String &idTag) {
+    this->idTag = String(idTag);
+}
 
-  /*
-   * Generate JSON object
-   */
-  const size_t capacity = JSON_ARRAY_SIZE(4) + JSON_OBJECT_SIZE(5) + 60;
-  const int OUT_LEN = 180;
+const char* StartTransaction::getOcppOperationType(){
+    return "StartTransaction";
+}
 
-  //const size_t capacity = JSON_ARRAY_SIZE(4) + JSON_OBJECT_SIZE(1) + 20;
-  DynamicJsonDocument doc(capacity);
+DynamicJsonDocument* StartTransaction::createReq() {
+  DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(5) + (JSONDATE_LENGTH + 1) + (idTag.length() + 1));
+  JsonObject payload = doc->to<JsonObject>();
 
-  doc.add(MESSAGE_TYPE_CALL);      //MessageType
-  doc.add(this->getMessageID());   //Unique message ID
-  doc.add("StartTransaction");            //Action
-  JsonObject doc_3 = doc.createNestedObject(); //Payload
-
-  doc_3["connectorId"] = 1;
+  payload["connectorId"] = 1;
   MeteringService* meteringService = getMeteringService();
   if (meteringService != NULL) {
-	doc_3["meterStart"] = meteringService->readEnergyActiveImportRegister();
+	  payload["meterStart"] = meteringService->readEnergyActiveImportRegister();
   }
   char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
   getJsonDateStringFromGivenTime(timestamp, JSONDATE_LENGTH + 1, now());
-  doc_3["timestamp"] = timestamp;
-  doc_3["idTag"] = "fefed1d19876";
+  payload["timestamp"] = timestamp;
+  payload["idTag"] = idTag;
 
-  char out[OUT_LEN];  
-  size_t len = serializeJson(doc, out, OUT_LEN);
-
-  if (DEBUG_APP_LAY) Serial.print(F("[StartTransaction] JSON message: "));
-  if (DEBUG_APP_LAY) Serial.printf(out);
-  if (DEBUG_APP_LAY) Serial.print('\n');
-
-  //TODO destroy JSON doc
-  doc.clear();
-
-  boolean success = webSocket->sendTXT(out, len);
-  if (success) {
-    waitForConf = true; //package has been sent and waits for its answer
-  }
-  return false;
+  return doc;
 }
 
-boolean StartTransaction::receiveConf(JsonDocument *json) {
+void StartTransaction::processConf(JsonObject payload) {
 
-  /**
-   * Check if conf-message belongs to this operation instance
-   */
-  
-  if ((*json)[1] != this->getMessageID()) {
-    return false;
-  }
-
-  /**
-   * Process the message
-   */
-
-  const char* idTagInfoStatus = (*json)[2]["idTagInfo"]["status"] | "Invalid";
-  int transactionId = (*json)[2]["transactionId"] | -1; //TODO process Transaction ID
+  const char* idTagInfoStatus = payload["idTagInfo"]["status"] | "Invalid";
+  int transactionId = payload["transactionId"] | -1;
 
   if (!strcmp(idTagInfoStatus, "Accepted")) {
-    if (DEBUG_APP_LAY) Serial.print(F("[StartTransaction] Request has been accepted!\n")); //, transactionID is "));
-    //Serial.print(transactionId);
-    //Serial.print(F("\n"));
-    completed = true;
+    if (DEBUG_OUT) Serial.print(F("[StartTransaction] Request has been accepted!\n"));
 
     ChargePointStatusService *cpStatusService = getChargePointStatusService();
     if (cpStatusService != NULL){
       cpStatusService->startTransaction(transactionId);
+      cpStatusService->startEnergyOffer();
     }
 
     SmartChargingService *scService = getSmartChargingService();
     if (scService != NULL){
       scService->beginChargingNow();
     }
-    
-    if (onCompleteListener != NULL){
-      onCompleteListener(json);
-      onCompleteListener = NULL; //just call once per instance
-    }
-    waitForConf = false;
-  } else {
-    Serial.printf("[StartTransaction] Request has been denied!");
-  }
 
-  return true; //Message has been consumed
+  } else {
+    Serial.print(F("[StartTransaction] Request has been denied!\n"));
+  }
 }
 
 
-/* ####################################
- * For debugging only: implement dummy server functionalities to test against echo server
- * #################################### */
-boolean StartTransaction::receiveReq(JsonDocument *json) {
-
-  this->setMessageID((*json)[1]);
+void StartTransaction::processReq(JsonObject payload) {
 
   /**
    * Ignore Contents of this Req-message, because this is for debug purposes only
    */
-   
-  if (onReceiveReqListener != NULL){
-      onReceiveReqListener(json);
-      onReceiveReqListener = NULL; //just call once
-  }
 
-  reqExecuted = true;
-  
-  return true; //Message has been consumed
 }
 
-/* ####################################
- * For debugging only: implement dummy server functionalities to test against echo server
- * #################################### */
-boolean StartTransaction::sendConf() {
-  if (!reqExecuted) {
-    //wait until req has been executed
-    return false;
-  }
+DynamicJsonDocument* StartTransaction::createConf(){
+  DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
+  JsonObject payload = doc->to<JsonObject>();
 
-  /*
-   * Generate JSON object
-   */
-  const size_t capacity = JSON_ARRAY_SIZE(3) + JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2) + 50;
-  DynamicJsonDocument doc(capacity);
-
-  doc.add(MESSAGE_TYPE_CALLRESULT);               //MessageType
-  doc.add(this->getMessageID());       //Unique message ID
-  JsonObject doc_2 = doc.createNestedObject(); //Payload
-  JsonObject idTagInfo = doc_2.createNestedObject("idTagInfo");
+  JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
   idTagInfo["status"] = "Accepted";
-  doc_2["transactionId"] = 123456;
+  payload["transactionId"] = 123456; //sample data for debug purpose
 
-  char out[150];  
-  size_t len = serializeJson(doc, out, 150);
-
-  boolean success = webSocket->sendTXT(out, len);
-  doc.clear();
-  return success;
+  return doc;
 }

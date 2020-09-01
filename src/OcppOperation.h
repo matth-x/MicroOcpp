@@ -1,38 +1,52 @@
-/**
- * This is the superclass to all OCPP Operations in this framework. The client code (e.g. the CP) creates an instance of an
- * OcppOperation each time it invokes the framework to send an OCPP message. The framework calls req() and conf() when it is
- * ready to send the message, or when it received any message, respectively.
- * 
- */
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
 
- #ifndef OCPPOPERATION_H
- #define OCPPOPERATION_H
+#ifndef OCPPOPERATION_H
+#define OCPPOPERATION_H
 
 #define MESSAGE_TYPE_CALL 2
 #define MESSAGE_TYPE_CALLRESULT 3
 #define MESSAGE_TYPE_CALLERROR 4
 
- #include<ArduinoJson.h>
- #include<WebSocketsClient.h>
+#include <ArduinoJson.h>
+#include <WebSocketsClient.h>
 
-typedef void (*OnCompleteListener)(JsonDocument *json);
-typedef void (*OnReceiveReqListener)(JsonDocument *json);
+#include "OcppMessage.h"
+
+typedef void (*OnReceiveConfListener)(JsonObject payload);
+typedef void (*OnReceiveReqListener)(JsonObject payload);
+typedef void (*OnSendConfListener)(JsonObject payload);
 
 
 class OcppOperation {
 private:
-  int messageID = -1;
-protected:
+  String messageID;
+  OcppMessage *ocppMessage = NULL;
   WebSocketsClient *webSocket;
-  int getMessageID();
-  void setMessageID(int id);
-  OnCompleteListener onCompleteListener = NULL;
+  String &getMessageID();
+  void setMessageID(String &id);
+  OnReceiveConfListener onReceiveConfListener = NULL;
   OnReceiveReqListener onReceiveReqListener = NULL;
+  OnSendConfListener onSendConfListener = NULL;
+  boolean reqExecuted = false;
+
+  const ulong TIMEOUT_CANCEL = 20000; //in ms; Cancel operation after ... ms
+  boolean timeout_active = false;
+  ulong timeout_start;
+
+  const ulong RETRY_INTERVAL = 3000; //in ms; first retry after ... ms; second retry after 2 * ... ms; third after 4 ...
+  ulong retry_start = 0;
+  ulong retry_interval_mult = 1; // RETRY_INTERVAL * retry_interval_mult gives longer periods with each iteration
 public:
+
+  OcppOperation(WebSocketsClient *webSocket, OcppMessage *ocppMessage);
 
   OcppOperation(WebSocketsClient *webSocket);
 
-  virtual ~OcppOperation();
+  ~OcppOperation();
+
+  void setOcppMessage(OcppMessage *msg);
 
 
   /**
@@ -45,7 +59,7 @@ public:
    * the operation is completed (for example when conf() has been called), return true. When the operation is still pending, return
    * false.
    */
-   virtual boolean sendReq();
+   boolean sendReq();
 
    /**
     * Decides if message belongs to this operation instance and if yes, proccesses it. For example, multiple instances of an
@@ -53,33 +67,33 @@ public:
     * 
     * Returns true if JSON object has been consumed, false otherwise.
     */
-    virtual boolean receiveConf(JsonDocument *json);
+    boolean receiveConf(JsonDocument *json);
 
     /**
      * Processes the request in the JSON document. Returns true on success, false on error.
      * 
      * Returns false if the request doesn't belong to the corresponding operation instance
      */
-    virtual boolean receiveReq(JsonDocument *json);
+    boolean receiveReq(JsonDocument *json);
 
     /**
      * After successfully processing a request sent by the communication counterpart, this function sends a confirmation
      * message. Returns true on success, false otherwise.
      */
-    virtual boolean sendConf();
+    boolean sendConf();
 
-    /**
-     * Sets a Listener that is called when the operation is finished. The listener is passed the JSON from
-     * a) the OCPP communication counterpart in case the counterpart passed it as answer
-     * b) this OCPP station in case this station has sent it as request (i.e. it is the copy of the JSON document
-     *    generated on this device before)
-     */
-    void setOnCompleteListener(OnCompleteListener onComplete);
+    void setOnReceiveConfListener(OnReceiveConfListener onReceiveConf);
 
     /**
      * Sets a Listener that is called after this machine processed a request by the communication counterpart
      */
-    void setOnReceiveReq(OnReceiveReqListener onReceiveReq);
+    void setOnReceiveReqListener(OnReceiveReqListener onReceiveReq);
+
+    void setOnSendConfListener(OnSendConfListener onSendConf);
+
+    boolean isFullyConfigured();
+
+    void print_debug();
 };
 
  #endif

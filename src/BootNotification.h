@@ -1,27 +1,25 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #ifndef BOOTNOTIFICATION_H
 #define BOOTNOTIFICATION_H
 
-#include "OcppOperation.h"
+#include "OcppMessage.h"
 
-class BootNotification : public OcppOperation {
-private:
-  boolean waitForConf = false;
-  boolean completed = false;
-  boolean reqExecuted = false; // For debugging only: implement dummy server functionalities to test against echo server
+class BootNotification : public OcppMessage {
 public:
-  BootNotification(WebSocketsClient *webSocket);
+  BootNotification();
 
-  /**
-   * See OcppOperation.h for more information
-   */
-  boolean sendReq();
-  boolean receiveConf(JsonDocument *json);
+  const char* getOcppOperationType();
 
-  /**
-   * For debuggin only: implement dummy server functionalities to test against echo server
-   */
-  boolean receiveReq(JsonDocument *json);
-  boolean sendConf();
+  DynamicJsonDocument* createReq();
+
+  void processConf(JsonObject payload);
+
+  void processReq(JsonObject payload);
+
+  DynamicJsonDocument* createConf();
 };
 
 

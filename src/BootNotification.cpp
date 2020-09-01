@@ -1,3 +1,7 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #include "Variants.h"
 
 #include "BootNotification.h"
@@ -7,153 +11,65 @@
 #include <string.h>
 #include "TimeHelper.h"
 
-BootNotification::BootNotification(WebSocketsClient *webSocket) 
-  : OcppOperation(webSocket) {
 
+BootNotification::BootNotification() {
+  
 }
 
-boolean BootNotification::sendReq() {
-  if (completed) {
-    //Authorize request has been conf'd and is therefore completed
-    return true;
-  }
-  if (waitForConf) {
-    //Authorize request is already pending; nothing to do here
-    return false;
-  }
-
-  if (DEBUG_APP_LAY) Serial.print(F("[BootNotification] Request JSON: "));
-
-  /*
-   * Generate JSON object
-   */
-  const size_t capacity = JSON_ARRAY_SIZE(4) + JSON_OBJECT_SIZE(3) + 50;
-  const int OUT_LEN = 150;
-  DynamicJsonDocument doc(capacity);
-
-  doc.add(MESSAGE_TYPE_CALL);               //MessageType
-  doc.add(this->getMessageID());       //Unique message ID
-  doc.add("BootNotification");     //Action
-
-  JsonObject doc_3 = doc.createNestedObject(); //Payload
-
-  doc_3["chargePointVendor"] = EVSE_getChargePointVendor();
-  doc_3["chargePointSerialNumber"] = EVSE_getChargePointSerialNumber();
-  doc_3["chargePointModel"] = EVSE_getChargePointModel();
-
-  char out[OUT_LEN];  
-  size_t len = serializeJson(doc, out, OUT_LEN);
-  
-  if (DEBUG_APP_LAY) Serial.printf(out);
-  if (DEBUG_APP_LAY) Serial.print('\n');
-
-  doc.clear();
-
-  boolean success = webSocket->sendTXT(out, len);
-  if (success) {
-    waitForConf = true;
-  }
-
-  return false;
+const char* BootNotification::getOcppOperationType(){
+    return "BootNotification";
 }
 
+DynamicJsonDocument* BootNotification::createReq() {
+  String cpSerial = String('\0');
+  EVSE_getChargePointSerialNumber(cpSerial);
 
-boolean BootNotification::receiveConf(JsonDocument *json) {
-  /**
-   * Check if conf-message belongs to this operation instance
-   */
-  
-  if ((*json)[1] != this->getMessageID()) {
-    return false;
-  }
+  DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(3)
+      + strlen(EVSE_getChargePointVendor()) + 1
+      + cpSerial.length() + 1
+      + strlen(EVSE_getChargePointModel()) + 1);
+  JsonObject payload = doc->to<JsonObject>();
+  payload["chargePointVendor"] = EVSE_getChargePointVendor();
+  payload["chargePointSerialNumber"] = cpSerial;
+  payload["chargePointModel"] = EVSE_getChargePointModel();
+  return doc;
+}
 
-  /**
-   * Process the message
-   */
-  
-  const char* currentTime = (*json)[2]["currentTime"] | "Invalid";
+void BootNotification::processConf(JsonObject payload){
+  const char* currentTime = payload["currentTime"] | "Invalid";
   if (strcmp(currentTime, "Invalid")) {
     setTimeFromJsonDateString(currentTime);
   } else {
     Serial.print(F("[BootNotification] Error reading time string. Expect format like 2020-02-01T20:53:32.486Z\n"));
   }
   
-  int interval = (*json)[2]["interval"];
-  //TODO Review: completely ignore heartbeatinterval? Heartbeat isn't necessary for JSON implementations
-  //(See OCPP-J 1.6 documentation for more details)
+  //int interval = payload["interval"] | 86400; //not used in this implementation
 
-  const char* status = (*json)[2]["status"];
+  const char* status = payload["status"] | "Invalid";
 
   if (!strcmp(status, "Accepted")) {
-    if (DEBUG_APP_LAY) Serial.print(F("[BootNotification] Request has been accepted!\n"));
+    if (DEBUG_OUT) Serial.print(F("[BootNotification] Request has been accepted!\n"));
     if (getChargePointStatusService() != NULL) {
       getChargePointStatusService()->boot();
     }
-    completed = true;
-    if (onCompleteListener != NULL){
-      onCompleteListener(json);
-      onCompleteListener = NULL; //just call once
-    }
-    waitForConf = false;
   } else {
     Serial.print(F("[BootNotification] Request unsuccessful!\n"));
   }
-  //TODO: catch status "Pending"
-
-  return true; //Message has been consumed
 }
 
-
-/* ####################################
- * For debugging only: implement dummy server functionalities to test against echo server
- * #################################### */
-boolean BootNotification::receiveReq(JsonDocument *json) {
-
-  this->setMessageID((*json)[1]);
-
-  /**
-   * Ignore Contents of this Req-message, because this is for debug purposes only
-   */
-   
-  if (onReceiveReqListener != NULL){
-      onReceiveReqListener(json);
-      onReceiveReqListener = NULL; //just call once
-  }
-
-  reqExecuted = true;
-  
-  return true; //Message has been consumed
+void BootNotification::processReq(JsonObject payload){
+    /*
+     * Ignore Contents of this Req-message, because this is for debug purposes only
+     */
 }
 
-/* ####################################
- * For debugging only: implement dummy server functionalities to test against echo server
- * #################################### */
-boolean BootNotification::sendConf() {
-  if (!reqExecuted) {
-    //wait until req has been executed
-    return false;
-  }
-
-  /*
-   * Generate JSON object
-   */
-  const size_t capacity = JSON_ARRAY_SIZE(3) + JSON_OBJECT_SIZE(3) + 100;
-  DynamicJsonDocument doc(capacity);
-
-  doc.add(MESSAGE_TYPE_CALLRESULT);               //MessageType
-  doc.add(this->getMessageID());       //Unique message ID
-  JsonObject doc_2 = doc.createNestedObject(); //Payload
-
+DynamicJsonDocument* BootNotification::createConf(){
+  DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(3) + (JSONDATE_LENGTH + 1));
+  JsonObject payload = doc->to<JsonObject>();
   char currentTime[JSONDATE_LENGTH + 1] = {'\0'};
   getJsonDateStringFromSystemTime(currentTime, JSONDATE_LENGTH);
-  doc_2["currentTime"] = currentTime;
-  doc_2["interval"] = 86400; //heartbeat send interval - not relevant for JSON variant of OCPP so send dummy value that likely won't break
-  doc_2["status"] = "Accepted";
-
-  char out[150];  
-  size_t len = serializeJson(doc, out, 150);
-
-  boolean success = webSocket->sendTXT(out, len);
-  doc.clear();
-  return success;
+  payload["currentTime"] =  currentTime; //currentTime
+  payload["interval"] = 86400; //heartbeat send interval - not relevant for JSON variant of OCPP so send dummy value that likely won't break
+  payload["status"] = "Accepted";
+  return doc;
 }

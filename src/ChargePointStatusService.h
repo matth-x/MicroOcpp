@@ -1,3 +1,7 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #ifndef CHARGEPOINTSTATUSSERVICE_H
 #define CHARGEPOINTSTATUSSERVICE_H
 
@@ -19,6 +23,7 @@ enum class ChargePointStatus {
 class ChargePointStatusService {
 private:
   bool authorized = false;
+  String idTag = String('\0');
   bool transactionRunning = false;
   int transactionId = -1;
   bool evDrawsEnergy = false;
@@ -27,8 +32,10 @@ private:
   WebSocketsClient *webSocket;
 public:
   ChargePointStatusService(WebSocketsClient *webSocket);
+  void authorize(String &idTag);
   void authorize();
   void unauthorize();
+  String &getIdTag();
   void startTransaction(int transactionId);
   void stopTransaction();
   int getTransactionId();

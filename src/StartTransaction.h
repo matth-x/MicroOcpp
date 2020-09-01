@@ -1,29 +1,31 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #ifndef STARTTRANSACTION_H
 #define STARTTRANSACTION_H
 
 #include "Variants.h"
 
-#include "OcppOperation.h"
+#include "OcppMessage.h"
 
-class StartTransaction : public OcppOperation {
+class StartTransaction : public OcppMessage {
 private:
-  boolean waitForConf = false;
-  boolean completed = false;
-  boolean reqExecuted = false; // For debugging only: implement dummy server functionalities to test against echo server
+  String idTag = String('\0');
 public:
-  StartTransaction(WebSocketsClient *webSocket);
+  StartTransaction();
 
-  /**
-   * See OcppOperation.h for more information
-   */
-  boolean sendReq();
-  boolean receiveConf(JsonDocument *json);
+  StartTransaction(String &idTag);
 
-  /**
-   * For debuggin only: implement dummy server functionalities to test against echo server
-   */
-  boolean receiveReq(JsonDocument *json);
-  boolean sendConf();
+  const char* getOcppOperationType();
+
+  DynamicJsonDocument* createReq();
+
+  void processConf(JsonObject payload);
+
+  void processReq(JsonObject payload);
+
+  DynamicJsonDocument* createConf();
 };
 
 #endif

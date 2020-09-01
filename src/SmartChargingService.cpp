@@ -1,3 +1,7 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #include "Variants.h"
 
 #include "SmartChargingService.h"
@@ -26,13 +30,13 @@ void SmartChargingService::loop(){
     float limit = -1.0f;
     time_t validTo = 0;
     inferenceLimit(now(), &limit, &validTo);
-    if (DEBUG_APP_LAY) Serial.print(F("[SmartChargingService] New Limit! Values: {scheduled at = "));
-    if (DEBUG_APP_LAY) printTime(nextChange);
-    if (DEBUG_APP_LAY) Serial.print(F(", nextChange = "));
-    if (DEBUG_APP_LAY) printTime(validTo);
-    if (DEBUG_APP_LAY) Serial.print(F(", limit = "));
-    if (DEBUG_APP_LAY) Serial.print(limit);
-    if (DEBUG_APP_LAY) Serial.print(F("}\n"));
+    if (DEBUG_OUT) Serial.print(F("[SmartChargingService] New Limit! Values: {scheduled at = "));
+    if (DEBUG_OUT) printTime(nextChange);
+    if (DEBUG_OUT) Serial.print(F(", nextChange = "));
+    if (DEBUG_OUT) printTime(validTo);
+    if (DEBUG_OUT) Serial.print(F(", limit = "));
+    if (DEBUG_OUT) Serial.print(limit);
+    if (DEBUG_OUT) Serial.print(F("}\n"));
     nextChange = validTo;
     if (limit != limitBeforeChange){
       if (onLimitChange != NULL) {
@@ -189,7 +193,7 @@ void SmartChargingService::endChargingNow(){
 void SmartChargingService::updateChargingProfile(JsonObject *json){
   ChargingProfile *chargingProfile = new ChargingProfile(json);
 
-  if (DEBUG_OUTPUT) {
+  if (DEBUG_OUT) {
     Serial.print(F("[SmartChargingService] Charging Profile internal model\n"));
     chargingProfile->printProfile();
   }

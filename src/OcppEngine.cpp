@@ -1,3 +1,7 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #include "OcppEngine.h"
 #include "SimpleOcppOperationFactory.h"
 
@@ -27,14 +31,14 @@ boolean processWebSocketEvent(uint8_t * payload, size_t length){
 
   boolean success = false;
 
-  DynamicJsonDocument doc(JSON_DOC_SIZE);
+  DynamicJsonDocument doc(JSON_DOC_SIZE); //TODO Check: Can default JSON_DOC_SIZE just be replaced by param length?
   DeserializationError err = deserializeJson(doc, payload);
   switch (err.code()) {
     case DeserializationError::Ok:
         success = true;
         break;
     case DeserializationError::InvalidInput:
-        Serial.print(F("[OcppEngine] Invalid input!\n"));
+        Serial.print(F("[OcppEngine] Invalid input! Not a JSON\n"));
         break;
     case DeserializationError::NoMemory:
         Serial.print(F("[OcppEngine] Error: Not enough memory\n"));
@@ -80,7 +84,7 @@ void handleReqMessage(JsonDocument *json){
     Serial.print(F("[OcppEngine] Couldn't make OppOperation from Request. Ignore request.\n"));
     return;
   }
-  receiveOcppOperation(req); //enqueue so loop() plans conf sending
+  receivedOcppOperations.add(req);; //enqueue so loop() plans conf sending
   req->receiveReq(json); //"fire" the operation
 }
 
@@ -89,12 +93,12 @@ void handleReqMessage(JsonDocument *json){
    * delete the element from the list. Try all the pending OCPP Operations until the right one is found.
    * 
    * This function could result in improper behavior in Charging Stations, because messages are not
-   * garanteed to be received and therefore processed in the right order.
+   * guaranteed to be received and therefore processed in the right order.
    */
 void handleConfMessage(JsonDocument *json){
   for (int i = 0; i < initiatedOcppOperations.size(); i++){
     OcppOperation *el = initiatedOcppOperations.get(i);
-    boolean success = el->receiveConf(json);
+    boolean success = el->receiveConf(json); //maybe rename to "consumed"?
     if (success){
       initiatedOcppOperations.remove(i);
       
@@ -109,15 +113,16 @@ void handleConfMessage(JsonDocument *json){
 }
 
 void handleErrMessage(JsonDocument *json){
-  Serial.printf("[OcppEngine] Received CALLERROR"); //delete when implemented
+  Serial.printf("[OcppEngine] Received CALLERROR\n"); //delete when implemented
 }
 
 void initiateOcppOperation(OcppOperation *o){
+  if (!o->isFullyConfigured()){
+    Serial.printf("[OcppEngine] initiateOcppOperation(op) was called without the operation being configured and ready to send. Discard operation!\n");
+    delete o;
+    return;
+  }
   initiatedOcppOperations.add(o);
-}
-
-void receiveOcppOperation(OcppOperation *o){
-  receivedOcppOperations.add(o);
 }
 
 void ocppEngine_loop(){
@@ -125,16 +130,16 @@ void ocppEngine_loop(){
   /**
    * Work through the initiatedOcppOperations queue. Start with the first element by calling req() on it. If
    * the operation is (still) pending, it will return false and therefore each other queued element must
-   * wait until this operation is finished. If an ocppOperation is finished, it returns true on a req() call, 
+   * wait until this operation is over. If an ocppOperation is finished, it returns true on a req() call, 
    * can be dequeued and the following ocppOperation is processed.
    */
   
   while (initiatedOcppOperations.size() > 0){
     OcppOperation *el = initiatedOcppOperations.get(0);
-    boolean finished = el->sendReq();
-    if (finished){
+    boolean timeout = el->sendReq(); //The only reason to dequeue elements here is when a timeout occurs. Normally
+    if (timeout){                    //the Conf msg processing routine dequeues finished elements
       initiatedOcppOperations.remove(0);
-
+      
       //TODO Review: are all recources freed here?
       delete el;
       //go on with the next element in the queue, which is now at initiatedOcppOperations[0]
@@ -146,7 +151,7 @@ void ocppEngine_loop(){
 
   /**
    * Work through the receivedOcppOperations queue. Start with the first element by calling conf() on it. 
-   * If an ocppOperation is finished, it returns true on a conf() call, and ist dequeued.
+   * If an ocppOperation is finished, it returns true on a conf() call, and is dequeued.
    */
   
   int i = 0;
@@ -199,7 +204,7 @@ ocppEngine_meteringService = meteringService;
 
 MeteringService* getMeteringService() {
   if (ocppEngine_meteringService == NULL) {
-    Serial.print(F("Fatal error: in OcppEngine, there is no ocppEngine_meteringService set, but it is accessed!\n"));
+    Serial.print(F("[OcppEngine] Error: in OcppEngine, there is no ocppEngine_meteringService set, but it is accessed!\n"));
     //no error catch 
   }
   return ocppEngine_meteringService;

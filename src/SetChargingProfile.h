@@ -1,23 +1,24 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #ifndef SETCHARGINGPROFILE_H
 #define SETCHARGINGPROFILE_H
 
-#include "OcppOperation.h"
+#include "OcppMessage.h"
 #include "SmartChargingService.h"
 
-class SetChargingProfile : public OcppOperation {
+class SetChargingProfile : public OcppMessage {
 private:
-  boolean waitForConf = false;
-  boolean completed = false;
-  boolean reqExecuted = false;
   SmartChargingService *smartChargingService;
 public:
-  SetChargingProfile(WebSocketsClient *webSocket, SmartChargingService *smartChargingService);
+  SetChargingProfile(SmartChargingService *smartChargingService);
 
-  /**
-   * See OcppOperation.h for more information
-   */
-  boolean receiveReq(JsonDocument *json);
-  boolean sendConf();
+  const char* getOcppOperationType();
+
+  void processReq(JsonObject payload);
+
+  DynamicJsonDocument* createConf();
 };
 
 

@@ -1,32 +1,32 @@
+// matth-x/ESP8266-OCPP
+// Copyright Matthias Akstaller 2019 - 2020
+// MIT License
+
 #ifndef STATUSNOTIFICATION_H
 #define STATUSNOTIFICATION_H
 
-#include "OcppOperation.h"
+#include "OcppMessage.h"
 #include "ChargePointStatusService.h"
 #include "TimeHelper.h"
 
-class StatusNotification : public OcppOperation {
+class StatusNotification : public OcppMessage {
 private:
-  boolean waitForConf = false;
-  boolean completed = false;
-  boolean reqExecuted = false; // For debugging only: implement dummy server functionalities to test against echo server
   ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
   char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
 public:
-  StatusNotification(WebSocketsClient *webSocket, ChargePointStatus currentStatus);
+  StatusNotification(ChargePointStatus currentStatus);
 
-  /**
-   * See OcppOperation.h for more information
-   */
-  boolean sendReq();
-  boolean receiveConf(JsonDocument *json);
+  StatusNotification();
 
-  /**
-   * For debuggin only: implement dummy server functionalities to test against echo server
-   */
-  StatusNotification(WebSocketsClient *webSocket);
-  boolean receiveReq(JsonDocument *json);
-  boolean sendConf();
+  const char* getOcppOperationType();
+
+  DynamicJsonDocument* createReq();
+
+  void processConf(JsonObject payload);
+
+  void processReq(JsonObject payload);
+
+  DynamicJsonDocument* createConf();
 };
 
 #endif
