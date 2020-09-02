@@ -3,11 +3,61 @@ OCPP 1.6 Smart Charging client for the ESP8266
 
 ## Get the Smart Grid on your Home Charger :car::electric_plug::battery:
 
-One of the biggest milestones for the Smart Grid is the full integration of EVs into managed Charging systems. An open and homogenous protocol landscape is a key factor to reduce the effort to establish grid-wide Smart Charging strategies. The Open Charge Point Protocol (OCPP) is mainly designed for public EVSEs, but brings an extensive basis for Smart Charging in private chargers as well. This project intends to provide the OCPP framework for turning an ESP8266 into a Smart Charging controller.
+You can easily turn your ESP8266 into an OCPP charge point controller. This library provides the tools for the web communication part of your project.
 
-By now, an OCPP-enabled ESP8266 was successfully integrated into a ClipperCreek Inc. charging station. That controller connected the charging station to a third-party load management system. In the tests, the ESP8266 proved to be a suitable platform. Furthermore, the test results promise that the ESP8266 is most likely powerful enough for full OCPP.
+:heavy_check_mark: Works with [SteVe](https://github.com/RWTH-i5-IDSG/steve)
 
-As the repository name indicates, this project is not limited to Smart Charging. The framework is open to extension by any OCPP message type and is designed towards all OCPP functionalities. But for now, the main development is focused on Smart Charging since it is the most important use case on private chargers. In future, the focus on private chargers could also move towards all types of EVSEs.
+:heavy_check_mark: Tested with two further (proprietary) central systems
+
+:heavy_check_mark: Already integrated in two charging stations (including a ClipperCreek Inc. station)
+
+You still have the responsibility (or freedom) to design the application logic of the charger and to integrate the HW components. This library
+
+- lets you initiate any kind of OCPP operation
+- responds to requests from the central system and notifies your client code by listeners
+- manages the EVSE data model as specified by OCPP and does a lot of the paperwork. For example, it sends StatusNotification or MeterValues messages by itself.
+
+However, it doesn't
+
+- define reactions on the messages from the central system (CS). For example, when you initiate an Authorize request which the CS accepts, the library stores the EVSE status but lets you define how to react to it.
+
+For simple chargers, the application logic + HW integration is far below 1000 LOCs.
+
+## Usage guide
+
+Please take the `example_client.ino` (in the examples folder) as starting point for your first project. I will keep it up to date and insert an demonstration for each new feature. Here is an overview of the key concepts:
+
+- To simply send an OCPP operation (e.g. `BootNotification`, insert
+```cpp
+OcppOperation *bootNotification = makeOcppOperation(&webSocket,
+    new BootNotification());
+initiateOcppOperation(bootNotification);
+```
+- To send an OCPP operation and define an action when it succeeds, insert
+```cpp
+OcppOperation *bootNotification = makeOcppOperation(&webSocket,
+    new BootNotification());
+initiateOcppOperation(bootNotification);
+bootNotification->setOnReceiveConfListener([](JsonObject payload) {
+    Serial.print(F("BootNotification at client callback.\n"));
+    // e.g. flash a confirmation light on your EVSE here
+});
+```
+- To define an action when a requirement message comes in from the CS, insert in `setup()`
+```cpp
+setOnSetChargingProfileRequestListener([](JsonObject payload) {
+    Serial.print(F("New charging profile was set!.\n"));
+    // e.g. refresh your display. Note that the Smart Charging logic is already implemented in SmartChargingService.cpp
+});
+```
+- To integrate your HW, you have to write a file that implements all functions from `EVSE.h`. For example:
+```cpp
+float EVSE_readChargeRate() {
+    float chargeRate = myPowerMeter.getActivePowerInW();
+    return chargeRate; //in W
+}
+```
+- Please take `EVSE_test_routines.ino` as an example. It simulates the user interaction at the EVSE and repeats its test routine over and over again. You can see it in your device monitor!
 
 ## Dependencies
 
