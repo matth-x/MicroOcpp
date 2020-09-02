@@ -11,15 +11,15 @@ You can easily turn your ESP8266 into an OCPP charge point controller. This libr
 
 :heavy_check_mark: Already integrated in two charging stations (including a ClipperCreek Inc. station)
 
-You still have the responsibility (or freedom) to design the application logic of the charger and to integrate the HW components. This library
+### Features
 
 - lets you initiate any kind of OCPP operation
 - responds to requests from the central system and notifies your client code by listeners
-- manages the EVSE data model as specified by OCPP and does a lot of the paperwork. For example, it sends StatusNotification or MeterValues messages by itself.
+- manages the EVSE data model as specified by OCPP and does a lot of the paperwork. For example, it sends `StatusNotification` or `MeterValues` messages by itself.
 
-However, it doesn't
+You still have the responsibility (or freedom) to design the application logic of the charger and to integrate the HW components. This library doesn't
 
-- define reactions on the messages from the central system (CS). For example, when you initiate an Authorize request which the CS accepts, the library stores the EVSE status but lets you define how to react to it.
+- define reactions on the messages from the central system (CS). For example, when you initiate an Authorize request which the CS accepts, the library stores the new EVSE status but lets you define which action to take.
 
 For simple chargers, the application logic + HW integration is far below 1000 LOCs.
 
@@ -27,7 +27,7 @@ For simple chargers, the application logic + HW integration is far below 1000 LO
 
 Please take the `example_client.ino` (in the examples folder) as starting point for your first project. I will keep it up to date and insert an demonstration for each new feature. Here is an overview of the key concepts:
 
-- To simply send an OCPP operation (e.g. `BootNotification`, insert
+- To simply send an OCPP operation (e.g. `BootNotification`), insert
 ```cpp
 OcppOperation *bootNotification = makeOcppOperation(&webSocket,
     new BootNotification());
@@ -57,7 +57,9 @@ float EVSE_readChargeRate() {
     return chargeRate; //in W
 }
 ```
-- Please take `EVSE_test_routines.ino` as an example. It simulates the user interaction at the EVSE and repeats its test routine over and over again. You can see it in your device monitor!
+Please take `EVSE_test_routines.ino` as an example.
+
+The charge point simulation in the example folder establishes a connection to a WebSocket echo server (`wss://echo.websocket.org/`). You can also run the simulation against the URL of your central system. The `EVSE_test_routines.ino` implements all EVSE functionalities and simulates the user interaction at the EVSE. It repeats its test routine over and over again. You can watch it in your device monitor! 
 
 ## Dependencies
 
