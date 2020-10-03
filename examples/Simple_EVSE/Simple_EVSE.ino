@@ -4,7 +4,7 @@
 
 #include <Variants.h>
 #ifndef PROD
-#ifndef SIMPLE_EVSE
+#ifdef SIMPLE_EVSE
 
 #include <Arduino.h>
 
@@ -23,7 +23,6 @@
 #include <TimeHelper.h>
 #include <EVSE.h>
 #include <SimpleOcppOperationFactory.h>
-#include <Variants.h> //Debug switch
 
 //OCPP message classes
 #include <OcppOperation.h>
@@ -43,8 +42,8 @@ SmartChargingService *smartChargingService;
 ChargePointStatusService *chargePointStatusService;
 MeteringService *meteringService;
 
-#define STASSID "YOUR_WLAN_SSID"
-#define STAPSK  "YOUR_WLAND_PSWD"
+#define STASSID "WLAN040"                                 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#define STAPSK  "sh10j1978"                              // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #define WS_HOST "wss://echo.websocket.org"
 #define WS_PORT 80
@@ -55,8 +54,6 @@ MeteringService *meteringService;
 //#define LED 13
 #define LED_ON LOW
 #define LED_OFF HIGH
-
-bool readyForTestRoutines = false; //seelater
 
 
 /*
@@ -162,12 +159,12 @@ void setup() {
   setTimeFromJsonDateString("2019-11-01T11:59:55.123Z"); //use if needed for debugging
 
   meteringService->setPowerSampler([]() {
-    return (float) (millis() % 1000); //example values. Put your own power meter in here
+    return EVSE_readChargeRate(); //example values. Put your own power meter in here
   });
   //meteringService->setPowerSampler(EVSE_readChargeRate); //Alternative
 
   meteringService->setEnergySampler([]() {
-    return 1e-6f * (float) millis();
+    return EVSE_readEnergyRegister();
   });
 
 
@@ -176,47 +173,85 @@ void setup() {
         new BootNotification());
     initiateOcppOperation(bootNotification);
     bootNotification->setOnReceiveConfListener([](JsonObject payload) {
-        Serial.print(F("BootNotification at client callback.\n"));
-        readyForTestRoutines = true; // use only with EVSE_test_routines.cpp
+        if (DEBUG_OUT) Serial.print(F("BootNotification at client callback.\n"));
     });
   });
 
   EVSE_setOnEvPlug([] () {
-    if (!readyForTestRoutines) return; // use only with EVSE_test_routines.cpp
-    if (DEBUG_OUT) Serial.print(F("EVSE_setOnEvPlug Callback: EV plugged! Authorize the charging session\n"));
+    if (DEBUG_OUT) Serial.print(F("EVSE_setOnEvPlug Callback: EV plugged!\n"));
 
-    String myIdTag = "fedcba987";
-    OcppOperation *authorize = makeOcppOperation(&webSocket,
-        new Authorize(myIdTag));
-    initiateOcppOperation(authorize);
+    if (!EVSE_authorizationProvided()) {
+      if (DEBUG_OUT) Serial.print(F("EVSE_setOnEvPlug Callback: no authorization provided yet. Wait for authorization\n"));
+      return;
+    }
 
-    authorize->setOnReceiveConfListener([](JsonObject payload) {
-      const char* status = payload["idTagInfo"]["status"] | "Invalid";
-      if (!strcmp(status, "Accepted")) {
-        if (DEBUG_OUT) Serial.print(F("EVSE_setOnEvPlug Callback: Authorize request has been accepted! Initiate StartTransaction\n"));
-
-        OcppOperation *startTransaction = makeOcppOperation(&webSocket,
-          new StartTransaction());
-        initiateOcppOperation(startTransaction);
-        startTransaction->setOnReceiveConfListener([](JsonObject payload) {
-          Serial.print(F("EVSE_setOnEvPlug Callback: StartTransaction was successful\n"));
-          digitalWrite(LED, LED_ON);
-        });
-
-      } else {
-        Serial.print(F("EVSE_setOnEvPlug Callback: Authorize request has been denied!"));
-      }  
+    OcppOperation *startTransaction = makeOcppOperation(&webSocket,
+      new StartTransaction());
+    initiateOcppOperation(startTransaction);
+    startTransaction->setOnReceiveConfListener([](JsonObject payload) {
+      Serial.print(F("EVSE_setOnEvPlug Callback: StartTransaction was successful\n"));
+      digitalWrite(LED, LED_ON);
+      EVSE_startEnergyOffer();
     });
   });
 
   EVSE_setOnEvUnplug([] () {
-    if (!readyForTestRoutines) return; // use only with EVSE_test_routines.cpp
+    if (chargePointStatusService->getTransactionId() < 0) {
+      //there is currently no transaction running. Do nothing
+      return;
+    }
+
     OcppOperation *stopTransaction = makeOcppOperation(&webSocket,
           new StopTransaction());
     initiateOcppOperation(stopTransaction);
     stopTransaction->setOnReceiveConfListener([](JsonObject payload) {
       Serial.print(F("EVSE_setOnEvUnplug Callback: StopTransaction was successful\n"));
       digitalWrite(LED, LED_OFF);
+      EVSE_stopEnergyOffer();
+    });
+  });
+
+  EVSE_setOnProvideAuthorization([] () {
+    if (DEBUG_OUT) Serial.print(F("EVSE_setOnProvideAuthorization Callback: EV plugged!\n"));
+
+    String myIdTag = "fedcba987"; //use fixed ID tag in this implementation
+    OcppOperation *authorize = makeOcppOperation(&webSocket,
+        new Authorize(myIdTag));
+    initiateOcppOperation(authorize);
+
+    authorize->setOnReceiveConfListener([](JsonObject payload) {
+      if (DEBUG_OUT) Serial.print(F("EVSE_setOnProvideAuthorization Callback: Authorize request has been accepted!\n"));
+
+      if (!EVSE_EvIsPlugged()) {
+        //There is no EV present so do nothing further
+        if (DEBUG_OUT) Serial.print(F("EVSE_setOnProvideAuthorization Callback: No EV plugged. No further action\n"));
+        return;
+      }
+
+      OcppOperation *startTransaction = makeOcppOperation(&webSocket,
+        new StartTransaction());
+      initiateOcppOperation(startTransaction);
+      startTransaction->setOnReceiveConfListener([](JsonObject payload) {
+        Serial.print(F("EVSE_setOnProvideAuthorization Callback: StartTransaction was successful\n"));
+        digitalWrite(LED, LED_ON);
+        EVSE_startEnergyOffer();
+      });
+    });
+  });
+
+  EVSE_setOnRevokeAuthorization([] {
+    if (chargePointStatusService->getTransactionId() < 0) {
+      //there is currently no transaction running. Do nothing
+      return;
+    }
+
+    OcppOperation *stopTransaction = makeOcppOperation(&webSocket,
+          new StopTransaction());
+    initiateOcppOperation(stopTransaction);
+    stopTransaction->setOnReceiveConfListener([](JsonObject payload) {
+      Serial.print(F("EVSE_setOnEvUnplug Callback: StopTransaction was successful\n"));
+      digitalWrite(LED, LED_OFF);
+      EVSE_stopEnergyOffer();
     });
   });
 

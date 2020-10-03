@@ -93,12 +93,6 @@ void ChargePointStatusService::stopTransaction(){
 }
 
 int ChargePointStatusService::getTransactionId() {
-  if (transactionId < 0) {
-    if (DEBUG_OUT) Serial.print(F("[ChargePointStatusService] Warning: getTransactionId() returns invalid transactionId. Have you called it after stopTransaction()? (can only be called before) Have you called it before startTransaction?\n"));
-  }
-  if (transactionRunning == false) {
-    if (DEBUG_OUT) Serial.print(F("[ChargePointStatusService] Warning: getTransactionId() called, but there is no transaction running. Have you called it after stopTransaction()? (can only be called before) Have you called it before startTransaction?\n"));
-  }
   return transactionId;
 }
 

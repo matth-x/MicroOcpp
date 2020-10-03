@@ -2,6 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2020
 // MIT License
 
+#include <Variants.h>
+#ifndef PROD
+#ifndef SIMPLE_EVSE
+
 #include <EVSE.h>
 #include <ChargePointStatusService.h>
 #include <OcppEngine.h>
@@ -134,3 +138,6 @@ char *EVSE_getChargePointVendor() {
 char *EVSE_getChargePointModel() {
   return "Greatest CP model";
 }
+
+#endif
+#endif
