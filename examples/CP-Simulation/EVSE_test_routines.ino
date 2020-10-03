@@ -4,7 +4,7 @@
 
 #include <Variants.h>
 #ifndef PROD
-#ifndef SIMPLE_EVSE
+//#ifndef SIMPLE_EVSE
 
 #include <EVSE.h>
 #include <ChargePointStatusService.h>
@@ -115,12 +115,24 @@ bool EVSE_EvIsPlugged() {
   return evIsPlugged;
 }
 
+bool EVSE_authorizationProvided() {
+  //not used
+}
+
 void EVSE_setOnEvPlug(OnEvPlug onEvPg) {
   onEvPlug = onEvPg;
 }
 
 void EVSE_setOnEvUnplug(OnEvUnplug onEvUpg) {
   onEvUnplug = onEvUpg;
+}
+
+void EVSE_setOnProvideAuthorization(OnProvideAuthorization onAuth) {
+  //not used
+}
+
+void EVSE_setOnRevokeAuthorization(OnRevokeAuthorization onRevokeAuth) {
+  //not used
 }
 
 void EVSE_setOnBoot(OnBoot onBt) {
@@ -140,4 +152,4 @@ char *EVSE_getChargePointModel() {
 }
 
 #endif
-#endif
+//#endif

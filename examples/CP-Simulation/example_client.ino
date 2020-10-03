@@ -4,7 +4,7 @@
 
 #include <Variants.h>
 #ifndef PROD
-#ifndef SIMPLE_EVSE
+//#ifndef SIMPLE_EVSE
 
 #include <Arduino.h>
 
@@ -233,5 +233,5 @@ void loop() {
   //meteringService->loop();          //optional
 }
 
-#endif
+//#endif
 #endif
