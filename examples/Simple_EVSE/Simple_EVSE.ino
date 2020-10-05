@@ -42,8 +42,8 @@ SmartChargingService *smartChargingService;
 ChargePointStatusService *chargePointStatusService;
 MeteringService *meteringService;
 
-#define STASSID "WLAN040"                                 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#define STAPSK  "sh10j1978"                              // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#define STASSID "YourSSID"
+#define STAPSK  "YourPW"
 
 #define WS_HOST "wss://echo.websocket.org"
 #define WS_PORT 80
@@ -139,7 +139,7 @@ void setup() {
   // ping server every 15000 ms
   // expect pong from server within 3000 ms
   // consider connection disconnected if pong is not received 2 times
-  webSocket.enableHeartbeat(15000, 3000, 2); //comment this one out to for specific OCPP servers
+  webSocket.enableHeartbeat(15000, 3000, 2);
 
   ocppEngine_initialize(&webSocket, 2048); //default JSON document size = 2048
 
