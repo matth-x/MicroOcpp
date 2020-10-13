@@ -11,29 +11,35 @@
 //can only be used for echo server debugging
 MeterValues::MeterValues() {
   sampleTime = LinkedList<time_t>(); //not used in server mode but needed to keep the destructor simple
+  energy = LinkedList<float>();
   power = LinkedList<float>();
 }
 
-MeterValues::MeterValues(LinkedList<time_t> *sample_t, LinkedList<float> *energyRegister) {
-  sampleTime = LinkedList<time_t>();
-  energy = LinkedList<float>();
-  power = LinkedList<float>(); //remains empty
-  for (int i = 0; i < energyRegister->size(); i++) {
-    sampleTime.add(sample_t->get(i));
-    energy.add((float) energyRegister->get(i));
-  }
-}
+//MeterValues::MeterValues(LinkedList<time_t> *sample_t, LinkedList<float> *energyRegister) {
+//  sampleTime = LinkedList<time_t>();
+//  energy = LinkedList<float>();
+//  power = LinkedList<float>(); //remains empty
+//  for (int i = 0; i < energyRegister->size(); i++) {
+//    sampleTime.add(sample_t->get(i));
+//    energy.add((float) energyRegister->get(i));
+//  }
+//}
 
-MeterValues::MeterValues(LinkedList<time_t> *sample_t, LinkedList<float> *energyRegister, LinkedList<float> *pwr) {
+MeterValues::MeterValues(LinkedList<time_t> *sample_t, LinkedList<float> *energyRegister, LinkedList<float> *pwr, int connectorId, int transactionId) 
+      : connectorId(connectorId), transactionId(transactionId) {
   sampleTime = LinkedList<time_t>();
   energy = LinkedList<float>();
   power = LinkedList<float>();
   for (int i = 0; i < sample_t->size(); i++)
     sampleTime.add(sample_t->get(i));
-  for (int i = 0; i < energyRegister->size(); i++)
-    energy.add(energyRegister->get(i));
-  for (int i = 0; i < pwr->size(); i++)
-    power.add(pwr->get(i));
+  if (energyRegister != NULL) {
+    for (int i = 0; i < energyRegister->size(); i++)
+      energy.add(energyRegister->get(i));
+  }
+  if (pwr != NULL) {
+    for (int i = 0; i < pwr->size(); i++)
+      power.add(pwr->get(i));
+  }
 }
 
 MeterValues::~MeterValues(){
@@ -58,10 +64,7 @@ DynamicJsonDocument* MeterValues::createReq() {
       + 230); //"safety space"
   JsonObject payload = doc->to<JsonObject>();
   
-  payload["connectorId"] = 1;
-  if (getChargePointStatusService() != NULL) {
-    payload["transactionId"] = getChargePointStatusService()->getTransactionId();
-  }
+  payload["connectorId"] = connectorId;
   JsonArray meterValues = payload.createNestedArray("meterValue");
   for (int i = 0; i < sampleTime.size(); i++) {
     JsonObject meterValue = meterValues.createNestedObject();
@@ -79,6 +82,10 @@ DynamicJsonDocument* MeterValues::createReq() {
       sampledValue_2["value"] = power.get(i);
       sampledValue_2["measurand"] = "Power.Active.Import";
     }
+  }
+
+  if (transactionId >= 0) {
+    payload["transactionId"] = transactionId;
   }
 
   return doc;

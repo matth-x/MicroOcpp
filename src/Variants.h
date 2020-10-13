@@ -14,4 +14,6 @@
 
 //#define OCPP_SERVER //comment out if this should be compiled as server <--- needs to be implemented again
 
+#define MULTIPLE_CONN
+
 #endif

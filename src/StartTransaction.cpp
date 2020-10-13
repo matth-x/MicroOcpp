@@ -9,7 +9,7 @@
 #include "OcppEngine.h"
 #include "MeteringService.h"
 
-
+/*
 StartTransaction::StartTransaction() {
     if (getChargePointStatusService() != NULL) {
       if (!getChargePointStatusService()->getIdTag().isEmpty()) {
@@ -22,6 +22,24 @@ StartTransaction::StartTransaction() {
 
 StartTransaction::StartTransaction(String &idTag) {
     this->idTag = String(idTag);
+}*/
+
+StartTransaction::StartTransaction(int connectorId) : connectorId(connectorId) {
+  ChargePointStatusService *cpss = getChargePointStatusService();
+  if (cpss != NULL) {
+      if (cpss->existsUnboundAuthorization()) {
+          this->idTag = String(cpss->getUnboundIdTag());
+      } else {
+          //The CP is not authorized. Try anyway, let the CS decide what to do ...
+          this->idTag = String("fefed1d19876");
+      }
+  } else {
+    this->idTag = String("fefed1d19876"); //Use a default payload. In the typical use case of this library, you probably you don't even need Authorization at all
+  }
+}
+
+StartTransaction::StartTransaction(int connectorId, String &idTag) : connectorId(connectorId) {
+  this->idTag = String(idTag);
 }
 
 const char* StartTransaction::getOcppOperationType(){
@@ -32,10 +50,10 @@ DynamicJsonDocument* StartTransaction::createReq() {
   DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(5) + (JSONDATE_LENGTH + 1) + (idTag.length() + 1));
   JsonObject payload = doc->to<JsonObject>();
 
-  payload["connectorId"] = 1;
+  payload["connectorId"] = connectorId;
   MeteringService* meteringService = getMeteringService();
   if (meteringService != NULL) {
-	  payload["meterStart"] = meteringService->readEnergyActiveImportRegister();
+	  payload["meterStart"] = meteringService->readEnergyActiveImportRegister(connectorId);
   }
   char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
   getJsonDateStringFromGivenTime(timestamp, JSONDATE_LENGTH + 1, now());
@@ -54,9 +72,11 @@ void StartTransaction::processConf(JsonObject payload) {
     if (DEBUG_OUT) Serial.print(F("[StartTransaction] Request has been accepted!\n"));
 
     ChargePointStatusService *cpStatusService = getChargePointStatusService();
-    if (cpStatusService != NULL){
-      cpStatusService->startTransaction(transactionId);
-      cpStatusService->startEnergyOffer();
+    ConnectorStatus *connector = getConnectorStatus(connectorId);
+    if (cpStatusService != NULL && connector != NULL){
+      cpStatusService->bindAuthorization(idTag, connectorId);
+      connector->startTransaction(transactionId);
+      connector->startEnergyOffer();
     }
 
     SmartChargingService *scService = getSmartChargingService();

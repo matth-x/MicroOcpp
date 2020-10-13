@@ -6,6 +6,7 @@
 #define CHARGEPOINTSTATUSSERVICE_H
 
 #include <WebSocketsClient.h>
+#include <LinkedList.h>
 
 enum class ChargePointStatus {
   Available,
@@ -19,6 +20,39 @@ enum class ChargePointStatus {
   Faulted,      //not supported by this client
   NOT_SET //not part of OCPP 1.6
 };
+
+#include "Variants.h"
+#ifdef MULTIPLE_CONN
+#include "ConnectorStatus.h"
+
+class ChargePointStatusService {
+private:
+  WebSocketsClient *webSocket;
+  const int numConnectors;
+  ConnectorStatus **connectors;
+
+  boolean authorized = false;
+  String idTag = String('\0');
+
+public:
+  ChargePointStatusService(WebSocketsClient *webSocket, int numConnectors);
+
+  ~ChargePointStatusService();
+  
+  void loop();
+
+  void authorize(String &idTag);
+  void authorize();
+  void boot();
+  String &getUnboundIdTag();
+  boolean existsUnboundAuthorization();
+  void bindAuthorization(String &idTag, int connectorId);
+
+  ConnectorStatus *getConnector(int connectorId);
+  int getNumConnectors();
+};
+
+#else
 
 class ChargePointStatusService {
 private:
@@ -50,4 +84,5 @@ public:
   ChargePointStatus inferenceStatus();
 };
 
+#endif
 #endif

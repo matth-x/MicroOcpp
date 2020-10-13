@@ -11,11 +11,12 @@
 
 class StartTransaction : public OcppMessage {
 private:
+  int connectorId = 1;
   String idTag = String('\0');
 public:
-  StartTransaction();
+  StartTransaction(int connectorId);
 
-  StartTransaction(String &idTag);
+  StartTransaction(int connectorId, String &idTag);
 
   const char* getOcppOperationType();
 

@@ -17,7 +17,7 @@ const char* SetChargingProfile::getOcppOperationType(){
 
 void SetChargingProfile::processReq(JsonObject payload) {
 
-  int connectorID = payload["connectorId"]; //<-- not used in this implementation
+  int connectorID = payload["connectorId"];
 
   JsonObject csChargingProfiles = payload["csChargingProfiles"];
 

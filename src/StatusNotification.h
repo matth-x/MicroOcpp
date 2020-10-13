@@ -6,15 +6,16 @@
 #define STATUSNOTIFICATION_H
 
 #include "OcppMessage.h"
-#include "ChargePointStatusService.h"
+#include "ConnectorStatus.h"
 #include "TimeHelper.h"
 
 class StatusNotification : public OcppMessage {
 private:
-  ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
+  int connectorId = 1;
+  OcppEvseState currentStatus = OcppEvseState::NOT_SET;
   char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
 public:
-  StatusNotification(ChargePointStatus currentStatus);
+  StatusNotification(int connectorId, OcppEvseState currentStatus);
 
   StatusNotification();
 

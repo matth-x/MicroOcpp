@@ -13,28 +13,22 @@ StopTransaction::StopTransaction() {
 
 }
 
+StopTransaction::StopTransaction(int connectorId) : connectorId(connectorId) {
+
+}
+
 const char* StopTransaction::getOcppOperationType(){
     return "StopTransaction";
 }
 
 DynamicJsonDocument* StopTransaction::createReq() {
 
-  String idTag = String('\0');
-
-  if (getChargePointStatusService() != NULL) {
-    idTag += getChargePointStatusService()->getIdTag();
-  }
-
-  DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (idTag.length() + 1) + (JSONDATE_LENGTH + 1));
+  DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1));
   JsonObject payload = doc->to<JsonObject>();
-  
-  if (!idTag.isEmpty()) { //if there is no idTag present, we shouldn't add a default one
-    payload["idTag"] = idTag;
-  }
 
   float meterStop = 0.0f;
   if (getMeteringService() != NULL) {
-    meterStop = getMeteringService()->readEnergyActiveImportRegister();
+    meterStop = getMeteringService()->readEnergyActiveImportRegister(connectorId);
   }
 
   payload["meterStop"] = meterStop; //TODO meterStart is required to be in Wh, but measuring unit is probably inconsistent in implementation
@@ -43,14 +37,13 @@ DynamicJsonDocument* StopTransaction::createReq() {
   payload["timestamp"] = timestamp;
 
   int transactionId = -1;
-  if (getChargePointStatusService() != NULL) {
-    transactionId = getChargePointStatusService()->getTransactionId();
-  }
+  if (getConnectorStatus(connectorId) != NULL)
+    transactionId = getConnectorStatus(connectorId)->getTransactionId();
+
   payload["transactionId"] = transactionId;
 
-  if (getChargePointStatusService() != NULL) {
-    getChargePointStatusService()->stopEnergyOffer();
-  }
+  if (getConnectorStatus(connectorId) != NULL)
+    getConnectorStatus(connectorId)->stopEnergyOffer();
 
   return doc;
 }
@@ -59,11 +52,12 @@ void StopTransaction::processConf(JsonObject payload) {
 
   //no need to process anything here
 
-  ChargePointStatusService *cpStatusService = getChargePointStatusService();
-  if (cpStatusService != NULL){
-    //cpStatusService->stopEnergyOffer(); //No. This should remain in createReq
-    cpStatusService->stopTransaction();
-    cpStatusService->unauthorize();
+  ConnectorStatus *connector = getConnectorStatus(connectorId);
+
+  //cpStatusService->stopEnergyOffer(); //No. This should remain in createReq
+  if (connector != NULL) {
+    connector->stopTransaction();
+    connector->unauthorize();
   }
 
   SmartChargingService *scService = getSmartChargingService();

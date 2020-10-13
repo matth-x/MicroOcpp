@@ -181,7 +181,7 @@ void SmartChargingService::beginChargingNow(){
 
 void SmartChargingService::endChargingNow(){
   if (!chargingSessionIsActive) {
-    Serial.print(F("[SmartChargingService] Error: end Charging session but there isn't running one!"));
+    Serial.print(F("[SmartChargingService] Error: end Charging session but there isn't running one!\n"));
   }
   
   chargingSessionStart = INFINITY_THLD;
