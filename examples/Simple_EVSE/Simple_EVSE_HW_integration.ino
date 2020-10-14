@@ -4,7 +4,7 @@
 
 #include <Variants.h>
 #ifndef PROD
-#ifdef SIMPLE_EVSE
+#ifndef SIMPLE_EVSE
 
 #include <EVSE.h>
 #include <ChargePointStatusService.h>

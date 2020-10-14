@@ -6,8 +6,8 @@
 #define STATUSNOTIFICATION_H
 
 #include "OcppMessage.h"
-#include "ConnectorStatus.h"
 #include "TimeHelper.h"
+#include "OcppEvseState.h"
 
 class StatusNotification : public OcppMessage {
 private:

@@ -7,6 +7,56 @@
 #include "SmartChargingService.h"
 #include "OcppEngine.h"
 
+#ifdef MULTIPLE_CONN
+
+SmartChargingService::SmartChargingService(float chargeLimit)
+      : DEFAULT_CHARGE_LIMIT(chargeLimit) {
+  setSmartChargingService(this); //in OcppEngine.cpp
+}
+
+void SmartChargingService::loop(){
+ 
+}
+
+float SmartChargingService::inferenceLimitNow(){
+
+}
+
+void SmartChargingService::setOnLimitChange(OnLimitChange onLtChg){
+  onLimitChange = onLtChg;
+}
+
+/**
+ * validToOutParam: The begin of the next SmartCharging restriction after time t. It is not taken into
+ * account if the next Profile will be a prevailing one. If the profile at time t ends before any
+ * other profile engages, the end of this profile will be written into validToOutParam.
+ */
+void SmartChargingService::inferenceLimit(time_t t, float *limitOutParam, time_t *validToOutParam){
+  
+}
+
+void SmartChargingService::writeOutCompositeSchedule(JsonObject *json){
+  Serial.print(F("[SmartChargingService] Unsupported Operation: SmartChargingService::writeOutCompositeSchedule\n"));
+}
+
+void SmartChargingService::beginCharging(time_t t, int transactionID){
+  
+}
+
+void SmartChargingService::beginChargingNow(){
+  beginCharging(now(), -1);
+}
+
+void SmartChargingService::endChargingNow(){
+  
+}
+
+void SmartChargingService::updateChargingProfile(JsonObject *json){
+  
+}
+
+#else
+
 SmartChargingService::SmartChargingService(float chargeLimit)
       : DEFAULT_CHARGE_LIMIT(chargeLimit) {
   limitBeforeChange = -1.0f;
@@ -230,3 +280,5 @@ void SmartChargingService::updateChargingProfile(JsonObject *json){
    */
   nextChange = now();
 }
+
+#endif

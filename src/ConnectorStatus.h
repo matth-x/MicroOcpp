@@ -6,19 +6,7 @@
 #define CONNECTOR_STATUS
 
 #include "StatusNotification.h"
-
-enum class OcppEvseState {
-  Available,
-  Preparing,
-  Charging,
-  SuspendedEVSE,
-  SuspendedEV,
-  Finishing,    //not supported by this client
-  Reserved,     //not supported by this client
-  Unavailable,  //not supported by this client
-  Faulted,      //not supported by this client
-  NOT_SET //not part of OCPP 1.6
-};
+#include "OcppEvseState.h"
 
 class ConnectorStatus {
 private:

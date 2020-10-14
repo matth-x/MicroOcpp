@@ -8,7 +8,7 @@
 
 #define DEBUG_OUT true
 //#define PROD
-#define SIMPLE_EVSE
+//#define SIMPLE_EVSE
 
 #define HW_AUTHORIZATION
 

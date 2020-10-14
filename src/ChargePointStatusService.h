@@ -8,19 +8,6 @@
 #include <WebSocketsClient.h>
 #include <LinkedList.h>
 
-enum class ChargePointStatus {
-  Available,
-  Preparing,
-  Charging,
-  SuspendedEVSE,
-  SuspendedEV,
-  Finishing,    //not supported by this client
-  Reserved,     //not supported by this client
-  Unavailable,  //not supported by this client
-  Faulted,      //not supported by this client
-  NOT_SET //not part of OCPP 1.6
-};
-
 #include "Variants.h"
 #ifdef MULTIPLE_CONN
 #include "ConnectorStatus.h"

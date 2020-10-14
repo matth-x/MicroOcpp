@@ -8,8 +8,16 @@
 #include "OcppMessage.h"
 
 class BootNotification : public OcppMessage {
+private:
+  String chargePointModel = String('\0');
+  String chargePointVendor = String('\0');
+  String chargePointSerialNumber = String('\0');
 public:
   BootNotification();
+
+  BootNotification(String &chargePointModel, String &chargePointVendor);
+
+  BootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber);
 
   const char* getOcppOperationType();
 

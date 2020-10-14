@@ -52,12 +52,12 @@ StatusNotification *ConnectorStatus::loop() {
   return NULL;
 }
 
-void ChargePointStatusService::authorize(String &idTag){
+void ConnectorStatus::authorize(String &idTag){
   this->idTag = String(idTag);
   authorize();
 }
 
-void ChargePointStatusService::authorize(){
+void ConnectorStatus::authorize(){
   if (authorized == true){
     if (DEBUG_OUT) Serial.print(F("[ConnectorStatus] Warning: authorized twice or didn't unauthorize before\n"));
   }
