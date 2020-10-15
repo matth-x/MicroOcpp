@@ -198,6 +198,17 @@ ChargePointStatusService *getChargePointStatusService(){
   return ocppEngine_chargePointStatusService;
 }
 
+ConnectorStatus *getConnectorStatus(int connectorId) {
+  if (getChargePointStatusService() == NULL) return NULL;
+
+  ConnectorStatus *result = getChargePointStatusService()->getConnector(connectorId);
+  if (result == NULL) {
+    Serial.print(F("[OcppEngine] Error in getConnectorStatus(): cannot fetch connector with given connectorId!\n"));
+    //no error catch 
+  }
+  return result;
+}
+
 void setMeteringSerivce(MeteringService *meteringService) {
 ocppEngine_meteringService = meteringService;
 }

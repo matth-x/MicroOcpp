@@ -8,9 +8,7 @@
 
 #define DEBUG_OUT true
 //#define PROD
-#define SIMPLE_EVSE
-
-#define HW_AUTHORIZATION
+//#define SIMPLE_EVSE
 
 //#define OCPP_SERVER //comment out if this should be compiled as server <--- needs to be implemented again
 

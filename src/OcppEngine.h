@@ -36,6 +36,8 @@ void setChargePointStatusService(ChargePointStatusService *cpss);
 
 ChargePointStatusService *getChargePointStatusService();
 
+ConnectorStatus *getConnectorStatus(int connectorId);
+
 void setMeteringSerivce(MeteringService *meteringService);
 
 MeteringService* getMeteringService();

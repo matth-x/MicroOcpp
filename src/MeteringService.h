@@ -17,6 +17,32 @@
 typedef float (*PowerSampler)();
 typedef float (*EnergySampler)();
 
+#include "Variants.h"
+#ifndef PROD
+
+#include "ConnectorMeterValuesRecorder.h"
+
+class MeteringService {
+private:
+  WebSocketsClient *webSocket;
+  const int numConnectors;
+  ConnectorMeterValuesRecorder **connectors;
+public:
+  MeteringService(WebSocketsClient *webSocket, int numConnectors);
+
+  ~MeteringService();
+
+  void loop();
+
+  void setPowerSampler(int connectorId, PowerSampler powerSampler);
+
+  void setEnergySampler(int connectorId, EnergySampler energySampler);
+
+  float readEnergyActiveImportRegister(int connectorId);
+};
+
+#else
+
 class MeteringService {
 private:
   WebSocketsClient *webSocket;
@@ -53,4 +79,5 @@ public:
   float readEnergyActiveImportRegister();
 };
 
+#endif
 #endif

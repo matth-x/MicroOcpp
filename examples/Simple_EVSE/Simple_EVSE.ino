@@ -4,7 +4,7 @@
 
 #include <Variants.h>
 #ifndef PROD
-#ifdef SIMPLE_EVSE
+#ifndef SIMPLE_EVSE
 
 #include <Arduino.h>
 
@@ -42,8 +42,8 @@ SmartChargingService *smartChargingService;
 ChargePointStatusService *chargePointStatusService;
 MeteringService *meteringService;
 
-#define STASSID "YourSSID"
-#define STAPSK  "YourPW"
+#define STASSID "YOUR_WLAN_SSID"
+#define STAPSK  "YOUR_WLAN_PW"
 
 #define WS_HOST "wss://echo.websocket.org"
 #define WS_PORT 80
@@ -51,7 +51,6 @@ MeteringService *meteringService;
 #define WS_PROTOCOL "ocpp1.6"
 
 #define LED 2
-//#define LED 13
 #define LED_ON LOW
 #define LED_OFF HIGH
 

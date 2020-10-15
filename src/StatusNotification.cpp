@@ -8,8 +8,8 @@
 
 #include <string.h>
 
-StatusNotification::StatusNotification(ChargePointStatus currentStatus) 
-  : currentStatus(currentStatus) {
+StatusNotification::StatusNotification(int connectorId, OcppEvseState currentStatus) 
+  : connectorId(connectorId), currentStatus(currentStatus) {
  
   if (!getJsonDateStringFromSystemTime(timestamp, JSONDATE_LENGTH)){
     Serial.print(F("[StatusNotification] Error reading time string. Expect format like 2020-02-01T20:53:32.486Z\n"));
@@ -22,34 +22,34 @@ StatusNotification::StatusNotification(ChargePointStatus currentStatus)
   }
 
   switch (currentStatus) {
-    case (ChargePointStatus::Available):
+    case (OcppEvseState::Available):
       if (DEBUG_OUT) Serial.print(F("Available\n"));
       break;
-    case (ChargePointStatus::Preparing):
+    case (OcppEvseState::Preparing):
       if (DEBUG_OUT) Serial.print(F("Preparing\n"));
       break;
-    case (ChargePointStatus::Charging):
+    case (OcppEvseState::Charging):
       if (DEBUG_OUT) Serial.print(F("Charging\n"));
       break;
-    case (ChargePointStatus::SuspendedEVSE):
+    case (OcppEvseState::SuspendedEVSE):
       if (DEBUG_OUT) Serial.print(F("SuspendedEVSE\n"));
       break;
-    case (ChargePointStatus::SuspendedEV):
+    case (OcppEvseState::SuspendedEV):
       if (DEBUG_OUT) Serial.print(F("SuspendedEV\n"));
       break;
-    case (ChargePointStatus::Finishing):
+    case (OcppEvseState::Finishing):
       if (DEBUG_OUT) Serial.print(F("Finishing\n"));
       break;
-    case (ChargePointStatus::Reserved):
+    case (OcppEvseState::Reserved):
       if (DEBUG_OUT) Serial.print(F("Reserved\n"));
       break;
-    case (ChargePointStatus::Unavailable):
+    case (OcppEvseState::Unavailable):
       if (DEBUG_OUT) Serial.print(F("Unavailable\n"));
       break;
-    case (ChargePointStatus::Faulted):
+    case (OcppEvseState::Faulted):
       if (DEBUG_OUT) Serial.print(F("Faulted\n"));
       break;
-    case (ChargePointStatus::NOT_SET):
+    case (OcppEvseState::NOT_SET):
       Serial.print(F("NOT_SET\n"));
       break;
     default:
@@ -62,40 +62,40 @@ const char* StatusNotification::getOcppOperationType(){
     return "StatusNotification";
 }
 
-//TODO if the status has changed again when sendReq() is called, abort the operation completely (note: if req is already sent, stick with listening to conf). The ChargePointStatusService will enqueue a new operation itself
+//TODO if the status has changed again when sendReq() is called, abort the operation completely (note: if req is already sent, stick with listening to conf). The OcppEvseStateService will enqueue a new operation itself
 DynamicJsonDocument* StatusNotification::createReq() {
   DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1));
   JsonObject payload = doc->to<JsonObject>();
   
-  payload["connectorId"] = 1;        //Hardcoded to be one because only one connector is supported
+  payload["connectorId"] = connectorId;
   payload["errorCode"] = "NoError";  //No error diagnostics support
   
   switch (currentStatus) {
-    case (ChargePointStatus::Available):
+    case (OcppEvseState::Available):
       payload["status"] = "Available";
       break;
-    case (ChargePointStatus::Preparing):
+    case (OcppEvseState::Preparing):
       payload["status"] = "Preparing";
       break;
-    case (ChargePointStatus::Charging):
+    case (OcppEvseState::Charging):
       payload["status"] = "Charging";
       break;
-    case (ChargePointStatus::SuspendedEVSE):
+    case (OcppEvseState::SuspendedEVSE):
       payload["status"] = "SuspendedEVSE";
       break;
-    case (ChargePointStatus::SuspendedEV):
+    case (OcppEvseState::SuspendedEV):
       payload["status"] = "SuspendedEV";
       break;
-    case (ChargePointStatus::Finishing):
+    case (OcppEvseState::Finishing):
       payload["status"] = "Finishing";
       break;
-    case (ChargePointStatus::Reserved):
+    case (OcppEvseState::Reserved):
       payload["status"] = "Reserved";
       break;
-    case (ChargePointStatus::Unavailable):
+    case (OcppEvseState::Unavailable):
       payload["status"] = "Unavailable";
       break;
-    case (ChargePointStatus::Faulted):
+    case (OcppEvseState::Faulted):
       payload["status"] = "Faulted";
       break;
     default:

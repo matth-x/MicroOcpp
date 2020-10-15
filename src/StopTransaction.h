@@ -8,8 +8,12 @@
 #include "OcppMessage.h"
 
 class StopTransaction : public OcppMessage {
+private:
+  int connectorId = 1;
 public:
   StopTransaction();
+
+  StopTransaction(int connectorId);
 
   const char* getOcppOperationType();
 

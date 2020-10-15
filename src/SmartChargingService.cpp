@@ -7,8 +7,15 @@
 #include "SmartChargingService.h"
 #include "OcppEngine.h"
 
-SmartChargingService::SmartChargingService(float chargeLimit)
+#define SINGLE_CONNECTOR_ID 1
+
+SmartChargingService::SmartChargingService(float chargeLimit, int numConnectors)
       : DEFAULT_CHARGE_LIMIT(chargeLimit) {
+  
+  if (numConnectors >= 2) {
+    Serial.print(F("[SmartChargingService] Error: Unfortunately, multiple connectors are not implemented in SmartChargingService yet. Only connector 1 will receive charging limits\n"));
+  }
+  
   limitBeforeChange = -1.0f;
   nextChange = INFINITY_THLD;
   chargingSessionStart = INFINITY_THLD;
@@ -46,12 +53,14 @@ void SmartChargingService::loop(){
     limitBeforeChange = limit;
 
     //ChargePointStatusService:
-    ChargePointStatusService *cpStatusService = getChargePointStatusService();
+    ChargePointStatusService *cpStatusService = getChargePointStatusService();    
     if (cpStatusService != NULL) {
       if (limit > 0.0f) {
-        cpStatusService->startEnergyOffer();
+        //cpStatusService->getConnector(SINGLE_CONNECTOR_ID)->startEnergyOffer();  //No, the client implementation should decide what to do here! TODO review if needed
+        //cpStatusService->startEnergyOffer();
       } else {
-        cpStatusService->stopEnergyOffer();
+        //cpStatusService->getConnector(SINGLE_CONNECTOR_ID)->stopEnergyOffer();   //No, the client implementation should decide what to do here! TODO review if needed
+        //cpStatusService->stopEnergyOffer();
       }
     }
   }
@@ -181,7 +190,7 @@ void SmartChargingService::beginChargingNow(){
 
 void SmartChargingService::endChargingNow(){
   if (!chargingSessionIsActive) {
-    Serial.print(F("[SmartChargingService] Error: end Charging session but there isn't running one!"));
+    Serial.print(F("[SmartChargingService] Error: end Charging session but there isn't running one!\n"));
   }
   
   chargingSessionStart = INFINITY_THLD;

@@ -16,6 +16,7 @@
 #include "StopTransaction.h"
 #include "TriggerMessage.h"
 #include "RemoteStartTransaction.h"
+#include "RemoteStopTransaction.h"
 #include "Reset.h"
 
 #include "OcppEngine.h"
@@ -62,6 +63,11 @@ void setOnRemoteStartTransactionSendConfListener(OnSendConfListener listener){
   onRemoteStartTransactionSendConf = listener;
 }
 
+OnSendConfListener onRemoteStopTransactionSendConf;
+void setOnRemoteStopTransactionSendConfListener(OnSendConfListener listener){
+  onRemoteStopTransactionSendConf = listener;
+}
+
 OnSendConfListener onResetSendConf;
 void setOnResetSendConfListener(OnSendConfListener listener){
   onResetSendConf = listener;
@@ -106,7 +112,7 @@ OcppOperation *makeOcppOperation(WebSocketsClient *ws, const char *messageType) 
   } else if (!strcmp(messageType, "StatusNotification")) {
     msg = new StatusNotification();
   } else if (!strcmp(messageType, "StartTransaction")) {
-    msg = new StartTransaction();
+    msg = new StartTransaction(1); //connectorId 1
     operation->setOnReceiveReqListener(onStartTransactionRequest);
   } else if (!strcmp(messageType, "StopTransaction")) {
     msg = new StopTransaction();
@@ -119,6 +125,11 @@ OcppOperation *makeOcppOperation(WebSocketsClient *ws, const char *messageType) 
     if (onRemoteStartTransactionSendConf == NULL) 
       Serial.print(F("[SimpleOcppOperationFactory] Warning: RemoteStartTransaction is without effect when the sendConf listener is not set. Set a listener which initiates the StartTransaction operation.\n"));
     operation->setOnSendConfListener(onRemoteStartTransactionSendConf);
+  } else if (!strcmp(messageType, "RemoteStopTransaction")) {
+    msg = new RemoteStopTransaction();
+    if (onRemoteStopTransactionSendConf == NULL) 
+      Serial.print(F("[SimpleOcppOperationFactory] Warning: RemoteStopTransaction is without effect when the sendConf listener is not set. Set a listener which initiates the StopTransaction operation.\n"));
+    operation->setOnSendConfListener(onRemoteStopTransactionSendConf);
   } else if (!strcmp(messageType, "Reset")) {
     msg = new Reset();
     if (onResetSendConf == NULL)

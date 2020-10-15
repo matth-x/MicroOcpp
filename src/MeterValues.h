@@ -16,10 +16,13 @@ private:
   LinkedList<float> power;
   LinkedList<float> energy;
 
+  int connectorId = 0;
+  int transactionId = -1;
+
 public:
   MeterValues(LinkedList<time_t> *sampleTime, LinkedList<float> *energy);
 
-  MeterValues(LinkedList<time_t> *sampleTime, LinkedList<float> *energy, LinkedList<float> *power);
+  MeterValues(LinkedList<time_t> *sampleTime, LinkedList<float> *energy, LinkedList<float> *power, int connectorId, int transactionId);
 
   MeterValues(); //for debugging only. Make this for the server pendant
 

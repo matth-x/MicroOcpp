@@ -33,7 +33,7 @@ void Authorize::processConf(JsonObject payload){
 
         ChargePointStatusService *cpStatusService = getChargePointStatusService();
         if (cpStatusService != NULL){
-            cpStatusService->authorize();
+            cpStatusService->authorize(idTag);
         }
     
     } else {
