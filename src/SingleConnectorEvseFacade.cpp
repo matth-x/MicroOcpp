@@ -89,7 +89,7 @@ void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
 
     ocppEngine_initialize(&webSocket, 2048); //default JSON document size = 2048
 
-    smartChargingService = new SmartChargingService(16.0f); //default charging limit: 16A
+    smartChargingService = new SmartChargingService(16.0f, OCPP_NUMCONNECTORS); //default charging limit: 16A
     chargePointStatusService = new ChargePointStatusService(&webSocket, OCPP_NUMCONNECTORS); //Constructor adds instance to ocppEngine in constructor
     meteringService = new MeteringService(&webSocket, OCPP_NUMCONNECTORS);
 

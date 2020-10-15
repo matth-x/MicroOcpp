@@ -3,8 +3,6 @@
 // MIT License
 
 #include <Variants.h>
-#ifndef PROD
-#ifdef SIMPLE_EVSE
 
 #include <Arduino.h>
 
@@ -81,6 +79,3 @@ void loop() {
 
   EVSE_loop(); //refers to the GPIO-charger example
 }
-
-#endif
-#endif

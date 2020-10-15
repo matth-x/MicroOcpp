@@ -3,8 +3,6 @@
 // MIT License
 
 #include <Variants.h>
-#ifndef PROD
-#ifndef SIMPLE_EVSE
 
 #include "OneConnector_HW_integration.h"
 
@@ -58,6 +56,21 @@ void EVSE_initialize() {
 void EVSE_loop() {
     if (!evseIsBooted) return;
 
+    if (!evIsPlugged && millis() - t >= T_PLUG && millis() - t < T_FULL) {
+        evIsPlugged = true;
+        onEvPlug();
+    }
+    
+    if (evRequestsEnergy && millis() - t >= T_FULL && millis() - t < T_UNPLUG) {
+        evRequestsEnergy = false;
+        stopEvDrawsEnergy();
+    }
+
+    if (evIsPlugged && millis() - t >= T_UNPLUG && millis() - t < T_RESET) {
+        evIsPlugged = false;
+        onEvUnplug();
+    }
+
     if (millis() - t >= T_RESET) {
         t = millis();
         evIsPlugged = false;
@@ -66,30 +79,6 @@ void EVSE_loop() {
         Serial.print(F("\n[EVSE]      ---   Start test routines   ---\n"));
         return;
     }
-
-    if (millis() - t >= T_UNPLUG) {
-        if (evIsPlugged){
-            evIsPlugged = false;
-            onEvUnplug();
-        }
-        return;
-    }
-
-    if (millis() - t >= T_FULL) {
-        if (evRequestsEnergy){
-            evRequestsEnergy = false;
-            stopEvDrawsEnergy();
-        }
-        return;
-    }
-
-    if (millis() - t >= T_PLUG) {
-        if (!evIsPlugged){
-            evIsPlugged = true;
-            onEvPlug();
-        }
-        return;
-    }    
 }
 
 void onEvPlug() {
@@ -126,6 +115,3 @@ void EVSE_setChargingLimit(float limit) {
     Serial.print(F("\n"));
     chargingLimit = limit;
 }
-
-#endif
-#endif

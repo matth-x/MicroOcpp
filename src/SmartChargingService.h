@@ -28,7 +28,7 @@ private:
   bool chargingSessionIsActive;
   
 public:
-  SmartChargingService(float chargeLimit);
+  SmartChargingService(float chargeLimit, int numConnectors);
   void beginCharging(time_t t, int transactionID);
   void beginChargingNow();
   void endChargingNow();

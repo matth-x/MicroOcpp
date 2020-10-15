@@ -10,7 +10,7 @@
 
 #include <EEPROM.h>
 
-#ifdef MULTIPLE_CONN
+#ifndef PROD
 
 MeteringService::MeteringService(WebSocketsClient *webSocket, int numConn)
       : webSocket(webSocket), numConnectors(numConn) {

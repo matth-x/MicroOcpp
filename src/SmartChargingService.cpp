@@ -7,58 +7,15 @@
 #include "SmartChargingService.h"
 #include "OcppEngine.h"
 
-#ifdef MULTIPLE_CONN
+#define SINGLE_CONNECTOR_ID 1
 
-SmartChargingService::SmartChargingService(float chargeLimit)
+SmartChargingService::SmartChargingService(float chargeLimit, int numConnectors)
       : DEFAULT_CHARGE_LIMIT(chargeLimit) {
-  setSmartChargingService(this); //in OcppEngine.cpp
-}
-
-void SmartChargingService::loop(){
- 
-}
-
-float SmartChargingService::inferenceLimitNow(){
-
-}
-
-void SmartChargingService::setOnLimitChange(OnLimitChange onLtChg){
-  onLimitChange = onLtChg;
-}
-
-/**
- * validToOutParam: The begin of the next SmartCharging restriction after time t. It is not taken into
- * account if the next Profile will be a prevailing one. If the profile at time t ends before any
- * other profile engages, the end of this profile will be written into validToOutParam.
- */
-void SmartChargingService::inferenceLimit(time_t t, float *limitOutParam, time_t *validToOutParam){
   
-}
-
-void SmartChargingService::writeOutCompositeSchedule(JsonObject *json){
-  Serial.print(F("[SmartChargingService] Unsupported Operation: SmartChargingService::writeOutCompositeSchedule\n"));
-}
-
-void SmartChargingService::beginCharging(time_t t, int transactionID){
+  if (numConnectors >= 2) {
+    Serial.print(F("[SmartChargingService] Error: Unfortunately, multiple connectors are not implemented in SmartChargingService yet. Only connector 1 will receive charging limits\n"));
+  }
   
-}
-
-void SmartChargingService::beginChargingNow(){
-  beginCharging(now(), -1);
-}
-
-void SmartChargingService::endChargingNow(){
-  
-}
-
-void SmartChargingService::updateChargingProfile(JsonObject *json){
-  
-}
-
-#else
-
-SmartChargingService::SmartChargingService(float chargeLimit)
-      : DEFAULT_CHARGE_LIMIT(chargeLimit) {
   limitBeforeChange = -1.0f;
   nextChange = INFINITY_THLD;
   chargingSessionStart = INFINITY_THLD;
@@ -96,12 +53,14 @@ void SmartChargingService::loop(){
     limitBeforeChange = limit;
 
     //ChargePointStatusService:
-    ChargePointStatusService *cpStatusService = getChargePointStatusService();
+    ChargePointStatusService *cpStatusService = getChargePointStatusService();    
     if (cpStatusService != NULL) {
       if (limit > 0.0f) {
-        cpStatusService->startEnergyOffer();
+        //cpStatusService->getConnector(SINGLE_CONNECTOR_ID)->startEnergyOffer();  //No, the client implementation should decide what to do here! TODO review if needed
+        //cpStatusService->startEnergyOffer();
       } else {
-        cpStatusService->stopEnergyOffer();
+        //cpStatusService->getConnector(SINGLE_CONNECTOR_ID)->stopEnergyOffer();   //No, the client implementation should decide what to do here! TODO review if needed
+        //cpStatusService->stopEnergyOffer();
       }
     }
   }
@@ -280,5 +239,3 @@ void SmartChargingService::updateChargingProfile(JsonObject *json){
    */
   nextChange = now();
 }
-
-#endif

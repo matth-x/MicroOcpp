@@ -2,6 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2020
 // MIT License
 
+#ifdef PROD
+
 #ifndef EVSE_H
 #define EVSE_H
 
@@ -42,5 +44,7 @@ void EVSE_loop();
 void EVSE_getChargePointSerialNumber(String &out);
 char *EVSE_getChargePointVendor();
 char *EVSE_getChargePointModel();
+
+#endif
 
 #endif

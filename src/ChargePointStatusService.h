@@ -8,8 +8,6 @@
 #include <WebSocketsClient.h>
 #include <LinkedList.h>
 
-#include "Variants.h"
-#ifdef MULTIPLE_CONN
 #include "ConnectorStatus.h"
 
 class ChargePointStatusService {
@@ -39,37 +37,4 @@ public:
   int getNumConnectors();
 };
 
-#else
-
-class ChargePointStatusService {
-private:
-  bool authorized = false;
-  String idTag = String('\0');
-  bool transactionRunning = false;
-  int transactionId = -1;
-  bool evDrawsEnergy = false;
-  bool evseOffersEnergy = false;
-  ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
-  WebSocketsClient *webSocket;
-public:
-  ChargePointStatusService(WebSocketsClient *webSocket);
-  void authorize(String &idTag);
-  void authorize();
-  void unauthorize();
-  String &getIdTag();
-  void startTransaction(int transactionId);
-  void stopTransaction();
-  int getTransactionId();
-  void boot();
-  void startEvDrawsEnergy();
-  void stopEvDrawsEnergy();
-  void startEnergyOffer();
-  void stopEnergyOffer();
-
-  void loop();
-
-  ChargePointStatus inferenceStatus();
-};
-
-#endif
 #endif

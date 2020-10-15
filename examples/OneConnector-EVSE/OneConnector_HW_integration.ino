@@ -3,8 +3,6 @@
 // MIT License
 
 #include <Variants.h>
-#ifndef PROD
-#ifdef SIMPLE_EVSE
 
 #include "OneConnector_HW_integration.h"
 
@@ -172,6 +170,3 @@ void EVSE_setChargingLimit(float limit) {
         }
     }
 }
-
-#endif
-#endif

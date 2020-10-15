@@ -18,7 +18,7 @@ typedef float (*PowerSampler)();
 typedef float (*EnergySampler)();
 
 #include "Variants.h"
-#ifdef MULTIPLE_CONN
+#ifndef PROD
 
 #include "ConnectorMeterValuesRecorder.h"
 

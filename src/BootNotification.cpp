@@ -32,11 +32,6 @@ const char* BootNotification::getOcppOperationType(){
 }
 
 DynamicJsonDocument* BootNotification::createReq() {
-  String cpSerial = String('\0');
-
-#ifndef MULTIPLE_CONN
-  EVSE_getChargePointSerialNumber(cpSerial);
-#endif
 
   DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(3)
       + chargePointModel.length() + 1
