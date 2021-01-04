@@ -5,6 +5,7 @@
 #include "MeterValues.h"
 #include "OcppEngine.h"
 #include "MeteringService.h"
+#include "Configuration.h"
 
 #include "Variants.h"
 
@@ -53,14 +54,21 @@ const char* MeterValues::getOcppOperationType(){
 }
 
 DynamicJsonDocument* MeterValues::createReq() {
+
+  int MeterValuesSampledDataMaxLength = 10;
+  if (!getConfiguration_Int("MeterValuesSampledDataMaxLength", &MeterValuesSampledDataMaxLength)) {
+    Serial.print(F("[MeterValues] Could not find configuration: MeterValuesSampledDataMaxLength. Assume value 10\n"));
+  }
+
   DynamicJsonDocument *doc = new DynamicJsonDocument(
       JSON_OBJECT_SIZE(2) //connectorID, transactionId
-      + JSON_ARRAY_SIZE(METER_VALUES_SAMPLED_DATA_MAX_LENGTH) //metervalue array
-      + METER_VALUES_SAMPLED_DATA_MAX_LENGTH * JSON_OBJECT_SIZE(1) //sampledValue
-      + METER_VALUES_SAMPLED_DATA_MAX_LENGTH * (JSON_OBJECT_SIZE(1) + (JSONDATE_LENGTH + 1)) //timestamp
-      + METER_VALUES_SAMPLED_DATA_MAX_LENGTH * JSON_ARRAY_SIZE(2) //sampledValue
-      + 2 * METER_VALUES_SAMPLED_DATA_MAX_LENGTH * JSON_OBJECT_SIZE(1) //value
-      + 2 * JSON_OBJECT_SIZE(1) //measurand
+      + JSON_ARRAY_SIZE(MeterValuesSampledDataMaxLength) //metervalue array
+      + MeterValuesSampledDataMaxLength * JSON_OBJECT_SIZE(1) //sampledValue
+      + MeterValuesSampledDataMaxLength * (JSON_OBJECT_SIZE(1) + (JSONDATE_LENGTH + 1)) //timestamp
+      + MeterValuesSampledDataMaxLength * JSON_ARRAY_SIZE(2) //sampledValue
+      + 2 * MeterValuesSampledDataMaxLength * JSON_OBJECT_SIZE(1) //value          //   why are these taken by two?
+      + 2 * MeterValuesSampledDataMaxLength * JSON_OBJECT_SIZE(1) //measurand      //
+      + 2 * MeterValuesSampledDataMaxLength * JSON_OBJECT_SIZE(1) //unit           //
       + 230); //"safety space"
   JsonObject payload = doc->to<JsonObject>();
   
@@ -76,11 +84,13 @@ DynamicJsonDocument* MeterValues::createReq() {
       JsonObject sampledValue_1 = sampledValue.createNestedObject();
       sampledValue_1["value"] = energy.get(i);
       sampledValue_1["measurand"] = "Energy.Active.Import.Register";
+      sampledValue_1["unit"] = "Wh";
     }
     if (power.size() - 1 >= i) {
       JsonObject sampledValue_2 = sampledValue.createNestedObject();
       sampledValue_2["value"] = power.get(i);
       sampledValue_2["measurand"] = "Power.Active.Import";
+      sampledValue_2["unit"] = "W";
     }
   }
 

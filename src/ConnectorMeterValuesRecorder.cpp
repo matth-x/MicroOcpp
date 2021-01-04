@@ -4,12 +4,18 @@
 
 #include "ConnectorMeterValuesRecorder.h"
 #include "OcppEngine.h"
+#include "Configuration.h"
 
 ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(int connectorId)
         : connectorId(connectorId) {
     sampleTimestamp = LinkedList<time_t>();
     energy = LinkedList<float>();
     power = LinkedList<float>();
+
+    defaultConfiguration_Int("MeterValueSampleInterval", 60);
+    defaultConfiguration_Int("MeterValuesSampledDataMaxLength", 4);
+
+    reloadConstants();
 }
 
 void ConnectorMeterValuesRecorder::takeSample() {
@@ -46,15 +52,18 @@ MeterValues *ConnectorMeterValuesRecorder::loop() {
     * If no powerSampler is available, estimate the energy consumption taking the Charging Schedule and CP Status
     * into account.
     */
-    if (now() >= (time_t) METER_VALUE_SAMPLE_INTERVAL + lastSampleTime) {
+    if (now() >= (time_t) MeterValueSampleInterval + lastSampleTime) {
         takeSample();
         lastSampleTime = now();
+
+        reloadConstants();
     }
+
 
     /*
     * Is the value buffer already full? If yes, return MeterValues message
     */
-    if (sampleTimestamp.size() >= METER_VALUES_SAMPLED_DATA_MAX_LENGTH) {
+    if (sampleTimestamp.size() >= MeterValuesSampledDataMaxLength) {
         MeterValues *result = toMeterValues();
         return result;
     }
@@ -101,6 +110,19 @@ void ConnectorMeterValuesRecorder::clear() {
     sampleTimestamp.clear();
     energy.clear();
     power.clear();
+}
+
+void ConnectorMeterValuesRecorder::reloadConstants() {
+
+    int m_i = 0;
+
+    if (getConfiguration_Int("MeterValueSampleInterval", &m_i)){
+        MeterValueSampleInterval = m_i;
+    }
+
+    if (getConfiguration_Int("MeterValuesSampledDataMaxLength", &m_i)){
+        MeterValuesSampledDataMaxLength = m_i;
+    }
 }
 
 void ConnectorMeterValuesRecorder::setPowerSampler(PowerSampler ps){

@@ -56,7 +56,7 @@ void StopTransaction::processConf(JsonObject payload) {
 
   //cpStatusService->stopEnergyOffer(); //No. This should remain in createReq
   if (connector != NULL) {
-    connector->stopTransaction();
+    connector->stopTransaction(); //TODO maybe better in createReq
     connector->unauthorize();
   }
 

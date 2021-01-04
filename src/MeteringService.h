@@ -5,9 +5,9 @@
 #ifndef METERINGSERVICE_H
 #define METERINGSERVICE_H
 
-#define METER_VALUE_SAMPLE_INTERVAL 60 //in seconds
+//#define METER_VALUE_SAMPLE_INTERVAL 60 //in seconds
 
-#define METER_VALUES_SAMPLED_DATA_MAX_LENGTH 4 //after 4 measurements, send the values to the CS
+//#define METER_VALUES_SAMPLED_DATA_MAX_LENGTH 4 //after 4 measurements, send the values to the CS
 
 #include <LinkedList.h>
 #include <WebSocketsClient.h>
@@ -18,7 +18,6 @@ typedef float (*PowerSampler)();
 typedef float (*EnergySampler)();
 
 #include "Variants.h"
-#ifndef PROD
 
 #include "ConnectorMeterValuesRecorder.h"
 
@@ -41,43 +40,4 @@ public:
   float readEnergyActiveImportRegister(int connectorId);
 };
 
-#else
-
-class MeteringService {
-private:
-  WebSocketsClient *webSocket;
-  LinkedList<time_t> powerMeasurementTime;
-  LinkedList<float> power;
-  time_t lastSampleTime = 0; //0 means not charging right now
-  float lastPower;
-
-  LinkedList<time_t> energyMeasurementTime;
-  LinkedList<float> energy;
-
-  float incrementEnergyActiveImportRegister(float energy);
- 
-  float (*powerSampler)() = NULL;
-  float (*energySampler)() = NULL;
-
-  void addCurrentPowerDataPoint(float currentPower);
-  void addEnergyDataPoint(float energyRegister);
-  void addEnergyAndPowerDataPoint(float energyRegister, float power);
-public:
-  MeteringService(WebSocketsClient *webSocket);
-  void loop();
-
-  void setPowerSampler(PowerSampler powerSampler);
-
-  void setEnergySampler(EnergySampler energySampler);
-
-  void flushPowerValues();
-
-  void flushEnergyValues();
-
-  void flushEnergyAndPowerValues();
-
-  float readEnergyActiveImportRegister();
-};
-
-#endif
 #endif

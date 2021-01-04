@@ -29,5 +29,9 @@ void setOnTriggerMessageRequestListener(void listener(JsonObject payload));
 void setOnRemoteStartTransactionReceiveRequestListener(void listener(JsonObject payload));
 void setOnRemoteStartTransactionSendConfListener(void listener(JsonObject payload));
 void setOnRemoteStopTransactionSendConfListener(void listener(JsonObject payload));
+void setOnChangeConfigurationReceiveRequestListener(void listener(JsonObject payload));
+void setOnChangeConfigurationSendConfListener(void listener(JsonObject payload));
+void setOnGetConfigurationReceiveRequestListener(void listener(JsonObject payload));
+void setOnGetConfigurationSendConfListener(void listener(JsonObject payload));
 void setOnResetSendConfListener(void listener(JsonObject payload));
 #endif

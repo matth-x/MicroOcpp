@@ -26,6 +26,10 @@ private:
   time_t chargingSessionStart;
   int chargingSessionTransactionID;
   bool chargingSessionIsActive;
+
+  ChargingProfile *updateProfileStack(JsonObject *json);
+  bool writeProfileToFlash(JsonObject *json, ChargingProfile *chargingProfile);
+  bool loadProfiles();
   
 public:
   SmartChargingService(float chargeLimit, int numConnectors);

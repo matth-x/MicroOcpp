@@ -93,3 +93,9 @@ void ChargePointStatusService::bindAuthorization(String &idTag, int connectorId)
 int ChargePointStatusService::getNumConnectors() {
   return numConnectors;
 }
+
+void ChargePointStatusService::recoverState() {
+  for (int i = 0; i < numConnectors; i++) {
+    connectors[i]->recoverState();
+  }
+}

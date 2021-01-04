@@ -7,6 +7,10 @@
 
 #include "OcppOperation.h"
 
+#include "Variants.h"
+
+#ifndef PROD
+
 
 void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url);
 
@@ -93,4 +97,13 @@ void startEvDrawsEnergy();
 
 void stopEvDrawsEnergy();
 
+/*
+ * Access information about the internal state of the library
+ */
+
+int getTransactionId(); //returns the ID of the current transaction. Returns -1 if called before or after an transaction
+
+
+
+#endif
 #endif

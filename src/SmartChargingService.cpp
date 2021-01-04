@@ -7,12 +7,19 @@
 #include "SmartChargingService.h"
 #include "OcppEngine.h"
 
+#include "Configuration.h"
+
 #define SINGLE_CONNECTOR_ID 1
+
+#define PROFILE_FN_PREFIX "/ocpp-"
+#define PROFILE_FN_SUFFIX ".cnf"
+#define PROFILE_CUSTOM_CAPACITY 500
+#define PROFILE_MAX_CAPACITY 4000
 
 SmartChargingService::SmartChargingService(float chargeLimit, int numConnectors)
       : DEFAULT_CHARGE_LIMIT(chargeLimit) {
   
-  if (numConnectors >= 2) {
+  if (numConnectors > 2) {
     Serial.print(F("[SmartChargingService] Error: Unfortunately, multiple connectors are not implemented in SmartChargingService yet. Only connector 1 will receive charging limits\n"));
   }
   
@@ -27,6 +34,9 @@ SmartChargingService::SmartChargingService(float chargeLimit, int numConnectors)
     TxProfile[i] = NULL;
   }
   setSmartChargingService(this); //in OcppEngine.cpp
+  defaultConfiguration_Int("ChargeProfileMaxStackLevel", CHARGEPROFILEMAXSTACKLEVEL); //waring: this configuration is read-only! It will never be synchronized inside this module
+
+  loadProfiles();
 }
 
 void SmartChargingService::loop(){
@@ -199,7 +209,13 @@ void SmartChargingService::endChargingNow(){
   nextChange = now();
 }
 
-void SmartChargingService::updateChargingProfile(JsonObject *json){
+void SmartChargingService::updateChargingProfile(JsonObject *json) {
+  ChargingProfile *pointer = updateProfileStack(json);
+  if (pointer)
+    writeProfileToFlash(json, pointer);
+}
+
+ChargingProfile *SmartChargingService::updateProfileStack(JsonObject *json){
   ChargingProfile *chargingProfile = new ChargingProfile(json);
 
   if (DEBUG_OUT) {
@@ -238,4 +254,174 @@ void SmartChargingService::updateChargingProfile(JsonObject *json){
    * and nextChange will be recalculated and onLimitChanged will be called.
    */
   nextChange = now();
+
+  return chargingProfile;
+}
+
+bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile *chargingProfile) {
+
+  String profileFN = PROFILE_FN_PREFIX;
+
+  switch (chargingProfile->getChargingProfilePurpose()) {
+    case (ChargingProfilePurposeType::ChargePointMaxProfile):
+      profileFN += "ChargePointMaxProfile-";
+      break;
+    case (ChargingProfilePurposeType::TxDefaultProfile):
+      profileFN += "TxDefaultProfile-";
+      break;
+    case (ChargingProfilePurposeType::TxProfile):
+      profileFN += "TxProfile-";
+      break;
+  }
+
+  profileFN += chargingProfile->getStackLevel();
+  profileFN += PROFILE_FN_SUFFIX;
+
+  SPIFFS.remove(profileFN);
+
+  File file = SPIFFS.open(profileFN, "w");
+
+  if (!file) {
+      Serial.print(F("[SmartChargingService] Unable to save: could not save profile: "));
+      Serial.println(profileFN);
+      return false;
+  }
+
+  // Serialize JSON to file
+  if (serializeJson(*json, file) == 0) {
+      Serial.println(F("[SmartChargingService] Unable to save: Could not serialize JSON for profile: "));
+      Serial.println(profileFN);
+      file.close();
+      return false;
+  }
+
+  //success
+  file.close();
+  if (DEBUG_OUT) Serial.print(F("[SmartChargingService] Saving profile successful\n"));
+
+  // BEGIN DEBUG
+  if (DEBUG_OUT) {
+    file = SPIFFS.open(profileFN, "r");
+
+    Serial.println(file.readStringUntil('\n'));
+
+    file.close();
+    // END DEBUG
+  }
+
+  return true;
+}
+
+bool SmartChargingService::loadProfiles() {
+
+    const int N_PURPOSES = 3;
+    ChargingProfilePurposeType purposes[N_PURPOSES] = {ChargingProfilePurposeType::ChargePointMaxProfile, ChargingProfilePurposeType::TxDefaultProfile, ChargingProfilePurposeType::TxProfile};
+
+    for (int iStack = 0; iStack < N_PURPOSES; iStack++) {
+      ChargingProfile **profilePurposeStack; //select which stack this profile belongs to due to its purpose
+      String profileFnPurpose;
+
+      switch (purposes[iStack]) {
+        case (ChargingProfilePurposeType::ChargePointMaxProfile):
+          profilePurposeStack = ChargePointMaxProfile;
+          profileFnPurpose = "ChargePointMaxProfile-";
+          break;
+        case (ChargingProfilePurposeType::TxDefaultProfile):
+          profilePurposeStack = TxDefaultProfile;
+          profileFnPurpose = "TxDefaultProfile-";
+          break;
+        case (ChargingProfilePurposeType::TxProfile):
+          profilePurposeStack = TxProfile;
+          profileFnPurpose = "TxProfile-";
+          break;
+      }
+
+      for (int iLevel = 0; iLevel < CHARGEPROFILEMAXSTACKLEVEL; iLevel++) {
+
+        String profileFN = PROFILE_FN_PREFIX;
+        profileFN += profileFnPurpose;
+        profileFN += iLevel;
+        profileFN += PROFILE_FN_SUFFIX;
+
+        File file = SPIFFS.open(profileFN, "r");
+
+        if (file) {
+            if (DEBUG_OUT) Serial.print(F("[SmartChargingService] Load profile from file: "));
+            if (DEBUG_OUT) Serial.println(profileFN);
+        } else {
+            continue; //There is not a profile on the stack iStack with stacklevel iLevel. Normal case, just continue.
+        }
+
+        if (!file.available()) {
+            Serial.print(F("[SmartChargingService] Unable to initialize: empty file for profile: "));
+            Serial.println(profileFN);
+            file.close();
+            return false;
+        }
+
+        int file_size = file.size();
+
+        if (file_size < 2) {
+            Serial.print(F("[SmartChargingService] Unable to initialize: too short for json: "));
+            Serial.println(profileFN);
+            continue;
+        }
+        
+        size_t capacity = 2*file_size;
+        if (capacity < PROFILE_CUSTOM_CAPACITY)
+          capacity = PROFILE_CUSTOM_CAPACITY;
+        if (capacity > PROFILE_MAX_CAPACITY)
+          capacity = PROFILE_MAX_CAPACITY;
+
+        while (capacity <= PROFILE_MAX_CAPACITY) {
+          bool increaseCapacity = false;
+          bool error = true;
+
+          DynamicJsonDocument profileDoc(capacity);
+
+          DeserializationError jsonError = deserializeJson(profileDoc, file);
+          switch (jsonError.code()) {
+            case DeserializationError::Ok:
+                error = false;
+                break;
+            case DeserializationError::InvalidInput:
+                Serial.print(F("[SmartChargingService] Unable to initialize: Invalid json in file: "));
+                Serial.println(profileFN);
+                break;
+            case DeserializationError::NoMemory:
+                increaseCapacity = true;
+                error = false;
+                break;
+            default:
+                Serial.print(F("[SmartChargingService] Unable to initialize: Error in file: "));
+                Serial.println(profileFN);
+                break;
+          }
+
+          if (error) {
+              break;
+          }
+
+          if (increaseCapacity) {
+            capacity *= 1.5;
+            file.seek(0, SeekSet); //rewind file to beginning
+            if (DEBUG_OUT) Serial.print(F("[SmartChargingService] Initialization: increase JsonCapacity to "));
+            if (DEBUG_OUT) Serial.print(capacity, DEC);
+            if (DEBUG_OUT) Serial.print(F("for file: "));
+            if (DEBUG_OUT) Serial.println(profileFN);
+            continue;
+          }
+
+          JsonObject profileJson = profileDoc.as<JsonObject>();
+          updateProfileStack(&profileJson);
+
+          profileDoc.clear();
+          break;
+        }
+
+        file.close();
+      }
+    }
+
+    return true;
 }

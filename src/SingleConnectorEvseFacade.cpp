@@ -4,11 +4,16 @@
 
 #include "SingleConnectorEvseFacade.h"
 
+#include "Variants.h"
+
+#ifndef PROD
+
 #include "OcppEngine.h"
 #include "MeteringService.h"
 #include "SmartChargingService.h"
 #include "ChargePointStatusService.h"
 #include "SimpleOcppOperationFactory.h"
+#include "Configuration.h"
 
 #include "Authorize.h"
 #include "BootNotification.h"
@@ -68,6 +73,8 @@ void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
         Serial.print(F("[SingleConnectorEvseFacade] Error: cannot call OCPP_initialize() two times! If you want to reconfigure the library, please restart your ESP\n"));
         return;
     }
+
+    configuration_init(); //call before each other library call
 
     // server address, port and URL
     webSocket.begin(CS_hostname, CS_port, CS_url, "ocpp1.6");
@@ -221,3 +228,9 @@ void startEvDrawsEnergy() {
 void stopEvDrawsEnergy() {
     chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->stopEvDrawsEnergy();
 }
+
+int getTransactionId() {
+    return chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->getTransactionId();
+}
+
+#endif

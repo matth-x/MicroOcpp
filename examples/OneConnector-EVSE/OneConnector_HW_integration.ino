@@ -56,7 +56,7 @@ void EVSE_initialize() {
   pinMode(AUTHORIZATION, INPUT);
   pinMode(EV_ENERGY_REQUEST, INPUT);
   
-  bootNotification("Greatest EVSE vendor", "GPIO-based CP model", [] (JsonObject confMsg) {
+  bootNotification("GPIO-based CP model", "Greatest EVSE vendor", [] (JsonObject confMsg) {
     //This callback is executed when the .conf() response from the central system arrives
     Serial.print(F("BootNotification was answered at "));
     Serial.print(confMsg["currentTime"].as<String>());

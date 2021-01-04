@@ -35,6 +35,8 @@ public:
 
   ConnectorStatus *getConnector(int connectorId);
   int getNumConnectors();
+
+  void recoverState();
 };
 
 #endif

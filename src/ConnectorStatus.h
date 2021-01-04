@@ -36,6 +36,9 @@ public:
     void startEnergyOffer();
     void stopEnergyOffer();
 
+    void saveState();
+    void recoverState();
+
     StatusNotification *loop();
 
     OcppEvseState inferenceStatus();

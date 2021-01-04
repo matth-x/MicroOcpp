@@ -18,6 +18,8 @@
 #include "RemoteStartTransaction.h"
 #ifdef PROD
 #include "RemoteStopTransaction.h"
+#include "ChangeConfiguration.h"
+#include "GetConfiguration.h"
 #endif
 #include "Reset.h"
 
@@ -68,6 +70,26 @@ void setOnRemoteStartTransactionSendConfListener(OnSendConfListener listener){
 OnSendConfListener onRemoteStopTransactionSendConf;
 void setOnRemoteStopTransactionSendConfListener(OnSendConfListener listener){
   onRemoteStopTransactionSendConf = listener;
+}
+
+OnSendConfListener onChangeConfigurationReceiveReq;
+void setOnChangeConfigurationReceiveRequestListener(OnSendConfListener listener){
+  onChangeConfigurationReceiveReq = listener;
+}
+
+OnSendConfListener onChangeConfigurationSendConf;
+void setOnChangeConfigurationSendConfListener(OnSendConfListener listener){
+  onChangeConfigurationSendConf = listener;
+}
+
+OnSendConfListener onGetConfigurationReceiveReq;
+void setOnGetConfigurationReceiveReqListener(OnSendConfListener listener){
+  onGetConfigurationReceiveReq = listener;
+}
+
+OnSendConfListener onGetConfigurationSendConf;
+void setOnGetConfigurationSendConfListener(OnSendConfListener listener){
+  onGetConfigurationSendConf = listener;
 }
 
 OnSendConfListener onResetSendConf;
@@ -133,6 +155,15 @@ OcppOperation *makeOcppOperation(WebSocketsClient *ws, const char *messageType) 
     if (onRemoteStopTransactionSendConf == NULL) 
       Serial.print(F("[SimpleOcppOperationFactory] Warning: RemoteStopTransaction is without effect when the sendConf listener is not set. Set a listener which initiates the StopTransaction operation.\n"));
     operation->setOnSendConfListener(onRemoteStopTransactionSendConf);
+//#endif
+  } else if (!strcmp(messageType, "ChangeConfiguration")) {
+    msg = new ChangeConfiguration();
+    operation->setOnReceiveReqListener(onChangeConfigurationReceiveReq);
+    operation->setOnSendConfListener(onChangeConfigurationSendConf);
+  } else if (!strcmp(messageType, "GetConfiguration")) {
+    msg = new GetConfiguration();
+    operation->setOnReceiveReqListener(onGetConfigurationReceiveReq);
+    operation->setOnSendConfListener(onGetConfigurationSendConf);
 #endif
   } else if (!strcmp(messageType, "Reset")) {
     msg = new Reset();
