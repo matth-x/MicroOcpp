@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #ifndef CONNECTOR_METER_VALUES_RECORDER
@@ -12,6 +12,7 @@
 #include <LinkedList.h>
 #include <TimeHelper.h>
 #include <MeterValues.h>
+#include "Configuration.h"
 
 typedef float (*PowerSampler)();
 typedef float (*EnergySampler)();
@@ -30,13 +31,14 @@ private:
     float (*powerSampler)() = NULL;
     float (*energySampler)() = NULL;
 
-    ulong MeterValueSampleInterval = 60; //will be overwritten (see constructor)
-    ulong MeterValuesSampledDataMaxLength = 4; //will be overwritten (see constructor)
+    //ulong MeterValueSampleInterval = 60; //will be overwritten (see constructor)
+    //ulong MeterValuesSampledDataMaxLength = 4; //will be overwritten (see constructor)
+    std::shared_ptr<Configuration<int>> MeterValueSampleInterval = NULL;
+    std::shared_ptr<Configuration<int>> MeterValuesSampledDataMaxLength = NULL;
 
     void takeSample();
     MeterValues *toMeterValues();
     void clear();
-    void reloadConstants();
 public:
     ConnectorMeterValuesRecorder(int connectorId);
 

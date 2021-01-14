@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include "ConnectorStatus.h"
@@ -7,7 +7,6 @@
 
 #include "ChargePointStatusService.h"
 #include "OcppEngine.h"
-#include "Configuration.h"
 
 ConnectorStatus::ConnectorStatus(int connectorId) : connectorId(connectorId) {
 
@@ -15,9 +14,13 @@ ConnectorStatus::ConnectorStatus(int connectorId) : connectorId(connectorId) {
   String key = "OCPP_STATE_TRANSACTION_ID_CONNECTOR_";
   String id = String(connectorId, DEC);
   key += id;
-  if (!defaultConfiguration_Int(key.c_str(), transactionId)) {
-    Serial.print(F("[ConnectorStatus] Warning: cannot set default transaction ID to -1 in configurations!\n"));
+  transactionId = declareConfiguration(key.c_str(), -1);
+  if (!transactionId) {
+    Serial.print(F("[ConnectorStatus] Error! Cannot declare transactionId\n"));
   }
+  //if (!declareConfiguration(key.c_str(), transactionId)) {
+  //  Serial.print(F("[ConnectorStatus] Warning: cannot set default transaction ID to -1 in configurations!\n"));
+  //}
 }
 
 OcppEvseState ConnectorStatus::inferenceStatus() {
@@ -101,7 +104,7 @@ void ConnectorStatus::startTransaction(int transId){
   if (transactionRunning == true){
     if (DEBUG_OUT) Serial.print(F("[OcppEvseStateService] Warning: started transaction twice or didn't stop transaction before\n"));
   }
-  transactionId = transId;
+  *transactionId = transId;
   transactionRunning = true;
 
   saveState();
@@ -112,13 +115,13 @@ void ConnectorStatus::stopTransaction(){
     if (DEBUG_OUT) Serial.print(F("[OcppEvseStateService] Warning: stopped transaction twice or didn't start transaction before\n"));
   }
   transactionRunning = false;
-  transactionId = -1;
+  *transactionId = -1;
 
   saveState();
 }
 
 int ConnectorStatus::getTransactionId() {
-  return transactionId;
+  return *transactionId;
 }
 
 void ConnectorStatus::startEvDrawsEnergy(){
@@ -150,16 +153,18 @@ void ConnectorStatus::stopEnergyOffer(){
 }
 
 void ConnectorStatus::saveState() {
-    String key = "OCPP_STATE_TRANSACTION_ID_CONNECTOR_";
-    String id = String(connectorId, DEC);
-    key += id;
-    if (setConfiguration_Int(key.c_str(), transactionId)) {
-      configuration_save();
-    } else {
-      Serial.print(F("[ConnectorStatus] Warning: cannot save transaction ID in flash memory!\n"));
-    }
+    //String key = "OCPP_STATE_TRANSACTION_ID_CONNECTOR_";
+    //String id = String(connectorId, DEC);
+    //key += id;
+    //if (setConfiguration_Int(key.c_str(), transactionId)) {
+    //  configuration_save();
+    //} else {
+    //  Serial.print(F("[ConnectorStatus] Warning: cannot save transaction ID in flash memory!\n"));
+    //}
+    configuration_save();
 }
 
+/*
 void ConnectorStatus::recoverState() {
     String key = "OCPP_STATE_TRANSACTION_ID_CONNECTOR_";
     String id = String(connectorId, DEC);
@@ -169,3 +174,4 @@ void ConnectorStatus::recoverState() {
         transactionId = val;
     }
 }
+*/

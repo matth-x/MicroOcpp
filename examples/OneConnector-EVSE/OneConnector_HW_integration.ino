@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include <Variants.h>
@@ -11,6 +11,8 @@
 #include <SingleConnectorEvseFacade.h>
 
 /*
+ * Demonstration video: https://youtu.be/hfTh9GjG-N4
+ *
  * The simple EVSE uses GPIO for the communication between the ESP8266 and the peripherals. The sketch was
  * written and tested on the NodeMCU v3. The following pin-mapping shows how the NodeMCU was connected
  * to its peripherals. Feel free to adapt it according to your own setup.
@@ -130,7 +132,7 @@ void onEvUnplug() {
 
 void onProvideAuthorization() {
     Serial.print(F("[EVSE] User authorized charging session\n"));
-    String idTag = String("fefe1d1d1d"); // e.g. idTag = readRFIDTag();
+    String idTag = String("abcdef123456789"); // e.g. idTag = readRFIDTag();
     authorize(idTag, [](JsonObject conf) {
         successfullyAuthorized = true;
 

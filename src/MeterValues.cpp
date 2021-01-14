@@ -1,11 +1,10 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include "MeterValues.h"
 #include "OcppEngine.h"
 #include "MeteringService.h"
-#include "Configuration.h"
 
 #include "Variants.h"
 
@@ -55,20 +54,17 @@ const char* MeterValues::getOcppOperationType(){
 
 DynamicJsonDocument* MeterValues::createReq() {
 
-  int MeterValuesSampledDataMaxLength = 10;
-  if (!getConfiguration_Int("MeterValuesSampledDataMaxLength", &MeterValuesSampledDataMaxLength)) {
-    Serial.print(F("[MeterValues] Could not find configuration: MeterValuesSampledDataMaxLength. Assume value 10\n"));
-  }
+  int numEntries = sampleTime.size();
 
   DynamicJsonDocument *doc = new DynamicJsonDocument(
       JSON_OBJECT_SIZE(2) //connectorID, transactionId
-      + JSON_ARRAY_SIZE(MeterValuesSampledDataMaxLength) //metervalue array
-      + MeterValuesSampledDataMaxLength * JSON_OBJECT_SIZE(1) //sampledValue
-      + MeterValuesSampledDataMaxLength * (JSON_OBJECT_SIZE(1) + (JSONDATE_LENGTH + 1)) //timestamp
-      + MeterValuesSampledDataMaxLength * JSON_ARRAY_SIZE(2) //sampledValue
-      + 2 * MeterValuesSampledDataMaxLength * JSON_OBJECT_SIZE(1) //value          //   why are these taken by two?
-      + 2 * MeterValuesSampledDataMaxLength * JSON_OBJECT_SIZE(1) //measurand      //
-      + 2 * MeterValuesSampledDataMaxLength * JSON_OBJECT_SIZE(1) //unit           //
+      + JSON_ARRAY_SIZE(numEntries) //metervalue array
+      + numEntries * JSON_OBJECT_SIZE(1) //sampledValue
+      + numEntries * (JSON_OBJECT_SIZE(1) + (JSONDATE_LENGTH + 1)) //timestamp
+      + numEntries * JSON_ARRAY_SIZE(2) //sampledValue
+      + 2 * numEntries * JSON_OBJECT_SIZE(1) //value          //   why are these taken by two?
+      + 2 * numEntries * JSON_OBJECT_SIZE(1) //measurand      //
+      + 2 * numEntries * JSON_OBJECT_SIZE(1) //unit           //
       + 230); //"safety space"
   JsonObject payload = doc->to<JsonObject>();
   

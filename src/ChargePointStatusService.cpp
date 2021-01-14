@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include "Variants.h"
@@ -92,10 +92,4 @@ void ChargePointStatusService::bindAuthorization(String &idTag, int connectorId)
 
 int ChargePointStatusService::getNumConnectors() {
   return numConnectors;
-}
-
-void ChargePointStatusService::recoverState() {
-  for (int i = 0; i < numConnectors; i++) {
-    connectors[i]->recoverState();
-  }
 }

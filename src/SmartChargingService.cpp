@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include "Variants.h"
@@ -34,7 +34,7 @@ SmartChargingService::SmartChargingService(float chargeLimit, int numConnectors)
     TxProfile[i] = NULL;
   }
   setSmartChargingService(this); //in OcppEngine.cpp
-  defaultConfiguration_Int("ChargeProfileMaxStackLevel", CHARGEPROFILEMAXSTACKLEVEL); //waring: this configuration is read-only! It will never be synchronized inside this module
+  declareConfiguration("ChargeProfileMaxStackLevel", CHARGEPROFILEMAXSTACKLEVEL, false);
 
   loadProfiles();
 }
