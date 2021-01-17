@@ -1,9 +1,11 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include "OcppEngine.h"
 #include "SimpleOcppOperationFactory.h"
+
+#include "OcppError.h"
 
 
 WebSocketsClient *wsocket;
@@ -16,6 +18,10 @@ LinkedList<OcppOperation*> receivedOcppOperations;
 
 int JSON_DOC_SIZE;
 
+#define HEAP_GUARD 2000UL //will not accept JSON messages if it will result in less than HEAP_GUARD free bytes in heap
+
+size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_size);
+
 void ocppEngine_initialize(WebSocketsClient *ws, int DEFAULT_JSON_DOC_SIZE){
   wsocket = ws;
   JSON_DOC_SIZE = DEFAULT_JSON_DOC_SIZE; //TODO Find another approach where the Doc size is determined dynamically
@@ -27,61 +33,136 @@ void ocppEngine_initialize(WebSocketsClient *ws, int DEFAULT_JSON_DOC_SIZE){
 /**
  * Process raw application data coming from the websocket stream
  */
-boolean processWebSocketEvent(uint8_t * payload, size_t length){
+boolean processWebSocketEvent(const char* payload, size_t length){
 
-  boolean success = false;
+  boolean deserializationSuccess = false;
 
-  DynamicJsonDocument doc(JSON_DOC_SIZE); //TODO Check: Can default JSON_DOC_SIZE just be replaced by param length?
-  DeserializationError err = deserializeJson(doc, payload);
+  DynamicJsonDocument *doc = NULL;
+  size_t capacity = length + 100;
+
+  DeserializationError err = DeserializationError::NoMemory;
+  while (capacity + HEAP_GUARD < ESP.getFreeHeap() && err == DeserializationError::NoMemory) {
+      if (doc){
+          delete doc;
+          doc = NULL;
+      }
+      doc = new DynamicJsonDocument(capacity);
+      err = deserializeJson(*doc, payload, length);
+
+      capacity /= 2;
+      capacity *= 3;
+  }
+
   switch (err.code()) {
     case DeserializationError::Ok:
-        success = true;
+        if (doc != NULL){
+          int messageTypeId = (*doc)[0];
+          switch(messageTypeId) {
+            case MESSAGE_TYPE_CALL:
+              handleReqMessage(doc);      
+              deserializationSuccess = true;
+              break;
+            case MESSAGE_TYPE_CALLRESULT:
+              handleConfMessage(doc);
+              deserializationSuccess = true;
+              break;
+            case MESSAGE_TYPE_CALLERROR:
+              handleErrMessage(doc);
+              deserializationSuccess = true;
+              break;
+            default:
+              Serial.print(F("[OcppEngine] Invalid OCPP message! (though JSON has successfully been deserialized)\n"));
+              break;
+          }
+        } else { //unlikely corner case
+            Serial.print(F("[OcppEngine] Deserialization is okay but doc is Null\n"));
+        }
         break;
     case DeserializationError::InvalidInput:
         Serial.print(F("[OcppEngine] Invalid input! Not a JSON\n"));
         break;
     case DeserializationError::NoMemory:
-        Serial.print(F("[OcppEngine] Error: Not enough memory\n"));
+        {
+          if (DEBUG_OUT) Serial.print(F("[OcppEngine] Error: Not enough memory in heap! Input length = "));
+          if (DEBUG_OUT) Serial.print(length);
+          if (DEBUG_OUT) Serial.print(F(", free heap = "));
+          if (DEBUG_OUT) Serial.println(ESP.getFreeHeap());
+
+          /*
+          * If websocket input is of message type MESSAGE_TYPE_CALL, send back a message of type MESSAGE_TYPE_CALLERROR.
+          * Then the communication counterpart knows that this operation failed.
+          * If the input type is MESSAGE_TYPE_CALLRESULT, it can be ignored. This controller will automatically resend the corresponding requirement message.
+          */
+
+          if (doc){
+              delete doc;
+              doc = NULL;
+          }
+
+          doc = new DynamicJsonDocument(200);
+          char onlyRpcHeader[200];
+          size_t onlyRpcHeader_len = removePayload(payload, length, onlyRpcHeader, 200);
+          DeserializationError err2 = deserializeJson(*doc, onlyRpcHeader, onlyRpcHeader_len);
+          if (err2.code() == DeserializationError::Ok) {
+            int messageTypeId2 = (*doc)[0];
+            if (messageTypeId2 == MESSAGE_TYPE_CALL) {
+              deserializationSuccess = true;
+              OcppOperation *op = makeOcppOperation(wsocket, new OutOfMemory(ESP.getFreeHeap(), length));
+              handleReqMessage(doc, op);
+            }
+          }
+        }
         break;
     default:
-        Serial.print(F("[OcppEngine] Deserialization failed\n"));
+        Serial.print(F("[OcppEngine] Deserialization failed: "));
+        Serial.println(err.c_str());
         break;
   }
 
-  if (!success) {
-    //propably the payload just wasn't a JSON message
-    doc.clear();
-    return false;
-  }
-  
-  int messageTypeId = doc[0];
-  switch(messageTypeId) {
-    case MESSAGE_TYPE_CALL:
-      handleReqMessage(&doc);      
-      success = true;
-      break;
-    case MESSAGE_TYPE_CALLRESULT:
-      handleConfMessage(&doc);
-      success = true;
-      break;
-    case MESSAGE_TYPE_CALLERROR:
-      handleErrMessage(&doc);
-      success = true;
-      break;
-    default:
-      Serial.print(F("[OcppEngine] Invalid OCPP message! (though JSON has successfully been deserialized)\n"));
-      break;
+  if (doc) {
+    delete doc;
   }
 
-  doc.clear();
-  return success;
+  return deserializationSuccess;
 }
 
+/**
+ * Send back error code
+ */
+boolean processWebSocketUnsupportedEvent(const char* payload, size_t length){
+  bool deserializationSuccess = false;
+  DynamicJsonDocument *doc = new DynamicJsonDocument(200);
+  char onlyRpcHeader[200];
+  size_t onlyRpcHeader_len = removePayload(payload, length, onlyRpcHeader, 200);
+  DeserializationError err = deserializeJson(*doc, onlyRpcHeader, onlyRpcHeader_len);
+  if (err.code() == DeserializationError::Ok) {
+    int messageTypeId = (*doc)[0];
+    if (messageTypeId == MESSAGE_TYPE_CALL) {
+      deserializationSuccess = true;
+      OcppOperation *op = makeOcppOperation(wsocket, new WebSocketError("This controller does not support WebSocket fragments"));
+      handleReqMessage(doc, op);
+    }
+  } else {
+    Serial.print(F("[OcppEngine] Deserialization of unsupported WebSocket event failed: "));
+    Serial.println(err.c_str());
+  }
+
+  if (doc) delete doc;
+  return deserializationSuccess;
+}
 
 void handleReqMessage(JsonDocument *json){
   OcppOperation *req = makeFromJson(wsocket, json);
   if (req == NULL) {
     Serial.print(F("[OcppEngine] Couldn't make OppOperation from Request. Ignore request.\n"));
+    return;
+  }
+  handleReqMessage(json, req);
+}
+
+void handleReqMessage(JsonDocument *json, OcppOperation *req) {
+  if (req == NULL) {
+    Serial.print(F("[OcppEngine] handleReqMessage: invalid argument\n"));
     return;
   }
   receivedOcppOperations.add(req);; //enqueue so loop() plans conf sending
@@ -112,9 +193,24 @@ void handleConfMessage(JsonDocument *json){
   Serial.print(F("[OcppEngine] Received CALLRESULT doesn't match any pending operation!\n"));
 }
 
+
 void handleErrMessage(JsonDocument *json){
-  Serial.printf("[OcppEngine] Received CALLERROR\n"); //delete when implemented
+  for (int i = 0; i < initiatedOcppOperations.size(); i++){
+    OcppOperation *el = initiatedOcppOperations.get(i);
+    boolean success = el->receiveError(json); //maybe rename to "consumed"?
+    if (success){
+      initiatedOcppOperations.remove(i);
+      
+      //TODO Review: are all recources freed here?
+      delete el;
+      return;
+    }
+  }
+
+  //didn't find matching OcppOperation
+  Serial.print(F("[OcppEngine] Received CALLERROR doesn't match any pending operation!\n"));
 }
+
 
 void initiateOcppOperation(OcppOperation *o){
   if (!o->isFullyConfigured()){
@@ -219,4 +315,24 @@ MeteringService* getMeteringService() {
     //no error catch 
   }
   return ocppEngine_meteringService;
+}
+
+size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_size) {
+    size_t res_len = 0;
+    for (size_t i = 0; i < src_size && i < dst_size-3; i++) {
+        if (src[i] == '\0'){
+            //no payload found within specified range. Cancel execution
+            break;
+        }
+        dst[i] = src[i];
+        if (src[i] == '{') {
+            dst[i+1] = '}';
+            dst[i+2] = ']';
+            res_len = i+3;
+            break;
+        }
+    }
+    dst[res_len] = '\0';
+    res_len++;
+    return res_len;
 }

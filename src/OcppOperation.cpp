@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include "OcppOperation.h"
@@ -95,9 +95,16 @@ boolean OcppOperation::sendReq(){
    */
   String out;
   serializeJson(requestJson, out);
-  if (DEBUG_OUT) Serial.print(F("[OcppOperation] Send requirement: "));
-  if (DEBUG_OUT) Serial.print(out);
-  if (DEBUG_OUT) Serial.print(F("\n"));
+
+#if DEBUG_OUT
+  if (printReqCounter > 10000) {
+    printReqCounter = 0;
+    Serial.print(F("[OcppOperation] Send requirement: "));
+    Serial.print(out);
+    Serial.print(F("\n"));
+  }
+  printReqCounter++;
+#endif
   if (webSocket->sendTXT(out)) {
     //success
     if (!timeout_active) {
@@ -125,7 +132,7 @@ boolean OcppOperation::receiveConf(JsonDocument *confJson){ //TODO add something
   }
 
   /*
-   * Hand the payload over to the OcppOperation object
+   * Hand the payload over to the OcppMessage object
    */
   JsonObject payload = (*confJson)[2];
   ocppMessage->processConf(payload);
@@ -144,8 +151,29 @@ boolean OcppOperation::receiveConf(JsonDocument *confJson){ //TODO add something
   return true;
 }
 
+boolean OcppOperation::receiveError(JsonDocument *confJson){ //TODO add something like "JsonObject conf = confJson->as<JsonObject>();" and test
+  /*
+   * check if messageIDs match. If yes, continue with this function. If not, return false for message not consumed
+   */
+  if (!getMessageID().equals((*confJson)[1].as<String>())){
+    return false;
+  }
 
-boolean OcppOperation::receiveReq(JsonDocument *reqJson){ //TODO add something like "JsonObject req = reqJson->as<JsonObject>();" and test
+  /*
+   * Hand the error over to the OcppMessage object
+   */
+  const char *errorCode = (*confJson)[2];
+  const char *errorDescription = (*confJson)[3];
+  JsonObject errorDetails = (*confJson)[4];
+  ocppMessage->processErr(errorCode, errorDescription, errorDetails);
+  
+  // TODO introduce onReceiveErrListener
+
+  return true;
+}
+
+
+boolean OcppOperation::receiveReq(JsonDocument *reqJson){ //TODO add something like "JsonObject req = reqJson->as<JsonArray>();" and test
   
   String reqId = (*reqJson)[1];
   setMessageID(reqId);//(*reqJson)[1]);
@@ -183,38 +211,88 @@ boolean OcppOperation::sendConf(){
   /*
    * Create the OCPP message
    */
+  DynamicJsonDocument *confJson = NULL;
   DynamicJsonDocument *confPayload = ocppMessage->createConf();
+  DynamicJsonDocument *errorDetails = NULL;
+  
+  bool operationSuccess = ocppMessage->getErrorCode() == NULL && confPayload != NULL;
 
-  /*
-   * Create OCPP-J Remote Procedure Call header
-   */
-  size_t json_buffsize = JSON_ARRAY_SIZE(3) + (getMessageID().length() + 1) + confPayload->capacity();
-  DynamicJsonDocument confJson(json_buffsize);
+  if (operationSuccess) {
+    // operation did not fail
 
-  confJson.add(MESSAGE_TYPE_CALLRESULT);   //MessageType
-  confJson.add(getMessageID());            //Unique message ID
-  confJson.add(*confPayload);              //Payload  
+    /*
+    * Create OCPP-J Remote Procedure Call header
+    */
+    size_t json_buffsize = JSON_ARRAY_SIZE(3) + (getMessageID().length() + 1) + confPayload->capacity();
+    confJson = new DynamicJsonDocument(json_buffsize);
+
+    confJson->add(MESSAGE_TYPE_CALLRESULT);   //MessageType
+    confJson->add(getMessageID());            //Unique message ID
+    confJson->add(*confPayload);              //Payload
+  } else {
+    //operation failure. Send error message instead
+
+    const char *errorCode = ocppMessage->getErrorCode();
+    const char *errorDescription = ocppMessage->getErrorDescription();
+    errorDetails = ocppMessage->getErrorDetails();
+    if (!errorCode) { //catch corner case when payload is null but errorCode is not set too!
+      errorCode = "GenericError";
+      errorDescription = "Could not create payload (createConf() returns Null)";
+      errorDetails = createEmptyDocument();
+    }
+
+    /*
+     * Create OCPP-J Remote Procedure Call header
+     */
+    size_t json_buffsize = JSON_ARRAY_SIZE(5)
+              + (getMessageID().length() + 1)
+              + strlen(errorCode) + 1
+              + strlen(errorDescription) + 1
+              + errorDetails->capacity();
+    confJson = new DynamicJsonDocument(json_buffsize);
+
+    confJson->add(MESSAGE_TYPE_CALLERROR);   //MessageType
+    confJson->add(getMessageID());            //Unique message ID
+    confJson->add(errorCode);
+    confJson->add(errorDescription);
+    confJson->add(*errorDetails);              //Error description
+  }
 
   /*
    * Serialize and send. Destroy serialization and JSON object. 
    */
   String out;
-  serializeJson(confJson, out);
-  boolean success = webSocket->sendTXT(out);
+  serializeJson(*confJson, out);
+  boolean wsSuccess = webSocket->sendTXT(out);
 
-  if (success) {
-    if (DEBUG_OUT) Serial.print(F("[OcppOperation] (Conf) JSON message: "));
-    if (DEBUG_OUT) Serial.print(out);
-    if (DEBUG_OUT) Serial.print('\n');
-    if (onSendConfListener != NULL){
-      onSendConfListener(confPayload->as<JsonObject>());
-      onSendConfListener = NULL; //just call once
+  if (wsSuccess) {
+    if (operationSuccess) {
+      if (DEBUG_OUT) Serial.print(F("[OcppOperation] (Conf) JSON message: "));
+      if (DEBUG_OUT) Serial.print(out);
+      if (DEBUG_OUT) Serial.print('\n');
+      if (onSendConfListener != NULL){
+        onSendConfListener(confPayload->as<JsonObject>());
+        onSendConfListener = NULL; //just call once
+      }
+    } else {
+      if (DEBUG_OUT) Serial.print(F("[OcppOperation] (Conf) Error occured! JSON CallError message: "));
+      if (DEBUG_OUT) Serial.print(out);
+      if (DEBUG_OUT) Serial.print('\n');
+      //if (onSendConfListener != NULL){ // TODO if (onSendErrListener != NULL) ...
+      //  onSendConfListener(confPayload->as<JsonObject>());
+      //  onSendConfListener = NULL; //just call once
+      //}
     }
   }
   
-  confJson.clear();
-  delete confPayload;
-  return success;
+  if (confJson)
+    delete confJson;
+  if (confPayload)
+    delete confPayload;
+  if (errorDetails)
+    delete errorDetails;
+
+  return wsSuccess;
 }
 
 void OcppOperation::setOnReceiveConfListener(OnReceiveConfListener onReceiveConf){

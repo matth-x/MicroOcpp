@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #ifndef OCPPOPERATION_H
@@ -13,6 +13,8 @@
 #include <WebSocketsClient.h>
 
 #include "OcppMessage.h"
+
+#include "Variants.h"
 
 typedef void (*OnReceiveConfListener)(JsonObject payload);
 typedef void (*OnReceiveReqListener)(JsonObject payload);
@@ -38,6 +40,9 @@ private:
   const ulong RETRY_INTERVAL = 3000; //in ms; first retry after ... ms; second retry after 2 * ... ms; third after 4 ...
   ulong retry_start = 0;
   ulong retry_interval_mult = 1; // RETRY_INTERVAL * retry_interval_mult gives longer periods with each iteration
+#if DEBUG_OUT
+  uint16_t printReqCounter = -1;
+#endif
 public:
 
   OcppOperation(WebSocketsClient *webSocket, OcppMessage *ocppMessage);
@@ -70,6 +75,13 @@ public:
     boolean receiveConf(JsonDocument *json);
 
     /**
+    * Decides if message belongs to this operation instance and if yes, notifies the OcppMessage object about the CallError.
+    * 
+    * Returns true if JSON object has been consumed, false otherwise.
+    */
+    boolean receiveError(JsonDocument *json);
+
+    /**
      * Processes the request in the JSON document. Returns true on success, false on error.
      * 
      * Returns false if the request doesn't belong to the corresponding operation instance
@@ -77,8 +89,9 @@ public:
     boolean receiveReq(JsonDocument *json);
 
     /**
-     * After successfully processing a request sent by the communication counterpart, this function sends a confirmation
-     * message. Returns true on success, false otherwise.
+     * After processing a request sent by the communication counterpart, this function sends a confirmation
+     * message. Returns true on success, false otherwise. Returns also true if a CallError has successfully
+     * been sent
      */
     boolean sendConf();
 

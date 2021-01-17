@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include "SingleConnectorEvseFacade.h"
@@ -34,7 +34,6 @@ OnLimitChange onLimitChange;
 #define OCPP_ID_OF_CP 0
 boolean OCPP_initialized = false;
 
-
 /*
    Called by Websocket library on incoming message on the internet link
 */
@@ -42,29 +41,38 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 
     switch (type) {
         case WStype_DISCONNECTED:
-        Serial.print(F("[WSc] Disconnected!\n"));
-        break;
+            Serial.print(F("[WSc] Disconnected!\n"));
+            break;
         case WStype_CONNECTED:
-        Serial.printf("[WSc] Connected to url: %s\n", payload);
-        break;
+            Serial.printf("[WSc] Connected to url: %s\n", payload);
+            break;
         case WStype_TEXT:
-        if (DEBUG_OUT) Serial.printf("[WSc] get text: %s\n", payload);
+            if (DEBUG_OUT) Serial.printf("[WSc] get text: %s\n", payload);
 
-        if (!processWebSocketEvent(payload, length)) { //forward message to OcppEngine
-            Serial.print(F("[WSc] Processing WebSocket input event failed!\n"));
-        }
-        break;
+            if (!processWebSocketEvent((const char *) payload, length)) { //forward message to OcppEngine
+                Serial.print(F("[WSc] Processing WebSocket input event failed!\n"));
+            }
+            break;
+        case WStype_FRAGMENT_TEXT_START: //fragments are not supported
+            Serial.print(F("[WSc] Fragments are not supported\n"));
+            if (!processWebSocketUnsupportedEvent((const char *) payload, length)) { //forward message to OcppEngine
+                Serial.print(F("[WSc] Processing WebSocket input event failed!\n"));
+            }
+            break;
         case WStype_BIN:
-        Serial.print(F("[WSc] Incoming binary data stream not supported"));
-        break;
+            Serial.print(F("[WSc] Incoming binary data stream not supported"));
+            break;
         case WStype_PING:
-        // pong will be send automatically
-        Serial.print(F("[WSc] get ping\n"));
-        break;
+            // pong will be send automatically
+            Serial.print(F("[WSc] get ping\n"));
+            break;
         case WStype_PONG:
-        // answer to a ping we send
-        Serial.print(F("[WSc] get pong\n"));
-        break;
+            // answer to a ping we send
+            Serial.print(F("[WSc] get pong\n"));
+            break;
+        default:
+            Serial.print(F("[WSc] Unsupported WebSocket event type\n"));
+            break;
     }
 }
 

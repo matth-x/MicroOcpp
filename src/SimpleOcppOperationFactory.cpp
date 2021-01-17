@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include "Variants.h"
@@ -16,6 +16,7 @@
 #include "StopTransaction.h"
 #include "TriggerMessage.h"
 #include "RemoteStartTransaction.h"
+#include "OcppError.h"
 #ifdef PROD
 #include "RemoteStopTransaction.h"
 #include "ChangeConfiguration.h"
@@ -171,8 +172,8 @@ OcppOperation *makeOcppOperation(WebSocketsClient *ws, const char *messageType) 
       Serial.print(F("[SimpleOcppOperationFactory] Warning: Reset is without effect when the sendConf listener is not set. Set a listener which resets your device.\n"));
     operation->setOnSendConfListener(onResetSendConf);
   } else {
-    Serial.print(F("[SimpleOcppOperationFactory] Operation not supported"));
-      //TODO reply error code
+    Serial.println(F("[SimpleOcppOperationFactory] Operation not supported"));
+    msg = new NotImplemented();
   }
 
   if (msg == NULL) {

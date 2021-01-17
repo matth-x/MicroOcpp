@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include "OcppMessage.h"
@@ -29,4 +29,10 @@ void OcppMessage::processReq(JsonObject payload) {
 DynamicJsonDocument* OcppMessage::createConf() {
     Serial.print(F("[OcppMessage]  Unsupported operation: createConf() is not implemented!\n"));
     return NULL;
+}
+
+DynamicJsonDocument *createEmptyDocument() {
+  DynamicJsonDocument *emptyDoc = new DynamicJsonDocument(0);
+  emptyDoc->to<JsonObject>();
+  return emptyDoc;
 }

@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 /**
@@ -21,6 +21,7 @@
  #include<ArduinoJson.h>
  #include<WebSocketsClient.h>
 
+DynamicJsonDocument *createEmptyDocument();
 
 class OcppMessage {
 private:
@@ -46,6 +47,8 @@ public:
 
   virtual void processConf(JsonObject payload);
 
+  virtual void processErr(const char *code, const char *description, JsonObject details) { }
+
   /**
    * Processes the request in the JSON document. 
    */
@@ -56,6 +59,11 @@ public:
    * message.
    */
   virtual DynamicJsonDocument* createConf();
+
+  virtual const char *getErrorCode() {return NULL;} //NULL means no error
+  virtual const char *getErrorDescription() {return "";}
+  virtual DynamicJsonDocument *getErrorDetails() {return createEmptyDocument();}
+
     
 };
 
