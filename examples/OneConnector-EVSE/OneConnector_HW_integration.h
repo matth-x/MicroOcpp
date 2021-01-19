@@ -1,8 +1,10 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 /*
+ * Demonstration video: https://youtu.be/hfTh9GjG-N4
+ * 
  * The simple EVSE uses GPIO for the communication between the ESP8266 and the peripherals. The sketch was
  * written and tested on the NodeMCU v3. The following pin-mapping shows how the NodeMCU was connected
  * to its peripherals. Feel free to adapt it according to your own setup.

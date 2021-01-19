@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include <Variants.h>
@@ -22,9 +22,18 @@ ESP8266WiFiMulti WiFiMulti;
 #define STASSID "YOUR_WLAN_SSID"
 #define STAPSK  "YOUR_WLAN_PW"
 
+//  WebSocket echo server test
+
 #define OCPP_HOST "wss://echo.websocket.org"
 #define OCPP_PORT 80
 #define OCPP_URL "wss://echo.websocket.org/"
+
+//
+////  Settings which worked for my SteVe instance
+//
+//#define OCPP_HOST "my.instance.com"
+//#define OCPP_PORT 80
+//#define OCPP_URL "ws://my.instance.com/steve/websocket/CentralSystemService/gpio-based-charger"
 
 #define LED 2
 #define LED_ON LOW
