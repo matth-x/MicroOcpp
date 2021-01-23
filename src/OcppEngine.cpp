@@ -53,6 +53,8 @@ boolean processWebSocketEvent(const char* payload, size_t length){
       capacity *= 3;
   }
 
+  //TODO insert validateRpcHeader at suitable position
+
   switch (err.code()) {
     case DeserializationError::Ok:
         if (doc != NULL){
@@ -104,7 +106,7 @@ boolean processWebSocketEvent(const char* payload, size_t length){
           size_t onlyRpcHeader_len = removePayload(payload, length, onlyRpcHeader, 200);
           DeserializationError err2 = deserializeJson(*doc, onlyRpcHeader, onlyRpcHeader_len);
           if (err2.code() == DeserializationError::Ok) {
-            int messageTypeId2 = (*doc)[0];
+            int messageTypeId2 = (*doc)[0] | -1;
             if (messageTypeId2 == MESSAGE_TYPE_CALL) {
               deserializationSuccess = true;
               OcppOperation *op = makeOcppOperation(wsocket, new OutOfMemory(ESP.getFreeHeap(), length));
@@ -197,8 +199,8 @@ void handleConfMessage(JsonDocument *json){
 void handleErrMessage(JsonDocument *json){
   for (int i = 0; i < initiatedOcppOperations.size(); i++){
     OcppOperation *el = initiatedOcppOperations.get(i);
-    boolean success = el->receiveError(json); //maybe rename to "consumed"?
-    if (success){
+    boolean discardOperation = el->receiveError(json); //maybe rename to "consumed"?
+    if (discardOperation){
       initiatedOcppOperations.remove(i);
       
       //TODO Review: are all recources freed here?
@@ -207,8 +209,8 @@ void handleErrMessage(JsonDocument *json){
     }
   }
 
-  //didn't find matching OcppOperation
-  Serial.print(F("[OcppEngine] Received CALLERROR doesn't match any pending operation!\n"));
+  //No OcppOperation was aborted because of the error message
+  if (DEBUG_OUT) Serial.print(F("[OcppEngine] Received CALLERROR did not abort a pending operation\n"));
 }
 
 

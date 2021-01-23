@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #ifndef SIMPLEOCPPOPERATIONFACTORY_H
@@ -20,18 +20,18 @@ OcppOperation* makeOcppOperation(WebSocketsClient *ws, OcppMessage *msg);
 
 OcppOperation *makeOcppOperation(WebSocketsClient *ws, const char *actionCode);
 
-void setOnAuthorizeRequestListener(void listener(JsonObject payload));
-void setOnBootNotificationRequestListener(void listener(JsonObject payload));
-void setOnTargetValuesRequestListener(void listener(JsonObject payload));
-void setOnSetChargingProfileRequestListener(void listener(JsonObject payload));
-void setOnStartTransactionRequestListener(void listener(JsonObject payload));
-void setOnTriggerMessageRequestListener(void listener(JsonObject payload));
-void setOnRemoteStartTransactionReceiveRequestListener(void listener(JsonObject payload));
-void setOnRemoteStartTransactionSendConfListener(void listener(JsonObject payload));
-void setOnRemoteStopTransactionSendConfListener(void listener(JsonObject payload));
-void setOnChangeConfigurationReceiveRequestListener(void listener(JsonObject payload));
-void setOnChangeConfigurationSendConfListener(void listener(JsonObject payload));
-void setOnGetConfigurationReceiveRequestListener(void listener(JsonObject payload));
-void setOnGetConfigurationSendConfListener(void listener(JsonObject payload));
-void setOnResetSendConfListener(void listener(JsonObject payload));
+void setOnAuthorizeRequestListener(OnReceiveReqListener onReceiveReq);
+void setOnBootNotificationRequestListener(OnReceiveReqListener onReceiveReq);
+void setOnTargetValuesRequestListener(OnReceiveReqListener onReceiveReq);
+void setOnSetChargingProfileRequestListener(OnReceiveReqListener onReceiveReq);
+void setOnStartTransactionRequestListener(OnReceiveReqListener onReceiveReq);
+void setOnTriggerMessageRequestListener(OnReceiveReqListener onReceiveReq);
+void setOnRemoteStartTransactionReceiveRequestListener(OnReceiveReqListener onReceiveReq);
+void setOnRemoteStartTransactionSendConfListener(OnSendConfListener onSendConf);
+void setOnRemoteStopTransactionSendConfListener(OnSendConfListener onSendConf);
+void setOnChangeConfigurationReceiveRequestListener(OnReceiveReqListener onReceiveReq);
+void setOnChangeConfigurationSendConfListener(OnSendConfListener onSendConf);
+void setOnGetConfigurationReceiveRequestListener(OnReceiveReqListener onReceiveReq);
+void setOnGetConfigurationSendConfListener(OnSendConfListener onSendConf);
+void setOnResetSendConfListener(OnSendConfListener onSendConf);
 #endif

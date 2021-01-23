@@ -46,8 +46,11 @@ public:
 
 
   virtual void processConf(JsonObject payload);
-
-  virtual void processErr(const char *code, const char *description, JsonObject details) { }
+  
+  /*
+   * returns if the operation must be aborted
+   */
+  virtual bool processErr(const char *code, const char *description, JsonObject details) { return true;}
 
   /**
    * Processes the request in the JSON document. 

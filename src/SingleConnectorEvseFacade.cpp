@@ -19,6 +19,7 @@
 #include "BootNotification.h"
 #include "StartTransaction.h"
 #include "StopTransaction.h"
+#include "OcppOperationTimeout.h"
 
 WebSocketsClient webSocket;
 
@@ -163,30 +164,34 @@ void setOnResetSendConf(void listener(JsonObject payload)) {
      setOnResetSendConfListener(listener);
 }
 
-void authorize(String &idTag) {
+void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError) {
     OcppOperation *authorize = makeOcppOperation(&webSocket,
         new Authorize(idTag));
     initiateOcppOperation(authorize);
+    if (onConf)
+        authorize->setOnReceiveConfListener(onConf);
+    if (onAbort)
+        authorize->setOnAbortListener(onAbort);
+    if (onTimeout)
+        authorize->setOnTimeoutListener(onTimeout);
+    if (onError)
+        authorize->setOnReceiveErrorListener(onError);
+    authorize->setTimeout(new FixedTimeout(20000));
 }
 
-void authorize(String &idTag, OnReceiveConfListener onConf) {
-    OcppOperation *authorize = makeOcppOperation(&webSocket,
-        new Authorize(idTag));
-    initiateOcppOperation(authorize);
-    authorize->setOnReceiveConfListener(onConf);
-}
-
-void bootNotification(String chargePointModel, String chargePointVendor) {
+void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError) {
     OcppOperation *bootNotification = makeOcppOperation(&webSocket,
         new BootNotification(chargePointModel, chargePointVendor));
     initiateOcppOperation(bootNotification);
-}
-
-void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf) {
-    OcppOperation *bootNotification = makeOcppOperation(&webSocket,
-        new BootNotification(chargePointModel, chargePointVendor));
-    initiateOcppOperation(bootNotification);
-    bootNotification->setOnReceiveConfListener(onConf);
+    if (onConf)
+        bootNotification->setOnReceiveConfListener(onConf);
+    if (onAbort)
+        bootNotification->setOnAbortListener(onAbort);
+    if (onTimeout)
+        bootNotification->setOnTimeoutListener(onTimeout);
+    if (onError)
+        bootNotification->setOnReceiveErrorListener(onError);
+    bootNotification->setTimeout(new SuppressedTimeout());
 }
 
 void bootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber, OnReceiveConfListener onConf) {
@@ -194,19 +199,22 @@ void bootNotification(String &chargePointModel, String &chargePointVendor, Strin
         new BootNotification(chargePointModel, chargePointVendor, chargePointSerialNumber));
     initiateOcppOperation(bootNotification);
     bootNotification->setOnReceiveConfListener(onConf);
+    bootNotification->setTimeout(new SuppressedTimeout());
 }
 
-void startTransaction() {
+void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError) {
     OcppOperation *startTransaction = makeOcppOperation(&webSocket,
         new StartTransaction(OCPP_ID_OF_CONNECTOR));
     initiateOcppOperation(startTransaction);
-}
-
-void startTransaction(OnReceiveConfListener onConf) {
-    OcppOperation *startTransaction = makeOcppOperation(&webSocket,
-        new StartTransaction(OCPP_ID_OF_CONNECTOR));
-    initiateOcppOperation(startTransaction);
-    startTransaction->setOnReceiveConfListener(onConf);
+    if (onConf)
+        startTransaction->setOnReceiveConfListener(onConf);
+    if (onAbort)
+        startTransaction->setOnAbortListener(onAbort);
+    if (onTimeout)
+        startTransaction->setOnTimeoutListener(onTimeout);
+    if (onError)
+        startTransaction->setOnReceiveErrorListener(onError);
+    startTransaction->setTimeout(new FixedTimeout(20000));
 }
 
 void startTransaction(String &idTag, OnReceiveConfListener onConf) {
@@ -214,19 +222,22 @@ void startTransaction(String &idTag, OnReceiveConfListener onConf) {
         new StartTransaction(OCPP_ID_OF_CONNECTOR, idTag));
     initiateOcppOperation(startTransaction);
     startTransaction->setOnReceiveConfListener(onConf);
+    startTransaction->setTimeout(new FixedTimeout(20000));
 }
 
-void stopTransaction() {
+void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError) {
     OcppOperation *stopTransaction = makeOcppOperation(&webSocket,
         new StopTransaction(OCPP_ID_OF_CONNECTOR));
     initiateOcppOperation(stopTransaction);
-}
-
-void stopTransaction(OnReceiveConfListener onConf) {
-    OcppOperation *stopTransaction = makeOcppOperation(&webSocket,
-        new StopTransaction(OCPP_ID_OF_CONNECTOR));
-    initiateOcppOperation(stopTransaction);
-    stopTransaction->setOnReceiveConfListener(onConf);
+    if (onConf)
+        stopTransaction->setOnReceiveConfListener(onConf);
+    if (onAbort)
+        stopTransaction->setOnAbortListener(onAbort);
+    if (onTimeout)
+        stopTransaction->setOnTimeoutListener(onTimeout);
+    if (onError)
+        stopTransaction->setOnReceiveErrorListener(onError);
+    stopTransaction->setTimeout(new SuppressedTimeout());
 }
 
 void startEvDrawsEnergy() {

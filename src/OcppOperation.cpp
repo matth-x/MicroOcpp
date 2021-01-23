@@ -20,10 +20,22 @@ OcppOperation::OcppOperation(WebSocketsClient *webSocket) : webSocket(webSocket)
 OcppOperation::~OcppOperation(){
   if (ocppMessage != NULL)
     delete ocppMessage;
+  if (timeout)
+    delete timeout;
 }
 
 void OcppOperation::setOcppMessage(OcppMessage *msg){
   ocppMessage = msg;
+}
+
+void OcppOperation::setTimeout(Timeout *to){
+  if (!to){
+    Serial.print(F("[OcppOperation] in setTimeout(): passed NULL! Ignore\n"));
+    return;
+  }
+  if (timeout)
+    delete timeout;
+  timeout = to;
 }
 
 void OcppOperation::setMessageID(String &id){
@@ -48,11 +60,14 @@ boolean OcppOperation::sendReq(){
    * 
    * if timeout, print out error message and treat this operation as completed (-> return true)
    */
-  if (timeout_active && millis() - timeout_start >= TIMEOUT_CANCEL){
+  //if (timeout_active && millis() - timeout_start >= TIMEOUT_CANCEL){
+  if (timeout->isExceeded()) {
     //cancel this operation
     Serial.print(F("[OcppOperation] "));
     Serial.print(ocppMessage->getOcppOperationType());
     Serial.print(F(" timeout! Cancel operation\n"));
+    onTimeoutListener();
+    onAbortListener();
     return true;
   }
 
@@ -60,20 +75,23 @@ boolean OcppOperation::sendReq(){
    * retry behaviour
    * 
    * if retry, run the rest of this function, i.e. resend the message. If not, just return false
-   * 
-   * Mix timeout + retry?
    */
   if (millis() <= retry_start + RETRY_INTERVAL * retry_interval_mult) {
     //NO retry
     return false;
   }
   // Do retry. Increase timer by factor 2
-  retry_interval_mult *= 2;
+  if (RETRY_INTERVAL * retry_interval_mult * 2 <= RETRY_INTERVAL_MAX)
+    retry_interval_mult *= 2;
 
   /*
    * Create the OCPP message
    */
   DynamicJsonDocument *requestPayload = ocppMessage->createReq();
+  if (!requestPayload) {
+    onAbortListener();
+    return true;
+  }
 
   /*
    * Create OCPP-J Remote Procedure Call header
@@ -105,12 +123,17 @@ boolean OcppOperation::sendReq(){
   }
   printReqCounter++;
 #endif
-  if (webSocket->sendTXT(out)) {
+  
+  bool success = webSocket->sendTXT(out);
+
+  timeout->tick(success);
+  
+  if (success) {
     //success
-    if (!timeout_active) {
-      timeout_active = true;
-      timeout_start = millis();
-    } 
+//    if (!timeout_active) {
+//      timeout_active = true;
+//      timeout_start = millis();
+//    } 
     retry_start = millis();
   } else {
     //webSocket is not able to put any data on TCP stack. Maybe because we're offline
@@ -140,10 +163,7 @@ boolean OcppOperation::receiveConf(JsonDocument *confJson){ //TODO add something
   /*
    * Hand the payload over to the onReceiveConf Callback
    */
-  if (onReceiveConfListener != NULL){
-      onReceiveConfListener(payload);
-      onReceiveConfListener = NULL; //just call once per instance
-  }
+  onReceiveConfListener(payload);
 
   /*
    * return true as this message has been consumed
@@ -165,13 +185,20 @@ boolean OcppOperation::receiveError(JsonDocument *confJson){ //TODO add somethin
   const char *errorCode = (*confJson)[2];
   const char *errorDescription = (*confJson)[3];
   JsonObject errorDetails = (*confJson)[4];
-  ocppMessage->processErr(errorCode, errorDescription, errorDetails);
-  
-  // TODO introduce onReceiveErrListener
+  bool abortOperation = ocppMessage->processErr(errorCode, errorDescription, errorDetails);
 
-  return true;
+  if (abortOperation) {
+    onReceiveErrorListener(errorCode, errorDescription, errorDetails);
+    onAbortListener();
+  } else {
+    //restart operation
+    timeout->restart();
+    retry_start = 0;
+    retry_interval_mult = 1;
+  }
+
+  return abortOperation;
 }
-
 
 boolean OcppOperation::receiveReq(JsonDocument *reqJson){ //TODO add something like "JsonObject req = reqJson->as<JsonArray>();" and test
   
@@ -191,10 +218,7 @@ boolean OcppOperation::receiveReq(JsonDocument *reqJson){ //TODO add something l
    * Hand the payload over to the first Callback. It is a callback that notifies the client that request has been processed in the OCPP-library
    */
 
-  if (onReceiveReqListener != NULL){
-      onReceiveReqListener(payload);
-      onReceiveReqListener = NULL; //just call once per instance
-  }
+  onReceiveReqListener(payload);
 
   reqExecuted = true; //ensure that the conf is only sent after the req has been executed
 
@@ -270,18 +294,12 @@ boolean OcppOperation::sendConf(){
       if (DEBUG_OUT) Serial.print(F("[OcppOperation] (Conf) JSON message: "));
       if (DEBUG_OUT) Serial.print(out);
       if (DEBUG_OUT) Serial.print('\n');
-      if (onSendConfListener != NULL){
-        onSendConfListener(confPayload->as<JsonObject>());
-        onSendConfListener = NULL; //just call once
-      }
+      onSendConfListener(confPayload->as<JsonObject>());
     } else {
       if (DEBUG_OUT) Serial.print(F("[OcppOperation] (Conf) Error occured! JSON CallError message: "));
       if (DEBUG_OUT) Serial.print(out);
       if (DEBUG_OUT) Serial.print('\n');
-      //if (onSendConfListener != NULL){ // TODO if (onSendErrListener != NULL) ...
-      //  onSendConfListener(confPayload->as<JsonObject>());
-      //  onSendConfListener = NULL; //just call once
-      //}
+      onAbortListener();
     }
   }
   
@@ -296,18 +314,36 @@ boolean OcppOperation::sendConf(){
 }
 
 void OcppOperation::setOnReceiveConfListener(OnReceiveConfListener onReceiveConf){
-  onReceiveConfListener = onReceiveConf;
+  if (onReceiveConf)
+    onReceiveConfListener = onReceiveConf;
 }
 
 /**
  * Sets a Listener that is called after this machine processed a request by the communication counterpart
  */
 void OcppOperation::setOnReceiveReqListener(OnReceiveReqListener onReceiveReq){
-  onReceiveReqListener = onReceiveReq;
+  if (onReceiveReq)
+    onReceiveReqListener = onReceiveReq;
 }
 
 void OcppOperation::setOnSendConfListener(OnSendConfListener onSendConf){
-  onSendConfListener = onSendConf;
+  if (onSendConf)
+    onSendConfListener = onSendConf;
+}
+
+void OcppOperation::setOnTimeoutListener(OnTimeoutListener onTimeout) {
+  if (onTimeout)
+    onTimeoutListener = onTimeout;
+}
+
+void OcppOperation::setOnReceiveErrorListener(OnReceiveErrorListener onReceiveError) {
+  if (onReceiveError)
+    onReceiveErrorListener = onReceiveError;
+}
+
+void OcppOperation::setOnAbortListener(OnAbortListener onAbort) {
+  if (onAbort)
+    onAbortListener = onAbort;
 }
 
 boolean OcppOperation::isFullyConfigured(){

@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #ifndef SINGLE_CONNECTOR_EVSE_FACADE
@@ -72,17 +72,13 @@ void setOnResetSendConf(void listener(JsonObject payload));
  * in any case.
  */
 
-void authorize(String &idTag);
-void authorize(String &idTag, OnReceiveConfListener onConf);
+void authorize(String &idTag, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL);
 
-void bootNotification(String chargePointModel, String chargePointVendor);
-void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf);
+void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL);
 
-void startTransaction();
-void startTransaction(OnReceiveConfListener onConf);
+void startTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL);
 
-void stopTransaction();
-void stopTransaction(OnReceiveConfListener onConf);
+void stopTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL);
 
 /*
  * Provide hardware-related information II
@@ -102,8 +98,6 @@ void stopEvDrawsEnergy();
  */
 
 int getTransactionId(); //returns the ID of the current transaction. Returns -1 if called before or after an transaction
-
-
 
 #endif
 #endif

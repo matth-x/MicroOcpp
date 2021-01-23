@@ -60,7 +60,7 @@ void EVSE_initialize() {
   
   bootNotification("GPIO-based CP model", "Greatest EVSE vendor", [] (JsonObject confMsg) {
     //This callback is executed when the .conf() response from the central system arrives
-    Serial.print(F("BootNotification was answered at "));
+    Serial.print(F("BootNotification was answered. Central system clock: "));
     Serial.print(confMsg["currentTime"].as<String>());
     Serial.print(F("\n"));
 
@@ -133,7 +133,13 @@ void onEvUnplug() {
 void onProvideAuthorization() {
     Serial.print(F("[EVSE] User authorized charging session\n"));
     String idTag = String("abcdef123456789"); // e.g. idTag = readRFIDTag();
+
+    /*
+     * Demonstrate the use of all event listeners that come with sending OCPP operations. At the beginning, you probably only need
+     * the first listener which the engine fires when the Central System has responded with a .conf() msg.
+     */
     authorize(idTag, [](JsonObject conf) {
+        //execute when the .conf() response from the central system arrives (optional but very likely necessary for your integration)
         successfullyAuthorized = true;
 
         if (evIsPlugged) {
@@ -142,6 +148,14 @@ void onProvideAuthorization() {
                 digitalWrite(EVSE_RELAY, EVSE_OFFERS_ENERGY);
             });
         }
+    }, []() {
+        //add further listeners (optional)
+        Serial.print(F("[EVSE] Could not authorize charging session! Aborted\n"));
+    }, []() { //(optional)
+        Serial.print(F("[EVSE] Could not authorize charging session! Reason: timeout\n"));
+    }, [](const char *code, const char *description, JsonObject details) { //(optional)
+        Serial.print(F("[EVSE] Could not authorize charging session! Reason: received OCPP error: "));
+        Serial.println(code);
     });
 }
 
