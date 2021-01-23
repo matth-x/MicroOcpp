@@ -1,8 +1,9 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
-#ifdef PROD
+#include <Variants.h>
+#if !USE_FACADE
 
 #ifndef EVSE_H
 #define EVSE_H
