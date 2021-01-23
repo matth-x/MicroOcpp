@@ -12,7 +12,7 @@
 #include <ESP8266WiFiMulti.h>
 
 //ESP8266-OCPP modules
-#include <SingleConnectorEvseFacade.h>
+#include <ESP8266-OCPP.h>
 
 //Simulated HW integration (used as example)
 #include "OneConnector_HW_integration.h"

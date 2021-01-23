@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include <Variants.h>
@@ -8,7 +8,7 @@
 
 #include <Arduino.h>
 
-#include <SingleConnectorEvseFacade.h>
+#include <ESP8266-OCPP.h>
 
 /*
  * This module simulates user interaction at an EVSE. It runs a routine in which a
@@ -42,9 +42,8 @@ void EVSE_initialize() {
   
   bootNotification("Greatest EVSE vendor", "Simulated CP model", [] (JsonObject confMsg) {
     //This callback is executed when the .conf() response from the central system arrives
-    Serial.print(F("BootNotification was answered at "));
-    Serial.print(confMsg["currentTime"].as<String>());
-    Serial.print(F("\n"));
+    Serial.print(F("BootNotification was answered. Central System clock: "));
+    Serial.println(confMsg["currentTime"].as<String>());
 
     evseIsBooted = true;
     t = millis();
@@ -63,7 +62,6 @@ void EVSE_loop() {
     
     if (evRequestsEnergy && millis() - t >= T_FULL && millis() - t < T_UNPLUG) {
         evRequestsEnergy = false;
-        stopEvDrawsEnergy();
     }
 
     if (evIsPlugged && millis() - t >= T_UNPLUG && millis() - t < T_RESET) {
@@ -83,12 +81,11 @@ void EVSE_loop() {
 
 void onEvPlug() {
     Serial.print(F("[EVSE] EV plugged\n"));
-    String fixedIdTag = String("fefe1d1d");
+    String fixedIdTag = String("abcdef123456789"); // e.g. idTag = readRFIDTag();
     authorize(fixedIdTag, [](JsonObject confMsg) {
         startTransaction([](JsonObject conf) {
             transactionRunning = true;
             evRequestsEnergy = true;
-            startEvDrawsEnergy();
             Serial.print(F("[EVSE] Successfully authorized and started transaction\n"));
         });
     });
