@@ -16,6 +16,8 @@ private:
   const int numConnectors;
   ConnectorStatus **connectors;
 
+  bool booted = false;
+
   boolean authorized = false;
   String idTag = String('\0');
 

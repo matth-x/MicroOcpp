@@ -23,13 +23,13 @@ protected:
 
     AbstractConfiguration();
     AbstractConfiguration(JsonObject storedKeyValuePair);
-    ~AbstractConfiguration();
     size_t getStorageHeaderJsonCapacity();
     void storeStorageHeader(JsonObject keyValuePair);
     size_t getOcppMsgHeaderJsonCapacity();
     void storeOcppMsgHeader(JsonObject keyValuePair);
     bool isValid();
 public:
+    virtual ~AbstractConfiguration();
     bool setKey(const char *key);
     void printKey();
     void revokeWritePermission();

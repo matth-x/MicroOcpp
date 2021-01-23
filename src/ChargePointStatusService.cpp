@@ -31,6 +31,7 @@ ChargePointStatusService::~ChargePointStatusService() {
 }
 
 void ChargePointStatusService::loop() {
+  if (!booted) return;
   for (int i = 0; i < numConnectors; i++){
     StatusNotification *statusNotificationMsg = connectors[i]->loop();
     if (statusNotificationMsg != NULL) {
@@ -62,7 +63,7 @@ void ChargePointStatusService::authorize(){
 }
 
 void ChargePointStatusService::boot() {
-  
+  booted = true;
 }
 
 String &ChargePointStatusService::getUnboundIdTag() {

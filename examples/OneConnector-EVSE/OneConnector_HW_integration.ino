@@ -8,7 +8,7 @@
 
 #include <Arduino.h>
 
-#include <SingleConnectorEvseFacade.h>
+#include <ESP8266-OCPP.h>
 
 /*
  * Demonstration video: https://youtu.be/hfTh9GjG-N4
@@ -60,9 +60,8 @@ void EVSE_initialize() {
   
   bootNotification("GPIO-based CP model", "Greatest EVSE vendor", [] (JsonObject confMsg) {
     //This callback is executed when the .conf() response from the central system arrives
-    Serial.print(F("BootNotification was answered. Central system clock: "));
-    Serial.print(confMsg["currentTime"].as<String>());
-    Serial.print(F("\n"));
+    Serial.print(F("BootNotification was answered. Central System clock: "));
+    Serial.println(confMsg["currentTime"].as<String>());
 
     evseIsBooted = true;
   });
@@ -97,17 +96,17 @@ void EVSE_loop() {
       }
     }
 
-    if (digitalRead(EV_ENERGY_REQUEST) == EV_REQUESTS_ENERGY) {
-      if (!evRequestsEnergy) {
-        evRequestsEnergy = true;
-        startEvDrawsEnergy(); //Notify ChargePointStatusService about the new EVSE state. It then sends a Status Notification
-      }
-    } else {
-      if (evRequestsEnergy) {
-        evRequestsEnergy = false;
-        stopEvDrawsEnergy(); //Notify ChargePointStatusService about the new EVSE state. It then sends a Status Notification
-      }
+    bool previousState = evRequestsEnergy;
+
+    evRequestsEnergy = digitalRead(EV_ENERGY_REQUEST) == EV_REQUESTS_ENERGY;
+
+    if (previousState != evRequestsEnergy && transactionRunning) {
+        if (evRequestsEnergy)
+            Serial.print(F("[EVSE] EV requests energy. Send Status Notification\n"));
+        else
+            Serial.print(F("[EVSE] EV does not request energy anymore. Send Status Notification\n"));
     }
+
 }
 
 void onEvPlug() {
@@ -136,9 +135,9 @@ void onProvideAuthorization() {
 
     /*
      * Demonstrate the use of all event listeners that come with sending OCPP operations. At the beginning, you probably only need
-     * the first listener which the engine fires when the Central System has responded with a .conf() msg.
+     * the first listener which is called when the Central System has responded with a .conf() msg.
      */
-    authorize(idTag, [](JsonObject conf) {
+    authorize(idTag, [](JsonObject conf) { //onReceiveConfListener
         //execute when the .conf() response from the central system arrives (optional but very likely necessary for your integration)
         successfullyAuthorized = true;
 
@@ -148,12 +147,14 @@ void onProvideAuthorization() {
                 digitalWrite(EVSE_RELAY, EVSE_OFFERS_ENERGY);
             });
         }
-    }, []() {
-        //add further listeners (optional)
+    }, []() { //onAbortListener (optional)
+        //execute when the OCPP engine stops running this operation for any reason
         Serial.print(F("[EVSE] Could not authorize charging session! Aborted\n"));
-    }, []() { //(optional)
+    }, []() { //onTimeoutListener (optional)
+        //execute when the operation is not answered until the timeout expires (e.g. because the Wi-Fi network lost internet connection)
         Serial.print(F("[EVSE] Could not authorize charging session! Reason: timeout\n"));
-    }, [](const char *code, const char *description, JsonObject details) { //(optional)
+    }, [](const char *code, const char *description, JsonObject details) { //onReceiveErrorListener (optional)
+        //execute when the Central System returns a CallError
         Serial.print(F("[EVSE] Could not authorize charging session! Reason: received OCPP error: "));
         Serial.println(code);
     });
@@ -174,8 +175,7 @@ float EVSE_readChargeRate() { //estimation for EVSEs without power meter
 
 void EVSE_setChargingLimit(float limit) {
     Serial.print(F("[EVSE] New charging limit set. Got "));
-    Serial.print(limit);
-    Serial.print(F("\n"));
+    Serial.println(limit);
     chargingLimit = limit;
 
     if (chargingLimit <= 0.f) {
@@ -185,4 +185,8 @@ void EVSE_setChargingLimit(float limit) {
             digitalWrite(EVSE_RELAY, EVSE_OFFERS_ENERGY);
         }
     }
+}
+
+bool EVSE_evRequestsEnergy() {
+    return evRequestsEnergy;
 }

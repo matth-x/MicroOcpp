@@ -2,11 +2,11 @@
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
-#include "SingleConnectorEvseFacade.h"
+#include "ESP8266-OCPP.h"
 
 #include "Variants.h"
 
-#ifndef PROD
+#if USE_FACADE
 
 #include "OcppEngine.h"
 #include "MeteringService.h"
@@ -26,6 +26,8 @@ WebSocketsClient webSocket;
 MeteringService *meteringService;
 PowerSampler powerSampler;
 EnergySampler energySampler;
+bool (*evRequestsEnergySampler)() = NULL;
+bool evRequestsEnergyLastState = false;
 SmartChargingService *smartChargingService;
 ChargePointStatusService *chargePointStatusService;
 OnLimitChange onLimitChange;
@@ -48,7 +50,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
             Serial.printf("[WSc] Connected to url: %s\n", payload);
             break;
         case WStype_TEXT:
-            if (DEBUG_OUT) Serial.printf("[WSc] get text: %s\n", payload);
+            if (DEBUG_OUT || TRAFFIC_OUT) Serial.printf("[WSc] get text: %s\n", payload);
 
             if (!processWebSocketEvent((const char *) payload, length)) { //forward message to OcppEngine
                 Serial.print(F("[WSc] Processing WebSocket input event failed!\n"));
@@ -131,6 +133,24 @@ void OCPP_loop() {
     if (powerSampler != NULL || energySampler != NULL) {
         meteringService->loop();        //optional
     }
+
+    bool evRequestsEnergyNewState = true;
+    if (evRequestsEnergySampler != NULL) {
+        evRequestsEnergyNewState = evRequestsEnergySampler();
+    } else {
+        if (powerSampler != NULL) {
+            evRequestsEnergyNewState = powerSampler() >= 5.f;
+        }
+    }
+
+    if (!evRequestsEnergyLastState && evRequestsEnergyNewState) {
+        evRequestsEnergyLastState = true;
+        chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->startEvDrawsEnergy();
+    } else if (evRequestsEnergyLastState && !evRequestsEnergyNewState) {
+        evRequestsEnergyLastState = false;
+        chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->stopEvDrawsEnergy();
+    }
+
 }
 
 void setPowerActiveImportSampler(float power()) {
@@ -141,6 +161,11 @@ void setPowerActiveImportSampler(float power()) {
 void setEnergyActiveImportSampler(float energy()) {
     energySampler = energy;
     meteringService->setEnergySampler(OCPP_ID_OF_CONNECTOR, energySampler); //connectorId=1
+}
+
+void setEvRequestsEnergySampler(bool evRequestsEnergy()) {
+    evRequestsEnergySampler = evRequestsEnergy;
+
 }
 
 void setOnChargingRateLimitChange(void chargingRateChanged(float limit)) {
@@ -240,13 +265,13 @@ void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
     stopTransaction->setTimeout(new SuppressedTimeout());
 }
 
-void startEvDrawsEnergy() {
-    chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->startEvDrawsEnergy();
-}
+//void startEvDrawsEnergy() {
+//    chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->startEvDrawsEnergy();
+//}
 
-void stopEvDrawsEnergy() {
-    chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->stopEvDrawsEnergy();
-}
+//void stopEvDrawsEnergy() {
+//    chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->stopEvDrawsEnergy();
+//}
 
 int getTransactionId() {
     return chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->getTransactionId();

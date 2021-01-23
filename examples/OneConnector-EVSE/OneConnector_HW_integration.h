@@ -28,4 +28,6 @@ float EVSE_readChargeRate();
 
 void EVSE_setChargingLimit(float limit);
 
+bool EVSE_evRequestsEnergy();
+
 #endif

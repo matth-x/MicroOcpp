@@ -4,21 +4,52 @@
 
 #include "OcppOperationTimeout.h"
 
+void Timeout::setOnTimeoutListener(OnTimeoutListener onTimeout) {
+    if (onTimeout)
+        onTimeoutListener = onTimeout;
+}
+
+void Timeout::setOnAbortListener(OnAbortListener onAbort) {
+    if (onAbort)
+        onAbortListener = onAbort;
+}
+
+void Timeout::trigger() {
+    if (!triggered && timerIsExceeded()) {
+        triggered = true;
+        onTimeoutListener();
+        onAbortListener();
+    }
+}
+void Timeout::tick(bool sendingSuccessful) {
+    timerTick(sendingSuccessful);
+    trigger();
+}
+void Timeout::restart() {
+    triggered = false;
+    timerRestart();
+}
+bool Timeout::isExceeded() {
+    bool exceeded = timerIsExceeded();
+    trigger();
+    return exceeded;
+}
+
 FixedTimeout::FixedTimeout(ulong TIMEOUT_DURATION) : TIMEOUT_DURATION(TIMEOUT_DURATION) { 
     timeout_active = false;
 }
 
-void FixedTimeout::tick(bool sendingSuccessful) {
+void FixedTimeout::timerTick(bool sendingSuccessful) {
     if (!timeout_active) {
         timeout_active = true;
         timeout_start = millis();
     }
 }
-void FixedTimeout::restart() {
+void FixedTimeout::timerRestart() {
     timeout_start = millis();
     timeout_active = false;
 }
-bool FixedTimeout::isExceeded() {
+bool FixedTimeout::timerIsExceeded() {
     return timeout_active && millis() - timeout_start >= TIMEOUT_DURATION;
 }
 
@@ -27,7 +58,7 @@ OfflineSensitiveTimeout::OfflineSensitiveTimeout(ulong TIMEOUT_DURATION) : TIMEO
     timeout_active = false;
 }
 
-void OfflineSensitiveTimeout::tick(bool sendingSuccessful) {
+void OfflineSensitiveTimeout::timerTick(bool sendingSuccessful) {
     ulong t = millis();
     
     if (!timeout_active) {
@@ -42,12 +73,12 @@ void OfflineSensitiveTimeout::tick(bool sendingSuccessful) {
 
     last_tick = t;
 }
-void OfflineSensitiveTimeout::restart() {
+void OfflineSensitiveTimeout::timerRestart() {
     ulong t = millis();
     timeout_start = t;
     last_tick = t;
     timeout_active = false;
 }
-bool OfflineSensitiveTimeout::isExceeded() {
+bool OfflineSensitiveTimeout::timerIsExceeded() {
     return timeout_active && millis() - timeout_start >= TIMEOUT_DURATION;
 }

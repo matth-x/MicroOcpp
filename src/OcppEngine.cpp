@@ -247,6 +247,16 @@ void ocppEngine_loop(){
     }
   }
 
+  /*
+   * Activate timeout detection on the msgs other than the first in the queue.
+   */
+
+  for (int i = 1; i < initiatedOcppOperations.size(); i++) {
+    Timeout *timer = initiatedOcppOperations.get(i)->getTimeout();
+    if (timer)
+      timer->tick(false); //false: did not send a frame prior to calling tick
+  }
+
   /**
    * Work through the receivedOcppOperations queue. Start with the first element by calling conf() on it. 
    * If an ocppOperation is finished, it returns true on a conf() call, and is dequeued.

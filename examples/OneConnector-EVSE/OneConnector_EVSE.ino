@@ -12,7 +12,7 @@
 #include <ESP8266WiFiMulti.h>
 
 //ESP8266-OCPP modules
-#include <SingleConnectorEvseFacade.h>
+#include <ESP8266-OCPP.h>
 
 //GPIO-based HW integration (used as example)
 #include "OneConnector_HW_integration.h"
@@ -77,6 +77,10 @@ void setup() {
 
   setOnChargingRateLimitChange([](float limit) {
     EVSE_setChargingLimit(limit); //from the GPIO-charger example
+  });
+
+  setEvRequestsEnergySampler([]() {
+    return EVSE_evRequestsEnergy();
   });
 
   EVSE_initialize();

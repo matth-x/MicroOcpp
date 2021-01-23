@@ -2,14 +2,14 @@
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
-#ifndef SINGLE_CONNECTOR_EVSE_FACADE
-#define SINGLE_CONNECTOR_EVSE_FACADE
+#ifndef ESP8266OCPP_H
+#define ESP8266OCPP_H
 
 #include "OcppOperation.h"
 
 #include "Variants.h"
 
-#ifndef PROD
+#if USE_FACADE
 
 
 void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url);
@@ -29,6 +29,8 @@ void OCPP_loop();
 void setPowerActiveImportSampler(float power());
 
 void setEnergyActiveImportSampler(float energy());
+
+void setEvRequestsEnergySampler(bool evRequestsEnergy());
 
 /*
  * React on calls by the library's internal functions
@@ -51,13 +53,13 @@ void setOnChargingRateLimitChange(void chargingRateChanged(float limit));
  * Set the callbacks once in your setup() function.
  */
 
-void setOnSetChargingProfileRequest(void listener(JsonObject payload));
+void setOnSetChargingProfileRequest(void listener(JsonObject payload)); //optional
 
-void setOnRemoteStartTransactionSendConf(void listener(JsonObject payload));
+void setOnRemoteStartTransactionSendConf(void listener(JsonObject payload)); //important, energize the power plug here
 
-void setOnRemoteStopTransactionSendConf(void listener(JsonObject payload));
+void setOnRemoteStopTransactionSendConf(void listener(JsonObject payload)); //important, de-energize the power plug here
 
-void setOnResetSendConf(void listener(JsonObject payload));
+void setOnResetSendConf(void listener(JsonObject payload)); //important, reset your device here (i.e. call ESP.reset();)
 
 /*
  * Perform CP-initiated operations
@@ -89,9 +91,9 @@ void stopTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbor
  * Call these functions in your integration.
  */
 
-void startEvDrawsEnergy();
+//void startEvDrawsEnergy(); //<-- please use setEvRequestsEnergySampler(bool evRequestsEnergy());
 
-void stopEvDrawsEnergy();
+//void stopEvDrawsEnergy(); //<-- please use setEvRequestsEnergySampler(bool evRequestsEnergy());
 
 /*
  * Access information about the internal state of the library

@@ -36,6 +36,12 @@ void OcppOperation::setTimeout(Timeout *to){
   if (timeout)
     delete timeout;
   timeout = to;
+  timeout->setOnTimeoutListener(onTimeoutListener);
+  timeout->setOnAbortListener(onAbortListener);
+}
+
+Timeout *OcppOperation::getTimeout() {
+  return timeout;
 }
 
 void OcppOperation::setMessageID(String &id){
@@ -65,9 +71,7 @@ boolean OcppOperation::sendReq(){
     //cancel this operation
     Serial.print(F("[OcppOperation] "));
     Serial.print(ocppMessage->getOcppOperationType());
-    Serial.print(F(" timeout! Cancel operation\n"));
-    onTimeoutListener();
-    onAbortListener();
+    Serial.print(F(" has timed out! Discard operation\n"));
     return true;
   }
 
@@ -134,6 +138,8 @@ boolean OcppOperation::sendReq(){
 //      timeout_active = true;
 //      timeout_start = millis();
 //    } 
+    if (TRAFFIC_OUT) Serial.print(F("[OcppOperation] Send requirement: "));
+    if (TRAFFIC_OUT) Serial.println(out);
     retry_start = millis();
   } else {
     //webSocket is not able to put any data on TCP stack. Maybe because we're offline
@@ -291,14 +297,13 @@ boolean OcppOperation::sendConf(){
 
   if (wsSuccess) {
     if (operationSuccess) {
-      if (DEBUG_OUT) Serial.print(F("[OcppOperation] (Conf) JSON message: "));
-      if (DEBUG_OUT) Serial.print(out);
-      if (DEBUG_OUT) Serial.print('\n');
+      if (DEBUG_OUT || TRAFFIC_OUT) Serial.print(F("[OcppOperation] (Conf) JSON message: "));
+      if (DEBUG_OUT || TRAFFIC_OUT) Serial.println(out);
       onSendConfListener(confPayload->as<JsonObject>());
     } else {
-      if (DEBUG_OUT) Serial.print(F("[OcppOperation] (Conf) Error occured! JSON CallError message: "));
-      if (DEBUG_OUT) Serial.print(out);
-      if (DEBUG_OUT) Serial.print('\n');
+      Serial.print(F("[OcppOperation] (Conf) Error occured! JSON CallError message: "));
+      Serial.print(out);
+      Serial.print('\n');
       onAbortListener();
     }
   }

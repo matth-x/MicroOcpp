@@ -22,9 +22,9 @@
 typedef std::function<void(JsonObject payload)> OnReceiveConfListener;
 typedef std::function<void(JsonObject payload)> OnReceiveReqListener;
 typedef std::function<void(JsonObject payload)> OnSendConfListener;
-typedef std::function<void()> OnTimeoutListener;
+//typedef std::function<void()> OnTimeoutListener; //in OcppOperationTimeout. Workaround for circle include. Fix by extracting type definitions to new source file
 typedef std::function<void(const char *code, const char *description, JsonObject details)> OnReceiveErrorListener; //will be called if OCPP communication partner returns error code
-typedef std::function<void()> OnAbortListener; //will be called whenever the engine will stop trying to execute the operation normallythere is a timeout or error (onAbort = onTimeout || onReceiveError)
+//typedef std::function<void()> OnAbortListener; //will be called whenever the engine will stop trying to execute the operation normallythere is a timeout or error (onAbort = onTimeout || onReceiveError)
 
 
 class OcppOperation {
@@ -62,6 +62,8 @@ public:
   void setOcppMessage(OcppMessage *msg);
 
   void setTimeout(Timeout *timeout);
+
+  Timeout *getTimeout();
 
   /**
    * Sends the message(s) that belong to the OCPP Operation. This function puts a JSON message on the lower protocol layer.

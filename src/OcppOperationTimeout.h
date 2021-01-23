@@ -7,14 +7,27 @@
 
 #include <Arduino.h>
 
+typedef std::function<void()> OnTimeoutListener;
+typedef std::function<void()> OnAbortListener;
+
 class Timeout {
+private:
+    OnTimeoutListener onTimeoutListener = [] () {};
+    OnAbortListener onAbortListener = [] () {};
+    bool triggered = false;
+    void trigger();
 protected:
     Timeout() = default;
 public:
+    void setOnTimeoutListener(OnTimeoutListener onTimeoutListener);
+    void setOnAbortListener(OnAbortListener onAbortListener);
     virtual ~Timeout() = default;
-    virtual void tick(bool sendingSuccessful) {}
-    virtual void restart() {}
-    virtual bool isExceeded() {return false;}
+    void tick(bool sendingSuccessful);
+    virtual void timerTick(bool sendingSuccessful) = 0;
+    void restart();
+    virtual void timerRestart() = 0;
+    bool isExceeded();
+    virtual bool timerIsExceeded() = 0;
 };
 
 class FixedTimeout : public Timeout {
@@ -24,9 +37,9 @@ private:
     bool timeout_active;
 public:
     FixedTimeout(ulong TIMEOUT_EXPIRE);
-    void tick(bool sendingSuccessful);
-    void restart();
-    bool isExceeded();
+    void timerTick(bool sendingSuccessful);
+    void timerRestart();
+    bool timerIsExceeded();
 };
 
 class OfflineSensitiveTimeout : public Timeout {
@@ -37,17 +50,17 @@ private:
     bool timeout_active;
 public:
     OfflineSensitiveTimeout(ulong TIMEOUT_EXPIRE);
-    void tick(bool sendingSuccessful);
-    void restart();
-    bool isExceeded();
+    void timerTick(bool sendingSuccessful);
+    void timerRestart();
+    bool timerIsExceeded();
 };
 
 class SuppressedTimeout : public Timeout {
 public:
-    SuppressedTimeout() {}
-    void tick(bool sendingSuccessful) {}
-    void restart() {}
-    bool isExceeded() {return false;}
+    SuppressedTimeout() = default;
+    void timerTick(bool sendingSuccessful) {}
+    void timerRestart() {}
+    bool timerIsExceeded() {return false;}
 };
 
 #endif
