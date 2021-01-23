@@ -1,9 +1,9 @@
 # ESP8266-OCPP
-OCPP 1.6 Smart Charging client for the ESP8266
+OCPP 1.6J Smart Charging client for the ESP8266
 
-## Get the Smart Grid on your Home Charger :car::electric_plug::battery:
+## Make your EVSE ready for OCPP :car::electric_plug::battery:
 
-You can easily turn your ESP8266 into an OCPP charge point controller. This library provides the tools for the web communication part of your project.
+You can easily turn your ESP8266 into an OCPP charge point controller. This library allows your EVSE to communicate with an OCPP Central System and to participate in your Charging Network.
 
 :heavy_check_mark: Works with [SteVe](https://github.com/RWTH-i5-IDSG/steve)
 
@@ -13,13 +13,13 @@ You can easily turn your ESP8266 into an OCPP charge point controller. This libr
 
 ### Features
 
-- lets you initiate all supported OCPP operations
+- lets you initiate all supported OCPP operations (see the table at the bottom of this page)
 - responds to requests from the central system and notifies your client code by listeners
 - manages the EVSE data model as specified by OCPP and does a lot of the paperwork. For example, it sends `StatusNotification` or `MeterValues` messages by itself.
 
 You still have the responsibility (or freedom) to design the application logic of the charger and to integrate the HW components. This library doesn't
 
-- define physical reactions on the messages from the central system (CS). For example, when you initiate an Authorize request which the CS accepts, the library stores the new EVSE status but lets you define which action to take.
+- define physical reactions on the messages from the central system (CS). For example, when you initiate a `StartTransaction` request which the CS accepts, the library stores the new EVSE status including the `transactionId`, but lets you define which action to take.
 
 For simple chargers, the application logic + HW integration is far below 1000 LOCs.
 
@@ -29,13 +29,13 @@ Please take `OneConnector_EVSE.ino` (in the `examples/OneConnector-EVSE/` folder
 
 - To get the library running, you have to install all dependencies (see the list below).
 
-- In your project's `main` file, include `SingleConnectorEvseFacade.h`. This gives you a simple access to all functions.
+- In your project's `main` file, include `ESP8266-OCPP.h`. This gives you a simple access to all functions.
 
 - Before establishing an OCPP connection you have to ensure that your device has access to a Wi-Fi access point. All debug messages are printed on the standard serial (i.e. `Serial.print(F("debug msg"))`).
 
-- To create the OCPP connection, call `OCPP_initialize(String OCPP_HOST, uint16_t OCPP_PORT, String OCPP_URL)`. You need to insert the parameters according to the configuration of your central system. Internally, the library uses these parameters without further alteration to establish a WebSocket connection.
+- To connect to your OCPP Central System, call `OCPP_initialize(String OCPP_HOST, uint16_t OCPP_PORT, String OCPP_URL)`. You need to insert the address parameters according to the configuration of your central system. Internally, the library passes these parameters to the WebSocket object without further alteration.
 
-- In your `setup()` function, you can add the configuration functions from `SingleConnectorEvseFacade.h` to properly integrate your hardware. All configuration functions are documented in `SingleConnectorEvseFacade.h`. For example, to integrate the energy meter of your EVSE, add
+- In your `setup()` function, you can add the configuration functions from `ESP8266-OCPP.h` to properly integrate your hardware. All configuration functions are documented in `ESP8266-OCPP.h`. For example, to integrate the energy meter of your EVSE, add
 
 ```cpp
 setEnergyActiveImportSampler([]() {
@@ -45,27 +45,63 @@ setEnergyActiveImportSampler([]() {
 
 - Add `OCPP_loop()` to your `loop()` function.
 
-- There are a couple of OCPP operations you can already use. For example, to send a `Boot Notification`, use the function 
+- There are a couple of OCPP operations you can initialize on your EVSE. For example, to send a `Boot Notification`, use the function 
 ```cpp
-void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf)`
+void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf = NULL, ...)`
 ```
 
 In practice, it looks like this:
 
 ```cpp
-bootNotification("Greatest EVSE vendor", "GPIO-based CP model", [] (JsonObject confMsg) {
-    //This callback is executed when the .conf() response from the central system arrives
-    Serial.print(F("BootNotification was answered at "));
-    Serial.print(confMsg["currentTime"].as<String>());
-    Serial.print(F("\n"));
+void setup() {
 
-    evseIsBooted = true; //notify your hardware that the BootNotification.conf() has arrived
-});
+    ... //other code including the initialization of Wi-Fi and OCPP
+
+    bootNotification("GPIO-based CP model", "Greatest EVSE vendor", [] (JsonObject confMsg) {
+        //This callback is executed when the .conf() response from the central system arrives
+        Serial.print(F("BootNotification was answered. Central System clock: "));
+        Serial.println(confMsg["currentTime"].as<String>());
+    
+        evseIsBooted = true; //notify your hardware that the BootNotification.conf() has arrived
+    });
+    
+    ... //rest of setup() function; execuded immediately as bootNotification() is non-blocking
+}
 ```
 
 The parameters `chargePointModel` and `chargePointVendor` are equivalent to the parameters in the `Boot Notification` as defined by the OCPP specification. The last parameter `OnReceiveConfListener onConf` is a callback function which the library executes when the central system has processed the operation and the ESP has received the `.conf()` response. Here you can add your device-specific behavior, e.g. flash a confirmation LED or unlock the connectors. If you don't need it, the last parameter is optional.
 
-- The library also reacts on CS-initiated operations. You can add your own behavior there too. For example, when you want to flash a LED on receipt of a `Set Charging Profile` request, use the following function.
+For your first EVSE integration, the `onReceiveConfListener` is probably sufficient. For advanced EVSE projects, the other listeners likely become relevant:
+  
+- `onAbortListener`: will be called whenever the engine stops trying to finish an operation normally which was initiated by this device.
+
+- `onTimeoutListener`: will be executed when the operation is not answered until the timeout expires. Note that timeouts also trigger the `onAbortListener`.
+
+- `onReceiveErrorListener`: will be called when the Central System returns a CallError. Again, each error also triggers the `onAbortListener`.
+  
+Following example shows the correct usage of all listeners.
+
+
+```cpp
+authorize(idTag, [](JsonObject conf) { 
+    //onReceiveConfListener (optional but very likely necessary for your integration)
+    successfullyAuthorized = true; //example client code
+    ... //further client code, e.g. call startTransaction()
+}, []() { 
+    //onAbortListener (optional)
+    Serial.print(F("[EVSE] Could not authorize charging session! Aborted\n")); //flash error light etc.
+}, []() { 
+    //onTimeoutListener (optional)
+    Serial.print(F("[EVSE] Could not authorize charging session! Reason: timeout\n"));
+}, [](const char *code, const char *description, JsonObject details) { 
+    //onReceiveErrorListener (optional)
+    Serial.print(F("[EVSE] Could not authorize charging session! Reason: received OCPP error: "));
+    Serial.println(code);
+});
+
+```
+
+The library also reacts on CS-initiated operations. You can add your own behavior there too. For example, when you want to flash a LED on receipt of a `Set Charging Profile` request, use the following function.
 
 ```cpp
 void setOnSetChargingProfileRequest(void listener(JsonObject payload));
@@ -77,18 +113,46 @@ To get started quickly without EVSE hardware, you can use the charge point simul
 
 ## Dependencies
 
-- bblanchon/ArduinoJSON
-- Links2004/arduinoWebSockets
-- ivanseidel/LinkedList
-- PaulStoffregen/Time
+- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
+- [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets)
+- [ivanseidel/LinkedList](https://github.com/ivanseidel/LinkedList)
+- [PaulStoffregen/Time](https://github.com/PaulStoffregen/Time)
+
+## Supported operations
+
+| Operation name | supported | in progress | not supported yet |
+| -------------- | --------- | ----------- | ----------------- |
+| **Core profile** |
+| `Authorize` | :heavy_check_mark: |
+| `BootNotification` | :heavy_check_mark: |
+| `ChangeAvailability` |   |   | :heavy_multiplication_x: |
+| `ChangeConfiguration` |    |  merged soon |
+| `ClearCache` |   |   | :heavy_multiplication_x: |
+| `DataTransfer` | :heavy_check_mark: |
+| `GetConfiguration` |    |  merged soon |
+| `Heartbeat` | :heavy_check_mark: |
+| `MeterValues` | :heavy_check_mark: |
+| `RemoteStartTransaction` | :heavy_check_mark: |
+| `RemoteStopTransaction` |   | merged soon |
+| `Reset` | :heavy_check_mark: |
+| `StartTransaction` | :heavy_check_mark: |
+| `StatusNotification` | :heavy_check_mark: |
+| `StopTransaction` | :heavy_check_mark: |
+| `UnlockConnector` |   |   | :heavy_multiplication_x: |
+| **Smart charging profile** |
+| `ClearChargingProfile` |   |   | :heavy_multiplication_x: |
+| `GetCompositeSchedule` |   |   | :heavy_multiplication_x: |
+| `SetChargingProfile` | :heavy_check_mark: |
+| **Remote trigger profile** |
+| `TriggerMessage` | :heavy_check_mark: |
 
 ## Next development steps
 
 - [x] introduce a timeout mechanism
 - [x] some refactoring steps (e.g. separate RPC header from OCPP payload creation)
 - [x] add facade for rapid integration
-- [ ] introduce proper offline behavior and package loss / fault detection
-- [ ] handle fragmented input messages correctly
+- [x] introduce proper offline behavior and package loss / fault detection
+- [x] handle fragmented input messages correctly
 - [x] add support for multiple power connectors
 - [ ] reach full compliance to OCPP 1.6 Smart Charging Profile
 - [ ] **get ready for OCPP 2.0.1**
