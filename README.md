@@ -120,27 +120,27 @@ To get started quickly without EVSE hardware, you can use the charge point simul
 
 ## Supported operations
 
-| Operation name | supported | in progress | not supported yet |
-| -------------- | --------- | ----------- | ----------------- |
+| Operation name | supported | in progress | not supported |
+| -------------- | --------- | ----------- | ------------- |
 | **Core profile** |
 | `Authorize` | :heavy_check_mark: |
 | `BootNotification` | :heavy_check_mark: |
 | `ChangeAvailability` |   |   | :heavy_multiplication_x: |
-| `ChangeConfiguration` |    |  merged soon |
+| `ChangeConfiguration` |    |  pushed soon |
 | `ClearCache` |   |   | :heavy_multiplication_x: |
 | `DataTransfer` | :heavy_check_mark: |
-| `GetConfiguration` |    |  merged soon |
+| `GetConfiguration` |    |  pushed soon |
 | `Heartbeat` | :heavy_check_mark: |
 | `MeterValues` | :heavy_check_mark: |
 | `RemoteStartTransaction` | :heavy_check_mark: |
-| `RemoteStopTransaction` |   | merged soon |
+| `RemoteStopTransaction` |   | pushed soon |
 | `Reset` | :heavy_check_mark: |
 | `StartTransaction` | :heavy_check_mark: |
 | `StatusNotification` | :heavy_check_mark: |
 | `StopTransaction` | :heavy_check_mark: |
 | `UnlockConnector` |   |   | :heavy_multiplication_x: |
 | **Smart charging profile** |
-| `ClearChargingProfile` |   |   | :heavy_multiplication_x: |
+| `ClearChargingProfile` |   | pushed soon  |
 | `GetCompositeSchedule` |   |   | :heavy_multiplication_x: |
 | `SetChargingProfile` | :heavy_check_mark: |
 | **Remote trigger profile** |
@@ -156,3 +156,11 @@ To get started quickly without EVSE hardware, you can use the charge point simul
 - [x] add support for multiple power connectors
 - [ ] reach full compliance to OCPP 1.6 Smart Charging Profile
 - [ ] **get ready for OCPP 2.0.1**
+
+## Further help
+
+I hope this guide can help you to successfully integrate an OCPP controller into your EVSE. If something needs clarification or if you have a question, please send me a message.
+
+:envelope: : matthias A⊤ esp8266-ocpp DО⊤ com
+
+If your project is very complex or goes beyond integrating OCPP and you want professional assistance, you can contact me as well. I'm looking forward to hearing about your ideas!
