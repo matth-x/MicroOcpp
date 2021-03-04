@@ -64,6 +64,8 @@ boolean OcppOperation::sendReq(){
   /*
    * timeout behaviour
    * 
+   * TODO This is possibly a duplication of the timeout behavior in ocppEngine_loop(). Check if responsibility for timeout can be left to OcppEngine only
+   * 
    * if timeout, print out error message and treat this operation as completed (-> return true)
    */
   //if (timeout_active && millis() - timeout_start >= TIMEOUT_CANCEL){

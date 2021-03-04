@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include "MeteringService.h"
@@ -34,6 +34,7 @@ void MeteringService::loop(){
     MeterValues *meterValuesMsg = connectors[i]->loop();
     if (meterValuesMsg != NULL) {
       OcppOperation *meterValues = makeOcppOperation(webSocket, meterValuesMsg);
+      meterValues->setTimeout(new FixedTimeout(120000));
       initiateOcppOperation(meterValues);
     }
   }

@@ -255,6 +255,12 @@ void ocppEngine_loop(){
     Timeout *timer = initiatedOcppOperations.get(i)->getTimeout();
     if (timer)
       timer->tick(false); //false: did not send a frame prior to calling tick
+      if (timer->isExceeded()) {
+        Serial.print(F("[OcppEngine] Discarding operation due to timeout: "));
+        initiatedOcppOperations.get(i)->print_debug();
+        initiatedOcppOperations.remove(i);
+        delete initiatedOcppOperations.get(i);
+      }
   }
 
   /**
