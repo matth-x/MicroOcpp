@@ -65,7 +65,7 @@ void setup() {
         evseIsBooted = true; //notify your hardware that the BootNotification.conf() has arrived
     });
     
-    ... //rest of setup() function; execuded immediately as bootNotification() is non-blocking
+    ... //rest of setup() function; executed immediately as bootNotification() is non-blocking
 }
 ```
 
@@ -121,7 +121,7 @@ To get started quickly without EVSE hardware, you can use the charge point simul
 ## Supported operations
 
 | Operation name | supported | in progress | not supported |
-| -------------- | --------- | ----------- | ------------- |
+| -------------- | :---------: | :-----------: | :-------------: |
 | **Core profile** |
 | `Authorize` | :heavy_check_mark: |
 | `BootNotification` | :heavy_check_mark: |
@@ -154,6 +154,7 @@ To get started quickly without EVSE hardware, you can use the charge point simul
 - [x] introduce proper offline behavior and package loss / fault detection
 - [x] handle fragmented input messages correctly
 - [x] add support for multiple power connectors
+- [ ] add support for the ESP32
 - [ ] reach full compliance to OCPP 1.6 Smart Charging Profile
 - [ ] **get ready for OCPP 2.0.1**
 
@@ -163,4 +164,4 @@ I hope this guide can help you to successfully integrate an OCPP controller into
 
 :envelope: : matthias A⊤ esp8266-ocpp DО⊤ com
 
-If your project is very complex or goes beyond integrating OCPP and you want professional assistance, you can contact me as well. I'm looking forward to hearing about your ideas!
+If you want professional assistance for your EVSE project, you can contact me as well. I'm looking forward to hearing about your ideas!
