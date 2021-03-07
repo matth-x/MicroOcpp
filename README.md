@@ -1,5 +1,9 @@
-# ESP8266-OCPP
+# ArduinoOcpp
 OCPP 1.6J Smart Charging client for the ESP8266
+
+ESP32 & more coming soon
+
+_Former repo name: ESP8266-OCPP_
 
 ## Make your EVSE ready for OCPP :car::electric_plug::battery:
 
