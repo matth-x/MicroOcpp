@@ -126,14 +126,14 @@ To get started quickly without EVSE hardware, you can use the charge point simul
 | `Authorize` | :heavy_check_mark: |
 | `BootNotification` | :heavy_check_mark: |
 | `ChangeAvailability` |   |   | :heavy_multiplication_x: |
-| `ChangeConfiguration` |    |  pushed soon |
+| `ChangeConfiguration` | :heavy_check_mark: |
 | `ClearCache` |   |   | :heavy_multiplication_x: |
 | `DataTransfer` | :heavy_check_mark: |
-| `GetConfiguration` |    |  pushed soon |
+| `GetConfiguration` | :heavy_check_mark: |
 | `Heartbeat` | :heavy_check_mark: |
 | `MeterValues` | :heavy_check_mark: |
 | `RemoteStartTransaction` | :heavy_check_mark: |
-| `RemoteStopTransaction` |   | pushed soon |
+| `RemoteStopTransaction` | :heavy_check_mark: |
 | `Reset` | :heavy_check_mark: |
 | `StartTransaction` | :heavy_check_mark: |
 | `StatusNotification` | :heavy_check_mark: |
