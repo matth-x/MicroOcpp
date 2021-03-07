@@ -17,11 +17,9 @@
 #include "TriggerMessage.h"
 #include "RemoteStartTransaction.h"
 #include "OcppError.h"
-#if !USE_FACADE
 #include "RemoteStopTransaction.h"
 #include "ChangeConfiguration.h"
 #include "GetConfiguration.h"
-#endif
 #include "Reset.h"
 
 #include "OcppEngine.h"
@@ -150,7 +148,6 @@ OcppOperation *makeOcppOperation(WebSocketsClient *ws, const char *messageType) 
     if (onRemoteStartTransactionSendConf == NULL) 
       Serial.print(F("[SimpleOcppOperationFactory] Warning: RemoteStartTransaction is without effect when the sendConf listener is not set. Set a listener which initiates the StartTransaction operation.\n"));
     operation->setOnSendConfListener(onRemoteStartTransactionSendConf);
-#if !USE_FACADE
   } else if (!strcmp(messageType, "RemoteStopTransaction")) {
     msg = new RemoteStopTransaction();
     if (onRemoteStopTransactionSendConf == NULL) 
@@ -165,7 +162,6 @@ OcppOperation *makeOcppOperation(WebSocketsClient *ws, const char *messageType) 
     msg = new GetConfiguration();
     operation->setOnReceiveReqListener(onGetConfigurationReceiveReq);
     operation->setOnSendConfListener(onGetConfigurationSendConf);
-#endif
   } else if (!strcmp(messageType, "Reset")) {
     msg = new Reset();
     if (onResetSendConf == NULL)
