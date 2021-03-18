@@ -117,7 +117,7 @@ To get started quickly without EVSE hardware, you can use the charge point simul
 
 ## Dependencies
 
-- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
+- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson) (Please use version 6.17.2)
 - [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets)
 - [ivanseidel/LinkedList](https://github.com/ivanseidel/LinkedList)
 - [PaulStoffregen/Time](https://github.com/PaulStoffregen/Time)
@@ -166,6 +166,6 @@ To get started quickly without EVSE hardware, you can use the charge point simul
 
 I hope this guide can help you to successfully integrate an OCPP controller into your EVSE. If something needs clarification or if you have a question, please send me a message.
 
-:envelope: : matthias A⊤ esp8266-ocpp DО⊤ com
+:envelope: : matthias A⊤ arduino-ocpp DО⊤ com
 
 If you want professional assistance for your EVSE project, you can contact me as well. I'm looking forward to hearing about your ideas!
