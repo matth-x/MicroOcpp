@@ -3,11 +3,13 @@ OCPP 1.6J Smart Charging client for the ESP8266
 
 ESP32 & more coming soon
 
+Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
+
 _Former repo name: ESP8266-OCPP_
 
 ## Make your EVSE ready for OCPP :car::electric_plug::battery:
 
-You can easily turn your ESP8266 into an OCPP charge point controller. This library allows your EVSE to communicate with an OCPP Central System and to participate in your Charging Network.
+You can build an OCPP Charge Point controller using the popular, Wi-Fi enabled microcontrollers ESP8266, ESP32 and comparable. This library allows your EVSE to communicate with an OCPP Central System and to participate in your Charging Network.
 
 :heavy_check_mark: Works with [SteVe](https://github.com/RWTH-i5-IDSG/steve)
 
@@ -33,13 +35,13 @@ Please take `OneConnector_EVSE.ino` (in the `examples/OneConnector-EVSE/` folder
 
 - To get the library running, you have to install all dependencies (see the list below).
 
-- In your project's `main` file, include `ESP8266-OCPP.h`. This gives you a simple access to all functions.
+- In your project's `main` file, include `ArduinoOcpp.h`. This gives you a simple access to all functions.
 
 - Before establishing an OCPP connection you have to ensure that your device has access to a Wi-Fi access point. All debug messages are printed on the standard serial (i.e. `Serial.print(F("debug msg"))`).
 
 - To connect to your OCPP Central System, call `OCPP_initialize(String OCPP_HOST, uint16_t OCPP_PORT, String OCPP_URL)`. You need to insert the address parameters according to the configuration of your central system. Internally, the library passes these parameters to the WebSocket object without further alteration.
 
-- In your `setup()` function, you can add the configuration functions from `ESP8266-OCPP.h` to properly integrate your hardware. All configuration functions are documented in `ESP8266-OCPP.h`. For example, to integrate the energy meter of your EVSE, add
+- In your `setup()` function, you can add the configuration functions from `ArduinoOcpp.h` to properly integrate your hardware. All configuration functions are documented in `ArduinoOcpp.h`. For example, to integrate the energy meter of your EVSE, add
 
 ```cpp
 setEnergyActiveImportSampler([]() {
