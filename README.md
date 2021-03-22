@@ -1,5 +1,9 @@
-# ESP8266-OCPP
+# ArduinoOcpp
 OCPP 1.6J Smart Charging client for the ESP8266
+
+ESP32 & more coming soon
+
+_Former repo name: ESP8266-OCPP_
 
 ## Make your EVSE ready for OCPP :car::electric_plug::battery:
 
@@ -113,7 +117,7 @@ To get started quickly without EVSE hardware, you can use the charge point simul
 
 ## Dependencies
 
-- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
+- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson) (Please use version 6.17.2)
 - [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets)
 - [ivanseidel/LinkedList](https://github.com/ivanseidel/LinkedList)
 - [PaulStoffregen/Time](https://github.com/PaulStoffregen/Time)
@@ -126,14 +130,14 @@ To get started quickly without EVSE hardware, you can use the charge point simul
 | `Authorize` | :heavy_check_mark: |
 | `BootNotification` | :heavy_check_mark: |
 | `ChangeAvailability` |   |   | :heavy_multiplication_x: |
-| `ChangeConfiguration` |    |  pushed soon |
+| `ChangeConfiguration` | :heavy_check_mark: |
 | `ClearCache` |   |   | :heavy_multiplication_x: |
 | `DataTransfer` | :heavy_check_mark: |
-| `GetConfiguration` |    |  pushed soon |
+| `GetConfiguration` | :heavy_check_mark: |
 | `Heartbeat` | :heavy_check_mark: |
 | `MeterValues` | :heavy_check_mark: |
 | `RemoteStartTransaction` | :heavy_check_mark: |
-| `RemoteStopTransaction` |   | pushed soon |
+| `RemoteStopTransaction` | :heavy_check_mark: |
 | `Reset` | :heavy_check_mark: |
 | `StartTransaction` | :heavy_check_mark: |
 | `StatusNotification` | :heavy_check_mark: |
@@ -162,6 +166,6 @@ To get started quickly without EVSE hardware, you can use the charge point simul
 
 I hope this guide can help you to successfully integrate an OCPP controller into your EVSE. If something needs clarification or if you have a question, please send me a message.
 
-:envelope: : matthias A⊤ esp8266-ocpp DО⊤ com
+:envelope: : matthias A⊤ arduino-ocpp DО⊤ com
 
 If you want professional assistance for your EVSE project, you can contact me as well. I'm looking forward to hearing about your ideas!
