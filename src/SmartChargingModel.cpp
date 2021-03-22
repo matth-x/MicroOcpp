@@ -1,5 +1,5 @@
 // matth-x/ESP8266-OCPP
-// Copyright Matthias Akstaller 2019 - 2020
+// Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include "Variants.h"
@@ -47,7 +47,7 @@ ChargingSchedule::ChargingSchedule(JsonObject *json, ChargingProfileKindType cha
   if (!getTimeFromJsonDateString((*json)["startSchedule"] | "1970-01-01T00:00:00.000Z", &startSchedule)){
     //non-success
   }
-  schedulingUnit = (*json)["scheduleUnit"]; //either 'A' or 'W'
+  schedulingUnit = (*json)["scheduleUnit"] | 'W'; //either 'A' or 'W'
   
   chargingSchedulePeriod = LinkedList<ChargingSchedulePeriod*>();
   JsonArray periodJsonArray = (*json)["chargingSchedulePeriod"];

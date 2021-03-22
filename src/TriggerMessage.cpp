@@ -35,7 +35,7 @@ DynamicJsonDocument* TriggerMessage::createConf(){
   
   payload["status"] = statusMessage;
 
-  Serial.print(F("[TriggerMessage] Triggering messages is not implemented!\n"));
+  initiateOcppOperation(triggeredOperation);
 
   return doc;
 }

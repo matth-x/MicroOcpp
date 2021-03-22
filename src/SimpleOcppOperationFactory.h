@@ -34,4 +34,5 @@ void setOnChangeConfigurationSendConfListener(OnSendConfListener onSendConf);
 void setOnGetConfigurationReceiveRequestListener(OnReceiveReqListener onReceiveReq);
 void setOnGetConfigurationSendConfListener(OnSendConfListener onSendConf);
 void setOnResetSendConfListener(OnSendConfListener onSendConf);
+void setOnUpdateFirmwareReceiveRequestListener(OnReceiveReqListener onReceiveReq);
 #endif

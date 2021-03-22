@@ -12,12 +12,15 @@ private:
   String chargePointModel = String('\0');
   String chargePointVendor = String('\0');
   String chargePointSerialNumber = String('\0');
+  String firmwareVersion = String('\0');
 public:
   BootNotification();
 
   BootNotification(String &chargePointModel, String &chargePointVendor);
 
   BootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber);
+
+  BootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber, String &firmwareVersion);
 
   const char* getOcppOperationType();
 

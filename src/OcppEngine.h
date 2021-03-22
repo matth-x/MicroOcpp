@@ -7,7 +7,6 @@
 
 #include <ArduinoJson.h>
 #include <WebSocketsClient.h>
-#include <LinkedList.h>
 
 #include "OcppOperation.h"
 #include "SmartChargingService.h"

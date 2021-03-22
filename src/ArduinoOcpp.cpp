@@ -1,10 +1,8 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
-#if 0 //DEPRECATED! Everything has moved to ArduinoOcpp.cpp
-
-#include "ESP8266-OCPP.h"
+#include "ArduinoOcpp.h"
 
 #include "Variants.h"
 
@@ -22,6 +20,9 @@
 #include "StartTransaction.h"
 #include "StopTransaction.h"
 #include "OcppOperationTimeout.h"
+
+namespace ArduinoOcpp {
+namespace Facade {
 
 WebSocketsClient webSocket;
 
@@ -80,6 +81,11 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
             break;
     }
 }
+
+} //end namespace ArduinoOcpp::Facade
+} //end namespace ArduinoOcpp
+
+using namespace ArduinoOcpp::Facade;
 
 void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
     if (OCPP_initialized) {
@@ -279,5 +285,4 @@ int getTransactionId() {
     return chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->getTransactionId();
 }
 
-#endif
 #endif

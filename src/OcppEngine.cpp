@@ -7,14 +7,13 @@
 
 #include "OcppError.h"
 
-
 WebSocketsClient *wsocket;
 SmartChargingService *ocppEngine_smartChargingService;
 ChargePointStatusService *ocppEngine_chargePointStatusService;
 MeteringService *ocppEngine_meteringService;
 
-LinkedList<OcppOperation*> initiatedOcppOperations;
-LinkedList<OcppOperation*> receivedOcppOperations;
+std::vector<OcppOperation*> initiatedOcppOperations;
+std::vector<OcppOperation*> receivedOcppOperations;
 
 int JSON_DOC_SIZE;
 
@@ -25,9 +24,6 @@ size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_siz
 void ocppEngine_initialize(WebSocketsClient *ws, int DEFAULT_JSON_DOC_SIZE){
   wsocket = ws;
   JSON_DOC_SIZE = DEFAULT_JSON_DOC_SIZE; //TODO Find another approach where the Doc size is determined dynamically
-
-  initiatedOcppOperations = LinkedList<OcppOperation*>();
-  receivedOcppOperations = LinkedList<OcppOperation*>();
 }
 
 /**
@@ -167,7 +163,7 @@ void handleReqMessage(JsonDocument *json, OcppOperation *req) {
     Serial.print(F("[OcppEngine] handleReqMessage: invalid argument\n"));
     return;
   }
-  receivedOcppOperations.add(req);; //enqueue so loop() plans conf sending
+  receivedOcppOperations.push_back(req);; //enqueue so loop() plans conf sending
   req->receiveReq(json); //"fire" the operation
 }
 
@@ -179,14 +175,25 @@ void handleReqMessage(JsonDocument *json, OcppOperation *req) {
    * guaranteed to be received and therefore processed in the right order.
    */
 void handleConfMessage(JsonDocument *json){
+  #if 0
   for (int i = 0; i < initiatedOcppOperations.size(); i++){
-    OcppOperation *el = initiatedOcppOperations.get(i);
+    OcppOperation *el = initiatedOcppOperations.at(i);
     boolean success = el->receiveConf(json); //maybe rename to "consumed"?
     if (success){
-      initiatedOcppOperations.remove(i);
+      initiatedOcppOperations.(i);
       
       //TODO Review: are all recources freed here?
       delete el;
+      return;
+    }
+  }
+  #endif
+
+  for (auto operation = initiatedOcppOperations.begin(); operation != initiatedOcppOperations.end(); ++operation) {
+    boolean success = (*operation)->receiveConf(json); //maybe rename to "consumed"?
+    if (success) {
+      delete *operation;
+      initiatedOcppOperations.erase(operation);
       return;
     }
   }
@@ -197,6 +204,7 @@ void handleConfMessage(JsonDocument *json){
 
 
 void handleErrMessage(JsonDocument *json){
+  #if 0
   for (int i = 0; i < initiatedOcppOperations.size(); i++){
     OcppOperation *el = initiatedOcppOperations.get(i);
     boolean discardOperation = el->receiveError(json); //maybe rename to "consumed"?
@@ -205,6 +213,17 @@ void handleErrMessage(JsonDocument *json){
       
       //TODO Review: are all recources freed here?
       delete el;
+      return;
+    }
+  }
+  #endif
+
+  for (auto operation = initiatedOcppOperations.begin(); operation != initiatedOcppOperations.end(); ++operation){
+    boolean discardOperation = (*operation)->receiveError(json); //maybe rename to "consumed"?
+    if (discardOperation){
+      //TODO Review: are all recources freed here?
+      delete *operation;
+      initiatedOcppOperations.erase(operation);
       return;
     }
   }
@@ -220,7 +239,7 @@ void initiateOcppOperation(OcppOperation *o){
     delete o;
     return;
   }
-  initiatedOcppOperations.add(o);
+  initiatedOcppOperations.push_back(o);
 }
 
 void ocppEngine_loop(){
@@ -232,6 +251,7 @@ void ocppEngine_loop(){
    * can be dequeued and the following ocppOperation is processed.
    */
   
+  #if 0
   while (initiatedOcppOperations.size() > 0){
     OcppOperation *el = initiatedOcppOperations.get(0);
     boolean timeout = el->sendReq(); //The only reason to dequeue elements here is when a timeout occurs. Normally
@@ -246,11 +266,28 @@ void ocppEngine_loop(){
       break;
     }
   }
+  #endif
+
+  auto operation = initiatedOcppOperations.begin();
+  while (operation != initiatedOcppOperations.end()){
+    boolean timeout = (*operation)->sendReq(); //The only reason to dequeue elements here is when a timeout occurs. Normally
+    if (timeout){                              //the Conf msg processing routine dequeues finished elements
+      delete *operation;
+      operation = initiatedOcppOperations.erase(operation);
+      
+      //TODO Review: are all recources freed here?
+      //go on with the next element in the queue, which is now at initiatedOcppOperations[0]
+    } else {
+      //there is one operation pending right now, so quit this while-loop.
+      break;
+    }
+  }
 
   /*
    * Activate timeout detection on the msgs other than the first in the queue.
    */
 
+  #if 0
   for (int i = 1; i < initiatedOcppOperations.size(); i++) {
     Timeout *timer = initiatedOcppOperations.get(i)->getTimeout();
     if (timer)
@@ -262,12 +299,36 @@ void ocppEngine_loop(){
         delete initiatedOcppOperations.get(i);
       }
   }
+  #endif
 
+  operation = initiatedOcppOperations.begin();
+  while (operation != initiatedOcppOperations.end()) {
+    if (operation == initiatedOcppOperations.begin()){ //jump over the first element
+      ++operation; 
+      continue; 
+    } 
+    Timeout *timer = (*operation)->getTimeout();
+    if (!timer) {
+      ++operation; //no timeouts, nothing to do in this iteration
+      continue;
+    }
+    timer->tick(false); //false: did not send a frame prior to calling tick
+    if (timer->isExceeded()) {
+      Serial.print(F("[OcppEngine] Discarding operation due to timeout: "));
+      (*operation)->print_debug();
+      delete *operation;
+      operation = initiatedOcppOperations.erase(operation);
+    } else {
+      ++operation;
+    }
+  }
+  
   /**
    * Work through the receivedOcppOperations queue. Start with the first element by calling conf() on it. 
    * If an ocppOperation is finished, it returns true on a conf() call, and is dequeued.
    */
   
+  #if 0
   int i = 0;
   while (i < receivedOcppOperations.size()){
     OcppOperation *el = receivedOcppOperations.get(i);
@@ -282,6 +343,23 @@ void ocppEngine_loop(){
       //There will be another attempt to send this conf message in a future loop call.
       //Go on with the next element in the queue, which is now at receivedOcppOperations[i+1]
       i++;
+    }
+  }
+  #endif
+
+  operation = receivedOcppOperations.begin();
+  while (operation != receivedOcppOperations.end()){
+    boolean success = (*operation)->sendConf();
+    if (success){
+      delete *operation;
+      operation = receivedOcppOperations.erase(operation);
+
+      //TODO Review: are all recources freed here?
+      //go on with the next element in the queue, which is now at receivedOcppOperations[i]
+    } else {
+      //There will be another attempt to send this conf message in a future loop call.
+      //Go on with the next element in the queue, which is now at receivedOcppOperations[i+1]
+      ++operation; //TODO review: this makes conf's out-of-order. But if the first Op fails because of lacking RAM, this could save the device. 
     }
   }
 
@@ -335,6 +413,19 @@ MeteringService* getMeteringService() {
   return ocppEngine_meteringService;
 }
 
+/*
+ * Tries to recover the Ocpp-Operation header from a broken message.
+ * 
+ * Example input: 
+ * [2, "75705e50-682d-404e-b400-1bca33d41e19", "ChangeConfiguration", {"key":"now the msg breaks...
+ * 
+ * The Json library returns an error code when trying to deserialize that broken message. This
+ * function searches for the first occurence of the character '{' and writes "}]" after it.
+ * 
+ * Example output:
+ * [2, "75705e50-682d-404e-b400-1bca33d41e19", "ChangeConfiguration", {}]
+ *
+ */
 size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_size) {
     size_t res_len = 0;
     for (size_t i = 0; i < src_size && i < dst_size-3; i++) {

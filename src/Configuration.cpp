@@ -218,13 +218,59 @@ std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonStorageEntry() {
         return NULL;
     }
     size_t capacity = getStorageHeaderJsonCapacity()
-                + JSON_OBJECT_SIZE(1); //value
+                + JSON_OBJECT_SIZE(3); //type, header, value
     
     std::shared_ptr<DynamicJsonDocument> doc = std::make_shared<DynamicJsonDocument>(capacity);
     JsonObject keyValuePair = doc->to<JsonObject>();
+    keyValuePair["type"] = getSerializedTypeSpecifier();
     storeStorageHeader(keyValuePair);
     keyValuePair["value"] = value;
     return doc;
+}
+
+//template<>
+//std::shared_ptr<DynamicJsonDocument> Configuration<float>::toJsonStorageEntry() {
+//    if (!isValid() || toBeRemoved()) {
+//        return NULL;
+//    }
+//
+//    /*
+//     * need to enforce at least one decimal place
+//     */
+//    String serialized = String(value, 6); //6 decimal places, i.e. value = 42.1234 --> serialized = 42.123400
+//    unsigned int trunicated_len = serialized.length(); //without trailing 0
+//    char *trunicated_value = (char *) malloc(sizeof(char) * (trunicated_len + 1)); //malloc includes trailing 0
+//    serialized.toCharArray(trunicated_value, trunicated_len + 1);
+//    while (trunicated_len > 1) {
+//        unsigned int index_last = trunicated_len - 1;
+//        if (trunicated_value[index_last] == '0' && trunicated_value[index_last - 1] != '.') {
+//            trunicated_value[index_last] = '\0';
+//            trunicated_len--;
+//        } else {
+//            break;
+//        }
+//    }
+//
+//    size_t capacity = getStorageHeaderJsonCapacity()
+//                + JSON_OBJECT_SIZE(1)
+//                + trunicated_len + 1; //value
+//    
+//    std::shared_ptr<DynamicJsonDocument> doc = std::make_shared<DynamicJsonDocument>(capacity);
+//    JsonObject keyValuePair = doc->to<JsonObject>();
+//    storeStorageHeader(keyValuePair);
+//    keyValuePair["value"] = trunicated_value;
+//    free(trunicated_value);
+//    return doc;
+//}
+
+template<>
+const char *Configuration<int>::getSerializedTypeSpecifier() {
+    return "int";
+}
+
+template<>
+const char *Configuration<float>::getSerializedTypeSpecifier() {
+    return "float";
 }
 
 template<class T>
@@ -421,11 +467,12 @@ std::shared_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonStorageE
     }
 
     size_t capacity = getStorageHeaderJsonCapacity()
-                + JSON_OBJECT_SIZE(2) //header, value
+                + JSON_OBJECT_SIZE(3) //type, header, value
                 + value_size + 1; //TODO value_size already considers 0-terminator. Is "+1" really necessary here?
 
     std::shared_ptr<DynamicJsonDocument> doc = std::make_shared<DynamicJsonDocument>(capacity);
     JsonObject keyValuePair = doc->to<JsonObject>();
+    keyValuePair["type"] = getSerializedTypeSpecifier();
     storeStorageHeader(keyValuePair);
     keyValuePair["value"] = value;
     return doc;
@@ -716,6 +763,21 @@ bool configuration_init() {
         return false;
     }
 
+#if 0
+    Serial.print(F("[Configuration] DEBUG: dump configuration file contents: \n"));
+    while (file.available()) {
+        Serial.write(file.read());
+    }
+    Serial.print(F("[Configuration] DEBUG: end configuration file\n"));
+    file.close();
+    file = SPIFFS.open(CONFIGURATION_FN, "r");
+
+    if (!file) {
+        Serial.print(F("[Configuration] Unable to initialize: could not open configuration file\n"));
+        return false;
+    }
+#endif
+
     if (!file.available()) {
         Serial.print(F("[Configuration] Unable to initialize: empty file\n"));
         file.close();
@@ -768,7 +830,7 @@ bool configuration_init() {
         return false;
     }
 
-    size_t jsonCapacity = file_size + JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(configurations_len) + configurations_len * JSON_OBJECT_SIZE(2);
+    size_t jsonCapacity = file_size + JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(configurations_len) + configurations_len * JSON_OBJECT_SIZE(3);
 
     if (DEBUG_OUT) Serial.print(F("[Configuration] Config capacity = "));
     if (DEBUG_OUT) Serial.print(jsonCapacity);
@@ -788,13 +850,26 @@ bool configuration_init() {
     JsonArray configurations = config["configurations"];
     for (int i = 0; i < configurations.size(); i++) {
         JsonObject pair = configurations[i];
-        if (pair["value"].as<JsonVariant>().is<int>()){
+        const char *type = pair["type"] | "Undefined";
+
+        //backwards compatibility. Will be removed in a few months
+        if (!strcmp(type, "Undefined")) {
+            if (pair["value"].as<JsonVariant>().is<int>()){
+                type = "int";
+            } else if (pair["value"].as<JsonVariant>().is<float>()){
+                type = "float";
+            } else if (pair["value"].as<JsonVariant>().is<const char*>()){
+                type = "string";
+            }
+        } //end backwards compatibility
+
+        if (!strcmp(type, "int")){
             std::shared_ptr<Configuration<int>> configuration = std::make_shared<Configuration<int>>(pair);
             configuration_ints.add(configuration);
-        } else if (pair["value"].as<JsonVariant>().is<float>()){
+        } else if (!strcmp(type, "float")){
             std::shared_ptr<Configuration<float>> configuration = std::make_shared<Configuration<float>>(pair);
             configuration_floats.add(configuration);
-        } else if (pair["value"].as<JsonVariant>().is<const char*>()){
+        } else if (!strcmp(type, "string")){
             std::shared_ptr<Configuration<const char*>> configuration = std::make_shared<Configuration<const char*>>(pair);
             configuration_strings.add(configuration);
         } else {

@@ -21,6 +21,10 @@
 #include "ChangeConfiguration.h"
 #include "GetConfiguration.h"
 #include "Reset.h"
+#if !USE_FACADE
+#include "UpdateFirmware.h"
+#include "FirmwareStatusNotification.h"
+#endif
 
 #include "OcppEngine.h"
 
@@ -72,7 +76,7 @@ void setOnRemoteStopTransactionSendConfListener(OnSendConfListener listener){
 }
 
 OnSendConfListener onChangeConfigurationReceiveReq;
-void setOnChangeConfigurationReceiveRequestListener(OnSendConfListener listener){
+void setOnChangeConfigurationReceiveRequestListener(OnReceiveReqListener listener){
   onChangeConfigurationReceiveReq = listener;
 }
 
@@ -94,6 +98,11 @@ void setOnGetConfigurationSendConfListener(OnSendConfListener listener){
 OnSendConfListener onResetSendConf;
 void setOnResetSendConfListener(OnSendConfListener listener){
   onResetSendConf = listener;
+}
+
+OnReceiveReqListener onUpdateFirmwareReceiveReq;
+void setOnUpdateFirmwareReceiveRequestListener(OnReceiveReqListener listener) {
+  onUpdateFirmwareReceiveReq = listener;
 }
 
 OcppOperation* makeFromTriggerMessage(WebSocketsClient *ws, JsonObject payload) {
@@ -153,7 +162,6 @@ OcppOperation *makeOcppOperation(WebSocketsClient *ws, const char *messageType) 
     if (onRemoteStopTransactionSendConf == NULL) 
       Serial.print(F("[SimpleOcppOperationFactory] Warning: RemoteStopTransaction is without effect when the sendConf listener is not set. Set a listener which initiates the StopTransaction operation.\n"));
     operation->setOnSendConfListener(onRemoteStopTransactionSendConf);
-//#endif
   } else if (!strcmp(messageType, "ChangeConfiguration")) {
     msg = new ChangeConfiguration();
     operation->setOnReceiveReqListener(onChangeConfigurationReceiveReq);
@@ -167,6 +175,15 @@ OcppOperation *makeOcppOperation(WebSocketsClient *ws, const char *messageType) 
     if (onResetSendConf == NULL)
       Serial.print(F("[SimpleOcppOperationFactory] Warning: Reset is without effect when the sendConf listener is not set. Set a listener which resets your device.\n"));
     operation->setOnSendConfListener(onResetSendConf);
+#if !USE_FACADE
+  } else if (!strcmp(messageType, "UpdateFirmware")) {
+    msg = new UpdateFirmware();
+    if (onUpdateFirmwareReceiveReq == NULL)
+      Serial.print(F("[SimpleOcppOperationFactory] Warning: UpdateFirmware is without effect when the receiveReq listener is not set. Please implement a FW update routine for your device.\n"));
+    operation->setOnReceiveReqListener(onUpdateFirmwareReceiveReq);
+  } else if (!strcmp(messageType, "FirmwareStatusNotification")) {
+    msg = new FirmwareStatusNotification();
+#endif
   } else {
     Serial.println(F("[SimpleOcppOperationFactory] Operation not supported"));
     msg = new NotImplemented();

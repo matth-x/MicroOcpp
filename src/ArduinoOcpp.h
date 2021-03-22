@@ -2,18 +2,14 @@
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
-#ifndef ESP8266OCPP_H
-#define ESP8266OCPP_H
-
-#include "ArduinoOcpp.h"
-#if 0 //DEPRECATED! Everything was moved to ArduinoOcpp.h
+#ifndef ARDUINOOCPP_H
+#define ARDUINOOCPP_H
 
 #include "OcppOperation.h"
 
 #include "Variants.h"
 
 #if USE_FACADE
-
 
 void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url);
 
@@ -104,6 +100,5 @@ void stopTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbor
 
 int getTransactionId(); //returns the ID of the current transaction. Returns -1 if called before or after an transaction
 
-#endif
 #endif
 #endif

@@ -15,7 +15,7 @@ private:
     size_t key_size = 0; // key=NULL --> key_size = 0; key = "" --> key_size = 1; key = "A" --> key_size = 2
     bool rebootRequiredWhenChanged = false;
     bool toBeRemovedFlag = false;
-    bool writepermission = true;
+    bool writepermission = true; //write permission for ChangeConfiguration operation
 protected:
     uint16_t value_revision = 0; //number of changes of subclass-member "value". This will be important for the client to detect if there was a change
     bool initializedValue = false;
@@ -52,6 +52,7 @@ template <class T>
 class Configuration : public AbstractConfiguration {
 private:
     T value;
+    const char *getSerializedTypeSpecifier(); //returns "int" or "float" as written to the configuration Json file
 public:
     Configuration();
     Configuration(JsonObject storedKeyValuePair);
@@ -79,6 +80,7 @@ private:
     char *value = NULL;
     char *valueReadOnlyCopy = NULL;
     size_t value_size = 0;
+    const char *getSerializedTypeSpecifier() {return "string";}
 public:
     Configuration();
     Configuration(JsonObject storedKeyValuePair);
