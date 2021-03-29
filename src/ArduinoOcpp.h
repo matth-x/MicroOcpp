@@ -5,9 +5,16 @@
 #ifndef ARDUINOOCPP_H
 #define ARDUINOOCPP_H
 
-#include "OcppOperation.h"
+#include <ArduinoOcpp/Core/OcppOperation.h>
 
 #include "Variants.h"
+
+using ArduinoOcpp::OnReceiveConfListener;
+using ArduinoOcpp::OnReceiveReqListener;
+using ArduinoOcpp::OnSendConfListener;
+using ArduinoOcpp::OnAbortListener;
+using ArduinoOcpp::OnTimeoutListener;
+using ArduinoOcpp::OnReceiveErrorListener;
 
 #if USE_FACADE
 

@@ -8,18 +8,18 @@
 
 #if USE_FACADE
 
-#include "OcppEngine.h"
-#include "MeteringService.h"
-#include "SmartChargingService.h"
-#include "ChargePointStatusService.h"
-#include "SimpleOcppOperationFactory.h"
-#include "Configuration.h"
+#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
+#include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/Configuration.h>
 
-#include "Authorize.h"
-#include "BootNotification.h"
-#include "StartTransaction.h"
-#include "StopTransaction.h"
-#include "OcppOperationTimeout.h"
+#include <ArduinoOcpp/MessagesV16/Authorize.h>
+#include <ArduinoOcpp/MessagesV16/BootNotification.h>
+#include <ArduinoOcpp/MessagesV16/StartTransaction.h>
+#include <ArduinoOcpp/MessagesV16/StopTransaction.h>
+#include <ArduinoOcpp/Core/OcppOperationTimeout.h>
 
 namespace ArduinoOcpp {
 namespace Facade {
@@ -40,6 +40,7 @@ OnLimitChange onLimitChange;
 #define OCPP_ID_OF_CP 0
 boolean OCPP_initialized = false;
 
+#if 0 //moved to OcppConnection
 /*
    Called by Websocket library on incoming message on the internet link
 */
@@ -82,10 +83,14 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     }
 }
 
+#endif //moved to OcppConnection
+
 } //end namespace ArduinoOcpp::Facade
 } //end namespace ArduinoOcpp
 
+using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Facade;
+using namespace ArduinoOcpp::Ocpp16;
 
 void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
     if (OCPP_initialized) {
@@ -99,7 +104,7 @@ void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
     webSocket.begin(CS_hostname, CS_port, CS_url, "ocpp1.6");
 
     // event handler
-    webSocket.onEvent(webSocketEvent);
+    //webSocket.onEvent(webSocketEvent); //will be set in ocppEngine_initialize()
 
     // use HTTP Basic Authorization this is optional remove if not needed
     // webSocket.setAuthorization("user", "Password");
@@ -198,7 +203,7 @@ void setOnResetSendConf(void listener(JsonObject payload)) {
 }
 
 void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError) {
-    OcppOperation *authorize = makeOcppOperation(&webSocket,
+    OcppOperation *authorize = makeOcppOperation(
         new Authorize(idTag));
     initiateOcppOperation(authorize);
     if (onConf)
@@ -213,7 +218,7 @@ void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAb
 }
 
 void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError) {
-    OcppOperation *bootNotification = makeOcppOperation(&webSocket,
+    OcppOperation *bootNotification = makeOcppOperation(
         new BootNotification(chargePointModel, chargePointVendor));
     initiateOcppOperation(bootNotification);
     if (onConf)
@@ -228,7 +233,7 @@ void bootNotification(String chargePointModel, String chargePointVendor, OnRecei
 }
 
 void bootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber, OnReceiveConfListener onConf) {
-    OcppOperation *bootNotification = makeOcppOperation(&webSocket,
+    OcppOperation *bootNotification = makeOcppOperation(
         new BootNotification(chargePointModel, chargePointVendor, chargePointSerialNumber));
     initiateOcppOperation(bootNotification);
     bootNotification->setOnReceiveConfListener(onConf);
@@ -236,7 +241,7 @@ void bootNotification(String &chargePointModel, String &chargePointVendor, Strin
 }
 
 void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError) {
-    OcppOperation *startTransaction = makeOcppOperation(&webSocket,
+    OcppOperation *startTransaction = makeOcppOperation(
         new StartTransaction(OCPP_ID_OF_CONNECTOR));
     initiateOcppOperation(startTransaction);
     if (onConf)
@@ -251,7 +256,7 @@ void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnT
 }
 
 void startTransaction(String &idTag, OnReceiveConfListener onConf) {
-    OcppOperation *startTransaction = makeOcppOperation(&webSocket,
+    OcppOperation *startTransaction = makeOcppOperation(
         new StartTransaction(OCPP_ID_OF_CONNECTOR, idTag));
     initiateOcppOperation(startTransaction);
     startTransaction->setOnReceiveConfListener(onConf);
@@ -259,7 +264,7 @@ void startTransaction(String &idTag, OnReceiveConfListener onConf) {
 }
 
 void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError) {
-    OcppOperation *stopTransaction = makeOcppOperation(&webSocket,
+    OcppOperation *stopTransaction = makeOcppOperation(
         new StopTransaction(OCPP_ID_OF_CONNECTOR));
     initiateOcppOperation(stopTransaction);
     if (onConf)

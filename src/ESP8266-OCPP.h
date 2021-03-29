@@ -8,7 +8,7 @@
 #include "ArduinoOcpp.h"
 #if 0 //DEPRECATED! Everything was moved to ArduinoOcpp.h
 
-#include "OcppOperation.h"
+#include <ArduinoOcpp/Core/OcppOperation.h>
 
 #include "Variants.h"
 
