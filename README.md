@@ -5,6 +5,8 @@ ESP32 & more coming soon
 
 Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
 
+PlatformIO package: [ArduinoOcpp](https://platformio.org/lib/show/11975/ArduinoOcpp)
+
 _Former repo name: ESP8266-OCPP_
 
 ## Make your EVSE ready for OCPP :car::electric_plug::battery:
@@ -34,6 +36,8 @@ For simple chargers, the application logic + HW integration is far below 1000 LO
 Please take `OneConnector_EVSE.ino` (in the `examples/OneConnector-EVSE/` folder) as starting point for you first project. It is an integration of a simple GPIO-based charger with one connector. See `OneConnector_HW_integration.ino` in which the charger functions are mapped onto the OCPP library to get a feeling for how to use this library in practice. In this guide, I give a brief overview of the key concepts.
 
 - To get the library running, you have to install all dependencies (see the list below).
+
+   - In case you use PlatformIO, you can just add `matth-x/ArduinoOcpp` to your project using the PIO library manager.
 
 - In your project's `main` file, include `ArduinoOcpp.h`. This gives you a simple access to all functions.
 
@@ -123,6 +127,8 @@ To get started quickly without EVSE hardware, you can use the charge point simul
 - [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets)
 - [ivanseidel/LinkedList](https://github.com/ivanseidel/LinkedList)
 - [PaulStoffregen/Time](https://github.com/PaulStoffregen/Time)
+
+In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/ArduinoOcpp` in the PIO library manager.
 
 ## Supported operations
 
