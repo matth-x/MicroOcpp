@@ -5,12 +5,16 @@
 #ifndef VARIANTS_H
 #define VARIANTS_H
 
-
+#ifndef DEBUG_OUT
 #define DEBUG_OUT false   //Print debug messages on Serial. Gives more insights about inner processes
-#define TRAFFIC_OUT true  //Print OCPP communication on Serial. Gives insights about communication with the Central System
-//#define PROD
-#define USE_FACADE true
+#endif
 
-//#define OCPP_SERVER //comment out if this should be compiled as server <--- needs to be implemented again
+#ifndef TRAFFIC_OUT
+#define TRAFFIC_OUT true  //Print OCPP communication on Serial. Gives insights about communication with the Central System
+#endif
+
+#ifndef USE_FACADE
+#define USE_FACADE true
+#endif
 
 #endif
