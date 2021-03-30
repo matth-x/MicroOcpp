@@ -16,6 +16,10 @@ OcppClientSocket::OcppClientSocket(WebSocketsClient *wsock) : wsock(wsock) {
 
 }
 
+void OcppClientSocket::loop() {
+    wsock->loop();
+}
+
 bool OcppClientSocket::sendTXT(String &out) {
     return wsock->sendTXT(out);
 }
@@ -61,6 +65,10 @@ OcppServerSocket::OcppServerSocket(IPAddress &ip_addr) : ip_addr(ip_addr) {
 
 OcppServerSocket::~OcppServerSocket() {
     OcppServer::getInstance()->removeReceiveTXTcallback(this->ip_addr);
+}
+
+void OcppServerSocket::loop() {
+    //nothing here. The client must call the EspWiFi server loop function
 }
 
 bool OcppServerSocket::sendTXT(String &out) {

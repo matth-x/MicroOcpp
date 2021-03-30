@@ -17,6 +17,8 @@ public:
     OcppSocket();
     virtual ~OcppSocket() = default;
 
+    virtual void loop() = 0;
+
     virtual bool sendTXT(String &out) = 0;
 
     virtual void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) = 0; //ReceiveTXTcallback is defined in OcppServer.h
@@ -32,6 +34,8 @@ public:
     //OcppClientSocket(ReceiveTXTcallback &receiveTXT, std::shared_ptr<WebSocketsClient> wsock);
     OcppClientSocket(WebSocketsClient *wsock);
 
+    void loop();
+
     bool sendTXT(String &out);
 
     void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT);
@@ -43,6 +47,8 @@ private:
 public:
     OcppServerSocket(IPAddress &ip_addr);
     ~OcppServerSocket();
+
+    void loop();
 
     bool sendTXT(String &out);
 

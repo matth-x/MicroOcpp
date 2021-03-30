@@ -9,6 +9,7 @@
 #if USE_FACADE
 
 #include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
@@ -25,6 +26,7 @@ namespace ArduinoOcpp {
 namespace Facade {
 
 WebSocketsClient webSocket;
+OcppSocket *ocppSocket;
 
 MeteringService *meteringService;
 PowerSampler powerSampler;
@@ -118,7 +120,9 @@ void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
     // consider connection disconnected if pong is not received 2 times
     webSocket.enableHeartbeat(15000, 3000, 2); //comment this one out to for specific OCPP servers
 
-    ocppEngine_initialize(&webSocket, 2048); //default JSON document size = 2048
+    ocppSocket = new EspWiFi::OcppClientSocket(&webSocket);
+
+    ocppEngine_initialize(ocppSocket);
 
     smartChargingService = new SmartChargingService(16.0f, OCPP_NUMCONNECTORS); //default charging limit: 16A
     chargePointStatusService = new ChargePointStatusService(&webSocket, OCPP_NUMCONNECTORS); //Constructor adds instance to ocppEngine in constructor
@@ -134,7 +138,7 @@ void OCPP_loop() {
         return;
     }
 
-    webSocket.loop();                   //mandatory
+    //webSocket.loop();                 //moved to Core/OcppSocket
     ocppEngine_loop();                  //mandatory
 
     if (onLimitChange != NULL) {

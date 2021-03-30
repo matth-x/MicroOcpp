@@ -28,6 +28,7 @@ int JSON_DOC_SIZE;
 
 //size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_size);
 
+OcppSocket *ocppSock;
 OcppConnection *mConnection;
 
 } //end namespace OcppEngine
@@ -35,12 +36,8 @@ OcppConnection *mConnection;
 using namespace ArduinoOcpp::OcppEngine;
 using namespace ArduinoOcpp::EspWiFi;
 
-void ocppEngine_initialize(WebSocketsClient *ws, int DEFAULT_JSON_DOC_SIZE){
-  wsocket = ws;
-  JSON_DOC_SIZE = DEFAULT_JSON_DOC_SIZE; //TODO Find another approach where the Doc size is determined dynamically
-
-  OcppClientSocket *ocppSock = new OcppClientSocket(ws);
-
+void ocppEngine_initialize(OcppSocket *ocppSocket){
+  ocppSock = ocppSocket;
   mConnection = new OcppConnection(ocppSock);
 }
 
@@ -49,6 +46,7 @@ void initiateOcppOperation(OcppOperation *o) {
 }
 
 void ocppEngine_loop() {
+  ocppSock->loop();
   mConnection->loop();
 }
 

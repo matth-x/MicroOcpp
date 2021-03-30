@@ -6,16 +6,16 @@
 #define OCPPENGINE_H
 
 #include <ArduinoJson.h>
-#include <WebSocketsClient.h>
 
 #include <ArduinoOcpp/Core/OcppOperation.h>
+#include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 
 namespace ArduinoOcpp {
 
-void ocppEngine_initialize(WebSocketsClient *webSocket, int DEFAULT_JSON_DOC_SIZE);
+void ocppEngine_initialize(OcppSocket *ocppSocket);
 
 #if 0
 
