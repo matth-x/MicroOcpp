@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -8,7 +8,7 @@
 
 #include <Arduino.h>
 
-#include <ESP8266-OCPP.h>
+#include <ArduinoOcpp.h>
 
 /*
  * This module simulates user interaction at an EVSE. It runs a routine in which a
@@ -75,6 +75,8 @@ void EVSE_loop() {
         evRequestsEnergy = false;
         transactionRunning = false;
         Serial.print(F("\n[EVSE]      ---   Start test routines   ---\n"));
+        Serial.print(F("[EVSE] INFO: free heap (kB): "));
+        Serial.println(ESP.getFreeHeap());
         return;
     }
 }
