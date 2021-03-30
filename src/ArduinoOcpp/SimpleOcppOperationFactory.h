@@ -11,6 +11,8 @@
 
 namespace ArduinoOcpp {
 
+typedef std::function<OcppMessage*()> OcppMessageCreator;
+
 OcppOperation* makeFromTriggerMessage(JsonObject payload);
 
 OcppOperation* makeFromJson(JsonDocument *request);
@@ -20,6 +22,8 @@ OcppOperation* makeOcppOperation();
 OcppOperation* makeOcppOperation(OcppMessage *msg);
 
 OcppOperation *makeOcppOperation(const char *actionCode);
+
+void registerCustomOcppMessage(const char *messageType, OcppMessageCreator ocppMessageCreator, OnReceiveReqListener onReceiveReq = NULL);
 
 void setOnAuthorizeRequestListener(OnReceiveReqListener onReceiveReq);
 void setOnBootNotificationRequestListener(OnReceiveReqListener onReceiveReq);

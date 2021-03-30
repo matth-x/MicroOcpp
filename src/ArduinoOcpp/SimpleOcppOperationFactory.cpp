@@ -21,7 +21,7 @@
 #include <ArduinoOcpp/MessagesV16/ChangeConfiguration.h>
 #include <ArduinoOcpp/MessagesV16/GetConfiguration.h>
 #include <ArduinoOcpp/MessagesV16/Reset.h>
-#if !USE_FACADE
+#if 0
 #include "UpdateFirmware.h"
 #include "FirmwareStatusNotification.h"
 #endif
@@ -107,6 +107,38 @@ void setOnUpdateFirmwareReceiveRequestListener(OnReceiveReqListener listener) {
   onUpdateFirmwareReceiveReq = listener;
 }
 
+struct CustomOcppMessageCreatorEntry {
+    const char *messageType;
+    OcppMessageCreator creator;
+    OnReceiveReqListener onReceiveReq;
+};
+
+std::vector<CustomOcppMessageCreatorEntry> customMessagesRegistry;
+void registerCustomOcppMessage(const char *messageType, OcppMessageCreator ocppMessageCreator, OnReceiveReqListener onReceiveReq) {
+    customMessagesRegistry.erase(std::remove_if(customMessagesRegistry.begin(),
+                                               customMessagesRegistry.end(),
+            [messageType](CustomOcppMessageCreatorEntry &el) {
+                return !strcmp(messageType, el.messageType);
+            }),
+        customMessagesRegistry.end());
+
+    CustomOcppMessageCreatorEntry entry;
+    entry.messageType = messageType;
+    entry.creator  = ocppMessageCreator;
+    entry.onReceiveReq = onReceiveReq;
+
+    customMessagesRegistry.push_back(entry);
+}
+
+CustomOcppMessageCreatorEntry *makeCustomOcppMessage(const char *messageType) {
+    for (auto it = customMessagesRegistry.begin(); it != customMessagesRegistry.end(); ++it) {
+        if (!strcmp(it->messageType, messageType)) {
+            return &(*it);
+        }
+    }
+    return NULL;
+}
+
 OcppOperation* makeFromTriggerMessage(JsonObject payload) {
 
   //int connectorID = payload["connectorId"]; <-- not used in this implementation
@@ -130,7 +162,10 @@ OcppOperation *makeOcppOperation(const char *messageType) {
   OcppOperation *operation = makeOcppOperation();
   OcppMessage *msg = NULL;
 
-  if (!strcmp(messageType, "Authorize")) {
+  if (CustomOcppMessageCreatorEntry *entry = makeCustomOcppMessage(messageType)) {
+      msg = entry->creator();
+      operation->setOnReceiveReqListener(entry->onReceiveReq);
+  } else if (!strcmp(messageType, "Authorize")) {
     msg = new Ocpp16::Authorize();
     operation->setOnReceiveReqListener(onAuthorizeRequest);
   } else if (!strcmp(messageType, "BootNotification")) {
@@ -177,7 +212,7 @@ OcppOperation *makeOcppOperation(const char *messageType) {
     if (onResetSendConf == NULL)
       Serial.print(F("[SimpleOcppOperationFactory] Warning: Reset is without effect when the sendConf listener is not set. Set a listener which resets your device.\n"));
     operation->setOnSendConfListener(onResetSendConf);
-#if !USE_FACADE
+#if 0
   } else if (!strcmp(messageType, "UpdateFirmware")) {
     msg = new UpdateFirmware();
     if (onUpdateFirmwareReceiveReq == NULL)
