@@ -31,7 +31,7 @@ OcppSocket *ocppSocket;
 MeteringService *meteringService;
 PowerSampler powerSampler;
 EnergySampler energySampler;
-bool (*evRequestsEnergySampler)() = NULL;
+std::function<bool()> evRequestsEnergySampler = NULL; //bool (*evRequestsEnergySampler)() = NULL;
 bool evRequestsEnergyLastState = false;
 SmartChargingService *smartChargingService;
 ChargePointStatusService *chargePointStatusService;
@@ -170,43 +170,43 @@ void OCPP_loop() {
 
 }
 
-void setPowerActiveImportSampler(float power()) {
+void setPowerActiveImportSampler(std::function<float()> power) {
     powerSampler = power;
     meteringService->setPowerSampler(OCPP_ID_OF_CONNECTOR, powerSampler); //connectorId=1
 }
 
-void setEnergyActiveImportSampler(float energy()) {
+void setEnergyActiveImportSampler(std::function<float()> energy) {
     energySampler = energy;
     meteringService->setEnergySampler(OCPP_ID_OF_CONNECTOR, energySampler); //connectorId=1
 }
 
-void setEvRequestsEnergySampler(bool evRequestsEnergy()) {
+void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy) {
     evRequestsEnergySampler = evRequestsEnergy;
 
 }
 
-void setOnChargingRateLimitChange(void chargingRateChanged(float limit)) {
+void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged) {
     onLimitChange = chargingRateChanged;
     smartChargingService->setOnLimitChange(onLimitChange);
 }
 
-void setOnSetChargingProfileRequest(void listener(JsonObject payload)) {
-     setOnSetChargingProfileRequestListener(listener);
+void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq) {
+     setOnSetChargingProfileRequestListener(onReceiveReq);
 }
 
-void setOnRemoteStartTransactionSendConf(void listener(JsonObject payload)) {
-     setOnRemoteStartTransactionSendConfListener(listener);
+void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf) {
+     setOnRemoteStartTransactionSendConfListener(onSendConf);
 }
 
-void setOnRemoteStopTransactionSendConf(void listener(JsonObject payload)) {
-     setOnRemoteStopTransactionSendConfListener(listener);
+void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf) {
+     setOnRemoteStopTransactionSendConfListener(onSendConf);
 }
 
-void setOnResetSendConf(void listener(JsonObject payload)) {
-     setOnResetSendConfListener(listener);
+void setOnResetSendConf(OnSendConfListener onSendConf) {
+     setOnResetSendConfListener(onSendConf);
 }
 
-void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError) {
+void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
     OcppOperation *authorize = makeOcppOperation(
         new Authorize(idTag));
     initiateOcppOperation(authorize);
@@ -218,10 +218,13 @@ void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAb
         authorize->setOnTimeoutListener(onTimeout);
     if (onError)
         authorize->setOnReceiveErrorListener(onError);
-    authorize->setTimeout(new FixedTimeout(20000));
+    if (timeout)
+        authorize->setTimeout(timeout);
+    else
+        authorize->setTimeout(new FixedTimeout(20000));
 }
 
-void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError) {
+void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
     OcppOperation *bootNotification = makeOcppOperation(
         new BootNotification(chargePointModel, chargePointVendor));
     initiateOcppOperation(bootNotification);
@@ -233,7 +236,10 @@ void bootNotification(String chargePointModel, String chargePointVendor, OnRecei
         bootNotification->setOnTimeoutListener(onTimeout);
     if (onError)
         bootNotification->setOnReceiveErrorListener(onError);
-    bootNotification->setTimeout(new SuppressedTimeout());
+    if (timeout)
+        bootNotification->setTimeout(timeout);
+    else
+        bootNotification->setTimeout(new SuppressedTimeout());
 }
 
 void bootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber, OnReceiveConfListener onConf) {
@@ -244,7 +250,7 @@ void bootNotification(String &chargePointModel, String &chargePointVendor, Strin
     bootNotification->setTimeout(new SuppressedTimeout());
 }
 
-void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError) {
+void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
     OcppOperation *startTransaction = makeOcppOperation(
         new StartTransaction(OCPP_ID_OF_CONNECTOR));
     initiateOcppOperation(startTransaction);
@@ -256,7 +262,10 @@ void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnT
         startTransaction->setOnTimeoutListener(onTimeout);
     if (onError)
         startTransaction->setOnReceiveErrorListener(onError);
-    startTransaction->setTimeout(new FixedTimeout(20000));
+    if (timeout)
+        startTransaction->setTimeout(timeout);
+    else
+        startTransaction->setTimeout(new FixedTimeout(20000));
 }
 
 void startTransaction(String &idTag, OnReceiveConfListener onConf) {
@@ -267,7 +276,7 @@ void startTransaction(String &idTag, OnReceiveConfListener onConf) {
     startTransaction->setTimeout(new FixedTimeout(20000));
 }
 
-void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError) {
+void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
     OcppOperation *stopTransaction = makeOcppOperation(
         new StopTransaction(OCPP_ID_OF_CONNECTOR));
     initiateOcppOperation(stopTransaction);
@@ -279,7 +288,10 @@ void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
         stopTransaction->setOnTimeoutListener(onTimeout);
     if (onError)
         stopTransaction->setOnReceiveErrorListener(onError);
-    stopTransaction->setTimeout(new SuppressedTimeout());
+    if (timeout)
+        stopTransaction->setTimeout(timeout);
+    else
+        stopTransaction->setTimeout(new SuppressedTimeout());
 }
 
 //void startEvDrawsEnergy() {

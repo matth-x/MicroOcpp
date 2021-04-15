@@ -19,8 +19,12 @@
 
 namespace ArduinoOcpp {
 
-typedef float (*PowerSampler)();
-typedef float (*EnergySampler)();
+//typedef float (*PowerSampler)();
+//typedef float (*EnergySampler)();
+
+typedef std::function<float()> PowerSampler;
+typedef std::function<float()> EnergySampler;
+
 
 class MeteringService {
 private:

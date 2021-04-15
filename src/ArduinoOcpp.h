@@ -6,6 +6,7 @@
 #define ARDUINOOCPP_H
 
 #include <ArduinoOcpp/Core/OcppOperation.h>
+#include <ArduinoOcpp/Core/OcppOperationTimeout.h>
 
 #include "Variants.h"
 
@@ -15,6 +16,8 @@ using ArduinoOcpp::OnSendConfListener;
 using ArduinoOcpp::OnAbortListener;
 using ArduinoOcpp::OnTimeoutListener;
 using ArduinoOcpp::OnReceiveErrorListener;
+
+using ArduinoOcpp::Timeout;
 
 #if USE_FACADE
 
@@ -32,11 +35,11 @@ void OCPP_loop();
  * Set the callbacks once in your setup() function.
  */
 
-void setPowerActiveImportSampler(float power());
+void setPowerActiveImportSampler(std::function<float()> power);
 
-void setEnergyActiveImportSampler(float energy());
+void setEnergyActiveImportSampler(std::function<float()> energy);
 
-void setEvRequestsEnergySampler(bool evRequestsEnergy());
+void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
 
 /*
  * React on calls by the library's internal functions
@@ -47,7 +50,7 @@ void setEvRequestsEnergySampler(bool evRequestsEnergy());
  * Set the callbacks once in your setup() function.
  */
 
-void setOnChargingRateLimitChange(void chargingRateChanged(float limit));
+void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged);
 
 /*
  * React on CS-initiated operations
@@ -59,13 +62,13 @@ void setOnChargingRateLimitChange(void chargingRateChanged(float limit));
  * Set the callbacks once in your setup() function.
  */
 
-void setOnSetChargingProfileRequest(void listener(JsonObject payload)); //optional
+void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq); //optional
 
-void setOnRemoteStartTransactionSendConf(void listener(JsonObject payload)); //important, energize the power plug here
+void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf); //important, energize the power plug here
 
-void setOnRemoteStopTransactionSendConf(void listener(JsonObject payload)); //important, de-energize the power plug here
+void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf); //important, de-energize the power plug here
 
-void setOnResetSendConf(void listener(JsonObject payload)); //important, reset your device here (i.e. call ESP.reset();)
+void setOnResetSendConf(OnSendConfListener onSendConf); //important, reset your device here (i.e. call ESP.reset();)
 
 /*
  * Perform CP-initiated operations
@@ -80,13 +83,13 @@ void setOnResetSendConf(void listener(JsonObject payload)); //important, reset y
  * in any case.
  */
 
-void authorize(String &idTag, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL);
+void authorize(String &idTag, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
 
-void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL);
+void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
 
-void startTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL);
+void startTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
 
-void stopTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL);
+void stopTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
 
 /*
  * Provide hardware-related information II

@@ -14,7 +14,8 @@
 
 namespace ArduinoOcpp {
 
-typedef void (*OnLimitChange)(float newLimit);
+//typedef void (*OnLimitChange)(float newLimit);
+typedef std::function<void(float)> OnLimitChange;
 
 class SmartChargingService {
 private:
