@@ -9,6 +9,7 @@
 
 #include <ArduinoJson.h>
 #include <TimeLib.h>
+#include <functional>
 
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.h>
 

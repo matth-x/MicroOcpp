@@ -11,6 +11,8 @@
 
 #include <LinkedList.h>
 #include <WebSocketsClient.h>
+#include <functional>
+
 #include <ArduinoOcpp/TimeHelper.h>
 #include <EEPROMLayout.h>
 #include <Variants.h>
