@@ -159,7 +159,7 @@ Configuration<T>::Configuration(JsonObject storedKeyValuePair) : AbstractConfigu
 }
 
 template <class T>
-T Configuration<T>::operator=(T newVal) noexcept {
+T Configuration<T>::operator=(T newVal) {
 
     if (hasWritePermission()) {
         if (value != newVal) {
