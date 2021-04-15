@@ -121,7 +121,7 @@ void OcppServer::setReceiveTXTcallback(IPAddress &ip_addr, ReceiveTXTcallback &c
         (*result).processTXT = callback;
     } else {
         //no route found. Add new one
-        ReceiveTXTroute route {0};
+        ReceiveTXTroute route {};
         route.ip_addr = ip_addr;
         route.processTXT = callback;
         receiveTXTrouting.push_back(route);
