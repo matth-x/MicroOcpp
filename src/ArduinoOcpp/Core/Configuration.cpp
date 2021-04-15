@@ -749,6 +749,7 @@ std::shared_ptr<LinkedList<std::shared_ptr<AbstractConfiguration>>> getAllConfig
 }
 
 bool configuration_init() {
+#ifndef AO_DEACTIVATE_FLASH
     SPIFFSConfig cfg;
     cfg.setAutoFormat(true);
     SPIFFS.setConfig(cfg);
@@ -884,10 +885,12 @@ bool configuration_init() {
     file.close();
 
     Serial.println(F("[Configuration] Initialization successful\n"));
+#endif //ndef AO_DEACTIVATE_FLASH
     return true;
 }
 
 bool configuration_save() {
+#ifndef AO_DEACTIVATE_FLASH
 
     SPIFFS.remove(CONFIGURATION_FN);
 
@@ -942,6 +945,7 @@ bool configuration_save() {
     file.close();
     Serial.print(F("[Configuration] Saving config successful\n"));
 
+#endif //ndef AO_DEACTIVATE_FLASH
     return true;
 }
 
