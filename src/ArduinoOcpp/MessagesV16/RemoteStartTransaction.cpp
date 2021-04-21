@@ -22,7 +22,7 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
     connectorId = payload["connectorId"] | -1;
 
     if (payload.containsKey("idTag")) {
-        const char *idTag = payload["idTag"] | "Invalid";
+        String idTag = payload["idTag"] | String("Invalid");
         ChargePointStatusService *cpService = getChargePointStatusService();
         if (cpService != NULL) { 
             cpService->authorize(idTag);
