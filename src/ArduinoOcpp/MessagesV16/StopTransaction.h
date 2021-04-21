@@ -13,6 +13,7 @@ namespace Ocpp16 {
 class StopTransaction : public OcppMessage {
 private:
   int connectorId = 1;
+  int transactionId = -1;
 public:
   StopTransaction();
 

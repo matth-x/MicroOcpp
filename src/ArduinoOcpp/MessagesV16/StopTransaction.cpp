@@ -23,65 +23,65 @@ const char* StopTransaction::getOcppOperationType(){
 
 DynamicJsonDocument* StopTransaction::createReq() {
 
-  DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1));
-  JsonObject payload = doc->to<JsonObject>();
+    DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1));
+    JsonObject payload = doc->to<JsonObject>();
 
-  float meterStop = 0.0f;
-  if (getMeteringService() != NULL) {
-    meterStop = getMeteringService()->readEnergyActiveImportRegister(connectorId);
-  }
+    float meterStop = 0.0f;
+    if (getMeteringService() != NULL) {
+        meterStop = getMeteringService()->readEnergyActiveImportRegister(connectorId);
+    }
 
-  payload["meterStop"] = meterStop; //TODO meterStart is required to be in Wh, but measuring unit is probably inconsistent in implementation
-  char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
-  getJsonDateStringFromSystemTime(timestamp, JSONDATE_LENGTH);
-  payload["timestamp"] = timestamp;
+    payload["meterStop"] = meterStop; //TODO meterStart is required to be in Wh, but measuring unit is probably inconsistent in implementation
+    char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
+    getJsonDateStringFromSystemTime(timestamp, JSONDATE_LENGTH);
+    payload["timestamp"] = timestamp;
 
-  int transactionId = -1;
-  if (getConnectorStatus(connectorId) != NULL)
-    transactionId = getConnectorStatus(connectorId)->getTransactionId();
+    ConnectorStatus *connector = getConnectorStatus(connectorId);
+    if (connector != NULL) {
+        if (connector->getTransactionId() >= 0) {
+            //Connector is in a transaction (transactionId > 0) or in an undefinded state (transactionId == 0).
 
-  payload["transactionId"] = transactionId;
+            //End the charging session in each module.
 
-  if (getConnectorStatus(connectorId) != NULL)
-    getConnectorStatus(connectorId)->stopEnergyOffer();
+            transactionId = connector->getTransactionId();
 
-  return doc;
+            connector->stopEnergyOffer();
+            connector->stopTransaction();
+            connector->unauthorize();
+
+            SmartChargingService *scService = getSmartChargingService();
+            if (scService != NULL){
+                scService->endChargingNow();
+            }
+        } // else: Connector says that is is not involved in a transaction (anymore). It has been ended before, so do nothing
+    }
+
+    payload["transactionId"] = transactionId;
+
+    return doc;
 }
 
 void StopTransaction::processConf(JsonObject payload) {
 
-  //no need to process anything here
+    //no need to process anything here
 
-  ConnectorStatus *connector = getConnectorStatus(connectorId);
-
-  //cpStatusService->stopEnergyOffer(); //No. This should remain in createReq
-  if (connector != NULL) {
-    connector->stopTransaction(); //TODO maybe better in createReq
-    connector->unauthorize();
-  }
-
-  SmartChargingService *scService = getSmartChargingService();
-  if (scService != NULL){
-    scService->endChargingNow();
-  }
-
-  if (DEBUG_OUT) Serial.print(F("[StopTransaction] Request has been accepted!\n"));
-
+    if (DEBUG_OUT) Serial.print(F("[StopTransaction] Request has been accepted!\n"));
+    
 }
 
 
 void StopTransaction::processReq(JsonObject payload) {
-  /**
-   * Ignore Contents of this Req-message, because this is for debug purposes only
-   */
+    /**
+     * Ignore Contents of this Req-message, because this is for debug purposes only
+     */
 }
 
 DynamicJsonDocument* StopTransaction::createConf(){
-  DynamicJsonDocument* doc = new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1));
-  JsonObject payload = doc->to<JsonObject>();
+    DynamicJsonDocument* doc = new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1));
+    JsonObject payload = doc->to<JsonObject>();
 
-  JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
-  idTagInfo["status"] = "Accepted";
+    JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
+    idTagInfo["status"] = "Accepted";
 
-  return doc;
+    return doc;
 }
