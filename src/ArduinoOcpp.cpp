@@ -96,7 +96,7 @@ using namespace ArduinoOcpp::Ocpp16;
 
 void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
     if (OCPP_initialized) {
-        Serial.print(F("[SingleConnectorEvseFacade] Error: cannot call OCPP_initialize() two times! If you want to reconfigure the library, please restart your ESP\n"));
+        Serial.print(F("[ArduinoOcpp] Error: cannot call OCPP_initialize() two times! If you want to reconfigure the library, please restart your ESP\n"));
         return;
     }
 
@@ -122,6 +122,20 @@ void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
 
     ocppSocket = new EspWiFi::OcppClientSocket(&webSocket);
 
+    OCPP_initialize(ocppSocket);
+}
+
+void OCPP_initialize(OcppSocket *ocppSocket) {
+    if (OCPP_initialized) {
+        Serial.print(F("[ArduinoOcpp] Error: cannot call OCPP_initialize() two times! If you want to reconfigure the library, please restart your ESP\n"));
+        return;
+    }
+
+    if (!ocppSocket) {
+        Serial.print(F("[ArduinoOcpp] OCPP_initialize(ocppSocket): ocppSocket cannot be NULL!\n"));
+        return;
+    }
+
     ocppEngine_initialize(ocppSocket);
 
     smartChargingService = new SmartChargingService(16.0f, OCPP_NUMCONNECTORS); //default charging limit: 16A
@@ -133,7 +147,7 @@ void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
 
 void OCPP_loop() {
     if (!OCPP_initialized) {
-        Serial.print(F("[SingleConnectorEvseFacade] Error: you must call OCPP_initialize before calling the loop() function!\n"));
+        Serial.print(F("[ArduinoOcpp] Error: you must call OCPP_initialize before calling the loop() function!\n"));
         delay(200); //Prevent this error message from flooding the Serial monitor.
         return;
     }

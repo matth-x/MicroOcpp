@@ -23,6 +23,8 @@ using ArduinoOcpp::Timeout;
 
 void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url);
 
+void OCPP_initialize(ArduinoOcpp::OcppSocket *ocppSocket);
+
 void OCPP_loop();
 
 /*
