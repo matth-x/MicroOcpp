@@ -74,14 +74,14 @@ void loop() {
     /*
      * Detect if something physical happened at your EVSE and trigger the corresponding OCPP messages
      */
-    if (/* RFID chip detected!*/ false) {
+    if (/* RFID chip detected? */ false) {
         String idTag = "my-id-tag"; //e.g. idTag = RFID.readIdTag();
         authorize(idTag);
     }
     
-    if (/* EV plugged in! */ false) {
+    if (/* EV plugged in? */ false) {
         startTransaction([] (JsonObject payload) {
-            //Callback: Central System has answered. Energize your EV plug and flash a confirmation light if you want.
+            //Callback: Central System has answered. Energize your EV plug inside this callback and flash a confirmation light if you want.
             Serial.print(F("[main] Started OCPP transaction. EV plug energized\n"));
         });
     }
