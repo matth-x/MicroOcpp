@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -261,7 +261,7 @@ ChargingProfile *SmartChargingService::updateProfileStack(JsonObject *json){
 }
 
 bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile *chargingProfile) {
-#ifndef AO_DEACTIVATE_FLASH
+#if !defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
 
   String profileFN = PROFILE_FN_PREFIX;
 
@@ -317,7 +317,7 @@ bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile
 }
 
 bool SmartChargingService::loadProfiles() {
-#ifndef AO_DEACTIVATE_FLASH
+#if !defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
     const int N_PURPOSES = 3;
     ChargingProfilePurposeType purposes[N_PURPOSES] = {ChargingProfilePurposeType::ChargePointMaxProfile, ChargingProfilePurposeType::TxDefaultProfile, ChargingProfilePurposeType::TxProfile};
 

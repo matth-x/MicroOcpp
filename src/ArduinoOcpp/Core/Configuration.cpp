@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -749,7 +749,7 @@ std::shared_ptr<LinkedList<std::shared_ptr<AbstractConfiguration>>> getAllConfig
 }
 
 bool configuration_init() {
-#ifndef AO_DEACTIVATE_FLASH
+#if !defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
     SPIFFSConfig cfg;
     cfg.setAutoFormat(true);
     SPIFFS.setConfig(cfg);
@@ -890,7 +890,7 @@ bool configuration_init() {
 }
 
 bool configuration_save() {
-#ifndef AO_DEACTIVATE_FLASH
+#if !defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
 
     SPIFFS.remove(CONFIGURATION_FN);
 
