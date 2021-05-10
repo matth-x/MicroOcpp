@@ -9,6 +9,10 @@
 
 #include <ArduinoOcpp/Core/Configuration.h>
 
+#if defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
+#include "SPIFFS.h"
+#endif
+
 #define SINGLE_CONNECTOR_ID 1
 
 #define PROFILE_FN_PREFIX "/ocpp-"
@@ -261,7 +265,7 @@ ChargingProfile *SmartChargingService::updateProfileStack(JsonObject *json){
 }
 
 bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile *chargingProfile) {
-#if !defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
+#ifndef AO_DEACTIVATE_FLASH
 
   String profileFN = PROFILE_FN_PREFIX;
 
@@ -317,7 +321,7 @@ bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile
 }
 
 bool SmartChargingService::loadProfiles() {
-#if !defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
+#ifndef AO_DEACTIVATE_FLASH
     const int N_PURPOSES = 3;
     ChargingProfilePurposeType purposes[N_PURPOSES] = {ChargingProfilePurposeType::ChargePointMaxProfile, ChargingProfilePurposeType::TxDefaultProfile, ChargingProfilePurposeType::TxProfile};
 

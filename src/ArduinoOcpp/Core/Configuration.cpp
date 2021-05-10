@@ -10,7 +10,11 @@
 #include <LinkedList.h>
 #include <ArduinoJson.h>
 
+#if defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
+#include "SPIFFS.h"
+#else
 #include <FS.h>
+#endif
 
 #define MAX_FILE_SIZE 4000
 #define MAX_CONFIGURATIONS 50
@@ -749,7 +753,15 @@ std::shared_ptr<LinkedList<std::shared_ptr<AbstractConfiguration>>> getAllConfig
 }
 
 bool configuration_init() {
-#if !defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
+#ifndef AO_DEACTIVATE_FLASH
+
+#if defined(ESP32)
+    if(!SPIFFS.begin(true)){
+        Serial.println("An Error has occurred while mounting SPIFFS");
+        return false;
+    }
+#else
+    //ESP8266
     SPIFFSConfig cfg;
     cfg.setAutoFormat(true);
     SPIFFS.setConfig(cfg);
@@ -758,6 +770,7 @@ bool configuration_init() {
         Serial.print(F("[Configuration] Unable to initialize: unable to mount FS\n"));
         return false;
     }
+#endif
 
     File file = SPIFFS.open(CONFIGURATION_FN, "r");
 
@@ -890,7 +903,7 @@ bool configuration_init() {
 }
 
 bool configuration_save() {
-#if !defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
+#ifndef AO_DEACTIVATE_FLASH
 
     SPIFFS.remove(CONFIGURATION_FN);
 
