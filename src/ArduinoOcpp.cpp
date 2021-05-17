@@ -212,6 +212,10 @@ void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf) {
      setOnRemoteStartTransactionSendConfListener(onSendConf);
 }
 
+void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq) {
+     setOnRemoteStopTransactionReceiveRequestListener(onReceiveReq);
+}
+
 void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf) {
      setOnRemoteStopTransactionSendConfListener(onSendConf);
 }

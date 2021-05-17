@@ -72,6 +72,11 @@ void setOnRemoteStartTransactionSendConfListener(OnSendConfListener listener){
   onRemoteStartTransactionSendConf = listener;
 }
 
+OnReceiveReqListener onRemoteStopTransactionReceiveRequest;
+void setOnRemoteStopTransactionReceiveRequestListener(OnReceiveReqListener listener){
+  onRemoteStopTransactionReceiveRequest = listener;
+}
+
 OnSendConfListener onRemoteStopTransactionSendConf;
 void setOnRemoteStopTransactionSendConfListener(OnSendConfListener listener){
   onRemoteStopTransactionSendConf = listener;
@@ -197,7 +202,8 @@ OcppOperation *makeOcppOperation(const char *messageType) {
   } else if (!strcmp(messageType, "RemoteStopTransaction")) {
     msg = new Ocpp16::RemoteStopTransaction();
     if (onRemoteStopTransactionSendConf == NULL) 
-      Serial.print(F("[SimpleOcppOperationFactory] Warning: RemoteStopTransaction is without effect when the sendConf listener is not set. Set a listener which initiates the StopTransaction operation.\n"));
+      Serial.print(F("[SimpleOcppOperationFactory] Warning: RemoteStopTransaction is without effect when no sendConf listener is set. Set a listener which initiates the StopTransaction operation.\n"));
+    operation->setOnReceiveReqListener(onRemoteStopTransactionReceiveRequest);
     operation->setOnSendConfListener(onRemoteStopTransactionSendConf);
   } else if (!strcmp(messageType, "ChangeConfiguration")) {
     msg = new Ocpp16::ChangeConfiguration();
