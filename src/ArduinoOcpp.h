@@ -112,5 +112,7 @@ void stopTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbor
 
 int getTransactionId(); //returns the ID of the current transaction. Returns -1 if called before or after an transaction
 
+bool existsUnboundIdTag(); //returns if the user has given a valid Ocpp Charging Card which is not used for a transaction yet
+
 #endif
 #endif

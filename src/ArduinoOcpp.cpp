@@ -320,4 +320,8 @@ int getTransactionId() {
     return chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->getTransactionId();
 }
 
+bool existsUnboundIdTag() {
+    return chargePointStatusService->existsUnboundAuthorization();
+}
+
 #endif
