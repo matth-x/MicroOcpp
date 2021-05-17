@@ -116,7 +116,7 @@ std::shared_ptr<Configuration<const char *>> getConfiguration_string(const char 
 std::shared_ptr<AbstractConfiguration> getConfiguration(const char *key);
 std::shared_ptr<LinkedList<std::shared_ptr<AbstractConfiguration>>> getAllConfigurations();
 
-bool configuration_init();
+bool configuration_init(bool formatOnFail);
 bool configuration_save();
 
 } //end namespace ArduinoOcpp

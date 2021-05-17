@@ -11,9 +11,11 @@
 #include <ArduinoJson.h>
 
 #if defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
-#include "SPIFFS.h"
+#include <LITTLEFS.h>
+#define USE_FS LITTLEFS
 #else
 #include <FS.h>
+#define USE_FS SPIFFS
 #endif
 
 #define MAX_FILE_SIZE 4000
@@ -22,7 +24,7 @@
 #define KEY_MAXLEN 60
 #define STRING_VAL_MAXLEN 500
 
-#define CONFIGURATION_FN "/esp8266-ocpp.cnf"
+#define CONFIGURATION_FN "/arduino-ocpp.cnf"
 
 #define DEV_CONF true
 
@@ -752,18 +754,18 @@ std::shared_ptr<LinkedList<std::shared_ptr<AbstractConfiguration>>> getAllConfig
     return result;
 }
 
-bool configuration_init() {
+bool configuration_init(bool formatOnFail) {
 #ifndef AO_DEACTIVATE_FLASH
 
 #if defined(ESP32)
-    if(!SPIFFS.begin(true)){
-        Serial.println("An Error has occurred while mounting SPIFFS");
+    if(!LITTLEFS.begin(formatOnFail)) {
+        Serial.println("[Configuration] An Error has occurred while mounting LITTLEFS");
         return false;
     }
 #else
     //ESP8266
     SPIFFSConfig cfg;
-    cfg.setAutoFormat(true);
+    cfg.setAutoFormat(formatOnFail);
     SPIFFS.setConfig(cfg);
 
     if (!SPIFFS.begin()) {
@@ -772,7 +774,7 @@ bool configuration_init() {
     }
 #endif
 
-    File file = SPIFFS.open(CONFIGURATION_FN, "r");
+    File file = USE_FS.open(CONFIGURATION_FN, "r");
 
     if (!file) {
         Serial.print(F("[Configuration] Unable to initialize: could not open configuration file\n"));
@@ -905,9 +907,9 @@ bool configuration_init() {
 bool configuration_save() {
 #ifndef AO_DEACTIVATE_FLASH
 
-    SPIFFS.remove(CONFIGURATION_FN);
+    USE_FS.remove(CONFIGURATION_FN);
 
-    File file = SPIFFS.open(CONFIGURATION_FN, "w");
+    File file = USE_FS.open(CONFIGURATION_FN, "w");
 
     if (!file) {
         Serial.print(F("[Configuration] Unable to save: could not open configuration file\n"));

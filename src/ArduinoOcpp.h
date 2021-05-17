@@ -69,7 +69,7 @@ void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq); //option
 void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf); //important, energize the power plug here
 
 void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf); //important, de-energize the power plug here
-void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onSendConf); //optional, to de-energize the power plug immediately
+void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq); //optional, to de-energize the power plug immediately
 
 void setOnResetSendConf(OnSendConfListener onSendConf); //important, reset your device here (i.e. call ESP.reset();)
 

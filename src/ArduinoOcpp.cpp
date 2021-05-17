@@ -100,7 +100,8 @@ void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
         return;
     }
 
-    configuration_init(); //call before each other library call
+    const bool FORMAT_FS_ON_FAIL = true;
+    configuration_init(FORMAT_FS_ON_FAIL); //call before each other library call
 
     // server address, port and URL
     webSocket.begin(CS_hostname, CS_port, CS_url, "ocpp1.6");
