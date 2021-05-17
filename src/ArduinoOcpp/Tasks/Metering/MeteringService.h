@@ -11,6 +11,8 @@
 
 #include <LinkedList.h>
 #include <WebSocketsClient.h>
+#include <functional>
+
 #include <ArduinoOcpp/TimeHelper.h>
 #include <EEPROMLayout.h>
 #include <Variants.h>
@@ -19,8 +21,12 @@
 
 namespace ArduinoOcpp {
 
-typedef float (*PowerSampler)();
-typedef float (*EnergySampler)();
+//typedef float (*PowerSampler)();
+//typedef float (*EnergySampler)();
+
+typedef std::function<float()> PowerSampler;
+typedef std::function<float()> EnergySampler;
+
 
 class MeteringService {
 private:

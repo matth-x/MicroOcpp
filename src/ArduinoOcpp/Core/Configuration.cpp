@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -10,7 +10,11 @@
 #include <LinkedList.h>
 #include <ArduinoJson.h>
 
+#if defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
+#include "SPIFFS.h"
+#else
 #include <FS.h>
+#endif
 
 #define MAX_FILE_SIZE 4000
 #define MAX_CONFIGURATIONS 50
@@ -159,7 +163,7 @@ Configuration<T>::Configuration(JsonObject storedKeyValuePair) : AbstractConfigu
 }
 
 template <class T>
-T Configuration<T>::operator=(T newVal) noexcept {
+T Configuration<T>::operator=(T newVal) {
 
     if (hasWritePermission()) {
         if (value != newVal) {
@@ -749,6 +753,15 @@ std::shared_ptr<LinkedList<std::shared_ptr<AbstractConfiguration>>> getAllConfig
 }
 
 bool configuration_init() {
+#ifndef AO_DEACTIVATE_FLASH
+
+#if defined(ESP32)
+    if(!SPIFFS.begin(true)){
+        Serial.println("An Error has occurred while mounting SPIFFS");
+        return false;
+    }
+#else
+    //ESP8266
     SPIFFSConfig cfg;
     cfg.setAutoFormat(true);
     SPIFFS.setConfig(cfg);
@@ -757,6 +770,7 @@ bool configuration_init() {
         Serial.print(F("[Configuration] Unable to initialize: unable to mount FS\n"));
         return false;
     }
+#endif
 
     File file = SPIFFS.open(CONFIGURATION_FN, "r");
 
@@ -884,10 +898,12 @@ bool configuration_init() {
     file.close();
 
     Serial.println(F("[Configuration] Initialization successful\n"));
+#endif //ndef AO_DEACTIVATE_FLASH
     return true;
 }
 
 bool configuration_save() {
+#ifndef AO_DEACTIVATE_FLASH
 
     SPIFFS.remove(CONFIGURATION_FN);
 
@@ -942,6 +958,7 @@ bool configuration_save() {
     file.close();
     Serial.print(F("[Configuration] Saving config successful\n"));
 
+#endif //ndef AO_DEACTIVATE_FLASH
     return true;
 }
 

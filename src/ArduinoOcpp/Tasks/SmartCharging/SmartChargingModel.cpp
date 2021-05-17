@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -80,7 +80,7 @@ float maximum(float f1, float f2){
 }
 
 bool ChargingSchedule::inferenceLimit(time_t t, time_t startOfCharging, float *limit, time_t *nextChange) {
-  time_t basis; //point in time to which schedule-related times are relative
+  time_t basis = 0; //point in time to which schedule-related times are relative
   *nextChange = INFINITY_THLD; //defaulted to Infinity
   switch (chargingProfileKind) {
     case (ChargingProfileKindType::Absolute):

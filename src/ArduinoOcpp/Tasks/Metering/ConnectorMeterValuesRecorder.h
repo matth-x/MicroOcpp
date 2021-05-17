@@ -10,14 +10,18 @@
 //#define METER_VALUES_SAMPLED_DATA_MAX_LENGTH 4 //after 4 measurements, send the values to the CS
 
 #include <LinkedList.h>
+#include <functional>
+
 #include <ArduinoOcpp/TimeHelper.h>
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
 namespace ArduinoOcpp {
 
-typedef float (*PowerSampler)();
-typedef float (*EnergySampler)();
+//typedef float (*PowerSampler)();
+//typedef float (*EnergySampler)();
+typedef std::function<float()> PowerSampler;
+typedef std::function<float()> EnergySampler;
 
 class ConnectorMeterValuesRecorder {
 private:
@@ -30,8 +34,8 @@ private:
     float lastPower;
     int lastTransactionId = -1;
  
-    float (*powerSampler)() = NULL;
-    float (*energySampler)() = NULL;
+    PowerSampler powerSampler = NULL;
+    EnergySampler energySampler = NULL;
 
     //ulong MeterValueSampleInterval = 60; //will be overwritten (see constructor)
     //ulong MeterValuesSampledDataMaxLength = 4; //will be overwritten (see constructor)

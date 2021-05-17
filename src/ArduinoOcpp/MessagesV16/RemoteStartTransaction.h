@@ -14,7 +14,6 @@ namespace Ocpp16 {
 
 class RemoteStartTransaction : public OcppMessage {
 private:
-  String idTag;
   int connectorId;
 public:
   RemoteStartTransaction();

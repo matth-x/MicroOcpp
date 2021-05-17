@@ -9,12 +9,14 @@
 
 #include <ArduinoJson.h>
 #include <TimeLib.h>
+#include <functional>
 
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.h>
 
 namespace ArduinoOcpp {
 
-typedef void (*OnLimitChange)(float newLimit);
+//typedef void (*OnLimitChange)(float newLimit);
+typedef std::function<void(float)> OnLimitChange;
 
 class SmartChargingService {
 private:
