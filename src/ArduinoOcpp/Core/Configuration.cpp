@@ -769,7 +769,7 @@ bool configuration_init(bool formatOnFail) {
     SPIFFS.setConfig(cfg);
 
     if (!SPIFFS.begin()) {
-        Serial.print(F("[Configuration] Unable to initialize: unable to mount FS\n"));
+        Serial.print(F("[Configuration] Unable to initialize: unable to mount SPIFFS\n"));
         return false;
     }
 #endif
@@ -788,7 +788,7 @@ bool configuration_init(bool formatOnFail) {
     }
     Serial.print(F("[Configuration] DEBUG: end configuration file\n"));
     file.close();
-    file = SPIFFS.open(CONFIGURATION_FN, "r");
+    file = USE_FS.open(CONFIGURATION_FN, "r");
 
     if (!file) {
         Serial.print(F("[Configuration] Unable to initialize: could not open configuration file\n"));

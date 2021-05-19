@@ -10,7 +10,11 @@
 #include <ArduinoOcpp/Core/Configuration.h>
 
 #if defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
-#include "SPIFFS.h"
+#include <LITTLEFS.h>
+#define USE_FS LITTLEFS
+#else
+#include <FS.h>
+#define USE_FS SPIFFS
 #endif
 
 #define SINGLE_CONNECTOR_ID 1
@@ -284,9 +288,9 @@ bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile
   profileFN += chargingProfile->getStackLevel();
   profileFN += PROFILE_FN_SUFFIX;
 
-  SPIFFS.remove(profileFN);
+  USE_FS.remove(profileFN);
 
-  File file = SPIFFS.open(profileFN, "w");
+  File file = USE_FS.open(profileFN, "w");
 
   if (!file) {
       Serial.print(F("[SmartChargingService] Unable to save: could not save profile: "));
@@ -308,7 +312,7 @@ bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile
 
   // BEGIN DEBUG
   if (DEBUG_OUT) {
-    file = SPIFFS.open(profileFN, "r");
+    file = USE_FS.open(profileFN, "r");
 
     Serial.println(file.readStringUntil('\n'));
 
@@ -351,7 +355,7 @@ bool SmartChargingService::loadProfiles() {
         profileFN += iLevel;
         profileFN += PROFILE_FN_SUFFIX;
 
-        File file = SPIFFS.open(profileFN, "r");
+        File file = USE_FS.open(profileFN, "r");
 
         if (file) {
             if (DEBUG_OUT) Serial.print(F("[SmartChargingService] Load profile from file: "));
