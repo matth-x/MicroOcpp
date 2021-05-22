@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -12,6 +12,7 @@
 #include <functional>
 
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.h>
+#include <ArduinoOcpp/Core/ConfigurationOptions.h>
 
 namespace ArduinoOcpp {
 
@@ -32,11 +33,12 @@ private:
   bool chargingSessionIsActive;
 
   ChargingProfile *updateProfileStack(JsonObject *json);
+  FilesystemOpt filesystemOpt;
   bool writeProfileToFlash(JsonObject *json, ChargingProfile *chargingProfile);
   bool loadProfiles();
   
 public:
-  SmartChargingService(float chargeLimit, int numConnectors);
+  SmartChargingService(float chargeLimit, int numConnectors, FilesystemOpt filesystemOpt = FilesystemOpt::Use_Mount_FormatOnFail);
   void beginCharging(time_t t, int transactionID);
   void beginChargingNow();
   void endChargingNow();

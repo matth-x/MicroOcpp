@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -10,7 +10,7 @@
 using ArduinoOcpp::Ocpp16::GetConfiguration;
 
 GetConfiguration::GetConfiguration() {
-    keys = LinkedList<String>();
+    
 }
 
 GetConfiguration::~GetConfiguration() {
@@ -31,35 +31,34 @@ void GetConfiguration::processReq(JsonObject payload) {
 
 DynamicJsonDocument* GetConfiguration::createConf(){
 
-    std::shared_ptr<LinkedList<std::shared_ptr<AbstractConfiguration>>> configurationKeys;
-    LinkedList<String> unknownKeys = LinkedList<String>();
+    std::shared_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> configurationKeys;
+    std::vector<String> unknownKeys;
 
     if (keys.size() <= 0){ //return all existing keys
         configurationKeys = getAllConfigurations();
     } else { //only return keys that were searched using the "key" parameter
-        configurationKeys = std::make_shared<LinkedList<std::shared_ptr<AbstractConfiguration>>>();
         for (int i = 0; i < keys.size(); i++) {
             std::shared_ptr<AbstractConfiguration> entry = getConfiguration(keys.get(i).c_str());
             if (entry)
-                configurationKeys->add(entry);
+                configurationKeys->push_back(entry);
             else
-                unknownKeys.add(keys.get(i).c_str());
+                unknownKeys.push_back(keys.get(i).c_str());
         }
     }
 
     size_t capacity = 0;
-    LinkedList<std::shared_ptr<DynamicJsonDocument>> configurationKeysJson = LinkedList<std::shared_ptr<DynamicJsonDocument>>();
+    std::vector<std::shared_ptr<DynamicJsonDocument>> configurationKeysJson;
 
-    for (int i = 0; i < configurationKeys->size(); i++) {
-        std::shared_ptr<DynamicJsonDocument> entry = configurationKeys->get(i)->toJsonOcppMsgEntry();
+    for (auto confKey = configurationKeys->begin(); confKey != configurationKeys->end(); confKey++) {
+        std::shared_ptr<DynamicJsonDocument> entry = (*confKey)->toJsonOcppMsgEntry();
         if (entry) {
-            configurationKeysJson.add(entry);
+            configurationKeysJson.push_back(entry);
             capacity += entry->capacity();
         }
     }
 
-    for (int i = 0; i < unknownKeys.size(); i++) {
-        capacity += unknownKeys.get(i).length() + 1;
+    for (auto unknownKey = unknownKeys.begin(); unknownKey != unknownKeys.end(); unknownKey++) {
+        capacity += unknownKey->length() + 1;
     }
 
     capacity += JSON_OBJECT_SIZE(2) //configurationKey, unknownKey
@@ -72,15 +71,15 @@ DynamicJsonDocument* GetConfiguration::createConf(){
     
     JsonArray jsonConfigurationKey = payload.createNestedArray("configurationKey");
     for (int i = 0; i < configurationKeys->size(); i++) {
-        jsonConfigurationKey.add(configurationKeysJson.get(i)->as<JsonObject>());
+        jsonConfigurationKey.add(configurationKeysJson.at(i)->as<JsonObject>());
     }
 
     if (unknownKeys.size() > 0) {
         if (DEBUG_OUT) Serial.print(F("My unknown keys are: \n"));
         JsonArray jsonUnknownKey = payload.createNestedArray("unknownKey");
-        for (int i = 0; i < unknownKeys.size(); i++) {
-            if (DEBUG_OUT) Serial.println(unknownKeys.get(i));
-            jsonUnknownKey.add(unknownKeys.get(i));
+        for (auto unknownKey = unknownKeys.begin(); unknownKey != unknownKeys.end(); unknownKey++) {
+            if (DEBUG_OUT) Serial.println(*unknownKey);
+            jsonUnknownKey.add(*unknownKey);
         }
     }
 

@@ -26,8 +26,8 @@
 
 using namespace::ArduinoOcpp;
 
-SmartChargingService::SmartChargingService(float chargeLimit, int numConnectors)
-      : DEFAULT_CHARGE_LIMIT(chargeLimit) {
+SmartChargingService::SmartChargingService(float chargeLimit, int numConnectors, FilesystemOpt filesystemOpt)
+      : DEFAULT_CHARGE_LIMIT(chargeLimit), filesystemOpt(filesystemOpt) {
   
   if (numConnectors > 2) {
     Serial.print(F("[SmartChargingService] Error: Unfortunately, multiple connectors are not implemented in SmartChargingService yet. Only connector 1 will receive charging limits\n"));
@@ -44,7 +44,7 @@ SmartChargingService::SmartChargingService(float chargeLimit, int numConnectors)
     TxProfile[i] = NULL;
   }
   setSmartChargingService(this); //in OcppEngine.cpp
-  declareConfiguration("ChargeProfileMaxStackLevel", CHARGEPROFILEMAXSTACKLEVEL, false);
+  declareConfiguration("ChargeProfileMaxStackLevel", CHARGEPROFILEMAXSTACKLEVEL, CONFIGURATION_FN, false, true, false, true);
 
   loadProfiles();
 }
@@ -242,14 +242,15 @@ ChargingProfile *SmartChargingService::updateProfileStack(JsonObject *json){
   ChargingProfile **profilePurposeStack; //select which stack this profile belongs to due to its purpose
 
   switch (chargingProfile->getChargingProfilePurpose()) {
-    case (ChargingProfilePurposeType::ChargePointMaxProfile):
-      profilePurposeStack = ChargePointMaxProfile;
-      break;
     case (ChargingProfilePurposeType::TxDefaultProfile):
       profilePurposeStack = TxDefaultProfile;
       break;
     case (ChargingProfilePurposeType::TxProfile):
       profilePurposeStack = TxProfile;
+      break;
+    default:
+    //case (ChargingProfilePurposeType::ChargePointMaxProfile):
+      profilePurposeStack = ChargePointMaxProfile;
       break;
   }
   
@@ -271,6 +272,11 @@ ChargingProfile *SmartChargingService::updateProfileStack(JsonObject *json){
 bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile *chargingProfile) {
 #ifndef AO_DEACTIVATE_FLASH
 
+  if (!filesystemOpt.accessAllowed()) {
+    if (DEBUG_OUT) Serial.println(F("[SmartChargingService] Prohibit access to FS"));
+    return true;
+  }
+  
   String profileFN = PROFILE_FN_PREFIX;
 
   switch (chargingProfile->getChargingProfilePurpose()) {
@@ -326,6 +332,11 @@ bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile
 
 bool SmartChargingService::loadProfiles() {
 #ifndef AO_DEACTIVATE_FLASH
+    if (!filesystemOpt.accessAllowed()) {
+        if (DEBUG_OUT) Serial.println(F("[SmartChargingService] Prohibit access to FS"));
+        return true;
+    }
+    
     const int N_PURPOSES = 3;
     ChargingProfilePurposeType purposes[N_PURPOSES] = {ChargingProfilePurposeType::ChargePointMaxProfile, ChargingProfilePurposeType::TxDefaultProfile, ChargingProfilePurposeType::TxProfile};
 

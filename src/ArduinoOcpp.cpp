@@ -94,14 +94,11 @@ using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Facade;
 using namespace ArduinoOcpp::Ocpp16;
 
-void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
+void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, ArduinoOcpp::FilesystemOpt fsOpt) {
     if (OCPP_initialized) {
         Serial.print(F("[ArduinoOcpp] Error: cannot call OCPP_initialize() two times! If you want to reconfigure the library, please restart your ESP\n"));
         return;
     }
-
-    const bool FORMAT_FS_ON_FAIL = true;
-    configuration_init(FORMAT_FS_ON_FAIL); //call before each other library call
 
     // server address, port and URL
     webSocket.begin(CS_hostname, CS_port, CS_url, "ocpp1.6");
@@ -123,10 +120,10 @@ void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
 
     ocppSocket = new EspWiFi::OcppClientSocket(&webSocket);
 
-    OCPP_initialize(ocppSocket);
+    OCPP_initialize(ocppSocket, fsOpt);
 }
 
-void OCPP_initialize(OcppSocket *ocppSocket) {
+void OCPP_initialize(OcppSocket *ocppSocket, ArduinoOcpp::FilesystemOpt fsOpt) {
     if (OCPP_initialized) {
         Serial.print(F("[ArduinoOcpp] Error: cannot call OCPP_initialize() two times! If you want to reconfigure the library, please restart your ESP\n"));
         return;
@@ -136,10 +133,12 @@ void OCPP_initialize(OcppSocket *ocppSocket) {
         Serial.print(F("[ArduinoOcpp] OCPP_initialize(ocppSocket): ocppSocket cannot be NULL!\n"));
         return;
     }
+    
+    configuration_init(fsOpt); //call before each other library call
 
     ocppEngine_initialize(ocppSocket);
 
-    smartChargingService = new SmartChargingService(16.0f, OCPP_NUMCONNECTORS); //default charging limit: 16A
+    smartChargingService = new SmartChargingService(16.0f, OCPP_NUMCONNECTORS, fsOpt); //default charging limit: 16A
     chargePointStatusService = new ChargePointStatusService(&webSocket, OCPP_NUMCONNECTORS); //Constructor adds instance to ocppEngine in constructor
     meteringService = new MeteringService(&webSocket, OCPP_NUMCONNECTORS);
 
