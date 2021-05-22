@@ -37,6 +37,7 @@ DynamicJsonDocument* GetConfiguration::createConf(){
     if (keys.size() <= 0){ //return all existing keys
         configurationKeys = getAllConfigurations();
     } else { //only return keys that were searched using the "key" parameter
+        configurationKeys = std::make_shared<std::vector<std::shared_ptr<AbstractConfiguration>>>();
         for (int i = 0; i < keys.size(); i++) {
             std::shared_ptr<AbstractConfiguration> entry = getConfiguration(keys.get(i).c_str());
             if (entry)
