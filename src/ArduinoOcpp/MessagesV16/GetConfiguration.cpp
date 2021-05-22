@@ -10,7 +10,7 @@
 using ArduinoOcpp::Ocpp16::GetConfiguration;
 
 GetConfiguration::GetConfiguration() {
-    
+    keys = LinkedList<String>();
 }
 
 GetConfiguration::~GetConfiguration() {
