@@ -138,7 +138,7 @@ void OCPP_initialize(OcppSocket *ocppSocket, ArduinoOcpp::FilesystemOpt fsOpt) {
 
     ocppEngine_initialize(ocppSocket);
 
-    smartChargingService = new SmartChargingService(16.0f, OCPP_NUMCONNECTORS, fsOpt); //default charging limit: 16A
+    smartChargingService = new SmartChargingService(11000.0f, OCPP_NUMCONNECTORS, fsOpt); //default charging limit: 11kW
     chargePointStatusService = new ChargePointStatusService(&webSocket, OCPP_NUMCONNECTORS); //Constructor adds instance to ocppEngine in constructor
     meteringService = new MeteringService(&webSocket, OCPP_NUMCONNECTORS);
 
