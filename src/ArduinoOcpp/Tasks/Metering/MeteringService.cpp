@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -13,12 +13,12 @@
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-MeteringService::MeteringService(WebSocketsClient *webSocket, int numConn)
+MeteringService::MeteringService(WebSocketsClient *webSocket, int numConn, OcppTime *ocppTime)
       : webSocket(webSocket), numConnectors(numConn) {
   
   connectors = (ConnectorMeterValuesRecorder**) malloc(numConn * sizeof(ConnectorMeterValuesRecorder*));
   for (int i = 0; i < numConn; i++) {
-    connectors[i] = new ConnectorMeterValuesRecorder(i);
+    connectors[i] = new ConnectorMeterValuesRecorder(i, ocppTime);
   }
 
   setMeteringSerivce(this); //make MeteringService available through Ocpp Engine

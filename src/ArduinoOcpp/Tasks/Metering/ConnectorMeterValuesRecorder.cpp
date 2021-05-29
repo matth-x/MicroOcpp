@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -8,8 +8,8 @@
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(int connectorId)
-        : connectorId(connectorId) {
+ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(int connectorId, OcppTime *ocppTime)
+        : connectorId(connectorId), ocppTime(ocppTime) {
     sampleTimestamp = LinkedList<time_t>();
     energy = LinkedList<float>();
     power = LinkedList<float>();

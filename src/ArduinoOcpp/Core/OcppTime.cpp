@@ -1,10 +1,28 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppTime.h>
 
 namespace ArduinoOcpp {
+
+namespace Clocks {
+
+ulong lastClockReading = 0;
+otime_t lastClockValue = 0;
+
+/*
+ * Basic clock implementation. Works if millis() is exact enough for you and if device doesn't go in sleep mode. 
+ */
+OcppClock DEFAULT_CLOCK = [] () {
+    ulong tReading = (millis() - lastClockReading) / 1000UL;
+    if (tReading > 0) {
+        lastClockValue += tReading;
+        lastClockReading += tReading * 1000UL;
+    }
+    return lastClockValue;};
+} //end namespace Clocks
+
 
 OcppTimestamp::OcppTimestamp() {
     
@@ -168,6 +186,10 @@ OcppTimestamp OcppTimestamp::operator+(int secs) {
 
 OcppTimestamp OcppTimestamp::operator-(int secs) {
     return this->operator+(-secs);
+}
+
+OcppTime::OcppTime(OcppClock system_clock) : system_clock(system_clock) {
+
 }
 
 bool OcppTime::setOcppTime(const char* jsonDateString) {

@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -14,6 +14,15 @@
 namespace ArduinoOcpp {
 
 typedef int32_t otime_t; //requires 32bit signed integer or bigger
+typedef std::function<otime_t()> OcppClock;
+
+namespace Clocks {
+
+/*
+ * Basic clock implementation. Works if millis() is exact enough for you and if device doesn't go in sleep mode. 
+ */
+extern OcppClock DEFAULT_CLOCK;
+} //end namespace Clocks
 
 class OcppTimestamp {
 private:
@@ -61,11 +70,11 @@ private:
     OcppTimestamp ocpp_basetime;
     otime_t system_basetime = 0; //your system clock's time at the moment when the OCPP server's time was taken
 
-    std::function<otime_t()> system_clock = [] () {return (otime_t) 0;};
+    OcppClock system_clock = [] () {return (otime_t) 0;};
 
 public:
 
-    OcppTime(std::function<otime_t()> system_clock);
+    OcppTime(OcppClock system_clock);
 
     otime_t getOcppTimeScalar(); //returns current time of the OCPP server in non-UNIX but signed integer format. t2 - t1 is the time difference in seconds. 
     OcppTimestamp createTimestamp(otime_t scalar); //creates a timestamp in a JSON-serializable format. createTimestamp(getOcppTimeScalar()) will return the current OCPP time

@@ -26,8 +26,8 @@
 
 using namespace::ArduinoOcpp;
 
-SmartChargingService::SmartChargingService(float chargeLimit, int numConnectors, FilesystemOpt filesystemOpt)
-      : DEFAULT_CHARGE_LIMIT(chargeLimit), filesystemOpt(filesystemOpt) {
+SmartChargingService::SmartChargingService(float chargeLimit, int numConnectors, OcppTime *ocppTime, FilesystemOpt filesystemOpt)
+      : DEFAULT_CHARGE_LIMIT(chargeLimit), ocppTime(ocppTime), filesystemOpt(filesystemOpt) {
   
   if (numConnectors > 2) {
     Serial.print(F("[SmartChargingService] Error: Unfortunately, multiple connectors are not implemented in SmartChargingService yet. Only connector 1 will receive charging limits\n"));

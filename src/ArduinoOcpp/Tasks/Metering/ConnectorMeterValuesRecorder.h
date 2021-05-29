@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -15,6 +15,7 @@
 #include <ArduinoOcpp/TimeHelper.h>
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
 #include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/Core/OcppTime.h>
 
 namespace ArduinoOcpp {
 
@@ -26,6 +27,7 @@ typedef std::function<float()> EnergySampler;
 class ConnectorMeterValuesRecorder {
 private:
     const int connectorId;
+    OcppTime *ocppTime;
 
     LinkedList<time_t> sampleTimestamp;
     LinkedList<float> energy;
@@ -46,7 +48,7 @@ private:
     Ocpp16::MeterValues *toMeterValues();
     void clear();
 public:
-    ConnectorMeterValuesRecorder(int connectorId);
+    ConnectorMeterValuesRecorder(int connectorId, OcppTime *ocppTime);
 
     Ocpp16::MeterValues *loop();
 

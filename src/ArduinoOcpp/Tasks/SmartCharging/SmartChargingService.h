@@ -13,6 +13,7 @@
 
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.h>
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
+#include <ArduinoOcpp/Core/OcppTime.h>
 
 namespace ArduinoOcpp {
 
@@ -21,6 +22,7 @@ typedef std::function<void(float)> OnLimitChange;
 
 class SmartChargingService {
 private:
+  OcppTime *ocppTime;
   const float DEFAULT_CHARGE_LIMIT;
   ChargingProfile *ChargePointMaxProfile[CHARGEPROFILEMAXSTACKLEVEL];
   ChargingProfile *TxDefaultProfile[CHARGEPROFILEMAXSTACKLEVEL];
@@ -38,7 +40,7 @@ private:
   bool loadProfiles();
   
 public:
-  SmartChargingService(float chargeLimit, int numConnectors, FilesystemOpt filesystemOpt = FilesystemOpt::Use_Mount_FormatOnFail);
+  SmartChargingService(float chargeLimit, int numConnectors, OcppTime *ocppTime, FilesystemOpt filesystemOpt = FilesystemOpt::Use_Mount_FormatOnFail);
   void beginCharging(time_t t, int transactionID);
   void beginChargingNow();
   void endChargingNow();
