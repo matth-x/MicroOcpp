@@ -36,6 +36,7 @@ bool evRequestsEnergyLastState = false;
 SmartChargingService *smartChargingService;
 ChargePointStatusService *chargePointStatusService;
 OnLimitChange onLimitChange;
+OcppTime *ocppTime;
 
 #define OCPP_NUMCONNECTORS 2
 #define OCPP_ID_OF_CONNECTOR 1
@@ -94,7 +95,7 @@ using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Facade;
 using namespace ArduinoOcpp::Ocpp16;
 
-void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, ArduinoOcpp::FilesystemOpt fsOpt) {
+void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, ArduinoOcpp::FilesystemOpt fsOpt, ArduinoOcpp::OcppClock system_time) {
     if (OCPP_initialized) {
         Serial.print(F("[ArduinoOcpp] Error: cannot call OCPP_initialize() two times! If you want to reconfigure the library, please restart your ESP\n"));
         return;
@@ -123,7 +124,7 @@ void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, Arduin
     OCPP_initialize(ocppSocket, fsOpt);
 }
 
-void OCPP_initialize(OcppSocket *ocppSocket, ArduinoOcpp::FilesystemOpt fsOpt) {
+void OCPP_initialize(OcppSocket *ocppSocket, ArduinoOcpp::FilesystemOpt fsOpt, ArduinoOcpp::OcppClock system_time) {
     if (OCPP_initialized) {
         Serial.print(F("[ArduinoOcpp] Error: cannot call OCPP_initialize() two times! If you want to reconfigure the library, please restart your ESP\n"));
         return;
@@ -137,10 +138,11 @@ void OCPP_initialize(OcppSocket *ocppSocket, ArduinoOcpp::FilesystemOpt fsOpt) {
     configuration_init(fsOpt); //call before each other library call
 
     ocppEngine_initialize(ocppSocket);
+    ocppTime = new OcppTime(system_time);
 
-    smartChargingService = new SmartChargingService(11000.0f, OCPP_NUMCONNECTORS, fsOpt); //default charging limit: 11kW
+    smartChargingService = new SmartChargingService(11000.0f, OCPP_NUMCONNECTORS, ocppTime, fsOpt); //default charging limit: 11kW
     chargePointStatusService = new ChargePointStatusService(&webSocket, OCPP_NUMCONNECTORS); //Constructor adds instance to ocppEngine in constructor
-    meteringService = new MeteringService(&webSocket, OCPP_NUMCONNECTORS);
+    meteringService = new MeteringService(&webSocket, OCPP_NUMCONNECTORS, ocppTime);
 
     OCPP_initialized = true;
 }

@@ -8,6 +8,7 @@
 #include <ArduinoOcpp/Core/OcppOperation.h>
 #include <ArduinoOcpp/Core/OcppOperationTimeout.h>
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
+#include <ArduinoOcpp/Core/OcppTime.h>
 
 #include "Variants.h"
 
@@ -22,9 +23,9 @@ using ArduinoOcpp::Timeout;
 
 #if USE_FACADE
 
-void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail);
+void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
 
-void OCPP_initialize(ArduinoOcpp::OcppSocket *ocppSocket, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail);
+void OCPP_initialize(ArduinoOcpp::OcppSocket *ocppSocket, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
 
 void OCPP_loop();
 
