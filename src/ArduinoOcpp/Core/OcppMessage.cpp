@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -13,6 +13,10 @@ OcppMessage::~OcppMessage(){}
 const char* OcppMessage::getOcppOperationType(){
     Serial.print(F("[OcppMessage]  Unsupported operation: getOcppOperationType() is not implemented!\n"));
     return "CustomOperation";
+}
+
+void OcppMessage::initiate() {
+    //callback after initiateOcppOperation(anyMsg)
 }
 
 DynamicJsonDocument* OcppMessage::createReq() {

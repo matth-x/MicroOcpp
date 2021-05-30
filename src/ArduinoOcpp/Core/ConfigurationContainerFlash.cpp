@@ -108,8 +108,7 @@ bool ConfigurationContainerFlash::load() {
     }
 
     JsonArray configurationsArray = configDoc["configurations"];
-    for (int i = 0; i < configurationsArray.size(); i++) {
-        JsonObject config = configurationsArray[i];
+    for (JsonObject config : configurationsArray) {
         const char *type = config["type"] | "Undefined";
 
         std::shared_ptr<AbstractConfiguration> configuration = NULL;

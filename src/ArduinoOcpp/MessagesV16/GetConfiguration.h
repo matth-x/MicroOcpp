@@ -8,23 +8,22 @@
 #include <Variants.h>
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
-#include <LinkedList.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 
 class GetConfiguration : public OcppMessage {
 private:
-  LinkedList<String> keys;
+    std::vector<String> keys;
 public:
-  GetConfiguration();
-  ~GetConfiguration();
+    GetConfiguration();
+    ~GetConfiguration();
 
-  const char* getOcppOperationType();
+    const char* getOcppOperationType();
 
-  void processReq(JsonObject payload);
+    void processReq(JsonObject payload);
 
-  DynamicJsonDocument* createConf();
+    DynamicJsonDocument* createConf();
 
 };
 

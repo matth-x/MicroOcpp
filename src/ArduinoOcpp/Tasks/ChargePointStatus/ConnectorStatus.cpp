@@ -11,7 +11,7 @@
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-ConnectorStatus::ConnectorStatus(int connectorId) : connectorId(connectorId) {
+ConnectorStatus::ConnectorStatus(int connectorId, OcppTime *ocppTime) : connectorId(connectorId), ocppTime(ocppTime) {
 
     //Set default transaction ID in memory
     String key = "OCPP_STATE_TRANSACTION_ID_CONNECTOR_";
@@ -33,17 +33,17 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
 
     if (!authorized && !getChargePointStatusService()->existsUnboundAuthorization()) {
         return OcppEvseState::Available;
-    } else if (!transactionRunning) {
+    } else if (((int) *transactionId) < 0) {
         return OcppEvseState::Preparing;
     } else {
         //Transaction is currently running
         if (!evDrawsEnergy) {
-        return OcppEvseState::SuspendedEV;
+            return OcppEvseState::SuspendedEV;
         }
         if (!evseOffersEnergy) {
-        return OcppEvseState::SuspendedEVSE;
+            return OcppEvseState::SuspendedEVSE;
         }
-        return OcppEvseState::Charging;
+            return OcppEvseState::Charging;
     }
 }
 
@@ -57,7 +57,7 @@ StatusNotification *ConnectorStatus::loop() {
         //fire StatusNotification
         //TODO check for online condition: Only inform CS about status change if CP is online
         //TODO check for too short duration condition: Only inform CS about status change if it lasted for longer than MinimumStatusDuration
-        return new StatusNotification(connectorId, currentStatus);
+        return new StatusNotification(connectorId, currentStatus, ocppTime->getOcppTimestampNow());
     }
 
     return NULL;
@@ -87,28 +87,15 @@ void ConnectorStatus::unauthorize(){
     idTag = String('\0');
 }
 
-void ConnectorStatus::startTransaction(int transId){
-    if (transactionRunning == true){
-        if (DEBUG_OUT) Serial.print(F("[OcppEvseStateService] Warning: started transaction twice or didn't stop transaction before\n"));
-    }
-    *transactionId = transId;
-    transactionRunning = true;
-
-    saveState();
-}
-
-void ConnectorStatus::stopTransaction(){
-    if (transactionRunning == false){
-        if (DEBUG_OUT) Serial.print(F("[OcppEvseStateService] Warning: stopped transaction twice or didn't start transaction before\n"));
-    }
-    transactionRunning = false;
-    *transactionId = -1;
-
-    saveState();
-}
-
 int ConnectorStatus::getTransactionId() {
     return *transactionId;
+}
+
+void ConnectorStatus::setTransactionId(int id) {
+    int prevTxId = *transactionId;
+    *transactionId = id;
+    if (id != 0 || prevTxId > 0)
+        saveState();
 }
 
 void ConnectorStatus::startEvDrawsEnergy(){

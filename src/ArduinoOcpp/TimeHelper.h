@@ -5,6 +5,8 @@
 #ifndef TIMEHELPER_H
 #define TIMEHELPER_H
 
+#if 0
+
 #include <TimeLib.h>
 
 //Infinity begins in the end of year 2035
@@ -33,4 +35,5 @@ time_t minimum(time_t t1, time_t t2);
 void printTime(time_t t);
 
 } //end namespace ArduinoOcpp
+#endif
 #endif

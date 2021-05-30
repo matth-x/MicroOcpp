@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -50,7 +50,7 @@ private:
   ulong retry_start = 0;
   ulong retry_interval_mult = 1; // RETRY_INTERVAL * retry_interval_mult gives longer periods with each iteration
 #if DEBUG_OUT
-  uint16_t printReqCounter = -1;
+  uint16_t printReqCounter = 0;
 #endif
 public:
 
@@ -106,6 +106,8 @@ public:
      * been sent
      */
     boolean sendConf(OcppSocket *ocppSocket);
+
+    void setInitiated();
 
     void setOnReceiveConfListener(OnReceiveConfListener onReceiveConf);
 

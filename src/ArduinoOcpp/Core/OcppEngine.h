@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -9,6 +9,7 @@
 
 #include <ArduinoOcpp/Core/OcppOperation.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
+#include <ArduinoOcpp/Core/OcppTime.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
@@ -51,6 +52,10 @@ ConnectorStatus *getConnectorStatus(int connectorId);
 void setMeteringSerivce(MeteringService *meteringService);
 
 MeteringService* getMeteringService();
+
+void ocppEngine_setOcppTime(OcppTime *ocppTime);
+
+OcppTime *getOcppTime();
 
 } //end namespace ArduinoOcpp
 

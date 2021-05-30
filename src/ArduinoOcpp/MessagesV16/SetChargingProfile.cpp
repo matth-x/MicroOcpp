@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -19,11 +19,11 @@ const char* SetChargingProfile::getOcppOperationType(){
 
 void SetChargingProfile::processReq(JsonObject payload) {
 
-  int connectorID = payload["connectorId"];
+    //int connectorID = payload["connectorId"];
 
-  JsonObject csChargingProfiles = payload["csChargingProfiles"];
+    JsonObject csChargingProfiles = payload["csChargingProfiles"];
 
-  smartChargingService->updateChargingProfile(&csChargingProfiles);
+    smartChargingService->updateChargingProfile(&csChargingProfiles);
 }
 
 DynamicJsonDocument* SetChargingProfile::createConf(){ //TODO review

@@ -9,11 +9,9 @@
 
 //#define METER_VALUES_SAMPLED_DATA_MAX_LENGTH 4 //after 4 measurements, send the values to the CS
 
-#include <LinkedList.h>
 #include <WebSocketsClient.h>
 #include <functional>
 
-#include <ArduinoOcpp/TimeHelper.h>
 #include <EEPROMLayout.h>
 #include <Variants.h>
 

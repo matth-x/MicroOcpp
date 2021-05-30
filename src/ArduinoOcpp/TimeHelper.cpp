@@ -8,6 +8,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#if 0
+
 namespace ArduinoOcpp {
 
 /**
@@ -234,3 +236,5 @@ void printTime(time_t t) {
 }
 
 } //end namespace ArduinoOcpp
+
+#endif

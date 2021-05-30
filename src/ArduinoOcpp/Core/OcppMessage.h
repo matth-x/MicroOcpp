@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -35,6 +35,8 @@ public:
   virtual ~OcppMessage();
   
   virtual const char* getOcppOperationType();
+
+  virtual void initiate();
 
   /**
    * Create the payload for the respective OCPP message

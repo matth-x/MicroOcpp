@@ -23,9 +23,9 @@ using ArduinoOcpp::Timeout;
 
 #if USE_FACADE
 
-void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
+void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, float V_eff = 230.f /*German grid*/, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
 
-void OCPP_initialize(ArduinoOcpp::OcppSocket *ocppSocket, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
+void OCPP_initialize(ArduinoOcpp::OcppSocket *ocppSocket, float V_eff = 230.f /*German grid*/, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
 
 void OCPP_loop();
 
@@ -44,6 +44,8 @@ void setPowerActiveImportSampler(std::function<float()> power);
 void setEnergyActiveImportSampler(std::function<float()> energy);
 
 void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
+
+void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
 
 /*
  * React on calls by the library's internal functions

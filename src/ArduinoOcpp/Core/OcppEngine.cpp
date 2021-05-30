@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -18,6 +18,7 @@ OcppSocket *ocppSocket;
 SmartChargingService *ocppEngine_smartChargingService;
 ChargePointStatusService *ocppEngine_chargePointStatusService;
 MeteringService *ocppEngine_meteringService;
+OcppTime *ocppEngine_ocppTime;
 
 std::vector<OcppOperation*> initiatedOcppOperations;
 std::vector<OcppOperation*> receivedOcppOperations;
@@ -43,6 +44,7 @@ void ocppEngine_initialize(OcppSocket *ocppSocket){
 
 void initiateOcppOperation(OcppOperation *o) {
   mConnection->initiateOcppOperation(o);
+  o->setInitiated();
 }
 
 void ocppEngine_loop() {
@@ -438,6 +440,18 @@ MeteringService* getMeteringService() {
     //no error catch 
   }
   return ocppEngine_meteringService;
+}
+
+void ocppEngine_setOcppTime(OcppTime *ocppTime) {
+    ocppEngine_ocppTime = ocppTime;
+}
+
+OcppTime *getOcppTime() {
+    if (ocppEngine_ocppTime == NULL) {
+        Serial.print(F("[OcppEngine] Error: in OcppEngine, there is no ocppEngine_ocppTime set, but it is accessed!\n"));
+        //no error catch 
+    }
+    return ocppEngine_ocppTime;
 }
 
 

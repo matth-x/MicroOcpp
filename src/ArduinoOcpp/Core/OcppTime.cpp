@@ -100,19 +100,19 @@ bool OcppTimestamp::setTime(const char *jsonDateString) {
     return true;
 }
 
-bool OcppTimestamp::toJsonString(char *jsonDateString, size_t buffsize) {
-    if (buffsize < OCPP_JSONDATE_LENGTH + 1) return false;
+bool OcppTimestamp::toJsonString(char *jsonDateString, size_t buffsize) const {
+    if (buffsize < JSONDATE_LENGTH + 1) return false;
 
     jsonDateString[0] = ((char) ((year / 1000) % 10)) + '0';
     jsonDateString[1] = ((char) ((year / 100) % 10)) + '0';
     jsonDateString[2] = ((char) ((year / 10) % 10))  + '0';
     jsonDateString[3] = ((char) ((year / 1) % 10))  + '0';
     jsonDateString[4] = '-';
-    jsonDateString[5] = ((char) ((month / 10) % 10))  + '0';
-    jsonDateString[6] = ((char) ((month / 1) % 10))  + '0';
+    jsonDateString[5] = ((char) (((month + 1) / 10) % 10))  + '0';
+    jsonDateString[6] = ((char) (((month + 1) / 1) % 10))  + '0';
     jsonDateString[7] = '-';
-    jsonDateString[8] = ((char) ((day / 10) % 10))  + '0';
-    jsonDateString[9] = ((char) ((day / 1) % 10))  + '0';
+    jsonDateString[8] = ((char) (((day + 1) / 10) % 10))  + '0';
+    jsonDateString[9] = ((char) (((day + 1) / 1) % 10))  + '0';
     jsonDateString[10] = 'T';
     jsonDateString[11] = ((char) ((hour / 10) % 10))  + '0';
     jsonDateString[12] = ((char) ((hour / 1) % 10))  + '0';
@@ -131,62 +131,150 @@ bool OcppTimestamp::toJsonString(char *jsonDateString, size_t buffsize) {
     return true;
 }
 
-OcppTimestamp OcppTimestamp::operator+(int secs) {
-    OcppTimestamp res = *this;
-    res.second += secs;
+OcppTimestamp &OcppTimestamp::operator+=(int secs) {
 
-    if (res.second >= 0 && res.second < 60) return res;
+    second += secs;
 
-    res.minute += res.second / 60;
-    res.second %= 60;
-    if (res.second < 0) {
-        res.minute--;
-        res.second += 60;
+    if (second >= 0 && second < 60) return *this;
+
+    minute += second / 60;
+    second %= 60;
+    if (second < 0) {
+        minute--;
+        second += 60;
     }
 
-    if (res.minute >= 0 && res.minute < 60) return res;
+    if (minute >= 0 && minute < 60) return *this;
 
-    res.hour += res.minute / 60;
-    res.minute %= 60;
-    if (res.minute < 0) {
-        res.hour--;
-        res.minute += 60;
+    hour += minute / 60;
+    minute %= 60;
+    if (minute < 0) {
+        hour--;
+        minute += 60;
     }
 
-    if (res.hour >= 0 && res.hour < 24) return res;
+    if (hour >= 0 && hour < 24) return *this;
 
-    res.day += res.hour / 24;
-    res.hour %= 24;
-    if (res.hour < 0) {
-        res.day--;
-        res.hour += 24;
+    day += hour / 24;
+    hour %= 24;
+    if (hour < 0) {
+        day--;
+        hour += 24;
     }
 
-    while (res.day >= noDays(res.month, res.year)) {
-        res.day -= noDays(res.month, res.year);
-        res.month++;
+    while (day >= noDays(month, year)) {
+        day -= noDays(month, year);
+        month++;
         
-        if (res.month >= 12) {
-            res.month -= 12;
-            res.year++;
+        if (month >= 12) {
+            month -= 12;
+            year++;
         }
     }
 
-    while (res.day < 0) {
-        res.month--;
-        if (res.month < 0) {
-            res.month += 12;
-            res.year--;
+    while (day < 0) {
+        month--;
+        if (month < 0) {
+            month += 12;
+            year--;
         }
-        res.day += noDays(res.month, res.year);
+        day += noDays(month, year);
     }
 
-    return res;
+    return *this;
 };
 
-OcppTimestamp OcppTimestamp::operator-(int secs) {
-    return this->operator+(-secs);
+OcppTimestamp &OcppTimestamp::operator-=(int secs) {
+    return operator+=(-secs);
 }
+
+otime_t OcppTimestamp::operator-(const OcppTimestamp &rhs) const {
+    //dt = rhs - ocpp_base
+    
+    int16_t year_base, year_end;
+    if (year <= rhs.year) {
+        year_base = year;
+        year_end = rhs.year;
+    } else {
+        year_base = rhs.year;
+        year_end = year;
+    }
+
+    int16_t lhsDays = day;
+    int16_t rhsDays = rhs.day;
+
+    for (int16_t iy = year_base; iy <= year_end; iy++) {
+        for (int16_t im = 0; im < 12; im++) {
+            if (year > iy || (year == iy && month > im)) {
+                lhsDays += noDays(im, iy);
+            }
+            if (rhs.year > iy || (rhs.year == iy && rhs.month > im)) {
+                rhsDays += noDays(im, iy);
+            }
+        }
+    }
+
+    otime_t dt = (lhsDays - rhsDays) * (24 * 3600) + (hour - rhs.hour) * 3600 + (minute - rhs.minute) * 60 + second - rhs.second;
+    return dt;
+}
+
+OcppTimestamp &OcppTimestamp::operator=(const OcppTimestamp &rhs) {
+    year = rhs.year;
+    month = rhs.month;
+    day = rhs.day;
+    hour = rhs.hour;
+    minute = rhs.minute;
+    second = rhs.second;
+
+    return *this;
+}
+
+OcppTimestamp operator+(const OcppTimestamp &lhs, int secs) {
+    OcppTimestamp res = lhs;
+    res += secs;
+    return res;
+}
+
+OcppTimestamp operator-(const OcppTimestamp &lhs, int secs) {
+    return operator+(lhs, -secs);
+}
+
+bool operator==(const OcppTimestamp &lhs, const OcppTimestamp &rhs) {
+    return lhs.year == rhs.year && lhs.month == rhs.month && lhs.day == rhs.day && lhs.hour == rhs.hour && lhs.minute == rhs.minute && lhs.second == rhs.second;
+}
+
+bool operator!=(const OcppTimestamp &lhs, const OcppTimestamp &rhs) {
+    return !(lhs == rhs);
+}
+
+bool operator<(const OcppTimestamp &lhs, const OcppTimestamp &rhs) {
+    if (lhs.year != rhs.year)
+        return lhs.year < rhs.year;
+    if (lhs.month != rhs.month)
+        return lhs.month < rhs.month;
+    if (lhs.day != rhs.day)
+        return lhs.day < rhs.day;
+    if (lhs.hour != rhs.hour)
+        return lhs.hour < rhs.hour;
+    if (lhs.minute != rhs.minute)
+        return lhs.minute < rhs.minute;
+    if (lhs.second != rhs.second)
+        return lhs.second < rhs.second;
+    return false;  
+}
+
+bool operator<=(const OcppTimestamp &lhs, const OcppTimestamp &rhs) {
+    return lhs < rhs || lhs == rhs;
+}
+
+bool operator>(const OcppTimestamp &lhs, const OcppTimestamp &rhs) {
+    return rhs < lhs;
+}
+
+bool operator>=(const OcppTimestamp &lhs, const OcppTimestamp &rhs) {
+    return rhs <= lhs;
+}
+
 
 OcppTime::OcppTime(OcppClock system_clock) : system_clock(system_clock) {
 
@@ -202,7 +290,11 @@ bool OcppTime::setOcppTime(const char* jsonDateString) {
 
     system_basetime = system_clock();
     ocpp_basetime = timestamp;
-    
+    ocppTimeIsSet = true;
+
+    currentTime = ocpp_basetime;
+    previousUpdate = system_basetime;
+
     return true;
 }
 
@@ -210,10 +302,23 @@ otime_t OcppTime::getOcppTimeScalar() {
     return system_clock();
 }
 
+const OcppTimestamp &OcppTime::getOcppTimestampNow() {
+    otime_t tNow = system_clock();
+    if (previousUpdate != tNow) {
+        currentTime += (tNow - previousUpdate);
+        previousUpdate = tNow;
+    }
+    return currentTime;
+}
+
 OcppTimestamp OcppTime::createTimestamp(otime_t scalar) {
     OcppTimestamp res = ocpp_basetime + (scalar - system_basetime);
 
     return res;
+}
+
+otime_t OcppTime::toOcppTimeScalar(const OcppTimestamp &otimestamp) {
+    return otimestamp.operator-(ocpp_basetime);
 }
 
 }

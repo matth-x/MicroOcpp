@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -122,7 +122,7 @@ boolean OcppOperation::sendReq(OcppSocket *ocppSocket){
   serializeJson(requestJson, out);
 
 #if DEBUG_OUT
-  if (printReqCounter > 10000) {
+  if (printReqCounter > 5000) {
     printReqCounter = 0;
     Serial.print(F("[OcppOperation] Send requirement: "));
     Serial.print(out);
@@ -141,7 +141,7 @@ boolean OcppOperation::sendReq(OcppSocket *ocppSocket){
 //      timeout_active = true;
 //      timeout_start = millis();
 //    } 
-    if (TRAFFIC_OUT) Serial.print(F("[OcppOperation] Send requirement: "));
+    if (TRAFFIC_OUT) Serial.print(F("[OcppOperation] Sent requirement (success): "));
     if (TRAFFIC_OUT) Serial.println(out);
     retry_start = millis();
   } else {
@@ -319,6 +319,14 @@ boolean OcppOperation::sendConf(OcppSocket *ocppSocket){
     delete errorDetails;
 
   return wsSuccess;
+}
+
+void OcppOperation::setInitiated() {
+  if (ocppMessage) {
+    ocppMessage->initiate();
+  } else {
+    Serial.print(F("[OcppOperation] Error: called setInitiated without corresponding OcppOperation!\n"));
+  }
 }
 
 void OcppOperation::setOnReceiveConfListener(OnReceiveConfListener onReceiveConf){

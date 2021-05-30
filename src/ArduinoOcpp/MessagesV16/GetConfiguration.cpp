@@ -10,11 +10,11 @@
 using ArduinoOcpp::Ocpp16::GetConfiguration;
 
 GetConfiguration::GetConfiguration() {
-    keys = LinkedList<String>();
+    keys = std::vector<String>();
 }
 
 GetConfiguration::~GetConfiguration() {
-    keys.clear();
+    //keys.clear();
 }
 
 const char* GetConfiguration::getOcppOperationType(){
@@ -25,7 +25,7 @@ void GetConfiguration::processReq(JsonObject payload) {
 
     JsonArray requestedKeys = payload["key"];
     for (uint16_t i = 0; i < requestedKeys.size(); i++) {
-        keys.add(requestedKeys[i].as<String>());
+        keys.push_back(requestedKeys[i].as<String>());
     }
 }
 
@@ -34,16 +34,16 @@ DynamicJsonDocument* GetConfiguration::createConf(){
     std::shared_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> configurationKeys;
     std::vector<String> unknownKeys;
 
-    if (keys.size() <= 0){ //return all existing keys
+    if (keys.size() == 0){ //return all existing keys
         configurationKeys = getAllConfigurations();
     } else { //only return keys that were searched using the "key" parameter
         configurationKeys = std::make_shared<std::vector<std::shared_ptr<AbstractConfiguration>>>();
-        for (int i = 0; i < keys.size(); i++) {
-            std::shared_ptr<AbstractConfiguration> entry = getConfiguration(keys.get(i).c_str());
+        for (size_t i = 0; i < keys.size(); i++) {
+            std::shared_ptr<AbstractConfiguration> entry = getConfiguration(keys.at(i).c_str());
             if (entry)
                 configurationKeys->push_back(entry);
             else
-                unknownKeys.push_back(keys.get(i).c_str());
+                unknownKeys.push_back(keys.at(i).c_str());
         }
     }
 
@@ -71,7 +71,7 @@ DynamicJsonDocument* GetConfiguration::createConf(){
     JsonObject payload = doc->to<JsonObject>();
     
     JsonArray jsonConfigurationKey = payload.createNestedArray("configurationKey");
-    for (int i = 0; i < configurationKeys->size(); i++) {
+    for (size_t i = 0; i < configurationKeys->size(); i++) {
         jsonConfigurationKey.add(configurationKeysJson.at(i)->as<JsonObject>());
     }
 

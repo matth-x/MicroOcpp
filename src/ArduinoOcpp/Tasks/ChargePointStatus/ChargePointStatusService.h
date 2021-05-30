@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -6,7 +6,6 @@
 #define CHARGEPOINTSTATUSSERVICE_H
 
 #include <WebSocketsClient.h>
-#include <LinkedList.h>
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ConnectorStatus.h>
 
@@ -14,31 +13,33 @@ namespace ArduinoOcpp {
 
 class ChargePointStatusService {
 private:
-  WebSocketsClient *webSocket;
-  const int numConnectors;
-  ConnectorStatus **connectors;
+    WebSocketsClient *webSocket;
+    const int numConnectors;
+    OcppTime *ocppTime;
+    ConnectorStatus **connectors;
 
-  bool booted = false;
+    bool booted = false;
 
-  boolean authorized = false;
-  String idTag = String('\0');
+    boolean authorized = false;
+    String idTag = String('\0');
 
 public:
-  ChargePointStatusService(WebSocketsClient *webSocket, int numConnectors);
+    ChargePointStatusService(WebSocketsClient *webSocket, int numConnectors, OcppTime *ocppTime);
 
-  ~ChargePointStatusService();
-  
-  void loop();
+    ~ChargePointStatusService();
+    
+    void loop();
 
-  void authorize(String &idTag);
-  void authorize();
-  void boot();
-  String &getUnboundIdTag();
-  boolean existsUnboundAuthorization();
-  void bindAuthorization(String &idTag, int connectorId);
+    void authorize(String &idTag);
+    void authorize();
+    void boot();
+    String &getUnboundIdTag();
+    void invalidateUnboundIdTag();
+    boolean existsUnboundAuthorization();
+    void bindAuthorization(int connectorId);
 
-  ConnectorStatus *getConnector(int connectorId);
-  int getNumConnectors();
+    ConnectorStatus *getConnector(int connectorId);
+    int getNumConnectors();
 };
 
 } //end namespace ArduinoOcpp
