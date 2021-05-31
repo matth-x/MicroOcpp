@@ -1,7 +1,5 @@
 # ArduinoOcpp
-OCPP 1.6J Smart Charging client for the ESP8266
-
-ESP32 & more coming soon
+OCPP 1.6J Smart Charging client for the ESP8266 and the ESP32 (more coming soon)
 
 Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
 
@@ -125,8 +123,6 @@ To get started quickly without EVSE hardware, you can use the charge point simul
 
 - [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson) (Please use version 6.17.2)
 - [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets)
-- [ivanseidel/LinkedList](https://github.com/ivanseidel/LinkedList)
-- [PaulStoffregen/Time](https://github.com/PaulStoffregen/Time)
 
 In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/ArduinoOcpp` in the PIO library manager.
 
@@ -166,7 +162,7 @@ In case you use PlatformIO, you can copy all dependencies from `platformio.ini` 
 - [x] introduce proper offline behavior and package loss / fault detection
 - [x] handle fragmented input messages correctly
 - [x] add support for multiple power connectors
-- [ ] add support for the ESP32
+- [x] add support for the ESP32
 - [ ] reach full compliance to OCPP 1.6 Smart Charging Profile
 - [ ] **get ready for OCPP 2.0.1**
 
