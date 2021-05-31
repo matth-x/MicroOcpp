@@ -44,7 +44,6 @@ void ocppEngine_initialize(OcppSocket *ocppSocket){
 
 void initiateOcppOperation(OcppOperation *o) {
   mConnection->initiateOcppOperation(o);
-  o->setInitiated();
 }
 
 void ocppEngine_loop() {

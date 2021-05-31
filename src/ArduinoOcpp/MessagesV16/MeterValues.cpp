@@ -80,8 +80,11 @@ DynamicJsonDocument* MeterValues::createReq() {
         }
     }
 
-    if (transactionId >= 0) {
-        payload["transactionId"] = transactionId;
+    ConnectorStatus *connector = getConnectorStatus(connectorId);
+    if (connector) {
+        if (connector->getTransactionIdSync() >= 0) {
+            payload["transactionId"] = connector->getTransactionIdSync();
+        }
     }
 
     return doc;

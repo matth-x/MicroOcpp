@@ -16,7 +16,7 @@ const char* OcppMessage::getOcppOperationType(){
 }
 
 void OcppMessage::initiate() {
-    //callback after initiateOcppOperation(anyMsg)
+    //called after initiateOcppOperation(anyMsg)
 }
 
 DynamicJsonDocument* OcppMessage::createReq() {

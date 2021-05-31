@@ -21,6 +21,7 @@ ConnectorStatus::ConnectorStatus(int connectorId, OcppTime *ocppTime) : connecto
     if (!transactionId) {
         Serial.print(F("[ConnectorStatus] Error! Cannot declare transactionId\n"));
     }
+    transactionIdSync = *transactionId;
 }
 
 OcppEvseState ConnectorStatus::inferenceStatus() {
@@ -89,6 +90,18 @@ void ConnectorStatus::unauthorize(){
 
 int ConnectorStatus::getTransactionId() {
     return *transactionId;
+}
+
+int ConnectorStatus::getTransactionIdSync() {
+    return transactionIdSync;
+}
+
+void ConnectorStatus::setTransactionIdSync(int id) {
+    transactionIdSync = id;
+}
+
+uint16_t ConnectorStatus::getTransactionWriteCount() {
+    return transactionId->getValueRevision();
 }
 
 void ConnectorStatus::setTransactionId(int id) {

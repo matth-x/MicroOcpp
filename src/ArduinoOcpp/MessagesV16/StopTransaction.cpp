@@ -36,7 +36,6 @@ void StopTransaction::initiate() {
 
     ConnectorStatus *connector = getConnectorStatus(connectorId);
     if (connector != NULL){
-        transactionId = connector->getTransactionId(); //for req message
         connector->setTransactionId(-1); //immediate end of transaction
         connector->unauthorize();
     }
@@ -58,8 +57,11 @@ DynamicJsonDocument* StopTransaction::createReq() {
         otimestamp.toJsonString(timestamp, JSONDATE_LENGTH + 1);
         payload["timestamp"] = timestamp;
     }
-
-    payload["transactionId"] = transactionId;
+    ConnectorStatus *connector = getConnectorStatus(connectorId);
+    if (connector != NULL){
+        payload["transactionId"] = connector->getTransactionIdSync();
+        connector->setTransactionIdSync(-1);
+    }
 
     return doc;
 }

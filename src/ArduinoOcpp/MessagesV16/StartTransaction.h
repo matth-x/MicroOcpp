@@ -19,6 +19,7 @@ private:
   float meterStart = -1.0f;
   OcppTimestamp otimestamp;
   String idTag = String('\0');
+  uint16_t transactionRev = 0;
 public:
   StartTransaction(int connectorId);
 

@@ -68,6 +68,10 @@ void ChargePointStatusService::boot() {
     booted = true;
 }
 
+bool ChargePointStatusService::isBooted() {
+    return booted;
+}
+
 String &ChargePointStatusService::getUnboundIdTag() {
     return idTag;
 }

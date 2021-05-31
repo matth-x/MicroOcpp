@@ -21,6 +21,7 @@ private:
     bool transactionRunning = false;
     //int transactionId = -1;
     std::shared_ptr<Configuration<int>> transactionId = NULL;
+    int transactionIdSync = -1;
     bool evDrawsEnergy = false;
     bool evseOffersEnergy = false;
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
@@ -33,7 +34,10 @@ public:
     void unauthorize();
     String &getIdTag();
     int getTransactionId();
+    int getTransactionIdSync();
+    uint16_t getTransactionWriteCount();
     void setTransactionId(int id);
+    void setTransactionIdSync(int id);
     void boot();
     void startEvDrawsEnergy();
     void stopEvDrawsEnergy();

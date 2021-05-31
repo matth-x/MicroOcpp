@@ -44,6 +44,7 @@ OcppTime *ocppTime;
 #define OCPP_ID_OF_CONNECTOR 1
 #define OCPP_ID_OF_CP 0
 boolean OCPP_initialized = false;
+boolean OCPP_booted = false; //if BootNotification succeeded
 
 #if 0 //moved to OcppConnection
 /*
@@ -158,11 +159,16 @@ void OCPP_loop() {
         return;
     }
 
-    Serial.print('.');
-    delay(70);
-
     //webSocket.loop();                 //moved to Core/OcppSocket
     ocppEngine_loop();                  //mandatory
+
+    if (!OCPP_booted) {
+        if (chargePointStatusService->isBooted()) {
+            OCPP_booted = true;
+        } else {
+            return; //wait until the first BootNotification succeeded
+        }
+    }
 
     if (onLimitChange != NULL) {
         smartChargingService->loop();   //optional
@@ -310,7 +316,7 @@ void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnT
     if (timeout)
         startTransaction->setTimeout(timeout);
     else
-        startTransaction->setTimeout(new FixedTimeout(20000));
+        startTransaction->setTimeout(new SuppressedTimeout());
 }
 
 void startTransaction(String &idTag, OnReceiveConfListener onConf) {
@@ -318,7 +324,7 @@ void startTransaction(String &idTag, OnReceiveConfListener onConf) {
         new StartTransaction(OCPP_ID_OF_CONNECTOR, idTag));
     initiateOcppOperation(startTransaction);
     startTransaction->setOnReceiveConfListener(onConf);
-    startTransaction->setTimeout(new FixedTimeout(20000));
+    startTransaction->setTimeout(new SuppressedTimeout());
 }
 
 void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {

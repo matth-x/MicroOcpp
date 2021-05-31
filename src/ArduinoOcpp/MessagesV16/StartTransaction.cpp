@@ -35,18 +35,6 @@ void StartTransaction::initiate() {
         otimestamp = MIN_TIME;
     }
 
-    ChargePointStatusService *cpss = getChargePointStatusService();
-    if (cpss != NULL) {
-        if (cpss->existsUnboundAuthorization()) {
-            this->idTag = String(cpss->getUnboundIdTag());
-        } else {
-            //The CP is not authorized. Try anyway, let the CS decide what to do ...
-            this->idTag = String("A0-00-00-00");
-        }
-    } else {
-        this->idTag = String("A0-00-00-00"); //Use a default payload. In the typical use case of this library, you probably you don't even need Authorization at all
-    }
-
     if (idTag.isEmpty()) {
         ChargePointStatusService *cpss = getChargePointStatusService();
         if (cpss != NULL && cpss->existsUnboundAuthorization()) {
@@ -64,9 +52,12 @@ void StartTransaction::initiate() {
 
     ConnectorStatus *connector = getConnectorStatus(connectorId);
     if (connector != NULL){
+        if (connector->getTransactionId() >= 0) {
+            Serial.print(F("[StartTransaction] Warning: started transaction while OCPP already presumes a running transaction\n"));
+        }
         connector->setTransactionId(0); //pending
+        transactionRev = connector->getTransactionWriteCount();
     }
-
 
     if (DEBUG_OUT) Serial.println(F("[StartTransaction] StartTransaction initiated!"));
 }
@@ -101,14 +92,20 @@ void StartTransaction::processConf(JsonObject payload) {
 
         ConnectorStatus *connector = getConnectorStatus(connectorId);
         if (connector){
-            connector->setTransactionId(transactionId);
+            if (transactionRev == connector->getTransactionWriteCount()) {
+                connector->setTransactionId(transactionId);
+            }
+            connector->setTransactionIdSync(transactionId);
         }
     } else {
         Serial.print(F("[StartTransaction] Request has been denied!\n"));
         ConnectorStatus *connector = getConnectorStatus(connectorId);
         if (connector){
-            connector->setTransactionId(-1);
-            connector->unauthorize();
+            if (transactionRev == connector->getTransactionWriteCount()) {
+                connector->setTransactionId(-1);
+                connector->unauthorize();
+            }
+            connector->setTransactionIdSync(-1);
         }
     }
 }

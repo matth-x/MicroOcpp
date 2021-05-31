@@ -100,6 +100,7 @@ void OcppConnection::initiateOcppOperation(OcppOperation *o){
     return;
   }
   initiatedOcppOperations.push_back(o);
+  o->setInitiated();
 }
 
 bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t length) {

@@ -33,6 +33,7 @@ public:
     void authorize(String &idTag);
     void authorize();
     void boot();
+    bool isBooted();
     String &getUnboundIdTag();
     void invalidateUnboundIdTag();
     boolean existsUnboundAuthorization();
