@@ -10,6 +10,8 @@
 
 #include <ArduinoOcpp/Core/OcppError.h>
 
+#include <Variants.h>
+
 namespace ArduinoOcpp {
 namespace OcppEngine {
 

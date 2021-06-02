@@ -5,6 +5,7 @@
 #include <ArduinoOcpp/MessagesV16/Heartbeat.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <string.h>
+#include <Variants.h>
 
 using ArduinoOcpp::Ocpp16::Heartbeat;
 

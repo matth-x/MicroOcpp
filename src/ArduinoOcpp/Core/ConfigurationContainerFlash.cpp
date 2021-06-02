@@ -3,6 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/ConfigurationContainerFlash.h>
+#include <Variants.h>
 
 #if defined(ESP32)
 #define USE_FS LITTLEFS

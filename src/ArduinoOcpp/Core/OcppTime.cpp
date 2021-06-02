@@ -3,6 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppTime.h>
+#include <Variants.h>
 
 namespace ArduinoOcpp {
 

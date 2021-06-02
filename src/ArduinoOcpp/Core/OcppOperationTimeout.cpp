@@ -4,6 +4,8 @@
 
 #include <ArduinoOcpp/Core/OcppOperationTimeout.h>
 
+#include <Variants.h>
+
 using namespace ArduinoOcpp;
 
 void Timeout::setOnTimeoutListener(OnTimeoutListener onTimeout) {

@@ -4,6 +4,8 @@
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
+#include <Variants.h>
+
 using ArduinoOcpp::OcppMessage;
 
 OcppMessage::OcppMessage(){}

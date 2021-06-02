@@ -8,8 +8,6 @@
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 
-#include <EEPROM.h>
-
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
