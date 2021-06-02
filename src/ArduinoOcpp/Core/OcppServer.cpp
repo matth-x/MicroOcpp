@@ -6,6 +6,8 @@
 
 #include <Variants.h>
 
+#ifndef AO_CUSTOM_WS
+
 using namespace ArduinoOcpp::EspWiFi;
 
 OcppServer::OcppServer() {
@@ -153,3 +155,5 @@ bool OcppServer::sendTXT(IPAddress &ip_addr, String &out) {
 
     return wsockServer.sendTXT(mClient, out);
 }
+
+#endif //ndef AO_CUSTOM_WS

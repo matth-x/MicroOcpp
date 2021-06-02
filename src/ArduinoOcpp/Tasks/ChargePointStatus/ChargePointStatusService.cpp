@@ -14,8 +14,8 @@
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-ChargePointStatusService::ChargePointStatusService(WebSocketsClient *webSocket, int numConn, OcppTime *ocppTime)
-      : webSocket(webSocket), numConnectors(numConn), ocppTime(ocppTime) {
+ChargePointStatusService::ChargePointStatusService(int numConn, OcppTime *ocppTime)
+      : numConnectors(numConn), ocppTime(ocppTime) {
   
     connectors = (ConnectorStatus**) malloc(numConn * sizeof(ConnectorStatus*));
     for (int i = 0; i < numConn; i++) {

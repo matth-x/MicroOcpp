@@ -25,7 +25,9 @@
 namespace ArduinoOcpp {
 namespace Facade {
 
+#ifndef AO_CUSTOM_WS
 WebSocketsClient webSocket;
+#endif
 OcppSocket *ocppSocket;
 
 MeteringService *meteringService;
@@ -98,6 +100,7 @@ using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Facade;
 using namespace ArduinoOcpp::Ocpp16;
 
+#ifndef AO_CUSTOM_WS
 void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt, ArduinoOcpp::OcppClock system_time) {
     if (OCPP_initialized) {
         Serial.print(F("[ArduinoOcpp] Error: cannot call OCPP_initialize() two times! If you want to reconfigure the library, please restart your ESP\n"));
@@ -126,6 +129,7 @@ void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, float 
 
     OCPP_initialize(ocppSocket, V_eff, fsOpt);
 }
+#endif
 
 void OCPP_initialize(OcppSocket *ocppSocket, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt, ArduinoOcpp::OcppClock system_time) {
     if (OCPP_initialized) {
@@ -146,8 +150,8 @@ void OCPP_initialize(OcppSocket *ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     ocppEngine_setOcppTime(ocppTime);
 
     smartChargingService = new SmartChargingService(11000.0f, V_eff, OCPP_NUMCONNECTORS, ocppTime, fsOpt); //default charging limit: 11kW
-    chargePointStatusService = new ChargePointStatusService(&webSocket, OCPP_NUMCONNECTORS, ocppTime); //Constructor adds instance to ocppEngine in constructor
-    meteringService = new MeteringService(&webSocket, OCPP_NUMCONNECTORS, ocppTime);
+    chargePointStatusService = new ChargePointStatusService(OCPP_NUMCONNECTORS, ocppTime); //Constructor adds instance to ocppEngine in constructor
+    meteringService = new MeteringService(OCPP_NUMCONNECTORS, ocppTime);
 
     OCPP_initialized = true;
 }

@@ -13,7 +13,6 @@
 namespace ArduinoOcpp {
 namespace OcppEngine {
 
-WebSocketsClient *wsocket;
 OcppSocket *ocppSocket;
 SmartChargingService *ocppEngine_smartChargingService;
 ChargePointStatusService *ocppEngine_chargePointStatusService;
@@ -35,7 +34,6 @@ OcppConnection *mConnection;
 } //end namespace OcppEngine
 
 using namespace ArduinoOcpp::OcppEngine;
-using namespace ArduinoOcpp::EspWiFi;
 
 void ocppEngine_initialize(OcppSocket *ocppSocket){
   ocppSock = ocppSocket;

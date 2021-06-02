@@ -5,8 +5,6 @@
 #ifndef TRIGGERMESSAGE_H
 #define TRIGGERMESSAGE_H
 
-#include <WebSocketsClient.h>
-
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppOperation.h>
 #include <Variants.h>

@@ -5,16 +5,14 @@
 #ifndef OCPPSOCKET_H
 #define OCPPSOCKET_H
 
-#include <WebSocketsClient.h>
-#include <WebSocketsServer.h>
-
+#include <Arduino.h>
 #include <ArduinoOcpp/Core/OcppServer.h>
 
 namespace ArduinoOcpp {
 
 class OcppSocket {
 public:
-    OcppSocket();
+    OcppSocket() = default;
     virtual ~OcppSocket() = default;
 
     virtual void loop() = 0;
@@ -24,6 +22,14 @@ public:
     virtual void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) = 0; //ReceiveTXTcallback is defined in OcppServer.h
 };
 
+} //end namespace ArduinoOcpp
+
+#ifndef AO_CUSTOM_WS
+
+#include <WebSocketsClient.h>
+#include <WebSocketsServer.h>
+
+namespace ArduinoOcpp {
 namespace EspWiFi {
 
 class OcppClientSocket : public OcppSocket {
@@ -57,4 +63,5 @@ public:
 
 } //end namespace EspWiFi
 } //end namespace ArduinoOcpp
+#endif //ndef AO_CUSTOM_WS
 #endif

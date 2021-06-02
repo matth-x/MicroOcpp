@@ -138,7 +138,7 @@ bool ConfigurationContainerFlash::load() {
 
     configurationsUpdated();
 
-    Serial.println(F("[Configuration] Initialization successful\n"));
+    if (DEBUG_OUT) Serial.println(F("[Configuration] Initialization successful\n"));
 #endif //ndef AO_DEACTIVATE_FLASH
     return true;
 }

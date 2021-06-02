@@ -19,7 +19,6 @@
  #define OCPPMESSAGE_H
 
  #include <ArduinoJson.h>
- #include <WebSocketsClient.h>
 
 namespace ArduinoOcpp {
 
@@ -70,7 +69,6 @@ public:
   virtual const char *getErrorCode() {return NULL;} //NULL means no error
   virtual const char *getErrorDescription() {return "";}
   virtual DynamicJsonDocument *getErrorDetails() {return createEmptyDocument();}
-
     
 };
 

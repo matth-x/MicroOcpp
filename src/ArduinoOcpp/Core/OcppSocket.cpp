@@ -5,12 +5,11 @@
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include <Variants.h>
 
-using namespace ArduinoOcpp;
-using namespace ArduinoOcpp::EspWiFi;
+#ifndef AO_CUSTOM_WS
 
-OcppSocket::OcppSocket() {
-    
-}
+using namespace ArduinoOcpp;
+
+using namespace ArduinoOcpp::EspWiFi;
 
 OcppClientSocket::OcppClientSocket(WebSocketsClient *wsock) : wsock(wsock) {
 
@@ -78,3 +77,5 @@ bool OcppServerSocket::sendTXT(String &out) {
 void OcppServerSocket::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
     OcppServer::getInstance()->setReceiveTXTcallback(ip_addr, callback);
 }
+
+#endif

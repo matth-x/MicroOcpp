@@ -9,10 +9,8 @@
 
 //#define METER_VALUES_SAMPLED_DATA_MAX_LENGTH 4 //after 4 measurements, send the values to the CS
 
-#include <WebSocketsClient.h>
 #include <functional>
 
-#include <EEPROMLayout.h>
 #include <Variants.h>
 
 #include <ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.h>
@@ -28,11 +26,10 @@ typedef std::function<float()> EnergySampler;
 
 class MeteringService {
 private:
-  WebSocketsClient *webSocket;
   const int numConnectors;
   ConnectorMeterValuesRecorder **connectors;
 public:
-  MeteringService(WebSocketsClient *webSocket, int numConnectors, OcppTime *ocppTime);
+  MeteringService(int numConnectors, OcppTime *ocppTime);
 
   ~MeteringService();
 

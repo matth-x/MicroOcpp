@@ -5,15 +5,12 @@
 #ifndef CHARGEPOINTSTATUSSERVICE_H
 #define CHARGEPOINTSTATUSSERVICE_H
 
-#include <WebSocketsClient.h>
-
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ConnectorStatus.h>
 
 namespace ArduinoOcpp {
 
 class ChargePointStatusService {
 private:
-    WebSocketsClient *webSocket;
     const int numConnectors;
     OcppTime *ocppTime;
     ConnectorStatus **connectors;
@@ -24,7 +21,7 @@ private:
     String idTag = String('\0');
 
 public:
-    ChargePointStatusService(WebSocketsClient *webSocket, int numConnectors, OcppTime *ocppTime);
+    ChargePointStatusService(int numConnectors, OcppTime *ocppTime);
 
     ~ChargePointStatusService();
     

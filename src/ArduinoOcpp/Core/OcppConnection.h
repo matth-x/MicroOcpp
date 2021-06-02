@@ -7,7 +7,6 @@
 
 #include <deque>
 #include <memory>
-#include <WebSocketsClient.h>
 #include <ArduinoJson.h>
 
 #include <ArduinoOcpp/Core/OcppSocket.h>

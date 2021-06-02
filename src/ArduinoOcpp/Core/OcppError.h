@@ -6,7 +6,6 @@
 #define OCPPERROR_H
 
 #include <ArduinoJson.h>
-#include <WebSocketsClient.h>
 
 #include <ArduinoOcpp/Core/OcppOperation.h>
 

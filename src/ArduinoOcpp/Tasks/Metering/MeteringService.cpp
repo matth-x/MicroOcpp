@@ -13,8 +13,8 @@
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-MeteringService::MeteringService(WebSocketsClient *webSocket, int numConn, OcppTime *ocppTime)
-      : webSocket(webSocket), numConnectors(numConn) {
+MeteringService::MeteringService(int numConn, OcppTime *ocppTime)
+      : numConnectors(numConn) {
   
     connectors = (ConnectorMeterValuesRecorder**) malloc(numConn * sizeof(ConnectorMeterValuesRecorder*));
     for (int i = 0; i < numConn; i++) {
