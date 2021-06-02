@@ -8,16 +8,22 @@
 
 #include <ArduinoJson.h>
 
+#if defined(ESP32)
+#include <WiFi.h>
+#else
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
+ESP8266WiFiMulti WiFiMulti;
+#endif
 
 //ArduinoOcpp modules
 #include <ArduinoOcpp.h>
+#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/Configuration.h>
 
 //Simulated HW integration (used as example)
 #include "OneConnector_HW_integration.h"
 
-ESP8266WiFiMulti WiFiMulti;
 
 #define STASSID "YOUR_WLAN_SSID"
 #define STAPSK  "YOUR_WLAN_PW"
@@ -63,13 +69,24 @@ void setup() {
     delay(300);
   }
   
+#if defined (ESP32)
+  WiFi.begin(STASSID, STAPSK);
+
+  Serial.print(F("[main] Wait for WiFi: "));
+    while (!WiFi.isConnected()) {
+        Serial.print('.');
+        delay(1000);
+    }
+  Serial.print(F(" connected!\n"));
+#else
   WiFiMulti.addAP(STASSID, STAPSK);
 
   while (WiFiMulti.run() != WL_CONNECTED) {
     delay(100);
   }
+#endif
 
-  OCPP_initialize(OCPP_HOST, OCPP_PORT, OCPP_URL);
+  OCPP_initialize(OCPP_HOST, OCPP_PORT, OCPP_URL, ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail);
 
   setPowerActiveImportSampler([]() {
     return EVSE_readChargeRate(); //from the GPIO-charger example
