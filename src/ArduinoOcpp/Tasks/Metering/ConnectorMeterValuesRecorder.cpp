@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -8,11 +8,11 @@
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(int connectorId)
-        : connectorId(connectorId) {
-    sampleTimestamp = LinkedList<time_t>();
-    energy = LinkedList<float>();
-    power = LinkedList<float>();
+ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(int connectorId, OcppTime *ocppTime)
+        : connectorId(connectorId), ocppTime(ocppTime) {
+    sampleTimestamp = std::vector<OcppTimestamp>();
+    energy = std::vector<float>();
+    power = std::vector<float>();
 
     MeterValueSampleInterval = declareConfiguration("MeterValueSampleInterval", 60);
     MeterValuesSampledDataMaxLength = declareConfiguration("MeterValuesSampledDataMaxLength", 4);
@@ -20,15 +20,16 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(int connectorId)
 
 void ConnectorMeterValuesRecorder::takeSample() {
     if (energySampler != NULL || powerSampler != NULL) {
-        sampleTimestamp.add(now());
+        if (!ocppTime->isValid()) return;
+        sampleTimestamp.push_back(ocppTime->getOcppTimestampNow());
     }
 
     if (energySampler != NULL) {
-        energy.add(energySampler());
+        energy.push_back(energySampler());
     }
 
     if (powerSampler != NULL) {
-        power.add(powerSampler());
+        power.push_back(powerSampler());
     }
 }
 
@@ -52,16 +53,16 @@ MeterValues *ConnectorMeterValuesRecorder::loop() {
     * If no powerSampler is available, estimate the energy consumption taking the Charging Schedule and CP Status
     * into account.
     */
-    if (now() >= (time_t) *MeterValueSampleInterval + lastSampleTime) {
+    if (millis() - lastSampleTime >= (ulong) (*MeterValueSampleInterval * 1000)) {
         takeSample();
-        lastSampleTime = now();
+        lastSampleTime = millis();
     }
 
 
     /*
     * Is the value buffer already full? If yes, return MeterValues message
     */
-    if (sampleTimestamp.size() >= *MeterValuesSampledDataMaxLength) {
+    if (((int) sampleTimestamp.size()) >= (int) *MeterValuesSampledDataMaxLength) {
         MeterValues *result = toMeterValues();
         return result;
     }
@@ -71,8 +72,8 @@ MeterValues *ConnectorMeterValuesRecorder::loop() {
 
 MeterValues *ConnectorMeterValuesRecorder::toMeterValues() {
     if (sampleTimestamp.size() == 0) {
-        //anything wrong here. Discard
-        Serial.print(F("[ConnectorMeterValuesRecorder] Try to send MeterValues without any data point. Ignore\n"));
+        //Switching from Non-Transaction to Transaction (or vice versa) without sample. Or anything wrong here. Discard
+        if (DEBUG_OUT) Serial.print(F("[ConnectorMeterValuesRecorder] Try to send MeterValues without any data point. Ignore\n"));
         clear();
         return NULL;
     }

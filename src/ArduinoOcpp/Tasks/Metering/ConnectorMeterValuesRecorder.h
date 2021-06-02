@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -9,12 +9,11 @@
 
 //#define METER_VALUES_SAMPLED_DATA_MAX_LENGTH 4 //after 4 measurements, send the values to the CS
 
-#include <LinkedList.h>
 #include <functional>
 
-#include <ArduinoOcpp/TimeHelper.h>
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
 #include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/Core/OcppTime.h>
 
 namespace ArduinoOcpp {
 
@@ -26,27 +25,26 @@ typedef std::function<float()> EnergySampler;
 class ConnectorMeterValuesRecorder {
 private:
     const int connectorId;
+    OcppTime *ocppTime;
 
-    LinkedList<time_t> sampleTimestamp;
-    LinkedList<float> energy;
-    LinkedList<float> power;
-    time_t lastSampleTime = 0; //0 means not charging right now
+    std::vector<OcppTimestamp> sampleTimestamp;
+    std::vector<float> energy;
+    std::vector<float> power;
+    ulong lastSampleTime = 0; //0 means not charging right now
     float lastPower;
     int lastTransactionId = -1;
  
     PowerSampler powerSampler = NULL;
     EnergySampler energySampler = NULL;
 
-    //ulong MeterValueSampleInterval = 60; //will be overwritten (see constructor)
-    //ulong MeterValuesSampledDataMaxLength = 4; //will be overwritten (see constructor)
     std::shared_ptr<Configuration<int>> MeterValueSampleInterval = NULL;
     std::shared_ptr<Configuration<int>> MeterValuesSampledDataMaxLength = NULL;
 
     void takeSample();
-    Ocpp16::MeterValues *toMeterValues();
+    Ocpp16::MeterValues *toMeterValues(); //returns message if connector has captured enough samples
     void clear();
 public:
-    ConnectorMeterValuesRecorder(int connectorId);
+    ConnectorMeterValuesRecorder(int connectorId, OcppTime *ocppTime);
 
     Ocpp16::MeterValues *loop();
 

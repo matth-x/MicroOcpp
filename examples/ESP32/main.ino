@@ -85,6 +85,13 @@ void loop() {
             Serial.print(F("[main] Started OCPP transaction. EV plug energized\n"));
         });
     }
+    
+    if (/* EV plugged out? */ false) {
+        stopTransaction([] (JsonObject payload) {
+            //Callback: Central System has answered. Energize your EV plug inside this callback and flash a confirmation light if you want.
+            Serial.print(F("[main] Started OCPP transaction. EV plug energized\n"));
+        });
+    }
 
     //... see ArduinoOcpp.h for more possibilities
 }

@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -10,14 +10,16 @@
 
 #include <ArduinoOcpp/Core/OcppError.h>
 
+#include <Variants.h>
+
 namespace ArduinoOcpp {
 namespace OcppEngine {
 
-WebSocketsClient *wsocket;
 OcppSocket *ocppSocket;
 SmartChargingService *ocppEngine_smartChargingService;
 ChargePointStatusService *ocppEngine_chargePointStatusService;
 MeteringService *ocppEngine_meteringService;
+OcppTime *ocppEngine_ocppTime;
 
 std::vector<OcppOperation*> initiatedOcppOperations;
 std::vector<OcppOperation*> receivedOcppOperations;
@@ -34,7 +36,6 @@ OcppConnection *mConnection;
 } //end namespace OcppEngine
 
 using namespace ArduinoOcpp::OcppEngine;
-using namespace ArduinoOcpp::EspWiFi;
 
 void ocppEngine_initialize(OcppSocket *ocppSocket){
   ocppSock = ocppSocket;
@@ -438,6 +439,18 @@ MeteringService* getMeteringService() {
     //no error catch 
   }
   return ocppEngine_meteringService;
+}
+
+void ocppEngine_setOcppTime(OcppTime *ocppTime) {
+    ocppEngine_ocppTime = ocppTime;
+}
+
+OcppTime *getOcppTime() {
+    if (ocppEngine_ocppTime == NULL) {
+        Serial.print(F("[OcppEngine] Error: in OcppEngine, there is no ocppEngine_ocppTime set, but it is accessed!\n"));
+        //no error catch 
+    }
+    return ocppEngine_ocppTime;
 }
 
 

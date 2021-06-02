@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -7,6 +7,8 @@
 
 #include <ArduinoOcpp/Core/OcppOperation.h>
 #include <ArduinoOcpp/Core/OcppOperationTimeout.h>
+#include <ArduinoOcpp/Core/ConfigurationOptions.h>
+#include <ArduinoOcpp/Core/OcppTime.h>
 
 #include "Variants.h"
 
@@ -21,9 +23,13 @@ using ArduinoOcpp::Timeout;
 
 #if USE_FACADE
 
-void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url);
+#ifndef AO_CUSTOM_WS
+//uses links2004/WebSockets library
+void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, float V_eff = 230.f /*German grid*/, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
+#endif
 
-void OCPP_initialize(ArduinoOcpp::OcppSocket *ocppSocket);
+//Lets you use your own WebSocket implementation
+void OCPP_initialize(ArduinoOcpp::OcppSocket *ocppSocket, float V_eff = 230.f /*German grid*/, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
 
 void OCPP_loop();
 
@@ -42,6 +48,8 @@ void setPowerActiveImportSampler(std::function<float()> power);
 void setEnergyActiveImportSampler(std::function<float()> energy);
 
 void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
+
+void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
 
 /*
  * React on calls by the library's internal functions
@@ -69,7 +77,7 @@ void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq); //option
 void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf); //important, energize the power plug here
 
 void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf); //important, de-energize the power plug here
-void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onSendConf); //optional, to de-energize the power plug immediately
+void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq); //optional, to de-energize the power plug immediately
 
 void setOnResetSendConf(OnSendConfListener onSendConf); //important, reset your device here (i.e. call ESP.reset();)
 

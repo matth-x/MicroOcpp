@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -6,8 +6,7 @@
 #define METERVALUES_H
 
 #include <ArduinoOcpp/Core/OcppOperation.h>
-#include <LinkedList.h>
-#include <ArduinoOcpp/TimeHelper.h>
+#include <ArduinoOcpp/Core/OcppTime.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
@@ -15,17 +14,17 @@ namespace Ocpp16 {
 class MeterValues : public OcppMessage {
 private:
 
-  LinkedList<time_t> sampleTime;
-  LinkedList<float> power;
-  LinkedList<float> energy;
+  std::vector<OcppTimestamp> sampleTime;
+  std::vector<float> power;
+  std::vector<float> energy;
 
   int connectorId = 0;
   int transactionId = -1;
 
 public:
-  MeterValues(LinkedList<time_t> *sampleTime, LinkedList<float> *energy);
+  MeterValues(std::vector<OcppTimestamp> *sampleTime, std::vector<float> *energy);
 
-  MeterValues(LinkedList<time_t> *sampleTime, LinkedList<float> *energy, LinkedList<float> *power, int connectorId, int transactionId);
+  MeterValues(std::vector<OcppTimestamp> *sampleTime, std::vector<float> *energy, std::vector<float> *power, int connectorId, int transactionId);
 
   MeterValues(); //for debugging only. Make this for the server pendant
 

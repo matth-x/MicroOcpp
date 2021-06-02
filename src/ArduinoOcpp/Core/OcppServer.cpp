@@ -1,10 +1,12 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppServer.h>
 
 #include <Variants.h>
+
+#ifndef AO_CUSTOM_WS
 
 using namespace ArduinoOcpp::EspWiFi;
 
@@ -153,3 +155,5 @@ bool OcppServer::sendTXT(IPAddress &ip_addr, String &out) {
 
     return wsockServer.sendTXT(mClient, out);
 }
+
+#endif //ndef AO_CUSTOM_WS

@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -6,13 +6,20 @@
 #define OCPPSERVER_H
 
 #include <vector>
-#include <WebSocketsServer.h>
+#include <functional>
 
 namespace ArduinoOcpp {
 
 typedef uint8_t WsClient;
 typedef std::function<bool(const char*, size_t)> ReceiveTXTcallback;
 
+} //end namespace ArduinoOcpp
+
+#ifndef AO_CUSTOM_WS
+
+#include <WebSocketsServer.h>
+
+namespace ArduinoOcpp {
 namespace EspWiFi {
 
 struct ReceiveTXTroute {
@@ -46,4 +53,5 @@ public:
 
 } //end namespace EspWiFi
 } //end namespace ArduinoOcpp
+#endif //ndef AO_CUSTOM_WS
 #endif

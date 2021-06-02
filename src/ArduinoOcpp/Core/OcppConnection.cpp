@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -7,6 +7,7 @@
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/OcppError.h>
 
+#include <Variants.h>
 
 #define HEAP_GUARD 2000UL //will not accept JSON messages if it will result in less than HEAP_GUARD free bytes in heap
 
@@ -100,6 +101,7 @@ void OcppConnection::initiateOcppOperation(OcppOperation *o){
     return;
   }
   initiatedOcppOperations.push_back(o);
+  o->setInitiated();
 }
 
 bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t length) {

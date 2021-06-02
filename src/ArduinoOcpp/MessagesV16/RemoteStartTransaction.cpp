@@ -68,7 +68,7 @@ DynamicJsonDocument* RemoteStartTransaction::createReq() {
     DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
-    payload["idTag"] = "fefed1d19876";
+    payload["idTag"] = "A0-00-00-00";
 
     return doc;
 }

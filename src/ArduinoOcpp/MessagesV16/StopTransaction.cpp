@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -21,42 +21,47 @@ const char* StopTransaction::getOcppOperationType(){
     return "StopTransaction";
 }
 
+void StopTransaction::initiate() {
+
+    if (getMeteringService() != NULL) {
+        meterStop = getMeteringService()->readEnergyActiveImportRegister(connectorId);
+    }
+
+    OcppTime *ocppTime = getOcppTime();
+    if (ocppTime) {
+        otimestamp = ocppTime->getOcppTimestampNow();
+    } else {
+        otimestamp = MIN_TIME;
+    }
+
+    ConnectorStatus *connector = getConnectorStatus(connectorId);
+    if (connector != NULL){
+        connector->setTransactionId(-1); //immediate end of transaction
+        connector->unauthorize();
+    }
+
+    if (DEBUG_OUT) Serial.println(F("[StartTransaction] StopTransaction initiated!"));
+
+}
+
 DynamicJsonDocument* StopTransaction::createReq() {
 
     DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1));
     JsonObject payload = doc->to<JsonObject>();
 
-    float meterStop = 0.0f;
-    if (getMeteringService() != NULL) {
-        meterStop = getMeteringService()->readEnergyActiveImportRegister(connectorId);
+    if (meterStop >= 0.f)
+        payload["meterStop"] = meterStop; //TODO meterStart is required to be in Wh, but measuring unit is probably inconsistent in implementation
+
+    if (otimestamp > MIN_TIME) {
+        char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
+        otimestamp.toJsonString(timestamp, JSONDATE_LENGTH + 1);
+        payload["timestamp"] = timestamp;
     }
-
-    payload["meterStop"] = meterStop; //TODO meterStart is required to be in Wh, but measuring unit is probably inconsistent in implementation
-    char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
-    getJsonDateStringFromSystemTime(timestamp, JSONDATE_LENGTH);
-    payload["timestamp"] = timestamp;
-
     ConnectorStatus *connector = getConnectorStatus(connectorId);
-    if (connector != NULL) {
-        if (connector->getTransactionId() >= 0) {
-            //Connector is in a transaction (transactionId > 0) or in an undefinded state (transactionId == 0).
-
-            //End the charging session in each module.
-
-            transactionId = connector->getTransactionId();
-
-            connector->stopEnergyOffer();
-            connector->stopTransaction();
-            connector->unauthorize();
-
-            SmartChargingService *scService = getSmartChargingService();
-            if (scService != NULL){
-                scService->endChargingNow();
-            }
-        } // else: Connector says that is is not involved in a transaction (anymore). It has been ended before, so do nothing
+    if (connector != NULL){
+        payload["transactionId"] = connector->getTransactionIdSync();
+        connector->setTransactionIdSync(-1);
     }
-
-    payload["transactionId"] = transactionId;
 
     return doc;
 }

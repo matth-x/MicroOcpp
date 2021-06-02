@@ -25,7 +25,9 @@
 namespace ArduinoOcpp {
 namespace Facade {
 
+#ifndef AO_CUSTOM_WS
 WebSocketsClient webSocket;
+#endif
 OcppSocket *ocppSocket;
 
 MeteringService *meteringService;
@@ -33,14 +35,18 @@ PowerSampler powerSampler;
 EnergySampler energySampler;
 std::function<bool()> evRequestsEnergySampler = NULL; //bool (*evRequestsEnergySampler)() = NULL;
 bool evRequestsEnergyLastState = false;
+std::function<bool()> connectorEnergizedSampler = NULL;
+bool connectorEnergizedLastState = false;
 SmartChargingService *smartChargingService;
 ChargePointStatusService *chargePointStatusService;
 OnLimitChange onLimitChange;
+OcppTime *ocppTime;
 
 #define OCPP_NUMCONNECTORS 2
 #define OCPP_ID_OF_CONNECTOR 1
 #define OCPP_ID_OF_CP 0
 boolean OCPP_initialized = false;
+boolean OCPP_booted = false; //if BootNotification succeeded
 
 #if 0 //moved to OcppConnection
 /*
@@ -94,13 +100,12 @@ using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Facade;
 using namespace ArduinoOcpp::Ocpp16;
 
-void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
+#ifndef AO_CUSTOM_WS
+void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt, ArduinoOcpp::OcppClock system_time) {
     if (OCPP_initialized) {
         Serial.print(F("[ArduinoOcpp] Error: cannot call OCPP_initialize() two times! If you want to reconfigure the library, please restart your ESP\n"));
         return;
     }
-
-    configuration_init(); //call before each other library call
 
     // server address, port and URL
     webSocket.begin(CS_hostname, CS_port, CS_url, "ocpp1.6");
@@ -122,10 +127,11 @@ void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url) {
 
     ocppSocket = new EspWiFi::OcppClientSocket(&webSocket);
 
-    OCPP_initialize(ocppSocket);
+    OCPP_initialize(ocppSocket, V_eff, fsOpt);
 }
+#endif
 
-void OCPP_initialize(OcppSocket *ocppSocket) {
+void OCPP_initialize(OcppSocket *ocppSocket, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt, ArduinoOcpp::OcppClock system_time) {
     if (OCPP_initialized) {
         Serial.print(F("[ArduinoOcpp] Error: cannot call OCPP_initialize() two times! If you want to reconfigure the library, please restart your ESP\n"));
         return;
@@ -135,12 +141,17 @@ void OCPP_initialize(OcppSocket *ocppSocket) {
         Serial.print(F("[ArduinoOcpp] OCPP_initialize(ocppSocket): ocppSocket cannot be NULL!\n"));
         return;
     }
+    
+    configuration_init(fsOpt); //call before each other library call
 
     ocppEngine_initialize(ocppSocket);
 
-    smartChargingService = new SmartChargingService(16.0f, OCPP_NUMCONNECTORS); //default charging limit: 16A
-    chargePointStatusService = new ChargePointStatusService(&webSocket, OCPP_NUMCONNECTORS); //Constructor adds instance to ocppEngine in constructor
-    meteringService = new MeteringService(&webSocket, OCPP_NUMCONNECTORS);
+    ocppTime = new OcppTime(system_time);
+    ocppEngine_setOcppTime(ocppTime);
+
+    smartChargingService = new SmartChargingService(11000.0f, V_eff, OCPP_NUMCONNECTORS, ocppTime, fsOpt); //default charging limit: 11kW
+    chargePointStatusService = new ChargePointStatusService(OCPP_NUMCONNECTORS, ocppTime); //Constructor adds instance to ocppEngine in constructor
+    meteringService = new MeteringService(OCPP_NUMCONNECTORS, ocppTime);
 
     OCPP_initialized = true;
 }
@@ -154,6 +165,14 @@ void OCPP_loop() {
 
     //webSocket.loop();                 //moved to Core/OcppSocket
     ocppEngine_loop();                  //mandatory
+
+    if (!OCPP_booted) {
+        if (chargePointStatusService->isBooted()) {
+            OCPP_booted = true;
+        } else {
+            return; //wait until the first BootNotification succeeded
+        }
+    }
 
     if (onLimitChange != NULL) {
         smartChargingService->loop();   //optional
@@ -182,6 +201,21 @@ void OCPP_loop() {
         chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->stopEvDrawsEnergy();
     }
 
+    bool connectorEnergizedNewState = true;
+    if (connectorEnergizedSampler != NULL) {
+        connectorEnergizedNewState = connectorEnergizedSampler();
+    } else {
+        connectorEnergizedNewState = getTransactionId() >= 0;
+    }
+
+    if (!connectorEnergizedLastState && connectorEnergizedNewState) {
+        connectorEnergizedLastState = true;
+        chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->startEnergyOffer();
+    } else if (connectorEnergizedLastState && !connectorEnergizedNewState) {
+        connectorEnergizedLastState = false;
+        chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->stopEnergyOffer();
+    }
+
 }
 
 void setPowerActiveImportSampler(std::function<float()> power) {
@@ -196,7 +230,10 @@ void setEnergyActiveImportSampler(std::function<float()> energy) {
 
 void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy) {
     evRequestsEnergySampler = evRequestsEnergy;
+}
 
+void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized) {
+    connectorEnergizedSampler = connectorEnergized;
 }
 
 void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged) {
@@ -283,7 +320,7 @@ void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnT
     if (timeout)
         startTransaction->setTimeout(timeout);
     else
-        startTransaction->setTimeout(new FixedTimeout(20000));
+        startTransaction->setTimeout(new SuppressedTimeout());
 }
 
 void startTransaction(String &idTag, OnReceiveConfListener onConf) {
@@ -291,7 +328,7 @@ void startTransaction(String &idTag, OnReceiveConfListener onConf) {
         new StartTransaction(OCPP_ID_OF_CONNECTOR, idTag));
     initiateOcppOperation(startTransaction);
     startTransaction->setOnReceiveConfListener(onConf);
-    startTransaction->setTimeout(new FixedTimeout(20000));
+    startTransaction->setTimeout(new SuppressedTimeout());
 }
 
 void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {

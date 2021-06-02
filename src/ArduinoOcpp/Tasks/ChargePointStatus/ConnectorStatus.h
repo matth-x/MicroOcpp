@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -14,26 +14,30 @@ namespace ArduinoOcpp {
 class ConnectorStatus {
 private:
     const int connectorId;
+    OcppTime *ocppTime;
 
     bool authorized = false;
     String idTag = String('\0');
     bool transactionRunning = false;
     //int transactionId = -1;
     std::shared_ptr<Configuration<int>> transactionId = NULL;
+    int transactionIdSync = -1;
     bool evDrawsEnergy = false;
     bool evseOffersEnergy = false;
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
 public:
-    ConnectorStatus(int connectorId);
+    ConnectorStatus(int connectorId, OcppTime *ocppTime);
 
     //boolean requestAuthorization();
     void authorize();
     void authorize(String &idTag);
     void unauthorize();
     String &getIdTag();
-    void startTransaction(int transactionId);
-    void stopTransaction();
     int getTransactionId();
+    int getTransactionIdSync();
+    uint16_t getTransactionWriteCount();
+    void setTransactionId(int id);
+    void setTransactionIdSync(int id);
     void boot();
     void startEvDrawsEnergy();
     void stopEvDrawsEnergy();

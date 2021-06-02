@@ -1,8 +1,8 @@
 {
     "name": "ArduinoOcpp",
     "version": "0.0.1",
-    "description": "OCPP 1.6 Client for the ESP8266 (ESP32 and more coming soon)",
-    "keywords": "OCPP, 1.6, OCPP 1.6, Smart Energy, Smart Charging, client, ESP8266, Arduino",
+    "description": "OCPP 1.6 Client for the ESP8266 and ESP32 (more coming soon)",
+    "keywords": "OCPP, 1.6, OCPP 1.6, Smart Energy, Smart Charging, client, ESP8266, ESP32, Arduino",
     "repository":
     {
         "type": "git",
@@ -20,12 +20,10 @@
     "homepage": "https://www.arduino-ocpp.com",
     "dependencies": {
       "ArduinoJson": "6.17.2",
-      "WebSockets": "2.2.0",
-      "ivanseidel/LinkedList": "0.0.0-alpha+sha.dac3874d28",
-      "Time": "1.6"
+      "WebSockets": "2.2.0"
     },
     "frameworks": "arduino",
-    "platforms": "espressif8266",
+    "platforms": "espressif8266, espressif32",
 
     "export": {
         "include":
@@ -39,8 +37,7 @@
         "exclude":
         [
             "src/OneConnector*",
-            "src/Simulated_HW*",
-            "src/OcppServer*"
+            "src/Simulated_HW*"
         ]
     }
   }

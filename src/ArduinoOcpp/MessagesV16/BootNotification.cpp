@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -8,7 +8,7 @@
 #include <ArduinoOcpp/Core/OcppEngine.h>
 
 #include <string.h>
-#include <ArduinoOcpp/TimeHelper.h>
+#include <ArduinoOcpp/Core/OcppTime.h>
 
 using ArduinoOcpp::Ocpp16::BootNotification;
 
@@ -60,7 +60,10 @@ DynamicJsonDocument* BootNotification::createReq() {
 void BootNotification::processConf(JsonObject payload){
   const char* currentTime = payload["currentTime"] | "Invalid";
   if (strcmp(currentTime, "Invalid")) {
-    if (!setTimeFromJsonDateString(currentTime)) {
+    OcppTime *ocppTime = getOcppTime();
+    if (ocppTime && ocppTime->setOcppTime(currentTime)) {
+      //success
+    } else {
       Serial.print(F("[BootNotification] Error reading time string. Expect format like 2020-02-01T20:53:32.486Z\n"));
     }
   } else {
@@ -90,9 +93,6 @@ void BootNotification::processReq(JsonObject payload){
 DynamicJsonDocument* BootNotification::createConf(){
   DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(3) + (JSONDATE_LENGTH + 1));
   JsonObject payload = doc->to<JsonObject>();
-  //char currentTime[JSONDATE_LENGTH + 1] = {'\0'};
-  //getJsonDateStringFromSystemTime(currentTime, JSONDATE_LENGTH);
-  //payload["currentTime"] =  currentTime; //currentTime
   payload["currentTime"] = "2019-11-01T11:59:55.123Z";
   payload["interval"] = 86400; //heartbeat send interval - not relevant for JSON variant of OCPP so send dummy value that likely won't break
   payload["status"] = "Accepted";

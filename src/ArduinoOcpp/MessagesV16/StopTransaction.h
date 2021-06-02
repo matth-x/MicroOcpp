@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -6,28 +6,32 @@
 #define STOPTRANSACTION_H
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/OcppTime.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 
 class StopTransaction : public OcppMessage {
 private:
-  int connectorId = 1;
-  int transactionId = -1;
+    int connectorId = 1;
+    float meterStop = -1.0f;
+    OcppTimestamp otimestamp;
 public:
-  StopTransaction();
+    StopTransaction();
 
-  StopTransaction(int connectorId);
+    StopTransaction(int connectorId);
 
-  const char* getOcppOperationType();
+    const char* getOcppOperationType();
 
-  DynamicJsonDocument* createReq();
+    void initiate();
 
-  void processConf(JsonObject payload);
+    DynamicJsonDocument* createReq();
 
-  void processReq(JsonObject payload);
+    void processConf(JsonObject payload);
 
-  DynamicJsonDocument* createConf();
+    void processReq(JsonObject payload);
+
+    DynamicJsonDocument* createConf();
 };
 
 } //end namespace Ocpp16

@@ -84,20 +84,27 @@ void EVSE_loop() {
 void onEvPlug() {
     Serial.print(F("[EVSE] EV plugged\n"));
     String fixedIdTag = String("abcdef123456789"); // e.g. idTag = readRFIDTag();
-    authorize(fixedIdTag, [](JsonObject confMsg) {
-        startTransaction([](JsonObject conf) {
-            transactionRunning = true;
-            evRequestsEnergy = true;
-            Serial.print(F("[EVSE] Successfully authorized and started transaction\n"));
+    if (getTransactionId() < 0) {
+        authorize(fixedIdTag, [](JsonObject confMsg) {
+            startTransaction([](JsonObject conf) {
+                transactionRunning = true;
+                evRequestsEnergy = true;
+                Serial.print(F("[EVSE] Successfully authorized and started transaction\n"));
+            });
         });
-    });
+    } else {
+        transactionRunning = true;
+        evRequestsEnergy = true;
+        Serial.print(F("[EVSE] Successfully authorized and started transaction II\n"));
+    }
 }
 
 void onEvUnplug() {
     Serial.print(F("[EVSE] EV unplugged\n"));
     transactionRunning = false;
     evRequestsEnergy = false;
-    stopTransaction();
+    if (getTransactionId() >= 0)
+        stopTransaction();
 }
 
 float EVSE_readChargeRate() { //estimation for EVSEs without power meter

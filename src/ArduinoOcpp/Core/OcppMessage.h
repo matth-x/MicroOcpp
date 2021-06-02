@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -19,7 +19,6 @@
  #define OCPPMESSAGE_H
 
  #include <ArduinoJson.h>
- #include <WebSocketsClient.h>
 
 namespace ArduinoOcpp {
 
@@ -35,6 +34,8 @@ public:
   virtual ~OcppMessage();
   
   virtual const char* getOcppOperationType();
+
+  virtual void initiate();
 
   /**
    * Create the payload for the respective OCPP message
@@ -68,7 +69,6 @@ public:
   virtual const char *getErrorCode() {return NULL;} //NULL means no error
   virtual const char *getErrorDescription() {return "";}
   virtual DynamicJsonDocument *getErrorDetails() {return createEmptyDocument();}
-
     
 };
 

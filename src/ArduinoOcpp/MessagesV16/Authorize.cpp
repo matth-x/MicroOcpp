@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -9,7 +9,7 @@
 using ArduinoOcpp::Ocpp16::Authorize;
 
 Authorize::Authorize() {
-    idTag = String("fefed1d19876"); //Use a default payload. In the typical use case of this library, you probably you don't even need Authorization at all
+    this->idTag = String("A0-00-00-00"); //Use a default payload. In the typical use case of this library, you probably you don't even need Authorization at all
 }
 
 Authorize::Authorize(String &idTag) {

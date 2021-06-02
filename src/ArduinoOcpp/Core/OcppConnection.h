@@ -1,4 +1,4 @@
-// matth-x/ESP8266-OCPP
+// matth-x/ArduinoOcpp
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
@@ -7,7 +7,6 @@
 
 #include <deque>
 #include <memory>
-#include <WebSocketsClient.h>
 #include <ArduinoJson.h>
 
 #include <ArduinoOcpp/Core/OcppSocket.h>
