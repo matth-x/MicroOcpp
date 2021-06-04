@@ -14,6 +14,13 @@
 #define OCPP_PORT 80
 #define OCPP_URL "wss://echo.websocket.org/"
 
+//
+////  Settings which worked for my SteVe instance
+//
+//#define OCPP_HOST "my.instance.com"
+//#define OCPP_PORT 80
+//#define OCPP_URL "ws://my.instance.com/steve/websocket/CentralSystemService/gpio-based-charger"
+
 void setup() {
 
     /*
