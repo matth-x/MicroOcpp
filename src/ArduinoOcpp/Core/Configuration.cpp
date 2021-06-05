@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/Core/Configuration.h>
 //#include <ArduinoOcpp/Core/ConfigurationContainer.h>
-#include <ArduinoOcpp/Core/ConfigurationContainerFlash.h>
+
 
 #include <Variants.h>
 
@@ -65,6 +65,10 @@ std::shared_ptr<ConfigurationContainer> createConfigurationContainer(const char 
 }
 
 std::vector<std::shared_ptr<ConfigurationContainer>> configurationContainers;
+
+void addConfigurationContainer(std::shared_ptr<ConfigurationContainer> container) {
+    configurationContainers.push_back(container);
+}
 
 std::shared_ptr<ConfigurationContainer> getContainer(const char *filename) {
     std::vector<std::shared_ptr<ConfigurationContainer>>::iterator container = std::find_if(configurationContainers.begin(), configurationContainers.end(),
