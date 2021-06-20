@@ -21,10 +21,8 @@
 #include <ArduinoOcpp/MessagesV16/ChangeConfiguration.h>
 #include <ArduinoOcpp/MessagesV16/GetConfiguration.h>
 #include <ArduinoOcpp/MessagesV16/Reset.h>
-#if 0
-#include "UpdateFirmware.h"
-#include "FirmwareStatusNotification.h"
-#endif
+#include <ArduinoOcpp/MessagesV16/UpdateFirmware.h>
+#include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
 
 #include <ArduinoOcpp/Core/OcppEngine.h>
 
@@ -218,15 +216,13 @@ OcppOperation *makeOcppOperation(const char *messageType) {
     if (onResetSendConf == NULL)
       Serial.print(F("[SimpleOcppOperationFactory] Warning: Reset is without effect when the sendConf listener is not set. Set a listener which resets your device.\n"));
     operation->setOnSendConfListener(onResetSendConf);
-#if 0
   } else if (!strcmp(messageType, "UpdateFirmware")) {
-    msg = new UpdateFirmware();
+    msg = new Ocpp16::UpdateFirmware();
     if (onUpdateFirmwareReceiveReq == NULL)
       Serial.print(F("[SimpleOcppOperationFactory] Warning: UpdateFirmware is without effect when the receiveReq listener is not set. Please implement a FW update routine for your device.\n"));
     operation->setOnReceiveReqListener(onUpdateFirmwareReceiveReq);
   } else if (!strcmp(messageType, "FirmwareStatusNotification")) {
-    msg = new FirmwareStatusNotification();
-#endif
+    msg = new Ocpp16::FirmwareStatusNotification();
   } else {
     Serial.println(F("[SimpleOcppOperationFactory] Operation not supported"));
     msg = new NotImplemented();
