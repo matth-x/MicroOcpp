@@ -70,6 +70,14 @@ void addConfigurationContainer(std::shared_ptr<ConfigurationContainer> container
     configurationContainers.push_back(container);
 }
 
+std::vector<std::shared_ptr<ConfigurationContainer>>::iterator getConfigurationContainersBegin() {
+    return configurationContainers.begin();
+}
+
+std::vector<std::shared_ptr<ConfigurationContainer>>::iterator getConfigurationContainersEnd() {
+    return configurationContainers.end();
+}
+
 std::shared_ptr<ConfigurationContainer> getContainer(const char *filename) {
     std::vector<std::shared_ptr<ConfigurationContainer>>::iterator container = std::find_if(configurationContainers.begin(), configurationContainers.end(),
         [filename](std::shared_ptr<ConfigurationContainer> &elem) {

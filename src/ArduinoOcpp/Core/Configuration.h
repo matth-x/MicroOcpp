@@ -17,6 +17,9 @@ template <class T>
 std::shared_ptr<Configuration<T>> declareConfiguration(const char *key, T defaultValue, const char *filename = CONFIGURATION_FN, bool remotePeerCanWrite = true, bool remotePeerCanRead = true, bool localClientCanWrite = true, bool rebootRequiredWhenChanged = false);
 
 void addConfigurationContainer(std::shared_ptr<ConfigurationContainer> container);
+std::vector<std::shared_ptr<ConfigurationContainer>>::iterator getConfigurationContainersBegin();
+std::vector<std::shared_ptr<ConfigurationContainer>>::iterator getConfigurationContainersEnd();
+
 
 namespace Ocpp16 {
 
