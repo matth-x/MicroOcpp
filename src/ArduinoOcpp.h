@@ -54,13 +54,16 @@ void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
 /*
  * React on calls by the library's internal functions
  * 
- * The library needs to set parameters on your charger on a regular basis. The library calls
- * following callbacks regularily (if they were set) to perform updates on your charger.
+ * The library needs to set parameters on your charger on a regular basis or perform
+ * functions triggered by the central system. The library uses the following callbacks
+ * (if they were set) to perform updates or functions on your charger.
  * 
  * Set the callbacks once in your setup() function.
  */
 
 void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged);
+
+void setOnUnlockConnector(std::function<bool()> unlockConnector); //true: success, false: failure
 
 /*
  * React on CS-initiated operations

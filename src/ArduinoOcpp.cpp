@@ -241,6 +241,15 @@ void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged
     smartChargingService->setOnLimitChange(onLimitChange);
 }
 
+void setOnUnlockConnector(std::function<bool()> unlockConnector) {
+    ConnectorStatus *connector = getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (connector) {
+        connector->setOnUnlockConnector(unlockConnector);
+    } else {
+        Serial.print(F("[ArduinoOcpp] Error: called setOnUnlockConnector before initializing the library!\n"));
+    }
+}
+
 void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq) {
      setOnSetChargingProfileRequestListener(onReceiveReq);
 }

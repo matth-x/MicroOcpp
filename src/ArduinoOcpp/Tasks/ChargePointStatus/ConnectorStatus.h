@@ -25,6 +25,7 @@ private:
     bool evDrawsEnergy = false;
     bool evseOffersEnergy = false;
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
+    std::function<bool()> onUnlockConnector = NULL;
 public:
     ConnectorStatus(int connectorId, OcppTime *ocppTime);
 
@@ -50,6 +51,9 @@ public:
     Ocpp16::StatusNotification *loop();
 
     OcppEvseState inferenceStatus();
+
+    void setOnUnlockConnector(std::function<bool()> unlockConnector);
+    std::function<bool()> getOnUnlockConnector();
 };
 
 } //end namespace ArduinoOcpp

@@ -146,7 +146,7 @@ In case you use PlatformIO, you can copy all dependencies from `platformio.ini` 
 | `StartTransaction` | :heavy_check_mark: |
 | `StatusNotification` | :heavy_check_mark: |
 | `StopTransaction` | :heavy_check_mark: |
-| `UnlockConnector` |   |   | :heavy_multiplication_x: |
+| `UnlockConnector` | :heavy_check_mark: |
 | **Smart charging profile** |
 | `ClearChargingProfile` |   | pushed soon  |
 | `GetCompositeSchedule` |   |   | :heavy_multiplication_x: |
