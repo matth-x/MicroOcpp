@@ -24,6 +24,8 @@ private:
     int transactionIdSync = -1;
     bool evDrawsEnergy = false;
     bool evseOffersEnergy = false;
+    std::function<bool()> connectorPluggedSampler = NULL;
+    std::function<bool()> connectorFaultedSampler = NULL;
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
     std::function<bool()> onUnlockConnector = NULL;
 public:
@@ -44,6 +46,8 @@ public:
     void stopEvDrawsEnergy();
     void startEnergyOffer();
     void stopEnergyOffer();
+    void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
+    void setConnectorFaultedSampler(std::function<bool()> connectorFaulted);
 
     void saveState();
     //void recoverState();

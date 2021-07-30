@@ -51,6 +51,10 @@ void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
 
 void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
 
+void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
+
+void setConnectorFaultedSampler(std::function<bool()> connectorFailed);
+
 /*
  * React on calls by the library's internal functions
  * 

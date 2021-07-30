@@ -32,9 +32,17 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
         return OcppEvseState::Available; //no support for Unavailable or Faulted at the moment
     }
 
-    if (!authorized && !getChargePointStatusService()->existsUnboundAuthorization()) {
+//    if (!authorized && !getChargePointStatusService()->existsUnboundAuthorization()) {
+//        return OcppEvseState::Available;
+//    } else if (((int) *transactionId) < 0) {
+//        return OcppEvseState::Preparing;
+    if (connectorFaultedSampler != NULL && connectorFaultedSampler()) {
+        return OcppEvseState::Faulted;
+    } else if (!authorized && !getChargePointStatusService()->existsUnboundAuthorization() &&
+                ((int) *transactionId) < 0 &&
+                (connectorPluggedSampler == NULL || !connectorPluggedSampler()) ) {
         return OcppEvseState::Available;
-    } else if (((int) *transactionId) < 0) {
+    } else if (((int) *transactionId) <= 0) {
         return OcppEvseState::Preparing;
     } else {
         //Transaction is currently running
@@ -137,6 +145,14 @@ void ConnectorStatus::stopEnergyOffer(){
         if (DEBUG_OUT) Serial.print(F("[OcppEvseStateService] Warning: stopEnergyOffer called twice or didn't call startEnergyOffer before\n"));
     }
     evseOffersEnergy = false;
+}
+
+void ConnectorStatus::setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
+    this->connectorPluggedSampler = connectorPlugged;
+}
+
+void ConnectorStatus::setConnectorFaultedSampler(std::function<bool()> connectorFaulted) {
+    this->connectorFaultedSampler = connectorFaulted;
 }
 
 void ConnectorStatus::saveState() {

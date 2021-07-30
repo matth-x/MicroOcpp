@@ -236,6 +236,24 @@ void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized) {
     connectorEnergizedSampler = connectorEnergized;
 }
 
+void setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
+    ConnectorStatus *connector = getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (connector) {
+        connector->setConnectorPluggedSampler(connectorPlugged);
+    } else {
+        Serial.print(F("[ArduinoOcpp] Error: called setConnectorPluggedSampler before initializing the library!\n"));
+    }
+}
+
+void setConnectorFaultedSampler(std::function<bool()> connectorFaulted) {
+    ConnectorStatus *connector = getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (connector) {
+        connector->setConnectorFaultedSampler(connectorFaulted);
+    } else {
+        Serial.print(F("[ArduinoOcpp] Error: called setConnectorFaultedSampler before initializing the library!\n"));
+    }
+}
+
 void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged) {
     onLimitChange = chargingRateChanged;
     smartChargingService->setOnLimitChange(onLimitChange);
