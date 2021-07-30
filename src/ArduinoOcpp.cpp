@@ -332,6 +332,24 @@ void bootNotification(String &chargePointModel, String &chargePointVendor, Strin
     bootNotification->setTimeout(new SuppressedTimeout());
 }
 
+void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
+    OcppOperation *bootNotification = makeOcppOperation(
+        new BootNotification(payload));
+    initiateOcppOperation(bootNotification);
+    if (onConf)
+        bootNotification->setOnReceiveConfListener(onConf);
+    if (onAbort)
+        bootNotification->setOnAbortListener(onAbort);
+    if (onTimeout)
+        bootNotification->setOnTimeoutListener(onTimeout);
+    if (onError)
+        bootNotification->setOnReceiveErrorListener(onError);
+    if (timeout)
+        bootNotification->setTimeout(timeout);
+    else
+        bootNotification->setTimeout(new SuppressedTimeout());
+}
+
 void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
     OcppOperation *startTransaction = makeOcppOperation(
         new StartTransaction(OCPP_ID_OF_CONNECTOR));

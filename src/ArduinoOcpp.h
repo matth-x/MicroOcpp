@@ -105,6 +105,9 @@ void authorize(String &idTag, OnReceiveConfListener onConf = NULL, OnAbortListen
 
 void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
 
+//The OCPP operation will include the given payload without modifying it. The library will delete the payload object by itself.
+void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
+
 void startTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
 
 void stopTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
