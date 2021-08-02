@@ -245,12 +245,21 @@ void setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
     }
 }
 
-void setConnectorFaultedSampler(std::function<bool()> connectorFaulted) {
+//void setConnectorFaultedSampler(std::function<bool()> connectorFaulted) {
+//    ConnectorStatus *connector = getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+//    if (connector) {
+//        connector->setConnectorFaultedSampler(connectorFaulted);
+//    } else {
+//        Serial.print(F("[ArduinoOcpp] Error: called setConnectorFaultedSampler before initializing the library!\n"));
+//    }
+//}
+
+void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
     ConnectorStatus *connector = getConnectorStatus(OCPP_ID_OF_CONNECTOR);
     if (connector) {
-        connector->setConnectorFaultedSampler(connectorFaulted);
+        connector->addConnectorErrorCodeSampler(connectorErrorCode);
     } else {
-        Serial.print(F("[ArduinoOcpp] Error: called setConnectorFaultedSampler before initializing the library!\n"));
+        Serial.print(F("[ArduinoOcpp] Error: called addConnectorErrorCodeSampler before initializing the library!\n"));
     }
 }
 

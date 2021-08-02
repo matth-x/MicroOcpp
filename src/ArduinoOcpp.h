@@ -53,7 +53,9 @@ void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
 
 void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
 
-void setConnectorFaultedSampler(std::function<bool()> connectorFailed);
+//void setConnectorFaultedSampler(std::function<bool()> connectorFailed);
+
+void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode);
 
 /*
  * React on calls by the library's internal functions

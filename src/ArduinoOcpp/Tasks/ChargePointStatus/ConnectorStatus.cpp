@@ -36,7 +36,8 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
 //        return OcppEvseState::Available;
 //    } else if (((int) *transactionId) < 0) {
 //        return OcppEvseState::Preparing;
-    if (connectorFaultedSampler != NULL && connectorFaultedSampler()) {
+    //if (connectorFaultedSampler != NULL && connectorFaultedSampler()) {
+    if (getErrorCode() != NULL) {
         return OcppEvseState::Faulted;
     } else if (!authorized && !getChargePointStatusService()->existsUnboundAuthorization() &&
                 ((int) *transactionId) < 0 &&
@@ -66,9 +67,19 @@ StatusNotification *ConnectorStatus::loop() {
         //fire StatusNotification
         //TODO check for online condition: Only inform CS about status change if CP is online
         //TODO check for too short duration condition: Only inform CS about status change if it lasted for longer than MinimumStatusDuration
-        return new StatusNotification(connectorId, currentStatus, ocppTime->getOcppTimestampNow());
+        return new StatusNotification(connectorId, currentStatus, ocppTime->getOcppTimestampNow(), getErrorCode());
     }
 
+    return NULL;
+}
+
+const char *ConnectorStatus::getErrorCode() {
+    for (auto s = connectorErrorCodeSamplers.begin(); s != connectorErrorCodeSamplers.end(); s++) {
+        const char *err = s->operator()();
+        if (err != NULL) {
+            return err;
+        }
+    }
     return NULL;
 }
 
@@ -151,8 +162,12 @@ void ConnectorStatus::setConnectorPluggedSampler(std::function<bool()> connector
     this->connectorPluggedSampler = connectorPlugged;
 }
 
-void ConnectorStatus::setConnectorFaultedSampler(std::function<bool()> connectorFaulted) {
-    this->connectorFaultedSampler = connectorFaulted;
+//void ConnectorStatus::setConnectorFaultedSampler(std::function<bool()> connectorFaulted) {
+//    this->connectorFaultedSampler = connectorFaulted;
+//}
+
+void ConnectorStatus::addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
+    this->connectorErrorCodeSamplers.push_back(connectorErrorCode);
 }
 
 void ConnectorStatus::saveState() {

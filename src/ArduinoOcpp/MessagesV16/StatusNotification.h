@@ -17,8 +17,9 @@ private:
     int connectorId = 1;
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
     OcppTimestamp otimestamp;
+    const char *errorCode = NULL; //NULL is equivalent to "NoError"
 public:
-    StatusNotification(int connectorId, OcppEvseState currentStatus, const OcppTimestamp &otimestamp);
+    StatusNotification(int connectorId, OcppEvseState currentStatus, const OcppTimestamp &otimestamp, const char *errorCode = NULL);
 
     StatusNotification();
 

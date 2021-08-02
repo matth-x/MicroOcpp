@@ -25,7 +25,9 @@ private:
     bool evDrawsEnergy = false;
     bool evseOffersEnergy = false;
     std::function<bool()> connectorPluggedSampler = NULL;
-    std::function<bool()> connectorFaultedSampler = NULL;
+    //std::function<bool()> connectorFaultedSampler = NULL;
+    std::vector<std::function<const char *()>> connectorErrorCodeSamplers;
+    const char *getErrorCode();
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
     std::function<bool()> onUnlockConnector = NULL;
 public:
@@ -47,7 +49,8 @@ public:
     void startEnergyOffer();
     void stopEnergyOffer();
     void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
-    void setConnectorFaultedSampler(std::function<bool()> connectorFaulted);
+    //void setConnectorFaultedSampler(std::function<bool()> connectorFaulted);
+    void addConnectorErrorCodeSampler(std::function<const char*()> connectorErrorCode);
 
     void saveState();
     //void recoverState();
