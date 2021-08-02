@@ -13,6 +13,7 @@
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
@@ -39,6 +40,7 @@ std::function<bool()> connectorEnergizedSampler = NULL;
 bool connectorEnergizedLastState = false;
 SmartChargingService *smartChargingService;
 ChargePointStatusService *chargePointStatusService;
+HeartbeatService *heartbeatService;
 OnLimitChange onLimitChange;
 OcppTime *ocppTime;
 
@@ -152,6 +154,7 @@ void OCPP_initialize(OcppSocket *ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     smartChargingService = new SmartChargingService(11000.0f, V_eff, OCPP_NUMCONNECTORS, ocppTime, fsOpt); //default charging limit: 11kW
     chargePointStatusService = new ChargePointStatusService(OCPP_NUMCONNECTORS, ocppTime); //Constructor adds instance to ocppEngine in constructor
     meteringService = new MeteringService(OCPP_NUMCONNECTORS, ocppTime);
+    heartbeatService = new HeartbeatService();
 
     OCPP_initialized = true;
 }
@@ -183,6 +186,8 @@ void OCPP_loop() {
     if (powerSampler != NULL || energySampler != NULL) {
         meteringService->loop();        //optional
     }
+
+    heartbeatService->loop();
 
     bool evRequestsEnergyNewState = true;
     if (evRequestsEnergySampler != NULL) {
