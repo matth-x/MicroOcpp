@@ -24,6 +24,7 @@
 #include <ArduinoOcpp/MessagesV16/UpdateFirmware.h>
 #include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
 #include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
+#include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
 
 #include <ArduinoOcpp/Core/OcppEngine.h>
 
@@ -226,6 +227,8 @@ OcppOperation *makeOcppOperation(const char *messageType) {
     msg = new Ocpp16::FirmwareStatusNotification();
   } else if (!strcmp(messageType, "UnlockConnector")) {
     msg = new Ocpp16::UnlockConnector();
+  } else if (!strcmp(messageType, "ClearChargingProfile")) {
+    msg = new Ocpp16::ClearChargingProfile();
   } else {
     Serial.println(F("[SimpleOcppOperationFactory] Operation not supported"));
     msg = new NotImplemented();

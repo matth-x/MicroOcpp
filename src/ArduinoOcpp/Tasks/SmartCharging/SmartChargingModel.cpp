@@ -328,6 +328,10 @@ ChargingProfilePurposeType ChargingProfile::getChargingProfilePurpose(){
     return chargingProfilePurpose;
 }
 
+int ChargingProfile::getChargingProfileId() {
+    return chargingProfileId;
+}
+
 void ChargingProfile::printProfile(){
     Serial.print(F("  chargingProfileId: "));
     Serial.print(chargingProfileId);

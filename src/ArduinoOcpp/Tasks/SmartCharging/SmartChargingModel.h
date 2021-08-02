@@ -113,6 +113,8 @@ public:
     
     ChargingProfilePurposeType getChargingProfilePurpose();
 
+    int getChargingProfileId();
+
     /*
     * print on console
     */
