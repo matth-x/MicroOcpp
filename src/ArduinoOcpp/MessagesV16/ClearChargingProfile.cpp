@@ -24,7 +24,7 @@ void ClearChargingProfile::processReq(JsonObject payload) {
             (int chargingProfileId, int connectorId, ChargingProfilePurposeType chargingProfilePurpose, int stackLevel) {
         
         if (payload.containsKey("id")) {
-            if (chargingProfileId != payload["id"] | -1) {
+            if (chargingProfileId != (payload["id"] | -1)) {
                 return false;
             }
         }
@@ -54,7 +54,7 @@ void ClearChargingProfile::processReq(JsonObject payload) {
         }
 
         if (payload.containsKey("stackLevel")) {
-            if (stackLevel != payload["stackLevel"] | -1) {
+            if (stackLevel != (payload["stackLevel"] | -1)) {
                 return false;
             }
         }

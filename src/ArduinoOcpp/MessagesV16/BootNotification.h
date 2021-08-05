@@ -22,6 +22,8 @@ private:
 public:
     BootNotification();
 
+    ~BootNotification();
+
     BootNotification(String &chargePointModel, String &chargePointVendor);
 
     BootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber);

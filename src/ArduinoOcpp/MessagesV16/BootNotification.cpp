@@ -38,6 +38,11 @@ BootNotification::BootNotification(DynamicJsonDocument *payload) {
     this->overridePayload = payload;
 }
 
+BootNotification::~BootNotification() {
+    if (overridePayload != NULL)
+        delete overridePayload;
+}
+
 const char* BootNotification::getOcppOperationType(){
     return "BootNotification";
 }
@@ -45,7 +50,9 @@ const char* BootNotification::getOcppOperationType(){
 DynamicJsonDocument* BootNotification::createReq() {
 
     if (overridePayload != NULL) {
-        return overridePayload;
+        DynamicJsonDocument *result = new DynamicJsonDocument(overridePayload->capacity());
+        result->set(overridePayload);
+        return result;
     }
 
     DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(4)
