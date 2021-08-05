@@ -302,6 +302,10 @@ void setOnResetSendConf(OnSendConfListener onSendConf) {
      setOnResetSendConfListener(onSendConf);
 }
 
+void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq) {
+     setOnResetReceiveRequestListener(onReceiveReq);
+}
+
 void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
     OcppOperation *authorize = makeOcppOperation(
         new Authorize(idTag));

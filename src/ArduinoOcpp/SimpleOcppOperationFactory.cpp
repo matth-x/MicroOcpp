@@ -102,6 +102,11 @@ void setOnGetConfigurationSendConfListener(OnSendConfListener listener){
   onGetConfigurationSendConf = listener;
 }
 
+OnSendConfListener onResetReceiveReq;
+void setOnResetReceiveRequestListener(OnReceiveReqListener listener) {
+  onResetReceiveReq = listener;
+}
+
 OnSendConfListener onResetSendConf;
 void setOnResetSendConfListener(OnSendConfListener listener){
   onResetSendConf = listener;
@@ -215,8 +220,9 @@ OcppOperation *makeOcppOperation(const char *messageType) {
     operation->setOnSendConfListener(onGetConfigurationSendConf);
   } else if (!strcmp(messageType, "Reset")) {
     msg = new Ocpp16::Reset();
-    if (onResetSendConf == NULL)
-      Serial.print(F("[SimpleOcppOperationFactory] Warning: Reset is without effect when the sendConf listener is not set. Set a listener which resets your device.\n"));
+    if (onResetSendConf == NULL && onResetReceiveReq == NULL)
+      Serial.print(F("[SimpleOcppOperationFactory] Warning: Reset is without effect when the sendConf and receiveReq listener is not set. Set a listener which resets your device.\n"));
+    operation->setOnReceiveReqListener(onResetReceiveReq);
     operation->setOnSendConfListener(onResetSendConf);
   } else if (!strcmp(messageType, "UpdateFirmware")) {
     msg = new Ocpp16::UpdateFirmware();

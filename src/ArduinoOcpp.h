@@ -89,6 +89,7 @@ void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf); //import
 void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq); //optional, to de-energize the power plug immediately
 
 void setOnResetSendConf(OnSendConfListener onSendConf); //important, reset your device here (i.e. call ESP.reset();)
+void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq); //alternative: start reset timer here
 
 /*
  * Perform CP-initiated operations
