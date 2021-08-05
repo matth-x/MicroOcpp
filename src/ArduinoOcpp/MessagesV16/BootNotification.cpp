@@ -51,7 +51,8 @@ DynamicJsonDocument* BootNotification::createReq() {
 
     if (overridePayload != NULL) {
         DynamicJsonDocument *result = new DynamicJsonDocument(overridePayload->capacity());
-        result->set(overridePayload);
+        JsonObject payloadCast = result->as<JsonObject>();
+        result->set(payloadCast);
         return result;
     }
 
