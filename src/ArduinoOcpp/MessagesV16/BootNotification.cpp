@@ -50,9 +50,7 @@ const char* BootNotification::getOcppOperationType(){
 DynamicJsonDocument* BootNotification::createReq() {
 
     if (overridePayload != NULL) {
-        DynamicJsonDocument *result = new DynamicJsonDocument(overridePayload->capacity());
-        JsonObject payloadCast = result->as<JsonObject>();
-        result->set(payloadCast);
+        DynamicJsonDocument *result = new DynamicJsonDocument(*overridePayload);
         return result;
     }
 
