@@ -10,15 +10,24 @@
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 
+enum class FirmwareStatus {
+    Downloaded,
+    DownloadFailed,
+    Downloading,
+    Idle,
+    InstallationFailed,
+    Installing,
+    Installed
+};
+
 class FirmwareStatusNotification : public OcppMessage {
 private:
-  String status;
+  FirmwareStatus status;
+  static const char *cstrFromFwStatus(FirmwareStatus status);
 public:
   FirmwareStatusNotification();
 
-  FirmwareStatusNotification(String &status);
-
-  FirmwareStatusNotification(const char *status);
+  FirmwareStatusNotification(FirmwareStatus status);
 
   const char* getOcppOperationType() {return "FirmwareStatusNotification"; }
 

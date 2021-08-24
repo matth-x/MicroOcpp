@@ -13,6 +13,7 @@
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
+#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 
 namespace ArduinoOcpp {
 
@@ -52,6 +53,10 @@ ConnectorStatus *getConnectorStatus(int connectorId);
 void setMeteringSerivce(MeteringService *meteringService);
 
 MeteringService* getMeteringService();
+
+void setFirmwareService(FirmwareService *firmwareService);
+
+FirmwareService *getFirmwareService();
 
 void ocppEngine_setOcppTime(OcppTime *ocppTime);
 

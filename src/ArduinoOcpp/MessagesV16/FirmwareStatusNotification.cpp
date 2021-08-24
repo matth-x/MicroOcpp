@@ -3,25 +3,55 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
+#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 
 using ArduinoOcpp::Ocpp16::FirmwareStatusNotification;
 
 FirmwareStatusNotification::FirmwareStatusNotification() {
-    status = String("Idle"); // TriggerMessage will use this constructor. Should replace with actual value later
+    //status = String("Idle"); // TriggerMessage will use this constructor. Should replace with actual value later
+    FirmwareService *fwService = getFirmwareService();
+    if (fwService) {
+        status = fwService->getFirmwareStatus();
+    } else {
+        status = FirmwareStatus::Idle;
+    }
 }
 
-FirmwareStatusNotification::FirmwareStatusNotification(String &status) {
-    this->status = String(status);
+FirmwareStatusNotification::FirmwareStatusNotification(FirmwareStatus status) {
 }
 
-FirmwareStatusNotification::FirmwareStatusNotification(const char *status) {
-    this->status = status;
+const char *FirmwareStatusNotification::cstrFromFwStatus(FirmwareStatus status) {
+    switch (status) {
+        case (FirmwareStatus::Downloaded):
+            return "Downloaded";
+            break;
+        case (FirmwareStatus::DownloadFailed):
+            return "DownloadFailed";
+            break;
+        case (FirmwareStatus::Downloading):
+            return "Downloading";
+            break;
+        case (FirmwareStatus::Idle):
+            return "Idle";
+            break;
+        case (FirmwareStatus::InstallationFailed):
+            return "InstallationFailed";
+            break;
+        case (FirmwareStatus::Installing):
+            return "Installing";
+            break;
+        case (FirmwareStatus::Installed):
+            return "Installed";
+            break;
+    }
+    return NULL; //cannot be reached
 }
 
 DynamicJsonDocument* FirmwareStatusNotification::createReq() {
-  DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + (status.length() + 1));
+  DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
   JsonObject payload = doc->to<JsonObject>();
-  payload["status"] = status;
+  payload["status"] = cstrFromFwStatus(status);
   return doc;
 }
 
