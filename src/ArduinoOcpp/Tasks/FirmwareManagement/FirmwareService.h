@@ -27,22 +27,20 @@ enum class InstallationStatus {
     InstallationFailed
 };
 
+
 class FirmwareService {
 private:
     std::shared_ptr<Configuration<const char *>> previousBuildNumber = NULL;
     const char *buildNumber = NULL;
 
-    DownloadStatus previousDownloadStatus = DownloadStatus::NotDownloaded;
     std::function<DownloadStatus()> downloadStatusSampler = NULL;
     bool downloadIssued = false;
 
-    InstallationStatus previousInstallationStatus = InstallationStatus::NotInstalled;
     std::function<InstallationStatus()> installationStatusSampler = NULL;
     bool installationIssued = false;
 
-    bool updateFwEngaged = false;
-
     Ocpp16::FirmwareStatus lastReportedStatus = Ocpp16::FirmwareStatus::Idle;
+    bool checkedSuccessfulFwUpdate = false;
 
     String location = String('\0');
     OcppTimestamp retreiveDate = OcppTimestamp();
@@ -54,6 +52,17 @@ private:
 
     ulong delayTransition = 0;
     ulong timestampTransition = 0;
+
+    enum class UpdateStage {
+        Idle,
+        AwaitDownload,
+        Downloading,
+        AfterDownload,
+        AwaitInstallation,
+        Installing
+    } stage;
+
+    void resetStage();
 
 public:
     FirmwareService(const char *buildNumber);
@@ -88,7 +97,7 @@ FirmwareService *makeFirmwareService(const char *buildNumber);
 }
 }
 
+#endif //defined(ESP32) || defined(ESP8266)
 #endif //!defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WEBSOCKET)
-#endif //AO_CUSTOM_UPDATER
 
 #endif
