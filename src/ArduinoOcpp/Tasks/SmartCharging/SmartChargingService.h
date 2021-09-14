@@ -50,6 +50,7 @@ public:
     void inferenceLimit(const OcppTimestamp &t, float *limit, OcppTimestamp *validTo);
     float inferenceLimitNow();
     void setOnLimitChange(OnLimitChange onLimitChange);
+    ChargingSchedule *getCompositeSchedule(int connectorId, otime_t duration);
     void writeOutCompositeSchedule(JsonObject *json);
     void loop();
 };

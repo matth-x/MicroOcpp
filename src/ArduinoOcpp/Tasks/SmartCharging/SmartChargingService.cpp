@@ -196,6 +196,28 @@ void SmartChargingService::writeOutCompositeSchedule(JsonObject *json){
     Serial.print(F("[SmartChargingService] Unsupported Operation: SmartChargingService::writeOutCompositeSchedule\n"));
 }
 
+ChargingSchedule *SmartChargingService::getCompositeSchedule(int connectorId, otime_t duration){
+    OcppTime *ocppTime = getOcppTime();
+    OcppTimestamp startSchedule = OcppTimestamp();
+    if (ocppTime) {
+        startSchedule = ocppTime->getOcppTimestampNow();
+    }
+    ChargingSchedule *result = new ChargingSchedule(startSchedule, duration);
+    OcppTimestamp periodBegin = OcppTimestamp(startSchedule);
+    OcppTimestamp periodStop = OcppTimestamp(startSchedule);
+    while (periodBegin - startSchedule < duration) {
+        float limit = 0.f;
+        inferenceLimit(periodBegin, &limit, &periodStop);
+        ChargingSchedulePeriod *p = new ChargingSchedulePeriod(periodBegin - startSchedule, limit);
+        if (!result->addChargingSchedulePeriod(p)) {
+            delete p;
+            break;
+        }
+        periodBegin = periodStop;
+    }
+    return result;
+}
+
 void SmartChargingService::refreshChargingSessionState() {
     int currentTxId = getChargePointStatusService()->getConnector(SINGLE_CONNECTOR_ID)->getTransactionId();
 

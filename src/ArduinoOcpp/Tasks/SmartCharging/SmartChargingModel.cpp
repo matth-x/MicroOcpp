@@ -18,11 +18,22 @@ ChargingSchedulePeriod::ChargingSchedulePeriod(JsonObject *json){
     limit = (*json)["limit"]; //one fractural digit at most
     numberPhases = (*json)["numberPhases"] | -1;
 }
+ChargingSchedulePeriod::ChargingSchedulePeriod(int startPeriod, float limit){
+    this->startPeriod = startPeriod;
+    this->limit = limit;
+    numberPhases = -1; //support later
+}
 int ChargingSchedulePeriod::getStartPeriod(){
     return this->startPeriod;
 }
 float ChargingSchedulePeriod::getLimit(){
     return this->limit;
+}
+void ChargingSchedulePeriod::scale(float factor){
+    limit *= factor;
+}
+void ChargingSchedulePeriod::add(float value){
+    limit += value;
 }
 int ChargingSchedulePeriod::getNumberPhases(){
     Serial.print(F("[SmartChargingModel] Unsupported operation: ChargingSchedulePeriod::getNumberPhases(); No phase control implemented"));
@@ -73,6 +84,40 @@ ChargingSchedule::ChargingSchedule(JsonObject *json, ChargingProfileKindType cha
     });
     
     minChargingRate = (*json)["minChargingRate"] | -1.0f;
+}
+
+ChargingSchedule::ChargingSchedule(ChargingSchedule &other) {
+    chargingProfileKind = other.chargingProfileKind;
+    recurrencyKind = other.recurrencyKind;  
+    duration = other.duration;
+    startSchedule = other.startSchedule;
+    schedulingUnit = other.schedulingUnit;
+    
+    chargingSchedulePeriod = std::vector<ChargingSchedulePeriod*>();
+
+    for (auto period = other.chargingSchedulePeriod.begin(); period != other.chargingSchedulePeriod.end(); period++) {
+        ChargingSchedulePeriod *p = new ChargingSchedulePeriod(**period);
+        chargingSchedulePeriod.push_back(p);
+    }
+
+    //Expecting sorted list of periods but specification doesn't garantuee it
+    std::sort(chargingSchedulePeriod.begin(), chargingSchedulePeriod.end(), [] (ChargingSchedulePeriod *p1, ChargingSchedulePeriod *p2) {
+        return p1->getStartPeriod() < p2->getStartPeriod();
+    });
+    
+    minChargingRate = other.minChargingRate;
+}
+
+ChargingSchedule::ChargingSchedule(OcppTimestamp &startT, int duration) {
+    //create empty but valid Charging Schedule
+    this->duration = duration;
+    startSchedule = startT;
+    schedulingUnit = 'W'; //either 'A' or 'W'
+    std::vector<ChargingSchedulePeriod*> chargingSchedulePeriod = std::vector<ChargingSchedulePeriod*>();
+    float minChargingRate = 0.f;
+
+    chargingProfileKind = ChargingProfileKindType::Absolute; //copied from ChargingProfile to increase cohesion of limit inferencing methods
+    recurrencyKind = RecurrencyKindType::NOT_SET; //copied from ChargingProfile to increase cohesion of limit inferencing methods
 }
 
 ChargingSchedule::~ChargingSchedule(){
@@ -180,6 +225,58 @@ bool ChargingSchedule::inferenceLimit(const OcppTimestamp &t, const OcppTimestam
     }
 }
 
+bool ChargingSchedule::addChargingSchedulePeriod(ChargingSchedulePeriod *period) {
+    if (period == NULL) return false;
+
+    if (period->getStartPeriod() >= duration) {
+        return false;
+    }
+
+    chargingSchedulePeriod.push_back(period);
+    return true;
+}
+
+void ChargingSchedule::scale(float factor) {
+    for (auto p = chargingSchedulePeriod.begin(); p != chargingSchedulePeriod.end(); p++) {
+        (*p)->scale(factor);
+    }
+}
+
+void ChargingSchedule::translate(float offset) {
+    for (auto p = chargingSchedulePeriod.begin(); p != chargingSchedulePeriod.end(); p++) {
+        (*p)->add(offset);
+    }
+}
+
+DynamicJsonDocument *ChargingSchedule::toJsonDocument() {
+    size_t capacity = 0;
+    capacity += JSON_OBJECT_SIZE(5); //no of fields of ChargingSchedule
+    capacity += JSONDATE_LENGTH + 1; //startSchedule
+    capacity += 2; //scheduling unit will be saved as string
+    capacity += JSON_ARRAY_SIZE(chargingSchedulePeriod.size()) + chargingSchedulePeriod.size() * JSON_OBJECT_SIZE(3);
+
+    DynamicJsonDocument *result = new DynamicJsonDocument(capacity);
+    JsonObject payload = result->to<JsonObject>();
+    if (duration >= 0)
+        payload["duration"] = duration;
+    char startScheduleJson [JSONDATE_LENGTH + 1] = {'\0'};
+    startSchedule.toJsonString(startScheduleJson, JSONDATE_LENGTH + 1);
+    payload["startSchedule"] = startScheduleJson;
+    payload["schedulingUnit"] = schedulingUnit;
+    JsonArray periodArray = payload.createNestedArray("chargingSchedulePeriod");
+    for (auto period = chargingSchedulePeriod.begin(); period != chargingSchedulePeriod.end(); period++) {
+        JsonObject entry = periodArray.createNestedObject();
+        entry["startPeriod"] = (*period)->getStartPeriod();
+        entry["limit"] = (*period)->getLimit();
+        if ((*period)->getNumberPhases() >= 0) {
+            entry["numberPhases"] = (*period)->getNumberPhases();
+        }
+    }
+    if (minChargingRate >= 0)
+        payload["minChargeRate"] = minChargingRate;
+    
+    return result;
+}
 
 void ChargingSchedule::printSchedule(){
     Serial.print(F("    duration: "));

@@ -13,15 +13,25 @@ namespace Ocpp16 {
 
 class SetChargingProfile : public OcppMessage {
 private:
-  SmartChargingService *smartChargingService;
+    SmartChargingService *smartChargingService = NULL;
+
+    DynamicJsonDocument *payloadToClient = NULL;
 public:
-  SetChargingProfile(SmartChargingService *smartChargingService);
+    SetChargingProfile(SmartChargingService *smartChargingService);
 
-  const char* getOcppOperationType();
+    SetChargingProfile(DynamicJsonDocument *payloadToClient);
 
-  void processReq(JsonObject payload);
+    ~SetChargingProfile();
 
-  DynamicJsonDocument* createConf();
+    const char* getOcppOperationType();
+
+    void processReq(JsonObject payload);
+
+    DynamicJsonDocument* createConf();
+
+    DynamicJsonDocument* createReq();
+
+    void processConf(JsonObject payload);
 };
 
 } //end namespace Ocpp16
