@@ -31,12 +31,15 @@ float ChargingSchedulePeriod::getLimit(){
 }
 void ChargingSchedulePeriod::scale(float factor){
     limit *= factor;
+    if (limit < 0.f)
+        limit *= -1.f;
 }
 void ChargingSchedulePeriod::add(float value){
     limit += value;
+    if (limit < 0.f)
+        limit = 0;
 }
 int ChargingSchedulePeriod::getNumberPhases(){
-    Serial.print(F("[SmartChargingModel] Unsupported operation: ChargingSchedulePeriod::getNumberPhases(); No phase control implemented"));
     return this->numberPhases;
 }
 
