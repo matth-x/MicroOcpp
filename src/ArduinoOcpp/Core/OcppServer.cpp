@@ -98,6 +98,8 @@ void OcppServer::wsockEvent(WsClient num, WStype_t type, uint8_t * payload, size
     }
 }
 
+OcppServer::OcppServer *instance = NULL;
+
 OcppServer *OcppServer::getInstance() {
     if (!instance){
         instance = new OcppServer();
