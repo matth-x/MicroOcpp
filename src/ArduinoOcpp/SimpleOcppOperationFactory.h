@@ -42,6 +42,7 @@ void setOnGetConfigurationSendConfListener(OnSendConfListener onSendConf);
 void setOnResetReceiveRequestListener(OnReceiveReqListener onReceiveReq);
 void setOnResetSendConfListener(OnSendConfListener onSendConf);
 void setOnUpdateFirmwareReceiveRequestListener(OnReceiveReqListener onReceiveReq);
+void setOnMeterValuesReceiveRequestListener(OnReceiveReqListener onReceiveReq);
 
 } //end namespace ArduinoOcpp
 #endif

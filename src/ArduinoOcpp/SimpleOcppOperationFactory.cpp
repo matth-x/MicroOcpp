@@ -117,6 +117,11 @@ void setOnUpdateFirmwareReceiveRequestListener(OnReceiveReqListener listener) {
   onUpdateFirmwareReceiveReq = listener;
 }
 
+OnReceiveReqListener onMeterValuesReceiveReq = NULL;
+void setOnMeterValuesReceiveRequestListener(OnReceiveReqListener listener) {
+    onMeterValuesReceiveReq = listener;
+}
+
 struct CustomOcppMessageCreatorEntry {
     const char *messageType;
     OcppMessageCreator creator;
@@ -185,6 +190,7 @@ OcppOperation *makeOcppOperation(const char *messageType) {
     msg = new Ocpp16::Heartbeat();
   } else if (!strcmp(messageType, "MeterValues")) {
     msg = new Ocpp16::MeterValues();
+    operation->setOnReceiveReqListener(onMeterValuesReceiveReq);
   } else if (!strcmp(messageType, "SetChargingProfile")) {
     msg = new Ocpp16::SetChargingProfile(getSmartChargingService());
     operation->setOnReceiveReqListener(onSetChargingProfileRequest);
