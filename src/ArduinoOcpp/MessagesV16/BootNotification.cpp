@@ -107,7 +107,23 @@ void BootNotification::processReq(JsonObject payload){
 DynamicJsonDocument* BootNotification::createConf(){
     DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(3) + (JSONDATE_LENGTH + 1));
     JsonObject payload = doc->to<JsonObject>();
-    payload["currentTime"] = "2019-11-01T11:59:55.123Z";
+
+    //safety mechanism; in some test setups the library has to answer BootNotifications without valid system time
+    OcppTimestamp ocppTimeReference = OcppTimestamp(2019,10,0,11,59,55); 
+    OcppTimestamp ocppSelect = ocppTimeReference;
+    OcppTime *ocppTime = getOcppTime();
+    if (ocppTime) {
+        OcppTimestamp ocppNow = ocppTime->getOcppTimestampNow();
+        if (ocppNow > ocppTimeReference) {
+            //time has already been set
+            ocppSelect = ocppNow;
+        }
+    }
+
+    char ocppNowJson [JSONDATE_LENGTH + 1] = {'\0'};
+    ocppSelect.toJsonString(ocppNowJson, JSONDATE_LENGTH + 1);
+    payload["currentTime"] = ocppNowJson;
+
     payload["interval"] = 86400; //heartbeat send interval - not relevant for JSON variant of OCPP so send dummy value that likely won't break
     payload["status"] = "Accepted";
     return doc;
