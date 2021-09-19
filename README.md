@@ -1,11 +1,13 @@
 # ArduinoOcpp
-OCPP 1.6J Smart Charging client for the ESP8266 and the ESP32 (more coming soon)
+OCPP-J 1.6 client for the ESP8266 and the ESP32 (more coming soon)
 
-Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
+Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp)
 
 PlatformIO package: [ArduinoOcpp](https://platformio.org/lib/show/11975/ArduinoOcpp)
 
-_Former repo name: ESP8266-OCPP_
+Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
+
+Full compatibility with the ESP8266 and the ESP32 on the Arduino platform. Need a **FreeRTOS** version? Please [contact me](https://github.com/matth-x/ArduinoOcpp#further-help)
 
 ## Make your EVSE ready for OCPP :car::electric_plug::battery:
 
@@ -15,7 +17,7 @@ You can build an OCPP Charge Point controller using the popular, Wi-Fi enabled m
 
 :heavy_check_mark: Tested with two further (proprietary) central systems
 
-:heavy_check_mark: Already integrated in two charging stations (including a ClipperCreek Inc. station)
+:heavy_check_mark: Integrated and tested in many charging stations (including a ClipperCreek Inc. station)
 
 ### Features
 
