@@ -1,4 +1,4 @@
-# ArduinoOcpp
+# <img src="https://user-images.githubusercontent.com/63792403/133922028-fefc8abb-fde9-460b-826f-09a458502d17.png" alt="Icon" height="24"> &nbsp; ArduinoOcpp
 OCPP-J 1.6 client for the ESP8266 and the ESP32 (more coming soon)
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp)
@@ -7,7 +7,7 @@ PlatformIO package: [ArduinoOcpp](https://platformio.org/lib/show/11975/ArduinoO
 
 Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
 
-Full compatibility with the ESP8266 and the ESP32 on the Arduino platform. Need a **FreeRTOS** version? Please [contact me](https://github.com/matth-x/ArduinoOcpp#further-help)
+Full compatibility with the Arduino platform. Need a **FreeRTOS** version? Please [contact me](https://github.com/matth-x/ArduinoOcpp#further-help)
 
 ## Make your EVSE ready for OCPP :car::electric_plug::battery:
 
