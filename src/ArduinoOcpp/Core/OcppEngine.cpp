@@ -11,11 +11,13 @@
 #include <ArduinoOcpp/Core/OcppError.h>
 
 #include <Variants.h>
+#include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
 
 namespace ArduinoOcpp {
 namespace OcppEngine {
 
 OcppSocket *ocppSocket;
+HeartbeatService *heartbeatService = NULL;
 SmartChargingService *ocppEngine_smartChargingService = NULL;
 ChargePointStatusService *ocppEngine_chargePointStatusService = NULL;
 MeteringService *ocppEngine_meteringService = NULL;
@@ -43,6 +45,10 @@ void ocppEngine_initialize(OcppSocket *ocppSocket){
   mConnection = new OcppConnection(ocppSock);
 }
 
+void ocppEngine_startHeartbeat(int interval){
+    heartbeatService = new HeartbeatService(interval);
+}
+
 void initiateOcppOperation(OcppOperation *o) {
   mConnection->initiateOcppOperation(o);
 }
@@ -50,6 +56,7 @@ void initiateOcppOperation(OcppOperation *o) {
 void ocppEngine_loop() {
   ocppSock->loop();
   mConnection->loop();
+  if (heartbeatService != nullptr) heartbeatService->loop();
 }
 
 #if 0

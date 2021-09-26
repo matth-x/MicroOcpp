@@ -9,8 +9,9 @@
 
 using namespace ArduinoOcpp;
 
-HeartbeatService::HeartbeatService() {
-    heartbeatInterval = declareConfiguration("HeartbeatInterval", 86400);
+HeartbeatService::HeartbeatService(int interval) {
+    heartbeatInterval = declareConfiguration("HeartbeatInterval", interval);
+    *heartbeatInterval = interval;
     lastHeartbeat = millis();
 }
 

@@ -38,6 +38,8 @@ void handleErrMessage(JsonDocument *json);
 
 void initiateOcppOperation(OcppOperation *o);
 
+void ocppEngine_startHeartbeat(int interval);
+
 void ocppEngine_loop();
 
 void setSmartChargingService(SmartChargingService *scs);

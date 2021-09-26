@@ -9,19 +9,15 @@
 #include <ArduinoOcpp/Core/Configuration.h>
 
 namespace ArduinoOcpp {
+    class HeartbeatService {
+    private:
+        ulong lastHeartbeat;
+        std::shared_ptr<ArduinoOcpp::Configuration<int>> heartbeatInterval;
+    public:
+        HeartbeatService(int interval);
 
-class HeartbeatService {
-private:
-
-    ulong lastHeartbeat;
-    std::shared_ptr<ArduinoOcpp::Configuration<int>> heartbeatInterval;
-
-public:
-    HeartbeatService();
-
-    void loop();
-};
-
+        void loop();
+    };
 }
 
 #endif

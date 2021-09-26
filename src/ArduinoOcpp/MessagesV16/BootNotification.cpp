@@ -83,8 +83,9 @@ void BootNotification::processConf(JsonObject payload){
     } else {
         Serial.print(F("[BootNotification] Error reading time string. Missing attribute currentTime of type string\n"));
     }
-    
-    //int interval = payload["interval"] | 86400; //not used in this implementation
+
+    int interval = payload["interval"] | 86400;
+    ocppEngine_startHeartbeat(interval);
 
     const char* status = payload["status"] | "Invalid";
 
