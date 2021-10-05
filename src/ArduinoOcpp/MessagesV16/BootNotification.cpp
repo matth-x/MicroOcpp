@@ -6,6 +6,7 @@
 
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/Configuration.h>
 
 #include <string.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
@@ -84,7 +85,16 @@ void BootNotification::processConf(JsonObject payload){
         Serial.print(F("[BootNotification] Error reading time string. Missing attribute currentTime of type string\n"));
     }
     
-    //int interval = payload["interval"] | 86400; //not used in this implementation
+    int interval = payload["interval"] | -1;
+
+    //only write if in valid range
+    if (interval >= 1) {
+        std::shared_ptr<Configuration<int>> intervalConf = declareConfiguration<int>("HeartbeatInterval", 86400);
+        if (intervalConf && interval != *intervalConf) {
+            *intervalConf = interval;
+            configuration_save();
+        }
+    }
 
     const char* status = payload["status"] | "Invalid";
 
