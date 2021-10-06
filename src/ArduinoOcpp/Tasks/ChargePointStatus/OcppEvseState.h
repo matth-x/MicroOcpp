@@ -15,8 +15,8 @@ enum class OcppEvseState {
   SuspendedEV,
   Finishing,    //not supported by this client
   Reserved,     //not supported by this client
-  Unavailable,  //not supported by this client
-  Faulted,      //not supported by this client
+  Unavailable,
+  Faulted,
   NOT_SET //not part of OCPP 1.6
 };
 

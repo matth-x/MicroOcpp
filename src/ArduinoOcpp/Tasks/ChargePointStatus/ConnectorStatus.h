@@ -9,12 +9,18 @@
 #include <ArduinoOcpp/Tasks/ChargePointStatus/OcppEvseState.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
+#define AVAILABILITY_OPERATIVE 2
+#define AVAILABILITY_INOPERATIVE_SCHEDULED 1
+#define AVAILABILITY_INOPERATIVE 0
+
 namespace ArduinoOcpp {
 
 class ConnectorStatus {
 private:
     const int connectorId;
     OcppTime *ocppTime;
+
+    std::shared_ptr<Configuration<int>> availability = NULL;
 
     bool authorized = false;
     String idTag = String('\0');
@@ -43,6 +49,8 @@ public:
     uint16_t getTransactionWriteCount();
     void setTransactionId(int id);
     void setTransactionIdSync(int id);
+    int getAvailability();
+    void setAvailability(bool available);
     void boot();
     void startEvDrawsEnergy();
     void stopEvDrawsEnergy();
