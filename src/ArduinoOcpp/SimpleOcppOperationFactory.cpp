@@ -25,6 +25,7 @@
 #include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
 #include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
 #include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
+#include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
 
 #include <ArduinoOcpp/Core/OcppEngine.h>
 
@@ -232,8 +233,8 @@ OcppOperation *makeOcppOperation(const char *messageType) {
     operation->setOnSendConfListener(onResetSendConf);
   } else if (!strcmp(messageType, "UpdateFirmware")) {
     msg = new Ocpp16::UpdateFirmware();
-    if (onUpdateFirmwareReceiveReq == NULL)
-      Serial.print(F("[SimpleOcppOperationFactory] Warning: UpdateFirmware is without effect when the receiveReq listener is not set. Please implement a FW update routine for your device.\n"));
+    //if (onUpdateFirmwareReceiveReq == NULL)
+    //  Serial.print(F("[SimpleOcppOperationFactory] Warning: UpdateFirmware is without effect when the receiveReq listener is not set. Please implement a FW update routine for your device.\n"));
     operation->setOnReceiveReqListener(onUpdateFirmwareReceiveReq);
   } else if (!strcmp(messageType, "FirmwareStatusNotification")) {
     msg = new Ocpp16::FirmwareStatusNotification();
@@ -241,6 +242,8 @@ OcppOperation *makeOcppOperation(const char *messageType) {
     msg = new Ocpp16::UnlockConnector();
   } else if (!strcmp(messageType, "ClearChargingProfile")) {
     msg = new Ocpp16::ClearChargingProfile();
+  } else if (!strcmp(messageType, "ChangeAvailability")) {
+    msg = new Ocpp16::ChangeAvailability();
   } else {
     Serial.println(F("[SimpleOcppOperationFactory] Operation not supported"));
     msg = new NotImplemented();

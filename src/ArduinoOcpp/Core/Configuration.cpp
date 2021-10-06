@@ -219,8 +219,13 @@ std::shared_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> getAllConfi
 
 } //end namespace Ocpp16
 
+bool configuration_inited = false;
+
 bool configuration_init(FilesystemOpt fsOpt) {
-    bool loadRoutineSuccessful = false;
+    if (configuration_inited)
+        return true; //configuration_init() already called; tolerate multiple calls so user can use this store for
+                     //credentials outside ArduinoOcpp which need to be loaded before OCPP_initialize()
+    bool loadRoutineSuccessful = true;
 #ifndef AO_DEACTIVATE_FLASH
 
     configurationFilesystemOpt = fsOpt;
@@ -267,6 +272,7 @@ bool configuration_init(FilesystemOpt fsOpt) {
 
 
 #endif //ndef AO_DEACTIVATE_FLASH
+    configuration_inited = loadRoutineSuccessful;
     return loadRoutineSuccessful;
 }
 
