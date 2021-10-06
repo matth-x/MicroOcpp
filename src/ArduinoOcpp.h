@@ -136,5 +136,7 @@ int getTransactionId(); //returns the ID of the current transaction. Returns -1 
 
 bool existsUnboundIdTag(); //returns if the user has given a valid Ocpp Charging Card which is not used for a transaction yet
 
+bool isAvailable(); //if the charge point is operative or inoperative
+
 #endif
 #endif

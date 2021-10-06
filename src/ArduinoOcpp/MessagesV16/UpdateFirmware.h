@@ -6,13 +6,17 @@
 #define UPDATEFIRMWARE_H
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/OcppTime.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 
 class UpdateFirmware : public OcppMessage {
 private:
-  const char *location = "Invalid";
+  String location = String('\0');
+  OcppTimestamp retreiveDate = OcppTimestamp();
+  int retries = 1;
+  ulong retryInterval = 180;
   bool formatError = false;
 public:
   UpdateFirmware();
