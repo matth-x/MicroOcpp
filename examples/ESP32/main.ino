@@ -14,6 +14,13 @@
 #define OCPP_PORT 80
 #define OCPP_URL "wss://echo.websocket.org/"
 
+//
+////  Settings which worked for my SteVe instance
+//
+//#define OCPP_HOST "my.instance.com"
+//#define OCPP_PORT 80
+//#define OCPP_URL "ws://my.instance.com/steve/websocket/CentralSystemService/gpio-based-charger"
+
 void setup() {
 
     /*
@@ -86,10 +93,10 @@ void loop() {
         });
     }
     
-    if (/* EV plugged out? */ false) {
+    if (/* EV unplugged? */ false) {
         stopTransaction([] (JsonObject payload) {
-            //Callback: Central System has answered. Energize your EV plug inside this callback and flash a confirmation light if you want.
-            Serial.print(F("[main] Started OCPP transaction. EV plug energized\n"));
+            //Callback: Central System has answered. De-energize EV plug here.
+            Serial.print(F("[main] Stopped OCPP transaction. EV plug de-energized\n"));
         });
     }
 

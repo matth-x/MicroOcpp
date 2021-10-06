@@ -196,6 +196,28 @@ void SmartChargingService::writeOutCompositeSchedule(JsonObject *json){
     Serial.print(F("[SmartChargingService] Unsupported Operation: SmartChargingService::writeOutCompositeSchedule\n"));
 }
 
+ChargingSchedule *SmartChargingService::getCompositeSchedule(int connectorId, otime_t duration){
+    OcppTime *ocppTime = getOcppTime();
+    OcppTimestamp startSchedule = OcppTimestamp();
+    if (ocppTime) {
+        startSchedule = ocppTime->getOcppTimestampNow();
+    }
+    ChargingSchedule *result = new ChargingSchedule(startSchedule, duration);
+    OcppTimestamp periodBegin = OcppTimestamp(startSchedule);
+    OcppTimestamp periodStop = OcppTimestamp(startSchedule);
+    while (periodBegin - startSchedule < duration) {
+        float limit = 0.f;
+        inferenceLimit(periodBegin, &limit, &periodStop);
+        ChargingSchedulePeriod *p = new ChargingSchedulePeriod(periodBegin - startSchedule, limit);
+        if (!result->addChargingSchedulePeriod(p)) {
+            delete p;
+            break;
+        }
+        periodBegin = periodStop;
+    }
+    return result;
+}
+
 void SmartChargingService::refreshChargingSessionState() {
     int currentTxId = getChargePointStatusService()->getConnector(SINGLE_CONNECTOR_ID)->getTransactionId();
 
@@ -288,6 +310,61 @@ ChargingProfile *SmartChargingService::updateProfileStack(JsonObject *json){
     nextChange = ocppTime->getOcppTimestampNow();
 
     return chargingProfile;
+}
+
+bool SmartChargingService::clearChargingProfile(std::function<bool(int, int, ChargingProfilePurposeType, int)> filter) {
+    int nMatches = 0;
+
+    ChargingProfile **profileStacks [] = {ChargePointMaxProfile, TxDefaultProfile, TxProfile};
+
+    for (ChargingProfile **profileStack : profileStacks) {
+        for (int iLevel = 0; iLevel < CHARGEPROFILEMAXSTACKLEVEL; iLevel++) {
+            ChargingProfile *chargingProfile = profileStack[iLevel];
+            if (chargingProfile == NULL)
+                continue;
+
+            //                                                               -1: multiple connectors are not supported yet for Smart Charging
+            bool tbCleared = filter(chargingProfile->getChargingProfileId(), -1, chargingProfile->getChargingProfilePurpose(), iLevel);
+
+            if (tbCleared) {
+                nMatches++;
+
+#ifndef AO_DEACTIVATE_FLASH
+                if (filesystemOpt.accessAllowed()) {
+                    String profileFN = PROFILE_FN_PREFIX;
+
+                    switch (chargingProfile->getChargingProfilePurpose()) {
+                        case (ChargingProfilePurposeType::ChargePointMaxProfile):
+                            profileFN += "CpMaxProfile-";
+                            break;
+                        case (ChargingProfilePurposeType::TxDefaultProfile):
+                            profileFN += "TxDefProfile-";
+                            break;
+                        case (ChargingProfilePurposeType::TxProfile):
+                            profileFN += "TxProfile-";
+                            break;
+                    }
+
+                    profileFN += chargingProfile->getStackLevel();
+                    profileFN += PROFILE_FN_SUFFIX;
+
+                    USE_FS.remove(profileFN);
+                } else {
+                    if (DEBUG_OUT) Serial.println(F("[SmartChargingService] Prohibit access to FS"));
+                }
+#endif
+                delete chargingProfile;
+            }
+        }
+    }
+
+    /**
+     * Invalidate the last limit inference by setting the nextChange to now. By the next loop()-call, the limit
+     * and nextChange will be recalculated and onLimitChanged will be called.
+     */
+    nextChange = ocppTime->getOcppTimestampNow();
+
+    return nMatches > 0;
 }
 
 bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile *chargingProfile) {

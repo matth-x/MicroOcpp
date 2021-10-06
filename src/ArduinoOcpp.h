@@ -51,16 +51,25 @@ void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
 
 void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
 
+void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
+
+//void setConnectorFaultedSampler(std::function<bool()> connectorFailed);
+
+void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode);
+
 /*
  * React on calls by the library's internal functions
  * 
- * The library needs to set parameters on your charger on a regular basis. The library calls
- * following callbacks regularily (if they were set) to perform updates on your charger.
+ * The library needs to set parameters on your charger on a regular basis or perform
+ * functions triggered by the central system. The library uses the following callbacks
+ * (if they were set) to perform updates or functions on your charger.
  * 
  * Set the callbacks once in your setup() function.
  */
 
 void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged);
+
+void setOnUnlockConnector(std::function<bool()> unlockConnector); //true: success, false: failure
 
 /*
  * React on CS-initiated operations
@@ -80,6 +89,7 @@ void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf); //import
 void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq); //optional, to de-energize the power plug immediately
 
 void setOnResetSendConf(OnSendConfListener onSendConf); //important, reset your device here (i.e. call ESP.reset();)
+void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq); //alternative: start reset timer here
 
 /*
  * Perform CP-initiated operations
@@ -97,6 +107,9 @@ void setOnResetSendConf(OnSendConfListener onSendConf); //important, reset your 
 void authorize(String &idTag, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
 
 void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
+
+//The OCPP operation will include the given payload without modifying it. The library will delete the payload object by itself.
+void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
 
 void startTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
 
@@ -122,6 +135,8 @@ void stopTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbor
 int getTransactionId(); //returns the ID of the current transaction. Returns -1 if called before or after an transaction
 
 bool existsUnboundIdTag(); //returns if the user has given a valid Ocpp Charging Card which is not used for a transaction yet
+
+bool isAvailable(); //if the charge point is operative or inoperative
 
 #endif
 #endif

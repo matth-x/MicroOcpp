@@ -10,8 +10,8 @@
 
 using ArduinoOcpp::Ocpp16::StatusNotification;
 
-StatusNotification::StatusNotification(int connectorId, OcppEvseState currentStatus, const OcppTimestamp &otimestamp) 
-  : connectorId(connectorId), currentStatus(currentStatus), otimestamp(otimestamp) {
+StatusNotification::StatusNotification(int connectorId, OcppEvseState currentStatus, const OcppTimestamp &otimestamp, const char *errorCode) 
+  : connectorId(connectorId), currentStatus(currentStatus), otimestamp(otimestamp), errorCode(errorCode) {
 
     if (DEBUG_OUT) {
         Serial.print(F("[StatusNotification] New StatusNotification. New Status: "));
@@ -64,7 +64,11 @@ DynamicJsonDocument* StatusNotification::createReq() {
     JsonObject payload = doc->to<JsonObject>();
     
     payload["connectorId"] = connectorId;
-    payload["errorCode"] = "NoError";  //No error diagnostics support
+    if (errorCode != NULL) {
+        payload["errorCode"] = errorCode;
+    } else {
+        payload["errorCode"] = "NoError";
+    }
     
     switch (currentStatus) {
         case (OcppEvseState::Available):

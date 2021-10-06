@@ -38,8 +38,11 @@ private:
     int numberPhases = -1;
 public:
     ChargingSchedulePeriod(JsonObject *json);
+    ChargingSchedulePeriod(int startPeriod, float limit);
     int getStartPeriod();
     float getLimit();
+    void scale(float factor);
+    void add(float value);
     int getNumberPhases();
     void printPeriod();
 };
@@ -56,6 +59,8 @@ private:
     RecurrencyKindType recurrencyKind; //copied from ChargingProfile to increase cohesion of limit inferencing methods
 public:
     ChargingSchedule(JsonObject *json, ChargingProfileKindType chargingProfileKind, RecurrencyKindType recurrencyKind);
+    ChargingSchedule(ChargingSchedule &other);
+    ChargingSchedule(OcppTimestamp &startSchedule, int duration);
     ~ChargingSchedule();
 
     /**
@@ -67,6 +72,13 @@ public:
      *       if false, only nextChange will be set
      */
     bool inferenceLimit(const OcppTimestamp &t, const OcppTimestamp &startOfCharging, float *limit, OcppTimestamp *nextChange);
+
+    bool addChargingSchedulePeriod(ChargingSchedulePeriod *period);
+
+    void scale(float factor);
+    void translate(float offset);
+
+    DynamicJsonDocument *toJsonDocument();
 
     /*
     * print on console
@@ -87,6 +99,7 @@ private:
     ChargingSchedule *chargingSchedule;
 public:
     ChargingProfile(JsonObject *json);
+    ChargingProfile(ChargingSchedule *schedule, int chargingProfileId); //For Energy management. Can be extended with more parameters later
     ~ChargingProfile();
 
     /**
@@ -112,6 +125,8 @@ public:
     int getStackLevel();
     
     ChargingProfilePurposeType getChargingProfilePurpose();
+
+    int getChargingProfileId();
 
     /*
     * print on console

@@ -40,9 +40,9 @@ bool ConfigurationContainerFlash::load() {
     }
 
     if (!file.available()) {
-        Serial.print(F("[Configuration] Unable to initialize: empty file\n"));
+        Serial.print(F("[Configuration] Populate FS: create configuration file\n"));
         file.close();
-        return false;
+        return true;
     }
 
     int file_size = file.size();

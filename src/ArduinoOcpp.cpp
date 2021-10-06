@@ -13,6 +13,8 @@
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
+#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
@@ -39,6 +41,8 @@ std::function<bool()> connectorEnergizedSampler = NULL;
 bool connectorEnergizedLastState = false;
 SmartChargingService *smartChargingService;
 ChargePointStatusService *chargePointStatusService;
+HeartbeatService *heartbeatService;
+FirmwareService *firmwareService = NULL;
 OnLimitChange onLimitChange;
 OcppTime *ocppTime;
 
@@ -152,6 +156,14 @@ void OCPP_initialize(OcppSocket *ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     smartChargingService = new SmartChargingService(11000.0f, V_eff, OCPP_NUMCONNECTORS, ocppTime, fsOpt); //default charging limit: 11kW
     chargePointStatusService = new ChargePointStatusService(OCPP_NUMCONNECTORS, ocppTime); //Constructor adds instance to ocppEngine in constructor
     meteringService = new MeteringService(OCPP_NUMCONNECTORS, ocppTime);
+    heartbeatService = new HeartbeatService();
+
+#if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WEBSOCKET)
+    firmwareService = EspWiFi::makeFirmwareService("12345789"); //instantiate FW service + ESP installation routine
+#else
+    firmwareService = new FirmwareService("12345678"); //only instantiate FW service
+#endif
+    setFirmwareService(firmwareService);
 
     OCPP_initialized = true;
 }
@@ -182,6 +194,12 @@ void OCPP_loop() {
 
     if (powerSampler != NULL || energySampler != NULL) {
         meteringService->loop();        //optional
+    }
+
+    heartbeatService->loop();
+
+    if (firmwareService != NULL) {
+        firmwareService->loop();
     }
 
     bool evRequestsEnergyNewState = true;
@@ -236,9 +254,45 @@ void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized) {
     connectorEnergizedSampler = connectorEnergized;
 }
 
+void setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
+    ConnectorStatus *connector = getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (connector) {
+        connector->setConnectorPluggedSampler(connectorPlugged);
+    } else {
+        Serial.print(F("[ArduinoOcpp] Error: called setConnectorPluggedSampler before initializing the library!\n"));
+    }
+}
+
+//void setConnectorFaultedSampler(std::function<bool()> connectorFaulted) {
+//    ConnectorStatus *connector = getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+//    if (connector) {
+//        connector->setConnectorFaultedSampler(connectorFaulted);
+//    } else {
+//        Serial.print(F("[ArduinoOcpp] Error: called setConnectorFaultedSampler before initializing the library!\n"));
+//    }
+//}
+
+void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
+    ConnectorStatus *connector = getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (connector) {
+        connector->addConnectorErrorCodeSampler(connectorErrorCode);
+    } else {
+        Serial.print(F("[ArduinoOcpp] Error: called addConnectorErrorCodeSampler before initializing the library!\n"));
+    }
+}
+
 void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged) {
     onLimitChange = chargingRateChanged;
     smartChargingService->setOnLimitChange(onLimitChange);
+}
+
+void setOnUnlockConnector(std::function<bool()> unlockConnector) {
+    ConnectorStatus *connector = getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (connector) {
+        connector->setOnUnlockConnector(unlockConnector);
+    } else {
+        Serial.print(F("[ArduinoOcpp] Error: called setOnUnlockConnector before initializing the library!\n"));
+    }
 }
 
 void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq) {
@@ -259,6 +313,10 @@ void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf) {
 
 void setOnResetSendConf(OnSendConfListener onSendConf) {
      setOnResetSendConfListener(onSendConf);
+}
+
+void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq) {
+     setOnResetReceiveRequestListener(onReceiveReq);
 }
 
 void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
@@ -303,6 +361,24 @@ void bootNotification(String &chargePointModel, String &chargePointVendor, Strin
     initiateOcppOperation(bootNotification);
     bootNotification->setOnReceiveConfListener(onConf);
     bootNotification->setTimeout(new SuppressedTimeout());
+}
+
+void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
+    OcppOperation *bootNotification = makeOcppOperation(
+        new BootNotification(payload));
+    initiateOcppOperation(bootNotification);
+    if (onConf)
+        bootNotification->setOnReceiveConfListener(onConf);
+    if (onAbort)
+        bootNotification->setOnAbortListener(onAbort);
+    if (onTimeout)
+        bootNotification->setOnTimeoutListener(onTimeout);
+    if (onError)
+        bootNotification->setOnReceiveErrorListener(onError);
+    if (timeout)
+        bootNotification->setTimeout(timeout);
+    else
+        bootNotification->setTimeout(new SuppressedTimeout());
 }
 
 void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
@@ -363,6 +439,11 @@ int getTransactionId() {
 
 bool existsUnboundIdTag() {
     return chargePointStatusService->existsUnboundAuthorization();
+}
+
+bool isAvailable() {
+    return (chargePointStatusService->getConnector(OCPP_ID_OF_CP)->getAvailability() != AVAILABILITY_INOPERATIVE)
+       &&  (chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->getAvailability() != AVAILABILITY_INOPERATIVE);
 }
 
 #endif

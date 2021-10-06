@@ -135,7 +135,7 @@ In case you use PlatformIO, you can copy all dependencies from `platformio.ini` 
 | **Core profile** |
 | `Authorize` | :heavy_check_mark: |
 | `BootNotification` | :heavy_check_mark: |
-| `ChangeAvailability` |   |   | :heavy_multiplication_x: |
+| `ChangeAvailability` | :heavy_check_mark: |
 | `ChangeConfiguration` | :heavy_check_mark: |
 | `ClearCache` |   |   | :heavy_multiplication_x: |
 | `DataTransfer` | :heavy_check_mark: |
@@ -148,13 +148,18 @@ In case you use PlatformIO, you can copy all dependencies from `platformio.ini` 
 | `StartTransaction` | :heavy_check_mark: |
 | `StatusNotification` | :heavy_check_mark: |
 | `StopTransaction` | :heavy_check_mark: |
-| `UnlockConnector` |   |   | :heavy_multiplication_x: |
+| `UnlockConnector` | :heavy_check_mark: |
 | **Smart charging profile** |
-| `ClearChargingProfile` |   | pushed soon  |
+| `ClearChargingProfile` | :heavy_check_mark: |
 | `GetCompositeSchedule` |   |   | :heavy_multiplication_x: |
 | `SetChargingProfile` | :heavy_check_mark: |
 | **Remote trigger profile** |
 | `TriggerMessage` | :heavy_check_mark: |
+| **Firmware management** |
+| `GetDiagnostics` |   |   | :heavy_multiplication_x: |
+| `DiagnosticsStatusNotification` |   |   | :heavy_multiplication_x: |
+| `FirmwareStatusNotification` | :heavy_check_mark: |
+| `UpdateFirmware` | :heavy_check_mark: |
 
 ## Next development steps
 

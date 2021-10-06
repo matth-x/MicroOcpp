@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/Core/Configuration.h>
 //#include <ArduinoOcpp/Core/ConfigurationContainer.h>
-#include <ArduinoOcpp/Core/ConfigurationContainerFlash.h>
+
 
 #include <Variants.h>
 
@@ -65,6 +65,18 @@ std::shared_ptr<ConfigurationContainer> createConfigurationContainer(const char 
 }
 
 std::vector<std::shared_ptr<ConfigurationContainer>> configurationContainers;
+
+void addConfigurationContainer(std::shared_ptr<ConfigurationContainer> container) {
+    configurationContainers.push_back(container);
+}
+
+std::vector<std::shared_ptr<ConfigurationContainer>>::iterator getConfigurationContainersBegin() {
+    return configurationContainers.begin();
+}
+
+std::vector<std::shared_ptr<ConfigurationContainer>>::iterator getConfigurationContainersEnd() {
+    return configurationContainers.end();
+}
 
 std::shared_ptr<ConfigurationContainer> getContainer(const char *filename) {
     std::vector<std::shared_ptr<ConfigurationContainer>>::iterator container = std::find_if(configurationContainers.begin(), configurationContainers.end(),
@@ -207,8 +219,13 @@ std::shared_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> getAllConfi
 
 } //end namespace Ocpp16
 
+bool configuration_inited = false;
+
 bool configuration_init(FilesystemOpt fsOpt) {
-    bool loadRoutineSuccessful = false;
+    if (configuration_inited)
+        return true; //configuration_init() already called; tolerate multiple calls so user can use this store for
+                     //credentials outside ArduinoOcpp which need to be loaded before OCPP_initialize()
+    bool loadRoutineSuccessful = true;
 #ifndef AO_DEACTIVATE_FLASH
 
     configurationFilesystemOpt = fsOpt;
@@ -255,6 +272,7 @@ bool configuration_init(FilesystemOpt fsOpt) {
 
 
 #endif //ndef AO_DEACTIVATE_FLASH
+    configuration_inited = loadRoutineSuccessful;
     return loadRoutineSuccessful;
 }
 

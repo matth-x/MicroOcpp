@@ -21,10 +21,11 @@
 #include <ArduinoOcpp/MessagesV16/ChangeConfiguration.h>
 #include <ArduinoOcpp/MessagesV16/GetConfiguration.h>
 #include <ArduinoOcpp/MessagesV16/Reset.h>
-#if 0
-#include "UpdateFirmware.h"
-#include "FirmwareStatusNotification.h"
-#endif
+#include <ArduinoOcpp/MessagesV16/UpdateFirmware.h>
+#include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
+#include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
+#include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
+#include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
 
 #include <ArduinoOcpp/Core/OcppEngine.h>
 
@@ -102,6 +103,11 @@ void setOnGetConfigurationSendConfListener(OnSendConfListener listener){
   onGetConfigurationSendConf = listener;
 }
 
+OnSendConfListener onResetReceiveReq;
+void setOnResetReceiveRequestListener(OnReceiveReqListener listener) {
+  onResetReceiveReq = listener;
+}
+
 OnSendConfListener onResetSendConf;
 void setOnResetSendConfListener(OnSendConfListener listener){
   onResetSendConf = listener;
@@ -110,6 +116,11 @@ void setOnResetSendConfListener(OnSendConfListener listener){
 OnReceiveReqListener onUpdateFirmwareReceiveReq;
 void setOnUpdateFirmwareReceiveRequestListener(OnReceiveReqListener listener) {
   onUpdateFirmwareReceiveReq = listener;
+}
+
+OnReceiveReqListener onMeterValuesReceiveReq = NULL;
+void setOnMeterValuesReceiveRequestListener(OnReceiveReqListener listener) {
+    onMeterValuesReceiveReq = listener;
 }
 
 struct CustomOcppMessageCreatorEntry {
@@ -180,6 +191,7 @@ OcppOperation *makeOcppOperation(const char *messageType) {
     msg = new Ocpp16::Heartbeat();
   } else if (!strcmp(messageType, "MeterValues")) {
     msg = new Ocpp16::MeterValues();
+    operation->setOnReceiveReqListener(onMeterValuesReceiveReq);
   } else if (!strcmp(messageType, "SetChargingProfile")) {
     msg = new Ocpp16::SetChargingProfile(getSmartChargingService());
     operation->setOnReceiveReqListener(onSetChargingProfileRequest);
@@ -215,18 +227,23 @@ OcppOperation *makeOcppOperation(const char *messageType) {
     operation->setOnSendConfListener(onGetConfigurationSendConf);
   } else if (!strcmp(messageType, "Reset")) {
     msg = new Ocpp16::Reset();
-    if (onResetSendConf == NULL)
-      Serial.print(F("[SimpleOcppOperationFactory] Warning: Reset is without effect when the sendConf listener is not set. Set a listener which resets your device.\n"));
+    if (onResetSendConf == NULL && onResetReceiveReq == NULL)
+      Serial.print(F("[SimpleOcppOperationFactory] Warning: Reset is without effect when the sendConf and receiveReq listener is not set. Set a listener which resets your device.\n"));
+    operation->setOnReceiveReqListener(onResetReceiveReq);
     operation->setOnSendConfListener(onResetSendConf);
-#if 0
   } else if (!strcmp(messageType, "UpdateFirmware")) {
-    msg = new UpdateFirmware();
-    if (onUpdateFirmwareReceiveReq == NULL)
-      Serial.print(F("[SimpleOcppOperationFactory] Warning: UpdateFirmware is without effect when the receiveReq listener is not set. Please implement a FW update routine for your device.\n"));
+    msg = new Ocpp16::UpdateFirmware();
+    //if (onUpdateFirmwareReceiveReq == NULL)
+    //  Serial.print(F("[SimpleOcppOperationFactory] Warning: UpdateFirmware is without effect when the receiveReq listener is not set. Please implement a FW update routine for your device.\n"));
     operation->setOnReceiveReqListener(onUpdateFirmwareReceiveReq);
   } else if (!strcmp(messageType, "FirmwareStatusNotification")) {
-    msg = new FirmwareStatusNotification();
-#endif
+    msg = new Ocpp16::FirmwareStatusNotification();
+  } else if (!strcmp(messageType, "UnlockConnector")) {
+    msg = new Ocpp16::UnlockConnector();
+  } else if (!strcmp(messageType, "ClearChargingProfile")) {
+    msg = new Ocpp16::ClearChargingProfile();
+  } else if (!strcmp(messageType, "ChangeAvailability")) {
+    msg = new Ocpp16::ChangeAvailability();
   } else {
     Serial.println(F("[SimpleOcppOperationFactory] Operation not supported"));
     msg = new NotImplemented();

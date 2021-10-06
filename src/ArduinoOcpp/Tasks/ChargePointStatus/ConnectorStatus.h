@@ -9,12 +9,18 @@
 #include <ArduinoOcpp/Tasks/ChargePointStatus/OcppEvseState.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
+#define AVAILABILITY_OPERATIVE 2
+#define AVAILABILITY_INOPERATIVE_SCHEDULED 1
+#define AVAILABILITY_INOPERATIVE 0
+
 namespace ArduinoOcpp {
 
 class ConnectorStatus {
 private:
     const int connectorId;
     OcppTime *ocppTime;
+
+    std::shared_ptr<Configuration<int>> availability = NULL;
 
     bool authorized = false;
     String idTag = String('\0');
@@ -24,7 +30,12 @@ private:
     int transactionIdSync = -1;
     bool evDrawsEnergy = false;
     bool evseOffersEnergy = false;
+    std::function<bool()> connectorPluggedSampler = NULL;
+    //std::function<bool()> connectorFaultedSampler = NULL;
+    std::vector<std::function<const char *()>> connectorErrorCodeSamplers;
+    const char *getErrorCode();
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
+    std::function<bool()> onUnlockConnector = NULL;
 public:
     ConnectorStatus(int connectorId, OcppTime *ocppTime);
 
@@ -38,11 +49,16 @@ public:
     uint16_t getTransactionWriteCount();
     void setTransactionId(int id);
     void setTransactionIdSync(int id);
+    int getAvailability();
+    void setAvailability(bool available);
     void boot();
     void startEvDrawsEnergy();
     void stopEvDrawsEnergy();
     void startEnergyOffer();
     void stopEnergyOffer();
+    void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
+    //void setConnectorFaultedSampler(std::function<bool()> connectorFaulted);
+    void addConnectorErrorCodeSampler(std::function<const char*()> connectorErrorCode);
 
     void saveState();
     //void recoverState();
@@ -50,6 +66,9 @@ public:
     Ocpp16::StatusNotification *loop();
 
     OcppEvseState inferenceStatus();
+
+    void setOnUnlockConnector(std::function<bool()> unlockConnector);
+    std::function<bool()> getOnUnlockConnector();
 };
 
 } //end namespace ArduinoOcpp

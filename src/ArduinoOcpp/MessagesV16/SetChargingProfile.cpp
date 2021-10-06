@@ -13,6 +13,16 @@ SetChargingProfile::SetChargingProfile(SmartChargingService *smartChargingServic
 
 }
 
+SetChargingProfile::SetChargingProfile(DynamicJsonDocument *payloadToClient) 
+  : payloadToClient(payloadToClient) {
+
+}
+
+SetChargingProfile::~SetChargingProfile() {
+    if (payloadToClient != NULL)
+        delete payloadToClient;
+}
+
 const char* SetChargingProfile::getOcppOperationType(){
     return "SetChargingProfile";
 }
@@ -27,8 +37,23 @@ void SetChargingProfile::processReq(JsonObject payload) {
 }
 
 DynamicJsonDocument* SetChargingProfile::createConf(){ //TODO review
-  DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
-  JsonObject payload = doc->to<JsonObject>();
-  payload["status"] = "Accepted";
-  return doc;
+    DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
+    JsonObject payload = doc->to<JsonObject>();
+    payload["status"] = "Accepted";
+    return doc;
+}
+
+DynamicJsonDocument* SetChargingProfile::createReq() {
+    if (payloadToClient != NULL) {
+        DynamicJsonDocument *result = new DynamicJsonDocument(*payloadToClient);
+        return result;
+    }
+    return NULL;
+}
+
+void SetChargingProfile::processConf(JsonObject payload) {
+    const char* status = payload["status"] | "Invalid";
+    if (strcmp(status, "Accepted")) {
+        Serial.println(F("[SetChargingProfile] Send profile: rejected by client!"));
+    }
 }

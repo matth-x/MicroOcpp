@@ -16,9 +16,10 @@ namespace ArduinoOcpp {
 namespace OcppEngine {
 
 OcppSocket *ocppSocket;
-SmartChargingService *ocppEngine_smartChargingService;
-ChargePointStatusService *ocppEngine_chargePointStatusService;
-MeteringService *ocppEngine_meteringService;
+SmartChargingService *ocppEngine_smartChargingService = NULL;
+ChargePointStatusService *ocppEngine_chargePointStatusService = NULL;
+MeteringService *ocppEngine_meteringService = NULL;
+FirmwareService *ocppEngine_firmwareService = NULL;
 OcppTime *ocppEngine_ocppTime;
 
 std::vector<OcppOperation*> initiatedOcppOperations;
@@ -439,6 +440,18 @@ MeteringService* getMeteringService() {
     //no error catch 
   }
   return ocppEngine_meteringService;
+}
+
+void setFirmwareService(FirmwareService *fwService) {
+  ocppEngine_firmwareService = fwService;
+}
+
+FirmwareService *getFirmwareService() {
+  if (ocppEngine_firmwareService == NULL) {
+    Serial.print(F("[OcppEngine] Error: in OcppEngine, there is no ocppEngine_firmwareService set, but it is accessed!\n"));
+    //no error catch 
+  }
+  return ocppEngine_firmwareService;
 }
 
 void ocppEngine_setOcppTime(OcppTime *ocppTime) {

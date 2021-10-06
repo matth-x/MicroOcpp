@@ -13,28 +13,34 @@ namespace Ocpp16 {
 
 class BootNotification : public OcppMessage {
 private:
-  String chargePointModel = String('\0');
-  String chargePointVendor = String('\0');
-  String chargePointSerialNumber = String('\0');
-  String firmwareVersion = String('\0');
+    String chargePointModel = String('\0');
+    String chargePointVendor = String('\0');
+    String chargePointSerialNumber = String('\0');
+    String firmwareVersion = String('\0');
+
+    DynamicJsonDocument *overridePayload = NULL;
 public:
-  BootNotification();
+    BootNotification();
 
-  BootNotification(String &chargePointModel, String &chargePointVendor);
+    ~BootNotification();
 
-  BootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber);
+    BootNotification(String &chargePointModel, String &chargePointVendor);
 
-  BootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber, String &firmwareVersion);
+    BootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber);
 
-  const char* getOcppOperationType();
+    BootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber, String &firmwareVersion);
 
-  DynamicJsonDocument* createReq();
+    BootNotification(DynamicJsonDocument *payload);
 
-  void processConf(JsonObject payload);
+    const char* getOcppOperationType();
 
-  void processReq(JsonObject payload);
+    DynamicJsonDocument* createReq();
 
-  DynamicJsonDocument* createConf();
+    void processConf(JsonObject payload);
+
+    void processReq(JsonObject payload);
+
+    DynamicJsonDocument* createConf();
 };
 
 } //end namespace Ocpp16
