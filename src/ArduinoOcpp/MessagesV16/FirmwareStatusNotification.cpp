@@ -9,7 +9,6 @@
 using ArduinoOcpp::Ocpp16::FirmwareStatusNotification;
 
 FirmwareStatusNotification::FirmwareStatusNotification() {
-    //status = String("Idle"); // TriggerMessage will use this constructor. Should replace with actual value later
     FirmwareService *fwService = getFirmwareService();
     if (fwService) {
         status = fwService->getFirmwareStatus();
@@ -18,7 +17,7 @@ FirmwareStatusNotification::FirmwareStatusNotification() {
     }
 }
 
-FirmwareStatusNotification::FirmwareStatusNotification(FirmwareStatus status) {
+FirmwareStatusNotification::FirmwareStatusNotification(FirmwareStatus status) : status(status) {
 }
 
 const char *FirmwareStatusNotification::cstrFromFwStatus(FirmwareStatus status) {

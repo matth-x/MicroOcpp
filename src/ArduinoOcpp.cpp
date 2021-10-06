@@ -14,6 +14,7 @@
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
+#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
@@ -41,6 +42,7 @@ bool connectorEnergizedLastState = false;
 SmartChargingService *smartChargingService;
 ChargePointStatusService *chargePointStatusService;
 HeartbeatService *heartbeatService;
+FirmwareService *firmwareService = NULL;
 OnLimitChange onLimitChange;
 OcppTime *ocppTime;
 
@@ -156,6 +158,13 @@ void OCPP_initialize(OcppSocket *ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     meteringService = new MeteringService(OCPP_NUMCONNECTORS, ocppTime);
     heartbeatService = new HeartbeatService();
 
+#if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WEBSOCKET)
+    firmwareService = EspWiFi::makeFirmwareService("12345789"); //instantiate FW service + ESP installation routine
+#else
+    firmwareService = new FirmwareService("12345678"); //only instantiate FW service
+#endif
+    setFirmwareService(firmwareService);
+
     OCPP_initialized = true;
 }
 
@@ -188,6 +197,10 @@ void OCPP_loop() {
     }
 
     heartbeatService->loop();
+
+    if (firmwareService != NULL) {
+        firmwareService->loop();
+    }
 
     bool evRequestsEnergyNewState = true;
     if (evRequestsEnergySampler != NULL) {
@@ -426,6 +439,11 @@ int getTransactionId() {
 
 bool existsUnboundIdTag() {
     return chargePointStatusService->existsUnboundAuthorization();
+}
+
+bool isAvailable() {
+    return (chargePointStatusService->getConnector(OCPP_ID_OF_CP)->getAvailability() != AVAILABILITY_INOPERATIVE)
+       &&  (chargePointStatusService->getConnector(OCPP_ID_OF_CONNECTOR)->getAvailability() != AVAILABILITY_INOPERATIVE);
 }
 
 #endif

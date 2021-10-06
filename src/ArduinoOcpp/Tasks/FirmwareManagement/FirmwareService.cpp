@@ -31,6 +31,7 @@ void FirmwareService::loop() {
 
         //if (!downloadIssued) {
         if (stage == UpdateStage::Idle) {
+            if (DEBUG_OUT) Serial.println(F("[FirmwareService] Start update!"));
             if (onDownload == NULL) {
                 stage = UpdateStage::AfterDownload;
             } else {
@@ -44,6 +45,7 @@ void FirmwareService::loop() {
 
         //if (!onDownloadCalled) {
         if (stage == UpdateStage::AwaitDownload) {
+            if (DEBUG_OUT) Serial.println(F("[FirmwareService] Start Download!"));
             stage = UpdateStage::Downloading;
             if (onDownload != NULL) {
                 onDownload(location);
@@ -88,6 +90,7 @@ void FirmwareService::loop() {
 
         //if (!installationIssued) {
         if (stage == UpdateStage::AfterDownload) {
+            if (DEBUG_OUT) Serial.println(F("[FirmwareService] After download!"));
             bool ongoingTx = false;
             ChargePointStatusService *cpStatus = getChargePointStatusService();
             if (cpStatus) {
@@ -112,6 +115,7 @@ void FirmwareService::loop() {
         }
 
         if (stage == UpdateStage::AwaitInstallation) {
+            if (DEBUG_OUT) Serial.println(F("[FirmwareService] Installing!"));
             stage = UpdateStage::Installing;
 
             if (onInstall != NULL) {
@@ -174,6 +178,20 @@ void FirmwareService::scheduleFirmwareUpdate(String &location, OcppTimestamp ret
     this->retries = retries;
     this->retryInterval = retryInterval;
 
+    if (DEBUG_OUT) {
+        Serial.print(F("[FirmwareService] Scheduled FW update!\n"));
+        Serial.print(F("                  location = "));
+        Serial.println(this->location);
+        Serial.print(F("                  retrieveDate = "));
+        char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
+        this->retreiveDate.toJsonString(dbuf, JSONDATE_LENGTH + 1);
+        Serial.println(dbuf);
+        Serial.print(F("                  retries = "));
+        Serial.print(this->retries);
+        Serial.print(F(", retryInterval = "));
+        Serial.println(this->retryInterval);
+    }
+
     resetStage();
 }
 
@@ -213,9 +231,9 @@ OcppOperation *FirmwareService::getFirmwareStatusNotification() {
         checkedSuccessfulFwUpdate = true;
         
         size_t buildNoSize = previousBuildNumber->getBuffsize();
-        if (!strncmp(buildNumber, *previousBuildNumber, buildNoSize)) {
+        if (strncmp(buildNumber, *previousBuildNumber, buildNoSize)) {
             //new FW
-            previousBuildNumber->setValue(buildNumber, strlen(buildNumber));
+            previousBuildNumber->setValue(buildNumber, strlen(buildNumber) + 1);
             configuration_save();
 
             lastReportedStatus = FirmwareStatus::Installed;
@@ -264,7 +282,7 @@ void FirmwareService::resetStage() {
 
 #include <HTTPUpdate.h>
 
-FirmwareService *makeFirmwareService(const char *buildNumber) {
+FirmwareService *EspWiFi::makeFirmwareService(const char *buildNumber) {
     FirmwareService *fwService = new FirmwareService(buildNumber);
 
     /*
@@ -326,7 +344,7 @@ FirmwareService *makeFirmwareService(const char *buildNumber) {
 
 #include <ESP8266httpUpdate.h>
 
-FirmwareService *makeFirmwareService(const char *buildNumber) {
+FirmwareService *EspWiFi::makeFirmwareService(const char *buildNumber) {
     FirmwareService *fwService = new FirmwareService(buildNumber);
 
     fwService->setOnInstall([fwService = fwService] (String &location) {
