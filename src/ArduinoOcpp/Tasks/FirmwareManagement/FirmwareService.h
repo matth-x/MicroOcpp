@@ -64,6 +64,8 @@ private:
 
     void resetStage();
 
+    bool availabilityRestore = false;
+
 public:
     FirmwareService(const char *buildNumber);
 

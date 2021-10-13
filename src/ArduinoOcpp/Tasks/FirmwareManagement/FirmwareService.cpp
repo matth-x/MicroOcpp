@@ -104,6 +104,11 @@ void FirmwareService::loop() {
             }
 
             if (!ongoingTx) {
+                if (cpStatus) {
+                    ConnectorStatus *evse = cpStatus->getConnector(0);
+                    availabilityRestore = (evse->getAvailability() == AVAILABILITY_OPERATIVE);
+                    evse->setAvailability(false);
+                }
                 stage = UpdateStage::AwaitInstallation;
                 installationIssued = true;
 
@@ -132,17 +137,17 @@ void FirmwareService::loop() {
         if (stage == UpdateStage::Installing) {
 
             //check if client reports installation to be finished
-            if (installationStatusSampler != NULL && installationStatusSampler() == InstallationStatus::Installed) {
+            if ((installationStatusSampler != NULL && installationStatusSampler() == InstallationStatus::Installed)
+                    //if client doesn't report installation state, assume download to be finished (at least 40s installation time have passed until here)
+                      || (installationStatusSampler == NULL)) {
                 //Client should reboot during onInstall. If not, client is responsible to reboot at a later point
                 resetStage();
-                retries = 0; //Success. End of update routine
-                return;
-            }
-
-            //if client doesn't report installation state, assume download to be finished (at least 40s installation time have passed until here)
-            if (installationStatusSampler == NULL) {
-                resetStage();
                 retries = 0; //End of update routine. Client must reboot on its own
+                if (availabilityRestore) {
+                    if (getChargePointStatusService() && getChargePointStatusService()->getConnector(0)) {
+                        getChargePointStatusService()->getConnector(0)->setAvailability(true);
+                    }
+                }
                 return;
             }
 
