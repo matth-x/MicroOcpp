@@ -119,7 +119,7 @@ void setOnSetChargingProfileRequest(void listener(JsonObject payload));
 
 You can also process the original payload from the CS using the `payload` object.
 
-To get started quickly without EVSE hardware, you can use the charge point simulation in `examples/Simulation_without_HW/` as a starting point. It establishes a connection to a WebSocket echo server (`wss://echo.websocket.org/`). This works because the library can answer its own requests to make testing easier. You can also run the simulation against the URL of your central system. `Simulated_HW.ino` simulates the user interaction at the EVSE. It repeats its test routine over and over again. You can watch it in your device monitor! 
+To get started quickly with or without EVSE hardware, you can flash the sketch in `examples/SECC` onto your ESP. That example mimics a full OCPP communications controller as it would look like in a real charging station. You can build a charger prototype based on that example or just view the internal state using the device monitor.
 
 ## Dependencies
 
