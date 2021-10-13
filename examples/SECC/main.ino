@@ -3,20 +3,19 @@
 // MIT License
 //
 //
-// IMPORTANT: Please add all files from this example folder to your project!
+// IMPORTANT: Please add tzapu/WiFiManager@0.16.0 to the libdeps of your project!
 //
-// This is a complete EVCC (Electric Vehicle Communications Controller) codebase. An EVCC
-// is responsible for all communication over the internet, i.e. to your OCPP server. You
-// can flash this program onto an ESP32, build it into your EVSE and start charging
-// with OCPP-connectivity.
+// This sketch demonstrates a complete OCPP Wi-Fi module of an EVSE. You can flash
+// an ESP8266/ESP32 with this program, build it into your EVSE and start charging with
+// OCPP-connectivity.
 //
-// The pin mapping and additional comments can be found in this file. Maybe you need to
-// adapt a few things before deployment.
+// The pin mapping and additional comments can be found in this file. You probably need
+// to adapt a few things before deployment.
 //
 
 
 #include <Arduino.h>
-#include <WiFiManager.h> //please install tzapu/WiFiManager 
+#include <WiFiManager.h> //please install tzapu/WiFiManager@0.16.0
 
 #include <ArduinoOcpp.h>
 #include <ArduinoOcpp/Core/Configuration.h> //load and save settings of WiFi captive portal
@@ -27,7 +26,7 @@
  */
 #define AMPERAGE_PIN 4 //modulated as PWM
 
-#define EV_PLUG_PIN 14
+#define EV_PLUG_PIN 14 // Input pin | Read if an EV is connected to the EVSE
 #if defined(ESP32)
 #define EV_PLUGGED HIGH
 #define EV_UNPLUGGED LOW
@@ -36,11 +35,11 @@
 #define EV_UNPLUGGED HIGH
 #endif
 
-#define OCPP_CHARGE_PERMISSION_PIN 5
+#define OCPP_CHARGE_PERMISSION_PIN 5 // Output pin | Signal if OCPP allows / forbids energy flow
 #define OCPP_CHARGE_PERMITTED HIGH
 #define OCPP_CHARGE_FORBIDDEN LOW
 
-#define EV_CHARGE_PIN 12
+#define EV_CHARGE_PIN 12 // Input pin | Read if EV requests energy (corresponds to SAE J1772 State C)
 #if defined(ESP32)
 #define EV_CHARGING LOW
 #define EV_SUSPENDED HIGH
@@ -49,11 +48,11 @@
 #define EV_SUSPENDED LOW
 #endif
 
-#define OCPP_AVAILABILITY_PIN 0
+#define OCPP_AVAILABILITY_PIN 0 // Output pin | Signal if this EVSE is out of order (set by Central System)
 #define OCPP_AVAILABLE HIGH
 #define OCPP_UNAVAILABLE LOW
 
-#define EVSE_GROUND_FAULT_PIN 13
+#define EVSE_GROUND_FAULT_PIN 13 // Input pin | Read ground fault detector
 #define EVSE_GROUND_FAULTED HIGH
 #define EVSE_GROUND_CLEAR LOW
 
@@ -62,11 +61,11 @@
  * Internal LED of ESP8266/ESP32 + additional ESP8266 development board LED
  */
 
-#define SERVER_CONNECT_LED 16
+#define SERVER_CONNECT_LED 16 // Output pin | Signal if connection to OCPP server has succeeded
 #define SERVER_CONNECT_ON LOW
 #define SERVER_CONNECT_OFF HIGH
 
-#define CHARGE_PERMISSION_LED 2
+#define CHARGE_PERMISSION_LED 2 // Output pin | Signal if OCPP allows / forbids energy flow
 #if defined(ESP32)
 #define CHARGE_PERMISSION_ON HIGH
 #define CHARGE_PERMISSION_OFF LOW
