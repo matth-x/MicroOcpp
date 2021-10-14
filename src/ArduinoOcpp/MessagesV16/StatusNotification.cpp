@@ -113,9 +113,9 @@ DynamicJsonDocument* StatusNotification::createReq() {
 
 
 void StatusNotification::processConf(JsonObject payload) {
-  /*
-   * Empty payload
-   */
+    /*
+    * Empty payload
+    */
 }
 
 
@@ -137,7 +137,7 @@ void StatusNotification::processReq(JsonObject payload) {
  * For debugging only
  */
 DynamicJsonDocument* StatusNotification::createConf(){
-  DynamicJsonDocument* doc = new DynamicJsonDocument(0);
-  //JsonObject payload = doc->to<JsonObject>();
-  return doc;
+    DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
+    JsonObject payload = doc->to<JsonObject>();
+    return doc;
 }

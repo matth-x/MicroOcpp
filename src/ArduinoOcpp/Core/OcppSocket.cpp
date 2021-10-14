@@ -71,6 +71,8 @@ void OcppServerSocket::loop() {
 }
 
 bool OcppServerSocket::sendTXT(String &out) {
+    if (DEBUG_OUT) Serial.print(F("[OcppServerSocket] Send TXT: "));
+    if (DEBUG_OUT) Serial.println(out);
     return OcppServer::getInstance()->sendTXT(ip_addr, out);
 }
 
