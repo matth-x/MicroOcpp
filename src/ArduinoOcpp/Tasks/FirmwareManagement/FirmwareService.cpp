@@ -32,6 +32,13 @@ void FirmwareService::loop() {
         //if (!downloadIssued) {
         if (stage == UpdateStage::Idle) {
             if (DEBUG_OUT) Serial.println(F("[FirmwareService] Start update!"));
+            if (getChargePointStatusService()) {
+                ConnectorStatus *evse = getChargePointStatusService()->getConnector(0);
+                if (!availabilityRestore) {
+                    availabilityRestore = (evse->getAvailability() == AVAILABILITY_OPERATIVE);
+                }
+                evse->setAvailability(false);
+            }
             if (onDownload == NULL) {
                 stage = UpdateStage::AfterDownload;
             } else {
@@ -104,11 +111,6 @@ void FirmwareService::loop() {
             }
 
             if (!ongoingTx) {
-                if (cpStatus) {
-                    ConnectorStatus *evse = cpStatus->getConnector(0);
-                    availabilityRestore = (evse->getAvailability() == AVAILABILITY_OPERATIVE);
-                    evse->setAvailability(false);
-                }
                 stage = UpdateStage::AwaitInstallation;
                 installationIssued = true;
 
