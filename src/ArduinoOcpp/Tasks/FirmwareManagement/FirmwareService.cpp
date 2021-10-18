@@ -179,7 +179,7 @@ void FirmwareService::loop() {
     }
 }
 
-void FirmwareService::scheduleFirmwareUpdate(String &location, OcppTimestamp retreiveDate, int retries, ulong retryInterval) {
+void FirmwareService::scheduleFirmwareUpdate(String &location, OcppTimestamp retreiveDate, int retries, unsigned int retryInterval) {
     this->location = String(location);
     this->retreiveDate = retreiveDate;
     this->retries = retries;

@@ -45,7 +45,7 @@ private:
     String location = String('\0');
     OcppTimestamp retreiveDate = OcppTimestamp();
     int retries = 0;
-    ulong retryInterval = 0;
+    unsigned int retryInterval = 0;
 
     std::function<bool(String &location)> onDownload = NULL;
     std::function<bool(String &location)> onInstall = NULL;
@@ -66,16 +66,16 @@ private:
 
     bool availabilityRestore = false;
 
+    OcppOperation *getFirmwareStatusNotification();
+
 public:
     FirmwareService(const char *buildNumber);
 
     void loop();
 
-    void scheduleFirmwareUpdate(String &location, OcppTimestamp retreiveDate, int retries = 1, ulong retryInterval = 0);
+    void scheduleFirmwareUpdate(String &location, OcppTimestamp retreiveDate, int retries = 1, unsigned int retryInterval = 0);
 
     Ocpp16::FirmwareStatus getFirmwareStatus();
-
-    OcppOperation *getFirmwareStatusNotification();
 
     void setOnDownload(std::function<bool(String &location)> onDownload);
 
