@@ -39,7 +39,7 @@ void UpdateFirmware::processReq(JsonObject payload) {
 }
 
 DynamicJsonDocument* UpdateFirmware::createConf(){
-    DynamicJsonDocument* doc = new DynamicJsonDocument(0);
+    DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
     FirmwareService *fwService = getFirmwareService();

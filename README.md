@@ -156,8 +156,8 @@ In case you use PlatformIO, you can copy all dependencies from `platformio.ini` 
 | **Remote trigger profile** |
 | `TriggerMessage` | :heavy_check_mark: |
 | **Firmware management** |
-| `GetDiagnostics` |   |   | :heavy_multiplication_x: |
-| `DiagnosticsStatusNotification` |   |   | :heavy_multiplication_x: |
+| `GetDiagnostics` | :heavy_check_mark: |
+| `DiagnosticsStatusNotification` | :heavy_check_mark: |
 | `FirmwareStatusNotification` | :heavy_check_mark: |
 | `UpdateFirmware` | :heavy_check_mark: |
 

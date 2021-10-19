@@ -23,6 +23,8 @@
 #include <ArduinoOcpp/MessagesV16/Reset.h>
 #include <ArduinoOcpp/MessagesV16/UpdateFirmware.h>
 #include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
+#include <ArduinoOcpp/MessagesV16/GetDiagnostics.h>
+#include <ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.h>
 #include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
 #include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
 #include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
@@ -238,6 +240,10 @@ OcppOperation *makeOcppOperation(const char *messageType) {
     operation->setOnReceiveReqListener(onUpdateFirmwareReceiveReq);
   } else if (!strcmp(messageType, "FirmwareStatusNotification")) {
     msg = new Ocpp16::FirmwareStatusNotification();
+  } else if (!strcmp(messageType, "GetDiagnostics")) {
+    msg = new Ocpp16::GetDiagnostics();
+  } else if (!strcmp(messageType, "DiagnosticsStatusNotification")) {
+    msg = new Ocpp16::DiagnosticsStatusNotification();
   } else if (!strcmp(messageType, "UnlockConnector")) {
     msg = new Ocpp16::UnlockConnector();
   } else if (!strcmp(messageType, "ClearChargingProfile")) {

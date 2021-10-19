@@ -14,6 +14,7 @@
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
+#include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 
 namespace ArduinoOcpp {
 
@@ -57,6 +58,10 @@ MeteringService* getMeteringService();
 void setFirmwareService(FirmwareService *firmwareService);
 
 FirmwareService *getFirmwareService();
+
+void setDiagnosticsService(DiagnosticsService *diagnosticsService);
+
+DiagnosticsService *getDiagnosticsService();
 
 void ocppEngine_setOcppTime(OcppTime *ocppTime);
 

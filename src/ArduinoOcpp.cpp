@@ -15,6 +15,7 @@
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
+#include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
@@ -43,6 +44,7 @@ SmartChargingService *smartChargingService;
 ChargePointStatusService *chargePointStatusService;
 HeartbeatService *heartbeatService;
 FirmwareService *firmwareService = NULL;
+DiagnosticsService *diagnosticsServce = NULL;
 OnLimitChange onLimitChange;
 OcppTime *ocppTime;
 
@@ -164,6 +166,13 @@ void OCPP_initialize(OcppSocket *ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     firmwareService = new FirmwareService("12345678"); //only instantiate FW service
 #endif
     setFirmwareService(firmwareService);
+
+#if !defined(AO_CUSTOM_DIAGNOSTICS) && !defined(AO_CUSTOM_WEBSOCKET)
+    diagnosticsServce = EspWiFi::makeDiagnosticsService();  //will only return "Rejected" because logging is not implemented yet
+#else
+    diagnosticsServce = new DiagnosticsService();
+#endif
+    setDiagnosticsService(diagnosticsServce);
 
     OCPP_initialized = true;
 }

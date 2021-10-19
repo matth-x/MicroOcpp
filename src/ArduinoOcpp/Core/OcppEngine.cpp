@@ -20,6 +20,7 @@ SmartChargingService *ocppEngine_smartChargingService = NULL;
 ChargePointStatusService *ocppEngine_chargePointStatusService = NULL;
 MeteringService *ocppEngine_meteringService = NULL;
 FirmwareService *ocppEngine_firmwareService = NULL;
+DiagnosticsService *ocppEngine_diagnosticsService = NULL;
 OcppTime *ocppEngine_ocppTime;
 
 std::vector<OcppOperation*> initiatedOcppOperations;
@@ -452,6 +453,18 @@ FirmwareService *getFirmwareService() {
     //no error catch 
   }
   return ocppEngine_firmwareService;
+}
+
+void setDiagnosticsService(DiagnosticsService *diagnosticsService) {
+  ocppEngine_diagnosticsService = diagnosticsService;
+}
+
+DiagnosticsService *getDiagnosticsService() {
+  if (ocppEngine_diagnosticsService == NULL) {
+    Serial.print(F("[OcppEngine] Error: in OcppEngine, there is no ocppEngine_diagnosticsService set, but it is accessed!\n"));
+    //no error catch 
+  }
+  return ocppEngine_diagnosticsService;
 }
 
 void ocppEngine_setOcppTime(OcppTime *ocppTime) {
