@@ -211,6 +211,10 @@ void OCPP_loop() {
         firmwareService->loop();
     }
 
+    if (diagnosticsServce != NULL) {
+        diagnosticsServce->loop();
+    }
+
     bool evRequestsEnergyNewState = true;
     if (evRequestsEnergySampler != NULL) {
         evRequestsEnergyNewState = evRequestsEnergySampler();
