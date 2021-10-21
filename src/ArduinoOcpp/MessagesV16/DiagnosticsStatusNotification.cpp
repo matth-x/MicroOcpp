@@ -26,13 +26,13 @@ const char *DiagnosticsStatusNotification::cstrFromFwStatus(DiagnosticsStatus st
             return "Idle";
             break;
         case (DiagnosticsStatus::Uploaded):
-            return "Downloaded";
+            return "Uploaded";
             break;
         case (DiagnosticsStatus::UploadFailed):
-            return "DownloadFailed";
+            return "UploadFailed";
             break;
         case (DiagnosticsStatus::Uploading):
-            return "Downloading";
+            return "Uploading";
             break;
     }
     return NULL; //cannot be reached
