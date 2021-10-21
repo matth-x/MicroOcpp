@@ -20,6 +20,7 @@ void DiagnosticsService::loop() {
 
         if (!uploadIssued) {
             if (onUpload != NULL) {
+                if (DEBUG_OUT) Serial.println(F("[DiagnosticsService] call onUpload"));
                 onUpload(location, startTime, stopTime);
                 uploadIssued = true;
             } else {
@@ -32,6 +33,7 @@ void DiagnosticsService::loop() {
         if (uploadIssued) {
             if (uploadStatusSampler != NULL && uploadStatusSampler() == UploadStatus::Uploaded) {
                 //success!
+                if (DEBUG_OUT) Serial.println(F("[DiagnosticsService] end update routine (by status)"));
                 uploadIssued = false;
                 retries = 0;
             }
@@ -44,6 +46,7 @@ void DiagnosticsService::loop() {
 
                 if (uploadStatusSampler == NULL) {
                     //No way to find out if failed. But maximum time has elapsed. Assume success
+                    if (DEBUG_OUT) Serial.println(F("[DiagnosticsService] end update routine (by timer)"));
                     uploadIssued = false;
                     retries = 0;
                 } else {
@@ -93,6 +96,7 @@ String DiagnosticsService::requestDiagnosticsUpload(String &location, int retrie
         Serial.print(F("                     startTime = "));
         char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
         this->startTime.toJsonString(dbuf, JSONDATE_LENGTH + 1);
+        Serial.println(dbuf);
         Serial.print(F("                     stopTime = "));
         this->stopTime.toJsonString(dbuf, JSONDATE_LENGTH + 1);
         Serial.println(dbuf);
@@ -101,6 +105,13 @@ String DiagnosticsService::requestDiagnosticsUpload(String &location, int retrie
     nextTry = getOcppTime()->getOcppTimestampNow();
     nextTry += 10; //wait for 10s before upload
     uploadIssued = false;
+
+    if (DEBUG_OUT) {
+        Serial.print(F("[DiagnosticsService] initial try at "));
+        char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
+        nextTry.toJsonString(dbuf, JSONDATE_LENGTH + 1);
+        Serial.println(dbuf);
+    }
 
     return "diagnostics.log";
 }
