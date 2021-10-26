@@ -3,7 +3,15 @@
 // MIT License
 
 #include <Arduino.h>
+#if defined(ESP8266)
+#include <ESP8266WiFi.h>
+#include <ESP8266WiFiMulti.h>
+ESP8266WiFiMulti WiFiMulti;
+#elif defined(ESP32)
 #include <WiFi.h>
+#else
+#error only ESP32 or ESP8266 supported at the moment
+#endif
 
 #include <ArduinoOcpp.h>
 
@@ -30,13 +38,25 @@ void setup() {
     Serial.begin(115200);
     Serial.setDebugOutput(true);
 
-    WiFi.begin(STASSID, STAPSK);
+    Serial.print(F("[main] Wait for WiFi: "));
 
+#if defined(ESP8266)
+    WiFiMulti.addAP(STASSID, STAPSK);
+    while (WiFiMulti.run() != WL_CONNECTED) {
+        Serial.print('.');
+        delay(1000);
+    }
+#elif defined(ESP32)
+    WiFi.begin(STASSID, STAPSK);
     Serial.print(F("[main] Wait for WiFi: "));
     while (!WiFi.isConnected()) {
         Serial.print('.');
         delay(1000);
     }
+#else
+#error only ESP32 or ESP8266 supported at the moment
+#endif
+
     Serial.print(F(" connected!\n"));
 
     /*
@@ -77,6 +97,17 @@ void loop() {
      * Do all OCPP stuff (process WebSocket input, send recorded meter values to Central System, etc.)
      */
     OCPP_loop();
+
+    /*
+     * Get transaction state of OCPP
+     */
+    if (getTransactionId() > 0) {
+        //transaction running with txID given by getTransactionId()
+    } else if (getTransactionId() == 0) {
+        //transaction initiation is pending, i.e. startTransaction() was already sent, but hasn't come back yet.
+    } else {
+        //no transaction running at the moment
+    }
 
     /*
      * Detect if something physical happened at your EVSE and trigger the corresponding OCPP messages

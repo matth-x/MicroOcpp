@@ -1,7 +1,7 @@
 {
     "name": "ArduinoOcpp",
-    "version": "0.0.2",
-    "description": "OCPP 1.6 Client for the ESP8266 and ESP32 (more coming soon)",
+    "version": "0.0.3",
+    "description": "OCPP 1.6 Client for the ESP8266 and ESP32",
     "keywords": "OCPP, 1.6, OCPP 1.6, Smart Energy, Smart Charging, client, ESP8266, ESP32, Arduino, EVSE, Charge Point",
     "repository":
     {
@@ -46,27 +46,17 @@
     "examples": [
       {
           "name": "ESP32 / ESP8266 OCPP connection",
-          "base": "examples/ESP32",
+          "base": "examples/ESP",
           "files": [
               "main.ino"
           ]
       },
       {
-          "name": "ESP8266 OCPP test client",
-          "base": "examples/Simulation_without_HW",
-          "files": [
-              "OneConnector_EVSE.ino",
-              "OneConnector_HW_integration.h",
-              "Simulated_HW.ino"
-          ]
-      },
-      {
-        "name": "ESP8266 GPIO-based EVSE",
-        "base": "examples/OneConnector-EVSE",
+        "name": "ESP GPIO-based Supply Equipment Communications Controller (SECC)",
+        "base": "examples/SECC",
         "files": [
-            "OneConnector_EVSE.ino",
-            "OneConnector_HW_integration.h",
-            "OneConnector_HW_integration.ino"
+            "main.ino",
+            "README.md"
         ]
     }
   ]

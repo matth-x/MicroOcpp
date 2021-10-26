@@ -103,7 +103,7 @@ String DiagnosticsService::requestDiagnosticsUpload(String &location, int retrie
     }
 
     nextTry = getOcppTime()->getOcppTimestampNow();
-    nextTry += 10; //wait for 10s before upload
+    nextTry += 5; //wait for 5s before upload
     uploadIssued = false;
 
     if (DEBUG_OUT) {
