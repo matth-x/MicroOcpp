@@ -23,7 +23,9 @@ void OcppMessage::initiate() {
 
 DynamicJsonDocument* OcppMessage::createReq() {
     Serial.print(F("[OcppMessage]  Unsupported operation: createReq() is not implemented!\n"));
-    return new DynamicJsonDocument(0);
+    DynamicJsonDocument* doc = new DynamicJsonDocument(0);
+    doc->to<JsonObject>();
+    return doc;
 }
 
 void OcppMessage::processConf(JsonObject payload) {

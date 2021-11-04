@@ -105,7 +105,7 @@ void MeterValues::processReq(JsonObject payload) {
 
 DynamicJsonDocument* MeterValues::createConf(){
     DynamicJsonDocument* doc = new DynamicJsonDocument(0);
-    //JsonObject payload = doc->to<JsonObject>();
+    doc->to<JsonObject>();
     /*
      * empty payload
      */

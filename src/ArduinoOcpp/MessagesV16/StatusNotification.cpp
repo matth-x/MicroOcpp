@@ -137,7 +137,7 @@ void StatusNotification::processReq(JsonObject payload) {
  * For debugging only
  */
 DynamicJsonDocument* StatusNotification::createConf(){
-    DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
-    JsonObject payload = doc->to<JsonObject>();
+    DynamicJsonDocument* doc = new DynamicJsonDocument(0);
+    doc->to<JsonObject>();
     return doc;
 }

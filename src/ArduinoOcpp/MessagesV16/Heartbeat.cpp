@@ -19,7 +19,7 @@ const char* Heartbeat::getOcppOperationType(){
 
 DynamicJsonDocument* Heartbeat::createReq() {
     DynamicJsonDocument *doc = new DynamicJsonDocument(0);
-    //JsonObject payload = doc->to<JsonObject>();
+    doc->to<JsonObject>();
     /*
     * Empty payload
     */

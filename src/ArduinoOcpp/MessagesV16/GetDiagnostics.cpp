@@ -59,8 +59,8 @@ DynamicJsonDocument* GetDiagnostics::createConf(){
     }
 
     if (fileName.isEmpty()) {
-        DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
-        JsonObject payload = doc->to<JsonObject>();
+        DynamicJsonDocument* doc = new DynamicJsonDocument(0);
+        doc->to<JsonObject>();
         return doc;
     } else {
         DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + fileName.length() + 1);
