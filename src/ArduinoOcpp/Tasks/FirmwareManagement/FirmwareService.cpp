@@ -12,8 +12,12 @@
 using namespace ArduinoOcpp;
 using ArduinoOcpp::Ocpp16::FirmwareStatus;
 
-FirmwareService::FirmwareService(const char *buildNumber) : buildNumber(buildNumber) {
+void FirmwareService::setBuildNumber(const char *buildNumber) {
+    if (buildNumber == NULL)
+        return;
+    this->buildNumber = buildNumber;
     previousBuildNumber = declareConfiguration<const char*>("BUILD_NUMBER", buildNumber, CONFIGURATION_FN, false, false, true, false);
+    checkedSuccessfulFwUpdate = false; //--> CS will be notified
 }
 
 void FirmwareService::loop() {
@@ -234,7 +238,7 @@ OcppOperation *FirmwareService::getFirmwareStatusNotification() {
     /*
      * Check if FW has been updated previously, but only once
      */
-    if (!checkedSuccessfulFwUpdate) {
+    if (!checkedSuccessfulFwUpdate && buildNumber != NULL && previousBuildNumber != NULL) {
         checkedSuccessfulFwUpdate = true;
         
         size_t buildNoSize = previousBuildNumber->getBuffsize();
@@ -290,7 +294,8 @@ void FirmwareService::resetStage() {
 #include <HTTPUpdate.h>
 
 FirmwareService *EspWiFi::makeFirmwareService(const char *buildNumber) {
-    FirmwareService *fwService = new FirmwareService(buildNumber);
+    FirmwareService *fwService = new FirmwareService();
+    fwService->setBuildNumber(buildNumber);
 
     /*
      * example of how to integrate a separate download phase (optional)
@@ -352,7 +357,8 @@ FirmwareService *EspWiFi::makeFirmwareService(const char *buildNumber) {
 #include <ESP8266httpUpdate.h>
 
 FirmwareService *EspWiFi::makeFirmwareService(const char *buildNumber) {
-    FirmwareService *fwService = new FirmwareService(buildNumber);
+    FirmwareService *fwService = new FirmwareService();
+    fwService->setBuildNumber(buildNumber);
 
     fwService->setOnInstall([fwService = fwService] (String &location) {
         

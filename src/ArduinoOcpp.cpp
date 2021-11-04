@@ -163,7 +163,7 @@ void OCPP_initialize(OcppSocket *ocppSocket, float V_eff, ArduinoOcpp::Filesyste
 #if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WEBSOCKET)
     firmwareService = EspWiFi::makeFirmwareService("12345789"); //instantiate FW service + ESP installation routine
 #else
-    firmwareService = new FirmwareService("12345678"); //only instantiate FW service
+    firmwareService = new FirmwareService(); //only instantiate FW service
 #endif
     setFirmwareService(firmwareService);
 

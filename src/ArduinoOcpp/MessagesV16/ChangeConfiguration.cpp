@@ -40,7 +40,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     bool isFloat = false;
     float numFloat = -1.0f;
     bool isString = false;
-    const char *value_string = '\0';
+    const char *value_string = "\0";
 
     if (value.is<int>()) { //Not enough. SteVe always sends numerical values as strings. Must also handle this
         isInt = true;

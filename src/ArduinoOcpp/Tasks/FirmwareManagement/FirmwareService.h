@@ -69,7 +69,9 @@ private:
     OcppOperation *getFirmwareStatusNotification();
 
 public:
-    FirmwareService(const char *buildNumber);
+    FirmwareService() { }
+
+    void setBuildNumber(const char *buildNumber);
 
     void loop();
 
