@@ -19,7 +19,7 @@
 #endif
 
 #define KEY_MAXLEN 60
-#define STRING_VAL_MAXLEN 500
+#define STRING_VAL_MAXLEN 2000 //allow TLS certificates in ...
 
 namespace ArduinoOcpp {
 

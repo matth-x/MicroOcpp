@@ -123,7 +123,7 @@ To get started quickly with or without EVSE hardware, you can flash the sketch i
 
 ## Dependencies
 
-- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson) (Please use version 6.17.2)
+- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
 - [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets)
 
 In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/ArduinoOcpp` in the PIO library manager.

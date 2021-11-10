@@ -117,7 +117,7 @@ ChargingSchedule::ChargingSchedule(OcppTimestamp &startT, int duration) {
     startSchedule = startT;
     schedulingUnit = 'W'; //either 'A' or 'W'
     std::vector<ChargingSchedulePeriod*> chargingSchedulePeriod = std::vector<ChargingSchedulePeriod*>();
-    float minChargingRate = 0.f;
+    //float minChargingRate = 0.f;
 
     chargingProfileKind = ChargingProfileKindType::Absolute; //copied from ChargingProfile to increase cohesion of limit inferencing methods
     recurrencyKind = RecurrencyKindType::NOT_SET; //copied from ChargingProfile to increase cohesion of limit inferencing methods
