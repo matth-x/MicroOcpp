@@ -188,9 +188,21 @@ void setup() {
     
     if (ocppUrlParsed.isTLS) {
         if (CA_cert->getBuffsize() > 0) {
+            //TODOS: ESP8266: limit BearSSL buffsize
+            configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov"); //alternatively: settimeofday(&de, &tz);
+            PRINT(F("[main] Wait for NTP time (used for certificate validation) "));
+            time_t now = time(nullptr);
+            while (now < 8 * 3600 * 2) {
+                delay(500);
+                PRINT('.');
+                now = time(nullptr);
+            }
+            PRINT(F(" finished. Unix timestamp is "));
+            PRINTLN(now);
+
             wSock->beginSslWithCA(ocppUrlParsed.host.c_str(), ocppUrlParsed.port, ocppUrlParsed.url.c_str(), *CA_cert, "ocpp1.6");
         } else {
-            wSock->beginSSL(ocppUrlParsed.host, ocppUrlParsed.port, ocppUrlParsed.url, "", "ocpp1.6");
+            wSock->beginSSL(ocppUrlParsed.host.c_str(), ocppUrlParsed.port, ocppUrlParsed.url.c_str(), NULL, "ocpp1.6");
         }
     } else {
         wSock->begin(ocppUrlParsed.host, ocppUrlParsed.port, ocppUrlParsed.url, "ocpp1.6");
@@ -361,7 +373,7 @@ bool runWiFiManager() {
     WiFiManagerParameter divider("<div><br/></div>");
     wifiManager.addParameter(&divider);
 
-    WiFiManagerParameter caCertParam ("caCert", "CA Certificate", "", 150,"placeholder=\"Paste here or leave blank\"");
+    WiFiManagerParameter caCertParam ("caCert", "CA Certificate", "", 1500,"placeholder=\"Paste here or leave blank\"");
     wifiManager.addParameter(&caCertParam);
     WiFiManagerParameter caCertSavePararm ("<div><label for='caCertSave' style='width: auto;'>Save new CA Certificate</label><input type='checkbox' name='caCertSave' value='1'  style='width: auto; margin-left: 10px; vertical-align: middle;'></div>");
     wifiManager.addParameter(&caCertSavePararm);
