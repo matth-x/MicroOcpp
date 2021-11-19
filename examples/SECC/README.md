@@ -15,6 +15,8 @@ You can find the interface descriptions in `main.ino`. Please be aware that alth
 - Copy the `main.ino` from this example folder into your source directory. Adapt the pinout settings if needed.
 - Finished. You should be able to compile and upload the sketch onto your ESP.
 
+When booting, the ESP opens up the Wi-Fi configuration portal. Please connect your PC to the network with the SSID `EVSE_Maintenance_Portal` within the first 30s of the boot routine of the ESP (the portal has a timeout). The passphrase is `myEvseController`.
+
 ## Standalone mode
 
 If you just want to check out ArduinoOcpp you can run this sketch on an ESP without any peripherals. The pinout of the ESP8266-NodeMCU&nbsp;board is already fully configured in `main.ino` so that board is the most convenient to start testing.

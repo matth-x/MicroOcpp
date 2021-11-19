@@ -312,7 +312,7 @@ ChargingProfile *SmartChargingService::updateProfileStack(JsonObject *json){
     return chargingProfile;
 }
 
-bool SmartChargingService::clearChargingProfile(std::function<bool(int, int, ChargingProfilePurposeType, int)> filter) {
+bool SmartChargingService::clearChargingProfile(const std::function<bool(int, int, ChargingProfilePurposeType, int)>& filter) {
     int nMatches = 0;
 
     ChargingProfile **profileStacks [] = {ChargePointMaxProfile, TxDefaultProfile, TxProfile};

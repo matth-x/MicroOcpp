@@ -46,7 +46,7 @@ public:
     //void beginChargingNow();
     //void endChargingNow();
     void updateChargingProfile(JsonObject *json);
-    bool clearChargingProfile(std::function<bool(int, int, ChargingProfilePurposeType, int)> filter);
+    bool clearChargingProfile(const std::function<bool(int, int, ChargingProfilePurposeType, int)>& filter);
     void inferenceLimit(const OcppTimestamp &t, float *limit, OcppTimestamp *validTo);
     float inferenceLimitNow();
     void setOnLimitChange(OnLimitChange onLimitChange);

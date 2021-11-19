@@ -20,7 +20,7 @@ const char* ClearChargingProfile::getOcppOperationType(){
 
 void ClearChargingProfile::processReq(JsonObject payload) {
 
-    std::function<bool(int, int, ChargingProfilePurposeType, int)> filter = [payload = payload]
+    std::function<bool(int, int, ChargingProfilePurposeType, int)> filter = [payload]
             (int chargingProfileId, int connectorId, ChargingProfilePurposeType chargingProfilePurpose, int stackLevel) {
         
         if (payload.containsKey("id")) {

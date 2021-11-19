@@ -307,14 +307,14 @@ FirmwareService *EspWiFi::makeFirmwareService(const char *buildNumber) {
         return true;
     });
 
-    fwService->setDownloadStatusSampler([fwService = fwService] () {
+    fwService->setDownloadStatusSampler([] () {
         //report the download progress
         //...
         return DownloadStatus::NotDownloaded;
     });
 #endif //separate download phase
 
-    fwService->setOnInstall([fwService = fwService] (String &location) {
+    fwService->setOnInstall([fwService] (String &location) {
 
         fwService->setInstallationStatusSampler([](){return InstallationStatus::NotInstalled;});
 
@@ -345,7 +345,7 @@ FirmwareService *EspWiFi::makeFirmwareService(const char *buildNumber) {
         return true;
     });
 
-    fwService->setInstallationStatusSampler([fwService = fwService] () {
+    fwService->setInstallationStatusSampler([] () {
         return InstallationStatus::NotInstalled;
     });
 
@@ -360,7 +360,7 @@ FirmwareService *EspWiFi::makeFirmwareService(const char *buildNumber) {
     FirmwareService *fwService = new FirmwareService();
     fwService->setBuildNumber(buildNumber);
 
-    fwService->setOnInstall([fwService = fwService] (String &location) {
+    fwService->setOnInstall([fwService] (String &location) {
         
         WiFiClient client;
         //WiFiClientSecure client;
@@ -390,7 +390,7 @@ FirmwareService *EspWiFi::makeFirmwareService(const char *buildNumber) {
         return true;
     });
 
-    fwService->setInstallationStatusSampler([fwService = fwService] () {
+    fwService->setInstallationStatusSampler([] () {
         return InstallationStatus::NotInstalled;
     });
 
