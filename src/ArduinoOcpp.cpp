@@ -161,7 +161,7 @@ void OCPP_initialize(OcppSocket *ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     heartbeatService = new HeartbeatService();
 
 #if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WEBSOCKET)
-    firmwareService = EspWiFi::makeFirmwareService("12345789"); //instantiate FW service + ESP installation routine
+    firmwareService = EspWiFi::makeFirmwareService("1234578901"); //instantiate FW service + ESP installation routine
 #else
     firmwareService = new FirmwareService(); //only instantiate FW service
 #endif
@@ -332,10 +332,9 @@ void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq) {
      setOnResetReceiveRequestListener(onReceiveReq);
 }
 
-void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
-    OcppOperation *authorize = makeOcppOperation(
+void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+    auto authorize = makeOcppOperation(
         new Authorize(idTag));
-    initiateOcppOperation(authorize);
     if (onConf)
         authorize->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -345,15 +344,15 @@ void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAb
     if (onError)
         authorize->setOnReceiveErrorListener(onError);
     if (timeout)
-        authorize->setTimeout(timeout);
+        authorize->setTimeout(std::move(timeout));
     else
-        authorize->setTimeout(new FixedTimeout(20000));
+        authorize->setTimeout(std::unique_ptr<Timeout>(new FixedTimeout(20000)));
+    initiateOcppOperation(std::move(authorize));
 }
 
-void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
-    OcppOperation *bootNotification = makeOcppOperation(
+void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+    auto bootNotification = makeOcppOperation(
         new BootNotification(chargePointModel, chargePointVendor));
-    initiateOcppOperation(bootNotification);
     if (onConf)
         bootNotification->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -363,23 +362,23 @@ void bootNotification(String chargePointModel, String chargePointVendor, OnRecei
     if (onError)
         bootNotification->setOnReceiveErrorListener(onError);
     if (timeout)
-        bootNotification->setTimeout(timeout);
+        bootNotification->setTimeout(std::move(timeout));
     else
-        bootNotification->setTimeout(new SuppressedTimeout());
+        bootNotification->setTimeout(std::unique_ptr<Timeout> (new SuppressedTimeout()));
+    initiateOcppOperation(std::move(bootNotification));
 }
 
 void bootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber, OnReceiveConfListener onConf) {
-    OcppOperation *bootNotification = makeOcppOperation(
+    auto bootNotification = makeOcppOperation(
         new BootNotification(chargePointModel, chargePointVendor, chargePointSerialNumber));
-    initiateOcppOperation(bootNotification);
     bootNotification->setOnReceiveConfListener(onConf);
-    bootNotification->setTimeout(new SuppressedTimeout());
+    bootNotification->setTimeout(std::unique_ptr<Timeout> (new SuppressedTimeout()));
+    initiateOcppOperation(std::move(bootNotification));
 }
 
-void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
-    OcppOperation *bootNotification = makeOcppOperation(
+void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+    auto bootNotification = makeOcppOperation(
         new BootNotification(payload));
-    initiateOcppOperation(bootNotification);
     if (onConf)
         bootNotification->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -389,15 +388,15 @@ void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf
     if (onError)
         bootNotification->setOnReceiveErrorListener(onError);
     if (timeout)
-        bootNotification->setTimeout(timeout);
+        bootNotification->setTimeout(std::move(timeout));
     else
-        bootNotification->setTimeout(new SuppressedTimeout());
+        bootNotification->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
+    initiateOcppOperation(std::move(bootNotification));
 }
 
-void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
-    OcppOperation *startTransaction = makeOcppOperation(
+void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+    auto startTransaction = makeOcppOperation(
         new StartTransaction(OCPP_ID_OF_CONNECTOR));
-    initiateOcppOperation(startTransaction);
     if (onConf)
         startTransaction->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -407,23 +406,23 @@ void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnT
     if (onError)
         startTransaction->setOnReceiveErrorListener(onError);
     if (timeout)
-        startTransaction->setTimeout(timeout);
+        startTransaction->setTimeout(std::move(timeout));
     else
-        startTransaction->setTimeout(new SuppressedTimeout());
+        startTransaction->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
+    initiateOcppOperation(std::move(startTransaction));
 }
 
 void startTransaction(String &idTag, OnReceiveConfListener onConf) {
-    OcppOperation *startTransaction = makeOcppOperation(
+    auto startTransaction = makeOcppOperation(
         new StartTransaction(OCPP_ID_OF_CONNECTOR, idTag));
-    initiateOcppOperation(startTransaction);
     startTransaction->setOnReceiveConfListener(onConf);
-    startTransaction->setTimeout(new SuppressedTimeout());
+    startTransaction->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
+    initiateOcppOperation(std::move(startTransaction));
 }
 
-void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, Timeout *timeout) {
-    OcppOperation *stopTransaction = makeOcppOperation(
+void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+    auto stopTransaction = makeOcppOperation(
         new StopTransaction(OCPP_ID_OF_CONNECTOR));
-    initiateOcppOperation(stopTransaction);
     if (onConf)
         stopTransaction->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -433,9 +432,10 @@ void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
     if (onError)
         stopTransaction->setOnReceiveErrorListener(onError);
     if (timeout)
-        stopTransaction->setTimeout(timeout);
+        stopTransaction->setTimeout(std::move(timeout));
     else
-        stopTransaction->setTimeout(new SuppressedTimeout());
+        stopTransaction->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
+    initiateOcppOperation(std::move(stopTransaction));
 }
 
 //void startEvDrawsEnergy() {

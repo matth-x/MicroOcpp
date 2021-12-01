@@ -20,24 +20,7 @@ namespace ArduinoOcpp {
 
 void ocppEngine_initialize(OcppSocket *ocppSocket);
 
-#if 0
-
-bool processWebSocketEvent(const char* payload, size_t length);
-
-//WebSocket fragments are not supported. This function sends a meaningful error response
-boolean processWebSocketUnsupportedEvent(const char* payload, size_t length);
-
-void handleConfMessage(JsonDocument *json);
-
-void handleReqMessage(JsonDocument *json);
-
-void handleReqMessage(JsonDocument *json, OcppOperation *op);
-
-void handleErrMessage(JsonDocument *json);
-
-#endif
-
-void initiateOcppOperation(OcppOperation *o);
+void initiateOcppOperation(std::unique_ptr<OcppOperation> o);
 
 void ocppEngine_loop();
 

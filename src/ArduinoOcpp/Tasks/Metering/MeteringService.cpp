@@ -33,10 +33,10 @@ void MeteringService::loop(){
 
     for (int i = 0; i < numConnectors; i++){
         MeterValues *meterValuesMsg = connectors[i]->loop();
-        if (meterValuesMsg != NULL) {
-            OcppOperation *meterValues = makeOcppOperation(meterValuesMsg);
-            meterValues->setTimeout(new FixedTimeout(120000));
-            initiateOcppOperation(meterValues);
+        if (meterValuesMsg != nullptr) {
+            auto meterValues = makeOcppOperation(meterValuesMsg);
+            meterValues->setTimeout(std::unique_ptr<Timeout>{new FixedTimeout(120000)});
+            initiateOcppOperation(std::move(meterValues));
         }
     }
 }

@@ -36,9 +36,9 @@ void ChargePointStatusService::loop() {
     if (!booted) return;
     for (int i = 0; i < numConnectors; i++){
         StatusNotification *statusNotificationMsg = connectors[i]->loop();
-        if (statusNotificationMsg != NULL) {
-            OcppOperation *statusNotification = makeOcppOperation(statusNotificationMsg);
-            initiateOcppOperation(statusNotification);
+        if (statusNotificationMsg != nullptr) {
+            auto statusNotification = makeOcppOperation(statusNotificationMsg);
+            initiateOcppOperation(std::move(statusNotification));
         }
     }
 }
@@ -46,7 +46,7 @@ void ChargePointStatusService::loop() {
 ConnectorStatus *ChargePointStatusService::getConnector(int connectorId) {
     if (connectorId < 0 || connectorId >= numConnectors) {
         Serial.print(F("[ChargePointStatusService] Error in getConnector(connectorId): connectorId is out of bounds\n"));
-        return NULL;
+        return nullptr;
     }
 
     return connectors[connectorId];

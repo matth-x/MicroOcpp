@@ -10,16 +10,16 @@ using namespace ArduinoOcpp;
 using Ocpp16::DiagnosticsStatus;
 
 void DiagnosticsService::loop() {
-    OcppOperation *notification = getDiagnosticsStatusNotification();
+    auto notification = getDiagnosticsStatusNotification();
     if (notification) {
-        initiateOcppOperation(notification);
+        initiateOcppOperation(std::move(notification));
     }
 
     const OcppTimestamp& timestampNow = getOcppTime()->getOcppTimestampNow();
     if (retries > 0 && timestampNow >= nextTry) {
 
         if (!uploadIssued) {
-            if (onUpload != NULL) {
+            if (onUpload != nullptr) {
                 if (DEBUG_OUT) Serial.println(F("[DiagnosticsService] call onUpload"));
                 onUpload(location, startTime, stopTime);
                 uploadIssued = true;
@@ -31,7 +31,7 @@ void DiagnosticsService::loop() {
         }
 
         if (uploadIssued) {
-            if (uploadStatusSampler != NULL && uploadStatusSampler() == UploadStatus::Uploaded) {
+            if (uploadStatusSampler != nullptr && uploadStatusSampler() == UploadStatus::Uploaded) {
                 //success!
                 if (DEBUG_OUT) Serial.println(F("[DiagnosticsService] end update routine (by status)"));
                 uploadIssued = false;
@@ -41,10 +41,10 @@ void DiagnosticsService::loop() {
             //check if maximum time elapsed or failed
             const int UPLOAD_TIMEOUT = 60;
             if (timestampNow - nextTry >= UPLOAD_TIMEOUT
-                    || (uploadStatusSampler != NULL && uploadStatusSampler() == UploadStatus::UploadFailed)) {
+                    || (uploadStatusSampler != nullptr && uploadStatusSampler() == UploadStatus::UploadFailed)) {
                 //maximum upload time elapsed or failed
 
-                if (uploadStatusSampler == NULL) {
+                if (uploadStatusSampler == nullptr) {
                     //No way to find out if failed. But maximum time has elapsed. Assume success
                     if (DEBUG_OUT) Serial.println(F("[DiagnosticsService] end update routine (by timer)"));
                     uploadIssued = false;
@@ -68,7 +68,7 @@ void DiagnosticsService::loop() {
 
 //timestamps before year 2021 will be treated as "undefined"
 String DiagnosticsService::requestDiagnosticsUpload(String &location, int retries, unsigned int retryInterval, OcppTimestamp startTime, OcppTimestamp stopTime) {
-    if (onUpload == NULL) //maybe add further plausibility checks
+    if (onUpload == nullptr) //maybe add further plausibility checks
         return String('\0');
     
     this->location = location;
@@ -119,7 +119,7 @@ String DiagnosticsService::requestDiagnosticsUpload(String &location, int retrie
 
 DiagnosticsStatus DiagnosticsService::getDiagnosticsStatus() {
     if (uploadIssued) {
-        if (uploadStatusSampler != NULL) {
+        if (uploadStatusSampler != nullptr) {
             switch (uploadStatusSampler()) {
                 case UploadStatus::NotUploaded:
                     return DiagnosticsStatus::Uploading;
@@ -134,18 +134,18 @@ DiagnosticsStatus DiagnosticsService::getDiagnosticsStatus() {
     return DiagnosticsStatus::Idle;
 }
 
-OcppOperation *DiagnosticsService::getDiagnosticsStatusNotification() {
+std::unique_ptr<OcppOperation> DiagnosticsService::getDiagnosticsStatusNotification() {
 
     if (getDiagnosticsStatus() != lastReportedStatus) {
         lastReportedStatus = getDiagnosticsStatus();
         if (lastReportedStatus != DiagnosticsStatus::Idle) {
             OcppMessage *diagNotificationMsg = new Ocpp16::DiagnosticsStatusNotification(lastReportedStatus);
-            OcppOperation *diagNotification = makeOcppOperation(diagNotificationMsg);
+            auto diagNotification = makeOcppOperation(diagNotificationMsg);
             return diagNotification;
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void DiagnosticsService::setOnUpload(std::function<bool(String &location, OcppTimestamp &startTime, OcppTimestamp &stopTime)> onUpload) {

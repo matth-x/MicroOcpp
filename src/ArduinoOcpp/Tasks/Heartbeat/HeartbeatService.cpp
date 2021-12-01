@@ -22,7 +22,7 @@ void HeartbeatService::loop() {
     if (now - lastHeartbeat >= hbInterval) {
         lastHeartbeat = now;
 
-        OcppOperation *heartbeat = makeOcppOperation("Heartbeat");
-        initiateOcppOperation(heartbeat);
+        auto heartbeat = makeOcppOperation("Heartbeat");
+        initiateOcppOperation(std::move(heartbeat));
     }
 }

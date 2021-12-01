@@ -104,16 +104,16 @@ void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq); //alternative: sta
  * in any case.
  */
 
-void authorize(String &idTag, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
+void authorize(String &idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
-void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
+void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
 //The OCPP operation will include the given payload without modifying it. The library will delete the payload object by itself.
-void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
+void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
-void startTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
+void startTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
-void stopTransaction(OnReceiveConfListener onConf = NULL, OnAbortListener onAbort = NULL, OnTimeoutListener onTimeout = NULL, OnReceiveErrorListener onError = NULL, Timeout *timeout = NULL);
+void stopTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
 /*
  * Provide hardware-related information II

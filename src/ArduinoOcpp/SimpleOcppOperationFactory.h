@@ -11,17 +11,17 @@
 
 namespace ArduinoOcpp {
 
-typedef std::function<OcppMessage*()> OcppMessageCreator;
+using OcppMessageCreator = std::function<OcppMessage*()>;
 
-OcppOperation* makeFromTriggerMessage(JsonObject payload);
+std::unique_ptr<OcppOperation> makeFromTriggerMessage(JsonObject payload);
 
-OcppOperation* makeFromJson(JsonDocument *request);
+std::unique_ptr<OcppOperation> makeFromJson(const JsonDocument& request);
 
-OcppOperation* makeOcppOperation();
+std::unique_ptr<OcppOperation> makeOcppOperation();
 
-OcppOperation* makeOcppOperation(OcppMessage *msg);
+std::unique_ptr<OcppOperation> makeOcppOperation(OcppMessage *msg);
 
-OcppOperation *makeOcppOperation(const char *actionCode);
+std::unique_ptr<OcppOperation> makeOcppOperation(const char *actionCode);
 
 void registerCustomOcppMessage(const char *messageType, OcppMessageCreator ocppMessageCreator, OnReceiveReqListener onReceiveReq = NULL);
 

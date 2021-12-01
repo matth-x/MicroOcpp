@@ -14,16 +14,16 @@ namespace Ocpp16 {
 
 class TriggerMessage : public OcppMessage {
 private:
-  OcppOperation *triggeredOperation;
-  const char *statusMessage;
+    std::unique_ptr<OcppOperation> triggeredOperation;
+    const char *statusMessage;
 public:
-  TriggerMessage();
+    TriggerMessage();
 
-  const char* getOcppOperationType();
+    const char* getOcppOperationType();
 
-  void processReq(JsonObject payload);
+    void processReq(JsonObject payload);
 
-  DynamicJsonDocument* createConf();
+    DynamicJsonDocument* createConf();
 };
 
 } //end namespace Ocpp16

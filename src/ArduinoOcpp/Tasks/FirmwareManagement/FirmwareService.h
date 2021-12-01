@@ -66,7 +66,7 @@ private:
 
     bool availabilityRestore = false;
 
-    OcppOperation *getFirmwareStatusNotification();
+    std::unique_ptr<OcppOperation> getFirmwareStatusNotification();
 
 public:
     FirmwareService() { }

@@ -13,7 +13,7 @@ using namespace ArduinoOcpp;
 using ArduinoOcpp::Ocpp16::FirmwareStatus;
 
 void FirmwareService::setBuildNumber(const char *buildNumber) {
-    if (buildNumber == NULL)
+    if (buildNumber == nullptr)
         return;
     this->buildNumber = buildNumber;
     previousBuildNumber = declareConfiguration<const char*>("BUILD_NUMBER", buildNumber, CONFIGURATION_FN, false, false, true, false);
@@ -21,9 +21,9 @@ void FirmwareService::setBuildNumber(const char *buildNumber) {
 }
 
 void FirmwareService::loop() {
-    OcppOperation *notification = getFirmwareStatusNotification();
+    auto notification = getFirmwareStatusNotification();
     if (notification) {
-        initiateOcppOperation(notification);
+        initiateOcppOperation(std::move(notification));
     }
 
     if (millis() - timestampTransition < delayTransition) {
@@ -43,7 +43,7 @@ void FirmwareService::loop() {
                 }
                 evse->setAvailability(false);
             }
-            if (onDownload == NULL) {
+            if (onDownload == nullptr) {
                 stage = UpdateStage::AfterDownload;
             } else {
                 downloadIssued = true;
@@ -58,7 +58,7 @@ void FirmwareService::loop() {
         if (stage == UpdateStage::AwaitDownload) {
             if (DEBUG_OUT) Serial.println(F("[FirmwareService] Start Download!"));
             stage = UpdateStage::Downloading;
-            if (onDownload != NULL) {
+            if (onDownload != nullptr) {
                 onDownload(location);
                 timestampTransition = millis();
                 delayTransition = 30000; //give the download at least 30s
@@ -71,18 +71,18 @@ void FirmwareService::loop() {
         if (stage == UpdateStage::Downloading) {
 
             //check if client reports download to be finished
-            if (downloadStatusSampler != NULL && downloadStatusSampler() == DownloadStatus::Downloaded) {
+            if (downloadStatusSampler != nullptr && downloadStatusSampler() == DownloadStatus::Downloaded) {
                 stage = UpdateStage::AfterDownload;
             }
 
             //if client doesn't report download state, assume download to be finished (at least 30s download time have passed until here)
-            if (downloadStatusSampler == NULL) {
+            if (downloadStatusSampler == nullptr) {
                 stage = UpdateStage::AfterDownload;
             }
 
             //check for timeout or error condition
             if (timestampNow - retreiveDate >= DOWNLOAD_TIMEOUT
-                    || (downloadStatusSampler != NULL && downloadStatusSampler() == DownloadStatus::DownloadFailed)) {
+                    || (downloadStatusSampler != nullptr && downloadStatusSampler() == DownloadStatus::DownloadFailed)) {
                 
                 Serial.println(F("[FirmwareService] Download timeout or failed! Retry"));
                 if (retryInterval < DOWNLOAD_TIMEOUT)
@@ -129,7 +129,7 @@ void FirmwareService::loop() {
             if (DEBUG_OUT) Serial.println(F("[FirmwareService] Installing!"));
             stage = UpdateStage::Installing;
 
-            if (onInstall != NULL) {
+            if (onInstall != nullptr) {
                 onInstall(location); //should restart the device on success
             } else {
                 Serial.println(F("[FirmwareService] onInstall must be set! (see setOnInstall). Will abort"));
@@ -143,9 +143,9 @@ void FirmwareService::loop() {
         if (stage == UpdateStage::Installing) {
 
             //check if client reports installation to be finished
-            if ((installationStatusSampler != NULL && installationStatusSampler() == InstallationStatus::Installed)
+            if ((installationStatusSampler != nullptr && installationStatusSampler() == InstallationStatus::Installed)
                     //if client doesn't report installation state, assume download to be finished (at least 40s installation time have passed until here)
-                      || (installationStatusSampler == NULL)) {
+                      || (installationStatusSampler == nullptr)) {
                 //Client should reboot during onInstall. If not, client is responsible to reboot at a later point
                 resetStage();
                 retries = 0; //End of update routine. Client must reboot on its own
@@ -160,7 +160,7 @@ void FirmwareService::loop() {
             //check for timeout or error condition
             const int INSTALLATION_TIMEOUT = 120;
             if ((timestampNow - retreiveDate >= INSTALLATION_TIMEOUT + DOWNLOAD_TIMEOUT)
-                    || (installationStatusSampler != NULL && installationStatusSampler() == InstallationStatus::InstallationFailed)) {
+                    || (installationStatusSampler != nullptr && installationStatusSampler() == InstallationStatus::InstallationFailed)) {
 
                 Serial.println(F("[FirmwareService] Installation timeout or failed! Retry"));
                 if (retryInterval < INSTALLATION_TIMEOUT + DOWNLOAD_TIMEOUT)
@@ -208,37 +208,37 @@ void FirmwareService::scheduleFirmwareUpdate(String &location, OcppTimestamp ret
 
 FirmwareStatus FirmwareService::getFirmwareStatus() {
     if (installationIssued) {
-        if (installationStatusSampler != NULL) {
+        if (installationStatusSampler != nullptr) {
             if (installationStatusSampler() == InstallationStatus::Installed) {
                 return FirmwareStatus::Installed;
             } else if (installationStatusSampler() == InstallationStatus::InstallationFailed) {
                 return FirmwareStatus::InstallationFailed;
             }
         }
-        if (onInstall != NULL)
+        if (onInstall != nullptr)
             return FirmwareStatus::Installing;
     }
     
     if (downloadIssued) {
-        if (downloadStatusSampler != NULL) {
+        if (downloadStatusSampler != nullptr) {
             if (downloadStatusSampler() == DownloadStatus::Downloaded) {
                 return FirmwareStatus::Downloaded;
             } else if (downloadStatusSampler() == DownloadStatus::DownloadFailed) {
                 return FirmwareStatus::DownloadFailed;
             }
         }
-        if (onDownload != NULL)
+        if (onDownload != nullptr)
             return FirmwareStatus::Downloading;
     }
 
     return FirmwareStatus::Idle;
 }
 
-OcppOperation *FirmwareService::getFirmwareStatusNotification() {
+std::unique_ptr<OcppOperation> FirmwareService::getFirmwareStatusNotification() {
     /*
      * Check if FW has been updated previously, but only once
      */
-    if (!checkedSuccessfulFwUpdate && buildNumber != NULL && previousBuildNumber != NULL) {
+    if (!checkedSuccessfulFwUpdate && buildNumber != nullptr && previousBuildNumber != nullptr) {
         checkedSuccessfulFwUpdate = true;
         
         size_t buildNoSize = previousBuildNumber->getBuffsize();
@@ -249,7 +249,7 @@ OcppOperation *FirmwareService::getFirmwareStatusNotification() {
 
             lastReportedStatus = FirmwareStatus::Installed;
             OcppMessage *fwNotificationMsg = new Ocpp16::FirmwareStatusNotification(lastReportedStatus);
-            OcppOperation *fwNotification = makeOcppOperation(fwNotificationMsg);
+            auto fwNotification = makeOcppOperation(fwNotificationMsg);
             return fwNotification;
         }
     }
@@ -258,12 +258,12 @@ OcppOperation *FirmwareService::getFirmwareStatusNotification() {
         lastReportedStatus = getFirmwareStatus();
         if (lastReportedStatus != FirmwareStatus::Idle && lastReportedStatus != FirmwareStatus::Installed) {
             OcppMessage *fwNotificationMsg = new Ocpp16::FirmwareStatusNotification(lastReportedStatus);
-            OcppOperation *fwNotification = makeOcppOperation(fwNotificationMsg);
+            auto fwNotification = makeOcppOperation(fwNotificationMsg);
             return fwNotification;
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void FirmwareService::setOnDownload(std::function<bool(String &location)> onDownload) {

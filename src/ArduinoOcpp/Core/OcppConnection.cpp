@@ -24,22 +24,19 @@ OcppConnection::OcppConnection(OcppSocket *ocppSock) : ocppSock(ocppSock) {
 }
 
 void OcppConnection::loop() {
+
     /**
-      * Work through the initiatedOcppOperations queue. Start with the first element by calling req() on it. If
-      * the operation is (still) pending, it will return false and therefore each other queued element must
-      * wait until this operation is over. If an ocppOperation is finished, it returns true on a req() call, 
-      * can be dequeued and the following ocppOperation is processed.
-      */
+     * Work through the initiatedOcppOperations queue. Start with the first element by calling req() on it. If
+     * the operation is (still) pending, it will return false and therefore each other queued element must
+     * wait until this operation is over. If an ocppOperation is finished, it returns true on a req() call, 
+     * can be dequeued and the following ocppOperation is processed.
+     */
 
     auto operation = initiatedOcppOperations.begin();
     while (operation != initiatedOcppOperations.end()){
-        boolean timeout = (*operation)->sendReq(ocppSock); //The only reason to dequeue elements here is when a timeout occurs. Normally
-        if (timeout){                                      //the Conf msg processing routine dequeues finished elements
-            delete *operation;
+        boolean timeout = (*operation)->sendReq(*ocppSock); //The only reason to dequeue elements here is when a timeout occurs. Normally
+        if (timeout){                                       //the Conf msg processing routine dequeues finished elements
             operation = initiatedOcppOperations.erase(operation);
-            
-            //TODO Review: are all recources freed here?
-            //go on with the next element in the queue, which is now at initiatedOcppOperations[0]
         } else {
             //there is one operation pending right now, so quit this while-loop.
             break;
@@ -65,7 +62,6 @@ void OcppConnection::loop() {
         if (timer->isExceeded()) {
             Serial.print(F("[OcppEngine] Discarding operation due to timeout: "));
             (*operation)->print_debug();
-            delete *operation;
             operation = initiatedOcppOperations.erase(operation);
         } else {
             ++operation;
@@ -79,171 +75,154 @@ void OcppConnection::loop() {
 
     operation = receivedOcppOperations.begin();
     while (operation != receivedOcppOperations.end()){
-        boolean success = (*operation)->sendConf(ocppSock);
+        boolean success = (*operation)->sendConf(*ocppSock);
         if (success){
-            delete *operation;
             operation = receivedOcppOperations.erase(operation);
-
-            //TODO Review: are all recources freed here?
-            //go on with the next element in the queue, which is now at receivedOcppOperations[i]
         } else {
             //There will be another attempt to send this conf message in a future loop call.
             //Go on with the next element in the queue, which is now at receivedOcppOperations[i+1]
-            ++operation; //TODO review: this makes conf's out-of-order. But if the first Op fails because of lacking RAM, this could save the device. 
+            ++operation; //TODO review: this makes confs out-of-order. But if the first Op fails because of lacking RAM, this could save the device. 
         }
     }
 }
 
-void OcppConnection::initiateOcppOperation(OcppOperation *o){
-  if (!o->isFullyConfigured()){
-    Serial.printf("[OcppEngine] initiateOcppOperation(op) was called without the operation being configured and ready to send. Discard operation!\n");
-    delete o;
-    return;
-  }
-  initiatedOcppOperations.push_back(o);
-  o->setInitiated();
+void OcppConnection::initiateOcppOperation(std::unique_ptr<OcppOperation> o){
+    if (!o) {
+        Serial.printf("[OcppEngine] initiateOcppOperation(op) was called with null. Ignore\n");
+        return;
+    }
+    if (!o->isFullyConfigured()){
+        Serial.printf("[OcppEngine] initiateOcppOperation(op) was called without the operation being configured and ready to send. Discard operation!\n");
+        return; //o gets destroyed
+    }
+    o->setInitiated();
+    initiatedOcppOperations.push_back(std::move(o));
 }
 
 bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t length) {
     
-  boolean deserializationSuccess = false;
+    boolean deserializationSuccess = false;
 
-  DynamicJsonDocument *doc = NULL;
-  size_t capacity = length + 100;
+    auto doc = std::unique_ptr<DynamicJsonDocument>{nullptr};
+    size_t capacity = length + 100;
 
-  DeserializationError err = DeserializationError::NoMemory;
-  while (capacity + HEAP_GUARD < ESP.getFreeHeap() && err == DeserializationError::NoMemory) {
-      if (doc){
-          delete doc;
-          doc = NULL;
-      }
-      doc = new DynamicJsonDocument(capacity);
-      err = deserializeJson(*doc, payload, length);
+    DeserializationError err = DeserializationError::NoMemory;
+    while (capacity + HEAP_GUARD < ESP.getFreeHeap() && err == DeserializationError::NoMemory) {
+        doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
+        err = deserializeJson(*doc, payload, length);
 
-      capacity /= 2;
-      capacity *= 3;
-  }
+        capacity /= 2;
+        capacity *= 3;
+    }
 
-  //TODO insert validateRpcHeader at suitable position
+    //TODO insert validateRpcHeader at suitable position
 
-  switch (err.code()) {
-    case DeserializationError::Ok:
-        if (doc != NULL){
-          int messageTypeId = (*doc)[0];
-          switch(messageTypeId) {
-            case MESSAGE_TYPE_CALL:
-              handleReqMessage(doc);      
-              deserializationSuccess = true;
-              break;
-            case MESSAGE_TYPE_CALLRESULT:
-              handleConfMessage(doc);
-              deserializationSuccess = true;
-              break;
-            case MESSAGE_TYPE_CALLERROR:
-              handleErrMessage(doc);
-              deserializationSuccess = true;
-              break;
-            default:
-              Serial.print(F("[OcppEngine] Invalid OCPP message! (though JSON has successfully been deserialized)\n"));
-              break;
-          }
-        } else { //unlikely corner case
-            Serial.print(F("[OcppEngine] Deserialization is okay but doc is Null\n"));
-        }
-        break;
-    case DeserializationError::InvalidInput:
-        Serial.print(F("[OcppEngine] Invalid input! Not a JSON\n"));
-        break;
-    case DeserializationError::NoMemory:
-        {
-          if (DEBUG_OUT) Serial.print(F("[OcppEngine] Error: Not enough memory in heap! Input length = "));
-          if (DEBUG_OUT) Serial.print(length);
-          if (DEBUG_OUT) Serial.print(F(", free heap = "));
-          if (DEBUG_OUT) Serial.println(ESP.getFreeHeap());
-
-          /*
-          * If websocket input is of message type MESSAGE_TYPE_CALL, send back a message of type MESSAGE_TYPE_CALLERROR.
-          * Then the communication counterpart knows that this operation failed.
-          * If the input type is MESSAGE_TYPE_CALLRESULT, it can be ignored. This controller will automatically resend the corresponding requirement message.
-          */
-
-          if (doc){
-              delete doc;
-              doc = NULL;
-          }
-
-          doc = new DynamicJsonDocument(200);
-          char onlyRpcHeader[200];
-          size_t onlyRpcHeader_len = removePayload(payload, length, onlyRpcHeader, 200);
-          DeserializationError err2 = deserializeJson(*doc, onlyRpcHeader, onlyRpcHeader_len);
-          if (err2.code() == DeserializationError::Ok) {
-            int messageTypeId2 = (*doc)[0] | -1;
-            if (messageTypeId2 == MESSAGE_TYPE_CALL) {
-              deserializationSuccess = true;
-              OcppOperation *op = makeOcppOperation(new OutOfMemory(ESP.getFreeHeap(), length));
-              handleReqMessage(doc, op);
+    switch (err.code()) {
+        case DeserializationError::Ok:
+            if (doc != nullptr){
+                int messageTypeId = (*doc)[0] | -1;
+                switch(messageTypeId) {
+                    case MESSAGE_TYPE_CALL:
+                        handleReqMessage(*doc);      
+                        deserializationSuccess = true;
+                        break;
+                    case MESSAGE_TYPE_CALLRESULT:
+                        handleConfMessage(*doc);
+                        deserializationSuccess = true;
+                        break;
+                    case MESSAGE_TYPE_CALLERROR:
+                        handleErrMessage(*doc);
+                        deserializationSuccess = true;
+                        break;
+                    default:
+                        Serial.print(F("[OcppEngine] Invalid OCPP message! (though JSON has successfully been deserialized)\n"));
+                        break;
+                }
+            } else { //unlikely corner case
+                Serial.print(F("[OcppEngine] Deserialization is okay but doc is nullptr\n"));
             }
-          }
-        }
-        break;
-    default:
-        Serial.print(F("[OcppEngine] Deserialization failed: "));
-        Serial.println(err.c_str());
-        break;
-  }
+            break;
+        case DeserializationError::InvalidInput:
+            Serial.print(F("[OcppEngine] Invalid input! Not a JSON\n"));
+            break;
+        case DeserializationError::NoMemory:
+            {
+                if (DEBUG_OUT) Serial.print(F("[OcppEngine] Error: Not enough memory in heap! Input length = "));
+                if (DEBUG_OUT) Serial.print(length);
+                if (DEBUG_OUT) Serial.print(F(", free heap = "));
+                if (DEBUG_OUT) Serial.println(ESP.getFreeHeap());
 
-  if (doc) {
-    delete doc;
-  }
+                /*
+                 * If websocket input is of message type MESSAGE_TYPE_CALL, send back a message of type MESSAGE_TYPE_CALLERROR.
+                 * Then the communication counterpart knows that this operation failed.
+                 * If the input type is MESSAGE_TYPE_CALLRESULT, it can be ignored. This controller will automatically resend the corresponding request message.
+                 */
 
-  return deserializationSuccess;
+                doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(200));
+                char onlyRpcHeader[200];
+                size_t onlyRpcHeader_len = removePayload(payload, length, onlyRpcHeader, sizeof(onlyRpcHeader));
+                DeserializationError err2 = deserializeJson(*doc, onlyRpcHeader, onlyRpcHeader_len);
+                if (err2.code() == DeserializationError::Ok) {
+                    int messageTypeId2 = (*doc)[0] | -1;
+                    if (messageTypeId2 == MESSAGE_TYPE_CALL) {
+                        deserializationSuccess = true;
+                        auto op = makeOcppOperation(new OutOfMemory(ESP.getFreeHeap(), length));
+                        handleReqMessage(*doc, std::move(op));
+                    }
+                }
+            }
+            break;
+        default:
+            Serial.print(F("[OcppEngine] Deserialization failed: "));
+            Serial.println(err.c_str());
+            break;
+    }
+
+    return deserializationSuccess;
 }
 
 /**
-   * call conf() on each element of the queue. Start with first element. On successful message delivery,
-   * delete the element from the list. Try all the pending OCPP Operations until the right one is found.
-   * 
-   * This function could result in improper behavior in Charging Stations, because messages are not
-   * guaranteed to be received and therefore processed in the right order.
-   */
-void OcppConnection::handleConfMessage(JsonDocument *json) {
+ * call conf() on each element of the queue. Start with first element. On successful message delivery,
+ * delete the element from the list. Try all the pending OCPP Operations until the right one is found.
+ * 
+ * This function could result in improper behavior in Charging Stations, because messages are not
+ * guaranteed to be received and therefore processed in the right order.
+ */
+void OcppConnection::handleConfMessage(JsonDocument& json) {
     for (auto operation = initiatedOcppOperations.begin(); operation != initiatedOcppOperations.end(); ++operation) {
         boolean success = (*operation)->receiveConf(json); //maybe rename to "consumed"?
         if (success) {
-            delete *operation;
             initiatedOcppOperations.erase(operation);
             return;
         }
     }
 
-  //didn't find matching OcppOperation
-  Serial.print(F("[OcppEngine] Received CALLRESULT doesn't match any pending operation!\n"));
+    //didn't find matching OcppOperation
+    Serial.print(F("[OcppEngine] Received CALLRESULT doesn't match any pending operation!\n"));
 }
 
-void OcppConnection::handleReqMessage(JsonDocument *json) {
-    OcppOperation *req = makeFromJson(json);
-    if (req == NULL) {
+void OcppConnection::handleReqMessage(JsonDocument& json) {
+    auto req = makeFromJson(json);
+    if (req == nullptr) {
         Serial.print(F("[OcppEngine] Couldn't make OppOperation from Request. Ignore request.\n"));
         return;
     }
-    handleReqMessage(json, req);
+    handleReqMessage(json, std::move(req));
 }
 
-void OcppConnection::handleReqMessage(JsonDocument *json, OcppOperation *op) {
-    if (op == NULL) {
+void OcppConnection::handleReqMessage(JsonDocument& json, std::unique_ptr<OcppOperation> op) {
+    if (op == nullptr) {
         Serial.print(F("[OcppEngine] handleReqMessage: invalid argument\n"));
         return;
     }
-    receivedOcppOperations.push_back(op);; //enqueue so loop() plans conf sending
     op->receiveReq(json); //"fire" the operation
+    receivedOcppOperations.push_back(std::move(op)); //enqueue so loop() plans conf sending
 }
 
-void OcppConnection::handleErrMessage(JsonDocument *json) {
+void OcppConnection::handleErrMessage(JsonDocument& json) {
     for (auto operation = initiatedOcppOperations.begin(); operation != initiatedOcppOperations.end(); ++operation){
         boolean discardOperation = (*operation)->receiveError(json); //maybe rename to "consumed"?
-        if (discardOperation){
-            //TODO Review: are all recources freed here?
-            delete *operation;
+        if (discardOperation) {
             initiatedOcppOperations.erase(operation);
             return;
         }
@@ -285,4 +264,3 @@ size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_siz
     res_len++;
     return res_len;
 }
-

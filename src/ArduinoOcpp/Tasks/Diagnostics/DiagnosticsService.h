@@ -33,7 +33,7 @@ private:
     std::function<UploadStatus()> uploadStatusSampler = NULL;
     bool uploadIssued = false;
 
-    OcppOperation *getDiagnosticsStatusNotification();
+    std::unique_ptr<OcppOperation> getDiagnosticsStatusNotification();
 
     Ocpp16::DiagnosticsStatus lastReportedStatus = Ocpp16::DiagnosticsStatus::Idle;
 

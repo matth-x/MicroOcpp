@@ -17,19 +17,19 @@ namespace ArduinoOcpp {
 class OcppConnection {
 private:
     OcppSocket *ocppSock;
-    std::deque<OcppOperation*> initiatedOcppOperations;
-    std::deque<OcppOperation*> receivedOcppOperations;
+    std::deque<std::unique_ptr<OcppOperation>> initiatedOcppOperations;
+    std::deque<std::unique_ptr<OcppOperation>> receivedOcppOperations;
 
-    void handleConfMessage(JsonDocument *json);
-    void handleReqMessage(JsonDocument *json);
-    void handleReqMessage(JsonDocument *json, OcppOperation *op);
-    void handleErrMessage(JsonDocument *json);
+    void handleConfMessage(JsonDocument& json);
+    void handleReqMessage(JsonDocument& json);
+    void handleReqMessage(JsonDocument& json, std::unique_ptr<OcppOperation> op);
+    void handleErrMessage(JsonDocument& json);
 public:
     OcppConnection(OcppSocket *ocppSock);
 
     void loop();
 
-    void initiateOcppOperation(OcppOperation *o);
+    void initiateOcppOperation(std::unique_ptr<OcppOperation> o);
     
     bool processOcppSocketInputTXT(const char* payload, size_t length);
 };
