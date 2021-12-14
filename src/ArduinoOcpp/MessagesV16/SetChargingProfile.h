@@ -6,20 +6,17 @@
 #define SETCHARGINGPROFILE_H
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
-#include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 
 class SetChargingProfile : public OcppMessage {
 private:
-    SmartChargingService *smartChargingService = NULL;
-
-    DynamicJsonDocument *payloadToClient = NULL;
+    std::unique_ptr<DynamicJsonDocument> payloadToClient;
 public:
-    SetChargingProfile(SmartChargingService *smartChargingService);
+    SetChargingProfile();
 
-    SetChargingProfile(DynamicJsonDocument *payloadToClient);
+    SetChargingProfile(std::unique_ptr<DynamicJsonDocument> payloadToClient);
 
     ~SetChargingProfile();
 
@@ -27,9 +24,9 @@ public:
 
     void processReq(JsonObject payload);
 
-    DynamicJsonDocument* createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf();
 
-    DynamicJsonDocument* createReq();
+    std::unique_ptr<DynamicJsonDocument> createReq();
 
     void processConf(JsonObject payload);
 };

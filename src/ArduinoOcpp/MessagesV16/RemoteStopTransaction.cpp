@@ -2,10 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
-#include "Variants.h"
+#include <Variants.h>
 
 #include <ArduinoOcpp/MessagesV16/RemoteStopTransaction.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 
 using ArduinoOcpp::Ocpp16::RemoteStopTransaction;
@@ -19,29 +19,30 @@ const char* RemoteStopTransaction::getOcppOperationType(){
 }
 
 void RemoteStopTransaction::processReq(JsonObject payload) {
-  transactionId = payload["transactionId"] | -1;
+    transactionId = payload["transactionId"] | -1;
 }
 
-DynamicJsonDocument* RemoteStopTransaction::createConf(){
-  DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
-  JsonObject payload = doc->to<JsonObject>();
-  
-  bool canStopTransaction = false;
+std::unique_ptr<DynamicJsonDocument> RemoteStopTransaction::createConf(){
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    JsonObject payload = doc->to<JsonObject>();
+    
+    bool canStopTransaction = false;
 
-  if (getChargePointStatusService() != NULL) {
-    for (int i = 0; i < getChargePointStatusService()->getNumConnectors(); i++) {
-      ConnectorStatus *connIter = getConnectorStatus(i);
-      if (connIter->getTransactionId() == transactionId) {
-        canStopTransaction = true; 
-      }
+    if (ocppModel && ocppModel->getChargePointStatusService()) {
+        auto cpStatusService = ocppModel->getChargePointStatusService();
+        for (int i = 0; i < cpStatusService->getNumConnectors(); i++) {
+            auto connIter = cpStatusService->getConnector(i);
+            if (connIter->getTransactionId() == transactionId) {
+                canStopTransaction = true; 
+            }
+        }
     }
-  }
 
-  if (canStopTransaction){
-    payload["status"] = "Accepted";
-  } else {
-    payload["status"] = "Rejected";
-  }
-  
-  return doc;
+    if (canStopTransaction){
+        payload["status"] = "Accepted";
+    } else {
+        payload["status"] = "Rejected";
+    }
+    
+    return doc;
 }

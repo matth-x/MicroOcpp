@@ -9,10 +9,13 @@
 
 namespace ArduinoOcpp {
 
+class OcppEngine;
+
 class ChargePointStatusService {
 private:
+    OcppEngine& context;
+    
     const int numConnectors;
-    OcppTime *ocppTime;
     ConnectorStatus **connectors;
 
     bool booted = false;
@@ -21,7 +24,7 @@ private:
     String idTag = String('\0');
 
 public:
-    ChargePointStatusService(int numConnectors, OcppTime *ocppTime);
+    ChargePointStatusService(OcppEngine& context, int numConnectors);
 
     ~ChargePointStatusService();
     

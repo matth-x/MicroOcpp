@@ -183,15 +183,15 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     //success
 }
 
-DynamicJsonDocument* ChangeConfiguration::createConf(){
-  DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
-  JsonObject payload = doc->to<JsonObject>();
-  if (err || readOnly) {
-    payload["status"] = "Rejected";
-  } else if (rebootRequired) {
-    payload["status"] = "RebootRequired";
-  } else {
-    payload["status"] = "Accepted";
-  }
-  return doc;
+std::unique_ptr<DynamicJsonDocument> ChangeConfiguration::createConf(){
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    JsonObject payload = doc->to<JsonObject>();
+    if (err || readOnly) {
+        payload["status"] = "Rejected";
+    } else if (rebootRequired) {
+        payload["status"] = "RebootRequired";
+    } else {
+        payload["status"] = "Accepted";
+    }
+    return doc;
 }

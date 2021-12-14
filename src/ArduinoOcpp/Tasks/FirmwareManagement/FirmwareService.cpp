@@ -3,11 +3,13 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
+#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+
 #include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 
 using namespace ArduinoOcpp;
 using ArduinoOcpp::Ocpp16::FirmwareStatus;
@@ -23,21 +25,24 @@ void FirmwareService::setBuildNumber(const char *buildNumber) {
 void FirmwareService::loop() {
     auto notification = getFirmwareStatusNotification();
     if (notification) {
-        initiateOcppOperation(std::move(notification));
+        context.initiateOperation(std::move(notification));
     }
 
     if (millis() - timestampTransition < delayTransition) {
         return;
     }
 
-    OcppTimestamp timestampNow = getOcppTime()->getOcppTimestampNow();
+    OcppTimestamp timestampNow = context.getOcppModel().getOcppTime().getOcppTimestampNow();
     if (retries > 0 && timestampNow >= retreiveDate) {
 
+        auto cpStatusService = context.getOcppModel().getChargePointStatusService();
+        
         //if (!downloadIssued) {
         if (stage == UpdateStage::Idle) {
             if (DEBUG_OUT) Serial.println(F("[FirmwareService] Start update!"));
-            if (getChargePointStatusService()) {
-                ConnectorStatus *evse = getChargePointStatusService()->getConnector(0);
+
+            if (cpStatusService) {
+                ConnectorStatus *evse = cpStatusService->getConnector(0);
                 if (!availabilityRestore) {
                     availabilityRestore = (evse->getAvailability() == AVAILABILITY_OPERATIVE);
                 }
@@ -103,10 +108,9 @@ void FirmwareService::loop() {
         if (stage == UpdateStage::AfterDownload) {
             if (DEBUG_OUT) Serial.println(F("[FirmwareService] After download!"));
             bool ongoingTx = false;
-            ChargePointStatusService *cpStatus = getChargePointStatusService();
-            if (cpStatus) {
-                for (int i = 0; i < cpStatus->getNumConnectors(); i++) {
-                    ConnectorStatus *connector = cpStatus->getConnector(i);
+            if (cpStatusService) {
+                for (int i = 0; i < cpStatusService->getNumConnectors(); i++) {
+                    auto connector = cpStatusService->getConnector(i);
                     if (connector && connector->getTransactionId() >= 0) {
                         ongoingTx = true;
                         break;
@@ -150,8 +154,8 @@ void FirmwareService::loop() {
                 resetStage();
                 retries = 0; //End of update routine. Client must reboot on its own
                 if (availabilityRestore) {
-                    if (getChargePointStatusService() && getChargePointStatusService()->getConnector(0)) {
-                        getChargePointStatusService()->getConnector(0)->setAvailability(true);
+                    if (cpStatusService && cpStatusService->getConnector(0)) {
+                        cpStatusService->getConnector(0)->setAvailability(true);
                     }
                 }
                 return;
@@ -293,8 +297,8 @@ void FirmwareService::resetStage() {
 
 #include <HTTPUpdate.h>
 
-FirmwareService *EspWiFi::makeFirmwareService(const char *buildNumber) {
-    FirmwareService *fwService = new FirmwareService();
+FirmwareService *EspWiFi::makeFirmwareService(OcppEngine& context, const char *buildNumber) {
+    FirmwareService *fwService = new FirmwareService(context);
     fwService->setBuildNumber(buildNumber);
 
     /*
@@ -356,8 +360,8 @@ FirmwareService *EspWiFi::makeFirmwareService(const char *buildNumber) {
 
 #include <ESP8266httpUpdate.h>
 
-FirmwareService *EspWiFi::makeFirmwareService(const char *buildNumber) {
-    FirmwareService *fwService = new FirmwareService();
+FirmwareService *EspWiFi::makeFirmwareService(OcppEngine& context, const char *buildNumber) {
+    FirmwareService *fwService = new FirmwareService(context);
     fwService->setBuildNumber(buildNumber);
 
     fwService->setOnInstall([fwService] (String &location) {

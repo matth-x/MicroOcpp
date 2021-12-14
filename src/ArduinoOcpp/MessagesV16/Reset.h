@@ -14,13 +14,13 @@ namespace Ocpp16 {
 
 class Reset : public OcppMessage {
 public:
-  Reset();
+    Reset();
 
-  const char* getOcppOperationType();
+    const char* getOcppOperationType();
 
-  void processReq(JsonObject payload);
+    void processReq(JsonObject payload);
 
-  DynamicJsonDocument* createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf();
 };
 
 } //end namespace Ocpp16

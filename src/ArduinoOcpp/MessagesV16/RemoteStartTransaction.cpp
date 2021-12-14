@@ -4,7 +4,7 @@
 
 
 #include <ArduinoOcpp/MessagesV16/RemoteStartTransaction.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <Variants.h>
 
@@ -23,33 +23,33 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
 
     if (payload.containsKey("idTag")) {
         String idTag = payload["idTag"] | String("Invalid");
-        ChargePointStatusService *cpService = getChargePointStatusService();
-        if (cpService != NULL) { 
-            cpService->authorize(idTag);
+        if (ocppModel && ocppModel->getChargePointStatusService()) { 
+            ocppModel->getChargePointStatusService()->authorize(idTag);
         }
     }
 }
 
-DynamicJsonDocument* RemoteStartTransaction::createConf(){
-    DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
+std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
     
     bool canStartTransaction = false;
     if (connectorId >= 1) {
         //connectorId specified for given connector, try to start Transaction here
-        ConnectorStatus *connector = getConnectorStatus(connectorId);
-        if (connector != NULL){
+        if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
+            auto connector = ocppModel->getConnectorStatus(connectorId);
             if (connector->getTransactionId() < 0) {
                 canStartTransaction = true;
             }
         }
     } else {
         //connectorId not specified. Find free connector
-        if (getChargePointStatusService() != NULL) {
-            for (int i = 1; i < getChargePointStatusService()->getNumConnectors(); i++) {
-                ConnectorStatus *connIter = getConnectorStatus(i);
+        if (ocppModel && ocppModel->getChargePointStatusService()) {
+            auto cpStatusService = ocppModel->getChargePointStatusService();
+            for (int i = 1; i < cpStatusService->getNumConnectors(); i++) {
+                auto connIter = cpStatusService->getConnector(i);
                 if (connIter->getTransactionId() < 0) {
-                canStartTransaction = true; 
+                    canStartTransaction = true; 
                 }
             }
         }
@@ -64,8 +64,8 @@ DynamicJsonDocument* RemoteStartTransaction::createConf(){
     return doc;
 }
 
-DynamicJsonDocument* RemoteStartTransaction::createReq() {
-    DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
+std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createReq() {
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
 
     payload["idTag"] = "A0-00-00-00";

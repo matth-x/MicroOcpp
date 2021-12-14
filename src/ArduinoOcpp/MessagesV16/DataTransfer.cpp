@@ -3,7 +3,6 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/DataTransfer.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
 #include <Variants.h>
 
 using ArduinoOcpp::Ocpp16::DataTransfer;
@@ -16,12 +15,12 @@ const char* DataTransfer::getOcppOperationType(){
     return "DataTransfer";
 }
 
-DynamicJsonDocument* DataTransfer::createReq() {
-  DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(2) + (msg.length() + 1));
-  JsonObject payload = doc->to<JsonObject>();
-  payload["vendorId"] = "CustomVendor";
-  payload["data"] = msg;
-  return doc;
+std::unique_ptr<DynamicJsonDocument> DataTransfer::createReq() {
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2) + (msg.length() + 1)));
+    JsonObject payload = doc->to<JsonObject>();
+    payload["vendorId"] = "CustomVendor";
+    payload["data"] = msg;
+    return doc;
 }
 
 void DataTransfer::processConf(JsonObject payload){

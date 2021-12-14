@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/Heartbeat.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
 #include <string.h>
 #include <Variants.h>
 
@@ -17,30 +17,23 @@ const char* Heartbeat::getOcppOperationType(){
     return "Heartbeat";
 }
 
-DynamicJsonDocument* Heartbeat::createReq() {
-    DynamicJsonDocument *doc = new DynamicJsonDocument(0);
-    doc->to<JsonObject>();
-    /*
-    * Empty payload
-    */
-    return doc;
+std::unique_ptr<DynamicJsonDocument> Heartbeat::createReq() {
+    return createEmptyDocument();
 }
 
 void Heartbeat::processConf(JsonObject payload) {
   
     const char* currentTime = payload["currentTime"] | "Invalid";
     if (strcmp(currentTime, "Invalid")) {
-        OcppTime *ocppTime = getOcppTime();
-        if (ocppTime && ocppTime->setOcppTime(currentTime)) {
-        //success
-        if (DEBUG_OUT) Serial.print(F("[Heartbeat] Request has been accepted!\n"));
+        if (ocppModel && ocppModel->getOcppTime().setOcppTime(currentTime)) {
+            //success
+            if (DEBUG_OUT) Serial.print(F("[Heartbeat] Request has been accepted!\n"));
         } else {
-        Serial.print(F("[Heartbeat] Request accepted. But Error reading time string. Expect format like 2020-02-01T20:53:32.486Z\n"));
+            Serial.print(F("[Heartbeat] Request accepted. But Error reading time string. Expect format like 2020-02-01T20:53:32.486Z\n"));
         }
     } else {
         Serial.print(F("[Heartbeat] Request denied. Missing field currentTime. Expect format like 2020-02-01T20:53:32.486Z\n"));
     }
-
 }
 
 void Heartbeat::processReq(JsonObject payload) {
@@ -51,16 +44,15 @@ void Heartbeat::processReq(JsonObject payload) {
 
 }
 
-DynamicJsonDocument* Heartbeat::createConf(){
-    DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + (JSONDATE_LENGTH + 1));
+std::unique_ptr<DynamicJsonDocument> Heartbeat::createConf(){
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + (JSONDATE_LENGTH + 1)));
     JsonObject payload = doc->to<JsonObject>();
 
     //safety mechanism; in some test setups the library could have to answer Heartbeats without valid system time
     OcppTimestamp ocppTimeReference = OcppTimestamp(2019,10,0,11,59,55); 
     OcppTimestamp ocppSelect = ocppTimeReference;
-    OcppTime *ocppTime = getOcppTime();
-    if (ocppTime) {
-        OcppTimestamp ocppNow = ocppTime->getOcppTimestampNow();
+    if (ocppModel) {
+        auto& ocppNow = ocppModel->getOcppTime().getOcppTimestampNow();
         if (ocppNow > ocppTimeReference) {
             //time has already been set
             ocppSelect = ocppNow;

@@ -3,8 +3,10 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/Authorize.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include "Variants.h"
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+
+#include <Variants.h>
 
 using ArduinoOcpp::Ocpp16::Authorize;
 
@@ -12,7 +14,7 @@ Authorize::Authorize() {
     this->idTag = String("A0-00-00-00"); //Use a default payload. In the typical use case of this library, you probably you don't even need Authorization at all
 }
 
-Authorize::Authorize(String &idTag) {
+Authorize::Authorize(const String &idTag) {
     this->idTag = String(idTag);
 }
 
@@ -20,11 +22,11 @@ const char* Authorize::getOcppOperationType(){
     return "Authorize";
 }
 
-DynamicJsonDocument* Authorize::createReq() {
-  DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + (idTag.length() + 1));
-  JsonObject payload = doc->to<JsonObject>();
-  payload["idTag"] = idTag;
-  return doc;
+std::unique_ptr<DynamicJsonDocument> Authorize::createReq() {
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + (idTag.length() + 1)));
+    JsonObject payload = doc->to<JsonObject>();
+    payload["idTag"] = idTag;
+    return doc;
 }
 
 void Authorize::processConf(JsonObject payload){
@@ -33,9 +35,8 @@ void Authorize::processConf(JsonObject payload){
     if (idTagInfo.equals("Accepted")) {
         if (DEBUG_OUT) Serial.print(F("[Authorize] Request has been accepted!\n"));
 
-        ChargePointStatusService *cpStatusService = getChargePointStatusService();
-        if (cpStatusService != NULL){
-            cpStatusService->authorize(idTag);
+        if (ocppModel && ocppModel->getChargePointStatusService()) {
+            ocppModel->getChargePointStatusService()->authorize(idTag);
         }
     
     } else {
@@ -49,8 +50,8 @@ void Authorize::processReq(JsonObject payload){
      */
 }
 
-DynamicJsonDocument* Authorize::createConf(){
-    DynamicJsonDocument* doc = new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1));
+std::unique_ptr<DynamicJsonDocument> Authorize::createConf(){
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
     idTagInfo["status"] = "Accepted";

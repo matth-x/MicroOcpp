@@ -3,42 +3,44 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
 #include <Variants.h>
 
 #include <string.h>
 
 using namespace ArduinoOcpp;
 
-const OcppTimestamp ArduinoOcpp::MIN_TIME = OcppTimestamp(2010, 0, 0, 0, 0, 0);
-const OcppTimestamp ArduinoOcpp::MAX_TIME = OcppTimestamp(2037, 0, 0, 0, 0, 0);
-
 ChargingSchedulePeriod::ChargingSchedulePeriod(JsonObject *json){
     startPeriod = (*json)["startPeriod"];
     limit = (*json)["limit"]; //one fractural digit at most
     numberPhases = (*json)["numberPhases"] | -1;
 }
+
 ChargingSchedulePeriod::ChargingSchedulePeriod(int startPeriod, float limit){
     this->startPeriod = startPeriod;
     this->limit = limit;
     numberPhases = -1; //support later
 }
+
 int ChargingSchedulePeriod::getStartPeriod(){
     return this->startPeriod;
 }
+
 float ChargingSchedulePeriod::getLimit(){
     return this->limit;
 }
+
 void ChargingSchedulePeriod::scale(float factor){
     limit *= factor;
     if (limit < 0.f)
         limit *= -1.f;
 }
+
 void ChargingSchedulePeriod::add(float value){
     limit += value;
     if (limit < 0.f)
         limit = 0;
 }
+
 int ChargingSchedulePeriod::getNumberPhases(){
     return this->numberPhases;
 }
@@ -111,7 +113,7 @@ ChargingSchedule::ChargingSchedule(ChargingSchedule &other) {
     minChargingRate = other.minChargingRate;
 }
 
-ChargingSchedule::ChargingSchedule(OcppTimestamp &startT, int duration) {
+ChargingSchedule::ChargingSchedule(const OcppTimestamp &startT, int duration) {
     //create empty but valid Charging Schedule
     this->duration = duration;
     startSchedule = startT;

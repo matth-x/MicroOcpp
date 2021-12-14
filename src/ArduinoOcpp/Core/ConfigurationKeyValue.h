@@ -12,8 +12,8 @@ namespace ArduinoOcpp {
 
 class AbstractConfiguration {
 private:
-    char *key = NULL;
-    size_t key_size = 0; // key=NULL --> key_size = 0; key = "" --> key_size = 1; key = "A" --> key_size = 2
+    char *key = nullptr;
+    size_t key_size = 0; // key=nullptr --> key_size = 0; key = "" --> key_size = 1; key = "A" --> key_size = 2
 
     bool rebootRequiredWhenChanged = false;
 
@@ -29,11 +29,11 @@ protected:
     bool initializedValue = false;
 
     AbstractConfiguration();
-    AbstractConfiguration(JsonObject storedKeyValuePair);
+    AbstractConfiguration(JsonObject &storedKeyValuePair);
     size_t getStorageHeaderJsonCapacity();
-    void storeStorageHeader(JsonObject keyValuePair);
+    void storeStorageHeader(JsonObject &keyValuePair);
     size_t getOcppMsgHeaderJsonCapacity();
-    void storeOcppMsgHeader(JsonObject keyValuePair);
+    void storeOcppMsgHeader(JsonObject &keyValuePair);
     bool isValid();
 
     bool permissionLocalClientCanWrite() {return localClientCanWrite;}
@@ -80,16 +80,9 @@ private:
     size_t getValueJsonCapacity();
 public:
     Configuration();
-    Configuration(JsonObject storedKeyValuePair);
+    Configuration(JsonObject &storedKeyValuePair);
     const T &operator=(const T & newVal);
-    operator T() { //TODO move to Configuration.cpp
-        if (!initializedValue) {
-            Serial.print(F("[Configuration<T>] Tried to access value without preceeding initialization: "));
-            printKey();
-            Serial.println();
-        }
-        return value;
-    }
+    operator T();
     bool isValid();
 
     std::shared_ptr<DynamicJsonDocument> toJsonStorageEntry();
@@ -101,13 +94,13 @@ public:
 template <>
 class Configuration<const char *> : public AbstractConfiguration {
 private:
-    char *value = NULL;
-    char *valueReadOnlyCopy = NULL;
+    char *value = nullptr;
+    char *valueReadOnlyCopy = nullptr;
     size_t value_size = 0;
     size_t getValueJsonCapacity();
 public:
     Configuration();
-    Configuration(JsonObject storedKeyValuePair);
+    Configuration(JsonObject &storedKeyValuePair);
     ~Configuration();
     bool setValue(const char *newVal, size_t buffsize);
     const char *operator=(const char *newVal);

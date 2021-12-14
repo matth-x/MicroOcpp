@@ -7,9 +7,9 @@
 
 #include <Arduino.h>
 #include <functional>
+#include <memory>
 #include <ArduinoOcpp/Core/OcppTime.h>
-#include <ArduinoOcpp/Core/OcppOperation.h>
-#include <ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.h>
+#include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsStatus.h>
 
 namespace ArduinoOcpp {
 
@@ -19,8 +19,13 @@ enum class UploadStatus {
     UploadFailed
 };
 
+class OcppEngine;
+class OcppOperation;
+
 class DiagnosticsService {
 private:
+    OcppEngine& context;
+    
     String location = String('\0');
     int retries = 0;
     unsigned int retryInterval = 0;
@@ -29,8 +34,8 @@ private:
 
     OcppTimestamp nextTry = OcppTimestamp();
 
-    std::function<bool(String &location, OcppTimestamp &startTime, OcppTimestamp &stopTime)> onUpload = NULL;
-    std::function<UploadStatus()> uploadStatusSampler = NULL;
+    std::function<bool(String &location, OcppTimestamp &startTime, OcppTimestamp &stopTime)> onUpload = nullptr;
+    std::function<UploadStatus()> uploadStatusSampler = nullptr;
     bool uploadIssued = false;
 
     std::unique_ptr<OcppOperation> getDiagnosticsStatusNotification();
@@ -38,7 +43,7 @@ private:
     Ocpp16::DiagnosticsStatus lastReportedStatus = Ocpp16::DiagnosticsStatus::Idle;
 
 public:
-    DiagnosticsService() = default;
+    DiagnosticsService(OcppEngine& context) : context(context) { }
 
     void loop();
 
@@ -59,7 +64,7 @@ public:
 
 namespace EspWiFi {
 
-DiagnosticsService *makeDiagnosticsService();
+DiagnosticsService *makeDiagnosticsService(OcppEngine& context);
 
 }
 

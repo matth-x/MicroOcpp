@@ -3,7 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/GetDiagnostics.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 
 using ArduinoOcpp::Ocpp16::GetDiagnostics;
 
@@ -50,20 +51,18 @@ void GetDiagnostics::processReq(JsonObject payload) {
     }
 }
 
-DynamicJsonDocument* GetDiagnostics::createConf(){
-    DiagnosticsService *diagService = getDiagnosticsService();
-    if (diagService != NULL) {
-        fileName = diagService->requestDiagnosticsUpload(location, retries, retryInterval, startTime, stopTime);
+std::unique_ptr<DynamicJsonDocument> GetDiagnostics::createConf(){
+    if (ocppModel && ocppModel->getDiagnosticsService()) {
+        fileName = ocppModel->getDiagnosticsService()->requestDiagnosticsUpload(location, retries, retryInterval, startTime, stopTime);
     } else {
         Serial.println(F("[GetDiagnostics] DiagnosticsService has not been initialized before! Please have a look at ArduinoOcpp.cpp for an example. Abort"));
+        return nullptr;
     }
 
     if (fileName.isEmpty()) {
-        DynamicJsonDocument* doc = new DynamicJsonDocument(0);
-        doc->to<JsonObject>();
-        return doc;
+        return createEmptyDocument();
     } else {
-        DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + fileName.length() + 1);
+        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + fileName.length() + 1));
         JsonObject payload = doc->to<JsonObject>();
         payload["fileName"] = fileName;
         return doc;

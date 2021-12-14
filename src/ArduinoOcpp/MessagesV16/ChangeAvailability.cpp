@@ -3,7 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 
 #include <functional>
 
@@ -19,10 +20,10 @@ const char* ChangeAvailability::getOcppOperationType(){
 
 void ChangeAvailability::processReq(JsonObject payload) {
     int connectorId = payload["connectorId"] | -1;
-    ChargePointStatusService *cpStatus = getChargePointStatusService();
-    if (!cpStatus) {
+    if (!ocppModel || !ocppModel->getChargePointStatusService()) {
         return;
     }
+    auto cpStatus = ocppModel->getChargePointStatusService();
     if (connectorId < 0 || connectorId >= cpStatus->getNumConnectors()) {
         return;
     }
@@ -55,8 +56,8 @@ void ChangeAvailability::processReq(JsonObject payload) {
     }
 }
 
-DynamicJsonDocument* ChangeAvailability::createConf(){
-    DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
+std::unique_ptr<DynamicJsonDocument> ChangeAvailability::createConf(){
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
     if (!accepted) {
         payload["status"] = "Rejected";

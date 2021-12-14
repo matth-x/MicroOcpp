@@ -19,25 +19,25 @@ const char* TriggerMessage::getOcppOperationType(){
 
 void TriggerMessage::processReq(JsonObject payload) {
 
-    Serial.print(F("[TriggerMessage] Warning: TriggerMessage is not tested!\n"));
+    Serial.println(F("[TriggerMessage] Warning: TriggerMessage is not tested!"));
 
     triggeredOperation = makeFromTriggerMessage(payload);
-    if (triggeredOperation != NULL) {
+    if (triggeredOperation != nullptr) {
         statusMessage = "Accepted";
     } else {
-        Serial.print(F("[TriggerMessage] Couldn't make OppOperation from TriggerMessage. Ignore request.\n"));
+        Serial.println(F("[TriggerMessage] Couldn't make OppOperation from TriggerMessage. Ignore request."));
         statusMessage = "NotImplemented";
     }
 }
 
-DynamicJsonDocument* TriggerMessage::createConf(){
-    DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + strlen(statusMessage));
+std::unique_ptr<DynamicJsonDocument> TriggerMessage::createConf(){
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + strlen(statusMessage)));
     JsonObject payload = doc->to<JsonObject>();
     
     payload["status"] = statusMessage;
     
-    if (triggeredOperation) //from the second createConf()-try on, do not initiate further OCPP ops
-        initiateOcppOperation(std::move(triggeredOperation));
+    if (triggeredOperation && defaultOcppEngine) //from the second createConf()-try on, do not initiate further OCPP ops
+        defaultOcppEngine->initiateOperation(std::move(triggeredOperation));
 
     return doc;
 }

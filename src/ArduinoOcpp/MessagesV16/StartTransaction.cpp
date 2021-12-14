@@ -3,7 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 
 #include <Variants.h>
@@ -23,35 +24,33 @@ const char* StartTransaction::getOcppOperationType(){
 }
 
 void StartTransaction::initiate() {
-    MeteringService* meteringService = getMeteringService();
-    if (meteringService != NULL) {
+    if (ocppModel && ocppModel->getMeteringService()) {
+        auto meteringService = ocppModel->getMeteringService();
         meterStart = meteringService->readEnergyActiveImportRegister(connectorId);
     }
 
-    OcppTime *ocppTime = getOcppTime();
-    if (ocppTime) {
-        otimestamp = ocppTime->getOcppTimestampNow();
+    if (ocppModel) {
+        otimestamp = ocppModel->getOcppTime().getOcppTimestampNow();
     } else {
         otimestamp = MIN_TIME;
     }
 
     if (idTag.isEmpty()) {
-        ChargePointStatusService *cpss = getChargePointStatusService();
-        if (cpss != NULL && cpss->existsUnboundAuthorization()) {
-            this->idTag = String(cpss->getUnboundIdTag()); 
+        if (ocppModel && ocppModel->getChargePointStatusService() 
+                    && ocppModel->getChargePointStatusService()->existsUnboundAuthorization()) {
+            this->idTag = String(ocppModel->getChargePointStatusService()->getUnboundIdTag()); 
         } else {
             //The CP is not authorized. Try anyway, let the CS decide what to do ...
             this->idTag = String("A0-00-00-00"); //Use a default payload. In the typical use case of this library, you probably you don't even need Authorization at all
         }
     }
 
-    ChargePointStatusService *cpStatusService = getChargePointStatusService();
-    if (cpStatusService) {
-        cpStatusService->bindAuthorization(connectorId);
+    if (ocppModel && ocppModel->getChargePointStatusService()) {
+        ocppModel->getChargePointStatusService()->bindAuthorization(connectorId);
     }
 
-    ConnectorStatus *connector = getConnectorStatus(connectorId);
-    if (connector != NULL){
+    if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
+        auto connector = ocppModel->getConnectorStatus(connectorId);
         if (connector->getTransactionId() >= 0) {
             Serial.print(F("[StartTransaction] Warning: started transaction while OCPP already presumes a running transaction\n"));
         }
@@ -62,8 +61,8 @@ void StartTransaction::initiate() {
     if (DEBUG_OUT) Serial.println(F("[StartTransaction] StartTransaction initiated!"));
 }
 
-DynamicJsonDocument* StartTransaction::createReq() {
-    DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(5) + (JSONDATE_LENGTH + 1) + (idTag.length() + 1));
+std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(5) + (JSONDATE_LENGTH + 1) + (idTag.length() + 1)));
     JsonObject payload = doc->to<JsonObject>();
 
     payload["connectorId"] = connectorId;
@@ -87,10 +86,13 @@ void StartTransaction::processConf(JsonObject payload) {
     const char* idTagInfoStatus = payload["idTagInfo"]["status"] | "Invalid";
     int transactionId = payload["transactionId"] | -1;
 
+    ConnectorStatus *connector = nullptr;
+    if (ocppModel)
+        connector = ocppModel->getConnectorStatus(connectorId);
+
     if (!strcmp(idTagInfoStatus, "Accepted")) {
         if (DEBUG_OUT) Serial.print(F("[StartTransaction] Request has been accepted!\n"));
 
-        ConnectorStatus *connector = getConnectorStatus(connectorId);
         if (connector){
             if (transactionRev == connector->getTransactionWriteCount()) {
                 connector->setTransactionId(transactionId);
@@ -99,7 +101,6 @@ void StartTransaction::processConf(JsonObject payload) {
         }
     } else {
         Serial.print(F("[StartTransaction] Request has been denied!\n"));
-        ConnectorStatus *connector = getConnectorStatus(connectorId);
         if (connector){
             if (transactionRev == connector->getTransactionWriteCount()) {
                 connector->setTransactionId(-1);
@@ -119,13 +120,13 @@ void StartTransaction::processReq(JsonObject payload) {
 
 }
 
-DynamicJsonDocument* StartTransaction::createConf(){
-  DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
-  JsonObject payload = doc->to<JsonObject>();
+std::unique_ptr<DynamicJsonDocument> StartTransaction::createConf(){
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2)));
+    JsonObject payload = doc->to<JsonObject>();
 
-  JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
-  idTagInfo["status"] = "Accepted";
-  payload["transactionId"] = 123456; //sample data for debug purpose
+    JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
+    idTagInfo["status"] = "Accepted";
+    payload["transactionId"] = 123456; //sample data for debug purpose
 
-  return doc;
+    return doc;
 }

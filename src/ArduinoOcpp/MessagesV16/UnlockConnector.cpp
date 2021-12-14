@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 
 #include <Variants.h>
@@ -22,17 +22,19 @@ void UnlockConnector::processReq(JsonObject payload) {
     
     int connectorId = payload["connectorId"] | -1;
 
-    ConnectorStatus *connector = getConnectorStatus(connectorId);
-    if (!connector) {
+    if (!ocppModel || !ocppModel->getConnectorStatus(connectorId)) {
         err = true;
         return;
     }
 
+    auto connector = ocppModel->getConnectorStatus(connectorId);
+
     std::function<bool()> unlockConnector = connector->getOnUnlockConnector();
-    if (unlockConnector != NULL) {
+    if (unlockConnector != nullptr) {
         cbDefined = true;
     } else {
         cbDefined = false;
+        if (DEBUG_OUT) Serial.println(F("[UnlockConnector] Unlock CB undefined"));
         return;
     }
 
@@ -41,15 +43,15 @@ void UnlockConnector::processReq(JsonObject payload) {
     //success
 }
 
-DynamicJsonDocument* UnlockConnector::createConf(){
-  DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
-  JsonObject payload = doc->to<JsonObject>();
-  if (err || !cbDefined) {
-    payload["status"] = "NotSupported";
-  } else if (cbUnlockSuccessful) {
-    payload["status"] = "Unlocked";
-  } else {
-    payload["status"] = "UnlockFailed";
-  }
-  return doc;
+std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf(){
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    JsonObject payload = doc->to<JsonObject>();
+    if (err || !cbDefined) {
+        payload["status"] = "NotSupported";
+    } else if (cbUnlockSuccessful) {
+        payload["status"] = "Unlocked";
+    } else {
+        payload["status"] = "UnlockFailed";
+    }
+    return doc;
 }

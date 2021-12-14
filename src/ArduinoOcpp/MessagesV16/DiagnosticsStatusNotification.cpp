@@ -4,20 +4,22 @@
 
 #include <ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 
 using ArduinoOcpp::Ocpp16::DiagnosticsStatusNotification;
 
 DiagnosticsStatusNotification::DiagnosticsStatusNotification() {
-    DiagnosticsService *diagService = getDiagnosticsService();
-    if (diagService) {
-        status = diagService->getDiagnosticsStatus();
+    if (defaultOcppEngine && defaultOcppEngine->getOcppModel().getDiagnosticsService()) {
+        auto diagnosticsService = defaultOcppEngine->getOcppModel().getDiagnosticsService();
+        status = diagnosticsService->getDiagnosticsStatus();
     } else {
         status = DiagnosticsStatus::Idle;
     }
 }
 
 DiagnosticsStatusNotification::DiagnosticsStatusNotification(DiagnosticsStatus status) : status(status) {
+    
 }
 
 const char *DiagnosticsStatusNotification::cstrFromFwStatus(DiagnosticsStatus status) {
@@ -35,14 +37,14 @@ const char *DiagnosticsStatusNotification::cstrFromFwStatus(DiagnosticsStatus st
             return "Uploading";
             break;
     }
-    return NULL; //cannot be reached
+    return nullptr; //cannot be reached
 }
 
-DynamicJsonDocument* DiagnosticsStatusNotification::createReq() {
-  DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
-  JsonObject payload = doc->to<JsonObject>();
-  payload["status"] = cstrFromFwStatus(status);
-  return doc;
+std::unique_ptr<DynamicJsonDocument> DiagnosticsStatusNotification::createReq() {
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    JsonObject payload = doc->to<JsonObject>();
+    payload["status"] = cstrFromFwStatus(status);
+    return doc;
 }
 
 void DiagnosticsStatusNotification::processConf(JsonObject payload){

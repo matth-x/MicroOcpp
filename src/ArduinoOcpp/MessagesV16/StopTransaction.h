@@ -25,13 +25,13 @@ public:
 
     void initiate();
 
-    DynamicJsonDocument* createReq();
+    std::unique_ptr<DynamicJsonDocument> createReq();
 
     void processConf(JsonObject payload);
 
     void processReq(JsonObject payload);
 
-    DynamicJsonDocument* createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf();
 };
 
 } //end namespace Ocpp16

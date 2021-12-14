@@ -4,36 +4,28 @@
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
+#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareStatus.h>
+
 #ifndef FIRMWARESTATUSNOTIFICATION_H
 #define FIRMWARESTATUSNOTIFICATION_H
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 
-enum class FirmwareStatus {
-    Downloaded,
-    DownloadFailed,
-    Downloading,
-    Idle,
-    InstallationFailed,
-    Installing,
-    Installed
-};
-
 class FirmwareStatusNotification : public OcppMessage {
 private:
-  FirmwareStatus status;
-  static const char *cstrFromFwStatus(FirmwareStatus status);
+    FirmwareStatus status;
+    static const char *cstrFromFwStatus(FirmwareStatus status);
 public:
-  FirmwareStatusNotification();
+    FirmwareStatusNotification();
 
-  FirmwareStatusNotification(FirmwareStatus status);
+    FirmwareStatusNotification(FirmwareStatus status);
 
-  const char* getOcppOperationType() {return "FirmwareStatusNotification"; }
+    const char* getOcppOperationType() {return "FirmwareStatusNotification"; }
 
-  DynamicJsonDocument* createReq();
+    std::unique_ptr<DynamicJsonDocument> createReq();
 
-  void processConf(JsonObject payload);
+    void processConf(JsonObject payload);
 
 };
 

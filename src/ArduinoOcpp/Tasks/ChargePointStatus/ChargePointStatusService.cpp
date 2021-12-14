@@ -2,27 +2,23 @@
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
-#include "Variants.h"
+#include <Variants.h>
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
-#include <ArduinoOcpp/MessagesV16/StatusNotification.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 
 #include <string.h>
 
 using namespace ArduinoOcpp;
-using namespace ArduinoOcpp::Ocpp16;
 
-ChargePointStatusService::ChargePointStatusService(int numConn, OcppTime *ocppTime)
-      : numConnectors(numConn), ocppTime(ocppTime) {
+ChargePointStatusService::ChargePointStatusService(OcppEngine& context, int numConn)
+      : context(context), numConnectors{numConn} {
   
     connectors = (ConnectorStatus**) malloc(numConn * sizeof(ConnectorStatus*));
     for (int i = 0; i < numConn; i++) {
-        connectors[i] = new ConnectorStatus(i, ocppTime);
+        connectors[i] = new ConnectorStatus(context.getOcppModel(), i);
     }
-
-    setChargePointStatusService(this);
 }
 
 ChargePointStatusService::~ChargePointStatusService() {
@@ -35,10 +31,10 @@ ChargePointStatusService::~ChargePointStatusService() {
 void ChargePointStatusService::loop() {
     if (!booted) return;
     for (int i = 0; i < numConnectors; i++){
-        StatusNotification *statusNotificationMsg = connectors[i]->loop();
+        auto statusNotificationMsg = connectors[i]->loop();
         if (statusNotificationMsg != nullptr) {
             auto statusNotification = makeOcppOperation(statusNotificationMsg);
-            initiateOcppOperation(std::move(statusNotification));
+            context.initiateOperation(std::move(statusNotification));
         }
     }
 }

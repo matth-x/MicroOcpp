@@ -14,7 +14,7 @@ GetConfiguration::GetConfiguration() {
 }
 
 GetConfiguration::~GetConfiguration() {
-    //keys.clear();
+    
 }
 
 const char* GetConfiguration::getOcppOperationType(){
@@ -29,7 +29,7 @@ void GetConfiguration::processReq(JsonObject payload) {
     }
 }
 
-DynamicJsonDocument* GetConfiguration::createConf(){
+std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
 
     std::shared_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> configurationKeys;
     std::vector<String> unknownKeys;
@@ -66,7 +66,7 @@ DynamicJsonDocument* GetConfiguration::createConf(){
                 + JSON_ARRAY_SIZE(configurationKeysJson.size())
                 + JSON_ARRAY_SIZE(unknownKeys.size());
     
-    DynamicJsonDocument* doc = new DynamicJsonDocument(capacity);
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
 
     JsonObject payload = doc->to<JsonObject>();
     

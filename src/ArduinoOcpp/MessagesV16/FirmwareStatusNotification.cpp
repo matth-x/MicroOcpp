@@ -4,20 +4,22 @@
 
 #include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 
 using ArduinoOcpp::Ocpp16::FirmwareStatusNotification;
 
 FirmwareStatusNotification::FirmwareStatusNotification() {
-    FirmwareService *fwService = getFirmwareService();
-    if (fwService) {
-        status = fwService->getFirmwareStatus();
+    if (defaultOcppEngine && defaultOcppEngine->getOcppModel().getFirmwareService()) {
+        auto firmwareService = defaultOcppEngine->getOcppModel().getFirmwareService();
+        status = firmwareService->getFirmwareStatus();
     } else {
         status = FirmwareStatus::Idle;
     }
 }
 
-FirmwareStatusNotification::FirmwareStatusNotification(FirmwareStatus status) : status(status) {
+FirmwareStatusNotification::FirmwareStatusNotification(FirmwareStatus status) : status{status} {
+
 }
 
 const char *FirmwareStatusNotification::cstrFromFwStatus(FirmwareStatus status) {
@@ -47,11 +49,11 @@ const char *FirmwareStatusNotification::cstrFromFwStatus(FirmwareStatus status) 
     return NULL; //cannot be reached
 }
 
-DynamicJsonDocument* FirmwareStatusNotification::createReq() {
-  DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
-  JsonObject payload = doc->to<JsonObject>();
-  payload["status"] = cstrFromFwStatus(status);
-  return doc;
+std::unique_ptr<DynamicJsonDocument> FirmwareStatusNotification::createReq() {
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    JsonObject payload = doc->to<JsonObject>();
+    payload["status"] = cstrFromFwStatus(status);
+    return doc;
 }
 
 void FirmwareStatusNotification::processConf(JsonObject payload){

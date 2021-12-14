@@ -9,25 +9,17 @@
 #define MESSAGE_TYPE_CALLRESULT 3
 #define MESSAGE_TYPE_CALLERROR 4
 
-#include <functional>
+#include <memory>
 
-#include <ArduinoJson.h>
-
-#include <ArduinoOcpp/Core/OcppSocket.h>
-#include <ArduinoOcpp/Core/OcppMessage.h>
-#include <ArduinoOcpp/Core/OcppOperationTimeout.h>
+#include <ArduinoOcpp/Core/OcppOperationCallbacks.h>
 
 #include <Variants.h>
 
 namespace ArduinoOcpp {
 
-using OnReceiveConfListener = std::function<void(JsonObject payload)>;
-using OnReceiveReqListener = std::function<void(JsonObject payload)>;
-using OnSendConfListener = std::function<void(JsonObject payload)>;
-//using OnTimeoutListener = std::function<void()>; //in OcppOperationTimeout. Workaround for circle include. Fix by extracting type definitions to new source file
-using OnReceiveErrorListener = std::function<void(const char *code, const char *description, JsonObject details)>; //will be called if OCPP communication partner returns error code
-//using OnAbortListener = std::function<void()>; //will be called whenever the engine will stop trying to execute the operation normallythere is a timeout or error (onAbort = onTimeout || onReceiveError)
-
+class OcppMessage;
+class OcppModel;
+class OcppSocket;
 
 class OcppOperation {
 private:
@@ -61,6 +53,8 @@ public:
     ~OcppOperation();
 
     void setOcppMessage(std::unique_ptr<OcppMessage> msg);
+
+    void setOcppModel(std::shared_ptr<OcppModel> oModel);
 
     void setTimeout(std::unique_ptr<Timeout> timeout);
 

@@ -6,7 +6,6 @@
 #define SIMPLEOCPPOPERATIONFACTORY_H
 
 #include <ArduinoJson.h>
-
 #include <ArduinoOcpp/Core/OcppOperation.h>
 
 namespace ArduinoOcpp {
@@ -43,6 +42,8 @@ void setOnResetReceiveRequestListener(OnReceiveReqListener onReceiveReq);
 void setOnResetSendConfListener(OnSendConfListener onSendConf);
 void setOnUpdateFirmwareReceiveRequestListener(OnReceiveReqListener onReceiveReq);
 void setOnMeterValuesReceiveRequestListener(OnReceiveReqListener onReceiveReq);
+
+void simpleOcppFactory_deinitialize();
 
 } //end namespace ArduinoOcpp
 #endif

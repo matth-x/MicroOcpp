@@ -5,50 +5,35 @@
 #ifndef OCPPENGINE_H
 #define OCPPENGINE_H
 
-#include <ArduinoJson.h>
-
-#include <ArduinoOcpp/Core/OcppOperation.h>
-#include <ArduinoOcpp/Core/OcppSocket.h>
+#include <ArduinoOcpp/Core/OcppConnection.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
-#include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
-#include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
-#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
-#include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 
 namespace ArduinoOcpp {
 
-void ocppEngine_initialize(OcppSocket *ocppSocket);
+class OcppSocket;
+class OcppModel;
 
-void initiateOcppOperation(std::unique_ptr<OcppOperation> o);
+class OcppEngine {
+private:
+    OcppSocket& oSock;
+    std::shared_ptr<OcppModel> oModel;
+    OcppConnection oConn;
 
-void ocppEngine_loop();
+    bool runOcppTasks = true;
+public:
+    OcppEngine(OcppSocket& ocppSocket, const OcppClock& system_clock);
+    ~OcppEngine();
 
-void setSmartChargingService(SmartChargingService *scs);
+    void loop();
 
-SmartChargingService* getSmartChargingService();
+    void setRunOcppTasks(bool enable) {runOcppTasks = enable;}
 
-void setChargePointStatusService(ChargePointStatusService *cpss);
+    void initiateOperation(std::unique_ptr<OcppOperation> op);
 
-ChargePointStatusService *getChargePointStatusService();
+    OcppModel& getOcppModel();
+};
 
-ConnectorStatus *getConnectorStatus(int connectorId);
-
-void setMeteringSerivce(MeteringService *meteringService);
-
-MeteringService* getMeteringService();
-
-void setFirmwareService(FirmwareService *firmwareService);
-
-FirmwareService *getFirmwareService();
-
-void setDiagnosticsService(DiagnosticsService *diagnosticsService);
-
-DiagnosticsService *getDiagnosticsService();
-
-void ocppEngine_setOcppTime(OcppTime *ocppTime);
-
-OcppTime *getOcppTime();
+extern OcppEngine *defaultOcppEngine;
 
 } //end namespace ArduinoOcpp
 

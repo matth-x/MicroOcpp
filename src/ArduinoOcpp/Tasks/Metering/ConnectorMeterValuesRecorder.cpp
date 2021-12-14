@@ -3,13 +3,18 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/MessagesV16/MeterValues.h>
+
+#include <Variants.h>
 
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(int connectorId, OcppTime *ocppTime)
-        : connectorId(connectorId), ocppTime(ocppTime) {
+ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, int connectorId)
+        : context(context), connectorId{connectorId} {
     sampleTimestamp = std::vector<OcppTimestamp>();
     energy = std::vector<float>();
     power = std::vector<float>();
@@ -19,29 +24,29 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(int connectorId, Ocpp
 }
 
 void ConnectorMeterValuesRecorder::takeSample() {
-    if (energySampler != NULL || powerSampler != NULL) {
-        if (!ocppTime->isValid()) return;
-        sampleTimestamp.push_back(ocppTime->getOcppTimestampNow());
+    if (energySampler != nullptr || powerSampler != nullptr) {
+        if (!context.getOcppTime().isValid()) return;
+        sampleTimestamp.push_back(context.getOcppTime().getOcppTimestampNow());
     }
 
-    if (energySampler != NULL) {
+    if (energySampler != nullptr) {
         energy.push_back(energySampler());
     }
 
-    if (powerSampler != NULL) {
+    if (powerSampler != nullptr) {
         power.push_back(powerSampler());
     }
 }
 
-MeterValues *ConnectorMeterValuesRecorder::loop() {
+OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
     /*
      * First: check if there was a transaction break (i.e. transaction either started or stopped; transactionId changed)
      */ 
-    ConnectorStatus *connector = getConnectorStatus(connectorId);
-    if (connector->getTransactionId() != lastTransactionId) {
+    auto connector = context.getConnectorStatus(connectorId);
+    if (connector && connector->getTransactionId() != lastTransactionId) {
         //transaction break occured!
-        MeterValues *result = toMeterValues();
+        auto result = toMeterValues();
         lastTransactionId = connector->getTransactionId();
         return result;
     }
@@ -63,37 +68,37 @@ MeterValues *ConnectorMeterValuesRecorder::loop() {
     * Is the value buffer already full? If yes, return MeterValues message
     */
     if (((int) sampleTimestamp.size()) >= (int) *MeterValuesSampledDataMaxLength) {
-        MeterValues *result = toMeterValues();
+        auto result = toMeterValues();
         return result;
     }
 
-    return NULL; //successful method completition. Currently there is no reason to send a MeterValues Msg.
+    return nullptr; //successful method completition. Currently there is no reason to send a MeterValues Msg.
 }
 
-MeterValues *ConnectorMeterValuesRecorder::toMeterValues() {
+OcppMessage *ConnectorMeterValuesRecorder::toMeterValues() {
     if (sampleTimestamp.size() == 0) {
         //Switching from Non-Transaction to Transaction (or vice versa) without sample. Or anything wrong here. Discard
         if (DEBUG_OUT) Serial.print(F("[ConnectorMeterValuesRecorder] Try to send MeterValues without any data point. Ignore\n"));
         clear();
-        return NULL;
+        return nullptr;
     }
 
     //decide which measurands to send. If a measurand is missing at at least one point in time, omit that measurand completely
 
     if (energy.size() == sampleTimestamp.size() && power.size() == sampleTimestamp.size()) {
-        MeterValues *result = new MeterValues(&sampleTimestamp, &energy, &power, connectorId, lastTransactionId);
+        auto result = new MeterValues(&sampleTimestamp, &energy, &power, connectorId, lastTransactionId);
         clear();
         return result;
     }
 
     if (energy.size() == sampleTimestamp.size() && power.size() != sampleTimestamp.size()) {
-        MeterValues *result = new MeterValues(&sampleTimestamp, &energy, NULL, connectorId, lastTransactionId);
+        auto result = new MeterValues(&sampleTimestamp, &energy, nullptr, connectorId, lastTransactionId);
         clear();
         return result;
     }
 
     if (energy.size() != sampleTimestamp.size() && power.size() == sampleTimestamp.size()) {
-        MeterValues *result = new MeterValues(&sampleTimestamp, NULL, &power, connectorId, lastTransactionId);
+        auto result = new MeterValues(&sampleTimestamp, nullptr, &power, connectorId, lastTransactionId);
         clear();
         return result;
     }
@@ -102,7 +107,7 @@ MeterValues *ConnectorMeterValuesRecorder::toMeterValues() {
     Serial.print(F("[ConnectorMeterValuesRecorder] Invalid data set. Discard data set and restard recording.\n"));
     clear();
 
-    return NULL;
+    return nullptr;
 }
 
 void ConnectorMeterValuesRecorder::clear() {
@@ -120,7 +125,7 @@ void ConnectorMeterValuesRecorder::setEnergySampler(EnergySampler es){
 }
 
 float ConnectorMeterValuesRecorder::readEnergyActiveImportRegister() {
-    if (energySampler != NULL) {
+    if (energySampler != nullptr) {
         return energySampler();
     } else {
         Serial.print(F("[ConnectorMeterValuesRecorder] Called readEnergyActiveImportRegister(), but no energySampler or handling strategy set!\n"));

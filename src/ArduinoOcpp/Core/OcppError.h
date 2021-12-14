@@ -7,7 +7,7 @@
 
 #include <ArduinoJson.h>
 
-#include <ArduinoOcpp/Core/OcppOperation.h>
+#include <ArduinoOcpp/Core/OcppMessage.h>
 
 namespace ArduinoOcpp {
 
@@ -30,8 +30,8 @@ public:
     const char *getErrorDescription() {
         return "Too little free memory on the controller. Operation denied";
     }
-    DynamicJsonDocument *getErrorDetails() {
-        DynamicJsonDocument *errDoc = new DynamicJsonDocument(JSON_OBJECT_SIZE(2));
+    std::unique_ptr<DynamicJsonDocument> getErrorDetails() {
+        auto errDoc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
         JsonObject err = errDoc->to<JsonObject>();
         err["free_heap"] = freeHeap;
         err["msg_length"] = msgLen;

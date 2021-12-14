@@ -3,8 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
 
 #include <functional>
 
@@ -62,17 +62,16 @@ void ClearChargingProfile::processReq(JsonObject payload) {
         return true;
     };
 
-    SmartChargingService *smartChargingService = getSmartChargingService();
-    if (!smartChargingService) {
+    if (!ocppModel || !ocppModel->getSmartChargingService()) {
         Serial.println(F("[ClearChargingProfile] SmartChargingService not initialized! Ignore request"));
         return;
     }
 
-    matchingProfilesFound = smartChargingService->clearChargingProfile(filter);
+    matchingProfilesFound = ocppModel->getSmartChargingService()->clearChargingProfile(filter);
 }
 
-DynamicJsonDocument* ClearChargingProfile::createConf(){
-    DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
+std::unique_ptr<DynamicJsonDocument> ClearChargingProfile::createConf(){
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
     if (matchingProfilesFound)
         payload["status"] = "Accepted";

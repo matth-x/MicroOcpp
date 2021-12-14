@@ -3,7 +3,6 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
 #include <Variants.h>
 
 #include <string.h>
@@ -59,12 +58,12 @@ const char* StatusNotification::getOcppOperationType(){
 }
 
 //TODO if the status has changed again when sendReq() is called, abort the operation completely (note: if req is already sent, stick with listening to conf). The OcppEvseStateService will enqueue a new operation itself
-DynamicJsonDocument* StatusNotification::createReq() {
-    DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1));
+std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1)));
     JsonObject payload = doc->to<JsonObject>();
     
     payload["connectorId"] = connectorId;
-    if (errorCode != NULL) {
+    if (errorCode != nullptr) {
         payload["errorCode"] = errorCode;
     } else {
         payload["errorCode"] = "NoError";
@@ -123,7 +122,7 @@ void StatusNotification::processConf(JsonObject payload) {
  * For debugging only
  */
 StatusNotification::StatusNotification() {
-    otimestamp = OcppTimestamp();
+    
 }
 
 /*
@@ -136,8 +135,6 @@ void StatusNotification::processReq(JsonObject payload) {
 /*
  * For debugging only
  */
-DynamicJsonDocument* StatusNotification::createConf(){
-    DynamicJsonDocument* doc = new DynamicJsonDocument(0);
-    doc->to<JsonObject>();
-    return doc;
+std::unique_ptr<DynamicJsonDocument> StatusNotification::createConf(){
+    return createEmptyDocument();
 }

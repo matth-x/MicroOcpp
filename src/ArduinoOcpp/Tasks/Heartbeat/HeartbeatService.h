@@ -5,19 +5,21 @@
 #ifndef HEARTBEATSERVICE_H
 #define HEARTBEATSERVICE_H
 
-#include <ArduinoOcpp/Core/OcppTime.h>
-#include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 
 namespace ArduinoOcpp {
 
+class OcppEngine;
+
 class HeartbeatService {
 private:
+    OcppEngine& context;
 
     ulong lastHeartbeat;
     std::shared_ptr<ArduinoOcpp::Configuration<int>> heartbeatInterval;
 
 public:
-    HeartbeatService();
+    HeartbeatService(OcppEngine& context);
 
     void loop();
 };

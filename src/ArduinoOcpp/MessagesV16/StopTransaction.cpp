@@ -3,7 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <Variants.h>
 
@@ -23,30 +24,28 @@ const char* StopTransaction::getOcppOperationType(){
 
 void StopTransaction::initiate() {
 
-    if (getMeteringService() != NULL) {
-        meterStop = getMeteringService()->readEnergyActiveImportRegister(connectorId);
+    if (ocppModel && ocppModel->getMeteringService()) {
+        auto meteringService = ocppModel->getMeteringService();
+        meterStop = meteringService->readEnergyActiveImportRegister(connectorId);
     }
 
-    OcppTime *ocppTime = getOcppTime();
-    if (ocppTime) {
-        otimestamp = ocppTime->getOcppTimestampNow();
+    if (ocppModel) {
+        otimestamp = ocppModel->getOcppTime().getOcppTimestampNow();
     } else {
         otimestamp = MIN_TIME;
     }
 
-    ConnectorStatus *connector = getConnectorStatus(connectorId);
-    if (connector != NULL){
+    if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
+        auto connector = ocppModel->getConnectorStatus(connectorId);
         connector->setTransactionId(-1); //immediate end of transaction
         connector->unauthorize();
     }
 
     if (DEBUG_OUT) Serial.println(F("[StartTransaction] StopTransaction initiated!"));
-
 }
 
-DynamicJsonDocument* StopTransaction::createReq() {
-
-    DynamicJsonDocument *doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1));
+std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1)));
     JsonObject payload = doc->to<JsonObject>();
 
     if (meterStop >= 0.f)
@@ -57,8 +56,9 @@ DynamicJsonDocument* StopTransaction::createReq() {
         otimestamp.toJsonString(timestamp, JSONDATE_LENGTH + 1);
         payload["timestamp"] = timestamp;
     }
-    ConnectorStatus *connector = getConnectorStatus(connectorId);
-    if (connector != NULL){
+    
+    if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
+        auto connector = ocppModel->getConnectorStatus(connectorId);
         payload["transactionId"] = connector->getTransactionIdSync();
         connector->setTransactionIdSync(-1);
     }
@@ -71,7 +71,6 @@ void StopTransaction::processConf(JsonObject payload) {
     //no need to process anything here
 
     if (DEBUG_OUT) Serial.print(F("[StopTransaction] Request has been accepted!\n"));
-    
 }
 
 
@@ -81,8 +80,8 @@ void StopTransaction::processReq(JsonObject payload) {
      */
 }
 
-DynamicJsonDocument* StopTransaction::createConf(){
-    DynamicJsonDocument* doc = new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1));
+std::unique_ptr<DynamicJsonDocument> StopTransaction::createConf(){
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
 
     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");

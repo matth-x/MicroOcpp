@@ -4,14 +4,19 @@
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ConnectorStatus.h>
 
+#include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/Configuration.h>
+
+#include <ArduinoOcpp/MessagesV16/StatusNotification.h>
+
 #include <Variants.h>
 
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-ConnectorStatus::ConnectorStatus(int connectorId, OcppTime *ocppTime) : connectorId(connectorId), ocppTime(ocppTime) {
+ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
+        : context(context), connectorId{connectorId} {
 
     //Set default transaction ID in memory
     String keyTx = "OCPP_STATE_TRANSACTION_ID_CONNECTOR_";
@@ -32,7 +37,7 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
     * Handle special case: This is the ConnectorStatus for the whole CP (i.e. connectorId=0) --> only states Available, Unavailable, Faulted are possible
     */
     if (connectorId == 0) {
-        if (getErrorCode() != NULL) {
+        if (getErrorCode() != nullptr) {
             return OcppEvseState::Faulted;
         } else if (*availability == AVAILABILITY_INOPERATIVE) {
             return OcppEvseState::Unavailable;
@@ -41,18 +46,20 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
         }
     }
 
+    auto cpStatusService = context.getChargePointStatusService();
+
 //    if (!authorized && !getChargePointStatusService()->existsUnboundAuthorization()) {
 //        return OcppEvseState::Available;
 //    } else if (((int) *transactionId) < 0) {
 //        return OcppEvseState::Preparing;
-    //if (connectorFaultedSampler != NULL && connectorFaultedSampler()) {
-    if (getErrorCode() != NULL) {
+    //if (connectorFaultedSampler != nullptr && connectorFaultedSampler()) {
+    if (getErrorCode() != nullptr) {
         return OcppEvseState::Faulted;
     } else if (*availability == AVAILABILITY_INOPERATIVE) {
         return OcppEvseState::Unavailable;
-    } else if (!authorized && !getChargePointStatusService()->existsUnboundAuthorization() &&
+    } else if (!authorized && cpStatusService && !cpStatusService->existsUnboundAuthorization() &&
                 ((int) *transactionId) < 0 &&
-                (connectorPluggedSampler == NULL || !connectorPluggedSampler()) ) {
+                (connectorPluggedSampler == nullptr || !connectorPluggedSampler()) ) {
         return OcppEvseState::Available;
     } else if (((int) *transactionId) <= 0) {
         return OcppEvseState::Preparing;
@@ -68,13 +75,13 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
     }
 }
 
-StatusNotification *ConnectorStatus::loop() {
+OcppMessage *ConnectorStatus::loop() {
     if (getTransactionId() <= 0 && *availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
         *availability = AVAILABILITY_INOPERATIVE;
         saveState();
     }
 
-    OcppEvseState inferencedStatus = inferenceStatus();
+    auto inferencedStatus = inferenceStatus();
     
     if (inferencedStatus != currentStatus) {
         currentStatus = inferencedStatus;
@@ -83,20 +90,20 @@ StatusNotification *ConnectorStatus::loop() {
         //fire StatusNotification
         //TODO check for online condition: Only inform CS about status change if CP is online
         //TODO check for too short duration condition: Only inform CS about status change if it lasted for longer than MinimumStatusDuration
-        return new StatusNotification(connectorId, currentStatus, ocppTime->getOcppTimestampNow(), getErrorCode());
+        return new StatusNotification(connectorId, currentStatus, context.getOcppTime().getOcppTimestampNow(), getErrorCode());
     }
 
-    return NULL;
+    return nullptr;
 }
 
 const char *ConnectorStatus::getErrorCode() {
     for (auto s = connectorErrorCodeSamplers.begin(); s != connectorErrorCodeSamplers.end(); s++) {
         const char *err = s->operator()();
-        if (err != NULL) {
+        if (err != nullptr) {
             return err;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 void ConnectorStatus::authorize(String &idTag){
@@ -194,10 +201,6 @@ void ConnectorStatus::stopEnergyOffer(){
 void ConnectorStatus::setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
     this->connectorPluggedSampler = connectorPlugged;
 }
-
-//void ConnectorStatus::setConnectorFaultedSampler(std::function<bool()> connectorFaulted) {
-//    this->connectorFaultedSampler = connectorFaulted;
-//}
 
 void ConnectorStatus::addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
     this->connectorErrorCodeSamplers.push_back(connectorErrorCode);

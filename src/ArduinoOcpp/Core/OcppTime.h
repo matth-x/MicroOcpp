@@ -9,7 +9,6 @@
 
 #include <Arduino.h> 
 
-
 namespace ArduinoOcpp {
 
 typedef int32_t otime_t; //requires 32bit signed integer or bigger
@@ -82,6 +81,8 @@ public:
     friend bool operator>=(const OcppTimestamp &lhs, const OcppTimestamp &rhs);
 };
 
+extern const OcppTimestamp MIN_TIME;
+extern const OcppTimestamp MAX_TIME;
 
 class OcppTime {
 private:
@@ -97,7 +98,8 @@ private:
 
 public:
 
-    OcppTime(OcppClock system_clock);
+    OcppTime(const OcppClock& system_clock);
+    //OcppTime(const OcppTime& ocppTime) = default;
 
     otime_t getOcppTimeScalar(); //returns current time of the OCPP server in non-UNIX but signed integer format. t2 - t1 is the time difference in seconds. 
     const OcppTimestamp &getOcppTimestampNow();

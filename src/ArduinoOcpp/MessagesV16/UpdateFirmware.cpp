@@ -3,7 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/UpdateFirmware.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 
 using ArduinoOcpp::Ocpp16::UpdateFirmware;
 
@@ -38,16 +39,13 @@ void UpdateFirmware::processReq(JsonObject payload) {
     retryInterval = payload["retryInterval"] | 180;
 }
 
-DynamicJsonDocument* UpdateFirmware::createConf(){
-    DynamicJsonDocument* doc = new DynamicJsonDocument(0);
-    doc->to<JsonObject>();
-
-    FirmwareService *fwService = getFirmwareService();
-    if (fwService != NULL) {
+std::unique_ptr<DynamicJsonDocument> UpdateFirmware::createConf(){
+    if (ocppModel && ocppModel->getFirmwareService()) {
+        auto fwService = ocppModel->getFirmwareService();
         fwService->scheduleFirmwareUpdate(location, retreiveDate, retries, retryInterval);
     } else {
         Serial.println(F("[UpdateFirmware] FirmwareService has not been initialized before! Please have a look at ArduinoOcpp.cpp for an example. Abort"));
     }
 
-    return doc;
+    return createEmptyDocument();
 }

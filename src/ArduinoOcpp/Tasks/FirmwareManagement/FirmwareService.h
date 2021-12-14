@@ -7,10 +7,10 @@
 
 #include <Arduino.h>
 #include <functional>
+#include <memory>
 
-#include <ArduinoOcpp/Core/OcppOperation.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
-#include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
+#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareStatus.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
 
 namespace ArduinoOcpp {
@@ -27,9 +27,13 @@ enum class InstallationStatus {
     InstallationFailed
 };
 
+class OcppEngine;
+class OcppOperation;
 
 class FirmwareService {
 private:
+    OcppEngine& context;
+    
     std::shared_ptr<Configuration<const char *>> previousBuildNumber = NULL;
     const char *buildNumber = NULL;
 
@@ -69,7 +73,7 @@ private:
     std::unique_ptr<OcppOperation> getFirmwareStatusNotification();
 
 public:
-    FirmwareService() { }
+    FirmwareService(OcppEngine& context) : context(context) { }
 
     void setBuildNumber(const char *buildNumber);
 
@@ -96,7 +100,7 @@ public:
 namespace ArduinoOcpp {
 namespace EspWiFi {
 
-FirmwareService *makeFirmwareService(const char *buildNumber);
+FirmwareService *makeFirmwareService(OcppEngine& context, const char *buildNumber);
 
 }
 }

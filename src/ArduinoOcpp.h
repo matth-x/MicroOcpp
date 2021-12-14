@@ -5,10 +5,13 @@
 #ifndef ARDUINOOCPP_H
 #define ARDUINOOCPP_H
 
-#include <ArduinoOcpp/Core/OcppOperation.h>
-#include <ArduinoOcpp/Core/OcppOperationTimeout.h>
+#include <ArduinoJson.h>
+
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/OcppOperationCallbacks.h>
+#include <ArduinoOcpp/Core/OcppOperationTimeout.h>
+#include <ArduinoOcpp/Core/OcppSocket.h>
 
 #include "Variants.h"
 
@@ -29,7 +32,10 @@ void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, float 
 #endif
 
 //Lets you use your own WebSocket implementation
-void OCPP_initialize(ArduinoOcpp::OcppSocket *ocppSocket, float V_eff = 230.f /*German grid*/, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
+void OCPP_initialize(ArduinoOcpp::OcppSocket& ocppSocket, float V_eff = 230.f /*German grid*/, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
+
+//experimental; More testing required (help needed: it would be awesome if you can you publish your evaluation results on the GitHub page)
+void OCPP_deinitialize();
 
 void OCPP_loop();
 

@@ -3,8 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 
 #include <Variants.h>
 
@@ -12,25 +12,17 @@ using ArduinoOcpp::Ocpp16::MeterValues;
 
 //can only be used for echo server debugging
 MeterValues::MeterValues() {
-    sampleTime = std::vector<OcppTimestamp>(); //not used in server mode but needed to keep the destructor simple
-    energy = std::vector<float>();
-    power = std::vector<float>();
+    
 }
 
-MeterValues::MeterValues(std::vector<OcppTimestamp> *sampleTime, std::vector<float> *energy, std::vector<float> *power, int connectorId, int transactionId) 
-      : connectorId(connectorId), transactionId(transactionId) {
+MeterValues::MeterValues(const std::vector<OcppTimestamp> *sampleTime, const std::vector<float> *energy, const std::vector<float> *power, int connectorId, int transactionId) 
+      : connectorId{connectorId}, transactionId{transactionId} {
     if (sampleTime)
         this->sampleTime = std::vector<OcppTimestamp>(*sampleTime);
-    else
-        this->sampleTime = std::vector<OcppTimestamp>();
     if (energy)
         this->energy = std::vector<float>(*energy);
-    else
-        this->energy = std::vector<float>();
     if (power)
         this->power = std::vector<float>(*power);
-    else
-        this->power = std::vector<float>();
 }
 
 MeterValues::~MeterValues(){
@@ -41,11 +33,11 @@ const char* MeterValues::getOcppOperationType(){
     return "MeterValues";
 }
 
-DynamicJsonDocument* MeterValues::createReq() {
+std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
 
     int numEntries = sampleTime.size();
 
-    DynamicJsonDocument *doc = new DynamicJsonDocument(
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
         JSON_OBJECT_SIZE(2) //connectorID, transactionId
         + JSON_ARRAY_SIZE(numEntries) //metervalue array
         + numEntries * JSON_OBJECT_SIZE(1) //sampledValue
@@ -54,7 +46,7 @@ DynamicJsonDocument* MeterValues::createReq() {
         + 2 * numEntries * JSON_OBJECT_SIZE(1) //value          //   why are these taken by two?
         + 2 * numEntries * JSON_OBJECT_SIZE(1) //measurand      //
         + 2 * numEntries * JSON_OBJECT_SIZE(1) //unit           //
-        + 230); //"safety space"
+        + 230)); //"safety space"
     JsonObject payload = doc->to<JsonObject>();
     
     payload["connectorId"] = connectorId;
@@ -80,8 +72,8 @@ DynamicJsonDocument* MeterValues::createReq() {
         }
     }
 
-    ConnectorStatus *connector = getConnectorStatus(connectorId);
-    if (connector) {
+    if (ocppModel && ocppModel->getConnectorStatus(connectorId)) {
+        auto connector = ocppModel->getConnectorStatus(connectorId);
         if (connector->getTransactionIdSync() >= 0) {
             payload["transactionId"] = connector->getTransactionIdSync();
         }
@@ -103,11 +95,6 @@ void MeterValues::processReq(JsonObject payload) {
 
 }
 
-DynamicJsonDocument* MeterValues::createConf(){
-    DynamicJsonDocument* doc = new DynamicJsonDocument(0);
-    doc->to<JsonObject>();
-    /*
-     * empty payload
-     */
-    return doc;
+std::unique_ptr<DynamicJsonDocument> MeterValues::createConf(){
+    return createEmptyDocument();
 }

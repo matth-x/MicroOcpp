@@ -9,14 +9,16 @@
 #include <memory>
 #include <ArduinoJson.h>
 
-#include <ArduinoOcpp/Core/OcppSocket.h>
-#include <ArduinoOcpp/Core/OcppOperation.h>
-
 namespace ArduinoOcpp {
+
+class OcppModel;
+class OcppSocket;
+class OcppOperation;
 
 class OcppConnection {
 private:
-    OcppSocket *ocppSock;
+    std::shared_ptr<OcppModel> baseModel;
+    
     std::deque<std::unique_ptr<OcppOperation>> initiatedOcppOperations;
     std::deque<std::unique_ptr<OcppOperation>> receivedOcppOperations;
 
@@ -25,9 +27,9 @@ private:
     void handleReqMessage(JsonDocument& json, std::unique_ptr<OcppOperation> op);
     void handleErrMessage(JsonDocument& json);
 public:
-    OcppConnection(OcppSocket *ocppSock);
+    OcppConnection(OcppSocket& oSock, std::shared_ptr<OcppModel> baseModel);
 
-    void loop();
+    void loop(OcppSocket& oSock);
 
     void initiateOcppOperation(std::unique_ptr<OcppOperation> o);
     

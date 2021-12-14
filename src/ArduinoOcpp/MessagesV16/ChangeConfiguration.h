@@ -24,7 +24,7 @@ public:
 
   void processReq(JsonObject payload);
 
-  DynamicJsonDocument* createConf();
+  std::unique_ptr<DynamicJsonDocument> createConf();
 
 };
 

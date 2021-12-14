@@ -4,7 +4,12 @@
 
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+
+#include <ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.h>
+
+#include <Variants.h>
 
 using namespace ArduinoOcpp;
 using Ocpp16::DiagnosticsStatus;
@@ -12,10 +17,10 @@ using Ocpp16::DiagnosticsStatus;
 void DiagnosticsService::loop() {
     auto notification = getDiagnosticsStatusNotification();
     if (notification) {
-        initiateOcppOperation(std::move(notification));
+        context.initiateOperation(std::move(notification));
     }
 
-    const OcppTimestamp& timestampNow = getOcppTime()->getOcppTimestampNow();
+    const auto& timestampNow = context.getOcppModel().getOcppTime().getOcppTimestampNow();
     if (retries > 0 && timestampNow >= nextTry) {
 
         if (!uploadIssued) {
@@ -80,7 +85,7 @@ String DiagnosticsService::requestDiagnosticsUpload(String &location, int retrie
     if (stopTime >= stopMin) {
         this->stopTime = stopTime;
     } else {
-        OcppTimestamp newStop = getOcppTime()->getOcppTimestampNow();
+        auto newStop = context.getOcppModel().getOcppTime().getOcppTimestampNow();
         newStop += 3600 * 24 * 365; //set new stop time one year in future
         this->stopTime = newStop;
     }
@@ -102,7 +107,7 @@ String DiagnosticsService::requestDiagnosticsUpload(String &location, int retrie
         Serial.println(dbuf);
     }
 
-    nextTry = getOcppTime()->getOcppTimestampNow();
+    nextTry = context.getOcppModel().getOcppTime().getOcppTimestampNow();
     nextTry += 5; //wait for 5s before upload
     uploadIssued = false;
 
@@ -159,8 +164,8 @@ void DiagnosticsService::setOnUploadStatusSampler(std::function<UploadStatus()> 
 #if !defined(AO_CUSTOM_DIAGNOSTICS) && !defined(AO_CUSTOM_WEBSOCKET)
 #if defined(ESP32) || defined(ESP8266)
 
-DiagnosticsService *EspWiFi::makeDiagnosticsService() {
-    DiagnosticsService *diagService = new DiagnosticsService();
+DiagnosticsService *EspWiFi::makeDiagnosticsService(OcppEngine& context) {
+    auto diagService = new DiagnosticsService(context);
 
     /*
      * add onUpload and uploadStatusSampler when logging was implemented

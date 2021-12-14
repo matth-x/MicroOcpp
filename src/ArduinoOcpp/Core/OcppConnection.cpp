@@ -3,7 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppConnection.h>
-
+#include <ArduinoOcpp/Core/OcppOperation.h>
+#include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/OcppError.h>
 
@@ -15,15 +16,15 @@ size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_siz
 
 using namespace ArduinoOcpp;
 
-OcppConnection::OcppConnection(OcppSocket *ocppSock) : ocppSock(ocppSock) {
+OcppConnection::OcppConnection(OcppSocket& ocppSock, std::shared_ptr<OcppModel> baseModel) : baseModel{baseModel} {
     ReceiveTXTcallback callback = [this] (const char *payload, size_t length) {
         return this->processOcppSocketInputTXT(payload, length);
     };
     
-    ocppSock->setReceiveTXTcallback(callback);
+    ocppSock.setReceiveTXTcallback(callback);
 }
 
-void OcppConnection::loop() {
+void OcppConnection::loop(OcppSocket& ocppSock) {
 
     /**
      * Work through the initiatedOcppOperations queue. Start with the first element by calling req() on it. If
@@ -34,7 +35,7 @@ void OcppConnection::loop() {
 
     auto operation = initiatedOcppOperations.begin();
     while (operation != initiatedOcppOperations.end()){
-        boolean timeout = (*operation)->sendReq(*ocppSock); //The only reason to dequeue elements here is when a timeout occurs. Normally
+        boolean timeout = (*operation)->sendReq(ocppSock); //The only reason to dequeue elements here is when a timeout occurs. Normally
         if (timeout){                                       //the Conf msg processing routine dequeues finished elements
             operation = initiatedOcppOperations.erase(operation);
         } else {
@@ -75,7 +76,7 @@ void OcppConnection::loop() {
 
     operation = receivedOcppOperations.begin();
     while (operation != receivedOcppOperations.end()){
-        boolean success = (*operation)->sendConf(*ocppSock);
+        boolean success = (*operation)->sendConf(ocppSock);
         if (success){
             operation = receivedOcppOperations.erase(operation);
         } else {
@@ -202,12 +203,12 @@ void OcppConnection::handleConfMessage(JsonDocument& json) {
 }
 
 void OcppConnection::handleReqMessage(JsonDocument& json) {
-    auto req = makeFromJson(json);
-    if (req == nullptr) {
+    auto op = makeFromJson(json);
+    if (op == nullptr) {
         Serial.print(F("[OcppEngine] Couldn't make OppOperation from Request. Ignore request.\n"));
         return;
     }
-    handleReqMessage(json, std::move(req));
+    handleReqMessage(json, std::move(op));
 }
 
 void OcppConnection::handleReqMessage(JsonDocument& json, std::unique_ptr<OcppOperation> op) {
@@ -215,6 +216,7 @@ void OcppConnection::handleReqMessage(JsonDocument& json, std::unique_ptr<OcppOp
         Serial.print(F("[OcppEngine] handleReqMessage: invalid argument\n"));
         return;
     }
+    op->setOcppModel(baseModel);
     op->receiveReq(json); //"fire" the operation
     receivedOcppOperations.push_back(std::move(op)); //enqueue so loop() plans conf sending
 }

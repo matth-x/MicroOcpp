@@ -7,6 +7,9 @@
 
 namespace ArduinoOcpp {
 
+const OcppTimestamp MIN_TIME = OcppTimestamp(2010, 0, 0, 0, 0, 0);
+const OcppTimestamp MAX_TIME = OcppTimestamp(2037, 0, 0, 0, 0, 0);
+
 namespace Clocks {
 
 ulong lastClockReading = 0;
@@ -277,7 +280,7 @@ bool operator>=(const OcppTimestamp &lhs, const OcppTimestamp &rhs) {
 }
 
 
-OcppTime::OcppTime(OcppClock system_clock) : system_clock(system_clock) {
+OcppTime::OcppTime(const OcppClock& system_clock) : system_clock(system_clock) {
 
 }
 

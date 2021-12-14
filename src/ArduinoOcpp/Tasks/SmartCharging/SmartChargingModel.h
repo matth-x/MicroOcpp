@@ -10,9 +10,6 @@
 
 namespace ArduinoOcpp {
 
-extern const OcppTimestamp MIN_TIME;
-extern const OcppTimestamp MAX_TIME;
-
 enum class ChargingProfilePurposeType {
     ChargePointMaxProfile,
     TxDefaultProfile,
@@ -60,7 +57,7 @@ private:
 public:
     ChargingSchedule(JsonObject *json, ChargingProfileKindType chargingProfileKind, RecurrencyKindType recurrencyKind);
     ChargingSchedule(ChargingSchedule &other);
-    ChargingSchedule(OcppTimestamp &startSchedule, int duration);
+    ChargingSchedule(const OcppTimestamp &startSchedule, int duration);
     ~ChargingSchedule();
 
     /**

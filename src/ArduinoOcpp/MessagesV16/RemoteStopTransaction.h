@@ -14,15 +14,15 @@ namespace Ocpp16 {
 
 class RemoteStopTransaction : public OcppMessage {
 private:
-  int transactionId;
+    int transactionId;
 public:
-  RemoteStopTransaction();
+    RemoteStopTransaction();
 
-  const char* getOcppOperationType();
+    const char* getOcppOperationType();
 
-  void processReq(JsonObject payload);
+    void processReq(JsonObject payload);
 
-  DynamicJsonDocument* createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf();
 };
 
 } //end namespace Ocpp16

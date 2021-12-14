@@ -3,6 +3,9 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppOperation.h>
+#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/OcppSocket.h>
 
 #include <Variants.h>
 
@@ -24,6 +27,18 @@ OcppOperation::~OcppOperation(){
 
 void OcppOperation::setOcppMessage(std::unique_ptr<OcppMessage> msg){
     ocppMessage = std::move(msg);
+}
+
+void OcppOperation::setOcppModel(std::shared_ptr<OcppModel> oModel) {
+    if (!ocppMessage) {
+        Serial.print(F("[OcppOperation] Please ensure that setOcppModel() will be called after setOcppMessage(). Abort"));
+        return;
+    }
+    if (!oModel) {
+        Serial.print(F("[OcppOperation] in setOcppModel(): passed nullptr! Ignore\n"));
+        return;
+    }
+    ocppMessage->setOcppModel(oModel);
 }
 
 void OcppOperation::setTimeout(std::unique_ptr<Timeout> to){

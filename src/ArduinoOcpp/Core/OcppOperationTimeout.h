@@ -10,8 +10,8 @@
 
 namespace ArduinoOcpp {
 
-typedef std::function<void()> OnTimeoutListener;
-typedef std::function<void()> OnAbortListener;
+using OnTimeoutListener = std::function<void()>;
+using OnAbortListener = std::function<void()>;
 
 class Timeout {
 private:

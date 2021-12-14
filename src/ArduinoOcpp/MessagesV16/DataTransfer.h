@@ -14,14 +14,14 @@ class DataTransfer : public OcppMessage {
 private:
   String msg;
 public:
-  DataTransfer(String &msg);
+    DataTransfer(String &msg);
 
-  const char* getOcppOperationType();
+    const char* getOcppOperationType();
 
-  DynamicJsonDocument* createReq();
+    std::unique_ptr<DynamicJsonDocument> createReq();
 
-  void processConf(JsonObject payload);
-
+    void processConf(JsonObject payload);
+    
 };
 
 } //end namespace Ocpp16

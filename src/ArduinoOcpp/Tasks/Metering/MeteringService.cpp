@@ -3,23 +3,18 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
-#include <ArduinoOcpp/Core/OcppOperation.h>
-#include <ArduinoOcpp/MessagesV16/MeterValues.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 
 using namespace ArduinoOcpp;
-using namespace ArduinoOcpp::Ocpp16;
 
-MeteringService::MeteringService(int numConn, OcppTime *ocppTime)
-      : numConnectors(numConn) {
+MeteringService::MeteringService(OcppEngine& context, int numConn)
+      : context(context), numConnectors{numConn} {
   
     connectors = (ConnectorMeterValuesRecorder**) malloc(numConn * sizeof(ConnectorMeterValuesRecorder*));
     for (int i = 0; i < numConn; i++) {
-        connectors[i] = new ConnectorMeterValuesRecorder(i, ocppTime);
+        connectors[i] = new ConnectorMeterValuesRecorder(context.getOcppModel(), i);
     }
-
-    setMeteringSerivce(this); //make MeteringService available through Ocpp Engine
 }
 
 MeteringService::~MeteringService() {
@@ -32,11 +27,11 @@ MeteringService::~MeteringService() {
 void MeteringService::loop(){
 
     for (int i = 0; i < numConnectors; i++){
-        MeterValues *meterValuesMsg = connectors[i]->loop();
+        auto meterValuesMsg = connectors[i]->loop();
         if (meterValuesMsg != nullptr) {
             auto meterValues = makeOcppOperation(meterValuesMsg);
             meterValues->setTimeout(std::unique_ptr<Timeout>{new FixedTimeout(120000)});
-            initiateOcppOperation(std::move(meterValues));
+            context.initiateOperation(std::move(meterValues));
         }
     }
 }

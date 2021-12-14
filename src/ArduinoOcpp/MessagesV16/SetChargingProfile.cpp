@@ -2,25 +2,25 @@
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
-#include "Variants.h"
-
 #include <ArduinoOcpp/MessagesV16/SetChargingProfile.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
+
+#include <Variants.h>
 
 using ArduinoOcpp::Ocpp16::SetChargingProfile;
 
-SetChargingProfile::SetChargingProfile(SmartChargingService *smartChargingService) 
-  : smartChargingService(smartChargingService) {
+SetChargingProfile::SetChargingProfile() {
 
 }
 
-SetChargingProfile::SetChargingProfile(DynamicJsonDocument *payloadToClient) 
-  : payloadToClient(payloadToClient) {
+SetChargingProfile::SetChargingProfile(std::unique_ptr<DynamicJsonDocument> payloadToClient) 
+  : payloadToClient{std::move(payloadToClient)} {
 
 }
 
 SetChargingProfile::~SetChargingProfile() {
-    if (payloadToClient != NULL)
-        delete payloadToClient;
+
 }
 
 const char* SetChargingProfile::getOcppOperationType(){
@@ -33,22 +33,25 @@ void SetChargingProfile::processReq(JsonObject payload) {
 
     JsonObject csChargingProfiles = payload["csChargingProfiles"];
 
-    smartChargingService->updateChargingProfile(&csChargingProfiles);
+    if (ocppModel && ocppModel->getSmartChargingService()) {
+        auto smartChargingService = ocppModel->getSmartChargingService();
+        smartChargingService->updateChargingProfile(&csChargingProfiles);
+    }
 }
 
-DynamicJsonDocument* SetChargingProfile::createConf(){ //TODO review
-    DynamicJsonDocument* doc = new DynamicJsonDocument(JSON_OBJECT_SIZE(1));
+std::unique_ptr<DynamicJsonDocument> SetChargingProfile::createConf(){ //TODO review
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = "Accepted";
     return doc;
 }
 
-DynamicJsonDocument* SetChargingProfile::createReq() {
-    if (payloadToClient != NULL) {
-        DynamicJsonDocument *result = new DynamicJsonDocument(*payloadToClient);
+std::unique_ptr<DynamicJsonDocument> SetChargingProfile::createReq() {
+    if (payloadToClient != nullptr) {
+        auto result = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(*payloadToClient));
         return result;
     }
-    return NULL;
+    return nullptr;
 }
 
 void SetChargingProfile::processConf(JsonObject payload) {

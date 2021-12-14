@@ -6,10 +6,14 @@
 #define TRIGGERMESSAGE_H
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
-#include <ArduinoOcpp/Core/OcppOperation.h>
 #include <Variants.h>
 
+#include <memory>
+
 namespace ArduinoOcpp {
+
+class OcppOperation;
+
 namespace Ocpp16 {
 
 class TriggerMessage : public OcppMessage {
@@ -23,7 +27,7 @@ public:
 
     void processReq(JsonObject payload);
 
-    DynamicJsonDocument* createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf();
 };
 
 } //end namespace Ocpp16

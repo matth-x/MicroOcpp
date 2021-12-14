@@ -12,21 +12,21 @@ namespace Ocpp16 {
 
 class Authorize : public OcppMessage {
 private:
-  String idTag;
+    String idTag;
 public:
-  Authorize();
+    Authorize();
 
-  Authorize(String &idTag);
+    Authorize(const String &idTag);
 
-  const char* getOcppOperationType();
+    const char* getOcppOperationType();
 
-  DynamicJsonDocument* createReq();
+    std::unique_ptr<DynamicJsonDocument> createReq();
 
-  void processConf(JsonObject payload);
+    void processConf(JsonObject payload);
 
-  void processReq(JsonObject payload);
+    void processReq(JsonObject payload);
 
-  DynamicJsonDocument* createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf();
 
 };
 

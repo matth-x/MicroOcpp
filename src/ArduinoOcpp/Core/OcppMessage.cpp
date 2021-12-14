@@ -8,24 +8,29 @@
 
 using ArduinoOcpp::OcppMessage;
 
-OcppMessage::OcppMessage(){}
+OcppMessage::OcppMessage() {}
 
-OcppMessage::~OcppMessage(){}
+OcppMessage::~OcppMessage() {}
   
 const char* OcppMessage::getOcppOperationType(){
     Serial.print(F("[OcppMessage]  Unsupported operation: getOcppOperationType() is not implemented!\n"));
     return "CustomOperation";
 }
 
+void OcppMessage::setOcppModel(std::shared_ptr<OcppModel> ocppModel) {
+    if (!ocppModelInitialized) { //prevent the ocppModel from being overwritten
+        this->ocppModel = ocppModel; //can still be nullptr
+        ocppModelInitialized = true;
+    }
+}
+
 void OcppMessage::initiate() {
     //called after initiateOcppOperation(anyMsg)
 }
 
-DynamicJsonDocument* OcppMessage::createReq() {
+std::unique_ptr<DynamicJsonDocument> OcppMessage::createReq() {
     Serial.print(F("[OcppMessage]  Unsupported operation: createReq() is not implemented!\n"));
-    DynamicJsonDocument* doc = new DynamicJsonDocument(0);
-    doc->to<JsonObject>();
-    return doc;
+    return nullptr;
 }
 
 void OcppMessage::processConf(JsonObject payload) {
@@ -36,13 +41,13 @@ void OcppMessage::processReq(JsonObject payload) {
     Serial.print(F("[OcppMessage]  Unsupported operation: processReq() is not implemented!\n"));
 }
 
-DynamicJsonDocument* OcppMessage::createConf() {
+std::unique_ptr<DynamicJsonDocument> OcppMessage::createConf() {
     Serial.print(F("[OcppMessage]  Unsupported operation: createConf() is not implemented!\n"));
-    return NULL;
+    return nullptr;
 }
 
-DynamicJsonDocument *ArduinoOcpp::createEmptyDocument() {
-  DynamicJsonDocument *emptyDoc = new DynamicJsonDocument(0);
-  emptyDoc->to<JsonObject>();
-  return emptyDoc;
+std::unique_ptr<DynamicJsonDocument> ArduinoOcpp::createEmptyDocument() {
+    auto emptyDoc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(0));
+    emptyDoc->to<JsonObject>();
+    return std::move(emptyDoc);
 }

@@ -13,25 +13,25 @@ namespace Ocpp16 {
 
 class GetDiagnostics : public OcppMessage {
 private:
-  String location = String('\0');
-  int retries = 1;
-  ulong retryInterval = 180;
-  OcppTimestamp startTime = OcppTimestamp();
-  OcppTimestamp stopTime = OcppTimestamp();
+    String location = String('\0');
+    int retries = 1;
+    ulong retryInterval = 180;
+    OcppTimestamp startTime = OcppTimestamp();
+    OcppTimestamp stopTime = OcppTimestamp();
 
-  String fileName = String('\0');
-  
-  bool formatError = false;
+    String fileName = String('\0');
+    
+    bool formatError = false;
 public:
-  GetDiagnostics();
+    GetDiagnostics();
 
-  const char* getOcppOperationType() {return "GetDiagnostics";}
+    const char* getOcppOperationType() {return "GetDiagnostics";}
 
-  void processReq(JsonObject payload);
+    void processReq(JsonObject payload);
 
-  DynamicJsonDocument* createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf();
 
-  const char *getErrorCode() {if (formatError) return "FormationViolation"; else return NULL;}
+    const char *getErrorCode() {if (formatError) return "FormationViolation"; else return nullptr;}
 };
 
 } //end namespace Ocpp16

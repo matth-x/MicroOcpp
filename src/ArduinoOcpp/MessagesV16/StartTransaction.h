@@ -15,27 +15,27 @@ namespace Ocpp16 {
 
 class StartTransaction : public OcppMessage {
 private:
-  int connectorId = 1;
-  float meterStart = -1.0f;
-  OcppTimestamp otimestamp;
-  String idTag = String('\0');
-  uint16_t transactionRev = 0;
+    int connectorId = 1;
+    float meterStart = -1.0f;
+    OcppTimestamp otimestamp;
+    String idTag = String('\0');
+    uint16_t transactionRev = 0;
 public:
-  StartTransaction(int connectorId);
+    StartTransaction(int connectorId);
 
-  StartTransaction(int connectorId, String &idTag);
+    StartTransaction(int connectorId, String &idTag);
 
-  const char* getOcppOperationType();
+    const char* getOcppOperationType();
 
-  void initiate();
+    void initiate();
 
-  DynamicJsonDocument* createReq();
+    std::unique_ptr<DynamicJsonDocument> createReq();
 
-  void processConf(JsonObject payload);
+    void processConf(JsonObject payload);
 
-  void processReq(JsonObject payload);
+    void processReq(JsonObject payload);
 
-  DynamicJsonDocument* createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf();
 };
 
 } //end namespace Ocpp16

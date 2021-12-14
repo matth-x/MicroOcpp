@@ -5,7 +5,7 @@
 #ifndef METERVALUES_H
 #define METERVALUES_H
 
-#include <ArduinoOcpp/Core/OcppOperation.h>
+#include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
 
 namespace ArduinoOcpp {
@@ -14,31 +14,29 @@ namespace Ocpp16 {
 class MeterValues : public OcppMessage {
 private:
 
-  std::vector<OcppTimestamp> sampleTime;
-  std::vector<float> power;
-  std::vector<float> energy;
+    std::vector<OcppTimestamp> sampleTime;
+    std::vector<float> power;
+    std::vector<float> energy;
 
-  int connectorId = 0;
-  int transactionId = -1;
+    int connectorId = 0;
+    int transactionId = -1;
 
 public:
-  MeterValues(std::vector<OcppTimestamp> *sampleTime, std::vector<float> *energy);
+    MeterValues(const std::vector<OcppTimestamp> *sampleTime, const std::vector<float> *energy, const std::vector<float> *power, int connectorId, int transactionId);
 
-  MeterValues(std::vector<OcppTimestamp> *sampleTime, std::vector<float> *energy, std::vector<float> *power, int connectorId, int transactionId);
+    MeterValues(); //for debugging only. Make this for the server pendant
 
-  MeterValues(); //for debugging only. Make this for the server pendant
+    ~MeterValues();
 
-  ~MeterValues();
+    const char* getOcppOperationType();
 
-  const char* getOcppOperationType();
+    std::unique_ptr<DynamicJsonDocument> createReq();
 
-  DynamicJsonDocument* createReq();
+    void processConf(JsonObject payload);
 
-  void processConf(JsonObject payload);
+    void processReq(JsonObject payload);
 
-  void processReq(JsonObject payload);
-
-  DynamicJsonDocument* createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf();
 };
 
 } //end namespace Ocpp16

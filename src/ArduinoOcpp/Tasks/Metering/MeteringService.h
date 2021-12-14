@@ -17,29 +17,29 @@
 
 namespace ArduinoOcpp {
 
-//typedef float (*PowerSampler)();
-//typedef float (*EnergySampler)();
+using PowerSampler = std::function<float()>;
+using EnergySampler = std::function<float()>;
 
-typedef std::function<float()> PowerSampler;
-typedef std::function<float()> EnergySampler;
-
+class OcppEngine;
 
 class MeteringService {
 private:
-  const int numConnectors;
-  ConnectorMeterValuesRecorder **connectors;
+    OcppEngine& context;
+    
+    const int numConnectors;
+    ConnectorMeterValuesRecorder **connectors;
 public:
-  MeteringService(int numConnectors, OcppTime *ocppTime);
+    MeteringService(OcppEngine& context, int numConnectors);
 
-  ~MeteringService();
+    ~MeteringService();
 
-  void loop();
+    void loop();
 
-  void setPowerSampler(int connectorId, PowerSampler powerSampler);
+    void setPowerSampler(int connectorId, PowerSampler powerSampler);
 
-  void setEnergySampler(int connectorId, EnergySampler energySampler);
+    void setEnergySampler(int connectorId, EnergySampler energySampler);
 
-  float readEnergyActiveImportRegister(int connectorId);
+    float readEnergyActiveImportRegister(int connectorId);
 };
 
 } //end namespace ArduinoOcpp

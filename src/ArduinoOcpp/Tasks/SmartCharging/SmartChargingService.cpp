@@ -2,10 +2,12 @@
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
-#include "Variants.h"
+#include <Variants.h>
 
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 
 #include <ArduinoOcpp/Core/Configuration.h>
 
@@ -26,8 +28,8 @@
 
 using namespace::ArduinoOcpp;
 
-SmartChargingService::SmartChargingService(float chargeLimit, float V_eff, int numConnectors, OcppTime *ocppTime, FilesystemOpt filesystemOpt)
-      : DEFAULT_CHARGE_LIMIT(chargeLimit), V_eff(V_eff), ocppTime(ocppTime), filesystemOpt(filesystemOpt) {
+SmartChargingService::SmartChargingService(OcppEngine& context, float chargeLimit, float V_eff, int numConnectors, FilesystemOpt filesystemOpt)
+      : context(context), DEFAULT_CHARGE_LIMIT{chargeLimit}, V_eff{V_eff}, filesystemOpt{filesystemOpt} {
   
     if (numConnectors > 2) {
         Serial.print(F("[SmartChargingService] Error: Unfortunately, multiple connectors are not implemented in SmartChargingService yet. Only connector 1 will receive charging limits\n"));
@@ -43,7 +45,6 @@ SmartChargingService::SmartChargingService(float chargeLimit, float V_eff, int n
         TxDefaultProfile[i] = NULL;
         TxProfile[i] = NULL;
     }
-    setSmartChargingService(this); //in OcppEngine.cpp
     declareConfiguration("ChargeProfileMaxStackLevel", CHARGEPROFILEMAXSTACKLEVEL, CONFIGURATION_FN, false, true, false, true);
 
     loadProfiles();
@@ -56,8 +57,8 @@ void SmartChargingService::loop(){
     /**
      * check if to call onLimitChange
      */
-    if (ocppTime->getOcppTimestampNow() >= nextChange){
-        OcppTimestamp tNow = ocppTime->getOcppTimestampNow();
+    if (context.getOcppModel().getOcppTime().getOcppTimestampNow() >= nextChange){
+        auto& tNow = context.getOcppModel().getOcppTime().getOcppTimestampNow();
         float limit = -1.0f;
         OcppTimestamp validTo = OcppTimestamp();
         inferenceLimit(tNow, &limit, &validTo);
@@ -88,7 +89,8 @@ void SmartChargingService::loop(){
 float SmartChargingService::inferenceLimitNow(){
     float limit = 0.0f;
     OcppTimestamp validTo = OcppTimestamp(); //not needed
-    inferenceLimit(ocppTime->getOcppTimestampNow(), &limit, &validTo);
+    auto& tNow = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+    inferenceLimit(tNow, &limit, &validTo);
     return limit;
 }
 
@@ -197,11 +199,7 @@ void SmartChargingService::writeOutCompositeSchedule(JsonObject *json){
 }
 
 ChargingSchedule *SmartChargingService::getCompositeSchedule(int connectorId, otime_t duration){
-    OcppTime *ocppTime = getOcppTime();
-    OcppTimestamp startSchedule = OcppTimestamp();
-    if (ocppTime) {
-        startSchedule = ocppTime->getOcppTimestampNow();
-    }
+    auto& startSchedule = context.getOcppModel().getOcppTime().getOcppTimestampNow();
     ChargingSchedule *result = new ChargingSchedule(startSchedule, duration);
     OcppTimestamp periodBegin = OcppTimestamp(startSchedule);
     OcppTimestamp periodStop = OcppTimestamp(startSchedule);
@@ -219,48 +217,25 @@ ChargingSchedule *SmartChargingService::getCompositeSchedule(int connectorId, ot
 }
 
 void SmartChargingService::refreshChargingSessionState() {
-    int currentTxId = getChargePointStatusService()->getConnector(SINGLE_CONNECTOR_ID)->getTransactionId();
+    int currentTxId = -1;
+    if (context.getOcppModel().getConnectorStatus(SINGLE_CONNECTOR_ID)) {
+        auto connector = context.getOcppModel().getConnectorStatus(SINGLE_CONNECTOR_ID);
+        currentTxId = connector->getTransactionId();
+    }
 
     if (currentTxId != chargingSessionTransactionID) {
         //transition!
 
         if (chargingSessionTransactionID != 0 && currentTxId >= 0) {
-            chargingSessionStart = ocppTime->getOcppTimestampNow();
+            chargingSessionStart = context.getOcppModel().getOcppTime().getOcppTimestampNow();
         } else if (chargingSessionTransactionID >= 0 && currentTxId < 0) {
             chargingSessionStart = MAX_TIME;
         }
 
-        nextChange = ocppTime->getOcppTimestampNow();
+        nextChange = context.getOcppModel().getOcppTime().getOcppTimestampNow();
         chargingSessionTransactionID = currentTxId;
     }
 }
-
-/*
-void SmartChargingService::beginCharging(time_t t, int transactionID){
-  if (chargingSessionIsActive) {
-    Serial.print(F("[SmartChargingService] Error: begin new Charging session though there is already running one!\n"));
-  }
-  chargingSessionStart = t;
-  chargingSessionTransactionID = transactionID;
-  chargingSessionIsActive = true;
-  nextChange = minimum(t, nextChange);
-}
-
-void SmartChargingService::beginChargingNow(){
-  beginCharging(now(), -1);
-}
-
-void SmartChargingService::endChargingNow(){
-  if (!chargingSessionIsActive) {
-    Serial.print(F("[SmartChargingService] Error: end Charging session but there isn't running one!\n"));
-  }
-  
-  chargingSessionStart = INFINITY_THLD;
-  chargingSessionTransactionID = -1;
-  chargingSessionIsActive = false;
-  nextChange = now();
-}
-*/
 
 void SmartChargingService::updateChargingProfile(JsonObject *json) {
     ChargingProfile *pointer = updateProfileStack(json);
@@ -307,7 +282,7 @@ ChargingProfile *SmartChargingService::updateProfileStack(JsonObject *json){
      * Invalidate the last limit inference by setting the nextChange to now. By the next loop()-call, the limit
      * and nextChange will be recalculated and onLimitChanged will be called.
      */
-    nextChange = ocppTime->getOcppTimestampNow();
+    nextChange = context.getOcppModel().getOcppTime().getOcppTimestampNow();
 
     return chargingProfile;
 }
@@ -362,7 +337,7 @@ bool SmartChargingService::clearChargingProfile(const std::function<bool(int, in
      * Invalidate the last limit inference by setting the nextChange to now. By the next loop()-call, the limit
      * and nextChange will be recalculated and onLimitChanged will be called.
      */
-    nextChange = ocppTime->getOcppTimestampNow();
+    nextChange = context.getOcppModel().getOcppTime().getOcppTimestampNow();
 
     return nMatches > 0;
 }

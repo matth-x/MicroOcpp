@@ -16,14 +16,16 @@
 
 namespace ArduinoOcpp {
 
-//typedef void (*OnLimitChange)(float newLimit);
-typedef std::function<void(float)> OnLimitChange;
+using OnLimitChange = std::function<void(float)>;
+
+class OcppEngine;
 
 class SmartChargingService {
 private:
+    OcppEngine& context;
+    
     const float DEFAULT_CHARGE_LIMIT;
     const float V_eff; //use for approximation: chargingLimit in A * V_eff = chargingLimit in W
-    OcppTime *ocppTime;
     ChargingProfile *ChargePointMaxProfile[CHARGEPROFILEMAXSTACKLEVEL];
     ChargingProfile *TxDefaultProfile[CHARGEPROFILEMAXSTACKLEVEL];
     ChargingProfile *TxProfile[CHARGEPROFILEMAXSTACKLEVEL];
@@ -41,10 +43,7 @@ private:
     bool loadProfiles();
   
 public:
-    SmartChargingService(float chargeLimit, float V_eff, int numConnectors, OcppTime *ocppTime, FilesystemOpt filesystemOpt = FilesystemOpt::Use_Mount_FormatOnFail);
-    //void beginCharging(const OcppTimestamp &t, int transactionID);
-    //void beginChargingNow();
-    //void endChargingNow();
+    SmartChargingService(OcppEngine& context, float chargeLimit, float V_eff, int numConnectors, FilesystemOpt filesystemOpt = FilesystemOpt::Use_Mount_FormatOnFail);
     void updateChargingProfile(JsonObject *json);
     bool clearChargingProfile(const std::function<bool(int, int, ChargingProfilePurposeType, int)>& filter);
     void inferenceLimit(const OcppTimestamp &t, float *limit, OcppTimestamp *validTo);

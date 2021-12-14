@@ -3,6 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsStatus.h>
 
 #ifndef DIAGNOSTICSSTATUSNOTIFICATION_H
 #define DIAGNOSTICSSTATUSNOTIFICATION_H
@@ -10,27 +11,20 @@
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 
-enum class DiagnosticsStatus {
-    Idle,
-    Uploaded,
-    UploadFailed,
-    Uploading
-};
-
 class DiagnosticsStatusNotification : public OcppMessage {
 private:
-  DiagnosticsStatus status;
-  static const char *cstrFromFwStatus(DiagnosticsStatus status);
+    DiagnosticsStatus status;
+    static const char *cstrFromFwStatus(DiagnosticsStatus status);
 public:
-  DiagnosticsStatusNotification();
+    DiagnosticsStatusNotification();
 
-  DiagnosticsStatusNotification(DiagnosticsStatus status);
+    DiagnosticsStatusNotification(DiagnosticsStatus status);
 
-  const char* getOcppOperationType() {return "DiagnosticsStatusNotification"; }
+    const char* getOcppOperationType() {return "DiagnosticsStatusNotification"; }
 
-  DynamicJsonDocument* createReq();
+    std::unique_ptr<DynamicJsonDocument> createReq();
 
-  void processConf(JsonObject payload);
+    void processConf(JsonObject payload);
 
 };
 

@@ -10,22 +10,24 @@
 //#define METER_VALUES_SAMPLED_DATA_MAX_LENGTH 4 //after 4 measurements, send the values to the CS
 
 #include <functional>
+#include <memory>
 
-#include <ArduinoOcpp/MessagesV16/MeterValues.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 
 namespace ArduinoOcpp {
 
-//typedef float (*PowerSampler)();
-//typedef float (*EnergySampler)();
-typedef std::function<float()> PowerSampler;
-typedef std::function<float()> EnergySampler;
+using PowerSampler = std::function<float()>;
+using EnergySampler = std::function<float()>;
+
+class OcppModel;
+class OcppTimestamp;
+class OcppMessage;
 
 class ConnectorMeterValuesRecorder {
 private:
+    OcppModel& context;
+    
     const int connectorId;
-    OcppTime *ocppTime;
 
     std::vector<OcppTimestamp> sampleTimestamp;
     std::vector<float> energy;
@@ -41,12 +43,12 @@ private:
     std::shared_ptr<Configuration<int>> MeterValuesSampledDataMaxLength = NULL;
 
     void takeSample();
-    Ocpp16::MeterValues *toMeterValues(); //returns message if connector has captured enough samples
+    OcppMessage *toMeterValues(); //returns message if connector has captured enough samples
     void clear();
 public:
-    ConnectorMeterValuesRecorder(int connectorId, OcppTime *ocppTime);
+    ConnectorMeterValuesRecorder(OcppModel& context, int connectorId);
 
-    Ocpp16::MeterValues *loop();
+    OcppMessage *loop();
 
     void setPowerSampler(PowerSampler powerSampler);
 

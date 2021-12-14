@@ -25,7 +25,7 @@ public:
 
   void processReq(JsonObject payload);
 
-  DynamicJsonDocument* createConf();
+  std::unique_ptr<DynamicJsonDocument> createConf();
 
   const char *getErrorCode() {if (formatError) return "FormationViolation"; else return NULL;}
 };

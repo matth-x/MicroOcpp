@@ -27,7 +27,7 @@ AbstractConfiguration::AbstractConfiguration() {
 
 }
 
-AbstractConfiguration::AbstractConfiguration(JsonObject storedKeyValuePair) {
+AbstractConfiguration::AbstractConfiguration(JsonObject &storedKeyValuePair) {
     if (storedKeyValuePair["key"].as<JsonVariant>().is<const char*>()) {
         setKey(storedKeyValuePair["key"]);
     } else {
@@ -36,14 +36,14 @@ AbstractConfiguration::AbstractConfiguration(JsonObject storedKeyValuePair) {
 }
 
 AbstractConfiguration::~AbstractConfiguration() {
-    if (key != NULL) {
+    if (key != nullptr) {
         free(key);
     }
-    key = NULL;
+    key = nullptr;
 }
 
 void AbstractConfiguration::printKey() {
-    if (key != NULL) {
+    if (key != nullptr) {
         Serial.print(key);
     }
 }
@@ -53,7 +53,7 @@ size_t AbstractConfiguration::getStorageHeaderJsonCapacity() {
             + key_size + 1; //TODO key_size already considers 0-terminator. Is "+1" really necessary here?
 }
 
-void AbstractConfiguration::storeStorageHeader(JsonObject keyValuePair) {
+void AbstractConfiguration::storeStorageHeader(JsonObject &keyValuePair) {
     if (toBeRemovedFlag) return;
     keyValuePair["key"] = key;
 }
@@ -63,7 +63,7 @@ size_t AbstractConfiguration::getOcppMsgHeaderJsonCapacity() {
             + key_size + 1; //TODO key_size already considers 0-terminator. Is "+1" really necessary here?
 }
 
-void AbstractConfiguration::storeOcppMsgHeader(JsonObject keyValuePair) {
+void AbstractConfiguration::storeOcppMsgHeader(JsonObject &keyValuePair) {
     if (toBeRemovedFlag) return;
     keyValuePair["key"] = key;
     if (remotePeerCanWrite) {
@@ -74,11 +74,11 @@ void AbstractConfiguration::storeOcppMsgHeader(JsonObject keyValuePair) {
 }
 
 bool AbstractConfiguration::isValid() {
-    return initializedValue && key != NULL && key_size > 0 && !toBeRemovedFlag;
+    return initializedValue && key != nullptr && key_size > 0 && !toBeRemovedFlag;
 }
 
 bool AbstractConfiguration::setKey(const char *newKey) {
-    if (key != NULL || key_size > 0) {
+    if (key != nullptr || key_size > 0) {
         Serial.print(F("[AbstractConfiguration] Cannot change key or set key twice! Keep old value\n"));
         return false;
     }
@@ -144,9 +144,10 @@ Configuration<const char *>::Configuration() {
 }
 
 template<class T>
-Configuration<T>::Configuration(JsonObject storedKeyValuePair) : AbstractConfiguration(storedKeyValuePair) {
-    if (storedKeyValuePair["value"].as<JsonVariant>().is<T>()) {
-        this->operator=(storedKeyValuePair["value"].as<JsonVariant>().as<T>());
+Configuration<T>::Configuration(JsonObject &storedKeyValuePair) : AbstractConfiguration(storedKeyValuePair) {
+    auto jsonEntry = storedKeyValuePair["value"].as<JsonVariant>();
+    if (jsonEntry.is<T>()) {
+        this->operator=(jsonEntry.as<T>());
     } else {
         Serial.print(F("[Configuration<T>] Type mismatch: cannot deserialize Json to given Type T\n"));
     }
@@ -176,6 +177,16 @@ const T &Configuration<T>::operator=(const T & newVal) {
     return newVal;
 }
 
+template <class T>
+Configuration<T>::operator T() {
+    if (!initializedValue) {
+//        Serial.print(F("[Configuration<T>] Tried to access value without preceeding initialization: "));
+//        printKey();
+//        Serial.println();
+    }
+    return value;
+}
+
 template<class T>
 bool Configuration<T>::isValid() {
     return AbstractConfiguration::isValid();
@@ -198,7 +209,7 @@ size_t Configuration<const char *>::getValueJsonCapacity() {
 template<class T>
 std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonStorageEntry() {
     if (!isValid() || toBeRemoved()) {
-        return NULL;
+        return nullptr;
     }
     size_t capacity = getStorageHeaderJsonCapacity()
                 + getValueJsonCapacity()
@@ -215,7 +226,7 @@ std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonStorageEntry() {
 template<class T>
 std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonOcppMsgEntry() {
     if (!isValid() || toBeRemoved()) {
-        return NULL;
+        return nullptr;
     }
     size_t capacity = getOcppMsgHeaderJsonCapacity()
                 + getValueJsonCapacity()
@@ -230,7 +241,7 @@ std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonOcppMsgEntry() {
 
 std::shared_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonStorageEntry() {
     if (!isValid() || toBeRemoved()) {
-        return NULL;
+        return nullptr;
     }
     size_t capacity = getStorageHeaderJsonCapacity()
                 + getValueJsonCapacity()
@@ -246,7 +257,7 @@ std::shared_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonStorageE
 
 std::shared_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonOcppMsgEntry() {
     if (!isValid() || toBeRemoved()) {
-        return NULL;
+        return nullptr;
     }
     size_t capacity = getOcppMsgHeaderJsonCapacity()
                 + getValueJsonCapacity()
@@ -259,7 +270,7 @@ std::shared_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonOcppMsgE
     return doc;
 }
 
-Configuration<const char *>::Configuration(JsonObject storedKeyValuePair) : AbstractConfiguration(storedKeyValuePair) {
+Configuration<const char *>::Configuration(JsonObject &storedKeyValuePair) : AbstractConfiguration(storedKeyValuePair) {
     if (storedKeyValuePair["value"].as<JsonVariant>().is<const char*>()) {
         const char *storedValue = storedKeyValuePair["value"].as<JsonVariant>().as<const char*>();
         if (storedValue) {
@@ -275,13 +286,13 @@ Configuration<const char *>::Configuration(JsonObject storedKeyValuePair) : Abst
 }
 
 Configuration<const char *>::~Configuration() {
-    if (value != NULL) {
+    if (value != nullptr) {
         free(value);
-        value = NULL;
+        value = nullptr;
     }
-    if (valueReadOnlyCopy != NULL) {
+    if (valueReadOnlyCopy != nullptr) {
         free(valueReadOnlyCopy);
-        valueReadOnlyCopy = NULL;
+        valueReadOnlyCopy = nullptr;
     }
 }
 
@@ -338,14 +349,14 @@ bool Configuration<const char *>::setValue(const char *new_value, size_t buffsiz
     
     if (value_changed || !initializedValue) {
 
-        if (value != NULL) {
+        if (value != nullptr) {
             free(value);
-            value = NULL;
+            value = nullptr;
         }
 
-        if (valueReadOnlyCopy != NULL) {
+        if (valueReadOnlyCopy != nullptr) {
             free(valueReadOnlyCopy);
-            valueReadOnlyCopy = NULL;
+            valueReadOnlyCopy = nullptr;
         }
 
         value_size = checkedBuffsize;
@@ -355,14 +366,14 @@ bool Configuration<const char *>::setValue(const char *new_value, size_t buffsiz
         if (!value || !valueReadOnlyCopy) {
             Serial.print(F("[Configuration<const char *>] in setValue(): Could not allocate value or value copy\n"));
 
-            if (value != NULL) {
+            if (value != nullptr) {
                 free(value);
-                value = NULL;
+                value = nullptr;
             }
 
-            if (valueReadOnlyCopy != NULL) {
+            if (valueReadOnlyCopy != nullptr) {
                 free(valueReadOnlyCopy);
-                valueReadOnlyCopy = NULL;
+                valueReadOnlyCopy = nullptr;
             }
 
             value_size = 0;
@@ -402,7 +413,7 @@ Configuration<const char *>::operator const char*() {
 }
 
 bool Configuration<const char *>::isValid() {
-    return AbstractConfiguration::isValid() && value != NULL && valueReadOnlyCopy != NULL && value_size > 0;
+    return AbstractConfiguration::isValid() && value != nullptr && valueReadOnlyCopy != nullptr && value_size > 0;
 }
 
 size_t Configuration<const char *>::getBuffsize() {

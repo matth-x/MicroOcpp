@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2021
 // MIT License
 
-#include "Variants.h"
+#include <Variants.h>
 
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 
@@ -29,100 +29,139 @@
 #include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
 #include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
 
-#include <ArduinoOcpp/Core/OcppEngine.h>
-
 #include <string.h>
 
+#include <vector>
+
 namespace ArduinoOcpp {
+
+class TBDeiniter {
+public:
+    virtual ~TBDeiniter() = default;
+};
+
+std::vector<std::unique_ptr<TBDeiniter>> toBeDeinitialized;
+
+template<class T>
+class TBDeiniterConcrete : public TBDeiniter {
+private:
+    T& obj;
+public:
+    TBDeiniterConcrete(T& obj) : obj(obj) { }
+    ~TBDeiniterConcrete() {obj = nullptr;}
+};
+
+template<class T>
+void deinit_afterwards(T& obj) {
+    toBeDeinitialized.emplace_back(std::unique_ptr<TBDeiniter>{new TBDeiniterConcrete<T>{obj}});
+}
 
 OnReceiveReqListener onAuthorizeRequest;
 void setOnAuthorizeRequestListener(OnReceiveReqListener listener){
     onAuthorizeRequest = listener;
+    deinit_afterwards(onAuthorizeRequest);
 }
 
 OnReceiveReqListener onBootNotificationRequest;
 void setOnBootNotificationRequestListener(OnReceiveReqListener listener){
     onBootNotificationRequest = listener;
+    deinit_afterwards(onBootNotificationRequest);
 }
 
 OnReceiveReqListener onTargetValuesRequest;
 void setOnTargetValuesRequestListener(OnReceiveReqListener listener) {
     onTargetValuesRequest = listener;
+    deinit_afterwards(onTargetValuesRequest);
 }
 
 OnReceiveReqListener onSetChargingProfileRequest;
 void setOnSetChargingProfileRequestListener(OnReceiveReqListener listener){
     onSetChargingProfileRequest = listener;
+    deinit_afterwards(onSetChargingProfileRequest);
 }
 
 OnReceiveReqListener onStartTransactionRequest;
 void setOnStartTransactionRequestListener(OnReceiveReqListener listener){
     onStartTransactionRequest = listener;
+    deinit_afterwards(onStartTransactionRequest);
 }
 
 OnReceiveReqListener onTriggerMessageRequest;
 void setOnTriggerMessageRequestListener(OnReceiveReqListener listener){
     onTriggerMessageRequest = listener;
+    deinit_afterwards(onTriggerMessageRequest);
 }
 
 OnReceiveReqListener onRemoteStartTransactionReceiveRequest;
 void setOnRemoteStartTransactionReceiveRequestListener(OnReceiveReqListener listener) {
     onRemoteStartTransactionReceiveRequest = listener;
+    deinit_afterwards(onRemoteStartTransactionReceiveRequest);
 }
 
 OnSendConfListener onRemoteStartTransactionSendConf;
 void setOnRemoteStartTransactionSendConfListener(OnSendConfListener listener){
     onRemoteStartTransactionSendConf = listener;
+    deinit_afterwards(onRemoteStartTransactionSendConf);
 }
 
 OnReceiveReqListener onRemoteStopTransactionReceiveRequest;
 void setOnRemoteStopTransactionReceiveRequestListener(OnReceiveReqListener listener){
     onRemoteStopTransactionReceiveRequest = listener;
+    deinit_afterwards(onRemoteStopTransactionReceiveRequest);
 }
 
 OnSendConfListener onRemoteStopTransactionSendConf;
 void setOnRemoteStopTransactionSendConfListener(OnSendConfListener listener){
     onRemoteStopTransactionSendConf = listener;
+    deinit_afterwards(onRemoteStopTransactionSendConf);
 }
 
 OnSendConfListener onChangeConfigurationReceiveReq;
 void setOnChangeConfigurationReceiveRequestListener(OnReceiveReqListener listener){
     onChangeConfigurationReceiveReq = listener;
+    deinit_afterwards(onChangeConfigurationReceiveReq);
 }
 
 OnSendConfListener onChangeConfigurationSendConf;
 void setOnChangeConfigurationSendConfListener(OnSendConfListener listener){
     onChangeConfigurationSendConf = listener;
+    deinit_afterwards(onChangeConfigurationSendConf);
 }
 
 OnSendConfListener onGetConfigurationReceiveReq;
 void setOnGetConfigurationReceiveReqListener(OnSendConfListener listener){
     onGetConfigurationReceiveReq = listener;
+    deinit_afterwards(onGetConfigurationReceiveReq);
 }
 
 OnSendConfListener onGetConfigurationSendConf;
 void setOnGetConfigurationSendConfListener(OnSendConfListener listener){
     onGetConfigurationSendConf = listener;
+    deinit_afterwards(onGetConfigurationSendConf);
 }
 
 OnSendConfListener onResetReceiveReq;
 void setOnResetReceiveRequestListener(OnReceiveReqListener listener) {
     onResetReceiveReq = listener;
+    deinit_afterwards(onResetReceiveReq);
 }
 
 OnSendConfListener onResetSendConf;
 void setOnResetSendConfListener(OnSendConfListener listener){
     onResetSendConf = listener;
+    deinit_afterwards(onResetSendConf);
 }
 
 OnReceiveReqListener onUpdateFirmwareReceiveReq;
 void setOnUpdateFirmwareReceiveRequestListener(OnReceiveReqListener listener) {
     onUpdateFirmwareReceiveReq = listener;
+    deinit_afterwards(onUpdateFirmwareReceiveReq);
 }
 
 OnReceiveReqListener onMeterValuesReceiveReq;
 void setOnMeterValuesReceiveRequestListener(OnReceiveReqListener listener) {
     onMeterValuesReceiveReq = listener;
+    deinit_afterwards(onMeterValuesReceiveReq);
 }
 
 struct CustomOcppMessageCreatorEntry {
@@ -146,6 +185,11 @@ void registerCustomOcppMessage(const char *messageType, OcppMessageCreator ocppM
     entry.onReceiveReq = onReceiveReq;
 
     customMessagesRegistry.push_back(entry);
+}
+
+void simpleOcppFactory_deinitialize() {
+    customMessagesRegistry.clear();
+    toBeDeinitialized.clear();
 }
 
 CustomOcppMessageCreatorEntry *makeCustomOcppMessage(const char *messageType) {
@@ -195,7 +239,7 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::MeterValues());
         operation->setOnReceiveReqListener(onMeterValuesReceiveReq);
     } else if (!strcmp(messageType, "SetChargingProfile")) {
-        msg = std::unique_ptr<OcppMessage>(new Ocpp16::SetChargingProfile(getSmartChargingService()));
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::SetChargingProfile());
         operation->setOnReceiveReqListener(onSetChargingProfileRequest);
     } else if (!strcmp(messageType, "StatusNotification")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::StatusNotification());

@@ -5,9 +5,8 @@
 #ifndef CONNECTOR_STATUS
 #define CONNECTOR_STATUS
 
-#include <ArduinoOcpp/MessagesV16/StatusNotification.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/OcppEvseState.h>
-#include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 
 #define AVAILABILITY_OPERATIVE 2
 #define AVAILABILITY_INOPERATIVE_SCHEDULED 1
@@ -15,29 +14,33 @@
 
 namespace ArduinoOcpp {
 
+class OcppModel;
+class OcppMessage;
+
 class ConnectorStatus {
 private:
+    OcppModel& context;
+    
     const int connectorId;
-    OcppTime *ocppTime;
 
-    std::shared_ptr<Configuration<int>> availability = NULL;
+    std::shared_ptr<Configuration<int>> availability = nullptr;
 
     bool authorized = false;
     String idTag = String('\0');
     bool transactionRunning = false;
     //int transactionId = -1;
-    std::shared_ptr<Configuration<int>> transactionId = NULL;
+    std::shared_ptr<Configuration<int>> transactionId = nullptr;
     int transactionIdSync = -1;
     bool evDrawsEnergy = false;
     bool evseOffersEnergy = false;
-    std::function<bool()> connectorPluggedSampler = NULL;
-    //std::function<bool()> connectorFaultedSampler = NULL;
+    std::function<bool()> connectorPluggedSampler = nullptr;
+    //std::function<bool()> connectorFaultedSampler = nullptr;
     std::vector<std::function<const char *()>> connectorErrorCodeSamplers;
     const char *getErrorCode();
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
-    std::function<bool()> onUnlockConnector = NULL;
+    std::function<bool()> onUnlockConnector = nullptr;
 public:
-    ConnectorStatus(int connectorId, OcppTime *ocppTime);
+    ConnectorStatus(OcppModel& context, int connectorId);
 
     //boolean requestAuthorization();
     void authorize();
@@ -57,13 +60,12 @@ public:
     void startEnergyOffer();
     void stopEnergyOffer();
     void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
-    //void setConnectorFaultedSampler(std::function<bool()> connectorFaulted);
     void addConnectorErrorCodeSampler(std::function<const char*()> connectorErrorCode);
 
     void saveState();
     //void recoverState();
 
-    Ocpp16::StatusNotification *loop();
+    OcppMessage *loop();
 
     OcppEvseState inferenceStatus();
 

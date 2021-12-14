@@ -3,13 +3,14 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
-#include <ArduinoOcpp/MessagesV16/Heartbeat.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/MessagesV16/Heartbeat.h>
 
 using namespace ArduinoOcpp;
 
-HeartbeatService::HeartbeatService() {
+HeartbeatService::HeartbeatService(OcppEngine& context) : context(context) {
     heartbeatInterval = declareConfiguration("HeartbeatInterval", 86400);
     lastHeartbeat = millis();
 }
@@ -23,6 +24,6 @@ void HeartbeatService::loop() {
         lastHeartbeat = now;
 
         auto heartbeat = makeOcppOperation("Heartbeat");
-        initiateOcppOperation(std::move(heartbeat));
+        context.initiateOperation(std::move(heartbeat));
     }
 }

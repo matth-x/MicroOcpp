@@ -79,6 +79,9 @@
 #define PRINTLN(...) Serial.println(__VA_ARGS__)
 #endif
 
+WebSocketsClient wSock;
+ArduinoOcpp::EspWiFi::OcppClientSocket oSock{&wSock};
+
 int evPlugged = EV_UNPLUGGED;
 
 bool booted = false;
@@ -178,12 +181,11 @@ void setup() {
     /*
      * Initialize ArduinoOcpp framework.
      */
-    WebSocketsClient *wSock = new WebSocketsClient();
-    wSock->setReconnectInterval(5000);
-    wSock->enableHeartbeat(15000, 3000, 2);
+    wSock.setReconnectInterval(5000);
+    wSock.enableHeartbeat(15000, 3000, 2);
 
     if (httpAuthentication->getBuffsize() > 1) {
-        wSock->setAuthorization(*httpAuthentication);
+        wSock.setAuthorization(*httpAuthentication);
     }
     
     if (ocppUrlParsed.isTLS) {
@@ -200,15 +202,14 @@ void setup() {
             PRINT(F(" finished. Unix timestamp is "));
             PRINTLN(now);
 
-            wSock->beginSslWithCA(ocppUrlParsed.host.c_str(), ocppUrlParsed.port, ocppUrlParsed.url.c_str(), *CA_cert, "ocpp1.6");
+            wSock.beginSslWithCA(ocppUrlParsed.host.c_str(), ocppUrlParsed.port, ocppUrlParsed.url.c_str(), *CA_cert, "ocpp1.6");
         } else {
-            wSock->beginSSL(ocppUrlParsed.host.c_str(), ocppUrlParsed.port, ocppUrlParsed.url.c_str(), NULL, "ocpp1.6");
+            wSock.beginSSL(ocppUrlParsed.host.c_str(), ocppUrlParsed.port, ocppUrlParsed.url.c_str(), NULL, "ocpp1.6");
         }
     } else {
-        wSock->begin(ocppUrlParsed.host, ocppUrlParsed.port, ocppUrlParsed.url, "ocpp1.6");
+        wSock.begin(ocppUrlParsed.host, ocppUrlParsed.port, ocppUrlParsed.url, "ocpp1.6");
     }
 
-    ArduinoOcpp::EspWiFi::OcppClientSocket *oSock = new ArduinoOcpp::EspWiFi::OcppClientSocket(wSock);
     OCPP_initialize(oSock,
             /* Grid voltage */ 230.f, 
             ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, 
@@ -383,7 +384,7 @@ bool runWiFiManager() {
     WiFiManagerParameter httpAuthenticationSavePararm ("<div><label for='httpAuthenticationSave' style='width: auto;'>Save new HTTP token</label><input type='checkbox' name='httpAuthenticationSave' value='1'  style='width: auto; margin-left: 10px; vertical-align: middle;'></div>");
     wifiManager.addParameter(&httpAuthenticationSavePararm);
 
-    wifiManager.setSaveParamsCallback([&ocppUrlParam = ocppUrlParam, &ocppUrl = ocppUrl, &wifiManager = wifiManager, &CA_cert = CA_cert, &caCertParam = caCertParam, &httpAuthentication = httpAuthentication, &httpAuthenticationParam = httpAuthenticationParam] () {
+    wifiManager.setSaveParamsCallback([&ocppUrlParam, ocppUrl, &wifiManager, CA_cert, &caCertParam, httpAuthentication, &httpAuthenticationParam] () {
         String newOcppUrl = String(ocppUrlParam.getValue());
         newOcppUrl.trim();
         Ocpp_URL newOcppUrlParsed = Ocpp_URL();
