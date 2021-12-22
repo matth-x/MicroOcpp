@@ -62,6 +62,13 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
                 (connectorPluggedSampler == nullptr || !connectorPluggedSampler()) ) {
         return OcppEvseState::Available;
     } else if (((int) *transactionId) <= 0) {
+        if (connectorPluggedSampler != nullptr && connectorPluggedSampler() &&
+                (currentStatus == OcppEvseState::Finishing ||
+                currentStatus == OcppEvseState::Charging ||
+                currentStatus == OcppEvseState::SuspendedEV ||
+                currentStatus == OcppEvseState::SuspendedEVSE)) {
+            return OcppEvseState::Finishing;
+        }
         return OcppEvseState::Preparing;
     } else {
         //Transaction is currently running
