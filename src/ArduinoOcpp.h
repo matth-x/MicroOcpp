@@ -6,6 +6,7 @@
 #define ARDUINOOCPP_H
 
 #include <ArduinoJson.h>
+#include <memory>
 
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
