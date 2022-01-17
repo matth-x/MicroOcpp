@@ -18,10 +18,24 @@
     ],
     "license": "MIT",
     "homepage": "https://www.arduino-ocpp.com",
-    "dependencies": {
-      "ArduinoJson": "6.17.2",
-      "WebSockets": "2.2.0"
+    "dependencies": [
+        {
+            "owner": "bblanchon",
+            "name": "ArduinoJson",
+            "version": "6.19.1"
     },
+        {
+            "owner": "links2004",
+            "name": "WebSockets",
+            "version": "2.3.6"
+        },
+        {
+            "owner": "lorol",
+            "name": "LittleFS_esp32",
+            "version": "1.0.5",
+            "platforms": ["espressif32"]
+        }
+      ],
     "frameworks": "arduino",
     "platforms": "espressif8266, espressif32",
 

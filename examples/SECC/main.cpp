@@ -15,7 +15,7 @@
 
 
 #include <Arduino.h>
-#include <WiFiManager.h> //please install tzapu/WiFiManager@0.16.0
+#include <WiFiManager.h> //please install https://github.com/tzapu/WiFiManager.git
 
 #include <ArduinoOcpp.h>
 #include <ArduinoOcpp/Core/Configuration.h> //load and save settings of WiFi captive portal
