@@ -1,17 +1,16 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2021
+// Copyright Matthias Akstaller 2019 - 2022
 // MIT License
 
 #ifndef OCPPSERVER_H
 #define OCPPSERVER_H
 
 #include <vector>
-#include <functional>
+#include <ArduinoOcpp/Core/OcppSocket.h>
 
 namespace ArduinoOcpp {
 
-typedef uint8_t WsClient;
-typedef std::function<bool(const char*, size_t)> ReceiveTXTcallback;
+using WsClient = uint8_t;
 
 } //end namespace ArduinoOcpp
 

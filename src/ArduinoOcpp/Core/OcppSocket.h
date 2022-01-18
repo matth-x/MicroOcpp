@@ -1,14 +1,16 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2021
+// Copyright Matthias Akstaller 2019 - 2022
 // MIT License
 
 #ifndef OCPPSOCKET_H
 #define OCPPSOCKET_H
 
 #include <Arduino.h>
-#include <ArduinoOcpp/Core/OcppServer.h>
+#include <functional>
 
 namespace ArduinoOcpp {
+
+using ReceiveTXTcallback = std::function<bool(const char*, size_t)>;
 
 class OcppSocket {
 public:

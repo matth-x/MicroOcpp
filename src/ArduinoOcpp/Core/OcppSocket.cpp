@@ -1,8 +1,9 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2021
+// Copyright Matthias Akstaller 2019 - 2022
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppSocket.h>
+#include <ArduinoOcpp/Core/OcppServer.h>
 #include <Variants.h>
 
 #ifndef AO_CUSTOM_WS
