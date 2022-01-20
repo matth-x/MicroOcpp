@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2021
+// Copyright Matthias Akstaller 2019 - 2022
 // MIT License
 
 #ifndef CONNECTOR_STATUS
