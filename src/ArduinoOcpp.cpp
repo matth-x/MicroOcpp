@@ -491,3 +491,17 @@ bool isAvailable() {
     return (chargePoint->getAvailability() != AVAILABILITY_INOPERATIVE)
        &&  (connector->getAvailability() != AVAILABILITY_INOPERATIVE);
 }
+
+#if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WEBSOCKET)
+FirmwareService *getFirmwareService() {
+    auto& model = ocppEngine->getOcppModel();
+    return model.getFirmwareService();
+}
+#endif
+
+#if defined(AO_CUSTOM_DIAGNOSTICS) || defined(AO_CUSTOM_WEBSOCKET)
+DiagnosticsService *getDiagnosticsService() {
+    auto& model = ocppEngine->getOcppModel();
+    return model.getDiagnosticsService();
+}
+#endif

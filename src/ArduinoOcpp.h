@@ -121,19 +121,6 @@ void startTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener on
 void stopTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
 /*
- * Provide hardware-related information II
- * 
- * When the EVSE state changes, you must notify the library in order to make StatusNotification
- * work properly.
- * 
- * Call these functions in your integration.
- */
-
-//void startEvDrawsEnergy(); //<-- please use setEvRequestsEnergySampler(bool evRequestsEnergy());
-
-//void stopEvDrawsEnergy(); //<-- please use setEvRequestsEnergySampler(bool evRequestsEnergy());
-
-/*
  * Access information about the internal state of the library
  */
 
@@ -142,5 +129,23 @@ int getTransactionId(); //returns the ID of the current transaction. Returns -1 
 bool existsUnboundIdTag(); //returns if the user has given a valid Ocpp Charging Card which is not used for a transaction yet
 
 bool isAvailable(); //if the charge point is operative or inoperative
+
+/*
+ * Configure the device management
+ */
+
+#if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WEBSOCKET)
+#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
+using ArduinoOcpp::FirmwareService;
+
+FirmwareService *getFirmwareService();
+#endif
+
+#if defined(AO_CUSTOM_DIAGNOSTICS) || defined(AO_CUSTOM_WEBSOCKET)
+#include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
+using ArduinoOcpp::DiagnosticsService;
+
+DiagnosticsService *getDiagnosticsService();
+#endif
 
 #endif
