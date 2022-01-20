@@ -25,8 +25,6 @@ using ArduinoOcpp::OnReceiveErrorListener;
 
 using ArduinoOcpp::Timeout;
 
-#if USE_FACADE
-
 #ifndef AO_CUSTOM_WS
 //uses links2004/WebSockets library
 void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, float V_eff = 230.f /*German grid*/, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
@@ -145,5 +143,4 @@ bool existsUnboundIdTag(); //returns if the user has given a valid Ocpp Charging
 
 bool isAvailable(); //if the charge point is operative or inoperative
 
-#endif
 #endif

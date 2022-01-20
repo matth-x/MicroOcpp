@@ -21,8 +21,4 @@
 #endif
 #endif
 
-#ifndef USE_FACADE
-#define USE_FACADE true
-#endif
-
 #endif

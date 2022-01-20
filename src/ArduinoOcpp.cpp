@@ -6,8 +6,6 @@
 
 #include "Variants.h"
 
-#if USE_FACADE
-
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
@@ -493,5 +491,3 @@ bool isAvailable() {
     return (chargePoint->getAvailability() != AVAILABILITY_INOPERATIVE)
        &&  (connector->getAvailability() != AVAILABILITY_INOPERATIVE);
 }
-
-#endif
