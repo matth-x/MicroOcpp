@@ -94,7 +94,7 @@ public:
 
 } //endif namespace ArduinoOcpp
 
-#if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WEBSOCKET)
+#if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
 #if defined(ESP32) || defined(ESP8266)
 
 namespace ArduinoOcpp {
@@ -106,6 +106,6 @@ FirmwareService *makeFirmwareService(OcppEngine& context, const char *buildNumbe
 }
 
 #endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WEBSOCKET)
+#endif //!defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
 
 #endif

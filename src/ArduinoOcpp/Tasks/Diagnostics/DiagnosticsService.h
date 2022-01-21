@@ -59,7 +59,7 @@ public:
     void setOnUploadStatusSampler(std::function<UploadStatus()> uploadStatusSampler);
 };
 
-#if !defined(AO_CUSTOM_DIAGNOSTICS) && !defined(AO_CUSTOM_WEBSOCKET)
+#if !defined(AO_CUSTOM_DIAGNOSTICS) && !defined(AO_CUSTOM_WS)
 #if defined(ESP32) || defined(ESP8266)
 
 namespace EspWiFi {
@@ -69,7 +69,7 @@ DiagnosticsService *makeDiagnosticsService(OcppEngine& context);
 }
 
 #endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WEBSOCKET)
+#endif //!defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
 
 } //end namespace ArduinoOcpp
 

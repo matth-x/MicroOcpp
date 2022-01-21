@@ -100,7 +100,7 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
         new HeartbeatService(*ocppEngine)));
 
-#if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WEBSOCKET)
+#if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
     model.setFirmwareService(std::unique_ptr<FirmwareService>(
         EspWiFi::makeFirmwareService(*ocppEngine, "1234578901"))); //instantiate FW service + ESP installation routine
 #else
@@ -108,7 +108,7 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
         new FirmwareService(*ocppEngine))); //only instantiate FW service
 #endif
 
-#if !defined(AO_CUSTOM_DIAGNOSTICS) && !defined(AO_CUSTOM_WEBSOCKET)
+#if !defined(AO_CUSTOM_DIAGNOSTICS) && !defined(AO_CUSTOM_WS)
     model.setDiagnosticsService(std::unique_ptr<DiagnosticsService>(
         EspWiFi::makeDiagnosticsService(*ocppEngine))); //will only return "Rejected" because logging is not implemented yet
 #else
@@ -492,15 +492,15 @@ bool isAvailable() {
        &&  (connector->getAvailability() != AVAILABILITY_INOPERATIVE);
 }
 
-#if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WEBSOCKET)
-FirmwareService *getFirmwareService() {
+#if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WS)
+ArduinoOcpp::FirmwareService *getFirmwareService() {
     auto& model = ocppEngine->getOcppModel();
     return model.getFirmwareService();
 }
 #endif
 
-#if defined(AO_CUSTOM_DIAGNOSTICS) || defined(AO_CUSTOM_WEBSOCKET)
-DiagnosticsService *getDiagnosticsService() {
+#if defined(AO_CUSTOM_DIAGNOSTICS) || defined(AO_CUSTOM_WS)
+ArduinoOcpp::DiagnosticsService *getDiagnosticsService() {
     auto& model = ocppEngine->getOcppModel();
     return model.getDiagnosticsService();
 }

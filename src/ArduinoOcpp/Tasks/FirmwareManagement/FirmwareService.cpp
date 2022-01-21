@@ -292,7 +292,7 @@ void FirmwareService::resetStage() {
     installationIssued = false;
 }
 
-#if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WEBSOCKET)
+#if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
 #if defined(ESP32)
 
 #include <HTTPUpdate.h>
@@ -402,4 +402,4 @@ FirmwareService *EspWiFi::makeFirmwareService(OcppEngine& context, const char *b
 }
 
 #endif //defined(ESP8266)
-#endif //!defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WEBSOCKET)
+#endif //!defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)

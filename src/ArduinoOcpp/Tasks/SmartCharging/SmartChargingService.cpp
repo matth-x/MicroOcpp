@@ -323,7 +323,9 @@ bool SmartChargingService::clearChargingProfile(const std::function<bool(int, in
                     profileFN += chargingProfile->getStackLevel();
                     profileFN += PROFILE_FN_SUFFIX;
 
-                    USE_FS.remove(profileFN);
+                    if (USE_FS.exists(profileFN)) {
+                        USE_FS.remove(profileFN);
+                    }
                 } else {
                     if (DEBUG_OUT) Serial.println(F("[SmartChargingService] Prohibit access to FS"));
                 }
@@ -367,7 +369,9 @@ bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile
     profileFN += chargingProfile->getStackLevel();
     profileFN += PROFILE_FN_SUFFIX;
 
-    USE_FS.remove(profileFN);
+    if (USE_FS.exists(profileFN)) {
+        USE_FS.remove(profileFN);
+    }
 
     File file = USE_FS.open(profileFN, "w");
 

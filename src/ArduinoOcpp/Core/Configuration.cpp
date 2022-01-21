@@ -258,9 +258,11 @@ bool configuration_init(FilesystemOpt fsOpt) {
     }
 
     if (containerDefault) {
-        Serial.print(F("[Configuration] Found default container before calling configuration_init(). If you added\n" \
-                       "                the container manually, please ensure to call load(). If not, it is a hint\n" \
-                       "                that declareConfiguration() was called too early\n"));
+        if (DEBUG_OUT) {
+            Serial.print(F("[Configuration] Found default container before calling configuration_init(). If you added\n" \
+                           "                the container manually, please ensure to call load(). If not, it is a hint\n" \
+                           "                that declareConfiguration() was called too early\n"));
+        }
     } else {
         containerDefault = createConfigurationContainer(CONFIGURATION_FN);
         if (!containerDefault->load()) {

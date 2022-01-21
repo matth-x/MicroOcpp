@@ -32,6 +32,11 @@ bool ConfigurationContainerFlash::load() {
                        "                               All previously declared values won't be written back\n"));
     }
 
+    if (!USE_FS.exists(getFilename())) {
+        if (DEBUG_OUT) Serial.print(F("[Configuration] Populate FS: create configuration file\n"));
+        return true;
+    }
+
     File file = USE_FS.open(getFilename(), "r");
 
     if (!file) {
@@ -151,7 +156,9 @@ bool ConfigurationContainerFlash::save() {
         return true; //nothing to be done
     }
 
-    USE_FS.remove(getFilename());
+    if (USE_FS.exists(getFilename())) {
+        USE_FS.remove(getFilename());
+    }
 
     File file = USE_FS.open(getFilename(), "w");
 

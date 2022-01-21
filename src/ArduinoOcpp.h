@@ -134,18 +134,22 @@ bool isAvailable(); //if the charge point is operative or inoperative
  * Configure the device management
  */
 
-#if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WEBSOCKET)
+#if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WS)
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
-using ArduinoOcpp::FirmwareService;
-
-FirmwareService *getFirmwareService();
+// You need to configure this object if FW updates are relevant for you. This project already
+// brings a simple configuration for the ESP32 and ESP8266 for prototyping purposes, however
+// for the productive system you will have to develop a configuration targeting the specific
+// OCPP backend.
+// See  ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h 
+ArduinoOcpp::FirmwareService *getFirmwareService();
 #endif
 
-#if defined(AO_CUSTOM_DIAGNOSTICS) || defined(AO_CUSTOM_WEBSOCKET)
+#if defined(AO_CUSTOM_DIAGNOSTICS) || defined(AO_CUSTOM_WS)
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
-using ArduinoOcpp::DiagnosticsService;
-
-DiagnosticsService *getDiagnosticsService();
+// This library implements the OCPP messaging side of Diagnostics, but no logging or the
+// log upload to your backend.
+// To integrate Diagnostics, see ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h
+ArduinoOcpp::DiagnosticsService *getDiagnosticsService();
 #endif
 
 #endif
