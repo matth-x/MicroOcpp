@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2021
+// Copyright Matthias Akstaller 2019 - 2022
 // MIT License
 
 #include <Arduino.h>
@@ -18,9 +18,9 @@ ESP8266WiFiMulti WiFiMulti;
 #define STASSID "YOUR_WLAN_SSID"
 #define STAPSK  "YOUR_WLAN_PW"
 
-#define OCPP_HOST "wss://echo.websocket.org"
+#define OCPP_HOST "echo.websocket.events"
 #define OCPP_PORT 80
-#define OCPP_URL "wss://echo.websocket.org/"
+#define OCPP_URL "ws://echo.websocket.events/"
 
 //
 ////  Settings which worked for my SteVe instance

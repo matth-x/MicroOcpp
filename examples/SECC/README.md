@@ -11,7 +11,7 @@ You can find the interface descriptions in `main.ino`. Please be aware that alth
 ## Usage
 
 - Create an empty project in the PlatformIO IDE.
-- Copy the `platformio.ini` from ArduinoOcpp's root directory to your source directory. Add `tzapu/WiFiManager@0.16.0` to the libdeps of the `platformio.ini`.
+- Copy the `platformio.ini` from this directory to your root directory. Alternatively, just add `https://github.com/tzapu/WiFiManager.git` to the lib_deps of your `platformio.ini`.
 - Copy the `main.ino` from this example folder into your source directory. Adapt the pinout settings if needed.
 - Finished. You should be able to compile and upload the sketch onto your ESP.
 

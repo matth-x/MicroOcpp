@@ -118,7 +118,7 @@ std::unique_ptr<DynamicJsonDocument> BootNotification::createConf(){
     JsonObject payload = doc->to<JsonObject>();
 
     //safety mechanism; in some test setups the library has to answer BootNotifications without valid system time
-    OcppTimestamp ocppTimeReference = OcppTimestamp(2019,10,0,11,59,55); 
+    OcppTimestamp ocppTimeReference = OcppTimestamp(2022,0,27,11,59,55); 
     OcppTimestamp ocppSelect = ocppTimeReference;
     if (ocppModel) {
         auto& ocppTime = ocppModel->getOcppTime();

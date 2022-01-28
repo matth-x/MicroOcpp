@@ -3,7 +3,7 @@
 // MIT License
 //
 //
-// IMPORTANT: Please add tzapu/WiFiManager@0.16.0 to the libdeps of your project!
+// IMPORTANT: Please add https://github.com/tzapu/WiFiManager.git to the lib_deps of your project!
 //
 // This sketch demonstrates a complete OCPP Wi-Fi module of an EVSE. You can flash
 // an ESP8266/ESP32 with this program, build it into your EVSE and start charging with
@@ -15,7 +15,7 @@
 
 
 #include <Arduino.h>
-#include <WiFiManager.h> //please install https://github.com/tzapu/WiFiManager.git
+#include <WiFiManager.h> //please add to lib_deps: https://github.com/tzapu/WiFiManager.git
 
 #include <ArduinoOcpp.h>
 #include <ArduinoOcpp/Core/Configuration.h> //load and save settings of WiFi captive portal
@@ -77,6 +77,9 @@
 #if DEBUG_OUT
 #define PRINT(...) Serial.print(__VA_ARGS__)
 #define PRINTLN(...) Serial.println(__VA_ARGS__)
+#else
+#define PRINT(...)
+#define PRINTLN(...)
 #endif
 
 WebSocketsClient wSock;

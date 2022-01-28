@@ -46,15 +46,13 @@
             "examples/*",
             "platformio.ini",
             "library.json",
-            "LICENSE",
-            "min_spiffs.csv"
+            "LICENSE"
         ],
         "exclude":
         [
-            "src/OneConnector*",
-            "src/Simulated_HW*",
             "src/sdkconfig*",
             "examples/SECC/WiFiManager*",
+            "examples/CompatibilityTest",
             "src/main.cpp"
         ]
     },
