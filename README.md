@@ -33,7 +33,7 @@ For simple chargers, the application logic + HW integration is far below 1000 LO
 
 ## Usage guide
 
-Please take `examples/ESP/main.cpp` as the starting point for you first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. In this guide, I give a brief overview of the key concepts.
+Please take `examples/ESP/main.cpp` as the starting point for your first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. In this guide, I give a brief overview of the key concepts.
 
 - To get the library running, you have to install all dependencies (see the list below).
 
