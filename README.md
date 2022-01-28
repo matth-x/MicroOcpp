@@ -33,7 +33,7 @@ For simple chargers, the application logic + HW integration is far below 1000 LO
 
 ## Usage guide
 
-Please take `OneConnector_EVSE.ino` (in the `examples/OneConnector-EVSE/` folder) as starting point for you first project. It is an integration of a simple GPIO-based charger with one connector. See `OneConnector_HW_integration.ino` in which the charger functions are mapped onto the OCPP library to get a feeling for how to use this library in practice. In this guide, I give a brief overview of the key concepts.
+Please take `examples/ESP/main.cpp` as the starting point for you first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. In this guide, I give a brief overview of the key concepts.
 
 - To get the library running, you have to install all dependencies (see the list below).
 
@@ -123,8 +123,8 @@ To get started quickly with or without EVSE hardware, you can flash the sketch i
 
 ## Dependencies
 
-- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
-- [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets)
+- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson) (please upgrade to version `6.19.1`)
+- [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets) (please upgrade to version `2.3.6`)
 
 In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/ArduinoOcpp` in the PIO library manager.
 
