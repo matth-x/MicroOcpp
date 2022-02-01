@@ -25,7 +25,7 @@ private:
 
     bool toBeRemovedFlag = false;
 protected:
-    uint16_t value_revision = 0; //number of changes of subclass-member "value". This will be important for the client to detect if there was a change
+    uint16_t value_revision = 0; //number of memory-relevant changes of subclass-member "value" (deleting counts too). This will be important for the client to detect if there was a change
     bool initializedValue = false;
 
     AbstractConfiguration();

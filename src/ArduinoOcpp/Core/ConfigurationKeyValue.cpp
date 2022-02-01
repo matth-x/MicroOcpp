@@ -120,10 +120,12 @@ bool AbstractConfiguration::toBeRemoved() {
 
 void AbstractConfiguration::setToBeRemoved() {
     toBeRemovedFlag = true;
+    value_revision++;
 }
 
 void AbstractConfiguration::resetToBeRemovedFlag() {
     toBeRemovedFlag = false;
+    value_revision++;
 }
 
 uint16_t AbstractConfiguration::getValueRevision() {

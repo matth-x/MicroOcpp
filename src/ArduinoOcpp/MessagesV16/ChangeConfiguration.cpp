@@ -33,6 +33,27 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     }
 
     /*
+     * Delete entry if value field is empty string
+     */
+    if (value.is<const char *>()) {
+        const char *value_string = value.as<const char *>();
+        if (value_string == nullptr || value_string[0] == '\0') {
+            auto configuration = getConfiguration(key.c_str());
+            if (configuration) {
+                if (configuration->permissionRemotePeerCanWrite()) {
+                    configuration->setToBeRemoved();
+                    configuration_save();
+                    rebootRequired = true;
+                } else {
+                    readOnly = true;
+                    Serial.print(F("[ChangeConfiguration] Trying to delete readonly value!\n"));
+                }
+            }
+            return; //delete operator but nothing to delete --> ignore operation
+        }
+    }
+
+    /*
      * Parse value
      */
     bool isInt = false;
@@ -40,7 +61,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     bool isFloat = false;
     float numFloat = -1.0f;
     bool isString = false;
-    const char *value_string = "\0";
+    const char *value_string = "";
 
     if (value.is<int>()) { //Not enough. SteVe always sends numerical values as strings. Must also handle this
         isInt = true;
@@ -152,6 +173,9 @@ void ChangeConfiguration::processReq(JsonObject payload) {
             Serial.print(F("[ChangeConfiguration] Value has incompatible type!\n"));
             return;
         }
+
+        configuration->resetToBeRemovedFlag();
+
     } else {
         //configuration does not exist yet. Create new entry
         if (isInt) {
