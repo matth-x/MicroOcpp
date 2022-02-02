@@ -69,7 +69,7 @@ ChargingSchedule::ChargingSchedule(JsonObject *json, ChargingProfileKindType cha
         //non-success
         startSchedule = MIN_TIME;
     }
-    const char *unit = (*json)["scheduleUnit"] | "__Invalid";
+    const char *unit = (*json)["chargingRateUnit"] | "__Invalid";
     if (unit[0] == 'a' || unit[0] == 'A') {
         schedulingUnit = 'A';
     } else {
