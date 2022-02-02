@@ -30,7 +30,7 @@ std::unique_ptr<DynamicJsonDocument> Authorize::createReq() {
 }
 
 void Authorize::processConf(JsonObject payload){
-    String idTagInfo = payload["idTagInfo"]["status"] | "Invalid";
+    String idTagInfo = payload["idTagInfo"]["status"] | "not specified";
 
     if (idTagInfo.equals("Accepted")) {
         if (DEBUG_OUT) Serial.print(F("[Authorize] Request has been accepted!\n"));
@@ -40,7 +40,8 @@ void Authorize::processConf(JsonObject payload){
         }
     
     } else {
-        Serial.print(F("[Authorize] Request has been denied!"));
+        Serial.print(F("[Authorize] Request has been denied! Reason: "));
+        Serial.println(idTagInfo);
     }
 }
 

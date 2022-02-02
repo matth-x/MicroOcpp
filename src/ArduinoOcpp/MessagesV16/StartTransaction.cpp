@@ -83,7 +83,7 @@ std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
 
 void StartTransaction::processConf(JsonObject payload) {
 
-    const char* idTagInfoStatus = payload["idTagInfo"]["status"] | "Invalid";
+    const char* idTagInfoStatus = payload["idTagInfo"]["status"] | "not specified";
     int transactionId = payload["transactionId"] | -1;
 
     ConnectorStatus *connector = nullptr;
@@ -100,7 +100,8 @@ void StartTransaction::processConf(JsonObject payload) {
             connector->setTransactionIdSync(transactionId);
         }
     } else {
-        Serial.print(F("[StartTransaction] Request has been denied!\n"));
+        Serial.print(F("[StartTransaction] Request has been denied! Reason: "));
+        Serial.println(idTagInfoStatus);
         if (connector){
             if (transactionRev == connector->getTransactionWriteCount()) {
                 connector->setTransactionId(-1);
