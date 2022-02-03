@@ -26,7 +26,7 @@ const char* StartTransaction::getOcppOperationType(){
 void StartTransaction::initiate() {
     if (ocppModel && ocppModel->getMeteringService()) {
         auto meteringService = ocppModel->getMeteringService();
-        meterStart = meteringService->readEnergyActiveImportRegister(connectorId);
+        meterStart = (int) meteringService->readEnergyActiveImportRegister(connectorId);
     }
 
     if (ocppModel) {
@@ -66,7 +66,7 @@ std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
     JsonObject payload = doc->to<JsonObject>();
 
     payload["connectorId"] = connectorId;
-    if (meterStart >= 0.f) {
+    if (meterStart >= 0) {
         payload["meterStart"] = meterStart;
     }
 

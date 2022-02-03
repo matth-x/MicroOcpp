@@ -16,7 +16,7 @@ namespace Ocpp16 {
 class StartTransaction : public OcppMessage {
 private:
     int connectorId = 1;
-    float meterStart = -1.0f;
+    int meterStart = -1;
     OcppTimestamp otimestamp;
     String idTag = String('\0');
     uint16_t transactionRev = 0;

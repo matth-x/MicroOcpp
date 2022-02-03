@@ -26,7 +26,7 @@ void StopTransaction::initiate() {
 
     if (ocppModel && ocppModel->getMeteringService()) {
         auto meteringService = ocppModel->getMeteringService();
-        meterStop = meteringService->readEnergyActiveImportRegister(connectorId);
+        meterStop = (int) meteringService->readEnergyActiveImportRegister(connectorId);
     }
 
     if (ocppModel) {
@@ -48,7 +48,7 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1)));
     JsonObject payload = doc->to<JsonObject>();
 
-    if (meterStop >= 0.f)
+    if (meterStop >= 0)
         payload["meterStop"] = meterStop; //TODO meterStart is required to be in Wh, but measuring unit is probably inconsistent in implementation
 
     if (otimestamp > MIN_TIME) {

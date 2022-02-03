@@ -14,7 +14,7 @@ namespace Ocpp16 {
 class StopTransaction : public OcppMessage {
 private:
     int connectorId = 1;
-    float meterStop = -1.0f;
+    int meterStop = -1;
     OcppTimestamp otimestamp;
 public:
     StopTransaction();
