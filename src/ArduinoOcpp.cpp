@@ -4,8 +4,6 @@
 
 #include "ArduinoOcpp.h"
 
-#include "Variants.h"
-
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
@@ -21,6 +19,8 @@
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
+
+#include <ArduinoOcpp/Debug.h>
 
 namespace ArduinoOcpp {
 namespace Facade {
@@ -55,7 +55,7 @@ using namespace ArduinoOcpp::Ocpp16;
 #ifndef AO_CUSTOM_WS
 void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt, ArduinoOcpp::OcppClock system_time) {
     if (ocppEngine) {
-        Serial.print(F("[ArduinoOcpp] Error: cannot call OCPP_initialize() two times! If you want to reconfigure the library, please restart your ESP\n"));
+        AO_DBG_WARN("Can't be called two times. Either restart ESP, or call OCPP_deinitialize() before");
         return;
     }
 
@@ -83,7 +83,7 @@ void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, float 
 
 void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt, ArduinoOcpp::OcppClock system_time) {
     if (ocppEngine) {
-        Serial.print(F("[ArduinoOcpp] Error: cannot call OCPP_initialize() two times! If you want to reconfigure the library, please restart your ESP\n"));
+        AO_DBG_WARN("Can't be called two times. To change the credentials, either restart ESP, or call OCPP_deinitialize() before");
         return;
     }
 
@@ -120,7 +120,7 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
 }
 
 void OCPP_deinitialize() {
-    Serial.println(F("[ArduinoOcpp] called OCPP_deinitialize: still experimental function. If you find problems, it would be great if you publish them on the GitHub page"));
+    AO_DBG_DEBUG("Still experimental function. If you find problems, it would be great if you publish them on the GitHub page");
 
     delete ocppEngine;
     ocppEngine = nullptr;
@@ -148,8 +148,8 @@ void OCPP_deinitialize() {
 
 void OCPP_loop() {
     if (!ocppEngine) {
-        Serial.print(F("[ArduinoOcpp] Error: you must call OCPP_initialize before calling the loop() function!\n"));
-        delay(200); //Prevent this error message from flooding the Serial monitor.
+        AO_DBG_WARN("Please call OCPP_initialize before");
+        delay(200); //Prevent this message from flooding the Serial monitor.
         return;
     }
 
@@ -207,7 +207,7 @@ void OCPP_loop() {
 
 void setPowerActiveImportSampler(std::function<float()> power) {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in setPowerActiveImportSampler(): You must call OCPP_initialize() before. Ignore"));
+        AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     powerSampler = power;
@@ -221,7 +221,7 @@ void setPowerActiveImportSampler(std::function<float()> power) {
 
 void setEnergyActiveImportSampler(std::function<float()> energy) {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in setEnergyActiveImportSampler(): You must call OCPP_initialize() before. Ignore"));
+        AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     auto& model = ocppEngine->getOcppModel();
@@ -242,12 +242,12 @@ void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized) {
 
 void setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in setConnectorPluggedSampler(): You must call OCPP_initialize() before. Ignore"));
+        AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
     if (!connector) {
-        Serial.println(F("[ArduinoOcpp.cpp] in setConnectorPluggedSampler(): Could not find connector. Ignore"));
+        AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
     connector->setConnectorPluggedSampler(connectorPlugged);
@@ -255,12 +255,12 @@ void setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
 
 void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in addConnectorErrorCodeSampler(): You must call OCPP_initialize() before. Ignore"));
+        AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
     if (!connector) {
-        Serial.println(F("[ArduinoOcpp.cpp] in addConnectorErrorCodeSampler(): Could not find connector. Ignore"));
+        AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
     connector->addConnectorErrorCodeSampler(connectorErrorCode);
@@ -268,7 +268,7 @@ void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCo
 
 void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged) {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in setOnChargingRateLimitChange(): You must call OCPP_initialize() before. Ignore"));
+        AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     auto& model = ocppEngine->getOcppModel();
@@ -281,12 +281,12 @@ void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged
 
 void setOnUnlockConnector(std::function<bool()> unlockConnector) {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in setOnUnlockConnector(): You must call OCPP_initialize() before. Ignore"));
+        AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
     if (!connector) {
-        Serial.println(F("[ArduinoOcpp.cpp] in setOnUnlockConnector(): Could not find connector. Ignore"));
+        AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
     connector->setOnUnlockConnector(unlockConnector);
@@ -318,7 +318,7 @@ void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq) {
 
 void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in authorize(): You must call OCPP_initialize() before. Ignore"));
+        AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     auto authorize = makeOcppOperation(
@@ -340,7 +340,7 @@ void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAb
 
 void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in bootNotification(): You must call OCPP_initialize() before. Ignore"));
+        AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     auto bootNotification = makeOcppOperation(
@@ -362,7 +362,7 @@ void bootNotification(String chargePointModel, String chargePointVendor, OnRecei
 
 void bootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber, OnReceiveConfListener onConf) {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in bootNotification(): You must call OCPP_initialize() before. Ignore"));
+        AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     auto bootNotification = makeOcppOperation(
@@ -374,7 +374,7 @@ void bootNotification(String &chargePointModel, String &chargePointVendor, Strin
 
 void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in bootNotification(): You must call OCPP_initialize() before. Ignore"));
+        AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     auto bootNotification = makeOcppOperation(
@@ -396,7 +396,7 @@ void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf
 
 void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in startTransaction(): You must call OCPP_initialize() before. Ignore"));
+        AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     auto startTransaction = makeOcppOperation(
@@ -418,7 +418,7 @@ void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnT
 
 void startTransaction(String &idTag, OnReceiveConfListener onConf) {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in startTransaction(): You must call OCPP_initialize() before. Ignore"));
+        AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     auto startTransaction = makeOcppOperation(
@@ -430,7 +430,7 @@ void startTransaction(String &idTag, OnReceiveConfListener onConf) {
 
 void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in stopTransaction(): You must call OCPP_initialize() before. Ignore"));
+        AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     auto stopTransaction = makeOcppOperation(
@@ -452,12 +452,12 @@ void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
 
 int getTransactionId() {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in getTransactionId(): You must call OCPP_initialize() before"));
+        AO_DBG_WARN("Please call OCPP_initialize before");
         return -1;
     }
     auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
     if (!connector) {
-        Serial.println(F("[ArduinoOcpp.cpp] in getTransactionId(): Could not find connector"));
+        AO_DBG_ERR("Could not find connector. Ignore");
         return -1;
     }
     return connector->getTransactionId();
@@ -465,12 +465,12 @@ int getTransactionId() {
 
 bool existsUnboundIdTag() {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in existsUnboundIdTag(): You must call OCPP_initialize() before"));
+        AO_DBG_WARN("Please call OCPP_initialize before");
         return false;
     }
     auto csService = ocppEngine->getOcppModel().getChargePointStatusService();
     if (!csService) {
-        Serial.println(F("[ArduinoOcpp.cpp] in existsUnboundIdTag(): Could not find connector"));
+        AO_DBG_ERR("Could not find connector. Ignore");
         return false;
     }
     return csService->existsUnboundAuthorization();
@@ -478,14 +478,14 @@ bool existsUnboundIdTag() {
 
 bool isAvailable() {
     if (!ocppEngine) {
-        Serial.println(F("[ArduinoOcpp.cpp] in isAvailable(): You must call OCPP_initialize() before"));
+        AO_DBG_WARN("Please call OCPP_initialize before");
         return true; //assume "true" as default state
     }
     auto& model = ocppEngine->getOcppModel();
     auto chargePoint = model.getConnectorStatus(OCPP_ID_OF_CP);
     auto connector = model.getConnectorStatus(OCPP_ID_OF_CONNECTOR);
     if (!chargePoint || !connector) {
-        Serial.println(F("[ArduinoOcpp.cpp] in isAvailable(): Could not find connector"));
+        AO_DBG_ERR("Could not find connector. Ignore");
         return true; //assume "true" as default state
     }
     return (chargePoint->getAvailability() != AVAILABILITY_INOPERATIVE)

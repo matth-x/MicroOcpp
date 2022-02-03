@@ -2,8 +2,6 @@
 // Copyright Matthias Akstaller 2019 - 2022
 // MIT License
 
-#include <Variants.h>
-
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 
 #include <ArduinoOcpp/MessagesV16/Authorize.h>
@@ -28,6 +26,8 @@
 #include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
 #include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
 #include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
+
+#include <ArduinoOcpp/Debug.h>
 
 #include <string.h>
 
@@ -206,11 +206,7 @@ std::unique_ptr<OcppOperation> makeFromTriggerMessage(JsonObject payload) {
     //int connectorID = payload["connectorId"]; <-- not used in this implementation
     const char *messageType = payload["requestedMessage"];
 
-    if (DEBUG_OUT) {
-        Serial.print(F("[SimpleOcppOperationFactory] makeFromTriggerMessage for message type "));
-        Serial.print(messageType);
-        Serial.print(F("\n"));
-    }
+    AO_DBG_INFO("execute for message type %s", messageType);
 
     return makeOcppOperation(messageType);
 }
@@ -254,13 +250,13 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType) {
     } else if (!strcmp(messageType, "RemoteStartTransaction")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::RemoteStartTransaction());
         operation->setOnReceiveReqListener(onRemoteStartTransactionReceiveRequest);
-        if (onRemoteStartTransactionSendConf == nullptr) 
-            Serial.print(F("[SimpleOcppOperationFactory] Warning: RemoteStartTransaction is without effect when the sendConf listener is not set. Set a listener which initiates the StartTransaction operation.\n"));
+        if (onRemoteStartTransactionSendConf == nullptr)
+            AO_DBG_WARN("RemoteStartTransaction is without effect when the sendConf listener is not set. Set a listener which initiates the StartTransaction operation.");
         operation->setOnSendConfListener(onRemoteStartTransactionSendConf);
     } else if (!strcmp(messageType, "RemoteStopTransaction")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::RemoteStopTransaction());
-        if (onRemoteStopTransactionSendConf == nullptr) 
-            Serial.print(F("[SimpleOcppOperationFactory] Warning: RemoteStopTransaction is without effect when no sendConf listener is set. Set a listener which initiates the StopTransaction operation.\n"));
+        if (onRemoteStopTransactionSendConf == nullptr)
+            AO_DBG_WARN("RemoteStopTransaction is without effect when no sendConf listener is set. Set a listener which initiates the StopTransaction operation.");
         operation->setOnReceiveReqListener(onRemoteStopTransactionReceiveRequest);
         operation->setOnSendConfListener(onRemoteStopTransactionSendConf);
     } else if (!strcmp(messageType, "ChangeConfiguration")) {
@@ -274,13 +270,11 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType) {
     } else if (!strcmp(messageType, "Reset")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::Reset());
         if (onResetSendConf == nullptr && onResetReceiveReq == nullptr)
-            Serial.print(F("[SimpleOcppOperationFactory] Warning: Reset is without effect when the sendConf and receiveReq listener is not set. Set a listener which resets your device.\n"));
+            AO_DBG_WARN("Reset is without effect when the sendConf and receiveReq listener is not set. Set a listener which resets your device.");
         operation->setOnReceiveReqListener(onResetReceiveReq);
         operation->setOnSendConfListener(onResetSendConf);
     } else if (!strcmp(messageType, "UpdateFirmware")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::UpdateFirmware());
-        //if (onUpdateFirmwareReceiveReq == nullptr)
-        //  Serial.print(F("[SimpleOcppOperationFactory] Warning: UpdateFirmware is without effect when the receiveReq listener is not set. Please implement a FW update routine for your device.\n"));
         operation->setOnReceiveReqListener(onUpdateFirmwareReceiveReq);
     } else if (!strcmp(messageType, "FirmwareStatusNotification")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::FirmwareStatusNotification());
@@ -295,7 +289,7 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType) {
     } else if (!strcmp(messageType, "ChangeAvailability")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::ChangeAvailability());
     } else {
-        Serial.println(F("[SimpleOcppOperationFactory] Operation not supported"));
+        AO_DBG_WARN("Operation not supported");
         msg = std::unique_ptr<OcppMessage>(new NotImplemented());
     }
 
@@ -309,7 +303,7 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType) {
 
 std::unique_ptr<OcppOperation> makeOcppOperation(OcppMessage *msg){
     if (msg == nullptr) {
-        Serial.print(F("[SimpleOcppOperationFactory] in makeOcppOperation(webSocket, ocppMessage): ocppMessage is null!\n"));
+        AO_DBG_ERR("msg is null");
         return nullptr;
     }
     auto operation = makeOcppOperation();

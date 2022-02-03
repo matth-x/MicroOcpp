@@ -11,6 +11,8 @@
 
 #include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
 
+#include <Variants.h>
+
 using namespace ArduinoOcpp;
 using ArduinoOcpp::Ocpp16::FirmwareStatus;
 

@@ -13,8 +13,6 @@
 
 #include <ArduinoOcpp/Core/OcppOperationCallbacks.h>
 
-#include <Variants.h>
-
 namespace ArduinoOcpp {
 
 class OcppMessage;
@@ -41,9 +39,8 @@ private:
     const ulong RETRY_INTERVAL_MAX = 20000; //in ms; 
     ulong retry_start = 0;
     ulong retry_interval_mult = 1; // RETRY_INTERVAL * retry_interval_mult gives longer periods with each iteration
-#if DEBUG_OUT
+
     uint16_t printReqCounter = 0;
-#endif
 public:
 
     OcppOperation(std::unique_ptr<OcppMessage> msg);

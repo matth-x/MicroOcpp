@@ -3,10 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/Configuration.h>
-//#include <ArduinoOcpp/Core/ConfigurationContainer.h>
-
-
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 #include <string.h>
 #include <vector>
@@ -30,8 +27,8 @@ std::shared_ptr<Configuration<T>> createConfiguration(const char *key, T value) 
     std::shared_ptr<Configuration<T>> configuration = std::make_shared<Configuration<T>>();
         
     if (!configuration->setKey(key)) {
-        Serial.print(F("[Configuration] In createConfiguration(key, T, ...) : Cannot set key! Abort\n"));
-        return NULL;
+        AO_DBG_ERR("Cannot set key! Abort");
+        return nullptr;
     }
 
     *configuration = value;
@@ -44,13 +41,13 @@ std::shared_ptr<Configuration<const char *>> createConfiguration(const char *key
     std::shared_ptr<Configuration<const char*>> configuration = std::make_shared<Configuration<const char*>>();
         
     if (!configuration->setKey(key)) {
-        Serial.print(F("[Configuration] In createConfiguration(key, const char*) : Cannot set key! Abort\n"));
-        return NULL;
+        AO_DBG_ERR("Cannot set key! Abort");
+        return nullptr;
     }
 
     if (!configuration->setValue(value, strlen(value) + 1)) {
-        Serial.print(F("[Configuration] In createConfiguration(key, const char*) : Cannot set value! Abort\n"));
-        return NULL;
+        AO_DBG_ERR("Cannot set value! Abort");
+        return nullptr;
     }
 
     return configuration;
@@ -87,7 +84,7 @@ std::shared_ptr<ConfigurationContainer> getContainer(const char *filename) {
     if (container != configurationContainers.end()) {
         return *container;
     } else {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -98,24 +95,23 @@ std::shared_ptr<Configuration<T>> declareConfiguration(const char *key, T defaul
     std::shared_ptr<ConfigurationContainer> container = getContainer(filename);
     
     if (!container) {
-        Serial.print(F("[Configuration] declareConfiguration: init new configurations container on flash filesystem: "));
-        Serial.println(filename);
+        AO_DBG_INFO("init new configurations container on flash filesystem: %s", filename);
 
         container = createConfigurationContainer(filename);
         configurationContainers.push_back(container);
 
         if (!container->load()) {
-            Serial.print(F("[Configuration] Cannot load file contents. Path will be overwritten\n"));
+            AO_DBG_WARN("Cannot load file contents. Path will be overwritten");
         }
     }
 
     std::shared_ptr<AbstractConfiguration> configuration = container->getConfiguration(key);
 
     if (configuration && strcmp(configuration->getSerializedType(), SerializedType<T>::get())) {
-        Serial.println(F("[Configuration] Error declaring configuration: conflicting declared types. Override previous declaration"));
+        AO_DBG_ERR("conflicting declared types. Override previous declaration");
         container->removeConfiguration(configuration);
         configuration->setToBeRemoved();
-        configuration = NULL;
+        configuration = nullptr;
     }
 
     std::shared_ptr<Configuration<T>> configurationConcrete = std::static_pointer_cast<Configuration<T>>(configuration);
@@ -129,8 +125,8 @@ std::shared_ptr<Configuration<T>> declareConfiguration(const char *key, T defaul
         configuration = std::static_pointer_cast<AbstractConfiguration>(configurationConcrete);
 
         if (!configuration) {
-            Serial.print(F("[Configuration] In declareConfiguration(key, int, ...) : Cannot find configuration stored from previous session and cannot create new one! Abort\n"));
-            return NULL;
+            AO_DBG_ERR("Cannot find configuration stored from previous session and cannot create new one! Abort");
+            return nullptr;
         }
         container->addConfiguration(configuration);
     }
@@ -153,7 +149,7 @@ namespace Ocpp16 {
 template<class T>
 std::shared_ptr<Configuration<T>> changeConfiguration(const char *key, T value) {
 
-    std::shared_ptr<Configuration<T>> config = NULL;
+    std::shared_ptr<Configuration<T>> config = nullptr;
 
     for (std::vector<std::shared_ptr<ConfigurationContainer>>::iterator container = configurationContainers.begin(); container != configurationContainers.end(); container++) {
         
@@ -167,7 +163,7 @@ std::shared_ptr<Configuration<T>> changeConfiguration(const char *key, T value) 
         //found configuration
 
         if (!config->permissionRemotePeerCanWrite()) {
-            return NULL;
+            return nullptr;
         }
 
         *config = value;
@@ -177,8 +173,8 @@ std::shared_ptr<Configuration<T>> changeConfiguration(const char *key, T value) 
         config = createConfiguration<T>(key, value);
 
         if (!config) {
-            Serial.print(F("[Configuration] In setConfiguration(key, int) : Cannot neither find configuration nor create new one! Abort\n"));
-            return NULL;
+            AO_DBG_ERR("Cannot neither find configuration nor create new one! Abort");
+            return nullptr;
         }
 
         std::shared_ptr<ConfigurationContainer> containerDefault = getContainer(CONFIGURATION_FN);
@@ -193,14 +189,14 @@ std::shared_ptr<Configuration<T>> changeConfiguration(const char *key, T value) 
 */
 
 std::shared_ptr<AbstractConfiguration> getConfiguration(const char *key) {
-    std::shared_ptr<AbstractConfiguration> result = NULL;
+    std::shared_ptr<AbstractConfiguration> result = nullptr;
 
     for (auto container = configurationContainers.begin(); container != configurationContainers.end(); container++) {
         result = (*container)->getConfiguration(key);
         if (result)
             return result;
     }
-    return NULL;
+    return nullptr;
 }
 
 std::shared_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> getAllConfigurations() { //TODO maybe change to iterator?
@@ -233,7 +229,7 @@ bool configuration_init(FilesystemOpt fsOpt) {
     if (fsOpt.mustMount()) { 
 #if defined(ESP32)
         if(!LITTLEFS.begin(fsOpt.formatOnFail())) {
-            Serial.println("[Configuration] An Error has occurred while mounting LITTLEFS");
+            AO_DBG_ERR("Error while mounting LITTLEFS");
             loadRoutineSuccessful = false;
         }
 #else
@@ -243,13 +239,13 @@ bool configuration_init(FilesystemOpt fsOpt) {
         SPIFFS.setConfig(cfg);
 
         if (!SPIFFS.begin()) {
-            Serial.print(F("[Configuration] Unable to initialize: unable to mount SPIFFS\n"));
+            AO_DBG_ERR("Unable to initialize: unable to mount SPIFFS");
             loadRoutineSuccessful = false;
         }
 #endif
     } //end fs mount
 
-    std::shared_ptr<ConfigurationContainer> containerDefault = NULL;
+    std::shared_ptr<ConfigurationContainer> containerDefault = nullptr;
     for (auto container = configurationContainers.begin(); container != configurationContainers.end(); container++) {
         if (!strcmp((*container)->getFilename(), CONFIGURATION_FN)) {
             containerDefault = (*container);
@@ -258,15 +254,13 @@ bool configuration_init(FilesystemOpt fsOpt) {
     }
 
     if (containerDefault) {
-        if (DEBUG_OUT) {
-            Serial.print(F("[Configuration] Found default container before calling configuration_init(). If you added\n" \
-                           "                the container manually, please ensure to call load(). If not, it is a hint\n" \
-                           "                that declareConfiguration() was called too early\n"));
-        }
+        AO_DBG_DEBUG("Found default container before calling configuration_init(). If you added\n" \
+                           "        the container manually, please ensure to call load(). If not, it is a hint\n" \
+                           "        that declareConfiguration() was called too early\n");
     } else {
         containerDefault = createConfigurationContainer(CONFIGURATION_FN);
         if (!containerDefault->load()) {
-            Serial.print(F("[Configuration] Loading default configurations file failed!\n"));
+            AO_DBG_ERR("Loading default configurations file failed");
             loadRoutineSuccessful = false;
         }
         configurationContainers.push_back(containerDefault);

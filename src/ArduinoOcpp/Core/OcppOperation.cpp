@@ -7,7 +7,7 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
 
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 int unique_id_counter = 1000000;
 
@@ -31,11 +31,11 @@ void OcppOperation::setOcppMessage(std::unique_ptr<OcppMessage> msg){
 
 void OcppOperation::setOcppModel(std::shared_ptr<OcppModel> oModel) {
     if (!ocppMessage) {
-        Serial.print(F("[OcppOperation] Please ensure that setOcppModel() will be called after setOcppMessage(). Abort"));
+        AO_DBG_ERR("Must be called after setOcppMessage(). Abort");
         return;
     }
     if (!oModel) {
-        Serial.print(F("[OcppOperation] in setOcppModel(): passed nullptr! Ignore\n"));
+        AO_DBG_ERR("Passed nullptr. Ignore");
         return;
     }
     ocppMessage->setOcppModel(oModel);
@@ -43,7 +43,7 @@ void OcppOperation::setOcppModel(std::shared_ptr<OcppModel> oModel) {
 
 void OcppOperation::setTimeout(std::unique_ptr<Timeout> to){
     if (!to){
-        Serial.print(F("[OcppOperation] in setTimeout(): passed nullptr! Ignore\n"));
+        AO_DBG_ERR("Passed nullptr! Ignore");
         return;
     }
     timeout = std::move(to);
@@ -57,7 +57,7 @@ Timeout *OcppOperation::getTimeout() {
 
 void OcppOperation::setMessageID(const String &id){
     if (messageID.length() > 0){
-        Serial.print(F("[OcppOperation] OcppOperation (class): MessageID is set twice or is set after first usage!\n"));
+        AO_DBG_WARN("MessageID is set twice or is set after first usage!");
         //return; <-- Just letting the id being overwritten probably doesn't cause further errors...
     }
     messageID = id;
@@ -79,9 +79,7 @@ boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
      */
     if (timeout->isExceeded()) {
         //cancel this operation
-        Serial.print(F("[OcppOperation] "));
-        Serial.print(ocppMessage->getOcppOperationType());
-        Serial.print(F(" has timed out! Discard operation\n"));
+        AO_DBG_INFO("%s has timed out! Discard operation", ocppMessage->getOcppOperationType());
         return true;
     }
 
@@ -128,23 +126,18 @@ boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
     String out {'\0'};
     serializeJson(requestJson, out);
 
-#if DEBUG_OUT
     if (printReqCounter > 5000) {
         printReqCounter = 0;
-        Serial.print(F("[OcppOperation] Send requirement: "));
-        Serial.print(out);
-        Serial.print(F("\n"));
+        AO_DBG_DEBUG("Try to send requirement: %s", out.c_str());
     }
     printReqCounter++;
-#endif
     
     bool success = ocppSocket.sendTXT(out);
 
     timeout->tick(success);
     
     if (success) {
-        if (TRAFFIC_OUT) Serial.print(F("[OcppOperation] Sent requirement (success): "));
-        if (TRAFFIC_OUT) Serial.println(out);
+        AO_DBG_TRAFFIC_OUT(out.c_str());
         retry_start = millis();
     } else {
         //ocppSocket is not able to put any data on TCP stack. Maybe because we're offline
@@ -298,13 +291,10 @@ boolean OcppOperation::sendConf(OcppSocket& ocppSocket){
 
     if (wsSuccess) {
         if (operationSuccess) {
-            if (DEBUG_OUT || TRAFFIC_OUT) Serial.print(F("[OcppOperation] (Conf) JSON message: "));
-            if (DEBUG_OUT || TRAFFIC_OUT) Serial.println(out);
+            AO_DBG_TRAFFIC_OUT(out.c_str());
             onSendConfListener(confPayload->as<JsonObject>());
         } else {
-            Serial.print(F("[OcppOperation] (Conf) Error occured! JSON CallError message: "));
-            Serial.print(out);
-            Serial.print('\n');
+            AO_DBG_WARN("Operation failed. JSON CallError message: %s", out.c_str());
             onAbortListener();
         }
     }
@@ -316,7 +306,7 @@ void OcppOperation::setInitiated() {
     if (ocppMessage) {
         ocppMessage->initiate();
     } else {
-        Serial.print(F("[OcppOperation] Error: called setInitiated without corresponding OcppOperation!\n"));
+        AO_DBG_ERR("Missing ocppMessage instance");
     }
 }
 
@@ -358,11 +348,9 @@ boolean OcppOperation::isFullyConfigured(){
 }
 
 void OcppOperation::print_debug() {
-    Serial.print(F("[OcppOperation] I am a "));
     if (ocppMessage) {
-        Serial.print(ocppMessage->getOcppOperationType());
+        AO_CONSOLE_PRINTF("OcppOperation of type %s\n", ocppMessage->getOcppOperationType());
     } else {
-        Serial.print(F("nullptr"));
+        AO_CONSOLE_PRINTF("OcppOperation (no type)\n");
     }
-    Serial.print(F("\n"));
 }
