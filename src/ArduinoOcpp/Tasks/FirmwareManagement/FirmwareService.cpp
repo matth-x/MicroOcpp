@@ -106,7 +106,7 @@ void FirmwareService::loop() {
 
         //if (!installationIssued) {
         if (stage == UpdateStage::AfterDownload) {
-            if (DEBUG_OUT) Serial.println(F("[FirmwareService] After download!"));
+            //if (DEBUG_OUT) Serial.println(F("[FirmwareService] After download!"));
             bool ongoingTx = false;
             if (cpStatusService) {
                 for (int i = 0; i < cpStatusService->getNumConnectors(); i++) {
