@@ -30,12 +30,6 @@ WebSocketsClient *webSocket {nullptr};
 OcppSocket *ocppSocket {nullptr};
 #endif
 
-PowerSampler powerSampler {nullptr};
-std::function<bool()> evRequestsEnergySampler {nullptr};
-bool evRequestsEnergyLastState {false};
-std::function<bool()> connectorEnergizedSampler {nullptr};
-bool connectorEnergizedLastState {false};
-
 OcppEngine *ocppEngine {nullptr};
 FilesystemOpt fileSystemOpt {};
 float voltage_eff {230.f};
@@ -133,12 +127,6 @@ void OCPP_deinitialize() {
 #endif
 
     simpleOcppFactory_deinitialize();
-    
-    powerSampler = nullptr;
-    evRequestsEnergySampler = nullptr;
-    evRequestsEnergyLastState = false;
-    connectorEnergizedSampler = nullptr;
-    connectorEnergizedLastState = false;
 
     fileSystemOpt = FilesystemOpt();
     voltage_eff = 230.f;
@@ -167,42 +155,6 @@ void OCPP_loop() {
         }
     }
 
-    bool evRequestsEnergyNewState = true;
-    if (evRequestsEnergySampler != nullptr) {
-        evRequestsEnergyNewState = evRequestsEnergySampler();
-    } else {
-        if (powerSampler != nullptr) {
-            evRequestsEnergyNewState = powerSampler() >= 50.f;
-        }
-    }
-
-    if (!evRequestsEnergyLastState && evRequestsEnergyNewState) {
-        evRequestsEnergyLastState = true;
-        if (model.getConnectorStatus(OCPP_ID_OF_CONNECTOR))
-            model.getConnectorStatus(OCPP_ID_OF_CONNECTOR)->startEvDrawsEnergy();
-    } else if (evRequestsEnergyLastState && !evRequestsEnergyNewState) {
-        evRequestsEnergyLastState = false;
-        if (model.getConnectorStatus(OCPP_ID_OF_CONNECTOR))
-            model.getConnectorStatus(OCPP_ID_OF_CONNECTOR)->stopEvDrawsEnergy();
-    }
-
-    bool connectorEnergizedNewState = true;
-    if (connectorEnergizedSampler != nullptr) {
-        connectorEnergizedNewState = connectorEnergizedSampler();
-    } else {
-        connectorEnergizedNewState = getTransactionId() >= 0;
-    }
-
-    if (!connectorEnergizedLastState && connectorEnergizedNewState) {
-        connectorEnergizedLastState = true;
-        if (model.getConnectorStatus(OCPP_ID_OF_CONNECTOR))
-            model.getConnectorStatus(OCPP_ID_OF_CONNECTOR)->startEnergyOffer();
-    } else if (connectorEnergizedLastState && !connectorEnergizedNewState) {
-        connectorEnergizedLastState = false;
-        if (model.getConnectorStatus(OCPP_ID_OF_CONNECTOR))
-            model.getConnectorStatus(OCPP_ID_OF_CONNECTOR)->stopEnergyOffer();
-    }
-
 }
 
 void setPowerActiveImportSampler(std::function<float()> power) {
@@ -210,13 +162,13 @@ void setPowerActiveImportSampler(std::function<float()> power) {
         AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
-    powerSampler = power;
+
     auto& model = ocppEngine->getOcppModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
             new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS)));
     }
-    model.getMeteringService()->setPowerSampler(OCPP_ID_OF_CONNECTOR, powerSampler); //connectorId=1
+    model.getMeteringService()->setPowerSampler(OCPP_ID_OF_CONNECTOR, power); //connectorId=1
 }
 
 void setEnergyActiveImportSampler(std::function<float()> energy) {
@@ -233,11 +185,29 @@ void setEnergyActiveImportSampler(std::function<float()> energy) {
 }
 
 void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy) {
-    evRequestsEnergySampler = evRequestsEnergy;
+    if (!ocppEngine) {
+        AO_DBG_ERR("Please call OCPP_initialize before");
+        return;
+    }
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return;
+    }
+    connector->setEvRequestsEnergySampler(evRequestsEnergy);
 }
 
 void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized) {
-    connectorEnergizedSampler = connectorEnergized;
+    if (!ocppEngine) {
+        AO_DBG_ERR("Please call OCPP_initialize before");
+        return;
+    }
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return;
+    }
+    connector->setConnectorEnergizedSampler(connectorEnergized);
 }
 
 void setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {

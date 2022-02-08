@@ -10,7 +10,7 @@
 
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
 
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
@@ -72,13 +72,13 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
         return OcppEvseState::Preparing;
     } else {
         //Transaction is currently running
-        if (!evDrawsEnergy) {
+        if (evRequestsEnergySampler && !evRequestsEnergySampler()) {
             return OcppEvseState::SuspendedEV;
         }
-        if (!evseOffersEnergy) {
+        if (connectorEnergizedSampler && !connectorEnergizedSampler()) {
             return OcppEvseState::SuspendedEVSE;
         }
-            return OcppEvseState::Charging;
+        return OcppEvseState::Charging;
     }
 }
 
@@ -92,7 +92,7 @@ OcppMessage *ConnectorStatus::loop() {
     
     if (inferencedStatus != currentStatus) {
         currentStatus = inferencedStatus;
-        if (DEBUG_OUT) Serial.print(F("[OcppEvseStateService] Status changed\n"));
+        AO_DBG_DEBUG("Status changed");
 
         //fire StatusNotification
         //TODO check for online condition: Only inform CS about status change if CP is online
@@ -120,7 +120,7 @@ void ConnectorStatus::authorize(String &idTag){
 
 void ConnectorStatus::authorize(){
     if (authorized == true){
-        if (DEBUG_OUT) Serial.print(F("[ConnectorStatus] Warning: authorized twice or didn't unauthorize before\n"));
+        AO_DBG_WARN("Authorized twice or didn't unauthorize before");
     }
     authorized = true;
 }
@@ -131,7 +131,7 @@ String &ConnectorStatus::getIdTag() {
 
 void ConnectorStatus::unauthorize(){
     if (authorized == false){
-        if (DEBUG_OUT) Serial.print(F("[OcppEvseStateService] Warning: unauthorized twice or didn't authorize before\n"));
+        AO_DBG_WARN("Unauthorized twice or didn't authorize before");
     }
     authorized = false;
     idTag = String('\0');
@@ -177,36 +177,16 @@ void ConnectorStatus::setAvailability(bool available) {
     saveState();
 }
 
-void ConnectorStatus::startEvDrawsEnergy(){
-    if (evDrawsEnergy == true){
-        if (DEBUG_OUT) Serial.print(F("[OcppEvseStateService] Warning: startEvDrawsEnergy called twice or didn't call stopEvDrawsEnergy before\n"));
-    }
-    evDrawsEnergy = true;
-}
-
-void ConnectorStatus::stopEvDrawsEnergy(){
-    if (evDrawsEnergy == false){
-        if (DEBUG_OUT) Serial.print(F("[OcppEvseStateService] Warning: stopEvDrawsEnergy called twice or didn't call startEvDrawsEnergy before\n"));
-    }
-    evDrawsEnergy = false;
-}
-
-void ConnectorStatus::startEnergyOffer(){
-    if (evseOffersEnergy == true){
-        if (DEBUG_OUT) Serial.print(F("[OcppEvseStateService] Warning: startEnergyOffer called twice or didn't call stopEnergyOffer before\n"));
-    }
-    evseOffersEnergy = true;
-}
-
-void ConnectorStatus::stopEnergyOffer(){
-    if (evseOffersEnergy == false){
-        if (DEBUG_OUT) Serial.print(F("[OcppEvseStateService] Warning: stopEnergyOffer called twice or didn't call startEnergyOffer before\n"));
-    }
-    evseOffersEnergy = false;
-}
-
 void ConnectorStatus::setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
     this->connectorPluggedSampler = connectorPlugged;
+}
+
+void ConnectorStatus::setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy) {
+    this->evRequestsEnergySampler = evRequestsEnergy;
+}
+
+void ConnectorStatus::setConnectorEnergizedSampler(std::function<bool()> connectorEnergized) {
+    this->connectorEnergizedSampler = connectorEnergizedSampler;
 }
 
 void ConnectorStatus::addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {

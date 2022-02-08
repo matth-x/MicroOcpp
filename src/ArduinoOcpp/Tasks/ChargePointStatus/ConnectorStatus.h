@@ -31,10 +31,9 @@ private:
     //int transactionId = -1;
     std::shared_ptr<Configuration<int>> transactionId = nullptr;
     int transactionIdSync = -1;
-    bool evDrawsEnergy = false;
-    bool evseOffersEnergy = false;
     std::function<bool()> connectorPluggedSampler = nullptr;
-    //std::function<bool()> connectorFaultedSampler = nullptr;
+    std::function<bool()> evRequestsEnergySampler {nullptr};
+    std::function<bool()> connectorEnergizedSampler {nullptr};
     std::vector<std::function<const char *()>> connectorErrorCodeSamplers;
     const char *getErrorCode();
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
@@ -55,11 +54,9 @@ public:
     int getAvailability();
     void setAvailability(bool available);
     void boot();
-    void startEvDrawsEnergy();
-    void stopEvDrawsEnergy();
-    void startEnergyOffer();
-    void stopEnergyOffer();
     void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
+    void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
+    void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
     void addConnectorErrorCodeSampler(std::function<const char*()> connectorErrorCode);
 
     void saveState();
