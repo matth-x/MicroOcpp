@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::OcppMessage;
 
@@ -13,7 +13,7 @@ OcppMessage::OcppMessage() {}
 OcppMessage::~OcppMessage() {}
   
 const char* OcppMessage::getOcppOperationType(){
-    Serial.print(F("[OcppMessage]  Unsupported operation: getOcppOperationType() is not implemented!\n"));
+    AO_DBG_ERR("Unsupported operation: getOcppOperationType() is not implemented");
     return "CustomOperation";
 }
 
@@ -29,20 +29,20 @@ void OcppMessage::initiate() {
 }
 
 std::unique_ptr<DynamicJsonDocument> OcppMessage::createReq() {
-    Serial.print(F("[OcppMessage]  Unsupported operation: createReq() is not implemented!\n"));
+    AO_DBG_ERR("Unsupported operation: createReq() is not implemented");
     return nullptr;
 }
 
 void OcppMessage::processConf(JsonObject payload) {
-    Serial.print(F("[OcppMessage]  Unsupported operation: processConf() is not implemented!\n"));
+    AO_DBG_ERR("Unsupported operation: processConf() is not implemented");
 }
 
 void OcppMessage::processReq(JsonObject payload) {
-    Serial.print(F("[OcppMessage]  Unsupported operation: processReq() is not implemented!\n"));
+    AO_DBG_ERR("Unsupported operation: processReq() is not implemented");
 }
 
 std::unique_ptr<DynamicJsonDocument> OcppMessage::createConf() {
-    Serial.print(F("[OcppMessage]  Unsupported operation: createConf() is not implemented!\n"));
+    AO_DBG_ERR("Unsupported operation: createConf() is not implemented");
     return nullptr;
 }
 

@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/Core/OcppServer.h>
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 #ifndef AO_CUSTOM_WS
 
@@ -28,32 +28,32 @@ void OcppClientSocket::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
     wsock->onEvent([callback](WStype_t type, uint8_t * payload, size_t length) {
         switch (type) {
             case WStype_DISCONNECTED:
-                if (DEBUG_OUT) Serial.print(F("[OcppClientSocket] Disconnected!\n"));
+                AO_DBG_INFO("Disconnected");
                 break;
             case WStype_CONNECTED:
-                if (DEBUG_OUT) Serial.printf("[OcppClientSocket] Connected to url: %s\n", payload);
+                AO_DBG_INFO("Connected to url: %s\n", payload);
                 break;
             case WStype_TEXT:
-                if (DEBUG_OUT || TRAFFIC_OUT) Serial.printf("[OcppClientSocket] get text: %s\n", payload);
+                AO_DBG_TRAFFIC_IN(payload);
 
                 if (!callback((const char *) payload, length)) { //forward message to OcppEngine
-                    if (DEBUG_OUT) Serial.print(F("[OcppClientSocket] Processing WebSocket input event failed!\n"));
+                    AO_DBG_WARN("Processing WebSocket input event failed");
                 }
                 break;
             case WStype_BIN:
-                if (DEBUG_OUT) Serial.print(F("[OcppClientSocket] Incoming binary data stream not supported"));
+                AO_DBG_WARN("Binary data stream not supported");
                 break;
             case WStype_PING:
                 // pong will be send automatically
-                if (DEBUG_OUT || TRAFFIC_OUT) Serial.print(F("[OcppClientSocket] get ping\n"));
+                AO_DBG_TRAFFIC_IN("WS ping");
                 break;
             case WStype_PONG:
                 // answer to a ping we send
-                if (DEBUG_OUT || TRAFFIC_OUT) Serial.print(F("[OcppClientSocket] get pong\n"));
+                AO_DBG_TRAFFIC_IN("WS pong");
                 break;
             case WStype_FRAGMENT_TEXT_START: //fragments are not supported
             default:
-                if (DEBUG_OUT) Serial.print(F("[OcppClientSocket] Unsupported WebSocket event type\n"));
+                AO_DBG_WARN("Unsupported WebSocket event type");
                 break;
         }
     });
@@ -72,8 +72,7 @@ void OcppServerSocket::loop() {
 }
 
 bool OcppServerSocket::sendTXT(String &out) {
-    if (DEBUG_OUT) Serial.print(F("[OcppServerSocket] Send TXT: "));
-    if (DEBUG_OUT) Serial.println(out);
+    AO_DBG_TRAFFIC_OUT(out.c_str());
     return OcppServer::getInstance()->sendTXT(ip_addr, out);
 }
 

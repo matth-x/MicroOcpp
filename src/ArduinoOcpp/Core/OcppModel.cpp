@@ -10,7 +10,7 @@
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
 
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 using namespace ArduinoOcpp;
 
@@ -62,7 +62,7 @@ ConnectorStatus *OcppModel::getConnectorStatus(int connectorId) const {
 
     auto result = getChargePointStatusService()->getConnector(connectorId);
     if (result == nullptr) {
-        if (DEBUG_OUT) Serial.println(F("[OcppModel] in getConnectorStatus(): cannot fetch connector with given connectorId. Return nullptr"));
+        AO_DBG_ERR("Cannot fetch connector with given connectorId. Return nullptr");
         //no error catch 
     }
     return result;

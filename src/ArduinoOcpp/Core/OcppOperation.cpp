@@ -99,7 +99,7 @@ boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
     /*
      * Create the OCPP message
      */
-    auto requestPayload = std::unique_ptr<DynamicJsonDocument>(ocppMessage->createReq());
+    auto requestPayload = ocppMessage->createReq();
     if (!requestPayload) {
         onAbortListener();
         return true;
