@@ -33,7 +33,8 @@ std::unique_ptr<DynamicJsonDocument> RemoteStopTransaction::createConf(){
         for (int i = 0; i < cpStatusService->getNumConnectors(); i++) {
             auto connIter = cpStatusService->getConnector(i);
             if (connIter->getTransactionId() == transactionId) {
-                canStopTransaction = true; 
+                canStopTransaction = true;
+                connIter->endSession();
             }
         }
     }

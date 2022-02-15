@@ -6,16 +6,21 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::Authorize;
 
-Authorize::Authorize() {
-    this->idTag = String("A0-00-00-00"); //Use a default payload. In the typical use case of this library, you probably you don't even need Authorization at all
-}
+//Authorize::Authorize() {
+//    snprintf(this->idTag, IDTAG_LEN_MAX + 1, "A0-00-00-00"); //Use a default payload. In the typical use case of this library, you probably you don't even need Authorization at all
+//}
 
-Authorize::Authorize(const String &idTag) {
-    this->idTag = String(idTag);
+Authorize::Authorize(const char *idTagIn) {
+    if (idTagIn && strnlen(idTagIn, IDTAG_LEN_MAX + 2) <= IDTAG_LEN_MAX) {
+        snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
+    } else {
+        AO_DBG_WARN("Format violation of idTag. Use default idTag");
+        snprintf(idTag, IDTAG_LEN_MAX + 1, "A0-00-00-00");
+    }
 }
 
 const char* Authorize::getOcppOperationType(){
@@ -23,25 +28,22 @@ const char* Authorize::getOcppOperationType(){
 }
 
 std::unique_ptr<DynamicJsonDocument> Authorize::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + (idTag.length() + 1)));
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + (IDTAG_LEN_MAX + 1)));
     JsonObject payload = doc->to<JsonObject>();
     payload["idTag"] = idTag;
     return doc;
 }
 
 void Authorize::processConf(JsonObject payload){
-    String idTagInfo = payload["idTagInfo"]["status"] | "not specified";
+    const char *idTagInfo = payload["idTagInfo"]["status"] | "not specified";
 
-    if (idTagInfo.equals("Accepted")) {
-        if (DEBUG_OUT) Serial.print(F("[Authorize] Request has been accepted!\n"));
+    if (!strcmp(idTagInfo, "Accepted")) {
+        AO_DBG_INFO("Request has been accepted");
 
-        if (ocppModel && ocppModel->getChargePointStatusService()) {
-            ocppModel->getChargePointStatusService()->authorize(idTag);
-        }
+        //TODO add entry in offline auth cache
     
     } else {
-        Serial.print(F("[Authorize] Request has been denied! Reason: "));
-        Serial.println(idTagInfo);
+        AO_DBG_INFO("Request has been denied. Reason: %s", idTagInfo);
     }
 }
 

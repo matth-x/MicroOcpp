@@ -22,7 +22,7 @@ DiagnosticsStatusNotification::DiagnosticsStatusNotification(DiagnosticsStatus s
     
 }
 
-const char *DiagnosticsStatusNotification::cstrFromFwStatus(DiagnosticsStatus status) {
+const char *DiagnosticsStatusNotification::cstrFromStatus(DiagnosticsStatus status) {
     switch (status) {
         case (DiagnosticsStatus::Idle):
             return "Idle";
@@ -43,7 +43,7 @@ const char *DiagnosticsStatusNotification::cstrFromFwStatus(DiagnosticsStatus st
 std::unique_ptr<DynamicJsonDocument> DiagnosticsStatusNotification::createReq() {
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
-    payload["status"] = cstrFromFwStatus(status);
+    payload["status"] = cstrFromStatus(status);
     return doc;
 }
 

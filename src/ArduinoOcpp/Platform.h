@@ -20,4 +20,9 @@
 //#define ao_tick_ms millis
 //#endif
 
+#ifndef ao_avail_heap
+#include <Arduino.h>
+#define ao_avail_heap ESP.getFreeHeap
+#endif
+
 #endif

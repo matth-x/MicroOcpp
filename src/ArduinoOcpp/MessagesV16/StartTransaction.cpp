@@ -6,17 +6,19 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
-
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::StartTransaction;
 
 StartTransaction::StartTransaction(int connectorId) : connectorId(connectorId) {
-    this->idTag = String('\0');
+    
 }
 
-StartTransaction::StartTransaction(int connectorId, String &idTag) : connectorId(connectorId) {
-    this->idTag = String(idTag);
+StartTransaction::StartTransaction(int connectorId, const char *idTag) : connectorId(connectorId) {
+    if (idTag && strnlen(idTag, IDTAG_LEN_MAX + 2) <= IDTAG_LEN_MAX)
+        snprintf(this->idTag, IDTAG_LEN_MAX + 1, "%s", idTag);
+    else
+        AO_DBG_ERR("Format violation");
 }
 
 const char* StartTransaction::getOcppOperationType(){
@@ -35,34 +37,37 @@ void StartTransaction::initiate() {
         otimestamp = MIN_TIME;
     }
 
-    if (idTag.isEmpty()) {
-        if (ocppModel && ocppModel->getChargePointStatusService() 
-                    && ocppModel->getChargePointStatusService()->existsUnboundAuthorization()) {
-            this->idTag = String(ocppModel->getChargePointStatusService()->getUnboundIdTag()); 
-        } else {
-            //The CP is not authorized. Try anyway, let the CS decide what to do ...
-            this->idTag = String("A0-00-00-00"); //Use a default payload. In the typical use case of this library, you probably you don't even need Authorization at all
-        }
-    }
-
-    if (ocppModel && ocppModel->getChargePointStatusService()) {
-        ocppModel->getChargePointStatusService()->bindAuthorization(connectorId);
-    }
-
-    if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
+    if (ocppModel && ocppModel->getConnectorStatus(connectorId)) {
         auto connector = ocppModel->getConnectorStatus(connectorId);
+
+        if (*idTag == '\0') {
+            const char *sessionIdTag = connector->getSessionIdTag();
+            if (sessionIdTag) {
+                snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", sessionIdTag);
+            } else {
+                AO_DBG_WARN("Try to start transaction without providing idTag. Initialize session with default idTag");
+                connector->beginSession(nullptr);
+                sessionIdTag = connector->getSessionIdTag(); //returns default idTag now
+                if (sessionIdTag)
+                    snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", sessionIdTag);
+            }
+        } else {
+            //idTag has been overriden
+            connector->beginSession(idTag);
+        }
+
         if (connector->getTransactionId() >= 0) {
-            Serial.print(F("[StartTransaction] Warning: started transaction while OCPP already presumes a running transaction\n"));
+            AO_DBG_WARN("Started transaction while OCPP already presumes a running transaction");
         }
         connector->setTransactionId(0); //pending
         transactionRev = connector->getTransactionWriteCount();
     }
 
-    if (DEBUG_OUT) Serial.println(F("[StartTransaction] StartTransaction initiated!"));
+    AO_DBG_INFO("StartTransaction initiated");
 }
 
 std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(5) + (JSONDATE_LENGTH + 1) + (idTag.length() + 1)));
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(5) + (JSONDATE_LENGTH + 1) + (IDTAG_LEN_MAX + 1)));
     JsonObject payload = doc->to<JsonObject>();
 
     payload["connectorId"] = connectorId;
@@ -89,27 +94,24 @@ void StartTransaction::processConf(JsonObject payload) {
     ConnectorStatus *connector = nullptr;
     if (ocppModel)
         connector = ocppModel->getConnectorStatus(connectorId);
-
-    if (!strcmp(idTagInfoStatus, "Accepted")) {
-        if (DEBUG_OUT) Serial.print(F("[StartTransaction] Request has been accepted!\n"));
-
-        if (connector){
-            if (transactionRev == connector->getTransactionWriteCount()) {
+    
+    if (connector){
+        if (transactionRev == connector->getTransactionWriteCount()) {
+            
+            if (!strcmp(idTagInfoStatus, "Accepted")) {
+                AO_DBG_INFO("Request has been accepted");
                 connector->setTransactionId(transactionId);
+            } else {
+                AO_DBG_INFO("Request has been denied. Reason: %s", idTagInfoStatus);
+                //connector->setTransactionId(-1);
+                connector->endSession(); //something is wrong with the idTag. Abort session
             }
-            connector->setTransactionIdSync(transactionId);
         }
-    } else {
-        Serial.print(F("[StartTransaction] Request has been denied! Reason: "));
-        Serial.println(idTagInfoStatus);
-        if (connector){
-            if (transactionRev == connector->getTransactionWriteCount()) {
-                connector->setTransactionId(-1);
-                connector->unauthorize();
-            }
-            connector->setTransactionIdSync(-1);
-        }
+        connector->setTransactionIdSync(transactionId);
+
+        AO_DBG_DEBUG("Local txId = %i, remote txId = %i", connector->getTransactionId(), connector->getTransactionIdSync());
     }
+
 }
 
 

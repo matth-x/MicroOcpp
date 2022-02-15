@@ -267,7 +267,9 @@ DynamicJsonDocument *ChargingSchedule::toJsonDocument() {
     char startScheduleJson [JSONDATE_LENGTH + 1] = {'\0'};
     startSchedule.toJsonString(startScheduleJson, JSONDATE_LENGTH + 1);
     payload["startSchedule"] = startScheduleJson;
-    payload["schedulingUnit"] = schedulingUnit;
+    char chargingRateUnit_str [2] = {'\0'};
+    chargingRateUnit_str[0] = schedulingUnit;
+    payload["chargingRateUnit"] = chargingRateUnit_str;
     JsonArray periodArray = payload.createNestedArray("chargingSchedulePeriod");
     for (auto period = chargingSchedulePeriod.begin(); period != chargingSchedulePeriod.end(); period++) {
         JsonObject entry = periodArray.createNestedObject();

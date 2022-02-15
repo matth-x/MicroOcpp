@@ -6,13 +6,9 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::StopTransaction;
-
-StopTransaction::StopTransaction() {
-
-}
 
 StopTransaction::StopTransaction(int connectorId) : connectorId(connectorId) {
 
@@ -38,10 +34,13 @@ void StopTransaction::initiate() {
     if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
         auto connector = ocppModel->getConnectorStatus(connectorId);
         connector->setTransactionId(-1); //immediate end of transaction
-        connector->unauthorize();
+        if (connector->getSessionIdTag()) {
+            AO_DBG_DEBUG("Ending EV user session triggered by StopTransaction");
+            connector->endSession();
+        }
     }
 
-    if (DEBUG_OUT) Serial.println(F("[StartTransaction] StopTransaction initiated!"));
+    AO_DBG_INFO("StopTransaction initiated!");
 }
 
 std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
@@ -60,7 +59,6 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
     if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
         auto connector = ocppModel->getConnectorStatus(connectorId);
         payload["transactionId"] = connector->getTransactionIdSync();
-        connector->setTransactionIdSync(-1);
     }
 
     return doc;
@@ -68,9 +66,12 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
 
 void StopTransaction::processConf(JsonObject payload) {
 
-    //no need to process anything here
+    if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
+        auto connector = ocppModel->getConnectorStatus(connectorId);
+        connector->setTransactionIdSync(-1);
+    }
 
-    if (DEBUG_OUT) Serial.print(F("[StopTransaction] Request has been accepted!\n"));
+    AO_DBG_INFO("Request has been accepted!");
 }
 
 

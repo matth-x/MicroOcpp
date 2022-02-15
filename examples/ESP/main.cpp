@@ -48,7 +48,6 @@ void setup() {
     }
 #elif defined(ESP32)
     WiFi.begin(STASSID, STAPSK);
-    Serial.print(F("[main] Wait for WiFi: "));
     while (!WiFi.isConnected()) {
         Serial.print('.');
         delay(1000);
@@ -99,35 +98,33 @@ void loop() {
     OCPP_loop();
 
     /*
-     * Get transaction state of OCPP
+     * Check internal OCPP state and bind EVSE hardware to it
      */
-    if (getTransactionId() > 0) {
-        //transaction running with txID given by getTransactionId()
-    } else if (getTransactionId() == 0) {
-        //transaction initiation is pending, i.e. startTransaction() was already sent, but hasn't come back yet.
+    if (ocppPermitsCharge()) {
+        //OCPP set up and transaction running. Energize the EV plug here
     } else {
-        //no transaction running at the moment
+        //No transaction running at the moment. De-energize EV plug
     }
 
     /*
      * Detect if something physical happened at your EVSE and trigger the corresponding OCPP messages
      */
     if (/* RFID chip detected? */ false) {
-        String idTag = "my-id-tag"; //e.g. idTag = RFID.readIdTag();
+        const char *idTag = "my-id-tag"; //e.g. idTag = RFID.readIdTag();
         authorize(idTag);
     }
     
     if (/* EV plugged in? */ false) {
-        startTransaction([] (JsonObject payload) {
-            //Callback: Central System has answered. Energize your EV plug inside this callback and flash a confirmation light if you want.
-            Serial.print(F("[main] Started OCPP transaction. EV plug energized\n"));
+        startTransaction("my-id-tag", [] (JsonObject payload) {
+            //Callback: Central System has answered. Could flash a confirmation light here.
+            Serial.print(F("[main] Started OCPP transaction\n"));
         });
     }
     
     if (/* EV unplugged? */ false) {
         stopTransaction([] (JsonObject payload) {
-            //Callback: Central System has answered. De-energize EV plug here.
-            Serial.print(F("[main] Stopped OCPP transaction. EV plug de-energized\n"));
+            //Callback: Central System has answered.
+            Serial.print(F("[main] Stopped OCPP transaction\n"));
         });
     }
 

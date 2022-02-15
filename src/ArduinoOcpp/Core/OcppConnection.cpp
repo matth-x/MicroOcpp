@@ -8,7 +8,7 @@
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/OcppError.h>
 
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 #define HEAP_GUARD 2000UL //will not accept JSON messages if it will result in less than HEAP_GUARD free bytes in heap
 
@@ -61,7 +61,7 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
         }
         timer->tick(false); //false: did not send a frame prior to calling tick
         if (timer->isExceeded()) {
-            Serial.print(F("[OcppEngine] Discarding operation due to timeout: "));
+            AO_DBG_INFO("Discarding operation due to timeout:");
             (*operation)->print_debug();
             operation = initiatedOcppOperations.erase(operation);
         } else {
@@ -89,11 +89,11 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
 
 void OcppConnection::initiateOcppOperation(std::unique_ptr<OcppOperation> o){
     if (!o) {
-        Serial.printf("[OcppEngine] initiateOcppOperation(op) was called with null. Ignore\n");
+        AO_DBG_ERR("Called with null. Ignore");
         return;
     }
     if (!o->isFullyConfigured()){
-        Serial.printf("[OcppEngine] initiateOcppOperation(op) was called without the operation being configured and ready to send. Discard operation!\n");
+        AO_DBG_ERR("Called without the operation being configured and ready to send. Discard operation!");
         return; //o gets destroyed
     }
     o->setInitiated();
@@ -108,7 +108,7 @@ bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t lengt
     size_t capacity = length + 100;
 
     DeserializationError err = DeserializationError::NoMemory;
-    while (capacity + HEAP_GUARD < ESP.getFreeHeap() && err == DeserializationError::NoMemory) {
+    while (capacity + HEAP_GUARD < ao_avail_heap() && err == DeserializationError::NoMemory) {
         doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
         err = deserializeJson(*doc, payload, length);
 
@@ -136,22 +136,19 @@ bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t lengt
                         deserializationSuccess = true;
                         break;
                     default:
-                        Serial.print(F("[OcppEngine] Invalid OCPP message! (though JSON has successfully been deserialized)\n"));
+                        AO_DBG_WARN("Invalid OCPP message! (though JSON has successfully been deserialized)");
                         break;
                 }
             } else { //unlikely corner case
-                Serial.print(F("[OcppEngine] Deserialization is okay but doc is nullptr\n"));
+                AO_DBG_ERR("Deserialization is okay but doc is nullptr");
             }
             break;
         case DeserializationError::InvalidInput:
-            Serial.print(F("[OcppEngine] Invalid input! Not a JSON\n"));
+            AO_DBG_WARN("Invalid input! Not a JSON");
             break;
         case DeserializationError::NoMemory:
             {
-                if (DEBUG_OUT) Serial.print(F("[OcppEngine] Error: Not enough memory in heap! Input length = "));
-                if (DEBUG_OUT) Serial.print(length);
-                if (DEBUG_OUT) Serial.print(F(", free heap = "));
-                if (DEBUG_OUT) Serial.println(ESP.getFreeHeap());
+                AO_DBG_WARN("OOP! Incoming operation exceeds reserved heap. Input length = %lu, free heap = %lu", length, ao_avail_heap());
 
                 /*
                  * If websocket input is of message type MESSAGE_TYPE_CALL, send back a message of type MESSAGE_TYPE_CALLERROR.
@@ -167,15 +164,14 @@ bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t lengt
                     int messageTypeId2 = (*doc)[0] | -1;
                     if (messageTypeId2 == MESSAGE_TYPE_CALL) {
                         deserializationSuccess = true;
-                        auto op = makeOcppOperation(new OutOfMemory(ESP.getFreeHeap(), length));
+                        auto op = makeOcppOperation(new OutOfMemory(ao_avail_heap(), length));
                         handleReqMessage(*doc, std::move(op));
                     }
                 }
             }
             break;
         default:
-            Serial.print(F("[OcppEngine] Deserialization failed: "));
-            Serial.println(err.c_str());
+            AO_DBG_WARN("Deserialization failed: %s", err.c_str());
             break;
     }
 
@@ -199,13 +195,13 @@ void OcppConnection::handleConfMessage(JsonDocument& json) {
     }
 
     //didn't find matching OcppOperation
-    Serial.print(F("[OcppEngine] Received CALLRESULT doesn't match any pending operation!\n"));
+    AO_DBG_WARN("Received CALLRESULT doesn't match any pending operation");
 }
 
 void OcppConnection::handleReqMessage(JsonDocument& json) {
     auto op = makeFromJson(json);
     if (op == nullptr) {
-        Serial.print(F("[OcppEngine] Couldn't make OppOperation from Request. Ignore request.\n"));
+        AO_DBG_WARN("Couldn't make OppOperation from Request. Ignore request");
         return;
     }
     handleReqMessage(json, std::move(op));
@@ -213,7 +209,7 @@ void OcppConnection::handleReqMessage(JsonDocument& json) {
 
 void OcppConnection::handleReqMessage(JsonDocument& json, std::unique_ptr<OcppOperation> op) {
     if (op == nullptr) {
-        Serial.print(F("[OcppEngine] handleReqMessage: invalid argument\n"));
+        AO_DBG_ERR("Invalid argument");
         return;
     }
     op->setOcppModel(baseModel);
@@ -231,7 +227,7 @@ void OcppConnection::handleErrMessage(JsonDocument& json) {
     }
 
     //No OcppOperation was aborted because of the error message
-    if (DEBUG_OUT) Serial.print(F("[OcppEngine] Received CALLERROR did not abort a pending operation\n"));
+    AO_DBG_WARN("Received CALLERROR did not abort a pending operation");
 }
 
 /*

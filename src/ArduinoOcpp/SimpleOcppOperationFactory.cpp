@@ -224,7 +224,7 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType) {
         msg = std::unique_ptr<OcppMessage>(entry->creator());
         operation->setOnReceiveReqListener(entry->onReceiveReq);
     } else if (!strcmp(messageType, "Authorize")) {
-        msg = std::unique_ptr<OcppMessage>(new Ocpp16::Authorize());
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::Authorize("A0-00-00-00")); //send default idTag
         operation->setOnReceiveReqListener(onAuthorizeRequest);
     } else if (!strcmp(messageType, "BootNotification")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::BootNotification());
@@ -243,7 +243,7 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction(1)); //connectorId 1
         operation->setOnReceiveReqListener(onStartTransactionRequest);
     } else if (!strcmp(messageType, "StopTransaction")) {
-        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StopTransaction());
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StopTransaction(1)); //connectorId 1
     } else if (!strcmp(messageType, "TriggerMessage")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::TriggerMessage());
         operation->setOnReceiveReqListener(onTriggerMessageRequest);

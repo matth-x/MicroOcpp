@@ -17,7 +17,6 @@ private:
     int meterStop = -1;
     OcppTimestamp otimestamp;
 public:
-    StopTransaction();
 
     StopTransaction(int connectorId);
 

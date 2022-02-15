@@ -117,7 +117,7 @@ bool ConfigurationContainerFlash::load() {
     for (JsonObject config : configurationsArray) {
         const char *type = config["type"] | "Undefined";
 
-        std::shared_ptr<AbstractConfiguration> configuration = NULL;
+        std::shared_ptr<AbstractConfiguration> configuration = nullptr;
 
         if (!strcmp(type, SerializedType<int>::get())){
             configuration = std::make_shared<Configuration<int>>(config);
@@ -144,7 +144,7 @@ bool ConfigurationContainerFlash::load() {
 
     configurationsUpdated();
 
-    if (DEBUG_OUT) Serial.println(F("[Configuration] Initialization successful\n"));
+    if (DEBUG_OUT) Serial.println(F("[Configuration] Initialization successful"));
 #endif //ndef AO_DEACTIVATE_FLASH
     return true;
 }

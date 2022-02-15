@@ -6,17 +6,18 @@
 #define AUTHORIZE_H
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 
 class Authorize : public OcppMessage {
 private:
-    String idTag;
+    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
 public:
-    Authorize();
+//    Authorize();
 
-    Authorize(const String &idTag);
+    Authorize(const char *idTag);
 
     const char* getOcppOperationType();
 

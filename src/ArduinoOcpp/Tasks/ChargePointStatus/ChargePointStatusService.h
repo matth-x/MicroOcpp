@@ -15,13 +15,9 @@ class ChargePointStatusService {
 private:
     OcppEngine& context;
     
-    const int numConnectors;
-    ConnectorStatus **connectors;
+    std::vector<std::unique_ptr<ConnectorStatus>> connectors;
 
     bool booted = false;
-
-    boolean authorized = false;
-    String idTag = String('\0');
 
 public:
     ChargePointStatusService(OcppEngine& context, int numConnectors);
@@ -30,14 +26,8 @@ public:
     
     void loop();
 
-    void authorize(String &idTag);
-    void authorize();
     void boot();
     bool isBooted();
-    String &getUnboundIdTag();
-    void invalidateUnboundIdTag();
-    boolean existsUnboundAuthorization();
-    void bindAuthorization(int connectorId);
 
     ConnectorStatus *getConnector(int connectorId);
     int getNumConnectors();

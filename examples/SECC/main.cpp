@@ -270,15 +270,6 @@ void setup() {
 //        }
     });
 
-    setOnRemoteStartTransactionSendConf([] (JsonObject payload) {
-        if (!strcmp(payload["status"], "Accepted"))
-            startTransaction();
-    });
-
-    setOnRemoteStopTransactionSendConf([] (JsonObject payload) {
-        stopTransaction();
-    });
-
     setOnResetSendConf([] (JsonObject payload) {
         if (getTransactionId() >= 0)
             stopTransaction();
@@ -317,11 +308,11 @@ void loop() {
      * Detect if something physical happened at your EVSE and trigger the corresponding OCPP messages
      */
     if (/* RFID chip detected? */ false) {
-        String idTag = "my-id-tag"; //e.g. idTag = RFID.readIdTag();
+        const char *idTag = "my-id-tag"; //e.g. idTag = RFID.readIdTag();
         authorize(idTag);
     }
 
-    if (getTransactionId() > 0) {
+    if (ocppPermitsCharge()) {
         digitalWrite(OCPP_CHARGE_PERMISSION_PIN, OCPP_CHARGE_PERMITTED);
         digitalWrite(CHARGE_PERMISSION_LED, CHARGE_PERMISSION_ON);
     } else {
@@ -342,7 +333,7 @@ void loop() {
         //transition unplugged -> plugged; Case B: no transaction running; start transaction
         evPlugged = EV_PLUGGED;
 
-        startTransaction();
+        startTransaction("my-id-tag");
     } else if (digitalRead(EV_PLUG_PIN) == EV_UNPLUGGED && evPlugged == EV_PLUGGED) {
         //transition plugged -> unplugged
         evPlugged = EV_UNPLUGGED;

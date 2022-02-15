@@ -7,6 +7,7 @@
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/OcppEvseState.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
+#include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 #define AVAILABILITY_OPERATIVE 2
 #define AVAILABILITY_INOPERATIVE_SCHEDULED 1
@@ -25,12 +26,11 @@ private:
 
     std::shared_ptr<Configuration<int>> availability = nullptr;
 
-    bool authorized = false;
-    String idTag = String('\0');
-    bool transactionRunning = false;
-    //int transactionId = -1;
+    bool session = false;
+    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
     std::shared_ptr<Configuration<int>> transactionId = nullptr;
     int transactionIdSync = -1;
+
     std::function<bool()> connectorPluggedSampler = nullptr;
     std::function<bool()> evRequestsEnergySampler {nullptr};
     std::function<bool()> connectorEnergizedSampler {nullptr};
@@ -41,19 +41,29 @@ private:
 public:
     ConnectorStatus(OcppModel& context, int connectorId);
 
-    //boolean requestAuthorization();
-    void authorize();
-    void authorize(String &idTag);
-    void unauthorize();
-    String &getIdTag();
+    /*
+     * Relation Session <-> Transaction
+     * Session: the EV user is authorized and the OCPP transaction can start immediately without
+     *          further confirmation by the user or the OCPP backend
+     * Transaction: started by "StartTransaction" and stopped by "StopTransaction".
+     * 
+     * A session (between the EV user and the OCPP system) is on of two prerequisites to start a
+     * transaction. The other prerequisite is that the EV is properly connected to the EVSE
+     * (given by ConnectorPluggedSampler and no error code)
+     */
+    void beginSession(const char *idTag);
+    void endSession();
+    const char *getSessionIdTag();
     int getTransactionId();
     int getTransactionIdSync();
     uint16_t getTransactionWriteCount();
     void setTransactionId(int id);
     void setTransactionIdSync(int id);
+
+
     int getAvailability();
     void setAvailability(bool available);
-    void boot();
+    void setAuthorizationProvider(std::function<const char *()> authorization);
     void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
     void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
     void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
@@ -65,6 +75,8 @@ public:
     OcppMessage *loop();
 
     OcppEvseState inferenceStatus();
+
+    bool ocppPermitsCharge();
 
     void setOnUnlockConnector(std::function<bool()> unlockConnector);
     std::function<bool()> getOnUnlockConnector();

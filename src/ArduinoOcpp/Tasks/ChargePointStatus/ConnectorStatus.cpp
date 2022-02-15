@@ -9,6 +9,8 @@
 #include <ArduinoOcpp/Core/Configuration.h>
 
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
+#include <ArduinoOcpp/MessagesV16/StartTransaction.h>
+#include <ArduinoOcpp/MessagesV16/StopTransaction.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -57,11 +59,11 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
         return OcppEvseState::Faulted;
     } else if (*availability == AVAILABILITY_INOPERATIVE) {
         return OcppEvseState::Unavailable;
-    } else if (!authorized && cpStatusService && !cpStatusService->existsUnboundAuthorization() &&
-                ((int) *transactionId) < 0 &&
+    } else if (!session &&
+                getTransactionId() < 0 &&
                 (connectorPluggedSampler == nullptr || !connectorPluggedSampler()) ) {
         return OcppEvseState::Available;
-    } else if (((int) *transactionId) <= 0) {
+    } else if (getTransactionId() <= 0) {
         if (connectorPluggedSampler != nullptr && connectorPluggedSampler() &&
                 (currentStatus == OcppEvseState::Finishing ||
                 currentStatus == OcppEvseState::Charging ||
@@ -82,10 +84,46 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
     }
 }
 
+bool ConnectorStatus::ocppPermitsCharge() {
+    if (connectorId == 0) {
+        AO_DBG_WARN("not supported for connectorId == 0");
+        return false;
+    }
+
+    OcppEvseState state = inferenceStatus();
+
+    return state == OcppEvseState::Charging ||
+            state == OcppEvseState::SuspendedEV ||
+            state == OcppEvseState::SuspendedEVSE;
+}
+
 OcppMessage *ConnectorStatus::loop() {
     if (getTransactionId() <= 0 && *availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
         *availability = AVAILABILITY_INOPERATIVE;
         saveState();
+    }
+
+    /*
+     * Check conditions for start or stop transaction
+     */
+    if (connectorPluggedSampler) { //only supported with connectorPluggedSampler
+        if (getTransactionId() >= 0) {
+            //check condition for StopTransaction
+            if (!connectorPluggedSampler() ||
+                    !session) {
+                AO_DBG_INFO("Session mngt: trigger StopTransaction");
+                return new StopTransaction(connectorId);
+            }
+        } else {
+            //check condition for StartTransaction
+            if (connectorPluggedSampler() &&
+                    session &&
+                    !getErrorCode() &&
+                    *availability == AVAILABILITY_OPERATIVE) {
+                AO_DBG_INFO("Session mngt: trigger StartTransaction");
+                return new StartTransaction(connectorId);
+            }
+        }
     }
 
     auto inferencedStatus = inferenceStatus();
@@ -113,28 +151,24 @@ const char *ConnectorStatus::getErrorCode() {
     return nullptr;
 }
 
-void ConnectorStatus::authorize(String &idTag){
-    this->idTag = String(idTag);
-    authorize();
-}
-
-void ConnectorStatus::authorize(){
-    if (authorized == true){
-        AO_DBG_WARN("Authorized twice or didn't unauthorize before");
+void ConnectorStatus::beginSession(const char *sessionIdTag) {
+    if (!sessionIdTag || *sessionIdTag == '\0') {
+        //input string is empty
+        snprintf(idTag, IDTAG_LEN_MAX + 1, "A0-00-00-00");
+    } else {
+        snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", sessionIdTag);
     }
-    authorized = true;
+    session = true;
 }
 
-String &ConnectorStatus::getIdTag() {
-    return idTag;
+void ConnectorStatus::endSession() {
+    if (session)
+        memset(idTag, '\0', IDTAG_LEN_MAX + 1);
+    session = false;
 }
 
-void ConnectorStatus::unauthorize(){
-    if (authorized == false){
-        AO_DBG_WARN("Unauthorized twice or didn't authorize before");
-    }
-    authorized = false;
-    idTag = String('\0');
+const char *ConnectorStatus::getSessionIdTag() {
+    return session ? idTag : nullptr;
 }
 
 int ConnectorStatus::getTransactionId() {

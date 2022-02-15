@@ -19,6 +19,7 @@
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
+#include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -267,7 +268,7 @@ void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq) {
 }
 
 void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf) {
-     setOnRemoteStartTransactionSendConfListener(onSendConf);
+    setOnRemoteStartTransactionSendConfListener(onSendConf);
 }
 
 void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq) {
@@ -286,9 +287,13 @@ void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq) {
      setOnResetReceiveRequestListener(onReceiveReq);
 }
 
-void authorize(String &idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
         AO_DBG_ERR("Please call OCPP_initialize before");
+        return;
+    }
+    if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
+        AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return;
     }
     auto authorize = makeOcppOperation(
@@ -330,18 +335,6 @@ void bootNotification(String chargePointModel, String chargePointVendor, OnRecei
     ocppEngine->initiateOperation(std::move(bootNotification));
 }
 
-void bootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber, OnReceiveConfListener onConf) {
-    if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
-        return;
-    }
-    auto bootNotification = makeOcppOperation(
-        new BootNotification(chargePointModel, chargePointVendor, chargePointSerialNumber));
-    bootNotification->setOnReceiveConfListener(onConf);
-    bootNotification->setTimeout(std::unique_ptr<Timeout> (new SuppressedTimeout()));
-    ocppEngine->initiateOperation(std::move(bootNotification));
-}
-
 void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
         AO_DBG_ERR("Please call OCPP_initialize before");
@@ -364,13 +357,17 @@ void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf
     ocppEngine->initiateOperation(std::move(bootNotification));
 }
 
-void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+void startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
         AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
+    if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
+        AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
+        return;
+    }
     auto startTransaction = makeOcppOperation(
-        new StartTransaction(OCPP_ID_OF_CONNECTOR));
+        new StartTransaction(OCPP_ID_OF_CONNECTOR, idTag));
     if (onConf)
         startTransaction->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -383,18 +380,6 @@ void startTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnT
         startTransaction->setTimeout(std::move(timeout));
     else
         startTransaction->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
-    ocppEngine->initiateOperation(std::move(startTransaction));
-}
-
-void startTransaction(String &idTag, OnReceiveConfListener onConf) {
-    if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
-        return;
-    }
-    auto startTransaction = makeOcppOperation(
-        new StartTransaction(OCPP_ID_OF_CONNECTOR, idTag));
-    startTransaction->setOnReceiveConfListener(onConf);
-    startTransaction->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
     ocppEngine->initiateOperation(std::move(startTransaction));
 }
 
@@ -433,17 +418,17 @@ int getTransactionId() {
     return connector->getTransactionId();
 }
 
-bool existsUnboundIdTag() {
+bool ocppPermitsCharge() {
     if (!ocppEngine) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return false;
     }
-    auto csService = ocppEngine->getOcppModel().getChargePointStatusService();
-    if (!csService) {
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
     }
-    return csService->existsUnboundAuthorization();
+    return connector->ocppPermitsCharge();
 }
 
 bool isAvailable() {
@@ -460,6 +445,53 @@ bool isAvailable() {
     }
     return (chargePoint->getAvailability() != AVAILABILITY_INOPERATIVE)
        &&  (connector->getAvailability() != AVAILABILITY_INOPERATIVE);
+}
+
+void beginSession(const char *idTag) {
+    if (!ocppEngine) {
+        AO_DBG_ERR("Please call OCPP_initialize before");
+        return;
+    }
+    if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
+        AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
+        return;
+    }
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return;
+    }
+    connector->beginSession(idTag);
+}
+
+void endSession() {
+    if (!ocppEngine) {
+        AO_DBG_ERR("Please call OCPP_initialize before");
+        return;
+    }
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return;
+    }
+    connector->endSession();
+}
+
+bool isInSession() {
+    return getSessionIdTag() != nullptr;
+}
+
+const char *getSessionIdTag() {
+    if (!ocppEngine) {
+        AO_DBG_ERR("Please call OCPP_initialize before");
+        return nullptr;
+    }
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return nullptr;
+    }
+    return connector->getSessionIdTag();
 }
 
 #if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WS)

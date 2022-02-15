@@ -25,8 +25,6 @@ public:
 
     BootNotification(String &chargePointModel, String &chargePointVendor);
 
-    BootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber);
-
     BootNotification(String &chargePointModel, String &chargePointVendor, String &chargePointSerialNumber, String &firmwareVersion);
 
     BootNotification(DynamicJsonDocument *payload);

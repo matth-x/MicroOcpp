@@ -2,12 +2,11 @@
 // Copyright Matthias Akstaller 2019 - 2022
 // MIT License
 
-#include <Variants.h>
-
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/Debug.h>
 
 #include <string.h>
 
@@ -20,12 +19,6 @@ BootNotification::BootNotification() {
 BootNotification::BootNotification(String &cpModel, String &cpVendor) {
     chargePointModel = String(cpModel);
     chargePointVendor = String(cpVendor);
-}
-
-BootNotification::BootNotification(String &cpModel, String &cpVendor, String &cpSerialNumber) {
-    chargePointModel = String(cpModel);
-    chargePointVendor = String(cpVendor);
-    chargePointSerialNumber = String(cpSerialNumber);
 }
 
 BootNotification::BootNotification(String &cpModel, String &cpVendor, String &cpSerialNumber, String &fwVersion) {
@@ -78,10 +71,10 @@ void BootNotification::processConf(JsonObject payload){
         if (ocppModel && ocppModel->getOcppTime().setOcppTime(currentTime)) {
             //success
         } else {
-            Serial.print(F("[BootNotification] Error reading time string. Expect format like 2020-02-01T20:53:32.486Z\n"));
+            AO_DBG_ERR("Time string format violation. Expect format like 2022-02-01T20:53:32.486Z");
         }
     } else {
-        Serial.print(F("[BootNotification] Error reading time string. Missing attribute currentTime of type string\n"));
+        AO_DBG_ERR("Missing attribute currentTime");
     }
     
     int interval = payload["interval"] | -1;
@@ -98,12 +91,12 @@ void BootNotification::processConf(JsonObject payload){
     const char* status = payload["status"] | "Invalid";
 
     if (!strcmp(status, "Accepted")) {
-        if (DEBUG_OUT) Serial.print(F("[BootNotification] Request has been accepted!\n"));
+        AO_DBG_INFO("Request has been accepted");
         if (ocppModel && ocppModel->getChargePointStatusService() != nullptr) {
             ocppModel->getChargePointStatusService()->boot();
         }
     } else {
-        Serial.print(F("[BootNotification] Request unsuccessful!\n"));
+        AO_DBG_WARN("Request unsuccessful");
     }
 }
 

@@ -3,54 +3,47 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 #include <string.h>
 
 using ArduinoOcpp::Ocpp16::StatusNotification;
 
+//helper function
+namespace ArduinoOcpp {
+namespace Ocpp16 {
+const char *cstrFromOcppEveState(OcppEvseState state) {
+    switch (state) {
+        case (OcppEvseState::Available):
+            return "Available";
+        case (OcppEvseState::Preparing):
+            return "Preparing";
+        case (OcppEvseState::Charging):
+            return "Charging";
+        case (OcppEvseState::SuspendedEVSE):
+            return "SuspendedEVSE";
+        case (OcppEvseState::SuspendedEV):
+            return "SuspendedEV";
+        case (OcppEvseState::Finishing):
+            return "Finishing";
+        case (OcppEvseState::Reserved):
+            return "Reserved";
+        case (OcppEvseState::Unavailable):
+            return "Unavailable";
+        case (OcppEvseState::Faulted):
+            return "Faulted";
+        default:
+            AO_DBG_ERR("OcppEvseState not specified");
+        case (OcppEvseState::NOT_SET):
+            return "NOT_SET";
+    }
+}
+}} //end namespaces
+
 StatusNotification::StatusNotification(int connectorId, OcppEvseState currentStatus, const OcppTimestamp &otimestamp, const char *errorCode) 
   : connectorId(connectorId), currentStatus(currentStatus), otimestamp(otimestamp), errorCode(errorCode) {
 
-    if (DEBUG_OUT) {
-        Serial.print(F("[StatusNotification] New StatusNotification. New Status: "));
-    }
-
-    switch (currentStatus) {
-        case (OcppEvseState::Available):
-            if (DEBUG_OUT) Serial.print(F("Available\n"));
-            break;
-        case (OcppEvseState::Preparing):
-            if (DEBUG_OUT) Serial.print(F("Preparing\n"));
-            break;
-        case (OcppEvseState::Charging):
-            if (DEBUG_OUT) Serial.print(F("Charging\n"));
-            break;
-        case (OcppEvseState::SuspendedEVSE):
-            if (DEBUG_OUT) Serial.print(F("SuspendedEVSE\n"));
-            break;
-        case (OcppEvseState::SuspendedEV):
-            if (DEBUG_OUT) Serial.print(F("SuspendedEV\n"));
-            break;
-        case (OcppEvseState::Finishing):
-            if (DEBUG_OUT) Serial.print(F("Finishing\n"));
-            break;
-        case (OcppEvseState::Reserved):
-            if (DEBUG_OUT) Serial.print(F("Reserved\n"));
-            break;
-        case (OcppEvseState::Unavailable):
-            if (DEBUG_OUT) Serial.print(F("Unavailable\n"));
-            break;
-        case (OcppEvseState::Faulted):
-            if (DEBUG_OUT) Serial.print(F("Faulted\n"));
-            break;
-        case (OcppEvseState::NOT_SET):
-            Serial.print(F("NOT_SET\n"));
-            break;
-        default:
-            Serial.print(F("[Error, invalid status code]\n"));
-            break;
-    }
+    AO_DBG_INFO("New status: %s", cstrFromOcppEveState(currentStatus));
 }
 
 const char* StatusNotification::getOcppOperationType(){
@@ -65,43 +58,14 @@ std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
     payload["connectorId"] = connectorId;
     if (errorCode != nullptr) {
         payload["errorCode"] = errorCode;
+    } else if (currentStatus == OcppEvseState::NOT_SET) {
+        AO_DBG_ERR("Reporting undefined status");
+        payload["errorCode"] = "InternalError";
     } else {
         payload["errorCode"] = "NoError";
     }
-    
-    switch (currentStatus) {
-        case (OcppEvseState::Available):
-            payload["status"] = "Available";
-            break;
-        case (OcppEvseState::Preparing):
-            payload["status"] = "Preparing";
-            break;
-        case (OcppEvseState::Charging):
-            payload["status"] = "Charging";
-            break;
-        case (OcppEvseState::SuspendedEVSE):
-            payload["status"] = "SuspendedEVSE";
-            break;
-        case (OcppEvseState::SuspendedEV):
-            payload["status"] = "SuspendedEV";
-            break;
-        case (OcppEvseState::Finishing):
-            payload["status"] = "Finishing";
-            break;
-        case (OcppEvseState::Reserved):
-            payload["status"] = "Reserved";
-            break;
-        case (OcppEvseState::Unavailable):
-            payload["status"] = "Unavailable";
-            break;
-        case (OcppEvseState::Faulted):
-            payload["status"] = "Faulted";
-            break;
-        default:
-            payload["status"] = "NOT_SET";
-            Serial.print(F("[StatusNotification] Error: Sending status NOT_SET!\n"));
-            break;
-    }
+
+    payload["status"] = cstrFromOcppEveState(currentStatus);
 
     char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
     otimestamp.toJsonString(timestamp, JSONDATE_LENGTH + 1);

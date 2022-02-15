@@ -6,8 +6,7 @@
 #define REMOTESTARTTRANSACTION_H
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
-
-#include <Variants.h>
+#include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
@@ -15,6 +14,7 @@ namespace Ocpp16 {
 class RemoteStartTransaction : public OcppMessage {
 private:
     int connectorId;
+    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
 public:
     RemoteStartTransaction();
 

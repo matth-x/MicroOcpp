@@ -14,7 +14,7 @@ namespace Ocpp16 {
 class DiagnosticsStatusNotification : public OcppMessage {
 private:
     DiagnosticsStatus status;
-    static const char *cstrFromFwStatus(DiagnosticsStatus status);
+    static const char *cstrFromStatus(DiagnosticsStatus status);
 public:
     DiagnosticsStatusNotification();
 

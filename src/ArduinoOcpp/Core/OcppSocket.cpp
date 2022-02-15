@@ -31,7 +31,7 @@ void OcppClientSocket::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
                 AO_DBG_INFO("Disconnected");
                 break;
             case WStype_CONNECTED:
-                AO_DBG_INFO("Connected to url: %s\n", payload);
+                AO_DBG_INFO("Connected to url: %s", payload);
                 break;
             case WStype_TEXT:
                 AO_DBG_TRAFFIC_IN(payload);

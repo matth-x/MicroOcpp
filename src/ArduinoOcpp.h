@@ -14,8 +14,6 @@
 #include <ArduinoOcpp/Core/OcppOperationTimeout.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
 
-#include "Variants.h"
-
 using ArduinoOcpp::OnReceiveConfListener;
 using ArduinoOcpp::OnReceiveReqListener;
 using ArduinoOcpp::OnSendConfListener;
@@ -88,7 +86,7 @@ void setOnUnlockConnector(std::function<bool()> unlockConnector); //true: succes
 
 void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq); //optional
 
-void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf); //important, energize the power plug here
+void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf); //important, energize the power plug here and capture the idTag
 
 void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf); //important, de-energize the power plug here
 void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq); //optional, to de-energize the power plug immediately
@@ -109,14 +107,14 @@ void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq); //alternative: sta
  * in any case.
  */
 
-void authorize(String &idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
+void authorize(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
 void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
-//The OCPP operation will include the given payload without modifying it. The library will delete the payload object by itself.
+//The OCPP operation will include the given payload without modifying it. The library will delete the payload object after successful transmission.
 void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
-void startTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
+void startTransaction(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
 void stopTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
@@ -126,9 +124,26 @@ void stopTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onA
 
 int getTransactionId(); //returns the ID of the current transaction. Returns -1 if called before or after an transaction
 
-bool existsUnboundIdTag(); //returns if the user has given a valid Ocpp Charging Card which is not used for a transaction yet
+bool ocppPermitsCharge();
 
 bool isAvailable(); //if the charge point is operative or inoperative
+
+/*
+ * Session management
+ *
+ * A session begins when the EV user is authenticated against the OCPP system and intends to start the charging process.
+ * The session ends as soon as the authentication expires or as soon as the EV user does not intend to charge anymore.
+ * 
+ * A session means that the EVSE does not need further input from the EV user or OCPP backend to start a transaction.
+ */
+
+void beginSession(const char *idTag);
+
+void endSession();
+
+bool isInSession();
+
+const char *getSessionIdTag();
 
 /*
  * Configure the device management

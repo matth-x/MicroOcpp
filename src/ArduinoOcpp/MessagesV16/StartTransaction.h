@@ -7,8 +7,7 @@
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
-
-#include <Variants.h>
+#include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
@@ -18,12 +17,12 @@ private:
     int connectorId = 1;
     int meterStart = -1;
     OcppTimestamp otimestamp;
-    String idTag = String('\0');
+    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
     uint16_t transactionRev = 0;
 public:
     StartTransaction(int connectorId);
 
-    StartTransaction(int connectorId, String &idTag);
+    StartTransaction(int connectorId, const char *idTag);
 
     const char* getOcppOperationType();
 
