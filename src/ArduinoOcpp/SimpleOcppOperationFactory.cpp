@@ -201,22 +201,12 @@ CustomOcppMessageCreatorEntry *makeCustomOcppMessage(const char *messageType) {
     return nullptr;
 }
 
-std::unique_ptr<OcppOperation> makeFromTriggerMessage(JsonObject payload) {
-
-    //int connectorID = payload["connectorId"]; <-- not used in this implementation
-    const char *messageType = payload["requestedMessage"];
-
-    AO_DBG_INFO("execute for message type %s", messageType);
-
-    return makeOcppOperation(messageType);
-}
-
 std::unique_ptr<OcppOperation> makeFromJson(const JsonDocument& json) {
     const char* messageType = json[2];
     return makeOcppOperation(messageType);
 }
 
-std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType) {
+std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType, int connectorId) {
     auto operation = makeOcppOperation();
     auto msg = std::unique_ptr<OcppMessage>{nullptr};
 
@@ -238,7 +228,7 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::SetChargingProfile());
         operation->setOnReceiveReqListener(onSetChargingProfileRequest);
     } else if (!strcmp(messageType, "StatusNotification")) {
-        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StatusNotification());
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StatusNotification(connectorId));
     } else if (!strcmp(messageType, "StartTransaction")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction(1)); //connectorId 1
         operation->setOnReceiveReqListener(onStartTransactionRequest);

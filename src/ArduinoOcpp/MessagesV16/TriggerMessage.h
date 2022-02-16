@@ -6,9 +6,6 @@
 #define TRIGGERMESSAGE_H
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
-#include <Variants.h>
-
-#include <memory>
 
 namespace ArduinoOcpp {
 
@@ -20,6 +17,8 @@ class TriggerMessage : public OcppMessage {
 private:
     std::unique_ptr<OcppOperation> triggeredOperation;
     const char *statusMessage;
+
+    bool formatError = false;
 public:
     TriggerMessage();
 
@@ -28,6 +27,8 @@ public:
     void processReq(JsonObject payload);
 
     std::unique_ptr<DynamicJsonDocument> createConf();
+
+    const char *getErrorCode() {return formatError ? "FormationViolation" : nullptr;}
 };
 
 } //end namespace Ocpp16

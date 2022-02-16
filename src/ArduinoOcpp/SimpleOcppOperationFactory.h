@@ -12,15 +12,13 @@ namespace ArduinoOcpp {
 
 using OcppMessageCreator = std::function<OcppMessage*()>;
 
-std::unique_ptr<OcppOperation> makeFromTriggerMessage(JsonObject payload);
-
 std::unique_ptr<OcppOperation> makeFromJson(const JsonDocument& request);
 
 std::unique_ptr<OcppOperation> makeOcppOperation();
 
 std::unique_ptr<OcppOperation> makeOcppOperation(OcppMessage *msg);
 
-std::unique_ptr<OcppOperation> makeOcppOperation(const char *actionCode);
+std::unique_ptr<OcppOperation> makeOcppOperation(const char *actionCode, int connectorId = -1);
 
 void registerCustomOcppMessage(const char *messageType, OcppMessageCreator ocppMessageCreator, OnReceiveReqListener onReceiveReq = NULL);
 

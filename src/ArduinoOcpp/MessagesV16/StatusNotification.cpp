@@ -3,6 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Debug.h>
 
 #include <string.h>
@@ -50,6 +52,39 @@ const char* StatusNotification::getOcppOperationType(){
     return "StatusNotification";
 }
 
+void StatusNotification::initiate() {
+    //set the most recent EVSE status, but only if it hasn't been specified by the constructor before
+    if (currentStatus != OcppEvseState::NOT_SET) {
+        return;
+    }
+    
+    if (ocppModel && ocppModel->getChargePointStatusService()) {
+        auto cpsService = ocppModel->getChargePointStatusService();
+        if (connectorId < 0 || connectorId >= cpsService->getNumConnectors()) {
+            if (cpsService->getNumConnectors() == 2) {
+                //special case: EVSE has exactly 1 physical connector -> take status of the connector
+                connectorId = 1;
+            } else {
+                //generic EVSE: take status of the whole EVSE
+                connectorId = 0;
+            }
+        }
+        auto connector = cpsService->getConnector(connectorId);
+        if (connector) {
+            currentStatus = connector->inferenceStatus();
+        }
+    }
+    
+    if (ocppModel) {
+        otimestamp = ocppModel->getOcppTime().getOcppTimestampNow();
+    } else {
+        otimestamp = MIN_TIME;
+    }
+    if (currentStatus == OcppEvseState::NOT_SET) {
+        AO_DBG_ERR("Could not determine EVSE status");
+    }
+}
+
 //TODO if the status has changed again when sendReq() is called, abort the operation completely (note: if req is already sent, stick with listening to conf). The OcppEvseStateService will enqueue a new operation itself
 std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1)));
@@ -81,11 +116,7 @@ void StatusNotification::processConf(JsonObject payload) {
     */
 }
 
-
-/* 
- * For debugging only
- */
-StatusNotification::StatusNotification() {
+StatusNotification::StatusNotification(int connectorId) : connectorId(connectorId) {
     
 }
 

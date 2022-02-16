@@ -21,9 +21,11 @@ private:
 public:
     StatusNotification(int connectorId, OcppEvseState currentStatus, const OcppTimestamp &otimestamp, const char *errorCode = nullptr);
 
-    StatusNotification();
+    StatusNotification(int connectorId = -1);
 
     const char* getOcppOperationType();
+
+    void initiate();
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 
