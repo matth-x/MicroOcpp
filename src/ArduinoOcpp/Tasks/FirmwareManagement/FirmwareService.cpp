@@ -203,7 +203,7 @@ void FirmwareService::scheduleFirmwareUpdate(String &location, OcppTimestamp ret
                     "                  retrieveDate = %s\n" \
                     "                  retries = %i" \
                     ", retryInterval = %u",
-            this->location,
+            this->location.c_str(),
             dbuf,
             this->retries,
             this->retryInterval);

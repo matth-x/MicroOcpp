@@ -148,7 +148,7 @@ bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t lengt
             break;
         case DeserializationError::NoMemory:
             {
-                AO_DBG_WARN("OOP! Incoming operation exceeds reserved heap. Input length = %lu, free heap = %lu", length, ao_avail_heap());
+                AO_DBG_WARN("OOP! Incoming operation exceeds reserved heap. Input length = %zu, free heap = %u", length, ao_avail_heap());
 
                 /*
                  * If websocket input is of message type MESSAGE_TYPE_CALL, send back a message of type MESSAGE_TYPE_CALLERROR.

@@ -21,15 +21,23 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
         : context(context), connectorId{connectorId} {
 
     //Set default transaction ID in memory
+    String keySession = "AO_SID_CONN_";
     String keyTx = "OCPP_STATE_TRANSACTION_ID_CONNECTOR_";
     String keyAvailability = "OCPP_STATE_AVAILABILITY_CONNECTOR_";
     String id = String(connectorId, DEC);
+    keySession += id;
     keyTx += id;
     keyAvailability += id;
+    sIdTag = declareConfiguration<const char *>(keySession.c_str(), "", CONFIGURATION_FN, false, false, true, false);
     transactionId = declareConfiguration<int>(keyTx.c_str(), -1, CONFIGURATION_FN, false, false, true, false);
     availability = declareConfiguration<int>(keyAvailability.c_str(), AVAILABILITY_OPERATIVE, CONFIGURATION_FN, false, false, true, false);
-    if (!transactionId || !availability) {
-        Serial.print(F("[ConnectorStatus] Error! Cannot declare transactionId or availability!\n"));
+    if (!sIdTag || !transactionId || !availability) {
+        AO_DBG_ERR("Cannot declare sessionIdTag, transactionId or availability");
+    }
+    if (sIdTag->getBuffsize() > 0 && (*sIdTag)[0] != '\0') {
+        snprintf(idTag, min((size_t) (IDTAG_LEN_MAX + 1), sIdTag->getBuffsize()), "%s", ((const char *) *sIdTag));
+        session = true;
+        AO_DBG_DEBUG("Load session idTag at initialization");
     }
     transactionIdSync = *transactionId;
 }
@@ -48,8 +56,8 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
         }
     }
 
-    auto cpStatusService = context.getChargePointStatusService();
-
+//    auto cpStatusService = context.getChargePointStatusService();
+//
 //    if (!authorized && !getChargePointStatusService()->existsUnboundAuthorization()) {
 //        return OcppEvseState::Available;
 //    } else if (((int) *transactionId) < 0) {
@@ -111,6 +119,8 @@ OcppMessage *ConnectorStatus::loop() {
             //check condition for StopTransaction
             if (!connectorPluggedSampler() ||
                     !session) {
+                AO_DBG_DEBUG("Session mngt: txId=%i, connectorPlugged=%d, session=%d",
+                        getTransactionId(), connectorPluggedSampler(), session);
                 AO_DBG_INFO("Session mngt: trigger StopTransaction");
                 return new StopTransaction(connectorId);
             }
@@ -120,6 +130,8 @@ OcppMessage *ConnectorStatus::loop() {
                     session &&
                     !getErrorCode() &&
                     *availability == AVAILABILITY_OPERATIVE) {
+                AO_DBG_DEBUG("Session mngt: txId=%i, connectorPlugged=%d, session=%d",
+                        getTransactionId(), connectorPluggedSampler(), session);
                 AO_DBG_INFO("Session mngt: trigger StartTransaction");
                 return new StartTransaction(connectorId);
             }
@@ -152,18 +164,25 @@ const char *ConnectorStatus::getErrorCode() {
 }
 
 void ConnectorStatus::beginSession(const char *sessionIdTag) {
+    AO_DBG_DEBUG("Begin session with idTag %s, overwriting idTag %s", sessionIdTag, idTag);
     if (!sessionIdTag || *sessionIdTag == '\0') {
         //input string is empty
         snprintf(idTag, IDTAG_LEN_MAX + 1, "A0-00-00-00");
     } else {
         snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", sessionIdTag);
     }
+    sIdTag->setValue(idTag, IDTAG_LEN_MAX + 1);
+    saveState();
     session = true;
 }
 
 void ConnectorStatus::endSession() {
-    if (session)
+    AO_DBG_DEBUG("End session with idTag %s", idTag);
+    if (session) {
         memset(idTag, '\0', IDTAG_LEN_MAX + 1);
+        *sIdTag = "";
+        saveState();
+    }
     session = false;
 }
 

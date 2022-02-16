@@ -28,6 +28,7 @@ private:
 
     bool session = false;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
+    std::shared_ptr<Configuration<const char *>> sIdTag = nullptr;
     std::shared_ptr<Configuration<int>> transactionId = nullptr;
     int transactionIdSync = -1;
 
