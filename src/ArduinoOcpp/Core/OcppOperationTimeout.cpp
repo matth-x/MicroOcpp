@@ -3,8 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppOperationTimeout.h>
-
-#include <Variants.h>
+#include <ArduinoOcpp/Platform.h>
 
 using namespace ArduinoOcpp;
 
@@ -46,15 +45,15 @@ FixedTimeout::FixedTimeout(ulong TIMEOUT_DURATION) : TIMEOUT_DURATION(TIMEOUT_DU
 void FixedTimeout::timerTick(bool sendingSuccessful) {
     if (!timeout_active) {
         timeout_active = true;
-        timeout_start = millis();
+        timeout_start = ao_tick_ms();
     }
 }
 void FixedTimeout::timerRestart() {
-    timeout_start = millis();
+    timeout_start = ao_tick_ms();
     timeout_active = false;
 }
 bool FixedTimeout::timerIsExceeded() {
-    return timeout_active && millis() - timeout_start >= TIMEOUT_DURATION;
+    return timeout_active && ao_tick_ms() - timeout_start >= TIMEOUT_DURATION;
 }
 
 
@@ -63,7 +62,7 @@ OfflineSensitiveTimeout::OfflineSensitiveTimeout(ulong TIMEOUT_DURATION) : TIMEO
 }
 
 void OfflineSensitiveTimeout::timerTick(bool sendingSuccessful) {
-    ulong t = millis();
+    ulong t = ao_tick_ms();
     
     if (!timeout_active) {
         timeout_active = true;
@@ -78,11 +77,11 @@ void OfflineSensitiveTimeout::timerTick(bool sendingSuccessful) {
     last_tick = t;
 }
 void OfflineSensitiveTimeout::timerRestart() {
-    ulong t = millis();
+    ulong t = ao_tick_ms();
     timeout_start = t;
     last_tick = t;
     timeout_active = false;
 }
 bool OfflineSensitiveTimeout::timerIsExceeded() {
-    return timeout_active && millis() - timeout_start >= TIMEOUT_DURATION;
+    return timeout_active && ao_tick_ms() - timeout_start >= TIMEOUT_DURATION;
 }

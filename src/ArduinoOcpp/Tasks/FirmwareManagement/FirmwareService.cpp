@@ -11,7 +11,8 @@
 
 #include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
 
-#include <Variants.h>
+#include <ArduinoOcpp/Platform.h>
+#include <ArduinoOcpp/Debug.h>
 
 using namespace ArduinoOcpp;
 using ArduinoOcpp::Ocpp16::FirmwareStatus;
@@ -30,7 +31,7 @@ void FirmwareService::loop() {
         context.initiateOperation(std::move(notification));
     }
 
-    if (millis() - timestampTransition < delayTransition) {
+    if (ao_tick_ms() - timestampTransition < delayTransition) {
         return;
     }
 
@@ -41,7 +42,7 @@ void FirmwareService::loop() {
         
         //if (!downloadIssued) {
         if (stage == UpdateStage::Idle) {
-            if (DEBUG_OUT) Serial.println(F("[FirmwareService] Start update!"));
+            AO_DBG_INFO("Start update");
 
             if (cpStatusService) {
                 ConnectorStatus *evse = cpStatusService->getConnector(0);
@@ -55,7 +56,7 @@ void FirmwareService::loop() {
             } else {
                 downloadIssued = true;
                 stage = UpdateStage::AwaitDownload;
-                timestampTransition = millis();
+                timestampTransition = ao_tick_ms();
                 delayTransition = 5000; //delay between state "Downloading" and actually starting the download
                 return;
             }
@@ -63,11 +64,11 @@ void FirmwareService::loop() {
 
         //if (!onDownloadCalled) {
         if (stage == UpdateStage::AwaitDownload) {
-            if (DEBUG_OUT) Serial.println(F("[FirmwareService] Start Download!"));
+            AO_DBG_INFO("Start download");
             stage = UpdateStage::Downloading;
             if (onDownload != nullptr) {
                 onDownload(location);
-                timestampTransition = millis();
+                timestampTransition = ao_tick_ms();
                 delayTransition = 30000; //give the download at least 30s
                 return;
             }
@@ -91,7 +92,7 @@ void FirmwareService::loop() {
             if (timestampNow - retreiveDate >= DOWNLOAD_TIMEOUT
                     || (downloadStatusSampler != nullptr && downloadStatusSampler() == DownloadStatus::DownloadFailed)) {
                 
-                Serial.println(F("[FirmwareService] Download timeout or failed! Retry"));
+                AO_DBG_INFO("Download timeout or failed! Retry");
                 if (retryInterval < DOWNLOAD_TIMEOUT)
                     retreiveDate = timestampNow;
                 else
@@ -99,7 +100,7 @@ void FirmwareService::loop() {
                 retries--;
                 resetStage();
 
-                timestampTransition = millis();
+                timestampTransition = ao_tick_ms();
                 delayTransition = 10000;
                 return;
             }
@@ -108,7 +109,6 @@ void FirmwareService::loop() {
 
         //if (!installationIssued) {
         if (stage == UpdateStage::AfterDownload) {
-            //if (DEBUG_OUT) Serial.println(F("[FirmwareService] After download!"));
             bool ongoingTx = false;
             if (cpStatusService) {
                 for (int i = 0; i < cpStatusService->getNumConnectors(); i++) {
@@ -124,7 +124,7 @@ void FirmwareService::loop() {
                 stage = UpdateStage::AwaitInstallation;
                 installationIssued = true;
 
-                timestampTransition = millis();
+                timestampTransition = ao_tick_ms();
                 delayTransition = 10000;
             }
 
@@ -132,16 +132,16 @@ void FirmwareService::loop() {
         }
 
         if (stage == UpdateStage::AwaitInstallation) {
-            if (DEBUG_OUT) Serial.println(F("[FirmwareService] Installing!"));
+            AO_DBG_INFO("Installing");
             stage = UpdateStage::Installing;
 
             if (onInstall != nullptr) {
                 onInstall(location); //should restart the device on success
             } else {
-                Serial.println(F("[FirmwareService] onInstall must be set! (see setOnInstall). Will abort"));
+                AO_DBG_WARN("onInstall must be set! (see setOnInstall). Will abort");
             }
 
-            timestampTransition = millis();
+            timestampTransition = ao_tick_ms();
             delayTransition = 40000;
             return;
         }
@@ -168,7 +168,7 @@ void FirmwareService::loop() {
             if ((timestampNow - retreiveDate >= INSTALLATION_TIMEOUT + DOWNLOAD_TIMEOUT)
                     || (installationStatusSampler != nullptr && installationStatusSampler() == InstallationStatus::InstallationFailed)) {
 
-                Serial.println(F("[FirmwareService] Installation timeout or failed! Retry"));
+                AO_DBG_INFO("Installation timeout or failed! Retry");
                 if (retryInterval < INSTALLATION_TIMEOUT + DOWNLOAD_TIMEOUT)
                     retreiveDate = timestampNow;
                 else
@@ -176,14 +176,14 @@ void FirmwareService::loop() {
                 retries--;
                 resetStage();
 
-                timestampTransition = millis();
+                timestampTransition = ao_tick_ms();
                 delayTransition = 10000;
                 return;
             }
         }
 
         //should never reach this code
-        Serial.println(F("[FirmwareService] Unconsidered special case occured. Firmware update failed"));
+        AO_DBG_ERR("Firmware update failed");
         retries = 0;
         resetStage();
     }
@@ -195,19 +195,18 @@ void FirmwareService::scheduleFirmwareUpdate(String &location, OcppTimestamp ret
     this->retries = retries;
     this->retryInterval = retryInterval;
 
-    if (DEBUG_OUT) {
-        Serial.print(F("[FirmwareService] Scheduled FW update!\n"));
-        Serial.print(F("                  location = "));
-        Serial.println(this->location);
-        Serial.print(F("                  retrieveDate = "));
-        char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
-        this->retreiveDate.toJsonString(dbuf, JSONDATE_LENGTH + 1);
-        Serial.println(dbuf);
-        Serial.print(F("                  retries = "));
-        Serial.print(this->retries);
-        Serial.print(F(", retryInterval = "));
-        Serial.println(this->retryInterval);
-    }
+    char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
+    this->retreiveDate.toJsonString(dbuf, JSONDATE_LENGTH + 1);
+
+    AO_DBG_INFO("Scheduled FW update!\n" \
+                    "                  location = %s\n" \
+                    "                  retrieveDate = %s\n" \
+                    "                  retries = %i" \
+                    ", retryInterval = %u",
+            this->location,
+            dbuf,
+            this->retries,
+            this->retryInterval);
 
     resetStage();
 }
@@ -335,15 +334,15 @@ FirmwareService *EspWiFi::makeFirmwareService(OcppEngine& context, const char *b
         switch (ret) {
             case HTTP_UPDATE_FAILED:
                 fwService->setInstallationStatusSampler([](){return InstallationStatus::InstallationFailed;});
-                Serial.printf("[main] HTTP_UPDATE_FAILED Error (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
+                AO_DBG_WARN("HTTP_UPDATE_FAILED Error (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
                 break;
             case HTTP_UPDATE_NO_UPDATES:
                 fwService->setInstallationStatusSampler([](){return InstallationStatus::InstallationFailed;});
-                Serial.println(F("[main] HTTP_UPDATE_NO_UPDATES"));
+                AO_DBG_WARN("HTTP_UPDATE_NO_UPDATES");
                 break;
             case HTTP_UPDATE_OK:
                 fwService->setInstallationStatusSampler([](){return InstallationStatus::Installed;});
-                Serial.println(F("[main] HTTP_UPDATE_OK"));
+                AO_DBG_INFO("HTTP_UPDATE_OK");
                 ESP.restart();
                 break;
         }
@@ -380,15 +379,15 @@ FirmwareService *EspWiFi::makeFirmwareService(OcppEngine& context, const char *b
         switch (ret) {
             case HTTP_UPDATE_FAILED:
                 fwService->setInstallationStatusSampler([](){return InstallationStatus::InstallationFailed;});
-                Serial.printf("[main] HTTP_UPDATE_FAILED Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+                AO_DBG_WARN("HTTP_UPDATE_FAILED Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
                 break;
             case HTTP_UPDATE_NO_UPDATES:
                 fwService->setInstallationStatusSampler([](){return InstallationStatus::InstallationFailed;});
-                Serial.println(F("[main] HTTP_UPDATE_NO_UPDATES"));
+                AO_DBG_WARN("HTTP_UPDATE_NO_UPDATES");
                 break;
             case HTTP_UPDATE_OK:
                 fwService->setInstallationStatusSampler([](){return InstallationStatus::Installed;});
-                Serial.println(F("[main] HTTP_UPDATE_OK"));
+                AO_DBG_INFO("HTTP_UPDATE_OK");
                 ESP.restart();
                 break;
         }

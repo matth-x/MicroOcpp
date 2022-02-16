@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppTime.h>
-#include <Variants.h>
+#include <ArduinoOcpp/Platform.h>
 
 namespace ArduinoOcpp {
 
@@ -16,10 +16,10 @@ ulong lastClockReading = 0;
 otime_t lastClockValue = 0;
 
 /*
- * Basic clock implementation. Works if millis() is exact enough for you and if device doesn't go in sleep mode. 
+ * Basic clock implementation. Works if ao_tick_ms() is exact enough for you and if device doesn't go in sleep mode. 
  */
 OcppClock DEFAULT_CLOCK = [] () {
-    ulong tReading = (millis() - lastClockReading) / 1000UL;
+    ulong tReading = (ao_tick_ms() - lastClockReading) / 1000UL;
     if (tReading > 0) {
         lastClockValue += tReading;
         lastClockReading += tReading * 1000UL;

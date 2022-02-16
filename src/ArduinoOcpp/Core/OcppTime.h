@@ -21,7 +21,7 @@ typedef std::function<otime_t()> OcppClock;
 namespace Clocks {
 
 /*
- * Basic clock implementation. Works if millis() is exact enough for you and if device doesn't go in sleep mode. 
+ * Basic clock implementation. Works if ao_tick_ms() is exact enough for you and if device doesn't go in sleep mode. 
  */
 extern OcppClock DEFAULT_CLOCK;
 } //end namespace Clocks

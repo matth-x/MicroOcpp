@@ -7,6 +7,7 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
 
+#include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Debug.h>
 
 int unique_id_counter = 1000000;
@@ -88,7 +89,7 @@ boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
      * 
      * if retry, run the rest of this function, i.e. resend the message. If not, just return false
      */
-    if (millis() <= retry_start + RETRY_INTERVAL * retry_interval_mult) {
+    if (ao_tick_ms() <= retry_start + RETRY_INTERVAL * retry_interval_mult) {
         //NO retry
         return false;
     }
@@ -138,7 +139,7 @@ boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
     
     if (success) {
         AO_DBG_TRAFFIC_OUT(out.c_str());
-        retry_start = millis();
+        retry_start = ao_tick_ms();
     } else {
         //ocppSocket is not able to put any data on TCP stack. Maybe because we're offline
         retry_start = 0;

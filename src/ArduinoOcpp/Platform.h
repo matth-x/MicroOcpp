@@ -15,10 +15,10 @@
 #define AO_CONSOLE_PRINTF(X, ...) AO_USE_SERIAL.printf_P(PSTR(X), ##__VA_ARGS__)
 #endif
 
-//#ifndef ao_tick_ms
-//#include <Arduino.h>
-//#define ao_tick_ms millis
-//#endif
+#ifndef ao_tick_ms
+#include <Arduino.h>
+#define ao_tick_ms millis
+#endif
 
 #ifndef ao_avail_heap
 #include <Arduino.h>

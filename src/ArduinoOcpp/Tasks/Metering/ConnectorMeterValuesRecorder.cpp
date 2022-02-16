@@ -7,8 +7,8 @@
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
-
-#include <Variants.h>
+#include <ArduinoOcpp/Platform.h>
+#include <ArduinoOcpp/Debug.h>
 
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
@@ -58,9 +58,9 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
     * If no powerSampler is available, estimate the energy consumption taking the Charging Schedule and CP Status
     * into account.
     */
-    if (millis() - lastSampleTime >= (ulong) (*MeterValueSampleInterval * 1000)) {
+    if (ao_tick_ms() - lastSampleTime >= (ulong) (*MeterValueSampleInterval * 1000)) {
         takeSample();
-        lastSampleTime = millis();
+        lastSampleTime = ao_tick_ms();
     }
 
 
@@ -78,7 +78,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
 OcppMessage *ConnectorMeterValuesRecorder::toMeterValues() {
     if (sampleTimestamp.size() == 0) {
         //Switching from Non-Transaction to Transaction (or vice versa) without sample. Or anything wrong here. Discard
-        if (DEBUG_OUT) Serial.print(F("[ConnectorMeterValuesRecorder] Try to send MeterValues without any data point. Ignore\n"));
+        AO_DBG_DEBUG("Suggested to send MeterValues without any data point. Ignore");
         clear();
         return nullptr;
     }
@@ -104,7 +104,7 @@ OcppMessage *ConnectorMeterValuesRecorder::toMeterValues() {
     }
 
     //Maybe the energy sampler or power sampler was set during recording. Discard recorded data.
-    Serial.print(F("[ConnectorMeterValuesRecorder] Invalid data set. Discard data set and restard recording.\n"));
+    AO_DBG_WARN("Invalid data set. Discard data set and restart recording");
     clear();
 
     return nullptr;
@@ -128,7 +128,7 @@ float ConnectorMeterValuesRecorder::readEnergyActiveImportRegister() {
     if (energySampler != nullptr) {
         return energySampler();
     } else {
-        Serial.print(F("[ConnectorMeterValuesRecorder] Called readEnergyActiveImportRegister(), but no energySampler or handling strategy set!\n"));
+        AO_DBG_DEBUG("Called readEnergyActiveImportRegister(), but no energySampler or handling strategy set");
         return 0.f;
     }
 }
