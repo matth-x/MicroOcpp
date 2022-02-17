@@ -3,6 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/Reset.h>
+#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 
 using ArduinoOcpp::Ocpp16::Reset;
 
@@ -22,6 +24,17 @@ void Reset::processReq(JsonObject payload) {
     const char *type = payload["type"] | "Invalid";
     if (!strcmp(type, "Hard")){
         Serial.print(F("[Reset] Warning: received request to perform hard reset, but this implementation is only capable of soft reset!\n"));
+    }
+
+    if (ocppModel && ocppModel->getChargePointStatusService()) {
+        auto cpsService = ocppModel->getChargePointStatusService();
+        unsigned int connId = 0;
+        for (unsigned int i = 0; i < cpsService->getNumConnectors(); i++) {
+            auto connector = cpsService->getConnector(connId);
+            if (connector) {
+                connector->endSession();
+            }
+        }
     }
 }
 
