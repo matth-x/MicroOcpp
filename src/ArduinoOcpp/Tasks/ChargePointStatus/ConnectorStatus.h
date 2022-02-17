@@ -24,21 +24,25 @@ private:
     
     const int connectorId;
 
-    std::shared_ptr<Configuration<int>> availability = nullptr;
+    std::shared_ptr<Configuration<int>> availability {nullptr};
 
     bool session = false;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
-    std::shared_ptr<Configuration<const char *>> sIdTag = nullptr;
-    std::shared_ptr<Configuration<int>> transactionId = nullptr;
+    std::shared_ptr<Configuration<const char *>> sIdTag {nullptr};
+    std::shared_ptr<Configuration<int>> transactionId {nullptr};
     int transactionIdSync = -1;
 
-    std::function<bool()> connectorPluggedSampler = nullptr;
+    std::shared_ptr<Configuration<int>> connectionTimeOut {nullptr}; //in seconds
+    bool connectionTimeOutListen {false};
+    ulong connectionTimeOutTimestamp {0}; //in milliseconds
+
+    std::function<bool()> connectorPluggedSampler {nullptr};
     std::function<bool()> evRequestsEnergySampler {nullptr};
     std::function<bool()> connectorEnergizedSampler {nullptr};
     std::vector<std::function<const char *()>> connectorErrorCodeSamplers;
     const char *getErrorCode();
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
-    std::function<bool()> onUnlockConnector = nullptr;
+    std::function<bool()> onUnlockConnector {nullptr};
 public:
     ConnectorStatus(OcppModel& context, int connectorId);
 

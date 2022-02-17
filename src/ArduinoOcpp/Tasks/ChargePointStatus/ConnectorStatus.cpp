@@ -31,6 +31,7 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
     sIdTag = declareConfiguration<const char *>(keySession.c_str(), "", CONFIGURATION_FN, false, false, true, false);
     transactionId = declareConfiguration<int>(keyTx.c_str(), -1, CONFIGURATION_FN, false, false, true, false);
     availability = declareConfiguration<int>(keyAvailability.c_str(), AVAILABILITY_OPERATIVE, CONFIGURATION_FN, false, false, true, false);
+    connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN, true, true, true, false);
     if (!sIdTag || !transactionId || !availability) {
         AO_DBG_ERR("Cannot declare sessionIdTag, transactionId or availability");
     }
@@ -138,6 +139,19 @@ OcppMessage *ConnectorStatus::loop() {
         }
     }
 
+    if (connectionTimeOutListen) {
+        if (getTransactionId() >= 0 || !session) {
+            AO_DBG_DEBUG("Session mngt: release connectionTimeOut");
+            connectionTimeOutListen = false;
+        } else {
+            if (connectionTimeOutTimestamp - ao_tick_ms() >= ((ulong) *connectionTimeOut) * 1000UL) {
+                AO_DBG_INFO("Session mngt: timeout");
+                endSession();
+                connectionTimeOutListen = false;
+            }
+        }
+    }
+
     auto inferencedStatus = inferenceStatus();
     
     if (inferencedStatus != currentStatus) {
@@ -174,6 +188,9 @@ void ConnectorStatus::beginSession(const char *sessionIdTag) {
     sIdTag->setValue(idTag, IDTAG_LEN_MAX + 1);
     saveState();
     session = true;
+
+    connectionTimeOutListen = true;
+    connectionTimeOutTimestamp = ao_tick_ms();
 }
 
 void ConnectorStatus::endSession() {
@@ -184,6 +201,8 @@ void ConnectorStatus::endSession() {
         saveState();
     }
     session = false;
+
+    connectionTimeOutListen = false;
 }
 
 const char *ConnectorStatus::getSessionIdTag() {
