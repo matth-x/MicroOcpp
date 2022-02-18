@@ -5,6 +5,7 @@
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/Configuration.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -12,12 +13,17 @@
 
 using namespace ArduinoOcpp;
 
-ChargePointStatusService::ChargePointStatusService(OcppEngine& context, int numConn)
+ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned int numConn)
       : context(context) {
 
     for (int i = 0; i < numConn; i++) {
         connectors.push_back(std::unique_ptr<ConnectorStatus>(new ConnectorStatus(context.getOcppModel(), i)));
     }
+
+    
+    std::shared_ptr<Configuration<int>> numberOfConnectors =
+            declareConfiguration<int>("NumberOfConnectors", numConn, CONFIGURATION_FN, false, true, true, false);
+    *numberOfConnectors = numConn;
 }
 
 ChargePointStatusService::~ChargePointStatusService() {

@@ -20,7 +20,7 @@ private:
     bool booted = false;
 
 public:
-    ChargePointStatusService(OcppEngine& context, int numConnectors);
+    ChargePointStatusService(OcppEngine& context, unsigned int numConnectors);
 
     ~ChargePointStatusService();
     
