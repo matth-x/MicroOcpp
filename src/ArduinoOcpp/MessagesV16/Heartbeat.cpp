@@ -4,8 +4,8 @@
 
 #include <ArduinoOcpp/MessagesV16/Heartbeat.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Debug.h>
 #include <string.h>
-#include <Variants.h>
 
 using ArduinoOcpp::Ocpp16::Heartbeat;
 
@@ -27,12 +27,12 @@ void Heartbeat::processConf(JsonObject payload) {
     if (strcmp(currentTime, "Invalid")) {
         if (ocppModel && ocppModel->getOcppTime().setOcppTime(currentTime)) {
             //success
-            if (DEBUG_OUT) Serial.print(F("[Heartbeat] Request has been accepted!\n"));
+            AO_DBG_DEBUG("Request has been accepted");
         } else {
-            Serial.print(F("[Heartbeat] Request accepted. But Error reading time string. Expect format like 2020-02-01T20:53:32.486Z\n"));
+            AO_DBG_WARN("Could not read time string. Expect format like 2020-02-01T20:53:32.486Z");
         }
     } else {
-        Serial.print(F("[Heartbeat] Request denied. Missing field currentTime. Expect format like 2020-02-01T20:53:32.486Z\n"));
+        AO_DBG_WARN("Missing field currentTime. Expect format like 2020-02-01T20:53:32.486Z");
     }
 }
 

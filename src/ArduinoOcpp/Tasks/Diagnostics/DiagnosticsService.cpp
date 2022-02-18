@@ -6,10 +6,9 @@
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Debug.h>
 
 #include <ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.h>
-
-#include <Variants.h>
 
 using namespace ArduinoOcpp;
 using Ocpp16::DiagnosticsStatus;
@@ -25,11 +24,11 @@ void DiagnosticsService::loop() {
 
         if (!uploadIssued) {
             if (onUpload != nullptr) {
-                if (DEBUG_OUT) Serial.println(F("[DiagnosticsService] call onUpload"));
+                AO_DBG_DEBUG("Call onUpload");
                 onUpload(location, startTime, stopTime);
                 uploadIssued = true;
             } else {
-                Serial.println(F("[DiagnosticsService] onUpload must be set! (see setOnUpload). Will abort"));
+                AO_DBG_ERR("onUpload must be set! (see setOnUpload). Will abort");
                 retries = 0;
                 uploadIssued = false;
             }
@@ -38,7 +37,7 @@ void DiagnosticsService::loop() {
         if (uploadIssued) {
             if (uploadStatusSampler != nullptr && uploadStatusSampler() == UploadStatus::Uploaded) {
                 //success!
-                if (DEBUG_OUT) Serial.println(F("[DiagnosticsService] end update routine (by status)"));
+                AO_DBG_DEBUG("end upload routine (by status)")
                 uploadIssued = false;
                 retries = 0;
             }
@@ -51,12 +50,12 @@ void DiagnosticsService::loop() {
 
                 if (uploadStatusSampler == nullptr) {
                     //No way to find out if failed. But maximum time has elapsed. Assume success
-                    if (DEBUG_OUT) Serial.println(F("[DiagnosticsService] end update routine (by timer)"));
+                    AO_DBG_DEBUG("end upload routine (by timer)");
                     uploadIssued = false;
                     retries = 0;
                 } else {
                     //either we have UploadFailed status or (NotDownloaded + timeout) here
-                    Serial.println(F("[DiagnosticsService] Upload timeout or failed!"));
+                    AO_DBG_WARN("Upload timeout or failed");
                     const int TRANSITION_DELAY = 10;
                     if (retryInterval <= UPLOAD_TIMEOUT + TRANSITION_DELAY) {
                         nextTry = timestampNow;
@@ -90,33 +89,29 @@ String DiagnosticsService::requestDiagnosticsUpload(String &location, int retrie
         this->stopTime = newStop;
     }
     
-    if (DEBUG_OUT) {
-        Serial.print(F("[DiagnosticsService] Scheduled Diagnostics upload!\n"));
-        Serial.print(F("                     location = "));
-        Serial.println(this->location);
-        Serial.print(F("                     retries = "));
-        Serial.print(this->retries);
-        Serial.print(F(", retryInterval = "));
-        Serial.println(this->retryInterval);
-        Serial.print(F("                     startTime = "));
-        char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
-        this->startTime.toJsonString(dbuf, JSONDATE_LENGTH + 1);
-        Serial.println(dbuf);
-        Serial.print(F("                     stopTime = "));
-        this->stopTime.toJsonString(dbuf, JSONDATE_LENGTH + 1);
-        Serial.println(dbuf);
-    }
+    char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
+    char dbuf2 [JSONDATE_LENGTH + 1] = {'\0'};
+    this->startTime.toJsonString(dbuf, JSONDATE_LENGTH + 1);
+    this->stopTime.toJsonString(dbuf2, JSONDATE_LENGTH + 1);
+
+    AO_DBG_INFO("Scheduled Diagnostics upload!\n" \
+                    "                  location = %s\n" \
+                    "                  retries = %i" \
+                    ", retryInterval = %u" \
+                    "                  startTime = %s\n" \
+                    "                  stopTime = %s",
+            this->location.c_str(),
+            this->retries,
+            this->retryInterval,
+            dbuf,
+            dbuf2);
 
     nextTry = context.getOcppModel().getOcppTime().getOcppTimestampNow();
     nextTry += 5; //wait for 5s before upload
     uploadIssued = false;
 
-    if (DEBUG_OUT) {
-        Serial.print(F("[DiagnosticsService] initial try at "));
-        char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
-        nextTry.toJsonString(dbuf, JSONDATE_LENGTH + 1);
-        Serial.println(dbuf);
-    }
+    nextTry.toJsonString(dbuf, JSONDATE_LENGTH + 1);
+    AO_DBG_DEBUG("Initial try at %s", dbuf);
 
     return "diagnostics.log";
 }

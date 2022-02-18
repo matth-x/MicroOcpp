@@ -22,9 +22,6 @@ void Reset::processReq(JsonObject payload) {
      * a onSendConfListener in which you initiate a reset (e.g. calling ESP.reset() )
      */
     const char *type = payload["type"] | "Invalid";
-    if (!strcmp(type, "Hard")){
-        Serial.print(F("[Reset] Warning: received request to perform hard reset, but this implementation is only capable of soft reset!\n"));
-    }
 
     if (ocppModel && ocppModel->getChargePointStatusService()) {
         auto cpsService = ocppModel->getChargePointStatusService();

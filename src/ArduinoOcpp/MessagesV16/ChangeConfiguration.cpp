@@ -4,8 +4,7 @@
 
 #include <ArduinoOcpp/MessagesV16/ChangeConfiguration.h>
 #include <ArduinoOcpp/Core/Configuration.h>
-
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::ChangeConfiguration;
 
@@ -21,14 +20,14 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     String key = payload["key"];
     if (key.isEmpty()) {
         err = true;
-        Serial.print(F("[ChangeConfiguration] Could not read key!\n"));
+        AO_DBG_WARN("Could not read key");
         return;
     }
 
     JsonVariant value = payload["value"];
     if (value.isNull()) {
         err = true;
-        Serial.print(F("[ChangeConfiguration] Message is lacking value!\n"));
+        AO_DBG_WARN("Message is lacking value");
         return;
     }
 
@@ -46,7 +45,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
                     rebootRequired = true;
                 } else {
                     readOnly = true;
-                    Serial.print(F("[ChangeConfiguration] Trying to delete readonly value!\n"));
+                    AO_DBG_WARN("Trying to delete readonly value");
                 }
             }
             return; //delete operator but nothing to delete --> ignore operation
@@ -115,10 +114,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
         if (nNonDigits == 0 && nDigits > 0 && nSign <= 1 && nDots == 0) {
             //integer
             if (nDigits > INT_MAXDIGITS) {
-                Serial.print(F("[ChangeConfiguration] Integer overflow! key = "));
-                Serial.print(key.c_str());
-                Serial.print(F(", value = "));
-                Serial.println(value_string);
+                AO_DBG_WARN("Integer overflow! key = %s, value = %s", key.c_str(), value_string);
                 err = true;
                 return;
             } else {
@@ -152,7 +148,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     if (configuration) {
         if (!configuration->permissionRemotePeerCanWrite()) {
             readOnly = true;
-            Serial.print(F("[ChangeConfiguration] Trying to override readonly value!\n"));
+            AO_DBG_WARN("Trying to override readonly value");
             return;
         }
 
@@ -170,7 +166,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
 //            *configurationConcrete = value.as<String>();
         } else {
             err = true;
-            Serial.print(F("[ChangeConfiguration] Value has incompatible type!\n"));
+            AO_DBG_WARN("Value has incompatible type");
             return;
         }
 
@@ -186,14 +182,14 @@ void ChangeConfiguration::processReq(JsonObject payload) {
             configuration = std::static_pointer_cast<AbstractConfiguration>(declareConfiguration<const char*>(key.c_str(), value_string));
         } else {
             err = true;
-            Serial.print(F("[ChangeConfiguration] Could not parse value!\n"));
+            AO_DBG_WARN("Could not parse value");
             return;
         }
     } //end if (configuration)
     
     if (!configuration) {
         err = true;
-        Serial.print(F("[ChangeConfiguration] Could not deserialize value or set configuration!\n"));
+        AO_DBG_WARN("Could not deserialize value or set configuration");
         return;
     }
 

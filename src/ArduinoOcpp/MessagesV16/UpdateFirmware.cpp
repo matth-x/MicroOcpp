@@ -5,6 +5,7 @@
 #include <ArduinoOcpp/MessagesV16/UpdateFirmware.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
+#include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::UpdateFirmware;
 
@@ -23,7 +24,7 @@ void UpdateFirmware::processReq(JsonObject payload) {
     //check location URL. Maybe introduce Same-Origin-Policy?
     if (location.isEmpty()) {
         formatError = true;
-        Serial.println(F("[UpdateFirmware] Could not read location. Abort"));
+        AO_DBG_WARN("Could not read location. Abort");
         return;
     }
 
@@ -31,7 +32,7 @@ void UpdateFirmware::processReq(JsonObject payload) {
     const char *retrieveDateRaw = payload["retrieveDate"] | "Invalid";
     if (!retreiveDate.setTime(retrieveDateRaw)) {
         formatError = true;
-        Serial.println(F("[UpdateFirmware] Could not read retrieveDate. Abort"));
+        AO_DBG_WARN("Could not read retrieveDate. Abort");
         return;
     }
     
@@ -44,7 +45,7 @@ std::unique_ptr<DynamicJsonDocument> UpdateFirmware::createConf(){
         auto fwService = ocppModel->getFirmwareService();
         fwService->scheduleFirmwareUpdate(location, retreiveDate, retries, retryInterval);
     } else {
-        Serial.println(F("[UpdateFirmware] FirmwareService has not been initialized before! Please have a look at ArduinoOcpp.cpp for an example. Abort"));
+        AO_DBG_ERR("FirmwareService has not been initialized before! Please have a look at ArduinoOcpp.cpp for an example. Abort");
     }
 
     return createEmptyDocument();

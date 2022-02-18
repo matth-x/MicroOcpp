@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/DataTransfer.h>
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::DataTransfer;
 
@@ -27,8 +27,8 @@ void DataTransfer::processConf(JsonObject payload){
     String status = payload["status"] | "Invalid";
 
     if (status.equals("Accepted")) {
-        if (DEBUG_OUT) Serial.print(F("[DataTransfer] Request has been accepted!\n"));
+        AO_DBG_DEBUG("Request has been accepted");
     } else {
-        Serial.print(F("[DataTransfer] Request has been denied!"));
+        AO_DBG_INFO("Request has been denied");
     }
 }

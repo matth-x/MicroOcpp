@@ -5,6 +5,7 @@
 #include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
+#include <ArduinoOcpp/Debug.h>
 
 #include <functional>
 
@@ -30,7 +31,7 @@ void ClearChargingProfile::processReq(JsonObject payload) {
         }
 
         if (payload.containsKey("connectorId")) {
-            Serial.print(F("[ClearChargingProfile] Smart Charging does not implement multiple connectors yet. Ignore connectorId\n"));
+            AO_DBG_WARN("Smart Charging does not implement multiple connectors yet. Ignore connectorId");
         }
 
         if (payload.containsKey("chargingProfilePurpose")) {
@@ -63,7 +64,7 @@ void ClearChargingProfile::processReq(JsonObject payload) {
     };
 
     if (!ocppModel || !ocppModel->getSmartChargingService()) {
-        Serial.println(F("[ClearChargingProfile] SmartChargingService not initialized! Ignore request"));
+        AO_DBG_ERR("SmartChargingService not initialized! Ignore request");
         return;
     }
 

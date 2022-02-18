@@ -5,8 +5,7 @@
 #include <ArduinoOcpp/MessagesV16/SetChargingProfile.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
-
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::SetChargingProfile;
 
@@ -57,6 +56,6 @@ std::unique_ptr<DynamicJsonDocument> SetChargingProfile::createReq() {
 void SetChargingProfile::processConf(JsonObject payload) {
     const char* status = payload["status"] | "Invalid";
     if (strcmp(status, "Accepted")) {
-        Serial.println(F("[SetChargingProfile] Send profile: rejected by client!"));
+        AO_DBG_WARN("Send profile: rejected by client");
     }
 }

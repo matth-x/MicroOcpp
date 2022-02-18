@@ -5,28 +5,21 @@
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Debug.h>
 
 using namespace ArduinoOcpp;
 
 MeteringService::MeteringService(OcppEngine& context, int numConn)
-      : context(context), numConnectors{numConn} {
-  
-    connectors = (ConnectorMeterValuesRecorder**) malloc(numConn * sizeof(ConnectorMeterValuesRecorder*));
-    for (int i = 0; i < numConn; i++) {
-        connectors[i] = new ConnectorMeterValuesRecorder(context.getOcppModel(), i);
-    }
-}
+      : context(context) {
 
-MeteringService::~MeteringService() {
-    for (int i = 0; i < numConnectors; i++) {
-        delete connectors[i];
+    for (int i = 0; i < numConn; i++) {
+        connectors.push_back(std::unique_ptr<ConnectorMeterValuesRecorder>(new ConnectorMeterValuesRecorder(context.getOcppModel(), i)));
     }
-    free(connectors);
 }
 
 void MeteringService::loop(){
 
-    for (int i = 0; i < numConnectors; i++){
+    for (int i = 0; i < connectors.size(); i++){
         auto meterValuesMsg = connectors[i]->loop();
         if (meterValuesMsg != nullptr) {
             auto meterValues = makeOcppOperation(meterValuesMsg);
@@ -37,24 +30,24 @@ void MeteringService::loop(){
 }
 
 void MeteringService::setPowerSampler(int connectorId, PowerSampler ps){
-    if (connectorId < 0 || connectorId >= numConnectors) {
-        Serial.print(F("[MeteringService] Error in setPowerSampler(): connectorId is out of bounds\n"));
+    if (connectorId < 0 || connectorId >= connectors.size()) {
+        AO_DBG_ERR("connectorId is out of bounds");
         return;
     }
     connectors[connectorId]->setPowerSampler(ps);
 }
 
 void MeteringService::setEnergySampler(int connectorId, EnergySampler es){
-    if (connectorId < 0 || connectorId >= numConnectors) {
-        Serial.print(F("[MeteringService] Error in setEnergySampler(): connectorId is out of bounds\n"));
+    if (connectorId < 0 || connectorId >= connectors.size()) {
+        AO_DBG_ERR("connectorId is out of bounds");
         return;
     }
     connectors[connectorId]->setEnergySampler(es);
 }
 
 float MeteringService::readEnergyActiveImportRegister(int connectorId) {
-    if (connectorId < 0 || connectorId >= numConnectors) {
-        Serial.print(F("[MeteringService] Error in readEnergyActiveImportRegister(): connectorId is out of bounds\n"));
+    if (connectorId < 0 || connectorId >= connectors.size()) {
+        AO_DBG_ERR("connectorId is out of bounds");
         return 0.f;
     }
     return connectors[connectorId]->readEnergyActiveImportRegister();

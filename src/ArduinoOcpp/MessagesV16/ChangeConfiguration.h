@@ -5,8 +5,6 @@
 #ifndef CHANGECONFIGURATION_H
 #define CHANGECONFIGURATION_H
 
-#include <Variants.h>
-
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
 namespace ArduinoOcpp {

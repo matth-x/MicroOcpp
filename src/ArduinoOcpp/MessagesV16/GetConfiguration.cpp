@@ -6,6 +6,7 @@
 
 #include <ArduinoOcpp/MessagesV16/GetConfiguration.h>
 #include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::GetConfiguration;
 
@@ -76,10 +77,9 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
     }
 
     if (unknownKeys.size() > 0) {
-        if (DEBUG_OUT) Serial.print(F("My unknown keys are: \n"));
         JsonArray jsonUnknownKey = payload.createNestedArray("unknownKey");
         for (auto unknownKey = unknownKeys.begin(); unknownKey != unknownKeys.end(); unknownKey++) {
-            if (DEBUG_OUT) Serial.println(*unknownKey);
+            AO_DBG_DEBUG("Unknown key: %s", unknownKey->c_str())
             jsonUnknownKey.add(*unknownKey);
         }
     }

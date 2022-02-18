@@ -5,6 +5,7 @@
 #include <ArduinoOcpp/MessagesV16/GetDiagnostics.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
+#include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::GetDiagnostics;
 
@@ -23,7 +24,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
     //check location URL. Maybe introduce Same-Origin-Policy?
     if (location.isEmpty()) {
         formatError = true;
-        Serial.println(F("[GetDiagnostics] Could not read location. Abort"));
+        AO_DBG_WARN("Could not read location. Abort");
         return;
     }
     
@@ -35,7 +36,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
         const char *startTimeRaw = payload["startTime"] | "Invalid";
         if (!startTime.setTime(startTimeRaw)) {
             formatError = true;
-            Serial.println(F("[GetDiagnostics] Could not read startTime. Abort"));
+            AO_DBG_WARN("Could not read startTime. Abort");
             return;
         }
     }
@@ -45,7 +46,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
         const char *stopTimeRaw = payload["stopTime"] | "Invalid";
         if (!stopTime.setTime(stopTimeRaw)) {
             formatError = true;
-            Serial.println(F("[GetDiagnostics] Could not read stopTime. Abort"));
+            AO_DBG_WARN("Could not read stopTime. Abort");
             return;
         }
     }
@@ -55,7 +56,7 @@ std::unique_ptr<DynamicJsonDocument> GetDiagnostics::createConf(){
     if (ocppModel && ocppModel->getDiagnosticsService()) {
         fileName = ocppModel->getDiagnosticsService()->requestDiagnosticsUpload(location, retries, retryInterval, startTime, stopTime);
     } else {
-        Serial.println(F("[GetDiagnostics] DiagnosticsService has not been initialized before! Please have a look at ArduinoOcpp.cpp for an example. Abort"));
+        AO_DBG_WARN("DiagnosticsService has not been initialized before! Please have a look at ArduinoOcpp.cpp for an example. Abort");
         return nullptr;
     }
 

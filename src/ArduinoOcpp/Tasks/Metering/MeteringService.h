@@ -5,33 +5,24 @@
 #ifndef METERINGSERVICE_H
 #define METERINGSERVICE_H
 
-//#define METER_VALUE_SAMPLE_INTERVAL 60 //in seconds
-
-//#define METER_VALUES_SAMPLED_DATA_MAX_LENGTH 4 //after 4 measurements, send the values to the CS
-
 #include <functional>
-
-#include <Variants.h>
 
 #include <ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.h>
 
 namespace ArduinoOcpp {
 
-using PowerSampler = std::function<float()>;
-using EnergySampler = std::function<float()>;
+using PowerSampler = std::function<float()>;  //in Watts (W)
+using EnergySampler = std::function<float()>; //in Watt-hours (Wh)
 
 class OcppEngine;
 
 class MeteringService {
 private:
     OcppEngine& context;
-    
-    const int numConnectors;
-    ConnectorMeterValuesRecorder **connectors;
+
+    std::vector<std::unique_ptr<ConnectorMeterValuesRecorder>> connectors;
 public:
     MeteringService(OcppEngine& context, int numConnectors);
-
-    ~MeteringService();
 
     void loop();
 

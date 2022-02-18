@@ -5,8 +5,7 @@
 #include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
-
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::UnlockConnector;
 
@@ -34,7 +33,7 @@ void UnlockConnector::processReq(JsonObject payload) {
         cbDefined = true;
     } else {
         cbDefined = false;
-        if (DEBUG_OUT) Serial.println(F("[UnlockConnector] Unlock CB undefined"));
+        AO_DBG_WARN("Unlock CB undefined");
         return;
     }
 

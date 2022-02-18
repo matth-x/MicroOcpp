@@ -5,8 +5,7 @@
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
-
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::MeterValues;
 
@@ -83,7 +82,7 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
 }
 
 void MeterValues::processConf(JsonObject payload) {
-    if (DEBUG_OUT) Serial.print(F("[MeterValues] Request has been confirmed!\n"));
+    AO_DBG_DEBUG("Request has been confirmed");
 }
 
 

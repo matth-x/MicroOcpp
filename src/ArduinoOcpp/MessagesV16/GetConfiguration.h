@@ -5,8 +5,6 @@
 #ifndef GETCONFIGURATION_H
 #define GETCONFIGURATION_H
 
-#include <Variants.h>
-
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
 namespace ArduinoOcpp {

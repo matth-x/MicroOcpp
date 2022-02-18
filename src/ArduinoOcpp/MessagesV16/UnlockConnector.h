@@ -5,8 +5,6 @@
 #ifndef UNLOCKCONNECTOR_H
 #define UNLOCKCONNECTOR_H
 
-#include <Variants.h>
-
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
 namespace ArduinoOcpp {
