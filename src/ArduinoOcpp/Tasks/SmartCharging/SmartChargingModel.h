@@ -7,6 +7,7 @@
 
 #include <ArduinoJson.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
+#include <memory>
 
 namespace ArduinoOcpp {
 
@@ -28,13 +29,18 @@ enum class RecurrencyKindType {
     Weekly
 };
 
+enum class ChargingRateUnitType {
+    Watt,
+    Amp
+};
+
 class ChargingSchedulePeriod {
 private:
     int startPeriod;
     float limit; //one fractural digit at most
     int numberPhases = -1;
 public:
-    ChargingSchedulePeriod(JsonObject *json);
+    ChargingSchedulePeriod(JsonObject &json);
     ChargingSchedulePeriod(int startPeriod, float limit);
     int getStartPeriod();
     float getLimit();
@@ -48,17 +54,16 @@ class ChargingSchedule {
 private:
     int duration = -1;
     OcppTimestamp startSchedule;
-    char schedulingUnit; //either 'A' or 'W'
-    std::vector<ChargingSchedulePeriod*> chargingSchedulePeriod;
+    ChargingRateUnitType chargingRateUnit;
+    std::vector<std::unique_ptr<ChargingSchedulePeriod>> chargingSchedulePeriod;
     float minChargingRate = -1.0f;
 
     ChargingProfileKindType chargingProfileKind; //copied from ChargingProfile to increase cohesion of limit inferencing methods
     RecurrencyKindType recurrencyKind; //copied from ChargingProfile to increase cohesion of limit inferencing methods
 public:
-    ChargingSchedule(JsonObject *json, ChargingProfileKindType chargingProfileKind, RecurrencyKindType recurrencyKind);
+    ChargingSchedule(JsonObject &json, ChargingProfileKindType chargingProfileKind, RecurrencyKindType recurrencyKind);
     ChargingSchedule(ChargingSchedule &other);
     ChargingSchedule(const OcppTimestamp &startSchedule, int duration);
-    ~ChargingSchedule();
 
     /**
      * limit: output parameter
@@ -70,7 +75,7 @@ public:
      */
     bool inferenceLimit(const OcppTimestamp &t, const OcppTimestamp &startOfCharging, float *limit, OcppTimestamp *nextChange);
 
-    bool addChargingSchedulePeriod(ChargingSchedulePeriod *period);
+    bool addChargingSchedulePeriod(std::unique_ptr<ChargingSchedulePeriod> period);
 
     void scale(float factor);
     void translate(float offset);
@@ -93,11 +98,9 @@ private:
     RecurrencyKindType recurrencyKind; // copied to ChargingSchedule to increase cohesion
     OcppTimestamp validFrom;
     OcppTimestamp validTo;
-    ChargingSchedule *chargingSchedule;
+    std::unique_ptr<ChargingSchedule> chargingSchedule;
 public:
-    ChargingProfile(JsonObject *json);
-    ChargingProfile(ChargingSchedule *schedule, int chargingProfileId); //For Energy management. Can be extended with more parameters later
-    ~ChargingProfile();
+    ChargingProfile(JsonObject &json);
 
     /**
      * limit: output parameter

@@ -3,16 +3,16 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.h>
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 #include <string.h>
 
 using namespace ArduinoOcpp;
 
-ChargingSchedulePeriod::ChargingSchedulePeriod(JsonObject *json){
-    startPeriod = (*json)["startPeriod"];
-    limit = (*json)["limit"]; //one fractural digit at most
-    numberPhases = (*json)["numberPhases"] | -1;
+ChargingSchedulePeriod::ChargingSchedulePeriod(JsonObject &json){
+    startPeriod = json["startPeriod"];
+    limit = json["limit"]; //one fractural digit at most
+    numberPhases = json["numberPhases"] | -1;
 }
 
 ChargingSchedulePeriod::ChargingSchedulePeriod(int startPeriod, float limit){
@@ -46,49 +46,45 @@ int ChargingSchedulePeriod::getNumberPhases(){
 }
 
 void ChargingSchedulePeriod::printPeriod(){
-    Serial.print(F("      startPeriod: "));
-    Serial.print(startPeriod);
-    Serial.print(F("\n"));
-
-    Serial.print(F("      limit: "));
-    Serial.print(limit);
-    Serial.print(F("\n"));
-
-    Serial.print(F("      numberPhases: "));
-    Serial.print(numberPhases);
-    Serial.print(F("\n"));
+    AO_DBG_INFO("CHARGING SCHEDULE PERIOD:\n" \
+                "      startPeriod: %i\n" \
+                "      limit: %f\n" \
+                "      numberPhases: %i\n",
+                startPeriod,
+                limit,
+                numberPhases);
 }
 
-ChargingSchedule::ChargingSchedule(JsonObject *json, ChargingProfileKindType chargingProfileKind, RecurrencyKindType recurrencyKind)
+ChargingSchedule::ChargingSchedule(JsonObject &json, ChargingProfileKindType chargingProfileKind, RecurrencyKindType recurrencyKind)
       : chargingProfileKind(chargingProfileKind)
       , recurrencyKind(recurrencyKind) {  
   
-    duration = (*json)["duration"] | -1;
+    duration = json["duration"] | -1;
     startSchedule = OcppTimestamp();
-    if (!startSchedule.setTime((*json)["startSchedule"] | "Invalid")) {
+    if (!startSchedule.setTime(json["startSchedule"] | "Invalid")) {
         //non-success
         startSchedule = MIN_TIME;
     }
-    const char *unit = (*json)["chargingRateUnit"] | "__Invalid";
+    const char *unit = json["chargingRateUnit"] | "__Invalid";
     if (unit[0] == 'a' || unit[0] == 'A') {
-        schedulingUnit = 'A';
+        chargingRateUnit = ChargingRateUnitType::Amp;
     } else {
-        schedulingUnit = 'W';
+        chargingRateUnit = ChargingRateUnitType::Watt;
     }
     
-    chargingSchedulePeriod = std::vector<ChargingSchedulePeriod*>();
-    JsonArray periodJsonArray = (*json)["chargingSchedulePeriod"];
+    JsonArray periodJsonArray = json["chargingSchedulePeriod"];
     for (JsonObject periodJson : periodJsonArray) {
-        ChargingSchedulePeriod *period = new ChargingSchedulePeriod(&periodJson);
-        chargingSchedulePeriod.push_back(period);
+        auto period = std::unique_ptr<ChargingSchedulePeriod>(new ChargingSchedulePeriod(periodJson));
+        chargingSchedulePeriod.push_back(std::move(period));
     }
 
     //Expecting sorted list of periods but specification doesn't garantuee it
-    std::sort(chargingSchedulePeriod.begin(), chargingSchedulePeriod.end(), [] (ChargingSchedulePeriod *p1, ChargingSchedulePeriod *p2) {
-        return p1->getStartPeriod() < p2->getStartPeriod();
+    std::sort(chargingSchedulePeriod.begin(), chargingSchedulePeriod.end(),
+        [] (const std::unique_ptr<ChargingSchedulePeriod> &p1, const std::unique_ptr<ChargingSchedulePeriod> &p2) {
+            return p1->getStartPeriod() < p2->getStartPeriod();
     });
     
-    minChargingRate = (*json)["minChargingRate"] | -1.0f;
+    minChargingRate = json["minChargingRate"] | -1.0f;
 }
 
 ChargingSchedule::ChargingSchedule(ChargingSchedule &other) {
@@ -96,18 +92,17 @@ ChargingSchedule::ChargingSchedule(ChargingSchedule &other) {
     recurrencyKind = other.recurrencyKind;  
     duration = other.duration;
     startSchedule = other.startSchedule;
-    schedulingUnit = other.schedulingUnit;
-    
-    chargingSchedulePeriod = std::vector<ChargingSchedulePeriod*>();
+    chargingRateUnit = other.chargingRateUnit;
 
     for (auto period = other.chargingSchedulePeriod.begin(); period != other.chargingSchedulePeriod.end(); period++) {
-        ChargingSchedulePeriod *p = new ChargingSchedulePeriod(**period);
-        chargingSchedulePeriod.push_back(p);
+        auto p = std::unique_ptr<ChargingSchedulePeriod>(new ChargingSchedulePeriod(**period));
+        chargingSchedulePeriod.push_back(std::move(p));
     }
 
     //Expecting sorted list of periods but specification doesn't garantuee it
-    std::sort(chargingSchedulePeriod.begin(), chargingSchedulePeriod.end(), [] (ChargingSchedulePeriod *p1, ChargingSchedulePeriod *p2) {
-        return p1->getStartPeriod() < p2->getStartPeriod();
+    std::sort(chargingSchedulePeriod.begin(), chargingSchedulePeriod.end(),
+        [] (const std::unique_ptr<ChargingSchedulePeriod> &p1, const std::unique_ptr<ChargingSchedulePeriod> &p2) {
+            return p1->getStartPeriod() < p2->getStartPeriod();
     });
     
     minChargingRate = other.minChargingRate;
@@ -117,26 +112,11 @@ ChargingSchedule::ChargingSchedule(const OcppTimestamp &startT, int duration) {
     //create empty but valid Charging Schedule
     this->duration = duration;
     startSchedule = startT;
-    schedulingUnit = 'W'; //either 'A' or 'W'
-    std::vector<ChargingSchedulePeriod*> chargingSchedulePeriod = std::vector<ChargingSchedulePeriod*>();
+    chargingRateUnit = ChargingRateUnitType::Watt;
     //float minChargingRate = 0.f;
 
     chargingProfileKind = ChargingProfileKindType::Absolute; //copied from ChargingProfile to increase cohesion of limit inferencing methods
     recurrencyKind = RecurrencyKindType::NOT_SET; //copied from ChargingProfile to increase cohesion of limit inferencing methods
-}
-
-ChargingSchedule::~ChargingSchedule(){
-    for (size_t i = 0; i < chargingSchedulePeriod.size(); i++) {
-        delete chargingSchedulePeriod.at(i);
-    }
-}
-
-float maximum(float f1, float f2){
-    if (f1 < f2) {
-        return f2;
-    } else {
-        return f1;
-    }
 }
 
 bool ChargingSchedule::inferenceLimit(const OcppTimestamp &t, const OcppTimestamp &startOfCharging, float *limit, OcppTimestamp *nextChange) {
@@ -157,7 +137,7 @@ bool ChargingSchedule::inferenceLimit(const OcppTimestamp &t, const OcppTimestam
             } else if (startOfCharging > MIN_TIME && startOfCharging < t) {
                 basis = startOfCharging;
             } else {
-                Serial.print(F("[SmartChargingModel] Undefined behaviour: Inferencing limit from absolute profile, but neither startSchedule, nor start of charging are set! Abort\n"));
+                AO_DBG_ERR("Absolute profile, but neither startSchedule, nor start of charging are set. Undefined behavior, abort");
                 return false;
             }
             break;
@@ -169,7 +149,7 @@ bool ChargingSchedule::inferenceLimit(const OcppTimestamp &t, const OcppTimestam
                 basis = t - ((t - startSchedule) % (7 * 24 * 3600));
                 *nextChange = basis + (7 * 24 * 3600);
             } else {
-                Serial.print(F("[SmartChargingModel] Undefined behaviour: Recurring ChargingProfile but no RecurrencyKindType set! Assume \"Daily\""));
+                AO_DBG_ERR("Recurring ChargingProfile but no RecurrencyKindType set. Undefined behavior, assume 'Daily'");
                 basis = t - ((t - startSchedule) % (24 * 3600));
                 *nextChange = basis + (24 * 3600);
             }
@@ -186,7 +166,7 @@ bool ChargingSchedule::inferenceLimit(const OcppTimestamp &t, const OcppTimestam
     }
 
     if (t < basis) { //check for error
-        Serial.print(F("[SmartChargingModel] Error in SchmartChargingModel::inferenceLimit: time basis is smaller than t, but t must be >= basis\n"));
+        AO_DBG_ERR("time basis is smaller than t, but t must be >= basis");
         return false;
     }
     
@@ -223,21 +203,21 @@ bool ChargingSchedule::inferenceLimit(const OcppTimestamp &t, const OcppTimestam
     }
     
     if (limit_res >= 0.0f) {
-        *limit = maximum(limit_res, minChargingRate);
+        *limit = std::max(limit_res, minChargingRate);
         return true;
     } else {
         return false; //No limit was found. Either there is no ChargingProfilePeriod, or each period begins after t_toBasis
     }
 }
 
-bool ChargingSchedule::addChargingSchedulePeriod(ChargingSchedulePeriod *period) {
-    if (period == NULL) return false;
+bool ChargingSchedule::addChargingSchedulePeriod(std::unique_ptr<ChargingSchedulePeriod> period) {
+    if (!period) return false;
 
     if (period->getStartPeriod() >= duration) {
         return false;
     }
 
-    chargingSchedulePeriod.push_back(period);
+    chargingSchedulePeriod.push_back(std::move(period));
     return true;
 }
 
@@ -257,7 +237,6 @@ DynamicJsonDocument *ChargingSchedule::toJsonDocument() {
     size_t capacity = 0;
     capacity += JSON_OBJECT_SIZE(5); //no of fields of ChargingSchedule
     capacity += JSONDATE_LENGTH + 1; //startSchedule
-    capacity += 2; //scheduling unit will be saved as string
     capacity += JSON_ARRAY_SIZE(chargingSchedulePeriod.size()) + chargingSchedulePeriod.size() * JSON_OBJECT_SIZE(3);
 
     DynamicJsonDocument *result = new DynamicJsonDocument(capacity);
@@ -267,9 +246,7 @@ DynamicJsonDocument *ChargingSchedule::toJsonDocument() {
     char startScheduleJson [JSONDATE_LENGTH + 1] = {'\0'};
     startSchedule.toJsonString(startScheduleJson, JSONDATE_LENGTH + 1);
     payload["startSchedule"] = startScheduleJson;
-    char chargingRateUnit_str [2] = {'\0'};
-    chargingRateUnit_str[0] = schedulingUnit;
-    payload["chargingRateUnit"] = chargingRateUnit_str;
+    payload["chargingRateUnit"] = chargingRateUnit == (ChargingRateUnitType::Amp) ? "A" : "W";
     JsonArray periodArray = payload.createNestedArray("chargingSchedulePeriod");
     for (auto period = chargingSchedulePeriod.begin(); period != chargingSchedulePeriod.end(); period++) {
         JsonObject entry = periodArray.createNestedObject();
@@ -286,47 +263,33 @@ DynamicJsonDocument *ChargingSchedule::toJsonDocument() {
 }
 
 void ChargingSchedule::printSchedule(){
-    Serial.print(F("    duration: "));
-    Serial.print(duration);
-    Serial.print(F("\n"));
-    
-    Serial.print(F("    startSchedule: "));
+
     char tmp[JSONDATE_LENGTH + 1] = {'\0'};
     startSchedule.toJsonString(tmp, JSONDATE_LENGTH + 1);
-    Serial.print(tmp);
-    Serial.print(F("\n"));
 
-    Serial.print(F("    schedulingUnit: "));
-    Serial.print(schedulingUnit);
-    Serial.print(F("\n"));
+    AO_DBG_INFO("CHARGING SCHEDULE:\n" \
+                "    duration: %i\n" \
+                "    startSchedule: %s\n" \
+                "    chargingRateUnit: %s\n" \
+                "    minChargingRate: %f\n",
+                duration,
+                tmp,
+                chargingRateUnit == (ChargingRateUnitType::Amp) ? "A" :
+                    chargingRateUnit == (ChargingRateUnitType::Watt) ? "W" : "Error",
+                minChargingRate);
 
     for (auto period = chargingSchedulePeriod.begin(); period != chargingSchedulePeriod.end(); period++) {
         (*period)->printPeriod();
     }
-
-    Serial.print(F("    minChargingRate: "));
-    Serial.print(minChargingRate);
-    Serial.print(F("\n"));
 }
 
-ChargingProfile::ChargingProfile(JsonObject *json){
+ChargingProfile::ChargingProfile(JsonObject &json){
   
-    chargingProfileId = (*json)["chargingProfileId"];
-    transactionId = (*json)["transactionId"] | -1;
-    stackLevel = (*json)["stackLevel"];
-
-    if (DEBUG_OUT) {
-        Serial.print(F("[SmartChargingModel] ChargingProfile created with chargingProfileId = "));
-        Serial.print(chargingProfileId);
-        Serial.print(F("\n"));
-    }
+    chargingProfileId = json["chargingProfileId"] | -1;
+    transactionId = json["transactionId"] | -1;
+    stackLevel = json["stackLevel"] | 0;
     
-    const char *chargingProfilePurposeStr = (*json)["chargingProfilePurpose"] | "Invalid";
-    if (DEBUG_OUT) {
-        Serial.print(F("[SmartChargingModel] chargingProfilePurposeStr="));
-        Serial.print(chargingProfilePurposeStr);
-        Serial.print(F("\n"));
-    }
+    const char *chargingProfilePurposeStr = json["chargingProfilePurpose"] | "Invalid";
     if (!strcmp(chargingProfilePurposeStr, "ChargePointMaxProfile")) {
         chargingProfilePurpose = ChargingProfilePurposeType::ChargePointMaxProfile;
     } else if (!strcmp(chargingProfilePurposeStr, "TxDefaultProfile")) {
@@ -335,7 +298,7 @@ ChargingProfile::ChargingProfile(JsonObject *json){
     } else {
         chargingProfilePurpose = ChargingProfilePurposeType::TxProfile;
     }
-    const char *chargingProfileKindStr = (*json)["chargingProfileKind"] | "Invalid";
+    const char *chargingProfileKindStr = json["chargingProfileKind"] | "Invalid";
     if (!strcmp(chargingProfileKindStr, "Absolute")) {
         chargingProfileKind = ChargingProfileKindType::Absolute;
     } else if (!strcmp(chargingProfileKindStr, "Recurring")) {
@@ -344,12 +307,7 @@ ChargingProfile::ChargingProfile(JsonObject *json){
     } else {
         chargingProfileKind = ChargingProfileKindType::Relative;
     }
-    const char *recurrencyKindStr = (*json)["recurrencyKind"] | "Invalid";
-    if (DEBUG_OUT) {
-        Serial.print(F("[SmartChargingModel] recurrencyKindStr="));
-        Serial.print(recurrencyKindStr);
-        Serial.print('\n');
-    }
+    const char *recurrencyKindStr = json["recurrencyKind"] | "Invalid";
     if (!strcmp(recurrencyKindStr, "Daily")) {
         recurrencyKind = RecurrencyKindType::Daily;
     } else if (!strcmp(recurrencyKindStr, "Weekly")) {
@@ -358,42 +316,22 @@ ChargingProfile::ChargingProfile(JsonObject *json){
         recurrencyKind = RecurrencyKindType::NOT_SET; //not part of OCPP 1.6
     }
 
-    if (!validFrom.setTime((*json)["validFrom"] | "Invalid")) {
+    AO_DBG_DEBUG("Deserialize JSON: chargingProfileId=%i, chargingProfilePurpose=%s, recurrencyKind=%s", chargingProfileId, chargingProfilePurposeStr, recurrencyKindStr);
+
+    if (!validFrom.setTime(json["validFrom"] | "Invalid")) {
         //non-success
-        Serial.print(F("[SmartChargingModel] Error reading validFrom. Expect format like 2020-02-01T20:53:32.486Z. Assume unlimited validity\n"));
+        AO_DBG_ERR("validFrom format violation. Expect format like 2022-02-01T20:53:32.486Z. Assume unlimited validity");
         validFrom = MIN_TIME;
     }
 
-    if (!validTo.setTime((*json)["validTo"] | "Invalid")) {
+    if (!validTo.setTime(json["validTo"] | "Invalid")) {
         //non-success
-        Serial.print(F("[SmartChargingModel] Error reading validTo. Expect format like 2020-02-01T20:53:32.486Z. Assume unlimited validity\n"));
+        AO_DBG_ERR("validTo format violation. Expect format like 2022-02-01T20:53:32.486Z. Assume unlimited validity");
         validTo = MIN_TIME;
     }
 
-    JsonObject schedule = (*json)["chargingSchedule"]; 
-    chargingSchedule = new ChargingSchedule(&schedule, chargingProfileKind, recurrencyKind);
-}
-
-ChargingProfile::~ChargingProfile(){
-    delete chargingSchedule;
-}
-
-/**
- * Modulo, the mathematical way
- * 
- * dividend:    -4  -3  -2  -1   0   1   2   3   4 
- * % divisor:    3   3   3   3   3   3   3   3   3
- * = remainder:  2   0   1   2   0   1   2   0   1
- */
-int modulo(int dividend, int divisor){
-    int remainder = dividend;
-    while (remainder < 0) {
-        remainder += divisor;
-    }
-    while (remainder >= divisor) {
-        remainder -= divisor;
-    }
-    return remainder;
+    JsonObject schedule = json["chargingSchedule"]; 
+    chargingSchedule = std::unique_ptr<ChargingSchedule>(new ChargingSchedule(schedule, chargingProfileKind, recurrencyKind));
 }
 
 bool ChargingProfile::inferenceLimit(const OcppTimestamp &t, const OcppTimestamp &startOfCharging, float *limit, OcppTimestamp *nextChange){
@@ -437,67 +375,36 @@ int ChargingProfile::getChargingProfileId() {
 }
 
 void ChargingProfile::printProfile(){
-    Serial.print(F("  chargingProfileId: "));
-    Serial.print(chargingProfileId);
-    Serial.print(F("\n"));
 
-    Serial.print(F("  transactionId: "));
-    Serial.print(transactionId);
-    Serial.print(F("\n"));
-
-    Serial.print(F("  stackLevel: "));
-    Serial.print(stackLevel);
-    Serial.print(F("\n"));
-
-    Serial.print(F("  chargingProfilePurpose: "));
-    switch (chargingProfilePurpose) {
-        case (ChargingProfilePurposeType::ChargePointMaxProfile):
-            Serial.print(F("ChargePointMaxProfile"));
-            break;
-        case (ChargingProfilePurposeType::TxDefaultProfile):
-            Serial.print(F("TxDefaultProfile"));
-            break;
-        case (ChargingProfilePurposeType::TxProfile):
-            Serial.print(F("TxProfile"));
-            break;    
-    }
-    Serial.print(F("\n"));
-
-    Serial.print(F("  chargingProfileKind: "));
-    switch (chargingProfileKind) {
-        case (ChargingProfileKindType::Absolute):
-        Serial.print(F("Absolute"));
-        break;
-        case (ChargingProfileKindType::Recurring):
-        Serial.print(F("Recurring"));
-        break;
-        case (ChargingProfileKindType::Relative):
-        Serial.print(F("Relative"));
-        break;    
-    }
-    Serial.print(F("\n"));
-
-    Serial.print(F("  recurrencyKind: "));
-    switch (recurrencyKind) {
-        case (RecurrencyKindType::Daily):
-        Serial.print(F("Daily"));
-        break;
-        case (RecurrencyKindType::Weekly):
-        Serial.print(F("Weekly"));
-        break;
-        case (RecurrencyKindType::NOT_SET):
-        Serial.print(F("NOT_SET"));
-        break;    
-    }
-    Serial.print(F("\n"));
-
-    Serial.print(F("  validFrom: "));
     char tmp[JSONDATE_LENGTH + 1] = {'\0'};
     validFrom.toJsonString(tmp, JSONDATE_LENGTH + 1);
-    Serial.print(F("\n"));
+    char tmp2[JSONDATE_LENGTH + 1] = {'\0'};
+    validTo.toJsonString(tmp2, JSONDATE_LENGTH + 1);
 
-    Serial.print(F("  validTo: "));
-    validTo.toJsonString(tmp, JSONDATE_LENGTH + 1);
-    Serial.print(F("\n"));
+    AO_DBG_INFO("CHARGING PROFILE:\n" \
+                "  chargingProfileId: %i\n" \
+                "  transactionId: %i\n" \
+                "  stackLevel: %i\n" \
+                "  chargingProfilePurpose: %s\n" \
+                "  chargingProfileKind: %s\n" \
+                "  recurrencyKind: %s\n" \
+                "  validFrom: %s\n" \
+                "  validTo: %s\n",
+                chargingProfileId,
+                transactionId,
+                stackLevel,
+                chargingProfilePurpose == (ChargingProfilePurposeType::ChargePointMaxProfile) ? "ChargePointMaxProfile" :
+                    chargingProfilePurpose == (ChargingProfilePurposeType::TxDefaultProfile) ? "TxDefaultProfile" :
+                    chargingProfilePurpose == (ChargingProfilePurposeType::TxProfile) ? "TxProfile" : "Error",
+                chargingProfileKind == (ChargingProfileKindType::Absolute) ? "Absolute" :
+                    chargingProfileKind == (ChargingProfileKindType::Recurring) ? "Recurring" :
+                    chargingProfileKind == (ChargingProfileKindType::Relative) ? "Relative" : "Error",
+                recurrencyKind == (RecurrencyKindType::Daily) ? "Daily" :
+                    recurrencyKind == (RecurrencyKindType::Weekly) ? "Weekly" :
+                    recurrencyKind == (RecurrencyKindType::NOT_SET) ? "NOT_SET" : "Error",
+                tmp,
+                tmp2
+                );
+
     chargingSchedule->printSchedule();
 }

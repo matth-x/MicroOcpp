@@ -8,8 +8,8 @@
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
-
 #include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/Debug.h>
 
 #if defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
 #include <LITTLEFS.h>
@@ -206,9 +206,8 @@ ChargingSchedule *SmartChargingService::getCompositeSchedule(int connectorId, ot
     while (periodBegin - startSchedule < duration) {
         float limit = 0.f;
         inferenceLimit(periodBegin, &limit, &periodStop);
-        ChargingSchedulePeriod *p = new ChargingSchedulePeriod(periodBegin - startSchedule, limit);
-        if (!result->addChargingSchedulePeriod(p)) {
-            delete p;
+        auto p = std::unique_ptr<ChargingSchedulePeriod>(new ChargingSchedulePeriod(periodBegin - startSchedule, limit));
+        if (!result->addChargingSchedulePeriod(std::move(p))) {
             break;
         }
         periodBegin = periodStop;
@@ -244,16 +243,16 @@ void SmartChargingService::updateChargingProfile(JsonObject *json) {
 }
 
 ChargingProfile *SmartChargingService::updateProfileStack(JsonObject *json){
-    ChargingProfile *chargingProfile = new ChargingProfile(json);
+    ChargingProfile *chargingProfile = new ChargingProfile(*json);
 
-    if (DEBUG_OUT) {
-        Serial.print(F("[SmartChargingService] Charging Profile internal model\n"));
+    if (AO_DBG_LEVEL >= AO_DL_INFO) {
+        AO_DBG_INFO("Charging Profile internal model:");
         chargingProfile->printProfile();
     }
 
     int stackLevel = chargingProfile->getStackLevel();
     if (stackLevel >= CHARGEPROFILEMAXSTACKLEVEL || stackLevel < 0) {
-        Serial.print(F("[SmartChargingService] Error: Stacklevel of Charging Profile is smaller or greater than CHARGEPROFILEMAXSTACKLEVEL\n"));
+        AO_DBG_ERR("Stacklevel of Charging Profile is smaller or greater than CHARGEPROFILEMAXSTACKLEVEL");
         stackLevel = CHARGEPROFILEMAXSTACKLEVEL - 1;
     }
 
