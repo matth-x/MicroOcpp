@@ -240,13 +240,9 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType, int co
     } else if (!strcmp(messageType, "RemoteStartTransaction")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::RemoteStartTransaction());
         operation->setOnReceiveReqListener(onRemoteStartTransactionReceiveRequest);
-        if (onRemoteStartTransactionSendConf == nullptr)
-            AO_DBG_WARN("RemoteStartTransaction is without effect when the sendConf listener is not set. Set a listener which initiates the StartTransaction operation.");
         operation->setOnSendConfListener(onRemoteStartTransactionSendConf);
     } else if (!strcmp(messageType, "RemoteStopTransaction")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::RemoteStopTransaction());
-        if (onRemoteStopTransactionSendConf == nullptr)
-            AO_DBG_WARN("RemoteStopTransaction is without effect when no sendConf listener is set. Set a listener which initiates the StopTransaction operation.");
         operation->setOnReceiveReqListener(onRemoteStopTransactionReceiveRequest);
         operation->setOnSendConfListener(onRemoteStopTransactionSendConf);
     } else if (!strcmp(messageType, "ChangeConfiguration")) {

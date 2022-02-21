@@ -49,5 +49,5 @@ std::unique_ptr<DynamicJsonDocument> OcppMessage::createConf() {
 std::unique_ptr<DynamicJsonDocument> ArduinoOcpp::createEmptyDocument() {
     auto emptyDoc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(0));
     emptyDoc->to<JsonObject>();
-    return std::move(emptyDoc);
+    return emptyDoc;
 }

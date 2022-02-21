@@ -144,7 +144,7 @@ OcppMessage *ConnectorStatus::loop() {
             AO_DBG_DEBUG("Session mngt: release connectionTimeOut");
             connectionTimeOutListen = false;
         } else {
-            if (connectionTimeOutTimestamp - ao_tick_ms() >= ((ulong) *connectionTimeOut) * 1000UL) {
+            if (ao_tick_ms() - connectionTimeOutTimestamp >= ((ulong) *connectionTimeOut) * 1000UL) {
                 AO_DBG_INFO("Session mngt: timeout");
                 endSession();
                 connectionTimeOutListen = false;

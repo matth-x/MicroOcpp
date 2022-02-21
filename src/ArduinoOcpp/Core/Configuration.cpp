@@ -290,18 +290,9 @@ bool configuration_save() {
 template std::shared_ptr<Configuration<int>> createConfiguration(const char *key, int value);
 template std::shared_ptr<Configuration<float>> createConfiguration(const char *key, float value);
 template std::shared_ptr<Configuration<const char *>> createConfiguration(const char *key, const char * value);
-//template std::shared_ptr<Configuration<String>> createConfiguration(const char *key, String value);
 
 template std::shared_ptr<Configuration<int>> declareConfiguration(const char *key, int defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
 template std::shared_ptr<Configuration<float>> declareConfiguration(const char *key, float defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
 template std::shared_ptr<Configuration<const char *>> declareConfiguration(const char *key, const char *defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
-//template std::shared_ptr<Configuration<String>> declareConfiguration(const char *key, String defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
-
-/*
-template std::shared_ptr<Configuration<int>> Ocpp16::changeConfiguration(const char *key, int value);
-template std::shared_ptr<Configuration<float>> Ocpp16::changeConfiguration(const char *key, float value);
-template std::shared_ptr<Configuration<const char *>> Ocpp16::changeConfiguration(const char *key, const char *value);
-//template std::shared_ptr<Configuration<String>> Ocpp16::changeConfiguration(const char *key, String value);
-*/
 
 } //end namespace ArduinoOcpp
