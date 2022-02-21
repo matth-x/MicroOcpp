@@ -35,7 +35,6 @@ private:
     OcppTimestamp chargingSessionStart;
     int chargingSessionTransactionID;
     void refreshChargingSessionState();
-    //bool chargingSessionIsActive;
 
     ChargingProfile *updateProfileStack(JsonObject *json);
     FilesystemOpt filesystemOpt;
@@ -50,7 +49,6 @@ public:
     float inferenceLimitNow();
     void setOnLimitChange(OnLimitChange onLimitChange);
     ChargingSchedule *getCompositeSchedule(int connectorId, otime_t duration);
-    void writeOutCompositeSchedule(JsonObject *json);
     void loop();
 };
 

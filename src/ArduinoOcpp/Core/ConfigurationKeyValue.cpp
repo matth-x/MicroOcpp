@@ -3,8 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
-
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 #include <string.h>
 #include <vector>
@@ -31,7 +30,7 @@ AbstractConfiguration::AbstractConfiguration(JsonObject &storedKeyValuePair) {
     if (storedKeyValuePair["key"].as<JsonVariant>().is<const char*>()) {
         setKey(storedKeyValuePair["key"]);
     } else {
-        Serial.print(F("[AbstractConfiguration] Type mismatch: cannot construct with given storedKeyValuePair\n"));
+        AO_DBG_ERR("Type mismatch");
     }
 }
 
@@ -43,9 +42,8 @@ AbstractConfiguration::~AbstractConfiguration() {
 }
 
 void AbstractConfiguration::printKey() {
-    if (key != nullptr) {
-        Serial.print(key);
-    }
+    if (key)
+        AO_CONSOLE_PRINTF("%s", key);
 }
 
 size_t AbstractConfiguration::getStorageHeaderJsonCapacity() {
@@ -79,25 +77,23 @@ bool AbstractConfiguration::isValid() {
 
 bool AbstractConfiguration::setKey(const char *newKey) {
     if (key != nullptr || key_size > 0) {
-        Serial.print(F("[AbstractConfiguration] Cannot change key or set key twice! Keep old value\n"));
+        AO_DBG_ERR("Cannot change key or set key twice! Keep old value");
         return false;
     }
 
     key_size = strlen(newKey) + 1; //plus 0-terminator
 
     if (key_size > KEY_MAXLEN + 1) {
-        Serial.print(F("[AbstractConfiguration] in setKey(): Maximal key length exceeded: "));
-        Serial.print(newKey);
-        Serial.print(F(". Abort\n"));
+        AO_DBG_ERR("Maximal key length exceeded: %s. Abort", newKey);
         return false;
     } else if (key_size <= 1) {
-        Serial.print(F("[AbstractConfiguration] in setKey(): Null or empty key not allowed! Abort\n"));
+        AO_DBG_ERR("Null or empty key not allowed! Abort");
         return false;
     }
 
     key = (char *) malloc(sizeof(char) * key_size);
     if (!key) {
-        Serial.print(F("[AbstractConfiguration] in setKey(): Could not allocate key\n"));
+        AO_DBG_ERR("Could not allocate key");
         return false;
     }
 
@@ -151,19 +147,30 @@ Configuration<T>::Configuration(JsonObject &storedKeyValuePair) : AbstractConfig
     if (jsonEntry.is<T>()) {
         this->operator=(jsonEntry.as<T>());
     } else {
-        Serial.print(F("[Configuration<T>] Type mismatch: cannot deserialize Json to given Type T\n"));
+        AO_DBG_ERR("Type mismatch: cannot deserialize Json to given type");
     }
+}
+
+//helper functions
+void printValue(int value) {
+    AO_CONSOLE_PRINTF("%i", value);
+}
+
+void printValue(float value) {
+    AO_CONSOLE_PRINTF("%f", value);
 }
 
 template <class T>
 const T &Configuration<T>::operator=(const T & newVal) {
 
     if (permissionLocalClientCanWrite() || !initializedValue) {
-        if (DEBUG_OUT && !initializedValue) {
-            Serial.print(F("[Configuration<T>] Initialized config object. Key = "));
+        if (AO_DBG_LEVEL >= AO_DL_DEBUG && !initializedValue) {
+            AO_DBG_DEBUG("Initialized config object:");
+            AO_CONSOLE_PRINTF("[AO]     > Key = ");
             printKey();
-            Serial.print(F(", value = "));
-            Serial.println(newVal);
+            AO_CONSOLE_PRINTF(", value = ");
+            printValue(newVal);
+            AO_CONSOLE_PRINTF("\n");
         }
         initializedValue = true;
         if (value != newVal) {
@@ -172,20 +179,16 @@ const T &Configuration<T>::operator=(const T & newVal) {
         value = newVal;
         resetToBeRemovedFlag();
     } else {
-        Serial.print(F("[Configuration] Tried to override read-only configuration: "));
+        AO_DBG_ERR("Tried to override read-only configuration:");
+        AO_CONSOLE_PRINTF("[AO]     > Key = ");
         printKey();
-        Serial.println();
+        AO_CONSOLE_PRINTF("\n");
     }
     return newVal;
 }
 
 template <class T>
 Configuration<T>::operator T() {
-    if (!initializedValue) {
-//        Serial.print(F("[Configuration<T>] Tried to access value without preceeding initialization: "));
-//        printKey();
-//        Serial.println();
-    }
     return value;
 }
 
@@ -198,11 +201,6 @@ template<class T>
 size_t Configuration<T>::getValueJsonCapacity() {
     return JSON_OBJECT_SIZE(1);
 }
-
-//template<>
-//size_t Configuration<String>::getValueJsonCapacity() {
-//    return JSON_OBJECT_SIZE(1) + value.length() + 1;
-//}
 
 size_t Configuration<const char *>::getValueJsonCapacity() {
     return JSON_OBJECT_SIZE(1) + value_size;
@@ -280,10 +278,10 @@ Configuration<const char *>::Configuration(JsonObject &storedKeyValuePair) : Abs
             storedValueSize++;
             setValue(storedValue, storedValueSize);
         } else {
-            Serial.print(F("[Configuration<const char *>] Stored value is empty\n"));
+            AO_DBG_WARN("Stored value is empty");
         }
     } else {
-        Serial.print(F("[Configuration<const char *>] Type mismatch: cannot deserialize Json to given Type T\n"));
+        AO_DBG_ERR("Type mismatch: cannot deserialize Json to given type");
     }
 }
 
@@ -300,14 +298,13 @@ Configuration<const char *>::~Configuration() {
 
 bool Configuration<const char *>::setValue(const char *new_value, size_t buffsize) {
     if (!permissionLocalClientCanWrite() && initializedValue) {
-        Serial.print(F("[Configuration<const char *>] Tried to override read-only configuration: "));
-        printKey();
-        Serial.println();
+        AO_DBG_ERR("Tried to override read-only configuration:");
+        AO_CONSOLE_PRINTF("[AO]     > Key = ");
         return false;
     }
 
     if (!new_value) {
-        Serial.print(F("[Configuration<const char *>] in setValue(): Argument is null! No change\n"));
+        AO_DBG_ERR("Argument is null. No change");
         return false;
     }
 
@@ -328,12 +325,12 @@ bool Configuration<const char *>::setValue(const char *new_value, size_t buffsiz
     }
 
     if (checkedBuffsize <= 0) {
-        Serial.print(F("[Configuration<const char *>] in setValue(): buffsize is <= 0! No change\n"));
+        AO_DBG_ERR("buffsize is <= 0 -- No change");
         return false;
     }
 
     if (checkedBuffsize > STRING_VAL_MAXLEN + 1) {
-        Serial.print(F("[Configuration<const char *>] in setValue(): Maximal value length exceeded! Abort\n"));
+        AO_DBG_ERR("Maximum value length exceeded. Abort");
         return false;
     }
 
@@ -366,7 +363,7 @@ bool Configuration<const char *>::setValue(const char *new_value, size_t buffsiz
         value = (char *) malloc (sizeof(char) * value_size);
         valueReadOnlyCopy = (char *) malloc (sizeof(char) * value_size);
         if (!value || !valueReadOnlyCopy) {
-            Serial.print(F("[Configuration<const char *>] in setValue(): Could not allocate value or value copy\n"));
+            AO_DBG_ERR("Could not allocate value or value copy");
 
             if (value != nullptr) {
                 free(value);
@@ -391,11 +388,11 @@ bool Configuration<const char *>::setValue(const char *new_value, size_t buffsiz
         value_revision++;
     }
     
-    if (DEBUG_OUT && !initializedValue) {
-        Serial.print(F("[Configuration<const char*>] Initialized config object. Key = "));
+    if (AO_DBG_LEVEL >= AO_DL_DEBUG && !initializedValue) {
+        AO_DBG_DEBUG("Initialized config object:");
+        AO_CONSOLE_PRINTF("[AO]     > Key = ");
         printKey();
-        Serial.print(F(", value = "));
-        Serial.println(value);
+        AO_CONSOLE_PRINTF(", value = %s\n", value);
     }
     initializedValue = true;
     resetToBeRemovedFlag();
@@ -404,7 +401,7 @@ bool Configuration<const char *>::setValue(const char *new_value, size_t buffsiz
 
 const char *Configuration<const char *>::operator=(const char *newVal) {
     if (!setValue(newVal, strlen(newVal) + 1)) {
-        Serial.print(F("[Configuration<const char *>] Setting value in operator= was unsuccessful!\n"));
+        AO_DBG_ERR("Setting value in operator= was unsuccessful");
     }
     return newVal;
 }

@@ -2,8 +2,6 @@
 // Copyright Matthias Akstaller 2019 - 2022
 // MIT License
 
-#include <Variants.h>
-
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
@@ -32,14 +30,13 @@ SmartChargingService::SmartChargingService(OcppEngine& context, float chargeLimi
       : context(context), DEFAULT_CHARGE_LIMIT{chargeLimit}, V_eff{V_eff}, filesystemOpt{filesystemOpt} {
   
     if (numConnectors > 2) {
-        Serial.print(F("[SmartChargingService] Error: Unfortunately, multiple connectors are not implemented in SmartChargingService yet. Only connector 1 will receive charging limits\n"));
+        AO_DBG_ERR("Only one connector supported at the moment");
     }
     
     limitBeforeChange = -1.0f;
     nextChange = MIN_TIME;
     chargingSessionStart = MAX_TIME;
     chargingSessionTransactionID = -1;
-    //chargingSessionIsActive = false;
     for (int i = 0; i < CHARGEPROFILEMAXSTACKLEVEL; i++) {
         ChargePointMaxProfile[i] = NULL;
         TxDefaultProfile[i] = NULL;
@@ -63,19 +60,15 @@ void SmartChargingService::loop(){
         OcppTimestamp validTo = OcppTimestamp();
         inferenceLimit(tNow, &limit, &validTo);
 
-        if (DEBUG_OUT) {
-            Serial.print(F("[SmartChargingService] New Limit! Values: {scheduled at = "));
+#if (AO_DBG_LEVEL >= AO_DL_INFO)
+        char timestamp1[JSONDATE_LENGTH + 1] = {'\0'};
+        nextChange.toJsonString(timestamp1, JSONDATE_LENGTH + 1);
+        char timestamp2[JSONDATE_LENGTH + 1] = {'\0'};
+        validTo.toJsonString(timestamp2, JSONDATE_LENGTH + 1);
+        AO_DBG_INFO("New limit for connector 1, scheduled at = %s, nextChange = %s, limit = %f",
+                            timestamp1, timestamp2, limit);
+#endif
 
-            char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
-            nextChange.toJsonString(timestamp, JSONDATE_LENGTH + 1);
-            Serial.print(timestamp);
-            Serial.print(F(", nextChange = "));
-            validTo.toJsonString(timestamp, JSONDATE_LENGTH + 1);
-            Serial.print(timestamp);
-            Serial.print(F(", limit = "));
-            Serial.print(limit);
-            Serial.print(F("}\n"));
-        }
         nextChange = validTo;
         if (limit != limitBeforeChange){
             if (onLimitChange != NULL) {
@@ -192,10 +185,6 @@ void SmartChargingService::inferenceLimit(const OcppTimestamp &t, float *limitOu
     if (!applicable_profile_found) {
         *limitOutParam = DEFAULT_CHARGE_LIMIT;
     }
-}
-
-void SmartChargingService::writeOutCompositeSchedule(JsonObject *json){
-    Serial.print(F("[SmartChargingService] Unsupported Operation: SmartChargingService::writeOutCompositeSchedule\n"));
 }
 
 ChargingSchedule *SmartChargingService::getCompositeSchedule(int connectorId, otime_t duration){
@@ -326,7 +315,7 @@ bool SmartChargingService::clearChargingProfile(const std::function<bool(int, in
                         USE_FS.remove(profileFN);
                     }
                 } else {
-                    if (DEBUG_OUT) Serial.println(F("[SmartChargingService] Prohibit access to FS"));
+                    AO_DBG_DEBUG("Prohibit access to FS");
                 }
 #endif
                 delete chargingProfile;
@@ -347,7 +336,7 @@ bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile
 #ifndef AO_DEACTIVATE_FLASH
 
     if (!filesystemOpt.accessAllowed()) {
-        if (DEBUG_OUT) Serial.println(F("[SmartChargingService] Prohibit access to FS"));
+        AO_DBG_DEBUG("Prohibit access to FS");
         return true;
     }
     
@@ -375,15 +364,13 @@ bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile
     File file = USE_FS.open(profileFN, "w");
 
     if (!file) {
-        Serial.print(F("[SmartChargingService] Unable to save: could not save profile: "));
-        Serial.println(profileFN);
+        AO_DBG_ERR("Unable to save: could not save profile: %s", profileFN.c_str());
         return false;
     }
 
     // Serialize JSON to file
     if (serializeJson(*json, file) == 0) {
-        Serial.println(F("[SmartChargingService] Unable to save: Could not serialize JSON for profile: "));
-        Serial.println(profileFN);
+        AO_DBG_ERR("Unable to save: could not serialize JSON for profile: %s", profileFN.c_str());
         file.close();
         return false;
     }
@@ -391,17 +378,7 @@ bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile
     //success
     file.close();
 
-    if (DEBUG_OUT) Serial.print(F("[SmartChargingService] Saving profile successful\n"));
-
-    // BEGIN DEBUG
-    if (DEBUG_OUT) {
-        file = USE_FS.open(profileFN, "r");
-
-        Serial.println(file.readStringUntil('\n'));
-
-        file.close();
-        // END DEBUG
-    }
+    AO_DBG_DEBUG("Saving profile successful");
 
 #endif //ndef AO_DEACTIVATE_FLASH
     return true;
@@ -413,7 +390,7 @@ bool SmartChargingService::loadProfiles() {
 
 #ifndef AO_DEACTIVATE_FLASH
     if (!filesystemOpt.accessAllowed()) {
-        if (DEBUG_OUT) Serial.println(F("[SmartChargingService] Prohibit access to FS"));
+        AO_DBG_DEBUG("Prohibit access to FS");
         return true;
     }
 
@@ -452,18 +429,15 @@ bool SmartChargingService::loadProfiles() {
             File file = USE_FS.open(profileFN, "r");
 
             if (file) {
-                if (DEBUG_OUT) Serial.print(F("[SmartChargingService] Load profile from file: "));
-                if (DEBUG_OUT) Serial.println(profileFN);
+                AO_DBG_DEBUG("Load profile from file: %s", profileFN.c_str());
             } else {
-                Serial.print(F("[SmartChargingService] Unable to initialize: could not open file for profile: "));
-                Serial.println(profileFN);
+                AO_DBG_ERR("Unable to initialize: could not open file for profile: %s", profileFN.c_str());
                 success = false;
                 continue;
             }
 
             if (!file.available()) {
-                Serial.print(F("[SmartChargingService] Unable to initialize: empty file for profile: "));
-                Serial.println(profileFN);
+                AO_DBG_ERR("Unable to initialize: empty file for profile: %s", profileFN.c_str());
                 file.close();
                 success = false;
                 continue;
@@ -472,8 +446,7 @@ bool SmartChargingService::loadProfiles() {
             int file_size = file.size();
 
             if (file_size < 2) {
-                Serial.print(F("[SmartChargingService] Unable to initialize: too short for json: "));
-                Serial.println(profileFN);
+                AO_DBG_ERR("Unable to initialize: too short for json: %s", profileFN.c_str());
                 success = false;
                 continue;
             }
@@ -496,8 +469,7 @@ bool SmartChargingService::loadProfiles() {
                         error = false;
                         break;
                     case DeserializationError::InvalidInput:
-                        Serial.print(F("[SmartChargingService] Unable to initialize: Invalid json in file: "));
-                        Serial.println(profileFN);
+                        AO_DBG_ERR("Unable to initialize: invalid json in file: %s", profileFN.c_str());
                         success = false;
                         break;
                     case DeserializationError::NoMemory:
@@ -505,8 +477,7 @@ bool SmartChargingService::loadProfiles() {
                         error = false;
                         break;
                     default:
-                        Serial.print(F("[SmartChargingService] Unable to initialize: Error in file: "));
-                        Serial.println(profileFN);
+                        AO_DBG_ERR("Unable to initialize: error in file: %s", profileFN.c_str());
                         success = false;
                         break;
                 }
@@ -519,10 +490,7 @@ bool SmartChargingService::loadProfiles() {
                     capacity *= 3;
                     capacity /= 2;
                     file.seek(0, SeekSet); //rewind file to beginning
-                    if (DEBUG_OUT) Serial.print(F("[SmartChargingService] Initialization: increase JsonCapacity to "));
-                    if (DEBUG_OUT) Serial.print(capacity, DEC);
-                    if (DEBUG_OUT) Serial.print(F("for file: "));
-                    if (DEBUG_OUT) Serial.println(profileFN);
+                    AO_DBG_DEBUG("Initialization: increase JsonCapacity to %zu for file: %s", capacity, profileFN.c_str());
                     continue;
                 }
 

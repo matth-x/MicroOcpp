@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/ConfigurationContainerFlash.h>
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 #if defined(ESP32)
 #define USE_FS LITTLEFS
@@ -28,24 +28,24 @@ bool ConfigurationContainerFlash::load() {
 #ifndef AO_DEACTIVATE_FLASH
 
     if (configurations.size() > 0) {
-        Serial.print(F("[ConfigurationsContainerFlash] Error: declared configurations before calling container->load().\n" \
-                       "                               All previously declared values won't be written back\n"));
+        AO_DBG_ERR("Error: declared configurations before calling container->load(). " \
+                    "All previously declared values won't be written back");
     }
 
     if (!USE_FS.exists(getFilename())) {
-        if (DEBUG_OUT) Serial.print(F("[Configuration] Populate FS: create configuration file\n"));
+        AO_DBG_DEBUG("Populate FS: create configuration file");
         return true;
     }
 
     File file = USE_FS.open(getFilename(), "r");
 
     if (!file) {
-        Serial.print(F("[Configuration] Unable to initialize: could not open configuration file\n"));
+        AO_DBG_ERR("Unable to initialize: could not open configuration file %s", getFilename());
         return false;
     }
 
     if (!file.available()) {
-        Serial.print(F("[Configuration] Populate FS: create configuration file\n"));
+        AO_DBG_DEBUG("Populate FS: create configuration file");
         file.close();
         return true;
     }
@@ -53,32 +53,32 @@ bool ConfigurationContainerFlash::load() {
     int file_size = file.size();
 
     if (file_size < 2) {
-        Serial.print(F("[Configuration] Unable to initialize: too short for json\n"));
+        AO_DBG_ERR("Unable to initialize: too short for json");
         file.close();
         return false;
     } else if (file_size > MAX_FILE_SIZE) {
-        Serial.print(F("[Configuration] Unable to initialize: filesize is too long!\n"));
+        AO_DBG_ERR("Unable to initialize: filesize is too long");
         file.close();
         return false;
     }
 
     String token = file.readStringUntil('\n');
     if (!token.equals("content-type:arduino-ocpp_configuration_file")) {
-        Serial.print(F("[Configuration] Unable to initialize: unrecognized configuration file format\n"));
+        AO_DBG_ERR("Unable to initialize: unrecognized configuration file format");
         file.close();
         return false;
     }
 
     token = file.readStringUntil('\n');
     if (!token.equals("version:1.0")) {
-        Serial.print(F("[Configuration] Unable to initialize: unsupported version\n"));
+        AO_DBG_ERR("Unable to initialize: unsupported version");
         file.close();
         return false;
     }
 
     token = file.readStringUntil(':');
     if (!token.equals("configurations_len")) {
-        Serial.print(F("[Configuration] Unable to initialize: missing length statement\n"));
+        AO_DBG_ERR("Unable to initialize: missing length statement");
         file.close();
         return false;
     }
@@ -86,29 +86,25 @@ bool ConfigurationContainerFlash::load() {
     token = file.readStringUntil('\n');
     int configurations_len = token.toInt();
     if (configurations_len <= 0) {
-        Serial.print(F("[Configuration] Initialization: Empty configuration\n"));
+        AO_DBG_ERR("Unable to initialize: empty configuration");
         file.close();
         return true;
     }
     if (configurations_len > MAX_CONFIGURATIONS) {
-        Serial.print(F("[Configuration] Unable to initialize: configurations_len is too big!\n"));
+        AO_DBG_ERR("Unable to initialize: configurations_len is too big");
         file.close();
         return false;
     }
 
     size_t jsonCapacity = file_size + JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(configurations_len) + configurations_len * JSON_OBJECT_SIZE(5);
 
-    if (DEBUG_OUT) Serial.print(F("[Configuration] Config capacity = "));
-    if (DEBUG_OUT) Serial.print(jsonCapacity);
-    if (DEBUG_OUT) Serial.print(F("\n"));
+    AO_DBG_DEBUG("Config capacity = %zu", jsonCapacity);
 
     DynamicJsonDocument configDoc(jsonCapacity);
 
     DeserializationError error = deserializeJson(configDoc, file);
     if (error) {
-        Serial.println(F("[Configuration] Unable to initialize: config file deserialization failed: "));
-        Serial.print(error.c_str());
-        Serial.print(F("\n"));
+        AO_DBG_ERR("Unable to initialize: config file deserialization failed: %s", error.c_str());
         file.close();
         return false;
     }
@@ -125,18 +121,12 @@ bool ConfigurationContainerFlash::load() {
             configuration = std::make_shared<Configuration<float>>(config);
         } else if (!strcmp(type, SerializedType<const char *>::get())){
             configuration = std::make_shared<Configuration<const char *>>(config);
-//        } else if (!strcmp(type, SerializedType<String>::get())){
-//            configuration = std::make_shared<Configuration<String>>(config);
         }
 
         if (configuration) {
             configurations.push_back(configuration);
         } else {
-            Serial.print(F("[Configuration] Initialization fault: could not read key-value pair "));
-            Serial.print(config["key"].as<const char *>());
-            Serial.print(F(" of type "));
-            Serial.print(config["type"].as<const char *>());
-            Serial.print(F("\n"));
+            AO_DBG_ERR("Initialization fault: could not read key-value pair %s of type %s", config["key"].as<const char *>(), config["type"].as<const char *>());
         }
     }
 
@@ -144,7 +134,7 @@ bool ConfigurationContainerFlash::load() {
 
     configurationsUpdated();
 
-    if (DEBUG_OUT) Serial.println(F("[Configuration] Initialization successful"));
+    AO_DBG_DEBUG("Initialization successful");
 #endif //ndef AO_DEACTIVATE_FLASH
     return true;
 }
@@ -163,7 +153,7 @@ bool ConfigurationContainerFlash::save() {
     File file = USE_FS.open(getFilename(), "w");
 
     if (!file) {
-        Serial.print(F("[Configuration] Unable to save: could not open configuration file\n"));
+        AO_DBG_ERR("Unable to save: could not open configuration file %s", getFilename());
         return false;
     }
 
@@ -200,14 +190,14 @@ bool ConfigurationContainerFlash::save() {
 
     // Serialize JSON to file
     if (serializeJson(configDoc, file) == 0) {
-        Serial.println(F("[Configuration] Unable to save: Could not serialize JSON\n"));
+        AO_DBG_ERR("Unable to save: Could not serialize JSON");
         file.close();
         return false;
     }
 
     //success
     file.close();
-    Serial.print(F("[Configuration] Saving configDoc successful\n"));
+    AO_DBG_DEBUG("Saving configDoc successful");
 
 #endif //ndef AO_DEACTIVATE_FLASH
     return true;
