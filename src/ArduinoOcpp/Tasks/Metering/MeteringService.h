@@ -15,6 +15,7 @@ using PowerSampler = std::function<float()>;  //in Watts (W)
 using EnergySampler = std::function<float()>; //in Watt-hours (Wh)
 
 class OcppEngine;
+class OcppOperation;
 
 class MeteringService {
 private:
@@ -31,6 +32,8 @@ public:
     void setEnergySampler(int connectorId, EnergySampler energySampler);
 
     float readEnergyActiveImportRegister(int connectorId);
+
+    std::unique_ptr<OcppOperation> retrieveMeterValues(int connectorId); //returns all recorded MeterValues and deletes own records
 };
 
 } //end namespace ArduinoOcpp

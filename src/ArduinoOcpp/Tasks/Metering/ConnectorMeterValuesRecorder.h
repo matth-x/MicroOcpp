@@ -43,12 +43,12 @@ private:
     std::shared_ptr<Configuration<int>> MeterValuesSampledDataMaxLength = NULL;
 
     void takeSample();
-    OcppMessage *toMeterValues(); //returns message if connector has captured enough samples
     void clear();
 public:
     ConnectorMeterValuesRecorder(OcppModel& context, int connectorId);
 
     OcppMessage *loop();
+    OcppMessage *toMeterValues();
 
     void setPowerSampler(PowerSampler powerSampler);
 

@@ -4,6 +4,7 @@
 
 #include <ArduinoOcpp/MessagesV16/TriggerMessage.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
@@ -27,14 +28,24 @@ void TriggerMessage::processReq(JsonObject payload) {
     const int connectorId = payload["connectorId"] | 0;
 
     if (ocppModel && ocppModel->getChargePointStatusService()) {
-        if (connectorId >= ocppModel->getChargePointStatusService()->getNumConnectors()) {
+        if (connectorId < 0 || connectorId >= ocppModel->getChargePointStatusService()->getNumConnectors()) {
             formatError = true;
         }
     }
 
     if (!formatError) {
         AO_DBG_INFO("Execute for message type %s, connectorId = %i", requestedMessage, connectorId);
-        triggeredOperation = makeOcppOperation(requestedMessage, connectorId);
+        if (!strcmp(requestedMessage, "MeterValues")) {
+            if (ocppModel && ocppModel->getMeteringService()) {
+                triggeredOperation = ocppModel->getMeteringService()->retrieveMeterValues(connectorId);
+            }
+
+            if (!triggeredOperation) {
+                formatError = true;
+            }
+        } else {
+            triggeredOperation = makeOcppOperation(requestedMessage, connectorId);
+        }
     }
 
     if (triggeredOperation) {

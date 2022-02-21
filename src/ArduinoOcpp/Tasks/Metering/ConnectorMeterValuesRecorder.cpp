@@ -46,7 +46,9 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
     auto connector = context.getConnectorStatus(connectorId);
     if (connector && connector->getTransactionId() != lastTransactionId) {
         //transaction break occured!
-        auto result = toMeterValues();
+        OcppMessage *result {nullptr};
+        if (sampleTimestamp.size() > 0)
+            result = toMeterValues();
         lastTransactionId = connector->getTransactionId();
         return result;
     }
@@ -77,10 +79,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
 OcppMessage *ConnectorMeterValuesRecorder::toMeterValues() {
     if (sampleTimestamp.size() == 0) {
-        //Switching from Non-Transaction to Transaction (or vice versa) without sample. Or anything wrong here. Discard
-        AO_DBG_DEBUG("Suggested to send MeterValues without any data point. Ignore");
-        clear();
-        return nullptr;
+        AO_DBG_WARN("Creating MeterValues without any content");
     }
 
     //decide which measurands to send. If a measurand is missing at at least one point in time, omit that measurand completely

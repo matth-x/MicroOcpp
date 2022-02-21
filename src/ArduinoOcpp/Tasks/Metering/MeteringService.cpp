@@ -52,3 +52,19 @@ float MeteringService::readEnergyActiveImportRegister(int connectorId) {
     }
     return connectors[connectorId]->readEnergyActiveImportRegister();
 }
+
+std::unique_ptr<OcppOperation> MeteringService::retrieveMeterValues(int connectorId) {
+    if (connectorId < 0 || connectorId >= connectors.size()) {
+        AO_DBG_ERR("connectorId out of bounds. Ignore");
+        return nullptr;
+    }
+    auto& connector = connectors.at(connectorId);
+    if (connector.get()) {
+        auto msg = connector->toMeterValues();
+        auto meterValues = makeOcppOperation(msg);
+        meterValues->setTimeout(std::unique_ptr<Timeout>{new FixedTimeout(120000)});
+        return meterValues;
+    }
+    AO_DBG_ERR("Could not find connector");
+    return nullptr;
+}
