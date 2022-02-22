@@ -16,5 +16,6 @@
 #define CiString500TypeLen 500
 
 #define IDTAG_LEN_MAX CiString20TypeLen
+#define CONF_KEYLEN_MAX CiString50TypeLen
 
 #endif

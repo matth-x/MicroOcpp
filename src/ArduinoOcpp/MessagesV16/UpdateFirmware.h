@@ -13,7 +13,7 @@ namespace Ocpp16 {
 
 class UpdateFirmware : public OcppMessage {
 private:
-  String location = String('\0');
+  std::string location {};
   OcppTimestamp retreiveDate = OcppTimestamp();
   int retries = 1;
   ulong retryInterval = 180;

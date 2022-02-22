@@ -20,9 +20,9 @@ void GetDiagnostics::processReq(JsonObject payload) {
      */
 
     const char *loc = payload["location"] | "";
-    location = String(loc);
+    location = loc;
     //check location URL. Maybe introduce Same-Origin-Policy?
-    if (location.isEmpty()) {
+    if (location.empty()) {
         formatError = true;
         AO_DBG_WARN("Could not read location. Abort");
         return;
@@ -60,7 +60,7 @@ std::unique_ptr<DynamicJsonDocument> GetDiagnostics::createConf(){
         return nullptr;
     }
 
-    if (fileName.isEmpty()) {
+    if (fileName.empty()) {
         return createEmptyDocument();
     } else {
         auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + fileName.length() + 1));

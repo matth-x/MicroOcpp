@@ -16,16 +16,16 @@ BootNotification::BootNotification() {
   
 }
 
-BootNotification::BootNotification(String &cpModel, String &cpVendor) {
-    chargePointModel = String(cpModel);
-    chargePointVendor = String(cpVendor);
+BootNotification::BootNotification(const char *cpModel, const char *cpVendor) {
+    snprintf(chargePointModel, CP_MODEL_LEN_MAX + 1, "%s", cpModel);
+    snprintf(chargePointVendor, CP_VENDOR_LEN_MAX + 1, "%s", cpVendor);
 }
 
-BootNotification::BootNotification(String &cpModel, String &cpVendor, String &cpSerialNumber, String &fwVersion) {
-    chargePointModel = String(cpModel);
-    chargePointVendor = String(cpVendor);
-    chargePointSerialNumber = String(cpSerialNumber);
-    firmwareVersion = String(fwVersion);
+BootNotification::BootNotification(const char *cpModel, const char *cpSerialNumber, const char *cpVendor, const char *fwVersion) {
+    snprintf(chargePointModel, CP_MODEL_LEN_MAX + 1, "%s", cpModel);
+    snprintf(chargePointSerialNumber, CP_SERIALNUMBER_LEN_MAX + 1, "%s", cpSerialNumber);
+    snprintf(chargePointVendor, CP_VENDOR_LEN_MAX + 1, "%s", cpVendor);
+    snprintf(firmwareVersion, FW_VERSION_LEN_MAX + 1, "%s", fwVersion);
 }
 
 BootNotification::BootNotification(DynamicJsonDocument *payload) {
@@ -49,17 +49,17 @@ std::unique_ptr<DynamicJsonDocument> BootNotification::createReq() {
     }
 
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4)
-        + chargePointModel.length() + 1
-        + chargePointVendor.length() + 1
-        + chargePointSerialNumber.length() + 1
-        + firmwareVersion.length() + 1));
+        + strlen(chargePointModel) + 1
+        + strlen(chargePointVendor) + 1
+        + strlen(chargePointSerialNumber) + 1
+        + strlen(firmwareVersion) + 1));
     JsonObject payload = doc->to<JsonObject>();
     payload["chargePointModel"] = chargePointModel;
-    payload["chargePointVendor"] = chargePointVendor;
-    if (!chargePointSerialNumber.isEmpty()) {
+    if (chargePointSerialNumber[0]) {
         payload["chargePointSerialNumber"] = chargePointSerialNumber;
     }
-    if (!firmwareVersion.isEmpty()) {
+    payload["chargePointVendor"] = chargePointVendor;
+    if (firmwareVersion[0]) {
         payload["firmwareVersion"] = firmwareVersion;
     }
     return doc;

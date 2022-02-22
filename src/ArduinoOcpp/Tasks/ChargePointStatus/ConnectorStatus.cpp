@@ -11,6 +11,7 @@
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
+#include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -21,16 +22,17 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
         : context(context), connectorId{connectorId} {
 
     //Set default transaction ID in memory
-    String keySession = "AO_SID_CONN_";
-    String keyTx = "OCPP_STATE_TRANSACTION_ID_CONNECTOR_";
-    String keyAvailability = "OCPP_STATE_AVAILABILITY_CONNECTOR_";
-    String id = String(connectorId, DEC);
-    keySession += id;
-    keyTx += id;
-    keyAvailability += id;
-    sIdTag = declareConfiguration<const char *>(keySession.c_str(), "", CONFIGURATION_FN, false, false, true, false);
-    transactionId = declareConfiguration<int>(keyTx.c_str(), -1, CONFIGURATION_FN, false, false, true, false);
-    availability = declareConfiguration<int>(keyAvailability.c_str(), AVAILABILITY_OPERATIVE, CONFIGURATION_FN, false, false, true, false);
+    char key [CONF_KEYLEN_MAX + 1] = {'\0'};
+
+    snprintf(key, CONF_KEYLEN_MAX + 1, "AO_SID_CONN_%d", connectorId);
+    sIdTag = declareConfiguration<const char *>(key, "", CONFIGURATION_FN, false, false, true, false);
+
+    snprintf(key, CONF_KEYLEN_MAX + 1, "AO_TXID_CONN_%d", connectorId);
+    transactionId = declareConfiguration<int>(key, -1, CONFIGURATION_FN, false, false, true, false);
+
+    snprintf(key, CONF_KEYLEN_MAX + 1, "AO_AVAIL_CONN_%d", connectorId);
+    availability = declareConfiguration<int>(key, AVAILABILITY_OPERATIVE, CONFIGURATION_FN, false, false, true, false);
+
     connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN, true, true, true, false);
     if (!sIdTag || !transactionId || !availability) {
         AO_DBG_ERR("Cannot declare sessionIdTag, transactionId or availability");
@@ -38,6 +40,8 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
     if (sIdTag->getBuffsize() > 0 && (*sIdTag)[0] != '\0') {
         snprintf(idTag, min((size_t) (IDTAG_LEN_MAX + 1), sIdTag->getBuffsize()), "%s", ((const char *) *sIdTag));
         session = true;
+        connectionTimeOutTimestamp = ao_tick_ms();
+        connectionTimeOutListen = true;
         AO_DBG_DEBUG("Load session idTag at initialization");
     }
     transactionIdSync = *transactionId;

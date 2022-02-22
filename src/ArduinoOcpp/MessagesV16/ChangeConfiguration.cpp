@@ -17,8 +17,8 @@ const char* ChangeConfiguration::getOcppOperationType(){
 }
 
 void ChangeConfiguration::processReq(JsonObject payload) {
-    String key = payload["key"];
-    if (key.isEmpty()) {
+    const char *key = payload["key"] | "";
+    if (strlen(key) < 2) {
         err = true;
         AO_DBG_WARN("Could not read key");
         return;
@@ -37,7 +37,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     if (value.is<const char *>()) {
         const char *value_string = value.as<const char *>();
         if (value_string == nullptr || value_string[0] == '\0') {
-            auto configuration = getConfiguration(key.c_str());
+            auto configuration = getConfiguration(key);
             if (configuration) {
                 if (configuration->permissionRemotePeerCanWrite()) {
                     configuration->setToBeRemoved();
@@ -65,11 +65,9 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     if (value.is<int>()) { //Not enough. SteVe always sends numerical values as strings. Must also handle this
         isInt = true;
         numInt = value.as<int>();
-        //configuration = std::static_pointer_cast<AbstractConfiguration>(declareConfiguration<int>(key.c_str(), value.as<int>()));
     } else if (value.is<float>()) {
         isFloat = true;
         numFloat = value.as<float>();
-        //configuration = std::static_pointer_cast<AbstractConfiguration>(declareConfiguration<float>(key.c_str(), value.as<float>()));
     } else if (value.is<const char *>()) { //SteVe sends numerical values as strings. Check for that first
         isString = true;
         value_string = value.as<const char *>();
@@ -109,12 +107,10 @@ void ChangeConfiguration::processReq(JsonObject payload) {
         else
             INT_MAXDIGITS = 4;
 
-        //bool isString = false;
-
         if (nNonDigits == 0 && nDigits > 0 && nSign <= 1 && nDots == 0) {
             //integer
             if (nDigits > INT_MAXDIGITS) {
-                AO_DBG_WARN("Integer overflow! key = %s, value = %s", key.c_str(), value_string);
+                AO_DBG_WARN("Integer overflow! key = %s, value = %s", key, value_string);
                 err = true;
                 return;
             } else {
@@ -122,7 +118,6 @@ void ChangeConfiguration::processReq(JsonObject payload) {
                     int neg = -numInt;
                     numInt = neg; 
                 }
-                //configuration = std::static_pointer_cast<AbstractConfiguration>(declareConfiguration<int>(key.c_str(), numInt));
                 isInt = true;
             }
         } else if (nNonDigits == 0 && nDigits > 0 && nSign <= 1 && nDots == 1) {
@@ -134,16 +129,14 @@ void ChangeConfiguration::processReq(JsonObject payload) {
                 numFloat *= -1.f;
             }
 
-            //configuration = std::static_pointer_cast<AbstractConfiguration>(declareConfiguration<float>(key.c_str(), numFloat));
             isFloat = true;
         } else {
             //only string
             isString = true;
-            //configuration = std::static_pointer_cast<AbstractConfiguration>(declareConfiguration<const char *>(key.c_str(), value_string));
         }
     }
 
-    std::shared_ptr<AbstractConfiguration> configuration = getConfiguration(key.c_str());
+    std::shared_ptr<AbstractConfiguration> configuration = getConfiguration(key);
 
     if (configuration) {
         if (!configuration->permissionRemotePeerCanWrite()) {
@@ -161,9 +154,6 @@ void ChangeConfiguration::processReq(JsonObject payload) {
         } else if (!strcmp(configuration->getSerializedType(), SerializedType<const char *>::get()) && isString) {
             std::shared_ptr<Configuration<const char *>> configurationConcrete = std::static_pointer_cast<Configuration<const char *>>(configuration);
             *configurationConcrete = value_string;
-//        } else if (!strcmp(configuration->getSerializedType(), SerializedType<String>::get()) && value.is<String>()) {
-//            std::shared_ptr<Configuration<String>> configurationConcrete = std::static_pointer_cast<Configuration<String>>(configuration);
-//            *configurationConcrete = value.as<String>();
         } else {
             err = true;
             AO_DBG_WARN("Value has incompatible type");
@@ -175,11 +165,11 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     } else {
         //configuration does not exist yet. Create new entry
         if (isInt) {
-            configuration = std::static_pointer_cast<AbstractConfiguration>(declareConfiguration<int>(key.c_str(), numInt));
+            configuration = std::static_pointer_cast<AbstractConfiguration>(declareConfiguration<int>(key, numInt));
         } else if (isFloat) {
-            configuration = std::static_pointer_cast<AbstractConfiguration>(declareConfiguration<float>(key.c_str(), numFloat));
+            configuration = std::static_pointer_cast<AbstractConfiguration>(declareConfiguration<float>(key, numFloat));
         } else if (isString) {
-            configuration = std::static_pointer_cast<AbstractConfiguration>(declareConfiguration<const char*>(key.c_str(), value_string));
+            configuration = std::static_pointer_cast<AbstractConfiguration>(declareConfiguration<const char*>(key, value_string));
         } else {
             err = true;
             AO_DBG_WARN("Could not parse value");

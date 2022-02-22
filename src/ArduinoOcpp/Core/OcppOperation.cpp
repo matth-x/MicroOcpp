@@ -56,17 +56,19 @@ Timeout *OcppOperation::getTimeout() {
     return timeout.get();
 }
 
-void OcppOperation::setMessageID(const String &id){
-    if (messageID.length() > 0){
+void OcppOperation::setMessageID(const std::string &id){
+    if (!messageID.empty()){
         AO_DBG_WARN("MessageID is set twice or is set after first usage!");
-        //return; <-- Just letting the id being overwritten probably doesn't cause further errors...
     }
     messageID = id;
 }
 
-const String *OcppOperation::getMessageID() {
-    if (messageID.isEmpty()) {
-        messageID = String(unique_id_counter++);
+const std::string *OcppOperation::getMessageID() {
+    if (messageID.empty()) {
+        char id_str [16] = {'\0'};
+        sprintf(id_str, "%d", unique_id_counter++);
+        messageID = std::string {id_str};
+        //messageID = std::to_string(unique_id_counter++);
     }
     return &messageID;
 }
@@ -124,7 +126,7 @@ boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
      * 
      * Return that this function must be called again (-> false)
      */
-    String out {'\0'};
+    std::string out {};
     serializeJson(requestJson, out);
 
     if (printReqCounter > 5000) {
@@ -153,7 +155,7 @@ boolean OcppOperation::receiveConf(JsonDocument& confJson){
     /*
      * check if messageIDs match. If yes, continue with this function. If not, return false for message not consumed
      */
-    if (!getMessageID()->equals(confJson[1].as<String>())){
+    if (*getMessageID() != confJson[1].as<std::string>()){
         return false;
     }
 
@@ -178,7 +180,7 @@ boolean OcppOperation::receiveError(JsonDocument& confJson){
     /*
      * check if messageIDs match. If yes, continue with this function. If not, return false for message not consumed
      */
-    if (!getMessageID()->equals(confJson[1].as<String>())){
+    if (*getMessageID() != confJson[1].as<std::string>()){
         return false;
     }
 
@@ -205,7 +207,7 @@ boolean OcppOperation::receiveError(JsonDocument& confJson){
 
 boolean OcppOperation::receiveReq(JsonDocument& reqJson){
   
-    String reqId = reqJson[1];
+    std::string reqId = reqJson[1];
     setMessageID(reqId);
 
     //TODO What if client receives requests two times? Can happen if previous conf is lost. In the Smart Charging Profile
@@ -286,7 +288,7 @@ boolean OcppOperation::sendConf(OcppSocket& ocppSocket){
     /*
      * Serialize and send. Destroy serialization and JSON object. 
      */
-    String out {'\0'};
+    std::string out {};
     serializeJson(*confJson, out);
     boolean wsSuccess = ocppSocket.sendTXT(out);
 

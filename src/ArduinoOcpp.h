@@ -25,7 +25,7 @@ using ArduinoOcpp::Timeout;
 
 #ifndef AO_CUSTOM_WS
 //uses links2004/WebSockets library
-void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, float V_eff = 230.f /*German grid*/, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
+void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, float V_eff = 230.f /*German grid*/, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
 #endif
 
 //Lets you use your own WebSocket implementation
@@ -109,7 +109,7 @@ void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq); //alternative: sta
 
 void authorize(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
-void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
+void bootNotification(const char *chargePointModel, const char *chargePointVendor, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
 //The OCPP operation will include the given payload without modifying it. The library will delete the payload object after successful transmission.
 void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);

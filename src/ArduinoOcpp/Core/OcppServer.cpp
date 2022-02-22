@@ -139,7 +139,7 @@ void OcppServer::removeReceiveTXTcallback(IPAddress &ip_addr) {
         }), receiveTXTrouting.end());
 }
 
-bool OcppServer::sendTXT(IPAddress &ip_addr, String &out) {
+bool OcppServer::sendTXT(IPAddress &ip_addr, std::string &out) {
 
     WsClient mClient;
 
@@ -155,7 +155,7 @@ bool OcppServer::sendTXT(IPAddress &ip_addr, String &out) {
         return false;
     }
 
-    return wsockServer.sendTXT(mClient, out);
+    return wsockServer.sendTXT(mClient, out.c_str(), out.length());
 }
 
 #endif //ndef AO_CUSTOM_WS

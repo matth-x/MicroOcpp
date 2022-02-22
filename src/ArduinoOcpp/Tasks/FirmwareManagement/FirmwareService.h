@@ -46,13 +46,13 @@ private:
     Ocpp16::FirmwareStatus lastReportedStatus = Ocpp16::FirmwareStatus::Idle;
     bool checkedSuccessfulFwUpdate = false;
 
-    String location = String('\0');
+    std::string location {};
     OcppTimestamp retreiveDate = OcppTimestamp();
     int retries = 0;
     unsigned int retryInterval = 0;
 
-    std::function<bool(String &location)> onDownload = NULL;
-    std::function<bool(String &location)> onInstall = NULL;
+    std::function<bool(const std::string &location)> onDownload = NULL;
+    std::function<bool(const std::string &location)> onInstall = NULL;
 
     ulong delayTransition = 0;
     ulong timestampTransition = 0;
@@ -79,15 +79,15 @@ public:
 
     void loop();
 
-    void scheduleFirmwareUpdate(String &location, OcppTimestamp retreiveDate, int retries = 1, unsigned int retryInterval = 0);
+    void scheduleFirmwareUpdate(const std::string &location, OcppTimestamp retreiveDate, int retries = 1, unsigned int retryInterval = 0);
 
     Ocpp16::FirmwareStatus getFirmwareStatus();
 
-    void setOnDownload(std::function<bool(String &location)> onDownload);
+    void setOnDownload(std::function<bool(const std::string &location)> onDownload);
 
     void setDownloadStatusSampler(std::function<DownloadStatus()> downloadStatusSampler);
 
-    void setOnInstall(std::function<bool(String &location)> onInstall);
+    void setOnInstall(std::function<bool(const std::string &location)> onInstall);
 
     void setInstallationStatusSampler(std::function<InstallationStatus()> installationStatusSampler);
 };

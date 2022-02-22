@@ -20,8 +20,8 @@ void OcppClientSocket::loop() {
     wsock->loop();
 }
 
-bool OcppClientSocket::sendTXT(String &out) {
-    return wsock->sendTXT(out);
+bool OcppClientSocket::sendTXT(std::string &out) {
+    return wsock->sendTXT(out.c_str(), out.length());
 }
 
 void OcppClientSocket::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
@@ -71,7 +71,7 @@ void OcppServerSocket::loop() {
     //nothing here. The client must call the EspWiFi server loop function
 }
 
-bool OcppServerSocket::sendTXT(String &out) {
+bool OcppServerSocket::sendTXT(std::string &out) {
     AO_DBG_TRAFFIC_OUT(out.c_str());
     return OcppServer::getInstance()->sendTXT(ip_addr, out);
 }

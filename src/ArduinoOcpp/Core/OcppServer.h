@@ -47,7 +47,7 @@ public:
 
     void removeReceiveTXTcallback(IPAddress &ip_addr);
 
-    bool sendTXT(IPAddress &ip_addr, String &out);
+    bool sendTXT(IPAddress &ip_addr, std::string &out);
 };
 
 } //end namespace EspWiFi

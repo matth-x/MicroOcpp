@@ -20,9 +20,9 @@ void UpdateFirmware::processReq(JsonObject payload) {
      */
 
     const char *loc = payload["location"] | "";
-    location = String(loc);
+    location = loc;
     //check location URL. Maybe introduce Same-Origin-Policy?
-    if (location.isEmpty()) {
+    if (location.empty()) {
         formatError = true;
         AO_DBG_WARN("Could not read location. Abort");
         return;

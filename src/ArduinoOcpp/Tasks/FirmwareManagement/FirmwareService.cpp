@@ -189,8 +189,8 @@ void FirmwareService::loop() {
     }
 }
 
-void FirmwareService::scheduleFirmwareUpdate(String &location, OcppTimestamp retreiveDate, int retries, unsigned int retryInterval) {
-    this->location = String(location);
+void FirmwareService::scheduleFirmwareUpdate(const std::string &location, OcppTimestamp retreiveDate, int retries, unsigned int retryInterval) {
+    this->location = location;
     this->retreiveDate = retreiveDate;
     this->retries = retries;
     this->retryInterval = retryInterval;
@@ -271,7 +271,7 @@ std::unique_ptr<OcppOperation> FirmwareService::getFirmwareStatusNotification() 
     return nullptr;
 }
 
-void FirmwareService::setOnDownload(std::function<bool(String &location)> onDownload) {
+void FirmwareService::setOnDownload(std::function<bool(const std::string &location)> onDownload) {
     this->onDownload = onDownload;
 }
 
@@ -279,7 +279,7 @@ void FirmwareService::setDownloadStatusSampler(std::function<DownloadStatus()> d
     this->downloadStatusSampler = downloadStatusSampler;
 }
 
-void FirmwareService::setOnInstall(std::function<bool(String &location)> onInstall) {
+void FirmwareService::setOnInstall(std::function<bool(const std::string &location)> onInstall) {
     this->onInstall = onInstall;
 }
 
@@ -306,7 +306,7 @@ FirmwareService *EspWiFi::makeFirmwareService(OcppEngine& context, const char *b
      * example of how to integrate a separate download phase (optional)
      */
 #if 0 //separate download phase
-    fwService->setOnDownload([] (String &location) {
+    fwService->setOnDownload([] (const std::string &location) {
         //download the new binary
         //...
         return true;
@@ -319,7 +319,7 @@ FirmwareService *EspWiFi::makeFirmwareService(OcppEngine& context, const char *b
     });
 #endif //separate download phase
 
-    fwService->setOnInstall([fwService] (String &location) {
+    fwService->setOnInstall([fwService] (const std::string &location) {
 
         fwService->setInstallationStatusSampler([](){return InstallationStatus::NotInstalled;});
 
@@ -365,7 +365,7 @@ FirmwareService *EspWiFi::makeFirmwareService(OcppEngine& context, const char *b
     FirmwareService *fwService = new FirmwareService(context);
     fwService->setBuildNumber(buildNumber);
 
-    fwService->setOnInstall([fwService] (String &location) {
+    fwService->setOnInstall([fwService] (const std::string &location) {
         
         WiFiClient client;
         //WiFiClientSecure client;

@@ -12,9 +12,9 @@ namespace Ocpp16 {
 
 class DataTransfer : public OcppMessage {
 private:
-  String msg;
+    std::string msg {};
 public:
-    DataTransfer(String &msg);
+    DataTransfer(const std::string &msg);
 
     const char* getOcppOperationType();
 

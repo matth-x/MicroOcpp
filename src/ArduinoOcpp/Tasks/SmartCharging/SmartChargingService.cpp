@@ -21,6 +21,7 @@
 
 #define PROFILE_FN_PREFIX "/ocpp-"
 #define PROFILE_FN_SUFFIX ".cnf"
+#define PROFILE_FN_MAXSIZE 30
 #define PROFILE_CUSTOM_CAPACITY 500
 #define PROFILE_MAX_CAPACITY 4000
 
@@ -294,25 +295,22 @@ bool SmartChargingService::clearChargingProfile(const std::function<bool(int, in
 
 #ifndef AO_DEACTIVATE_FLASH
                 if (filesystemOpt.accessAllowed()) {
-                    String profileFN = PROFILE_FN_PREFIX;
+                    char fn [PROFILE_FN_MAXSIZE] = {'\0'};
 
                     switch (chargingProfile->getChargingProfilePurpose()) {
                         case (ChargingProfilePurposeType::ChargePointMaxProfile):
-                            profileFN += "CpMaxProfile-";
+                            snprintf(fn, PROFILE_FN_MAXSIZE, PROFILE_FN_PREFIX "CpMaxProfile-%d" PROFILE_FN_SUFFIX, chargingProfile->getStackLevel());
                             break;
                         case (ChargingProfilePurposeType::TxDefaultProfile):
-                            profileFN += "TxDefProfile-";
+                            snprintf(fn, PROFILE_FN_MAXSIZE, PROFILE_FN_PREFIX "TxDefProfile-%d" PROFILE_FN_SUFFIX, chargingProfile->getStackLevel());
                             break;
                         case (ChargingProfilePurposeType::TxProfile):
-                            profileFN += "TxProfile-";
+                            snprintf(fn, PROFILE_FN_MAXSIZE, PROFILE_FN_PREFIX "TxProfile-%d"    PROFILE_FN_SUFFIX, chargingProfile->getStackLevel());
                             break;
                     }
 
-                    profileFN += chargingProfile->getStackLevel();
-                    profileFN += PROFILE_FN_SUFFIX;
-
-                    if (USE_FS.exists(profileFN)) {
-                        USE_FS.remove(profileFN);
+                    if (USE_FS.exists(fn)) {
+                        USE_FS.remove(fn);
                     }
                 } else {
                     AO_DBG_DEBUG("Prohibit access to FS");
@@ -339,38 +337,35 @@ bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile
         AO_DBG_DEBUG("Prohibit access to FS");
         return true;
     }
-    
-    String profileFN = PROFILE_FN_PREFIX;
+
+    char fn [PROFILE_FN_MAXSIZE] = {'\0'};
 
     switch (chargingProfile->getChargingProfilePurpose()) {
         case (ChargingProfilePurposeType::ChargePointMaxProfile):
-            profileFN += "CpMaxProfile-";
+            snprintf(fn, PROFILE_FN_MAXSIZE, PROFILE_FN_PREFIX "CpMaxProfile-%d" PROFILE_FN_SUFFIX, chargingProfile->getStackLevel());
             break;
         case (ChargingProfilePurposeType::TxDefaultProfile):
-            profileFN += "TxDefProfile-";
+            snprintf(fn, PROFILE_FN_MAXSIZE, PROFILE_FN_PREFIX "TxDefProfile-%d" PROFILE_FN_SUFFIX, chargingProfile->getStackLevel());
             break;
         case (ChargingProfilePurposeType::TxProfile):
-            profileFN += "TxProfile-";
+            snprintf(fn, PROFILE_FN_MAXSIZE, PROFILE_FN_PREFIX "TxProfile-%d"    PROFILE_FN_SUFFIX, chargingProfile->getStackLevel());
             break;
     }
 
-    profileFN += chargingProfile->getStackLevel();
-    profileFN += PROFILE_FN_SUFFIX;
-
-    if (USE_FS.exists(profileFN)) {
-        USE_FS.remove(profileFN);
+    if (USE_FS.exists(fn)) {
+        USE_FS.remove(fn);
     }
 
-    File file = USE_FS.open(profileFN, "w");
+    File file = USE_FS.open(fn, "w");
 
     if (!file) {
-        AO_DBG_ERR("Unable to save: could not save profile: %s", profileFN.c_str());
+        AO_DBG_ERR("Unable to save: could not save profile: %s", fn);
         return false;
     }
 
     // Serialize JSON to file
     if (serializeJson(*json, file) == 0) {
-        AO_DBG_ERR("Unable to save: could not serialize JSON for profile: %s", profileFN.c_str());
+        AO_DBG_ERR("Unable to save: could not serialize JSON for profile: %s", fn);
         file.close();
         return false;
     }
@@ -396,48 +391,40 @@ bool SmartChargingService::loadProfiles() {
 
     ChargingProfilePurposeType purposes[] = {ChargingProfilePurposeType::ChargePointMaxProfile, ChargingProfilePurposeType::TxDefaultProfile, ChargingProfilePurposeType::TxProfile};
 
-    for (const ChargingProfilePurposeType purpose : purposes) {
-        //ChargingProfile **profilePurposeStack; //select which stack this profile belongs to due to its purpose
-        String profileFnPurpose = String('\0');
+    char fn [PROFILE_FN_MAXSIZE] = {'\0'};
 
-        switch (purpose) {
-            case (ChargingProfilePurposeType::ChargePointMaxProfile):
-                //profilePurposeStack = ChargePointMaxProfile;
-                profileFnPurpose = "CpMaxProfile-";
-                break;
-            case (ChargingProfilePurposeType::TxDefaultProfile):
-                //profilePurposeStack = TxDefaultProfile;
-                profileFnPurpose = "TxDefProfile-";
-                break;
-            case (ChargingProfilePurposeType::TxProfile):
-                //profilePurposeStack = TxProfile;
-                profileFnPurpose = "TxProfile-";
-                break;
-        }
+    for (const ChargingProfilePurposeType purpose : purposes) {
 
         for (int iLevel = 0; iLevel < CHARGEPROFILEMAXSTACKLEVEL; iLevel++) {
 
-            String profileFN = PROFILE_FN_PREFIX;
-            profileFN += profileFnPurpose;
-            profileFN += iLevel;
-            profileFN += PROFILE_FN_SUFFIX;
+            switch (purpose) {
+                case (ChargingProfilePurposeType::ChargePointMaxProfile):
+                    snprintf(fn, PROFILE_FN_MAXSIZE, PROFILE_FN_PREFIX "CpMaxProfile-%d" PROFILE_FN_SUFFIX, iLevel);
+                    break;
+                case (ChargingProfilePurposeType::TxDefaultProfile):
+                    snprintf(fn, PROFILE_FN_MAXSIZE, PROFILE_FN_PREFIX "TxDefProfile-%d" PROFILE_FN_SUFFIX, iLevel);
+                    break;
+                case (ChargingProfilePurposeType::TxProfile):
+                    snprintf(fn, PROFILE_FN_MAXSIZE, PROFILE_FN_PREFIX "TxProfile-%d"    PROFILE_FN_SUFFIX, iLevel);
+                    break;
+            }
 
-            if (!USE_FS.exists(profileFN)) {
+            if (!USE_FS.exists(fn)) {
                 continue; //There is not a profile on the stack iStack with stacklevel iLevel. Normal case, just continue.
             }
             
-            File file = USE_FS.open(profileFN, "r");
+            File file = USE_FS.open(fn, "r");
 
             if (file) {
-                AO_DBG_DEBUG("Load profile from file: %s", profileFN.c_str());
+                AO_DBG_DEBUG("Load profile from file: %s", fn);
             } else {
-                AO_DBG_ERR("Unable to initialize: could not open file for profile: %s", profileFN.c_str());
+                AO_DBG_ERR("Unable to initialize: could not open file for profile: %s", fn);
                 success = false;
                 continue;
             }
 
             if (!file.available()) {
-                AO_DBG_ERR("Unable to initialize: empty file for profile: %s", profileFN.c_str());
+                AO_DBG_ERR("Unable to initialize: empty file for profile: %s", fn);
                 file.close();
                 success = false;
                 continue;
@@ -446,7 +433,7 @@ bool SmartChargingService::loadProfiles() {
             int file_size = file.size();
 
             if (file_size < 2) {
-                AO_DBG_ERR("Unable to initialize: too short for json: %s", profileFN.c_str());
+                AO_DBG_ERR("Unable to initialize: too short for json: %s", fn);
                 success = false;
                 continue;
             }
@@ -469,7 +456,7 @@ bool SmartChargingService::loadProfiles() {
                         error = false;
                         break;
                     case DeserializationError::InvalidInput:
-                        AO_DBG_ERR("Unable to initialize: invalid json in file: %s", profileFN.c_str());
+                        AO_DBG_ERR("Unable to initialize: invalid json in file: %s", fn);
                         success = false;
                         break;
                     case DeserializationError::NoMemory:
@@ -477,7 +464,7 @@ bool SmartChargingService::loadProfiles() {
                         error = false;
                         break;
                     default:
-                        AO_DBG_ERR("Unable to initialize: error in file: %s", profileFN.c_str());
+                        AO_DBG_ERR("Unable to initialize: error in file: %s", fn);
                         success = false;
                         break;
                 }
@@ -490,7 +477,7 @@ bool SmartChargingService::loadProfiles() {
                     capacity *= 3;
                     capacity /= 2;
                     file.seek(0, SeekSet); //rewind file to beginning
-                    AO_DBG_DEBUG("Initialization: increase JsonCapacity to %zu for file: %s", capacity, profileFN.c_str());
+                    AO_DBG_DEBUG("Initialization: increase JsonCapacity to %zu for file: %s", capacity, fn);
                     continue;
                 }
 

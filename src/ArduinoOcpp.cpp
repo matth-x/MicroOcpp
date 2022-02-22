@@ -19,7 +19,6 @@
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
-#include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -48,7 +47,7 @@ using namespace ArduinoOcpp::Facade;
 using namespace ArduinoOcpp::Ocpp16;
 
 #ifndef AO_CUSTOM_WS
-void OCPP_initialize(String CS_hostname, uint16_t CS_port, String CS_url, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt, ArduinoOcpp::OcppClock system_time) {
+void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt, ArduinoOcpp::OcppClock system_time) {
     if (ocppEngine) {
         AO_DBG_WARN("Can't be called two times. Either restart ESP, or call OCPP_deinitialize() before");
         return;
@@ -313,7 +312,7 @@ void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener 
     ocppEngine->initiateOperation(std::move(authorize));
 }
 
-void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+void bootNotification(const char *chargePointModel, const char *chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
         AO_DBG_ERR("Please call OCPP_initialize before");
         return;

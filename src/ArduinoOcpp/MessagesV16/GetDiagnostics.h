@@ -13,13 +13,13 @@ namespace Ocpp16 {
 
 class GetDiagnostics : public OcppMessage {
 private:
-    String location = String('\0');
+    std::string location {};
     int retries = 1;
     ulong retryInterval = 180;
     OcppTimestamp startTime = OcppTimestamp();
     OcppTimestamp stopTime = OcppTimestamp();
 
-    String fileName = String('\0');
+    std::string fileName {};
     
     bool formatError = false;
 public:

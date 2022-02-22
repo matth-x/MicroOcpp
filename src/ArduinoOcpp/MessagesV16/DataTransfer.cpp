@@ -7,8 +7,8 @@
 
 using ArduinoOcpp::Ocpp16::DataTransfer;
 
-DataTransfer::DataTransfer(String &msg) {
-    this->msg = String(msg);
+DataTransfer::DataTransfer(const std::string &msg) {
+    this->msg = msg;
 }
 
 const char* DataTransfer::getOcppOperationType(){
@@ -24,9 +24,9 @@ std::unique_ptr<DynamicJsonDocument> DataTransfer::createReq() {
 }
 
 void DataTransfer::processConf(JsonObject payload){
-    String status = payload["status"] | "Invalid";
+    std::string status = payload["status"] | "Invalid";
 
-    if (status.equals("Accepted")) {
+    if (status == "Accepted") {
         AO_DBG_DEBUG("Request has been accepted");
     } else {
         AO_DBG_INFO("Request has been denied");

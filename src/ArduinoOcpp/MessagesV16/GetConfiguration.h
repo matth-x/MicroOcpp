@@ -12,10 +12,9 @@ namespace Ocpp16 {
 
 class GetConfiguration : public OcppMessage {
 private:
-    std::vector<String> keys;
+    std::vector<std::string> keys;
 public:
     GetConfiguration();
-    ~GetConfiguration();
 
     const char* getOcppOperationType();
 

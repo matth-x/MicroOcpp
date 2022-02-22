@@ -11,11 +11,7 @@
 using ArduinoOcpp::Ocpp16::GetConfiguration;
 
 GetConfiguration::GetConfiguration() {
-    keys = std::vector<String>();
-}
 
-GetConfiguration::~GetConfiguration() {
-    
 }
 
 const char* GetConfiguration::getOcppOperationType(){
@@ -25,15 +21,15 @@ const char* GetConfiguration::getOcppOperationType(){
 void GetConfiguration::processReq(JsonObject payload) {
 
     JsonArray requestedKeys = payload["key"];
-    for (uint16_t i = 0; i < requestedKeys.size(); i++) {
-        keys.push_back(requestedKeys[i].as<String>());
+    for (size_t i = 0; i < requestedKeys.size(); i++) {
+        keys.push_back(requestedKeys[i].as<std::string>());
     }
 }
 
 std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
 
     std::shared_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> configurationKeys;
-    std::vector<String> unknownKeys;
+    std::vector<std::string> unknownKeys;
 
     if (keys.size() == 0){ //return all existing keys
         configurationKeys = getAllConfigurations();

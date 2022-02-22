@@ -21,10 +21,10 @@ class OcppSocket;
 
 class OcppOperation {
 private:
-    String messageID{'\0'};
+    std::string messageID {};
     std::unique_ptr<OcppMessage> ocppMessage;
-    const String *getMessageID();
-    void setMessageID(const String &id);
+    const std::string *getMessageID();
+    void setMessageID(const std::string &id);
     OnReceiveConfListener onReceiveConfListener = [] (JsonObject payload) {};
     OnReceiveReqListener onReceiveReqListener = [] (JsonObject payload) {};
     OnSendConfListener onSendConfListener = [] (JsonObject payload) {};

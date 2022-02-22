@@ -19,7 +19,7 @@ public:
 
     virtual void loop() = 0;
 
-    virtual bool sendTXT(String &out) = 0;
+    virtual bool sendTXT(std::string &out) = 0;
 
     virtual void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) = 0; //ReceiveTXTcallback is defined in OcppServer.h
 };
@@ -44,7 +44,7 @@ public:
 
     void loop();
 
-    bool sendTXT(String &out);
+    bool sendTXT(std::string &out);
 
     void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT);
 };
@@ -58,7 +58,7 @@ public:
 
     void loop();
 
-    bool sendTXT(String &out);
+    bool sendTXT(std::string &out);
 
     void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT);
 };
