@@ -36,15 +36,19 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
 
     int numEntries = sampleTime.size();
 
+    const size_t VALUE_MAXPRECISION = 10;
+    const size_t VALUE_MAXSIZE = VALUE_MAXPRECISION + 7; 
+    char value_str [VALUE_MAXSIZE] = {'\0'};
+
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
-        JSON_OBJECT_SIZE(2) //connectorID, transactionId
+        JSON_OBJECT_SIZE(3) //connectorID, transactionId, meterValue entry
         + JSON_ARRAY_SIZE(numEntries) //metervalue array
-        + numEntries * JSON_OBJECT_SIZE(1) //sampledValue
+        + numEntries * JSON_OBJECT_SIZE(1) //sampledValue entry
         + numEntries * (JSON_OBJECT_SIZE(1) + (JSONDATE_LENGTH + 1)) //timestamp
         + numEntries * JSON_ARRAY_SIZE(2) //sampledValue
-        + 2 * numEntries * JSON_OBJECT_SIZE(1) //value          //   why are these taken by two?
-        + 2 * numEntries * JSON_OBJECT_SIZE(1) //measurand      //
-        + 2 * numEntries * JSON_OBJECT_SIZE(1) //unit           //
+        + 2 * numEntries * (JSON_OBJECT_SIZE(1) + VALUE_MAXSIZE) //value
+        + 2 * numEntries * JSON_OBJECT_SIZE(1) //measurand
+        + 2 * numEntries * JSON_OBJECT_SIZE(1) //unit
         + 230)); //"safety space"
     JsonObject payload = doc->to<JsonObject>();
     
@@ -59,13 +63,15 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
         JsonArray sampledValue = meterValue.createNestedArray("sampledValue");
         if (energy.size() >= i + 1) {
             JsonObject sampledValue_1 = sampledValue.createNestedObject();
-            sampledValue_1["value"] = energy.at(i);
+            snprintf(value_str, VALUE_MAXSIZE, "%.*g", VALUE_MAXPRECISION, energy.at(i));
+            sampledValue_1["value"] = value_str;
             sampledValue_1["measurand"] = "Energy.Active.Import.Register";
             sampledValue_1["unit"] = "Wh";
         }
         if (power.size() >= i + 1) {
             JsonObject sampledValue_2 = sampledValue.createNestedObject();
-            sampledValue_2["value"] = power.at(i);
+            snprintf(value_str, VALUE_MAXSIZE, "%.*g", VALUE_MAXPRECISION, power.at(i));
+            sampledValue_2["value"] = value_str;
             sampledValue_2["measurand"] = "Power.Active.Import";
             sampledValue_2["unit"] = "W";
         }
