@@ -16,7 +16,7 @@ namespace Ocpp16 {
 class TriggerMessage : public OcppMessage {
 private:
     std::unique_ptr<OcppOperation> triggeredOperation;
-    const char *statusMessage;
+    const char *statusMessage {nullptr};
 
     bool formatError = false;
 public:

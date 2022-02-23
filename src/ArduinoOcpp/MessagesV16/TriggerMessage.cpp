@@ -36,15 +36,21 @@ void TriggerMessage::processReq(JsonObject payload) {
     if (!formatError) {
         AO_DBG_INFO("Execute for message type %s, connectorId = %i", requestedMessage, connectorId);
         if (!strcmp(requestedMessage, "MeterValues")) {
+            //special case MeterValues needs unique handling
             if (ocppModel && ocppModel->getMeteringService()) {
                 triggeredOperation = ocppModel->getMeteringService()->retrieveMeterValues(connectorId);
-            }
 
-            if (!triggeredOperation) {
-                formatError = true;
+                if (!triggeredOperation) {
+                    formatError = true;
+                }
+            } else {
+                AO_DBG_WARN("MeteringService not initialized");
             }
         } else {
             triggeredOperation = makeOcppOperation(requestedMessage, connectorId);
+            if (!triggeredOperation) {
+                statusMessage = "NotImplemented";
+            }
         }
     }
 
@@ -52,7 +58,9 @@ void TriggerMessage::processReq(JsonObject payload) {
         statusMessage = "Accepted";
     } else {
         AO_DBG_WARN("Could not make OppOperation from TriggerMessage. Ignore request");
-        statusMessage = "NotImplemented";
+        if (!statusMessage) {
+            statusMessage = "Rejected";
+        }
     }
 }
 
