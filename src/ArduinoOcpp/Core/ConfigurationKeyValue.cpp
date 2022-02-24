@@ -223,19 +223,30 @@ std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonStorageEntry() {
     return doc;
 }
 
+int toCStringValue(char *buf, size_t length, int value) {
+    return snprintf(buf, length, "%d", value);
+}
+
+int toCStringValue(char *buf, size_t length, float value) {
+    return snprintf(buf, length, "%.*g", length >= 7 ? length - 7 : 0, value);
+}
+
 template<class T>
 std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonOcppMsgEntry() {
     if (!isValid() || toBeRemoved()) {
         return nullptr;
     }
+    const size_t VALUE_MAXSIZE = 50;
     size_t capacity = getOcppMsgHeaderJsonCapacity()
-                + getValueJsonCapacity()
+                + getValueJsonCapacity() + VALUE_MAXSIZE
                 + JSON_OBJECT_SIZE(2); // header, value
     
     std::shared_ptr<DynamicJsonDocument> doc = std::make_shared<DynamicJsonDocument>(capacity);
     JsonObject keyValuePair = doc->to<JsonObject>();
     storeOcppMsgHeader(keyValuePair);
-    keyValuePair["value"] = value;
+    char value_str [VALUE_MAXSIZE] = {'\0'};
+    toCStringValue(value_str, VALUE_MAXSIZE, value);
+    keyValuePair["value"] = value_str;
     return doc;
 }
 
