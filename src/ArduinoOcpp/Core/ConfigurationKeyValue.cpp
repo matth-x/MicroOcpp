@@ -65,9 +65,9 @@ void AbstractConfiguration::storeOcppMsgHeader(JsonObject &keyValuePair) {
     if (toBeRemovedFlag) return;
     keyValuePair["key"] = key;
     if (remotePeerCanWrite) {
-        keyValuePair["readonly"] = "false";
+        keyValuePair["readonly"] = false;
     } else {
-        keyValuePair["readonly"] = "true";
+        keyValuePair["readonly"] = true;
     }
 }
 
