@@ -43,7 +43,7 @@ private:
     Ocpp16::DiagnosticsStatus lastReportedStatus = Ocpp16::DiagnosticsStatus::Idle;
 
 public:
-    DiagnosticsService(OcppEngine& context) : context(context) { }
+    DiagnosticsService(OcppEngine& context);
 
     void loop();
 

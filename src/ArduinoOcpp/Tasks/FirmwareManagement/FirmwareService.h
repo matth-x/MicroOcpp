@@ -73,7 +73,7 @@ private:
     std::unique_ptr<OcppOperation> getFirmwareStatusNotification();
 
 public:
-    FirmwareService(OcppEngine& context) : context(context) { }
+    FirmwareService(OcppEngine& context);
 
     void setBuildNumber(const char *buildNumber);
 

@@ -6,12 +6,25 @@
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
 
 #include <ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.h>
 
 using namespace ArduinoOcpp;
 using Ocpp16::DiagnosticsStatus;
+
+DiagnosticsService::DiagnosticsService(OcppEngine& context) : context(context) {
+    const char *fpId = "FirmwareManagement";
+    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_FN, false, true, true, false);
+    if (!strstr(*fProfile, fpId)) {
+        auto fProfilePlus = std::string(*fProfile);
+        if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
+            fProfilePlus += ",";
+        fProfilePlus += fpId;
+        fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
+    }
+}
 
 void DiagnosticsService::loop() {
     auto notification = getDiagnosticsStatusNotification();

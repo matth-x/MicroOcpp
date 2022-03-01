@@ -17,6 +17,18 @@
 using namespace ArduinoOcpp;
 using ArduinoOcpp::Ocpp16::FirmwareStatus;
 
+FirmwareService::FirmwareService(OcppEngine& context) : context(context) {
+    const char *fpId = "FirmwareManagement";
+    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_FN, false, true, true, false);
+    if (!strstr(*fProfile, fpId)) {
+        auto fProfilePlus = std::string(*fProfile);
+        if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
+            fProfilePlus += ",";
+        fProfilePlus += fpId;
+        fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
+    }
+}
+
 void FirmwareService::setBuildNumber(const char *buildNumber) {
     if (buildNumber == nullptr)
         return;
