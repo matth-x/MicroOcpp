@@ -15,12 +15,12 @@ namespace Ocpp16 {
 
 class TriggerMessage : public OcppMessage {
 private:
-    std::unique_ptr<OcppOperation> triggeredOperation;
+    std::vector<std::unique_ptr<OcppOperation>> triggeredOperations;
     const char *statusMessage {nullptr};
 
-    bool formatError = false;
+    const char *errorCode = nullptr;
 public:
-    TriggerMessage();
+    TriggerMessage() = default;
 
     const char* getOcppOperationType();
 
@@ -28,7 +28,7 @@ public:
 
     std::unique_ptr<DynamicJsonDocument> createConf();
 
-    const char *getErrorCode() {return formatError ? "FormationViolation" : nullptr;}
+    const char *getErrorCode() {return errorCode;}
 };
 
 } //end namespace Ocpp16

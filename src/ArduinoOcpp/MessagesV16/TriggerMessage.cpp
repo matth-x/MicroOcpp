@@ -12,56 +12,66 @@
 
 using ArduinoOcpp::Ocpp16::TriggerMessage;
 
-TriggerMessage::TriggerMessage() {
-    statusMessage = "NotImplemented"; //default value if anything goes wrong
-}
-
 const char* TriggerMessage::getOcppOperationType(){
     return "TriggerMessage";
 }
 
 void TriggerMessage::processReq(JsonObject payload) {
 
-    AO_DBG_INFO("Warning: TriggerMessage is not fully tested");
-
     const char *requestedMessage = payload["requestedMessage"] | "Invalid";
-    const int connectorId = payload["connectorId"] | 0;
+    const int connectorId = payload["connectorId"] | -1;
 
-    if (ocppModel && ocppModel->getChargePointStatusService()) {
-        if (connectorId < 0 || connectorId >= ocppModel->getChargePointStatusService()->getNumConnectors()) {
-            formatError = true;
-        }
-    }
+    AO_DBG_INFO("Execute for message type %s, connectorId = %i", requestedMessage, connectorId);
 
-    if (!formatError) {
-        AO_DBG_INFO("Execute for message type %s, connectorId = %i", requestedMessage, connectorId);
-        if (!strcmp(requestedMessage, "MeterValues")) {
-            //special case MeterValues needs unique handling
-            if (ocppModel && ocppModel->getMeteringService()) {
-                triggeredOperation = ocppModel->getMeteringService()->retrieveMeterValues(connectorId);
+    statusMessage = "Rejected";
 
-                if (!triggeredOperation) {
-                    formatError = true;
+    if (!strcmp(requestedMessage, "MeterValues")) {
+        if (ocppModel && ocppModel->getMeteringService()) {
+            auto mService = ocppModel->getMeteringService();
+            if (connectorId < 0) {
+                auto nConnectors = mService->getNumConnectors();
+                for (decltype(nConnectors) i = 0; i < nConnectors; i++) {
+                    triggeredOperations.push_back(mService->takeMeterValuesNow(i));
                 }
+            } else if (connectorId < mService->getNumConnectors()) {
+                triggeredOperations.push_back(mService->takeMeterValuesNow(connectorId));
             } else {
-                AO_DBG_WARN("MeteringService not initialized");
+                errorCode = "PropertyConstraintViolation";
             }
+        }
+    } else if (!strcmp(requestedMessage, "StatusNotification")) {
+        if (ocppModel && ocppModel->getChargePointStatusService()) {
+            auto cpsService = ocppModel->getChargePointStatusService();
+            if (connectorId < 0) {
+                auto nConnectors = cpsService->getNumConnectors();
+                for (decltype(nConnectors) i = 0; i < nConnectors; i++) {
+                    triggeredOperations.push_back(makeOcppOperation(requestedMessage, i));
+                }
+            } else if (connectorId < cpsService->getNumConnectors()) {
+                triggeredOperations.push_back(makeOcppOperation(requestedMessage, connectorId));
+            } else {
+                errorCode = "PropertyConstraintViolation";
+            }
+        }
+    } else {
+        auto msg = makeOcppOperation(requestedMessage, connectorId);
+        if (msg) {
+            triggeredOperations.push_back(std::move(msg));
         } else {
-            triggeredOperation = makeOcppOperation(requestedMessage, connectorId);
-            if (!triggeredOperation) {
-                statusMessage = "NotImplemented";
-            }
+            statusMessage = "NotImplemented";
         }
     }
 
-    if (triggeredOperation) {
+    if (!triggeredOperations.empty()) {
         statusMessage = "Accepted";
     } else {
-        AO_DBG_WARN("Could not make OppOperation from TriggerMessage. Ignore request");
-        if (!statusMessage) {
-            statusMessage = "Rejected";
+        if (errorCode) {
+            AO_DBG_ERR("errorCode: %s", errorCode);
+        } else {
+            AO_DBG_WARN("TriggerMessage denied. statusMessage: %s", statusMessage);
         }
     }
+
 }
 
 std::unique_ptr<DynamicJsonDocument> TriggerMessage::createConf(){
@@ -69,9 +79,14 @@ std::unique_ptr<DynamicJsonDocument> TriggerMessage::createConf(){
     JsonObject payload = doc->to<JsonObject>();
     
     payload["status"] = statusMessage;
-    
-    if (triggeredOperation && defaultOcppEngine) //from the second createConf()-try on, do not initiate further OCPP ops
-        defaultOcppEngine->initiateOperation(std::move(triggeredOperation));
+
+    if (defaultOcppEngine) {
+        auto op = triggeredOperations.begin();
+        while (op != triggeredOperations.end()) {
+            defaultOcppEngine->initiateOperation(std::move(triggeredOperations.front()));
+            op = triggeredOperations.erase(op);
+        }
+    }
 
     return doc;
 }

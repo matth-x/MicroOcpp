@@ -40,15 +40,19 @@ void ConnectorMeterValuesRecorder::takeSample() {
 
 OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
+    if (*MeterValueSampleInterval < 1) {
+        //Metering off by definition
+        clear();
+        return nullptr;
+    }
+
     /*
      * First: check if there was a transaction break (i.e. transaction either started or stopped; transactionId changed)
      */ 
     auto connector = context.getConnectorStatus(connectorId);
     if (connector && connector->getTransactionId() != lastTransactionId) {
         //transaction break occured!
-        OcppMessage *result {nullptr};
-        if (sampleTimestamp.size() > 0)
-            result = toMeterValues();
+        auto result = toMeterValues();
         lastTransactionId = connector->getTransactionId();
         return result;
     }
@@ -79,7 +83,9 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
 OcppMessage *ConnectorMeterValuesRecorder::toMeterValues() {
     if (sampleTimestamp.size() == 0) {
-        AO_DBG_WARN("Creating MeterValues without any content");
+        AO_DBG_DEBUG("Checking if to send MeterValues ... No");
+        clear();
+        return nullptr;
     }
 
     //decide which measurands to send. If a measurand is missing at at least one point in time, omit that measurand completely
@@ -107,6 +113,37 @@ OcppMessage *ConnectorMeterValuesRecorder::toMeterValues() {
     clear();
 
     return nullptr;
+}
+
+OcppMessage *ConnectorMeterValuesRecorder::takeMeterValuesNow() {
+
+    if (!energySampler && !powerSampler) {
+        return nullptr;
+    }
+
+    decltype(sampleTimestamp) t_now;
+    decltype(energy) e_now;
+    decltype(power) p_now;
+
+    if (context.getOcppTime().isValid()) {
+        t_now.push_back(context.getOcppTime().getOcppTimestampNow());
+    }
+
+    if (energySampler) {
+        e_now.push_back(energySampler());
+    }
+
+    if (powerSampler) {
+        p_now.push_back(powerSampler());
+    }
+
+    int txId_now = -1;
+    auto connector = context.getConnectorStatus(connectorId);
+    if (connector) {
+        txId_now = connector->getTransactionId();
+    }
+
+    return new MeterValues(&t_now, &e_now, &p_now, connectorId, txId_now);
 }
 
 void ConnectorMeterValuesRecorder::clear() {

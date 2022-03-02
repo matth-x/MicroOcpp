@@ -43,18 +43,20 @@ private:
     std::shared_ptr<Configuration<int>> MeterValuesSampledDataMaxLength = NULL;
 
     void takeSample();
+    OcppMessage *toMeterValues();
     void clear();
 public:
     ConnectorMeterValuesRecorder(OcppModel& context, int connectorId);
 
     OcppMessage *loop();
-    OcppMessage *toMeterValues();
 
     void setPowerSampler(PowerSampler powerSampler);
 
     void setEnergySampler(EnergySampler energySampler);
 
     float readEnergyActiveImportRegister();
+
+    OcppMessage *takeMeterValuesNow();
 };
 
 } //end namespace ArduinoOcpp

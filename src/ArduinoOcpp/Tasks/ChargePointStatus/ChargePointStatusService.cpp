@@ -22,7 +22,7 @@ ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned
 
     
     std::shared_ptr<Configuration<int>> numberOfConnectors =
-            declareConfiguration<int>("NumberOfConnectors", numConn, CONFIGURATION_FN, false, true, true, false);
+            declareConfiguration<int>("NumberOfConnectors", numConn >= 1 ? numConn - 1 : 0, CONFIGURATION_FN, false, true, false, false);
     *numberOfConnectors = numConn;
 
     const char *fpId = "Core,RemoteTrigger";

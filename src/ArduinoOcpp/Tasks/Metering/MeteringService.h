@@ -33,7 +33,9 @@ public:
 
     float readEnergyActiveImportRegister(int connectorId);
 
-    std::unique_ptr<OcppOperation> retrieveMeterValues(int connectorId); //returns all recorded MeterValues and deletes own records
+    std::unique_ptr<OcppOperation> takeMeterValuesNow(int connectorId); //snapshot of all meters now
+
+    int getNumConnectors() {return connectors.size();}
 };
 
 } //end namespace ArduinoOcpp
