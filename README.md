@@ -137,7 +137,7 @@ In case you use PlatformIO, you can copy all dependencies from `platformio.ini` 
 | `BootNotification` | :heavy_check_mark: |
 | `ChangeAvailability` | :heavy_check_mark: |
 | `ChangeConfiguration` | :heavy_check_mark: |
-| `ClearCache` |   |   | :heavy_multiplication_x: |
+| `ClearCache` | :heavy_check_mark: |
 | `DataTransfer` | :heavy_check_mark: |
 | `GetConfiguration` | :heavy_check_mark: |
 | `Heartbeat` | :heavy_check_mark: |

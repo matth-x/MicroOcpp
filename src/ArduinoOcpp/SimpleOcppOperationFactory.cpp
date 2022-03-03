@@ -26,6 +26,7 @@
 #include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
 #include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
 #include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
+#include <ArduinoOcpp/MessagesV16/ClearCache.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -274,6 +275,8 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType, int co
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::ClearChargingProfile());
     } else if (!strcmp(messageType, "ChangeAvailability")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::ChangeAvailability());
+    } else if (!strcmp(messageType, "ClearCache")) {
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::ClearCache());
     } else {
         AO_DBG_WARN("Operation not supported");
         msg = std::unique_ptr<OcppMessage>(new NotImplemented());
