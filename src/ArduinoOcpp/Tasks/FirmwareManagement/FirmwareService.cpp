@@ -19,7 +19,7 @@ using ArduinoOcpp::Ocpp16::FirmwareStatus;
 
 FirmwareService::FirmwareService(OcppEngine& context) : context(context) {
     const char *fpId = "FirmwareManagement";
-    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_FN, false, true, true, false);
+    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
     if (!strstr(*fProfile, fpId)) {
         auto fProfilePlus = std::string(*fProfile);
         if (!fProfilePlus.empty() && fProfilePlus.back() != ',')

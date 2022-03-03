@@ -10,6 +10,7 @@
 #include <ArduinoOcpp/Core/ConfigurationContainerFlash.h>
 
 #define CONFIGURATION_FN "/arduino-ocpp.cnf"
+#define CONFIGURATION_VOLATILE "/volatile"
 
 namespace ArduinoOcpp {
 
@@ -22,9 +23,6 @@ std::vector<std::shared_ptr<ConfigurationContainer>>::iterator getConfigurationC
 
 
 namespace Ocpp16 {
-
-//    template <class T>
-//    std::shared_ptr<Configuration<T>> changeConfiguration(const char *key, T value);
 
     std::shared_ptr<AbstractConfiguration> getConfiguration(const char *key);
     std::shared_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> getAllConfigurations();

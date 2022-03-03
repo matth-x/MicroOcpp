@@ -22,13 +22,12 @@ ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned
 
     
     std::shared_ptr<Configuration<int>> numberOfConnectors =
-            declareConfiguration<int>("NumberOfConnectors", numConn >= 1 ? numConn - 1 : 0, CONFIGURATION_FN, false, true, false, false);
-    *numberOfConnectors = numConn;
+            declareConfiguration<int>("NumberOfConnectors", numConn >= 1 ? numConn - 1 : 0, CONFIGURATION_VOLATILE, false, true, false, false);
 
     const char *fpId = "Core,RemoteTrigger";
     const char *fpIdCore = "Core";
     const char *fpIdRTrigger = "RemoteTrigger";
-    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_FN, false, true, true, false);
+    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
     if (!strstr(*fProfile, fpIdCore)) {
         auto fProfilePlus = std::string(*fProfile);
         if (!fProfilePlus.empty() && fProfilePlus.back() != ',')

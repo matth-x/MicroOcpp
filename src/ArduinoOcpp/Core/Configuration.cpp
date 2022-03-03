@@ -54,10 +54,15 @@ std::shared_ptr<Configuration<const char *>> createConfiguration(const char *key
 }
 
 std::shared_ptr<ConfigurationContainer> createConfigurationContainer(const char *filename) {
-    if (configurationFilesystemOpt.accessAllowed()) {
-        return std::static_pointer_cast<ConfigurationContainer>(std::make_shared<ConfigurationContainerFlash>(filename));
-    } else {
+    //create non-persistent Configuration store (i.e. lives only in RAM) if
+    //     - Flash FS usage is switched off OR
+    //     - Filename starts with "/volatile"
+    if (!configurationFilesystemOpt.accessAllowed() ||
+                 !strncmp(filename, CONFIGURATION_VOLATILE, strlen(CONFIGURATION_VOLATILE))) {
         return std::static_pointer_cast<ConfigurationContainer>(std::make_shared<ConfigurationContainerVolatile>(filename));
+    } else {
+        //create persistent Configuration store. This is the normal case
+        return std::static_pointer_cast<ConfigurationContainer>(std::make_shared<ConfigurationContainerFlash>(filename));
     }
 }
 
@@ -144,49 +149,6 @@ std::shared_ptr<Configuration<T>> declareConfiguration(const char *key, T defaul
 }
 
 namespace Ocpp16 {
-
-/*
-template<class T>
-std::shared_ptr<Configuration<T>> changeConfiguration(const char *key, T value) {
-
-    std::shared_ptr<Configuration<T>> config = nullptr;
-
-    for (std::vector<std::shared_ptr<ConfigurationContainer>>::iterator container = configurationContainers.begin(); container != configurationContainers.end(); container++) {
-        
-        config = std::static_pointer_cast<Configuration<T>>(*container)->getConfiguration(key);
-        if (config) {
-            break;
-        }
-    }
-    
-    if (config) {
-        //found configuration
-
-        if (!config->permissionRemotePeerCanWrite()) {
-            return nullptr;
-        }
-
-        *config = value;
-
-    } else {
-        //did not find configuration. Create new one
-        config = createConfiguration<T>(key, value);
-
-        if (!config) {
-            AO_DBG_ERR("Cannot neither find configuration nor create new one! Abort");
-            return nullptr;
-        }
-
-        std::shared_ptr<ConfigurationContainer> containerDefault = getContainer(CONFIGURATION_FN);
-
-        if (containerDefault) {
-            containerDefault->addConfiguration(config);
-        } //else: There is no container. Probably this controller does not need persistency at all
-    }
-
-    return config;
-}
-*/
 
 std::shared_ptr<AbstractConfiguration> getConfiguration(const char *key) {
     std::shared_ptr<AbstractConfiguration> result = nullptr;

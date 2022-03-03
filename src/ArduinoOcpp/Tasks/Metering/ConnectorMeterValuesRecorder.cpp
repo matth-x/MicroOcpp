@@ -20,7 +20,7 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
     power = std::vector<float>();
 
     MeterValueSampleInterval = declareConfiguration("MeterValueSampleInterval", 60);
-    MeterValuesSampledDataMaxLength = declareConfiguration("MeterValuesSampledDataMaxLength", 4);
+    MeterValuesSampledDataMaxLength = declareConfiguration("MeterValuesSampledDataMaxLength", 4, CONFIGURATION_VOLATILE, false, true, false, false);
 }
 
 void ConnectorMeterValuesRecorder::takeSample() {
