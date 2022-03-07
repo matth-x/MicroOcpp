@@ -171,6 +171,7 @@ In case you use PlatformIO, you can copy all dependencies from `platformio.ini` 
 - [x] add support for multiple power connectors
 - [x] add support for the ESP32
 - [ ] reach full compliance to OCPP 1.6 Smart Charging Profile
+- [ ] integrate Authorization Cache
 - [ ] **get ready for OCPP 2.0.1**
 
 ## Further help

@@ -131,7 +131,7 @@ boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
 
     if (printReqCounter > 5000) {
         printReqCounter = 0;
-        AO_DBG_DEBUG("Try to send requirement: %s", out.c_str());
+        AO_DBG_DEBUG("Try to send request: %s", out.c_str());
     }
     printReqCounter++;
     

@@ -482,7 +482,7 @@ bool isInSession() {
 
 const char *getSessionIdTag() {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_WARN("Please call OCPP_initialize before");
         return nullptr;
     }
     auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
