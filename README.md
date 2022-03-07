@@ -17,19 +17,18 @@ You can build an OCPP Charge Point controller using the popular, Wi-Fi enabled m
 
 :heavy_check_mark: Tested with two further (proprietary) central systems
 
-:heavy_check_mark: Integrated and tested in many charging stations (including a ClipperCreek Inc. station)
+:heavy_check_mark: Integrated and tested in many charging stations
 
 ### Features
 
-- lets you initiate all supported OCPP operations (see the table at the bottom of this page)
-- responds to requests from the central system and notifies your client code by listeners
-- manages the EVSE data model as specified by OCPP and does a lot of the paperwork. For example, it sends `StatusNotification` or `MeterValues` messages by itself.
+- handles the OCPP communication with the charging network
+- implements the standard OCPP charging process
+- provides an API for the integration of the hardware modules of your PCB
+- works with any TLS implementation and WebSocket library. E.g.
+   - Arduino networking stack: [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets), or
+   - generic embedded systems: [Mongoose Networking Library](https://github.com/cesanta/mongoose)
 
-You still have the responsibility (or freedom) to design the application logic of the charger and to integrate the HW components. This library doesn't
-
-- define physical reactions on the messages from the central system (CS). For example, when you initiate a `StartTransaction` request which the CS accepts, the library stores the new EVSE status including the `transactionId`, but lets you define which action to take.
-
-For simple chargers, the application logic + HW integration is far below 1000 LOCs.
+For simple chargers, the necessary hardware and internet integration is usually far below 1000 LOCs.
 
 ## Usage guide
 
@@ -41,9 +40,10 @@ Please take `examples/ESP/main.cpp` as the starting point for your first project
 
 - In your project's `main` file, include `ArduinoOcpp.h`. This gives you a simple access to all functions.
 
-- Before establishing an OCPP connection you have to ensure that your device has access to a Wi-Fi access point. All debug messages are printed on the standard serial (i.e. `Serial.print(F("debug msg"))`).
+- Before establishing an OCPP connection you have to ensure that your device has access to a Wi-Fi access point. All debug messages are printed on the standard serial (i.e. `Serial.print("debug msg")`). To redirect debug messages, please refer to `src/ArduinoOcpp/Platform.h`.
 
 - To connect to your OCPP Central System, call `OCPP_initialize(String OCPP_HOST, uint16_t OCPP_PORT, String OCPP_URL)`. You need to insert the address parameters according to the configuration of your central system. Internally, the library passes these parameters to the WebSocket object without further alteration.
+   - To secure the connection with TLS, you have to configure the WebSocket. Please take `examples/SECC/main.cpp` as an example.
 
 - In your `setup()` function, you can add the configuration functions from `ArduinoOcpp.h` to properly integrate your hardware. All configuration functions are documented in `ArduinoOcpp.h`. For example, to integrate the energy meter of your EVSE, add
 
@@ -55,9 +55,11 @@ setEnergyActiveImportSampler([]() {
 
 - Add `OCPP_loop()` to your `loop()` function.
 
-- There are a couple of OCPP operations you can initialize on your EVSE. For example, to send a `Boot Notification`, use the function 
+### Sending OCPP operations
+
+There are a couple of OCPP operations you can initialize on your EVSE. For example, to send a `Boot Notification`, use the function 
 ```cpp
-void bootNotification(String chargePointModel, String chargePointVendor, OnReceiveConfListener onConf = NULL, ...)`
+void bootNotification(const char *chargePointModel, const char *chargePointVendor, OnReceiveConfListener onConf = nullptr, ...)`
 ```
 
 In practice, it looks like this:
@@ -67,12 +69,13 @@ void setup() {
 
     ... //other code including the initialization of Wi-Fi and OCPP
 
-    bootNotification("GPIO-based CP model", "Greatest EVSE vendor", [] (JsonObject confMsg) {
+    bootNotification("My CP model name", "My company name", [] (JsonObject confMsg) {
         //This callback is executed when the .conf() response from the central system arrives
         Serial.print(F("BootNotification was answered. Central System clock: "));
-        Serial.println(confMsg["currentTime"].as<String>());
-    
-        evseIsBooted = true; //notify your hardware that the BootNotification.conf() has arrived
+        Serial.println(confMsg["currentTime"].as<String>()); //"currentTime" is a field of the central system response
+        
+        //Notify your hardare that the BootNotification.conf() has arrived. E.g.:
+        //evseIsBooted = true;
     });
     
     ... //rest of setup() function; executed immediately as bootNotification() is non-blocking
@@ -89,37 +92,52 @@ For your first EVSE integration, the `onReceiveConfListener` is probably suffici
 
 - `onReceiveErrorListener`: will be called when the Central System returns a CallError. Again, each error also triggers the `onAbortListener`.
   
-Following example shows the correct usage of all listeners.
-
+The following example shows the correct usage of all listeners.
 
 ```cpp
 authorize(idTag, [](JsonObject conf) { 
     //onReceiveConfListener (optional but very likely necessary for your integration)
     successfullyAuthorized = true; //example client code
-    ... //further client code, e.g. call startTransaction()
+    ... //further client code, e.g. beginSession(idTag);
 }, []() { 
     //onAbortListener (optional)
-    Serial.print(F("[EVSE] Could not authorize charging session! Aborted\n")); //flash error light etc.
+    Serial.print(F("[EVSE] Could not authorize charging session. Aborted\n")); //flash error light etc.
 }, []() { 
     //onTimeoutListener (optional)
-    Serial.print(F("[EVSE] Could not authorize charging session! Reason: timeout\n"));
+    Serial.print(F("[EVSE] Could not authorize charging session. Reason: timeout\n"));
 }, [](const char *code, const char *description, JsonObject details) { 
     //onReceiveErrorListener (optional)
-    Serial.print(F("[EVSE] Could not authorize charging session! Reason: received OCPP error: "));
+    Serial.print(F("[EVSE] Could not authorize charging session. Reason: received OCPP error: "));
     Serial.println(code);
 });
 
 ```
 
-The library also reacts on CS-initiated operations. You can add your own behavior there too. For example, when you want to flash a LED on receipt of a `Set Charging Profile` request, use the following function.
+### Receiving OCPP operations
+
+The library also reacts on CS-initiated operations. You can add your own behavior there too. For example, to flash a LED on receipt of a `Set Charging Profile` request, use the following function.
 
 ```cpp
-void setOnSetChargingProfileRequest(void listener(JsonObject payload));
+setOnSetChargingProfileRequest([] (JsonObject payload) {
+    //...
+});
 ```
 
 You can also process the original payload from the CS using the `payload` object.
 
-To get started quickly with or without EVSE hardware, you can flash the sketch in `examples/SECC` onto your ESP. That example mimics a full OCPP communications controller as it would look like in a real charging station. You can build a charger prototype based on that example or just view the internal state using the device monitor.
+### Transaction and Session management
+
+In practice, there are a couple of prerequisites for OCPP-transactions. The library abstracts them into two conditions:
+1) The electric connection between the EVSE and EV is established and safe
+2) The user is identified, authorized and shows the intention to charge the vehicle
+
+Your hardware integration is fully responsible for Condition (1). To make the OCPP library aware about the safe connection, set a callback function with `setConnectorPluggedSampler(std::function<bool()> connectorPlugged)`. Condition (2) is handled by both the hardware integration and the OCPP library. To make the library aware about Condition (2) use the functions `beginSession(const char *idTag)` and `endSession()`. Note that internally, the OCPP library uses the same functions if it receives a `RemoteStartTransaction` request, or stops a transaction for any reason.
+
+In return, the function `bool ocppPermitsCharge()` notifies your hardware implementation if the OCPP transaction is engaged and the EVSE can charge the EV ultimately.
+
+Alternatively, you can manage OCPP transactions by yourself using `startTransaction(const char *idTag)` and `stopTransaction()`.
+
+*To get started quickly with or without EVSE hardware, you can flash the sketch in `examples/SECC` onto your ESP. That example mimics a full OCPP communications controller as it would look like in a real charging station. You can build a charger prototype based on that example or just view the internal state using the device monitor.*
 
 ## Dependencies
 
@@ -163,9 +181,6 @@ In case you use PlatformIO, you can copy all dependencies from `platformio.ini` 
 
 ## Next development steps
 
-- [x] introduce a timeout mechanism
-- [x] some refactoring steps (e.g. separate RPC header from OCPP payload creation)
-- [x] add facade for rapid integration
 - [x] introduce proper offline behavior and package loss / fault detection
 - [x] handle fragmented input messages correctly
 - [x] add support for multiple power connectors
