@@ -5,7 +5,6 @@
 #ifndef DIAGNOSTICSSERVICE_H
 #define DIAGNOSTICSSERVICE_H
 
-#include <Arduino.h>
 #include <functional>
 #include <memory>
 #include <ArduinoOcpp/Core/OcppTime.h>

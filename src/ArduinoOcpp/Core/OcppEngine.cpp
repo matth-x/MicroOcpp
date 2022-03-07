@@ -7,8 +7,6 @@
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 
-#include <Variants.h>
-
 using namespace ArduinoOcpp;
 
 OcppEngine *ArduinoOcpp::defaultOcppEngine = nullptr;

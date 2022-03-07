@@ -3,7 +3,6 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/ConfigurationContainer.h>
-#include <Variants.h>
 
 namespace ArduinoOcpp {
 

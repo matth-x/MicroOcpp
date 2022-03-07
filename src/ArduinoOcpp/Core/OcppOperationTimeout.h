@@ -5,7 +5,6 @@
 #ifndef OCPPOPERATIONTIMEOUT_H
 #define OCPPOPERATIONTIMEOUT_H
 
-#include <Arduino.h>
 #include <functional>
 
 namespace ArduinoOcpp {

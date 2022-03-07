@@ -3,14 +3,22 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppServer.h>
-
-#include <Variants.h>
+#include <ArduinoOcpp/Debug.h>
 
 #ifndef AO_CUSTOM_WS
+
+#define DEBUG_OUT (AO_DBG_LEVEL >= AO_DL_INFO)
+
+#ifdef AO_TRAFFIC_OUT
+#define TRAFFIC_OUT true
+#else
+#define TRAFFIC_OUT false
+#endif
 
 using namespace ArduinoOcpp::EspWiFi;
 
 OcppServer::OcppServer() {
+    AO_DBG_WARN("OCPP Server only suitable for tests at the moment");
     wsockServer.begin();
     wsockServer.onEvent([this](WsClient num, WStype_t type, uint8_t * payload, size_t length) {
         this->wsockEvent(num, type, payload, length);

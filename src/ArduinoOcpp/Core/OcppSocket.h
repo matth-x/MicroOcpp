@@ -5,7 +5,6 @@
 #ifndef OCPPSOCKET_H
 #define OCPPSOCKET_H
 
-#include <Arduino.h>
 #include <functional>
 
 namespace ArduinoOcpp {

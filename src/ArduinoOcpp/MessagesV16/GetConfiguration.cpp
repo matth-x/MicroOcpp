@@ -2,8 +2,6 @@
 // Copyright Matthias Akstaller 2019 - 2022
 // MIT License
 
-#include <Variants.h>
-
 #include <ArduinoOcpp/MessagesV16/GetConfiguration.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>

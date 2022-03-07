@@ -7,8 +7,6 @@
 
 #include <functional>
 
-#include <Arduino.h> 
-
 namespace ArduinoOcpp {
 
 typedef int32_t otime_t; //requires 32bit signed integer or bigger

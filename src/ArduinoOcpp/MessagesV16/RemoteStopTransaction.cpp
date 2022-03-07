@@ -2,8 +2,6 @@
 // Copyright Matthias Akstaller 2019 - 2022
 // MIT License
 
-#include <Variants.h>
-
 #include <ArduinoOcpp/MessagesV16/RemoteStopTransaction.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>

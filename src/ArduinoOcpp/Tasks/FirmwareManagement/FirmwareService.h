@@ -5,7 +5,6 @@
 #ifndef FIRMWARESERVICE_H
 #define FIRMWARESERVICE_H
 
-#include <Arduino.h>
 #include <functional>
 #include <memory>
 
