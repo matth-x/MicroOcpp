@@ -320,13 +320,13 @@ ChargingProfile::ChargingProfile(JsonObject &json){
 
     if (!validFrom.setTime(json["validFrom"] | "Invalid")) {
         //non-success
-        AO_DBG_ERR("validFrom format violation. Expect format like 2022-02-01T20:53:32.486Z. Assume unlimited validity");
+        AO_DBG_DEBUG("validFrom undefined. Expect format like 2022-02-01T20:53:32.486Z. Assume unlimited validity");
         validFrom = MIN_TIME;
     }
 
     if (!validTo.setTime(json["validTo"] | "Invalid")) {
         //non-success
-        AO_DBG_ERR("validTo format violation. Expect format like 2022-02-01T20:53:32.486Z. Assume unlimited validity");
+        AO_DBG_DEBUG("validTo undefined. Expect format like 2022-02-01T20:53:32.486Z. Assume unlimited validity");
         validTo = MIN_TIME;
     }
 
