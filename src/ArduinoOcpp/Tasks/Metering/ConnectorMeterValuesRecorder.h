@@ -12,6 +12,7 @@
 #include <functional>
 #include <memory>
 
+#include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 
 namespace ArduinoOcpp {
@@ -29,18 +30,18 @@ private:
     
     const int connectorId;
 
-    std::vector<OcppTimestamp> sampleTimestamp;
-    std::vector<float> energy;
-    std::vector<float> power;
+    std::vector<std::unique_ptr<MeterValue>> meterValue;
+
     ulong lastSampleTime = 0; //0 means not charging right now
     float lastPower;
     int lastTransactionId = -1;
  
-    PowerSampler powerSampler = NULL;
-    EnergySampler energySampler = NULL;
+    PowerSampler powerSampler = nullptr;
+    EnergySampler energySampler = nullptr;
+    std::vector<std::unique_ptr<SampledValueSampler>> meterValueSamplers;
 
-    std::shared_ptr<Configuration<int>> MeterValueSampleInterval = NULL;
-    std::shared_ptr<Configuration<int>> MeterValuesSampledDataMaxLength = NULL;
+    std::shared_ptr<Configuration<int>> MeterValueSampleInterval = nullptr;
+    std::shared_ptr<Configuration<int>> MeterValuesSampledDataMaxLength = nullptr;
 
     void takeSample();
     OcppMessage *toMeterValues();
@@ -54,7 +55,9 @@ public:
 
     void setEnergySampler(EnergySampler energySampler);
 
-    float readEnergyActiveImportRegister();
+    void addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler);
+
+    int32_t readEnergyActiveImportRegister();
 
     OcppMessage *takeMeterValuesNow();
 };

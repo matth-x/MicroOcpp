@@ -22,7 +22,7 @@ void StopTransaction::initiate() {
 
     if (ocppModel && ocppModel->getMeteringService()) {
         auto meteringService = ocppModel->getMeteringService();
-        meterStop = (int) meteringService->readEnergyActiveImportRegister(connectorId);
+        meterStop = meteringService->readEnergyActiveImportRegister(connectorId);
     }
 
     if (ocppModel) {

@@ -28,7 +28,7 @@ const char* StartTransaction::getOcppOperationType(){
 void StartTransaction::initiate() {
     if (ocppModel && ocppModel->getMeteringService()) {
         auto meteringService = ocppModel->getMeteringService();
-        meterStart = (int) meteringService->readEnergyActiveImportRegister(connectorId);
+        meterStart = meteringService->readEnergyActiveImportRegister(connectorId);
     }
 
     if (ocppModel) {

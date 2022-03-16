@@ -15,27 +15,27 @@ using namespace ArduinoOcpp::Ocpp16;
 
 ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, int connectorId)
         : context(context), connectorId{connectorId} {
-    sampleTimestamp = std::vector<OcppTimestamp>();
-    energy = std::vector<float>();
-    power = std::vector<float>();
 
     MeterValueSampleInterval = declareConfiguration("MeterValueSampleInterval", 60);
     MeterValuesSampledDataMaxLength = declareConfiguration("MeterValuesSampledDataMaxLength", 4, CONFIGURATION_VOLATILE, false, true, false, false);
 }
 
 void ConnectorMeterValuesRecorder::takeSample() {
-    if (energySampler != nullptr || powerSampler != nullptr) {
-        if (!context.getOcppTime().isValid()) return;
-        sampleTimestamp.push_back(context.getOcppTime().getOcppTimestampNow());
+    if (meterValueSamplers.empty()) return;
+
+    std::unique_ptr<MeterValue> sample;
+    if (context.getOcppTime().isValid()) {
+        sample.reset(new MeterValue(context.getOcppTime().getOcppTimestampNow()));
+    }
+    if (!sample) {
+        return;
     }
 
-    if (energySampler != nullptr) {
-        energy.push_back(energySampler());
+    for (auto mvs = meterValueSamplers.begin(); mvs != meterValueSamplers.end(); mvs++) {
+        sample->addSampledValue((*mvs)->takeValue());
     }
 
-    if (powerSampler != nullptr) {
-        power.push_back(powerSampler());
-    }
+    meterValue.push_back(std::move(sample));
 }
 
 OcppMessage *ConnectorMeterValuesRecorder::loop() {
@@ -73,7 +73,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
     /*
     * Is the value buffer already full? If yes, return MeterValues message
     */
-    if (((int) sampleTimestamp.size()) >= (int) *MeterValuesSampledDataMaxLength) {
+    if (((int) meterValue.size()) >= (int) *MeterValuesSampledDataMaxLength) {
         auto result = toMeterValues();
         return result;
     }
@@ -82,59 +82,35 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
 }
 
 OcppMessage *ConnectorMeterValuesRecorder::toMeterValues() {
-    if (sampleTimestamp.size() == 0) {
+    if (meterValue.empty()) {
         AO_DBG_DEBUG("Checking if to send MeterValues ... No");
         clear();
         return nullptr;
-    }
-
-    //decide which measurands to send. If a measurand is missing at at least one point in time, omit that measurand completely
-
-    if (energy.size() == sampleTimestamp.size() && power.size() == sampleTimestamp.size()) {
-        auto result = new MeterValues(&sampleTimestamp, &energy, &power, connectorId, lastTransactionId);
+    } else {
+        auto result = new MeterValues(meterValue, connectorId, lastTransactionId);
         clear();
         return result;
     }
-
-    if (energy.size() == sampleTimestamp.size() && power.size() != sampleTimestamp.size()) {
-        auto result = new MeterValues(&sampleTimestamp, &energy, nullptr, connectorId, lastTransactionId);
-        clear();
-        return result;
-    }
-
-    if (energy.size() != sampleTimestamp.size() && power.size() == sampleTimestamp.size()) {
-        auto result = new MeterValues(&sampleTimestamp, nullptr, &power, connectorId, lastTransactionId);
-        clear();
-        return result;
-    }
-
-    //Maybe the energy sampler or power sampler was set during recording. Discard recorded data.
-    AO_DBG_WARN("Invalid data set. Discard data set and restart recording");
-    clear();
-
-    return nullptr;
 }
 
 OcppMessage *ConnectorMeterValuesRecorder::takeMeterValuesNow() {
 
-    if (!energySampler && !powerSampler) {
+    if (meterValueSamplers.empty()) {
         return nullptr;
     }
 
-    decltype(sampleTimestamp) t_now;
-    decltype(energy) e_now;
-    decltype(power) p_now;
+    std::unique_ptr<MeterValue> value;
 
     if (context.getOcppTime().isValid()) {
-        t_now.push_back(context.getOcppTime().getOcppTimestampNow());
+        value.reset(new MeterValue(context.getOcppTime().getOcppTimestampNow()));
     }
 
-    if (energySampler) {
-        e_now.push_back(energySampler());
+    if (!value) {
+        return nullptr;
     }
 
-    if (powerSampler) {
-        p_now.push_back(powerSampler());
+    for (auto mvs = meterValueSamplers.begin(); mvs != meterValueSamplers.end(); mvs++) {
+        value->addSampledValue((*mvs)->takeValue());
     }
 
     int txId_now = -1;
@@ -143,24 +119,29 @@ OcppMessage *ConnectorMeterValuesRecorder::takeMeterValuesNow() {
         txId_now = connector->getTransactionId();
     }
 
-    return new MeterValues(&t_now, &e_now, &p_now, connectorId, txId_now);
+    decltype(meterValue) mv_now;
+    mv_now.push_back(std::move(value));
+
+    return new MeterValues(mv_now, connectorId, txId_now);
 }
 
 void ConnectorMeterValuesRecorder::clear() {
-    sampleTimestamp.clear();
-    energy.clear();
-    power.clear();
+    meterValue.clear();
 }
 
 void ConnectorMeterValuesRecorder::setPowerSampler(PowerSampler ps){
-  this->powerSampler = ps;
+    this->powerSampler = ps;
 }
 
 void ConnectorMeterValuesRecorder::setEnergySampler(EnergySampler es){
-  this->energySampler = es;
+    this->energySampler = es;
 }
 
-float ConnectorMeterValuesRecorder::readEnergyActiveImportRegister() {
+void ConnectorMeterValuesRecorder::addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler) {
+    meterValueSamplers.push_back(std::move(meterValueSampler));
+}
+
+int32_t ConnectorMeterValuesRecorder::readEnergyActiveImportRegister() {
     if (energySampler != nullptr) {
         return energySampler();
     } else {

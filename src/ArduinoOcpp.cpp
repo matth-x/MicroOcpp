@@ -168,7 +168,16 @@ void setPowerActiveImportSampler(std::function<float()> power) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
             new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS)));
     }
-    model.getMeteringService()->setPowerSampler(OCPP_ID_OF_CONNECTOR, power); //connectorId=1
+    SampledValueProperties meterProperties;
+    meterProperties.setMeasurand("Power.Active.Import");
+    meterProperties.setUnit("W");
+    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>>(
+                           new SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>(
+            meterProperties,
+            power
+    ));
+    model.getMeteringService()->addMeterValueSampler(OCPP_ID_OF_CONNECTOR, std::move(mvs)); //connectorId=1
+    model.getMeteringService()->setPowerSampler(OCPP_ID_OF_CONNECTOR, power);
 }
 
 void setEnergyActiveImportSampler(std::function<float()> energy) {
@@ -181,7 +190,27 @@ void setEnergyActiveImportSampler(std::function<float()> energy) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
             new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS)));
     }
-    model.getMeteringService()->setEnergySampler(OCPP_ID_OF_CONNECTOR, energy); //connectorId=1
+    SampledValueProperties meterProperties;
+    meterProperties.setMeasurand("Energy.Active.Import.Register");
+    meterProperties.setUnit("Wh");
+    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>>(
+                           new SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>(
+            meterProperties, energy));
+    model.getMeteringService()->addMeterValueSampler(OCPP_ID_OF_CONNECTOR, std::move(mvs)); //connectorId=1
+    model.getMeteringService()->setEnergySampler(OCPP_ID_OF_CONNECTOR, energy);
+}
+
+void addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler) {
+    if (!ocppEngine) {
+        AO_DBG_ERR("Please call OCPP_initialize before");
+        return;
+    }
+    auto& model = ocppEngine->getOcppModel();
+    if (!model.getMeteringService()) {
+        model.setMeteringSerivce(std::unique_ptr<MeteringService>(
+            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS)));
+    }
+    model.getMeteringService()->addMeterValueSampler(OCPP_ID_OF_CONNECTOR, std::move(meterValueSampler)); //connectorId=1
 }
 
 void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy) {

@@ -13,6 +13,7 @@
 #include <ArduinoOcpp/Core/OcppOperationCallbacks.h>
 #include <ArduinoOcpp/Core/OcppOperationTimeout.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
+#include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 
 using ArduinoOcpp::OnReceiveConfListener;
 using ArduinoOcpp::OnReceiveReqListener;
@@ -49,6 +50,8 @@ void OCPP_loop();
 void setPowerActiveImportSampler(std::function<float()> power);
 
 void setEnergyActiveImportSampler(std::function<float()> energy);
+
+void addMeterValueSampler(std::unique_ptr<ArduinoOcpp::SampledValueSampler> meterValueSampler);
 
 void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
 

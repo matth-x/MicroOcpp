@@ -8,6 +8,7 @@
 #include <functional>
 
 #include <ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.h>
+#include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 
 namespace ArduinoOcpp {
 
@@ -31,7 +32,9 @@ public:
 
     void setEnergySampler(int connectorId, EnergySampler energySampler);
 
-    float readEnergyActiveImportRegister(int connectorId);
+    void addMeterValueSampler(int connectorId, std::unique_ptr<SampledValueSampler> meterValueSampler);
+
+    int32_t readEnergyActiveImportRegister(int connectorId);
 
     std::unique_ptr<OcppOperation> takeMeterValuesNow(int connectorId); //snapshot of all meters now
 
