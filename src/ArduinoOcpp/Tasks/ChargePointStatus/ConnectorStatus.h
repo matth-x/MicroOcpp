@@ -5,6 +5,9 @@
 #ifndef CONNECTOR_STATUS
 #define CONNECTOR_STATUS
 
+#include <vector>
+#include <functional>
+
 #include <ArduinoOcpp/Tasks/ChargePointStatus/OcppEvseState.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
@@ -21,7 +24,7 @@ class OcppMessage;
 class ConnectorStatus {
 private:
     OcppModel& context;
-    
+
     const int connectorId;
 
     std::shared_ptr<Configuration<int>> availability {nullptr};
@@ -51,7 +54,7 @@ public:
      * Session: the EV user is authorized and the OCPP transaction can start immediately without
      *          further confirmation by the user or the OCPP backend
      * Transaction: started by "StartTransaction" and stopped by "StopTransaction".
-     * 
+     *
      * A session (between the EV user and the OCPP system) is on of two prerequisites to start a
      * transaction. The other prerequisite is that the EV is properly connected to the EVSE
      * (given by ConnectorPluggedSampler and no error code)

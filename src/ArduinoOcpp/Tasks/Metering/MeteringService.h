@@ -6,6 +6,7 @@
 #define METERINGSERVICE_H
 
 #include <functional>
+#include <vector>
 
 #include <ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.h>
 

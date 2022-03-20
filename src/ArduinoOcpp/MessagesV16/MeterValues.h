@@ -5,6 +5,8 @@
 #ifndef METERVALUES_H
 #define METERVALUES_H
 
+#include <vector>
+
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
 

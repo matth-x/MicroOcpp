@@ -5,6 +5,8 @@
 #ifndef CHARGEPOINTSTATUSSERVICE_H
 #define CHARGEPOINTSTATUSSERVICE_H
 
+#include <vector>
+
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ConnectorStatus.h>
 
 namespace ArduinoOcpp {
@@ -14,7 +16,7 @@ class OcppEngine;
 class ChargePointStatusService {
 private:
     OcppEngine& context;
-    
+
     std::vector<std::unique_ptr<ConnectorStatus>> connectors;
 
     bool booted = false;
@@ -23,7 +25,7 @@ public:
     ChargePointStatusService(OcppEngine& context, unsigned int numConnectors);
 
     ~ChargePointStatusService();
-    
+
     void loop();
 
     void boot();

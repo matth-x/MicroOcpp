@@ -11,6 +11,7 @@
 
 #include <functional>
 #include <memory>
+#include <vector>
 
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 
@@ -26,7 +27,7 @@ class OcppMessage;
 class ConnectorMeterValuesRecorder {
 private:
     OcppModel& context;
-    
+
     const int connectorId;
 
     std::vector<OcppTimestamp> sampleTimestamp;
@@ -35,7 +36,7 @@ private:
     ulong lastSampleTime = 0; //0 means not charging right now
     float lastPower;
     int lastTransactionId = -1;
- 
+
     PowerSampler powerSampler = NULL;
     EnergySampler energySampler = NULL;
 

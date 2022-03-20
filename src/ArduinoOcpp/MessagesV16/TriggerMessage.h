@@ -5,6 +5,8 @@
 #ifndef TRIGGERMESSAGE_H
 #define TRIGGERMESSAGE_H
 
+#include <vector>
+
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
 namespace ArduinoOcpp {

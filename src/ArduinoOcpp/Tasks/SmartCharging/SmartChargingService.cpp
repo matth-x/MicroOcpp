@@ -21,7 +21,7 @@
 
 #define PROFILE_FN_PREFIX "/ocpp-"
 #define PROFILE_FN_SUFFIX ".cnf"
-#define PROFILE_FN_MAXSIZE 30
+#define PROFILE_FN_MAXSIZE 48
 #define PROFILE_CUSTOM_CAPACITY 500
 #define PROFILE_MAX_CAPACITY 4000
 
@@ -29,11 +29,11 @@ using namespace::ArduinoOcpp;
 
 SmartChargingService::SmartChargingService(OcppEngine& context, float chargeLimit, float V_eff, int numConnectors, FilesystemOpt filesystemOpt)
       : context(context), DEFAULT_CHARGE_LIMIT{chargeLimit}, V_eff{V_eff}, filesystemOpt{filesystemOpt} {
-  
+
     if (numConnectors > 2) {
         AO_DBG_ERR("Only one connector supported at the moment");
     }
-    
+
     limitBeforeChange = -1.0f;
     nextChange = MIN_TIME;
     chargingSessionStart = MAX_TIME;
@@ -111,7 +111,7 @@ void SmartChargingService::inferenceLimit(const OcppTimestamp &t, float *limitOu
     OcppTimestamp validToMin = MAX_TIME;
     /*
     * TxProfile rules over TxDefaultProfile. ChargePointMaxProfile rules over both of them
-    * 
+    *
     * if (TxProfile is present)
     *       take limit from TxProfile with the highest stackLevel
     * else
@@ -184,7 +184,7 @@ void SmartChargingService::inferenceLimit(const OcppTimestamp &t, float *limitOu
         //Warning: This block MUST be rewritten when multiple connector support is introduced
         if (applicable_profile_found) {
             if (limit_cpmax < *limitOutParam){
-                //TxProfile or TxDefaultProfile exceeds the maximum for the whole CP 
+                //TxProfile or TxDefaultProfile exceeds the maximum for the whole CP
                 *limitOutParam = limit_cpmax;
             } //else: TxProfile or TxDefaultProfile are within their boundary. Do nothing
         } else {
@@ -270,7 +270,7 @@ ChargingProfile *SmartChargingService::updateProfileStack(JsonObject *json){
             profilePurposeStack = ChargePointMaxProfile;
             break;
     }
-    
+
     if (profilePurposeStack[stackLevel] != NULL){
         delete profilePurposeStack[stackLevel];
     }
@@ -422,7 +422,7 @@ bool SmartChargingService::loadProfiles() {
             if (!USE_FS.exists(fn)) {
                 continue; //There is not a profile on the stack iStack with stacklevel iLevel. Normal case, just continue.
             }
-            
+
             File file = USE_FS.open(fn, "r");
 
             if (file) {
@@ -447,7 +447,7 @@ bool SmartChargingService::loadProfiles() {
                 success = false;
                 continue;
             }
-            
+
             size_t capacity = 2*file_size;
             if (capacity < PROFILE_CUSTOM_CAPACITY)
                 capacity = PROFILE_CUSTOM_CAPACITY;
