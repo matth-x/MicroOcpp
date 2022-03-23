@@ -125,18 +125,6 @@ setOnSetChargingProfileRequest([] (JsonObject payload) {
 
 You can also process the original payload from the CS using the `payload` object.
 
-### Transaction and Session management
-
-In practice, there are a couple of prerequisites for OCPP-transactions. The library abstracts them into two conditions:
-1) The electric connection between the EVSE and EV is established and safe
-2) The user is identified, authorized and shows the intention to charge the vehicle
-
-Your hardware integration is fully responsible for Condition (1). To make the OCPP library aware about the safe connection, set a callback function with `setConnectorPluggedSampler(std::function<bool()> connectorPlugged)`. Condition (2) is handled by both the hardware integration and the OCPP library. To make the library aware about Condition (2) use the functions `beginSession(const char *idTag)` and `endSession()`. Note that internally, the OCPP library uses the same functions if it receives a `RemoteStartTransaction` request, or stops a transaction for any reason.
-
-In return, the function `bool ocppPermitsCharge()` notifies your hardware implementation if the OCPP transaction is engaged and the EVSE can charge the EV ultimately.
-
-Alternatively, you can manage OCPP transactions by yourself using `startTransaction(const char *idTag)` and `stopTransaction()`.
-
 *To get started quickly with or without EVSE hardware, you can flash the sketch in `examples/SECC` onto your ESP. That example mimics a full OCPP communications controller as it would look like in a real charging station. You can build a charger prototype based on that example or just view the internal state using the device monitor.*
 
 ## Dependencies
