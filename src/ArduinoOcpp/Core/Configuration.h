@@ -9,6 +9,9 @@
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
 #include <ArduinoOcpp/Core/ConfigurationContainerFlash.h>
 
+#include <memory>
+#include <vector>
+
 #define CONFIGURATION_FN "/arduino-ocpp.cnf"
 #define CONFIGURATION_VOLATILE "/volatile"
 

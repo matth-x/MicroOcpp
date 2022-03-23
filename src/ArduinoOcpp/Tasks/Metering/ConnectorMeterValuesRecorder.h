@@ -11,6 +11,7 @@
 
 #include <functional>
 #include <memory>
+#include <vector>
 
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 

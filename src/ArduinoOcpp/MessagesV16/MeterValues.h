@@ -8,6 +8,8 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
 
+#include <vector>
+
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 

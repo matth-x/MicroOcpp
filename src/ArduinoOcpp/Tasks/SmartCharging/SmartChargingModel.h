@@ -8,6 +8,7 @@
 #include <ArduinoJson.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
 #include <memory>
+#include <vector>
 
 namespace ArduinoOcpp {
 

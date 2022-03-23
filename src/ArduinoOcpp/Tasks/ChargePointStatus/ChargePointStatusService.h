@@ -7,6 +7,8 @@
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ConnectorStatus.h>
 
+#include <vector>
+
 namespace ArduinoOcpp {
 
 class OcppEngine;

@@ -6,6 +6,7 @@
 #define OCPP_OPERATION_CALLBACKS
 
 #include <ArduinoJson.h>
+#include <functional>
 
 #include <ArduinoOcpp/Core/OcppOperationTimeout.h>
 

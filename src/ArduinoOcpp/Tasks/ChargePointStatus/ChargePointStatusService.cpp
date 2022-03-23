@@ -9,6 +9,7 @@
 
 #include <ArduinoOcpp/Debug.h>
 
+#include <memory>
 #include <string.h>
 
 using namespace ArduinoOcpp;

@@ -7,6 +7,7 @@
 
 #include <ArduinoJson.h>
 #include <memory>
+#include <functional>
 
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
 #include <ArduinoOcpp/Core/OcppTime.h>

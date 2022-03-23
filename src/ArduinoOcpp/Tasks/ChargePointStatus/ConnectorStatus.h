@@ -9,6 +9,10 @@
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
+#include <vector>
+#include <functional>
+#include <memory>
+
 #define AVAILABILITY_OPERATIVE 2
 #define AVAILABILITY_INOPERATIVE_SCHEDULED 1
 #define AVAILABILITY_INOPERATIVE 0
