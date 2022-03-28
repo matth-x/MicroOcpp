@@ -17,7 +17,7 @@ using namespace ArduinoOcpp;
 ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned int numConn)
       : context(context) {
 
-    for (int i = 0; i < numConn; i++) {
+    for (unsigned int i = 0; i < numConn; i++) {
         connectors.push_back(std::unique_ptr<ConnectorStatus>(new ConnectorStatus(context.getOcppModel(), i)));
     }
 
@@ -61,7 +61,7 @@ void ChargePointStatusService::loop() {
 }
 
 ConnectorStatus *ChargePointStatusService::getConnector(int connectorId) {
-    if (connectorId < 0 || connectorId >= connectors.size()) {
+    if (connectorId < 0 || connectorId >= (int) connectors.size()) {
         AO_DBG_ERR("connectorId is out of bounds");
         return nullptr;
     }

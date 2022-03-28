@@ -25,8 +25,8 @@ void Reset::processReq(JsonObject payload) {
 
     if (ocppModel && ocppModel->getChargePointStatusService()) {
         auto cpsService = ocppModel->getChargePointStatusService();
-        unsigned int connId = 0;
-        for (unsigned int i = 0; i < cpsService->getNumConnectors(); i++) {
+        int connId = 0;
+        for (int i = 0; i < cpsService->getNumConnectors(); i++) {
             auto connector = cpsService->getConnector(connId);
             if (connector) {
                 connector->endSession();

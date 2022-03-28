@@ -15,8 +15,8 @@ ESP8266WiFiMulti WiFiMulti;
 
 #include <ArduinoOcpp.h>
 
-#define STASSID "YOUR_WLAN_SSID"
-#define STAPSK  "YOUR_WLAN_PW"
+#define STASSID "YOUR_WIFI_SSID"
+#define STAPSK  "YOUR_WIFI_PW"
 
 #define OCPP_HOST "echo.websocket.events"
 #define OCPP_PORT 80
@@ -110,19 +110,30 @@ void loop() {
      * Detect if something physical happened at your EVSE and trigger the corresponding OCPP messages
      */
     if (/* RFID chip detected? */ false) {
-        const char *idTag = "my-id-tag"; //e.g. idTag = RFID.readIdTag();
-        authorize(idTag);
+        const char *idTag = "0123456789abcd"; //e.g. idTag = RFID.readIdTag();
+        authorize(idTag, [] (JsonObject response) {
+            //check if user with idTag is authorized
+            if (!strcmp("Accepted", response["idTagInfo"]["status"] | "Invalid")){
+                Serial.println(F("[main] User is authorized to start charging"));
+            } else {
+                Serial.printf("[main] Authorize denied. Reason: %s\n", response["idTagInfo"]["status"] | "");
+            }
+        });
+        Serial.printf("[main] Authorizing user with idTag %s\n", idTag);
     }
     
-    if (/* EV plugged in? */ false) {
-        startTransaction("my-id-tag", [] (JsonObject payload) {
+    if (/* EV plugged in and user authorized? */ false) {
+        const char *idTag = "0123456789abcd"; //e.g. authorized idTag from above
+        startTransaction(idTag, [] (JsonObject response) {
             //Callback: Central System has answered. Could flash a confirmation light here.
-            Serial.print(F("[main] Started OCPP transaction\n"));
+            Serial.printf("[main] Started OCPP transaction. Status: %s, transactionId: %u\n",
+                    response["idTagInfo"]["status"] | "Invalid",
+                    response["transactionId"] | -1);
         });
     }
     
     if (/* EV unplugged? */ false) {
-        stopTransaction([] (JsonObject payload) {
+        stopTransaction([] (JsonObject response) {
             //Callback: Central System has answered.
             Serial.print(F("[main] Stopped OCPP transaction\n"));
         });

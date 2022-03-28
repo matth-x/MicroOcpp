@@ -19,7 +19,7 @@ MeteringService::MeteringService(OcppEngine& context, int numConn)
 
 void MeteringService::loop(){
 
-    for (int i = 0; i < connectors.size(); i++){
+    for (unsigned int i = 0; i < connectors.size(); i++){
         auto meterValuesMsg = connectors[i]->loop();
         if (meterValuesMsg != nullptr) {
             auto meterValues = makeOcppOperation(meterValuesMsg);
@@ -30,7 +30,7 @@ void MeteringService::loop(){
 }
 
 void MeteringService::setPowerSampler(int connectorId, PowerSampler ps){
-    if (connectorId < 0 || connectorId >= connectors.size()) {
+    if (connectorId < 0 || connectorId >= (int) connectors.size()) {
         AO_DBG_ERR("connectorId is out of bounds");
         return;
     }
@@ -38,7 +38,7 @@ void MeteringService::setPowerSampler(int connectorId, PowerSampler ps){
 }
 
 void MeteringService::setEnergySampler(int connectorId, EnergySampler es){
-    if (connectorId < 0 || connectorId >= connectors.size()) {
+    if (connectorId < 0 || connectorId >= (int) connectors.size()) {
         AO_DBG_ERR("connectorId is out of bounds");
         return;
     }
@@ -46,7 +46,7 @@ void MeteringService::setEnergySampler(int connectorId, EnergySampler es){
 }
 
 float MeteringService::readEnergyActiveImportRegister(int connectorId) {
-    if (connectorId < 0 || connectorId >= connectors.size()) {
+    if (connectorId < 0 || connectorId >= (int) connectors.size()) {
         AO_DBG_ERR("connectorId is out of bounds");
         return 0.f;
     }
@@ -54,7 +54,7 @@ float MeteringService::readEnergyActiveImportRegister(int connectorId) {
 }
 
 std::unique_ptr<OcppOperation> MeteringService::takeMeterValuesNow(int connectorId) {
-    if (connectorId < 0 || connectorId >= connectors.size()) {
+    if (connectorId < 0 || connectorId >= (int) connectors.size()) {
         AO_DBG_ERR("connectorId out of bounds. Ignore");
         return nullptr;
     }
