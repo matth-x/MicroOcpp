@@ -43,7 +43,9 @@
         "include":
         [
             "src/*",
-            "examples/*",
+            "examples/ESP/*",
+            "examples/ESP-TLS/*",
+            "examples/SECC/*",
             "platformio.ini",
             "library.json",
             "README.md",
@@ -53,7 +55,6 @@
         [
             "src/sdkconfig*",
             "examples/SECC/WiFiManager*",
-            "examples/CompatibilityTest",
             "src/main.cpp"
         ]
     },
@@ -62,6 +63,13 @@
       {
           "name": "Basic OCPP connection",
           "base": "examples/ESP",
+          "files": [
+              "main.cpp"
+          ]
+      },
+      {
+          "name": "OCPP Security Profile 2",
+          "base": "examples/ESP-TLS",
           "files": [
               "main.cpp"
           ]
