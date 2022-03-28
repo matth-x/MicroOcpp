@@ -13,9 +13,9 @@ Full compatibility with the Arduino platform. Need a **FreeRTOS** version? Pleas
 
 You can build an OCPP Charge Point controller using the popular, Wi-Fi enabled microcontrollers ESP8266, ESP32 and comparable. This library allows your EVSE to communicate with an OCPP Central System and to participate in your Charging Network.
 
-:heavy_check_mark: Works with [SteVe](https://github.com/RWTH-i5-IDSG/steve)
+:heavy_check_mark: Works with [SteVe](https://github.com/RWTH-i5-IDSG/steve) and [The Mobility House OCPP package](https://github.com/mobilityhouse/ocpp)
 
-:heavy_check_mark: Tested with two further (proprietary) central systems
+:heavy_check_mark: Passed compatibility tests with further commercial Central Systems
 
 :heavy_check_mark: Integrated and tested in many charging stations
 
@@ -23,7 +23,7 @@ You can build an OCPP Charge Point controller using the popular, Wi-Fi enabled m
 
 - handles the OCPP communication with the charging network
 - implements the standard OCPP charging process
-- provides an API for the integration of the hardware modules of your PCB
+- provides an API for the integration of the hardware modules of your EVSE
 - works with any TLS implementation and WebSocket library. E.g.
    - Arduino networking stack: [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets), or
    - generic embedded systems: [Mongoose Networking Library](https://github.com/cesanta/mongoose)
