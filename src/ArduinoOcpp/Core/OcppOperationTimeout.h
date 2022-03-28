@@ -7,6 +7,8 @@
 
 #include <functional>
 
+#include <sys/types.h>
+
 namespace ArduinoOcpp {
 
 using OnTimeoutListener = std::function<void()>;
