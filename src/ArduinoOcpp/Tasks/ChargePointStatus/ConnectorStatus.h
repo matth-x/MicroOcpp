@@ -45,7 +45,12 @@ private:
     std::function<bool()> connectorEnergizedSampler {nullptr};
     std::vector<std::function<const char *()>> connectorErrorCodeSamplers;
     const char *getErrorCode();
+
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
+    std::shared_ptr<Configuration<int>> minimumStatusDuration {nullptr}; //in seconds
+    OcppEvseState reportedStatus = OcppEvseState::NOT_SET;
+    ulong t_statusTransition = 0;
+
     std::function<bool()> onUnlockConnector {nullptr};
 public:
     ConnectorStatus(OcppModel& context, int connectorId);

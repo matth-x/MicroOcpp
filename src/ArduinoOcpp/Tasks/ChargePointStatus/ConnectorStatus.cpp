@@ -34,6 +34,8 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
     availability = declareConfiguration<int>(key, AVAILABILITY_OPERATIVE, CONFIGURATION_FN, false, false, true, false);
 
     connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN, true, true, true, false);
+    minimumStatusDuration = declareConfiguration<int>("MinimumStatusDuration", 0, CONFIGURATION_FN, true, true, true, false);
+
     if (!sIdTag || !transactionId || !availability) {
         AO_DBG_ERR("Cannot declare sessionIdTag, transactionId or availability");
     }
@@ -160,12 +162,18 @@ OcppMessage *ConnectorStatus::loop() {
     
     if (inferencedStatus != currentStatus) {
         currentStatus = inferencedStatus;
-        AO_DBG_DEBUG("Status changed");
+        t_statusTransition = ao_tick_ms();
+        AO_DBG_DEBUG("Status changed%s", *minimumStatusDuration > 0 ? ", will report delayed", "");
+    }
 
-        //fire StatusNotification
-        //TODO check for online condition: Only inform CS about status change if CP is online
-        //TODO check for too short duration condition: Only inform CS about status change if it lasted for longer than MinimumStatusDuration
-        return new StatusNotification(connectorId, currentStatus, context.getOcppTime().getOcppTimestampNow(), getErrorCode());
+    if (reportedStatus != currentStatus &&
+            (*minimumStatusDuration <= 0 || //MinimumStatusDuration disabled
+            ao_tick_ms() - t_statusTransition >= ((ulong) *minimumStatusDuration) * 1000UL)) {
+        reportedStatus = currentStatus;
+        OcppTimestamp reportedTimestamp = context.getOcppTime().getOcppTimestampNow();
+        reportedTimestamp -= (ao_tick_ms() - t_statusTransition) / 1000UL;
+
+        return new StatusNotification(connectorId, reportedStatus, reportedTimestamp, getErrorCode());
     }
 
     return nullptr;
