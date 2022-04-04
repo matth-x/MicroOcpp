@@ -32,30 +32,22 @@ For simple chargers, the necessary hardware and internet integration is usually 
 
 ## Usage guide
 
-Please take `examples/ESP/main.cpp` as the starting point for your first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. In this guide, I give a brief overview of the key concepts.
+Please take `examples/ESP/main.cpp` as the starting point for your first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. This guide explains the concepts for a minimal integration.
 
-- To get the library running, you have to install all dependencies (see the list below).
+- To get the library running, you have to install all dependencies (see the list below). In case you use PlatformIO, you can just add `matth-x/ArduinoOcpp` to your project using the PIO library manager.
 
-   - In case you use PlatformIO, you can just add `matth-x/ArduinoOcpp` to your project using the PIO library manager.
-
-- In your project's `main` file, include `ArduinoOcpp.h`. This gives you a simple access to all functions.
+- In your project's `main` file, include `ArduinoOcpp.h`.
 
 - Before establishing an OCPP connection you have to ensure that your device has access to a Wi-Fi access point. All debug messages are printed on the standard serial (i.e. `Serial.print("debug msg")`). To redirect debug messages, please refer to `src/ArduinoOcpp/Platform.h`.
 
 - To connect to your OCPP Central System, call `OCPP_initialize(String OCPP_HOST, uint16_t OCPP_PORT, String OCPP_URL)`. You need to insert the address parameters according to the configuration of your central system. Internally, the library passes these parameters to the WebSocket object without further alteration.
-   - To secure the connection with TLS, you have to configure the WebSocket. Please take `examples/SECC/main.cpp` as an example.
+   - To secure the connection with TLS, you have to configure the WebSocket. Please take `examples/ESP-TLS/main.cpp` as an example.
 
-- In your `setup()` function, you can add the configuration functions from `ArduinoOcpp.h` to properly integrate your hardware. All configuration functions are documented in `ArduinoOcpp.h`. For example, to integrate the energy meter of your EVSE, add
-
-```cpp
-setEnergyActiveImportSampler([]() {
-    return yourEVSE_readEnergyMeter();
-});
-```
+- In your `setup()` function, you can add the configuration functions from `ArduinoOcpp.h` to properly integrate your hardware. For example, the library needs access to the energy meter. All configuration functions are documented in `ArduinoOcpp.h`.
 
 - Add `OCPP_loop()` to your `loop()` function.
 
-### Sending OCPP operations
+**Sending OCPP operations**
 
 There are a couple of OCPP operations you can initialize on your EVSE. For example, to send a `Boot Notification`, use the function 
 ```cpp
@@ -84,36 +76,7 @@ void setup() {
 
 The parameters `chargePointModel` and `chargePointVendor` are equivalent to the parameters in the `Boot Notification` as defined by the OCPP specification. The last parameter `OnReceiveConfListener onConf` is a callback function which the library executes when the central system has processed the operation and the ESP has received the `.conf()` response. Here you can add your device-specific behavior, e.g. flash a confirmation LED or unlock the connectors. If you don't need it, the last parameter is optional.
 
-For your first EVSE integration, the `onReceiveConfListener` is probably sufficient. For advanced EVSE projects, the other listeners likely become relevant:
-  
-- `onAbortListener`: will be called whenever the engine stops trying to finish an operation normally which was initiated by this device.
-
-- `onTimeoutListener`: will be executed when the operation is not answered until the timeout expires. Note that timeouts also trigger the `onAbortListener`.
-
-- `onReceiveErrorListener`: will be called when the Central System returns a CallError. Again, each error also triggers the `onAbortListener`.
-  
-The following example shows the correct usage of all listeners.
-
-```cpp
-authorize(idTag, [](JsonObject conf) { 
-    //onReceiveConfListener (optional but very likely necessary for your integration)
-    successfullyAuthorized = true; //example client code
-    ... //further client code, e.g. beginSession(idTag);
-}, []() { 
-    //onAbortListener (optional)
-    Serial.print(F("[EVSE] Could not authorize charging session. Aborted\n")); //flash error light etc.
-}, []() { 
-    //onTimeoutListener (optional)
-    Serial.print(F("[EVSE] Could not authorize charging session. Reason: timeout\n"));
-}, [](const char *code, const char *description, JsonObject details) { 
-    //onReceiveErrorListener (optional)
-    Serial.print(F("[EVSE] Could not authorize charging session. Reason: received OCPP error: "));
-    Serial.println(code);
-});
-
-```
-
-### Receiving OCPP operations
+**Receiving OCPP operations**
 
 The library also reacts on CS-initiated operations. You can add your own behavior there too. For example, to flash a LED on receipt of a `Set Charging Profile` request, use the following function.
 

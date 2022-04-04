@@ -106,6 +106,15 @@ void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq); //alternative: sta
  * "OnReceiveConfListener onConf" and passes the OCPP payload to it. The following functions
  * are non-blocking. Your application code will immediately resume with the subsequent code
  * in any case.
+ * 
+ * For your first EVSE integration, the `onReceiveConfListener` is probably sufficient. For
+ * advanced EVSE projects, the other listeners likely become relevant:
+ * - `onAbortListener`: will be called whenever the engine stops trying to finish an operation
+ *           normally which was initiated by this device.
+ * - `onTimeoutListener`: will be executed when the operation is not answered until the timeout
+ *           expires. Note that timeouts also trigger the `onAbortListener`.
+ * - `onReceiveErrorListener`: will be called when the Central System returns a CallError.
+ *           Again, each error also triggers the `onAbortListener`.
  */
 
 void authorize(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
