@@ -9,14 +9,6 @@
 #include <vector>
 #include <ArduinoJson.h>
 
-#if defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
-#include <LITTLEFS.h>
-#define USE_FS LITTLEFS
-#else
-#include <FS.h>
-#define USE_FS SPIFFS
-#endif
-
 #define KEY_MAXLEN 60
 #define STRING_VAL_MAXLEN 2000 //allow TLS certificates in ...
 

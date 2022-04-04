@@ -31,7 +31,7 @@ private:
     OnTimeoutListener onTimeoutListener = [] () {};
     OnReceiveErrorListener onReceiveErrorListener = [] (const char *code, const char *description, JsonObject details) {};
     OnAbortListener onAbortListener = [] () {};
-    boolean reqExecuted = false;
+    bool reqExecuted = false;
 
     std::unique_ptr<Timeout> timeout{new OfflineSensitiveTimeout(40000)};
 
@@ -67,7 +67,7 @@ public:
      * the operation is completed (for example when conf() has been called), return true. When the operation is still pending, return
      * false.
      */
-    boolean sendReq(OcppSocket& ocppSocket);
+    bool sendReq(OcppSocket& ocppSocket);
 
    /**
     * Decides if message belongs to this operation instance and if yes, proccesses it. For example, multiple instances of an
@@ -75,28 +75,28 @@ public:
     * 
     * Returns true if JSON object has been consumed, false otherwise.
     */
-    boolean receiveConf(JsonDocument& json);
+    bool receiveConf(JsonDocument& json);
 
     /**
     * Decides if message belongs to this operation instance and if yes, notifies the OcppMessage object about the CallError.
     * 
     * Returns true if JSON object has been consumed, false otherwise.
     */
-    boolean receiveError(JsonDocument& json);
+    bool receiveError(JsonDocument& json);
 
     /**
      * Processes the request in the JSON document. Returns true on success, false on error.
      * 
      * Returns false if the request doesn't belong to the corresponding operation instance
      */
-    boolean receiveReq(JsonDocument& json);
+    bool receiveReq(JsonDocument& json);
 
     /**
      * After processing a request sent by the communication counterpart, this function sends a confirmation
      * message. Returns true on success, false otherwise. Returns also true if a CallError has successfully
      * been sent
      */
-    boolean sendConf(OcppSocket& ocppSocket);
+    bool sendConf(OcppSocket& ocppSocket);
 
     void setInitiated();
 
@@ -126,7 +126,7 @@ public:
      */
     void setOnAbortListener(OnAbortListener onAbort);
 
-    boolean isFullyConfigured();
+    bool isFullyConfigured();
 
     void print_debug();
 };

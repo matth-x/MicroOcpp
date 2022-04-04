@@ -37,7 +37,7 @@ float voltage_eff {230.f};
 #define OCPP_NUMCONNECTORS 2
 #define OCPP_ID_OF_CONNECTOR 1
 #define OCPP_ID_OF_CP 0
-boolean OCPP_booted = false; //if BootNotification succeeded
+bool OCPP_booted = false; //if BootNotification succeeded
 
 } //end namespace ArduinoOcpp::Facade
 } //end namespace ArduinoOcpp
@@ -137,7 +137,7 @@ void OCPP_deinitialize() {
 void OCPP_loop() {
     if (!ocppEngine) {
         AO_DBG_WARN("Please call OCPP_initialize before");
-        delay(200); //Prevent this message from flooding the Serial monitor.
+        //delay(200); //Prevent this message from flooding the Serial monitor.
         return;
     }
 

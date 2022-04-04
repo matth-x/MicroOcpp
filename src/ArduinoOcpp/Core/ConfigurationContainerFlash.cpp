@@ -11,12 +11,14 @@
 #define USE_FS SPIFFS
 #endif
 
+#ifndef AO_DEACTIVATE_FLASH
 #if USE_FS == LITTLEFS
 #include <LITTLEFS.h>
 #elif USE_FS == SPIFFS
 #include <FS.h>
 #else
 #error "FS not supported"
+#endif
 #endif
 
 #define MAX_FILE_SIZE 4000

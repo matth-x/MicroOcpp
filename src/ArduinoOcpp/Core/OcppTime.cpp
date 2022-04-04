@@ -4,6 +4,7 @@
 
 #include <ArduinoOcpp/Core/OcppTime.h>
 #include <ArduinoOcpp/Platform.h>
+#include <string.h>
 
 namespace ArduinoOcpp {
 

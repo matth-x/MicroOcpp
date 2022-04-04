@@ -73,7 +73,7 @@ const std::string *OcppOperation::getMessageID() {
     return &messageID;
 }
 
-boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
+bool OcppOperation::sendReq(OcppSocket& ocppSocket){
 
     /*
      * timeout behaviour
@@ -151,7 +151,7 @@ boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
     return false;
 }
 
-boolean OcppOperation::receiveConf(JsonDocument& confJson){
+bool OcppOperation::receiveConf(JsonDocument& confJson){
     /*
      * check if messageIDs match. If yes, continue with this function. If not, return false for message not consumed
      */
@@ -176,7 +176,7 @@ boolean OcppOperation::receiveConf(JsonDocument& confJson){
     return true;
 }
 
-boolean OcppOperation::receiveError(JsonDocument& confJson){
+bool OcppOperation::receiveError(JsonDocument& confJson){
     /*
      * check if messageIDs match. If yes, continue with this function. If not, return false for message not consumed
      */
@@ -205,7 +205,7 @@ boolean OcppOperation::receiveError(JsonDocument& confJson){
     return abortOperation;
 }
 
-boolean OcppOperation::receiveReq(JsonDocument& reqJson){
+bool OcppOperation::receiveReq(JsonDocument& reqJson){
   
     std::string reqId = reqJson[1];
     setMessageID(reqId);
@@ -229,7 +229,7 @@ boolean OcppOperation::receiveReq(JsonDocument& reqJson){
     return true; //true because everything was successful. If there will be an error check in future, this value becomes more reasonable
 }
 
-boolean OcppOperation::sendConf(OcppSocket& ocppSocket){
+bool OcppOperation::sendConf(OcppSocket& ocppSocket){
 
     if (!reqExecuted) {
         //wait until req has been executed
@@ -290,7 +290,7 @@ boolean OcppOperation::sendConf(OcppSocket& ocppSocket){
      */
     std::string out {};
     serializeJson(*confJson, out);
-    boolean wsSuccess = ocppSocket.sendTXT(out);
+    bool wsSuccess = ocppSocket.sendTXT(out);
 
     if (wsSuccess) {
         if (operationSuccess) {
@@ -346,7 +346,7 @@ void OcppOperation::setOnAbortListener(OnAbortListener onAbort) {
         onAbortListener = onAbort;
 }
 
-boolean OcppOperation::isFullyConfigured(){
+bool OcppOperation::isFullyConfigured(){
     return ocppMessage != nullptr;
 }
 

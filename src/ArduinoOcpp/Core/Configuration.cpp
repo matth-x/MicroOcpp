@@ -7,15 +7,8 @@
 
 #include <string.h>
 #include <vector>
+#include <algorithm>
 #include <ArduinoJson.h>
-
-#if defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
-#include <LITTLEFS.h>
-#define USE_FS LITTLEFS
-#else
-#include <FS.h>
-#define USE_FS SPIFFS
-#endif
 
 namespace ArduinoOcpp {
 

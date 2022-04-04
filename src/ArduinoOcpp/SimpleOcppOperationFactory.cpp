@@ -31,7 +31,7 @@
 #include <ArduinoOcpp/Debug.h>
 
 #include <string.h>
-
+#include <algorithm>
 #include <vector>
 
 namespace ArduinoOcpp {

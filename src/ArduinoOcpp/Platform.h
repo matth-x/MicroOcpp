@@ -5,6 +5,8 @@
 #ifndef AO_PLATFORM_H
 #define AO_PLATFORM_H
 
+#include <ao_opts.h>
+
 #ifdef AO_CUSTOM_CONSOLE
 
 #ifndef AO_CUSTOM_CONSOLE_MAXMSGSIZE

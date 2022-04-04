@@ -9,12 +9,14 @@
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
 
-#if defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
+#ifndef AO_DEACTIVATE_FLASH
+#if defined(ESP32)
 #include <LITTLEFS.h>
 #define USE_FS LITTLEFS
 #else
 #include <FS.h>
 #define USE_FS SPIFFS
+#endif
 #endif
 
 #define SINGLE_CONNECTOR_ID 1
