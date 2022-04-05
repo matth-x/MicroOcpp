@@ -34,6 +34,10 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
     availability = declareConfiguration<int>(key, AVAILABILITY_OPERATIVE, CONFIGURATION_FN, false, false, true, false);
 
     connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN, true, true, true, false);
+    minimumStatusDuration = declareConfiguration<int>("MinimumStatusDuration", 0, CONFIGURATION_FN, true, true, true, false);
+    stopTransactionOnInvalidId = declareConfiguration<const char*>("StopTransactionOnInvalidId", "true", CONFIGURATION_FN, true, true, false, false);
+    stopTransactionOnEVSideDisconnect = declareConfiguration<const char*>("StopTransactionOnEVSideDisconnect", "true", CONFIGURATION_FN, true, true, false, false);
+
     if (!sIdTag || !transactionId || !availability) {
         AO_DBG_ERR("Cannot declare sessionIdTag, transactionId or availability");
     }
@@ -87,11 +91,12 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
         return OcppEvseState::Preparing;
     } else {
         //Transaction is currently running
+        if ((connectorEnergizedSampler && !connectorEnergizedSampler()) ||
+                idTagInvalidated) {
+            return OcppEvseState::SuspendedEVSE;
+        }
         if (evRequestsEnergySampler && !evRequestsEnergySampler()) {
             return OcppEvseState::SuspendedEV;
-        }
-        if (connectorEnergizedSampler && !connectorEnergizedSampler()) {
-            return OcppEvseState::SuspendedEVSE;
         }
         return OcppEvseState::Charging;
     }
@@ -100,6 +105,10 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
 bool ConnectorStatus::ocppPermitsCharge() {
     if (connectorId == 0) {
         AO_DBG_WARN("not supported for connectorId == 0");
+        return false;
+    }
+
+    if (idTagInvalidated) {
         return false;
     }
 
@@ -115,6 +124,14 @@ OcppMessage *ConnectorStatus::loop() {
         *availability = AVAILABILITY_INOPERATIVE;
         saveState();
     }
+        
+    if (connectorPluggedSampler) {
+        if (getTransactionId() >= 0 && !connectorPluggedSampler()) {
+            if (!*stopTransactionOnEVSideDisconnect || strcmp(*stopTransactionOnEVSideDisconnect, "false")) {
+                endSession("EVDisconnected");
+            }
+        }
+    }
 
     /*
      * Check conditions for start or stop transaction
@@ -122,12 +139,11 @@ OcppMessage *ConnectorStatus::loop() {
     if (connectorPluggedSampler) { //only supported with connectorPluggedSampler
         if (getTransactionId() >= 0) {
             //check condition for StopTransaction
-            if (!connectorPluggedSampler() ||
-                    !session) {
+            if (!session) {
                 AO_DBG_DEBUG("Session mngt: txId=%i, connectorPlugged=%d, session=%d",
                         getTransactionId(), connectorPluggedSampler(), session);
                 AO_DBG_INFO("Session mngt: trigger StopTransaction");
-                return new StopTransaction(connectorId);
+                return new StopTransaction(connectorId, endReason[0] != '\0' ? endReason : nullptr);
             }
         } else {
             //check condition for StartTransaction
@@ -160,12 +176,18 @@ OcppMessage *ConnectorStatus::loop() {
     
     if (inferencedStatus != currentStatus) {
         currentStatus = inferencedStatus;
-        AO_DBG_DEBUG("Status changed");
+        t_statusTransition = ao_tick_ms();
+        AO_DBG_DEBUG("Status changed%s", *minimumStatusDuration ? ", will report delayed" : "");
+    }
 
-        //fire StatusNotification
-        //TODO check for online condition: Only inform CS about status change if CP is online
-        //TODO check for too short duration condition: Only inform CS about status change if it lasted for longer than MinimumStatusDuration
-        return new StatusNotification(connectorId, currentStatus, context.getOcppTime().getOcppTimestampNow(), getErrorCode());
+    if (reportedStatus != currentStatus &&
+            (*minimumStatusDuration <= 0 || //MinimumStatusDuration disabled
+            ao_tick_ms() - t_statusTransition >= ((ulong) *minimumStatusDuration) * 1000UL)) {
+        reportedStatus = currentStatus;
+        OcppTimestamp reportedTimestamp = context.getOcppTime().getOcppTimestampNow();
+        reportedTimestamp -= (ao_tick_ms() - t_statusTransition) / 1000UL;
+
+        return new StatusNotification(connectorId, reportedStatus, reportedTimestamp, getErrorCode());
     }
 
     return nullptr;
@@ -192,13 +214,18 @@ void ConnectorStatus::beginSession(const char *sessionIdTag) {
     sIdTag->setValue(idTag, IDTAG_LEN_MAX + 1);
     saveState();
     session = true;
+    idTagInvalidated = false;
+
+    memset(endReason, '\0', REASON_LEN_MAX + 1);
 
     connectionTimeOutListen = true;
     connectionTimeOutTimestamp = ao_tick_ms();
 }
 
-void ConnectorStatus::endSession() {
-    AO_DBG_DEBUG("End session with idTag %s", idTag);
+void ConnectorStatus::endSession(const char *reason) {
+    AO_DBG_DEBUG("End session with idTag %s for reason %s, %s previous reason",
+                            idTag, reason ? reason : "undefined",
+                            endReason[0] == '\0' ? "no" : "overruled by");
     if (session) {
         memset(idTag, '\0', IDTAG_LEN_MAX + 1);
         *sIdTag = "";
@@ -206,7 +233,22 @@ void ConnectorStatus::endSession() {
     }
     session = false;
 
+    if (reason && endReason[0] == '\0') {
+        snprintf(endReason, REASON_LEN_MAX + 1, "%s", reason);
+    }
+
     connectionTimeOutListen = false;
+}
+
+void ConnectorStatus::setIdTagInvalidated() {
+    if (session) {
+        idTagInvalidated = true;
+        if (!*stopTransactionOnInvalidId || strcmp(*stopTransactionOnInvalidId, "false")) {
+            endSession("DeAuthorized");
+        }
+    } else {
+        AO_DBG_WARN("Cannot invalidate IdTag outside of session");
+    }
 }
 
 const char *ConnectorStatus::getSessionIdTag() {

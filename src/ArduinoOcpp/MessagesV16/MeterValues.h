@@ -9,6 +9,8 @@
 #include <ArduinoOcpp/Core/OcppTime.h>
 #include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
 
+#include <vector>
+
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 

@@ -10,8 +10,10 @@
 
 using ArduinoOcpp::Ocpp16::StopTransaction;
 
-StopTransaction::StopTransaction(int connectorId) : connectorId(connectorId) {
-
+StopTransaction::StopTransaction(int connectorId, const char *reason) : connectorId(connectorId) {
+    if (reason) {
+        snprintf(this->reason, REASON_LEN_MAX, "%s", reason);
+    }
 }
 
 const char* StopTransaction::getOcppOperationType(){
@@ -44,7 +46,7 @@ void StopTransaction::initiate() {
 }
 
 std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1)));
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(5) + (JSONDATE_LENGTH + 1) + (REASON_LEN_MAX + 1)));
     JsonObject payload = doc->to<JsonObject>();
 
     if (meterStop >= 0)
@@ -59,6 +61,10 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
     if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
         auto connector = ocppModel->getConnectorStatus(connectorId);
         payload["transactionId"] = connector->getTransactionIdSync();
+    }
+
+    if (reason[0] != '\0') {
+        payload["reason"] = reason;
     }
 
     return doc;

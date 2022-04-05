@@ -6,6 +6,7 @@
 #define HEARTBEATSERVICE_H
 
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
+#include <memory>
 
 namespace ArduinoOcpp {
 

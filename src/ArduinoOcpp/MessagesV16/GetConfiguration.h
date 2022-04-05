@@ -7,6 +7,8 @@
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
+#include <vector>
+
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 

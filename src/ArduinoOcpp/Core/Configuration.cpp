@@ -100,7 +100,7 @@ std::shared_ptr<Configuration<T>> declareConfiguration(const char *key, T defaul
     std::shared_ptr<ConfigurationContainer> container = getContainer(filename);
     
     if (!container) {
-        AO_DBG_INFO("init new configurations container on flash filesystem: %s", filename);
+        AO_DBG_INFO("init new configurations container: %s", filename);
 
         container = createConfigurationContainer(filename);
         configurationContainers.push_back(container);

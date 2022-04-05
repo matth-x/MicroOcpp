@@ -7,6 +7,7 @@
 
 #include <ArduinoOcpp/Core/OcppConnection.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
+#include <memory>
 
 namespace ArduinoOcpp {
 

@@ -21,7 +21,7 @@ StartTransaction::StartTransaction(int connectorId, const char *idTag) : connect
         AO_DBG_ERR("Format violation");
 }
 
-const char* StartTransaction::getOcppOperationType(){
+const char* StartTransaction::getOcppOperationType() {
     return "StartTransaction";
 }
 
@@ -95,17 +95,18 @@ void StartTransaction::processConf(JsonObject payload) {
     if (ocppModel)
         connector = ocppModel->getConnectorStatus(connectorId);
     
-    if (connector){
+    if (connector) {
         if (transactionRev == connector->getTransactionWriteCount()) {
-            
+
             if (!strcmp(idTagInfoStatus, "Accepted")) {
                 AO_DBG_INFO("Request has been accepted");
-                connector->setTransactionId(transactionId);
             } else {
                 AO_DBG_INFO("Request has been denied. Reason: %s", idTagInfoStatus);
-                //connector->setTransactionId(-1);
-                connector->endSession(); //something is wrong with the idTag. Abort session
+                AO_DBG_DEBUG("Set txId despite rejection");
+                connector->setIdTagInvalidated();
             }
+            
+            connector->setTransactionId(transactionId);
         }
         connector->setTransactionIdSync(transactionId);
 
@@ -123,7 +124,7 @@ void StartTransaction::processReq(JsonObject payload) {
 
 }
 
-std::unique_ptr<DynamicJsonDocument> StartTransaction::createConf(){
+std::unique_ptr<DynamicJsonDocument> StartTransaction::createConf() {
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2)));
     JsonObject payload = doc->to<JsonObject>();
 

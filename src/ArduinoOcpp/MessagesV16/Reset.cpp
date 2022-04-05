@@ -21,15 +21,15 @@ void Reset::processReq(JsonObject payload) {
      * Process the application data here. Note: you have to implement the device reset procedure in your client code. You have to set
      * a onSendConfListener in which you initiate a reset (e.g. calling ESP.reset() )
      */
-    //const char *type = payload["type"] | "Invalid";
+    bool isHard = !strcmp(payload["type"] | "undefined", "Hard");
 
     if (ocppModel && ocppModel->getChargePointStatusService()) {
         auto cpsService = ocppModel->getChargePointStatusService();
-        unsigned int connId = 0;
-        for (unsigned int i = 0; i < cpsService->getNumConnectors(); i++) {
+        int connId = 0;
+        for (int i = 0; i < cpsService->getNumConnectors(); i++) {
             auto connector = cpsService->getConnector(connId);
             if (connector) {
-                connector->endSession();
+                connector->endSession(isHard ? "HardReset" : "SoftReset");
             }
         }
     }

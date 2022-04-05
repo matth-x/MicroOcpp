@@ -6,6 +6,7 @@
 #define OCPPSOCKET_H
 
 #include <functional>
+#include <memory>
 
 namespace ArduinoOcpp {
 
