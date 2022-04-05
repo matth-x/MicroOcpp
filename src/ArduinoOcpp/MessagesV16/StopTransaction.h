@@ -7,6 +7,7 @@
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
@@ -16,9 +17,10 @@ private:
     int connectorId = 1;
     int meterStop = -1;
     OcppTimestamp otimestamp;
+    char reason [REASON_LEN_MAX] {'\0'};
 public:
 
-    StopTransaction(int connectorId);
+    StopTransaction(int connectorId, const char *reason = nullptr);
 
     const char* getOcppOperationType();
 

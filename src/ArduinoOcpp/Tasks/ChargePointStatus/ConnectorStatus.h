@@ -28,15 +28,17 @@ private:
     
     const int connectorId;
 
-    std::shared_ptr<Configuration<int>> availability {nullptr};
+    std::shared_ptr<Configuration<int>> availability;
 
     bool session = false;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
-    std::shared_ptr<Configuration<const char *>> sIdTag {nullptr};
-    std::shared_ptr<Configuration<int>> transactionId {nullptr};
+    bool idTagInvalidated {false}; //if StartTransaction.conf() has status != "Accepted"
+    std::shared_ptr<Configuration<const char *>> sIdTag;
+    std::shared_ptr<Configuration<int>> transactionId;
     int transactionIdSync = -1;
+    char endReason [REASON_LEN_MAX + 1] = {'\0'};
 
-    std::shared_ptr<Configuration<int>> connectionTimeOut {nullptr}; //in seconds
+    std::shared_ptr<Configuration<int>> connectionTimeOut; //in seconds
     bool connectionTimeOutListen {false};
     ulong connectionTimeOutTimestamp {0}; //in milliseconds
 
@@ -47,11 +49,17 @@ private:
     const char *getErrorCode();
 
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
-    std::shared_ptr<Configuration<int>> minimumStatusDuration {nullptr}; //in seconds
+    std::shared_ptr<Configuration<int>> minimumStatusDuration; //in seconds
     OcppEvseState reportedStatus = OcppEvseState::NOT_SET;
     ulong t_statusTransition = 0;
 
+    //std::function<std::unique_ptr<OcppMessage>()> startTransactionBehavior;
+    //std::function<std::unique_ptr<OcppMessage>(const char* stopReason)> stopTransactionBehavior;
+
     std::function<bool()> onUnlockConnector {nullptr};
+
+    std::shared_ptr<Configuration<const char*>> stopTransactionOnInvalidId;
+    std::shared_ptr<Configuration<const char*>> stopTransactionOnEVSideDisconnect;
 public:
     ConnectorStatus(OcppModel& context, int connectorId);
 
@@ -66,14 +74,14 @@ public:
      * (given by ConnectorPluggedSampler and no error code)
      */
     void beginSession(const char *idTag);
-    void endSession();
+    void endSession(const char *reason = nullptr);
+    void setIdTagInvalidated(); //if StartTransaction.conf() has status != "Accepted"
     const char *getSessionIdTag();
     int getTransactionId();
     int getTransactionIdSync();
     uint16_t getTransactionWriteCount();
     void setTransactionId(int id);
     void setTransactionIdSync(int id);
-
 
     int getAvailability();
     void setAvailability(bool available);

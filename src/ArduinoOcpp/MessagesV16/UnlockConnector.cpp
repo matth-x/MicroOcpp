@@ -28,6 +28,8 @@ void UnlockConnector::processReq(JsonObject payload) {
 
     auto connector = ocppModel->getConnectorStatus(connectorId);
 
+    connector->endSession("UnlockCommand");
+
     std::function<bool()> unlockConnector = connector->getOnUnlockConnector();
     if (unlockConnector != nullptr) {
         cbDefined = true;
@@ -38,8 +40,6 @@ void UnlockConnector::processReq(JsonObject payload) {
     }
 
     cbUnlockSuccessful = unlockConnector();
-
-    //success
 }
 
 std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf(){
