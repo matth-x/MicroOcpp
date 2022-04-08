@@ -47,11 +47,12 @@ set(AO_SRC
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.cpp
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.cpp
     src/ArduinoOcpp.cpp
+    src/ArduinoOcpp_c.cpp
     src/ao_opts_impl.c
 )
 
 idf_component_register(SRCS ${AO_SRC}
-                    INCLUDE_DIRS "./src")
+                    INCLUDE_DIRS "./src" "${PROJECT_DIR}/include")
 
 target_compile_options(${COMPONENT_TARGET} PUBLIC
     -DAO_CUSTOM_WS

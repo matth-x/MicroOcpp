@@ -34,6 +34,10 @@ For simple chargers, the necessary hardware and internet integration is usually 
 
 **This feature branch is WIP. A usage guide will follow.**
 
+## Dependencies
+
+- [bblanchon/ArduinoJson](https://github.com/bblanchon/ArduinoJson)
+
 ## Supported operations
 
 | Operation name | supported | in progress | not supported |

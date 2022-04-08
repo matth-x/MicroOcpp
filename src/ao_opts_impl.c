@@ -24,6 +24,6 @@ long ao_tick_ms_impl() {
     return xTaskGetTickCount() / configTICK_RATE_HZ;
 }
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif
