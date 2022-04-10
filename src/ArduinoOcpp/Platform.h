@@ -23,7 +23,7 @@ void ao_console_out(const char *msg);
                 char msg [AO_CUSTOM_CONSOLE_MAXMSGSIZE]; \
                 snprintf(msg, AO_CUSTOM_CONSOLE_MAXMSGSIZE, X, ##__VA_ARGS__); \
                 sprintf(msg + AO_CUSTOM_CONSOLE_MAXMSGSIZE - 7, " [...]"); \
-                ao_console_out(msg); \
+                ArduinoOcpp::ao_console_out(msg); \
             } while (0)
 #else
 #define ao_set_console_out(X) \

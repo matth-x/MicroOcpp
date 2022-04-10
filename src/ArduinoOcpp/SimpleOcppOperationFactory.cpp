@@ -69,12 +69,6 @@ void setOnBootNotificationRequestListener(OnReceiveReqListener listener){
     deinit_afterwards(onBootNotificationRequest);
 }
 
-OnReceiveReqListener onTargetValuesRequest;
-void setOnTargetValuesRequestListener(OnReceiveReqListener listener) {
-    onTargetValuesRequest = listener;
-    deinit_afterwards(onTargetValuesRequest);
-}
-
 OnReceiveReqListener onSetChargingProfileRequest;
 void setOnSetChargingProfileRequestListener(OnReceiveReqListener listener){
     onSetChargingProfileRequest = listener;

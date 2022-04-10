@@ -1,22 +1,43 @@
 #include "ArduinoOcpp_c.h"
 #include "ArduinoOcpp.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <ArduinoOcpp/Debug.h>
 
-void ao_initialize() {
+ArduinoOcpp::OcppSocket *ocppSocket = nullptr;
+
+extern "C" void ao_initialize(AO_OcppSocket *osock) {
     //OCPP_initialize("echo.websocket.events", 80, "ws://echo.websocket.events/");
+    if (!osock) {
+        AO_DBG_ERR("osock is null");
+    }
+
+    ocppSocket = reinterpret_cast<ArduinoOcpp::OcppSocket*>(osock);
+
+    OCPP_initialize(*ocppSocket);
 }
 
-void ao_loop() {
+extern "C" void ao_loop() {
     OCPP_loop();
 }
 
-void ao_bootNotification() {
+extern "C" void ao_bootNotification(const char *chargePointModel, const char *chargePointVendor, OnOcppMessage onConfirmation) {
     bootNotification("model", "vendor");
 }
 
-#ifdef __cplusplus
-}
+#ifndef AO_RECEIVE_PAYLOAD_BUFSIZE
+#define AO_RECEIVE_PAYLOAD_BUFSIZE 1024
 #endif
+
+char ao_recv_payload_buff [AO_RECEIVE_PAYLOAD_BUFSIZE] = {'\0'};
+
+extern "C" void ao_onResetRequest(OnOcppMessage onRequest) {
+    OnReceiveReqListener cb = [onRequest] (JsonObject payload) {
+        auto len = serializeJson(payload, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
+        if (len <= 0) {
+            AO_DBG_WARN("Received payload buffer exceeded. Continue without payload");
+        }
+        onRequest(len > 0 ? ao_recv_payload_buff : nullptr, len);
+    };
+    setOnResetReceiveReq(cb);
+}
+
