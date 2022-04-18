@@ -5,7 +5,7 @@
 
 ArduinoOcpp::OcppSocket *ocppSocket = nullptr;
 
-extern "C" void ao_initialize(AO_OcppSocket *osock) {
+extern "C" void ao_initialize(AOcppSocket *osock) {
     //OCPP_initialize("echo.websocket.events", 80, "ws://echo.websocket.events/");
     if (!osock) {
         AO_DBG_ERR("osock is null");
@@ -20,7 +20,7 @@ extern "C" void ao_loop() {
     OCPP_loop();
 }
 
-extern "C" void ao_bootNotification(const char *chargePointModel, const char *chargePointVendor, OnOcppMessage onConfirmation) {
+extern "C" void ao_bootNotification(const char *chargePointModel, const char *chargePointVendor, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError) {
     bootNotification("model", "vendor");
 }
 

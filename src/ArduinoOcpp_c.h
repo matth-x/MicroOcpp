@@ -3,8 +3,8 @@
 
 #include <stddef.h>
 
-struct AO_OcppSocket;
-typedef struct AO_OcppSocket AO_OcppSocket;
+struct AOcppSocket;
+typedef struct AOcppSocket AOcppSocket;
 
 typedef void (*OnOcppMessage) (const char *payload, size_t len);
 typedef void (*OnOcppAbort)   ();
@@ -15,11 +15,17 @@ typedef void (*OnOcppError)   (const char *code, const char *description, const 
 extern "C" {
 #endif
 
-void ao_initialize(AO_OcppSocket *osock);
+void ao_initialize(AOcppSocket *osock);
 
 void ao_loop();
 
-void ao_bootNotification(const char *chargePointModel, const char *chargePointVendor, OnOcppMessage onConfirmation);
+void ao_bootNotification(const char *chargePointModel, const char *chargePointVendor, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError);
+
+void ao_authorize(const char *idTag, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError);
+
+void ao_startTransaction(const char *idTag, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError);
+
+void ao_stopTransaction(OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError);
 
 void ao_onResetRequest(OnOcppMessage onRequest);
 
