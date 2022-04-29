@@ -10,7 +10,7 @@
 #ifdef AO_CUSTOM_CONSOLE
 
 #ifndef AO_CUSTOM_CONSOLE_MAXMSGSIZE
-#define AO_CUSTOM_CONSOLE_MAXMSGSIZE 128
+#define AO_CUSTOM_CONSOLE_MAXMSGSIZE 196
 #endif
 
 void ao_set_console_out(void (*console_out)(const char *msg));
@@ -21,8 +21,9 @@ void ao_console_out(const char *msg);
 #define AO_CONSOLE_PRINTF(X, ...) \
             do { \
                 char msg [AO_CUSTOM_CONSOLE_MAXMSGSIZE]; \
-                snprintf(msg, AO_CUSTOM_CONSOLE_MAXMSGSIZE, X, ##__VA_ARGS__); \
-                sprintf(msg + AO_CUSTOM_CONSOLE_MAXMSGSIZE - 7, " [...]"); \
+                if (snprintf(msg, AO_CUSTOM_CONSOLE_MAXMSGSIZE, X, ##__VA_ARGS__) < 0) { \
+                    sprintf(msg + AO_CUSTOM_CONSOLE_MAXMSGSIZE - 7, " [...]"); \
+                } \
                 ArduinoOcpp::ao_console_out(msg); \
             } while (0)
 #else

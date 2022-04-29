@@ -57,4 +57,5 @@ idf_component_register(SRCS ${AO_SRC}
 target_compile_options(${COMPONENT_TARGET} PUBLIC
     -DAO_CUSTOM_WS
     -DAO_CUSTOM_CONSOLE
-    -DAO_DEACTIVATE_FLASH)
+    -DAO_DEACTIVATE_FLASH
+    -DAO_DBG_LEVEL=AO_DL_DEBUG)

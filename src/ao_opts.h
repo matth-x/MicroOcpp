@@ -25,7 +25,7 @@ long  ao_tick_ms_impl();
 //#endif
 
 #ifndef AO_CUSTOM_CONSOLE_MAXMSGSIZE
-#define AO_CUSTOM_CONSOLE_MAXMSGSIZE 500
+#define AO_CUSTOM_CONSOLE_MAXMSGSIZE 192
 #endif
 
 #endif

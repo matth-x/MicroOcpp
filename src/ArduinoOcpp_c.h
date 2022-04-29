@@ -26,6 +26,8 @@ void ao_deinitialize();
 
 void ao_loop();
 
+void ao_set_console_out_c(void (*console_out)(const char *msg));
+
 /*
  * Feed lib with HW related data
  */

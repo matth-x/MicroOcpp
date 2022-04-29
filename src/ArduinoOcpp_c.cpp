@@ -20,6 +20,10 @@ extern "C" void ao_loop() {
     OCPP_loop();
 }
 
+extern "C" void ao_set_console_out_c(void (*console_out)(const char *msg)) {
+    ao_set_console_out(console_out);
+}
+
 extern "C" void ao_bootNotification(const char *chargePointModel, const char *chargePointVendor, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError) {
     bootNotification("model", "vendor");
 }

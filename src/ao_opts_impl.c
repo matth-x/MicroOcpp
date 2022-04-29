@@ -21,7 +21,8 @@ extern "C" {
 #endif
 
 long ao_tick_ms_impl() {
-    return xTaskGetTickCount() / configTICK_RATE_HZ;
+    //return xTaskGetTickCount() / configTICK_RATE_HZ;
+    return xTaskGetTickCount() * (1000 / configTICK_RATE_HZ);
 }
 
 #ifdef __cplusplus
