@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-long  ao_tick_ms_impl();
+unsigned long ao_tick_ms_impl();
 //unsigned int32_t ao_avail_heap_impl();
 
 #ifdef __cplusplus
