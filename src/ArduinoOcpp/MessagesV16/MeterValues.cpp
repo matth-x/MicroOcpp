@@ -15,12 +15,9 @@ MeterValues::MeterValues() {
     
 }
 
-MeterValues::MeterValues(const std::vector<std::unique_ptr<MeterValue>>& meterValue, int connectorId, int transactionId) 
-      : connectorId{connectorId}, transactionId{transactionId} {
+MeterValues::MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, int connectorId, int transactionId) 
+      : meterValue{std::move(meterValue)}, connectorId{connectorId}, transactionId{transactionId} {
 
-    for (auto value = meterValue.begin(); value != meterValue.end(); value++) {
-        this->meterValue.push_back(std::unique_ptr<MeterValue>(new MeterValue(**value)));
-    }
 }
 
 MeterValues::~MeterValues(){

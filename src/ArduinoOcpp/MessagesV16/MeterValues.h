@@ -22,7 +22,7 @@ private:
     int transactionId = -1;
 
 public:
-    MeterValues(const std::vector<std::unique_ptr<MeterValue>>& meterValue, int connectorId, int transactionId);
+    MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, int connectorId, int transactionId);
 
     MeterValues(); //for debugging only. Make this for the server pendant
 

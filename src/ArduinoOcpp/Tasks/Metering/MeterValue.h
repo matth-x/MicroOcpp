@@ -7,6 +7,7 @@
 
 #include <ArduinoOcpp/Core/OcppTime.h>
 #include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
+#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoJson.h>
 #include <memory>
 
@@ -18,42 +19,27 @@ private:
     std::vector<std::unique_ptr<SampledValue>> sampledValue;
 public:
     MeterValue(OcppTimestamp timestamp) : timestamp(timestamp) { }
-    MeterValue(const MeterValue& other) {
-        timestamp = other.timestamp;
-        for (auto value = other.sampledValue.begin(); value != other.sampledValue.end(); value++) {
-            sampledValue.push_back(std::unique_ptr<SampledValue>((*value)->clone()));
-        }
-    }
+    MeterValue(const MeterValue& other);
 
     void addSampledValue(std::unique_ptr<SampledValue> sample) {sampledValue.push_back(std::move(sample));}
 
-    std::unique_ptr<DynamicJsonDocument> toJson() {
-        size_t capacity = 0;
-        std::vector<std::unique_ptr<DynamicJsonDocument>> entries;
-        for (auto sample = sampledValue.begin(); sample != sampledValue.end(); sample++) {
-            auto json = (*sample)->toJson();
-            capacity += json->capacity();
-            entries.push_back(std::move(json));
-        }
+    std::unique_ptr<DynamicJsonDocument> toJson();
+};
 
-        capacity += JSON_ARRAY_SIZE(entries.size());
-        capacity += JSONDATE_LENGTH + 1;
-        capacity += JSON_OBJECT_SIZE(2);
-        
-        auto result = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity + 100)); //TODO remove safety space
-        auto jsonPayload = result->to<JsonObject>();
+class MeterValueBuilder {
+private:
+    const std::vector<std::unique_ptr<SampledValueSampler>> &samplers;
+    std::shared_ptr<Configuration<const char*>> select;
+    std::vector<bool> select_mask;
+    unsigned int select_n {0};
+    decltype(select->getValueRevision()) select_observe;
 
-        char timestampStr [JSONDATE_LENGTH + 1] = {'\0'};
-        if (!timestamp.toJsonString(timestampStr, JSONDATE_LENGTH + 1)) {
-            return nullptr;
-        }
-        jsonPayload["timestamp"] = timestampStr;
-        auto jsonMeterValue = jsonPayload.createNestedArray("sampledValue");
-        for (auto entry = entries.begin(); entry != entries.end(); entry++) {
-            jsonMeterValue.add(**entry);
-        }
-        return std::move(result);
-    }
+    void updateObservedSamplers();
+public:
+    MeterValueBuilder(const std::vector<std::unique_ptr<SampledValueSampler>> &samplers,
+            std::shared_ptr<Configuration<const char*>> samplers_select);
+    
+    std::unique_ptr<MeterValue> takeSample(const OcppTimestamp& timestamp, const ReadingContext& context);
 };
 
 }

@@ -30,23 +30,39 @@ private:
     OcppModel& context;
     
     const int connectorId;
+    
+    std::vector<std::unique_ptr<MeterValue>> sampledData;
+    std::vector<std::unique_ptr<MeterValue>> alignedData;
+    std::vector<std::unique_ptr<MeterValue>> stopTxnSampledData;
+    std::vector<std::unique_ptr<MeterValue>> stopTxnAlignedData;
 
-    std::vector<std::unique_ptr<MeterValue>> meterValue;
+    std::unique_ptr<MeterValueBuilder> sampledDataBuilder;
+    std::unique_ptr<MeterValueBuilder> alignedDataBuilder;
+    std::unique_ptr<MeterValueBuilder> stopTxnSampledDataBuilder;
+    std::unique_ptr<MeterValueBuilder> stopTxnAlignedDataBuilder;
+
+    std::shared_ptr<Configuration<const char *>> sampledDataSelect;
+    std::shared_ptr<Configuration<const char *>> alignedDataSelect;
+    std::shared_ptr<Configuration<const char *>> stopTxnSampledDataSelect;
+    std::shared_ptr<Configuration<const char *>> stopTxnAlignedDataSelect;
 
     ulong lastSampleTime = 0; //0 means not charging right now
+    OcppTimestamp nextAlignedTime;
     float lastPower;
     int lastTransactionId = -1;
  
     PowerSampler powerSampler = nullptr;
     EnergySampler energySampler = nullptr;
-    std::vector<std::unique_ptr<SampledValueSampler>> meterValueSamplers;
+    std::vector<std::unique_ptr<SampledValueSampler>> samplers;
+    int energySamplerIndex {-1};
 
-    std::shared_ptr<Configuration<int>> MeterValueSampleInterval = nullptr;
-    std::shared_ptr<Configuration<int>> MeterValuesSampledDataMaxLength = nullptr;
+    std::shared_ptr<Configuration<int>> MeterValueSampleInterval;
+    std::shared_ptr<Configuration<int>> MeterValuesSampledDataMaxLength;
+    std::shared_ptr<Configuration<int>> StopTxnSampledDataMaxLength;
 
-    void takeSample();
-    OcppMessage *toMeterValues();
-    void clear();
+    std::shared_ptr<Configuration<int>> ClockAlignedDataInterval;
+    std::shared_ptr<Configuration<int>> MeterValuesAlignedDataMaxLength;
+    std::shared_ptr<Configuration<int>> StopTxnAlignedDataMaxLength;
 public:
     ConnectorMeterValuesRecorder(OcppModel& context, int connectorId);
 
@@ -60,7 +76,9 @@ public:
 
     int32_t readEnergyActiveImportRegister();
 
-    OcppMessage *takeMeterValuesNow();
+    OcppMessage *takeTriggeredMeterValues();
+
+    OcppMessage *getStopTransactionData();
 };
 
 } //end namespace ArduinoOcpp

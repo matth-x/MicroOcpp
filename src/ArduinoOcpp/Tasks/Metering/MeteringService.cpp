@@ -61,14 +61,14 @@ int32_t MeteringService::readEnergyActiveImportRegister(int connectorId) {
     return connectors[connectorId]->readEnergyActiveImportRegister();
 }
 
-std::unique_ptr<OcppOperation> MeteringService::takeMeterValuesNow(int connectorId) {
+std::unique_ptr<OcppOperation> MeteringService::takeTriggeredMeterValues(int connectorId) {
     if (connectorId < 0 || connectorId >= (int) connectors.size()) {
         AO_DBG_ERR("connectorId out of bounds. Ignore");
         return nullptr;
     }
     auto& connector = connectors.at(connectorId);
     if (connector.get()) {
-        auto msg = connector->takeMeterValuesNow();
+        auto msg = connector->takeTriggeredMeterValues();
         if (msg) {
             auto meterValues = makeOcppOperation(msg);
             meterValues->setTimeout(std::unique_ptr<Timeout>{new FixedTimeout(120000)});

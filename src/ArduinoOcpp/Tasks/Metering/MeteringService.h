@@ -38,7 +38,7 @@ public:
 
     int32_t readEnergyActiveImportRegister(int connectorId);
 
-    std::unique_ptr<OcppOperation> takeMeterValuesNow(int connectorId); //snapshot of all meters now
+    std::unique_ptr<OcppOperation> takeTriggeredMeterValues(int connectorId); //snapshot of all meters now
 
     int getNumConnectors() {return connectors.size();}
 };
