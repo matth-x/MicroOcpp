@@ -42,8 +42,6 @@ void ao_setConnectorEnergizedSampler(SamplerBool connectorEnergized);
 
 void ao_setConnectorPluggedSampler(SamplerBool connectorPlugged);
 
-//void setConnectorFaultedSampler(SamplerBool connectorFailed);
-
 void ao_addConnectorErrorCodeSampler(SamplerString connectorErrorCode);
 
 /*
@@ -57,8 +55,6 @@ void ao_onUnlockConnector(SamplerBool unlockConnector); //true: success, false: 
 /*
  * Generic listeners for OCPP operations initiated by Central System
  */
-
-void ao_onSetChargingProfileRequest(OnOcppMessage onRequest); //optional
 
 void ao_onRemoteStartTransactionSendConf(OnOcppMessage onSendConf); //important, energize the power plug here and capture the idTag
 
