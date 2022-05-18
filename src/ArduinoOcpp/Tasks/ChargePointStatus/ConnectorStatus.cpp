@@ -315,10 +315,10 @@ void ConnectorStatus::saveState() {
     configuration_save();
 }
 
-void ConnectorStatus::setOnUnlockConnector(std::function<bool()> unlockConnector) {
+void ConnectorStatus::setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector) {
     this->onUnlockConnector = unlockConnector;
 }
 
-std::function<bool()> ConnectorStatus::getOnUnlockConnector() {
+std::function<PollResult<bool>()> ConnectorStatus::getOnUnlockConnector() {
     return this->onUnlockConnector;
 }

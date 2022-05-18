@@ -50,10 +50,10 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
     );
     StopTxnAlignedDataMaxLength = declareConfiguration("StopTxnAlignedDataMaxLength", 4, CONFIGURATION_VOLATILE, false, true, false, false);
     
-    sampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesSampledData)); AO_DBG_DEBUG("After MeterValuesSampledData");
-    alignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesAlignedData)); AO_DBG_DEBUG("After MeterValuesAlignedData");
-    stopTxnSampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, StopTxnSampledData)); AO_DBG_DEBUG("After StopTxnSampledData");
-    stopTxnAlignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, StopTxnAlignedData)); AO_DBG_DEBUG("After StopTxnAlignedData");
+    sampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesSampledData));
+    alignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesAlignedData));
+    stopTxnSampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, StopTxnSampledData));
+    stopTxnAlignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, StopTxnAlignedData));
 }
 
 OcppMessage *ConnectorMeterValuesRecorder::loop() {
@@ -189,9 +189,9 @@ void ConnectorMeterValuesRecorder::addMeterValueSampler(std::unique_ptr<SampledV
     samplers.push_back(std::move(meterValueSampler));
 }
 
-int32_t ConnectorMeterValuesRecorder::readEnergyActiveImportRegister() {
+std::unique_ptr<SampledValue> ConnectorMeterValuesRecorder::readEnergyActiveImportRegister() {
     if (energySamplerIndex >= 0 && energySamplerIndex < samplers.size()) {
-        return samplers[energySamplerIndex]->takeValue(ReadingContext::NOT_SET)->toInteger();
+        return samplers[energySamplerIndex]->takeValue(ReadingContext::NOT_SET);
     } else {
         AO_DBG_DEBUG("Called readEnergyActiveImportRegister(), but no energySampler or handling strategy set");
         return 0;

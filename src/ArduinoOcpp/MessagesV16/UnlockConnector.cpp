@@ -19,7 +19,7 @@ const char* UnlockConnector::getOcppOperationType(){
 
 void UnlockConnector::processReq(JsonObject payload) {
     
-    int connectorId = payload["connectorId"] | -1;
+    auto connectorId = payload["connectorId"] | -1;
 
     if (!ocppModel || !ocppModel->getConnectorStatus(connectorId)) {
         err = true;
@@ -30,24 +30,29 @@ void UnlockConnector::processReq(JsonObject payload) {
 
     connector->endSession("UnlockCommand");
 
-    std::function<bool()> unlockConnector = connector->getOnUnlockConnector();
+    unlockConnector = connector->getOnUnlockConnector();
     if (unlockConnector != nullptr) {
-        cbDefined = true;
+        cbUnlockResult = unlockConnector();
     } else {
-        cbDefined = false;
         AO_DBG_WARN("Unlock CB undefined");
-        return;
     }
-
-    cbUnlockSuccessful = unlockConnector();
 }
 
-std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf(){
+std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf() {
+    if (unlockConnector) {
+        if (!cbUnlockResult) {
+            cbUnlockResult = unlockConnector();
+            if (!cbUnlockResult) {
+                return nullptr; //no result yet - delay confirmation response
+            }
+        }
+    }
+
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
-    if (err || !cbDefined) {
+    if (err || !unlockConnector) {
         payload["status"] = "NotSupported";
-    } else if (cbUnlockSuccessful) {
+    } else if (cbUnlockResult.toValue()) {
         payload["status"] = "Unlocked";
     } else {
         payload["status"] = "UnlockFailed";

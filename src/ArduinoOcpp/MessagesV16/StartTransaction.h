@@ -8,6 +8,7 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
+#include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
@@ -15,7 +16,7 @@ namespace Ocpp16 {
 class StartTransaction : public OcppMessage {
 private:
     int connectorId = 1;
-    int32_t meterStart = -1;
+    std::unique_ptr<SampledValue> meterStart {nullptr};
     OcppTimestamp otimestamp;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
     uint16_t transactionRev = 0;

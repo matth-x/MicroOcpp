@@ -19,7 +19,7 @@ private:
     std::vector<std::unique_ptr<SampledValue>> sampledValue;
 public:
     MeterValue(OcppTimestamp timestamp) : timestamp(timestamp) { }
-    MeterValue(const MeterValue& other);
+    MeterValue(const MeterValue& other) = delete;
 
     void addSampledValue(std::unique_ptr<SampledValue> sample) {sampledValue.push_back(std::move(sample));}
 

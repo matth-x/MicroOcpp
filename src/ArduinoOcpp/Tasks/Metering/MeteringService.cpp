@@ -53,10 +53,10 @@ void MeteringService::addMeterValueSampler(int connectorId, std::unique_ptr<Samp
     connectors[connectorId]->addMeterValueSampler(std::move(meterValueSampler));
 }
 
-int32_t MeteringService::readEnergyActiveImportRegister(int connectorId) {
+std::unique_ptr<SampledValue> MeteringService::readEnergyActiveImportRegister(int connectorId) {
     if (connectorId < 0 || connectorId >= connectors.size()) {
         AO_DBG_ERR("connectorId is out of bounds");
-        return 0.f;
+        return nullptr;
     }
     return connectors[connectorId]->readEnergyActiveImportRegister();
 }

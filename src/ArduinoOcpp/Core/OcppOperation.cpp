@@ -104,8 +104,7 @@ boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
      */
     auto requestPayload = ocppMessage->createReq();
     if (!requestPayload) {
-        onAbortListener();
-        return true;
+        return false;
     }
 
     /*
@@ -240,12 +239,16 @@ boolean OcppOperation::sendConf(OcppSocket& ocppSocket){
      * Create the OCPP message
      */
     std::unique_ptr<DynamicJsonDocument> confJson = nullptr;
-    std::unique_ptr<DynamicJsonDocument> confPayload = std::unique_ptr<DynamicJsonDocument>(ocppMessage->createConf());
+    std::unique_ptr<DynamicJsonDocument> confPayload = ocppMessage->createConf();
     std::unique_ptr<DynamicJsonDocument> errorDetails = nullptr;
     
-    bool operationSuccess = ocppMessage->getErrorCode() == nullptr && confPayload != nullptr;
+    bool operationFailure = ocppMessage->getErrorCode() != nullptr;
 
-    if (operationSuccess) {
+    if (!operationFailure && !confPayload) {
+        return false; //confirmation message still pending
+    }
+
+    if (!operationFailure) {
 
         /*
          * Create OCPP-J Remote Procedure Call header
@@ -293,7 +296,7 @@ boolean OcppOperation::sendConf(OcppSocket& ocppSocket){
     boolean wsSuccess = ocppSocket.sendTXT(out);
 
     if (wsSuccess) {
-        if (operationSuccess) {
+        if (!operationFailure) {
             AO_DBG_TRAFFIC_OUT(out.c_str());
             onSendConfListener(confPayload->as<JsonObject>());
         } else {

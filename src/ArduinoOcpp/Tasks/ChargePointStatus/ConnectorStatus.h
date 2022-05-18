@@ -7,6 +7,7 @@
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/OcppEvseState.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
+#include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 #include <vector>
@@ -56,7 +57,7 @@ private:
     //std::function<std::unique_ptr<OcppMessage>()> startTransactionBehavior;
     //std::function<std::unique_ptr<OcppMessage>(const char* stopReason)> stopTransactionBehavior;
 
-    std::function<bool()> onUnlockConnector {nullptr};
+    std::function<PollResult<bool>()> onUnlockConnector {nullptr};
 
     std::shared_ptr<Configuration<const char*>> stopTransactionOnInvalidId;
     std::shared_ptr<Configuration<const char*>> stopTransactionOnEVSideDisconnect;
@@ -100,8 +101,8 @@ public:
 
     bool ocppPermitsCharge();
 
-    void setOnUnlockConnector(std::function<bool()> unlockConnector);
-    std::function<bool()> getOnUnlockConnector();
+    void setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector);
+    std::function<PollResult<bool>()> getOnUnlockConnector();
 };
 
 } //end namespace ArduinoOcpp

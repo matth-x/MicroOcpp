@@ -14,20 +14,22 @@ template <class T>
 class SampledValueDeSerializer {
 public:
     static T deserialize(const char *str);
-    static std::string serialize(const T& val);
-    static int32_t toInteger(const T& val);
+    static bool ready(T& val);
+    static std::string serialize(T& val);
+    static int32_t toInteger(T& val);
 };
 
 template <>
-class SampledValueDeSerializer<int32_t> {
+class SampledValueDeSerializer<int32_t> { // example class
 public:
-    static int32_t deserialize(const char *str) {return 42;}
-    static std::string serialize(const int32_t& val) {
+    static int32_t deserialize(const char *str) {return strtol(str, nullptr,10);}
+    static bool ready(int32_t& val) {return true;} //int32_t is always valid
+    static std::string serialize(int32_t& val) {
         char str [12] = {'\0'};
         snprintf(str, 12, "%d", val);
         return std::string(str);
     }
-    static int32_t toInteger(const int32_t& val) {return val;}
+    static int32_t toInteger(int32_t& val) {return val;}
 };
 
 class SampledValueProperties {
@@ -74,6 +76,10 @@ enum class ReadingContext {
     NOT_SET
 };
 
+namespace Ocpp16 {
+const char *cstrFromReadingContext(ReadingContext context);
+}
+
 class SampledValue {
 protected:
     const SampledValueProperties& properties;
@@ -86,23 +92,22 @@ public:
 
     std::unique_ptr<DynamicJsonDocument> toJson();
 
-    virtual std::unique_ptr<SampledValue> clone() = 0;
-
+    virtual operator bool() = 0;
     virtual int32_t toInteger() = 0;
 };
 
 template <class T, class DeSerializer>
 class SampledValueConcrete : public SampledValue {
 private:
-    const T value;
+    T value;
 public:
     SampledValueConcrete(const SampledValueProperties& properties, ReadingContext context, const T&& value) : SampledValue(properties, context), value(value) { }
     SampledValueConcrete(const SampledValueConcrete& other) : SampledValue(other), value(other.value) { }
     ~SampledValueConcrete() = default;
 
-    std::string serializeValue() override {return DeSerializer::serialize(value);}
+    operator bool() override {return DeSerializer::ready(value);}
 
-    std::unique_ptr<SampledValue> clone() override {return std::unique_ptr<SampledValueConcrete<T, DeSerializer>>(new SampledValueConcrete<T, DeSerializer>(*this));}
+    std::string serializeValue() override {return DeSerializer::serialize(value);}
 
     int32_t toInteger() override { return DeSerializer::toInteger(value);}
 };
@@ -120,11 +125,11 @@ public:
 template <class T, class DeSerializer>
 class SampledValueSamplerConcrete : public SampledValueSampler {
 private:
-    std::function<T()> sampler;
+    std::function<T(ReadingContext context)> sampler;
 public:
-    SampledValueSamplerConcrete(SampledValueProperties properties, std::function<T()> sampler) : SampledValueSampler(properties), sampler(sampler) { }
+    SampledValueSamplerConcrete(SampledValueProperties properties, std::function<T(ReadingContext)> sampler) : SampledValueSampler(properties), sampler(sampler) { }
     std::unique_ptr<SampledValue> takeValue(ReadingContext context) override {
-        return std::unique_ptr<SampledValueConcrete<T, DeSerializer>>(new SampledValueConcrete<T, DeSerializer>(properties, context, sampler()));
+        return std::unique_ptr<SampledValueConcrete<T, DeSerializer>>(new SampledValueConcrete<T, DeSerializer>(properties, context, sampler(context)));
     }
 };
 

@@ -14,6 +14,7 @@
 #include <ArduinoOcpp/Core/OcppOperationCallbacks.h>
 #include <ArduinoOcpp/Core/OcppOperationTimeout.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
+#include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 
 using ArduinoOcpp::OnReceiveConfListener;
@@ -76,7 +77,7 @@ void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCo
 
 void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged);
 
-void setOnUnlockConnector(std::function<bool()> unlockConnector); //true: success, false: failure
+void setOnUnlockConnector(std::function<ArduinoOcpp::PollResult<bool>()> unlockConnector); //true: success, false: failure
 
 /*
  * React on CS-initiated operations

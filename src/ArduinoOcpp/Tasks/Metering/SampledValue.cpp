@@ -39,6 +39,9 @@ const char *cstrFromReadingContext(ReadingContext context) {
 
 std::unique_ptr<DynamicJsonDocument> SampledValue::toJson() {
     auto value = serializeValue();
+    if (value.empty()) {
+        return nullptr;
+    }
     size_t capacity = 0;
     capacity += JSON_OBJECT_SIZE(8);
     capacity += value.length() + 1

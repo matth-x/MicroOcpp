@@ -67,12 +67,18 @@ void StartTransaction::initiate() {
 }
 
 std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
+
+    if (meterStart && !*meterStart) {
+        //meterStart not ready yet
+        return nullptr;
+    }
+
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(5) + (JSONDATE_LENGTH + 1) + (IDTAG_LEN_MAX + 1)));
     JsonObject payload = doc->to<JsonObject>();
 
     payload["connectorId"] = connectorId;
-    if (meterStart >= 0) {
-        payload["meterStart"] = meterStart;
+    if (meterStart && *meterStart) {
+        payload["meterStart"] = meterStart->toInteger();
     }
 
     if (otimestamp > MIN_TIME) {

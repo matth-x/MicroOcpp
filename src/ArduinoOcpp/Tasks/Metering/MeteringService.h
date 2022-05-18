@@ -36,7 +36,7 @@ public:
 
     void addMeterValueSampler(int connectorId, std::unique_ptr<SampledValueSampler> meterValueSampler);
 
-    int32_t readEnergyActiveImportRegister(int connectorId);
+    std::unique_ptr<SampledValue> readEnergyActiveImportRegister(int connectorId);
 
     std::unique_ptr<OcppOperation> takeTriggeredMeterValues(int connectorId); //snapshot of all meters now
 

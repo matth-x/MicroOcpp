@@ -46,11 +46,18 @@ void StopTransaction::initiate() {
 }
 
 std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
+
+    if (meterStop && !*meterStop) {
+        //meterStop not ready yet
+        return nullptr;
+    }
+
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(5) + (JSONDATE_LENGTH + 1) + (REASON_LEN_MAX + 1)));
     JsonObject payload = doc->to<JsonObject>();
 
-    if (meterStop >= 0)
-        payload["meterStop"] = meterStop; //TODO meterStart is required to be in Wh, but measuring unit is probably inconsistent in implementation
+    if (meterStop && *meterStop) {
+        payload["meterStop"] = meterStop->toInteger();
+    }
 
     if (otimestamp > MIN_TIME) {
         char timestamp[JSONDATE_LENGTH + 1] = {'\0'};

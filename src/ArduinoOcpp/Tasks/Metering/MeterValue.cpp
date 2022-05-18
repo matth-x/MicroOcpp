@@ -9,18 +9,14 @@
 using ArduinoOcpp::MeterValue;
 using ArduinoOcpp::MeterValueBuilder;
 
-MeterValue::MeterValue(const MeterValue& other) {
-    timestamp = other.timestamp;
-    for (auto value = other.sampledValue.begin(); value != other.sampledValue.end(); value++) {
-        sampledValue.push_back(std::unique_ptr<SampledValue>((*value)->clone()));
-    }
-}
-
 std::unique_ptr<DynamicJsonDocument> MeterValue::toJson() {
     size_t capacity = 0;
     std::vector<std::unique_ptr<DynamicJsonDocument>> entries;
     for (auto sample = sampledValue.begin(); sample != sampledValue.end(); sample++) {
         auto json = (*sample)->toJson();
+        if (!json) {
+            return nullptr;
+        }
         capacity += json->capacity();
         entries.push_back(std::move(json));
     }

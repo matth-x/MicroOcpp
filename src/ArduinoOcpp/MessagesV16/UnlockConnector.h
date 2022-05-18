@@ -6,6 +6,7 @@
 #define UNLOCKCONNECTOR_H
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/PollResult.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
@@ -13,8 +14,8 @@ namespace Ocpp16 {
 class UnlockConnector : public OcppMessage {
 private:
     bool err = false;
-    bool cbDefined = false;
-    bool cbUnlockSuccessful = false;
+    std::function<PollResult<bool> ()> unlockConnector;
+    PollResult<bool> cbUnlockResult;
 public:
     UnlockConnector();
 

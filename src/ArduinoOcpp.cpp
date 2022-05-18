@@ -174,7 +174,7 @@ void setPowerActiveImportSampler(std::function<float()> power) {
     auto mvs = std::unique_ptr<SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>>(
                            new SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>(
             meterProperties,
-            power
+            [power] (ReadingContext) {return power();}
     ));
     model.getMeteringService()->addMeterValueSampler(OCPP_ID_OF_CONNECTOR, std::move(mvs)); //connectorId=1
     model.getMeteringService()->setPowerSampler(OCPP_ID_OF_CONNECTOR, power);
@@ -195,7 +195,9 @@ void setEnergyActiveImportSampler(std::function<float()> energy) {
     meterProperties.setUnit("Wh");
     auto mvs = std::unique_ptr<SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>>(
                            new SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>(
-            meterProperties, energy));
+            meterProperties,
+            [energy] (ReadingContext) {return energy();}
+    ));
     model.getMeteringService()->addMeterValueSampler(OCPP_ID_OF_CONNECTOR, std::move(mvs)); //connectorId=1
     model.getMeteringService()->setEnergySampler(OCPP_ID_OF_CONNECTOR, energy);
 }
@@ -278,7 +280,7 @@ void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged
     model.getSmartChargingService()->setOnLimitChange(chargingRateChanged);
 }
 
-void setOnUnlockConnector(std::function<bool()> unlockConnector) {
+void setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector) {
     if (!ocppEngine) {
         AO_DBG_ERR("Please call OCPP_initialize before");
         return;

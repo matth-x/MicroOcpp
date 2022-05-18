@@ -35,6 +35,9 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
     std::vector<std::unique_ptr<DynamicJsonDocument>> entries;
     for (auto value = meterValue.begin(); value != meterValue.end(); value++) {
         auto entry = (*value)->toJson();
+        if (!entry) {
+            return nullptr;
+        }
         capacity += entry->capacity();
         entries.push_back(std::move(entry));
     }

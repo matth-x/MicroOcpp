@@ -74,7 +74,7 @@ public:
 
     void addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler);
 
-    int32_t readEnergyActiveImportRegister();
+    std::unique_ptr<SampledValue> readEnergyActiveImportRegister();
 
     OcppMessage *takeTriggeredMeterValues();
 
