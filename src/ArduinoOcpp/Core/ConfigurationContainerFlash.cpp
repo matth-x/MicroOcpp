@@ -5,18 +5,12 @@
 #include <ArduinoOcpp/Core/ConfigurationContainerFlash.h>
 #include <ArduinoOcpp/Debug.h>
 
-#if defined(ESP32)
+#if defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
+#include <LITTLEFS.h>
 #define USE_FS LITTLEFS
 #else
-#define USE_FS SPIFFS
-#endif
-
-#if USE_FS == LITTLEFS
-#include <LITTLEFS.h>
-#elif USE_FS == SPIFFS
 #include <FS.h>
-#else
-#error "FS not supported"
+#define USE_FS SPIFFS
 #endif
 
 #define MAX_FILE_SIZE 4000

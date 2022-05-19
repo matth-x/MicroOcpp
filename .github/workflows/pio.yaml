@@ -1,0 +1,47 @@
+name: PlatformIO CI
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        example: [examples/ESP/main.cpp, examples/ESP-TLS/main.cpp, examples/SECC/main.cpp]
+        include:
+          - example: examples/SECC/main.cpp
+            dashboard-extra: --lib="/tmp/tzapu/WiFiManager"
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Cache PlatformIO
+      uses: actions/cache@v2
+      with:
+        path: ~/.platformio
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+    - name: Set up Python
+      uses: actions/setup-python@v2
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install --upgrade platformio
+    - name: Install library dependencies
+      run: pio pkg install
+    - name: Extra dependencies for SECC example
+      if: ${{ matrix.dashboard-extra }}
+      run: git clone https://github.com/tzapu/WiFiManager.git /tmp/tzapu/WiFiManager
+    - name: Run PlatformIO
+      run: pio ci --lib="." --project-conf=platformio.ini ${{ matrix.dashboard-extra }}
+      env:
+        PLATFORMIO_CI_SRC: ${{ matrix.example }}
