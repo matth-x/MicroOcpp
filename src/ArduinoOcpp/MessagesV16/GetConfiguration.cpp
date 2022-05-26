@@ -26,13 +26,15 @@ void GetConfiguration::processReq(JsonObject payload) {
 
 std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
 
-    std::shared_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> configurationKeys;
+    std::unique_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> configurationKeys;
     std::vector<std::string> unknownKeys;
 
     if (keys.size() == 0){ //return all existing keys
         configurationKeys = getAllConfigurations();
     } else { //only return keys that were searched using the "key" parameter
-        configurationKeys = std::make_shared<std::vector<std::shared_ptr<AbstractConfiguration>>>();
+        configurationKeys = std::unique_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>>(
+                                        new std::vector<std::shared_ptr<AbstractConfiguration>>()
+        );
         for (size_t i = 0; i < keys.size(); i++) {
             std::shared_ptr<AbstractConfiguration> entry = getConfiguration(keys.at(i).c_str());
             if (entry)

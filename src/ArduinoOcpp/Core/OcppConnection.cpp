@@ -112,8 +112,8 @@ bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t lengt
         doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
         err = deserializeJson(*doc, payload, length);
 
-        capacity /= 2;
         capacity *= 3;
+        capacity /= 2;
     }
 
     //TODO insert validateRpcHeader at suitable position

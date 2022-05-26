@@ -49,13 +49,17 @@ set(AO_SRC
     src/ArduinoOcpp.cpp
     src/ArduinoOcpp_c.cpp
     src/ao_opts_impl.c
+    src/ArduinoOcpp/Core/FilesystemAdapter.cpp
 )
 
 idf_component_register(SRCS ${AO_SRC}
-                    INCLUDE_DIRS "./src" "${PROJECT_DIR}/include")
+                    INCLUDE_DIRS "./src" "${PROJECT_DIR}/include"
+                    PRIV_REQUIRES spiffs)
 
 target_compile_options(${COMPONENT_TARGET} PUBLIC
     -DAO_CUSTOM_WS
     -DAO_CUSTOM_CONSOLE
     -DAO_DEACTIVATE_FLASH
-    -DAO_DBG_LEVEL=AO_DL_DEBUG)
+    -DAO_USE_FILEAPI=ESPIDF_SPIFFS
+    -DAO_DBG_LEVEL=AO_DL_DEBUG
+    -DAO_TRAFFIC_OUT)

@@ -14,6 +14,7 @@
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/Core/FilesystemAdapter.h>
 
 #include <ArduinoOcpp/MessagesV16/Authorize.h>
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
@@ -83,8 +84,11 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
 
     voltage_eff = V_eff;
     fileSystemOpt = fsOpt;
+
+    std::shared_ptr<FilesystemAdapter> filesystem = EspWiFi::makeDefaultFilesystemAdapter(fileSystemOpt);
+    AO_DBG_DEBUG("filesystem %s", filesystem ? "loaded" : "error");
     
-    configuration_init(fileSystemOpt); //call before each other library call
+    configuration_init(filesystem); //call before each other library call
 
     ocppEngine = new OcppEngine(ocppSocket, system_time);
     auto& model = ocppEngine->getOcppModel();

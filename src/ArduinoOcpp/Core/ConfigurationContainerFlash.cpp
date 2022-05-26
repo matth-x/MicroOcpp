@@ -5,6 +5,8 @@
 #include <ArduinoOcpp/Core/ConfigurationContainerFlash.h>
 #include <ArduinoOcpp/Debug.h>
 
+#include <algorithm>
+
 #if defined(ESP32)
 #define USE_FS LITTLEFS
 #else
@@ -23,95 +25,85 @@
 
 #define MAX_FILE_SIZE 4000
 #define MAX_CONFIGURATIONS 50
+#define MAX_CONFJSON_CAPACITY 4000
 
 namespace ArduinoOcpp {
 
 bool ConfigurationContainerFlash::load() {
-#ifndef AO_DEACTIVATE_FLASH
+
+    if (!filesystem) {
+        return false;
+    }
 
     if (configurations.size() > 0) {
         AO_DBG_ERR("Error: declared configurations before calling container->load(). " \
                     "All previously declared values won't be written back");
+        (void)0;
     }
 
-    if (!USE_FS.exists(getFilename())) {
+    size_t file_size = 0;
+    if (filesystem->stat(getFilename(), &file_size) != 0 // file does not exist
+            || file_size == 0) {                         // file exists, but empty
         AO_DBG_DEBUG("Populate FS: create configuration file");
-        return true;
+        return save();
     }
 
-    File file = USE_FS.open(getFilename(), "r");
+    if (file_size > MAX_FILE_SIZE) {
+        AO_DBG_ERR("Unable to initialize: filesize is too long");
+        return false;
+    }
+
+    auto file = filesystem->open(getFilename(), "r");
 
     if (!file) {
         AO_DBG_ERR("Unable to initialize: could not open configuration file %s", getFilename());
         return false;
     }
 
-    if (!file.available()) {
-        AO_DBG_DEBUG("Populate FS: create configuration file");
-        file.close();
-        return true;
+    auto jsonCapacity = std::max(file_size, (size_t) 256);
+    DynamicJsonDocument doc {0};
+    DeserializationError err = DeserializationError::NoMemory;
+
+    while (err == DeserializationError::NoMemory) {
+        if (jsonCapacity > MAX_CONFJSON_CAPACITY) {
+            AO_DBG_ERR("JSON capacity exceeded");
+            return false;
+        }
+
+        AO_DBG_DEBUG("Configs JSON capacity: %zu", jsonCapacity);
+
+        doc = DynamicJsonDocument(jsonCapacity);
+        ArduinoJsonFileAdapter file_adapt {file.get()};
+        err = deserializeJson(doc, file_adapt);
+
+        jsonCapacity *= 3;
+        jsonCapacity /= 2;
+        file->seek(0);
     }
 
-    int file_size = file.size();
-
-    if (file_size < 2) {
-        AO_DBG_ERR("Unable to initialize: too short for json");
-        file.close();
-        return false;
-    } else if (file_size > MAX_FILE_SIZE) {
-        AO_DBG_ERR("Unable to initialize: filesize is too long");
-        file.close();
+    if (err) {
+        AO_DBG_ERR("Unable to initialize: config file deserialization failed: %s", err.c_str());
         return false;
     }
 
-    String token = file.readStringUntil('\n');
-    if (!token.equals("content-type:arduino-ocpp_configuration_file")) {
+    JsonObject configHeader = doc["head"];
+
+    if (strcmp(configHeader["content-type"] | "Invalid", "ao_configuration_file")) {
         AO_DBG_ERR("Unable to initialize: unrecognized configuration file format");
-        file.close();
         return false;
     }
 
-    token = file.readStringUntil('\n');
-    if (!token.equals("version:1.0")) {
+    if (strcmp(configHeader["version"] | "Invalid", "1.1")) {
         AO_DBG_ERR("Unable to initialize: unsupported version");
-        file.close();
+        return false;
+    }
+    
+    JsonArray configurationsArray = doc["configurations"];
+    if (configurationsArray.size() > MAX_CONFIGURATIONS) {
+        AO_DBG_ERR("Unable to initialize: configurations_len is too big (=%zu)", configurationsArray.size());
         return false;
     }
 
-    token = file.readStringUntil(':');
-    if (!token.equals("configurations_len")) {
-        AO_DBG_ERR("Unable to initialize: missing length statement");
-        file.close();
-        return false;
-    }
-
-    token = file.readStringUntil('\n');
-    int configurations_len = token.toInt();
-    if (configurations_len <= 0) {
-        AO_DBG_ERR("Unable to initialize: empty configuration");
-        file.close();
-        return true;
-    }
-    if (configurations_len > MAX_CONFIGURATIONS) {
-        AO_DBG_ERR("Unable to initialize: configurations_len is too big");
-        file.close();
-        return false;
-    }
-
-    size_t jsonCapacity = file_size + JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(configurations_len) + configurations_len * JSON_OBJECT_SIZE(5);
-
-    AO_DBG_DEBUG("Config capacity = %zu", jsonCapacity);
-
-    DynamicJsonDocument configDoc(jsonCapacity);
-
-    DeserializationError error = deserializeJson(configDoc, file);
-    if (error) {
-        AO_DBG_ERR("Unable to initialize: config file deserialization failed: %s", error.c_str());
-        file.close();
-        return false;
-    }
-
-    JsonArray configurationsArray = configDoc["configurations"];
     for (JsonObject config : configurationsArray) {
         const char *type = config["type"] | "Undefined";
 
@@ -132,49 +124,46 @@ bool ConfigurationContainerFlash::load() {
         }
     }
 
-    file.close();
-
     configurationsUpdated();
 
-    AO_DBG_DEBUG("Initialization successful");
-#endif //ndef AO_DEACTIVATE_FLASH
+    AO_DBG_DEBUG("Initialization finished");
     return true;
 }
 
 bool ConfigurationContainerFlash::save() {
-#ifndef AO_DEACTIVATE_FLASH
+
+    if (!filesystem) {
+        return false;
+    }
 
     if (!configurationsUpdated()) {
         return true; //nothing to be done
     }
 
-    if (USE_FS.exists(getFilename())) {
-        USE_FS.remove(getFilename());
+    size_t file_size = 0;
+    if (filesystem->stat(getFilename(), &file_size) == 0) {
+        filesystem->remove(getFilename());
     }
 
-    File file = USE_FS.open(getFilename(), "w");
-
+    auto file = filesystem->open(getFilename(), "w");
     if (!file) {
         AO_DBG_ERR("Unable to save: could not open configuration file %s", getFilename());
         return false;
     }
 
-    size_t jsonCapacity = JSON_OBJECT_SIZE(1); //configurations
-
-    size_t numEntries = configurations.size();
-
-    file.print("content-type:arduino-ocpp_configuration_file\n");
-    file.print("version:1.0\n");
-    file.print("configurations_len:");
-    file.print(numEntries, DEC);
-    file.print("\n");
+    size_t jsonCapacity = 2 * JSON_OBJECT_SIZE(2); //head + configurations + head payload
 
     std::vector<std::shared_ptr<DynamicJsonDocument>> entries;
 
     for (auto config = configurations.begin(); config != configurations.end(); config++) {
         std::shared_ptr<DynamicJsonDocument> entry = (*config)->toJsonStorageEntry();
-        if (entry)
+        if (entry) {
             entries.push_back(entry);
+        }
+        if (entries.size() >= MAX_CONFIGURATIONS) {
+            AO_DBG_ERR("Max No of configratuions exceeded. Crop configs file (by FCFS)");
+            break;
+        }
     }
 
     jsonCapacity += JSON_ARRAY_SIZE(entries.size()); //length of configurations
@@ -182,26 +171,43 @@ bool ConfigurationContainerFlash::save() {
         jsonCapacity += (*entry)->capacity();
     }
 
-    DynamicJsonDocument configDoc(jsonCapacity);
+    jsonCapacity = std::max(jsonCapacity, (size_t) 256);
+    DynamicJsonDocument doc {0};
+    bool jsonDocOverflow = true;
 
-    JsonArray configurationsArray = configDoc.createNestedArray("configurations");
+    while (jsonDocOverflow) {
+        if (jsonCapacity > MAX_CONFJSON_CAPACITY) {
+            AO_DBG_ERR("JSON capacity exceeded");
+            return false;
+        }
 
-    for (auto entry = entries.begin(); entry != entries.end(); entry++) {
-        configurationsArray.add((*entry)->as<JsonObject>());
-    }
+        file->seek(0);
 
-    // Serialize JSON to file
-    if (serializeJson(configDoc, file) == 0) {
-        AO_DBG_ERR("Unable to save: Could not serialize JSON");
-        file.close();
-        return false;
+        doc = DynamicJsonDocument(jsonCapacity);
+        JsonObject head = doc.createNestedObject("head");
+        head["content-type"] = "ao_configuration_file";
+        head["version"] = "1.1";
+
+        JsonArray configurationsArray = doc.createNestedArray("configurations");
+        for (auto entry = entries.begin(); entry != entries.end(); entry++) {
+            configurationsArray.add((*entry)->as<JsonObject>());
+        }
+
+        ArduinoJsonFileAdapter file_adapt {file.get()};
+        size_t written = serializeJson(doc, file_adapt);
+
+        jsonCapacity *= 3;
+        jsonCapacity /= 2;
+        jsonDocOverflow = doc.overflowed();
+
+        if (!jsonDocOverflow && written < 20) { //plausibility check
+            AO_DBG_ERR("Config serialization: unkown error for file %s", getFilename());
+            return false;
+        }
     }
 
     //success
-    file.close();
-    AO_DBG_DEBUG("Saving configDoc successful");
-
-#endif //ndef AO_DEACTIVATE_FLASH
+    AO_DBG_DEBUG("Saving configurations finished");
     return true;
 }
 

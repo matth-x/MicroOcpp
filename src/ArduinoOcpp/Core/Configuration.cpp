@@ -12,7 +12,7 @@
 
 namespace ArduinoOcpp {
 
-FilesystemOpt configurationFilesystemOpt = FilesystemOpt::Use_Mount_FormatOnFail;
+std::shared_ptr<FilesystemAdapter> filesystem;
 
 template<class T>
 std::shared_ptr<Configuration<T>> createConfiguration(const char *key, T value) {
@@ -46,16 +46,16 @@ std::shared_ptr<Configuration<const char *>> createConfiguration(const char *key
     return configuration;
 }
 
-std::shared_ptr<ConfigurationContainer> createConfigurationContainer(const char *filename) {
+std::unique_ptr<ConfigurationContainer> createConfigurationContainer(const char *filename) {
     //create non-persistent Configuration store (i.e. lives only in RAM) if
     //     - Flash FS usage is switched off OR
     //     - Filename starts with "/volatile"
-    if (!configurationFilesystemOpt.accessAllowed() ||
+    if (!filesystem ||
                  !strncmp(filename, CONFIGURATION_VOLATILE, strlen(CONFIGURATION_VOLATILE))) {
-        return std::static_pointer_cast<ConfigurationContainer>(std::make_shared<ConfigurationContainerVolatile>(filename));
+        return std::unique_ptr<ConfigurationContainer>(new ConfigurationContainerVolatile(filename));
     } else {
-        //create persistent Configuration store. This is the normal case
-        return std::static_pointer_cast<ConfigurationContainer>(std::make_shared<ConfigurationContainerFlash>(filename));
+        //create persistent Configuration store. This is the normal caseS
+        return std::unique_ptr<ConfigurationContainer>(new ConfigurationContainerFlash(filesystem, filename));
     }
 }
 
@@ -154,8 +154,10 @@ std::shared_ptr<AbstractConfiguration> getConfiguration(const char *key) {
     return nullptr;
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> getAllConfigurations() { //TODO maybe change to iterator?
-    auto result = std::make_shared<std::vector<std::shared_ptr<AbstractConfiguration>>>();
+std::unique_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> getAllConfigurations() { //TODO maybe change to iterator?
+    auto result = std::unique_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>>(
+                              new std::vector<std::shared_ptr<AbstractConfiguration>>()
+    );
 
     for (auto container = configurationContainers.begin(); container != configurationContainers.end(); container++) {
         for (auto config = (*container)->configurationsIteratorBegin(); config != (*container)->configurationsIteratorEnd(); config++) {
@@ -172,33 +174,17 @@ std::shared_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> getAllConfi
 
 bool configuration_inited = false;
 
-bool configuration_init(FilesystemOpt fsOpt) {
+bool configuration_init(std::shared_ptr<FilesystemAdapter> _filesystem) {
     if (configuration_inited)
         return true; //configuration_init() already called; tolerate multiple calls so user can use this store for
                      //credentials outside ArduinoOcpp which need to be loaded before OCPP_initialize()
-    bool loadRoutineSuccessful = true;
-#ifndef AO_DEACTIVATE_FLASH
+    
+    filesystem = _filesystem;
 
-    configurationFilesystemOpt = fsOpt;
-
-    if (fsOpt.mustMount()) { 
-#if defined(ESP32)
-        if(!LITTLEFS.begin(fsOpt.formatOnFail())) {
-            AO_DBG_ERR("Error while mounting LITTLEFS");
-            loadRoutineSuccessful = false;
-        }
-#else
-        //ESP8266
-        SPIFFSConfig cfg;
-        cfg.setAutoFormat(fsOpt.formatOnFail());
-        SPIFFS.setConfig(cfg);
-
-        if (!SPIFFS.begin()) {
-            AO_DBG_ERR("Unable to initialize: unable to mount SPIFFS");
-            loadRoutineSuccessful = false;
-        }
-#endif
-    } //end fs mount
+    if (!filesystem) {
+        configuration_inited = true;
+        return true; //no filesystem, nothing can go wrong
+    }
 
     std::shared_ptr<ConfigurationContainer> containerDefault = nullptr;
     for (auto container = configurationContainers.begin(); container != configurationContainers.end(); container++) {
@@ -208,29 +194,28 @@ bool configuration_init(FilesystemOpt fsOpt) {
         }
     }
 
+    bool success = true;
+
     if (containerDefault) {
-        AO_DBG_DEBUG("Found default container before calling configuration_init(). If you added\n" \
-                           "        the container manually, please ensure to call load(). If not, it is a hint\n" \
-                           "        that declareConfiguration() was called too early\n");
+        AO_DBG_DEBUG("Found default container before calling configuration_init(). If you added");
+        AO_DBG_DEBUG(" > the container manually, please ensure to call load(). If not, it is a hint");
+        AO_DBG_DEBUG(" > that declareConfiguration() was called too early");
+        (void)0;
     } else {
         containerDefault = createConfigurationContainer(CONFIGURATION_FN);
         if (!containerDefault->load()) {
             AO_DBG_ERR("Loading default configurations file failed");
-            loadRoutineSuccessful = false;
+            success = false;
         }
         configurationContainers.push_back(containerDefault);
     }
 
-
-#endif //ndef AO_DEACTIVATE_FLASH
-    configuration_inited = loadRoutineSuccessful;
-    return loadRoutineSuccessful;
+    configuration_inited = success;
+    return success;
 }
 
 bool configuration_save() {
     bool success = true;
-#ifndef AO_DEACTIVATE_FLASH
-
 
     for (auto container = configurationContainers.begin(); container != configurationContainers.end(); container++) {
         if (!(*container)->save()) {
@@ -238,7 +223,6 @@ bool configuration_save() {
         }
     }
 
-#endif //ndef AO_DEACTIVATE_FLASH
     return success;
 }
 
