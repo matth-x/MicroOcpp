@@ -293,6 +293,32 @@ void setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector) {
     connector->setOnUnlockConnector(unlockConnector);
 }
 
+void setConnectorLock(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxCondition)> lockConnector) {
+    if (!ocppEngine) {
+        AO_DBG_ERR("Please call OCPP_initialize before");
+        return;
+    }
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return;
+    }
+    connector->setConnectorLock(lockConnector);
+}
+
+void setTxBasedMeterUpdate(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxCondition)> updateTxState) {
+    if (!ocppEngine) {
+        AO_DBG_ERR("Please call OCPP_initialize before");
+        return;
+    }
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return;
+    }
+    connector->setTxBasedMeterUpdate(updateTxState);
+}
+
 void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq) {
      setOnSetChargingProfileRequestListener(onReceiveReq);
 }

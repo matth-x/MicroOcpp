@@ -2,10 +2,11 @@
 // Copyright Matthias Akstaller 2019 - 2022
 // MIT License
 
-#ifndef CONNECTOR_STATUS
-#define CONNECTOR_STATUS
+#ifndef CONNECTORSTATUS_H
+#define CONNECTORSTATUS_H
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/OcppEvseState.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/TransactionPrerequisites.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
@@ -43,9 +44,9 @@ private:
     bool connectionTimeOutListen {false};
     ulong connectionTimeOutTimestamp {0}; //in milliseconds
 
-    std::function<bool()> connectorPluggedSampler {nullptr};
-    std::function<bool()> evRequestsEnergySampler {nullptr};
-    std::function<bool()> connectorEnergizedSampler {nullptr};
+    std::function<bool()> connectorPluggedSampler;
+    std::function<bool()> evRequestsEnergySampler;
+    std::function<bool()> connectorEnergizedSampler;
     std::vector<std::function<const char *()>> connectorErrorCodeSamplers;
     const char *getErrorCode();
 
@@ -54,13 +55,20 @@ private:
     OcppEvseState reportedStatus = OcppEvseState::NOT_SET;
     ulong t_statusTransition = 0;
 
-    //std::function<std::unique_ptr<OcppMessage>()> startTransactionBehavior;
-    //std::function<std::unique_ptr<OcppMessage>(const char* stopReason)> stopTransactionBehavior;
+    std::function<PollResult<bool>()> onUnlockConnector;
 
-    std::function<PollResult<bool>()> onUnlockConnector {nullptr};
+    std::function<TxEnableState(TxCondition)> onConnectorLockPollTx;
+    std::function<TxEnableState(TxCondition)> onOcmfMeterPollTx;
+
+    std::vector<std::function<TxCondition()>> txTriggerConditions;
+    std::vector<std::function<TxEnableState(TxCondition)>> txEnableSequence;
+    TxEnableState txEnable {TxEnableState::Inactive}; // = Result of Trigger and Enable Sequence
 
     std::shared_ptr<Configuration<const char*>> stopTransactionOnInvalidId;
     std::shared_ptr<Configuration<const char*>> stopTransactionOnEVSideDisconnect;
+    std::shared_ptr<Configuration<const char*>> unlockConnectorOnEVSideDisconnect;
+    std::shared_ptr<Configuration<const char*>> localAuthorizeOffline;
+    std::shared_ptr<Configuration<const char*>> localPreAuthorize;
 public:
     ConnectorStatus(OcppModel& context, int connectorId);
 
@@ -103,6 +111,9 @@ public:
 
     void setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector);
     std::function<PollResult<bool>()> getOnUnlockConnector();
+
+    void setConnectorLock(std::function<TxEnableState(TxCondition)> lockConnector);
+    void setTxBasedMeterUpdate(std::function<TxEnableState(TxCondition)> updateTxBasedMeter);
 };
 
 } //end namespace ArduinoOcpp

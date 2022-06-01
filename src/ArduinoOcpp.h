@@ -15,6 +15,7 @@
 #include <ArduinoOcpp/Core/OcppOperationTimeout.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/Core/PollResult.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/TransactionPrerequisites.h>
 #include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 
 using ArduinoOcpp::OnReceiveConfListener;
@@ -77,7 +78,25 @@ void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCo
 
 void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged);
 
-void setOnUnlockConnector(std::function<ArduinoOcpp::PollResult<bool>()> unlockConnector); //true: success, false: failure
+//Set a Cb to mechanically unlock the connector. Called for the OCPP operation "UnlockConnector"
+//Return values: true on success, false on failure, PollResult::Await if not known yet
+//Continues to call the Cb as long as it returns PollResult::Await
+void setOnUnlockConnector(std::function<ArduinoOcpp::PollResult<bool>()> unlockConnector);
+
+//Set a Cb for setting the state of the connector lock. Called in the course of normal transactions
+//Return values: - TxEnableState::Active if connector is locked and ready for transaction
+//               - TxEnableState::Inactive if connector lock is released
+//               - TxEnableState::Pending otherwise, e.g. if transitioning between the states
+//Called periodically
+void setConnectorLock(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxCondition)> lockConnector);
+
+//Set a Cb to update transaction-based energy measurements with the most recent transaction state.
+//This allows energy meters (e.g. based on OCMF) to take their measruements right before and after a transaction
+//Return values: - TxEnableState::Active if the energy meter confirmed to be in the transaction-state
+//               - TxEnableState::Inactive if the energy meter has transitioned into a non-transaction-state
+//               - TxEnableState::Pending otherwise, e.g. if transitioning between the states
+//Called periodically
+void setTxBasedMeterUpdate(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxCondition)> updateTxState);
 
 /*
  * React on CS-initiated operations

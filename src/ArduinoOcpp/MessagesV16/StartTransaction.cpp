@@ -136,7 +136,8 @@ std::unique_ptr<DynamicJsonDocument> StartTransaction::createConf() {
 
     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
     idTagInfo["status"] = "Accepted";
-    payload["transactionId"] = 123456; //sample data for debug purpose
+    static int uniqueTxId = 1000;
+    payload["transactionId"] = uniqueTxId++; //sample data for debug purpose
 
     return doc;
 }
