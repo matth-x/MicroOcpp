@@ -24,6 +24,23 @@ public:
     virtual void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) = 0; //ReceiveTXTcallback is defined in OcppServer.h
 };
 
+class OcppEchoSocket : public OcppSocket {
+private:
+    ReceiveTXTcallback receiveTXT;
+public:
+    void loop() override { }
+    bool sendTXT(std::string &out) override {
+        if (receiveTXT) {
+            return receiveTXT(out.c_str(), out.length());
+        } else {
+            return false;
+        }
+    }
+    void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) override {
+        this->receiveTXT = receiveTXT;
+    }
+};
+
 } //end namespace ArduinoOcpp
 
 #ifndef AO_CUSTOM_WS
@@ -36,10 +53,8 @@ namespace EspWiFi {
 
 class OcppClientSocket : public OcppSocket {
 private:
-    //std::shared_ptr<WebSocketsClient> wsock;
     WebSocketsClient *wsock;
 public:
-    //OcppClientSocket(ReceiveTXTcallback &receiveTXT, std::shared_ptr<WebSocketsClient> wsock);
     OcppClientSocket(WebSocketsClient *wsock);
 
     void loop();
