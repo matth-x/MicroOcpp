@@ -34,7 +34,7 @@ void ao_set_console_out_c(void (*console_out)(const char *msg));
 
 void ao_setPowerActiveImportSampler(SamplerFloat power);
 
-void ao_setEnergyActiveImportSampler(SamplerFloat energy);
+void ao_setEnergyActiveImportSampler(SamplerInt energy);
 
 void ao_setEvRequestsEnergySampler(SamplerBool evRequestsEnergy);
 

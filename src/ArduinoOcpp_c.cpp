@@ -63,6 +63,24 @@ std::function<const char*()> adaptCb(SamplerString cb) {
     return cb;
 }
 
+std::function<float()> adaptCb(SamplerFloat cb) {
+    return cb;
+}
+
+std::function<int()> adaptCb(SamplerInt cb) {
+    return cb;
+}
+
+void ao_setPowerActiveImportSampler(SamplerFloat power) {
+    setPowerActiveImportSampler(adaptCb(power));
+}
+
+void ao_setEnergyActiveImportSampler(SamplerInt energy) {
+    setEnergyActiveImportSampler([energy] () -> float {
+        return (float) energy();
+    });
+}
+
 void ao_setEvRequestsEnergySampler(SamplerBool evRequestsEnergy) {
     setEvRequestsEnergySampler(adaptCb(evRequestsEnergy));
 }
