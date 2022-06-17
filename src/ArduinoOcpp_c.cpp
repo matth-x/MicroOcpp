@@ -129,6 +129,17 @@ extern "C" void ao_bootNotification(const char *chargePointModel, const char *ch
     bootNotification("model", "vendor", adaptCb(onConfirmation), adaptCb(onAbort), adaptCb(onTimeout), adaptCb(onError));
 }
 
+void ao_bootNotification_full(const char *payloadJson, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError) {
+    DynamicJsonDocument *payload = new DynamicJsonDocument(JSON_OBJECT_SIZE(9) + 230 + 9); // BootNotification has at most 9 attributes with at most 230 chars + null terminators
+    auto err = deserializeJson(*payload, payloadJson);
+    if (err) {
+        AO_DBG_ERR("Could not process input: %s", err.c_str());
+        (void)0;
+    }
+
+    bootNotification(payload, adaptCb(onConfirmation), adaptCb(onAbort), adaptCb(onTimeout), adaptCb(onError));
+}
+
 void ao_authorize(const char *idTag, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError) {
     authorize(idTag, adaptCb(onConfirmation), adaptCb(onAbort), adaptCb(onTimeout), adaptCb(onError));
 }
