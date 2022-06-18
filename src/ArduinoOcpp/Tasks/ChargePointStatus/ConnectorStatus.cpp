@@ -37,6 +37,7 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
     minimumStatusDuration = declareConfiguration<int>("MinimumStatusDuration", 0, CONFIGURATION_FN, true, true, true, false);
     stopTransactionOnInvalidId = declareConfiguration<const char*>("StopTransactionOnInvalidId", "true", CONFIGURATION_FN, true, true, false, false);
     stopTransactionOnEVSideDisconnect = declareConfiguration<const char*>("StopTransactionOnEVSideDisconnect", "true", CONFIGURATION_FN, true, true, false, false);
+    unlockConnectorOnEVSideDisconnect = declareConfiguration<const char*>("UnlockConnectorOnEVSideDisconnect", "true", CONFIGURATION_FN, true, true, false, false);
     localAuthorizeOffline = declareConfiguration<const char*>("LocalAuthorizeOffline", "false", CONFIGURATION_FN, true, true, false, false);
     localPreAuthorize = declareConfiguration<const char*>("LocalPreAuthorize", "false", CONFIGURATION_FN, true, true, false, false);
 
