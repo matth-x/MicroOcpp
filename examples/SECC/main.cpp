@@ -74,11 +74,13 @@
 #define CHARGE_PERMISSION_OFF HIGH
 #endif
 
-#if DEBUG_OUT
+#if !defined(SECC_NO_DEBUG)
 #define PRINT(...) Serial.print(__VA_ARGS__)
+#define PRINTF(...) Serial.printf(__VA_ARGS__)
 #define PRINTLN(...) Serial.println(__VA_ARGS__)
 #else
 #define PRINT(...)
+#define PRINTF(...)
 #define PRINTLN(...)
 #endif
 
@@ -92,14 +94,15 @@ ulong scheduleReboot = 0; //0 = no reboot scheduled; otherwise reboot scheduled 
 ulong reboot_timestamp = 0; //timestamp of the triggering event; if scheduleReboot=0, the timestamp has no meaning
 
 // ============ CAPTIVE PORTAL
-#define CAPTIVE_PORTAL_TIMEOUT 30000
+#define CAPTIVE_PORTAL_TIMEOUT  60 //in seconds
+#define WIFI_CONNECTION_TIMEOUT 30 //in seconds
 
 struct Ocpp_URL {
     bool isTLS = true;
     String host = String('\0');
     uint16_t port = 443;
     String url = String('\0');
-    bool parse(String &url);
+    bool parse(String& url);
 };
 
 Ocpp_URL ocppUrlParsed = Ocpp_URL();
@@ -113,7 +116,9 @@ void setup() {
      * Initialize peripherals
      */
     Serial.begin(115200);
+#if !defined(SECC_NO_DEBUG)
     Serial.setDebugOutput(true);
+#endif
     pinMode(EV_PLUG_PIN, INPUT);
     pinMode(EV_CHARGE_PIN, INPUT);
     pinMode(EVSE_GROUND_FAULT_PIN, INPUT);
@@ -174,12 +179,10 @@ void setup() {
         ESP.restart();
     }
 
-    PRINT(F("[main] host, port, URL: "));
-    PRINT(ocppUrlParsed.host);
-    PRINT(F(", "));
-    PRINT(ocppUrlParsed.port);
-    PRINT(F(", "));
-    PRINTLN(ocppUrlParsed.url);
+    PRINTF("[main] host, port, URL: %s, %hu, %s\n",
+                ocppUrlParsed.host.isEmpty() ? "undefined" : ocppUrlParsed.host.c_str(),
+                ocppUrlParsed.port,
+                ocppUrlParsed.url.isEmpty()  ? "undefined" : ocppUrlParsed.url.c_str());
 
     /*
      * Initialize ArduinoOcpp framework.
@@ -202,21 +205,19 @@ void setup() {
                 PRINT('.');
                 now = time(nullptr);
             }
-            PRINT(F(" finished. Unix timestamp is "));
-            PRINTLN(now);
+            PRINTF(" finished. Unix timestamp is %lu\n", now);
 
             wSock.beginSslWithCA(ocppUrlParsed.host.c_str(), ocppUrlParsed.port, ocppUrlParsed.url.c_str(), *CA_cert, "ocpp1.6");
         } else {
-            wSock.beginSSL(ocppUrlParsed.host.c_str(), ocppUrlParsed.port, ocppUrlParsed.url.c_str(), NULL, "ocpp1.6");
+            wSock.beginSSL(ocppUrlParsed.host.c_str(), ocppUrlParsed.port, ocppUrlParsed.url.c_str(), nullptr, "ocpp1.6");
         }
     } else {
         wSock.begin(ocppUrlParsed.host, ocppUrlParsed.port, ocppUrlParsed.url, "ocpp1.6");
     }
 
     OCPP_initialize(oSock,
-            /* Grid voltage */ 230.f, 
-            ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, 
-            ArduinoOcpp::Clocks::DEFAULT_CLOCK);
+            230.f, //European grid voltage
+            ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail);
 
     /*
      * Integrate OCPP functionality. You can leave out the following part if your EVSE doesn't need it.
@@ -224,23 +225,25 @@ void setup() {
     setEnergyActiveImportSampler([]() {
         //read the energy input register of the EVSE here and return the value in Wh
         /*
-         * Approximated value. TODO: Replace with real reading
+         * Approximated value. Replace with real reading
          */
         static ulong lastSampled = millis();
         static float energyMeter = 0.f;
-        if (getTransactionId() > 0 && digitalRead(EV_CHARGE_PIN) == EV_CHARGING)
-            energyMeter += ((float) millis() - lastSampled) * 0.003f; //increase by 0.003Wh per ms (~ 10.8kWh per h)
+        if (getTransactionId() > 0)
+            energyMeter += ((float) (millis() - lastSampled)) * 0.003f; //increase by 0.003Wh per ms (~ 10.8kWh per h)
         lastSampled = millis();
         return energyMeter;
     });
 
     setOnChargingRateLimitChange([](float limit) {
         //set the SAE J1772 Control Pilot value here
-        PRINT(F("[main] Smart Charging allows maximum charge rate: "));
-        PRINTLN(limit);
-        float amps = limit / 230.f;
+        const float voltage = 230.f; // European grid
+        const uint nPhases = 1; //one, two or three phase charging
+        float amps = limit / (voltage * (float) nPhases);
         if (amps > 51.f)
             amps = 51.f;
+
+        PRINTF("[main] Smart Charging allows maximum charge rate: %iW; convert to Control Pilot amerage: %.2fA\n", (int) limit, amps);
 
         int pwmVal;
         if (amps < 6.f) {
@@ -253,7 +256,6 @@ void setup() {
         ledcWrite(AMPERAGE_PIN, pwmVal);
 #elif defined(ESP8266)
         analogWrite(AMPERAGE_PIN, pwmVal);
-#else
 #endif
     });
 
@@ -263,19 +265,20 @@ void setup() {
     });
 
     addConnectorErrorCodeSampler([] () {
-//        if (digitalRead(EVSE_GROUND_FAULT_PIN) != EVSE_GROUND_CLEAR) {
-//            return "GroundFault";
-//        } else {
-            return (const char *) NULL;
-//        }
+        //Uncomment if Ground fault pin is used
+        //if (digitalRead(EVSE_GROUND_FAULT_PIN) != EVSE_GROUND_CLEAR) {
+        //    return "GroundFault";
+        //}
+        return (const char *) nullptr;
     });
 
-    setOnResetSendConf([] (JsonObject payload) {
+    setOnResetSendConf([] (JsonObject confirmation) {
         if (getTransactionId() >= 0)
             stopTransaction();
         
+        PRINTLN(F("[main] Execute reset command"));
         reboot_timestamp = millis();
-        scheduleReboot = 5000;
+        scheduleReboot = 5000; //reboot will be executed in loop()
         booted = false;
     });
 
@@ -284,15 +287,14 @@ void setup() {
     /*
      * Notify the Central System that this station is ready
      */
-    bootNotification("My Charging Station", "My company name", [] (JsonObject payload) {
-        const char *status = payload["status"] | "INVALID";
-        if (!strcmp(status, "Accepted")) {
+    bootNotification("My Charging Station", "My company name", [] (JsonObject response) {
+        if (response["status"].as<String>().equals("Accepted")) {
             booted = true;
             digitalWrite(SERVER_CONNECT_LED, SERVER_CONNECT_ON);
         } else {
-            //retry sending the BootNotification
-            delay(60000);
-            ESP.restart();
+            //Wait for the connection retry
+            reboot_timestamp = millis();
+            scheduleReboot = 60000; //wait for 60s until reboot; reboot will be executed in loop()
         }
     });
 }
@@ -304,46 +306,48 @@ void loop() {
      */
     OCPP_loop();
 
-    /*
-     * Detect if something physical happened at your EVSE and trigger the corresponding OCPP messages
-     */
+    //NFC reader integration example
     if (/* RFID chip detected? */ false) {
         const char *idTag = "my-id-tag"; //e.g. idTag = RFID.readIdTag();
         authorize(idTag);
     }
 
     if (ocppPermitsCharge()) {
+        //EVSE is in a charging session and charging is permitted by the OCPP server
         digitalWrite(OCPP_CHARGE_PERMISSION_PIN, OCPP_CHARGE_PERMITTED);
         digitalWrite(CHARGE_PERMISSION_LED, CHARGE_PERMISSION_ON);
     } else {
+        //Charging is not allowed due to OCPP rules
         digitalWrite(OCPP_CHARGE_PERMISSION_PIN, OCPP_CHARGE_FORBIDDEN);
         digitalWrite(CHARGE_PERMISSION_LED, CHARGE_PERMISSION_OFF);
     }
 
-    if (!booted)
-        return;
     if (scheduleReboot > 0 && millis() - reboot_timestamp >= scheduleReboot) {
         ESP.restart();
     }
 
-    if (digitalRead(EV_PLUG_PIN) == EV_PLUGGED && evPlugged == EV_UNPLUGGED && getTransactionId() >= 0) {
-        //transition unplugged -> plugged; Case A: transaction has already been initiated
-        evPlugged = EV_PLUGGED;
-    } else if (digitalRead(EV_PLUG_PIN) == EV_PLUGGED && evPlugged == EV_UNPLUGGED && isAvailable()) {
-        //transition unplugged -> plugged; Case B: no transaction running; start transaction
-        evPlugged = EV_PLUGGED;
-
-        startTransaction("my-id-tag");
-    } else if (digitalRead(EV_PLUG_PIN) == EV_UNPLUGGED && evPlugged == EV_PLUGGED) {
-        //transition plugged -> unplugged
-        evPlugged = EV_UNPLUGGED;
-
-        if (getTransactionId() >= 0)
-            stopTransaction();
+    if (!booted) {
+        return;
     }
+
+    auto readEvPlugged = digitalRead(EV_PLUG_PIN);
+    if (evPlugged == EV_UNPLUGGED && readEvPlugged == EV_PLUGGED //transition from unplugged to plugged
+                && getTransactionId() < 0  //no transaction yet
+                && isAvailable()) {        //EVSE is in operative mode
+        startTransaction("my-id-tag");
+    } else if (evPlugged == EV_PLUGGED && readEvPlugged == EV_UNPLUGGED //transition from plugged to unplugged
+                && getTransactionId() >= 0) { //need to stop transaction
+        stopTransaction();
+    }
+    evPlugged = readEvPlugged;
 
     //... see ArduinoOcpp.h for more possibilities
 }
+
+
+
+// ### End of the OCPP integration. The following code integrates the
+// ### WiFi-Manager into this example sketch.
 
 bool runWiFiManager() {
 
@@ -416,16 +420,16 @@ bool runWiFiManager() {
     wifiManager.setDarkMode(true);
 
     //wifiManager.setConfigPortalTimeout(CAPATITIVE_PORTAL_TIMEOUT / 1000); //if nobody logs in to the portal, continue after timeout 
-    wifiManager.setTimeout(CAPTIVE_PORTAL_TIMEOUT / 1000); //if nobody logs in to the portal, continue after timeout 
-    wifiManager.setConnectTimeout(CAPTIVE_PORTAL_TIMEOUT / 1000);
+    wifiManager.setTimeout(CAPTIVE_PORTAL_TIMEOUT); //if nobody logs in to the portal, continue after timeout 
+    wifiManager.setConnectTimeout(WIFI_CONNECTION_TIMEOUT);
     //wifiManager.setSaveConnect(true);
     wifiManager.setAPClientCheck(true); // avoid timeout if client connected to softap
     PRINTLN(F("[main] Start capatitive portal"));
     
-    if (wifiManager.startConfigPortal("EVSE_Maintenance_Portal", "myEvseController")) {
+    if (wifiManager.startConfigPortal("EVSE-Config", "evse1234")) {
         return true;
     } else {
-        return wifiManager.autoConnect("EVSE_Maintenance_Portal", "myEvseController");
+        return wifiManager.autoConnect("EVSE-Config", "evse1234");
     }
 }
 

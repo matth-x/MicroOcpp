@@ -87,8 +87,8 @@ void setup() {
 #elif defined(ESP32)
     WiFi.begin(STASSID, STAPSK);
     while (!WiFi.isConnected()) {
-        Serial.print('.');
         delay(1000);
+        Serial.print('.');
     }
 #endif
 
