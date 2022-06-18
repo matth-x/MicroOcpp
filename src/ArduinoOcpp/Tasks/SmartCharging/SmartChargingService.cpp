@@ -44,6 +44,9 @@ SmartChargingService::SmartChargingService(OcppEngine& context, float chargeLimi
         TxProfile[i] = NULL;
     }
     declareConfiguration<int>("ChargeProfileMaxStackLevel", CHARGEPROFILEMAXSTACKLEVEL, CONFIGURATION_VOLATILE, false, true, false, false);
+    declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit ", "Power", CONFIGURATION_VOLATILE, false, true, false, false);
+    declareConfiguration<int>("ChargingScheduleMaxPeriods", CHARGINGSCHEDULEMAXPERIODS, CONFIGURATION_VOLATILE, false, true, false, false);
+    declareConfiguration<int>("MaxChargingProfilesInstalled", MAXCHARGINGPROFILESINSTALLED, CONFIGURATION_VOLATILE, false, true, false, false);
 
     const char *fpId = "SmartCharging";
     auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
