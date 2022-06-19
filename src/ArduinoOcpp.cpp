@@ -374,8 +374,14 @@ void bootNotification(const char *chargePointModel, const char *chargePointVendo
         AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
+    
+    auto credentials = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+        JSON_OBJECT_SIZE(2) + strlen(chargePointModel) + strlen(chargePointVendor) + 2));
+    (*credentials)["chargePointModel"] = (char*) chargePointModel;
+    (*credentials)["chargePointVendor"] = (char*) chargePointVendor;
+
     auto bootNotification = makeOcppOperation(
-        new BootNotification(chargePointModel, chargePointVendor));
+        new BootNotification(std::move(credentials)));
     if (onConf)
         bootNotification->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -397,7 +403,7 @@ void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf
         return;
     }
     auto bootNotification = makeOcppOperation(
-        new BootNotification(payload));
+        new BootNotification(std::unique_ptr<DynamicJsonDocument>(payload)));
     if (onConf)
         bootNotification->setOnReceiveConfListener(onConf);
     if (onAbort)

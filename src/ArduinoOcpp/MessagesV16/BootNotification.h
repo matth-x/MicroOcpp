@@ -18,24 +18,17 @@ namespace Ocpp16 {
 
 class BootNotification : public OcppMessage {
 private:
-    char chargePointModel [CP_MODEL_LEN_MAX + 1] = {'\0'};
-    char chargePointSerialNumber [CP_SERIALNUMBER_LEN_MAX + 1] = {'\0'};
-    char chargePointVendor [CP_VENDOR_LEN_MAX + 1] = {'\0'};
-    char firmwareVersion [FW_VERSION_LEN_MAX + 1] = {'\0'};
-
-    DynamicJsonDocument *overridePayload = NULL;
+    std::unique_ptr<DynamicJsonDocument> credentials;
 public:
     BootNotification();
 
-    ~BootNotification();
+    ~BootNotification() = default;
 
-    BootNotification(const char *chargePointModel, const char *chargePointVendor);
-
-    BootNotification(const char *chargePointModel, const char *chargePointSerialNumber, const char *chargePointVendor, const char *firmwareVersion);
-
-    BootNotification(DynamicJsonDocument *payload);
+    BootNotification(std::unique_ptr<DynamicJsonDocument> payload);
 
     const char* getOcppOperationType();
+
+    void initiate();
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 

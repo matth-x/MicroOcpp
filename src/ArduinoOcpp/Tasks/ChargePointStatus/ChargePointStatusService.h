@@ -21,6 +21,8 @@ private:
 
     bool booted = false;
 
+    std::string cpCredentials;
+
 public:
     ChargePointStatusService(OcppEngine& context, unsigned int numConnectors);
 
@@ -33,6 +35,9 @@ public:
 
     ConnectorStatus *getConnector(int connectorId);
     int getNumConnectors();
+
+    void setChargePointCredentials(DynamicJsonDocument &credentials);
+    std::string& getChargePointCredentials();
 };
 
 } //end namespace ArduinoOcpp

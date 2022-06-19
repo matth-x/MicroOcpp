@@ -86,3 +86,26 @@ bool ChargePointStatusService::isBooted() {
 int ChargePointStatusService::getNumConnectors() {
     return connectors.size();
 }
+
+void ChargePointStatusService::setChargePointCredentials(DynamicJsonDocument &credentials) {
+    if (!credentials.is<JsonObject>()) {
+        AO_DBG_ERR("Payload must be JSON object");
+        cpCredentials.clear();
+        return;
+    }
+    auto written = serializeJson(credentials, cpCredentials);
+    if (written <= 2) {
+        AO_DBG_ERR("Could not parse CP credentials: %s", written == 2 ? "format violation" : "invalid JSON");
+        cpCredentials.clear();
+        return;
+    }
+    //success
+}
+
+std::string& ChargePointStatusService::getChargePointCredentials() {
+    if (cpCredentials.size() <= 2) {
+        cpCredentials = "{}";
+    }
+
+    return cpCredentials;
+}
