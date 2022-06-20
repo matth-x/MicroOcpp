@@ -386,7 +386,7 @@ void ConnectorStatus::setEvRequestsEnergySampler(std::function<bool()> evRequest
 }
 
 void ConnectorStatus::setConnectorEnergizedSampler(std::function<bool()> connectorEnergized) {
-    this->connectorEnergizedSampler = connectorEnergizedSampler;
+    this->connectorEnergizedSampler = connectorEnergized;
 }
 
 void ConnectorStatus::addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
