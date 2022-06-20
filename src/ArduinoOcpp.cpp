@@ -380,30 +380,16 @@ void bootNotification(const char *chargePointModel, const char *chargePointVendo
     (*credentials)["chargePointModel"] = (char*) chargePointModel;
     (*credentials)["chargePointVendor"] = (char*) chargePointVendor;
 
-    auto bootNotification = makeOcppOperation(
-        new BootNotification(std::move(credentials)));
-    if (onConf)
-        bootNotification->setOnReceiveConfListener(onConf);
-    if (onAbort)
-        bootNotification->setOnAbortListener(onAbort);
-    if (onTimeout)
-        bootNotification->setOnTimeoutListener(onTimeout);
-    if (onError)
-        bootNotification->setOnReceiveErrorListener(onError);
-    if (timeout)
-        bootNotification->setTimeout(std::move(timeout));
-    else
-        bootNotification->setTimeout(std::unique_ptr<Timeout> (new SuppressedTimeout()));
-    ocppEngine->initiateOperation(std::move(bootNotification));
+    bootNotification(std::move(credentials), onConf, onAbort, onTimeout, onError, std::move(timeout));
 }
 
-void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+void bootNotification(std::unique_ptr<DynamicJsonDocument> payload, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
         AO_DBG_ERR("Please call OCPP_initialize before");
         return;
     }
     auto bootNotification = makeOcppOperation(
-        new BootNotification(std::unique_ptr<DynamicJsonDocument>(payload)));
+        new BootNotification(std::move(payload)));
     if (onConf)
         bootNotification->setOnReceiveConfListener(onConf);
     if (onAbort)
