@@ -330,6 +330,7 @@ bool SmartChargingService::clearChargingProfile(const std::function<bool(int, in
                 }
 #endif
                 delete chargingProfile;
+                profileStack[iLevel] = nullptr;
             }
         }
     }

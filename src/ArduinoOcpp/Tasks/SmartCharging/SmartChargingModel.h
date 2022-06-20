@@ -94,9 +94,9 @@ private:
     int chargingProfileId = -1;
     int transactionId = -1;
     int stackLevel = 0;
-    ChargingProfilePurposeType chargingProfilePurpose;
-    ChargingProfileKindType chargingProfileKind; //copied to ChargingSchedule to increase cohesion of limit inferencing methods
-    RecurrencyKindType recurrencyKind; // copied to ChargingSchedule to increase cohesion
+    ChargingProfilePurposeType chargingProfilePurpose {ChargingProfilePurposeType::TxProfile};
+    ChargingProfileKindType chargingProfileKind {ChargingProfileKindType::Relative}; //copied to ChargingSchedule to increase cohesion of limit inferencing methods
+    RecurrencyKindType recurrencyKind {RecurrencyKindType::NOT_SET}; // copied to ChargingSchedule to increase cohesion
     OcppTimestamp validFrom;
     OcppTimestamp validTo;
     std::unique_ptr<ChargingSchedule> chargingSchedule;
