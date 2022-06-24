@@ -86,6 +86,8 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
             return OcppEvseState::Faulted;
         } else if (*availability == AVAILABILITY_INOPERATIVE) {
             return OcppEvseState::Unavailable;
+        } else if (rebooting) {
+            return OcppEvseState::Unavailable;
         } else {
             return OcppEvseState::Available;
         }
@@ -94,6 +96,8 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
     if (getErrorCode() != nullptr) {
         return OcppEvseState::Faulted;
     } else if (*availability == AVAILABILITY_INOPERATIVE) {
+        return OcppEvseState::Unavailable;
+    } else if (rebooting && getTransactionId() < 0) {
         return OcppEvseState::Unavailable;
     } else if (getTransactionId() == 0 &&      // i.e. Tx pending or EVSE offline. Check if offline Tx is OFF
             !(*localAuthorizeOffline && strcmp(*localAuthorizeOffline, "false")) &&
@@ -334,6 +338,10 @@ const char *ConnectorStatus::getSessionIdTag() {
     return session ? idTag : nullptr;
 }
 
+uint16_t ConnectorStatus::getSessionWriteCount() {
+    return sIdTag->getValueRevision();
+}
+
 int ConnectorStatus::getTransactionId() {
     return *transactionId;
 }
@@ -372,6 +380,10 @@ void ConnectorStatus::setAvailability(bool available) {
         }
     }
     saveState();
+}
+
+void ConnectorStatus::setRebooting(bool rebooting) {
+    this->rebooting = rebooting;
 }
 
 void ConnectorStatus::setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {

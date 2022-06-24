@@ -25,19 +25,25 @@ void Reset::processReq(JsonObject payload) {
 
     if (ocppModel && ocppModel->getChargePointStatusService()) {
         auto cpsService = ocppModel->getChargePointStatusService();
-        int connId = 0;
-        for (int i = 0; i < cpsService->getNumConnectors(); i++) {
-            auto connector = cpsService->getConnector(connId);
-            if (connector) {
-                connector->endSession(isHard ? "HardReset" : "SoftReset");
+        if (!cpsService->getPreReset() || cpsService->getPreReset()(isHard) || isHard) {
+            resetAccepted = true;
+            cpsService->initiateReset(isHard);
+            int connId = 0;
+            for (int i = 0; i < cpsService->getNumConnectors(); i++) {
+                auto connector = cpsService->getConnector(connId);
+                if (connector) {
+                    connector->endSession(isHard ? "HardReset" : "SoftReset");
+                }
             }
         }
+    } else {
+        resetAccepted = true; //assume that onReceiveReset is set
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> Reset::createConf(){
+std::unique_ptr<DynamicJsonDocument> Reset::createConf() {
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
-    payload["status"] = "Accepted";
+    payload["status"] = resetAccepted ? "Accepted" : "Rejected";
     return doc;
 }

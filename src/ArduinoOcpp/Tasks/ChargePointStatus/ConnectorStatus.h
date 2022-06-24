@@ -31,6 +31,7 @@ private:
     const int connectorId;
 
     std::shared_ptr<Configuration<int>> availability;
+    bool rebooting = false; //report connector inoperative and reject new charging sessions
 
     bool session = false;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
@@ -86,6 +87,7 @@ public:
     void endSession(const char *reason = nullptr);
     void setIdTagInvalidated(); //if StartTransaction.conf() has status != "Accepted"
     const char *getSessionIdTag();
+    uint16_t getSessionWriteCount();
     int getTransactionId();
     int getTransactionIdSync();
     uint16_t getTransactionWriteCount();
@@ -94,6 +96,7 @@ public:
 
     int getAvailability();
     void setAvailability(bool available);
+    void setRebooting(bool rebooting);
     void setAuthorizationProvider(std::function<const char *()> authorization);
     void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
     void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);

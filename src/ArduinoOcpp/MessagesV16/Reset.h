@@ -11,6 +11,8 @@ namespace ArduinoOcpp {
 namespace Ocpp16 {
 
 class Reset : public OcppMessage {
+private:
+    bool resetAccepted {false};
 public:
     Reset();
 

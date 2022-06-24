@@ -110,6 +110,10 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
         new DiagnosticsService(*ocppEngine)));
 #endif
 
+#if !defined(AO_CUSTOM_RESET)
+    model.getChargePointStatusService()->setExecuteReset(EspWiFi::makeDefaultResetFn());
+#endif
+
     ocppEngine->setRunOcppTasks(false); //prevent OCPP classes from doing anything while booting
 }
 

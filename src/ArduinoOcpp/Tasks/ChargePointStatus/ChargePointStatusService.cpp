@@ -12,6 +12,8 @@
 #include <memory>
 #include <string.h>
 
+#define RESET_DELAY 15000
+
 using namespace ArduinoOcpp;
 
 ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned int numConn)
@@ -20,7 +22,6 @@ ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned
     for (unsigned int i = 0; i < numConn; i++) {
         connectors.push_back(std::unique_ptr<ConnectorStatus>(new ConnectorStatus(context.getOcppModel(), i)));
     }
-
     
     std::shared_ptr<Configuration<int>> numberOfConnectors =
             declareConfiguration<int>("NumberOfConnectors", numConn >= 1 ? numConn - 1 : 0, CONFIGURATION_VOLATILE, false, true, false, false);
@@ -44,6 +45,8 @@ ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
 
+    resetRetries = declareConfiguration<int>("ResetRetries", 2, CONFIGURATION_FN, true, true, false, false);
+    
     /*
      * Further configuration keys which correspond to the Core profile
      */
@@ -62,6 +65,25 @@ void ChargePointStatusService::loop() {
         if (statusNotificationMsg != nullptr) {
             auto statusNotification = makeOcppOperation(statusNotificationMsg);
             context.initiateOperation(std::move(statusNotification));
+        }
+    }
+
+    if (outstandingResetRetries > 0 && ao_tick_ms() - t_resetRetry >= RESET_DELAY) {
+        t_resetRetry = ao_tick_ms();
+        outstandingResetRetries--;
+        if (executeReset) {
+            AO_DBG_INFO("Reset device");
+            executeReset(isHardReset);
+        } else {
+            AO_DBG_ERR("No Reset function set! Abort");
+            outstandingResetRetries = 0;
+        }
+        AO_DBG_ERR("Reset device failure. %s", outstandingResetRetries == 0 ? "Abort" : "Retry");
+
+        if (outstandingResetRetries <= 0) {
+            for (auto connector = connectors.begin(); connector != connectors.end(); connector++) {
+                (*connector)->setRebooting(false);
+            }
         }
     }
 }
@@ -109,3 +131,44 @@ std::string& ChargePointStatusService::getChargePointCredentials() {
 
     return cpCredentials;
 }
+
+void ChargePointStatusService::setPreReset(std::function<bool(bool)> preReset) {
+    this->preReset = preReset;
+}
+
+std::function<bool(bool)> ChargePointStatusService::getPreReset() {
+    return this->preReset;
+}
+
+void ChargePointStatusService::setExecuteReset(std::function<void(bool)> executeReset) {
+    this->executeReset = executeReset;
+}
+
+std::function<void(bool)> ChargePointStatusService::getExecuteReset() {
+    return this->executeReset;
+}
+
+void ChargePointStatusService::initiateReset(bool isHard) {
+    isHardReset = isHard;
+    outstandingResetRetries = 1 + *resetRetries; //one initial try + no. of retries
+    if (outstandingResetRetries > 5) {
+        AO_DBG_ERR("no. of reset trials exceeds 5");
+        outstandingResetRetries = 5;
+    }
+    t_resetRetry = ao_tick_ms();
+
+    for (auto connector = connectors.begin(); connector != connectors.end(); connector++) {
+        (*connector)->setRebooting(true);
+    }
+}
+
+#if !defined(AO_CUSTOM_RESET)
+#if defined(ESP32) || defined(ESP8266)
+std::function<void(bool isHard)> ArduinoOcpp::EspWiFi::makeDefaultResetFn() {
+    return [] (bool isHard) {
+        AO_DBG_DEBUG("Perform ESP reset");
+        ESP.restart();
+    };
+}
+#endif //defined(ESP32) || defined(ESP8266)
+#endif //!defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
