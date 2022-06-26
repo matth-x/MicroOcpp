@@ -56,10 +56,18 @@ public:
         }
     }
     
-    int read() override;
-    size_t read(char *buf, size_t len) override;
-    size_t write(const char *buf, size_t len) override;
-    size_t seek(size_t offset) override;
+    int read() override {
+        return file.read();
+    };
+    size_t read(char *buf, size_t len) override {
+        return file.readBytes(buf, len);
+    }
+    size_t write(const char *buf, size_t len) override {
+        return file.printf("%.*s", len, buf);
+    }
+    size_t seek(size_t offset) override {
+        return file.seek(offset);
+    }
 };
 
 class ArduinoFilesystemAdapter : public FilesystemAdapter {
@@ -110,8 +118,8 @@ public:
         }
 
         int status = -1;
-        if (f.isFile()) {
-            size = f.size();
+        if (!f.isDirectory()) {
+            *size = f.size();
             status = 0;
         } else {
             //fetch more information for directory when ArduinoOcpp also uses them
@@ -124,7 +132,7 @@ public:
 
     std::unique_ptr<FileAdapter> open(const char *fn, const char *mode) override {
         File file = USE_FS.open(fn, mode);
-        if (file && file.isFile()) {
+        if (file && !file.isDirectory()) {
             return std::unique_ptr<FileAdapter>(new ArduinoFileAdapter(std::move(file)));
         } else {
             return nullptr;
@@ -146,7 +154,7 @@ std::unique_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
         new ArduinoFilesystemAdapter(config)
     );
 
-    if (*fs) {
+    if (fs) {
         return fs;
     } else {
         return nullptr;

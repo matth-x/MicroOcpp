@@ -36,7 +36,8 @@ const char *cstrFromOcppEveState(OcppEvseState state) {
             return "Faulted";
         default:
             AO_DBG_ERR("OcppEvseState not specified");
-            __attribute__ ((fallthrough));
+            (void)0;
+            /* fall through */
         case (OcppEvseState::NOT_SET):
             return "NOT_SET";
     }
