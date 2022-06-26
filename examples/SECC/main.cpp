@@ -151,8 +151,13 @@ void setup() {
     /*
      * You can use ArduinoOcpp's internal configurations store for credentials other than those which are
      * specified by OCPP. To use it before ArduinoOcpp is initialized, you need to call configuration_init()
+     * 
+     * This snippet also shows how to integrate a custom filesystem. Just subclass FilesystemAdapter and pass
+     * it to the library
      */
-    ArduinoOcpp::configuration_init(ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail);
+    std::shared_ptr<ArduinoOcpp::FilesystemAdapter> filesystem = ArduinoOcpp::EspWiFi::makeDefaultFilesystemAdapter(ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail);
+    ArduinoOcpp::configuration_init(filesystem);
+    filesystem = nullptr;
 
     /*
      * WiFiManager opens a captive portal, lets the user enter the WiFi credentials and provides a settings

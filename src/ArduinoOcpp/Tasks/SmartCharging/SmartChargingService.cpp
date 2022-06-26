@@ -300,8 +300,8 @@ void SmartChargingService::setChargingProfile(JsonObject json) {
 ChargingProfile *SmartChargingService::updateProfileStack(JsonObject json){
     ChargingProfile *chargingProfile = new ChargingProfile(json);
 
-    if (AO_DBG_LEVEL >= AO_DL_INFO) {
-        AO_DBG_INFO("Charging Profile internal model:");
+    if (AO_DBG_LEVEL >= AO_DL_VERBOSE) {
+        AO_DBG_VERBOSE("Charging Profile internal model:");
         chargingProfile->printProfile();
     }
 

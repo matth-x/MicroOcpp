@@ -83,6 +83,8 @@ public:
             if(!USE_FS.begin(config.formatOnFail())) {
                 AO_DBG_ERR("Error while mounting LITTLEFS");
                 valid = false;
+            } else {
+                AO_DBG_DEBUG("LittleFS mount success");
             }
 #elif AO_USE_FILEAPI == ARDUINO_SPIFFS
             //ESP8266
@@ -150,11 +152,10 @@ std::unique_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
             return nullptr;
     }
 
-    auto fs = std::unique_ptr<FilesystemAdapter>(
-        new ArduinoFilesystemAdapter(config)
-    );
+    auto fs_concrete = new ArduinoFilesystemAdapter(config);
+    auto fs = std::unique_ptr<FilesystemAdapter>(fs_concrete);
 
-    if (fs) {
+    if (*fs_concrete) {
         return fs;
     } else {
         return nullptr;
