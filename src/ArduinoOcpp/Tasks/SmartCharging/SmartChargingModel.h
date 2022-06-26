@@ -119,9 +119,9 @@ public:
     bool inferenceLimit(const OcppTimestamp &t, float *limit, OcppTimestamp *nextChange);
 
     /*
-    * Check if this profile belongs to transaction with ID transId
+    * Check if this profile belongs to transaction with ID txId or idTag alternatively
     */
-    bool checkTransactionId(int transId);
+    bool checkTransactionAssignment(int txId, int profileId);
 
     int getStackLevel();
     

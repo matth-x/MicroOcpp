@@ -13,7 +13,7 @@
 #include <functional>
 
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.h>
-#include <ArduinoOcpp/Core/ConfigurationOptions.h>
+#include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
 
 namespace ArduinoOcpp {
@@ -34,18 +34,24 @@ private:
     OnLimitChange onLimitChange = NULL;
     float limitBeforeChange;
     OcppTimestamp nextChange;
+
+    bool chargingSessionStateInitialized {false};
+    std::shared_ptr<Configuration<const char*>> txStartTime;
     OcppTimestamp chargingSessionStart;
     int chargingSessionTransactionID;
+    std::shared_ptr<Configuration<int>> sRmtProfileId;
+    uint16_t sRmtProfileIdRev {0};
+    uint16_t sessionIdTagRev {0};
     void refreshChargingSessionState();
 
-    ChargingProfile *updateProfileStack(JsonObject *json);
+    ChargingProfile *updateProfileStack(JsonObject json);
     FilesystemOpt filesystemOpt;
-    bool writeProfileToFlash(JsonObject *json, ChargingProfile *chargingProfile);
+    bool writeProfileToFlash(JsonObject json, ChargingProfile *chargingProfile);
     bool loadProfiles();
   
 public:
     SmartChargingService(OcppEngine& context, float chargeLimit, float V_eff, int numConnectors, FilesystemOpt filesystemOpt = FilesystemOpt::Use_Mount_FormatOnFail);
-    void updateChargingProfile(JsonObject *json);
+    void setChargingProfile(JsonObject json);
     bool clearChargingProfile(const std::function<bool(int, int, ChargingProfilePurposeType, int)>& filter);
     void inferenceLimit(const OcppTimestamp &t, float *limit, OcppTimestamp *validTo);
     float inferenceLimitNow();
