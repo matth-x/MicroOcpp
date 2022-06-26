@@ -1,4 +1,7 @@
 # <img src="https://user-images.githubusercontent.com/63792403/133922028-fefc8abb-fde9-460b-826f-09a458502d17.png" alt="Icon" height="24"> &nbsp; ArduinoOcpp
+
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/matth-x/ArduinoOcpp/PlatformIO%20CI?logo=github)](https://github.com/matth-x/ArduinoOcpp/actions)
+
 OCPP-J 1.6 client for the ESP8266 and the ESP32 (more coming soon)
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp)
@@ -32,11 +35,70 @@ For simple chargers, the necessary hardware and internet integration is usually 
 
 ## Usage guide
 
-**This feature branch is WIP. A usage guide will follow.**
+Please take `examples/ESP/main.cpp` as the starting point for your first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. This guide explains the concepts for a minimal integration.
+
+- To get the library running, you have to install all dependencies (see the list below). In case you use PlatformIO, you can just add `matth-x/ArduinoOcpp` to your project using the PIO library manager.
+
+- In your project's `main` file, include `ArduinoOcpp.h`.
+
+- Before establishing an OCPP connection you have to ensure that your device has access to a Wi-Fi access point. All debug messages are printed on the standard serial (i.e. `Serial.print("debug msg")`). To redirect debug messages, please refer to `src/ArduinoOcpp/Platform.h`.
+
+- To connect to your OCPP Central System, call `OCPP_initialize(String OCPP_HOST, uint16_t OCPP_PORT, String OCPP_URL)`. You need to insert the address parameters according to the configuration of your central system. Internally, the library passes these parameters to the WebSocket object without further alteration.
+   - To secure the connection with TLS, you have to configure the WebSocket. Please take `examples/ESP-TLS/main.cpp` as an example.
+
+- In your `setup()` function, you can add the configuration functions from `ArduinoOcpp.h` to properly integrate your hardware. For example, the library needs access to the energy meter. All configuration functions are documented in `ArduinoOcpp.h`.
+
+- Add `OCPP_loop()` to your `loop()` function.
+
+**Sending OCPP operations**
+
+There are a couple of OCPP operations you can initialize on your EVSE. For example, to send a `Boot Notification`, use the function 
+```cpp
+void bootNotification(const char *chargePointModel, const char *chargePointVendor, OnReceiveConfListener onConf = nullptr, ...)`
+```
+
+In practice, it looks like this:
+
+```cpp
+void setup() {
+
+    ... //other code including the initialization of Wi-Fi and OCPP
+
+    bootNotification("My CP model name", "My company name", [] (JsonObject confMsg) {
+        //This callback is executed when the .conf() response from the central system arrives
+        Serial.print(F("BootNotification was answered. Central System clock: "));
+        Serial.println(confMsg["currentTime"].as<String>()); //"currentTime" is a field of the central system response
+        
+        //Notify your hardare that the BootNotification.conf() has arrived. E.g.:
+        //evseIsBooted = true;
+    });
+    
+    ... //rest of setup() function; executed immediately as bootNotification() is non-blocking
+}
+```
+
+The parameters `chargePointModel` and `chargePointVendor` are equivalent to the parameters in the `Boot Notification` as defined by the OCPP specification. The last parameter `OnReceiveConfListener onConf` is a callback function which the library executes when the central system has processed the operation and the ESP has received the `.conf()` response. Here you can add your device-specific behavior, e.g. flash a confirmation LED or unlock the connectors. If you don't need it, the last parameter is optional.
+
+**Receiving OCPP operations**
+
+The library also reacts on CS-initiated operations. You can add your own behavior there too. For example, to flash a LED on receipt of a `Set Charging Profile` request, use the following function.
+
+```cpp
+setOnSetChargingProfileRequest([] (JsonObject payload) {
+    //...
+});
+```
+
+You can also process the original payload from the CS using the `payload` object.
+
+*To get started quickly with or without EVSE hardware, you can flash the sketch in `examples/SECC` onto your ESP. That example mimics a full OCPP communications controller as it would look like in a real charging station. You can build a charger prototype based on that example or just view the internal state using the device monitor.*
 
 ## Dependencies
 
-- [bblanchon/ArduinoJson](https://github.com/bblanchon/ArduinoJson)
+- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson) (please upgrade to version `6.19.1`)
+- [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets) (please upgrade to version `2.3.6`)
+
+In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/ArduinoOcpp` in the PIO library manager.
 
 ## Supported operations
 
