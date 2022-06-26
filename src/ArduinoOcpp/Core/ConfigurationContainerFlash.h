@@ -6,14 +6,15 @@
 #define CONFIGURATIONCONTAINERFLASH_H
 
 #include <ArduinoOcpp/Core/ConfigurationContainer.h>
+#include <ArduinoOcpp/Core/FilesystemAdapter.h>
 
 namespace ArduinoOcpp {
 
 class ConfigurationContainerFlash : public ConfigurationContainer {
-
-
+    std::shared_ptr<FilesystemAdapter> filesystem;
 public:
-    ConfigurationContainerFlash(const char *filename) : ConfigurationContainer(filename) { }
+    ConfigurationContainerFlash(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename) :
+            ConfigurationContainer(filename), filesystem(filesystem) { }
 
     ~ConfigurationContainerFlash() = default;
 

@@ -6,6 +6,7 @@
 #include <ArduinoOcpp/Debug.h>
 
 #include <string.h>
+#include <algorithm>
 
 using namespace ArduinoOcpp;
 

@@ -26,7 +26,6 @@ void registerCustomOcppMessage(const char *messageType, OcppMessageCreator ocppM
 
 void setOnAuthorizeRequestListener(OnReceiveReqListener onReceiveReq);
 void setOnBootNotificationRequestListener(OnReceiveReqListener onReceiveReq);
-void setOnTargetValuesRequestListener(OnReceiveReqListener onReceiveReq);
 void setOnSetChargingProfileRequestListener(OnReceiveReqListener onReceiveReq);
 void setOnStartTransactionRequestListener(OnReceiveReqListener onReceiveReq);
 void setOnTriggerMessageRequestListener(OnReceiveReqListener onReceiveReq);

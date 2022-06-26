@@ -45,7 +45,7 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
         AO_DBG_ERR("Cannot declare sessionIdTag, transactionId or availability");
     }
     if (sIdTag->getBuffsize() > 0 && (*sIdTag)[0] != '\0') {
-        snprintf(idTag, min((size_t) (IDTAG_LEN_MAX + 1), sIdTag->getBuffsize()), "%s", ((const char *) *sIdTag));
+        snprintf(idTag, std::min((size_t) (IDTAG_LEN_MAX + 1), sIdTag->getBuffsize()), "%s", ((const char *) *sIdTag));
         session = true;
         connectionTimeOutTimestamp = ao_tick_ms();
         connectionTimeOutListen = true;

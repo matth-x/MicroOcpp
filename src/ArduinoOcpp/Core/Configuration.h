@@ -8,11 +8,12 @@
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
 #include <ArduinoOcpp/Core/ConfigurationContainerFlash.h>
+#include <ArduinoOcpp/Core/FilesystemAdapter.h>
 
 #include <memory>
 #include <vector>
 
-#define CONFIGURATION_FN "/arduino-ocpp.cnf"
+#define CONFIGURATION_FN (AO_FILENAME_PREFIX "/arduino-ocpp.cnf")
 #define CONFIGURATION_VOLATILE "/volatile"
 
 namespace ArduinoOcpp {
@@ -28,10 +29,10 @@ std::vector<std::shared_ptr<ConfigurationContainer>>::iterator getConfigurationC
 namespace Ocpp16 {
 
     std::shared_ptr<AbstractConfiguration> getConfiguration(const char *key);
-    std::shared_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> getAllConfigurations();
+    std::unique_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> getAllConfigurations();
 }
 
-bool configuration_init(FilesystemOpt fsOpt = FilesystemOpt::Use_Mount_FormatOnFail);
+bool configuration_init(std::shared_ptr<FilesystemAdapter> filesytem);
 bool configuration_save();
 
 } //end namespace ArduinoOcpp

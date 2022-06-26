@@ -35,7 +35,7 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
 
     auto operation = initiatedOcppOperations.begin();
     while (operation != initiatedOcppOperations.end()){
-        boolean timeout = (*operation)->sendReq(ocppSock); //The only reason to dequeue elements here is when a timeout occurs. Normally
+        bool timeout = (*operation)->sendReq(ocppSock); //The only reason to dequeue elements here is when a timeout occurs. Normally
         if (timeout){                                       //the Conf msg processing routine dequeues finished elements
             operation = initiatedOcppOperations.erase(operation);
         } else {
@@ -76,7 +76,7 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
 
     operation = receivedOcppOperations.begin();
     while (operation != receivedOcppOperations.end()){
-        boolean success = (*operation)->sendConf(ocppSock);
+        bool success = (*operation)->sendConf(ocppSock);
         if (success){
             operation = receivedOcppOperations.erase(operation);
         } else {
@@ -102,7 +102,7 @@ void OcppConnection::initiateOcppOperation(std::unique_ptr<OcppOperation> o){
 
 bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t length) {
     
-    boolean deserializationSuccess = false;
+    bool deserializationSuccess = false;
 
     auto doc = std::unique_ptr<DynamicJsonDocument>{nullptr};
     size_t capacity = length + 100;
@@ -112,8 +112,8 @@ bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t lengt
         doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
         err = deserializeJson(*doc, payload, length);
 
-        capacity /= 2;
         capacity *= 3;
+        capacity /= 2;
     }
 
     //TODO insert validateRpcHeader at suitable position
@@ -187,7 +187,7 @@ bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t lengt
  */
 void OcppConnection::handleConfMessage(JsonDocument& json) {
     for (auto operation = initiatedOcppOperations.begin(); operation != initiatedOcppOperations.end(); ++operation) {
-        boolean success = (*operation)->receiveConf(json); //maybe rename to "consumed"?
+        bool success = (*operation)->receiveConf(json); //maybe rename to "consumed"?
         if (success) {
             initiatedOcppOperations.erase(operation);
             return;
@@ -219,7 +219,7 @@ void OcppConnection::handleReqMessage(JsonDocument& json, std::unique_ptr<OcppOp
 
 void OcppConnection::handleErrMessage(JsonDocument& json) {
     for (auto operation = initiatedOcppOperations.begin(); operation != initiatedOcppOperations.end(); ++operation){
-        boolean discardOperation = (*operation)->receiveError(json); //maybe rename to "consumed"?
+        bool discardOperation = (*operation)->receiveError(json); //maybe rename to "consumed"?
         if (discardOperation) {
             initiatedOcppOperations.erase(operation);
             return;

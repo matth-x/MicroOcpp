@@ -14,6 +14,7 @@
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/Core/FilesystemAdapter.h>
 
 #include <ArduinoOcpp/MessagesV16/Authorize.h>
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
@@ -37,7 +38,7 @@ float voltage_eff {230.f};
 #define OCPP_NUMCONNECTORS 2
 #define OCPP_ID_OF_CONNECTOR 1
 #define OCPP_ID_OF_CP 0
-boolean OCPP_booted = false; //if BootNotification succeeded
+bool OCPP_booted = false; //if BootNotification succeeded
 
 } //end namespace ArduinoOcpp::Facade
 } //end namespace ArduinoOcpp
@@ -83,8 +84,11 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
 
     voltage_eff = V_eff;
     fileSystemOpt = fsOpt;
+
+    std::shared_ptr<FilesystemAdapter> filesystem = EspWiFi::makeDefaultFilesystemAdapter(fileSystemOpt);
+    AO_DBG_DEBUG("filesystem %s", filesystem ? "loaded" : "error");
     
-    configuration_init(fileSystemOpt); //call before each other library call
+    configuration_init(filesystem); //call before each other library call
 
     ocppEngine = new OcppEngine(ocppSocket, system_time);
     auto& model = ocppEngine->getOcppModel();
@@ -141,7 +145,7 @@ void OCPP_deinitialize() {
 void OCPP_loop() {
     if (!ocppEngine) {
         AO_DBG_WARN("Please call OCPP_initialize before");
-        delay(200); //Prevent this message from flooding the Serial monitor.
+        //delay(200); //Prevent this message from flooding the Serial monitor.
         return;
     }
 

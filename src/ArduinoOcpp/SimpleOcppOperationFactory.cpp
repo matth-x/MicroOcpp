@@ -31,7 +31,7 @@
 #include <ArduinoOcpp/Debug.h>
 
 #include <string.h>
-
+#include <algorithm>
 #include <vector>
 
 namespace ArduinoOcpp {
@@ -67,12 +67,6 @@ OnReceiveReqListener onBootNotificationRequest;
 void setOnBootNotificationRequestListener(OnReceiveReqListener listener){
     onBootNotificationRequest = listener;
     deinit_afterwards(onBootNotificationRequest);
-}
-
-OnReceiveReqListener onTargetValuesRequest;
-void setOnTargetValuesRequestListener(OnReceiveReqListener listener) {
-    onTargetValuesRequest = listener;
-    deinit_afterwards(onTargetValuesRequest);
 }
 
 OnReceiveReqListener onSetChargingProfileRequest;
