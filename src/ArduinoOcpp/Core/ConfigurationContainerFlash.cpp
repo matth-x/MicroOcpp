@@ -7,21 +7,6 @@
 
 #include <algorithm>
 
-#if defined(ESP32)
-#define USE_FS LITTLEFS
-#else
-#define USE_FS SPIFFS
-#endif
-
-#ifndef AO_DEACTIVATE_FLASH
-#if USE_FS == LITTLEFS
-#include <LITTLEFS.h>
-#elif USE_FS == SPIFFS
-#include <FS.h>
-#define USE_FS SPIFFS
-#endif
-#endif
-
 #define MAX_FILE_SIZE 4000
 #define MAX_CONFIGURATIONS 50
 #define MAX_CONFJSON_CAPACITY 4000
