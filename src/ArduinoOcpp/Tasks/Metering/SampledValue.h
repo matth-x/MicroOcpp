@@ -7,6 +7,7 @@
 
 #include <ArduinoJson.h>
 #include <memory>
+#include <functional>
 
 namespace ArduinoOcpp {
 

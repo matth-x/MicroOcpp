@@ -137,7 +137,7 @@ void ao_bootNotification_full(const char *payloadJson, OnOcppMessage onConfirmat
         (void)0;
     }
 
-    bootNotification(payload, adaptCb(onConfirmation), adaptCb(onAbort), adaptCb(onTimeout), adaptCb(onError));
+    bootNotification(std::unique_ptr<DynamicJsonDocument>(payload), adaptCb(onConfirmation), adaptCb(onAbort), adaptCb(onTimeout), adaptCb(onError));
 }
 
 void ao_authorize(const char *idTag, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError) {

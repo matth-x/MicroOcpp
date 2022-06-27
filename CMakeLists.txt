@@ -44,6 +44,8 @@ set(AO_SRC
     src/ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.cpp
     src/ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.cpp
     src/ArduinoOcpp/Tasks/Metering/MeteringService.cpp
+    src/ArduinoOcpp/Tasks/Metering/MeterValue.cpp
+    src/ArduinoOcpp/Tasks/Metering/SampledValue.cpp
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.cpp
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.cpp
     src/ArduinoOcpp.cpp
@@ -60,6 +62,7 @@ target_compile_options(${COMPONENT_TARGET} PUBLIC
     -DAO_CUSTOM_WS
     -DAO_CUSTOM_CONSOLE
     -DAO_CUSTOM_UPDATER
+    -DAO_CUSTOM_RESET
     -DAO_DEACTIVATE_FLASH
     -DAO_USE_FILEAPI=ESPIDF_SPIFFS
     -DAO_DBG_LEVEL=AO_DL_DEBUG
