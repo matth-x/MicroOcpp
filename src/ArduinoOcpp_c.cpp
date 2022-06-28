@@ -81,6 +81,25 @@ void ao_setEnergyActiveImportSampler(SamplerInt energy) {
     });
 }
 
+void ao_addMeterValueSampler_Int(SamplerInt sampler, const char *measurand, const char *phase, const char *unit) {
+    
+    ArduinoOcpp::SampledValueProperties properties;
+    if (measurand)
+        properties.setMeasurand(measurand);
+    if (phase)
+        properties.setPhase(phase);
+    if (unit)
+        properties.setUnit(unit);
+    
+    auto adaptSampler = [sampler] (ArduinoOcpp::ReadingContext) -> int32_t {
+        return sampler();
+    };
+
+    auto reader =   new ArduinoOcpp::SampledValueSamplerConcrete<int32_t, ArduinoOcpp::SampledValueDeSerializer<int32_t>>(properties, adaptSampler);
+    addMeterValueSampler(
+        std::unique_ptr<ArduinoOcpp::SampledValueSamplerConcrete<int32_t, ArduinoOcpp::SampledValueDeSerializer<int32_t>>>(reader));
+}
+
 void ao_setEvRequestsEnergySampler(SamplerBool evRequestsEnergy) {
     setEvRequestsEnergySampler(adaptCb(evRequestsEnergy));
 }

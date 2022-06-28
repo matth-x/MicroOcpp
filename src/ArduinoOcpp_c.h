@@ -36,6 +36,8 @@ void ao_setPowerActiveImportSampler(SamplerFloat power);
 
 void ao_setEnergyActiveImportSampler(SamplerInt energy);
 
+void ao_addMeterValueSampler_Int(SamplerInt sampler, const char *measurand, const char *phase, const char *unit);
+
 void ao_setEvRequestsEnergySampler(SamplerBool evRequestsEnergy);
 
 void ao_setConnectorEnergizedSampler(SamplerBool connectorEnergized);
