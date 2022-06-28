@@ -73,7 +73,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
             AO_DBG_DEBUG("Clock aligned measurement %ds: %s", dt,
                 abs(dt) <= 60 ?
-                "in time (tolerance <= 60s)" : "off, e.g. because of first run. Ignore"); abs(-123);
+                "in time (tolerance <= 60s)" : "off, e.g. because of first run. Ignore");
             if (abs(dt) <= 60) { //is measurement still "clock-aligned"?
                 auto alignedMeterValues = alignedDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::SampleClock);
                 if (alignedMeterValues) {

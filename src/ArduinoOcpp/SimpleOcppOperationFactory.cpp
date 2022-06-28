@@ -6,6 +6,7 @@
 
 #include <ArduinoOcpp/MessagesV16/Authorize.h>
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
+#include <ArduinoOcpp/MessagesV16/GetCompositeSchedule.h>
 #include <ArduinoOcpp/MessagesV16/Heartbeat.h>
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
 #include <ArduinoOcpp/MessagesV16/SetChargingProfile.h>
@@ -214,6 +215,8 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType, int co
     } else if (!strcmp(messageType, "BootNotification")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::BootNotification());
         operation->setOnReceiveReqListener(onBootNotificationRequest);
+    } else if (!strcmp(messageType, "GetCompositeSchedule")) {
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::GetCompositeSchedule());
     } else if (!strcmp(messageType, "Heartbeat")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::Heartbeat());
     } else if (!strcmp(messageType, "MeterValues")) {

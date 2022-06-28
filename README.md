@@ -10,17 +10,17 @@ PlatformIO package: [ArduinoOcpp](https://platformio.org/lib/show/11975/ArduinoO
 
 Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
 
-Full compatibility with the Arduino platform. Need a **FreeRTOS** version? Please [contact me](https://github.com/matth-x/ArduinoOcpp#further-help)
+Fully integrated into the Arduino platform. Compatible with ESP-IDF and generic FreeRTOS
 
 ## Make your EVSE ready for OCPP :car::electric_plug::battery:
 
 You can build an OCPP Charge Point controller using the popular, Wi-Fi enabled microcontrollers ESP8266, ESP32 and comparable. This library allows your EVSE to communicate with an OCPP Central System and to participate in your Charging Network.
 
-:heavy_check_mark: Works with [SteVe](https://github.com/RWTH-i5-IDSG/steve) and [The Mobility House OCPP package](https://github.com/mobilityhouse/ocpp)
-
-:heavy_check_mark: Passed compatibility tests with further commercial Central Systems
+:heavy_check_mark: Works with [SteVe](https://github.com/RWTH-i5-IDSG/steve), [The Mobility House OCPP package](https://github.com/mobilityhouse/ocpp) and further commercial Central Systems
 
 :heavy_check_mark: Integrated and tested in many charging stations
+
+:heavy_check_mark: Eligible for **public chargers**. Complies also with the legal requirements of the German Ladesäulenverordnung (LSV)
 
 ### Features
 
@@ -37,18 +37,15 @@ For simple chargers, the necessary hardware and internet integration is usually 
 
 Please take `examples/ESP/main.cpp` as the starting point for your first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. This guide explains the concepts for a minimal integration.
 
-- To get the library running, you have to install all dependencies (see the list below). In case you use PlatformIO, you can just add `matth-x/ArduinoOcpp` to your project using the PIO library manager.
+- To install the dependencies, see the list below for a manual installation or add `matth-x/ArduinoOcpp` to your project using the PIO library manager.
 
-- In your project's `main` file, include `ArduinoOcpp.h`.
+- In your project's `main` file, include `ArduinoOcpp.h` and the Wi-Fi library. Initialize Wi-Fi and the Serial output.
 
-- Before establishing an OCPP connection you have to ensure that your device has access to a Wi-Fi access point. All debug messages are printed on the standard serial (i.e. `Serial.print("debug msg")`). To redirect debug messages, please refer to `src/ArduinoOcpp/Platform.h`.
+- To connect to the OCPP Central System, call `OCPP_initialize(const char *host, uint16_t port, const char *url)`. For a secure connection with TLS, you need to configure the WebSocket in advance. Please take `examples/ESP-TLS/main.cpp` as an example.
 
-- To connect to your OCPP Central System, call `OCPP_initialize(String OCPP_HOST, uint16_t OCPP_PORT, String OCPP_URL)`. You need to insert the address parameters according to the configuration of your central system. Internally, the library passes these parameters to the WebSocket object without further alteration.
-   - To secure the connection with TLS, you have to configure the WebSocket. Please take `examples/ESP-TLS/main.cpp` as an example.
+- In `setup()`, configure ArduinoOcpp with the hardware drivers. You can leave that part out for the first connection test. Please refer to `ArduinoOcpp.h` for a documentation about the supported EVSE peripherals.
 
-- In your `setup()` function, you can add the configuration functions from `ArduinoOcpp.h` to properly integrate your hardware. For example, the library needs access to the energy meter. All configuration functions are documented in `ArduinoOcpp.h`.
-
-- Add `OCPP_loop()` to your `loop()` function.
+- In `loop()`, add `OCPP_loop()`.
 
 **Sending OCPP operations**
 
@@ -61,7 +58,6 @@ In practice, it looks like this:
 
 ```cpp
 void setup() {
-
     ... //other code including the initialization of Wi-Fi and OCPP
 
     bootNotification("My CP model name", "My company name", [] (JsonObject confMsg) {
@@ -69,8 +65,7 @@ void setup() {
         Serial.print(F("BootNotification was answered. Central System clock: "));
         Serial.println(confMsg["currentTime"].as<String>()); //"currentTime" is a field of the central system response
         
-        //Notify your hardare that the BootNotification.conf() has arrived. E.g.:
-        //evseIsBooted = true;
+        //evseIsBooted = true; <-- Example: Notify your hardare that the BootNotification.conf() has arrived
     });
     
     ... //rest of setup() function; executed immediately as bootNotification() is non-blocking
@@ -81,67 +76,44 @@ The parameters `chargePointModel` and `chargePointVendor` are equivalent to the 
 
 **Receiving OCPP operations**
 
-The library also reacts on CS-initiated operations. You can add your own behavior there too. For example, to flash a LED on receipt of a `Set Charging Profile` request, use the following function.
+You can also add customized behavior to incoming OCPP messages. For example, to flash an LED on receipt of a `Set Charging Profile` request, use the following function.
 
 ```cpp
 setOnSetChargingProfileRequest([] (JsonObject payload) {
-    //...
+    //... will be executed every time this EVSE receives a new Charging Profile
 });
 ```
 
-You can also process the original payload from the CS using the `payload` object.
+Using the `payload` object you can access the original payload from the CS.
 
 *To get started quickly with or without EVSE hardware, you can flash the sketch in `examples/SECC` onto your ESP. That example mimics a full OCPP communications controller as it would look like in a real charging station. You can build a charger prototype based on that example or just view the internal state using the device monitor.*
 
 ## Dependencies
 
+Mandatory:
+
 - [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson) (please upgrade to version `6.19.1`)
+
+If compiled with the Arduino integration:
+
 - [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets) (please upgrade to version `2.3.6`)
 
 In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/ArduinoOcpp` in the PIO library manager.
 
 ## Supported operations
 
-| Operation name | supported | in progress | not supported |
-| -------------- | :---------: | :-----------: | :-------------: |
-| **Core profile** |
-| `Authorize` | :heavy_check_mark: |
-| `BootNotification` | :heavy_check_mark: |
-| `ChangeAvailability` | :heavy_check_mark: |
-| `ChangeConfiguration` | :heavy_check_mark: |
-| `ClearCache` | :heavy_check_mark: |
-| `DataTransfer` | :heavy_check_mark: |
-| `GetConfiguration` | :heavy_check_mark: |
-| `Heartbeat` | :heavy_check_mark: |
-| `MeterValues` | :heavy_check_mark: |
-| `RemoteStartTransaction` | :heavy_check_mark: |
-| `RemoteStopTransaction` | :heavy_check_mark: |
-| `Reset` | :heavy_check_mark: |
-| `StartTransaction` | :heavy_check_mark: |
-| `StatusNotification` | :heavy_check_mark: |
-| `StopTransaction` | :heavy_check_mark: |
-| `UnlockConnector` | :heavy_check_mark: |
-| **Smart charging profile** |
-| `ClearChargingProfile` | :heavy_check_mark: |
-| `GetCompositeSchedule` |   |   | :heavy_multiplication_x: |
-| `SetChargingProfile` | :heavy_check_mark: |
-| **Remote trigger profile** |
-| `TriggerMessage` | :heavy_check_mark: |
-| **Firmware management** |
-| `GetDiagnostics` | :heavy_check_mark: |
-| `DiagnosticsStatusNotification` | :heavy_check_mark: |
-| `FirmwareStatusNotification` | :heavy_check_mark: |
-| `UpdateFirmware` | :heavy_check_mark: |
+| Feature profile | supported | in progress |
+| -------------- | :---------: | :-----------: |
+| **Core** | :heavy_check_mark: |
+| **Smart charging** | :heavy_check_mark: |
+| **Remote trigger** | :heavy_check_mark: |
+| **Firmware management** | :heavy_check_mark: |
 
 ## Next development steps
 
-- [x] introduce proper offline behavior and package loss / fault detection
-- [x] handle fragmented input messages correctly
-- [x] add support for multiple power connectors
-- [x] add support for the ESP32
-- [ ] reach full compliance to OCPP 1.6 Smart Charging Profile
+- [x] reach full compliance to OCPP 1.6 Smart Charging Profile
 - [ ] integrate Authorization Cache
-- [ ] **get ready for OCPP 2.0.1**
+- [ ] **get ready for OCPP 2.0.1 and ISO 15118**
 
 ## Further help
 

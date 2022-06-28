@@ -92,6 +92,7 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
                 bool ret = scService->clearChargingProfile([clearProfileId](int id, int, ChargingProfilePurposeType, int) {
                     return id == clearProfileId;
                 });
+                (void)ret;
 
                 *sRmtProfileId = -1;
                 AO_DBG_DEBUG("Cleared Charging Profile from previous RemoteStartTx: %s", ret ? "success" : "already cleared");

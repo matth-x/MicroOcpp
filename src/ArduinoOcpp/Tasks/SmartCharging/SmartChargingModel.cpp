@@ -371,9 +371,8 @@ bool ChargingProfile::checkTransactionAssignment(int txId, int profileId) {
         return transactionId == txId; //return if they do match
     }
     
-    AO_DBG_ERR("Check error");
-    //neither txIds nor profileIDs apply
-    return false;
+    AO_DBG_DEBUG("Neither txIds nor profileIDs apply");
+    return true;
 }
 
 int ChargingProfile::getStackLevel(){
