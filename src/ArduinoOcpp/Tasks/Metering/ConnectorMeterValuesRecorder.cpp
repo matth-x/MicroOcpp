@@ -60,7 +60,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
     if (*ClockAlignedDataInterval >= 1) {
 
-         if (alignedData.size() >= *MeterValuesAlignedDataMaxLength) {
+         if (alignedData.size() >= (size_t) *MeterValuesAlignedDataMaxLength) {
             auto meterValues = new MeterValues(std::move(alignedData), connectorId, -1);
             alignedData.clear();
             return meterValues;
@@ -111,7 +111,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
     if (*MeterValueSampleInterval >= 1) {
         //record periodic tx data
 
-        if (sampledData.size() >= *MeterValuesSampledDataMaxLength) {
+        if (sampledData.size() >= (size_t) *MeterValuesSampledDataMaxLength) {
             auto meterValues = new MeterValues(std::move(sampledData), connectorId, lastTransactionId);
             sampledData.clear();
             return meterValues;
@@ -201,7 +201,7 @@ void ConnectorMeterValuesRecorder::addMeterValueSampler(std::unique_ptr<SampledV
 }
 
 std::unique_ptr<SampledValue> ConnectorMeterValuesRecorder::readTxEnergyMeter(ReadingContext reason) {
-    if (energySamplerIndex >= 0 && energySamplerIndex < samplers.size()) {
+    if (energySamplerIndex >= 0 && (size_t) energySamplerIndex < samplers.size()) {
         return samplers[energySamplerIndex]->takeValue(reason);
     } else {
         AO_DBG_DEBUG("Called readTxEnergyMeter(), but no energySampler or handling strategy set");
@@ -220,7 +220,7 @@ std::vector<std::unique_ptr<MeterValue>> ConnectorMeterValuesRecorder::createSto
     }
 
     //concatenate sampled and aligned meter data; clear all StopTX data in this object
-    auto res{std::move(stopTxnSampledData)};
+    decltype(stopTxnSampledData) res {std::move(stopTxnSampledData)};
     res.insert(res.end(), std::make_move_iterator(stopTxnAlignedData.begin()),
                           std::make_move_iterator(stopTxnAlignedData.end()));
     stopTxnSampledData.clear(); //make vectors defined after moving from them
