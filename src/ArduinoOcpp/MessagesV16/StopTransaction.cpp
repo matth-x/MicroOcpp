@@ -96,7 +96,9 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
         payload["reason"] = reason;
     }
 
-    payload["transactionData"] = txDataDoc;
+    if (!transactionData.empty()) {
+        payload["transactionData"] = txDataDoc;
+    }
 
     return doc;
 }
