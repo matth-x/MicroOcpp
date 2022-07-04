@@ -55,14 +55,13 @@ void setPowerActiveImportSampler(std::function<float()> power);
 void setEnergyActiveImportSampler(std::function<float()> energy);
 
 void addMeterValueSampler(std::unique_ptr<ArduinoOcpp::SampledValueSampler> meterValueSampler);
+void addMeterValueSampler(std::function<int32_t ()> value, const char *measurand = nullptr, const char *unit = nullptr, const char *location = nullptr, const char *phase = nullptr);
 
 void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
 
 void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
 
 void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
-
-//void setConnectorFaultedSampler(std::function<bool()> connectorFailed);
 
 void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode);
 

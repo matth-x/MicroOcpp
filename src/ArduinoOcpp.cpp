@@ -224,6 +224,39 @@ void addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler
     model.getMeteringService()->addMeterValueSampler(OCPP_ID_OF_CONNECTOR, std::move(meterValueSampler)); //connectorId=1
 }
 
+void addMeterValueSampler(std::function<int32_t ()> value, const char *measurand, const char *unit, const char *location, const char *phase) {
+    if (!ocppEngine) {
+        AO_DBG_ERR("Please call OCPP_initialize before");
+        return;
+    }
+
+    if (!value) {
+        AO_DBG_ERR("value undefined");
+        return;
+    }
+
+    if (!measurand) {
+        measurand = "Energy.Active.Import.Register";
+        AO_DBG_WARN("Measurand unspecified; assume %s", measurand);
+    }
+
+    SampledValueProperties properties;
+    properties.setMeasurand(measurand); //mandatory for AO
+
+    if (unit)
+        properties.setUnit(unit);
+    if (location)
+        properties.setLocation(location);
+    if (phase)
+        properties.setPhase(phase);
+
+    auto valueSampler = std::unique_ptr<ArduinoOcpp::SampledValueSamplerConcrete<int32_t, ArduinoOcpp::SampledValueDeSerializer<int32_t>>>(
+                                    new ArduinoOcpp::SampledValueSamplerConcrete<int32_t, ArduinoOcpp::SampledValueDeSerializer<int32_t>>(
+                properties,
+                [value] (ArduinoOcpp::ReadingContext) -> int32_t {return value();}));
+    addMeterValueSampler(std::move(valueSampler));
+}
+
 void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy) {
     if (!ocppEngine) {
         AO_DBG_ERR("Please call OCPP_initialize before");
