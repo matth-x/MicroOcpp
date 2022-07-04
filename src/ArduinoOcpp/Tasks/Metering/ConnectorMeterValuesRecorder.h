@@ -74,11 +74,12 @@ public:
 
     void addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler);
 
-    std::unique_ptr<SampledValue> readEnergyActiveImportRegister();
+    std::unique_ptr<SampledValue> readTxEnergyMeter(ReadingContext context);
 
     OcppMessage *takeTriggeredMeterValues();
 
-    OcppMessage *getStopTransactionData();
+    std::vector<std::unique_ptr<MeterValue>> createStopTxMeterData();
+
 };
 
 } //end namespace ArduinoOcpp

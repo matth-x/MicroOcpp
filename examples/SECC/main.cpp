@@ -157,7 +157,6 @@ void setup() {
      */
     std::shared_ptr<ArduinoOcpp::FilesystemAdapter> filesystem = ArduinoOcpp::EspWiFi::makeDefaultFilesystemAdapter(ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail);
     ArduinoOcpp::configuration_init(filesystem);
-    filesystem = nullptr;
 
     /*
      * WiFiManager opens a captive portal, lets the user enter the WiFi credentials and provides a settings

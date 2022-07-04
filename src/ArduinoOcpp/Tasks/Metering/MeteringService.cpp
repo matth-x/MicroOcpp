@@ -53,12 +53,12 @@ void MeteringService::addMeterValueSampler(int connectorId, std::unique_ptr<Samp
     connectors[connectorId]->addMeterValueSampler(std::move(meterValueSampler));
 }
 
-std::unique_ptr<SampledValue> MeteringService::readEnergyActiveImportRegister(int connectorId) {
+std::unique_ptr<SampledValue> MeteringService::readTxEnergyMeter(int connectorId, ReadingContext context) {
     if (connectorId < 0 || connectorId >= connectors.size()) {
         AO_DBG_ERR("connectorId is out of bounds");
         return nullptr;
     }
-    return connectors[connectorId]->readEnergyActiveImportRegister();
+    return connectors[connectorId]->readTxEnergyMeter(context);
 }
 
 std::unique_ptr<OcppOperation> MeteringService::takeTriggeredMeterValues(int connectorId) {
@@ -79,4 +79,14 @@ std::unique_ptr<OcppOperation> MeteringService::takeTriggeredMeterValues(int con
     }
     AO_DBG_ERR("Could not find connector");
     return nullptr;
+}
+
+std::vector<std::unique_ptr<MeterValue>> MeteringService::createStopTxMeterData(int connectorId) {
+    if (connectorId < 0 || connectorId >= connectors.size()) {
+        AO_DBG_ERR("connectorId is out of bounds");
+        return std::vector<std::unique_ptr<MeterValue>>();
+    }
+    auto& connector = connectors[connectorId];
+
+    return connector->createStopTxMeterData();
 }

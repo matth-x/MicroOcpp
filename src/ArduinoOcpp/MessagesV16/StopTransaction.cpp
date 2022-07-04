@@ -6,6 +6,7 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
+#include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::StopTransaction;
@@ -24,7 +25,8 @@ void StopTransaction::initiate() {
 
     if (ocppModel && ocppModel->getMeteringService()) {
         auto meteringService = ocppModel->getMeteringService();
-        meterStop = meteringService->readEnergyActiveImportRegister(connectorId);
+        meterStop = meteringService->readTxEnergyMeter(connectorId, ReadingContext::TransactionEnd);
+        transactionData = meteringService->createStopTxMeterData(connectorId);
     }
 
     if (ocppModel) {
@@ -52,7 +54,27 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
         return nullptr;
     }
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(5) + (JSONDATE_LENGTH + 1) + (REASON_LEN_MAX + 1)));
+    std::vector<std::unique_ptr<DynamicJsonDocument>> txDataJson;
+    size_t txDataJson_size = 0;
+    for (auto mv = transactionData.begin(); mv != transactionData.end(); mv++) {
+        auto mvJson = (*mv)->toJson();
+        if (!mvJson) {
+            return nullptr;
+        }
+        txDataJson_size += mvJson->capacity();
+        txDataJson.emplace_back(std::move(mvJson));
+    }
+
+    DynamicJsonDocument txDataDoc = DynamicJsonDocument(JSON_ARRAY_SIZE(txDataJson.size()) + txDataJson_size);
+    for (auto mvJson = txDataJson.begin(); mvJson != txDataJson.end(); mvJson++) {
+        txDataDoc.add(**mvJson);
+    }
+
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+                JSON_OBJECT_SIZE(6) + //total of 6 fields
+                (JSONDATE_LENGTH + 1) + //timestamp string
+                (REASON_LEN_MAX + 1) + //reason string
+                txDataDoc.capacity()));
     JsonObject payload = doc->to<JsonObject>();
 
     if (meterStop && *meterStop) {
@@ -73,6 +95,8 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
     if (reason[0] != '\0') {
         payload["reason"] = reason;
     }
+
+    payload["transactionData"] = txDataDoc;
 
     return doc;
 }

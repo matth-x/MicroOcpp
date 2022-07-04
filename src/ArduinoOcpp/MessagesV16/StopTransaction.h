@@ -8,9 +8,12 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
-#include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 
 namespace ArduinoOcpp {
+
+class SampledValue;
+class MeterValue;
+
 namespace Ocpp16 {
 
 class StopTransaction : public OcppMessage {
@@ -19,6 +22,7 @@ private:
     std::unique_ptr<SampledValue> meterStop {nullptr};
     OcppTimestamp otimestamp;
     char reason [REASON_LEN_MAX] {'\0'};
+    std::vector<std::unique_ptr<MeterValue>> transactionData;
 public:
 
     StopTransaction(int connectorId, const char *reason = nullptr);

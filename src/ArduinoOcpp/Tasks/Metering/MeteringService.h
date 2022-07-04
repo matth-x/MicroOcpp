@@ -36,9 +36,11 @@ public:
 
     void addMeterValueSampler(int connectorId, std::unique_ptr<SampledValueSampler> meterValueSampler);
 
-    std::unique_ptr<SampledValue> readEnergyActiveImportRegister(int connectorId);
+    std::unique_ptr<SampledValue> readTxEnergyMeter(int connectorId, ReadingContext reason);
 
     std::unique_ptr<OcppOperation> takeTriggeredMeterValues(int connectorId); //snapshot of all meters now
+
+    std::vector<std::unique_ptr<MeterValue>> createStopTxMeterData(int connectorId);
 
     int getNumConnectors() {return connectors.size();}
 };

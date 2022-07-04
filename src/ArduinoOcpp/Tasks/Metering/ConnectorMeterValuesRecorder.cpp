@@ -120,6 +120,17 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
         auto connector = context.getConnectorStatus(connectorId);
         if (connector && connector->getTransactionId() != lastTransactionId) {
             //transaction break
+
+    	    //take a transaction-related sample which is aligned to the transaction break
+            if (connector->getTransactionId() >= 0 && lastTransactionId < 0) {
+                auto sampleStartTx = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::TransactionBegin);
+                if (sampleStartTx) {
+                    stopTxnSampledData.push_back(std::move(sampleStartTx));
+                }
+            } else if (connector->getTransactionId() >= 0 && lastTransactionId > 0) {
+                AO_DBG_ERR("Cannot switch txId");
+            }
+
             MeterValues *meterValues = nullptr;
             if (!sampledData.empty()) {
                 meterValues = new MeterValues(std::move(sampledData), connectorId, lastTransactionId);
@@ -189,11 +200,31 @@ void ConnectorMeterValuesRecorder::addMeterValueSampler(std::unique_ptr<SampledV
     samplers.push_back(std::move(meterValueSampler));
 }
 
-std::unique_ptr<SampledValue> ConnectorMeterValuesRecorder::readEnergyActiveImportRegister() {
+std::unique_ptr<SampledValue> ConnectorMeterValuesRecorder::readTxEnergyMeter(ReadingContext reason) {
     if (energySamplerIndex >= 0 && energySamplerIndex < samplers.size()) {
-        return samplers[energySamplerIndex]->takeValue(ReadingContext::NOT_SET);
+        return samplers[energySamplerIndex]->takeValue(reason);
     } else {
-        AO_DBG_DEBUG("Called readEnergyActiveImportRegister(), but no energySampler or handling strategy set");
-        return 0;
+        AO_DBG_DEBUG("Called readTxEnergyMeter(), but no energySampler or handling strategy set");
+        return nullptr;
     }
+}
+
+std::vector<std::unique_ptr<MeterValue>> ConnectorMeterValuesRecorder::createStopTxMeterData() {
+    
+    //create final StopTxSample
+    if (*MeterValueSampleInterval >= 1) { //... only if sampled Meter Values are activated
+        auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::TransactionEnd);
+        if (sampleStopTx) {
+            stopTxnSampledData.push_back(std::move(sampleStopTx));
+        }
+    }
+
+    //concatenate sampled and aligned meter data; clear all StopTX data in this object
+    auto res{std::move(stopTxnSampledData)};
+    res.insert(res.end(), std::make_move_iterator(stopTxnAlignedData.begin()),
+                          std::make_move_iterator(stopTxnAlignedData.end()));
+    stopTxnSampledData.clear(); //make vectors defined after moving from them
+    stopTxnAlignedData.clear();
+
+    return std::move(res);
 }
