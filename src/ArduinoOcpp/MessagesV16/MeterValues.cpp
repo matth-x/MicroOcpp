@@ -15,8 +15,8 @@ MeterValues::MeterValues() {
     
 }
 
-MeterValues::MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, int connectorId, int transactionId) 
-      : meterValue{std::move(meterValue)}, connectorId{connectorId}, transactionId{transactionId} {
+MeterValues::MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, int connectorId) 
+      : meterValue{std::move(meterValue)}, connectorId{connectorId} {
 
 }
 

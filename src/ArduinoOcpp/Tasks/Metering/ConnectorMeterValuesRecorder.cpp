@@ -61,7 +61,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
     if (*ClockAlignedDataInterval >= 1) {
 
          if (alignedData.size() >= (size_t) *MeterValuesAlignedDataMaxLength) {
-            auto meterValues = new MeterValues(std::move(alignedData), connectorId, -1);
+            auto meterValues = new MeterValues(std::move(alignedData), connectorId);
             alignedData.clear();
             return meterValues;
         }
@@ -112,7 +112,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
         //record periodic tx data
 
         if (sampledData.size() >= (size_t) *MeterValuesSampledDataMaxLength) {
-            auto meterValues = new MeterValues(std::move(sampledData), connectorId, lastTransactionId);
+            auto meterValues = new MeterValues(std::move(sampledData), connectorId);
             sampledData.clear();
             return meterValues;
         }
@@ -133,7 +133,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
             MeterValues *meterValues = nullptr;
             if (!sampledData.empty()) {
-                meterValues = new MeterValues(std::move(sampledData), connectorId, lastTransactionId);
+                meterValues = new MeterValues(std::move(sampledData), connectorId);
                 sampledData.clear();
             }
             lastTransactionId = connector->getTransactionId();
@@ -182,7 +182,7 @@ OcppMessage *ConnectorMeterValuesRecorder::takeTriggeredMeterValues() {
     decltype(sampledData) mv_now;
     mv_now.push_back(std::move(sample));
 
-    return new MeterValues(std::move(mv_now), connectorId, txId_now);
+    return new MeterValues(std::move(mv_now), connectorId);
 }
 
 void ConnectorMeterValuesRecorder::setPowerSampler(PowerSampler ps){
