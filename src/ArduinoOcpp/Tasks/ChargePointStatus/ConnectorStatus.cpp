@@ -61,7 +61,9 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
      *     - instruct the OCMF meter to begin a transaction (if OCMF meter handler is set)
      */
     txTriggerConditions.push_back([this] () -> TxCondition {
-        return getSessionIdTag() == nullptr ? TxCondition::Inactive : TxCondition::Active;
+        if (!session)
+            return TxCondition::Inactive;
+        return getSessionIdTag() ? TxCondition::Active : TxCondition::Inactive;
     });
     txEnableSequence.push_back([this] (TxCondition cond) -> TxEnableState {
         if (onOcmfMeterPollTx) {
