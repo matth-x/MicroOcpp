@@ -287,7 +287,7 @@ const char *ConnectorStatus::getErrorCode() {
 }
 
 void ConnectorStatus::beginSession(const char *sessionIdTag) {
-    AO_DBG_DEBUG("Begin session with idTag %s, overwriting idTag %s", sessionIdTag, idTag);
+    AO_DBG_DEBUG("Begin session with idTag %s, overwriting idTag %s", sessionIdTag != nullptr ? sessionIdTag : "", idTag);
     if (!sessionIdTag || *sessionIdTag == '\0') {
         //input string is empty
         snprintf(idTag, IDTAG_LEN_MAX + 1, "A0-00-00-00");
