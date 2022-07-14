@@ -10,6 +10,8 @@
 
 using ArduinoOcpp::Ocpp16::StartTransaction;
 
+#define ENERGY_METER_TIMEOUT_MS 30 * 1000  //after waiting for 30s, send StartTx without start reading
+
 StartTransaction::StartTransaction(int connectorId) : connectorId(connectorId) {
     
 }
@@ -63,6 +65,8 @@ void StartTransaction::initiate() {
         transactionRev = connector->getTransactionWriteCount();
     }
 
+    emTimeout = ao_tick_ms();
+
     AO_DBG_INFO("StartTransaction initiated");
 }
 
@@ -70,7 +74,9 @@ std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
 
     if (meterStart && !*meterStart) {
         //meterStart not ready yet
-        return nullptr;
+        if (ao_tick_ms() - emTimeout < ENERGY_METER_TIMEOUT_MS) {
+            return nullptr;
+        }
     }
 
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(5) + (JSONDATE_LENGTH + 1) + (IDTAG_LEN_MAX + 1)));
@@ -79,6 +85,9 @@ std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
     payload["connectorId"] = connectorId;
     if (meterStart && *meterStart) {
         payload["meterStart"] = meterStart->toInteger();
+    } else {
+        AO_DBG_ERR("Energy meter timeout");
+        payload["meterStart"] = -1;
     }
 
     if (otimestamp > MIN_TIME) {

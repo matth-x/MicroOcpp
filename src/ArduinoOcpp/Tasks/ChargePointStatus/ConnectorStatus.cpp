@@ -183,9 +183,8 @@ OcppMessage *ConnectorStatus::loop() {
     }
 
     if (txTrigger == TxCondition::Active) {
-        for (auto trigger = txTriggerConditions.begin(); trigger != txTriggerConditions.end(); trigger++) {
-            auto result = trigger->operator()();
-            if (result == TxCondition::Active) {
+        for (auto trigger : txTriggerConditions) {
+            if (trigger() == TxCondition::Active) {
                 txEnable = TxEnableState::Pending;
             } else {
                 txTrigger = TxCondition::Inactive;

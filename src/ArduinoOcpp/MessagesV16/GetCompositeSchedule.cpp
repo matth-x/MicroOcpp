@@ -52,7 +52,10 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
 
 std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
     if (!ocppModel || !ocppModel->getSmartChargingService()) {
-        return nullptr;
+        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+        JsonObject payload = doc->to<JsonObject>();
+        payload["status"] = "Rejected";
+        return doc;
     }
 
     auto scService = ocppModel->getSmartChargingService();

@@ -23,6 +23,7 @@ private:
     OcppTimestamp otimestamp;
     char reason [REASON_LEN_MAX] {'\0'};
     std::vector<std::unique_ptr<MeterValue>> transactionData;
+    ulong emTimeout = 0;
 public:
 
     StopTransaction(int connectorId, const char *reason = nullptr);

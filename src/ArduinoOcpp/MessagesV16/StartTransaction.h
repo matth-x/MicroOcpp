@@ -20,6 +20,7 @@ private:
     OcppTimestamp otimestamp;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
     uint16_t transactionRev = 0;
+    ulong emTimeout = 0;
 public:
     StartTransaction(int connectorId);
 

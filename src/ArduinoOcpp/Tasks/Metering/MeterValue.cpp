@@ -29,10 +29,9 @@ std::unique_ptr<DynamicJsonDocument> MeterValue::toJson() {
     auto jsonPayload = result->to<JsonObject>();
 
     char timestampStr [JSONDATE_LENGTH + 1] = {'\0'};
-    if (!timestamp.toJsonString(timestampStr, JSONDATE_LENGTH + 1)) {
-        return nullptr;
+    if (timestamp.toJsonString(timestampStr, JSONDATE_LENGTH + 1)) {
+        jsonPayload["timestamp"] = timestampStr;
     }
-    jsonPayload["timestamp"] = timestampStr;
     auto jsonMeterValue = jsonPayload.createNestedArray("sampledValue");
     for (auto entry = entries.begin(); entry != entries.end(); entry++) {
         jsonMeterValue.add(**entry);

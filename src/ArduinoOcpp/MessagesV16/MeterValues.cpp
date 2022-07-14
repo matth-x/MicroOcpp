@@ -10,6 +10,8 @@
 
 using ArduinoOcpp::Ocpp16::MeterValues;
 
+#define ENERGY_METER_TIMEOUT_MS 30 * 1000  //after waiting for 30s, send MeterValues without missing readings
+
 //can only be used for echo server debugging
 MeterValues::MeterValues() {
     
@@ -28,6 +30,10 @@ const char* MeterValues::getOcppOperationType(){
     return "MeterValues";
 }
 
+void MeterValues::initiate() {
+    emTimeout = ao_tick_ms();
+}
+
 std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
 
     size_t capacity = 0;
@@ -35,11 +41,16 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
     std::vector<std::unique_ptr<DynamicJsonDocument>> entries;
     for (auto value = meterValue.begin(); value != meterValue.end(); value++) {
         auto entry = (*value)->toJson();
-        if (!entry) {
-            return nullptr;
+        if (entry) {
+            capacity += entry->capacity();
+            entries.push_back(std::move(entry));
+        } else {
+            if (ao_tick_ms() - emTimeout < ENERGY_METER_TIMEOUT_MS) {
+                return nullptr;
+            } else {
+                AO_DBG_ERR("Energy meter timeout!");
+            }
         }
-        capacity += entry->capacity();
-        entries.push_back(std::move(entry));
     }
 
     capacity += JSON_OBJECT_SIZE(3);

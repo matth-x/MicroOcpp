@@ -20,6 +20,8 @@ private:
 
     int connectorId = 0;
 
+    ulong emTimeout = 0;
+
 public:
     MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, int connectorId);
 
@@ -28,6 +30,8 @@ public:
     ~MeterValues();
 
     const char* getOcppOperationType();
+
+    void initiate() override;
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 
