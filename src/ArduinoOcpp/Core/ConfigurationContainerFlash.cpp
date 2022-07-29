@@ -3,6 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/ConfigurationContainerFlash.h>
+#include <ArduinoOcpp/Core/FilesystemUtils.h>
 #include <ArduinoOcpp/Debug.h>
 
 #include <algorithm>
