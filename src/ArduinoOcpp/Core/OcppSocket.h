@@ -27,9 +27,14 @@ public:
 class OcppEchoSocket : public OcppSocket {
 private:
     ReceiveTXTcallback receiveTXT;
+
+    bool connected = true; //for simulating connection losses
 public:
     void loop() override { }
     bool sendTXT(std::string &out) override {
+        if (!connected) {
+            return true;
+        }
         if (receiveTXT) {
             return receiveTXT(out.c_str(), out.length());
         } else {
@@ -39,6 +44,9 @@ public:
     void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) override {
         this->receiveTXT = receiveTXT;
     }
+
+    void setConnected(bool connected) {this->connected = connected;}
+    bool isConnected() {return connected;}
 };
 
 } //end namespace ArduinoOcpp
