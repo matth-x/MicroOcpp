@@ -60,7 +60,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
     if (*ClockAlignedDataInterval >= 1) {
 
-         if (alignedData.size() >= (size_t) *MeterValuesAlignedDataMaxLength) {
+        if (alignedData.size() >= (size_t) *MeterValuesAlignedDataMaxLength) {
             auto meterValues = new MeterValues(std::move(alignedData), connectorId);
             alignedData.clear();
             return meterValues;
@@ -171,12 +171,6 @@ OcppMessage *ConnectorMeterValuesRecorder::takeTriggeredMeterValues() {
 
     if (!sample) {
         return nullptr;
-    }
-
-    int txId_now = -1;
-    auto connector = context.getConnectorStatus(connectorId);
-    if (connector) {
-        txId_now = connector->getTransactionId();
     }
 
     decltype(sampledData) mv_now;

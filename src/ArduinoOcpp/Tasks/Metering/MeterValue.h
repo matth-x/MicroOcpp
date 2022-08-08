@@ -40,6 +40,8 @@ public:
             std::shared_ptr<Configuration<const char*>> samplers_select);
     
     std::unique_ptr<MeterValue> takeSample(const OcppTimestamp& timestamp, const ReadingContext& context);
+
+    std::unique_ptr<MeterValue> deserializeSample(const JsonObject mvJson);
 };
 
 }

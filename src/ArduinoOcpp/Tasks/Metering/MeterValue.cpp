@@ -102,3 +102,35 @@ std::unique_ptr<MeterValue> MeterValueBuilder::takeSample(const OcppTimestamp& t
 
     return sample;
 }
+
+std::unique_ptr<MeterValue> MeterValueBuilder::deserializeSample(const JsonObject mvJson) {
+
+    OcppTimestamp timestamp;
+    bool ret = timestamp.setTime(mvJson["timestamp"] | "Invalid");
+    if (!ret) {
+        AO_DBG_ERR("invalid timestamp");
+        return nullptr;
+    }
+
+    auto sample = std::unique_ptr<MeterValue>(new MeterValue(timestamp));
+
+    JsonArray sampledValue = mvJson["sampledValue"];
+    for (JsonObject svJson : sampledValue) {  //for each sampled value, search sampler with matching measurand type
+        const char *measurand = svJson["measurand"] | "Invalid";
+        for (auto& sampler : samplers) {
+            if (!sampler->getMeasurand().compare(measurand)) {
+                //found correct sampler
+                auto dVal = sampler->deserializeValue(svJson);
+                if (dVal) {
+                    sample->addSampledValue(std::move(dVal));
+                } else {
+                    AO_DBG_ERR("deserialization error");
+                }
+                break;
+            }
+        }
+    }
+
+    AO_DBG_VERBOSE("deserialized MV");
+    return sample;
+}

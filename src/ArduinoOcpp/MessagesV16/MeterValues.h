@@ -7,11 +7,13 @@
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
-#include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
 
 #include <vector>
 
 namespace ArduinoOcpp {
+
+class MeterValue;
+
 namespace Ocpp16 {
 
 class MeterValues : public OcppMessage {
