@@ -228,10 +228,10 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType, int co
     } else if (!strcmp(messageType, "StatusNotification")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::StatusNotification(connectorId));
     } else if (!strcmp(messageType, "StartTransaction")) {
-        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction(1)); //connectorId 1
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction());
         operation->setOnReceiveReqListener(onStartTransactionRequest);
     } else if (!strcmp(messageType, "StopTransaction")) {
-        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StopTransaction(1)); //connectorId 1
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StopTransaction());
     } else if (!strcmp(messageType, "TriggerMessage")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::TriggerMessage());
         operation->setOnReceiveReqListener(onTriggerMessageRequest);

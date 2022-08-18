@@ -87,7 +87,7 @@ void setOnUnlockConnector(std::function<ArduinoOcpp::PollResult<bool>()> unlockC
 //               - TxEnableState::Inactive if connector lock is released
 //               - TxEnableState::Pending otherwise, e.g. if transitioning between the states
 //Called periodically
-void setConnectorLock(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxCondition)> lockConnector);
+void setConnectorLock(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> lockConnector);
 
 //Set a Cb to update transaction-based energy measurements with the most recent transaction state.
 //This allows energy meters (e.g. based on OCMF) to take their measruements right before and after a transaction
@@ -95,7 +95,7 @@ void setConnectorLock(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxCo
 //               - TxEnableState::Inactive if the energy meter has transitioned into a non-transaction-state
 //               - TxEnableState::Pending otherwise, e.g. if transitioning between the states
 //Called periodically
-void setTxBasedMeterUpdate(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxCondition)> updateTxState);
+void setTxBasedMeterUpdate(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> updateTxState);
 
 /*
  * React on CS-initiated operations
@@ -146,9 +146,9 @@ void bootNotification(const char *chargePointModel, const char *chargePointVendo
 //The OCPP operation will include the given payload without modifying it. The library will delete the payload object after successful transmission.
 void bootNotification(std::unique_ptr<DynamicJsonDocument> payload, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
-void startTransaction(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
+bool startTransaction(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
-void stopTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
+bool stopTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
 /*
  * Access information about the internal state of the library

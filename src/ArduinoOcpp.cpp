@@ -12,6 +12,7 @@
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionService.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
@@ -40,6 +41,7 @@ float voltage_eff {230.f};
 #define OCPP_ID_OF_CONNECTOR 1
 #define OCPP_ID_OF_CP 0
 bool OCPP_booted = false; //if BootNotification succeeded
+bool enteredLoop = false; //if loop() is called the first time
 
 } //end namespace ArduinoOcpp::Facade
 } //end namespace ArduinoOcpp
@@ -94,6 +96,8 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     ocppEngine = new OcppEngine(ocppSocket, system_time);
     auto& model = ocppEngine->getOcppModel();
 
+    model.setTransactionService(std::unique_ptr<TransactionService>(
+        new TransactionService(*ocppEngine, OCPP_NUMCONNECTORS, filesystem)));
     model.setChargePointStatusService(std::unique_ptr<ChargePointStatusService>(
         new ChargePointStatusService(*ocppEngine, OCPP_NUMCONNECTORS)));
     model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
@@ -123,8 +127,7 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
 }
 
 void OCPP_deinitialize() {
-    AO_DBG_DEBUG("Still experimental function. If you find problems, it would be great if you publish them on the GitHub page");
-
+    
     delete ocppEngine;
     ocppEngine = nullptr;
 
@@ -141,13 +144,19 @@ void OCPP_deinitialize() {
     voltage_eff = 230.f;
 
     OCPP_booted = false;
+    enteredLoop = false;
 }
 
 void OCPP_loop() {
     if (!ocppEngine) {
         AO_DBG_WARN("Please call OCPP_initialize before");
-        //delay(200); //Prevent this message from flooding the Serial monitor.
         return;
+    }
+
+    if (!enteredLoop) {
+        enteredLoop = true;
+        configuration_save();
+        ocppEngine->getOcppModel().getTransactionService()->initiateRestoredOperations();
     }
 
     ocppEngine->loop();
@@ -168,7 +177,7 @@ void OCPP_loop() {
 
 void setPowerActiveImportSampler(std::function<float()> power) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
 
@@ -191,7 +200,7 @@ void setPowerActiveImportSampler(std::function<float()> power) {
 
 void setEnergyActiveImportSampler(std::function<float()> energy) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     auto& model = ocppEngine->getOcppModel();
@@ -213,7 +222,7 @@ void setEnergyActiveImportSampler(std::function<float()> energy) {
 
 void addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     auto& model = ocppEngine->getOcppModel();
@@ -226,7 +235,7 @@ void addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler
 
 void addMeterValueSampler(std::function<int32_t ()> value, const char *measurand, const char *unit, const char *location, const char *phase) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
 
@@ -259,7 +268,7 @@ void addMeterValueSampler(std::function<int32_t ()> value, const char *measurand
 
 void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
@@ -272,7 +281,7 @@ void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy) {
 
 void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
@@ -285,7 +294,7 @@ void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized) {
 
 void setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
@@ -298,7 +307,7 @@ void setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
 
 void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
@@ -311,7 +320,7 @@ void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCo
 
 void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     auto& model = ocppEngine->getOcppModel();
@@ -324,7 +333,7 @@ void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged
 
 void setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
@@ -335,9 +344,9 @@ void setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector) {
     connector->setOnUnlockConnector(unlockConnector);
 }
 
-void setConnectorLock(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxCondition)> lockConnector) {
+void setConnectorLock(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> lockConnector) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
@@ -348,9 +357,9 @@ void setConnectorLock(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxCo
     connector->setConnectorLock(lockConnector);
 }
 
-void setTxBasedMeterUpdate(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxCondition)> updateTxState) {
+void setTxBasedMeterUpdate(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> updateTxState) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
@@ -387,7 +396,7 @@ void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq) {
 
 void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
@@ -413,7 +422,7 @@ void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener 
 
 void bootNotification(const char *chargePointModel, const char *chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     
@@ -427,7 +436,7 @@ void bootNotification(const char *chargePointModel, const char *chargePointVendo
 
 void bootNotification(std::unique_ptr<DynamicJsonDocument> payload, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     auto bootNotification = makeOcppOperation(
@@ -447,17 +456,30 @@ void bootNotification(std::unique_ptr<DynamicJsonDocument> payload, OnReceiveCon
     ocppEngine->initiateOperation(std::move(bootNotification));
 }
 
-void startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
-        return;
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return false;
     }
     if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
         AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
-        return;
+        return false;
     }
+    auto transaction = ocppEngine->getOcppModel().getTransactionService()->getTransactionStore().getActiveTransaction(OCPP_ID_OF_CONNECTOR);
+    if (!transaction) {
+        AO_DBG_ERR("Transaction buffer full");
+        return false;
+    }
+
+    if (transaction->isRunning()) {
+        AO_DBG_ERR("Called StartTx while still in transaction. Please call StopTx");
+        return false;
+    }
+
+    transaction->setIdTag(idTag);
+    
     auto startTransaction = makeOcppOperation(
-        new StartTransaction(OCPP_ID_OF_CONNECTOR, idTag));
+        new StartTransaction(transaction));
     if (onConf)
         startTransaction->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -471,15 +493,31 @@ void startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
     else
         startTransaction->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
     ocppEngine->initiateOperation(std::move(startTransaction));
+
+    return true;
 }
 
-void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
-        return;
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return false;
     }
+
+    auto transaction = ocppEngine->getOcppModel().getTransactionService()->getTransactionStore().getActiveTransaction(OCPP_ID_OF_CONNECTOR);
+    if (!transaction || !transaction->isRunning()) {
+        AO_DBG_ERR("No running Tx to stop");
+        return false;
+    }
+
+    const char *idTag = transaction->getIdTag();
+    if (idTag) {
+        transaction->setStopIdTag(idTag);
+    }
+    
+    transaction->setStopReason("Local");
+
     auto stopTransaction = makeOcppOperation(
-        new StopTransaction(OCPP_ID_OF_CONNECTOR));
+        new StopTransaction(transaction));
     if (onConf)
         stopTransaction->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -493,6 +531,8 @@ void stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
     else
         stopTransaction->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
     ocppEngine->initiateOperation(std::move(stopTransaction));
+
+    return true;
 }
 
 int getTransactionId() {
@@ -539,7 +579,7 @@ bool isAvailable() {
 
 void beginSession(const char *idTag) {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
@@ -556,7 +596,7 @@ void beginSession(const char *idTag) {
 
 void endSession() {
     if (!ocppEngine) {
-        AO_DBG_ERR("Please call OCPP_initialize before");
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
     auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);

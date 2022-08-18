@@ -7,15 +7,24 @@
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionService.h>
+#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::StopTransaction;
+using ArduinoOcpp::TransactionRPC;
 
-StopTransaction::StopTransaction(int connectorId, const char *reason) : connectorId(connectorId) {
-    if (reason) {
-        snprintf(this->reason, REASON_LEN_MAX, "%s", reason);
-    }
+StopTransaction::StopTransaction(std::shared_ptr<Transaction> transaction)
+        : transaction(transaction) {
+
 }
+
+StopTransaction::StopTransaction(std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData)
+        : transaction(transaction), transactionData(std::move(transactionData)) {
+
+}
+
+StopTransaction::StopTransaction() { }
 
 const char* StopTransaction::getOcppOperationType(){
     return "StopTransaction";
@@ -23,36 +32,33 @@ const char* StopTransaction::getOcppOperationType(){
 
 void StopTransaction::initiate() {
 
-    if (ocppModel && ocppModel->getMeteringService()) {
+    if (ocppModel && transaction && !transaction->getStopRpcSync().isRequested()) {
+        //fill out tx data if not happened before
+
         auto meteringService = ocppModel->getMeteringService();
-        meterStop = meteringService->readTxEnergyMeter(connectorId, ReadingContext::TransactionEnd);
-        transactionData = meteringService->createStopTxMeterData(connectorId);
-    }
-
-    if (ocppModel) {
-        otimestamp = ocppModel->getOcppTime().getOcppTimestampNow();
-    } else {
-        otimestamp = MIN_TIME;
-    }
-
-    if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
-        auto connector = ocppModel->getConnectorStatus(connectorId);
-        connector->setTransactionId(-1); //immediate end of transaction
-        if (connector->getSessionIdTag()) {
-            AO_DBG_DEBUG("Ending EV user session triggered by StopTransaction");
-            connector->endSession();
+        if (transaction->getMeterStop() < 0 && meteringService) {
+            auto meterStop = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionEnd);
+            if (meterStop && *meterStop) {
+                transaction->setMeterStop(meterStop->toInteger());
+            } else {
+                AO_DBG_ERR("MeterStop undefined");
+            }
         }
-    }
 
+        if (transaction->getStopTimestamp() <= MIN_TIME) {
+            transaction->setStopTimestamp(ocppModel->getOcppTime().getOcppTimestampNow());
+        }
+
+        auto seqNr = ocppModel->getTransactionService()->getTransactionSequence().reserveSeqNr();
+        AO_DBG_DEBUG("Reserved seqNr inside StopTx: %u", seqNr);
+        transaction->getStopRpcSync().setRequested(seqNr);
+
+        transaction->commit();
+    }
     AO_DBG_INFO("StopTransaction initiated!");
 }
 
 std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
-
-    if (meterStop && !*meterStop) {
-        //meterStop not ready yet
-        return nullptr;
-    }
 
     std::vector<std::unique_ptr<DynamicJsonDocument>> txDataJson;
     size_t txDataJson_size = 0;
@@ -72,28 +78,30 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
 
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
                 JSON_OBJECT_SIZE(6) + //total of 6 fields
+                (IDTAG_LEN_MAX + 1) + //stop idTag
                 (JSONDATE_LENGTH + 1) + //timestamp string
                 (REASON_LEN_MAX + 1) + //reason string
                 txDataDoc.capacity()));
     JsonObject payload = doc->to<JsonObject>();
 
-    if (meterStop && *meterStop) {
-        payload["meterStop"] = meterStop->toInteger();
+    if (transaction->getStopIdTag() && *transaction->getStopIdTag()) {
+        payload["idTag"] = (char*) transaction->getStopIdTag();
     }
 
-    if (otimestamp > MIN_TIME) {
-        char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
-        otimestamp.toJsonString(timestamp, JSONDATE_LENGTH + 1);
+    if (transaction->isMeterStopDefined()) {
+        payload["meterStop"] = transaction->getMeterStop();
+    }
+
+    if (transaction->getStopTimestamp() > MIN_TIME) {
+        char timestamp [JSONDATE_LENGTH + 1] = {'\0'};
+        transaction->getStopTimestamp().toJsonString(timestamp, JSONDATE_LENGTH + 1);
         payload["timestamp"] = timestamp;
     }
-    
-    if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
-        auto connector = ocppModel->getConnectorStatus(connectorId);
-        payload["transactionId"] = connector->getTransactionIdSync();
-    }
 
-    if (reason[0] != '\0') {
-        payload["reason"] = reason;
+    payload["transactionId"] = transaction->getTransactionId();
+    
+    if (transaction->getStopReason() && *transaction->getStopReason()) {
+        payload["reason"] = (char*) transaction->getStopReason();
     }
 
     if (!transactionData.empty()) {
@@ -105,14 +113,17 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
 
 void StopTransaction::processConf(JsonObject payload) {
 
-    if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
-        auto connector = ocppModel->getConnectorStatus(connectorId);
-        connector->setTransactionIdSync(-1);
+    if (transaction) {
+        transaction->getStopRpcSync().confirm();
+        transaction->commit();
     }
 
     AO_DBG_INFO("Request has been accepted!");
 }
 
+TransactionRPC *StopTransaction::getTransactionSync() {
+    return transaction ? &transaction->getStopRpcSync() : nullptr;
+}
 
 void StopTransaction::processReq(JsonObject payload) {
     /**

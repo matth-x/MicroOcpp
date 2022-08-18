@@ -11,19 +11,20 @@
 #include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 
 namespace ArduinoOcpp {
+
+class Transaction;
+class TransactionRPC;
+
 namespace Ocpp16 {
 
 class StartTransaction : public OcppMessage {
 private:
-    int connectorId = 1;
-    std::unique_ptr<SampledValue> meterStart {nullptr};
-    OcppTimestamp otimestamp;
-    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
-    uint16_t transactionRev = 0;
+    std::shared_ptr<Transaction> transaction;
 public:
-    StartTransaction(int connectorId);
 
-    StartTransaction(int connectorId, const char *idTag);
+    StartTransaction(std::shared_ptr<Transaction> transaction);
+
+    StartTransaction() = default; //for debugging only. Make this for the server pendant
 
     const char* getOcppOperationType();
 
@@ -32,6 +33,8 @@ public:
     std::unique_ptr<DynamicJsonDocument> createReq();
 
     void processConf(JsonObject payload);
+
+    TransactionRPC *getTransactionSync() override;
 
     void processReq(JsonObject payload);
 

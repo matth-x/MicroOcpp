@@ -7,6 +7,7 @@
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/OcppEvseState.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/TransactionPrerequisites.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionProcess.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
@@ -23,6 +24,7 @@ namespace ArduinoOcpp {
 
 class OcppModel;
 class OcppMessage;
+class Transaction;
 
 class ConnectorStatus {
 private:
@@ -32,18 +34,6 @@ private:
 
     std::shared_ptr<Configuration<int>> availability;
     bool rebooting = false; //report connector inoperative and reject new charging sessions
-
-    bool session = false;
-    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
-    bool idTagInvalidated {false}; //if StartTransaction.conf() has status != "Accepted"
-    std::shared_ptr<Configuration<const char *>> sIdTag;
-    std::shared_ptr<Configuration<int>> transactionId;
-    int transactionIdSync = -1;
-    char endReason [REASON_LEN_MAX + 1] = {'\0'};
-
-    std::shared_ptr<Configuration<int>> connectionTimeOut; //in seconds
-    bool connectionTimeOutListen {false};
-    ulong connectionTimeOutTimestamp {0}; //in milliseconds
 
     std::function<bool()> connectorPluggedSampler;
     std::function<bool()> evRequestsEnergySampler;
@@ -58,13 +48,12 @@ private:
 
     std::function<PollResult<bool>()> onUnlockConnector;
 
-    std::function<TxEnableState(TxCondition)> onConnectorLockPollTx;
-    std::function<TxEnableState(TxCondition)> onOcmfMeterPollTx;
+    std::function<TxEnableState(TxTrigger)> onConnectorLockPollTx;
+    std::function<TxEnableState(TxTrigger)> onOcmfMeterPollTx;
 
-    std::vector<std::function<TxCondition()>> txTriggerConditions;
-    std::vector<std::function<TxEnableState(TxCondition)>> txEnableSequence;
-    TxEnableState txEnable {TxEnableState::Inactive}; // = Result of Trigger and Enable Sequence
+    TransactionProcess txProcess;
 
+    std::shared_ptr<Configuration<int>> connectionTimeOut; //in seconds
     std::shared_ptr<Configuration<const char*>> stopTransactionOnInvalidId;
     std::shared_ptr<Configuration<const char*>> stopTransactionOnEVSideDisconnect;
     std::shared_ptr<Configuration<const char*>> unlockConnectorOnEVSideDisconnect;
@@ -85,14 +74,10 @@ public:
      */
     void beginSession(const char *idTag);
     void endSession(const char *reason = nullptr);
-    void setIdTagInvalidated(); //if StartTransaction.conf() has status != "Accepted"
     const char *getSessionIdTag();
     uint16_t getSessionWriteCount();
     int getTransactionId();
     int getTransactionIdSync();
-    uint16_t getTransactionWriteCount();
-    void setTransactionId(int id);
-    void setTransactionIdSync(int id);
 
     int getAvailability();
     void setAvailability(bool available);
@@ -104,7 +89,6 @@ public:
     void addConnectorErrorCodeSampler(std::function<const char*()> connectorErrorCode);
 
     void saveState();
-    //void recoverState();
 
     OcppMessage *loop();
 
@@ -115,8 +99,8 @@ public:
     void setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector);
     std::function<PollResult<bool>()> getOnUnlockConnector();
 
-    void setConnectorLock(std::function<TxEnableState(TxCondition)> lockConnector);
-    void setTxBasedMeterUpdate(std::function<TxEnableState(TxCondition)> updateTxBasedMeter);
+    void setConnectorLock(std::function<TxEnableState(TxTrigger)> lockConnector);
+    void setTxBasedMeterUpdate(std::function<TxEnableState(TxTrigger)> updateTxBasedMeter);
 };
 
 } //end namespace ArduinoOcpp

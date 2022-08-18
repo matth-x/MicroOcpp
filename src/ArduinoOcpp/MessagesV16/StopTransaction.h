@@ -14,18 +14,24 @@ namespace ArduinoOcpp {
 class SampledValue;
 class MeterValue;
 
+class Transaction;
+class TransactionRPC;
+
 namespace Ocpp16 {
 
 class StopTransaction : public OcppMessage {
 private:
-    int connectorId = 1;
-    std::unique_ptr<SampledValue> meterStop {nullptr};
-    OcppTimestamp otimestamp;
-    char reason [REASON_LEN_MAX] {'\0'};
+    std::shared_ptr<Transaction> transaction;
     std::vector<std::unique_ptr<MeterValue>> transactionData;
 public:
 
-    StopTransaction(int connectorId, const char *reason = nullptr);
+    //StopTransaction(int connectorId, const char *reason = nullptr);
+
+    StopTransaction(std::shared_ptr<Transaction> transaction);
+
+    StopTransaction(std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData);
+    
+    StopTransaction(); //for debugging only. Make this for the server pendant
 
     const char* getOcppOperationType();
 
@@ -34,6 +40,10 @@ public:
     std::unique_ptr<DynamicJsonDocument> createReq();
 
     void processConf(JsonObject payload);
+
+    bool processErr(const char *code, const char *description, JsonObject details) { return false;}
+
+    TransactionRPC *getTransactionSync() override;
 
     void processReq(JsonObject payload);
 
