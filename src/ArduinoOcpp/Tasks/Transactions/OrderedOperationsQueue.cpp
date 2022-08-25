@@ -13,7 +13,7 @@ void OrderedOperationsQueue::addOcppOperation(uint seqNr, std::unique_ptr<OcppOp
 }
 
 void OrderedOperationsQueue::sort(uint seqEnd) {
-    std::sort(operations.begin(), operations.end(), [seqEnd] (std::pair<uint, std::unique_ptr<OcppOperation>>& a, std::pair<uint, std::unique_ptr<OcppOperation>>& b) {
+    std::sort(operations.begin(), operations.end(), [seqEnd] (const std::pair<uint, std::unique_ptr<OcppOperation>>& a, const std::pair<uint, std::unique_ptr<OcppOperation>>& b) {
         uint da = (seqEnd - a.first + MAX_TXEVENT_CNT) % MAX_TXEVENT_CNT; //distance between a to seqEnd
         uint db = (seqEnd - b.first + MAX_TXEVENT_CNT) % MAX_TXEVENT_CNT;
         return da > db; //sort descending by distance to seqEnd <=> sort ascending by seqNr
