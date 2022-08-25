@@ -5,10 +5,6 @@
 #ifndef CONNECTOR_METER_VALUES_RECORDER
 #define CONNECTOR_METER_VALUES_RECORDER
 
-//#define METER_VALUE_SAMPLE_INTERVAL 60 //in seconds
-
-//#define METER_VALUES_SAMPLED_DATA_MAX_LENGTH 4 //after 4 measurements, send the values to the CS
-
 #include <functional>
 #include <memory>
 #include <vector>
@@ -22,7 +18,6 @@ using PowerSampler = std::function<float()>;
 using EnergySampler = std::function<float()>;
 
 class OcppModel;
-class OcppTimestamp;
 class OcppMessage;
 
 class ConnectorMeterValuesRecorder {

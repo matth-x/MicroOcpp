@@ -9,6 +9,8 @@
 #define AO_FILENAME_PREFIX ""
 #endif
 
+#define MAX_PATH_SIZE 30
+
 #define ARDUINO_LITTLEFS 1
 #define ARDUINO_SPIFFS   2
 #define ESPIDF_SPIFFS    3
@@ -26,29 +28,6 @@ public:
     // virtual void close() = 0; implemented in deconstructor
 
     virtual int read() = 0;
-};
-
-class ArduinoJsonFileAdapter {
-private:
-    FileAdapter *file;
-public:
-    ArduinoJsonFileAdapter(FileAdapter *file) : file(file) { }
-
-    size_t readBytes(char *buf, size_t len) {
-        return file->read(buf, len);
-    }
-
-    int read() {
-        return file->read();
-    }
-
-    size_t write(const uint8_t *buf, size_t len) {
-        return file->write((const char*) buf, len);
-    }
-
-    size_t write(uint8_t c) {
-        return file->write((const char*) &c, 1);
-    }
 };
 
 class FilesystemAdapter {
@@ -92,7 +71,7 @@ public:
 namespace ArduinoOcpp {
 namespace EspWiFi {
 
-std::unique_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config);
+std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config);
 
 } //end namespace EspWiFi
 } //end namespace ArduinoOcpp

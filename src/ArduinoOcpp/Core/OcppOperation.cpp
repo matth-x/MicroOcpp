@@ -6,6 +6,7 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
+#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 
 #include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Debug.h>
@@ -117,6 +118,15 @@ bool OcppOperation::sendReq(OcppSocket& ocppSocket){
     requestJson.add(*getMessageID());                      //Unique message ID
     requestJson.add(ocppMessage->getOcppOperationType());  //Action
     requestJson.add(*requestPayload);                      //Payload
+
+    /*
+     * Transaction safety: before sending the message, store the assigned msgId so this action
+     * can be replayed when booted the next time
+     */
+    auto txSync = ocppMessage->getTransactionSync();
+    if (txSync) {
+        txSync->requestWithMsgId(unique_id_counter);
+    }
 
     /*
      * Serialize and send. Destroy serialization and JSON object. 
@@ -351,6 +361,11 @@ void OcppOperation::setOnAbortListener(OnAbortListener onAbort) {
 
 bool OcppOperation::isFullyConfigured(){
     return ocppMessage != nullptr;
+}
+
+void OcppOperation::rebaseMsgId(int msgIdCounter) {
+    unique_id_counter = msgIdCounter;
+    getMessageID(); //apply msgIdCounter to this operation
 }
 
 void OcppOperation::print_debug() {

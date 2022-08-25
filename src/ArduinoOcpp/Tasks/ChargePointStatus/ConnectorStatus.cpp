@@ -6,6 +6,7 @@
 
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionService.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
@@ -19,19 +20,11 @@ using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
 ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
-        : context(context), connectorId{connectorId} {
+        : context(context), connectorId{connectorId}, txProcess(connectorId) {
 
-    //Set default transaction ID in memory
-    char key [CONF_KEYLEN_MAX + 1] = {'\0'};
-
-    snprintf(key, CONF_KEYLEN_MAX + 1, "AO_SID_CONN_%d", connectorId);
-    sIdTag = declareConfiguration<const char *>(key, "", CONFIGURATION_FN, false, false, true, false);
-
-    snprintf(key, CONF_KEYLEN_MAX + 1, "AO_TXID_CONN_%d", connectorId);
-    transactionId = declareConfiguration<int>(key, -1, CONFIGURATION_FN, false, false, true, false);
-
-    snprintf(key, CONF_KEYLEN_MAX + 1, "AO_AVAIL_CONN_%d", connectorId);
-    availability = declareConfiguration<int>(key, AVAILABILITY_OPERATIVE, CONFIGURATION_FN, false, false, true, false);
+    char availabilityKey [CONF_KEYLEN_MAX + 1] = {'\0'};
+    snprintf(availabilityKey, CONF_KEYLEN_MAX + 1, "AO_AVAIL_CONN_%d", connectorId);
+    availability = declareConfiguration<int>(availabilityKey, AVAILABILITY_OPERATIVE, CONFIGURATION_FN, false, false, true, false);
 
     connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN, true, true, true, false);
     minimumStatusDuration = declareConfiguration<int>("MinimumStatusDuration", 0, CONFIGURATION_FN, true, true, true, false);
@@ -41,17 +34,9 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
     localAuthorizeOffline = declareConfiguration<const char*>("LocalAuthorizeOffline", "false", CONFIGURATION_FN, true, true, false, false);
     localPreAuthorize = declareConfiguration<const char*>("LocalPreAuthorize", "false", CONFIGURATION_FN, true, true, false, false);
 
-    if (!sIdTag || !transactionId || !availability) {
-        AO_DBG_ERR("Cannot declare sessionIdTag, transactionId or availability");
+    if (!availability) {
+        AO_DBG_ERR("Cannot declare availability");
     }
-    if (sIdTag->getBuffsize() > 0 && (*sIdTag)[0] != '\0') {
-        snprintf(idTag, std::min((size_t) (IDTAG_LEN_MAX + 1), sIdTag->getBuffsize()), "%s", ((const char *) *sIdTag));
-        session = true;
-        connectionTimeOutTimestamp = ao_tick_ms();
-        connectionTimeOutListen = true;
-        AO_DBG_DEBUG("Load session idTag at initialization");
-    }
-    transactionIdSync = *transactionId;
 
     /*
      * Initialize standard EVSE behavior.
@@ -60,22 +45,26 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
      *     - lock the connector (if handler is set)
      *     - instruct the OCMF meter to begin a transaction (if OCMF meter handler is set)
      */
-    txTriggerConditions.push_back([this] () -> TxCondition {
-        if (!session)
-            return TxCondition::Inactive;
-        return getSessionIdTag() ? TxCondition::Active : TxCondition::Inactive;
+    txProcess.addTrigger([this] () -> TxTrigger {
+        auto transaction = this->context.getTransactionService()->getTransactionStore().getActiveTransaction(this->connectorId);
+
+        if (transaction && transaction->isInSession() && transaction->isActive()) {
+            return TxTrigger::Active;
+        } else {
+            return TxTrigger::Inactive;
+        }
     });
-    txEnableSequence.push_back([this] (TxCondition cond) -> TxEnableState {
+    txProcess.addEnableStep([this] (TxTrigger cond) -> TxEnableState {
         if (onOcmfMeterPollTx) {
             return onOcmfMeterPollTx(cond);
         }
-        return cond == TxCondition::Active ? TxEnableState::Active : TxEnableState::Inactive;
+        return cond == TxTrigger::Active ? TxEnableState::Active : TxEnableState::Inactive;
     });
-    txEnableSequence.push_back([this] (TxCondition cond) -> TxEnableState {
+    txProcess.addEnableStep([this] (TxTrigger cond) -> TxEnableState {
         if (onConnectorLockPollTx) {
             return onConnectorLockPollTx(cond);
         }
-        return cond == TxCondition::Active ? TxEnableState::Active : TxEnableState::Inactive;
+        return cond == TxTrigger::Active ? TxEnableState::Active : TxEnableState::Inactive;
     });
 }
 
@@ -95,37 +84,30 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
         }
     }
 
+    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
+
     if (getErrorCode() != nullptr) {
         return OcppEvseState::Faulted;
+    } else if (!transaction) { //won't start new transactions if cached tx queue is full
+        return OcppEvseState::Unavailable;
     } else if (*availability == AVAILABILITY_INOPERATIVE) {
         return OcppEvseState::Unavailable;
-    } else if (rebooting && getTransactionId() < 0) {
+    } else if (rebooting && !transaction->isRunning()) {
         return OcppEvseState::Unavailable;
-    } else if (getTransactionId() == 0 &&      // i.e. Tx pending or EVSE offline. Check if offline Tx is OFF
-            !(*localAuthorizeOffline && strcmp(*localAuthorizeOffline, "false")) &&
-            !(*localPreAuthorize && strcmp(*localPreAuthorize, "false"))) {
-        //All modes for offline Tx are off
-        return OcppEvseState::Preparing; //see other Preparing case
-    } else if (getTransactionId() >= 0) {
+    } else if (transaction->isRunning()) {
         //Transaction is currently running
         if ((connectorEnergizedSampler && !connectorEnergizedSampler()) ||
-                idTagInvalidated) {
+                !transaction->isActive() || //will forbid charging
+                transaction->isIdTagDeauthorized()) {
             return OcppEvseState::SuspendedEVSE;
         }
         if (evRequestsEnergySampler && !evRequestsEnergySampler()) {
             return OcppEvseState::SuspendedEV;
         }
         return OcppEvseState::Charging;
-    } else if (txEnable == TxEnableState::Inactive) {
+    } else if (!txProcess.existsActiveTrigger() && txProcess.getState() == TxEnableState::Inactive) {
         return OcppEvseState::Available;
-    } else if (txEnable == TxEnableState::Pending ||  
-               txEnable == TxEnableState::Active) {   //reached if Tx init is delayed
-
-        if (txEnable == TxEnableState::Active) { // TODO verify if actually possible
-            AO_DBG_VERBOSE("Infered Active"); //
-            (void)0;                             //
-        }                                        //
-
+    } else {
         /*
          * Either in Preparing or Finishing state. Only way to know is from previous state
          */
@@ -139,7 +121,7 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
             return OcppEvseState::Preparing;
         }
     }
-    
+
     AO_DBG_VERBOSE("Cannot infere status");
     return OcppEvseState::Faulted; //internal error
 }
@@ -150,112 +132,99 @@ bool ConnectorStatus::ocppPermitsCharge() {
         return false;
     }
 
-    if (idTagInvalidated) {
-        return false;
-    }
+    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
 
-    OcppEvseState state = inferenceStatus();
-
-    return state == OcppEvseState::Charging ||
-            state == OcppEvseState::SuspendedEV ||
-            state == OcppEvseState::SuspendedEVSE;
+    return transaction &&
+            transaction->isRunning() &&
+            transaction->isActive() &&
+            !getErrorCode() &&
+            !transaction->isIdTagDeauthorized();
 }
 
 OcppMessage *ConnectorStatus::loop() {
-    if (getTransactionId() < 0 && *availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
+
+    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
+
+    if ((!transaction || !transaction->isRunning()) && *availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
         *availability = AVAILABILITY_INOPERATIVE;
         saveState();
     }
-        
-    if (connectorPluggedSampler) {
-        if (getTransactionId() >= 0 && !connectorPluggedSampler()) {
-            if (!*stopTransactionOnEVSideDisconnect || strcmp(*stopTransactionOnEVSideDisconnect, "false")) {
-                endSession("EVDisconnected");
+
+    if (transaction) { //begin exclusively transaction-related operations
+            
+        if (connectorPluggedSampler) {
+            if (transaction->isRunning() && transaction->isInSession() && !connectorPluggedSampler()) {
+                if (!*stopTransactionOnEVSideDisconnect || strcmp(*stopTransactionOnEVSideDisconnect, "false")) {
+                    AO_DBG_DEBUG("Stop Tx due to EV disconnect");
+                    transaction->setStopReason("EVDisconnected");
+                    transaction->endSession();
+                    transaction->commit();
+                }
             }
         }
-    }
 
-    auto txTrigger = txTriggerConditions.empty() ? TxCondition::Inactive : TxCondition::Active;
-    txEnable = TxEnableState::Inactive;
+        if (transaction->isInSession() &&
+                !transaction->getStartRpcSync().isRequested() &&
+                transaction->getSessionTimestamp() > MIN_TIME &&
+                connectionTimeOut && *connectionTimeOut > 0 &&
+                context.getOcppTime().getOcppTimestampNow() - transaction->getSessionTimestamp() >= (otime_t) *connectionTimeOut) {
+                
+            AO_DBG_INFO("Session mngt: timeout");
+            transaction->endSession();
+            transaction->commit();
+        }
 
-    if (*availability == AVAILABILITY_INOPERATIVE) {
-        txTrigger = TxCondition::Inactive;
-    }
-
-    if (txTrigger == TxCondition::Active) {
-        for (auto trigger = txTriggerConditions.begin(); trigger != txTriggerConditions.end(); trigger++) {
-            auto result = trigger->operator()();
-            if (result == TxCondition::Active) {
-                txEnable = TxEnableState::Pending;
-            } else {
-                txTrigger = TxCondition::Inactive;
+        if (transaction->isInSession() && transaction->isIdTagDeauthorized()) {
+            if (!*stopTransactionOnInvalidId || strcmp(*stopTransactionOnInvalidId, "false")) {
+                AO_DBG_DEBUG("DeAuthorize session");
+                transaction->setStopReason("DeAuthorized");
+                transaction->endSession();
+                transaction->commit();
             }
         }
-    }
 
-    if (txTrigger == TxCondition::Active) {
-        txEnable = TxEnableState::Active;
+        txProcess.evaluateProcessSteps(transaction->getTxNr());
+        auto txEnable = txProcess.getState();
 
-        for (auto step = txEnableSequence.rbegin(); step != txEnableSequence.rend(); step++) {
-            auto result = step->operator()(TxCondition::Active);
-            if (result != TxEnableState::Active) {
-                txEnable = TxEnableState::Pending;
-                break;
+        /*
+        * Check conditions for start or stop transaction
+        */
+
+        if (txEnable == TxEnableState::Active) {
+            
+            if (transaction->isPreparing() && !getErrorCode()) {
+                //start Transaction
+
+                AO_DBG_INFO("Session mngt: trigger StartTransaction");
+                //return new StartTransaction(connectorId);
+                auto seqNr = context.getTransactionService()->getTransactionSequence().reserveSeqNr();
+                AO_DBG_DEBUG("Reserved SeqNr %u", seqNr);
+                transaction->getStartRpcSync().setRequested(seqNr);
+                transaction->commit();
+                return new StartTransaction(transaction);
+            }
+        } else if (transaction->isRunning()) {
+
+            if (transaction->isInSession()) {
+                AO_DBG_DEBUG("Tx process not active");
+                transaction->endSession();
+                transaction->commit();
+            }
+
+            if (txEnable == TxEnableState::Inactive) {
+                //stop transaction
+                auto seqNr = context.getTransactionService()->getTransactionSequence().reserveSeqNr();
+                transaction->getStopRpcSync().setRequested(seqNr);
+                transaction->commit();
+
+                AO_DBG_INFO("Session mngt: trigger StopTransaction");
+
+                AO_DBG_DEBUG("Reserved SeqNr %u", seqNr);
+                
+                return new StopTransaction(transaction);
             }
         }
-    } else {
-        for (auto step = txEnableSequence.begin(); step != txEnableSequence.end(); step++) {
-            auto result = step->operator()(TxCondition::Inactive);
-            if (result != TxEnableState::Inactive) {
-                txEnable = TxEnableState::Pending;
-                break;
-            }
-        }
-    }
-
-
-    /*
-     * Check conditions for start or stop transaction
-     */
-    if (txEnable == TxEnableState::Active) {
-        //check if not in transaction yet
-        if (getTransactionId() < 0 &&
-                !getErrorCode()) {
-            //start Transaction
-
-            AO_DBG_DEBUG("Session mngt: txId=%i, connectorPlugged = %s, session=%d",
-                    getTransactionId(),
-                    connectorPluggedSampler ? (connectorPluggedSampler() ? "plugged" : "unplugged") : "undefined",
-                    session);
-            AO_DBG_INFO("Session mngt: trigger StartTransaction");
-            return new StartTransaction(connectorId);
-        }
-    } else {
-        //check if still in transaction
-        if (getTransactionId() >= 0) {
-            //stop transaction
-
-            AO_DBG_DEBUG("Session mngt: txId=%i, connectorPlugged = %s, session=%d",
-                    getTransactionId(),
-                    connectorPluggedSampler ? (connectorPluggedSampler() ? "plugged" : "unplugged") : "undefined",
-                    session);
-            AO_DBG_INFO("Session mngt: trigger StopTransaction");
-            return new StopTransaction(connectorId, endReason[0] != '\0' ? endReason : nullptr);
-        }
-    }
-
-    if (connectionTimeOutListen) {
-        if (getTransactionId() >= 0 || !session) {
-            AO_DBG_DEBUG("Session mngt: release connectionTimeOut");
-            connectionTimeOutListen = false;
-        } else {
-            if (ao_tick_ms() - connectionTimeOutTimestamp >= ((ulong) *connectionTimeOut) * 1000UL) {
-                AO_DBG_INFO("Session mngt: timeout");
-                endSession();
-                connectionTimeOutListen = false;
-            }
-        }
-    }
+    } //end transaction-related operations
 
     auto inferedStatus = inferenceStatus();
     
@@ -289,82 +258,92 @@ const char *ConnectorStatus::getErrorCode() {
 }
 
 void ConnectorStatus::beginSession(const char *sessionIdTag) {
-    AO_DBG_DEBUG("Begin session with idTag %s, overwriting idTag %s", sessionIdTag != nullptr ? sessionIdTag : "", idTag);
+    
+    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
+
+    if (!transaction) {
+        AO_DBG_ERR("Could not allocate Tx");
+        return;
+    }
+    
+    AO_DBG_DEBUG("Begin session with idTag %s, overwriting idTag %s", sessionIdTag != nullptr ? sessionIdTag : "", transaction->getIdTag());
     if (!sessionIdTag || *sessionIdTag == '\0') {
         //input string is empty
-        snprintf(idTag, IDTAG_LEN_MAX + 1, "A0-00-00-00");
+        transaction->setIdTag("A0-00-00-00");
     } else {
-        snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", sessionIdTag);
+        transaction->setIdTag(sessionIdTag);
     }
-    sIdTag->setValue(idTag, IDTAG_LEN_MAX + 1);
-    saveState();
-    session = true;
-    idTagInvalidated = false;
 
-    memset(endReason, '\0', REASON_LEN_MAX + 1);
+    transaction->setSessionTimestamp(context.getOcppTime().getOcppTimestampNow());
 
-    connectionTimeOutListen = true;
-    connectionTimeOutTimestamp = ao_tick_ms();
+    transaction->commit();
 }
 
 void ConnectorStatus::endSession(const char *reason) {
-    AO_DBG_DEBUG("End session with idTag %s for reason %s, %s previous reason",
-                            idTag, reason ? reason : "undefined",
-                            endReason[0] == '\0' ? "no" : "overruled by");
-    if (session) {
-        memset(idTag, '\0', IDTAG_LEN_MAX + 1);
-        *sIdTag = "";
-        saveState();
-    }
-    session = false;
 
-    if (reason && endReason[0] == '\0') {
-        snprintf(endReason, REASON_LEN_MAX + 1, "%s", reason);
+    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
+
+    if (!transaction) {
+        AO_DBG_ERR("Could not allocate Tx");
+        return;
     }
 
-    connectionTimeOutListen = false;
-}
+    if (transaction->isInSession()) {
+        AO_DBG_DEBUG("End session with idTag %s for reason %s, %s previous reason",
+                                transaction->getIdTag(), reason ? reason : "undefined",
+                                transaction->getStopReason() == '\0' ? "no" : "overruled by");
 
-void ConnectorStatus::setIdTagInvalidated() {
-    if (session) {
-        idTagInvalidated = true;
-        if (!*stopTransactionOnInvalidId || strcmp(*stopTransactionOnInvalidId, "false")) {
-            endSession("DeAuthorized");
+        if (reason) {
+            transaction->setStopReason(reason);
         }
-    } else {
-        AO_DBG_WARN("Cannot invalidate IdTag outside of session");
+        transaction->endSession();
+        transaction->commit();
     }
 }
 
 const char *ConnectorStatus::getSessionIdTag() {
-    return session ? idTag : nullptr;
+
+    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
+
+    if (!transaction) {
+        return nullptr;
+    }
+
+    return transaction->isInSession() ? transaction->getIdTag() : nullptr;
 }
 
 uint16_t ConnectorStatus::getSessionWriteCount() {
-    return sIdTag->getValueRevision();
+    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
+    
+    return transaction ? transaction->getTxNr() : 0;
 }
 
 int ConnectorStatus::getTransactionId() {
-    return *transactionId;
+    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
+    
+    if (!transaction) {
+        return -1;
+    }
+
+    if (transaction->isRunning()) {
+        if (transaction->getStartRpcSync().isConfirmed()) {
+            return transaction->getTransactionId();
+        } else {
+            return 0;
+        }
+    } else {
+        return -1;
+    }
 }
 
 int ConnectorStatus::getTransactionIdSync() {
-    return transactionIdSync;
-}
-
-void ConnectorStatus::setTransactionIdSync(int id) {
-    transactionIdSync = id;
-}
-
-uint16_t ConnectorStatus::getTransactionWriteCount() {
-    return transactionId->getValueRevision();
-}
-
-void ConnectorStatus::setTransactionId(int id) {
-    int prevTxId = *transactionId;
-    *transactionId = id;
-    if (id != 0 || prevTxId > 0)
-        saveState();
+    auto transaction = context.getTransactionService()->getTransactionStore().getTransactionSync(connectorId);
+    
+    if (transaction) {
+        return transaction->getTransactionId();
+    } else {
+        return -1;
+    }
 }
 
 int ConnectorStatus::getAvailability() {
@@ -390,8 +369,8 @@ void ConnectorStatus::setRebooting(bool rebooting) {
 
 void ConnectorStatus::setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
     this->connectorPluggedSampler = connectorPlugged;
-    txTriggerConditions.push_back([this] () -> TxCondition {
-        return connectorPluggedSampler() ? TxCondition::Active : TxCondition::Inactive;
+    txProcess.addTrigger([this] () -> TxTrigger {
+        return connectorPluggedSampler() ? TxTrigger::Active : TxTrigger::Inactive;
     });
 }
 
@@ -419,10 +398,10 @@ std::function<PollResult<bool>()> ConnectorStatus::getOnUnlockConnector() {
     return this->onUnlockConnector;
 }
 
-void ConnectorStatus::setConnectorLock(std::function<TxEnableState(TxCondition)> onConnectorLockPollTx) {
+void ConnectorStatus::setConnectorLock(std::function<TxEnableState(TxTrigger)> onConnectorLockPollTx) {
     this->onConnectorLockPollTx = onConnectorLockPollTx;
 }
 
-void ConnectorStatus::setTxBasedMeterUpdate(std::function<TxEnableState(TxCondition)> onOcmfMeterPollTx) {
+void ConnectorStatus::setTxBasedMeterUpdate(std::function<TxEnableState(TxTrigger)> onOcmfMeterPollTx) {
     this->onOcmfMeterPollTx = onOcmfMeterPollTx;
 }

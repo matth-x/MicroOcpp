@@ -128,6 +128,8 @@ public:
 
     bool isFullyConfigured();
 
+    void rebaseMsgId(int msgIdCounter); //workaround; remove when random UUID msg IDs are introduced
+
     void print_debug();
 };
 

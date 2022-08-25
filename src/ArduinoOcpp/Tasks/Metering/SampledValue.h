@@ -77,7 +77,8 @@ enum class ReadingContext {
 };
 
 namespace Ocpp16 {
-const char *cstrFromReadingContext(ReadingContext context);
+const char *serializeReadingContext(ReadingContext context);
+ReadingContext deserializeReadingContext(const char *serialized);
 }
 
 class SampledValue {
@@ -119,6 +120,7 @@ public:
     SampledValueSampler(SampledValueProperties properties) : properties(properties) { }
     virtual ~SampledValueSampler() = default;
     virtual std::unique_ptr<SampledValue> takeValue(ReadingContext context) = 0;
+    virtual std::unique_ptr<SampledValue> deserializeValue(JsonObject svJson) = 0;
     const std::string& getMeasurand() {return properties.getMeasurand();};
 };
 
@@ -129,7 +131,16 @@ private:
 public:
     SampledValueSamplerConcrete(SampledValueProperties properties, std::function<T(ReadingContext)> sampler) : SampledValueSampler(properties), sampler(sampler) { }
     std::unique_ptr<SampledValue> takeValue(ReadingContext context) override {
-        return std::unique_ptr<SampledValueConcrete<T, DeSerializer>>(new SampledValueConcrete<T, DeSerializer>(properties, context, sampler(context)));
+        return std::unique_ptr<SampledValueConcrete<T, DeSerializer>>(new SampledValueConcrete<T, DeSerializer>(
+            properties,
+            context,
+            sampler(context)));
+    }
+    std::unique_ptr<SampledValue> deserializeValue(JsonObject svJson) override {
+        return std::unique_ptr<SampledValueConcrete<T, DeSerializer>>(new SampledValueConcrete<T, DeSerializer>(
+            properties,
+            Ocpp16::deserializeReadingContext(svJson["context"] | "NOT_SET"),
+            DeSerializer::deserialize(svJson["value"] | "")));
     }
 };
 

@@ -11,7 +11,12 @@ namespace ArduinoOcpp {
  * Type definitions for extending the transaction initiation process
  */
 
-enum class TxCondition {
+enum class TxPrecondition {
+    Active,
+    Inactive
+};
+
+enum class TxTrigger {
     Active,
     Inactive
 };

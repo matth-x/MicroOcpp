@@ -135,6 +135,7 @@ public:
     std::unique_ptr<FileAdapter> open(const char *fn, const char *mode) override {
         File file = USE_FS.open(fn, mode);
         if (file && !file.isDirectory()) {
+            AO_DBG_DEBUG("File open successful: %s", fn);
             return std::unique_ptr<FileAdapter>(new ArduinoFileAdapter(std::move(file)));
         } else {
             return nullptr;
@@ -145,7 +146,13 @@ public:
     };
 };
 
-std::unique_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config) {
+std::weak_ptr<FilesystemAdapter> filesystemCache;
+
+std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config) {
+
+    if (auto cached = filesystemCache.lock()) {
+        return cached;
+    }
 
     if (!config.accessAllowed()) {
             AO_DBG_DEBUG("Access to Arduino FS not allowed by config");
@@ -153,7 +160,8 @@ std::unique_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     }
 
     auto fs_concrete = new ArduinoFilesystemAdapter(config);
-    auto fs = std::unique_ptr<FilesystemAdapter>(fs_concrete);
+    auto fs = std::shared_ptr<FilesystemAdapter>(fs_concrete);
+    filesystemCache = fs;
 
     if (*fs_concrete) {
         return fs;
