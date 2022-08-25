@@ -23,6 +23,7 @@ class StopTransaction : public OcppMessage {
 private:
     std::shared_ptr<Transaction> transaction;
     std::vector<std::unique_ptr<MeterValue>> transactionData;
+    ulong emTimeout = 0;
 public:
 
     //StopTransaction(int connectorId, const char *reason = nullptr);

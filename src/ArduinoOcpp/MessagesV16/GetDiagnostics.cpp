@@ -57,7 +57,7 @@ std::unique_ptr<DynamicJsonDocument> GetDiagnostics::createConf(){
         fileName = ocppModel->getDiagnosticsService()->requestDiagnosticsUpload(location, retries, retryInterval, startTime, stopTime);
     } else {
         AO_DBG_WARN("DiagnosticsService has not been initialized before! Please have a look at ArduinoOcpp.cpp for an example. Abort");
-        return nullptr;
+        return createEmptyDocument();
     }
 
     if (fileName.empty()) {
