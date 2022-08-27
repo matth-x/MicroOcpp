@@ -199,4 +199,12 @@ ArduinoOcpp::FirmwareService *getFirmwareService();
 ArduinoOcpp::DiagnosticsService *getDiagnosticsService();
 #endif
 
+namespace ArduinoOcpp {
+class OcppEngine;
+}
+
+//Get access to internal functions and data structures. The returned OcppEngine object allows
+//you to bypass the facace functions of this header and implement custom functionality.
+ArduinoOcpp::OcppEngine *getOcppEngine();
+
 #endif
