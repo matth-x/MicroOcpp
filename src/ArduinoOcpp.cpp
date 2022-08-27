@@ -564,3 +564,12 @@ ArduinoOcpp::DiagnosticsService *getDiagnosticsService() {
     return model.getDiagnosticsService();
 }
 #endif
+
+OcppEngine *getOcppEngine() {
+    if (!ocppEngine) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return nullptr;
+    }
+
+    return ocppEngine;
+}
