@@ -36,7 +36,10 @@ std::shared_ptr<FilesystemAdapter> filesystem;
 FilesystemOpt fileSystemOpt {};
 float voltage_eff {230.f};
 
+#ifndef OCPP_NUMCONNECTORS
 #define OCPP_NUMCONNECTORS 2
+#endif
+
 #define OCPP_ID_OF_CONNECTOR 1
 #define OCPP_ID_OF_CP 0
 bool OCPP_booted = false; //if BootNotification succeeded
