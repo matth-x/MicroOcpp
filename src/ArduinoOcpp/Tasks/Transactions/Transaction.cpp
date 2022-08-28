@@ -144,9 +144,6 @@ bool Transaction::deserializeSessionState(JsonObject state) {
 
     if (txStart.containsKey("rpc")) {
         JsonObject txStartRPC = txStart["rpc"];
-        AO_DBG_DEBUG("Deserialize RPC. Raw:")
-        serializeJson(txStartRPC, Serial);
-        Serial.println();
         if (!start.rpc.deserializeSessionState(txStartRPC)) {
             return false;
         }

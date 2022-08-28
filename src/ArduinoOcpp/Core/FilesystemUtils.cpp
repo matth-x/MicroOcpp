@@ -70,8 +70,7 @@ std::unique_ptr<DynamicJsonDocument> FilesystemUtils::loadJson(std::shared_ptr<F
     }
 
     AO_DBG_DEBUG("Loaded JSON file: %s", fn);
-    serializeJson(*doc, Serial);
-    Serial.println();
+    
     return doc;
 }
 
