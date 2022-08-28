@@ -70,7 +70,7 @@ std::unique_ptr<DynamicJsonDocument> FilesystemUtils::loadJson(std::shared_ptr<F
     }
 
     AO_DBG_DEBUG("Loaded JSON file: %s", fn);
-    
+
     return doc;
 }
 
@@ -104,7 +104,6 @@ bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, c
     ArduinoJsonFileAdapter fileWriter {file.get()};
 
     size_t written = serializeJson(doc, fileWriter);
-    written = serializeJson(doc, Serial);
 
     if (written < 2) {
         AO_DBG_ERR("Error writing file %s", fn);
