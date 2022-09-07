@@ -6,8 +6,7 @@
 #include <ArduinoOcpp/Core/ConfigurationOptions.h> //FilesystemOpt
 #include <ArduinoOcpp/Debug.h>
 
-//#ifndef AO_DEACTIVATE_FLASH
-#if 1
+#ifndef AO_DEACTIVATE_FLASH
 
 //Set default parameters; assume usage with Arduino if no build flags are present
 #ifndef AO_USE_FILEAPI

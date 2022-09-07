@@ -198,3 +198,7 @@ bool ao_isInSession() {
 const char *ao_getSessionIdTag() {
     return getSessionIdTag();
 }
+
+OcppHandle *getOcppHandle() {
+    return reinterpret_cast<OcppHandle*>(getOcppEngine());
+}

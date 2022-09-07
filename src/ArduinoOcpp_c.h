@@ -6,6 +6,9 @@
 struct AOcppSocket;
 typedef struct AOcppSocket AOcppSocket;
 
+struct OcppHandle;
+typedef struct OcppHandle OcppHandle;
+
 typedef void (*OnOcppMessage) (const char *payload, size_t len);
 typedef void (*OnOcppAbort)   ();
 typedef void (*OnOcppTimeout) ();
@@ -101,6 +104,12 @@ void ao_endSession();
 bool ao_isInSession();
 
 const char *ao_getSessionIdTag();
+
+/*
+ * Get access to the internals
+ */
+
+OcppHandle *getOcppHandle();
 
 #ifdef __cplusplus
 }
