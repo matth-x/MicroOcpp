@@ -65,7 +65,7 @@ void setup() {
         Serial.print(F("BootNotification was answered. Central System clock: "));
         Serial.println(confMsg["currentTime"].as<String>()); //"currentTime" is a field of the central system response
         
-        //evseIsBooted = true; <-- Example: Notify your hardare that the BootNotification.conf() has arrived
+        //evseIsBooted = true; <-- Example: Notify your hardware that the BootNotification.conf() has arrived
     });
     
     ... //rest of setup() function; executed immediately as bootNotification() is non-blocking
