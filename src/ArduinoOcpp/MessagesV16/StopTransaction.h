@@ -8,6 +8,7 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
+#include <vector>
 
 namespace ArduinoOcpp {
 

@@ -10,6 +10,7 @@
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoJson.h>
 #include <memory>
+#include <vector>
 
 namespace ArduinoOcpp {
 
