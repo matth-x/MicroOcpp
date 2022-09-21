@@ -11,10 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        example: [examples/ESP/main.cpp, examples/ESP-TLS/main.cpp, examples/SECC/main.cpp]
-        include:
-          - example: examples/SECC/main.cpp
-            dashboard-extra: --lib="/tmp/tzapu/WiFiManager"
+        example: [examples/ESP/main.cpp, examples/ESP-TLS/main.cpp]
 
     steps:
     - uses: actions/checkout@v2
@@ -38,9 +35,6 @@ jobs:
         pip install --upgrade platformio
     - name: Install library dependencies
       run: pio pkg install
-    - name: Extra dependencies for SECC example
-      if: ${{ matrix.dashboard-extra }}
-      run: git clone https://github.com/tzapu/WiFiManager.git /tmp/tzapu/WiFiManager
     - name: Run PlatformIO
       run: pio ci --lib="." --project-conf=platformio.ini ${{ matrix.dashboard-extra }}
       env:
