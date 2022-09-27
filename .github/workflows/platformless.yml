@@ -17,6 +17,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install build-essential
+        g++ --version
     - name: Get ArduinoJson
       run: wget -Uri https://github.com/bblanchon/ArduinoJson/releases/download/v6.19.4/ArduinoJson-v6.19.4.h -O ./src/ArduinoJson.h
     - name: Compile
