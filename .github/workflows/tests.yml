@@ -1,0 +1,19 @@
+name: Unit tests
+
+on:
+  push:
+    branches:
+      - test-integration-disabled
+
+jobs:
+
+  compile-tests:
+    name: Compile Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v3
+    - name: Compile tests
+      run: g++ -Wall test/unitTests/000-unitTestsMain.cpp -o test/compiledTests
+    - name: Run tests
+      run: ./test/compiledTests
