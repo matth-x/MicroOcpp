@@ -6,7 +6,8 @@
 //use the main function provided by catch2
 #define CATCH_CONFIG_MAIN
 //include the catch2 library
-#include "../catch2/catch.hpp"
+#include "./catch2/catch.hpp"
 
 //include the unit tests
-#include "./exampleCheckNumbers.cpp"
+//#include "./exampleCheckNumbers.cpp"
+#include "./initializeDeinitialize.h"
