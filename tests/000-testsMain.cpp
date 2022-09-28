@@ -5,5 +5,7 @@
 //include the catch2 library
 #include "./catch2/catch.hpp"
 
+//!!! following lines not nesseccary in the current test pipeline; all .cpp files are searched and compiled anyway
+
 //include the tests
-#include "./initialize.cpp"
+//#include "./initialize.h"

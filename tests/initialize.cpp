@@ -5,28 +5,19 @@
 #include "./catch2/catch.hpp"
 #include "./testHelper.h"
 
-TEST_CASE( "Do some loops", "[multi-file:2]" ) {
-
-    ArduinoOcpp::OcppEchoSocket echoSocket;
-
-    std::cout << "[main] Enter compilation test\n";
-
-    std::cout << "[main] set custom console\n";
+TEST_CASE( "OcppEngine start and stop" ) {
+    //set console output to the cpp console to display outputs
     ao_set_console_out(cpp_console_out);
-    
+    //initialize OcppEngine with dummy socket
+    ArduinoOcpp::OcppEchoSocket echoSocket;
     OCPP_initialize(echoSocket);
-    std::cout << "[main] AO initialized\n---------------------\n";
-    
-    std::cout << "[main] enqueue first operation\n";
-    bootNotification("Test charger", "Test vendor");
-    
-    std::cout << "[main] handle WebSocket traffic and run OCPP tasks\n"; 
-    OCPP_loop();
-    OCPP_loop();
-    OCPP_loop();
 
-    std::cout << "-------------------------\n[main] test routines done\n";
-    OCPP_deinitialize();
+    SECTION("OCPP is initialized"){
+        REQUIRE( getOcppEngine() );
+    }
 
-    std::cout << "[main] exit\n";
+    SECTION("OCPP is deinitialized"){
+        OCPP_deinitialize();
+        REQUIRE( !( getOcppEngine() ) );
+    }
 }
