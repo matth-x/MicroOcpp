@@ -3,7 +3,7 @@
 #include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include "./catch2/catch.hpp"
-#include "./000-unitTestsMain.h"
+#include "./testHelper.h"
 
 TEST_CASE( "Do some loops", "[multi-file:2]" ) {
 
