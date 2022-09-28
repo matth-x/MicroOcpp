@@ -3,10 +3,7 @@
 #include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include "./catch2/catch.hpp"
-
-void cpp_console_out(const char *msg) {
-    std::cout << msg;
-}
+#include "./000-unitTestsMain.h"
 
 TEST_CASE( "Do some loops", "[multi-file:2]" ) {
 
