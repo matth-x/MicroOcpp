@@ -1,4 +1,4 @@
-name: Platform independent tests
+name: Test Runner
 
 on:
   push:

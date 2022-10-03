@@ -1,4 +1,4 @@
-name: Platform independent compilation
+name: Default Compilation
 
 on:
   push:
