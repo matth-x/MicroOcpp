@@ -1,4 +1,3 @@
-#if 0
 #include "ArduinoOcpp_c.h"
 #include "ArduinoOcpp.h"
 
@@ -203,4 +202,3 @@ const char *ao_getSessionIdTag() {
 OcppHandle *getOcppHandle() {
     return reinterpret_cast<OcppHandle*>(getOcppEngine());
 }
-#endif
