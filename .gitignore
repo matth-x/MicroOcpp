@@ -2,3 +2,4 @@
 ArduinoJson.h
 workflow.sh
 output
+.vscode
