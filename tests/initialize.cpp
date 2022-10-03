@@ -1,9 +1,7 @@
-#include <iostream>
 #include <ArduinoOcpp.h>
-#include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include "./catch2/catch.hpp"
-#include "./testHelper.h"
+#include "./helpers/testHelper.h"
 
 TEST_CASE( "OcppEngine start and stop" ) {
     //set console output to the cpp console to display outputs
