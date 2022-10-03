@@ -13,7 +13,7 @@ jobs:
     steps:
     - name: Check out repository code
       uses: actions/checkout@v3
-    - name: get gcc compiler
+    - name: Get gcc compiler
       run: |
         sudo apt update
         sudo apt install build-essential
