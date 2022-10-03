@@ -23,4 +23,4 @@ jobs:
     - name: Get ArduinoJson
       run: wget -Uri https://github.com/bblanchon/ArduinoJson/releases/download/v6.19.4/ArduinoJson-v6.19.4.h -O ./src/ArduinoJson.h
     - name: Compile
-      run: g++ -c -std=c++14 -I ./src $(find ./src -type f -iregex ".*\.cpp") -DAO_CUSTOM_WS -DAO_CUSTOM_CONSOLE -DAO_CUSTOM_UPDATER -DAO_CUSTOM_RESET -DAO_DEACTIVATE_FLASH -DAO_USE_FILEAPI=ESPIDF_SPIFFS -DAO_DBG_LEVEL=AO_DL_DEBUG -DAO_TRAFFIC_OUT -DAO_FILENAME_PREFIX='"/ao_store"' -o ./output -Wall
+      run: g++ -c -std=c++14 -I ./src $(find ./src -type f -iregex ".*\.cpp") -DAO_CUSTOM_WS -DAO_CUSTOM_CONSOLE -DAO_CUSTOM_UPDATER -DAO_CUSTOM_RESET -DAO_DEACTIVATE_FLASH -DAO_USE_FILEAPI=ESPIDF_SPIFFS -DAO_DBG_LEVEL=AO_DL_DEBUG -DAO_TRAFFIC_OUT -DAO_FILENAME_PREFIX='"/ao_store"' -Wall
