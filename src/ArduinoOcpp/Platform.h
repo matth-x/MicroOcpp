@@ -5,8 +5,6 @@
 #ifndef AO_PLATFORM_H
 #define AO_PLATFORM_H
 
-#include <ao_opts.h>
-
 #ifdef __cplusplus
 #define EXT_C extern "C"
 #else
@@ -76,6 +74,8 @@ unsigned long ao_tick_ms_custom();
 #include <Arduino.h>
 #define ao_tick_ms millis
 #elif AO_PLATFORM == AO_PLATFORM_ESPIDF
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #define ao_tick_ms(X) ((xTaskGetTickCount() * 1000UL) / configTICK_RATE_HZ)
 #elif AO_PLATFORM == AO_PLATFORM_UNIX
 #define ao_tick_ms ao_tick_ms_unix

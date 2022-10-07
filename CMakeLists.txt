@@ -3,6 +3,8 @@ set(AO_SRC
     src/ArduinoOcpp/Core/ConfigurationContainer.cpp
     src/ArduinoOcpp/Core/ConfigurationContainerFlash.cpp
     src/ArduinoOcpp/Core/ConfigurationKeyValue.cpp
+    src/ArduinoOcpp/Core/FilesystemAdapter.cpp
+    src/ArduinoOcpp/Core/FilesystemUtils.cpp
     src/ArduinoOcpp/Core/OcppConnection.cpp
     src/ArduinoOcpp/Core/OcppEngine.cpp
     src/ArduinoOcpp/Core/OcppMessage.cpp
@@ -21,6 +23,7 @@ set(AO_SRC
     src/ArduinoOcpp/MessagesV16/DataTransfer.cpp
     src/ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.cpp
     src/ArduinoOcpp/MessagesV16/FirmwareStatusNotification.cpp
+    src/ArduinoOcpp/MessagesV16/GetCompositeSchedule.cpp
     src/ArduinoOcpp/MessagesV16/GetConfiguration.cpp
     src/ArduinoOcpp/MessagesV16/GetDiagnostics.cpp
     src/ArduinoOcpp/MessagesV16/Heartbeat.cpp
@@ -48,10 +51,14 @@ set(AO_SRC
     src/ArduinoOcpp/Tasks/Metering/SampledValue.cpp
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.cpp
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.cpp
+    src/ArduinoOcpp/Tasks/Transactions/OrderedOperationsQueue.cpp
+    src/ArduinoOcpp/Tasks/Transactions/Transaction.cpp
+    src/ArduinoOcpp/Tasks/Transactions/TransactionProcess.cpp
+    src/ArduinoOcpp/Tasks/Transactions/TransactionSequence.cpp
+    src/ArduinoOcpp/Tasks/Transactions/TransactionService.cpp
+    src/ArduinoOcpp/Tasks/Transactions/TransactionStore.cpp
     src/ArduinoOcpp.cpp
     src/ArduinoOcpp_c.cpp
-    src/ao_opts_impl.c
-    src/ArduinoOcpp/Core/FilesystemAdapter.cpp
 )
 
 idf_component_register(SRCS ${AO_SRC}
@@ -67,4 +74,5 @@ target_compile_options(${COMPONENT_TARGET} PUBLIC
     -DAO_USE_FILEAPI=ESPIDF_SPIFFS
     -DAO_DBG_LEVEL=AO_DL_DEBUG
     -DAO_TRAFFIC_OUT
-    -DAO_FILENAME_PREFIX="/ao_store")
+    -DAO_FILENAME_PREFIX="/ao_store"
+    -DAO_PLATFORM=AO_PLATFORM_ESPIDF)

@@ -6,6 +6,8 @@
 #include <ArduinoOcpp/Tasks/Transactions/TransactionSequence.h>
 #include <ArduinoOcpp/Debug.h>
 
+#include <algorithm>
+
 using namespace ArduinoOcpp;
 
 void OrderedOperationsQueue::addOcppOperation(uint seqNr, std::unique_ptr<OcppOperation> op) {
