@@ -1,0 +1,70 @@
+set(AO_SRC
+    src/ArduinoOcpp/Core/Configuration.cpp
+    src/ArduinoOcpp/Core/ConfigurationContainer.cpp
+    src/ArduinoOcpp/Core/ConfigurationContainerFlash.cpp
+    src/ArduinoOcpp/Core/ConfigurationKeyValue.cpp
+    src/ArduinoOcpp/Core/OcppConnection.cpp
+    src/ArduinoOcpp/Core/OcppEngine.cpp
+    src/ArduinoOcpp/Core/OcppMessage.cpp
+    src/ArduinoOcpp/Core/OcppModel.cpp
+    src/ArduinoOcpp/Core/OcppOperation.cpp
+    src/ArduinoOcpp/Core/OcppOperationTimeout.cpp
+    src/ArduinoOcpp/Core/OcppServer.cpp
+    src/ArduinoOcpp/Core/OcppSocket.cpp
+    src/ArduinoOcpp/Core/OcppTime.cpp
+    src/ArduinoOcpp/MessagesV16/Authorize.cpp
+    src/ArduinoOcpp/MessagesV16/BootNotification.cpp
+    src/ArduinoOcpp/MessagesV16/ChangeAvailability.cpp
+    src/ArduinoOcpp/MessagesV16/ChangeConfiguration.cpp
+    src/ArduinoOcpp/MessagesV16/ClearCache.cpp
+    src/ArduinoOcpp/MessagesV16/ClearChargingProfile.cpp
+    src/ArduinoOcpp/MessagesV16/DataTransfer.cpp
+    src/ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.cpp
+    src/ArduinoOcpp/MessagesV16/FirmwareStatusNotification.cpp
+    src/ArduinoOcpp/MessagesV16/GetConfiguration.cpp
+    src/ArduinoOcpp/MessagesV16/GetDiagnostics.cpp
+    src/ArduinoOcpp/MessagesV16/Heartbeat.cpp
+    src/ArduinoOcpp/MessagesV16/MeterValues.cpp
+    src/ArduinoOcpp/MessagesV16/RemoteStartTransaction.cpp
+    src/ArduinoOcpp/MessagesV16/RemoteStopTransaction.cpp
+    src/ArduinoOcpp/MessagesV16/Reset.cpp
+    src/ArduinoOcpp/MessagesV16/SetChargingProfile.cpp
+    src/ArduinoOcpp/MessagesV16/StartTransaction.cpp
+    src/ArduinoOcpp/MessagesV16/StatusNotification.cpp
+    src/ArduinoOcpp/MessagesV16/StopTransaction.cpp
+    src/ArduinoOcpp/MessagesV16/TriggerMessage.cpp
+    src/ArduinoOcpp/MessagesV16/UnlockConnector.cpp
+    src/ArduinoOcpp/MessagesV16/UpdateFirmware.cpp
+    src/ArduinoOcpp/Platform.cpp
+    src/ArduinoOcpp/SimpleOcppOperationFactory.cpp
+    src/ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.cpp
+    src/ArduinoOcpp/Tasks/ChargePointStatus/ConnectorStatus.cpp
+    src/ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.cpp
+    src/ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.cpp
+    src/ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.cpp
+    src/ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.cpp
+    src/ArduinoOcpp/Tasks/Metering/MeteringService.cpp
+    src/ArduinoOcpp/Tasks/Metering/MeterValue.cpp
+    src/ArduinoOcpp/Tasks/Metering/SampledValue.cpp
+    src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.cpp
+    src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.cpp
+    src/ArduinoOcpp.cpp
+    src/ArduinoOcpp_c.cpp
+    src/ao_opts_impl.c
+    src/ArduinoOcpp/Core/FilesystemAdapter.cpp
+)
+
+idf_component_register(SRCS ${AO_SRC}
+                    INCLUDE_DIRS "./src" "${PROJECT_DIR}/include"
+                    PRIV_REQUIRES spiffs)
+
+target_compile_options(${COMPONENT_TARGET} PUBLIC
+    -DAO_CUSTOM_WS
+    -DAO_CUSTOM_CONSOLE
+    -DAO_CUSTOM_UPDATER
+    -DAO_CUSTOM_RESET
+    -DAO_DEACTIVATE_FLASH
+    -DAO_USE_FILEAPI=ESPIDF_SPIFFS
+    -DAO_DBG_LEVEL=AO_DL_DEBUG
+    -DAO_TRAFFIC_OUT
+    -DAO_FILENAME_PREFIX="/ao_store")

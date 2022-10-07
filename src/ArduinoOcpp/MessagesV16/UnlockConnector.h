@@ -7,6 +7,7 @@
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/PollResult.h>
+#include <functional>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
