@@ -91,7 +91,11 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     voltage_eff = V_eff;
     fileSystemOpt = fsOpt;
 
-    filesystem = EspWiFi::makeDefaultFilesystemAdapter(fileSystemOpt);
+#ifndef AO_DEACTIVATE_FLASH
+    std::shared_ptr<FilesystemAdapter> filesystem = EspWiFi::makeDefaultFilesystemAdapter(fileSystemOpt);
+#else
+    std::shared_ptr<FilesystemAdapter> filesystem;
+#endif
     AO_DBG_DEBUG("filesystem %s", filesystem ? "loaded" : "error");
     
     configuration_init(filesystem); //call before each other library call

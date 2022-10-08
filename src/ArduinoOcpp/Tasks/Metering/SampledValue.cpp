@@ -30,6 +30,7 @@ const char *serializeReadingContext(ReadingContext context) {
             return "Trigger";
         default:
             AO_DBG_ERR("ReadingContext not specified");
+            /* fall through */
         case (ReadingContext::NOT_SET):
             return nullptr;
     }

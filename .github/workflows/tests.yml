@@ -1,0 +1,28 @@
+name: Test Runner
+
+on:
+  push:
+    branches:
+      - feature/freertos
+
+jobs:
+
+  compile-and-run:
+    name: Automated Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v3
+    - name: Get gcc compiler
+      run: |
+        sudo apt update
+        sudo apt install build-essential
+        sudo apt -y install gcc-9 g++-9
+        g++ --version
+        echo "g++ version must be 9.4.0"
+    - name: Get ArduinoJson
+      run: wget -Uri https://github.com/bblanchon/ArduinoJson/releases/download/v6.19.4/ArduinoJson-v6.19.4.h -O ./src/ArduinoJson.h
+    - name: Compile
+      run: g++ -std=c++14 -I ./src $(find ./src ./tests -type f -iregex ".*\.cpp") -DAO_CUSTOM_WS -DAO_CUSTOM_UPDATER -DAO_CUSTOM_RESET -DAO_DEACTIVATE_FLASH -DAO_USE_FILEAPI=ESPIDF_SPIFFS -DAO_TRAFFIC_OUT -DAO_FILENAME_PREFIX='"/ao_store"' -DAO_PLATFORM=AO_PLATFORM_UNIX -o ./output -Wall
+    - name: Run tests
+      run: ./output

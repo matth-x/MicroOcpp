@@ -9,8 +9,9 @@
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
-
 #include <ArduinoOcpp/Debug.h>
+
+#include <algorithm>
 
 using namespace ArduinoOcpp;
 

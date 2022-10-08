@@ -291,7 +291,7 @@ void ConnectorStatus::endSession(const char *reason) {
     if (transaction->isInSession()) {
         AO_DBG_DEBUG("End session with idTag %s for reason %s, %s previous reason",
                                 transaction->getIdTag(), reason ? reason : "undefined",
-                                transaction->getStopReason() == '\0' ? "no" : "overruled by");
+                                *transaction->getStopReason() ? "overruled by" : "no");
 
         if (reason) {
             transaction->setStopReason(reason);

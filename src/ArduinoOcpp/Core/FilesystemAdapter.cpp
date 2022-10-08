@@ -6,8 +6,7 @@
 #include <ArduinoOcpp/Core/ConfigurationOptions.h> //FilesystemOpt
 #include <ArduinoOcpp/Debug.h>
 
-//#ifndef AO_DEACTIVATE_FLASH
-#if 1
+#ifndef AO_DEACTIVATE_FLASH
 
 //Set default parameters; assume usage with Arduino if no build flags are present
 #ifndef AO_USE_FILEAPI
@@ -155,8 +154,8 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     }
 
     if (!config.accessAllowed()) {
-            AO_DBG_DEBUG("Access to Arduino FS not allowed by config");
-            return nullptr;
+        AO_DBG_DEBUG("Access to Arduino FS not allowed by config");
+        return nullptr;
     }
 
     auto fs_concrete = new ArduinoFilesystemAdapter(config);
@@ -241,11 +240,17 @@ public:
     }
 };
 
-std::unique_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config) {
+std::weak_ptr<FilesystemAdapter> filesystemCache;
+
+std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config) {
+
+    if (auto cached = filesystemCache.lock()) {
+        return cached;
+    }
 
     if (!config.accessAllowed()) {
-            AO_DBG_DEBUG("Access to ESP-IDF SPIFFS not allowed by config");
-            return nullptr;
+        AO_DBG_DEBUG("Access to ESP-IDF SPIFFS not allowed by config");
+        return nullptr;
     }
 
     bool mounted = true;
@@ -277,7 +282,9 @@ std::unique_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     }
 
     if (mounted) {
-        return std::unique_ptr<FilesystemAdapter>(new EspIdfFilesystemAdapter(config));
+        auto fs = std::shared_ptr<FilesystemAdapter>(new EspIdfFilesystemAdapter(config));
+        filesystemCache = fs;
+        return fs;
     } else {
         return nullptr;
     }
