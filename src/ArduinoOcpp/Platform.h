@@ -78,6 +78,7 @@ unsigned long ao_tick_ms_custom();
 #include "freertos/task.h"
 #define ao_tick_ms(X) ((xTaskGetTickCount() * 1000UL) / configTICK_RATE_HZ)
 #elif AO_PLATFORM == AO_PLATFORM_UNIX
+unsigned long ao_tick_ms_unix();
 #define ao_tick_ms ao_tick_ms_unix
 #endif
 #endif
@@ -90,7 +91,7 @@ unsigned long ao_tick_ms_custom();
 #include "freertos/FreeRTOS.h"
 #define ao_avail_heap xPortGetFreeHeapSize
 #elif AO_PLATFORM == AO_PLATFORM_UNIX
-#define ao_avail_heap 1000000 //suppress this technique on unix
+#define ao_avail_heap(X) 1000000 //suppress this technique on unix
 #endif
 #endif
 
