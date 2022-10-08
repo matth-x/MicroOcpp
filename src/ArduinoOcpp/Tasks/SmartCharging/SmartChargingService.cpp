@@ -10,6 +10,13 @@
 #include <ArduinoOcpp/Debug.h>
 
 #ifndef AO_DEACTIVATE_FLASH
+#include <ArduinoOcpp/Core/FilesystemAdapter.h>
+#if AO_USE_FILEAPI == ESPIDF_SPIFFS
+#define AO_DEACTIVATE_FLASH //migrate to File utils
+#endif
+#endif
+
+#ifndef AO_DEACTIVATE_FLASH
 #if defined(ESP32)
 #include <LITTLEFS.h>
 #define USE_FS LITTLEFS
