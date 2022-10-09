@@ -39,6 +39,8 @@ public:
 
     bool existsActiveTrigger() {return activeTriggerExists;}
     TxEnableState getState() {return txEnable;}
+
+    uint getTxNrRef();
 };
 
 }

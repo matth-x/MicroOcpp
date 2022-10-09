@@ -111,3 +111,10 @@ void TransactionProcess::evaluateProcessSteps(uint txNr) {
 #endif
 
 }
+
+uint TransactionProcess::getTxNrRef() {
+    if (txNrRef) {
+        return (uint) *txNrRef;
+    }
+    return 0;
+}
