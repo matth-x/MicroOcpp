@@ -23,7 +23,7 @@ private:
 
     std::shared_ptr<FilesystemAdapter> filesystem;
     std::shared_ptr<Configuration<int>> txBegin; //The Tx file names are consecutively numbered; first number
-    uint txEnd; //one place after last number
+    uint txEnd = 0; //one place after last number
     
     std::deque<std::shared_ptr<Transaction>> transactions;
 

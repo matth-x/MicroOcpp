@@ -134,8 +134,8 @@ void ConnectorTransactionStore::submitPendingOperations() {
 std::shared_ptr<Transaction> ConnectorTransactionStore::makeTransaction() {
 
     if (!filesystem) {
-        AO_DBG_ERR("Invalid state");
-        return nullptr;
+        AO_DBG_ERR("Need FS adapter");
+        //return nullptr; <-- allow test runs without FS
     }
 
     if (transactions.size() >= MAX_QUEUE_SIZE) {
