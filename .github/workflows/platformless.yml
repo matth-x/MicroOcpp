@@ -3,7 +3,7 @@ name: Default Compilation
 on:
   push:
     branches:
-      - feature/freertos
+      - develop
 
 jobs:
 
