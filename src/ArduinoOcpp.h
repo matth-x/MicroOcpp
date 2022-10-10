@@ -171,7 +171,7 @@ bool isAvailable(); //if the charge point is operative or inoperative
 
 void beginSession(const char *idTag);
 
-void endSession();
+void endSession(const char *reason = nullptr);
 
 bool isInSession();
 

@@ -601,7 +601,7 @@ void beginSession(const char *idTag) {
     connector->beginSession(idTag);
 }
 
-void endSession() {
+void endSession(const char *reason) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -611,7 +611,7 @@ void endSession() {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
-    connector->endSession();
+    connector->endSession(reason);
 }
 
 bool isInSession() {
