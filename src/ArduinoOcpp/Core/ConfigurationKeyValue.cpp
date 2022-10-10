@@ -220,7 +220,8 @@ int toCStringValue(char *buf, size_t length, int value) {
 }
 
 int toCStringValue(char *buf, size_t length, float value) {
-    return snprintf(buf, length, "%.*g", length >= 7 ? length - 7 : 0, value);
+    int ilength = (int) std::min((size_t) 100, length);
+    return snprintf(buf, length, "%.*g", ilength >= 7 ? ilength - 7 : 0, value);
 }
 
 template<class T>

@@ -44,7 +44,7 @@ void ConnectorTransactionStore::restorePendingTransactions() {
         return;
     }
 
-    if (!txBegin || *txBegin < 0 || *txBegin > MAX_TX_CNT) {
+    if (!txBegin || *txBegin < 0 || *txBegin > (int) MAX_TX_CNT) {
         AO_DBG_ERR("Invalid state");
         return;
     }
@@ -289,7 +289,7 @@ bool TransactionStore::commit(Transaction *transaction) {
         return false;
     }
     auto connectorId = transaction->getConnectorId();
-    if (connectorId < 0 || connectorId >= connectors.size()) {
+    if (connectorId < 0 || (size_t) connectorId >= connectors.size()) {
         AO_DBG_ERR("Invalid tx");
         return false;
     }

@@ -291,6 +291,7 @@ void SmartChargingService::refreshChargingSessionState() {
         bool ret = clearChargingProfile([clearProfileId] (int id, int, ChargingProfilePurposeType, int) {
             return id == clearProfileId;
         });
+        (void)ret;
 
         AO_DBG_DEBUG("Clearing RmtTx Charging Profile after session expiry: %s", ret ? "success" : "already cleared");
 

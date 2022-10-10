@@ -36,7 +36,7 @@ std::unique_ptr<DynamicJsonDocument> MeterValue::toJson() {
     for (auto entry = entries.begin(); entry != entries.end(); entry++) {
         jsonMeterValue.add(**entry);
     }
-    return std::move(result);
+    return result;
 }
 
 MeterValueBuilder::MeterValueBuilder(const std::vector<std::unique_ptr<SampledValueSampler>> &samplers,

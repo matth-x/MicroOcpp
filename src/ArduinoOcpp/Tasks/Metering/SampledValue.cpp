@@ -96,5 +96,5 @@ std::unique_ptr<DynamicJsonDocument> SampledValue::toJson() {
         payload["location"] = properties.getLocation();
     if (!properties.getUnit().empty())
         payload["unit"] = properties.getUnit();
-    return std::move(result);
+    return result;
 }

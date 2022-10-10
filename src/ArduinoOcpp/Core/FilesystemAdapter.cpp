@@ -367,8 +367,6 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
         return nullptr;
     }
 
-    bool mounted = true;
-
     if (config.mustMount()) {
         AO_DBG_DEBUG("Skip mounting on UNIX host");
     }

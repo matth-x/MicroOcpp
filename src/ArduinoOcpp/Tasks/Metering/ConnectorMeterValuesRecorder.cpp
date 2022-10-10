@@ -220,5 +220,5 @@ std::vector<std::unique_ptr<MeterValue>> ConnectorMeterValuesRecorder::createSto
     stopTxnSampledData.clear(); //make vectors defined after moving from them
     stopTxnAlignedData.clear();
 
-    return std::move(res);
+    return res;
 }

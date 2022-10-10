@@ -62,7 +62,7 @@ void TransactionService::setInitiatedMsgId(uint seqNr, int msgId) {
         AO_DBG_ERR("Invalid params");
         return;
     }
-    if (*lastInitiatedSeqNr == seqNr && *lastInitiatedMsgCnt == msgId) {
+    if ((uint) *lastInitiatedSeqNr == seqNr && *lastInitiatedMsgCnt == msgId) {
         //Nothing to update
         return;
     }
