@@ -16,19 +16,26 @@ unsigned long custom_timer_cb() {
 }
 
 void loop() {
-    mtime += 10000;
+    mtime += 1000;
     OCPP_loop();
-    mtime += 10000;
+    mtime += 1000;
+    OCPP_loop();
+    mtime += 1000;
     OCPP_loop();
 }
 
-TEST_CASE( "Charging sessions - basic" ) {
+TEST_CASE( "Charging sessions" ) {
 
     //initialize OcppEngine with dummy socket
     OcppEchoSocket echoSocket;
     OCPP_initialize(echoSocket);
 
     ao_set_timer(custom_timer_cb);
+
+    auto connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN);
+        *connectionTimeOut = 30;
+    auto minimumStatusDuration = declareConfiguration<int>("MinimumStatusDuration", 0, CONFIGURATION_FN);
+        *minimumStatusDuration = 0;
     
     std::array<const char*, 2> expectedSN {"Available", "Available"};
     std::array<bool, 2> checkedSN {false, false};
@@ -59,48 +66,183 @@ TEST_CASE( "Charging sessions - basic" ) {
     }
 
     loop();
-    loop();
 
-    SECTION("StartTx directly"){
+    SECTION("StartTx") {
+        SECTION("StartTx directly"){
+            startTransaction("mIdTag");
+            loop();
+            REQUIRE(ocppPermitsCharge());
+        }
+
+        SECTION("StartTx via session management - plug in first") {
+            expectedSN[1] = "Preparing";
+            setConnectorPluggedSampler([] () {return true;});
+            loop();
+            REQUIRE(checkedSN[1]);
+
+            checkedSN[1] = false;
+            expectedSN[1] = "Charging";
+            beginSession("mIdTag");
+            loop();
+            REQUIRE(checkedSN[1]);
+            REQUIRE(ocppPermitsCharge());
+        }
+
+        SECTION("StartTx via session management - authorization first") {
+
+            expectedSN[1] = "Preparing";
+            setConnectorPluggedSampler([] () {return false;});
+            beginSession("mIdTag");
+            loop();
+            REQUIRE(checkedSN[1]);
+
+            checkedSN[1] = false;
+            expectedSN[1] = "Charging";
+            setConnectorPluggedSampler([] () {return true;});
+            loop();
+            REQUIRE(checkedSN[1]);
+            REQUIRE(ocppPermitsCharge());
+        }
+
+        SECTION("StartTx via session management - no plug") {
+            expectedSN[1] = "Charging";
+            beginSession("mIdTag");
+            loop();
+            REQUIRE(checkedSN[1]);
+        }
+
+        SECTION("StartTx via session management - ConnectionTimeOut") {
+            expectedSN[1] = "Preparing";
+            setConnectorPluggedSampler([] () {return false;});
+            beginSession("mIdTag");
+            loop();
+            REQUIRE(checkedSN[1]);
+
+            checkedSN[1] = false;
+            expectedSN[1] = "Available";
+            mtime += *connectionTimeOut * 1000;
+            loop();
+            REQUIRE(checkedSN[1]);
+        }
+
+        loop();
+        if (ocppPermitsCharge()) {
+            stopTransaction();
+        }
+        loop();
+    }
+
+    SECTION("StopTx") {
         startTransaction("mIdTag");
         loop();
-        REQUIRE(ocppPermitsCharge());
+        expectedSN[1] = "Available";
+
+        SECTION("directly") {
+            stopTransaction();
+            loop();
+            REQUIRE(checkedSN[1]);
+            REQUIRE(!ocppPermitsCharge());
+        }
+
+        SECTION("via session management - deauthorize") {
+            endSession("Local");
+            loop();
+            REQUIRE(checkedSN[1]);
+            REQUIRE(!ocppPermitsCharge());
+        }
+
+        SECTION("via session management - deauthorize first") {
+            expectedSN[1] = "Finishing";
+            setConnectorPluggedSampler([] () {return true;});
+            endSession("Local");
+            loop();
+            REQUIRE(checkedSN[1]);
+            REQUIRE(!ocppPermitsCharge());
+
+            checkedSN[1] = false;
+            expectedSN[1] = "Available";
+            setConnectorPluggedSampler([] () {return false;});
+            loop();
+            REQUIRE(checkedSN[1]);
+            REQUIRE(!ocppPermitsCharge());
+        }
+
+        SECTION("via session management - plug out") {
+            setConnectorPluggedSampler([] () {return false;});
+            loop();
+            REQUIRE(checkedSN[1]);
+            REQUIRE(!ocppPermitsCharge());
+        }
+
+        if (ocppPermitsCharge()) {
+            stopTransaction();
+        }
+        loop();
     }
 
-    SECTION("StartTx via session management - plug in first") {
-        checkedSN[1] = false;
-        expectedSN[1] = "Preparing";
-        setConnectorPluggedSampler([] () {return true;});
+    SECTION("Advanced session management") {
+        bool connectorPlugged = false;
+        setConnectorPluggedSampler([&connectorPlugged] () {return connectorPlugged;});
+
+        TxEnableState meterState = TxEnableState::Inactive;
+        setTxBasedMeterUpdate([&meterState] (TxTrigger) {return meterState;});
+
+        TxEnableState lockState = TxEnableState::Inactive;
+        setConnectorLock([&lockState] (TxTrigger) {return lockState;});
+
+        beginSession("mIdTag");
         loop();
-        REQUIRE(checkedSN[1]);
+        REQUIRE(!ocppPermitsCharge());
+
+        connectorPlugged = true;
+        loop();
+        REQUIRE(!ocppPermitsCharge());
+        
+        meterState = TxEnableState::Active;
+        loop();
+        REQUIRE(!ocppPermitsCharge());
+        
+        meterState = TxEnableState::Pending;
+        lockState = TxEnableState::Active;
+        loop();
+        REQUIRE(!ocppPermitsCharge());
+        
+        meterState = TxEnableState::Active;
+        lockState = TxEnableState::Pending;
+        loop();
+        REQUIRE(!ocppPermitsCharge());
 
         checkedSN[1] = false;
         expectedSN[1] = "Charging";
-        beginSession("mIdTag");
+        
+        lockState = TxEnableState::Active;
         loop();
-        loop();
-        REQUIRE(checkedSN[1]);
         REQUIRE(ocppPermitsCharge());
-    }
-
-    SECTION("StartTx via session management - authorization first") {
-        auto connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 100, CONFIGURATION_FN);
-        *connectionTimeOut = 100;
-
-        checkedSN[1] = false;
-        expectedSN[1] = "Preparing";
-        setConnectorPluggedSampler([] () {return false;});
-        beginSession("mIdTag");
-        loop();
         REQUIRE(checkedSN[1]);
 
         checkedSN[1] = false;
-        expectedSN[1] = "Charging";
-        setConnectorPluggedSampler([] () {return true;});
+        expectedSN[1] = "SuspendedEVSE";
+
+        lockState = TxEnableState::Pending;
         loop();
+        REQUIRE(!ocppPermitsCharge());
+        REQUIRE(!getSessionIdTag());
+        REQUIRE(checkedSN[1]);
+
+        checkedSN[1] = false;
+        expectedSN[1] = "Finishing";
+
+        meterState = TxEnableState::Inactive;
+        lockState = TxEnableState::Inactive;
         loop();
         REQUIRE(checkedSN[1]);
-        REQUIRE(ocppPermitsCharge());
+
+        checkedSN[1] = false;
+        expectedSN[1] = "Available";
+
+        connectorPlugged = false;
+        loop();
+        REQUIRE(checkedSN[1]);
     }
 
     OCPP_deinitialize();
