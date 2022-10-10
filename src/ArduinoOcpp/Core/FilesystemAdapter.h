@@ -14,6 +14,7 @@
 #define ARDUINO_LITTLEFS 1
 #define ARDUINO_SPIFFS   2
 #define ESPIDF_SPIFFS    3
+#define POSIX_FILEAPI    4
 
 #include <memory>
 
@@ -63,16 +64,15 @@ public:
 
 #if AO_USE_FILEAPI == ARDUINO_LITTLEFS || \
     AO_USE_FILEAPI == ARDUINO_SPIFFS || \
-    AO_USE_FILEAPI == ESPIDF_SPIFFS
+    AO_USE_FILEAPI == ESPIDF_SPIFFS || \
+    AO_USE_FILEAPI == POSIX_FILEAPI
 
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
 
 namespace ArduinoOcpp {
-namespace EspWiFi {
 
 std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config);
 
-} //end namespace EspWiFi
 } //end namespace ArduinoOcpp
 #endif
 

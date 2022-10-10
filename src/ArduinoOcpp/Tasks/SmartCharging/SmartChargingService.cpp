@@ -9,6 +9,10 @@
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
 
+#if !defined(AO_DEACTIVATE_FLASH) && defined(AO_DEACTIVATE_FLASH_SMARTCHARGING)
+#define AO_DEACTIVATE_FLASH
+#endif
+
 #ifndef AO_DEACTIVATE_FLASH
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #if AO_USE_FILEAPI == ESPIDF_SPIFFS

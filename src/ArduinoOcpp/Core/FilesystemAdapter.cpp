@@ -42,7 +42,6 @@
 #if AO_USE_FILEAPI == ARDUINO_LITTLEFS || AO_USE_FILEAPI == ARDUINO_SPIFFS
 
 namespace ArduinoOcpp {
-namespace EspWiFi {
 
 class ArduinoFileAdapter : public FileAdapter {
     File file;
@@ -169,13 +168,11 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     }
 }
 
-} //end namespace EspWiFi
 } //end namespace ArduinoOcpp
 
 #elif AO_USE_FILEAPI == ESPIDF_SPIFFS
 
 namespace ArduinoOcpp {
-namespace EspWiFi {
 
 class EspIdfFileAdapter : public FileAdapter {
     FILE *file {nullptr};
@@ -290,7 +287,97 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     }
 }
 
-} //end namespace EspWiFi
+} //end namespace ArduinoOcpp
+
+#elif AO_USE_FILEAPI == POSIX_FILEAPI
+
+#include <cstdio>
+#include <sys/stat.h>
+
+namespace ArduinoOcpp {
+
+class PosixFileAdapter : public FileAdapter {
+    FILE *file {nullptr};
+public:
+    PosixFileAdapter(FILE *file) : file(file) {}
+
+    ~PosixFileAdapter() {
+        fclose(file);
+    }
+
+    size_t read(char *buf, size_t len) override {
+        return fread(buf, 1, len, file);
+    }
+
+    size_t write(const char *buf, size_t len) override {
+        return fwrite(buf, 1, len, file);
+    }
+
+    size_t seek(size_t offset) override {
+        return fseek(file, offset, SEEK_SET);
+    }
+
+    int read() {
+        return fgetc(file);
+    }
+};
+
+class PosixFilesystemAdapter : public FilesystemAdapter {
+public:
+    FilesystemOpt config;
+public:
+    PosixFilesystemAdapter(FilesystemOpt config) : config(config) { }
+
+    ~PosixFilesystemAdapter() = default;
+
+    int stat(const char *path, size_t *size) override {
+        struct ::stat st;
+        auto ret = ::stat(path, &st);
+        if (ret == 0) {
+            *size = st.st_size;
+        }
+        return ret;
+    }
+
+    std::unique_ptr<FileAdapter> open(const char *fn, const char *mode) override {
+        auto file = fopen(fn, mode);
+        if (file) {
+            return std::unique_ptr<FileAdapter>(new PosixFileAdapter(std::move(file)));
+        } else {
+            AO_DBG_DEBUG("Failed to open file path %s", fn);
+            return nullptr;
+        }
+    }
+
+    bool remove(const char *fn) override {
+        return ::remove(fn) == 0;
+    }
+};
+
+std::weak_ptr<FilesystemAdapter> filesystemCache;
+
+std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config) {
+
+    if (auto cached = filesystemCache.lock()) {
+        return cached;
+    }
+
+    if (!config.accessAllowed()) {
+        AO_DBG_DEBUG("Access to FS not allowed by config");
+        return nullptr;
+    }
+
+    bool mounted = true;
+
+    if (config.mustMount()) {
+        AO_DBG_DEBUG("Skip mounting on UNIX host");
+    }
+
+    auto fs = std::shared_ptr<FilesystemAdapter>(new PosixFilesystemAdapter(config));
+    filesystemCache = fs;
+    return fs;
+}
+
 } //end namespace ArduinoOcpp
 
 #endif
