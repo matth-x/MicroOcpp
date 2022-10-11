@@ -5,7 +5,7 @@
 #ifndef TRANSACTIONPROCESS_H
 #define TRANSACTIONPROCESS_H
 
-#include <ArduinoOcpp/Tasks/ChargePointStatus/TransactionPrerequisites.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionPrerequisites.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
 #include <vector>

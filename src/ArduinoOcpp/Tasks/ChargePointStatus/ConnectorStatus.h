@@ -6,7 +6,7 @@
 #define CONNECTORSTATUS_H
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/OcppEvseState.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/TransactionPrerequisites.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionPrerequisites.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionProcess.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/Core/PollResult.h>
