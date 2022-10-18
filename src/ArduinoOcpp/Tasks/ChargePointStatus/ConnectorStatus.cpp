@@ -16,6 +16,8 @@
 
 #include <ArduinoOcpp/Debug.h>
 
+#include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
+
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
@@ -196,6 +198,21 @@ OcppMessage *ConnectorStatus::loop() {
                 //start Transaction
 
                 AO_DBG_INFO("Session mngt: trigger StartTransaction");
+                auto meteringService = context.getMeteringService();
+                if (transaction->getMeterStart() < 0 && meteringService) {
+                    auto meterStart = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionBegin);
+                    if (meterStart && *meterStart) {
+                        transaction->setMeterStart(meterStart->toInteger());
+                    } else {
+                        AO_DBG_ERR("MeterStart undefined");
+                    }
+                }
+
+                AO_DBG_DEBUG("############ Check timestamp");
+                if (transaction->getStartTimestamp() <= MIN_TIME) {
+                    AO_DBG_DEBUG("############ Override timestamp");
+                    transaction->setStartTimestamp(context.getOcppTime().getOcppTimestampNow());
+                }
                 //return new StartTransaction(connectorId);
                 auto seqNr = context.getTransactionService()->getTransactionSequence().reserveSeqNr();
                 AO_DBG_DEBUG("Reserved SeqNr %u", seqNr);
@@ -215,13 +232,34 @@ OcppMessage *ConnectorStatus::loop() {
                 //stop transaction
                 auto seqNr = context.getTransactionService()->getTransactionSequence().reserveSeqNr();
                 transaction->getStopRpcSync().setRequested(seqNr);
+
+                auto meteringService = context.getMeteringService();
+                if (transaction->getMeterStop() < 0 && meteringService) {
+                    auto meterStop = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionEnd);
+                    if (meterStop && *meterStop) {
+                        transaction->setMeterStop(meterStop->toInteger());
+                    } else {
+                        AO_DBG_ERR("MeterStop undefined");
+                    }
+                }
+
+                if (transaction->getStopTimestamp() <= MIN_TIME) {
+                    transaction->setStopTimestamp(context.getOcppTime().getOcppTimestampNow());
+                }
+
                 transaction->commit();
 
                 AO_DBG_INFO("Session mngt: trigger StopTransaction");
 
                 AO_DBG_DEBUG("Reserved SeqNr %u", seqNr);
+
+                if (context.getMeteringService()) {
+                    auto txData = context.getMeteringService()->createStopTxMeterData(connectorId);
+                    return new StopTransaction(transaction, std::move(txData));
+                } else {
+                    return new StopTransaction(transaction);
+                }
                 
-                return new StopTransaction(transaction);
             }
         }
     } //end transaction-related operations
