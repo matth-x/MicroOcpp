@@ -15,7 +15,7 @@
 #include <ArduinoOcpp/Core/OcppOperationTimeout.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/Core/PollResult.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/TransactionPrerequisites.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionPrerequisites.h>
 #include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 
 using ArduinoOcpp::OnReceiveConfListener;
