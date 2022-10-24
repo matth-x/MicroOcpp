@@ -5,6 +5,8 @@
 #ifndef OCPPCONNECTION_H
 #define OCPPCONNECTION_H
 
+#include <ArduinoOcpp/Core/OperationsQueue.h>
+
 #include <deque>
 #include <memory>
 #include <ArduinoJson.h>
@@ -14,12 +16,14 @@ namespace ArduinoOcpp {
 class OcppModel;
 class OcppSocket;
 class OcppOperation;
+class FilesystemAdapter;
 
 class OcppConnection {
 private:
     std::shared_ptr<OcppModel> baseModel;
+    std::shared_ptr<FilesystemAdapter> filesystem;
     
-    std::deque<std::unique_ptr<OcppOperation>> initiatedOcppOperations;
+    OperationsQueue initiatedOcppOperations;
     std::deque<std::unique_ptr<OcppOperation>> receivedOcppOperations;
 
     void handleConfMessage(JsonDocument& json);
@@ -27,7 +31,7 @@ private:
     void handleReqMessage(JsonDocument& json, std::unique_ptr<OcppOperation> op);
     void handleErrMessage(JsonDocument& json);
 public:
-    OcppConnection(OcppSocket& oSock, std::shared_ptr<OcppModel> baseModel);
+    OcppConnection(OcppSocket& oSock, std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem);
 
     void loop(OcppSocket& oSock);
 

@@ -4,6 +4,7 @@
 
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/OperationStore.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
@@ -56,6 +57,67 @@ void StopTransaction::initiate() {
         transaction->commit();
     }
     AO_DBG_INFO("StopTransaction initiated!");
+}
+
+bool StopTransaction::initiate(StoredOperationHandler *opStore) {
+    if (!opStore || !ocppModel || !transaction || !transaction->getStopRpcSync().isRequested()) {
+        AO_DBG_ERR("-> legacy");
+        return false; //execute legacy initiate instead
+    }
+    
+    auto payload = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    (*payload)["txNr"] = transaction->getTxNr();
+
+    opStore->setPayload(std::move(payload));
+
+    opStore->commit();
+
+    transaction->getStopRpcSync().setRequested(1);
+
+    transaction->commit();
+
+    return true; //don't execute legacy initiate
+}
+
+bool StopTransaction::restore(StoredOperationHandler *opStore) {
+    if (!ocppModel) {
+        AO_DBG_ERR("invalid state");
+        return false;
+    }
+
+    if (!opStore) {
+        AO_DBG_ERR("invalid argument");
+        return false;
+    }
+
+    auto payload = opStore->getPayload();
+    if (!payload) {
+        AO_DBG_ERR("memory corruption");
+        return false;
+    }
+
+    int connectorId = (*payload)["connectorId"] | -1;
+    int txNr = (*payload)["txNr"] | -1;
+    if (connectorId < 0 || txNr < 0) {
+        AO_DBG_ERR("record incomplete");
+        return false;
+    }
+
+    auto txService = ocppModel->getTransactionService();
+
+    if (!txService) {
+        AO_DBG_ERR("invalid state");
+        return false;
+    }
+
+    transaction = txService->getTransactionStore().getTransactionSync(connectorId);
+    AO_DBG_WARN("Does not fetch correct tx yet, restore Stop data and so on ...");
+    if (!transaction) {
+        AO_DBG_ERR("referential integrity violation");
+        return false;
+    }
+
+    return true;
 }
 
 std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {

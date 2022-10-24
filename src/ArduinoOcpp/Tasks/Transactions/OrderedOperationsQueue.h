@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2022
 // MIT License
 
-#ifndef OPERATIONSQUEUE_H
-#define OPERATIONSQUEUE_H
+#ifndef ORDEREDOPERATIONSQUEUE_H
+#define ORDEREDOPERATIONSQUEUE_H
 
 #include <vector>
 #include <memory>

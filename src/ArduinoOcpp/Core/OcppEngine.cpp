@@ -11,8 +11,8 @@ using namespace ArduinoOcpp;
 
 OcppEngine *ArduinoOcpp::defaultOcppEngine = nullptr;
 
-OcppEngine::OcppEngine(OcppSocket& ocppSocket, const OcppClock& system_clock)
-        : oSock(ocppSocket), oModel{std::make_shared<OcppModel>(system_clock)}, oConn{oSock, oModel} {
+OcppEngine::OcppEngine(OcppSocket& ocppSocket, const OcppClock& system_clock, std::shared_ptr<FilesystemAdapter> filesystem)
+        : oSock(ocppSocket), oModel{std::make_shared<OcppModel>(system_clock)}, oConn{oSock, oModel, filesystem} {
     defaultOcppEngine = this;
 }
 

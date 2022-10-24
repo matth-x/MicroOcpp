@@ -22,7 +22,7 @@ TransactionService::TransactionService(OcppEngine& context, uint nConnectors, st
     lastInitiatedMsgCnt = declareConfiguration<int>("LastMsgId", 1100000, AO_TXSERV_FN, false, false, true, false);
 
     txStore.restorePendingTransactions();
-    txStore.submitPendingOperations();
+    /* txStore.submitPendingOperations(); */ AO_DBG_WARN("Disabled submitPendingOperations!");
 }
 
 void TransactionService::addRestoredOperation(uint seqNr, std::unique_ptr<OcppOperation> o) {

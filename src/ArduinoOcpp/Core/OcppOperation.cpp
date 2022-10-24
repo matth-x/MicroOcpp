@@ -7,6 +7,10 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
+#include <ArduinoOcpp/Core/OperationStore.h>
+
+#include <ArduinoOcpp/MessagesV16/StartTransaction.h>
+#include <ArduinoOcpp/MessagesV16/StopTransaction.h>
 
 #include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Debug.h>
@@ -318,11 +322,102 @@ bool OcppOperation::sendConf(OcppSocket& ocppSocket){
     return wsSuccess;
 }
 
-void OcppOperation::setInitiated() {
+void OcppOperation::initiate(std::unique_ptr<StoredOperationHandler> opStorage) {
     if (ocppMessage) {
-        ocppMessage->initiate();
+
+        /*
+         * Create OCPP-J Remote Procedure Call header as storage data (doesn't necessarily have to comply with OCPP RPC header)
+         */
+        if (opStorage) {
+            opStore = std::move(opStorage);
+            size_t json_buffsize = JSON_ARRAY_SIZE(3) + (getMessageID()->length() + 1);
+            auto rpcData = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(json_buffsize));
+
+            rpcData->add(MESSAGE_TYPE_CALL);                    //MessageType
+            rpcData->add(*getMessageID());                      //Unique message ID
+            rpcData->add(ocppMessage->getOcppOperationType());  //Action
+
+            opStore->setRpc(std::move(rpcData));
+        }
+        
+        bool inited = ocppMessage->initiate(opStore.get());
+
+        if (opStore) {
+            opStore->releaseBuffer();
+        }
+        
+        if (!inited) { //legacy support
+            ocppMessage->initiate();
+        }
     } else {
         AO_DBG_ERR("Missing ocppMessage instance");
+    }
+}
+
+bool OcppOperation::restore(std::unique_ptr<StoredOperationHandler> opStorage, std::shared_ptr<OcppModel> oModel) {
+    if (!opStorage) {
+        AO_DBG_ERR("invalid argument");
+        return false;
+    }
+
+    opStore = std::move(opStorage);
+
+    auto rpcData = opStore->getRpc();
+    auto payloadData = opStore->getPayload();
+    if (!rpcData || !payloadData) {
+        AO_DBG_ERR("corrupted storage");
+        return false;
+    }
+
+    messageID = (*rpcData)[1] | std::string();
+    std::string opType = (*rpcData)[2] | std::string();
+    if (messageID.empty() || opType.empty()) {
+        AO_DBG_ERR("corrupted storage");
+        messageID.clear();
+        return false;
+    }
+
+    int parsedMessageID = -1;
+    if (sscanf(messageID.c_str(), "%d", &parsedMessageID) == 1) {
+        if (parsedMessageID > unique_id_counter) {
+            unique_id_counter = parsedMessageID;
+            AO_DBG_VERBOSE("restore unique_id_counter = %d", unique_id_counter);
+        }
+    } else {
+        AO_DBG_ERR("cannot set unique msgID counter");
+        (void)0;
+        //skip this step but don't abort restore
+    }
+
+    std::unique_ptr<OcppMessage> msg;
+
+    if (!strcmp(opType.c_str(), "StartTransaction")) { //TODO this will get a nicer solution
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction());
+    } else if (!strcmp(opType.c_str(), "StopTransaction")) {
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StopTransaction());
+    }
+
+    if (!msg) {
+        AO_DBG_ERR("cannot create msg");
+        return false;
+    }
+
+    msg->setOcppModel(oModel);
+
+    bool success = msg->restore(opStore.get());
+    opStore->releaseBuffer();
+
+    if (!success) {
+        AO_DBG_ERR("restore error");
+        (void)0;
+    }
+
+    return success;
+}
+
+void OcppOperation::finalize() {
+    if (opStore) {
+        opStore->confirm();
     }
 }
 

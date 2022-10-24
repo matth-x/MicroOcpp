@@ -100,7 +100,7 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     
     configuration_init(filesystem); //call before each other library call
 
-    ocppEngine = new OcppEngine(ocppSocket, system_time);
+    ocppEngine = new OcppEngine(ocppSocket, system_time, filesystem);
     auto& model = ocppEngine->getOcppModel();
 
     model.setTransactionService(std::unique_ptr<TransactionService>(

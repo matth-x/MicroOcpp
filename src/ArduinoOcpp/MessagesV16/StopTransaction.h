@@ -24,10 +24,7 @@ class StopTransaction : public OcppMessage {
 private:
     std::shared_ptr<Transaction> transaction;
     std::vector<std::unique_ptr<MeterValue>> transactionData;
-    ulong emTimeout = 0;
 public:
-
-    //StopTransaction(int connectorId, const char *reason = nullptr);
 
     StopTransaction(std::shared_ptr<Transaction> transaction);
 
@@ -38,6 +35,9 @@ public:
     const char* getOcppOperationType();
 
     void initiate();
+    bool initiate(StoredOperationHandler *opStore) override;
+
+    bool restore(StoredOperationHandler *opStore) override;
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 
