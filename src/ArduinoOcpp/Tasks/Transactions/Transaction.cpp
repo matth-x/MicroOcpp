@@ -3,23 +3,14 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionService.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionSequence.h>
 
 #include <ArduinoOcpp/Debug.h>
 
 using namespace ArduinoOcpp;
 
-void TransactionRPC::requestWithMsgId(int msgId) {
-    context.setInitiatedMsgId(seqNr, msgId);
-}
-
 bool TransactionRPC::serializeSessionState(JsonObject rpc) {
     rpc["requested"] = requested;
-    if (requested) {
-        rpc["seqNr"] = seqNr;
-    }
     rpc["confirmed"] = confirmed;
     return true;
 }
@@ -112,7 +103,6 @@ bool Transaction::serializeSessionState(DynamicJsonDocument& out) {
 bool TransactionRPC::deserializeSessionState(JsonObject rpc) {
     if (rpc["requested"] | false) {
         requested = true;
-        seqNr = rpc["seqNr"] | 0;
     }
     if (rpc["confirmed"] | false) {
         confirmed = true;

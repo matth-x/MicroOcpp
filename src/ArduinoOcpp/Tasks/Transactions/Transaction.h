@@ -29,7 +29,6 @@ private:
 
     TransactionService& context;
     
-    uint seqNr = 0;
     bool requested = false;
     bool confirmed = false;
 
@@ -38,14 +37,8 @@ private:
 public:
     TransactionRPC(TransactionService& context) : context(context) { }
 
-    void requestWithMsgId(int msgId);
-
-    void setRequested(uint seqNr) {
-        this->seqNr = seqNr;
-        this->requested = true;
-    }
+    void setRequested() {this->requested = true;}
     bool isRequested() {return requested;}
-    uint getSeqNr() {return seqNr;}
     void confirm() {confirmed = true;}
     bool isConfirmed() {return confirmed;}
     bool isCompleted() {return isRequested() && isConfirmed();}
