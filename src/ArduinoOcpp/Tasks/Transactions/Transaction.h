@@ -21,13 +21,13 @@ namespace ArduinoOcpp {
  * of the terminology is documented in OCPP 1.6 Specification - Edition 2, sections 3.6, 4.8, 4.10 and 5.11. 
  */
 
-class TransactionService;
+class ConnectorTransactionStore;
 
 class TransactionRPC {
 private:
     friend class Transaction;
 
-    TransactionService& context;
+    ConnectorTransactionStore& context;
     
     bool requested = false;
     bool confirmed = false;
@@ -35,7 +35,7 @@ private:
     bool serializeSessionState(JsonObject out);
     bool deserializeSessionState(JsonObject in);
 public:
-    TransactionRPC(TransactionService& context) : context(context) { }
+    TransactionRPC(ConnectorTransactionStore& context) : context(context) { }
 
     void setRequested() {this->requested = true;}
     bool isRequested() {return requested;}
@@ -68,7 +68,7 @@ private:
     ClientTransactionStart client;
     ServerTransactionStart server;
 public:
-    TransactionStart(TransactionService& context) : rpc(context) { }
+    TransactionStart(ConnectorTransactionStore& context) : rpc(context) { }
 };
 
 class ClientTransactionStop {
@@ -93,7 +93,7 @@ private:
     ClientTransactionStop client;
     ServerTransactionStop server;
 public:
-    TransactionStop(TransactionService& context) : rpc(context) { }
+    TransactionStop(ConnectorTransactionStore& context) : rpc(context) { }
 };
 
 class ChargingSession {
@@ -112,7 +112,7 @@ private:
 
 class Transaction {
 private:
-    TransactionService& context;
+    ConnectorTransactionStore& context;
 
     ChargingSession session;      //data that exists before the tx
     TransactionStart start;
@@ -121,7 +121,7 @@ private:
     int connectorId = -1;
     uint txNr = 0; //only valid if session.connectorId is >= 0
 public:
-    Transaction(TransactionService& context, uint connectorId, uint txNr) : 
+    Transaction(ConnectorTransactionStore& context, uint connectorId, uint txNr) : 
                 context(context), 
                 start(context),
                 stop(context),

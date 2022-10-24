@@ -12,12 +12,11 @@
 
 namespace ArduinoOcpp {
 
-class TransactionService;
-class ConnectorTransactionSequence;
+class TransactionStore;
 
 class ConnectorTransactionStore {
 private:
-    TransactionService& context;
+    TransactionStore& context;
     const uint connectorId;
 
     std::shared_ptr<FilesystemAdapter> filesystem;
@@ -26,7 +25,7 @@ private:
     std::deque<std::weak_ptr<Transaction>> transactions;
 
 public:
-    ConnectorTransactionStore(TransactionService& context, uint connectorId, std::shared_ptr<FilesystemAdapter> filesystem);
+    ConnectorTransactionStore(TransactionStore& context, uint connectorId, std::shared_ptr<FilesystemAdapter> filesystem);
     
     std::shared_ptr<Transaction> getActiveTransaction();
     std::shared_ptr<Transaction> getTransactionSync();
@@ -40,7 +39,7 @@ class TransactionStore {
 private:
     std::vector<std::unique_ptr<ConnectorTransactionStore>> connectors;
 public:
-    TransactionStore(TransactionService& context, uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
+    TransactionStore(uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
     std::shared_ptr<Transaction> getActiveTransaction(uint connectorId);
     std::shared_ptr<Transaction> getTransactionSync(uint connectorId); //fron element of the tx queue; tx which is being executed at the server now

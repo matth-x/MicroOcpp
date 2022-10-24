@@ -3,7 +3,6 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionService.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
@@ -23,7 +22,7 @@ using namespace ArduinoOcpp;
 
 #define MAX_TX_CNT 100000U
 
-ConnectorTransactionStore::ConnectorTransactionStore(TransactionService& context, uint connectorId, std::shared_ptr<FilesystemAdapter> filesystem) :
+ConnectorTransactionStore::ConnectorTransactionStore(TransactionStore& context, uint connectorId, std::shared_ptr<FilesystemAdapter> filesystem) :
         context(context),
         connectorId(connectorId),
         filesystem(filesystem) {
@@ -47,14 +46,19 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
             }
         }
     }
-    
-    //check all other elements 
-    for (auto cached_wp : transactions) {
-        if (auto cached = cached_wp.lock()) {
-            if (cached->getTxNr() == txNr) {
+
+    //check all other elements (and free up unused entries)
+    auto cached = transactions.begin();
+    while (cached != transactions.end()) {
+        if (auto tx = cached->lock()) {
+            if (tx->getTxNr() == txNr) {
                 //cache hit
-                return cached;
+                return tx;
             }
+            cached++;
+        } else {
+            //collect outdated cache reference
+            cached = transactions.erase(cached);
         }
     }
 
@@ -73,7 +77,7 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
     }
 
     size_t msize;
-    if (filesystem->stat(fn, msize) != 0) {
+    if (filesystem->stat(fn, &msize) != 0) {
         AO_DBG_DEBUG("tx does not exist");
         return nullptr;
     }
@@ -85,12 +89,17 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
         return nullptr;
     }
 
-    auto transaction = std::unique_ptr<Transaction>(new Transaction(context, connectorId, tx));
+    auto transaction = std::make_shared<Transaction>(*this, connectorId, txNr);
     JsonObject txJson = doc->as<JsonObject>();
     if (!transaction->deserializeSessionState(txJson)) {
         AO_DBG_ERR("deserialization error");
         return nullptr;
     }
+
+    //before adding new entry, clean cache
+    std::remove_if(transactions.begin(), transactions.end(), [](std::weak_ptr<Transaction> tx) {
+        return tx.expired();
+    });
 
     transactions.push_back(transaction);
     return transaction;
@@ -113,6 +122,11 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction() {
         return nullptr;
     }
 
+    //before adding new entry, clean cache
+    std::remove_if(transactions.begin(), transactions.end(), [](std::weak_ptr<Transaction> tx) {
+        return tx.expired();
+    });
+
     transactions.push_back(transaction);
     return transaction;
 }
@@ -120,9 +134,10 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction() {
 std::shared_ptr<Transaction> ConnectorTransactionStore::getActiveTransaction() {
     
     if (!transactions.empty()) {
-        auto& tx = transactions.back();
-        if (tx->isActive() || tx->isRunning()) {
-            return tx;
+        if (auto tx = transactions.back().lock()) {
+            if (tx->isActive() || tx->isRunning()) {
+                return tx;
+            }
         }
     }
 
@@ -136,9 +151,10 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getActiveTransaction() {
 std::shared_ptr<Transaction> ConnectorTransactionStore::getTransactionSync() {
     
     if (!transactions.empty()) {
-        auto& tx = transactions.front();
-        if (tx->isRunning()) {
-            return tx;
+        if (auto tx = transactions.front().lock()) {
+            if (tx->isRunning()) {
+                return tx;
+            }
         }
     }
 
@@ -174,11 +190,11 @@ bool ConnectorTransactionStore::commit(Transaction *transaction) {
     return true;
 }
 
-TransactionStore::TransactionStore(TransactionService& context, uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem) {
+TransactionStore::TransactionStore(uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem) {
     
     for (uint i = 0; i < nConnectors; i++) {
         connectors.push_back(std::unique_ptr<ConnectorTransactionStore>(
-            new ConnectorTransactionStore(context, i, filesystem)));
+            new ConnectorTransactionStore(*this, i, filesystem)));
     }
 }
 

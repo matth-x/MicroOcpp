@@ -8,7 +8,7 @@
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionService.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>
 
@@ -50,9 +50,7 @@ void StopTransaction::initiate() {
             transaction->setStopTimestamp(ocppModel->getOcppTime().getOcppTimestampNow());
         }
 
-        auto seqNr = ocppModel->getTransactionService()->getTransactionSequence().reserveSeqNr();
-        AO_DBG_DEBUG("Reserved seqNr inside StopTx: %u", seqNr);
-        transaction->getStopRpcSync().setRequested(seqNr);
+        transaction->getStopRpcSync().setRequested();
 
         transaction->commit();
     }
@@ -60,7 +58,7 @@ void StopTransaction::initiate() {
 }
 
 bool StopTransaction::initiate(StoredOperationHandler *opStore) {
-    if (!opStore || !ocppModel || !transaction || !transaction->getStopRpcSync().isRequested()) {
+    if (!opStore || !ocppModel || !transaction) {
         AO_DBG_ERR("-> legacy");
         return false; //execute legacy initiate instead
     }
@@ -72,7 +70,7 @@ bool StopTransaction::initiate(StoredOperationHandler *opStore) {
 
     opStore->commit();
 
-    transaction->getStopRpcSync().setRequested(1);
+    transaction->getStopRpcSync().setRequested();
 
     transaction->commit();
 
@@ -103,15 +101,14 @@ bool StopTransaction::restore(StoredOperationHandler *opStore) {
         return false;
     }
 
-    auto txService = ocppModel->getTransactionService();
+    auto txStore = ocppModel->getTransactionStore();
 
-    if (!txService) {
+    if (!txStore) {
         AO_DBG_ERR("invalid state");
         return false;
     }
 
-    transaction = txService->getTransactionStore().getTransactionSync(connectorId);
-    AO_DBG_WARN("Does not fetch correct tx yet, restore Stop data and so on ...");
+    transaction = txStore->getTransaction(connectorId, txNr);
     if (!transaction) {
         AO_DBG_ERR("referential integrity violation");
         return false;

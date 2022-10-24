@@ -12,7 +12,7 @@
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionService.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
@@ -44,7 +44,6 @@ float voltage_eff {230.f};
 #define OCPP_ID_OF_CONNECTOR 1
 #define OCPP_ID_OF_CP 0
 bool OCPP_booted = false; //if BootNotification succeeded
-bool enteredLoop = false; //if loop() is called the first time
 
 } //end namespace ArduinoOcpp::Facade
 } //end namespace ArduinoOcpp
@@ -103,8 +102,8 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     ocppEngine = new OcppEngine(ocppSocket, system_time, filesystem);
     auto& model = ocppEngine->getOcppModel();
 
-    model.setTransactionService(std::unique_ptr<TransactionService>(
-        new TransactionService(*ocppEngine, OCPP_NUMCONNECTORS, filesystem)));
+    model.setTransactionStore(std::unique_ptr<TransactionStore>(
+        new TransactionStore(OCPP_NUMCONNECTORS, filesystem)));
     model.setChargePointStatusService(std::unique_ptr<ChargePointStatusService>(
         new ChargePointStatusService(*ocppEngine, OCPP_NUMCONNECTORS)));
     model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
@@ -151,19 +150,12 @@ void OCPP_deinitialize() {
     voltage_eff = 230.f;
 
     OCPP_booted = false;
-    enteredLoop = false;
 }
 
 void OCPP_loop() {
     if (!ocppEngine) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return;
-    }
-
-    if (!enteredLoop) {
-        enteredLoop = true;
-        configuration_save();
-        ocppEngine->getOcppModel().getTransactionService()->initiateRestoredOperations();
     }
 
     ocppEngine->loop();
@@ -472,7 +464,7 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
         AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return false;
     }
-    auto transaction = ocppEngine->getOcppModel().getTransactionService()->getTransactionStore().getActiveTransaction(OCPP_ID_OF_CONNECTOR);
+    auto transaction = ocppEngine->getOcppModel().getTransactionStore()->getActiveTransaction(OCPP_ID_OF_CONNECTOR);
     if (!transaction) {
         AO_DBG_ERR("Transaction buffer full");
         return false;
@@ -510,7 +502,7 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
         return false;
     }
 
-    auto transaction = ocppEngine->getOcppModel().getTransactionService()->getTransactionStore().getActiveTransaction(OCPP_ID_OF_CONNECTOR);
+    auto transaction = ocppEngine->getOcppModel().getTransactionStore()->getActiveTransaction(OCPP_ID_OF_CONNECTOR);
     if (!transaction || !transaction->isRunning()) {
         AO_DBG_ERR("No running Tx to stop");
         return false;

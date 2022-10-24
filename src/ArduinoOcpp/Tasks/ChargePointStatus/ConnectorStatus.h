@@ -32,6 +32,8 @@ private:
     
     const int connectorId;
 
+    std::shared_ptr<Transaction> transaction;
+
     std::shared_ptr<Configuration<int>> availability;
     bool rebooting = false; //report connector inoperative and reject new charging sessions
 

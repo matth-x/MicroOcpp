@@ -201,5 +201,5 @@ bool Transaction::deserializeSessionState(JsonObject state) {
 }
 
 bool Transaction::commit() {
-    return context.getTransactionStore().commit(this);
+    return context.commit(this);
 }

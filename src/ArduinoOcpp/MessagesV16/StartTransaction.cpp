@@ -7,7 +7,7 @@
 #include <ArduinoOcpp/Core/OperationStore.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionService.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>
 
@@ -41,9 +41,7 @@ void StartTransaction::initiate() {
             transaction->setStartTimestamp(ocppModel->getOcppTime().getOcppTimestampNow());
         }
         
-        auto seqNr = ocppModel->getTransactionService()->getTransactionSequence().reserveSeqNr();
-        AO_DBG_DEBUG("Reserved seqNr inside StartTx: %u", seqNr);
-        transaction->getStartRpcSync().setRequested(seqNr);
+        transaction->getStartRpcSync().setRequested();
 
         transaction->commit();
     }
@@ -52,7 +50,7 @@ void StartTransaction::initiate() {
 }
 
 bool StartTransaction::initiate(StoredOperationHandler *opStore) {
-    if (!opStore || !ocppModel || !transaction || !transaction->getStartRpcSync().isRequested()) {
+    if (!opStore || !ocppModel || !transaction) {
         AO_DBG_ERR("-> legacy");
         return false; //execute legacy initiate instead
     }
@@ -65,7 +63,7 @@ bool StartTransaction::initiate(StoredOperationHandler *opStore) {
 
     opStore->commit();
 
-    transaction->getStartRpcSync().setRequested(1);
+    transaction->getStartRpcSync().setRequested();
 
     transaction->commit();
 
@@ -96,15 +94,14 @@ bool StartTransaction::restore(StoredOperationHandler *opStore) {
         return false;
     }
 
-    auto txService = ocppModel->getTransactionService();
+    auto txStore = ocppModel->getTransactionStore();
 
-    if (!txService) {
+    if (!txStore) {
         AO_DBG_ERR("invalid state");
         return false;
     }
 
-    transaction = txService->getTransactionStore().getTransactionSync(connectorId);
-    AO_DBG_WARN("Does not fetch correct tx yet");
+    transaction = txStore->getTransaction(connectorId, txNr);
     if (!transaction) {
         AO_DBG_ERR("referential integrity violation");
         return false;
