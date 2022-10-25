@@ -9,7 +9,7 @@
 
 using ArduinoOcpp::Ocpp16::UnlockConnector;
 
-#define AO_UNLOCK_TIMEOUT 5000
+#define AO_UNLOCK_TIMEOUT 10000
 
 UnlockConnector::UnlockConnector() {
   
