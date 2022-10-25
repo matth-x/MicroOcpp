@@ -250,8 +250,34 @@ bool ConnectorTransactionStore::commit(Transaction *transaction) {
             beginNew = transactions.front()->getTxNr();
         }
         if (beginNew != (uint) *txBegin) {
+            unsigned int clearMem = *txBegin;
             *txBegin = beginNew;
+
+            while (clearMem != beginNew) {
+                char fn [MAX_PATH_SIZE] = {'\0'};
+                auto ret = snprintf(fn, MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, clearMem);
+                if (ret < 0 || ret >= MAX_PATH_SIZE) {
+                    AO_DBG_ERR("fn error: %i", ret);
+                    break; //all files have same length
+                }
+
+                size_t msize;
+                if (filesystem->stat(fn, &msize) == 0) {
+                    bool ret = filesystem->remove(fn);
+                    if (!ret) {
+                        AO_DBG_ERR("memory corrupted: %s", fn);
+                    }
+                }
+
+                clearMem++;
+            }
+            
             configuration_save();
+        }
+
+        if (transaction == transactions.front().get()) {
+            AO_DBG_DEBUG("Remove TX entry: %s", fn);
+            filesystem->remove(fn);
         }
     }
 
