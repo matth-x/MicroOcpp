@@ -17,6 +17,7 @@ private:
     bool err = false;
     std::function<PollResult<bool> ()> unlockConnector;
     PollResult<bool> cbUnlockResult;
+    unsigned long timerStart = 0; //for timeout
 public:
     UnlockConnector();
 

@@ -9,6 +9,8 @@
 
 using ArduinoOcpp::Ocpp16::UnlockConnector;
 
+#define AO_UNLOCK_TIMEOUT 5000
+
 UnlockConnector::UnlockConnector() {
   
 }
@@ -36,14 +38,20 @@ void UnlockConnector::processReq(JsonObject payload) {
     } else {
         AO_DBG_WARN("Unlock CB undefined");
     }
+
+    timerStart = ao_tick_ms();
 }
 
 std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf() {
-    if (unlockConnector) {
-        if (!cbUnlockResult) {
-            cbUnlockResult = unlockConnector();
+    if (!err && ao_tick_ms() - timerStart < AO_UNLOCK_TIMEOUT) {
+        //do poll and if more time is needed, delay creation of conf msg
+
+        if (unlockConnector) {
             if (!cbUnlockResult) {
-                return nullptr; //no result yet - delay confirmation response
+                cbUnlockResult = unlockConnector();
+                if (!cbUnlockResult) {
+                    return nullptr; //no result yet - delay confirmation response
+                }
             }
         }
     }
@@ -52,7 +60,7 @@ std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf() {
     JsonObject payload = doc->to<JsonObject>();
     if (err || !unlockConnector) {
         payload["status"] = "NotSupported";
-    } else if (cbUnlockResult.toValue()) {
+    } else if (cbUnlockResult && cbUnlockResult.toValue()) {
         payload["status"] = "Unlocked";
     } else {
         payload["status"] = "UnlockFailed";
