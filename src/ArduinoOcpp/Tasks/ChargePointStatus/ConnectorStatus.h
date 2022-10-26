@@ -51,7 +51,7 @@ private:
     std::function<PollResult<bool>()> onUnlockConnector;
 
     std::function<TxEnableState(TxTrigger)> onConnectorLockPollTx;
-    std::function<TxEnableState(TxTrigger)> onOcmfMeterPollTx;
+    std::function<TxEnableState(TxTrigger)> onTxBasedMeterPollTx;
 
     TransactionProcess txProcess;
 
@@ -80,6 +80,8 @@ public:
     uint16_t getSessionWriteCount();
     int getTransactionId();
     int getTransactionIdSync();
+    std::shared_ptr<Transaction> getTransaction();
+    void releaseTransaction();
 
     int getAvailability();
     void setAvailability(bool available);

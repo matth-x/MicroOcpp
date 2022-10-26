@@ -107,12 +107,12 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
 
 std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction() {
 
-    auto transaction = std::make_shared<Transaction>(context, connectorId, txEnd);
-
     if (!txEnd || *txEnd < 0) {
         AO_DBG_ERR("memory corruption");
         return nullptr;
     }
+
+    auto transaction = std::make_shared<Transaction>(*this, connectorId, (unsigned int) *txEnd);
 
     *txEnd = (*txEnd + 1) % MAX_TX_CNT;
     configuration_save();

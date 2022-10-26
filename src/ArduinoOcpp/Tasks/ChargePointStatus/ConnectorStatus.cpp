@@ -45,7 +45,7 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
      * By default, transactions are triggered by a valid IdTag (+ connected plug as soon as set)
      * The default necessary steps before starting a transaction are
      *     - lock the connector (if handler is set)
-     *     - instruct the OCMF meter to begin a transaction (if OCMF meter handler is set)
+     *     - instruct the tx-based meter to begin a transaction (if tx-based meter handler is set)
      */
     txProcess.addTrigger([this] () -> TxTrigger {
         if (transaction && transaction->isInSession() && transaction->isActive()) {
@@ -55,8 +55,8 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
         }
     });
     txProcess.addEnableStep([this] (TxTrigger cond) -> TxEnableState {
-        if (onOcmfMeterPollTx) {
-            return onOcmfMeterPollTx(cond);
+        if (onTxBasedMeterPollTx) {
+            return onTxBasedMeterPollTx(cond);
         }
         return cond == TxTrigger::Active ? TxEnableState::Active : TxEnableState::Inactive;
     });
@@ -361,6 +361,14 @@ int ConnectorStatus::getTransactionIdSync() {
     }
 }
 
+std::shared_ptr<Transaction> ConnectorStatus::getTransaction() {
+    return transaction;
+}
+
+void ConnectorStatus::releaseTransaction() {
+    transaction = nullptr;
+}
+
 int ConnectorStatus::getAvailability() {
     return *availability;
 }
@@ -417,6 +425,6 @@ void ConnectorStatus::setConnectorLock(std::function<TxEnableState(TxTrigger)> o
     this->onConnectorLockPollTx = onConnectorLockPollTx;
 }
 
-void ConnectorStatus::setTxBasedMeterUpdate(std::function<TxEnableState(TxTrigger)> onOcmfMeterPollTx) {
-    this->onOcmfMeterPollTx = onOcmfMeterPollTx;
+void ConnectorStatus::setTxBasedMeterUpdate(std::function<TxEnableState(TxTrigger)> onTxBasedMeterPollTx) {
+    this->onTxBasedMeterPollTx = onTxBasedMeterPollTx;
 }

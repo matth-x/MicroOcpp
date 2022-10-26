@@ -34,7 +34,7 @@ OcppOperation *OperationsQueue::front() {
 void OperationsQueue::pop_front() {
     
     if (head && head->getStorageHandler() && head->getStorageHandler()->getOpNr() >= 0) {
-        if (head->getStorageHandler()->getOpNr() != opStore.getOpBegin()) {
+        if ((unsigned int) head->getStorageHandler()->getOpNr() != opStore.getOpBegin()) {
             AO_DBG_ERR("wrong order, removed op from queue before increasing opBegin");
             (void)0;
         }

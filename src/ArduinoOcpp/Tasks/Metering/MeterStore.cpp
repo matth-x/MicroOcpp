@@ -53,6 +53,7 @@ bool TransactionMeterData::addTxData(std::unique_ptr<MeterValue> mv) {
 
     txData.push_back(std::move(mv));
     mvCount++;
+    return true;
 }
 
 std::vector<std::unique_ptr<MeterValue>> TransactionMeterData::retrieveStopTxData() {
@@ -192,10 +193,10 @@ bool MeterStore::remove(unsigned int connectorId, unsigned int txNr) {
 
     if (filesystem) {
         if (mvCount > 0) {
-            for (unsigned int i = 0; i < mvCount; i++) { //search until region without txs found
+            for (int i = 0; i < mvCount; i++) { //search until region without txs found
             
                 char fn [MAX_PATH_SIZE] = {'\0'};
-                auto ret = snprintf(fn, MAX_PATH_SIZE, AO_METERSTORE_DIR "sd" "-%u-%u-%u.jsn", connectorId, txNr, i);
+                auto ret = snprintf(fn, MAX_PATH_SIZE, AO_METERSTORE_DIR "sd" "-%u-%u-%d.jsn", connectorId, txNr, i);
                 if (ret < 0 || ret >= MAX_PATH_SIZE) {
                     AO_DBG_ERR("fn error: %i", ret);
                     return false; //all files have same length

@@ -302,6 +302,12 @@ void setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
         return;
     }
     connector->setConnectorPluggedSampler(connectorPlugged);
+
+    if (connectorPlugged) {
+        AO_DBG_INFO("Added ConnectorPluggedSampler. Transaction-management is in auto mode now");
+    } else {
+        AO_DBG_INFO("Reset ConnectorPluggedSampler. Transaction-management is in manual mode now");
+    }
 }
 
 void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
@@ -464,18 +470,26 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
         AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return false;
     }
-    auto transaction = ocppEngine->getOcppModel().getTransactionStore()->getActiveTransaction(OCPP_ID_OF_CONNECTOR);
-    if (!transaction) {
-        AO_DBG_ERR("Transaction buffer full");
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
         return false;
     }
-
-    if (transaction->isRunning()) {
-        AO_DBG_ERR("Called StartTx while still in transaction. Please call StopTx");
-        return false;
+    auto transaction = connector->getTransaction();
+    if (transaction) {
+        if (transaction->getStartRpcSync().isRequested()) {
+            AO_DBG_ERR("Transaction already in progress. Must call stopTransaction()");
+            return false;
+        }
+        transaction->setIdTag(idTag);
+    } else {
+        beginSession(idTag); //request new transaction object
+        transaction = connector->getTransaction();
+        if (!transaction) {
+            AO_DBG_WARN("Transaction queue full");
+            return false;
+        }
     }
-
-    transaction->setIdTag(idTag);
     
     auto startTransaction = makeOcppOperation(
         new StartTransaction(transaction));
@@ -501,12 +515,19 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
     }
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return false;
+    }
 
-    auto transaction = ocppEngine->getOcppModel().getTransactionStore()->getActiveTransaction(OCPP_ID_OF_CONNECTOR);
+    auto transaction = connector->getTransaction();
     if (!transaction || !transaction->isRunning()) {
         AO_DBG_ERR("No running Tx to stop");
         return false;
     }
+
+    connector->releaseTransaction();
 
     const char *idTag = transaction->getIdTag();
     if (idTag) {

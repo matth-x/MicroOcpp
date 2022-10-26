@@ -124,15 +124,6 @@ bool OcppOperation::sendReq(OcppSocket& ocppSocket){
     requestJson.add(*requestPayload);                      //Payload
 
     /*
-     * Transaction safety: before sending the message, store the assigned msgId so this action
-     * can be replayed when booted the next time
-     */
-    auto txSync = ocppMessage->getTransactionSync();
-    if (txSync) {
-        txSync->requestWithMsgId(unique_id_counter);
-    }
-
-    /*
      * Serialize and send. Destroy serialization and JSON object. 
      * 
      * If sending was successful, start timer
