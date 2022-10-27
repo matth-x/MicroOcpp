@@ -39,7 +39,6 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
     if (inited) {
         bool timeout = inited->sendReq(ocppSock); //The only reason to dequeue elements here is when a timeout occurs. Normally
         if (timeout){                                       //the Conf msg processing routine dequeues finished elements
-            inited->finalize();
             initiatedOcppOperations.pop_front();
         }
     }
@@ -61,7 +60,6 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
                 (!(*cached)->getStorageHandler() || (*cached)->getStorageHandler()->getOpNr() < 0)) {
             AO_DBG_INFO("Discarding cached due to timeout:");
             (*cached)->print_debug();
-            (*cached)->finalize();
             cached = initiatedOcppOperations.erase_tail(cached);
         } else {
             ++cached;
@@ -77,7 +75,6 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
     while (received != receivedOcppOperations.end()){
         bool success = (*received)->sendConf(ocppSock);
         if (success){
-            (*received)->finalize();
             received = receivedOcppOperations.erase(received);
         } else {
             //There will be another attempt to send this conf message in a future loop call.
@@ -193,7 +190,6 @@ void OcppConnection::handleConfMessage(JsonDocument& json) {
         [&json, &success] (std::unique_ptr<OcppOperation>& operation) {
             bool match = operation->receiveConf(json);
             if (match) {
-                operation->finalize();
                 success = true;
                 //operation will be deleted by the surrounding drop_if
             }
@@ -234,7 +230,6 @@ void OcppConnection::handleErrMessage(JsonDocument& json) {
         [&json, &success] (std::unique_ptr<OcppOperation>& operation) {
             bool match = operation->receiveError(json);
             if (match) {
-                operation->finalize();
                 success = true;
                 //operation will be deleted by the surrounding drop_if
             }

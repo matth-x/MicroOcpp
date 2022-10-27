@@ -142,6 +142,8 @@ OcppMessage *ConnectorStatus::loop() {
         saveState();
     }
 
+    txProcess.evaluateProcessSteps();
+
     if (transaction) { //begin exclusively transaction-related operations
             
         if (connectorPluggedSampler) {
@@ -175,7 +177,6 @@ OcppMessage *ConnectorStatus::loop() {
             }
         }
 
-        txProcess.evaluateProcessSteps(transaction->getTxNr());
         auto txEnable = txProcess.getState();
 
         /*

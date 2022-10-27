@@ -63,7 +63,8 @@ bool StopTransaction::initiate(StoredOperationHandler *opStore) {
         return false; //execute legacy initiate instead
     }
     
-    auto payload = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    auto payload = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+    (*payload)["connectorId"] = transaction->getConnectorId();
     (*payload)["txNr"] = transaction->getTxNr();
 
     opStore->setPayload(std::move(payload));

@@ -34,10 +34,8 @@ OcppOperation *OperationsQueue::front() {
 void OperationsQueue::pop_front() {
     
     if (head && head->getStorageHandler() && head->getStorageHandler()->getOpNr() >= 0) {
-        if ((unsigned int) head->getStorageHandler()->getOpNr() != opStore.getOpBegin()) {
-            AO_DBG_ERR("wrong order, removed op from queue before increasing opBegin");
-            (void)0;
-        }
+        opStore.advanceOpNr(head->getStorageHandler()->getOpNr());
+        AO_DBG_DEBUG("advanced %i to %u", head->getStorageHandler()->getOpNr(), opStore.getOpBegin());
     }
 
     head.release();
@@ -85,6 +83,11 @@ void OperationsQueue::pop_front() {
 
             if (!success) {
                 AO_DBG_ERR("could not restore operation");
+                fetched.release();
+            }
+
+            if (!fetched->isFullyConfigured()) {
+                AO_DBG_ERR("stored op initialization failure");
                 fetched.release();
             }
         }

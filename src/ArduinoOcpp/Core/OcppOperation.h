@@ -107,8 +107,6 @@ public:
 
     StoredOperationHandler *getStorageHandler() {return opStore.get();}
 
-    void finalize(); //called whenever this operation is completed or aborted right before the destructor
-
     void setOnReceiveConfListener(OnReceiveConfListener onReceiveConf);
 
     /**

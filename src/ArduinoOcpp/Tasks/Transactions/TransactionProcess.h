@@ -22,8 +22,6 @@ private:
 
     bool activeTriggerExists = false;
     TxEnableState txEnable {TxEnableState::Inactive}; // = Result of Trigger and Enable Sequence
-
-    std::shared_ptr<Configuration<int>> txNrRef;
     
 public:
 
@@ -35,12 +33,10 @@ public:
 
     void addEnableStep(std::function<TxEnableState(TxTrigger)> fn) {txEnableSequence.push_back(fn);}
 
-    void evaluateProcessSteps(uint txNr);
+    void evaluateProcessSteps();
 
     bool existsActiveTrigger() {return activeTriggerExists;}
     TxEnableState getState() {return txEnable;}
-
-    uint getTxNrRef();
 };
 
 }

@@ -142,7 +142,7 @@ bool OcppOperation::sendReq(OcppSocket& ocppSocket){
     bool success = ocppSocket.sendTXT(out);
 
     timeout->tick(success);
-    
+
     if (success) {
         AO_DBG_TRAFFIC_OUT(out.c_str());
         retry_start = ao_tick_ms();
@@ -354,8 +354,7 @@ bool OcppOperation::restore(std::unique_ptr<StoredOperationHandler> opStorage, s
     opStore = std::move(opStorage);
 
     auto rpcData = opStore->getRpc();
-    auto payloadData = opStore->getPayload();
-    if (!rpcData || !payloadData) {
+    if (!rpcData) {
         AO_DBG_ERR("corrupted storage");
         return false;
     }
@@ -371,8 +370,8 @@ bool OcppOperation::restore(std::unique_ptr<StoredOperationHandler> opStorage, s
     int parsedMessageID = -1;
     if (sscanf(messageID.c_str(), "%d", &parsedMessageID) == 1) {
         if (parsedMessageID > unique_id_counter) {
-            unique_id_counter = parsedMessageID;
-            AO_DBG_VERBOSE("restore unique_id_counter = %d", unique_id_counter);
+            AO_DBG_DEBUG("restore unique_id_counter with %d", parsedMessageID);
+            unique_id_counter = parsedMessageID + 1; //next unique value is parsedId + 1
         }
     } else {
         AO_DBG_ERR("cannot set unique msgID counter");
@@ -380,36 +379,31 @@ bool OcppOperation::restore(std::unique_ptr<StoredOperationHandler> opStorage, s
         //skip this step but don't abort restore
     }
 
-    std::unique_ptr<OcppMessage> msg;
-
     if (!strcmp(opType.c_str(), "StartTransaction")) { //TODO this will get a nicer solution
-        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction());
+        ocppMessage = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction());
     } else if (!strcmp(opType.c_str(), "StopTransaction")) {
-        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StopTransaction());
+        ocppMessage = std::unique_ptr<OcppMessage>(new Ocpp16::StopTransaction());
     }
 
-    if (!msg) {
+    if (!ocppMessage) {
         AO_DBG_ERR("cannot create msg");
         return false;
     }
 
-    msg->setOcppModel(oModel);
+    ocppMessage->setOcppModel(oModel);
 
-    bool success = msg->restore(opStore.get());
+    bool success = ocppMessage->restore(opStore.get());
     opStore->releaseBuffer();
 
-    if (!success) {
-        AO_DBG_ERR("restore error");
+    if (success) {
+        AO_DBG_DEBUG("restored opNr %i: %s", opStore->getOpNr(), ocppMessage->getOcppOperationType());
+        (void)0;
+    } else {
+        AO_DBG_ERR("restore opNr %i error", opStore->getOpNr());
         (void)0;
     }
 
     return success;
-}
-
-void OcppOperation::finalize() {
-    if (opStore) {
-        opStore->confirm();
-    }
 }
 
 void OcppOperation::setOnReceiveConfListener(OnReceiveConfListener onReceiveConf){

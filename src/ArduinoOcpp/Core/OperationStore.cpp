@@ -55,16 +55,6 @@ bool StoredOperationHandler::commit() {
     return true;
 }
 
-void StoredOperationHandler::confirm() {
-    if (isPersistent && opNr < 0) {
-        AO_DBG_ERR("invalid state");
-        return;
-    }
-    if (isPersistent) {
-        context.confirm((unsigned int) opNr);
-    }
-}
-
 bool StoredOperationHandler::restore(unsigned int opNrToLoad) {
     if (isPersistent) {
         AO_DBG_ERR("cannot restore after commit");
@@ -96,8 +86,8 @@ bool StoredOperationHandler::restore(unsigned int opNrToLoad) {
         return false;
     }
     
-    JsonObject rpc_restore = (*doc)["rpc"];
-    JsonObject payload_restore = (*doc)["payload"];
+    JsonVariant rpc_restore = (*doc)["rpc"];
+    JsonVariant payload_restore = (*doc)["payload"];
 
     rpc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(rpc_restore.memoryUsage()));
     payload = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(payload_restore.memoryUsage()));
@@ -157,14 +147,14 @@ unsigned int OperationStore::reserveOpNr() {
     return res;
 }
 
-void OperationStore::confirm(unsigned int opNr) {
+void OperationStore::advanceOpNr(unsigned int oldOpNr) {
     if (!opBegin || *opBegin < 0) {
         AO_DBG_ERR("init failure");
         return;
     }
 
-    if (opNr != (unsigned int) *opBegin) {
-        if (opNr - (unsigned int) *opBegin < 100) {
+    if (oldOpNr != (unsigned int) *opBegin) {
+        if (oldOpNr - (unsigned int) *opBegin < 100) {
             AO_DBG_ERR("synchronization failure - try to fix");
             (void)0;
         } else {
@@ -173,8 +163,8 @@ void OperationStore::confirm(unsigned int opNr) {
         }
     }
 
-    opNr++;
-    opNr %= AO_MAX_OPNR;
+    unsigned int opNr = (oldOpNr + 1) % AO_MAX_OPNR;
+
     AO_DBG_DEBUG("advance opBegin: %u", opNr);
     *opBegin = opNr;
     configuration_save();

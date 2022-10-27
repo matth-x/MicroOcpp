@@ -10,7 +10,7 @@ TEST_CASE( "Transaction process - trivial" ) {
     TransactionProcess txProcess {1};
 
     SECTION("Trivial transaction process"){
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE( !txProcess.existsActiveTrigger() );
         REQUIRE( txProcess.getState() == TxEnableState::Inactive );
     }
@@ -22,7 +22,7 @@ TEST_CASE( "Transaction process - trivial" ) {
             notified = true;
             return TxEnableState::Inactive;
         });
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE( notified );
         REQUIRE( txProcess.getState() == TxEnableState::Inactive );
     }
@@ -50,31 +50,31 @@ TEST_CASE("Transaction process - inputs") {
     });
 
     SECTION("All active") {
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE(txProcess.getState() == TxEnableState::Active);
     }
 
     SECTION("Precondition") {
         precondition = TxPrecondition::Inactive;
         checkTrigger = TxTrigger::Inactive;
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE( txProcess.getState() != TxEnableState::Active );
     }
 
     SECTION("Trigger") {
         trigger = TxTrigger::Inactive;
         checkTrigger = TxTrigger::Inactive;
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE( txProcess.getState() != TxEnableState::Active );
     }
 
     SECTION("Output enable") {
         enable = TxEnableState::Inactive;
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE( txProcess.getState() == TxEnableState::Pending );
 
         enable = TxEnableState::Pending;
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE( txProcess.getState() == TxEnableState::Pending );
     }
 }
@@ -110,37 +110,37 @@ TEST_CASE("Transaction process - execution order") {
     
     SECTION("Precondition"){
         preconditions[0] = TxPrecondition::Inactive;
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE( txProcess.getState() != TxEnableState::Active );
 
         preconditions[0] = TxPrecondition::Active;
         preconditions[1] = TxPrecondition::Inactive;
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE( txProcess.getState() != TxEnableState::Active );
     }
 
     SECTION("Trigger") {
         triggers[0] = TxTrigger::Inactive;
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE( txProcess.getState() != TxEnableState::Active );
         REQUIRE( txProcess.existsActiveTrigger());
 
         triggers[0] = TxTrigger::Active;
         triggers[1] = TxTrigger::Inactive;
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE( txProcess.getState() != TxEnableState::Active );
         REQUIRE( txProcess.existsActiveTrigger());
     }
 
     SECTION("Output enable - all active"){
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE(checkSeq[0] == 1);
         REQUIRE(checkSeq[1] == 0);
     }
 
     SECTION("Output enable - active pending"){
         enableSteps[1] = TxEnableState::Pending;
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE(checkSeq[0] == -1);
         REQUIRE(checkSeq[1] == 0);
     }
@@ -148,7 +148,7 @@ TEST_CASE("Transaction process - execution order") {
     SECTION("Output enable - inactive"){
         preconditions[0] = TxPrecondition::Inactive;
         enableSteps[0] = TxEnableState::Inactive;
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE(checkSeq[0] == 0);
         REQUIRE(checkSeq[1] == 1);
     }
@@ -156,7 +156,7 @@ TEST_CASE("Transaction process - execution order") {
     SECTION("Output enable - inactive pending"){
         preconditions[0] = TxPrecondition::Inactive;
         enableSteps[0] = TxEnableState::Pending;
-        txProcess.evaluateProcessSteps(0);
+        txProcess.evaluateProcessSteps();
         REQUIRE(checkSeq[0] == 0);
         REQUIRE(checkSeq[1] == -1);
     }
@@ -181,6 +181,7 @@ TEST_CASE("Transaction process - begin new transaction") {
         return enable;
     });
 
+/*
     SECTION("Evaluate different txNr") {
         auto txNr = txProcess.getTxNrRef();
         txProcess.evaluateProcessSteps(txNr + 1); //try to evaluate newer transaction
@@ -196,4 +197,5 @@ TEST_CASE("Transaction process - begin new transaction") {
         txProcess.evaluateProcessSteps(txNr + 1);
         REQUIRE( txNr + 1 == txProcess.getTxNrRef() );
     }
+*/
 }

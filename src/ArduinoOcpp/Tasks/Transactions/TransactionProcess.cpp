@@ -11,15 +11,7 @@
 using namespace ArduinoOcpp;
 
 TransactionProcess::TransactionProcess(uint connectorId) {
-    char key [30] = {'\0'};
-    if (snprintf(key, 30, "AO_txNrRef_%u", connectorId) < 0) {
-        AO_DBG_ERR("Invalid key");
-        (void)0;
-    }
-    txNrRef = declareConfiguration<int>(key, 0, AO_TXPROC_FN, false, false, true, false);
-    if (!txNrRef || *txNrRef < 0) {
-        AO_DBG_ERR("Initialization failure");
-    }
+
 }
 
 /*
@@ -29,7 +21,7 @@ TransactionProcess::TransactionProcess(uint connectorId) {
  * 
  * txEnable is the output variable. See getState() for getting the result.
  */
-void TransactionProcess::evaluateProcessSteps(uint txNr) {
+void TransactionProcess::evaluateProcessSteps() {
 
 #if AO_DBG_LEVEL >= AO_DL_DEBUG
     //print transitions to debug console
@@ -48,11 +40,6 @@ void TransactionProcess::evaluateProcessSteps(uint txNr) {
     //Check Tx triggers: all of them need to be true to trigger a tx; prepare that search here
     auto txTrigger = txTriggers.empty() ? TxTrigger::Inactive : TxTrigger::Active;
     if (txPrecondition != TxPrecondition::Active) { //Only trigger a tx if the preconditions are met
-        txTrigger = TxTrigger::Inactive;
-    }
-
-    //Check if the current process is obsolete
-    if (txNrRef && (uint) *txNrRef != txNr) {
         txTrigger = TxTrigger::Inactive;
     }
 
@@ -93,15 +80,6 @@ void TransactionProcess::evaluateProcessSteps(uint txNr) {
         }
     }
 
-    //If the current process is obsolete: Check if updating the tx reference is possible
-    if (txNrRef && (uint) *txNrRef != txNr) {
-        if (txEnable == TxEnableState::Inactive) {
-            AO_DBG_DEBUG("Upgrade to next tx: %u", txNr);
-            *txNrRef = txNr;
-            configuration_save();
-        }
-    }
-
 #if AO_DBG_LEVEL >= AO_DL_DEBUG
     if (txEnableBefore != txEnable) {
         AO_DBG_DEBUG("Transition from %s to %s",
@@ -110,11 +88,4 @@ void TransactionProcess::evaluateProcessSteps(uint txNr) {
     }
 #endif
 
-}
-
-uint TransactionProcess::getTxNrRef() {
-    if (txNrRef) {
-        return (uint) *txNrRef;
-    }
-    return 0;
 }

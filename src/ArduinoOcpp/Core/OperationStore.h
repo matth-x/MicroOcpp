@@ -37,7 +37,6 @@ public:
 
     bool commit();
     void releaseBuffer() {rpc.release(); payload.release();}
-    void confirm();
 
     bool restore(unsigned int opNr);
 
@@ -58,7 +57,7 @@ public:
     std::unique_ptr<StoredOperationHandler> fetchOpHandler(unsigned int opNr);
 
     unsigned int reserveOpNr();
-    void confirm(unsigned int opNr);
+    void advanceOpNr(unsigned int oldOpNr);
 
     unsigned int getOpBegin();
 };
