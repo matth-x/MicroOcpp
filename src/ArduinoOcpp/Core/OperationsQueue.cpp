@@ -107,7 +107,7 @@ void OperationsQueue::pop_front() {
         }
     }
 
-    AO_DBG_DEBUG("popped front");
+    AO_DBG_VERBOSE("popped front");
 }
 
 void OperationsQueue::initiate(std::unique_ptr<OcppOperation> op) {

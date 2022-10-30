@@ -91,9 +91,7 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     fileSystemOpt = fsOpt;
 
 #ifndef AO_DEACTIVATE_FLASH
-    std::shared_ptr<FilesystemAdapter> filesystem = makeDefaultFilesystemAdapter(fileSystemOpt);
-#else
-    std::shared_ptr<FilesystemAdapter> filesystem;
+    filesystem = makeDefaultFilesystemAdapter(fileSystemOpt);
 #endif
     AO_DBG_DEBUG("filesystem %s", filesystem ? "loaded" : "error");
     
@@ -183,7 +181,7 @@ void setPowerActiveImportSampler(std::function<float()> power) {
     auto& model = ocppEngine->getOcppModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS)));
+            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS, filesystem)));
     }
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Power.Active.Import");
@@ -205,7 +203,7 @@ void setEnergyActiveImportSampler(std::function<float()> energy) {
     auto& model = ocppEngine->getOcppModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS)));
+            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS, filesystem)));
     }
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Energy.Active.Import.Register");
@@ -227,7 +225,7 @@ void addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler
     auto& model = ocppEngine->getOcppModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS)));
+            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS, filesystem)));
     }
     model.getMeteringService()->addMeterValueSampler(OCPP_ID_OF_CONNECTOR, std::move(meterValueSampler)); //connectorId=1
 }

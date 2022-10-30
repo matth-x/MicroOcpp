@@ -27,8 +27,7 @@ private:
 public:
     ConnectorTransactionStore(TransactionStore& context, uint connectorId, std::shared_ptr<FilesystemAdapter> filesystem);
     
-    std::shared_ptr<Transaction> getActiveTransaction();
-    std::shared_ptr<Transaction> getTransactionSync();
+    std::shared_ptr<Transaction> getLatestTransaction();
     bool commit(Transaction *transaction);
 
     std::shared_ptr<Transaction> getTransaction(unsigned int txNr);
@@ -41,8 +40,7 @@ private:
 public:
     TransactionStore(uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
-    std::shared_ptr<Transaction> getActiveTransaction(uint connectorId);
-    std::shared_ptr<Transaction> getTransactionSync(uint connectorId); //fron element of the tx queue; tx which is being executed at the server now
+    std::shared_ptr<Transaction> getLatestTransaction(uint connectorId);
     bool commit(Transaction *transaction);
 
     std::shared_ptr<Transaction> getTransaction(unsigned int connectorId, unsigned int txNr);

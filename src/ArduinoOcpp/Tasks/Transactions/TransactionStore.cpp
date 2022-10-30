@@ -131,34 +131,15 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction() {
     return transaction;
 }
 
-std::shared_ptr<Transaction> ConnectorTransactionStore::getActiveTransaction() {
-    
-    if (!transactions.empty()) {
-        if (auto tx = transactions.back().lock()) {
-            if (tx->isActive() || tx->isRunning()) {
-                return tx;
-            }
-        }
+std::shared_ptr<Transaction> ConnectorTransactionStore::getLatestTransaction() {
+    if (!txEnd || *txEnd < 0) {
+        AO_DBG_ERR("memory corruption");
+        return nullptr;
     }
 
-    AO_DBG_DEBUG("Make new Tx");
+    unsigned int latest = ((unsigned int) *txEnd + MAX_TX_CNT - 1) % MAX_TX_CNT;
 
-    auto tx = createTransaction();
-
-    return tx;
-}
-
-std::shared_ptr<Transaction> ConnectorTransactionStore::getTransactionSync() {
-    
-    if (!transactions.empty()) {
-        if (auto tx = transactions.front().lock()) {
-            if (tx->isRunning()) {
-                return tx;
-            }
-        }
-    }
-
-    return nullptr;
+    return getTransaction(latest);
 }
 
 bool ConnectorTransactionStore::commit(Transaction *transaction) {
@@ -198,20 +179,12 @@ TransactionStore::TransactionStore(uint nConnectors, std::shared_ptr<FilesystemA
     }
 }
 
-std::shared_ptr<Transaction> TransactionStore::getActiveTransaction(uint connectorId) {
+std::shared_ptr<Transaction> TransactionStore::getLatestTransaction(uint connectorId) {
     if (connectorId >= connectors.size()) {
         AO_DBG_ERR("Invalid connectorId");
         return nullptr;
     }
-    return connectors[connectorId]->getActiveTransaction();
-}
-
-std::shared_ptr<Transaction> TransactionStore::getTransactionSync(uint connectorId) {
-    if (connectorId >= connectors.size()) {
-        AO_DBG_ERR("Invalid connectorId");
-        return nullptr;
-    }
-    return connectors[connectorId]->getTransactionSync();
+    return connectors[connectorId]->getLatestTransaction();
 }
 
 bool TransactionStore::commit(Transaction *transaction) {

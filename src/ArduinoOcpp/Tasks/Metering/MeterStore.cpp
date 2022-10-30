@@ -15,9 +15,15 @@
 
 #define MAX_STOPTXDATA_LEN 20
 
-TransactionMeterData::TransactionMeterData(unsigned int connectorId, unsigned int txNr, std::shared_ptr<FilesystemAdapter> filesystem)
-        : connectorId(connectorId), txNr(txNr), filesystem(filesystem) {
+using namespace ArduinoOcpp;
 
+TransactionMeterData::TransactionMeterData(unsigned int connectorId, unsigned int txNr, std::shared_ptr<FilesystemAdapter> filesystem)
+        : connectorId(connectorId), txNr(txNr), filesystem{filesystem} {
+    
+    if (!filesystem) {
+        AO_DBG_DEBUG("volatile mode");
+        (void)0;
+    }
 }
 
 bool TransactionMeterData::addTxData(std::unique_ptr<MeterValue> mv) {
@@ -51,8 +57,14 @@ bool TransactionMeterData::addTxData(std::unique_ptr<MeterValue> mv) {
         }
     }
 
-    txData.push_back(std::move(mv));
-    mvCount++;
+    if (txData.size() < MAX_STOPTXDATA_LEN) {
+        txData.push_back(std::move(mv));
+        mvCount++;
+        AO_DBG_DEBUG("added sd");
+    } else {
+        txData.back() = std::move(mv);
+        AO_DBG_DEBUG("updated latest sd");
+    }
     return true;
 }
 
@@ -62,6 +74,7 @@ std::vector<std::unique_ptr<MeterValue>> TransactionMeterData::retrieveStopTxDat
         return decltype(txData) {};
     }
     finalize();
+    AO_DBG_DEBUG("creating sd");
     return std::move(txData);
 }
 
@@ -114,6 +127,14 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
 
     AO_DBG_DEBUG("Restored %zu meter values", txData.size());
     return true;
+}
+
+MeterStore::MeterStore(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem {filesystem} {
+
+    if (!filesystem) {
+        AO_DBG_DEBUG("volatile mode");
+        (void)0;
+    }
 }
 
 std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuilder& mvBuilder, unsigned int connectorId, unsigned int txNr) {

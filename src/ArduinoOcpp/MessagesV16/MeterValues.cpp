@@ -6,6 +6,7 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
+#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::MeterValues;
@@ -17,9 +18,9 @@ MeterValues::MeterValues() {
     
 }
 
-MeterValues::MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, int connectorId) 
-      : meterValue{std::move(meterValue)}, connectorId{connectorId} {
-
+MeterValues::MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction) 
+      : meterValue{std::move(meterValue)}, connectorId{connectorId}, transaction{transaction} {
+    
 }
 
 MeterValues::~MeterValues(){
@@ -31,7 +32,7 @@ const char* MeterValues::getOcppOperationType(){
 }
 
 void MeterValues::initiate() {
-    emTimeout = ao_tick_ms();
+
 }
 
 std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
@@ -45,11 +46,8 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
             capacity += entry->capacity();
             entries.push_back(std::move(entry));
         } else {
-            if (ao_tick_ms() - emTimeout < ENERGY_METER_TIMEOUT_MS) {
-                return nullptr;
-            } else {
-                AO_DBG_ERR("Energy meter timeout!");
-            }
+            AO_DBG_ERR("Energy meter reading not convertible to JSON");
+            (void)0;
         }
     }
 
@@ -60,11 +58,8 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
     auto payload = doc->to<JsonObject>();
     payload["connectorId"] = connectorId;
 
-    if (ocppModel && ocppModel->getConnectorStatus(connectorId)) {
-        auto connector = ocppModel->getConnectorStatus(connectorId);
-        if (connector->getTransactionIdSync() >= 0) {
-            payload["transactionId"] = connector->getTransactionIdSync();
-        }
+    if (transaction) {
+        payload["transactionId"] = transaction->getTransactionId();
     }
 
     auto meterValueJson = payload.createNestedArray("meterValue");

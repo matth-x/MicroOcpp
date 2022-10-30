@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
+#include <ArduinoOcpp/Tasks/Metering/MeterStore.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 
 namespace ArduinoOcpp {
@@ -19,17 +20,18 @@ using EnergySampler = std::function<float()>;
 
 class OcppModel;
 class OcppMessage;
+class Transaction;
+class MeterStore;
 
 class ConnectorMeterValuesRecorder {
 private:
     OcppModel& context;
-    
     const int connectorId;
+    MeterStore& meterStore;
     
     std::vector<std::unique_ptr<MeterValue>> sampledData;
     std::vector<std::unique_ptr<MeterValue>> alignedData;
-    std::vector<std::unique_ptr<MeterValue>> stopTxnSampledData;
-    std::vector<std::unique_ptr<MeterValue>> stopTxnAlignedData;
+    std::shared_ptr<TransactionMeterData> stopTxnData;
 
     std::unique_ptr<MeterValueBuilder> sampledDataBuilder;
     std::unique_ptr<MeterValueBuilder> alignedDataBuilder;
@@ -45,6 +47,8 @@ private:
     OcppTimestamp nextAlignedTime;
     float lastPower;
     int lastTransactionId = -1;
+    bool trackTxRunning = false;
+    int trackTxNr = -1;
  
     PowerSampler powerSampler = nullptr;
     EnergySampler energySampler = nullptr;
@@ -59,7 +63,7 @@ private:
     std::shared_ptr<Configuration<int>> MeterValuesAlignedDataMaxLength;
     std::shared_ptr<Configuration<int>> StopTxnAlignedDataMaxLength;
 public:
-    ConnectorMeterValuesRecorder(OcppModel& context, int connectorId);
+    ConnectorMeterValuesRecorder(OcppModel& context, int connectorId, MeterStore& meterStore);
 
     OcppMessage *loop();
 
@@ -73,7 +77,9 @@ public:
 
     OcppMessage *takeTriggeredMeterValues();
 
-    std::vector<std::unique_ptr<MeterValue>> createStopTxMeterData();
+    void beginTxMeterData(Transaction *transaction);
+
+    std::vector<std::unique_ptr<MeterValue>> createStopTxMeterData(Transaction *transaction);
 
 };
 

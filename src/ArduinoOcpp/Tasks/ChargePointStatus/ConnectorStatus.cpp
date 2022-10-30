@@ -66,6 +66,13 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
         }
         return cond == TxTrigger::Active ? TxEnableState::Active : TxEnableState::Inactive;
     });
+
+    if (context.getTransactionStore()) {
+        transaction = context.getTransactionStore()->getLatestTransaction(connectorId);
+    } else {
+        AO_DBG_ERR("must initialize TxStore before ConnectorStatus");
+        (void)0;
+    }
 }
 
 OcppEvseState ConnectorStatus::inferenceStatus() {
@@ -142,6 +149,11 @@ OcppMessage *ConnectorStatus::loop() {
         saveState();
     }
 
+    if (transaction && (transaction->isAborted() || transaction->isCompleted())) {
+        AO_DBG_DEBUG("collect obsolete transaction");
+        transaction = nullptr;
+    }
+
     txProcess.evaluateProcessSteps();
 
     if (transaction) { //begin exclusively transaction-related operations
@@ -205,6 +217,10 @@ OcppMessage *ConnectorStatus::loop() {
 
                 transaction->commit();
 
+                if (context.getMeteringService()) {
+                    context.getMeteringService()->beginTxMeterData(transaction.get());
+                }
+
                 return new StartTransaction(transaction);
             }
         } else if (transaction->isRunning()) {
@@ -237,7 +253,7 @@ OcppMessage *ConnectorStatus::loop() {
                 AO_DBG_INFO("Session mngt: trigger StopTransaction");
 
                 if (context.getMeteringService()) {
-                    auto txData = context.getMeteringService()->createStopTxMeterData(connectorId);
+                    auto txData = context.getMeteringService()->createStopTxMeterData(transaction.get());
                     return new StopTransaction(std::move(transaction), std::move(txData));
                 } else {
                     return new StopTransaction(std::move(transaction));
@@ -335,6 +351,14 @@ uint16_t ConnectorStatus::getSessionWriteCount() {
     return transaction ? transaction->getTxNr() : 0;
 }
 
+bool ConnectorStatus::isTransactionRunning() {
+    if (!transaction) {
+        return false;
+    }
+
+    return transaction->isRunning();
+}
+
 int ConnectorStatus::getTransactionId() {
     
     if (!transaction) {
@@ -352,17 +376,7 @@ int ConnectorStatus::getTransactionId() {
     }
 }
 
-int ConnectorStatus::getTransactionIdSync() {
-    auto txSync = context.getTransactionStore()->getTransactionSync(connectorId);
-    
-    if (txSync) {
-        return txSync->getTransactionId();
-    } else {
-        return -1;
-    }
-}
-
-std::shared_ptr<Transaction> ConnectorStatus::getTransaction() {
+std::shared_ptr<Transaction>& ConnectorStatus::getTransaction() {
     return transaction;
 }
 

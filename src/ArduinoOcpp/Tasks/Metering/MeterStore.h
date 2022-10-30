@@ -11,7 +11,7 @@
 #include <vector>
 #include <deque>
 
-using namespace ArduinoOcpp;
+namespace ArduinoOcpp {
 
 class TransactionMeterData {
 private:
@@ -49,11 +49,14 @@ private:
     std::vector<std::weak_ptr<TransactionMeterData>> txMeterData;
 
 public:
+    MeterStore() = delete;
     MeterStore(std::shared_ptr<FilesystemAdapter> filesystem);
 
     std::shared_ptr<TransactionMeterData> getTxMeterData(MeterValueBuilder& mvBuilder, unsigned int connectorId, unsigned int txNr);
 
     bool remove(unsigned int connectorId, unsigned int txNr);
 };
+
+}
 
 #endif

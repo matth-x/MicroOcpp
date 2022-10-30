@@ -76,7 +76,7 @@ bool StoredOperationHandler::restore(unsigned int opNrToLoad) {
 
     size_t msize;
     if (filesystem->stat(fn, &msize) != 0) {
-        AO_DBG_DEBUG("operation %u does not exist", opNr);
+        AO_DBG_VERBOSE("operation %u does not exist", opNr);
         return false;
     }
 

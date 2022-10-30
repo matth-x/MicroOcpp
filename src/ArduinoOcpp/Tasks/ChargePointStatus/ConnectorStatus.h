@@ -78,9 +78,10 @@ public:
     void endSession(const char *reason = nullptr);
     const char *getSessionIdTag();
     uint16_t getSessionWriteCount();
+    bool isTransactionRunning();
     int getTransactionId();
     int getTransactionIdSync();
-    std::shared_ptr<Transaction> getTransaction();
+    std::shared_ptr<Transaction>& getTransaction();
     void releaseTransaction();
 
     int getAvailability();
