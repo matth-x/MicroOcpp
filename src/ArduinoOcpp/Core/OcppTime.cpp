@@ -5,6 +5,7 @@
 #include <ArduinoOcpp/Core/OcppTime.h>
 #include <ArduinoOcpp/Platform.h>
 #include <string.h>
+#include <ctype.h>	
 
 namespace ArduinoOcpp {
 
@@ -13,14 +14,14 @@ const OcppTimestamp MAX_TIME = OcppTimestamp(2037, 0, 0, 0, 0, 0);
 
 namespace Clocks {
 
-ulong lastClockReading = 0;
+unsigned long lastClockReading = 0;
 otime_t lastClockValue = 0;
 
 /*
  * Basic clock implementation. Works if ao_tick_ms() is exact enough for you and if device doesn't go in sleep mode. 
  */
 OcppClock DEFAULT_CLOCK = [] () {
-    ulong tReading = (ao_tick_ms() - lastClockReading) / 1000UL;
+    unsigned long tReading = (ao_tick_ms() - lastClockReading) / 1000UL;
     if (tReading > 0) {
         lastClockValue += tReading;
         lastClockReading += tReading * 1000UL;

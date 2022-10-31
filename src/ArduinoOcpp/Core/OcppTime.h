@@ -6,6 +6,8 @@
 #define OCPPTIME_H
 
 #include <functional>
+#include <stdint.h>
+#include <stddef.h>
 
 namespace ArduinoOcpp {
 
