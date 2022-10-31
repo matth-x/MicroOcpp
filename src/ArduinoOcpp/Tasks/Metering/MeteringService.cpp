@@ -98,17 +98,32 @@ void MeteringService::beginTxMeterData(Transaction *transaction) {
     connector->beginTxMeterData(transaction);
 }
 
-std::vector<std::unique_ptr<MeterValue>> MeteringService::createStopTxMeterData(Transaction *transaction) {
+std::shared_ptr<TransactionMeterData> MeteringService::endTxMeterData(Transaction *transaction) {
     if (!transaction) {
         AO_DBG_ERR("invalid argument");
-        return std::vector<std::unique_ptr<MeterValue>>();
+        return nullptr;
     }
     auto connectorId = transaction->getConnectorId();
     if (connectorId < 0 || (size_t) connectorId >= connectors.size()) {
         AO_DBG_ERR("connectorId is out of bounds");
-        return std::vector<std::unique_ptr<MeterValue>>();
+        return nullptr;
     }
     auto& connector = connectors[connectorId];
 
-    return connector->createStopTxMeterData(transaction);
+    return connector->endTxMeterData(transaction);
+}
+
+std::shared_ptr<TransactionMeterData> MeteringService::getStopTxMeterData(Transaction *transaction) {
+    if (!transaction) {
+        AO_DBG_ERR("invalid argument");
+        return nullptr;
+    }
+    auto connectorId = transaction->getConnectorId();
+    if (connectorId < 0 || (size_t) connectorId >= connectors.size()) {
+        AO_DBG_ERR("connectorId is out of bounds");
+        return nullptr;
+    }
+    auto& connector = connectors[connectorId];
+
+    return connector->getStopTxMeterData(transaction);
 }

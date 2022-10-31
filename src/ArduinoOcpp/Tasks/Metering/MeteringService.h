@@ -45,7 +45,9 @@ public:
 
     void beginTxMeterData(Transaction *transaction);
 
-    std::vector<std::unique_ptr<MeterValue>> createStopTxMeterData(Transaction *transaction);
+    std::shared_ptr<TransactionMeterData> endTxMeterData(Transaction *transaction); //use return value to keep data in cache
+
+    std::shared_ptr<TransactionMeterData> getStopTxMeterData(Transaction *transaction); //prefer endTxMeterData when possible
 
     int getNumConnectors() {return connectors.size();}
 };

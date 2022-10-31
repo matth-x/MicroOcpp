@@ -77,7 +77,9 @@ public:
 
     void beginTxMeterData(Transaction *transaction);
 
-    std::vector<std::unique_ptr<MeterValue>> createStopTxMeterData(Transaction *transaction);
+    std::shared_ptr<TransactionMeterData> endTxMeterData(Transaction *transaction);
+
+    std::shared_ptr<TransactionMeterData> getStopTxMeterData(Transaction *transaction);
 
 };
 

@@ -215,31 +215,36 @@ void ConnectorMeterValuesRecorder::beginTxMeterData(Transaction *transaction) {
     }
 
     if (stopTxnData) {
-        auto sampleStartTx = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::TransactionBegin);
-        if (sampleStartTx) {
-            stopTxnData->addTxData(std::move(sampleStartTx));
+        auto sampleTxBegin = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::TransactionBegin);
+        if (sampleTxBegin) {
+            stopTxnData->addTxData(std::move(sampleTxBegin));
         }
     }
 }
 
-std::vector<std::unique_ptr<MeterValue>> ConnectorMeterValuesRecorder::createStopTxMeterData(Transaction *transaction) {
+std::shared_ptr<TransactionMeterData> ConnectorMeterValuesRecorder::endTxMeterData(Transaction *transaction) {
     if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
         stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, connectorId, transaction->getTxNr());
     }
 
-    //create final StopTxSample
     if (stopTxnData) {
-        auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::TransactionEnd);
-        if (sampleStopTx) {
-            stopTxnData->addTxData(std::move(sampleStopTx));
+        auto sampleTxEnd = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::TransactionEnd);
+        if (sampleTxEnd) {
+            stopTxnData->addTxData(std::move(sampleTxEnd));
         }
-
-        auto res = stopTxnData->retrieveStopTxData();
-        stopTxnData = nullptr;
-
-        return res;
     }
 
-    AO_DBG_ERR("could not create TxData");
-    return std::vector<std::unique_ptr<MeterValue>>{};
+    return std::move(stopTxnData);
+}
+
+std::shared_ptr<TransactionMeterData> ConnectorMeterValuesRecorder::getStopTxMeterData(Transaction *transaction) {
+
+    auto txData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, connectorId, transaction->getTxNr());
+
+    if (!txData) {
+        AO_DBG_ERR("could not create TxData");
+        return nullptr;
+    }
+
+    return txData;
 }

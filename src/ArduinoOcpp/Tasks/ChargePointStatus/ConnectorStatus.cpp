@@ -233,6 +233,8 @@ OcppMessage *ConnectorStatus::loop() {
 
             if (txEnable == TxEnableState::Inactive) {
                 //stop transaction
+
+                AO_DBG_INFO("Session mngt: trigger StopTransaction");
                 
                 auto meteringService = context.getMeteringService();
                 if (transaction->getMeterStop() < 0 && meteringService) {
@@ -250,15 +252,17 @@ OcppMessage *ConnectorStatus::loop() {
 
                 transaction->commit();
 
-                AO_DBG_INFO("Session mngt: trigger StopTransaction");
+                std::shared_ptr<TransactionMeterData> stopTxData;
 
-                if (context.getMeteringService()) {
-                    auto txData = context.getMeteringService()->createStopTxMeterData(transaction.get());
-                    return new StopTransaction(std::move(transaction), std::move(txData));
+                if (meteringService) {
+                    stopTxData = meteringService->endTxMeterData(transaction.get());
+                }
+
+                if (stopTxData) {
+                    return new StopTransaction(std::move(transaction), stopTxData->retrieveStopTxData());
                 } else {
                     return new StopTransaction(std::move(transaction));
                 }
-                
             }
         }
     } //end transaction-related operations
