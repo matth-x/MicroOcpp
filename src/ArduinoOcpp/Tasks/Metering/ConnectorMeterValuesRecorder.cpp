@@ -65,7 +65,8 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
     if (context.getConnectorStatus(connectorId) && context.getConnectorStatus(connectorId)->getTransaction()) {
         transaction = context.getConnectorStatus(connectorId)->getTransaction().get();
 
-        if (!stopTxnData || (stopTxnData->getTxNr() != transaction->getTxNr() && transaction->isRunning())) {
+        if (transaction->isRunning() && (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr())) {
+            AO_DBG_WARN("reload stopTxnData");
             //reload (e.g. after power cut during transaction)
             stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, connectorId, transaction->getTxNr());
         }
@@ -232,8 +233,6 @@ std::vector<std::unique_ptr<MeterValue>> ConnectorMeterValuesRecorder::createSto
         if (sampleStopTx) {
             stopTxnData->addTxData(std::move(sampleStopTx));
         }
-
-        stopTxnData->finalize();
 
         auto res = stopTxnData->retrieveStopTxData();
         stopTxnData = nullptr;

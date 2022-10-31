@@ -115,6 +115,12 @@ bool StopTransaction::restore(StoredOperationHandler *opStore) {
         return false;
     }
 
+    if (ocppModel->getMeteringService()) {
+        auto mSerivce = ocppModel->getMeteringService();
+
+        transactionData = mSerivce->createStopTxMeterData(transaction.get());
+    }
+
     return true;
 }
 

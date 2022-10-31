@@ -45,8 +45,6 @@ private:
 
     ulong lastSampleTime = 0; //0 means not charging right now
     OcppTimestamp nextAlignedTime;
-    float lastPower;
-    int lastTransactionId = -1;
     bool trackTxRunning = false;
     int trackTxNr = -1;
  

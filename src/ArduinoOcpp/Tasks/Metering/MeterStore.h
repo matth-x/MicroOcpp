@@ -50,6 +50,7 @@ private:
 
 public:
     MeterStore() = delete;
+    MeterStore(MeterStore&) = delete;
     MeterStore(std::shared_ptr<FilesystemAdapter> filesystem);
 
     std::shared_ptr<TransactionMeterData> getTxMeterData(MeterValueBuilder& mvBuilder, unsigned int connectorId, unsigned int txNr);
