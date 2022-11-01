@@ -82,7 +82,6 @@ public:
     int getTransactionId();
     int getTransactionIdSync();
     std::shared_ptr<Transaction>& getTransaction();
-    void releaseTransaction();
 
     int getAvailability();
     void setAvailability(bool available);

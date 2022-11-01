@@ -20,8 +20,6 @@ using namespace ArduinoOcpp;
 
 #define AO_TXSTORE_META_FN AO_FILENAME_PREFIX "/txstore.jsn"
 
-#define MAX_TX_CNT 100000U
-
 ConnectorTransactionStore::ConnectorTransactionStore(TransactionStore& context, uint connectorId, std::shared_ptr<FilesystemAdapter> filesystem) :
         context(context),
         connectorId(connectorId),
@@ -33,6 +31,12 @@ ConnectorTransactionStore::ConnectorTransactionStore(TransactionStore& context, 
         (void)0;
     }
     txEnd = declareConfiguration<int>(key, 0, AO_TXSTORE_META_FN, false, false, true, false);
+
+    if (snprintf(key, 30, "AO_txBegin_%u", connectorId) < 0) {
+        AO_DBG_ERR("Invalid key");
+        (void)0;
+    }
+    txBegin = declareConfiguration<int>(key, 0, AO_TXSTORE_META_FN, false, false, true, false);
 }
 
 std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned int txNr) {
@@ -97,9 +101,11 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
     }
 
     //before adding new entry, clean cache
-    std::remove_if(transactions.begin(), transactions.end(), [](std::weak_ptr<Transaction> tx) {
-        return tx.expired();
-    });
+    transactions.erase(std::remove_if(transactions.begin(), transactions.end(),
+            [](std::weak_ptr<Transaction> tx) {
+                return tx.expired();
+            }),
+            transactions.end());
 
     transactions.push_back(transaction);
     return transaction;
@@ -123,9 +129,11 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction() {
     }
 
     //before adding new entry, clean cache
-    std::remove_if(transactions.begin(), transactions.end(), [](std::weak_ptr<Transaction> tx) {
-        return tx.expired();
-    });
+    transactions.erase(std::remove_if(transactions.begin(), transactions.end(),
+            [](std::weak_ptr<Transaction> tx) {
+                return tx.expired();
+            }),
+            transactions.end());
 
     transactions.push_back(transaction);
     return transaction;
@@ -171,6 +179,50 @@ bool ConnectorTransactionStore::commit(Transaction *transaction) {
     return true;
 }
 
+bool ConnectorTransactionStore::remove(unsigned int txNr) {
+
+    if (!filesystem) {
+        AO_DBG_DEBUG("no FS: nothing to remove");
+        return true;
+    }
+
+    char fn [MAX_PATH_SIZE] = {'\0'};
+    auto ret = snprintf(fn, MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, txNr);
+    if (ret < 0 || ret >= MAX_PATH_SIZE) {
+        AO_DBG_ERR("fn error: %i", ret);
+        return false;
+    }
+
+    size_t msize;
+    if (filesystem->stat(fn, &msize) != 0) {
+        AO_DBG_DEBUG("%s already removed", fn);
+        return true;
+    }
+
+    AO_DBG_DEBUG("remove %s", fn);
+    
+    return filesystem->remove(fn);
+}
+
+int ConnectorTransactionStore::getTxBegin() {
+    if (!txBegin || *txBegin < 0) {
+        AO_DBG_ERR("memory corruption");
+        return -1;
+    }
+
+    return *txBegin;
+}
+
+void ConnectorTransactionStore::updateTxBegin(unsigned int txNr) {
+    if (!txBegin || *txBegin < 0) {
+        AO_DBG_ERR("memory corruption");
+        return;
+    }
+
+    *txBegin = txNr;
+    configuration_save();
+}
+
 TransactionStore::TransactionStore(uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem) {
     
     for (uint i = 0; i < nConnectors; i++) {
@@ -193,7 +245,7 @@ bool TransactionStore::commit(Transaction *transaction) {
         return false;
     }
     auto connectorId = transaction->getConnectorId();
-    if (connectorId < 0 || (size_t) connectorId >= connectors.size()) {
+    if (connectorId >= connectors.size()) {
         AO_DBG_ERR("Invalid tx");
         return false;
     }
@@ -214,4 +266,28 @@ std::shared_ptr<Transaction> TransactionStore::createTransaction(unsigned int co
         return nullptr;
     }
     return connectors[connectorId]->createTransaction();
+}
+
+bool TransactionStore::remove(unsigned int connectorId, unsigned int txNr) {
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("Invalid connectorId");
+        return false;
+    }
+    return connectors[connectorId]->remove(txNr);
+}
+
+int TransactionStore::getTxBegin(unsigned int connectorId) {
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("Invalid connectorId");
+        return -1;
+    }
+    return connectors[connectorId]->getTxBegin();
+}
+
+void TransactionStore::updateTxBegin(unsigned int connectorId, unsigned int txNr) {
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("Invalid connectorId");
+        return;
+    }
+    return connectors[connectorId]->updateTxBegin(txNr);
 }

@@ -33,7 +33,6 @@ public:
     std::vector<std::unique_ptr<MeterValue>> retrieveStopTxData(); //will invalidate internal cache
 
     bool restore(MeterValueBuilder& mvBuilder); //load record from memory; true if record found, false if nothing loaded
-    bool remove();
 
     unsigned int getConnectorId() {return connectorId;}
     unsigned int getTxNr() {return txNr;}

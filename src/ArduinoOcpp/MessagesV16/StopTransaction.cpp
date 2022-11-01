@@ -15,6 +15,8 @@
 using ArduinoOcpp::Ocpp16::StopTransaction;
 using ArduinoOcpp::TransactionRPC;
 
+#define AO_TXHISTORY_SIZE 10
+
 StopTransaction::StopTransaction(std::shared_ptr<Transaction> transaction)
         : transaction(transaction) {
 
@@ -184,7 +186,23 @@ void StopTransaction::processConf(JsonObject payload) {
         transaction->commit();
     }
 
+    cleanTxStore();
+
     AO_DBG_INFO("Request has been accepted!");
+}
+
+bool StopTransaction::processErr(const char *code, const char *description, JsonObject details) {
+
+    if (transaction) {
+        transaction->getStopRpcSync().confirm(); //no retry behavior for now; consider data "arrived" at server
+        transaction->commit();
+    }
+
+    cleanTxStore();
+
+    AO_DBG_ERR("Server error, data loss!");
+
+    return false;
 }
 
 TransactionRPC *StopTransaction::getTransactionSync() {
@@ -205,4 +223,57 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createConf(){
     idTagInfo["status"] = "Accepted";
 
     return doc;
+}
+
+bool StopTransaction::cleanTxStore() {
+    if (!transaction || !ocppModel) {
+        //doesn't apply
+        return true;
+    }
+
+    auto txStore = ocppModel->getTransactionStore();
+    if (!txStore || txStore->getTxBegin(transaction->getConnectorId()) < 0) {
+        AO_DBG_ERR("invalid state");
+        return false;
+    }
+
+    unsigned int txBegin = (unsigned int) txStore->getTxBegin(transaction->getConnectorId());
+    unsigned int txRangeEnd = (transaction->getTxNr() + MAX_TX_CNT - AO_TXHISTORY_SIZE) % MAX_TX_CNT;
+
+    //to be deleted: [txBegin ... txRangeEnd)
+
+    if ((transaction->getTxNr() + MAX_TX_CNT - txBegin) % MAX_TX_CNT <= 
+            (transaction->getTxNr() + MAX_TX_CNT - txRangeEnd) % MAX_TX_CNT) {
+        //txBegin is after txRangeEnd => nothing to delete
+        AO_DBG_DEBUG("already clean");
+        return true;
+    }
+
+    unsigned int rangeSize = (txRangeEnd + MAX_TX_CNT - txBegin) % MAX_TX_CNT;
+    AO_DBG_DEBUG("deleting %u entries from %u to %u", rangeSize, txBegin, txRangeEnd);
+    if (rangeSize >= 50) {
+        AO_DBG_ERR("cannot clean more than 50 entries at once - clean only the first 50");
+        rangeSize = 50;
+        txRangeEnd = (txBegin + 50) % MAX_TX_CNT;
+    }
+
+    bool success = true;
+
+    if (auto mService = ocppModel->getMeteringService()) {
+        for (unsigned int i = 0; i < rangeSize; i++) {
+            unsigned int tx = (txBegin + i) % MAX_TX_CNT;
+
+            success &= mService->removeTxMeterData(transaction->getConnectorId(), tx);
+        }
+    }
+
+    for (unsigned int i = 0; i < rangeSize; i++) {
+        unsigned int tx = (txBegin + i) % MAX_TX_CNT;
+
+        success &= txStore->remove(transaction->getConnectorId(), tx);
+    }
+
+    txStore->updateTxBegin(transaction->getConnectorId(), txRangeEnd);
+
+    return success;
 }

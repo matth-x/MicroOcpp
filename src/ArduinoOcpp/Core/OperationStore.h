@@ -9,6 +9,8 @@
 #include <deque>
 #include <ArduinoJson.h>
 
+#define AO_MAX_OPNR 10000
+
 namespace ArduinoOcpp {
 
 class OperationStore;
@@ -60,6 +62,7 @@ public:
     void advanceOpNr(unsigned int oldOpNr);
 
     unsigned int getOpBegin();
+    unsigned int getOpEnd() {return opEnd;}
 };
 
 }

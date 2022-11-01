@@ -155,10 +155,11 @@ std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuild
 
     //clean outdated pointers before creating new object
 
-    std::remove_if(txMeterData.begin(), txMeterData.end(),
-            [connectorId, txNr] (std::weak_ptr<TransactionMeterData>& txm) {
+    txMeterData.erase(std::remove_if(txMeterData.begin(), txMeterData.end(),
+            [] (std::weak_ptr<TransactionMeterData>& txm) {
                 return txm.expired();
-            });
+            }),
+            txMeterData.end());
 
     //create new object and cache weak pointer
 
@@ -192,7 +193,7 @@ std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuild
 
 bool MeterStore::remove(unsigned int connectorId, unsigned int txNr) {
 
-    int mvCount = -1;
+    unsigned int mvCount = 0;
 
     auto cached = std::find_if(txMeterData.begin(), txMeterData.end(),
             [connectorId, txNr] (std::weak_ptr<TransactionMeterData>& txm) {
@@ -213,19 +214,7 @@ bool MeterStore::remove(unsigned int connectorId, unsigned int txNr) {
     bool success = true;
 
     if (filesystem) {
-        if (mvCount > 0) {
-            for (int i = 0; i < mvCount; i++) { //search until region without txs found
-            
-                char fn [MAX_PATH_SIZE] = {'\0'};
-                auto ret = snprintf(fn, MAX_PATH_SIZE, AO_METERSTORE_DIR "sd" "-%u-%u-%d.jsn", connectorId, txNr, i);
-                if (ret < 0 || ret >= MAX_PATH_SIZE) {
-                    AO_DBG_ERR("fn error: %i", ret);
-                    return false; //all files have same length
-                }
-
-                success &= filesystem->remove(fn);
-            }
-        } else {
+        if (mvCount == 0) {
             const uint MISSES_LIMIT = 3;
             uint misses = 0;
             unsigned int i = 0;
@@ -246,20 +235,35 @@ bool MeterStore::remove(unsigned int connectorId, unsigned int txNr) {
                     continue;
                 }
 
-                success &= filesystem->remove(fn);
-
                 i++;
+                mvCount = i;
                 misses = 0;
             }
+        }
+
+        AO_DBG_DEBUG("remove %u mvs for txNr %u", mvCount, txNr);
+
+        for (unsigned int i = 0; i < mvCount; i++) {
+            unsigned int sd = mvCount - 1U - i;
+        
+            char fn [MAX_PATH_SIZE] = {'\0'};
+            auto ret = snprintf(fn, MAX_PATH_SIZE, AO_METERSTORE_DIR "sd" "-%u-%u-%u.jsn", connectorId, txNr, sd);
+            if (ret < 0 || ret >= MAX_PATH_SIZE) {
+                AO_DBG_ERR("fn error: %i", ret);
+                return false;
+            }
+
+            success &= filesystem->remove(fn);
         }
     }
 
     //clean outdated pointers
 
-    std::remove_if(txMeterData.begin(), txMeterData.end(),
-            [connectorId, txNr] (std::weak_ptr<TransactionMeterData>& txm) {
+    txMeterData.erase(std::remove_if(txMeterData.begin(), txMeterData.end(),
+            [] (std::weak_ptr<TransactionMeterData>& txm) {
                 return txm.expired();
-            });
+            }),
+            txMeterData.end());
 
     if (success) {
         AO_DBG_DEBUG("Removed meter values for cId %u, txNr %u", connectorId, txNr);

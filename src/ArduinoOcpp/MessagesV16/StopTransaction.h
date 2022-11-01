@@ -24,6 +24,8 @@ class StopTransaction : public OcppMessage {
 private:
     std::shared_ptr<Transaction> transaction;
     std::vector<std::unique_ptr<MeterValue>> transactionData;
+
+    bool cleanTxStore();
 public:
 
     StopTransaction(std::shared_ptr<Transaction> transaction);
@@ -32,24 +34,24 @@ public:
     
     StopTransaction(); //for debugging only. Make this for the server pendant
 
-    const char* getOcppOperationType();
+    const char* getOcppOperationType() override;
 
-    void initiate();
+    void initiate() override;
     bool initiate(StoredOperationHandler *opStore) override;
 
     bool restore(StoredOperationHandler *opStore) override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq();
+    std::unique_ptr<DynamicJsonDocument> createReq() override;
 
-    void processConf(JsonObject payload);
+    void processConf(JsonObject payload) override;
 
-    bool processErr(const char *code, const char *description, JsonObject details) { return false;}
+    bool processErr(const char *code, const char *description, JsonObject details) override;
 
     TransactionRPC *getTransactionSync() override;
 
-    void processReq(JsonObject payload);
+    void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf() override;
 };
 
 } //end namespace Ocpp16

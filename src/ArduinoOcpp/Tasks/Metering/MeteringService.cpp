@@ -89,7 +89,7 @@ void MeteringService::beginTxMeterData(Transaction *transaction) {
         return;
     }
     auto connectorId = transaction->getConnectorId();
-    if (connectorId < 0 || (size_t) connectorId >= connectors.size()) {
+    if (connectorId >= connectors.size()) {
         AO_DBG_ERR("connectorId is out of bounds");
         return;
     }
@@ -104,7 +104,7 @@ std::shared_ptr<TransactionMeterData> MeteringService::endTxMeterData(Transactio
         return nullptr;
     }
     auto connectorId = transaction->getConnectorId();
-    if (connectorId < 0 || (size_t) connectorId >= connectors.size()) {
+    if (connectorId >= connectors.size()) {
         AO_DBG_ERR("connectorId is out of bounds");
         return nullptr;
     }
@@ -119,11 +119,15 @@ std::shared_ptr<TransactionMeterData> MeteringService::getStopTxMeterData(Transa
         return nullptr;
     }
     auto connectorId = transaction->getConnectorId();
-    if (connectorId < 0 || (size_t) connectorId >= connectors.size()) {
+    if (connectorId >= connectors.size()) {
         AO_DBG_ERR("connectorId is out of bounds");
         return nullptr;
     }
     auto& connector = connectors[connectorId];
 
     return connector->getStopTxMeterData(transaction);
+}
+
+bool MeteringService::removeTxMeterData(unsigned int connectorId, unsigned int txNr) {
+    return meterStore.remove(connectorId, txNr);
 }

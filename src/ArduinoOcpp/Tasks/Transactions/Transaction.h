@@ -118,10 +118,10 @@ private:
     TransactionStart start;
     TransactionStop stop;
 
-    int connectorId = -1;
-    uint txNr = 0; //only valid if session.connectorId is >= 0
+    unsigned int connectorId = 0;
+    unsigned int txNr = 0; //only valid if session.connectorId is >= 0
 public:
-    Transaction(ConnectorTransactionStore& context, uint connectorId, uint txNr) : 
+    Transaction(ConnectorTransactionStore& context, unsigned int connectorId, unsigned int txNr) : 
                 context(context), 
                 start(context),
                 stop(context),
@@ -131,10 +131,10 @@ public:
     bool serializeSessionState(DynamicJsonDocument& out);
     bool deserializeSessionState(JsonObject in);
 
-    int getConnectorId() {return connectorId;}
-    void setConnectorId(uint connectorId) {this->connectorId = connectorId;}
-    uint getTxNr() {return txNr;} //only valid if getConnectorId() >= 0
-    void setTxNr(uint txNr) {this->txNr = txNr;}
+    unsigned int getConnectorId() {return connectorId;}
+    void setConnectorId(unsigned int connectorId) {this->connectorId = connectorId;}
+    unsigned int getTxNr() {return txNr;} //only valid if getConnectorId() >= 0
+    void setTxNr(unsigned int txNr) {this->txNr = txNr;}
 
     TransactionRPC& getStartRpcSync() {return start.rpc;}
 

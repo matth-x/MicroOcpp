@@ -49,6 +49,8 @@ public:
 
     std::shared_ptr<TransactionMeterData> getStopTxMeterData(Transaction *transaction); //prefer endTxMeterData when possible
 
+    bool removeTxMeterData(unsigned int connectorId, unsigned int txNr);
+
     int getNumConnectors() {return connectors.size();}
 };
 

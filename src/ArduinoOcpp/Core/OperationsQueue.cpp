@@ -67,12 +67,14 @@ void OperationsQueue::pop_front() {
         std::unique_ptr<OcppOperation> fetched;
 
         bool exists = false;
-        for (size_t misses = 0; misses < 3; misses++) {
+        unsigned int range = (opStore.getOpEnd() + AO_MAX_OPNR - nextOpNr) % AO_MAX_OPNR;
+        for (size_t i = 0; i < range; i++) {
             exists = storageHandler->restore(nextOpNr);
             if (exists) {
                 break;
             }
             nextOpNr++;
+            nextOpNr %= AO_MAX_OPNR;
         }
 
         if (exists) {
@@ -138,7 +140,7 @@ void OperationsQueue::drop_if(std::function<bool(std::unique_ptr<OcppOperation>&
         pop_front();
     }
 
-    std::remove_if(tailCache.begin(), tailCache.end(), pred);
+    tailCache.erase(std::remove_if(tailCache.begin(), tailCache.end(), pred), tailCache.end());
 }
 
 std::deque<std::unique_ptr<OcppOperation>>::iterator OperationsQueue::begin_tail() {

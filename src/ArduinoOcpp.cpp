@@ -527,8 +527,6 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
 
     connector->endSession("Local");
 
-    connector->releaseTransaction();
-
     const char *idTag = transaction->getIdTag();
     if (idTag) {
         transaction->setStopIdTag(idTag);

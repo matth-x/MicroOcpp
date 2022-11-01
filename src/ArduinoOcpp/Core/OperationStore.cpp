@@ -14,7 +14,7 @@
 
 #define AO_OPSTORE_FN AO_FILENAME_PREFIX "/opstore.cnf"
 
-#define AO_MAX_OPNR 10000
+#define AO_OPHISTORY_SIZE 3
 
 using namespace ArduinoOcpp;
 
@@ -115,7 +115,7 @@ OperationStore::OperationStore(std::shared_ptr<FilesystemAdapter> filesystem) : 
             if (ret < 0 || ret >= MAX_PATH_SIZE) {
                 AO_DBG_ERR("fn error: %i", ret);
                 misses++;
-                i++;
+                i = (i + 1) % AO_MAX_OPNR;
                 continue;
             }
 
@@ -123,14 +123,14 @@ OperationStore::OperationStore(std::shared_ptr<FilesystemAdapter> filesystem) : 
             if (filesystem->stat(fn, &msize) != 0) {
                 AO_DBG_DEBUG("operation %u does not exist", i);
                 misses++;
-                i++;
+                i = (i + 1) % AO_MAX_OPNR;
                 continue;
             }
 
             //file exists
             misses = 0;
+            i = (i + 1) % AO_MAX_OPNR;
             opEnd = i;
-            i++;
         }
     }
 }
@@ -154,7 +154,7 @@ void OperationStore::advanceOpNr(unsigned int oldOpNr) {
     }
 
     if (oldOpNr != (unsigned int) *opBegin) {
-        if (oldOpNr - (unsigned int) *opBegin < 100) {
+        if ((oldOpNr + AO_MAX_OPNR - (unsigned int) *opBegin) % AO_MAX_OPNR < 100) {
             AO_DBG_ERR("synchronization failure - try to fix");
             (void)0;
         } else {
@@ -164,6 +164,35 @@ void OperationStore::advanceOpNr(unsigned int oldOpNr) {
     }
 
     unsigned int opNr = (oldOpNr + 1) % AO_MAX_OPNR;
+
+    //delete range [*opBegin ... opNr)
+
+    unsigned int rangeSize = (opNr + AO_MAX_OPNR - (unsigned int) *opBegin) % AO_MAX_OPNR;
+
+    AO_DBG_DEBUG("delete %u operations", rangeSize);
+
+    for (unsigned int i = 0; i < rangeSize; i++) {
+        unsigned int op = ((unsigned int) *opBegin + i + AO_MAX_OPNR - AO_OPHISTORY_SIZE) % AO_MAX_OPNR;
+
+        char fn [MAX_PATH_SIZE] = {'\0'};
+        auto ret = snprintf(fn, MAX_PATH_SIZE, AO_OPSTORE_DIR "op" "-%u.jsn", op);
+        if (ret < 0 || ret >= MAX_PATH_SIZE) {
+            AO_DBG_ERR("fn error: %i", ret);
+            break;
+        }
+
+        size_t msize;
+        if (filesystem->stat(fn, &msize) != 0) {
+            AO_DBG_DEBUG("operation %u does not exist", i);
+            continue;
+        }
+
+        bool success = filesystem->remove(fn);
+        if (!success) {
+            AO_DBG_ERR("error deleting %s", fn);
+            (void)0;
+        }
+    }
 
     AO_DBG_DEBUG("advance opBegin: %u", opNr);
     *opBegin = opNr;
