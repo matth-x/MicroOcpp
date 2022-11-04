@@ -82,9 +82,7 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
     if (connectorId == 0) {
         if (getErrorCode() != nullptr) {
             return OcppEvseState::Faulted;
-        } else if (*availability == AVAILABILITY_INOPERATIVE) {
-            return OcppEvseState::Unavailable;
-        } else if (rebooting) {
+        } else if (getAvailability() == AVAILABILITY_INOPERATIVE) {
             return OcppEvseState::Unavailable;
         } else {
             return OcppEvseState::Available;
@@ -93,9 +91,7 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
 
     if (getErrorCode() != nullptr) {
         return OcppEvseState::Faulted;
-    } else if (*availability == AVAILABILITY_INOPERATIVE) {
-        return OcppEvseState::Unavailable;
-    } else if (rebooting && (!transaction || !transaction->isRunning())) {
+    } else if (getAvailability() == AVAILABILITY_INOPERATIVE) {
         return OcppEvseState::Unavailable;
     } else if (transaction && transaction->isRunning()) {
         //Transaction is currently running
@@ -144,9 +140,14 @@ bool ConnectorStatus::ocppPermitsCharge() {
 
 OcppMessage *ConnectorStatus::loop() {
 
-    if ((!transaction || !transaction->isRunning()) && *availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
-        *availability = AVAILABILITY_INOPERATIVE;
-        saveState();
+    if (!isTransactionRunning()) {
+        if (*availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
+            *availability = AVAILABILITY_INOPERATIVE;
+            configuration_save();
+        }
+        if (availabilityVolatile == AVAILABILITY_INOPERATIVE_SCHEDULED) {
+            availabilityVolatile = AVAILABILITY_INOPERATIVE;
+        }
     }
 
     if (transaction && (transaction->isAborted() || transaction->isCompleted())) {
@@ -395,24 +396,38 @@ std::shared_ptr<Transaction>& ConnectorStatus::getTransaction() {
 }
 
 int ConnectorStatus::getAvailability() {
-    return *availability;
+    if (availabilityVolatile == AVAILABILITY_INOPERATIVE || *availability == AVAILABILITY_INOPERATIVE) {
+        return AVAILABILITY_INOPERATIVE;
+    } else if (availabilityVolatile == AVAILABILITY_INOPERATIVE_SCHEDULED || *availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
+        AVAILABILITY_INOPERATIVE_SCHEDULED;
+    } else {
+        return AVAILABILITY_OPERATIVE;
+    }
 }
 
 void ConnectorStatus::setAvailability(bool available) {
     if (available) {
         *availability = AVAILABILITY_OPERATIVE;
     } else {
-        if (getTransactionId() > 0) {
+        if (isTransactionRunning()) {
             *availability = AVAILABILITY_INOPERATIVE_SCHEDULED;
         } else {
             *availability = AVAILABILITY_INOPERATIVE;
         }
     }
-    saveState();
+    configuration_save();
 }
 
-void ConnectorStatus::setRebooting(bool rebooting) {
-    this->rebooting = rebooting;
+void ConnectorStatus::setAvailabilityVolatile(bool available) {
+    if (available) {
+        availabilityVolatile = AVAILABILITY_OPERATIVE;
+    } else {
+        if (isTransactionRunning()) {
+            availabilityVolatile = AVAILABILITY_INOPERATIVE_SCHEDULED;
+        } else {
+            availabilityVolatile = AVAILABILITY_INOPERATIVE;
+        }
+    }
 }
 
 void ConnectorStatus::setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
@@ -432,10 +447,6 @@ void ConnectorStatus::setConnectorEnergizedSampler(std::function<bool()> connect
 
 void ConnectorStatus::addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
     this->connectorErrorCodeSamplers.push_back(connectorErrorCode);
-}
-
-void ConnectorStatus::saveState() {
-    configuration_save();
 }
 
 void ConnectorStatus::setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector) {

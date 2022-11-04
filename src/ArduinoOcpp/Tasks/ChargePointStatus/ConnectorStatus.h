@@ -35,7 +35,7 @@ private:
     std::shared_ptr<Transaction> transaction;
 
     std::shared_ptr<Configuration<int>> availability;
-    bool rebooting = false; //report connector inoperative and reject new charging sessions
+    int availabilityVolatile = AVAILABILITY_OPERATIVE;
 
     std::function<bool()> connectorPluggedSampler;
     std::function<bool()> evRequestsEnergySampler;
@@ -85,14 +85,12 @@ public:
 
     int getAvailability();
     void setAvailability(bool available);
-    void setRebooting(bool rebooting);
+    void setAvailabilityVolatile(bool available); //set inoperative state but keep only until reboot at most
     void setAuthorizationProvider(std::function<const char *()> authorization);
     void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
     void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
     void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
     void addConnectorErrorCodeSampler(std::function<const char*()> connectorErrorCode);
-
-    void saveState();
 
     OcppMessage *loop();
 
