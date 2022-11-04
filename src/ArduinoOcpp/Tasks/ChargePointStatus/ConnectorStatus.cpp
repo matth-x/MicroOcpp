@@ -399,7 +399,7 @@ int ConnectorStatus::getAvailability() {
     if (availabilityVolatile == AVAILABILITY_INOPERATIVE || *availability == AVAILABILITY_INOPERATIVE) {
         return AVAILABILITY_INOPERATIVE;
     } else if (availabilityVolatile == AVAILABILITY_INOPERATIVE_SCHEDULED || *availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
-        AVAILABILITY_INOPERATIVE_SCHEDULED;
+        return AVAILABILITY_INOPERATIVE_SCHEDULED;
     } else {
         return AVAILABILITY_OPERATIVE;
     }

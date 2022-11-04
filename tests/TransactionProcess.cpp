@@ -1,5 +1,6 @@
 #include <ArduinoOcpp/Tasks/Transactions/TransactionProcess.h>
 #include "./catch2/catch.hpp"
+#include "./helpers/testHelper.h"
 
 #include <array>
 
