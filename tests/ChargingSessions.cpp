@@ -7,22 +7,10 @@
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
 #include "./catch2/catch.hpp"
+#include "./helpers/testHelper.h"
 
 using namespace ArduinoOcpp;
 
-unsigned long mtime = 10000;
-unsigned long custom_timer_cb() {
-    return mtime;
-}
-
-void loop() {
-    mtime += 1000;
-    OCPP_loop();
-    mtime += 1000;
-    OCPP_loop();
-    mtime += 1000;
-    OCPP_loop();
-}
 
 TEST_CASE( "Charging sessions" ) {
 

@@ -90,7 +90,7 @@ void setOnUnlockConnector(std::function<ArduinoOcpp::PollResult<bool>()> unlockC
 void setConnectorLock(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> lockConnector);
 
 //Set a Cb to update transaction-based energy measurements with the most recent transaction state.
-//This allows energy meters (e.g. based on OCMF) to take their measruements right before and after a transaction
+//This allows energy meters to take their measruements right before and after a transaction
 //Return values: - TxEnableState::Active if the energy meter confirmed to be in the transaction-state
 //               - TxEnableState::Inactive if the energy meter has transitioned into a non-transaction-state
 //               - TxEnableState::Pending otherwise, e.g. if transitioning between the states

@@ -82,7 +82,7 @@ void ChargePointStatusService::loop() {
 
         if (outstandingResetRetries <= 0) {
             for (auto connector = connectors.begin(); connector != connectors.end(); connector++) {
-                (*connector)->setRebooting(false);
+                (*connector)->setAvailabilityVolatile(false);
             }
         }
     }
@@ -158,7 +158,7 @@ void ChargePointStatusService::initiateReset(bool isHard) {
     t_resetRetry = ao_tick_ms();
 
     for (auto connector = connectors.begin(); connector != connectors.end(); connector++) {
-        (*connector)->setRebooting(true);
+        (*connector)->setAvailabilityVolatile(true);
     }
 }
 

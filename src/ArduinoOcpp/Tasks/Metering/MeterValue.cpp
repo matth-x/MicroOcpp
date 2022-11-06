@@ -67,7 +67,7 @@ void MeterValueBuilder::updateObservedSamplers() {
 
         if (sr != sl + 1) {
             for (size_t i = 0; i < samplers.size(); i++) {
-                if (!strncmp(samplers[i]->getMeasurand().c_str(), selectStr + sl, sr - sl)) {
+                if (!strncmp(samplers[i]->getProperties().getMeasurand().c_str(), selectStr + sl, sr - sl)) {
                     select_mask[i] = true;
                     select_n++;
                 }
@@ -115,9 +115,13 @@ std::unique_ptr<MeterValue> MeterValueBuilder::deserializeSample(const JsonObjec
 
     JsonArray sampledValue = mvJson["sampledValue"];
     for (JsonObject svJson : sampledValue) {  //for each sampled value, search sampler with matching measurand type
-        const char *measurand = svJson["measurand"] | "Invalid";
         for (auto& sampler : samplers) {
-            if (!sampler->getMeasurand().compare(measurand)) {
+            auto& properties = sampler->getProperties();
+            if (!properties.getMeasurand().compare(svJson["measurand"] | "") &&
+                    !properties.getFormat().compare(svJson["format"] | "") &&
+                    !properties.getPhase().compare(svJson["phase"] | "") &&
+                    !properties.getLocation().compare(svJson["location"] | "") &&
+                    !properties.getUnit().compare(svJson["unit"] | "")) {
                 //found correct sampler
                 auto dVal = sampler->deserializeValue(svJson);
                 if (dVal) {

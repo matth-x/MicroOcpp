@@ -13,6 +13,7 @@
 namespace ArduinoOcpp {
 
 class MeterValue;
+class Transaction;
 
 namespace Ocpp16 {
 
@@ -20,12 +21,12 @@ class MeterValues : public OcppMessage {
 private:
     std::vector<std::unique_ptr<MeterValue>> meterValue;
 
-    int connectorId = 0;
+    unsigned int connectorId = 0;
 
-    ulong emTimeout = 0;
+    std::shared_ptr<Transaction> transaction;
 
 public:
-    MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, int connectorId);
+    MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction = nullptr);
 
     MeterValues(); //for debugging only. Make this for the server pendant
 

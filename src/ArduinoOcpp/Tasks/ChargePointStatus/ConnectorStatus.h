@@ -32,8 +32,10 @@ private:
     
     const int connectorId;
 
+    std::shared_ptr<Transaction> transaction;
+
     std::shared_ptr<Configuration<int>> availability;
-    bool rebooting = false; //report connector inoperative and reject new charging sessions
+    int availabilityVolatile = AVAILABILITY_OPERATIVE;
 
     std::function<bool()> connectorPluggedSampler;
     std::function<bool()> evRequestsEnergySampler;
@@ -49,7 +51,7 @@ private:
     std::function<PollResult<bool>()> onUnlockConnector;
 
     std::function<TxEnableState(TxTrigger)> onConnectorLockPollTx;
-    std::function<TxEnableState(TxTrigger)> onOcmfMeterPollTx;
+    std::function<TxEnableState(TxTrigger)> onTxBasedMeterPollTx;
 
     TransactionProcess txProcess;
 
@@ -76,19 +78,19 @@ public:
     void endSession(const char *reason = nullptr);
     const char *getSessionIdTag();
     uint16_t getSessionWriteCount();
+    bool isTransactionRunning();
     int getTransactionId();
     int getTransactionIdSync();
+    std::shared_ptr<Transaction>& getTransaction();
 
     int getAvailability();
     void setAvailability(bool available);
-    void setRebooting(bool rebooting);
+    void setAvailabilityVolatile(bool available); //set inoperative state but keep only until reboot at most
     void setAuthorizationProvider(std::function<const char *()> authorization);
     void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
     void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
     void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
     void addConnectorErrorCodeSampler(std::function<const char*()> connectorErrorCode);
-
-    void saveState();
 
     OcppMessage *loop();
 

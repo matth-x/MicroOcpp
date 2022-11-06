@@ -8,52 +8,57 @@
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionSequence.h>
 #include <deque>
+
+#define MAX_TX_CNT 100000U
 
 namespace ArduinoOcpp {
 
-class TransactionService;
-class ConnectorTransactionSequence;
+class TransactionStore;
 
 class ConnectorTransactionStore {
 private:
-    TransactionService& context;
+    TransactionStore& context;
     const uint connectorId;
 
     std::shared_ptr<FilesystemAdapter> filesystem;
-    std::shared_ptr<Configuration<int>> txBegin; //The Tx file names are consecutively numbered; first number
-    uint txEnd = 0; //one place after last number
+    std::shared_ptr<Configuration<int>> txEnd;
     
-    std::deque<std::shared_ptr<Transaction>> transactions;
+    std::deque<std::weak_ptr<Transaction>> transactions;
 
-    std::shared_ptr<Transaction> makeTransaction();
+    std::shared_ptr<Configuration<int>> txBegin; //if txNr < txBegin, tx has been safely deleted
 
 public:
-    ConnectorTransactionStore(TransactionService& context, uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
+    ConnectorTransactionStore(TransactionStore& context, uint connectorId, std::shared_ptr<FilesystemAdapter> filesystem);
     
-    std::shared_ptr<Transaction> getActiveTransaction();
-    std::shared_ptr<Transaction> getTransactionSync();
+    std::shared_ptr<Transaction> getLatestTransaction();
     bool commit(Transaction *transaction);
 
-    void restorePendingTransactions();
-    void submitPendingOperations();
+    std::shared_ptr<Transaction> getTransaction(unsigned int txNr);
+    std::shared_ptr<Transaction> createTransaction();
+
+    bool remove(unsigned int txNr);
+
+    int getTxBegin();
+    void updateTxBegin(unsigned int txNr);
 };
 
 class TransactionStore {
 private:
     std::vector<std::unique_ptr<ConnectorTransactionStore>> connectors;
-
 public:
-    TransactionStore(TransactionService& context, uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
+    TransactionStore(uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
-    //std::shared_ptr<Transaction> makeTransaction(uint connectorId);
-    std::shared_ptr<Transaction> getActiveTransaction(uint connectorId);
-    std::shared_ptr<Transaction> getTransactionSync(uint connectorId); //fron element of the tx queue; tx which is being executed at the server now
+    std::shared_ptr<Transaction> getLatestTransaction(uint connectorId);
     bool commit(Transaction *transaction);
 
-    void restorePendingTransactions();
-    void submitPendingOperations();
+    std::shared_ptr<Transaction> getTransaction(unsigned int connectorId, unsigned int txNr);
+    std::shared_ptr<Transaction> createTransaction(unsigned int connectorId);
+
+    bool remove(unsigned int connectorId, unsigned int txNr);
+
+    int getTxBegin(unsigned int connectorId);
+    void updateTxBegin(unsigned int connectorId, unsigned int txNr);
 };
 
 }

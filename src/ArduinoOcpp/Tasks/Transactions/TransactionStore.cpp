@@ -3,7 +3,6 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionService.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
@@ -21,15 +20,18 @@ using namespace ArduinoOcpp;
 
 #define AO_TXSTORE_META_FN AO_FILENAME_PREFIX "/txstore.jsn"
 
-#define MAX_QUEUE_SIZE 20U
-#define MAX_TX_CNT 100000U
-
-ConnectorTransactionStore::ConnectorTransactionStore(TransactionService& context, uint connectorId, std::shared_ptr<FilesystemAdapter> filesystem) :
+ConnectorTransactionStore::ConnectorTransactionStore(TransactionStore& context, uint connectorId, std::shared_ptr<FilesystemAdapter> filesystem) :
         context(context),
         connectorId(connectorId),
         filesystem(filesystem) {
 
     char key [30] = {'\0'};
+    if (snprintf(key, 30, "AO_txEnd_%u", connectorId) < 0) {
+        AO_DBG_ERR("Invalid key");
+        (void)0;
+    }
+    txEnd = declareConfiguration<int>(key, 0, AO_TXSTORE_META_FN, false, false, true, false);
+
     if (snprintf(key, 30, "AO_txBegin_%u", connectorId) < 0) {
         AO_DBG_ERR("Invalid key");
         (void)0;
@@ -37,194 +39,129 @@ ConnectorTransactionStore::ConnectorTransactionStore(TransactionService& context
     txBegin = declareConfiguration<int>(key, 0, AO_TXSTORE_META_FN, false, false, true, false);
 }
 
-void ConnectorTransactionStore::restorePendingTransactions() {
+std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned int txNr) {
 
+    //check for most recent element of cache first because of temporal locality
+    if (!transactions.empty()) {
+        if (auto cached = transactions.back().lock()) {
+            if (cached->getTxNr() == txNr) {
+                //cache hit
+                return cached;
+            }
+        }
+    }
+
+    //check all other elements (and free up unused entries)
+    auto cached = transactions.begin();
+    while (cached != transactions.end()) {
+        if (auto tx = cached->lock()) {
+            if (tx->getTxNr() == txNr) {
+                //cache hit
+                return tx;
+            }
+            cached++;
+        } else {
+            //collect outdated cache reference
+            cached = transactions.erase(cached);
+        }
+    }
+
+    //cache miss - load tx from flash if existent
+    
     if (!filesystem) {
-        AO_DBG_ERR("FS error");
-        return;
-    }
-
-    if (!txBegin || *txBegin < 0 || *txBegin > (int) MAX_TX_CNT) {
-        AO_DBG_ERR("Invalid state");
-        return;
-    }
-
-    uint tx = *txBegin;
-    txEnd = tx;
-
-    const uint MISSES_LIMIT = 3;
-    uint misses = 0;
-
-    while (misses < MISSES_LIMIT) { //search until region without txs found
-
-        char fn [MAX_PATH_SIZE] = {'\0'};
-        auto ret = snprintf(fn, MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, tx);
-        if (ret < 0 || ret >= MAX_PATH_SIZE) {
-            AO_DBG_ERR("fn error: %i", ret);
-            break; //all files have same length
-        }
-
-        auto doc = FilesystemUtils::loadJson(filesystem, fn);
-
-        if (!doc) {
-            misses++;
-            tx++;
-            tx %= MAX_TX_CNT;
-            continue;
-        }
-
-        std::shared_ptr<Transaction> transaction = std::make_shared<Transaction>(context, connectorId, tx);
-        JsonObject txJson = doc->as<JsonObject>();
-        if (!transaction->deserializeSessionState(txJson)) {
-            AO_DBG_ERR("Deserialization error");
-            misses++;
-            tx++;
-            tx %= MAX_TX_CNT;
-            continue;
-        }
-
-        if (!transaction->isPending()) {
-            AO_DBG_DEBUG("Drop aborted / finished tx");
-            tx++;
-            tx %= MAX_TX_CNT;
-            continue; //normal behavior => don't increment misses
-        }
-
-        transactions.push_back(std::move(transaction));
-
-        tx++;
-        tx %= MAX_TX_CNT;
-        txEnd = tx;
-        misses = 0;
-
-        if (transactions.size() > MAX_QUEUE_SIZE) { //allow to exceed MAX_QUEUE_SIZE by 1
-            AO_DBG_ERR("txBegin out of sync");
-            break;
-        }
-    }
-
-    AO_DBG_DEBUG("Restored %zu transactions", transactions.size());
-}
-
-void ConnectorTransactionStore::submitPendingOperations() {
-    for (auto& tx : transactions) {
-        
-        auto& startRpc = tx->getStartRpcSync();
-        if (startRpc.isRequested() && !startRpc.isConfirmed()) {
-            //startTx has been initiated, but not been confirmed yet
-            AO_DBG_DEBUG("Restore StartTx, connectorId=%i, seqNr=%u", connectorId, startRpc.getSeqNr());
-
-            auto startOp = makeOcppOperation(new Ocpp16::StartTransaction(tx));
-            context.addRestoredOperation(startRpc.getSeqNr(), std::move(startOp));
-        }
-
-        auto& stopRpc = tx->getStopRpcSync();
-        if (stopRpc.isRequested() && !stopRpc.isConfirmed()) {
-            //stopTx has been initiated, but not been confirmed yet
-            AO_DBG_DEBUG("Restore StopTx, connectorId=%i, seqNr=%u", connectorId, stopRpc.getSeqNr());
-
-            //... add stop data
-
-            auto stopOp = makeOcppOperation(new Ocpp16::StopTransaction(tx));
-            context.addRestoredOperation(stopRpc.getSeqNr(), std::move(stopOp));
-        }
-    }
-}
-
-std::shared_ptr<Transaction> ConnectorTransactionStore::makeTransaction() {
-
-    if (!filesystem) {
-        AO_DBG_ERR("Need FS adapter");
-        //return nullptr; <-- allow test runs without FS
-    }
-
-    if (transactions.size() >= MAX_QUEUE_SIZE) {
-        AO_DBG_WARN("Queue full");
+        AO_DBG_DEBUG("no FS adapter");
         return nullptr;
     }
 
-    auto transaction = std::make_shared<Transaction>(context, connectorId, txEnd);
-    txEnd++;
-    txEnd %= MAX_TX_CNT;
+    char fn [MAX_PATH_SIZE] = {'\0'};
+    auto ret = snprintf(fn, MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, txNr);
+    if (ret < 0 || ret >= MAX_PATH_SIZE) {
+        AO_DBG_ERR("fn error: %i", ret);
+        return nullptr;
+    }
+
+    size_t msize;
+    if (filesystem->stat(fn, &msize) != 0) {
+        AO_DBG_DEBUG("tx does not exist");
+        return nullptr;
+    }
+
+    auto doc = FilesystemUtils::loadJson(filesystem, fn);
+
+    if (!doc) {
+        AO_DBG_ERR("memory corruption");
+        return nullptr;
+    }
+
+    auto transaction = std::make_shared<Transaction>(*this, connectorId, txNr);
+    JsonObject txJson = doc->as<JsonObject>();
+    if (!transaction->deserializeSessionState(txJson)) {
+        AO_DBG_ERR("deserialization error");
+        return nullptr;
+    }
+
+    //before adding new entry, clean cache
+    transactions.erase(std::remove_if(transactions.begin(), transactions.end(),
+            [](std::weak_ptr<Transaction> tx) {
+                return tx.expired();
+            }),
+            transactions.end());
 
     transactions.push_back(transaction);
-
-    if (!commit(transaction.get())) {
-        std::remove_if(transactions.begin(), transactions.end(),
-            [&transaction] (const std::shared_ptr<Transaction>& el) {
-                return el == transaction;
-            }
-        );
-        txEnd--;
-        txEnd += MAX_TX_CNT;
-        txEnd %= MAX_TX_CNT;
-        return nullptr;
-    }
-
     return transaction;
 }
 
-std::shared_ptr<Transaction> ConnectorTransactionStore::getActiveTransaction() {
-    
-    if (!transactions.empty()) {
-        auto& tx = transactions.back();
-        if (tx->isActive() || tx->isRunning()) {
-            return tx;
-        }
+std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction() {
+
+    if (!txEnd || *txEnd < 0) {
+        AO_DBG_ERR("memory corruption");
+        return nullptr;
     }
 
-    AO_DBG_DEBUG("Make new Tx");
+    auto transaction = std::make_shared<Transaction>(*this, connectorId, (unsigned int) *txEnd);
 
-    auto tx = makeTransaction();
-    if (tx) {
-        tx->setConnectorId(connectorId);
+    *txEnd = (*txEnd + 1) % MAX_TX_CNT;
+    configuration_save();
+
+    if (!commit(transaction.get())) {
+        AO_DBG_ERR("FS error");
+        return nullptr;
     }
 
-    return tx;
+    //before adding new entry, clean cache
+    transactions.erase(std::remove_if(transactions.begin(), transactions.end(),
+            [](std::weak_ptr<Transaction> tx) {
+                return tx.expired();
+            }),
+            transactions.end());
+
+    transactions.push_back(transaction);
+    return transaction;
 }
 
-std::shared_ptr<Transaction> ConnectorTransactionStore::getTransactionSync() {
-    
-    if (!transactions.empty()) {
-        auto& tx = transactions.front();
-        if (tx->isRunning()) {
-            return tx;
-        }
+std::shared_ptr<Transaction> ConnectorTransactionStore::getLatestTransaction() {
+    if (!txEnd || *txEnd < 0) {
+        AO_DBG_ERR("memory corruption");
+        return nullptr;
     }
 
-    return nullptr;
+    unsigned int latest = ((unsigned int) *txEnd + MAX_TX_CNT - 1) % MAX_TX_CNT;
+
+    return getTransaction(latest);
 }
 
 bool ConnectorTransactionStore::commit(Transaction *transaction) {
-    if (transactions.empty()) {
-        AO_DBG_ERR("Dangling transaction");
-        return false;
-    }
 
-    auto found = transactions.end();
-    if (transaction == (transactions.end() - 1)->get()) { //optimization: check if committing the last container element
-        found = transactions.end() - 1;
-    } else {
-        for (auto entry = transactions.begin(); entry != transactions.end(); entry++) {
-            if (transaction == entry->get()) {
-                found = entry;
-                break;
-            }
-        }
+    if (!filesystem) {
+        AO_DBG_DEBUG("no FS: nothing to commit");
+        return true;
     }
-
-    if (found == transactions.end()) {
-        AO_DBG_ERR("Dangling transaction");
-        return false;
-    }
-
-    //confirmed that transaction points to an element in the transactions container
 
     char fn [MAX_PATH_SIZE] = {'\0'};
     auto ret = snprintf(fn, MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, transaction->getTxNr());
     if (ret < 0 || ret >= MAX_PATH_SIZE) {
         AO_DBG_ERR("fn error: %i", ret);
-        return false; //all files have same length
+        return false;
     }
     
     DynamicJsonDocument txDoc {0};
@@ -238,75 +175,68 @@ bool ConnectorTransactionStore::commit(Transaction *transaction) {
         return false;
     }
 
-    //Data committed to memory; now update meta structures
-    
-    if (!transaction->isPending()) {
-        
-        AO_DBG_DEBUG("Drop completed transaction");
-        transactions.erase(found);
-        transaction = nullptr;
-        auto beginNew = txEnd;
-        if (!transactions.empty()) {
-            beginNew = transactions.front()->getTxNr();
-        }
-        if (beginNew != (uint) *txBegin) {
-            unsigned int clearMem = *txBegin;
-            *txBegin = beginNew;
-
-            while (clearMem != beginNew) {
-                char fn [MAX_PATH_SIZE] = {'\0'};
-                auto ret = snprintf(fn, MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, clearMem);
-                if (ret < 0 || ret >= MAX_PATH_SIZE) {
-                    AO_DBG_ERR("fn error: %i", ret);
-                    break; //all files have same length
-                }
-
-                size_t msize;
-                if (filesystem->stat(fn, &msize) == 0) {
-                    bool ret = filesystem->remove(fn);
-                    if (!ret) {
-                        AO_DBG_ERR("memory corrupted: %s", fn);
-                    }
-                }
-
-                clearMem++;
-            }
-            
-            configuration_save();
-        }
-
-        if (transaction == transactions.front().get()) {
-            AO_DBG_DEBUG("Remove TX entry: %s", fn);
-            filesystem->remove(fn);
-        }
-    }
-
     //success
     return true;
 }
 
-TransactionStore::TransactionStore(TransactionService& context, uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem) {
+bool ConnectorTransactionStore::remove(unsigned int txNr) {
+
+    if (!filesystem) {
+        AO_DBG_DEBUG("no FS: nothing to remove");
+        return true;
+    }
+
+    char fn [MAX_PATH_SIZE] = {'\0'};
+    auto ret = snprintf(fn, MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, txNr);
+    if (ret < 0 || ret >= MAX_PATH_SIZE) {
+        AO_DBG_ERR("fn error: %i", ret);
+        return false;
+    }
+
+    size_t msize;
+    if (filesystem->stat(fn, &msize) != 0) {
+        AO_DBG_DEBUG("%s already removed", fn);
+        return true;
+    }
+
+    AO_DBG_DEBUG("remove %s", fn);
+    
+    return filesystem->remove(fn);
+}
+
+int ConnectorTransactionStore::getTxBegin() {
+    if (!txBegin || *txBegin < 0) {
+        AO_DBG_ERR("memory corruption");
+        return -1;
+    }
+
+    return *txBegin;
+}
+
+void ConnectorTransactionStore::updateTxBegin(unsigned int txNr) {
+    if (!txBegin || *txBegin < 0) {
+        AO_DBG_ERR("memory corruption");
+        return;
+    }
+
+    *txBegin = txNr;
+    configuration_save();
+}
+
+TransactionStore::TransactionStore(uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem) {
     
     for (uint i = 0; i < nConnectors; i++) {
         connectors.push_back(std::unique_ptr<ConnectorTransactionStore>(
-            new ConnectorTransactionStore(context, i, filesystem)));
+            new ConnectorTransactionStore(*this, i, filesystem)));
     }
 }
 
-std::shared_ptr<Transaction> TransactionStore::getActiveTransaction(uint connectorId) {
+std::shared_ptr<Transaction> TransactionStore::getLatestTransaction(uint connectorId) {
     if (connectorId >= connectors.size()) {
         AO_DBG_ERR("Invalid connectorId");
         return nullptr;
     }
-    return connectors[connectorId]->getActiveTransaction();
-}
-
-std::shared_ptr<Transaction> TransactionStore::getTransactionSync(uint connectorId) {
-    if (connectorId >= connectors.size()) {
-        AO_DBG_ERR("Invalid connectorId");
-        return nullptr;
-    }
-    return connectors[connectorId]->getTransactionSync();
+    return connectors[connectorId]->getLatestTransaction();
 }
 
 bool TransactionStore::commit(Transaction *transaction) {
@@ -315,21 +245,49 @@ bool TransactionStore::commit(Transaction *transaction) {
         return false;
     }
     auto connectorId = transaction->getConnectorId();
-    if (connectorId < 0 || (size_t) connectorId >= connectors.size()) {
+    if (connectorId >= connectors.size()) {
         AO_DBG_ERR("Invalid tx");
         return false;
     }
     return connectors[connectorId]->commit(transaction);
 }
 
-void TransactionStore::restorePendingTransactions() {
-    for (auto& connector : connectors) {
-        connector->restorePendingTransactions();
+std::shared_ptr<Transaction> TransactionStore::getTransaction(unsigned int connectorId, unsigned int txNr) {
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("Invalid connectorId");
+        return nullptr;
     }
+    return connectors[connectorId]->getTransaction(txNr);
 }
 
-void TransactionStore::submitPendingOperations() {
-    for (auto& connector : connectors) {
-        connector->submitPendingOperations();
+std::shared_ptr<Transaction> TransactionStore::createTransaction(unsigned int connectorId) {
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("Invalid connectorId");
+        return nullptr;
     }
+    return connectors[connectorId]->createTransaction();
+}
+
+bool TransactionStore::remove(unsigned int connectorId, unsigned int txNr) {
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("Invalid connectorId");
+        return false;
+    }
+    return connectors[connectorId]->remove(txNr);
+}
+
+int TransactionStore::getTxBegin(unsigned int connectorId) {
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("Invalid connectorId");
+        return -1;
+    }
+    return connectors[connectorId]->getTxBegin();
+}
+
+void TransactionStore::updateTxBegin(unsigned int connectorId, unsigned int txNr) {
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("Invalid connectorId");
+        return;
+    }
+    return connectors[connectorId]->updateTxBegin(txNr);
 }

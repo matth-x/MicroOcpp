@@ -41,12 +41,6 @@ private:
     std::string location;
     std::string unit;
 
-    const std::string& getFormat() const {return format;}
-    const std::string& getPhase() const {return phase;}
-    const std::string& getLocation() const {return location;}
-    const std::string& getUnit() const {return unit;}
-    friend class SampledValue; //will be able to retreive these parameters
-
 public:
     SampledValueProperties() { }
     SampledValueProperties(const SampledValueProperties& other) :
@@ -58,11 +52,15 @@ public:
     ~SampledValueProperties() = default;
 
     void setFormat(const char *format) {this->format = format;}
+    const std::string& getFormat() const {return format;}
     void setMeasurand(const char *measurand) {this->measurand = measurand;}
     const std::string& getMeasurand() const {return measurand;}
     void setPhase(const char *phase) {this->phase = phase;}
+    const std::string& getPhase() const {return phase;}
     void setLocation(const char *location) {this->location = location;}
+    const std::string& getLocation() const {return location;}
     void setUnit(const char *unit) {this->unit = unit;}
+    const std::string& getUnit() const {return unit;}
 };
 
 enum class ReadingContext {
@@ -122,7 +120,7 @@ public:
     virtual ~SampledValueSampler() = default;
     virtual std::unique_ptr<SampledValue> takeValue(ReadingContext context) = 0;
     virtual std::unique_ptr<SampledValue> deserializeValue(JsonObject svJson) = 0;
-    const std::string& getMeasurand() {return properties.getMeasurand();};
+    const SampledValueProperties& getProperties() {return properties;};
 };
 
 template <class T, class DeSerializer>

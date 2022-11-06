@@ -14,6 +14,7 @@ namespace ArduinoOcpp {
 
 class Transaction;
 class TransactionRPC;
+class StoredOperationHandler;
 
 namespace Ocpp16 {
 
@@ -29,6 +30,9 @@ public:
     const char* getOcppOperationType();
 
     void initiate();
+    bool initiate(StoredOperationHandler *opStore) override;
+
+    bool restore(StoredOperationHandler *opStore) override;
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 

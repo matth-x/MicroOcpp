@@ -11,7 +11,7 @@
 
 namespace ArduinoOcpp {
 
-class TransactionService;
+class TransactionStore;
 class SmartChargingService;
 class ChargePointStatusService;
 class ConnectorStatus;
@@ -22,7 +22,7 @@ class HeartbeatService;
 
 class OcppModel {
 private:
-    std::unique_ptr<TransactionService> transactionService;
+    std::unique_ptr<TransactionStore> transactionStore;
     std::unique_ptr<SmartChargingService> smartChargingService;
     std::unique_ptr<ChargePointStatusService> chargePointStatusService;
     std::unique_ptr<MeteringService> meteringService;
@@ -39,8 +39,8 @@ public:
 
     void loop();
 
-    void setTransactionService(std::unique_ptr<TransactionService> transactionService);
-    TransactionService *getTransactionService();
+    void setTransactionStore(std::unique_ptr<TransactionStore> transactionStore);
+    TransactionStore *getTransactionStore();
 
     void setSmartChargingService(std::unique_ptr<SmartChargingService> scs);
     SmartChargingService* getSmartChargingService() const;

@@ -3,23 +3,14 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionService.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionSequence.h>
 
 #include <ArduinoOcpp/Debug.h>
 
 using namespace ArduinoOcpp;
 
-void TransactionRPC::requestWithMsgId(int msgId) {
-    context.setInitiatedMsgId(seqNr, msgId);
-}
-
 bool TransactionRPC::serializeSessionState(JsonObject rpc) {
     rpc["requested"] = requested;
-    if (requested) {
-        rpc["seqNr"] = seqNr;
-    }
     rpc["confirmed"] = confirmed;
     return true;
 }
@@ -112,7 +103,6 @@ bool Transaction::serializeSessionState(DynamicJsonDocument& out) {
 bool TransactionRPC::deserializeSessionState(JsonObject rpc) {
     if (rpc["requested"] | false) {
         requested = true;
-        seqNr = rpc["seqNr"] | 0;
     }
     if (rpc["confirmed"] | false) {
         confirmed = true;
@@ -200,8 +190,8 @@ bool Transaction::deserializeSessionState(JsonObject state) {
 
     AO_DBG_DEBUG("DUMP TX");
     AO_DBG_DEBUG("Session   | idTag %s", session.idTag);
-    AO_DBG_DEBUG("Start RPC | req: %i, seq: %u, conf: %i", start.rpc.requested, start.rpc.seqNr, start.rpc.confirmed);
-    AO_DBG_DEBUG("Stop  RPC | req: %i, seq: %u, conf: %i",  stop.rpc.requested,  stop.rpc.seqNr,  stop.rpc.confirmed);
+    AO_DBG_DEBUG("Start RPC | req: %i, conf: %i", start.rpc.requested, start.rpc.confirmed);
+    AO_DBG_DEBUG("Stop  RPC | req: %i, conf: %i",  stop.rpc.requested, stop.rpc.confirmed);
 
     //if (stop.rpc.confirmed) {
     //    JsonObject txStopServerSide = txStop["server"];
@@ -211,5 +201,5 @@ bool Transaction::deserializeSessionState(JsonObject state) {
 }
 
 bool Transaction::commit() {
-    return context.getTransactionStore().commit(this);
+    return context.commit(this);
 }

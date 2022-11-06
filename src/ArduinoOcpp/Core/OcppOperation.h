@@ -18,6 +18,7 @@ namespace ArduinoOcpp {
 class OcppMessage;
 class OcppModel;
 class OcppSocket;
+class StoredOperationHandler;
 
 class OcppOperation {
 private:
@@ -41,6 +42,8 @@ private:
     ulong retry_interval_mult = 1; // RETRY_INTERVAL * retry_interval_mult gives longer periods with each iteration
 
     uint16_t printReqCounter = 0;
+
+    std::unique_ptr<StoredOperationHandler> opStore;
 public:
 
     OcppOperation(std::unique_ptr<OcppMessage> msg);
@@ -98,7 +101,11 @@ public:
      */
     bool sendConf(OcppSocket& ocppSocket);
 
-    void setInitiated();
+    void initiate(std::unique_ptr<StoredOperationHandler> opStorage);
+
+    bool restore(std::unique_ptr<StoredOperationHandler> opStorage, std::shared_ptr<OcppModel> oModel);
+
+    StoredOperationHandler *getStorageHandler() {return opStore.get();}
 
     void setOnReceiveConfListener(OnReceiveConfListener onReceiveConf);
 

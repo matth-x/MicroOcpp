@@ -6,7 +6,7 @@
 
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionService.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
@@ -45,11 +45,9 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
      * By default, transactions are triggered by a valid IdTag (+ connected plug as soon as set)
      * The default necessary steps before starting a transaction are
      *     - lock the connector (if handler is set)
-     *     - instruct the OCMF meter to begin a transaction (if OCMF meter handler is set)
+     *     - instruct the tx-based meter to begin a transaction (if tx-based meter handler is set)
      */
     txProcess.addTrigger([this] () -> TxTrigger {
-        auto transaction = this->context.getTransactionService()->getTransactionStore().getActiveTransaction(this->connectorId);
-
         if (transaction && transaction->isInSession() && transaction->isActive()) {
             return TxTrigger::Active;
         } else {
@@ -57,8 +55,8 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
         }
     });
     txProcess.addEnableStep([this] (TxTrigger cond) -> TxEnableState {
-        if (onOcmfMeterPollTx) {
-            return onOcmfMeterPollTx(cond);
+        if (onTxBasedMeterPollTx) {
+            return onTxBasedMeterPollTx(cond);
         }
         return cond == TxTrigger::Active ? TxEnableState::Active : TxEnableState::Inactive;
     });
@@ -68,6 +66,13 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
         }
         return cond == TxTrigger::Active ? TxEnableState::Active : TxEnableState::Inactive;
     });
+
+    if (context.getTransactionStore()) {
+        transaction = context.getTransactionStore()->getLatestTransaction(connectorId);
+    } else {
+        AO_DBG_ERR("must initialize TxStore before ConnectorStatus");
+        (void)0;
+    }
 }
 
 OcppEvseState ConnectorStatus::inferenceStatus() {
@@ -77,26 +82,18 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
     if (connectorId == 0) {
         if (getErrorCode() != nullptr) {
             return OcppEvseState::Faulted;
-        } else if (*availability == AVAILABILITY_INOPERATIVE) {
-            return OcppEvseState::Unavailable;
-        } else if (rebooting) {
+        } else if (getAvailability() == AVAILABILITY_INOPERATIVE) {
             return OcppEvseState::Unavailable;
         } else {
             return OcppEvseState::Available;
         }
     }
 
-    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
-
     if (getErrorCode() != nullptr) {
         return OcppEvseState::Faulted;
-    } else if (!transaction) { //won't start new transactions if cached tx queue is full
+    } else if (getAvailability() == AVAILABILITY_INOPERATIVE) {
         return OcppEvseState::Unavailable;
-    } else if (*availability == AVAILABILITY_INOPERATIVE) {
-        return OcppEvseState::Unavailable;
-    } else if (rebooting && !transaction->isRunning()) {
-        return OcppEvseState::Unavailable;
-    } else if (transaction->isRunning()) {
+    } else if (transaction && transaction->isRunning()) {
         //Transaction is currently running
         if ((connectorEnergizedSampler && !connectorEnergizedSampler()) ||
                 !transaction->isActive() || //will forbid charging
@@ -134,8 +131,6 @@ bool ConnectorStatus::ocppPermitsCharge() {
         return false;
     }
 
-    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
-
     return transaction &&
             transaction->isRunning() &&
             transaction->isActive() &&
@@ -145,12 +140,32 @@ bool ConnectorStatus::ocppPermitsCharge() {
 
 OcppMessage *ConnectorStatus::loop() {
 
-    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
-
-    if ((!transaction || !transaction->isRunning()) && *availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
-        *availability = AVAILABILITY_INOPERATIVE;
-        saveState();
+    if (!isTransactionRunning()) {
+        if (*availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
+            *availability = AVAILABILITY_INOPERATIVE;
+            configuration_save();
+        }
+        if (availabilityVolatile == AVAILABILITY_INOPERATIVE_SCHEDULED) {
+            availabilityVolatile = AVAILABILITY_INOPERATIVE;
+        }
     }
+
+    if (transaction && (transaction->isAborted() || transaction->isCompleted())) {
+        if (transaction->isAborted()) {
+            //If the transaction is aborted (invalidated before started), delete all artifacts from flash
+            //This is an optimization. The memory management will attempt to remove those files again later
+            AO_DBG_DEBUG("collect obsolete transaction %u-%u", connectorId, transaction->getTxNr());
+            if (auto mService = context.getMeteringService()) {
+                mService->removeTxMeterData(connectorId, transaction->getTxNr());
+            }
+
+            context.getTransactionStore()->remove(connectorId, transaction->getTxNr());
+        }
+
+        transaction = nullptr;
+    }
+
+    txProcess.evaluateProcessSteps();
 
     if (transaction) { //begin exclusively transaction-related operations
             
@@ -185,7 +200,6 @@ OcppMessage *ConnectorStatus::loop() {
             }
         }
 
-        txProcess.evaluateProcessSteps(transaction->getTxNr());
         auto txEnable = txProcess.getState();
 
         /*
@@ -208,16 +222,16 @@ OcppMessage *ConnectorStatus::loop() {
                     }
                 }
 
-                AO_DBG_DEBUG("############ Check timestamp");
                 if (transaction->getStartTimestamp() <= MIN_TIME) {
-                    AO_DBG_DEBUG("############ Override timestamp");
                     transaction->setStartTimestamp(context.getOcppTime().getOcppTimestampNow());
                 }
-                //return new StartTransaction(connectorId);
-                auto seqNr = context.getTransactionService()->getTransactionSequence().reserveSeqNr();
-                AO_DBG_DEBUG("Reserved SeqNr %u", seqNr);
-                transaction->getStartRpcSync().setRequested(seqNr);
+
                 transaction->commit();
+
+                if (context.getMeteringService()) {
+                    context.getMeteringService()->beginTxMeterData(transaction.get());
+                }
+
                 return new StartTransaction(transaction);
             }
         } else if (transaction->isRunning()) {
@@ -230,9 +244,9 @@ OcppMessage *ConnectorStatus::loop() {
 
             if (txEnable == TxEnableState::Inactive) {
                 //stop transaction
-                auto seqNr = context.getTransactionService()->getTransactionSequence().reserveSeqNr();
-                transaction->getStopRpcSync().setRequested(seqNr);
 
+                AO_DBG_INFO("Session mngt: trigger StopTransaction");
+                
                 auto meteringService = context.getMeteringService();
                 if (transaction->getMeterStop() < 0 && meteringService) {
                     auto meterStop = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionEnd);
@@ -249,17 +263,17 @@ OcppMessage *ConnectorStatus::loop() {
 
                 transaction->commit();
 
-                AO_DBG_INFO("Session mngt: trigger StopTransaction");
+                std::shared_ptr<TransactionMeterData> stopTxData;
 
-                AO_DBG_DEBUG("Reserved SeqNr %u", seqNr);
-
-                if (context.getMeteringService()) {
-                    auto txData = context.getMeteringService()->createStopTxMeterData(connectorId);
-                    return new StopTransaction(transaction, std::move(txData));
-                } else {
-                    return new StopTransaction(transaction);
+                if (meteringService) {
+                    stopTxData = meteringService->endTxMeterData(transaction.get());
                 }
-                
+
+                if (stopTxData) {
+                    return new StopTransaction(std::move(transaction), stopTxData->retrieveStopTxData());
+                } else {
+                    return new StopTransaction(std::move(transaction));
+                }
             }
         }
     } //end transaction-related operations
@@ -297,11 +311,13 @@ const char *ConnectorStatus::getErrorCode() {
 
 void ConnectorStatus::beginSession(const char *sessionIdTag) {
     
-    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
-
     if (!transaction) {
-        AO_DBG_ERR("Could not allocate Tx");
-        return;
+        transaction = context.getTransactionStore()->createTransaction(connectorId);
+
+        if (!transaction) {
+            AO_DBG_ERR("Could not allocate Tx");
+            return;
+        }
     }
     
     AO_DBG_DEBUG("Begin session with idTag %s, overwriting idTag %s", sessionIdTag != nullptr ? sessionIdTag : "", transaction->getIdTag());
@@ -319,10 +335,8 @@ void ConnectorStatus::beginSession(const char *sessionIdTag) {
 
 void ConnectorStatus::endSession(const char *reason) {
 
-    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
-
     if (!transaction) {
-        AO_DBG_ERR("Could not allocate Tx");
+        AO_DBG_WARN("Cannot end session if no transaction running");
         return;
     }
 
@@ -341,8 +355,6 @@ void ConnectorStatus::endSession(const char *reason) {
 
 const char *ConnectorStatus::getSessionIdTag() {
 
-    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
-
     if (!transaction) {
         return nullptr;
     }
@@ -351,13 +363,18 @@ const char *ConnectorStatus::getSessionIdTag() {
 }
 
 uint16_t ConnectorStatus::getSessionWriteCount() {
-    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
-    
     return transaction ? transaction->getTxNr() : 0;
 }
 
+bool ConnectorStatus::isTransactionRunning() {
+    if (!transaction) {
+        return false;
+    }
+
+    return transaction->isRunning();
+}
+
 int ConnectorStatus::getTransactionId() {
-    auto transaction = context.getTransactionService()->getTransactionStore().getActiveTransaction(connectorId);
     
     if (!transaction) {
         return -1;
@@ -374,35 +391,43 @@ int ConnectorStatus::getTransactionId() {
     }
 }
 
-int ConnectorStatus::getTransactionIdSync() {
-    auto transaction = context.getTransactionService()->getTransactionStore().getTransactionSync(connectorId);
-    
-    if (transaction) {
-        return transaction->getTransactionId();
-    } else {
-        return -1;
-    }
+std::shared_ptr<Transaction>& ConnectorStatus::getTransaction() {
+    return transaction;
 }
 
 int ConnectorStatus::getAvailability() {
-    return *availability;
+    if (availabilityVolatile == AVAILABILITY_INOPERATIVE || *availability == AVAILABILITY_INOPERATIVE) {
+        return AVAILABILITY_INOPERATIVE;
+    } else if (availabilityVolatile == AVAILABILITY_INOPERATIVE_SCHEDULED || *availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
+        return AVAILABILITY_INOPERATIVE_SCHEDULED;
+    } else {
+        return AVAILABILITY_OPERATIVE;
+    }
 }
 
 void ConnectorStatus::setAvailability(bool available) {
     if (available) {
         *availability = AVAILABILITY_OPERATIVE;
     } else {
-        if (getTransactionId() > 0) {
+        if (isTransactionRunning()) {
             *availability = AVAILABILITY_INOPERATIVE_SCHEDULED;
         } else {
             *availability = AVAILABILITY_INOPERATIVE;
         }
     }
-    saveState();
+    configuration_save();
 }
 
-void ConnectorStatus::setRebooting(bool rebooting) {
-    this->rebooting = rebooting;
+void ConnectorStatus::setAvailabilityVolatile(bool available) {
+    if (available) {
+        availabilityVolatile = AVAILABILITY_OPERATIVE;
+    } else {
+        if (isTransactionRunning()) {
+            availabilityVolatile = AVAILABILITY_INOPERATIVE_SCHEDULED;
+        } else {
+            availabilityVolatile = AVAILABILITY_INOPERATIVE;
+        }
+    }
 }
 
 void ConnectorStatus::setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
@@ -424,10 +449,6 @@ void ConnectorStatus::addConnectorErrorCodeSampler(std::function<const char *()>
     this->connectorErrorCodeSamplers.push_back(connectorErrorCode);
 }
 
-void ConnectorStatus::saveState() {
-    configuration_save();
-}
-
 void ConnectorStatus::setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector) {
     this->onUnlockConnector = unlockConnector;
 }
@@ -440,6 +461,6 @@ void ConnectorStatus::setConnectorLock(std::function<TxEnableState(TxTrigger)> o
     this->onConnectorLockPollTx = onConnectorLockPollTx;
 }
 
-void ConnectorStatus::setTxBasedMeterUpdate(std::function<TxEnableState(TxTrigger)> onOcmfMeterPollTx) {
-    this->onOcmfMeterPollTx = onOcmfMeterPollTx;
+void ConnectorStatus::setTxBasedMeterUpdate(std::function<TxEnableState(TxTrigger)> onTxBasedMeterPollTx) {
+    this->onTxBasedMeterPollTx = onTxBasedMeterPollTx;
 }

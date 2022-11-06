@@ -6,6 +6,11 @@
 *
 * @param msg pointer to the string
 */
-void cpp_console_out(const char *msg);    
+void cpp_console_out(const char *msg);   
+
+extern unsigned long mtime;
+unsigned long custom_timer_cb();
+
+void loop();
 
 #endif

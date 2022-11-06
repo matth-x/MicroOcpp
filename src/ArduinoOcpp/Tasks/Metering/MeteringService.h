@@ -11,6 +11,7 @@
 
 #include <ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.h>
 #include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
+#include <ArduinoOcpp/Tasks/Metering/MeterStore.h>
 
 namespace ArduinoOcpp {
 
@@ -19,14 +20,16 @@ using EnergySampler = std::function<float()>; //in Watt-hours (Wh)
 
 class OcppEngine;
 class OcppOperation;
+class FilesystemAdapter;
 
 class MeteringService {
 private:
     OcppEngine& context;
+    MeterStore meterStore;
 
     std::vector<std::unique_ptr<ConnectorMeterValuesRecorder>> connectors;
 public:
-    MeteringService(OcppEngine& context, int numConnectors);
+    MeteringService(OcppEngine& context, int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
     void loop();
 
@@ -40,7 +43,13 @@ public:
 
     std::unique_ptr<OcppOperation> takeTriggeredMeterValues(int connectorId); //snapshot of all meters now
 
-    std::vector<std::unique_ptr<MeterValue>> createStopTxMeterData(int connectorId);
+    void beginTxMeterData(Transaction *transaction);
+
+    std::shared_ptr<TransactionMeterData> endTxMeterData(Transaction *transaction); //use return value to keep data in cache
+
+    std::shared_ptr<TransactionMeterData> getStopTxMeterData(Transaction *transaction); //prefer endTxMeterData when possible
+
+    bool removeTxMeterData(unsigned int connectorId, unsigned int txNr);
 
     int getNumConnectors() {return connectors.size();}
 };

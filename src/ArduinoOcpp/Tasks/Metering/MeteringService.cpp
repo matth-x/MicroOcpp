@@ -3,17 +3,19 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
+#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Debug.h>
 
 using namespace ArduinoOcpp;
 
-MeteringService::MeteringService(OcppEngine& context, int numConn)
-      : context(context) {
+MeteringService::MeteringService(OcppEngine& context, int numConn, std::shared_ptr<FilesystemAdapter> filesystem)
+      : context(context), meterStore(filesystem) {
 
     for (int i = 0; i < numConn; i++) {
-        connectors.push_back(std::unique_ptr<ConnectorMeterValuesRecorder>(new ConnectorMeterValuesRecorder(context.getOcppModel(), i)));
+        connectors.push_back(std::unique_ptr<ConnectorMeterValuesRecorder>(new ConnectorMeterValuesRecorder(context.getOcppModel(), i, meterStore)));
     }
 }
 
@@ -81,12 +83,51 @@ std::unique_ptr<OcppOperation> MeteringService::takeTriggeredMeterValues(int con
     return nullptr;
 }
 
-std::vector<std::unique_ptr<MeterValue>> MeteringService::createStopTxMeterData(int connectorId) {
-    if (connectorId < 0 || (size_t) connectorId >= connectors.size()) {
+void MeteringService::beginTxMeterData(Transaction *transaction) {
+    if (!transaction) {
+        AO_DBG_ERR("invalid argument");
+        return;
+    }
+    auto connectorId = transaction->getConnectorId();
+    if (connectorId >= connectors.size()) {
         AO_DBG_ERR("connectorId is out of bounds");
-        return std::vector<std::unique_ptr<MeterValue>>();
+        return;
     }
     auto& connector = connectors[connectorId];
 
-    return connector->createStopTxMeterData();
+    connector->beginTxMeterData(transaction);
+}
+
+std::shared_ptr<TransactionMeterData> MeteringService::endTxMeterData(Transaction *transaction) {
+    if (!transaction) {
+        AO_DBG_ERR("invalid argument");
+        return nullptr;
+    }
+    auto connectorId = transaction->getConnectorId();
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("connectorId is out of bounds");
+        return nullptr;
+    }
+    auto& connector = connectors[connectorId];
+
+    return connector->endTxMeterData(transaction);
+}
+
+std::shared_ptr<TransactionMeterData> MeteringService::getStopTxMeterData(Transaction *transaction) {
+    if (!transaction) {
+        AO_DBG_ERR("invalid argument");
+        return nullptr;
+    }
+    auto connectorId = transaction->getConnectorId();
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("connectorId is out of bounds");
+        return nullptr;
+    }
+    auto& connector = connectors[connectorId];
+
+    return connector->getStopTxMeterData(transaction);
+}
+
+bool MeteringService::removeTxMeterData(unsigned int connectorId, unsigned int txNr) {
+    return meterStore.remove(connectorId, txNr);
 }

@@ -3,6 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.h>
+#include <ArduinoOcpp/Tasks/Metering/MeterStore.h>
+#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Core/Configuration.h>
@@ -13,8 +15,8 @@
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, int connectorId)
-        : context(context), connectorId{connectorId} {
+ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, int connectorId, MeterStore& meterStore)
+        : context(context), connectorId{connectorId}, meterStore{meterStore} {
 
     auto MeterValuesSampledData = declareConfiguration<const char*>(
         "MeterValuesSampledData",
@@ -58,6 +60,18 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
 
 OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
+    Transaction *transaction = nullptr;
+
+    if (context.getConnectorStatus(connectorId) && context.getConnectorStatus(connectorId)->getTransaction()) {
+        transaction = context.getConnectorStatus(connectorId)->getTransaction().get();
+
+        if (transaction->isRunning() && (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr())) {
+            AO_DBG_WARN("reload stopTxnData");
+            //reload (e.g. after power cut during transaction)
+            stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, connectorId, transaction->getTxNr());
+        }
+    }
+
     if (*ClockAlignedDataInterval >= 1) {
 
         if (alignedData.size() >= (size_t) *MeterValuesAlignedDataMaxLength) {
@@ -80,13 +94,13 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
                     alignedData.push_back(std::move(alignedMeterValues));
                 }
 
-                if (stopTxnAlignedData.size() + 1 < (size_t) (*StopTxnAlignedDataMaxLength)) {
-                    //ensure that collection keeps one free data slot for final value at StopTransaction
+                if (stopTxnData) {
                     auto alignedStopTx = stopTxnAlignedDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::SampleClock);
                     if (alignedStopTx) {
-                        stopTxnAlignedData.push_back(std::move(alignedStopTx));
+                        stopTxnData->addTxData(std::move(alignedStopTx));
                     }
                 }
+
             }
             
             OcppTimestamp midnightBase = OcppTimestamp(2010,0,0,0,0,0);
@@ -105,7 +119,6 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
         }
     } else {
         alignedData.clear();
-        stopTxnAlignedData.clear();
     }
 
     if (*MeterValueSampleInterval >= 1) {
@@ -117,26 +130,21 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
             return meterValues;
         }
 
-        auto connector = context.getConnectorStatus(connectorId);
-        if (connector && connector->getTransactionId() != lastTransactionId) {
+        if ((transaction && transaction->isRunning()) != trackTxRunning) {
             //transaction break
 
-    	    //take a transaction-related sample which is aligned to the transaction break
-            if (connector->getTransactionId() >= 0 && lastTransactionId < 0) {
-                auto sampleStartTx = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::TransactionBegin);
-                if (sampleStartTx) {
-                    stopTxnSampledData.push_back(std::move(sampleStartTx));
-                }
-            } else if (connector->getTransactionId() >= 0 && lastTransactionId > 0) {
-                AO_DBG_ERR("Cannot switch txId");
+            trackTxRunning = (transaction && transaction->isRunning());
+
+            std::shared_ptr<Transaction> transaction_sp = nullptr;
+            if (context.getConnectorStatus(connectorId)) {
+                transaction_sp = context.getConnectorStatus(connectorId)->getTransaction();
             }
 
             MeterValues *meterValues = nullptr;
             if (!sampledData.empty()) {
-                meterValues = new MeterValues(std::move(sampledData), connectorId);
+                meterValues = new MeterValues(std::move(sampledData), connectorId, transaction_sp);
                 sampledData.clear();
             }
-            lastTransactionId = connector->getTransactionId();
             lastSampleTime = ao_tick_ms();
             return meterValues;
         }
@@ -147,11 +155,10 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
                 sampledData.push_back(std::move(sampleMeterValues));
             }
 
-            if (stopTxnSampledData.size() + 1 < (size_t) (*StopTxnSampledDataMaxLength)) {
-                //ensure that collection keeps one free data slot for final value at StopTransaction
+            if (stopTxnData) {
                 auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::SamplePeriodic);
                 if (sampleStopTx) {
-                    stopTxnSampledData.push_back(std::move(sampleStopTx));
+                    stopTxnData->addTxData(std::move(sampleStopTx));
                 }
             }
             lastSampleTime = ao_tick_ms();
@@ -159,7 +166,6 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
     } else {
         sampledData.clear();
-        stopTxnSampledData.clear();
     }
 
     return nullptr; //successful method completition. Currently there is no reason to send a MeterValues Msg.
@@ -188,7 +194,7 @@ void ConnectorMeterValuesRecorder::setEnergySampler(EnergySampler es){
 }
 
 void ConnectorMeterValuesRecorder::addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler) {
-    if (!meterValueSampler->getMeasurand().compare("Energy.Active.Import.Register")) {
+    if (!meterValueSampler->getProperties().getMeasurand().compare("Energy.Active.Import.Register")) {
         energySamplerIndex = samplers.size();
     }
     samplers.push_back(std::move(meterValueSampler));
@@ -203,22 +209,42 @@ std::unique_ptr<SampledValue> ConnectorMeterValuesRecorder::readTxEnergyMeter(Re
     }
 }
 
-std::vector<std::unique_ptr<MeterValue>> ConnectorMeterValuesRecorder::createStopTxMeterData() {
-    
-    //create final StopTxSample
-    if (*MeterValueSampleInterval >= 1) { //... only if sampled Meter Values are activated
-        auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::TransactionEnd);
-        if (sampleStopTx) {
-            stopTxnSampledData.push_back(std::move(sampleStopTx));
+void ConnectorMeterValuesRecorder::beginTxMeterData(Transaction *transaction) {
+    if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
+        stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, connectorId, transaction->getTxNr());
+    }
+
+    if (stopTxnData) {
+        auto sampleTxBegin = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::TransactionBegin);
+        if (sampleTxBegin) {
+            stopTxnData->addTxData(std::move(sampleTxBegin));
+        }
+    }
+}
+
+std::shared_ptr<TransactionMeterData> ConnectorMeterValuesRecorder::endTxMeterData(Transaction *transaction) {
+    if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
+        stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, connectorId, transaction->getTxNr());
+    }
+
+    if (stopTxnData) {
+        auto sampleTxEnd = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::TransactionEnd);
+        if (sampleTxEnd) {
+            stopTxnData->addTxData(std::move(sampleTxEnd));
         }
     }
 
-    //concatenate sampled and aligned meter data; clear all StopTX data in this object
-    decltype(stopTxnSampledData) res {std::move(stopTxnSampledData)};
-    res.insert(res.end(), std::make_move_iterator(stopTxnAlignedData.begin()),
-                          std::make_move_iterator(stopTxnAlignedData.end()));
-    stopTxnSampledData.clear(); //make vectors defined after moving from them
-    stopTxnAlignedData.clear();
+    return std::move(stopTxnData);
+}
 
-    return res;
+std::shared_ptr<TransactionMeterData> ConnectorMeterValuesRecorder::getStopTxMeterData(Transaction *transaction) {
+
+    auto txData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, connectorId, transaction->getTxNr());
+
+    if (!txData) {
+        AO_DBG_ERR("could not create TxData");
+        return nullptr;
+    }
+
+    return txData;
 }

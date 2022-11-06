@@ -7,6 +7,7 @@
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/OcppError.h>
+#include <ArduinoOcpp/Core/OperationStore.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -16,7 +17,8 @@ size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_siz
 
 using namespace ArduinoOcpp;
 
-OcppConnection::OcppConnection(OcppSocket& ocppSock, std::shared_ptr<OcppModel> baseModel) : baseModel{baseModel} {
+OcppConnection::OcppConnection(OcppSocket& ocppSock, std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
+            : baseModel{baseModel}, filesystem{filesystem}, initiatedOcppOperations{baseModel, filesystem} {
     ReceiveTXTcallback callback = [this] (const char *payload, size_t length) {
         return this->processOcppSocketInputTXT(payload, length);
     };
@@ -33,14 +35,11 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
      * can be dequeued and the following ocppOperation is processed.
      */
 
-    auto operation = initiatedOcppOperations.begin();
-    while (operation != initiatedOcppOperations.end()){
-        bool timeout = (*operation)->sendReq(ocppSock); //The only reason to dequeue elements here is when a timeout occurs. Normally
+    auto inited = initiatedOcppOperations.front();
+    if (inited) {
+        bool timeout = inited->sendReq(ocppSock); //The only reason to dequeue elements here is when a timeout occurs. Normally
         if (timeout){                                       //the Conf msg processing routine dequeues finished elements
-            operation = initiatedOcppOperations.erase(operation);
-        } else {
-            //there is one operation pending right now, so quit this while-loop.
-            break;
+            initiatedOcppOperations.pop_front();
         }
     }
 
@@ -48,24 +47,22 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
      * Activate timeout detection on the msgs other than the first in the queue.
      */
 
-    operation = initiatedOcppOperations.begin();
-    while (operation != initiatedOcppOperations.end()) {
-        if (operation == initiatedOcppOperations.begin()){ //jump over the first element
-            ++operation; 
-            continue; 
-        } 
-        Timeout *timer = (*operation)->getTimeout();
+    auto cached = initiatedOcppOperations.begin_tail();
+    while (cached != initiatedOcppOperations.end_tail()) {
+        Timeout *timer = (*cached)->getTimeout();
         if (!timer) {
-            ++operation; //no timeouts, nothing to do in this iteration
+            ++cached; //no timeouts, nothing to do in this iteration
             continue;
         }
         timer->tick(false); //false: did not send a frame prior to calling tick
-        if (timer->isExceeded()) {
-            AO_DBG_INFO("Discarding operation due to timeout:");
-            (*operation)->print_debug();
-            operation = initiatedOcppOperations.erase(operation);
+        if (timer->isExceeded() &&
+                //dropping operations out-of-order is only possible if they do not own an opNr
+                (!(*cached)->getStorageHandler() || (*cached)->getStorageHandler()->getOpNr() < 0)) {
+            AO_DBG_INFO("Discarding cached due to timeout:");
+            (*cached)->print_debug();
+            cached = initiatedOcppOperations.erase_tail(cached);
         } else {
-            ++operation;
+            ++cached;
         }
     }
     
@@ -74,15 +71,15 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
      * If an ocppOperation is finished, it returns true on a conf() call, and is dequeued.
      */
 
-    operation = receivedOcppOperations.begin();
-    while (operation != receivedOcppOperations.end()){
-        bool success = (*operation)->sendConf(ocppSock);
+    auto received = receivedOcppOperations.begin();
+    while (received != receivedOcppOperations.end()){
+        bool success = (*received)->sendConf(ocppSock);
         if (success){
-            operation = receivedOcppOperations.erase(operation);
+            received = receivedOcppOperations.erase(received);
         } else {
             //There will be another attempt to send this conf message in a future loop call.
             //Go on with the next element in the queue, which is now at receivedOcppOperations[i+1]
-            ++operation; //TODO review: this makes confs out-of-order. But if the first Op fails because of lacking RAM, this could save the device. 
+            ++received; //TODO review: this makes confs out-of-order. But if the first Op fails because of lacking RAM, this could save the device. 
         }
     }
 }
@@ -96,8 +93,8 @@ void OcppConnection::initiateOcppOperation(std::unique_ptr<OcppOperation> o){
         AO_DBG_ERR("Called without the operation being configured and ready to send. Discard operation!");
         return; //o gets destroyed
     }
-    o->setInitiated();
-    initiatedOcppOperations.push_back(std::move(o));
+    
+    initiatedOcppOperations.initiate(std::move(o));
 }
 
 bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t length) {
@@ -186,16 +183,24 @@ bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t lengt
  * guaranteed to be received and therefore processed in the right order.
  */
 void OcppConnection::handleConfMessage(JsonDocument& json) {
-    for (auto operation = initiatedOcppOperations.begin(); operation != initiatedOcppOperations.end(); ++operation) {
-        bool success = (*operation)->receiveConf(json); //maybe rename to "consumed"?
-        if (success) {
-            initiatedOcppOperations.erase(operation);
-            return;
-        }
-    }
 
-    //didn't find matching OcppOperation
-    AO_DBG_WARN("Received CALLRESULT doesn't match any pending operation");
+    bool success = false;
+
+    initiatedOcppOperations.drop_if(
+        [&json, &success] (std::unique_ptr<OcppOperation>& operation) {
+            bool match = operation->receiveConf(json);
+            if (match) {
+                success = true;
+                //operation will be deleted by the surrounding drop_if
+            }
+            return match;
+        }); //executes in order and drops every operation where predicate(op) == true
+
+    if (!success) {
+        //didn't find matching OcppOperation
+        AO_DBG_WARN("Received CALLRESULT doesn't match any pending operation");
+        (void)0;
+    }
 }
 
 void OcppConnection::handleReqMessage(JsonDocument& json) {
@@ -218,16 +223,24 @@ void OcppConnection::handleReqMessage(JsonDocument& json, std::unique_ptr<OcppOp
 }
 
 void OcppConnection::handleErrMessage(JsonDocument& json) {
-    for (auto operation = initiatedOcppOperations.begin(); operation != initiatedOcppOperations.end(); ++operation){
-        bool discardOperation = (*operation)->receiveError(json); //maybe rename to "consumed"?
-        if (discardOperation) {
-            initiatedOcppOperations.erase(operation);
-            return;
-        }
-    }
 
-    //No OcppOperation was aborted because of the error message
-    AO_DBG_WARN("Received CALLERROR did not abort a pending operation");
+    bool success = false;
+
+    initiatedOcppOperations.drop_if(
+        [&json, &success] (std::unique_ptr<OcppOperation>& operation) {
+            bool match = operation->receiveError(json);
+            if (match) {
+                success = true;
+                //operation will be deleted by the surrounding drop_if
+            }
+            return match;
+        }); //executes in order and drops every operation where predicate(op) == true
+
+    if (!success) {
+        //No OcppOperation was aborted because of the error message
+        AO_DBG_WARN("Received CALLERROR did not abort a pending operation");
+        (void)0;
+    }
 }
 
 /*

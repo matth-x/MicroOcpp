@@ -12,7 +12,7 @@
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionService.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
@@ -44,7 +44,6 @@ float voltage_eff {230.f};
 #define OCPP_ID_OF_CONNECTOR 1
 #define OCPP_ID_OF_CP 0
 bool OCPP_booted = false; //if BootNotification succeeded
-bool enteredLoop = false; //if loop() is called the first time
 
 } //end namespace ArduinoOcpp::Facade
 } //end namespace ArduinoOcpp
@@ -92,19 +91,17 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     fileSystemOpt = fsOpt;
 
 #ifndef AO_DEACTIVATE_FLASH
-    std::shared_ptr<FilesystemAdapter> filesystem = makeDefaultFilesystemAdapter(fileSystemOpt);
-#else
-    std::shared_ptr<FilesystemAdapter> filesystem;
+    filesystem = makeDefaultFilesystemAdapter(fileSystemOpt);
 #endif
     AO_DBG_DEBUG("filesystem %s", filesystem ? "loaded" : "error");
     
     configuration_init(filesystem); //call before each other library call
 
-    ocppEngine = new OcppEngine(ocppSocket, system_time);
+    ocppEngine = new OcppEngine(ocppSocket, system_time, filesystem);
     auto& model = ocppEngine->getOcppModel();
 
-    model.setTransactionService(std::unique_ptr<TransactionService>(
-        new TransactionService(*ocppEngine, OCPP_NUMCONNECTORS, filesystem)));
+    model.setTransactionStore(std::unique_ptr<TransactionStore>(
+        new TransactionStore(OCPP_NUMCONNECTORS, filesystem)));
     model.setChargePointStatusService(std::unique_ptr<ChargePointStatusService>(
         new ChargePointStatusService(*ocppEngine, OCPP_NUMCONNECTORS)));
     model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
@@ -151,19 +148,12 @@ void OCPP_deinitialize() {
     voltage_eff = 230.f;
 
     OCPP_booted = false;
-    enteredLoop = false;
 }
 
 void OCPP_loop() {
     if (!ocppEngine) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return;
-    }
-
-    if (!enteredLoop) {
-        enteredLoop = true;
-        configuration_save();
-        ocppEngine->getOcppModel().getTransactionService()->initiateRestoredOperations();
     }
 
     ocppEngine->loop();
@@ -191,7 +181,7 @@ void setPowerActiveImportSampler(std::function<float()> power) {
     auto& model = ocppEngine->getOcppModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS)));
+            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS, filesystem)));
     }
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Power.Active.Import");
@@ -213,7 +203,7 @@ void setEnergyActiveImportSampler(std::function<float()> energy) {
     auto& model = ocppEngine->getOcppModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS)));
+            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS, filesystem)));
     }
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Energy.Active.Import.Register");
@@ -235,7 +225,7 @@ void addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler
     auto& model = ocppEngine->getOcppModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS)));
+            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS, filesystem)));
     }
     model.getMeteringService()->addMeterValueSampler(OCPP_ID_OF_CONNECTOR, std::move(meterValueSampler)); //connectorId=1
 }
@@ -310,6 +300,12 @@ void setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
         return;
     }
     connector->setConnectorPluggedSampler(connectorPlugged);
+
+    if (connectorPlugged) {
+        AO_DBG_INFO("Added ConnectorPluggedSampler. Transaction-management is in auto mode now");
+    } else {
+        AO_DBG_INFO("Reset ConnectorPluggedSampler. Transaction-management is in manual mode now");
+    }
 }
 
 void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
@@ -472,18 +468,26 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
         AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return false;
     }
-    auto transaction = ocppEngine->getOcppModel().getTransactionService()->getTransactionStore().getActiveTransaction(OCPP_ID_OF_CONNECTOR);
-    if (!transaction) {
-        AO_DBG_ERR("Transaction buffer full");
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
         return false;
     }
-
-    if (transaction->isRunning()) {
-        AO_DBG_ERR("Called StartTx while still in transaction. Please call StopTx");
-        return false;
+    auto transaction = connector->getTransaction();
+    if (transaction) {
+        if (transaction->getStartRpcSync().isRequested()) {
+            AO_DBG_ERR("Transaction already in progress. Must call stopTransaction()");
+            return false;
+        }
+        transaction->setIdTag(idTag);
+    } else {
+        beginSession(idTag); //request new transaction object
+        transaction = connector->getTransaction();
+        if (!transaction) {
+            AO_DBG_WARN("Transaction queue full");
+            return false;
+        }
     }
-
-    transaction->setIdTag(idTag);
     
     auto startTransaction = makeOcppOperation(
         new StartTransaction(transaction));
@@ -509,12 +513,19 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
     }
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return false;
+    }
 
-    auto transaction = ocppEngine->getOcppModel().getTransactionService()->getTransactionStore().getActiveTransaction(OCPP_ID_OF_CONNECTOR);
+    auto transaction = connector->getTransaction();
     if (!transaction || !transaction->isRunning()) {
         AO_DBG_ERR("No running Tx to stop");
         return false;
     }
+
+    connector->endSession("Local");
 
     const char *idTag = transaction->getIdTag();
     if (idTag) {

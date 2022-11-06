@@ -4,9 +4,10 @@
 
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/OperationStore.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionService.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>
 
@@ -40,14 +41,73 @@ void StartTransaction::initiate() {
             transaction->setStartTimestamp(ocppModel->getOcppTime().getOcppTimestampNow());
         }
         
-        auto seqNr = ocppModel->getTransactionService()->getTransactionSequence().reserveSeqNr();
-        AO_DBG_DEBUG("Reserved seqNr inside StartTx: %u", seqNr);
-        transaction->getStartRpcSync().setRequested(seqNr);
+        transaction->getStartRpcSync().setRequested();
 
         transaction->commit();
     }
 
     AO_DBG_INFO("StartTransaction initiated");
+}
+
+bool StartTransaction::initiate(StoredOperationHandler *opStore) {
+    if (!opStore || !ocppModel || !transaction) {
+        AO_DBG_ERR("-> legacy");
+        return false; //execute legacy initiate instead
+    }
+    
+    auto payload = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+    (*payload)["connectorId"] = transaction->getConnectorId();
+    (*payload)["txNr"] = transaction->getTxNr();
+
+    opStore->setPayload(std::move(payload));
+
+    opStore->commit();
+
+    transaction->getStartRpcSync().setRequested();
+
+    transaction->commit();
+
+    return true; //don't execute legacy initiate
+}
+
+bool StartTransaction::restore(StoredOperationHandler *opStore) {
+    if (!ocppModel) {
+        AO_DBG_ERR("invalid state");
+        return false;
+    }
+
+    if (!opStore) {
+        AO_DBG_ERR("invalid argument");
+        return false;
+    }
+
+    auto payload = opStore->getPayload();
+    if (!payload) {
+        AO_DBG_ERR("memory corruption");
+        return false;
+    }
+
+    int connectorId = (*payload)["connectorId"] | -1;
+    int txNr = (*payload)["txNr"] | -1;
+    if (connectorId < 0 || txNr < 0) {
+        AO_DBG_ERR("record incomplete");
+        return false;
+    }
+
+    auto txStore = ocppModel->getTransactionStore();
+
+    if (!txStore) {
+        AO_DBG_ERR("invalid state");
+        return false;
+    }
+
+    transaction = txStore->getTransaction(connectorId, txNr);
+    if (!transaction) {
+        AO_DBG_ERR("referential integrity violation");
+        return false;
+    }
+
+    return true;
 }
 
 std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
