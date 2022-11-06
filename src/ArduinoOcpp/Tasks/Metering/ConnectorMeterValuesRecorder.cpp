@@ -16,7 +16,7 @@ using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
 ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, int connectorId, MeterStore& meterStore)
-        : context(context), connectorId{connectorId}, meterStore{meterStore} {
+        : context(context), connectorId{connectorId}, meterStore(meterStore) {
 
     auto MeterValuesSampledData = declareConfiguration<const char*>(
         "MeterValuesSampledData",
