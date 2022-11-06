@@ -9,6 +9,7 @@
 #include <memory>
 #include <ArduinoOcpp/Core/OcppTime.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsStatus.h>
+#include <string>
 
 namespace ArduinoOcpp {
 
