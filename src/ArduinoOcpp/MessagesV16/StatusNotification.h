@@ -36,6 +36,8 @@ public:
     std::unique_ptr<DynamicJsonDocument> createConf();
 };
 
+const char *cstrFromOcppEveState(OcppEvseState state);
+
 } //end namespace Ocpp16
 } //end namespace ArduinoOcpp
 #endif

@@ -107,13 +107,17 @@ bool AbstractConfiguration::toBeRemoved() {
 }
 
 void AbstractConfiguration::setToBeRemoved() {
+    if (!toBeRemovedFlag) {
+        value_revision++;
+    }
     toBeRemovedFlag = true;
-    value_revision++;
 }
 
 void AbstractConfiguration::resetToBeRemovedFlag() {
+    if (toBeRemovedFlag) {
+        value_revision++;
+    }
     toBeRemovedFlag = false;
-    value_revision++;
 }
 
 uint16_t AbstractConfiguration::getValueRevision() {

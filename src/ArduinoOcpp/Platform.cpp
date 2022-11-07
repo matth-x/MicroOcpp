@@ -54,6 +54,8 @@ unsigned long ao_tick_ms_unix() {
         ArduinoOcpp::clock_reference = std::chrono::steady_clock::now();
         ArduinoOcpp::clock_initialized = true;
     }
-    return (std::chrono::steady_clock::now() - ArduinoOcpp::clock_reference).count() / (int64_t) 1000000;
+    std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - ArduinoOcpp::clock_reference);
+    return (unsigned long) ms.count();
 }
 #endif

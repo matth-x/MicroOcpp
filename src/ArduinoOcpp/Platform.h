@@ -20,6 +20,7 @@
 #endif
 
 #ifdef AO_CUSTOM_CONSOLE
+#include <cstdio>
 
 #ifndef AO_CUSTOM_CONSOLE_MAXMSGSIZE
 #define AO_CUSTOM_CONSOLE_MAXMSGSIZE 196
