@@ -31,10 +31,10 @@ void TriggerMessage::processReq(JsonObject payload) {
             if (connectorId < 0) {
                 auto nConnectors = mService->getNumConnectors();
                 for (decltype(nConnectors) i = 0; i < nConnectors; i++) {
-                    triggeredOperations.push_back(mService->takeMeterValuesNow(i));
+                    triggeredOperations.push_back(mService->takeTriggeredMeterValues(i));
                 }
             } else if (connectorId < mService->getNumConnectors()) {
-                triggeredOperations.push_back(mService->takeMeterValuesNow(connectorId));
+                triggeredOperations.push_back(mService->takeTriggeredMeterValues(connectorId));
             } else {
                 errorCode = "PropertyConstraintViolation";
             }

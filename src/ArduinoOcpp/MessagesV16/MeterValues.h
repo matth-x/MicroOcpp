@@ -11,26 +11,30 @@
 #include <vector>
 
 namespace ArduinoOcpp {
+
+class MeterValue;
+class Transaction;
+
 namespace Ocpp16 {
 
 class MeterValues : public OcppMessage {
 private:
+    std::vector<std::unique_ptr<MeterValue>> meterValue;
 
-    std::vector<OcppTimestamp> sampleTime;
-    std::vector<float> power;
-    std::vector<float> energy;
+    unsigned int connectorId = 0;
 
-    int connectorId = 0;
-    int transactionId = -1;
+    std::shared_ptr<Transaction> transaction;
 
 public:
-    MeterValues(const std::vector<OcppTimestamp> *sampleTime, const std::vector<float> *energy, const std::vector<float> *power, int connectorId, int transactionId);
+    MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction = nullptr);
 
     MeterValues(); //for debugging only. Make this for the server pendant
 
     ~MeterValues();
 
     const char* getOcppOperationType();
+
+    void initiate() override;
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 

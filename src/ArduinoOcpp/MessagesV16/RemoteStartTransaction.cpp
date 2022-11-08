@@ -5,7 +5,9 @@
 
 #include <ArduinoOcpp/MessagesV16/RemoteStartTransaction.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::RemoteStartTransaction;
@@ -27,20 +29,28 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
         snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
     }
 
+    if (*idTag == '\0') {
+        AO_DBG_WARN("idTag format violation");
+        errorCode = "FormationViolation";
+    }
+
     if (payload.containsKey("chargingProfile")) {
-        AO_DBG_WARN("chargingProfile via RmtStartTransaction not supported yet");
+        AO_DBG_INFO("Setting Charging profile via RemoteStartTransaction");
+
+        JsonObject chargingProfile = payload["chargingProfile"];
+        if ((chargingProfile["chargingProfileId"] | -1) < 0) {
+            AO_DBG_WARN("RemoteStartTx profile requires non-negative chargingProfileId");
+            errorCode = chargingProfile.containsKey("chargingProfileId") ? 
+                        "PropertyConstraintViolation" : "FormationViolation";
+        }
+        chargingProfileDoc = DynamicJsonDocument(chargingProfile.memoryUsage()); //copy TxProfile
+        chargingProfileDoc.set(chargingProfile);
     }
 }
 
 std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
-
-    if (*idTag == '\0') {
-        AO_DBG_WARN("idTag format violation");
-        payload["status"] = "Rejected";
-        return doc;
-    }
     
     bool canStartTransaction = false;
     if (connectorId >= 1) {
@@ -70,11 +80,41 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
         }
     }
 
-    if (canStartTransaction){
+    if (canStartTransaction) {
+
+        auto sRmtProfileId = declareConfiguration<int>("AO_SRMTPROFILEID_CONN_1", -1, CONFIGURATION_FN, false, false, true, false);
+
+        if (ocppModel && ocppModel->getSmartChargingService()) {
+            auto scService = ocppModel->getSmartChargingService();
+
+            if (*sRmtProfileId >= 0) {
+                int clearProfileId = *sRmtProfileId;
+                bool ret = scService->clearChargingProfile([clearProfileId](int id, int, ChargingProfilePurposeType, int) {
+                    return id == clearProfileId;
+                });
+                (void)ret;
+
+                *sRmtProfileId = -1;
+                AO_DBG_DEBUG("Cleared Charging Profile from previous RemoteStartTx: %s", ret ? "success" : "already cleared");
+                configuration_save();
+            }
+        }
+
         if (ocppModel && ocppModel->getConnectorStatus(connectorId)) {
             auto connector = ocppModel->getConnectorStatus(connectorId);
 
             connector->beginSession(idTag);
+        }
+
+        if (!chargingProfileDoc.isNull()
+                && (ocppModel && ocppModel->getSmartChargingService())) {
+            auto scService = ocppModel->getSmartChargingService();
+
+            JsonObject chargingProfile = chargingProfileDoc.as<JsonObject>();
+            scService->setChargingProfile(chargingProfile);
+            *sRmtProfileId = chargingProfile["chargingProfileId"].as<int>();
+            AO_DBG_DEBUG("Charging Profile from RemoteStartTx set");
+            configuration_save();
         }
 
         payload["status"] = "Accepted";

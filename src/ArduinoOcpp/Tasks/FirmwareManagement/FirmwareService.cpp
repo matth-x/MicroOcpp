@@ -61,7 +61,7 @@ void FirmwareService::loop() {
                 if (!availabilityRestore) {
                     availabilityRestore = (evse->getAvailability() == AVAILABILITY_OPERATIVE);
                 }
-                evse->setAvailability(false);
+                evse->setAvailabilityVolatile(false);
             }
             if (onDownload == nullptr) {
                 stage = UpdateStage::AfterDownload;
@@ -169,7 +169,7 @@ void FirmwareService::loop() {
                 retries = 0; //End of update routine. Client must reboot on its own
                 if (availabilityRestore) {
                     if (cpStatusService && cpStatusService->getConnector(0)) {
-                        cpStatusService->getConnector(0)->setAvailability(true);
+                        cpStatusService->getConnector(0)->setAvailabilityVolatile(true);
                     }
                 }
                 return;

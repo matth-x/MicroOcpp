@@ -26,6 +26,8 @@ namespace ArduinoOcpp {
 std::unique_ptr<DynamicJsonDocument> createEmptyDocument();
 
 class OcppModel;
+class TransactionRPC;
+class StoredOperationHandler;
 
 class OcppMessage {
 private:
@@ -42,6 +44,9 @@ public:
     void setOcppModel(std::shared_ptr<OcppModel> ocppModel);
 
     virtual void initiate();
+    virtual bool initiate(StoredOperationHandler *rpcData) {return false;}
+
+    virtual bool restore(StoredOperationHandler *rpcData) {return false;}
 
     /**
      * Create the payload for the respective OCPP message
@@ -75,7 +80,8 @@ public:
     virtual const char *getErrorCode() {return nullptr;} //nullptr means no error
     virtual const char *getErrorDescription() {return "";}
     virtual std::unique_ptr<DynamicJsonDocument> getErrorDetails() {return createEmptyDocument();}
-        
+    
+    virtual TransactionRPC *getTransactionSync() {return nullptr;}
 };
 
 } //end namespace ArduinoOcpp

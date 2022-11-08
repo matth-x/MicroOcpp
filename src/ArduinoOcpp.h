@@ -14,6 +14,9 @@
 #include <ArduinoOcpp/Core/OcppOperationCallbacks.h>
 #include <ArduinoOcpp/Core/OcppOperationTimeout.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
+#include <ArduinoOcpp/Core/PollResult.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionPrerequisites.h>
+#include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 
 using ArduinoOcpp::OnReceiveConfListener;
 using ArduinoOcpp::OnReceiveReqListener;
@@ -30,7 +33,7 @@ void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_u
 #endif
 
 //Lets you use your own WebSocket implementation
-void OCPP_initialize(ArduinoOcpp::OcppSocket& ocppSocket, float V_eff = 230.f /*German grid*/, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
+void OCPP_initialize(ArduinoOcpp::OcppSocket& ocppSocket, float V_eff = 230.f /*European grid*/, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
 
 //experimental; More testing required (help needed: it would be awesome if you can you publish your evaluation results on the GitHub page)
 void OCPP_deinitialize();
@@ -51,13 +54,14 @@ void setPowerActiveImportSampler(std::function<float()> power);
 
 void setEnergyActiveImportSampler(std::function<float()> energy);
 
+void addMeterValueSampler(std::unique_ptr<ArduinoOcpp::SampledValueSampler> meterValueSampler);
+void addMeterValueSampler(std::function<int32_t ()> value, const char *measurand = nullptr, const char *unit = nullptr, const char *location = nullptr, const char *phase = nullptr);
+
 void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
 
 void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
 
 void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
-
-//void setConnectorFaultedSampler(std::function<bool()> connectorFailed);
 
 void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode);
 
@@ -73,7 +77,25 @@ void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCo
 
 void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged);
 
-void setOnUnlockConnector(std::function<bool()> unlockConnector); //true: success, false: failure
+//Set a Cb to mechanically unlock the connector. Called for the OCPP operation "UnlockConnector"
+//Return values: true on success, false on failure, PollResult::Await if not known yet
+//Continues to call the Cb as long as it returns PollResult::Await
+void setOnUnlockConnector(std::function<ArduinoOcpp::PollResult<bool>()> unlockConnector);
+
+//Set a Cb for setting the state of the connector lock. Called in the course of normal transactions
+//Return values: - TxEnableState::Active if connector is locked and ready for transaction
+//               - TxEnableState::Inactive if connector lock is released
+//               - TxEnableState::Pending otherwise, e.g. if transitioning between the states
+//Called periodically
+void setConnectorLock(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> lockConnector);
+
+//Set a Cb to update transaction-based energy measurements with the most recent transaction state.
+//This allows energy meters to take their measruements right before and after a transaction
+//Return values: - TxEnableState::Active if the energy meter confirmed to be in the transaction-state
+//               - TxEnableState::Inactive if the energy meter has transitioned into a non-transaction-state
+//               - TxEnableState::Pending otherwise, e.g. if transitioning between the states
+//Called periodically
+void setTxBasedMeterUpdate(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> updateTxState);
 
 /*
  * React on CS-initiated operations
@@ -122,11 +144,11 @@ void authorize(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbor
 void bootNotification(const char *chargePointModel, const char *chargePointVendor, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
 //The OCPP operation will include the given payload without modifying it. The library will delete the payload object after successful transmission.
-void bootNotification(DynamicJsonDocument *payload, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
+void bootNotification(std::unique_ptr<DynamicJsonDocument> payload, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
-void startTransaction(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
+bool startTransaction(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
-void stopTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
+bool stopTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
 /*
  * Access information about the internal state of the library
@@ -149,7 +171,7 @@ bool isAvailable(); //if the charge point is operative or inoperative
 
 void beginSession(const char *idTag);
 
-void endSession();
+void endSession(const char *reason = nullptr);
 
 bool isInSession();
 
@@ -176,5 +198,13 @@ ArduinoOcpp::FirmwareService *getFirmwareService();
 // To integrate Diagnostics, see ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h
 ArduinoOcpp::DiagnosticsService *getDiagnosticsService();
 #endif
+
+namespace ArduinoOcpp {
+class OcppEngine;
+}
+
+//Get access to internal functions and data structures. The returned OcppEngine object allows
+//you to bypass the facace functions of this header and implement custom functionality.
+ArduinoOcpp::OcppEngine *getOcppEngine();
 
 #endif

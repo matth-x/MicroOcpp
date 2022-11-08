@@ -34,7 +34,7 @@ void SetChargingProfile::processReq(JsonObject payload) {
 
     if (ocppModel && ocppModel->getSmartChargingService()) {
         auto smartChargingService = ocppModel->getSmartChargingService();
-        smartChargingService->updateChargingProfile(&csChargingProfiles);
+        smartChargingService->setChargingProfile(csChargingProfiles);
     }
 }
 

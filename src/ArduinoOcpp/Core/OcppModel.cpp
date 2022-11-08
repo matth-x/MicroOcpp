@@ -3,6 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
@@ -39,6 +40,14 @@ void OcppModel::loop() {
     
     if (firmwareService)
         firmwareService->loop();
+}
+
+void OcppModel::setTransactionStore(std::unique_ptr<TransactionStore> ts) {
+    transactionStore = std::move(ts);
+}
+
+TransactionStore *OcppModel::getTransactionStore() {
+    return transactionStore.get();
 }
 
 void OcppModel::setSmartChargingService(std::unique_ptr<SmartChargingService> scs) {

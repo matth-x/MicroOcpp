@@ -9,12 +9,25 @@
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
 
-#if defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
+#if !defined(AO_DEACTIVATE_FLASH) && defined(AO_DEACTIVATE_FLASH_SMARTCHARGING)
+#define AO_DEACTIVATE_FLASH
+#endif
+
+#ifndef AO_DEACTIVATE_FLASH
+#include <ArduinoOcpp/Core/FilesystemAdapter.h>
+#if AO_USE_FILEAPI == ESPIDF_SPIFFS
+#define AO_DEACTIVATE_FLASH //migrate to File utils
+#endif
+#endif
+
+#ifndef AO_DEACTIVATE_FLASH
+#if defined(ESP32)
 #include <LITTLEFS.h>
 #define USE_FS LITTLEFS
 #else
 #include <FS.h>
 #define USE_FS SPIFFS
+#endif
 #endif
 
 #define SINGLE_CONNECTOR_ID 1
@@ -37,13 +50,20 @@ SmartChargingService::SmartChargingService(OcppEngine& context, float chargeLimi
     limitBeforeChange = -1.0f;
     nextChange = MIN_TIME;
     chargingSessionStart = MAX_TIME;
+    char max_timestamp [JSONDATE_LENGTH + 1] = {'\0'};
+    chargingSessionStart.toJsonString(max_timestamp, JSONDATE_LENGTH + 1);
+    txStartTime = declareConfiguration<const char*>("AO_TXSTARTTIME_CONN_1", max_timestamp, CONFIGURATION_FN, false, false, true, false);
     chargingSessionTransactionID = -1;
+    sRmtProfileId = declareConfiguration<int>("AO_SRMTPROFILEID_CONN_1", -1, CONFIGURATION_FN, false, false, true, false);
     for (int i = 0; i < CHARGEPROFILEMAXSTACKLEVEL; i++) {
         ChargePointMaxProfile[i] = NULL;
         TxDefaultProfile[i] = NULL;
         TxProfile[i] = NULL;
     }
     declareConfiguration<int>("ChargeProfileMaxStackLevel", CHARGEPROFILEMAXSTACKLEVEL, CONFIGURATION_VOLATILE, false, true, false, false);
+    declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit ", "Power", CONFIGURATION_VOLATILE, false, true, false, false);
+    declareConfiguration<int>("ChargingScheduleMaxPeriods", CHARGINGSCHEDULEMAXPERIODS, CONFIGURATION_VOLATILE, false, true, false, false);
+    declareConfiguration<int>("MaxChargingProfilesInstalled", MAXCHARGINGPROFILESINSTALLED, CONFIGURATION_VOLATILE, false, true, false, false);
 
     const char *fpId = "SmartCharging";
     auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
@@ -123,9 +143,11 @@ void SmartChargingService::inferenceLimit(const OcppTimestamp &t, float *limitOu
     //evaluate limit from TxProfiles
     float limit_tx = 0.0f;
     bool limit_defined_tx = false;
-    for (int i = CHARGEPROFILEMAXSTACKLEVEL - 1; i >= 0; i--){
-        if (TxProfile[i] == NULL) continue;
-        if (!TxProfile[i]->checkTransactionId(chargingSessionTransactionID)) continue;
+    for (int i = CHARGEPROFILEMAXSTACKLEVEL - 1; i >= 0; i--) {
+        if (!TxProfile[i])
+            continue;
+        if (!TxProfile[i]->checkTransactionAssignment(chargingSessionTransactionID, *sRmtProfileId))
+            continue;
         OcppTimestamp nextChange = MAX_TIME;
         limit_defined_tx = TxProfile[i]->inferenceLimit(t, chargingSessionStart, &limit_tx, &nextChange);
         if (nextChange < validToMin)
@@ -141,7 +163,6 @@ void SmartChargingService::inferenceLimit(const OcppTimestamp &t, float *limitOu
     bool limit_defined_txdef = false;
     for (int i = CHARGEPROFILEMAXSTACKLEVEL - 1; i >= 0; i--){
         if (TxDefaultProfile[i] == NULL) continue;
-        //if (!TxDefaultProfile[i]->checkTransactionId(chargingSessionTransactionID)) continue; //this doesn't do anything on TxDefaultProfiles and could be deleted
         OcppTimestamp nextChange = MAX_TIME;
         limit_defined_txdef = TxDefaultProfile[i]->inferenceLimit(t, chargingSessionStart, &limit_txdef, &nextChange);
         if (nextChange < validToMin)
@@ -157,7 +178,6 @@ void SmartChargingService::inferenceLimit(const OcppTimestamp &t, float *limitOu
     bool limit_defined_cpmax = false;
     for (int i = CHARGEPROFILEMAXSTACKLEVEL - 1; i >= 0; i--){
         if (ChargePointMaxProfile[i] == NULL) continue;
-        //if (!ChargePointMaxProfile[i]->checkTransactionId(chargingSessionTransactionID)) continue; //this doesn't do anything on ChargePointMaxProfiles and could be deleted
         OcppTimestamp nextChange = MAX_TIME;
         limit_defined_cpmax = ChargePointMaxProfile[i]->inferenceLimit(t, chargingSessionStart, &limit_cpmax, &nextChange);
         if (nextChange < validToMin)
@@ -216,37 +236,84 @@ ChargingSchedule *SmartChargingService::getCompositeSchedule(int connectorId, ot
 }
 
 void SmartChargingService::refreshChargingSessionState() {
-    int currentTxId = -1;
-    if (context.getOcppModel().getConnectorStatus(SINGLE_CONNECTOR_ID)) {
-        auto connector = context.getOcppModel().getConnectorStatus(SINGLE_CONNECTOR_ID);
-        currentTxId = connector->getTransactionId();
+    if (!context.getOcppModel().getConnectorStatus(SINGLE_CONNECTOR_ID)) {
+        return; //charging session state does not apply
     }
 
-    if (currentTxId != chargingSessionTransactionID) {
+    auto connector = context.getOcppModel().getConnectorStatus(SINGLE_CONNECTOR_ID);
+
+    if (!chargingSessionStateInitialized) {
+        chargingSessionStateInitialized = true;
+
+        chargingSessionStart.setTime(*txStartTime);
+        chargingSessionTransactionID = connector->getTransactionId();
+        sessionIdTagRev = connector->getSessionWriteCount();
+        sRmtProfileIdRev = sRmtProfileId->getValueRevision();
+
+        //fuzzy check if session engaged at reboot (during first loop run)
+        auto chargingSessionStartCheck = MAX_TIME;
+        chargingSessionStartCheck -= 1000000; 
+        if (chargingSessionStart >= chargingSessionStartCheck) {
+            //charging session start lies in future -> null-value -> no charging session before reboot
+            chargingSessionTransactionID = -1;
+        }
+    }
+
+    if (connector->getTransactionId() != chargingSessionTransactionID) {
         //transition!
 
-        if (chargingSessionTransactionID != 0 && currentTxId >= 0) {
+        bool txStartUpdated = false;
+        if (chargingSessionTransactionID != 0 && connector->getTransactionId() >= 0) {
             chargingSessionStart = context.getOcppModel().getOcppTime().getOcppTimestampNow();
-        } else if (chargingSessionTransactionID >= 0 && currentTxId < 0) {
+            txStartUpdated = true;
+        } else if (chargingSessionTransactionID >= 0 && connector->getTransactionId() < 0) {
             chargingSessionStart = MAX_TIME;
+            txStartUpdated = true;
+        }
+
+        if (txStartUpdated) {
+            char timestamp [JSONDATE_LENGTH + 1] = {'\0'};
+            chargingSessionStart.toJsonString(timestamp, JSONDATE_LENGTH + 1);
+            *txStartTime = timestamp;
+            configuration_save();
         }
 
         nextChange = context.getOcppModel().getOcppTime().getOcppTimestampNow();
-        chargingSessionTransactionID = currentTxId;
     }
+  
+    if (*sRmtProfileId >= 0 && //Remote profile set? Check if to delete
+            (!connector->getSessionIdTag()    //Always delete Rmt profile if there is no session
+            || (sessionIdTagRev != connector->getSessionWriteCount() && sRmtProfileIdRev == sRmtProfileId->getValueRevision()))) {
+                                               //Alternaternively delete if session state has been overwritten
+        
+        //after RemoteTx session expired, clean charging profile
+        int clearProfileId = *sRmtProfileId;
+        bool ret = clearChargingProfile([clearProfileId] (int id, int, ChargingProfilePurposeType, int) {
+            return id == clearProfileId;
+        });
+        (void)ret;
+
+        AO_DBG_DEBUG("Clearing RmtTx Charging Profile after session expiry: %s", ret ? "success" : "already cleared");
+
+        *sRmtProfileId = -1;
+    }
+
+    chargingSessionTransactionID = connector->getTransactionId();
+    sessionIdTagRev = connector->getSessionWriteCount();
+    sRmtProfileIdRev = sRmtProfileId->getValueRevision();
 }
 
-void SmartChargingService::updateChargingProfile(JsonObject *json) {
+void SmartChargingService::setChargingProfile(JsonObject json) {
     ChargingProfile *pointer = updateProfileStack(json);
     if (pointer)
         writeProfileToFlash(json, pointer);
 }
 
-ChargingProfile *SmartChargingService::updateProfileStack(JsonObject *json){
-    ChargingProfile *chargingProfile = new ChargingProfile(*json);
+ChargingProfile *SmartChargingService::updateProfileStack(JsonObject json){
+    ChargingProfile *chargingProfile = new ChargingProfile(json);
 
-    if (AO_DBG_LEVEL >= AO_DL_INFO) {
-        AO_DBG_INFO("Charging Profile internal model:");
+    if (AO_DBG_LEVEL >= AO_DL_VERBOSE) {
+        AO_DBG_VERBOSE("Charging Profile internal model:");
         chargingProfile->printProfile();
     }
 
@@ -327,6 +394,7 @@ bool SmartChargingService::clearChargingProfile(const std::function<bool(int, in
                 }
 #endif
                 delete chargingProfile;
+                profileStack[iLevel] = nullptr;
             }
         }
     }
@@ -340,7 +408,7 @@ bool SmartChargingService::clearChargingProfile(const std::function<bool(int, in
     return nMatches > 0;
 }
 
-bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile *chargingProfile) {
+bool SmartChargingService::writeProfileToFlash(JsonObject json, ChargingProfile *chargingProfile) {
 #ifndef AO_DEACTIVATE_FLASH
 
     if (!filesystemOpt.accessAllowed()) {
@@ -374,7 +442,7 @@ bool SmartChargingService::writeProfileToFlash(JsonObject *json, ChargingProfile
     }
 
     // Serialize JSON to file
-    if (serializeJson(*json, file) == 0) {
+    if (serializeJson(json, file) == 0) {
         AO_DBG_ERR("Unable to save: could not serialize JSON for profile: %s", fn);
         file.close();
         return false;
@@ -492,7 +560,7 @@ bool SmartChargingService::loadProfiles() {
                 }
 
                 JsonObject profileJson = profileDoc.as<JsonObject>();
-                updateProfileStack(&profileJson);
+                updateProfileStack(profileJson);
 
                 profileDoc.clear();
                 break;

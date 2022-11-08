@@ -4,15 +4,30 @@
 
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/OperationStore.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
+#include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
+#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::StopTransaction;
+using ArduinoOcpp::TransactionRPC;
 
-StopTransaction::StopTransaction(int connectorId) : connectorId(connectorId) {
+#define AO_TXHISTORY_SIZE 10
+
+StopTransaction::StopTransaction(std::shared_ptr<Transaction> transaction)
+        : transaction(transaction) {
 
 }
+
+StopTransaction::StopTransaction(std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData)
+        : transaction(transaction), transactionData(std::move(transactionData)) {
+
+}
+
+StopTransaction::StopTransaction() { }
 
 const char* StopTransaction::getOcppOperationType(){
     return "StopTransaction";
@@ -20,45 +35,145 @@ const char* StopTransaction::getOcppOperationType(){
 
 void StopTransaction::initiate() {
 
-    if (ocppModel && ocppModel->getMeteringService()) {
+    if (ocppModel && transaction && !transaction->getStopRpcSync().isRequested()) {
+        //fill out tx data if not happened before
+
         auto meteringService = ocppModel->getMeteringService();
-        meterStop = (int) meteringService->readEnergyActiveImportRegister(connectorId);
-    }
-
-    if (ocppModel) {
-        otimestamp = ocppModel->getOcppTime().getOcppTimestampNow();
-    } else {
-        otimestamp = MIN_TIME;
-    }
-
-    if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
-        auto connector = ocppModel->getConnectorStatus(connectorId);
-        connector->setTransactionId(-1); //immediate end of transaction
-        if (connector->getSessionIdTag()) {
-            AO_DBG_DEBUG("Ending EV user session triggered by StopTransaction");
-            connector->endSession();
+        if (transaction->getMeterStop() < 0 && meteringService) {
+            auto meterStop = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionEnd);
+            if (meterStop && *meterStop) {
+                transaction->setMeterStop(meterStop->toInteger());
+            } else {
+                AO_DBG_ERR("MeterStop undefined");
+            }
         }
-    }
 
+        if (transaction->getStopTimestamp() <= MIN_TIME) {
+            transaction->setStopTimestamp(ocppModel->getOcppTime().getOcppTimestampNow());
+        }
+
+        transaction->getStopRpcSync().setRequested();
+
+        transaction->commit();
+    }
     AO_DBG_INFO("StopTransaction initiated!");
 }
 
-std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1)));
-    JsonObject payload = doc->to<JsonObject>();
-
-    if (meterStop >= 0)
-        payload["meterStop"] = meterStop; //TODO meterStart is required to be in Wh, but measuring unit is probably inconsistent in implementation
-
-    if (otimestamp > MIN_TIME) {
-        char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
-        otimestamp.toJsonString(timestamp, JSONDATE_LENGTH + 1);
-        payload["timestamp"] = timestamp;
+bool StopTransaction::initiate(StoredOperationHandler *opStore) {
+    if (!opStore || !ocppModel || !transaction) {
+        AO_DBG_ERR("-> legacy");
+        return false; //execute legacy initiate instead
     }
     
-    if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
-        auto connector = ocppModel->getConnectorStatus(connectorId);
-        payload["transactionId"] = connector->getTransactionIdSync();
+    auto payload = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+    (*payload)["connectorId"] = transaction->getConnectorId();
+    (*payload)["txNr"] = transaction->getTxNr();
+
+    opStore->setPayload(std::move(payload));
+
+    opStore->commit();
+
+    transaction->getStopRpcSync().setRequested();
+
+    transaction->commit();
+
+    return true; //don't execute legacy initiate
+}
+
+bool StopTransaction::restore(StoredOperationHandler *opStore) {
+    if (!ocppModel) {
+        AO_DBG_ERR("invalid state");
+        return false;
+    }
+
+    if (!opStore) {
+        AO_DBG_ERR("invalid argument");
+        return false;
+    }
+
+    auto payload = opStore->getPayload();
+    if (!payload) {
+        AO_DBG_ERR("memory corruption");
+        return false;
+    }
+
+    int connectorId = (*payload)["connectorId"] | -1;
+    int txNr = (*payload)["txNr"] | -1;
+    if (connectorId < 0 || txNr < 0) {
+        AO_DBG_ERR("record incomplete");
+        return false;
+    }
+
+    auto txStore = ocppModel->getTransactionStore();
+
+    if (!txStore) {
+        AO_DBG_ERR("invalid state");
+        return false;
+    }
+
+    transaction = txStore->getTransaction(connectorId, txNr);
+    if (!transaction) {
+        AO_DBG_ERR("referential integrity violation");
+        return false;
+    }
+
+    if (auto mSerivce = ocppModel->getMeteringService()) {
+        if (auto txData = mSerivce->getStopTxMeterData(transaction.get())) {
+            transactionData = txData->retrieveStopTxData();
+        }
+    }
+
+    return true;
+}
+
+std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
+
+    std::vector<std::unique_ptr<DynamicJsonDocument>> txDataJson;
+    size_t txDataJson_size = 0;
+    for (auto mv = transactionData.begin(); mv != transactionData.end(); mv++) {
+        auto mvJson = (*mv)->toJson();
+        if (!mvJson) {
+            return nullptr;
+        }
+        txDataJson_size += mvJson->capacity();
+        txDataJson.emplace_back(std::move(mvJson));
+    }
+
+    DynamicJsonDocument txDataDoc = DynamicJsonDocument(JSON_ARRAY_SIZE(txDataJson.size()) + txDataJson_size);
+    for (auto mvJson = txDataJson.begin(); mvJson != txDataJson.end(); mvJson++) {
+        txDataDoc.add(**mvJson);
+    }
+
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+                JSON_OBJECT_SIZE(6) + //total of 6 fields
+                (IDTAG_LEN_MAX + 1) + //stop idTag
+                (JSONDATE_LENGTH + 1) + //timestamp string
+                (REASON_LEN_MAX + 1) + //reason string
+                txDataDoc.capacity()));
+    JsonObject payload = doc->to<JsonObject>();
+
+    if (transaction->getStopIdTag() && *transaction->getStopIdTag()) {
+        payload["idTag"] = (char*) transaction->getStopIdTag();
+    }
+
+    if (transaction->isMeterStopDefined()) {
+        payload["meterStop"] = transaction->getMeterStop();
+    }
+
+    if (transaction->getStopTimestamp() > MIN_TIME) {
+        char timestamp [JSONDATE_LENGTH + 1] = {'\0'};
+        transaction->getStopTimestamp().toJsonString(timestamp, JSONDATE_LENGTH + 1);
+        payload["timestamp"] = timestamp;
+    }
+
+    payload["transactionId"] = transaction->getTransactionId();
+    
+    if (transaction->getStopReason() && *transaction->getStopReason()) {
+        payload["reason"] = (char*) transaction->getStopReason();
+    }
+
+    if (!transactionData.empty()) {
+        payload["transactionData"] = txDataDoc;
     }
 
     return doc;
@@ -66,14 +181,33 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
 
 void StopTransaction::processConf(JsonObject payload) {
 
-    if (ocppModel && ocppModel->getConnectorStatus(connectorId)){
-        auto connector = ocppModel->getConnectorStatus(connectorId);
-        connector->setTransactionIdSync(-1);
+    if (transaction) {
+        transaction->getStopRpcSync().confirm();
+        transaction->commit();
     }
+
+    cleanTxStore();
 
     AO_DBG_INFO("Request has been accepted!");
 }
 
+bool StopTransaction::processErr(const char *code, const char *description, JsonObject details) {
+
+    if (transaction) {
+        transaction->getStopRpcSync().confirm(); //no retry behavior for now; consider data "arrived" at server
+        transaction->commit();
+    }
+
+    cleanTxStore();
+
+    AO_DBG_ERR("Server error, data loss!");
+
+    return false;
+}
+
+TransactionRPC *StopTransaction::getTransactionSync() {
+    return transaction ? &transaction->getStopRpcSync() : nullptr;
+}
 
 void StopTransaction::processReq(JsonObject payload) {
     /**
@@ -89,4 +223,57 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createConf(){
     idTagInfo["status"] = "Accepted";
 
     return doc;
+}
+
+bool StopTransaction::cleanTxStore() {
+    if (!transaction || !ocppModel) {
+        //doesn't apply
+        return true;
+    }
+
+    auto txStore = ocppModel->getTransactionStore();
+    if (!txStore || txStore->getTxBegin(transaction->getConnectorId()) < 0) {
+        AO_DBG_ERR("invalid state");
+        return false;
+    }
+
+    unsigned int txBegin = (unsigned int) txStore->getTxBegin(transaction->getConnectorId());
+    unsigned int txRangeEnd = (transaction->getTxNr() + MAX_TX_CNT - AO_TXHISTORY_SIZE) % MAX_TX_CNT;
+
+    //to be deleted: [txBegin ... txRangeEnd)
+
+    if ((transaction->getTxNr() + MAX_TX_CNT - txBegin) % MAX_TX_CNT <= 
+            (transaction->getTxNr() + MAX_TX_CNT - txRangeEnd) % MAX_TX_CNT) {
+        //txBegin is after txRangeEnd => nothing to delete
+        AO_DBG_DEBUG("already clean");
+        return true;
+    }
+
+    unsigned int rangeSize = (txRangeEnd + MAX_TX_CNT - txBegin) % MAX_TX_CNT;
+    AO_DBG_DEBUG("deleting %u entries from %u to %u", rangeSize, txBegin, txRangeEnd);
+    if (rangeSize >= 50) {
+        AO_DBG_ERR("cannot clean more than 50 entries at once - clean only the first 50");
+        rangeSize = 50;
+        txRangeEnd = (txBegin + 50) % MAX_TX_CNT;
+    }
+
+    bool success = true;
+
+    if (auto mService = ocppModel->getMeteringService()) {
+        for (unsigned int i = 0; i < rangeSize; i++) {
+            unsigned int tx = (txBegin + i) % MAX_TX_CNT;
+
+            success &= mService->removeTxMeterData(transaction->getConnectorId(), tx);
+        }
+    }
+
+    for (unsigned int i = 0; i < rangeSize; i++) {
+        unsigned int tx = (txBegin + i) % MAX_TX_CNT;
+
+        success &= txStore->remove(transaction->getConnectorId(), tx);
+    }
+
+    txStore->updateTxBegin(transaction->getConnectorId(), txRangeEnd);
+
+    return success;
 }

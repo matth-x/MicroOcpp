@@ -13,56 +13,56 @@
 using ArduinoOcpp::Ocpp16::BootNotification;
 
 BootNotification::BootNotification() {
-  
+    
 }
 
-BootNotification::BootNotification(const char *cpModel, const char *cpVendor) {
-    snprintf(chargePointModel, CP_MODEL_LEN_MAX + 1, "%s", cpModel);
-    snprintf(chargePointVendor, CP_VENDOR_LEN_MAX + 1, "%s", cpVendor);
-}
-
-BootNotification::BootNotification(const char *cpModel, const char *cpSerialNumber, const char *cpVendor, const char *fwVersion) {
-    snprintf(chargePointModel, CP_MODEL_LEN_MAX + 1, "%s", cpModel);
-    snprintf(chargePointSerialNumber, CP_SERIALNUMBER_LEN_MAX + 1, "%s", cpSerialNumber);
-    snprintf(chargePointVendor, CP_VENDOR_LEN_MAX + 1, "%s", cpVendor);
-    snprintf(firmwareVersion, FW_VERSION_LEN_MAX + 1, "%s", fwVersion);
-}
-
-BootNotification::BootNotification(DynamicJsonDocument *payload) {
-    this->overridePayload = payload;
-}
-
-BootNotification::~BootNotification() {
-    if (overridePayload != nullptr)
-        delete overridePayload;
+BootNotification::BootNotification(std::unique_ptr<DynamicJsonDocument> payload) : credentials(std::move(payload)) {
+    
 }
 
 const char* BootNotification::getOcppOperationType(){
     return "BootNotification";
 }
 
+void BootNotification::initiate() {
+    if (credentials &&
+            ocppModel && ocppModel->getChargePointStatusService()) {
+        auto cpStatus = ocppModel->getChargePointStatusService();
+        cpStatus->setChargePointCredentials(*credentials);
+        credentials.release();
+    }
+}
+
 std::unique_ptr<DynamicJsonDocument> BootNotification::createReq() {
 
-    if (overridePayload != nullptr) {
-        auto result = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(*overridePayload));
-        return result;
+    if (ocppModel && ocppModel->getChargePointStatusService()) {
+        auto cpStatus = ocppModel->getChargePointStatusService();
+        const auto& cpCredentials = cpStatus->getChargePointCredentials();
+    
+        std::unique_ptr<DynamicJsonDocument> doc;
+        size_t capacity = JSON_OBJECT_SIZE(9) + cpCredentials.size();
+        DeserializationError err = DeserializationError::NoMemory;
+        while (err == DeserializationError::NoMemory) {
+            doc.reset(new DynamicJsonDocument(capacity));
+            err = deserializeJson(*doc, cpCredentials);
+
+            capacity *= 3;
+            capacity /= 2;
+        }
+
+        if (!err) {
+            return doc;
+        } else {
+            AO_DBG_ERR("could not parse stored credentials: %s", err.c_str());
+        }
     }
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4)
-        + strlen(chargePointModel) + 1
-        + strlen(chargePointVendor) + 1
-        + strlen(chargePointSerialNumber) + 1
-        + strlen(firmwareVersion) + 1));
-    JsonObject payload = doc->to<JsonObject>();
-    payload["chargePointModel"] = chargePointModel;
-    if (chargePointSerialNumber[0]) {
-        payload["chargePointSerialNumber"] = chargePointSerialNumber;
+    if (credentials) {
+        return std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(*credentials));
     }
-    payload["chargePointVendor"] = chargePointVendor;
-    if (firmwareVersion[0]) {
-        payload["firmwareVersion"] = firmwareVersion;
-    }
-    return doc;
+    
+    AO_DBG_ERR("payload undefined");
+    return createEmptyDocument();
 }
 
 void BootNotification::processConf(JsonObject payload){

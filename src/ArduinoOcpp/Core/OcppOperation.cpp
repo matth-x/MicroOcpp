@@ -6,6 +6,11 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
+#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
+#include <ArduinoOcpp/Core/OperationStore.h>
+
+#include <ArduinoOcpp/MessagesV16/StartTransaction.h>
+#include <ArduinoOcpp/MessagesV16/StopTransaction.h>
 
 #include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Debug.h>
@@ -73,7 +78,7 @@ const std::string *OcppOperation::getMessageID() {
     return &messageID;
 }
 
-boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
+bool OcppOperation::sendReq(OcppSocket& ocppSocket){
 
     /*
      * timeout behaviour
@@ -104,8 +109,7 @@ boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
      */
     auto requestPayload = ocppMessage->createReq();
     if (!requestPayload) {
-        onAbortListener();
-        return true;
+        return false;
     }
 
     /*
@@ -138,7 +142,7 @@ boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
     bool success = ocppSocket.sendTXT(out);
 
     timeout->tick(success);
-    
+
     if (success) {
         AO_DBG_TRAFFIC_OUT(out.c_str());
         retry_start = ao_tick_ms();
@@ -151,7 +155,7 @@ boolean OcppOperation::sendReq(OcppSocket& ocppSocket){
     return false;
 }
 
-boolean OcppOperation::receiveConf(JsonDocument& confJson){
+bool OcppOperation::receiveConf(JsonDocument& confJson){
     /*
      * check if messageIDs match. If yes, continue with this function. If not, return false for message not consumed
      */
@@ -176,7 +180,7 @@ boolean OcppOperation::receiveConf(JsonDocument& confJson){
     return true;
 }
 
-boolean OcppOperation::receiveError(JsonDocument& confJson){
+bool OcppOperation::receiveError(JsonDocument& confJson){
     /*
      * check if messageIDs match. If yes, continue with this function. If not, return false for message not consumed
      */
@@ -205,7 +209,7 @@ boolean OcppOperation::receiveError(JsonDocument& confJson){
     return abortOperation;
 }
 
-boolean OcppOperation::receiveReq(JsonDocument& reqJson){
+bool OcppOperation::receiveReq(JsonDocument& reqJson){
   
     std::string reqId = reqJson[1];
     setMessageID(reqId);
@@ -229,7 +233,7 @@ boolean OcppOperation::receiveReq(JsonDocument& reqJson){
     return true; //true because everything was successful. If there will be an error check in future, this value becomes more reasonable
 }
 
-boolean OcppOperation::sendConf(OcppSocket& ocppSocket){
+bool OcppOperation::sendConf(OcppSocket& ocppSocket){
 
     if (!reqExecuted) {
         //wait until req has been executed
@@ -240,12 +244,16 @@ boolean OcppOperation::sendConf(OcppSocket& ocppSocket){
      * Create the OCPP message
      */
     std::unique_ptr<DynamicJsonDocument> confJson = nullptr;
-    std::unique_ptr<DynamicJsonDocument> confPayload = std::unique_ptr<DynamicJsonDocument>(ocppMessage->createConf());
+    std::unique_ptr<DynamicJsonDocument> confPayload = ocppMessage->createConf();
     std::unique_ptr<DynamicJsonDocument> errorDetails = nullptr;
     
-    bool operationSuccess = ocppMessage->getErrorCode() == nullptr && confPayload != nullptr;
+    bool operationFailure = ocppMessage->getErrorCode() != nullptr;
 
-    if (operationSuccess) {
+    if (!operationFailure && !confPayload) {
+        return false; //confirmation message still pending
+    }
+
+    if (!operationFailure) {
 
         /*
          * Create OCPP-J Remote Procedure Call header
@@ -290,10 +298,10 @@ boolean OcppOperation::sendConf(OcppSocket& ocppSocket){
      */
     std::string out {};
     serializeJson(*confJson, out);
-    boolean wsSuccess = ocppSocket.sendTXT(out);
+    bool wsSuccess = ocppSocket.sendTXT(out);
 
     if (wsSuccess) {
-        if (operationSuccess) {
+        if (!operationFailure) {
             AO_DBG_TRAFFIC_OUT(out.c_str());
             onSendConfListener(confPayload->as<JsonObject>());
         } else {
@@ -305,12 +313,97 @@ boolean OcppOperation::sendConf(OcppSocket& ocppSocket){
     return wsSuccess;
 }
 
-void OcppOperation::setInitiated() {
+void OcppOperation::initiate(std::unique_ptr<StoredOperationHandler> opStorage) {
     if (ocppMessage) {
-        ocppMessage->initiate();
+
+        /*
+         * Create OCPP-J Remote Procedure Call header as storage data (doesn't necessarily have to comply with OCPP RPC header)
+         */
+        if (opStorage) {
+            opStore = std::move(opStorage);
+            size_t json_buffsize = JSON_ARRAY_SIZE(3) + (getMessageID()->length() + 1);
+            auto rpcData = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(json_buffsize));
+
+            rpcData->add(MESSAGE_TYPE_CALL);                    //MessageType
+            rpcData->add(*getMessageID());                      //Unique message ID
+            rpcData->add(ocppMessage->getOcppOperationType());  //Action
+
+            opStore->setRpc(std::move(rpcData));
+        }
+        
+        bool inited = ocppMessage->initiate(opStore.get());
+
+        if (opStore) {
+            opStore->releaseBuffer();
+        }
+        
+        if (!inited) { //legacy support
+            ocppMessage->initiate();
+        }
     } else {
         AO_DBG_ERR("Missing ocppMessage instance");
     }
+}
+
+bool OcppOperation::restore(std::unique_ptr<StoredOperationHandler> opStorage, std::shared_ptr<OcppModel> oModel) {
+    if (!opStorage) {
+        AO_DBG_ERR("invalid argument");
+        return false;
+    }
+
+    opStore = std::move(opStorage);
+
+    auto rpcData = opStore->getRpc();
+    if (!rpcData) {
+        AO_DBG_ERR("corrupted storage");
+        return false;
+    }
+
+    messageID = (*rpcData)[1] | std::string();
+    std::string opType = (*rpcData)[2] | std::string();
+    if (messageID.empty() || opType.empty()) {
+        AO_DBG_ERR("corrupted storage");
+        messageID.clear();
+        return false;
+    }
+
+    int parsedMessageID = -1;
+    if (sscanf(messageID.c_str(), "%d", &parsedMessageID) == 1) {
+        if (parsedMessageID > unique_id_counter) {
+            AO_DBG_DEBUG("restore unique_id_counter with %d", parsedMessageID);
+            unique_id_counter = parsedMessageID + 1; //next unique value is parsedId + 1
+        }
+    } else {
+        AO_DBG_ERR("cannot set unique msgID counter");
+        (void)0;
+        //skip this step but don't abort restore
+    }
+
+    if (!strcmp(opType.c_str(), "StartTransaction")) { //TODO this will get a nicer solution
+        ocppMessage = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction());
+    } else if (!strcmp(opType.c_str(), "StopTransaction")) {
+        ocppMessage = std::unique_ptr<OcppMessage>(new Ocpp16::StopTransaction());
+    }
+
+    if (!ocppMessage) {
+        AO_DBG_ERR("cannot create msg");
+        return false;
+    }
+
+    ocppMessage->setOcppModel(oModel);
+
+    bool success = ocppMessage->restore(opStore.get());
+    opStore->releaseBuffer();
+
+    if (success) {
+        AO_DBG_DEBUG("restored opNr %i: %s", opStore->getOpNr(), ocppMessage->getOcppOperationType());
+        (void)0;
+    } else {
+        AO_DBG_ERR("restore opNr %i error", opStore->getOpNr());
+        (void)0;
+    }
+
+    return success;
 }
 
 void OcppOperation::setOnReceiveConfListener(OnReceiveConfListener onReceiveConf){
@@ -346,8 +439,13 @@ void OcppOperation::setOnAbortListener(OnAbortListener onAbort) {
         onAbortListener = onAbort;
 }
 
-boolean OcppOperation::isFullyConfigured(){
+bool OcppOperation::isFullyConfigured(){
     return ocppMessage != nullptr;
+}
+
+void OcppOperation::rebaseMsgId(int msgIdCounter) {
+    unique_id_counter = msgIdCounter;
+    getMessageID(); //apply msgIdCounter to this operation
 }
 
 void OcppOperation::print_debug() {

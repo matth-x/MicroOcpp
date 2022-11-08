@@ -4,84 +4,136 @@
 
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/OperationStore.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
+#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::StartTransaction;
+using ArduinoOcpp::TransactionRPC;
 
-StartTransaction::StartTransaction(int connectorId) : connectorId(connectorId) {
+
+StartTransaction::StartTransaction(std::shared_ptr<Transaction> transaction) : transaction(transaction) {
     
 }
 
-StartTransaction::StartTransaction(int connectorId, const char *idTag) : connectorId(connectorId) {
-    if (idTag && strnlen(idTag, IDTAG_LEN_MAX + 2) <= IDTAG_LEN_MAX)
-        snprintf(this->idTag, IDTAG_LEN_MAX + 1, "%s", idTag);
-    else
-        AO_DBG_ERR("Format violation");
-}
-
-const char* StartTransaction::getOcppOperationType(){
+const char* StartTransaction::getOcppOperationType() {
     return "StartTransaction";
 }
 
 void StartTransaction::initiate() {
-    if (ocppModel && ocppModel->getMeteringService()) {
+    if (ocppModel && transaction && !transaction->getStartRpcSync().isRequested()) {
+        //fill out tx data if not happened before
+
         auto meteringService = ocppModel->getMeteringService();
-        meterStart = (int) meteringService->readEnergyActiveImportRegister(connectorId);
-    }
-
-    if (ocppModel) {
-        otimestamp = ocppModel->getOcppTime().getOcppTimestampNow();
-    } else {
-        otimestamp = MIN_TIME;
-    }
-
-    if (ocppModel && ocppModel->getConnectorStatus(connectorId)) {
-        auto connector = ocppModel->getConnectorStatus(connectorId);
-
-        if (*idTag == '\0') {
-            const char *sessionIdTag = connector->getSessionIdTag();
-            if (sessionIdTag) {
-                snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", sessionIdTag);
+        if (transaction->getMeterStart() < 0 && meteringService) {
+            auto meterStart = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionBegin);
+            if (meterStart && *meterStart) {
+                transaction->setMeterStart(meterStart->toInteger());
             } else {
-                AO_DBG_WARN("Try to start transaction without providing idTag. Initialize session with default idTag");
-                connector->beginSession(nullptr);
-                sessionIdTag = connector->getSessionIdTag(); //returns default idTag now
-                if (sessionIdTag)
-                    snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", sessionIdTag);
+                AO_DBG_ERR("MeterStart undefined");
             }
-        } else {
-            //idTag has been overriden
-            connector->beginSession(idTag);
         }
 
-        if (connector->getTransactionId() >= 0) {
-            AO_DBG_WARN("Started transaction while OCPP already presumes a running transaction");
+        if (transaction->getStartTimestamp() <= MIN_TIME) {
+            transaction->setStartTimestamp(ocppModel->getOcppTime().getOcppTimestampNow());
         }
-        connector->setTransactionId(0); //pending
-        transactionRev = connector->getTransactionWriteCount();
+        
+        transaction->getStartRpcSync().setRequested();
+
+        transaction->commit();
     }
 
     AO_DBG_INFO("StartTransaction initiated");
 }
 
+bool StartTransaction::initiate(StoredOperationHandler *opStore) {
+    if (!opStore || !ocppModel || !transaction) {
+        AO_DBG_ERR("-> legacy");
+        return false; //execute legacy initiate instead
+    }
+    
+    auto payload = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+    (*payload)["connectorId"] = transaction->getConnectorId();
+    (*payload)["txNr"] = transaction->getTxNr();
+
+    opStore->setPayload(std::move(payload));
+
+    opStore->commit();
+
+    transaction->getStartRpcSync().setRequested();
+
+    transaction->commit();
+
+    return true; //don't execute legacy initiate
+}
+
+bool StartTransaction::restore(StoredOperationHandler *opStore) {
+    if (!ocppModel) {
+        AO_DBG_ERR("invalid state");
+        return false;
+    }
+
+    if (!opStore) {
+        AO_DBG_ERR("invalid argument");
+        return false;
+    }
+
+    auto payload = opStore->getPayload();
+    if (!payload) {
+        AO_DBG_ERR("memory corruption");
+        return false;
+    }
+
+    int connectorId = (*payload)["connectorId"] | -1;
+    int txNr = (*payload)["txNr"] | -1;
+    if (connectorId < 0 || txNr < 0) {
+        AO_DBG_ERR("record incomplete");
+        return false;
+    }
+
+    auto txStore = ocppModel->getTransactionStore();
+
+    if (!txStore) {
+        AO_DBG_ERR("invalid state");
+        return false;
+    }
+
+    transaction = txStore->getTransaction(connectorId, txNr);
+    if (!transaction) {
+        AO_DBG_ERR("referential integrity violation");
+        return false;
+    }
+
+    return true;
+}
+
 std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(5) + (JSONDATE_LENGTH + 1) + (IDTAG_LEN_MAX + 1)));
+
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+                JSON_OBJECT_SIZE(5) + 
+                (IDTAG_LEN_MAX + 1) +
+                (JSONDATE_LENGTH + 1)));
+                
     JsonObject payload = doc->to<JsonObject>();
 
-    payload["connectorId"] = connectorId;
-    if (meterStart >= 0) {
-        payload["meterStart"] = meterStart;
+    payload["connectorId"] = transaction->getConnectorId();
+
+    if (transaction->getIdTag() && *transaction->getIdTag()) {
+        payload["idTag"] = (char*) transaction->getIdTag();
     }
 
-    if (otimestamp > MIN_TIME) {
+    if (transaction->isMeterStartDefined()) {
+        payload["meterStart"] = transaction->getMeterStart();
+    }
+
+    if (transaction->getStartTimestamp() > MIN_TIME) {
         char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
-        otimestamp.toJsonString(timestamp, JSONDATE_LENGTH + 1);
+        transaction->getStartTimestamp().toJsonString(timestamp, JSONDATE_LENGTH + 1);
         payload["timestamp"] = timestamp;
     }
-
-    payload["idTag"] = idTag;
 
     return doc;
 }
@@ -89,31 +141,23 @@ std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
 void StartTransaction::processConf(JsonObject payload) {
 
     const char* idTagInfoStatus = payload["idTagInfo"]["status"] | "not specified";
-    int transactionId = payload["transactionId"] | -1;
-
-    ConnectorStatus *connector = nullptr;
-    if (ocppModel)
-        connector = ocppModel->getConnectorStatus(connectorId);
-    
-    if (connector){
-        if (transactionRev == connector->getTransactionWriteCount()) {
-            
-            if (!strcmp(idTagInfoStatus, "Accepted")) {
-                AO_DBG_INFO("Request has been accepted");
-                connector->setTransactionId(transactionId);
-            } else {
-                AO_DBG_INFO("Request has been denied. Reason: %s", idTagInfoStatus);
-                //connector->setTransactionId(-1);
-                connector->endSession(); //something is wrong with the idTag. Abort session
-            }
-        }
-        connector->setTransactionIdSync(transactionId);
-
-        AO_DBG_DEBUG("Local txId = %i, remote txId = %i", connector->getTransactionId(), connector->getTransactionIdSync());
+    if (!strcmp(idTagInfoStatus, "Accepted")) {
+        AO_DBG_INFO("Request has been accepted");
+    } else {
+        AO_DBG_INFO("Request has been denied. Reason: %s", idTagInfoStatus);
+        transaction->setIdTagDeauthorized();
     }
 
+    int transactionId = payload["transactionId"] | -1;
+    transaction->setTransactionId(transactionId);
+
+    transaction->getStartRpcSync().confirm();
+    transaction->commit();
 }
 
+TransactionRPC *StartTransaction::getTransactionSync() {
+    return transaction ? &transaction->getStartRpcSync() : nullptr;
+}
 
 void StartTransaction::processReq(JsonObject payload) {
 
@@ -123,13 +167,14 @@ void StartTransaction::processReq(JsonObject payload) {
 
 }
 
-std::unique_ptr<DynamicJsonDocument> StartTransaction::createConf(){
+std::unique_ptr<DynamicJsonDocument> StartTransaction::createConf() {
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2)));
     JsonObject payload = doc->to<JsonObject>();
 
     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
     idTagInfo["status"] = "Accepted";
-    payload["transactionId"] = 123456; //sample data for debug purpose
+    static int uniqueTxId = 1000;
+    payload["transactionId"] = uniqueTxId++; //sample data for debug purpose
 
     return doc;
 }

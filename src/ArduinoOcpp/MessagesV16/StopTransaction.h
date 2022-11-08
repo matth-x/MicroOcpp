@@ -7,30 +7,51 @@
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/MessagesV16/CiStrings.h>
+#include <vector>
 
 namespace ArduinoOcpp {
+
+class SampledValue;
+class MeterValue;
+
+class Transaction;
+class TransactionRPC;
+
 namespace Ocpp16 {
 
 class StopTransaction : public OcppMessage {
 private:
-    int connectorId = 1;
-    int meterStop = -1;
-    OcppTimestamp otimestamp;
+    std::shared_ptr<Transaction> transaction;
+    std::vector<std::unique_ptr<MeterValue>> transactionData;
+
+    bool cleanTxStore();
 public:
 
-    StopTransaction(int connectorId);
+    StopTransaction(std::shared_ptr<Transaction> transaction);
 
-    const char* getOcppOperationType();
+    StopTransaction(std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData);
+    
+    StopTransaction(); //for debugging only. Make this for the server pendant
 
-    void initiate();
+    const char* getOcppOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq();
+    void initiate() override;
+    bool initiate(StoredOperationHandler *opStore) override;
 
-    void processConf(JsonObject payload);
+    bool restore(StoredOperationHandler *opStore) override;
 
-    void processReq(JsonObject payload);
+    std::unique_ptr<DynamicJsonDocument> createReq() override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf();
+    void processConf(JsonObject payload) override;
+
+    bool processErr(const char *code, const char *description, JsonObject details) override;
+
+    TransactionRPC *getTransactionSync() override;
+
+    void processReq(JsonObject payload) override;
+
+    std::unique_ptr<DynamicJsonDocument> createConf() override;
 };
 
 } //end namespace Ocpp16

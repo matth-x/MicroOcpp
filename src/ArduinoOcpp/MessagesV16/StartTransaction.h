@@ -8,29 +8,37 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
+#include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 
 namespace ArduinoOcpp {
+
+class Transaction;
+class TransactionRPC;
+class StoredOperationHandler;
+
 namespace Ocpp16 {
 
 class StartTransaction : public OcppMessage {
 private:
-    int connectorId = 1;
-    int meterStart = -1;
-    OcppTimestamp otimestamp;
-    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
-    uint16_t transactionRev = 0;
+    std::shared_ptr<Transaction> transaction;
 public:
-    StartTransaction(int connectorId);
 
-    StartTransaction(int connectorId, const char *idTag);
+    StartTransaction(std::shared_ptr<Transaction> transaction);
+
+    StartTransaction() = default; //for debugging only. Make this for the server pendant
 
     const char* getOcppOperationType();
 
     void initiate();
+    bool initiate(StoredOperationHandler *opStore) override;
+
+    bool restore(StoredOperationHandler *opStore) override;
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 
     void processConf(JsonObject payload);
+
+    TransactionRPC *getTransactionSync() override;
 
     void processReq(JsonObject payload);
 

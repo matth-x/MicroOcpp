@@ -6,6 +6,7 @@
 #include <ArduinoOcpp/Debug.h>
 
 #include <string.h>
+#include <algorithm>
 
 using namespace ArduinoOcpp;
 
@@ -46,7 +47,7 @@ int ChargingSchedulePeriod::getNumberPhases(){
 }
 
 void ChargingSchedulePeriod::printPeriod(){
-    AO_DBG_INFO("CHARGING SCHEDULE PERIOD:\n" \
+    AO_DBG_VERBOSE("CHARGING SCHEDULE PERIOD:\n" \
                 "      startPeriod: %i\n" \
                 "      limit: %f\n" \
                 "      numberPhases: %i\n",
@@ -267,7 +268,7 @@ void ChargingSchedule::printSchedule(){
     char tmp[JSONDATE_LENGTH + 1] = {'\0'};
     startSchedule.toJsonString(tmp, JSONDATE_LENGTH + 1);
 
-    AO_DBG_INFO("CHARGING SCHEDULE:\n" \
+    AO_DBG_VERBOSE("CHARGING SCHEDULE:\n" \
                 "    duration: %i\n" \
                 "    startSchedule: %s\n" \
                 "    chargingRateUnit: %s\n" \
@@ -351,14 +352,26 @@ bool ChargingProfile::inferenceLimit(const OcppTimestamp &t, float *limit, OcppT
     return inferenceLimit(t, MAX_TIME, limit, nextChange);
 }
 
-bool ChargingProfile::checkTransactionId(int chargingSessionTransactionID) {
-    if (transactionId >= 0 && chargingSessionTransactionID >= 0){
-        //Transaction IDs are valid
-        if (chargingProfilePurpose == ChargingProfilePurposeType::TxProfile //only then a transactionId can restrict the limits
-            && transactionId != chargingSessionTransactionID) {
-        return false;
-        }
+bool ChargingProfile::checkTransactionAssignment(int txId, int profileId) {
+    if (chargingProfilePurpose != ChargingProfilePurposeType::TxProfile) {
+        AO_DBG_ERR("assignment only exists for TxProfiles");
+        return true; //does not apply to this profile -> no restriction
     }
+
+    if (txId <= 0 && profileId < 0) {
+        //no search parameters set
+        return true;
+    }
+
+    if (chargingProfileId >= 0 && profileId >= 0) { //profileIDs are valid
+        return chargingProfileId == profileId; //return if they match (case of remote charging profiles)
+    }
+
+    if (transactionId > 0 && txId > 0) { //txIDs are valid
+        return transactionId == txId; //return if they do match
+    }
+    
+    AO_DBG_DEBUG("Neither txIds nor profileIDs apply");
     return true;
 }
 
@@ -381,7 +394,7 @@ void ChargingProfile::printProfile(){
     char tmp2[JSONDATE_LENGTH + 1] = {'\0'};
     validTo.toJsonString(tmp2, JSONDATE_LENGTH + 1);
 
-    AO_DBG_INFO("CHARGING PROFILE:\n" \
+    AO_DBG_VERBOSE("CHARGING PROFILE:\n" \
                 "  chargingProfileId: %i\n" \
                 "  transactionId: %i\n" \
                 "  stackLevel: %i\n" \

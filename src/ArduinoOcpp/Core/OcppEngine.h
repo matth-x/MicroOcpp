@@ -13,6 +13,7 @@ namespace ArduinoOcpp {
 
 class OcppSocket;
 class OcppModel;
+class FilesystemAdapter;
 
 class OcppEngine {
 private:
@@ -22,7 +23,7 @@ private:
 
     bool runOcppTasks = true;
 public:
-    OcppEngine(OcppSocket& ocppSocket, const OcppClock& system_clock);
+    OcppEngine(OcppSocket& ocppSocket, const OcppClock& system_clock, std::shared_ptr<FilesystemAdapter> filesystem);
     ~OcppEngine();
 
     void loop();

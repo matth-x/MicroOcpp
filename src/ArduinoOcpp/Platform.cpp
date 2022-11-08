@@ -22,3 +22,40 @@ void ao_set_console_out(void (*console_out)(const char *msg)) {
 }
 
 #endif
+
+#ifdef AO_CUSTOM_TIMER
+unsigned long (*ao_tick_ms_impl)() = nullptr;
+
+void ao_set_timer(unsigned long (*get_ms)()) {
+    ao_tick_ms_impl = get_ms;
+}
+
+unsigned long ao_tick_ms_custom() {
+    if (ao_tick_ms_impl) {
+        return ao_tick_ms_impl();
+    } else {
+        return 0;
+    }
+}
+#endif
+
+#if AO_PLATFORM == AO_PLATFORM_UNIX
+#include <chrono>
+
+namespace ArduinoOcpp {
+
+std::chrono::steady_clock::time_point clock_reference;
+bool clock_initialized = false;
+
+}
+
+unsigned long ao_tick_ms_unix() {
+    if (!ArduinoOcpp::clock_initialized) {
+        ArduinoOcpp::clock_reference = std::chrono::steady_clock::now();
+        ArduinoOcpp::clock_initialized = true;
+    }
+    std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - ArduinoOcpp::clock_reference);
+    return (unsigned long) ms.count();
+}
+#endif

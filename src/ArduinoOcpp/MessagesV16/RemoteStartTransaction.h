@@ -15,6 +15,9 @@ class RemoteStartTransaction : public OcppMessage {
 private:
     int connectorId;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
+    DynamicJsonDocument chargingProfileDoc {0};
+    
+    const char *errorCode {nullptr};
 public:
     RemoteStartTransaction();
 
@@ -27,6 +30,8 @@ public:
     void processReq(JsonObject payload);
 
     std::unique_ptr<DynamicJsonDocument> createConf();
+
+    const char *getErrorCode() {return errorCode;}
 };
 
 } //end namespace Ocpp16

@@ -5,14 +5,12 @@
 #ifndef CONNECTOR_METER_VALUES_RECORDER
 #define CONNECTOR_METER_VALUES_RECORDER
 
-//#define METER_VALUE_SAMPLE_INTERVAL 60 //in seconds
-
-//#define METER_VALUES_SAMPLED_DATA_MAX_LENGTH 4 //after 4 measurements, send the values to the CS
-
 #include <functional>
 #include <memory>
 #include <vector>
 
+#include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
+#include <ArduinoOcpp/Tasks/Metering/MeterStore.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 
 namespace ArduinoOcpp {
@@ -21,33 +19,49 @@ using PowerSampler = std::function<float()>;
 using EnergySampler = std::function<float()>;
 
 class OcppModel;
-class OcppTimestamp;
 class OcppMessage;
+class Transaction;
+class MeterStore;
 
 class ConnectorMeterValuesRecorder {
 private:
     OcppModel& context;
-    
     const int connectorId;
+    MeterStore& meterStore;
+    
+    std::vector<std::unique_ptr<MeterValue>> sampledData;
+    std::vector<std::unique_ptr<MeterValue>> alignedData;
+    std::shared_ptr<TransactionMeterData> stopTxnData;
 
-    std::vector<OcppTimestamp> sampleTimestamp;
-    std::vector<float> energy;
-    std::vector<float> power;
+    std::unique_ptr<MeterValueBuilder> sampledDataBuilder;
+    std::unique_ptr<MeterValueBuilder> alignedDataBuilder;
+    std::unique_ptr<MeterValueBuilder> stopTxnSampledDataBuilder;
+    std::unique_ptr<MeterValueBuilder> stopTxnAlignedDataBuilder;
+
+    std::shared_ptr<Configuration<const char *>> sampledDataSelect;
+    std::shared_ptr<Configuration<const char *>> alignedDataSelect;
+    std::shared_ptr<Configuration<const char *>> stopTxnSampledDataSelect;
+    std::shared_ptr<Configuration<const char *>> stopTxnAlignedDataSelect;
+
     ulong lastSampleTime = 0; //0 means not charging right now
-    float lastPower;
-    int lastTransactionId = -1;
+    OcppTimestamp nextAlignedTime;
+    bool trackTxRunning = false;
+    int trackTxNr = -1;
  
-    PowerSampler powerSampler = NULL;
-    EnergySampler energySampler = NULL;
+    PowerSampler powerSampler = nullptr;
+    EnergySampler energySampler = nullptr;
+    std::vector<std::unique_ptr<SampledValueSampler>> samplers;
+    int energySamplerIndex {-1};
 
-    std::shared_ptr<Configuration<int>> MeterValueSampleInterval = NULL;
-    std::shared_ptr<Configuration<int>> MeterValuesSampledDataMaxLength = NULL;
+    std::shared_ptr<Configuration<int>> MeterValueSampleInterval;
+    std::shared_ptr<Configuration<int>> MeterValuesSampledDataMaxLength;
+    std::shared_ptr<Configuration<int>> StopTxnSampledDataMaxLength;
 
-    void takeSample();
-    OcppMessage *toMeterValues();
-    void clear();
+    std::shared_ptr<Configuration<int>> ClockAlignedDataInterval;
+    std::shared_ptr<Configuration<int>> MeterValuesAlignedDataMaxLength;
+    std::shared_ptr<Configuration<int>> StopTxnAlignedDataMaxLength;
 public:
-    ConnectorMeterValuesRecorder(OcppModel& context, int connectorId);
+    ConnectorMeterValuesRecorder(OcppModel& context, int connectorId, MeterStore& meterStore);
 
     OcppMessage *loop();
 
@@ -55,9 +69,18 @@ public:
 
     void setEnergySampler(EnergySampler energySampler);
 
-    float readEnergyActiveImportRegister();
+    void addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler);
 
-    OcppMessage *takeMeterValuesNow();
+    std::unique_ptr<SampledValue> readTxEnergyMeter(ReadingContext context);
+
+    OcppMessage *takeTriggeredMeterValues();
+
+    void beginTxMeterData(Transaction *transaction);
+
+    std::shared_ptr<TransactionMeterData> endTxMeterData(Transaction *transaction);
+
+    std::shared_ptr<TransactionMeterData> getStopTxMeterData(Transaction *transaction);
+
 };
 
 } //end namespace ArduinoOcpp

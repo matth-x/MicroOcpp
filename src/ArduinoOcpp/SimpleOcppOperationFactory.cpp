@@ -6,6 +6,7 @@
 
 #include <ArduinoOcpp/MessagesV16/Authorize.h>
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
+#include <ArduinoOcpp/MessagesV16/GetCompositeSchedule.h>
 #include <ArduinoOcpp/MessagesV16/Heartbeat.h>
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
 #include <ArduinoOcpp/MessagesV16/SetChargingProfile.h>
@@ -31,7 +32,7 @@
 #include <ArduinoOcpp/Debug.h>
 
 #include <string.h>
-
+#include <algorithm>
 #include <vector>
 
 namespace ArduinoOcpp {
@@ -67,12 +68,6 @@ OnReceiveReqListener onBootNotificationRequest;
 void setOnBootNotificationRequestListener(OnReceiveReqListener listener){
     onBootNotificationRequest = listener;
     deinit_afterwards(onBootNotificationRequest);
-}
-
-OnReceiveReqListener onTargetValuesRequest;
-void setOnTargetValuesRequestListener(OnReceiveReqListener listener) {
-    onTargetValuesRequest = listener;
-    deinit_afterwards(onTargetValuesRequest);
 }
 
 OnReceiveReqListener onSetChargingProfileRequest;
@@ -220,6 +215,8 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType, int co
     } else if (!strcmp(messageType, "BootNotification")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::BootNotification());
         operation->setOnReceiveReqListener(onBootNotificationRequest);
+    } else if (!strcmp(messageType, "GetCompositeSchedule")) {
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::GetCompositeSchedule());
     } else if (!strcmp(messageType, "Heartbeat")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::Heartbeat());
     } else if (!strcmp(messageType, "MeterValues")) {
@@ -231,10 +228,10 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType, int co
     } else if (!strcmp(messageType, "StatusNotification")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::StatusNotification(connectorId));
     } else if (!strcmp(messageType, "StartTransaction")) {
-        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction(1)); //connectorId 1
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction());
         operation->setOnReceiveReqListener(onStartTransactionRequest);
     } else if (!strcmp(messageType, "StopTransaction")) {
-        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StopTransaction(1)); //connectorId 1
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::StopTransaction());
     } else if (!strcmp(messageType, "TriggerMessage")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::TriggerMessage());
         operation->setOnReceiveReqListener(onTriggerMessageRequest);

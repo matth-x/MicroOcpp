@@ -10,6 +10,8 @@
 #include <memory>
 
 #include <ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.h>
+#include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
+#include <ArduinoOcpp/Tasks/Metering/MeterStore.h>
 
 namespace ArduinoOcpp {
 
@@ -18,14 +20,16 @@ using EnergySampler = std::function<float()>; //in Watt-hours (Wh)
 
 class OcppEngine;
 class OcppOperation;
+class FilesystemAdapter;
 
 class MeteringService {
 private:
     OcppEngine& context;
+    MeterStore meterStore;
 
     std::vector<std::unique_ptr<ConnectorMeterValuesRecorder>> connectors;
 public:
-    MeteringService(OcppEngine& context, int numConnectors);
+    MeteringService(OcppEngine& context, int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
     void loop();
 
@@ -33,9 +37,19 @@ public:
 
     void setEnergySampler(int connectorId, EnergySampler energySampler);
 
-    float readEnergyActiveImportRegister(int connectorId);
+    void addMeterValueSampler(int connectorId, std::unique_ptr<SampledValueSampler> meterValueSampler);
 
-    std::unique_ptr<OcppOperation> takeMeterValuesNow(int connectorId); //snapshot of all meters now
+    std::unique_ptr<SampledValue> readTxEnergyMeter(int connectorId, ReadingContext reason);
+
+    std::unique_ptr<OcppOperation> takeTriggeredMeterValues(int connectorId); //snapshot of all meters now
+
+    void beginTxMeterData(Transaction *transaction);
+
+    std::shared_ptr<TransactionMeterData> endTxMeterData(Transaction *transaction); //use return value to keep data in cache
+
+    std::shared_ptr<TransactionMeterData> getStopTxMeterData(Transaction *transaction); //prefer endTxMeterData when possible
+
+    bool removeTxMeterData(unsigned int connectorId, unsigned int txNr);
 
     int getNumConnectors() {return connectors.size();}
 };

@@ -9,14 +9,6 @@
 #include <vector>
 #include <ArduinoJson.h>
 
-#if defined(ESP32) && !defined(AO_DEACTIVATE_FLASH)
-#include <LITTLEFS.h>
-#define USE_FS LITTLEFS
-#else
-#include <FS.h>
-#define USE_FS SPIFFS
-#endif
-
 #define KEY_MAXLEN 60
 #define STRING_VAL_MAXLEN 2000 //allow TLS certificates in ...
 
@@ -115,13 +107,17 @@ bool AbstractConfiguration::toBeRemoved() {
 }
 
 void AbstractConfiguration::setToBeRemoved() {
+    if (!toBeRemovedFlag) {
+        value_revision++;
+    }
     toBeRemovedFlag = true;
-    value_revision++;
 }
 
 void AbstractConfiguration::resetToBeRemovedFlag() {
+    if (toBeRemovedFlag) {
+        value_revision++;
+    }
     toBeRemovedFlag = false;
-    value_revision++;
 }
 
 uint16_t AbstractConfiguration::getValueRevision() {
@@ -228,7 +224,8 @@ int toCStringValue(char *buf, size_t length, int value) {
 }
 
 int toCStringValue(char *buf, size_t length, float value) {
-    return snprintf(buf, length, "%.*g", length >= 7 ? length - 7 : 0, value);
+    int ilength = (int) std::min((size_t) 100, length);
+    return snprintf(buf, length, "%.*g", ilength >= 7 ? ilength - 7 : 0, value);
 }
 
 template<class T>

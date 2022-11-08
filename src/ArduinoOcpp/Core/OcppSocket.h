@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 
 namespace ArduinoOcpp {
 
@@ -24,6 +25,31 @@ public:
     virtual void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) = 0; //ReceiveTXTcallback is defined in OcppServer.h
 };
 
+class OcppEchoSocket : public OcppSocket {
+private:
+    ReceiveTXTcallback receiveTXT;
+
+    bool connected = true; //for simulating connection losses
+public:
+    void loop() override { }
+    bool sendTXT(std::string &out) override {
+        if (!connected) {
+            return true;
+        }
+        if (receiveTXT) {
+            return receiveTXT(out.c_str(), out.length());
+        } else {
+            return false;
+        }
+    }
+    void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) override {
+        this->receiveTXT = receiveTXT;
+    }
+
+    void setConnected(bool connected) {this->connected = connected;}
+    bool isConnected() {return connected;}
+};
+
 } //end namespace ArduinoOcpp
 
 #ifndef AO_CUSTOM_WS
@@ -36,10 +62,8 @@ namespace EspWiFi {
 
 class OcppClientSocket : public OcppSocket {
 private:
-    //std::shared_ptr<WebSocketsClient> wsock;
     WebSocketsClient *wsock;
 public:
-    //OcppClientSocket(ReceiveTXTcallback &receiveTXT, std::shared_ptr<WebSocketsClient> wsock);
     OcppClientSocket(WebSocketsClient *wsock);
 
     void loop();

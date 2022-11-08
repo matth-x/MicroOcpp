@@ -2,11 +2,14 @@
 // Copyright Matthias Akstaller 2019 - 2022
 // MIT License
 
-#ifndef CONNECTOR_STATUS
-#define CONNECTOR_STATUS
+#ifndef CONNECTORSTATUS_H
+#define CONNECTORSTATUS_H
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/OcppEvseState.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionPrerequisites.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionProcess.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
+#include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 #include <vector>
@@ -21,6 +24,7 @@ namespace ArduinoOcpp {
 
 class OcppModel;
 class OcppMessage;
+class Transaction;
 
 class ConnectorStatus {
 private:
@@ -28,30 +32,35 @@ private:
     
     const int connectorId;
 
-    std::shared_ptr<Configuration<int>> availability {nullptr};
+    std::shared_ptr<Transaction> transaction;
 
-    bool session = false;
-    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
-    std::shared_ptr<Configuration<const char *>> sIdTag {nullptr};
-    std::shared_ptr<Configuration<int>> transactionId {nullptr};
-    int transactionIdSync = -1;
+    std::shared_ptr<Configuration<int>> availability;
+    int availabilityVolatile = AVAILABILITY_OPERATIVE;
 
-    std::shared_ptr<Configuration<int>> connectionTimeOut {nullptr}; //in seconds
-    bool connectionTimeOutListen {false};
-    ulong connectionTimeOutTimestamp {0}; //in milliseconds
-
-    std::function<bool()> connectorPluggedSampler {nullptr};
-    std::function<bool()> evRequestsEnergySampler {nullptr};
-    std::function<bool()> connectorEnergizedSampler {nullptr};
+    std::function<bool()> connectorPluggedSampler;
+    std::function<bool()> evRequestsEnergySampler;
+    std::function<bool()> connectorEnergizedSampler;
     std::vector<std::function<const char *()>> connectorErrorCodeSamplers;
     const char *getErrorCode();
 
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
-    std::shared_ptr<Configuration<int>> minimumStatusDuration {nullptr}; //in seconds
+    std::shared_ptr<Configuration<int>> minimumStatusDuration; //in seconds
     OcppEvseState reportedStatus = OcppEvseState::NOT_SET;
     ulong t_statusTransition = 0;
 
-    std::function<bool()> onUnlockConnector {nullptr};
+    std::function<PollResult<bool>()> onUnlockConnector;
+
+    std::function<TxEnableState(TxTrigger)> onConnectorLockPollTx;
+    std::function<TxEnableState(TxTrigger)> onTxBasedMeterPollTx;
+
+    TransactionProcess txProcess;
+
+    std::shared_ptr<Configuration<int>> connectionTimeOut; //in seconds
+    std::shared_ptr<Configuration<const char*>> stopTransactionOnInvalidId;
+    std::shared_ptr<Configuration<const char*>> stopTransactionOnEVSideDisconnect;
+    std::shared_ptr<Configuration<const char*>> unlockConnectorOnEVSideDisconnect;
+    std::shared_ptr<Configuration<const char*>> localAuthorizeOffline;
+    std::shared_ptr<Configuration<const char*>> localPreAuthorize;
 public:
     ConnectorStatus(OcppModel& context, int connectorId);
 
@@ -66,25 +75,22 @@ public:
      * (given by ConnectorPluggedSampler and no error code)
      */
     void beginSession(const char *idTag);
-    void endSession();
+    void endSession(const char *reason = nullptr);
     const char *getSessionIdTag();
+    uint16_t getSessionWriteCount();
+    bool isTransactionRunning();
     int getTransactionId();
     int getTransactionIdSync();
-    uint16_t getTransactionWriteCount();
-    void setTransactionId(int id);
-    void setTransactionIdSync(int id);
-
+    std::shared_ptr<Transaction>& getTransaction();
 
     int getAvailability();
     void setAvailability(bool available);
+    void setAvailabilityVolatile(bool available); //set inoperative state but keep only until reboot at most
     void setAuthorizationProvider(std::function<const char *()> authorization);
     void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
     void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
     void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
     void addConnectorErrorCodeSampler(std::function<const char*()> connectorErrorCode);
-
-    void saveState();
-    //void recoverState();
 
     OcppMessage *loop();
 
@@ -92,8 +98,11 @@ public:
 
     bool ocppPermitsCharge();
 
-    void setOnUnlockConnector(std::function<bool()> unlockConnector);
-    std::function<bool()> getOnUnlockConnector();
+    void setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector);
+    std::function<PollResult<bool>()> getOnUnlockConnector();
+
+    void setConnectorLock(std::function<TxEnableState(TxTrigger)> lockConnector);
+    void setTxBasedMeterUpdate(std::function<TxEnableState(TxTrigger)> updateTxBasedMeter);
 };
 
 } //end namespace ArduinoOcpp

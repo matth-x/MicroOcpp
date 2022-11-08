@@ -8,16 +8,16 @@
 namespace ArduinoOcpp {
 
 enum class OcppEvseState {
-  Available,
-  Preparing,
-  Charging,
-  SuspendedEVSE,
-  SuspendedEV,
-  Finishing,    //not supported by this client
-  Reserved,     //not supported by this client
-  Unavailable,
-  Faulted,
-  NOT_SET //not part of OCPP 1.6
+    Available,
+    Preparing,
+    Charging,
+    SuspendedEVSE,
+    SuspendedEV,
+    Finishing,
+    Reserved,
+    Unavailable,
+    Faulted,
+    NOT_SET //internal value for "undefined"
 };
 
 } //end namespace ArduinoOcpp
