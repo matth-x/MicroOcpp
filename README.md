@@ -2,7 +2,7 @@
 
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/matth-x/ArduinoOcpp/PlatformIO%20CI?logo=github)](https://github.com/matth-x/ArduinoOcpp/actions)
 
-OCPP-J 1.6 client for the ESP8266 and the ESP32 (more coming soon)
+OCPP-J 1.6 client for embedded microcontrollers. Portable C/C++. Runs on Espressif, NXP, Texas Instruments, STM and embedded Linux.
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp)
 
@@ -10,17 +10,17 @@ PlatformIO package: [ArduinoOcpp](https://platformio.org/lib/show/11975/ArduinoO
 
 Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
 
-Fully integrated into the Arduino platform. Compatible with ESP-IDF and generic FreeRTOS
+Fully integrated into the Arduino platform and the ESP32 / ESP8266. Compatible with ESP-IDF, FreeRTOS and generic embedded C/C++ platforms.
 
-## Make your EVSE ready for OCPP :car::electric_plug::battery:
+## Make your EVSE ready for OCPP-based charging networks :car::electric_plug::battery:
 
-You can build an OCPP Charge Point controller using the popular, Wi-Fi enabled microcontrollers ESP8266, ESP32 and comparable. This library allows your EVSE to communicate with an OCPP Central System and to participate in your Charging Network.
+This library allows your EVSE to communicate with an OCPP Backend and to participate in commercial charging networks. You can integrate it into an existing firmware development, or start a new EVSE project from scratch with it.
 
 :heavy_check_mark: Works with [SteVe](https://github.com/RWTH-i5-IDSG/steve), [The Mobility House OCPP package](https://github.com/mobilityhouse/ocpp) and further commercial Central Systems
 
-:heavy_check_mark: Integrated and tested in many charging stations
+:heavy_check_mark: Flexible API for customizable EVSE projects. Tested in many charging stations
 
-:heavy_check_mark: Eligible for **public chargers**. Complies also with the legal requirements of the German Ladesäulenverordnung (LSV)
+:heavy_check_mark: Eligible for **public chargers** (Eichrecht-compliant)
 
 ### Features
 
@@ -100,7 +100,7 @@ If compiled with the Arduino integration:
 
 In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/ArduinoOcpp` in the PIO library manager.
 
-## Supported operations
+## Supported Feature Profiles
 
 | Feature profile | supported | in progress |
 | -------------- | :---------: | :-----------: |
