@@ -162,13 +162,11 @@ void ChargePointStatusService::initiateReset(bool isHard) {
     }
 }
 
-#if !defined(AO_CUSTOM_RESET)
-#if defined(ESP32) || defined(ESP8266)
-std::function<void(bool isHard)> ArduinoOcpp::EspWiFi::makeDefaultResetFn() {
+#if AO_PLATFORM == AO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
+std::function<void(bool isHard)> ArduinoOcpp::makeDefaultResetFn() {
     return [] (bool isHard) {
         AO_DBG_DEBUG("Perform ESP reset");
         ESP.restart();
     };
 }
-#endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
+#endif //AO_PLATFORM == AO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))

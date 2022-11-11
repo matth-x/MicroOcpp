@@ -6,6 +6,7 @@
 #define CHARGEPOINTSTATUSSERVICE_H
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ConnectorStatus.h>
+#include <ArduinoOcpp/Platform.h>
 
 #include <vector>
 
@@ -58,18 +59,14 @@ public:
 
 } //end namespace ArduinoOcpp
 
-#if !defined(AO_CUSTOM_RESET)
-#if defined(ESP32) || defined(ESP8266)
+#if AO_PLATFORM == AO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
 
 namespace ArduinoOcpp {
-namespace EspWiFi {
 
 std::function<void(bool isHard)> makeDefaultResetFn();
 
 }
-}
 
-#endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
+#endif //AO_PLATFORM == AO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
 
 #endif

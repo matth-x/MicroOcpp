@@ -253,8 +253,6 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType, int co
         operation->setOnSendConfListener(onGetConfigurationSendConf);
     } else if (!strcmp(messageType, "Reset")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::Reset());
-        if (onResetSendConf == nullptr && onResetReceiveReq == nullptr)
-            AO_DBG_WARN("Reset is without effect when the sendConf and receiveReq listener is not set. Set a listener which resets your device.");
         operation->setOnReceiveReqListener(onResetReceiveReq);
         operation->setOnSendConfListener(onResetSendConf);
     } else if (!strcmp(messageType, "UpdateFirmware")) {

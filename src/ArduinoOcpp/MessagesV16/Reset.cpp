@@ -25,14 +25,19 @@ void Reset::processReq(JsonObject payload) {
 
     if (ocppModel && ocppModel->getChargePointStatusService()) {
         auto cpsService = ocppModel->getChargePointStatusService();
-        if (!cpsService->getPreReset() || cpsService->getPreReset()(isHard) || isHard) {
-            resetAccepted = true;
-            cpsService->initiateReset(isHard);
-            int connId = 0;
-            for (int i = 0; i < cpsService->getNumConnectors(); i++) {
-                auto connector = cpsService->getConnector(connId);
-                if (connector) {
-                    connector->endSession(isHard ? "HardReset" : "SoftReset");
+        if (!cpsService->getExecuteReset()) {
+            AO_DBG_ERR("No reset handler set. Abort operation");
+            (void)0;
+            //resetAccepted remains false
+        } else {
+            if (!cpsService->getPreReset() || cpsService->getPreReset()(isHard) || isHard) {
+                resetAccepted = true;
+                cpsService->initiateReset(isHard);
+                for (int i = 0; i < cpsService->getNumConnectors(); i++) {
+                    auto connector = cpsService->getConnector(i);
+                    if (connector) {
+                        connector->endSession(isHard ? "HardReset" : "SoftReset");
+                    }
                 }
             }
         }
