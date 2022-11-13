@@ -98,6 +98,21 @@ public:
 #error
 #endif
         } //end if mustMount()
+
+#if AO_DBG_LEVEL >= AO_DL_DEBUG
+        if (valid) {
+            File root = USE_FS.open("/");
+            File file = root.openNextFile();
+
+            AO_DBG_DEBUG("filesystem content:");
+            while(file) {
+                AO_CONSOLE_PRINTF("[AO]     > %s\n", file.name() ? file.name() : "null");
+                file = root.openNextFile();       
+            }
+
+            root.close();
+        }
+#endif //endif AO_DBG_LEVEL >= AO_DL_DBUG
     }
 
     ~ArduinoFilesystemAdapter() {

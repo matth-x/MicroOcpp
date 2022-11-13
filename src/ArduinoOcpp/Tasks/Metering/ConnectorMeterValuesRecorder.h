@@ -11,6 +11,7 @@
 
 #include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
 #include <ArduinoOcpp/Tasks/Metering/MeterStore.h>
+#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 
 namespace ArduinoOcpp {
@@ -29,8 +30,7 @@ private:
     const int connectorId;
     MeterStore& meterStore;
     
-    std::vector<std::unique_ptr<MeterValue>> sampledData;
-    std::vector<std::unique_ptr<MeterValue>> alignedData;
+    std::vector<std::unique_ptr<MeterValue>> meterData;
     std::shared_ptr<TransactionMeterData> stopTxnData;
 
     std::unique_ptr<MeterValueBuilder> sampledDataBuilder;
@@ -45,8 +45,8 @@ private:
 
     ulong lastSampleTime = 0; //0 means not charging right now
     OcppTimestamp nextAlignedTime;
+    std::shared_ptr<Transaction> transaction;
     bool trackTxRunning = false;
-    int trackTxNr = -1;
  
     PowerSampler powerSampler = nullptr;
     EnergySampler energySampler = nullptr;
@@ -54,12 +54,12 @@ private:
     int energySamplerIndex {-1};
 
     std::shared_ptr<Configuration<int>> MeterValueSampleInterval;
-    std::shared_ptr<Configuration<int>> MeterValuesSampledDataMaxLength;
-    std::shared_ptr<Configuration<int>> StopTxnSampledDataMaxLength;
+    std::shared_ptr<Configuration<int>> MeterValueCacheSize;
 
     std::shared_ptr<Configuration<int>> ClockAlignedDataInterval;
-    std::shared_ptr<Configuration<int>> MeterValuesAlignedDataMaxLength;
-    std::shared_ptr<Configuration<int>> StopTxnAlignedDataMaxLength;
+
+    std::shared_ptr<Configuration<const char*>> MeterValuesInTxOnly;
+    std::shared_ptr<Configuration<const char*>> StopTxnDataCapturePeriodic;
 public:
     ConnectorMeterValuesRecorder(OcppModel& context, int connectorId, MeterStore& meterStore);
 

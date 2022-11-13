@@ -82,7 +82,7 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
 
     size_t msize;
     if (filesystem->stat(fn, &msize) != 0) {
-        AO_DBG_DEBUG("tx does not exist");
+        AO_DBG_DEBUG("%u-%u does not exist", connectorId, txNr);
         return nullptr;
     }
 
