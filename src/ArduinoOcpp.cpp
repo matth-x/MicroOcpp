@@ -117,14 +117,15 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
 
 #if !defined(AO_CUSTOM_DIAGNOSTICS) && !defined(AO_CUSTOM_WS)
     model.setDiagnosticsService(std::unique_ptr<DiagnosticsService>(
-        EspWiFi::makeDiagnosticsService(*ocppEngine))); //will only return "Rejected" because logging is not implemented yet
+        EspWiFi::makeDiagnosticsService(*ocppEngine))); //will only return "Rejected" because client needs to implement logging
 #else
     model.setDiagnosticsService(std::unique_ptr<DiagnosticsService>(
         new DiagnosticsService(*ocppEngine)));
 #endif
 
-#if !defined(AO_CUSTOM_RESET)
-    model.getChargePointStatusService()->setExecuteReset(EspWiFi::makeDefaultResetFn());
+#if AO_PLATFORM == AO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
+    if (!model.getChargePointStatusService()->getExecuteReset())
+        model.getChargePointStatusService()->setExecuteReset(makeDefaultResetFn());
 #endif
 
     ocppEngine->setRunOcppTasks(false); //prevent OCPP classes from doing anything while booting

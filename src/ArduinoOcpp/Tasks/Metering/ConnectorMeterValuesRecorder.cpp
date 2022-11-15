@@ -24,7 +24,8 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
         CONFIGURATION_FN,
         true,true,true,false
     );
-    MeterValuesSampledDataMaxLength = declareConfiguration("MeterValuesSampledDataMaxLength", 4, CONFIGURATION_VOLATILE, false, true, false, false);
+    declareConfiguration<int>("MeterValuesSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, false, true, false, false);
+    MeterValueCacheSize = declareConfiguration("AO_MeterValueCacheSize", 1, CONFIGURATION_FN, true, true, true, false);
     MeterValueSampleInterval = declareConfiguration("MeterValueSampleInterval", 60);
     
     auto StopTxnSampledData = declareConfiguration<const char*>(
@@ -33,7 +34,7 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
         CONFIGURATION_FN,
         true,true,true,false
     );
-    StopTxnSampledDataMaxLength = declareConfiguration("StopTxnSampledDataMaxLength", 4, CONFIGURATION_VOLATILE, false, true, false, false);
+    declareConfiguration<int>("StopTxnSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, false, true, false, false);
     
     auto MeterValuesAlignedData = declareConfiguration<const char*>(
         "MeterValuesAlignedData",
@@ -41,7 +42,7 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
         CONFIGURATION_FN,
         true,true,true,false
     );
-    MeterValuesAlignedDataMaxLength = declareConfiguration("MeterValuesAlignedDataMaxLength", 4, CONFIGURATION_VOLATILE, false, true, false, false);
+    declareConfiguration<int>("MeterValuesAlignedDataMaxLength", 8, CONFIGURATION_VOLATILE, false, true, false, false);
     ClockAlignedDataInterval  = declareConfiguration("ClockAlignedDataInterval", 0);
     
     auto StopTxnAlignedData = declareConfiguration<const char*>(
@@ -50,8 +51,10 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
         CONFIGURATION_FN,
         true,true,true,false
     );
-    StopTxnAlignedDataMaxLength = declareConfiguration("StopTxnAlignedDataMaxLength", 4, CONFIGURATION_VOLATILE, false, true, false, false);
-    
+
+    MeterValuesInTxOnly = declareConfiguration<const char*>("AO_MeterValuesInTxOnly", "true", CONFIGURATION_FN, true, true, true, false);
+    StopTxnDataCapturePeriodic = declareConfiguration<const char*>("AO_StopTxnDataCapturePeriodic", "false", CONFIGURATION_FN, true, true, true, false);
+
     sampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesSampledData));
     alignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesAlignedData));
     stopTxnSampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, StopTxnSampledData));
@@ -60,25 +63,48 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
 
 OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
-    Transaction *transaction = nullptr;
+    bool txBreak = false;
+    if (context.getConnectorStatus(connectorId)) {
+        auto &curTx = context.getConnectorStatus(connectorId)->getTransaction();
+        txBreak = (curTx && curTx->isRunning()) != trackTxRunning;
+        trackTxRunning = (curTx && curTx->isRunning());
+    }
 
-    if (context.getConnectorStatus(connectorId) && context.getConnectorStatus(connectorId)->getTransaction()) {
-        transaction = context.getConnectorStatus(connectorId)->getTransaction().get();
+    if (txBreak) {
+        lastSampleTime = ao_tick_ms();
+    }
 
-        if (transaction->isRunning() && (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr())) {
-            AO_DBG_WARN("reload stopTxnData");
-            //reload (e.g. after power cut during transaction)
-            stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, connectorId, transaction->getTxNr());
+    if ((txBreak || meterData.size() >= (size_t) *MeterValueCacheSize) && !meterData.empty()) {
+        auto meterValues = new MeterValues(std::move(meterData), connectorId, transaction);
+        meterData.clear();
+        return meterValues;
+    }
+
+    if (context.getConnectorStatus(connectorId)) {
+        if (transaction != context.getConnectorStatus(connectorId)->getTransaction()) {
+            transaction = context.getConnectorStatus(connectorId)->getTransaction();
+        }
+        
+        if (transaction && transaction->isRunning()) {
+            //check during transaction
+
+            if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
+                AO_DBG_WARN("reload stopTxnData");
+                //reload (e.g. after power cut during transaction)
+                stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, connectorId, transaction->getTxNr());
+            }
+        } else {
+            //check outside of transaction
+
+            if (!(const char *) *MeterValuesInTxOnly || strcmp(*MeterValuesInTxOnly, "false")) {
+                //don't take any MeterValues outside of transactions
+                meterData.clear();
+                return nullptr;
+            }
         }
     }
 
     if (*ClockAlignedDataInterval >= 1) {
-
-        if (alignedData.size() >= (size_t) *MeterValuesAlignedDataMaxLength) {
-            auto meterValues = new MeterValues(std::move(alignedData), connectorId);
-            alignedData.clear();
-            return meterValues;
-        }
 
         auto& timestampNow = context.getOcppTime().getOcppTimestampNow();
         auto dt = nextAlignedTime - timestampNow;
@@ -91,7 +117,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
             if (abs(dt) <= 60) { //is measurement still "clock-aligned"?
                 auto alignedMeterValues = alignedDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::SampleClock);
                 if (alignedMeterValues) {
-                    alignedData.push_back(std::move(alignedMeterValues));
+                    meterData.push_back(std::move(alignedMeterValues));
                 }
 
                 if (stopTxnData) {
@@ -117,45 +143,18 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
                 nextAlignedTime = midnight + (intervall * *ClockAlignedDataInterval);
             }
         }
-    } else {
-        alignedData.clear();
     }
 
     if (*MeterValueSampleInterval >= 1) {
         //record periodic tx data
 
-        if (sampledData.size() >= (size_t) *MeterValuesSampledDataMaxLength) {
-            auto meterValues = new MeterValues(std::move(sampledData), connectorId);
-            sampledData.clear();
-            return meterValues;
-        }
-
-        if ((transaction && transaction->isRunning()) != trackTxRunning) {
-            //transaction break
-
-            trackTxRunning = (transaction && transaction->isRunning());
-
-            std::shared_ptr<Transaction> transaction_sp = nullptr;
-            if (context.getConnectorStatus(connectorId)) {
-                transaction_sp = context.getConnectorStatus(connectorId)->getTransaction();
-            }
-
-            MeterValues *meterValues = nullptr;
-            if (!sampledData.empty()) {
-                meterValues = new MeterValues(std::move(sampledData), connectorId, transaction_sp);
-                sampledData.clear();
-            }
-            lastSampleTime = ao_tick_ms();
-            return meterValues;
-        }
-
         if (ao_tick_ms() - lastSampleTime >= (ulong) (*MeterValueSampleInterval * 1000)) {
             auto sampleMeterValues = sampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::SamplePeriodic);
             if (sampleMeterValues) {
-                sampledData.push_back(std::move(sampleMeterValues));
+                meterData.push_back(std::move(sampleMeterValues));
             }
 
-            if (stopTxnData) {
+            if (stopTxnData && ((const char*) *StopTxnDataCapturePeriodic && !strcmp(*StopTxnDataCapturePeriodic, "true"))) {
                 auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::SamplePeriodic);
                 if (sampleStopTx) {
                     stopTxnData->addTxData(std::move(sampleStopTx));
@@ -163,9 +162,10 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
             }
             lastSampleTime = ao_tick_ms();
         }   
+    }
 
-    } else {
-        sampledData.clear();
+    if (*ClockAlignedDataInterval < 1 && *MeterValueSampleInterval < 1) {
+        meterData.clear();
     }
 
     return nullptr; //successful method completition. Currently there is no reason to send a MeterValues Msg.
@@ -179,10 +179,15 @@ OcppMessage *ConnectorMeterValuesRecorder::takeTriggeredMeterValues() {
         return nullptr;
     }
 
-    decltype(sampledData) mv_now;
+    decltype(meterData) mv_now;
     mv_now.push_back(std::move(sample));
 
-    return new MeterValues(std::move(mv_now), connectorId);
+    std::shared_ptr<Transaction> transaction = nullptr;
+    if (context.getConnectorStatus(connectorId)) {
+        transaction = context.getConnectorStatus(connectorId)->getTransaction();
+    }
+
+    return new MeterValues(std::move(mv_now), connectorId, transaction);
 }
 
 void ConnectorMeterValuesRecorder::setPowerSampler(PowerSampler ps){
