@@ -12,13 +12,13 @@ Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
 
 Fully integrated into the Arduino platform and the ESP32 / ESP8266. Compatible with ESP-IDF, FreeRTOS and generic embedded C/C++ platforms.
 
-## Make your EVSE ready for OCPP-based charging networks :car::electric_plug::battery:
+## Make your EVSE ready for OCPP :car::electric_plug::battery:
 
 This library allows your EVSE to communicate with an OCPP Backend and to participate in commercial charging networks. You can integrate it into an existing firmware development, or start a new EVSE project from scratch with it.
 
 :heavy_check_mark: Works with [SteVe](https://github.com/RWTH-i5-IDSG/steve), [The Mobility House OCPP package](https://github.com/mobilityhouse/ocpp) and further commercial Central Systems
 
-:heavy_check_mark: Flexible API for customizable EVSE projects. Tested in many charging stations
+:heavy_check_mark: Tested in many charging stations
 
 :heavy_check_mark: Eligible for **public chargers** (Eichrecht-compliant)
 
