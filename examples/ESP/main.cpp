@@ -23,11 +23,11 @@ ESP8266WiFiMulti WiFiMulti;
 #define OCPP_URL "ws://echo.websocket.events/"
 
 //
-////  Settings which worked for my SteVe instance
+//  Settings which worked for my SteVe instance:
 //
 //#define OCPP_HOST "my.instance.com"
 //#define OCPP_PORT 80
-//#define OCPP_URL "ws://my.instance.com/steve/websocket/CentralSystemService/gpio-based-charger"
+//#define OCPP_URL "ws://my.instance.com/steve/websocket/CentralSystemService/esp-charger"
 
 void setup() {
 
@@ -36,7 +36,6 @@ void setup() {
      */ 
 
     Serial.begin(115200);
-    Serial.setDebugOutput(true);
 
     Serial.print(F("[main] Wait for WiFi: "));
 
@@ -56,7 +55,7 @@ void setup() {
 #error only ESP32 or ESP8266 supported at the moment
 #endif
 
-    Serial.print(F(" connected!\n"));
+    Serial.println(F(" connected!"));
 
     /*
      * Initialize the OCPP library
@@ -66,19 +65,18 @@ void setup() {
     /*
      * Integrate OCPP functionality. You can leave out the following part if your EVSE doesn't need it.
      */
-    setPowerActiveImportSampler([]() {
-        //measure the input power of the EVSE here and return the value in Watts
+    setEnergyMeterInput([]() {
+        //take the energy register of the main electricity meter and return the value in watt-hours
         return 0.f;
     });
 
-    setOnChargingRateLimitChange([](float limit) {
+    setSmartChargingOutput([](float limit) {
         //set the SAE J1772 Control Pilot value here
-        Serial.print(F("[main] Smart Charging allows maximum charge rate: "));
-        Serial.println(limit);
+        Serial.printf("[main] Smart Charging allows maximum charge rate: %.0f\n", limit);
     });
 
-    setEvRequestsEnergySampler([]() {
-        //return true if the EV is in state "Ready for charging" (see https://en.wikipedia.org/wiki/SAE_J1772#Control_Pilot)
+    setConnectorPluggedInput([]() {
+        //return true if an EV is plugged to this EVSE
         return false;
     });
 
@@ -110,33 +108,39 @@ void loop() {
      * Detect if something physical happened at your EVSE and trigger the corresponding OCPP messages
      */
     if (/* RFID chip detected? */ false) {
-        const char *idTag = "0123456789abcd"; //e.g. idTag = RFID.readIdTag();
-        authorize(idTag, [] (JsonObject response) {
-            //check if user with idTag is authorized
-            if (!strcmp("Accepted", response["idTagInfo"]["status"] | "Invalid")){
-                Serial.println(F("[main] User is authorized to start charging"));
+        String idTag = "0123456789ABCD"; //e.g. idTag = RFID.readIdTag();
+
+        if (!getTransactionIdTag()) {
+            //no idTag registered yet. Start a new transaction
+
+            authorize(idTag.c_str(), [idTag] (JsonObject response) {
+                //check if user with idTag is authorized
+                if (!strcmp("Accepted", response["idTagInfo"]["status"] | "Invalid")){
+                    Serial.println(F("[main] User is authorized to start a transaction"));
+
+                    auto ret = beginTransaction(idTag.c_str()); //begin Tx locally
+
+                    if (ret) {
+                        Serial.println(F("[main] Transaction initiated. StartTransaction will be sent when ConnectorPlugged Input becomes true"));
+                    } else {
+                        Serial.println(F("[main] No transaction initiated"));
+                    }
+                } else {
+                    Serial.printf("[main] Authorize denied. Reason: %s\n", response["idTagInfo"]["status"] | "");
+                }
+            });
+            Serial.printf("[main] Authorizing user with idTag %s\n", idTag.c_str());
+        } else {
+            //Transaction already initiated. Check if to stop current Tx by RFID card
+            if (idTag.equals(getTransactionIdTag())) {
+                //card matches -> user can stop Tx
+                Serial.println(F("[main] End transaction by RFID card"));
+
+                endTransaction();
             } else {
-                Serial.printf("[main] Authorize denied. Reason: %s\n", response["idTagInfo"]["status"] | "");
+                Serial.println(F("[main] Cannot end transaction by RFID card (different card?)"));
             }
-        });
-        Serial.printf("[main] Authorizing user with idTag %s\n", idTag);
-    }
-    
-    if (/* EV plugged in and user authorized? */ false) {
-        const char *idTag = "0123456789abcd"; //e.g. authorized idTag from above
-        startTransaction(idTag, [] (JsonObject response) {
-            //Callback: Central System has answered. Could flash a confirmation light here.
-            Serial.printf("[main] Started OCPP transaction. Status: %s, transactionId: %u\n",
-                    response["idTagInfo"]["status"] | "Invalid",
-                    response["transactionId"] | -1);
-        });
-    }
-    
-    if (/* EV unplugged? */ false) {
-        stopTransaction([] (JsonObject response) {
-            //Callback: Central System has answered.
-            Serial.print(F("[main] Stopped OCPP transaction\n"));
-        });
+        }
     }
 
     //... see ArduinoOcpp.h for more possibilities

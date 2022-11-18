@@ -13,7 +13,7 @@
 #define AO_METERSTORE_DIR AO_FILENAME_PREFIX "/"
 #endif
 
-#define MAX_STOPTXDATA_LEN 20
+#define MAX_STOPTXDATA_LEN 10
 
 using namespace ArduinoOcpp;
 

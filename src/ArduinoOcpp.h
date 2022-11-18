@@ -28,106 +28,65 @@ using ArduinoOcpp::OnReceiveErrorListener;
 using ArduinoOcpp::Timeout;
 
 #ifndef AO_CUSTOM_WS
-//uses links2004/WebSockets library
-void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, float V_eff = 230.f /*German grid*/, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
+//use links2004/WebSockets library
+
+/*
+ * Initialize the library with the OCPP URL, EVSE voltage and filesystem configuration.
+ * 
+ * If the connections fails, please refer to 
+ * https://github.com/matth-x/ArduinoOcpp/issues/36#issuecomment-989716573 for recommendations on
+ * how to track down the issue with the connection.
+ * 
+ * This is a convenience function only available for Arduino. For a full initialization with TLS,
+ * please refer to https://github.com/matth-x/ArduinoOcpp/tree/master/examples/ESP-TLS
+ */
+void OCPP_initialize(
+            const char *CS_hostname, //e.g. "example.com"
+            uint16_t CS_port,        //e.g. 80
+            const char *CS_url,      //e.g. "ws://example.com/steve/websocket/CentralSystemService/charger001"
+            float V_eff = 230.f,     //Grid voltage of your country. e.g. 230.f (European voltage)
+            ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
 #endif
 
-//Lets you use your own WebSocket implementation
-void OCPP_initialize(ArduinoOcpp::OcppSocket& ocppSocket, float V_eff = 230.f /*European grid*/, ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, ArduinoOcpp::OcppClock system_time = ArduinoOcpp::Clocks::DEFAULT_CLOCK);
+/*
+ * Initialize the library with a WebSocket connection which is configured with protocol=ocpp1.6
+ * (=OcppSocket), EVSE voltage and filesystem configuration. This library requires that you handle
+ * establishing the connection and keeping it alive. Please refer to
+ * https://github.com/matth-x/ArduinoOcpp/tree/master/examples/ESP-TLS for an example how to use it.
+ * 
+ * This GitHub project also delivers an OcppSocket implementation based on links2004/WebSockets. If
+ * you need another WebSockets implementation, you can subclass the OcppSocket class and pass it to
+ * this initialize() function. Please refer to
+ * https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/MongooseOcppSocketClient.cpp for
+ * an example.
+ */
+void OCPP_initialize(
+            ArduinoOcpp::OcppSocket& ocppSocket, //WebSocket adapter for ArduinoOcpp
+            float V_eff = 230.f,                 //Grid voltage of your country. e.g. 230.f (European voltage)
+            ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
 
-//experimental; More testing required (help needed: it would be awesome if you can you publish your evaluation results on the GitHub page)
+/*
+ * Stop the OCPP library and release allocated resources.
+ */
 void OCPP_deinitialize();
 
+/*
+ * To be called in the main loop (e.g. place it inside loop())
+ */
 void OCPP_loop();
 
 /*
- * Provide hardware-related information to the library
+ * Send OCPP operations.
  * 
- * The library needs a way to obtain information from your charger that changes over time. The
- * library calls following callbacks regularily (if they were set) to refresh its internal
- * status.
+ * You only need to send the following operation types manually:
+ *     - BootNotification: Notify the OCPP server that this EVSE is ready and start the OCPP
+ *           routines.
+ *     - Authorize: Validate an RFID tag before using it for a transaction
  * 
- * Set the callbacks once in your setup() function.
- */
-
-void setPowerActiveImportSampler(std::function<float()> power);
-
-void setEnergyActiveImportSampler(std::function<float()> energy);
-
-void addMeterValueSampler(std::unique_ptr<ArduinoOcpp::SampledValueSampler> meterValueSampler);
-void addMeterValueSampler(std::function<int32_t ()> value, const char *measurand = nullptr, const char *unit = nullptr, const char *location = nullptr, const char *phase = nullptr);
-
-void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
-
-void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
-
-void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
-
-void addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode);
-
-/*
- * React on calls by the library's internal functions
- * 
- * The library needs to set parameters on your charger on a regular basis or perform
- * functions triggered by the central system. The library uses the following callbacks
- * (if they were set) to perform updates or functions on your charger.
- * 
- * Set the callbacks once in your setup() function.
- */
-
-void setOnChargingRateLimitChange(std::function<void(float)> chargingRateChanged);
-
-//Set a Cb to mechanically unlock the connector. Called for the OCPP operation "UnlockConnector"
-//Return values: true on success, false on failure, PollResult::Await if not known yet
-//Continues to call the Cb as long as it returns PollResult::Await
-void setOnUnlockConnector(std::function<ArduinoOcpp::PollResult<bool>()> unlockConnector);
-
-//Set a Cb for setting the state of the connector lock. Called in the course of normal transactions
-//Return values: - TxEnableState::Active if connector is locked and ready for transaction
-//               - TxEnableState::Inactive if connector lock is released
-//               - TxEnableState::Pending otherwise, e.g. if transitioning between the states
-//Called periodically
-void setConnectorLock(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> lockConnector);
-
-//Set a Cb to update transaction-based energy measurements with the most recent transaction state.
-//This allows energy meters to take their measruements right before and after a transaction
-//Return values: - TxEnableState::Active if the energy meter confirmed to be in the transaction-state
-//               - TxEnableState::Inactive if the energy meter has transitioned into a non-transaction-state
-//               - TxEnableState::Pending otherwise, e.g. if transitioning between the states
-//Called periodically
-void setTxBasedMeterUpdate(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> updateTxState);
-
-/*
- * React on CS-initiated operations
- * 
- * You can define custom behaviour in your integration which is executed every time the library
- * receives a CS-initiated operation. The following functions set a callback function for the
- * respective event. The library executes the callbacks always after its internal routines.
- * 
- * Set the callbacks once in your setup() function.
- */
-
-void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq); //optional
-
-void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf); //important, energize the power plug here and capture the idTag
-
-void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf); //important, de-energize the power plug here
-void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq); //optional, to de-energize the power plug immediately
-
-void setOnResetSendConf(OnSendConfListener onSendConf); //important, reset your device here (i.e. call ESP.reset();)
-void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq); //alternative: start reset timer here
-
-/*
- * Perform CP-initiated operations
- * 
- * Use following functions to send OCPP messages. Each function will adapt the library's
- * internal state appropriatley (e.g. after a successful StartTransaction request the library
- * will store the transactionId and send a StatusNotification).
+ * All other operation types are handled automatically by this library.
  * 
  * On receipt of the .conf() response the library calls the callback function
- * "OnReceiveConfListener onConf" and passes the OCPP payload to it. The following functions
- * are non-blocking. Your application code will immediately resume with the subsequent code
- * in any case.
+ * "OnReceiveConfListener onConf" and passes the OCPP payload to it.
  * 
  * For your first EVSE integration, the `onReceiveConfListener` is probably sufficient. For
  * advanced EVSE projects, the other listeners likely become relevant:
@@ -137,45 +96,168 @@ void setOnResetReceiveReq(OnReceiveReqListener onReceiveReq); //alternative: sta
  *           expires. Note that timeouts also trigger the `onAbortListener`.
  * - `onReceiveErrorListener`: will be called when the Central System returns a CallError.
  *           Again, each error also triggers the `onAbortListener`.
- */
-
-void authorize(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
-
-void bootNotification(const char *chargePointModel, const char *chargePointVendor, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
-
-//The OCPP operation will include the given payload without modifying it. The library will delete the payload object after successful transmission.
-void bootNotification(std::unique_ptr<DynamicJsonDocument> payload, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
-
-bool startTransaction(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
-
-bool stopTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
-
-/*
- * Access information about the internal state of the library
- */
-
-int getTransactionId(); //returns the ID of the current transaction. Returns -1 if called before or after an transaction
-
-bool ocppPermitsCharge();
-
-bool isAvailable(); //if the charge point is operative or inoperative
-
-/*
- * Session management
- *
- * A session begins when the EV user is authenticated against the OCPP system and intends to start the charging process.
- * The session ends as soon as the authentication expires or as soon as the EV user does not intend to charge anymore.
  * 
- * A session means that the EVSE does not need further input from the EV user or OCPP backend to start a transaction.
+ * The functions for sending OCPP operations are non-blocking. The program will resume immediately
+ * with the code after with the subsequent code in any case.
  */
 
-void beginSession(const char *idTag);
+void bootNotification(
+            const char *chargePointModel,                //model name of the EVSE
+            const char *chargePointVendor,               //vendor name
+            OnReceiveConfListener onConf = nullptr,      //callback (confirmation received)
+            OnAbortListener onAbort = nullptr,           //callback (confirmation not received), optional
+            OnTimeoutListener onTimeout = nullptr,       //callback (timeout expired), optional
+            OnReceiveErrorListener onError = nullptr,    //callback (error code received), optional
+            std::unique_ptr<Timeout> timeout = nullptr); //custom timeout behavior, optional
 
-void endSession(const char *reason = nullptr);
+//Alternative version for sending a complete BootNotification payload
+void bootNotification(
+            std::unique_ptr<DynamicJsonDocument> payload,//manually defined payload
+            OnReceiveConfListener onConf = nullptr,      //callback (confirmation received)
+            OnAbortListener onAbort = nullptr,           //callback (confirmation not received), optional
+            OnTimeoutListener onTimeout = nullptr,       //callback (timeout expired), optional
+            OnReceiveErrorListener onError = nullptr,    //callback (error code received), optional
+            std::unique_ptr<Timeout> timeout = nullptr); //custom timeout behavior, optional
 
-bool isInSession();
+void authorize(
+            const char *idTag,                           //RFID tag (e.g. ISO 14443 UID tag with 4 or 7 bytes)
+            OnReceiveConfListener onConf = nullptr,      //callback (confirmation received)
+            OnAbortListener onAbort = nullptr,           //callback (confirmation not received), optional
+            OnTimeoutListener onTimeout = nullptr,       //callback (timeout expired), optional
+            OnReceiveErrorListener onError = nullptr,    //callback (error code received), optional
+            std::unique_ptr<Timeout> timeout = nullptr); //custom timeout behavior, optional
 
-const char *getSessionIdTag();
+/*
+ * Transaction management.
+ * 
+ * Begin the transaction process by creating a new transaction and setting its user identification.
+ * The OCPP library will try to send a StartTransaction request with all data as soon as possible
+ * after all requirements for a transaction are met (i.e. the connector is plugged).
+ * 
+ * Returns true if it was possible to create a transaction. If it returned false, either another
+ * transaction is still running or you need to try it again later.
+ */
+bool beginTransaction(const char *idTag, uint connectorId = 1);
+
+/*
+ * End the transaction process by terminating the transaction and setting a reason for its termination.
+ * Please refer to to OCPP 1.6 Specification - Edition 2 p. 90 for a list of valid reasons. "reason"
+ * can also be nullptr.
+ * 
+ * It is safe to call this function at any time, i.e. when no transaction runs or when the transaction
+ * has already been ended. For example you can place `endTransaction("Reboot");` in the beginning of
+ * the program just to ensure that there is no transaction from a previous run.
+ * 
+ * Returns true if this action actually ended a transaction. False otherwise
+ */
+bool endTransaction(const char *reason = nullptr, uint connectorId = 1);
+
+/*
+ * Returns if the library has started the transaction by sending a StartTransaction and if it hasn't
+ * been stopped already by sending a StopTransaction.
+ */
+bool isTransactionRunning(uint connectorId = 1);
+
+/* 
+ * Returns if the OCPP library allows the EVSE to charge at the moment.
+ *
+ * If you integrate it into a J1772 charger, true means that the Control Pilot can send the PWM signal
+ * and false means that the Control Pilot must be at a DC voltage.
+ */
+bool ocppPermitsCharge(uint connectorId = 1);
+
+/*
+ * Define the Inputs and Outputs of this library.
+ * 
+ * This library interacts with the hardware of your charger by Inputs and Outputs. Inputs and Outputs
+ * are tiny function-objects which read information from the EVSE or control the behavior of the EVSE.
+ * 
+ * An Input is a function which returns the current state of a variable of the EVSE. For example, if
+ * the energy meter stores the energy register in the global variable `e_reg`, then you can allow
+ * this library to read it by defining the Input 
+ *     `[] () {return e_reg;}`
+ * and passing it to the library.
+ * 
+ * An Output is a function which gets a state value from the OCPP library and applies it to the EVSE.
+ * For example, to let Smart Charging control the PWM signal of the Control Pilot, define the Output
+ *     `[] (float p_max) {pwm = p_max / PWM_FACTOR;}` (simplified example)
+ * and pass it to the library.
+ * 
+ * Configure the library with Inputs and Outputs once in the setup() function.
+ */
+
+void setConnectorPluggedInput(std::function<bool()> pluggedInput, uint connectorId = 1); //Input about if an EV is plugged to this EVSE
+
+void setEnergyMeterInput(std::function<float()> energyInput, uint connectorId = 1); //Input of the electricity meter register
+
+void setPowerMeterInput(std::function<float()> powerInput, uint connectorId = 1); //Input of the power meter reading
+
+void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, uint connectorId = 1); //Output for the Smart Charging limit
+
+/*
+ * Define the Inputs and Outputs of this library. (Advanced)
+ * 
+ * These Inputs and Outputs are optional depending on the use case of your charger.
+ */
+
+void setEvReadyInput(std::function<bool()> evReadyInput, uint connectorId = 1); //Input if EV is ready to charge (= J1772 State C)
+
+void setEvseReadyInput(std::function<bool()> evseReadyInput, uint connectorId = 1); //Input if EVSE allows charge (= PWM signal on)
+
+void addErrorCodeInput(std::function<const char *()> errorCodeInput, uint connectorId = 1); //Input for Error codes (please refer to OCPP 1.6, Edit2, p. 71 and 72 for valid error codes)
+
+void addMeterValueInput(std::function<int32_t ()> valueInput, uint connectorId = 1, const char *measurand = nullptr, const char *unit = nullptr, const char *location = nullptr, const char *phase = nullptr); //integrate further metering Inputs
+
+void addMeterValueInput(std::unique_ptr<ArduinoOcpp::SampledValueSampler> valueInput, uint connectorId = 1); //integrate further metering Inputs (more extensive alternative)
+
+/*
+ * Set an InputOutput (reads and sets information at the same time) for forcing to unlock the
+ * connector. Called as part of the OCPP operation "UnlockConnector"
+ * Return values: true on success, false on failure, PollResult::Await if not known yet
+ * Continues to call the Cb as long as it returns PollResult::Await
+ */
+void setOnUnlockConnectorInOut(std::function<ArduinoOcpp::PollResult<bool>()> onUnlockConnectorInOut, uint connectorId = 1);
+
+/*
+ * Set an Input/Output for setting the state of the connector lock. Called in the course of normal
+ * transactions (not as part of UnlockConnector).
+ * Param. values: 
+ *     - TxTrigger::Active if connector should be locked
+ *     - TxTrigger::Inactive if connector should be unlocked
+ * Return values:
+ *     - TxEnableState::Active if connector is locked and ready for transaction
+ *     - TxEnableState::Inactive if connector lock is released
+ *     - TxEnableState::Pending otherwise, e.g. if transitioning between the states
+ */
+void setConnectorLockInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> lockConnectorInOut, uint connectorId = 1);
+
+/*
+ * Set an Input/Output to interact with a transaction-based energy meter. When this OCPP library is
+ * about to start a transaction, it toggles the Output to the energy meter to TxTrigger::Active so
+ * the energy meter can take a measurement right before a transaction. The same goes for the stop of
+ * transactions. With the Input, the energy meter signals if the measurement is ready and the
+ * transaction can finally start / stop.
+ * Param. values:
+ *     - TxTrigger::Active if the tx-based meter should be in transaction-mode
+ *     - TxTrigger::Inactive if the tx-based meter should be in non-transaction-mode
+ * Return values:
+ *     - TxEnableState::Active if the tx-based meter confirms to be in the transaction-mode
+ *     - TxEnableState::Inactive if the tx-based meter has transitioned into a non-transaction-mode
+ *     - TxEnableState::Pending otherwise, e.g. if transitioning between the states
+ */
+void setTxBasedMeterInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> txMeterInOut, uint connectorId = 1);
+
+/*
+ * Access further information about the internal state of the library
+ */
+
+bool isOperative(uint connectorId = 1); //if the charge point is operative or inoperative (see OCPP1.6 Edit2, p. 45)
+
+int getTransactionId(uint connectorId = 1); //returns the txId if known, -1 if no transaction is running and 0 if txId not assigned yet
+
+const char *getTransactionIdTag(uint connectorId = 1); //returns the authorization token if applicable, or nullptr otherwise
+
+void setOnResetRequest(OnReceiveReqListener onReceiveReq);
 
 /*
  * Configure the device management
@@ -183,19 +265,24 @@ const char *getSessionIdTag();
 
 #if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WS)
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
-// You need to configure this object if FW updates are relevant for you. This project already
-// brings a simple configuration for the ESP32 and ESP8266 for prototyping purposes, however
-// for the productive system you will have to develop a configuration targeting the specific
-// OCPP backend.
-// See  ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h 
+
+/*
+ * You need to configure this object if FW updates are relevant for you. This project already
+ * brings a simple configuration for the ESP32 and ESP8266 for prototyping purposes, however
+ * for the productive system you will have to develop a configuration targeting the specific
+ * OCPP backend.
+ * See ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h 
+ */
 ArduinoOcpp::FirmwareService *getFirmwareService();
 #endif
 
 #if defined(AO_CUSTOM_DIAGNOSTICS) || defined(AO_CUSTOM_WS)
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
-// This library implements the OCPP messaging side of Diagnostics, but no logging or the
-// log upload to your backend.
-// To integrate Diagnostics, see ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h
+/*
+ * This library implements the OCPP messaging side of Diagnostics, but no logging or the
+ * log upload to your backend.
+ * To integrate Diagnostics, see ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h
+ */
 ArduinoOcpp::DiagnosticsService *getDiagnosticsService();
 #endif
 
@@ -204,7 +291,24 @@ class OcppEngine;
 }
 
 //Get access to internal functions and data structures. The returned OcppEngine object allows
-//you to bypass the facace functions of this header and implement custom functionality.
+//you to bypass the facade functions of this header and implement custom functionality.
 ArduinoOcpp::OcppEngine *getOcppEngine();
+
+/*
+ * Deprecated functions or functions to be moved to ArduinoOcppExtended.h
+ */
+
+void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq); //optional
+
+void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf);
+
+void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf);
+void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq);
+
+void setOnResetSendConf(OnSendConfListener onSendConf);
+
+bool startTransaction(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
+
+bool stopTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
 
 #endif

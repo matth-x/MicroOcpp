@@ -2,7 +2,7 @@
 
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/matth-x/ArduinoOcpp/PlatformIO%20CI?logo=github)](https://github.com/matth-x/ArduinoOcpp/actions)
 
-OCPP-J 1.6 client for embedded microcontrollers. Portable C/C++. Runs on Espressif, NXP, Texas Instruments, STM and embedded Linux.
+OCPP-J 1.6 client for embedded microcontrollers. Portable C/C++. Runs on Espressif, NXP, Texas Instruments and STM.
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp)
 
@@ -20,7 +20,7 @@ This library allows your EVSE to communicate with an OCPP Backend and to partici
 
 :heavy_check_mark: Tested in many charging stations
 
-:heavy_check_mark: Eligible for **public chargers** (Eichrecht-compliant)
+:heavy_check_mark: Eligible for public chargers (Eichrecht-compliant)
 
 ### Features
 

@@ -155,7 +155,7 @@ void setup() {
      * This snippet also shows how to integrate a custom filesystem. Just subclass FilesystemAdapter and pass
      * it to the library
      */
-    std::shared_ptr<ArduinoOcpp::FilesystemAdapter> filesystem = ArduinoOcpp::EspWiFi::makeDefaultFilesystemAdapter(ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail);
+    std::shared_ptr<ArduinoOcpp::FilesystemAdapter> filesystem = ArduinoOcpp::makeDefaultFilesystemAdapter(ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail);
     ArduinoOcpp::configuration_init(filesystem);
 
     /*
@@ -226,7 +226,7 @@ void setup() {
     /*
      * Integrate OCPP functionality. You can leave out the following part if your EVSE doesn't need it.
      */
-    setEnergyActiveImportSampler([]() {
+    setEnergyMeterInput([]() {
         //read the energy input register of the EVSE here and return the value in Wh
         /*
          * Approximated value. Replace with real reading
@@ -239,7 +239,7 @@ void setup() {
         return energyMeter;
     });
 
-    setOnChargingRateLimitChange([](float limit) {
+    setSmartChargingOutput([](float limit) {
         //set the SAE J1772 Control Pilot value here
         const float voltage = 230.f; // European grid
         const uint nPhases = 1; //one, two or three phase charging
@@ -263,12 +263,12 @@ void setup() {
 #endif
     });
 
-    setEvRequestsEnergySampler([]() {
+    setEvReadyInput([]() {
         //return true if the EV is in state "Ready for charging" (see https://en.wikipedia.org/wiki/SAE_J1772#Control_Pilot)
         return digitalRead(EV_CHARGE_PIN) == EV_CHARGING;
     });
 
-    addConnectorErrorCodeSampler([] () {
+    addErrorCodeInput([] () {
         //Uncomment if Ground fault pin is used
         //if (digitalRead(EVSE_GROUND_FAULT_PIN) != EVSE_GROUND_CLEAR) {
         //    return "GroundFault";
@@ -337,7 +337,7 @@ void loop() {
     auto readEvPlugged = digitalRead(EV_PLUG_PIN);
     if (evPlugged == EV_UNPLUGGED && readEvPlugged == EV_PLUGGED //transition from unplugged to plugged
                 && getTransactionId() < 0  //no transaction yet
-                && isAvailable()) {        //EVSE is in operative mode
+                && isOperative()) {        //EVSE is in operative mode
         startTransaction("my-id-tag");
     } else if (evPlugged == EV_PLUGGED && readEvPlugged == EV_UNPLUGGED //transition from plugged to unplugged
                 && getTransactionId() >= 0) { //need to stop transaction
