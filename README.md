@@ -2,7 +2,7 @@
 
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/matth-x/ArduinoOcpp/PlatformIO%20CI?logo=github)](https://github.com/matth-x/ArduinoOcpp/actions)
 
-OCPP-J 1.6 client for embedded microcontrollers. Portable C/C++. Runs on Espressif, NXP, Texas Instruments and STM.
+OCPP-J 1.6 client for embedded microcontrollers. Portable C/C++. Compatible with Espressif, NXP, Texas Instruments and STM.
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp)
 
@@ -10,7 +10,7 @@ PlatformIO package: [ArduinoOcpp](https://platformio.org/lib/show/11975/ArduinoO
 
 Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
 
-Fully integrated into the Arduino platform and the ESP32 / ESP8266. Compatible with ESP-IDF, FreeRTOS and generic embedded C/C++ platforms.
+Fully integrated into the Arduino platform and the ESP32 / ESP8266. Runs on ESP-IDF, FreeRTOS and generic embedded C/C++ platforms.
 
 ## Make your EVSE ready for OCPP :car::electric_plug::battery:
 
