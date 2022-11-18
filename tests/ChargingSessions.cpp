@@ -48,8 +48,8 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE( checkedBN );
         REQUIRE( checkedSN[0] );
         REQUIRE( checkedSN[1] );
-        REQUIRE( isAvailable() );
-        REQUIRE( !getSessionIdTag() );
+        REQUIRE( isOperative() );
+        REQUIRE( !getTransactionIdTag() );
         REQUIRE( !ocppPermitsCharge() );
     }
 
@@ -64,13 +64,13 @@ TEST_CASE( "Charging sessions" ) {
 
         SECTION("StartTx via session management - plug in first") {
             expectedSN[1] = "Preparing";
-            setConnectorPluggedSampler([] () {return true;});
+            setConnectorPluggedInput([] () {return true;});
             loop();
             REQUIRE(checkedSN[1]);
 
             checkedSN[1] = false;
             expectedSN[1] = "Charging";
-            beginSession("mIdTag");
+            beginTransaction("mIdTag");
             loop();
             REQUIRE(checkedSN[1]);
             REQUIRE(ocppPermitsCharge());
@@ -79,14 +79,14 @@ TEST_CASE( "Charging sessions" ) {
         SECTION("StartTx via session management - authorization first") {
 
             expectedSN[1] = "Preparing";
-            setConnectorPluggedSampler([] () {return false;});
-            beginSession("mIdTag");
+            setConnectorPluggedInput([] () {return false;});
+            beginTransaction("mIdTag");
             loop();
             REQUIRE(checkedSN[1]);
 
             checkedSN[1] = false;
             expectedSN[1] = "Charging";
-            setConnectorPluggedSampler([] () {return true;});
+            setConnectorPluggedInput([] () {return true;});
             loop();
             REQUIRE(checkedSN[1]);
             REQUIRE(ocppPermitsCharge());
@@ -94,15 +94,15 @@ TEST_CASE( "Charging sessions" ) {
 
         SECTION("StartTx via session management - no plug") {
             expectedSN[1] = "Charging";
-            beginSession("mIdTag");
+            beginTransaction("mIdTag");
             loop();
             REQUIRE(checkedSN[1]);
         }
 
         SECTION("StartTx via session management - ConnectionTimeOut") {
             expectedSN[1] = "Preparing";
-            setConnectorPluggedSampler([] () {return false;});
-            beginSession("mIdTag");
+            setConnectorPluggedInput([] () {return false;});
+            beginTransaction("mIdTag");
             loop();
             REQUIRE(checkedSN[1]);
 
@@ -133,7 +133,7 @@ TEST_CASE( "Charging sessions" ) {
         }
 
         SECTION("via session management - deauthorize") {
-            endSession("Local");
+            endTransaction("Local");
             loop();
             REQUIRE(checkedSN[1]);
             REQUIRE(!ocppPermitsCharge());
@@ -141,22 +141,22 @@ TEST_CASE( "Charging sessions" ) {
 
         SECTION("via session management - deauthorize first") {
             expectedSN[1] = "Finishing";
-            setConnectorPluggedSampler([] () {return true;});
-            endSession("Local");
+            setConnectorPluggedInput([] () {return true;});
+            endTransaction("Local");
             loop();
             REQUIRE(checkedSN[1]);
             REQUIRE(!ocppPermitsCharge());
 
             checkedSN[1] = false;
             expectedSN[1] = "Available";
-            setConnectorPluggedSampler([] () {return false;});
+            setConnectorPluggedInput([] () {return false;});
             loop();
             REQUIRE(checkedSN[1]);
             REQUIRE(!ocppPermitsCharge());
         }
 
         SECTION("via session management - plug out") {
-            setConnectorPluggedSampler([] () {return false;});
+            setConnectorPluggedInput([] () {return false;});
             loop();
             REQUIRE(checkedSN[1]);
             REQUIRE(!ocppPermitsCharge());
@@ -170,15 +170,15 @@ TEST_CASE( "Charging sessions" ) {
 
     SECTION("Advanced session management") {
         bool connectorPlugged = false;
-        setConnectorPluggedSampler([&connectorPlugged] () {return connectorPlugged;});
+        setConnectorPluggedInput([&connectorPlugged] () {return connectorPlugged;});
 
         TxEnableState meterState = TxEnableState::Inactive;
-        setTxBasedMeterUpdate([&meterState] (TxTrigger) {return meterState;});
+        setTxBasedMeterInOut([&meterState] (TxTrigger) {return meterState;});
 
         TxEnableState lockState = TxEnableState::Inactive;
-        setConnectorLock([&lockState] (TxTrigger) {return lockState;});
+        setConnectorLockInOut([&lockState] (TxTrigger) {return lockState;});
 
-        beginSession("mIdTag");
+        beginTransaction("mIdTag");
         loop();
         REQUIRE(!ocppPermitsCharge());
 
@@ -214,7 +214,7 @@ TEST_CASE( "Charging sessions" ) {
         lockState = TxEnableState::Pending;
         loop();
         REQUIRE(!ocppPermitsCharge());
-        REQUIRE(!getSessionIdTag());
+        REQUIRE(!getTransactionIdTag());
         REQUIRE(checkedSN[1]);
 
         checkedSN[1] = false;

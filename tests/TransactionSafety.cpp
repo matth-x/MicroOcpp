@@ -46,11 +46,11 @@ TEST_CASE( "Transaction safety" ) {
         OCPP_loop();
         OCPP_loop();
         OCPP_loop();
-        setConnectorPluggedSampler([] () {return true;});
-        beginSession("mIdTag");
+        setConnectorPluggedInput([] () {return true;});
+        beginTransaction("mIdTag");
         OCPP_loop();
         REQUIRE(ocppPermitsCharge());
-        endSession();
+        endTransaction();
         OCPP_loop();
         REQUIRE(!ocppPermitsCharge());
         
@@ -59,17 +59,17 @@ TEST_CASE( "Transaction safety" ) {
 
     SECTION("Reset during transaction 01 - interrupt initiation") {
         AO_DBG_DEBUG("Reset during transaction 01 - interrupt initiation");
-        setConnectorPluggedSampler([] () {return false;});
+        setConnectorPluggedInput([] () {return false;});
         OCPP_loop();
         OCPP_loop();
         OCPP_loop();
-        beginSession("mIdTag");
+        beginTransaction("mIdTag");
         OCPP_deinitialize(); //reset and jump to next section
     }
 
     SECTION("Reset during transaction 02 - interrupt initiation second time") {
         AO_DBG_DEBUG("Reset during transaction 02 - interrupt initiation second time");
-        setConnectorPluggedSampler([] () {return false;});
+        setConnectorPluggedInput([] () {return false;});
         OCPP_loop();
         OCPP_loop();
         OCPP_loop();
@@ -79,7 +79,7 @@ TEST_CASE( "Transaction safety" ) {
 
     SECTION("Reset during transaction 03 - interrupt running tx") {
         AO_DBG_DEBUG("Reset during transaction 03 - interrupt running tx");
-        setConnectorPluggedSampler([] () {return true;});
+        setConnectorPluggedInput([] () {return true;});
         OCPP_loop();
         OCPP_loop();
         OCPP_loop();
@@ -89,18 +89,18 @@ TEST_CASE( "Transaction safety" ) {
 
     SECTION("Reset during transaction 04 - interrupt stopping tx") {
         AO_DBG_DEBUG("Reset during transaction 04 - interrupt stopping tx");
-        setConnectorPluggedSampler([] () {return true;});
+        setConnectorPluggedInput([] () {return true;});
         OCPP_loop();
         OCPP_loop();
         OCPP_loop();
         REQUIRE(ocppPermitsCharge());
-        endSession();
+        endTransaction();
         OCPP_deinitialize();
     }
 
     SECTION("Reset during transaction 06 - check tx finished") {
         AO_DBG_DEBUG("Reset during transaction 06 - check tx finished");
-        setConnectorPluggedSampler([] () {return true;});
+        setConnectorPluggedInput([] () {return true;});
         OCPP_loop();
         OCPP_loop();
         OCPP_loop();
