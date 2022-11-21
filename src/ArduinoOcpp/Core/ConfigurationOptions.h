@@ -5,6 +5,8 @@
 #ifndef CONFIGURATIONOPTIONS_H
 #define CONFIGURATIONOPTIONS_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
