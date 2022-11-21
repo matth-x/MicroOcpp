@@ -2,6 +2,7 @@
 #define ARDUINOOCPP_C_H
 
 #include <stddef.h>
+#include <ArduinoOcpp/Core/ConfigurationOptions.h>
 
 struct AOcppSocket;
 typedef struct AOcppSocket AOcppSocket;

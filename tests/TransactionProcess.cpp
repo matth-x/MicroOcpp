@@ -182,21 +182,4 @@ TEST_CASE("Transaction process - begin new transaction") {
         return enable;
     });
 
-/*
-    SECTION("Evaluate different txNr") {
-        auto txNr = txProcess.getTxNrRef();
-        txProcess.evaluateProcessSteps(txNr + 1); //try to evaluate newer transaction
-        REQUIRE( checkTrigger == TxTrigger::Inactive );
-        REQUIRE( txProcess.getState() != TxEnableState::Active );
-        REQUIRE( txNr == txProcess.getTxNrRef() );
-    }
-
-    SECTION("Switch to newer transaction") {
-        auto txNr = txProcess.getTxNrRef();
-        trigger = TxTrigger::Inactive;
-        enable = TxEnableState::Inactive;
-        txProcess.evaluateProcessSteps(txNr + 1);
-        REQUIRE( txNr + 1 == txProcess.getTxNrRef() );
-    }
-*/
 }

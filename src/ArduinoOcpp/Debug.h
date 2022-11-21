@@ -59,13 +59,13 @@
 
 #define AO_DBG_TRAFFIC_OUT(...)   \
     do {                        \
-        AO_CONSOLE_PRINTF("[AO] To WS lib: %s",__VA_ARGS__);           \
+        AO_CONSOLE_PRINTF("[AO] Send: %s",__VA_ARGS__);           \
         AO_CONSOLE_PRINTF("\n");         \
     } while (0)
 
 #define AO_DBG_TRAFFIC_IN(...)   \
     do {                        \
-        AO_CONSOLE_PRINTF("[AO] From WS lib: %s",__VA_ARGS__);           \
+        AO_CONSOLE_PRINTF("[AO] Recv: %.*s",__VA_ARGS__);           \
         AO_CONSOLE_PRINTF("\n");         \
     } while (0)
 
