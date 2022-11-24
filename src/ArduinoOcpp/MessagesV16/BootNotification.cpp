@@ -29,7 +29,7 @@ void BootNotification::initiate() {
             ocppModel && ocppModel->getChargePointStatusService()) {
         auto cpStatus = ocppModel->getChargePointStatusService();
         cpStatus->setChargePointCredentials(*credentials);
-        credentials.release();
+        credentials.reset();
     }
 }
 

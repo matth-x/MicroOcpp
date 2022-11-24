@@ -38,7 +38,7 @@ void OperationsQueue::pop_front() {
         AO_DBG_DEBUG("advanced %i to %u", head->getStorageHandler()->getOpNr(), opStore.getOpBegin());
     }
 
-    head.release();
+    head.reset();
 
     unsigned int nextOpNr = opStore.getOpBegin();
 
@@ -85,12 +85,12 @@ void OperationsQueue::pop_front() {
 
             if (!success) {
                 AO_DBG_ERR("could not restore operation");
-                fetched.release();
+                fetched.reset();
             }
 
             if (!fetched->isFullyConfigured()) {
                 AO_DBG_ERR("stored op initialization failure");
-                fetched.release();
+                fetched.reset();
             }
         }
 

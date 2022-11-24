@@ -334,7 +334,7 @@ void OcppOperation::initiate(std::unique_ptr<StoredOperationHandler> opStorage) 
         bool inited = ocppMessage->initiate(opStore.get());
 
         if (opStore) {
-            opStore->releaseBuffer();
+            opStore->clearBuffer();
         }
         
         if (!inited) { //legacy support
@@ -393,7 +393,7 @@ bool OcppOperation::restore(std::unique_ptr<StoredOperationHandler> opStorage, s
     ocppMessage->setOcppModel(oModel);
 
     bool success = ocppMessage->restore(opStore.get());
-    opStore->releaseBuffer();
+    opStore->clearBuffer();
 
     if (success) {
         AO_DBG_DEBUG("restored opNr %i: %s", opStore->getOpNr(), ocppMessage->getOcppOperationType());

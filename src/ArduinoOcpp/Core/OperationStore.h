@@ -38,7 +38,7 @@ public:
     std::unique_ptr<DynamicJsonDocument> getPayload() {return std::move(payload);}
 
     bool commit();
-    void releaseBuffer() {rpc.release(); payload.release();}
+    void clearBuffer() {rpc.reset(); payload.reset();}
 
     bool restore(unsigned int opNr);
 

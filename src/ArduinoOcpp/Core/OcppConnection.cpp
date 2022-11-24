@@ -99,7 +99,7 @@ void OcppConnection::initiateOcppOperation(std::unique_ptr<OcppOperation> o){
 
 bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t length) {
 
-    AO_DBG_TRAFFIC_IN(length, payload);
+    AO_DBG_TRAFFIC_IN((int) length, payload);
     
     bool deserializationSuccess = false;
 

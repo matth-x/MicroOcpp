@@ -158,10 +158,9 @@ void OCPP_loop() {
 
     ocppEngine->loop();
 
-    auto& model = ocppEngine->getOcppModel();
 
     if (!OCPP_booted) {
-        auto csService = model.getChargePointStatusService();
+        auto csService = ocppEngine->getOcppModel().getChargePointStatusService();
         if (!csService || csService->isBooted()) {
             OCPP_booted = true;
             ocppEngine->setRunOcppTasks(true);
