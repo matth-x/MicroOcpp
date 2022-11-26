@@ -12,9 +12,9 @@ extern "C" {
 #endif
 
 struct AO_FilesystemOpt {
-    bool use = false;
-    bool mount = false;
-    bool formatFsOnFail = false;
+    bool use;
+    bool mount;
+    bool formatFsOnFail;
 };
 
 #ifdef __cplusplus

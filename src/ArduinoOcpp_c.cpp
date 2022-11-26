@@ -114,14 +114,14 @@ void ao_authorize(const char *idTag, OnOcppMessage onConfirmation, OnOcppAbort o
 void ao_beginTransaction(const char *idTag) {
     ao_beginTransaction(idTag);
 }
-void ao_beginTransaction_m(const char *idTag, unsigned int connectorId) {
+void ao_beginTransaction_m(unsigned int connectorId, const char *idTag) {
     beginTransaction(idTag, 1);
 }
 
 bool ao_endTransaction(const char *reason) {
     return endTransaction(reason);
 }
-bool ao_endTransaction_m(const char *reason, unsigned int connectorId) {
+bool ao_endTransaction_m(unsigned int connectorId, const char *reason) {
     return endTransaction(reason, connectorId);
 }
 
@@ -142,63 +142,63 @@ bool ao_ocppPermitsCharge_m(unsigned int connectorId) {
 void ao_setConnectorPluggedInput(InputBool pluggedInput) {
     setConnectorPluggedInput(adaptFn(pluggedInput));
 }
-void ao_setConnectorPluggedInput_m(InputBool pluggedInput, unsigned int connectorId) {
+void ao_setConnectorPluggedInput_m(unsigned int connectorId, InputBool pluggedInput) {
     setConnectorPluggedInput(adaptFn(pluggedInput), connectorId);
 }
 
 void ao_setEnergyMeterInput(InputInt energyInput) {
     setEnergyMeterInput(adaptFn(energyInput));
 }
-void ao_setEnergyMeterInput_m(InputInt energyInput, unsigned int connectorId) {
+void ao_setEnergyMeterInput_m(unsigned int connectorId, InputInt energyInput) {
     setEnergyMeterInput(adaptFn(energyInput), connectorId);
 }
 
 void ao_setPowerMeterInput(InputFloat powerInput) {
     setPowerMeterInput(adaptFn(powerInput));
 }
-void ao_setPowerMeterInput_m(InputFloat powerInput, unsigned int connectorId) {
+void ao_setPowerMeterInput_m(unsigned int connectorId, InputFloat powerInput) {
     setPowerMeterInput(adaptFn(powerInput), connectorId);
 }
 
 void ao_setSmartChargingOutput(OutputFloat chargingLimitOutput) {
     setSmartChargingOutput(adaptFn(chargingLimitOutput));
 }
-void ao_setSmartChargingOutput_m(OutputFloat chargingLimitOutput, unsigned int connectorId) {
+void ao_setSmartChargingOutput_m(unsigned int connectorId, OutputFloat chargingLimitOutput) {
     setSmartChargingOutput(adaptFn(chargingLimitOutput), connectorId);
 }
 
 void ao_setEvReadyInput(InputBool evReadyInput) {
     setEvReadyInput(adaptFn(evReadyInput));
 }
-void ao_setEvReadyInput_m(InputBool evReadyInput, unsigned int connectorId) {
+void ao_setEvReadyInput_m(unsigned int connectorId, InputBool evReadyInput) {
     setEvReadyInput(adaptFn(evReadyInput), connectorId);
 }
 
 void ao_setEvseReadyInput(InputBool evseReadyInput) {
     setEvseReadyInput(adaptFn(evseReadyInput));
 }
-void ao_setEvseReadyInput_m(InputBool evseReadyInput, unsigned int connectorId) {
+void ao_setEvseReadyInput_m(unsigned int connectorId, InputBool evseReadyInput) {
     setEvseReadyInput(adaptFn(evseReadyInput), connectorId);
 }
 
 void ao_addErrorCodeInput(InputString errorCodeInput) {
     addErrorCodeInput(adaptFn(errorCodeInput));
 }
-void ao_addErrorCodeInput_m(InputString errorCodeInput, unsigned int connectorId) {
+void ao_addErrorCodeInput_m(unsigned int connectorId, InputString errorCodeInput) {
     addErrorCodeInput(adaptFn(errorCodeInput), connectorId);
 }
 
 void ao_addMeterValueInputInt(InputInt valueInput, const char *measurand, const char *unit, const char *location, const char *phase) {
     addMeterValueInput(adaptFn(valueInput), 1, measurand, unit, location, phase);
 }
-void ao_addMeterValueInputInt_m(InputInt valueInput, unsigned int connectorId, const char *measurand, const char *unit, const char *location, const char *phase) {
+void ao_addMeterValueInputInt_m(unsigned int connectorId, InputInt valueInput, const char *measurand, const char *unit, const char *location, const char *phase) {
     addMeterValueInput(adaptFn(valueInput), connectorId, measurand, unit, location, phase);
 }
 
 void ao_addMeterValueInput(MeterValueInput *meterValueInput) {
-    ao_addMeterValueInput_m(meterValueInput, 1);
+    ao_addMeterValueInput_m(1, meterValueInput);
 }
-void ao_addMeterValueInput_m(MeterValueInput *meterValueInput, unsigned int connectorId) {
+void ao_addMeterValueInput_m(unsigned int connectorId, MeterValueInput *meterValueInput) {
     auto svs = std::unique_ptr<ArduinoOcpp::SampledValueSampler>(
         reinterpret_cast<ArduinoOcpp::SampledValueSampler*>(meterValueInput));
     
@@ -206,9 +206,9 @@ void ao_addMeterValueInput_m(MeterValueInput *meterValueInput, unsigned int conn
 }
 
 void ao_setOnUnlockConnectorInOut(PollBool onUnlockConnectorInOut) {
-    ao_setOnUnlockConnectorInOut_m(onUnlockConnectorInOut, 1);
+    ao_setOnUnlockConnectorInOut_m(1, onUnlockConnectorInOut);
 }
-void ao_setOnUnlockConnectorInOut_m(PollBool onUnlockConnectorInOut, unsigned int connectorId) {
+void ao_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollBool onUnlockConnectorInOut) {
     setOnUnlockConnectorInOut([onUnlockConnectorInOut] () -> ArduinoOcpp::PollResult<bool> {
         auto res = onUnlockConnectorInOut();
         if (res == OptionalTrue) {
@@ -227,14 +227,14 @@ void ao_setOnUnlockConnectorInOut_m(PollBool onUnlockConnectorInOut, unsigned in
 void ao_setConnectorLockInOut(TxStepInOut lockConnectorInOut) {
     setConnectorLockInOut(adaptFn(lockConnectorInOut));
 }
-void ao_setConnectorLockInOut_m(TxStepInOut lockConnectorInOut, unsigned int connectorId) {
+void ao_setConnectorLockInOut_m(unsigned int connectorId, TxStepInOut lockConnectorInOut) {
     setConnectorLockInOut(adaptFn(lockConnectorInOut), connectorId);
 }
 
 void ao_setTxBasedMeterInOut(TxStepInOut txMeterInOut) {
     setTxBasedMeterInOut(adaptFn(txMeterInOut));
 }
-void ao_setTxBasedMeterInOut_m(TxStepInOut txMeterInOut, unsigned int connectorId) {
+void ao_setTxBasedMeterInOut_m(unsigned int connectorId, TxStepInOut txMeterInOut) {
     setTxBasedMeterInOut(adaptFn(txMeterInOut), connectorId);
 }
 

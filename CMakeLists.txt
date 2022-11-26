@@ -14,6 +14,8 @@ set(AO_SRC
     src/ArduinoOcpp/Core/OcppServer.cpp
     src/ArduinoOcpp/Core/OcppSocket.cpp
     src/ArduinoOcpp/Core/OcppTime.cpp
+    src/ArduinoOcpp/Core/OperationsQueue.cpp
+    src/ArduinoOcpp/Core/OperationStore.cpp
     src/ArduinoOcpp/MessagesV16/Authorize.cpp
     src/ArduinoOcpp/MessagesV16/BootNotification.cpp
     src/ArduinoOcpp/MessagesV16/ChangeAvailability.cpp
@@ -47,15 +49,13 @@ set(AO_SRC
     src/ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.cpp
     src/ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.cpp
     src/ArduinoOcpp/Tasks/Metering/MeteringService.cpp
+    src/ArduinoOcpp/Tasks/Metering/MeterStore.cpp
     src/ArduinoOcpp/Tasks/Metering/MeterValue.cpp
     src/ArduinoOcpp/Tasks/Metering/SampledValue.cpp
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.cpp
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.cpp
-    src/ArduinoOcpp/Tasks/Transactions/OrderedOperationsQueue.cpp
     src/ArduinoOcpp/Tasks/Transactions/Transaction.cpp
     src/ArduinoOcpp/Tasks/Transactions/TransactionProcess.cpp
-    src/ArduinoOcpp/Tasks/Transactions/TransactionSequence.cpp
-    src/ArduinoOcpp/Tasks/Transactions/TransactionService.cpp
     src/ArduinoOcpp/Tasks/Transactions/TransactionStore.cpp
     src/ArduinoOcpp.cpp
     src/ArduinoOcpp_c.cpp

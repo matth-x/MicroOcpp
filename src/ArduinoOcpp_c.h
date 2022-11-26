@@ -24,10 +24,10 @@ typedef bool  (*InputBool)();
 typedef const char* (*InputString)();
 typedef void (*OutputFloat)(float limit);
 enum OptionalBool {OptionalTrue, OptionalFalse, OptionalUndefined};
-typedef OptionalBool (*PollBool)();
+typedef enum OptionalBool (*PollBool)();
 enum TxTrigger_t {TxTrg_Active, TxTrg_Inactive};
 enum TxEnableState_t {TxEna_Active, TxEna_Inactive, TxEna_Pending};
-typedef TxEnableState_t (*TxStepInOut)(TxTrigger_t triggerIn);
+typedef enum TxEnableState_t (*TxStepInOut)(enum TxTrigger_t triggerIn);
 
 
 #ifdef __cplusplus
@@ -61,10 +61,10 @@ void ao_authorize(const char *idTag, OnOcppMessage onConfirmation, OnOcppAbort o
  */
 
 void ao_beginTransaction(const char *idTag);
-void ao_beginTransaction_m(const char *idTag, unsigned int connectorId); //multiple connectors version
+void ao_beginTransaction_m(unsigned int connectorId, const char *idTag); //multiple connectors version
 
 bool ao_endTransaction(const char *reason); //reason can be NULL
-bool ao_endTransaction_m(const char *reason, unsigned int connectorId); //reason can be NULL
+bool ao_endTransaction_m(unsigned int connectorId, const char *reason); //reason can be NULL
 
 bool ao_isTransactionRunning();
 bool ao_isTransactionRunning_m(unsigned int connectorId);
@@ -77,44 +77,44 @@ bool ao_ocppPermitsCharge_m(unsigned int connectorId);
  */
 
 void ao_setConnectorPluggedInput(InputBool pluggedInput);
-void ao_setConnectorPluggedInput_m(InputBool pluggedInput, unsigned int connectorId);
+void ao_setConnectorPluggedInput_m(unsigned int connectorId, InputBool pluggedInput);
 
 void ao_setEnergyMeterInput(InputInt energyInput);
-void ao_setEnergyMeterInput_m(InputInt energyInput, unsigned int connectorId);
+void ao_setEnergyMeterInput_m(unsigned int connectorId, InputInt energyInput);
 
 void ao_setPowerMeterInput(InputFloat powerInput);
-void ao_setPowerMeterInput_m(InputFloat powerInput, unsigned int connectorId);
+void ao_setPowerMeterInput_m(unsigned int connectorId, InputFloat powerInput);
 
 void ao_setSmartChargingOutput(OutputFloat chargingLimitOutput);
-void ao_setSmartChargingOutput_m(OutputFloat chargingLimitOutput, unsigned int connectorId);
+void ao_setSmartChargingOutput_m(unsigned int connectorId, OutputFloat chargingLimitOutput);
 
 /*
  * Define the Inputs and Outputs of this library. (Advanced)
  */
 
 void ao_setEvReadyInput(InputBool evReadyInput);
-void ao_setEvReadyInput_m(InputBool evReadyInput, unsigned int connectorId);
+void ao_setEvReadyInput_m(unsigned int connectorId, InputBool evReadyInput);
 
 void ao_setEvseReadyInput(InputBool evseReadyInput);
-void ao_setEvseReadyInput_m(InputBool evseReadyInput, unsigned int connectorId);
+void ao_setEvseReadyInput_m(unsigned int connectorId, InputBool evseReadyInput);
 
 void ao_addErrorCodeInput(InputString errorCodeInput);
-void ao_addErrorCodeInput_m(InputString errorCodeInput, unsigned int connectorId);
+void ao_addErrorCodeInput_m(unsigned int connectorId, InputString errorCodeInput);
 
 void ao_addMeterValueInputInt(InputInt valueInput, const char *measurand, const char *unit, const char *location, const char *phase); //measurand, unit, location and phase can be NULL
-void ao_addMeterValueInputInt_m(InputInt valueInput, unsigned int connectorId, const char *measurand, const char *unit, const char *location, const char *phase); //measurand, unit, location and phase can be NULL
+void ao_addMeterValueInputInt_m(unsigned int connectorId, InputInt valueInput, const char *measurand, const char *unit, const char *location, const char *phase); //measurand, unit, location and phase can be NULL
 
 void ao_addMeterValueInput(MeterValueInput *meterValueInput); //takes ownership of meterValueInput
-void ao_addMeterValueInput_m(MeterValueInput *meterValueInput, unsigned int connectorId); //takes ownership of meterValueInput
+void ao_addMeterValueInput_m(unsigned int connectorId, MeterValueInput *meterValueInput); //takes ownership of meterValueInput
 
 void ao_setOnUnlockConnectorInOut(PollBool onUnlockConnectorInOut);
-void ao_setOnUnlockConnectorInOut_m(PollBool onUnlockConnectorInOut, unsigned int connectorId);
+void ao_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollBool onUnlockConnectorInOut);
 
 void ao_setConnectorLockInOut(TxStepInOut lockConnectorInOut);
-void ao_setConnectorLockInOut_m(TxStepInOut lockConnectorInOut, unsigned int connectorId);
+void ao_setConnectorLockInOut_m(unsigned int connectorId, TxStepInOut lockConnectorInOut);
 
 void ao_setTxBasedMeterInOut(TxStepInOut txMeterInOut);
-void ao_setTxBasedMeterInOut_m(TxStepInOut txMeterInOut, unsigned int connectorId);
+void ao_setTxBasedMeterInOut_m(unsigned int connectorId, TxStepInOut txMeterInOut);
 
 /*
  * Access further information about the internal state of the library
