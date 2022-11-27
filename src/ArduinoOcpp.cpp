@@ -37,8 +37,8 @@ std::shared_ptr<FilesystemAdapter> filesystem;
 FilesystemOpt fileSystemOpt {};
 float voltage_eff {230.f};
 
-#ifndef OCPP_NUMCONNECTORS
-#define OCPP_NUMCONNECTORS 2
+#ifndef AO_NUMCONNECTORS
+#define AO_NUMCONNECTORS 2
 #endif
 
 #define OCPP_ID_OF_CP 0
@@ -100,9 +100,9 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
     auto& model = ocppEngine->getOcppModel();
 
     model.setTransactionStore(std::unique_ptr<TransactionStore>(
-        new TransactionStore(OCPP_NUMCONNECTORS, filesystem)));
+        new TransactionStore(AO_NUMCONNECTORS, filesystem)));
     model.setChargePointStatusService(std::unique_ptr<ChargePointStatusService>(
-        new ChargePointStatusService(*ocppEngine, OCPP_NUMCONNECTORS)));
+        new ChargePointStatusService(*ocppEngine, AO_NUMCONNECTORS)));
     model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
         new HeartbeatService(*ocppEngine)));
 
@@ -319,7 +319,7 @@ void setEnergyMeterInput(std::function<float()> energyInput, uint connectorId) {
     auto& model = ocppEngine->getOcppModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS, filesystem)));
+            new MeteringService(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
     }
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Energy.Active.Import.Register");
@@ -342,7 +342,7 @@ void setPowerMeterInput(std::function<float()> powerInput, uint connectorId) {
     auto& model = ocppEngine->getOcppModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS, filesystem)));
+            new MeteringService(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
     }
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Power.Active.Import");
@@ -368,7 +368,7 @@ void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, uint
     auto& model = ocppEngine->getOcppModel();
     if (!model.getSmartChargingService()) {
         model.setSmartChargingService(std::unique_ptr<SmartChargingService>(
-            new SmartChargingService(*ocppEngine, 11000.0f, voltage_eff, OCPP_NUMCONNECTORS, fileSystemOpt))); //default charging limit: 11kW
+            new SmartChargingService(*ocppEngine, 11000.0f, voltage_eff, AO_NUMCONNECTORS, fileSystemOpt))); //default charging limit: 11kW
     }
     model.getSmartChargingService()->setOnLimitChange(chargingLimitOutput);
 }
@@ -453,7 +453,7 @@ void addMeterValueInput(std::unique_ptr<SampledValueSampler> valueInput, uint co
     auto& model = ocppEngine->getOcppModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*ocppEngine, OCPP_NUMCONNECTORS, filesystem)));
+            new MeteringService(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
     }
     model.getMeteringService()->addMeterValueSampler(connectorId, std::move(valueInput));
 }
