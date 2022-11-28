@@ -56,6 +56,7 @@ std::function<void(void)> adaptFn(void (*fn)(void)) {
 char ao_recv_payload_buff [AO_RECEIVE_PAYLOAD_BUFSIZE] = {'\0'};
 
 std::function<void(JsonObject)> adaptFn(OnOcppMessage fn) {
+    if (!fn) return nullptr;
     return [fn] (JsonObject payload) {
         auto len = serializeJson(payload, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
         if (len <= 0) {
@@ -66,6 +67,7 @@ std::function<void(JsonObject)> adaptFn(OnOcppMessage fn) {
 }
 
 ArduinoOcpp::OnReceiveErrorListener adaptFn(OnOcppError fn) {
+    if (!fn) return nullptr;
     return [fn] (const char *code, const char *description, JsonObject details) {
         auto len = serializeJson(details, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
         if (len <= 0) {
@@ -76,6 +78,7 @@ ArduinoOcpp::OnReceiveErrorListener adaptFn(OnOcppError fn) {
 }
 
 std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> adaptFn(TxStepInOut fn) {
+    if (!fn) return nullptr;
     return [fn] (ArduinoOcpp::TxTrigger trigger) -> ArduinoOcpp::TxEnableState {
         auto res = fn(trigger == ArduinoOcpp::TxTrigger::Active ?
                             TxTrg_Active : TxTrg_Inactive);
