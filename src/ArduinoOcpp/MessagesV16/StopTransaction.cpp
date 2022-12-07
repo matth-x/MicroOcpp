@@ -205,10 +205,6 @@ bool StopTransaction::processErr(const char *code, const char *description, Json
     return false;
 }
 
-TransactionRPC *StopTransaction::getTransactionSync() {
-    return transaction ? &transaction->getStopRpcSync() : nullptr;
-}
-
 void StopTransaction::processReq(JsonObject payload) {
     /**
      * Ignore Contents of this Req-message, because this is for debug purposes only

@@ -6,7 +6,6 @@
 #define TRANSACTIONPROCESS_H
 
 #include <ArduinoOcpp/Tasks/Transactions/TransactionPrerequisites.h>
-#include <ArduinoOcpp/Core/Configuration.h>
 
 #include <vector>
 #include <functional>

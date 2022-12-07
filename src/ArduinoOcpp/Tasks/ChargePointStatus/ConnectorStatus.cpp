@@ -150,18 +150,22 @@ OcppMessage *ConnectorStatus::loop() {
         }
     }
 
-    if (transaction && (transaction->isAborted() || transaction->isCompleted())) {
-        if (transaction->isAborted()) {
-            //If the transaction is aborted (invalidated before started), delete all artifacts from flash
-            //This is an optimization. The memory management will attempt to remove those files again later
-            AO_DBG_DEBUG("collect obsolete transaction %u-%u", connectorId, transaction->getTxNr());
-            if (auto mService = context.getMeteringService()) {
-                mService->removeTxMeterData(connectorId, transaction->getTxNr());
-            }
-
-            context.getTransactionStore()->remove(connectorId, transaction->getTxNr());
+    if (transaction && transaction->isAborted()) {
+        //If the transaction is aborted (invalidated before started), delete all artifacts from flash
+        //This is an optimization. The memory management will attempt to remove those files again later
+        if (auto mService = context.getMeteringService()) {
+            mService->removeTxMeterData(connectorId, transaction->getTxNr());
         }
 
+        context.getTransactionStore()->remove(connectorId, transaction->getTxNr());
+
+        //Now, collect the transaction
+        AO_DBG_DEBUG("collect aborted transaction %u-%u", connectorId, transaction->getTxNr());
+        transaction = nullptr;
+    }
+
+    if (transaction && transaction->isCompleted()) {
+        AO_DBG_DEBUG("collect obsolete transaction %u-%u", connectorId, transaction->getTxNr());
         transaction = nullptr;
     }
 

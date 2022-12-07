@@ -47,8 +47,6 @@ public:
 
     bool processErr(const char *code, const char *description, JsonObject details) override;
 
-    TransactionRPC *getTransactionSync() override;
-
     void processReq(JsonObject payload) override;
 
     std::unique_ptr<DynamicJsonDocument> createConf() override;

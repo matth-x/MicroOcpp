@@ -141,9 +141,7 @@ public:
     TransactionRPC& getStopRpcSync() {return stop.rpc;}
 
     bool isAborted() {return !start.rpc.requested && !session.active;}
-    bool isCompleted() {return start.rpc.isRequested() && start.rpc.isConfirmed() &&
-                               stop.rpc.isRequested()  && stop.rpc.isConfirmed();}
-    bool isPending() {return !isAborted() && !isCompleted();}
+    bool isCompleted() {return stop.rpc.isConfirmed();}
     bool isPreparing() {return session.active && !start.rpc.isRequested() && !stop.rpc.isRequested();}
     bool isRunning() {return start.rpc.isRequested() && !stop.rpc.isRequested();}
     bool isActive() {return session.active && !stop.rpc.isRequested();}

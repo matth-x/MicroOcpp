@@ -61,10 +61,11 @@ ChargePointStatusService::~ChargePointStatusService() {
 void ChargePointStatusService::loop() {
     if (!booted) return;
     for (auto connector = connectors.begin(); connector != connectors.end(); connector++) {
-        auto statusNotificationMsg = (*connector)->loop();
-        if (statusNotificationMsg != nullptr) {
-            auto statusNotification = makeOcppOperation(statusNotificationMsg);
-            context.initiateOperation(std::move(statusNotification));
+        auto transactionMsg = (*connector)->loop();
+        if (transactionMsg != nullptr) {
+            auto transactionOp = makeOcppOperation(transactionMsg);
+            transactionOp->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
+            context.initiateOperation(std::move(transactionOp));
         }
     }
 

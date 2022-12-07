@@ -80,8 +80,6 @@ public:
     virtual const char *getErrorCode() {return nullptr;} //nullptr means no error
     virtual const char *getErrorDescription() {return "";}
     virtual std::unique_ptr<DynamicJsonDocument> getErrorDetails() {return createEmptyDocument();}
-    
-    virtual TransactionRPC *getTransactionSync() {return nullptr;}
 };
 
 } //end namespace ArduinoOcpp
