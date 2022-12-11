@@ -6,6 +6,7 @@
 #define METERSTORE_H
 
 #include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
+#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 
 #include <vector>
@@ -52,7 +53,7 @@ public:
     MeterStore(MeterStore&) = delete;
     MeterStore(std::shared_ptr<FilesystemAdapter> filesystem);
 
-    std::shared_ptr<TransactionMeterData> getTxMeterData(MeterValueBuilder& mvBuilder, unsigned int connectorId, unsigned int txNr);
+    std::shared_ptr<TransactionMeterData> getTxMeterData(MeterValueBuilder& mvBuilder, Transaction *transaction);
 
     bool remove(unsigned int connectorId, unsigned int txNr);
 };

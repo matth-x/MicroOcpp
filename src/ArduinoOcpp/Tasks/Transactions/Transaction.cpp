@@ -88,9 +88,9 @@ bool Transaction::serializeSessionState(DynamicJsonDocument& out) {
         txStopClientSide["reason"] = stop.client.reason;
     }
 
-    //if (stop.rpc.confirmed) {
-    //    JsonObject txStopServerSide = txStop.createNestedObject("server");
-    //}
+    if (silent) {
+        state["silent"] = true;
+    }
 
     if (out.overflowed()) {
         AO_DBG_ERR("JSON capacity exceeded");
@@ -188,14 +188,18 @@ bool Transaction::deserializeSessionState(JsonObject state) {
         }
     }
 
+    if (state.containsKey("silent")) {
+        silent = state["silent"] | false;
+    }
+
     AO_DBG_DEBUG("DUMP TX");
     AO_DBG_DEBUG("Session   | idTag %s", session.idTag);
     AO_DBG_DEBUG("Start RPC | req: %i, conf: %i", start.rpc.requested, start.rpc.confirmed);
     AO_DBG_DEBUG("Stop  RPC | req: %i, conf: %i",  stop.rpc.requested, stop.rpc.confirmed);
-
-    //if (stop.rpc.confirmed) {
-    //    JsonObject txStopServerSide = txStop["server"];
-    //}
+    if (silent) {
+        AO_DBG_DEBUG("          | silent Tx");
+        (void)0;
+    }
 
     return true;
 }

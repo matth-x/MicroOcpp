@@ -61,6 +61,8 @@ private:
     std::shared_ptr<Configuration<const char*>> unlockConnectorOnEVSideDisconnect;
     std::shared_ptr<Configuration<const char*>> localAuthorizeOffline;
     std::shared_ptr<Configuration<const char*>> localPreAuthorize;
+
+    std::shared_ptr<Configuration<const char*>> silentOfflineTransactions;
 public:
     ConnectorStatus(OcppModel& context, int connectorId);
 

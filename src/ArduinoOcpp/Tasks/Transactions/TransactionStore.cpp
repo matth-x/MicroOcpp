@@ -111,14 +111,25 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
     return transaction;
 }
 
-std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction() {
-
-    if (!txEnd || *txEnd < 0) {
+std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction(bool silent) {
+    
+    if (!txBegin || *txBegin < 0 || !txEnd || *txEnd < 0) {
         AO_DBG_ERR("memory corruption");
         return nullptr;
     }
 
-    auto transaction = std::make_shared<Transaction>(*this, connectorId, (unsigned int) *txEnd);
+    //check if maximum number of queued tx already reached
+    if ((*txEnd + MAX_TX_CNT - *txBegin) % MAX_TX_CNT >= AO_TXRECORD_SIZE) {
+        //limit reached
+
+        if (!silent) {
+            //normal tx -> abort
+            return nullptr;
+        }
+        //special case: silent tx -> create tx anyway, but should be deleted immediately after charging session
+    }
+
+    auto transaction = std::make_shared<Transaction>(*this, connectorId, (unsigned int) *txEnd, silent);
 
     *txEnd = (*txEnd + 1) % MAX_TX_CNT;
     configuration_save();
@@ -213,7 +224,16 @@ int ConnectorTransactionStore::getTxBegin() {
     return *txBegin;
 }
 
-void ConnectorTransactionStore::updateTxBegin(unsigned int txNr) {
+int ConnectorTransactionStore::getTxEnd() {
+    if (!txBegin || *txBegin < 0) {
+        AO_DBG_ERR("memory corruption");
+        return -1;
+    }
+
+    return *txEnd;
+}
+
+void ConnectorTransactionStore::setTxBegin(unsigned int txNr) {
     if (!txBegin || *txBegin < 0) {
         AO_DBG_ERR("memory corruption");
         return;
@@ -221,6 +241,25 @@ void ConnectorTransactionStore::updateTxBegin(unsigned int txNr) {
 
     *txBegin = txNr;
     configuration_save();
+}
+
+void ConnectorTransactionStore::setTxEnd(unsigned int txNr) {
+    if (!txBegin || *txBegin < 0 || !txEnd || *txEnd < 0) {
+        AO_DBG_ERR("memory corruption");
+        return;
+    }
+
+    *txEnd = txNr;
+    configuration_save();
+}
+
+unsigned int ConnectorTransactionStore::size() {
+    if (!txBegin || *txBegin < 0 || !txEnd || *txEnd < 0) {
+        AO_DBG_ERR("memory corruption");
+        return 0;
+    }
+
+    return (*txEnd + MAX_TX_CNT - *txBegin) % MAX_TX_CNT;
 }
 
 TransactionStore::TransactionStore(uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem) {
@@ -260,12 +299,12 @@ std::shared_ptr<Transaction> TransactionStore::getTransaction(unsigned int conne
     return connectors[connectorId]->getTransaction(txNr);
 }
 
-std::shared_ptr<Transaction> TransactionStore::createTransaction(unsigned int connectorId) {
+std::shared_ptr<Transaction> TransactionStore::createTransaction(unsigned int connectorId, bool silent) {
     if (connectorId >= connectors.size()) {
         AO_DBG_ERR("Invalid connectorId");
         return nullptr;
     }
-    return connectors[connectorId]->createTransaction();
+    return connectors[connectorId]->createTransaction(silent);
 }
 
 bool TransactionStore::remove(unsigned int connectorId, unsigned int txNr) {
@@ -284,10 +323,34 @@ int TransactionStore::getTxBegin(unsigned int connectorId) {
     return connectors[connectorId]->getTxBegin();
 }
 
-void TransactionStore::updateTxBegin(unsigned int connectorId, unsigned int txNr) {
+int TransactionStore::getTxEnd(unsigned int connectorId) {
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("Invalid connectorId");
+        return -1;
+    }
+    return connectors[connectorId]->getTxEnd();
+}
+
+void TransactionStore::setTxBegin(unsigned int connectorId, unsigned int txNr) {
     if (connectorId >= connectors.size()) {
         AO_DBG_ERR("Invalid connectorId");
         return;
     }
-    return connectors[connectorId]->updateTxBegin(txNr);
+    return connectors[connectorId]->setTxBegin(txNr);
+}
+
+void TransactionStore::setTxEnd(unsigned int connectorId, unsigned int txNr) {
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("Invalid connectorId");
+        return;
+    }
+    return connectors[connectorId]->setTxEnd(txNr);
+}
+
+unsigned int TransactionStore::size(unsigned int connectorId) {
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("Invalid connectorId");
+        return 0;
+    }
+    return connectors[connectorId]->size();
 }

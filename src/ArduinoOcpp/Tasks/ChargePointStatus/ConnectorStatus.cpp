@@ -36,6 +36,9 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
     localAuthorizeOffline = declareConfiguration<const char*>("LocalAuthorizeOffline", "false", CONFIGURATION_FN, true, true, false, false);
     localPreAuthorize = declareConfiguration<const char*>("LocalPreAuthorize", "false", CONFIGURATION_FN, true, true, false, false);
 
+    //if the EVSE goes offline, can it continue to charge without sending StartTx / StopTx to the server when going online again?
+    silentOfflineTransactions = declareConfiguration<const char*>("AO_SilentOfflineTransactions", "false", CONFIGURATION_FN, true, true, false, false);
+
     if (!availability) {
         AO_DBG_ERR("Cannot declare availability");
     }
@@ -153,14 +156,20 @@ OcppMessage *ConnectorStatus::loop() {
     if (transaction && transaction->isAborted()) {
         //If the transaction is aborted (invalidated before started), delete all artifacts from flash
         //This is an optimization. The memory management will attempt to remove those files again later
+        bool removed = true;
         if (auto mService = context.getMeteringService()) {
-            mService->removeTxMeterData(connectorId, transaction->getTxNr());
+            removed &= mService->removeTxMeterData(connectorId, transaction->getTxNr());
         }
 
-        context.getTransactionStore()->remove(connectorId, transaction->getTxNr());
+        if (removed) {
+            removed &= context.getTransactionStore()->remove(connectorId, transaction->getTxNr());
+        }
 
-        //Now, collect the transaction
-        AO_DBG_DEBUG("collect aborted transaction %u-%u", connectorId, transaction->getTxNr());
+        if (removed) {
+            context.getTransactionStore()->setTxEnd(connectorId, transaction->getTxNr()); //roll back creation of last tx entry
+        }
+
+        AO_DBG_DEBUG("collect aborted transaction %u-%u %s", connectorId, transaction->getTxNr(), removed ? "" : "failure");
         transaction = nullptr;
     }
 
@@ -216,6 +225,7 @@ OcppMessage *ConnectorStatus::loop() {
                 //start Transaction
 
                 AO_DBG_INFO("Session mngt: trigger StartTransaction");
+
                 auto meteringService = context.getMeteringService();
                 if (transaction->getMeterStart() < 0 && meteringService) {
                     auto meterStart = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionBegin);
@@ -228,6 +238,14 @@ OcppMessage *ConnectorStatus::loop() {
 
                 if (transaction->getStartTimestamp() <= MIN_TIME) {
                     transaction->setStartTimestamp(context.getOcppTime().getOcppTimestampNow());
+                }
+
+                if (transaction->isSilent()) {
+                    AO_DBG_INFO("silent Transaction: omit StartTx");
+                    transaction->getStartRpcSync().setRequested();
+                    transaction->getStartRpcSync().confirm();
+                    transaction->commit();
+                    return nullptr;
                 }
 
                 transaction->commit();
@@ -250,6 +268,19 @@ OcppMessage *ConnectorStatus::loop() {
                 //stop transaction
 
                 AO_DBG_INFO("Session mngt: trigger StopTransaction");
+
+                if (transaction->isSilent()) {
+                    AO_DBG_INFO("silent Transaction: omit StopTx");
+                    transaction->getStopRpcSync().setRequested();
+                    transaction->getStopRpcSync().confirm();
+                    if (auto mService = context.getMeteringService()) {
+                        mService->removeTxMeterData(connectorId, transaction->getTxNr());
+                    }
+                    context.getTransactionStore()->remove(connectorId, transaction->getTxNr());
+                    context.getTransactionStore()->setTxEnd(connectorId, transaction->getTxNr());
+                    transaction = nullptr;
+                    return nullptr;
+                }
                 
                 auto meteringService = context.getMeteringService();
                 if (transaction->getMeterStop() < 0 && meteringService) {
@@ -314,14 +345,106 @@ const char *ConnectorStatus::getErrorCode() {
 }
 
 void ConnectorStatus::beginSession(const char *sessionIdTag) {
-    
-    if (!transaction) {
-        transaction = context.getTransactionStore()->createTransaction(connectorId);
+    //(special case: tx already exists -> update the sessionIdTag and good)
 
-        if (!transaction) {
-            AO_DBG_ERR("Could not allocate Tx");
-            return;
+    if (!transaction) {
+        //no tx running, before creating new one, clean possible aorted tx
+
+        auto txr = context.getTransactionStore()->getTxEnd(connectorId);
+        auto txsize = context.getTransactionStore()->size(connectorId);
+        for (decltype(txsize) i = 0; i < txsize; i++) {
+            txr = (txr + MAX_TX_CNT - 1) % MAX_TX_CNT; //decrement by 1
+            
+            auto tx = context.getTransactionStore()->getTransaction(connectorId, txr);
+            //check if dangling silent tx, aborted tx, or corrupted entry (tx == null)
+            if (!tx || tx->isSilent() || tx->isAborted()) {
+                //yes, remove
+                bool removed = true;
+                if (auto mService = context.getMeteringService()) {
+                    removed &= mService->removeTxMeterData(connectorId, txr);
+                }
+                if (removed) {
+                    removed &= context.getTransactionStore()->remove(connectorId, txr);
+                }
+                if (removed) {
+                    context.getTransactionStore()->setTxEnd(connectorId, txr);
+                    AO_DBG_WARN("deleted dangling silent tx for new transaction");
+                } else {
+                    AO_DBG_ERR("memory corruption");
+                    break;
+                }
+            } else {
+                //no, tx record trimmed, end
+                break;
+            }
         }
+
+        //try to create new transaction
+        transaction = context.getTransactionStore()->createTransaction(connectorId);
+    }
+
+    if (!transaction) {
+        //could not create transaction - now, try to replace tx history entry
+
+        auto txl = context.getTransactionStore()->getTxBegin(connectorId);
+        auto txsize = context.getTransactionStore()->size(connectorId);
+
+        for (decltype(txsize) i = 0; i < txsize; i++) {
+
+            if (transaction) {
+                //success, finished here
+                break;
+            }
+
+            //no transaction allocated, delete history entry to make space
+
+            auto txhist = context.getTransactionStore()->getTransaction(connectorId, txl);
+            //oldest entry, now check if it's history and can be removed or corrupted entry
+            if (!txhist || txhist->isCompleted()) {
+                //yes, remove
+                bool removed = true;
+                if (auto mService = context.getMeteringService()) {
+                    removed &= mService->removeTxMeterData(connectorId, txl);
+                }
+                if (removed) {
+                    removed &= context.getTransactionStore()->remove(connectorId, txl);
+                }
+                if (removed) {
+                    context.getTransactionStore()->setTxBegin(connectorId, (txl + 1) % MAX_TX_CNT);
+                    AO_DBG_DEBUG("deleted tx history entry for new transaction");
+
+                    transaction = context.getTransactionStore()->createTransaction(connectorId);
+                } else {
+                    AO_DBG_ERR("memory corruption");
+                    break;
+                }
+            } else {
+                //no, end of history reached, don't delete further tx
+                AO_DBG_DEBUG("cannot delete more tx");
+                break;
+            }
+
+            txl++;
+            txl %= MAX_TX_CNT;
+        }
+    }
+
+    if (!transaction) {
+        //couldn't create normal transaction -> check if to start charging without real transaction
+        if (silentOfflineTransactions && *silentOfflineTransactions && !strcmp(*silentOfflineTransactions, "true")) {
+            //try to handle charging session without sending StartTx or StopTx to the server
+            transaction = context.getTransactionStore()->createTransaction(connectorId, true);
+
+            if (transaction) {
+                AO_DBG_DEBUG("created silent transaction");
+                (void)0;
+            }
+        }
+    }
+
+    if (!transaction) {
+        AO_DBG_ERR("could not allocate Tx");
+        return;
     }
     
     AO_DBG_DEBUG("Begin session with idTag %s, overwriting idTag %s", sessionIdTag != nullptr ? sessionIdTag : "", transaction->getIdTag());
