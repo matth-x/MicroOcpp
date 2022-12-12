@@ -192,10 +192,10 @@ void ao_addErrorCodeInput_m(unsigned int connectorId, InputString errorCodeInput
 }
 
 void ao_addMeterValueInputInt(InputInt valueInput, const char *measurand, const char *unit, const char *location, const char *phase) {
-    addMeterValueInput(adaptFn(valueInput), 1, measurand, unit, location, phase);
+    addMeterValueInput(adaptFn(valueInput), measurand, unit, location, phase, 1);
 }
 void ao_addMeterValueInputInt_m(unsigned int connectorId, InputInt valueInput, const char *measurand, const char *unit, const char *location, const char *phase) {
-    addMeterValueInput(adaptFn(valueInput), connectorId, measurand, unit, location, phase);
+    addMeterValueInput(adaptFn(valueInput), measurand, unit, location, phase, connectorId);
 }
 
 void ao_addMeterValueInput(MeterValueInput *meterValueInput) {

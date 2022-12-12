@@ -412,7 +412,7 @@ void addErrorCodeInput(std::function<const char *()> errorCodeInput, uint connec
     connector->addConnectorErrorCodeSampler(errorCodeInput);
 }
 
-void addMeterValueInput(std::function<int32_t ()> valueInput, uint connectorId, const char *measurand, const char *unit, const char *location, const char *phase) {
+void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measurand, const char *unit, const char *location, const char *phase, uint connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
