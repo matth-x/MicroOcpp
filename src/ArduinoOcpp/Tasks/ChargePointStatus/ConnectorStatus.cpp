@@ -40,8 +40,8 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
     silentOfflineTransactions = declareConfiguration<const char*>("AO_SilentOfflineTransactions", "false", CONFIGURATION_FN, true, true, true, false);
 
     //FreeVend mode
-    freeVendActive = declareConfiguration<const char*>("AO_FreeVendActive", "true", CONFIGURATION_FN, true, true, true, false);
-    freeVendIdTag = declareConfiguration<const char*>("AO_FreeVendIdTag", "testtesttest", CONFIGURATION_FN, true, true, true, false);
+    freeVendActive = declareConfiguration<const char*>("AO_FreeVendActive", "false", CONFIGURATION_FN, true, true, true, false);
+    freeVendIdTag = declareConfiguration<const char*>("AO_FreeVendIdTag", "", CONFIGURATION_FN, true, true, true, false);
 
     if (!availability) {
         AO_DBG_ERR("Cannot declare availability");
