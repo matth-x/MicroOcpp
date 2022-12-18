@@ -7,13 +7,13 @@
 
 #include <ArduinoJson.h>
 #include <memory>
+#include <string>
 
 namespace ArduinoOcpp {
 
 class AbstractConfiguration {
 private:
-    char *key = nullptr;
-    size_t key_size = 0; // key=nullptr --> key_size = 0; key = "" --> key_size = 1; key = "A" --> key_size = 2
+    std::string key;
 
     bool rebootRequiredWhenChanged = false;
 
@@ -94,9 +94,7 @@ public:
 template <>
 class Configuration<const char *> : public AbstractConfiguration {
 private:
-    char *value = nullptr;
-    char *valueReadOnlyCopy = nullptr;
-    size_t value_size = 0;
+    std::string value;
     size_t getValueJsonCapacity();
 public:
     Configuration();

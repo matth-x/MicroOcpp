@@ -19,28 +19,23 @@ AbstractConfiguration::AbstractConfiguration() {
 }
 
 AbstractConfiguration::AbstractConfiguration(JsonObject &storedKeyValuePair) {
-    if (storedKeyValuePair["key"].as<JsonVariant>().is<const char*>()) {
-        setKey(storedKeyValuePair["key"]);
-    } else {
-        AO_DBG_ERR("Type mismatch");
+    if (!setKey(storedKeyValuePair["key"] | "")) {
+        AO_DBG_ERR("validation error");
     }
 }
 
 AbstractConfiguration::~AbstractConfiguration() {
-    if (key != nullptr) {
-        free(key);
-    }
-    key = nullptr;
+
 }
 
 void AbstractConfiguration::printKey() {
-    if (key)
-        AO_CONSOLE_PRINTF("%s", key);
+    AO_CONSOLE_PRINTF("%s", key.c_str());
+    (void)0;
 }
 
 size_t AbstractConfiguration::getStorageHeaderJsonCapacity() {
     return JSON_OBJECT_SIZE(1) //key
-            + key_size + 1; //TODO key_size already considers 0-terminator. Is "+1" really necessary here?
+            + key.size() + 1;
 }
 
 void AbstractConfiguration::storeStorageHeader(JsonObject &keyValuePair) {
@@ -49,8 +44,8 @@ void AbstractConfiguration::storeStorageHeader(JsonObject &keyValuePair) {
 }
 
 size_t AbstractConfiguration::getOcppMsgHeaderJsonCapacity() {
-    return JSON_OBJECT_SIZE(2) //key + readonly value
-            + key_size + 1; //TODO key_size already considers 0-terminator. Is "+1" really necessary here?
+    return JSON_OBJECT_SIZE(2) //key + readonly field
+            + key.size() + 1;
 }
 
 void AbstractConfiguration::storeOcppMsgHeader(JsonObject &keyValuePair) {
@@ -64,33 +59,21 @@ void AbstractConfiguration::storeOcppMsgHeader(JsonObject &keyValuePair) {
 }
 
 bool AbstractConfiguration::isValid() {
-    return initializedValue && key != nullptr && key_size > 0 && !toBeRemovedFlag;
+    return initializedValue && !key.empty() && !toBeRemovedFlag;
 }
 
 bool AbstractConfiguration::setKey(const char *newKey) {
-    if (key != nullptr || key_size > 0) {
-        AO_DBG_ERR("Cannot change key or set key twice! Keep old value");
+    if (!key.empty()) {
+        AO_DBG_ERR("cannot override key");
         return false;
     }
 
-    key_size = strlen(newKey) + 1; //plus 0-terminator
-
-    if (key_size > KEY_MAXLEN + 1) {
-        AO_DBG_ERR("Maximal key length exceeded: %s. Abort", newKey);
-        return false;
-    } else if (key_size <= 1) {
-        AO_DBG_ERR("Null or empty key not allowed! Abort");
+    if (!newKey || *newKey == '\0') {
+        AO_DBG_ERR("invalid argument");
         return false;
     }
 
-    key = (char *) malloc(sizeof(char) * key_size);
-    if (!key) {
-        AO_DBG_ERR("Could not allocate key");
-        return false;
-    }
-
-    strcpy(key, newKey);
-
+    key = newKey;
     return true;
 }
 
@@ -125,7 +108,7 @@ uint16_t AbstractConfiguration::getValueRevision() {
 }
 
 bool AbstractConfiguration::keyEquals(const char *other) {
-    return !strcmp(key, other);
+    return !key.compare(other);
 }
 
 template <class T>
@@ -199,7 +182,7 @@ size_t Configuration<T>::getValueJsonCapacity() {
 }
 
 size_t Configuration<const char *>::getValueJsonCapacity() {
-    return JSON_OBJECT_SIZE(1) + value_size;
+    return JSON_OBJECT_SIZE(1) + value.size() + 1;
 }
 
 template<class T>
@@ -294,14 +277,7 @@ Configuration<const char *>::Configuration(JsonObject &storedKeyValuePair) : Abs
 }
 
 Configuration<const char *>::~Configuration() {
-    if (value != nullptr) {
-        free(value);
-        value = nullptr;
-    }
-    if (valueReadOnlyCopy != nullptr) {
-        free(valueReadOnlyCopy);
-        valueReadOnlyCopy = nullptr;
-    }
+
 }
 
 bool Configuration<const char *>::setValue(const char *new_value, size_t buffsize) {
@@ -316,83 +292,8 @@ bool Configuration<const char *>::setValue(const char *new_value, size_t buffsiz
         return false;
     }
 
-    //"ab"
-    //buffsize=5
-    //a != 0 -> checkedBuffsize = 1
-    //b != 0 -> checkedBuffsize = 2
-    //0 == 0 -> checkedBuffsize = 3
-    //break
-    size_t checkedBuffsize = 0;
-    for (size_t i = 0; i < buffsize; i++) {
-        if (new_value[i] != '\0') {
-            checkedBuffsize++;
-        } else {
-            checkedBuffsize++;
-            break;
-        }
-    }
-
-    if (checkedBuffsize <= 0) {
-        AO_DBG_ERR("buffsize is <= 0 -- No change");
-        return false;
-    }
-
-    if (checkedBuffsize > STRING_VAL_MAXLEN + 1) {
-        AO_DBG_ERR("Maximum value length exceeded. Abort");
-        return false;
-    }
-
-    bool value_changed = true;
-    if (checkedBuffsize == value_size) {
-        value_changed = false;
-        for (size_t i = 0; i < value_size; i++) {
-            if (value[i] != new_value[i]) {
-                value_changed = true;
-                break;
-            }
-        }
-
-    }
-    
-    if (value_changed || !initializedValue) {
-
-        if (value != nullptr) {
-            free(value);
-            value = nullptr;
-        }
-
-        if (valueReadOnlyCopy != nullptr) {
-            free(valueReadOnlyCopy);
-            valueReadOnlyCopy = nullptr;
-        }
-
-        value_size = checkedBuffsize;
-
-        value = (char *) malloc (sizeof(char) * value_size);
-        valueReadOnlyCopy = (char *) malloc (sizeof(char) * value_size);
-        if (!value || !valueReadOnlyCopy) {
-            AO_DBG_ERR("Could not allocate value or value copy");
-
-            if (value != nullptr) {
-                free(value);
-                value = nullptr;
-            }
-
-            if (valueReadOnlyCopy != nullptr) {
-                free(valueReadOnlyCopy);
-                valueReadOnlyCopy = nullptr;
-            }
-
-            value_size = 0;
-            return false;
-        }
-
-        strncpy(value, new_value, value_size);
-        strncpy(valueReadOnlyCopy, new_value, value_size);
-
-        value[value_size-1] = '\0';
-        valueReadOnlyCopy[value_size-1] = '\0';
-
+    if (value.compare(new_value) || !initializedValue) {
+        value = new_value;
         value_revision++;
     }
     
@@ -400,7 +301,7 @@ bool Configuration<const char *>::setValue(const char *new_value, size_t buffsiz
         AO_DBG_DEBUG("Initialized config object:");
         AO_CONSOLE_PRINTF("[AO]     > Key = ");
         printKey();
-        AO_CONSOLE_PRINTF(", value = %s\n", value);
+        AO_CONSOLE_PRINTF(", value = %s\n", value.c_str());
     }
     initializedValue = true;
     resetToBeRemovedFlag();
@@ -415,16 +316,15 @@ const char *Configuration<const char *>::operator=(const char *newVal) {
 }
 
 Configuration<const char *>::operator const char*() {
-    strncpy(valueReadOnlyCopy, value, value_size);
-    return valueReadOnlyCopy;
+    return value.c_str();
 }
 
 bool Configuration<const char *>::isValid() {
-    return AbstractConfiguration::isValid() && value != nullptr && valueReadOnlyCopy != nullptr && value_size > 0;
+    return AbstractConfiguration::isValid();
 }
 
 size_t Configuration<const char *>::getBuffsize() {
-    return value_size;
+    return value.size() + 1;
 }
 
 template class Configuration<int>;
