@@ -30,14 +30,18 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
 
     connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN, true, true, true, false);
     minimumStatusDuration = declareConfiguration<int>("MinimumStatusDuration", 0, CONFIGURATION_FN, true, true, true, false);
-    stopTransactionOnInvalidId = declareConfiguration<const char*>("StopTransactionOnInvalidId", "true", CONFIGURATION_FN, true, true, false, false);
-    stopTransactionOnEVSideDisconnect = declareConfiguration<const char*>("StopTransactionOnEVSideDisconnect", "true", CONFIGURATION_FN, true, true, false, false);
-    unlockConnectorOnEVSideDisconnect = declareConfiguration<const char*>("UnlockConnectorOnEVSideDisconnect", "true", CONFIGURATION_FN, true, true, false, false);
-    localAuthorizeOffline = declareConfiguration<const char*>("LocalAuthorizeOffline", "false", CONFIGURATION_FN, true, true, false, false);
-    localPreAuthorize = declareConfiguration<const char*>("LocalPreAuthorize", "false", CONFIGURATION_FN, true, true, false, false);
+    stopTransactionOnInvalidId = declareConfiguration<const char*>("StopTransactionOnInvalidId", "true", CONFIGURATION_FN, true, true, true, false);
+    stopTransactionOnEVSideDisconnect = declareConfiguration<const char*>("StopTransactionOnEVSideDisconnect", "true", CONFIGURATION_FN, true, true, true, false);
+    unlockConnectorOnEVSideDisconnect = declareConfiguration<const char*>("UnlockConnectorOnEVSideDisconnect", "true", CONFIGURATION_FN, true, true, true, false);
+    localAuthorizeOffline = declareConfiguration<const char*>("LocalAuthorizeOffline", "false", CONFIGURATION_FN, true, true, true, false);
+    localPreAuthorize = declareConfiguration<const char*>("LocalPreAuthorize", "false", CONFIGURATION_FN, true, true, true, false);
 
     //if the EVSE goes offline, can it continue to charge without sending StartTx / StopTx to the server when going online again?
-    silentOfflineTransactions = declareConfiguration<const char*>("AO_SilentOfflineTransactions", "false", CONFIGURATION_FN, true, true, false, false);
+    silentOfflineTransactions = declareConfiguration<const char*>("AO_SilentOfflineTransactions", "false", CONFIGURATION_FN, true, true, true, false);
+
+    //FreeVend mode
+    freeVendActive = declareConfiguration<const char*>("AO_FreeVendActive", "true", CONFIGURATION_FN, true, true, true, false);
+    freeVendIdTag = declareConfiguration<const char*>("AO_FreeVendIdTag", "testtesttest", CONFIGURATION_FN, true, true, true, false);
 
     if (!availability) {
         AO_DBG_ERR("Cannot declare availability");
@@ -98,9 +102,8 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
         return OcppEvseState::Unavailable;
     } else if (transaction && transaction->isRunning()) {
         //Transaction is currently running
-        if ((connectorEnergizedSampler && !connectorEnergizedSampler()) ||
-                !transaction->isActive() || //will forbid charging
-                transaction->isIdTagDeauthorized()) {
+        if (!ocppPermitsCharge() ||
+                (connectorEnergizedSampler && !connectorEnergizedSampler())) {
             return OcppEvseState::SuspendedEVSE;
         }
         if (evRequestsEnergySampler && !evRequestsEnergySampler()) {
@@ -134,11 +137,18 @@ bool ConnectorStatus::ocppPermitsCharge() {
         return false;
     }
 
+    bool suspendDeAuthorizedIdTag = transaction && transaction->isIdTagDeauthorized(); //if idTag status is "DeAuthorized" and if charging should stop
+    
+    //check special case for DeAuthorized idTags: FreeVend mode
+    if (suspendDeAuthorizedIdTag && freeVendActive && !strcmp(*freeVendActive, "true")) {
+        suspendDeAuthorizedIdTag = false;
+    }
+
     return transaction &&
             transaction->isRunning() &&
             transaction->isActive() &&
             !getErrorCode() &&
-            !transaction->isIdTagDeauthorized();
+            !suspendDeAuthorizedIdTag;
 }
 
 OcppMessage *ConnectorStatus::loop() {
@@ -312,6 +322,25 @@ OcppMessage *ConnectorStatus::loop() {
             }
         }
     } //end transaction-related operations
+
+    //handle FreeVend mode
+    if (freeVendActive && *freeVendActive && !strcmp(*freeVendActive, "true") && connectorPluggedSampler) {
+        if (!freeVendTrackPlugged && connectorPluggedSampler() && !transaction) {
+            const char *idTag = freeVendIdTag && *freeVendIdTag ? *freeVendIdTag : "";
+            if (!idTag || *idTag == '\0') {
+                idTag = "A0000000";
+            }
+            AO_DBG_INFO("begin FreeVend Tx using idTag %s", idTag);
+            beginSession(idTag);
+            
+            if (!transaction) {
+                AO_DBG_ERR("could not begin FreeVend Tx");
+                (void)0;
+            }
+        }
+
+        freeVendTrackPlugged = connectorPluggedSampler();
+    }
 
     auto inferedStatus = inferenceStatus();
     

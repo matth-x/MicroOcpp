@@ -63,6 +63,9 @@ private:
     std::shared_ptr<Configuration<const char*>> localPreAuthorize;
 
     std::shared_ptr<Configuration<const char*>> silentOfflineTransactions;
+    std::shared_ptr<Configuration<const char*>> freeVendActive;
+    std::shared_ptr<Configuration<const char*>> freeVendIdTag;
+    bool freeVendTrackPlugged = false;
 public:
     ConnectorStatus(OcppModel& context, int connectorId);
 
