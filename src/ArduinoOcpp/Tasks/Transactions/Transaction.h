@@ -26,8 +26,6 @@ class ConnectorTransactionStore;
 class TransactionRPC {
 private:
     friend class Transaction;
-
-    ConnectorTransactionStore& context;
     
     bool requested = false;
     bool confirmed = false;
@@ -35,8 +33,6 @@ private:
     bool serializeSessionState(JsonObject out);
     bool deserializeSessionState(JsonObject in);
 public:
-    TransactionRPC(ConnectorTransactionStore& context) : context(context) { }
-
     void setRequested() {this->requested = true;}
     bool isRequested() {return requested;}
     void confirm() {confirmed = true;}
@@ -67,8 +63,6 @@ private:
     TransactionRPC rpc;
     ClientTransactionStart client;
     ServerTransactionStart server;
-public:
-    TransactionStart(ConnectorTransactionStore& context) : rpc(context) { }
 };
 
 class ClientTransactionStop {
@@ -92,8 +86,6 @@ private:
     TransactionRPC rpc;
     ClientTransactionStop client;
     ServerTransactionStop server;
-public:
-    TransactionStop(ConnectorTransactionStore& context) : rpc(context) { }
 };
 
 class ChargingSession {
@@ -114,19 +106,20 @@ class Transaction {
 private:
     ConnectorTransactionStore& context;
 
-    ChargingSession session;      //data that exists before the tx
+    ChargingSession session;
     TransactionStart start;
     TransactionStop stop;
 
     unsigned int connectorId = 0;
-    unsigned int txNr = 0; //only valid if session.connectorId is >= 0
+    unsigned int txNr = 0;
+
+    bool silent = false; //silent Tx: process tx locally, without reporting to the server
 public:
-    Transaction(ConnectorTransactionStore& context, unsigned int connectorId, unsigned int txNr) : 
-                context(context), 
-                start(context),
-                stop(context),
+    Transaction(ConnectorTransactionStore& context, unsigned int connectorId, unsigned int txNr, bool silent = false) : 
+                context(context),
                 connectorId(connectorId), 
-                txNr(txNr) {}
+                txNr(txNr),
+                silent(silent) {}
 
     bool serializeSessionState(DynamicJsonDocument& out);
     bool deserializeSessionState(JsonObject in);
@@ -141,9 +134,7 @@ public:
     TransactionRPC& getStopRpcSync() {return stop.rpc;}
 
     bool isAborted() {return !start.rpc.requested && !session.active;}
-    bool isCompleted() {return start.rpc.isRequested() && start.rpc.isConfirmed() &&
-                               stop.rpc.isRequested()  && stop.rpc.isConfirmed();}
-    bool isPending() {return !isAborted() && !isCompleted();}
+    bool isCompleted() {return stop.rpc.isConfirmed();}
     bool isPreparing() {return session.active && !start.rpc.isRequested() && !stop.rpc.isRequested();}
     bool isRunning() {return start.rpc.isRequested() && !stop.rpc.isRequested();}
     bool isActive() {return session.active && !stop.rpc.isRequested();}
@@ -182,6 +173,7 @@ public:
     void setStopIdTag(const char *idTag) {snprintf(stop.client.idTag, IDTAG_LEN_MAX + 1, "%s", idTag);}
 
     bool commit();
+    bool isSilent() {return silent;} //no data will be sent to server and server will not assign transactionId
 };
 
 }

@@ -13,7 +13,7 @@
 #define AO_METERSTORE_DIR AO_FILENAME_PREFIX "/"
 #endif
 
-#define MAX_STOPTXDATA_LEN 10
+#define AO_MAX_STOPTXDATA_LEN 4
 
 using namespace ArduinoOcpp;
 
@@ -37,9 +37,24 @@ bool TransactionMeterData::addTxData(std::unique_ptr<MeterValue> mv) {
         return false;
     }
 
+    if (AO_MAX_STOPTXDATA_LEN <= 0) {
+        //txData off
+        return true;
+    }
+
+    bool replaceLast = mvCount >= AO_MAX_STOPTXDATA_LEN; //txData size exceeded? overwrite last entry instead of appending
+
     if (filesystem) {
+
+        unsigned int mvIndex = 0;
+        if (replaceLast) {
+            mvIndex = mvCount - 1;
+        } else {
+            mvIndex = mvCount ;
+        }
+
         char fn [MAX_PATH_SIZE] = {'\0'};
-        auto ret = snprintf(fn, MAX_PATH_SIZE, AO_METERSTORE_DIR "sd" "-%u-%u-%u.jsn", connectorId, txNr, mvCount);
+        auto ret = snprintf(fn, MAX_PATH_SIZE, AO_METERSTORE_DIR "sd" "-%u-%u-%u.jsn", connectorId, txNr, mvIndex);
         if (ret < 0 || ret >= MAX_PATH_SIZE) {
             AO_DBG_ERR("fn error: %i", ret);
             return false;
@@ -55,15 +70,18 @@ bool TransactionMeterData::addTxData(std::unique_ptr<MeterValue> mv) {
             AO_DBG_ERR("FS error");
             return false;
         }
+
+        if (!replaceLast) {
+            mvCount++;
+        }
     }
 
-    if (txData.size() < MAX_STOPTXDATA_LEN) {
-        txData.push_back(std::move(mv));
-        mvCount++;
-        AO_DBG_DEBUG("added sd");
-    } else {
+    if (replaceLast) {
         txData.back() = std::move(mv);
         AO_DBG_DEBUG("updated latest sd");
+    } else {
+        txData.push_back(std::move(mv));
+        AO_DBG_DEBUG("added sd");
     }
     return true;
 }
@@ -114,7 +132,7 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
             continue;
         }
 
-        if (txData.size() >= MAX_STOPTXDATA_LEN) {
+        if (txData.size() >= AO_MAX_STOPTXDATA_LEN) {
             AO_DBG_ERR("corrupted memory");
             return false;
         }
@@ -137,7 +155,15 @@ MeterStore::MeterStore(std::shared_ptr<FilesystemAdapter> filesystem) : filesyst
     }
 }
 
-std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuilder& mvBuilder, unsigned int connectorId, unsigned int txNr) {
+std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuilder& mvBuilder, Transaction *transaction) {
+    if (!transaction || transaction->isSilent()) {
+        //no tx assignment -> don't store txData
+        //tx is silent -> no StopTx will be sent and don't store txData
+        return nullptr;
+    }
+    auto connectorId = transaction->getConnectorId();
+    auto txNr = transaction->getTxNr();
+    
     auto cached = std::find_if(txMeterData.begin(), txMeterData.end(),
             [connectorId, txNr] (std::weak_ptr<TransactionMeterData>& txm) {
                 if (auto txml = txm.lock()) {

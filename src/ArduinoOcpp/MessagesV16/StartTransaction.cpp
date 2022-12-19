@@ -155,10 +155,6 @@ void StartTransaction::processConf(JsonObject payload) {
     transaction->commit();
 }
 
-TransactionRPC *StartTransaction::getTransactionSync() {
-    return transaction ? &transaction->getStartRpcSync() : nullptr;
-}
-
 void StartTransaction::processReq(JsonObject payload) {
 
   /**

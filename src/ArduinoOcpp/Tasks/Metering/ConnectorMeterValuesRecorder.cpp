@@ -85,13 +85,13 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
             transaction = context.getConnectorStatus(connectorId)->getTransaction();
         }
         
-        if (transaction && transaction->isRunning()) {
+        if (transaction && transaction->isRunning() && !transaction->isSilent()) {
             //check during transaction
 
             if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
                 AO_DBG_WARN("reload stopTxnData");
                 //reload (e.g. after power cut during transaction)
-                stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, connectorId, transaction->getTxNr());
+                stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction.get());
             }
         } else {
             //check outside of transaction
@@ -216,7 +216,7 @@ std::unique_ptr<SampledValue> ConnectorMeterValuesRecorder::readTxEnergyMeter(Re
 
 void ConnectorMeterValuesRecorder::beginTxMeterData(Transaction *transaction) {
     if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
-        stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, connectorId, transaction->getTxNr());
+        stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
     }
 
     if (stopTxnData) {
@@ -229,7 +229,7 @@ void ConnectorMeterValuesRecorder::beginTxMeterData(Transaction *transaction) {
 
 std::shared_ptr<TransactionMeterData> ConnectorMeterValuesRecorder::endTxMeterData(Transaction *transaction) {
     if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
-        stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, connectorId, transaction->getTxNr());
+        stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
     }
 
     if (stopTxnData) {
@@ -243,8 +243,7 @@ std::shared_ptr<TransactionMeterData> ConnectorMeterValuesRecorder::endTxMeterDa
 }
 
 std::shared_ptr<TransactionMeterData> ConnectorMeterValuesRecorder::getStopTxMeterData(Transaction *transaction) {
-
-    auto txData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, connectorId, transaction->getTxNr());
+    auto txData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
 
     if (!txData) {
         AO_DBG_ERR("could not create TxData");

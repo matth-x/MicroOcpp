@@ -24,8 +24,6 @@ class StopTransaction : public OcppMessage {
 private:
     std::shared_ptr<Transaction> transaction;
     std::vector<std::unique_ptr<MeterValue>> transactionData;
-
-    bool cleanTxStore();
 public:
 
     StopTransaction(std::shared_ptr<Transaction> transaction);
@@ -46,8 +44,6 @@ public:
     void processConf(JsonObject payload) override;
 
     bool processErr(const char *code, const char *description, JsonObject details) override;
-
-    TransactionRPC *getTransactionSync() override;
 
     void processReq(JsonObject payload) override;
 
