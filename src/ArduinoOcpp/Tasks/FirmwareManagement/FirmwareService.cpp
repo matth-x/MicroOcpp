@@ -58,9 +58,6 @@ void FirmwareService::loop() {
 
             if (cpStatusService) {
                 ConnectorStatus *evse = cpStatusService->getConnector(0);
-                if (!availabilityRestore) {
-                    availabilityRestore = (evse->getAvailability() == AVAILABILITY_OPERATIVE);
-                }
                 evse->setAvailabilityVolatile(false);
             }
             if (onDownload == nullptr) {
@@ -161,17 +158,12 @@ void FirmwareService::loop() {
         if (stage == UpdateStage::Installing) {
 
             //check if client reports installation to be finished
-            if ((installationStatusSampler != nullptr && installationStatusSampler() == InstallationStatus::Installed)
-                    //if client doesn't report installation state, assume download to be finished (at least 40s installation time have passed until here)
-                      || (installationStatusSampler == nullptr)) {
+            if (installationStatusSampler == nullptr || installationStatusSampler() == InstallationStatus::Installed) {
+                        //if client doesn't report installation state, assume download to be finished (at least 40s installation time have passed until here)
+                
                 //Client should reboot during onInstall. If not, client is responsible to reboot at a later point
                 resetStage();
                 retries = 0; //End of update routine. Client must reboot on its own
-                if (availabilityRestore) {
-                    if (cpStatusService && cpStatusService->getConnector(0)) {
-                        cpStatusService->getConnector(0)->setAvailabilityVolatile(true);
-                    }
-                }
                 return;
             }
 

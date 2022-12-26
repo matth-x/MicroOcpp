@@ -67,8 +67,6 @@ private:
 
     void resetStage();
 
-    bool availabilityRestore = false;
-
     std::unique_ptr<OcppOperation> getFirmwareStatusNotification();
 
 public:

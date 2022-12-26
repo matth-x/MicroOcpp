@@ -458,6 +458,28 @@ void addMeterValueInput(std::unique_ptr<SampledValueSampler> valueInput, uint co
     model.getMeteringService()->addMeterValueSampler(connectorId, std::move(valueInput));
 }
 
+void setOnResetNotify(std::function<bool(bool)> onResetNotify) {
+    if (!ocppEngine) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+
+    if (auto csService = ocppEngine->getOcppModel().getChargePointStatusService()) {
+        csService->setPreReset(onResetNotify);
+    }
+}
+
+void setOnResetExecute(std::function<void(bool)> onResetExecute) {
+    if (!ocppEngine) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+
+    if (auto csService = ocppEngine->getOcppModel().getChargePointStatusService()) {
+        csService->setExecuteReset(onResetExecute);
+    }
+}
+
 void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnectorInOut, uint connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
