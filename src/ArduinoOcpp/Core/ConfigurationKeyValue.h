@@ -20,10 +20,6 @@ private:
     bool remotePeerCanWrite = true;
     bool remotePeerCanRead = true;
     bool localClientCanWrite = true;
-//    const char *serializedAccessControl();
-//    void loadFromSerializedAccessControl(const char *access);
-
-    bool toBeRemovedFlag = false;
 protected:
     uint16_t value_revision = 0; //number of memory-relevant changes of subclass-member "value" (deleting counts too). This will be important for the client to detect if there was a change
     bool initializedValue = false;
@@ -44,9 +40,6 @@ public:
 
     void requireRebootWhenChanged();
     bool requiresRebootWhenChanged();
-    bool toBeRemoved();
-    void setToBeRemoved();
-    void resetToBeRemovedFlag();
 
     uint16_t getValueRevision();
     bool keyEquals(const char *other);

@@ -39,7 +39,6 @@ size_t AbstractConfiguration::getStorageHeaderJsonCapacity() {
 }
 
 void AbstractConfiguration::storeStorageHeader(JsonObject &keyValuePair) {
-    if (toBeRemovedFlag) return;
     keyValuePair["key"] = key;
 }
 
@@ -49,7 +48,6 @@ size_t AbstractConfiguration::getOcppMsgHeaderJsonCapacity() {
 }
 
 void AbstractConfiguration::storeOcppMsgHeader(JsonObject &keyValuePair) {
-    if (toBeRemovedFlag) return;
     keyValuePair["key"] = key;
     if (remotePeerCanWrite) {
         keyValuePair["readonly"] = false;
@@ -59,7 +57,7 @@ void AbstractConfiguration::storeOcppMsgHeader(JsonObject &keyValuePair) {
 }
 
 bool AbstractConfiguration::isValid() {
-    return initializedValue && !key.empty() && !toBeRemovedFlag;
+    return initializedValue && !key.empty();
 }
 
 bool AbstractConfiguration::setKey(const char *newKey) {
@@ -83,24 +81,6 @@ void AbstractConfiguration::requireRebootWhenChanged() {
 
 bool AbstractConfiguration::requiresRebootWhenChanged() {
     return rebootRequiredWhenChanged;
-}
-
-bool AbstractConfiguration::toBeRemoved() {
-    return toBeRemovedFlag;
-}
-
-void AbstractConfiguration::setToBeRemoved() {
-    if (!toBeRemovedFlag) {
-        value_revision++;
-    }
-    toBeRemovedFlag = true;
-}
-
-void AbstractConfiguration::resetToBeRemovedFlag() {
-    if (toBeRemovedFlag) {
-        value_revision++;
-    }
-    toBeRemovedFlag = false;
 }
 
 uint16_t AbstractConfiguration::getValueRevision() {
@@ -156,7 +136,6 @@ const T &Configuration<T>::operator=(const T & newVal) {
             value_revision++;
         }
         value = newVal;
-        resetToBeRemovedFlag();
     } else {
         AO_DBG_ERR("Tried to override read-only configuration:");
         AO_CONSOLE_PRINTF("[AO]     > Key = ");
@@ -187,7 +166,7 @@ size_t Configuration<const char *>::getValueJsonCapacity() {
 
 template<class T>
 std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonStorageEntry() {
-    if (!isValid() || toBeRemoved()) {
+    if (!isValid()) {
         return nullptr;
     }
     size_t capacity = getStorageHeaderJsonCapacity()
@@ -213,7 +192,7 @@ int toCStringValue(char *buf, size_t length, float value) {
 
 template<class T>
 std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonOcppMsgEntry() {
-    if (!isValid() || toBeRemoved()) {
+    if (!isValid()) {
         return nullptr;
     }
     const size_t VALUE_MAXSIZE = 50;
@@ -231,7 +210,7 @@ std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonOcppMsgEntry() {
 }
 
 std::shared_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonStorageEntry() {
-    if (!isValid() || toBeRemoved()) {
+    if (!isValid()) {
         return nullptr;
     }
     size_t capacity = getStorageHeaderJsonCapacity()
@@ -247,7 +226,7 @@ std::shared_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonStorageE
 }
 
 std::shared_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonOcppMsgEntry() {
-    if (!isValid() || toBeRemoved()) {
+    if (!isValid()) {
         return nullptr;
     }
     size_t capacity = getOcppMsgHeaderJsonCapacity()
@@ -304,7 +283,6 @@ bool Configuration<const char *>::setValue(const char *new_value, size_t buffsiz
         AO_CONSOLE_PRINTF(", value = %s\n", value.c_str());
     }
     initializedValue = true;
-    resetToBeRemovedFlag();
     return true;
 }
 
