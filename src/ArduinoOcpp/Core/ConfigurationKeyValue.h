@@ -64,6 +64,7 @@ struct SerializedType {
 
 template<> struct SerializedType<int> {static const char *get() {return "int";}};
 template<> struct SerializedType<float> {static const char *get() {return "float";}};
+template<> struct SerializedType<bool> {static const char *get() {return "bool";}};
 template<> struct SerializedType<const char*> {static const char *get() {return "string";}};
 
 template <class T>

@@ -119,6 +119,10 @@ void printValue(float value) {
     AO_CONSOLE_PRINTF("%f", value);
 }
 
+void printValue(bool value) {
+    AO_CONSOLE_PRINTF("%s", value ? "true" : "false");
+}
+
 template <class T>
 const T &Configuration<T>::operator=(const T & newVal) {
 
@@ -188,6 +192,10 @@ int toCStringValue(char *buf, size_t length, int value) {
 int toCStringValue(char *buf, size_t length, float value) {
     int ilength = (int) std::min((size_t) 100, length);
     return snprintf(buf, length, "%.*g", ilength >= 7 ? ilength - 7 : 0, value);
+}
+
+int toCStringValue(char *buf, size_t length, bool value) {
+    return snprintf(buf, length, "%s", value ? "true" : "false");
 }
 
 template<class T>
@@ -307,6 +315,7 @@ size_t Configuration<const char *>::getBuffsize() {
 
 template class Configuration<int>;
 template class Configuration<float>;
+template class Configuration<bool>;
 template class Configuration<const char *>;
 
 } //end namespace ArduinoOcpp

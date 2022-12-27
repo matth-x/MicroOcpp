@@ -6,7 +6,8 @@
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
 
-#include <cmath> //for isNaN check
+#include <cmath> //for isnan check
+#include <cctype> //for tolower
 
 using ArduinoOcpp::Ocpp16::ChangeConfiguration;
 
@@ -64,6 +65,8 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     int numInt = 0;
     bool convertibleFloat = true;
     float numFloat = 0.f;
+    bool convertibleBool = true;
+    bool numBool = false;
 
     int nDigits = 0, nNonDigits = 0, nDots = 0, nSign = 0; //"-1.234" has 4 digits, 0 nonDigits, 1 dot and 1 sign. Don't allow comma as seperator. Don't allow e-expressions (e.g. 1.23e-7)
     float numFloatTranslate = 1.f;
@@ -117,6 +120,16 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     if (std::isnan(numFloat)) {
         convertibleFloat = false;
     }
+
+    if (tolower(value[0]) == 't' && tolower(value[1]) == 'r' && tolower(value[2]) == 'u' && tolower(value[3]) == 'e' && !value[4]) {
+        numBool = true;
+    } else if (tolower(value[0]) == 'f' && tolower(value[1]) == 'a' && tolower(value[2]) == 'l' && tolower(value[3]) == 's' && tolower(value[4]) == 'e' && !value[5]) {
+        numBool = false;
+    } else if (convertibleInt) {
+        numBool = numInt != 0;
+    } else {
+        convertibleBool = false;
+    }
     
     //Store (parsed) value to Config
 
@@ -126,6 +139,9 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     } else if (!strcmp(configuration->getSerializedType(), SerializedType<float>::get()) && convertibleFloat) {
         std::shared_ptr<Configuration<float>> configurationConcrete = std::static_pointer_cast<Configuration<float>>(configuration);
         *configurationConcrete = numFloat;
+    } else if (!strcmp(configuration->getSerializedType(), SerializedType<bool>::get()) && convertibleBool) {
+        std::shared_ptr<Configuration<bool>> configurationConcrete = std::static_pointer_cast<Configuration<bool>>(configuration);
+        *configurationConcrete = numBool;
     } else if (!strcmp(configuration->getSerializedType(), SerializedType<const char *>::get())) {
         std::shared_ptr<Configuration<const char *>> configurationConcrete = std::static_pointer_cast<Configuration<const char *>>(configuration);
         *configurationConcrete = value;

@@ -222,10 +222,12 @@ bool configuration_save() {
 
 template std::shared_ptr<Configuration<int>> createConfiguration(const char *key, int value);
 template std::shared_ptr<Configuration<float>> createConfiguration(const char *key, float value);
+template std::shared_ptr<Configuration<bool>> createConfiguration(const char *key, bool value);
 template std::shared_ptr<Configuration<const char *>> createConfiguration(const char *key, const char * value);
 
 template std::shared_ptr<Configuration<int>> declareConfiguration(const char *key, int defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
 template std::shared_ptr<Configuration<float>> declareConfiguration(const char *key, float defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
+template std::shared_ptr<Configuration<bool>> declareConfiguration(const char *key, bool defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
 template std::shared_ptr<Configuration<const char *>> declareConfiguration(const char *key, const char *defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
 
 } //end namespace ArduinoOcpp
