@@ -52,8 +52,8 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
         true,true,true,false
     );
 
-    MeterValuesInTxOnly = declareConfiguration<const char*>("AO_MeterValuesInTxOnly", "true", CONFIGURATION_FN, true, true, true, false);
-    StopTxnDataCapturePeriodic = declareConfiguration<const char*>("AO_StopTxnDataCapturePeriodic", "false", CONFIGURATION_FN, true, true, true, false);
+    MeterValuesInTxOnly = declareConfiguration<bool>("AO_MeterValuesInTxOnly", true, CONFIGURATION_FN, true, true, true, false);
+    StopTxnDataCapturePeriodic = declareConfiguration<bool>("AO_StopTxnDataCapturePeriodic", false, CONFIGURATION_FN, true, true, true, false);
 
     sampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesSampledData));
     alignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesAlignedData));
@@ -96,7 +96,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
         } else {
             //check outside of transaction
 
-            if (!(const char *) *MeterValuesInTxOnly || strcmp(*MeterValuesInTxOnly, "false")) {
+            if (!MeterValuesInTxOnly || *MeterValuesInTxOnly) {
                 //don't take any MeterValues outside of transactions
                 meterData.clear();
                 return nullptr;
@@ -154,7 +154,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
                 meterData.push_back(std::move(sampleMeterValues));
             }
 
-            if (stopTxnData && ((const char*) *StopTxnDataCapturePeriodic && !strcmp(*StopTxnDataCapturePeriodic, "true"))) {
+            if (stopTxnData && StopTxnDataCapturePeriodic && *StopTxnDataCapturePeriodic) {
                 auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::SamplePeriodic);
                 if (sampleStopTx) {
                     stopTxnData->addTxData(std::move(sampleStopTx));
@@ -205,9 +205,9 @@ void ConnectorMeterValuesRecorder::addMeterValueSampler(std::unique_ptr<SampledV
     samplers.push_back(std::move(meterValueSampler));
 }
 
-std::unique_ptr<SampledValue> ConnectorMeterValuesRecorder::readTxEnergyMeter(ReadingContext reason) {
+std::unique_ptr<SampledValue> ConnectorMeterValuesRecorder::readTxEnergyMeter(ReadingContext context) {
     if (energySamplerIndex >= 0 && (size_t) energySamplerIndex < samplers.size()) {
-        return samplers[energySamplerIndex]->takeValue(reason);
+        return samplers[energySamplerIndex]->takeValue(context);
     } else {
         AO_DBG_DEBUG("Called readTxEnergyMeter(), but no energySampler or handling strategy set");
         return nullptr;

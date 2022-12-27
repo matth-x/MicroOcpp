@@ -58,8 +58,8 @@ private:
 
     std::shared_ptr<Configuration<int>> ClockAlignedDataInterval;
 
-    std::shared_ptr<Configuration<const char*>> MeterValuesInTxOnly;
-    std::shared_ptr<Configuration<const char*>> StopTxnDataCapturePeriodic;
+    std::shared_ptr<Configuration<bool>> MeterValuesInTxOnly;
+    std::shared_ptr<Configuration<bool>> StopTxnDataCapturePeriodic;
 public:
     ConnectorMeterValuesRecorder(OcppModel& context, int connectorId, MeterStore& meterStore);
 

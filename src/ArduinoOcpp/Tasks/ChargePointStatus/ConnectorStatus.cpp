@@ -30,17 +30,17 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
 
     connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN, true, true, true, false);
     minimumStatusDuration = declareConfiguration<int>("MinimumStatusDuration", 0, CONFIGURATION_FN, true, true, true, false);
-    stopTransactionOnInvalidId = declareConfiguration<const char*>("StopTransactionOnInvalidId", "true", CONFIGURATION_FN, true, true, true, false);
-    stopTransactionOnEVSideDisconnect = declareConfiguration<const char*>("StopTransactionOnEVSideDisconnect", "true", CONFIGURATION_FN, true, true, true, false);
-    unlockConnectorOnEVSideDisconnect = declareConfiguration<const char*>("UnlockConnectorOnEVSideDisconnect", "true", CONFIGURATION_FN, true, true, true, false);
-    localAuthorizeOffline = declareConfiguration<const char*>("LocalAuthorizeOffline", "false", CONFIGURATION_FN, true, true, true, false);
-    localPreAuthorize = declareConfiguration<const char*>("LocalPreAuthorize", "false", CONFIGURATION_FN, true, true, true, false);
+    stopTransactionOnInvalidId = declareConfiguration<bool>("StopTransactionOnInvalidId", true, CONFIGURATION_FN, true, true, true, false);
+    stopTransactionOnEVSideDisconnect = declareConfiguration<bool>("StopTransactionOnEVSideDisconnect", true, CONFIGURATION_FN, true, true, true, false);
+    unlockConnectorOnEVSideDisconnect = declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", true, CONFIGURATION_FN, true, true, true, false);
+    localAuthorizeOffline = declareConfiguration<bool>("LocalAuthorizeOffline", false, CONFIGURATION_FN, true, true, true, false);
+    localPreAuthorize = declareConfiguration<bool>("LocalPreAuthorize", false, CONFIGURATION_FN, true, true, true, false);
 
     //if the EVSE goes offline, can it continue to charge without sending StartTx / StopTx to the server when going online again?
-    silentOfflineTransactions = declareConfiguration<const char*>("AO_SilentOfflineTransactions", "false", CONFIGURATION_FN, true, true, true, false);
+    silentOfflineTransactions = declareConfiguration<bool>("AO_SilentOfflineTransactions", false, CONFIGURATION_FN, true, true, true, false);
 
     //FreeVend mode
-    freeVendActive = declareConfiguration<const char*>("AO_FreeVendActive", "false", CONFIGURATION_FN, true, true, true, false);
+    freeVendActive = declareConfiguration<bool>("AO_FreeVendActive", false, CONFIGURATION_FN, true, true, true, false);
     freeVendIdTag = declareConfiguration<const char*>("AO_FreeVendIdTag", "", CONFIGURATION_FN, true, true, true, false);
 
     if (!availability) {
@@ -140,7 +140,7 @@ bool ConnectorStatus::ocppPermitsCharge() {
     bool suspendDeAuthorizedIdTag = transaction && transaction->isIdTagDeauthorized(); //if idTag status is "DeAuthorized" and if charging should stop
     
     //check special case for DeAuthorized idTags: FreeVend mode
-    if (suspendDeAuthorizedIdTag && freeVendActive && !strcmp(*freeVendActive, "true")) {
+    if (suspendDeAuthorizedIdTag && freeVendActive && *freeVendActive) {
         suspendDeAuthorizedIdTag = false;
     }
 
@@ -194,7 +194,7 @@ OcppMessage *ConnectorStatus::loop() {
             
         if (connectorPluggedSampler) {
             if (transaction->isRunning() && transaction->isInSession() && !connectorPluggedSampler()) {
-                if (!*stopTransactionOnEVSideDisconnect || strcmp(*stopTransactionOnEVSideDisconnect, "false")) {
+                if (!stopTransactionOnEVSideDisconnect || *stopTransactionOnEVSideDisconnect) {
                     AO_DBG_DEBUG("Stop Tx due to EV disconnect");
                     transaction->setStopReason("EVDisconnected");
                     transaction->endSession();
@@ -215,7 +215,7 @@ OcppMessage *ConnectorStatus::loop() {
         }
 
         if (transaction->isInSession() && transaction->isIdTagDeauthorized()) {
-            if (!*stopTransactionOnInvalidId || strcmp(*stopTransactionOnInvalidId, "false")) {
+            if (!stopTransactionOnInvalidId || *stopTransactionOnInvalidId) {
                 AO_DBG_DEBUG("DeAuthorize session");
                 transaction->setStopReason("DeAuthorized");
                 transaction->endSession();
@@ -324,7 +324,7 @@ OcppMessage *ConnectorStatus::loop() {
     } //end transaction-related operations
 
     //handle FreeVend mode
-    if (freeVendActive && *freeVendActive && !strcmp(*freeVendActive, "true") && connectorPluggedSampler) {
+    if (freeVendActive && *freeVendActive && connectorPluggedSampler) {
         if (!freeVendTrackPlugged && connectorPluggedSampler() && !transaction) {
             const char *idTag = freeVendIdTag && *freeVendIdTag ? *freeVendIdTag : "";
             if (!idTag || *idTag == '\0') {
@@ -460,7 +460,7 @@ void ConnectorStatus::beginSession(const char *sessionIdTag) {
 
     if (!transaction) {
         //couldn't create normal transaction -> check if to start charging without real transaction
-        if (silentOfflineTransactions && *silentOfflineTransactions && !strcmp(*silentOfflineTransactions, "true")) {
+        if (silentOfflineTransactions && *silentOfflineTransactions) {
             //try to handle charging session without sending StartTx or StopTx to the server
             transaction = context.getTransactionStore()->createTransaction(connectorId, true);
 

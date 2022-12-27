@@ -50,7 +50,7 @@ ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned
     /*
      * Further configuration keys which correspond to the Core profile
      */
-    declareConfiguration<const char*>("AuthorizeRemoteTxRequests","false",CONFIGURATION_VOLATILE,false,true,false,false);
+    declareConfiguration<bool>("AuthorizeRemoteTxRequests",false,CONFIGURATION_VOLATILE,false,true,false,false);
     declareConfiguration<int>("GetConfigurationMaxKeys",30,CONFIGURATION_VOLATILE,false,true,false,false);
 }
 
