@@ -144,6 +144,16 @@ void ChangeConfiguration::processReq(JsonObject payload) {
         *configurationConcrete = numBool;
     } else if (!strcmp(configuration->getSerializedType(), SerializedType<const char *>::get())) {
         std::shared_ptr<Configuration<const char *>> configurationConcrete = std::static_pointer_cast<Configuration<const char *>>(configuration);
+        
+        //string configurations can have a validator
+        auto validator = configurationConcrete->getValidator();
+        if (validator && !validator(value)) {
+            //validator exists and validation fails
+            reject = true;
+            AO_DBG_WARN("validation failed for key=%s value=%s", key, value);
+            return;
+        }
+
         *configurationConcrete = value;
     } else {
         reject = true;
@@ -152,7 +162,12 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     }
 
     //success
-    configuration_save();
+
+    if (!configuration_save()) {
+        AO_DBG_ERR("could not write changes to flash");
+        errorCode = "InternalError";
+        return;
+    }
 
     if (configuration->requiresRebootWhenChanged()) {
         rebootRequired = true;

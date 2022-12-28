@@ -90,6 +90,8 @@ class Configuration<const char *> : public AbstractConfiguration {
 private:
     std::string value;
     size_t getValueJsonCapacity();
+
+    std::function<bool(const char*)> validator;
 public:
     Configuration();
     Configuration(JsonObject &storedKeyValuePair);
@@ -104,6 +106,9 @@ public:
     std::shared_ptr<DynamicJsonDocument> toJsonOcppMsgEntry();
 
     const char *getSerializedType() {return SerializedType<const char *>::get();}
+
+    void setValidator(std::function<bool(const char*)> validator);
+    std::function<bool(const char*)> getValidator();
 };
 
 } //end namespace ArduinoOcpp

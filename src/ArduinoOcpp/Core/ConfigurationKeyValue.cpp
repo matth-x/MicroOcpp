@@ -313,6 +313,14 @@ size_t Configuration<const char *>::getBuffsize() {
     return value.size() + 1;
 }
 
+void Configuration<const char *>::setValidator(std::function<bool(const char*)> validator) {
+    this->validator = validator;
+}
+
+std::function<bool(const char*)> Configuration<const char *>::getValidator() {
+    return this->validator;
+}
+
 template class Configuration<int>;
 template class Configuration<float>;
 template class Configuration<bool>;

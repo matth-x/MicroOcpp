@@ -59,6 +59,42 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
     alignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesAlignedData));
     stopTxnSampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, StopTxnSampledData));
     stopTxnAlignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, StopTxnAlignedData));
+
+    std::function<bool(const char*)> validateSelectString = [this] (const char *csl) {
+        bool isValid = true;
+        const char *l = csl; //the beginning of an entry of the comma-separated list
+        const char *r = l; //one place after the last character of the entry beginning with l
+        while (*l) {
+            if (*l == ',') {
+                l++;
+                continue;
+            }
+            r = l + 1;
+            while (*r != '\0' && *r != ',') {
+                r++;
+            }
+            bool found = false;
+            for (size_t i = 0; i < samplers.size(); i++) {
+                auto &measurand = samplers[i]->getProperties().getMeasurand();
+                if (measurand.length() == r - l &&                              //same length
+                        !strncmp(l, measurand.c_str(), measurand.length())) {   //same content
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                isValid = false;
+                AO_DBG_WARN("could not find metering device for %.*s", r - l, l);
+                break;
+            }
+            l = r;
+        }
+        return isValid;
+    };
+    MeterValuesSampledData->setValidator(validateSelectString);
+    StopTxnSampledData->setValidator(validateSelectString);
+    MeterValuesAlignedData->setValidator(validateSelectString);
+    StopTxnAlignedData->setValidator(validateSelectString);
 }
 
 OcppMessage *ConnectorMeterValuesRecorder::loop() {
