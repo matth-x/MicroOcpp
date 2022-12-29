@@ -106,8 +106,9 @@ std::shared_ptr<Configuration<T>> declareConfiguration(const char *key, T defaul
     std::shared_ptr<AbstractConfiguration> configuration = container->getConfiguration(key);
 
     if (configuration && strcmp(configuration->getSerializedType(), SerializedType<T>::get())) {
-        AO_DBG_ERR("conflicting declared types");
-        return nullptr;
+        AO_DBG_ERR("conflicting declared types. Discard old config");
+        container->removeConfiguration(configuration);
+        configuration = nullptr;
     }
 
     std::shared_ptr<Configuration<T>> configurationConcrete = std::static_pointer_cast<Configuration<T>>(configuration);
