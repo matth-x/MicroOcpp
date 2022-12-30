@@ -1,6 +1,6 @@
 {
     "name": "ArduinoOcpp",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "OCPP 1.6 Client for the ESP8266 and ESP32",
     "keywords": "OCPP, 1.6, OCPP 1.6, Smart Energy, Smart Charging, client, ESP8266, ESP32, Arduino, EVSE, Charge Point",
     "repository":
@@ -55,7 +55,7 @@
         [
             "src/sdkconfig*",
             "examples/SECC/WiFiManager*",
-            "src/main.cpp"
+            "src/main*"
         ]
     },
 
