@@ -7,23 +7,20 @@
 
 #include <ArduinoJson.h>
 #include <memory>
+#include <functional>
+#include <string>
 
 namespace ArduinoOcpp {
 
 class AbstractConfiguration {
 private:
-    char *key = nullptr;
-    size_t key_size = 0; // key=nullptr --> key_size = 0; key = "" --> key_size = 1; key = "A" --> key_size = 2
+    std::string key;
 
     bool rebootRequiredWhenChanged = false;
 
     bool remotePeerCanWrite = true;
     bool remotePeerCanRead = true;
     bool localClientCanWrite = true;
-//    const char *serializedAccessControl();
-//    void loadFromSerializedAccessControl(const char *access);
-
-    bool toBeRemovedFlag = false;
 protected:
     uint16_t value_revision = 0; //number of memory-relevant changes of subclass-member "value" (deleting counts too). This will be important for the client to detect if there was a change
     bool initializedValue = false;
@@ -44,9 +41,6 @@ public:
 
     void requireRebootWhenChanged();
     bool requiresRebootWhenChanged();
-    bool toBeRemoved();
-    void setToBeRemoved();
-    void resetToBeRemovedFlag();
 
     uint16_t getValueRevision();
     bool keyEquals(const char *other);
@@ -71,6 +65,7 @@ struct SerializedType {
 
 template<> struct SerializedType<int> {static const char *get() {return "int";}};
 template<> struct SerializedType<float> {static const char *get() {return "float";}};
+template<> struct SerializedType<bool> {static const char *get() {return "bool";}};
 template<> struct SerializedType<const char*> {static const char *get() {return "string";}};
 
 template <class T>
@@ -94,10 +89,10 @@ public:
 template <>
 class Configuration<const char *> : public AbstractConfiguration {
 private:
-    char *value = nullptr;
-    char *valueReadOnlyCopy = nullptr;
-    size_t value_size = 0;
+    std::string value;
     size_t getValueJsonCapacity();
+
+    std::function<bool(const char*)> validator;
 public:
     Configuration();
     Configuration(JsonObject &storedKeyValuePair);
@@ -112,6 +107,9 @@ public:
     std::shared_ptr<DynamicJsonDocument> toJsonOcppMsgEntry();
 
     const char *getSerializedType() {return SerializedType<const char *>::get();}
+
+    void setValidator(std::function<bool(const char*)> validator);
+    std::function<bool(const char*)> getValidator();
 };
 
 } //end namespace ArduinoOcpp

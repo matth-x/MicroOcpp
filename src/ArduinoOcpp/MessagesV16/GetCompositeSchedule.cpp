@@ -41,7 +41,7 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
     }
 
     if (connectorId < 0 || !payload.containsKey("duration")) {
-        errorCode = "FormatViolation";
+        errorCode = "FormationViolation";
     }
 
     if (!ocppModel || !ocppModel->getSmartChargingService()) {

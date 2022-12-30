@@ -412,7 +412,7 @@ void addErrorCodeInput(std::function<const char *()> errorCodeInput, uint connec
     connector->addConnectorErrorCodeSampler(errorCodeInput);
 }
 
-void addMeterValueInput(std::function<int32_t ()> valueInput, uint connectorId, const char *measurand, const char *unit, const char *location, const char *phase) {
+void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measurand, const char *unit, const char *location, const char *phase, uint connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -456,6 +456,28 @@ void addMeterValueInput(std::unique_ptr<SampledValueSampler> valueInput, uint co
             new MeteringService(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
     }
     model.getMeteringService()->addMeterValueSampler(connectorId, std::move(valueInput));
+}
+
+void setOnResetNotify(std::function<bool(bool)> onResetNotify) {
+    if (!ocppEngine) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+
+    if (auto csService = ocppEngine->getOcppModel().getChargePointStatusService()) {
+        csService->setPreReset(onResetNotify);
+    }
+}
+
+void setOnResetExecute(std::function<void(bool)> onResetExecute) {
+    if (!ocppEngine) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+
+    if (auto csService = ocppEngine->getOcppModel().getChargePointStatusService()) {
+        csService->setExecuteReset(onResetExecute);
+    }
 }
 
 void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnectorInOut, uint connectorId) {

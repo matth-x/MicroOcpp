@@ -38,8 +38,6 @@ public:
 
     void processConf(JsonObject payload);
 
-    TransactionRPC *getTransactionSync() override;
-
     void processReq(JsonObject payload);
 
     std::unique_ptr<DynamicJsonDocument> createConf();

@@ -50,7 +50,7 @@ ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned
     /*
      * Further configuration keys which correspond to the Core profile
      */
-    declareConfiguration<const char*>("AuthorizeRemoteTxRequests","false",CONFIGURATION_VOLATILE,false,true,false,false);
+    declareConfiguration<bool>("AuthorizeRemoteTxRequests",false,CONFIGURATION_VOLATILE,false,true,false,false);
     declareConfiguration<int>("GetConfigurationMaxKeys",30,CONFIGURATION_VOLATILE,false,true,false,false);
 }
 
@@ -61,10 +61,11 @@ ChargePointStatusService::~ChargePointStatusService() {
 void ChargePointStatusService::loop() {
     if (!booted) return;
     for (auto connector = connectors.begin(); connector != connectors.end(); connector++) {
-        auto statusNotificationMsg = (*connector)->loop();
-        if (statusNotificationMsg != nullptr) {
-            auto statusNotification = makeOcppOperation(statusNotificationMsg);
-            context.initiateOperation(std::move(statusNotification));
+        auto transactionMsg = (*connector)->loop();
+        if (transactionMsg != nullptr) {
+            auto transactionOp = makeOcppOperation(transactionMsg);
+            transactionOp->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
+            context.initiateOperation(std::move(transactionOp));
         }
     }
 
@@ -82,7 +83,7 @@ void ChargePointStatusService::loop() {
 
         if (outstandingResetRetries <= 0) {
             for (auto connector = connectors.begin(); connector != connectors.end(); connector++) {
-                (*connector)->setAvailabilityVolatile(false);
+                (*connector)->setAvailabilityVolatile(true);
             }
         }
     }
@@ -158,7 +159,7 @@ void ChargePointStatusService::initiateReset(bool isHard) {
     t_resetRetry = ao_tick_ms();
 
     for (auto connector = connectors.begin(); connector != connectors.end(); connector++) {
-        (*connector)->setAvailabilityVolatile(true);
+        (*connector)->setAvailabilityVolatile(false);
     }
 }
 

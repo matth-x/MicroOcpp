@@ -98,6 +98,8 @@ bool ConfigurationContainerFlash::load() {
             configuration = std::make_shared<Configuration<int>>(config);
         } else if (!strcmp(type, SerializedType<float>::get())){
             configuration = std::make_shared<Configuration<float>>(config);
+        } else if (!strcmp(type, SerializedType<bool>::get())){
+            configuration = std::make_shared<Configuration<bool>>(config);
         } else if (!strcmp(type, SerializedType<const char *>::get())){
             configuration = std::make_shared<Configuration<const char *>>(config);
         }

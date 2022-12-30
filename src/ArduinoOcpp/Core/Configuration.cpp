@@ -106,17 +106,12 @@ std::shared_ptr<Configuration<T>> declareConfiguration(const char *key, T defaul
     std::shared_ptr<AbstractConfiguration> configuration = container->getConfiguration(key);
 
     if (configuration && strcmp(configuration->getSerializedType(), SerializedType<T>::get())) {
-        AO_DBG_ERR("conflicting declared types. Override previous declaration");
+        AO_DBG_ERR("conflicting declared types. Discard old config");
         container->removeConfiguration(configuration);
-        configuration->setToBeRemoved();
         configuration = nullptr;
     }
 
     std::shared_ptr<Configuration<T>> configurationConcrete = std::static_pointer_cast<Configuration<T>>(configuration);
-
-    if (configurationConcrete && configurationConcrete->toBeRemoved()) {
-        (*configurationConcrete) = defaultValue;
-    }
 
     if (!configurationConcrete) {
         configurationConcrete = createConfiguration<T>(key, defaultValue);
@@ -228,10 +223,12 @@ bool configuration_save() {
 
 template std::shared_ptr<Configuration<int>> createConfiguration(const char *key, int value);
 template std::shared_ptr<Configuration<float>> createConfiguration(const char *key, float value);
+template std::shared_ptr<Configuration<bool>> createConfiguration(const char *key, bool value);
 template std::shared_ptr<Configuration<const char *>> createConfiguration(const char *key, const char * value);
 
 template std::shared_ptr<Configuration<int>> declareConfiguration(const char *key, int defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
 template std::shared_ptr<Configuration<float>> declareConfiguration(const char *key, float defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
+template std::shared_ptr<Configuration<bool>> declareConfiguration(const char *key, bool defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
 template std::shared_ptr<Configuration<const char *>> declareConfiguration(const char *key, const char *defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
 
 } //end namespace ArduinoOcpp

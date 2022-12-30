@@ -25,24 +25,78 @@ void ao_loop() {
     OCPP_loop();
 }
 
+/*
+ * Helper functions for transforming callback functions from C-style to C++style
+ */
+
+ArduinoOcpp::PollResult<bool> adaptScl(enum OptionalBool v) {
+    if (v == OptionalTrue) {
+        return true;
+    } else if (v == OptionalFalse) {
+        return false;
+    } else if (v == OptionalNone) {
+        return ArduinoOcpp::PollResult<bool>::Await();
+    } else {
+        AO_DBG_ERR("illegal argument");
+        return false;
+    }
+}
+
+enum TxTrigger_t adaptScl(ArduinoOcpp::TxTrigger v) {
+    return v == ArduinoOcpp::TxTrigger::Active ? TxTrigger_t::TxTrg_Active : TxTrigger_t::TxTrg_Inactive;
+}
+
+ArduinoOcpp::TxEnableState adaptScl(enum TxEnableState_t v) {
+    if (v == TxEna_Pending) {
+        return ArduinoOcpp::TxEnableState::Pending;
+    } else if (v == TxEna_Active) {
+        return ArduinoOcpp::TxEnableState::Active;
+    } else if (v == TxEna_Inactive) {
+        return ArduinoOcpp::TxEnableState::Inactive;
+    } else {
+        AO_DBG_ERR("illegal argument");
+        return ArduinoOcpp::TxEnableState::Inactive;
+    }
+}
+
 std::function<bool()> adaptFn(InputBool fn) {
     return fn;
+}
+
+std::function<bool()> adaptFn(unsigned int connectorId, InputBool_m fn) {
+    return [fn, connectorId] () {return fn(connectorId);};
 }
 
 std::function<const char*()> adaptFn(InputString fn) {
     return fn;
 }
 
+std::function<const char*()> adaptFn(unsigned int connectorId, InputString_m fn) {
+    return [fn, connectorId] () {return fn(connectorId);};
+}
+
 std::function<float()> adaptFn(InputFloat fn) {
     return fn;
+}
+
+std::function<float()> adaptFn(unsigned int connectorId, InputFloat_m fn) {
+    return [fn, connectorId] () {return fn(connectorId);};
 }
 
 std::function<int()> adaptFn(InputInt fn) {
     return fn;
 }
 
+std::function<int()> adaptFn(unsigned int connectorId, InputInt_m fn) {
+    return [fn, connectorId] () {return fn(connectorId);};
+}
+
 std::function<void(float)> adaptFn(OutputFloat fn) {
     return fn;
+}
+
+std::function<void(float)> adaptFn(unsigned int connectorId, OutputFloat_m fn) {
+    return [fn, connectorId] (float value) {return fn(connectorId, value);};
 }
 
 std::function<void(void)> adaptFn(void (*fn)(void)) {
@@ -66,6 +120,18 @@ std::function<void(JsonObject)> adaptFn(OnOcppMessage fn) {
     };
 }
 
+std::function<void(JsonObject)> adaptFn(const char *idTag_cstr, OnAuthorize fn) {
+    if (!fn) return nullptr;
+    std::string idTag = idTag_cstr ? idTag_cstr : "undefined";
+    return [fn, idTag] (JsonObject payload) {
+        auto len = serializeJson(payload, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
+        if (len <= 0) {
+            AO_DBG_WARN("Received payload buffer exceeded. Continue without payload");
+        }
+        fn(idTag.c_str(), len > 0 ? ao_recv_payload_buff : "", len);
+    };
+}
+
 ArduinoOcpp::OnReceiveErrorListener adaptFn(OnOcppError fn) {
     if (!fn) return nullptr;
     return [fn] (const char *code, const char *description, JsonObject details) {
@@ -77,21 +143,27 @@ ArduinoOcpp::OnReceiveErrorListener adaptFn(OnOcppError fn) {
     };
 }
 
+std::function<ArduinoOcpp::PollResult<bool>()> adaptFn(PollBool fn) {
+    return [fn] () {return adaptScl(fn());};
+}
+
+std::function<ArduinoOcpp::PollResult<bool>()> adaptFn(unsigned int connectorId, PollBool_m fn) {
+    return [fn, connectorId] () {return adaptScl(fn(connectorId));};
+}
+
 std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> adaptFn(TxStepInOut fn) {
     if (!fn) return nullptr;
     return [fn] (ArduinoOcpp::TxTrigger trigger) -> ArduinoOcpp::TxEnableState {
-        auto res = fn(trigger == ArduinoOcpp::TxTrigger::Active ?
-                            TxTrg_Active : TxTrg_Inactive);
-        if (res == TxEna_Pending) {
-            return ArduinoOcpp::TxEnableState::Pending;
-        } else if (res == TxEna_Active) {
-            return ArduinoOcpp::TxEnableState::Active;
-        } else if (res == TxEna_Inactive) {
-            return ArduinoOcpp::TxEnableState::Inactive;
-        } else {
-            AO_DBG_ERR("illegal argument");
-            return ArduinoOcpp::TxEnableState::Inactive;
-        }
+        auto res = fn(adaptScl(trigger));
+        return adaptScl(res);
+    };
+}
+
+std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> adaptFn(unsigned int connectorId, TxStepInOut_m fn) {
+    if (!fn) return nullptr;
+    return [fn, connectorId] (ArduinoOcpp::TxTrigger trigger) -> ArduinoOcpp::TxEnableState {
+        auto res = fn(connectorId, adaptScl(trigger));
+        return adaptScl(res);
     };
 }
 
@@ -110,8 +182,8 @@ void ao_bootNotification_full(const char *payloadJson, OnOcppMessage onConfirmat
     bootNotification(std::move(payload), adaptFn(onConfirmation), adaptFn(onAbort), adaptFn(onTimeout), adaptFn(onError));
 }
 
-void ao_authorize(const char *idTag, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError) {
-    authorize(idTag, adaptFn(onConfirmation), adaptFn(onAbort), adaptFn(onTimeout), adaptFn(onError));
+void ao_authorize(const char *idTag, OnAuthorize onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError) {
+    authorize(idTag, adaptFn(idTag, onConfirmation), adaptFn(onAbort), adaptFn(onTimeout), adaptFn(onError));
 }
 
 void ao_beginTransaction(const char *idTag) {
@@ -145,57 +217,57 @@ bool ao_ocppPermitsCharge_m(unsigned int connectorId) {
 void ao_setConnectorPluggedInput(InputBool pluggedInput) {
     setConnectorPluggedInput(adaptFn(pluggedInput));
 }
-void ao_setConnectorPluggedInput_m(unsigned int connectorId, InputBool pluggedInput) {
-    setConnectorPluggedInput(adaptFn(pluggedInput), connectorId);
+void ao_setConnectorPluggedInput_m(unsigned int connectorId, InputBool_m pluggedInput) {
+    setConnectorPluggedInput(adaptFn(connectorId, pluggedInput), connectorId);
 }
 
 void ao_setEnergyMeterInput(InputInt energyInput) {
     setEnergyMeterInput(adaptFn(energyInput));
 }
-void ao_setEnergyMeterInput_m(unsigned int connectorId, InputInt energyInput) {
-    setEnergyMeterInput(adaptFn(energyInput), connectorId);
+void ao_setEnergyMeterInput_m(unsigned int connectorId, InputInt_m energyInput) {
+    setEnergyMeterInput(adaptFn(connectorId, energyInput), connectorId);
 }
 
 void ao_setPowerMeterInput(InputFloat powerInput) {
     setPowerMeterInput(adaptFn(powerInput));
 }
-void ao_setPowerMeterInput_m(unsigned int connectorId, InputFloat powerInput) {
-    setPowerMeterInput(adaptFn(powerInput), connectorId);
+void ao_setPowerMeterInput_m(unsigned int connectorId, InputFloat_m powerInput) {
+    setPowerMeterInput(adaptFn(connectorId, powerInput), connectorId);
 }
 
 void ao_setSmartChargingOutput(OutputFloat chargingLimitOutput) {
     setSmartChargingOutput(adaptFn(chargingLimitOutput));
 }
-void ao_setSmartChargingOutput_m(unsigned int connectorId, OutputFloat chargingLimitOutput) {
-    setSmartChargingOutput(adaptFn(chargingLimitOutput), connectorId);
+void ao_setSmartChargingOutput_m(unsigned int connectorId, OutputFloat_m chargingLimitOutput) {
+    setSmartChargingOutput(adaptFn(connectorId, chargingLimitOutput), connectorId);
 }
 
 void ao_setEvReadyInput(InputBool evReadyInput) {
     setEvReadyInput(adaptFn(evReadyInput));
 }
-void ao_setEvReadyInput_m(unsigned int connectorId, InputBool evReadyInput) {
-    setEvReadyInput(adaptFn(evReadyInput), connectorId);
+void ao_setEvReadyInput_m(unsigned int connectorId, InputBool_m evReadyInput) {
+    setEvReadyInput(adaptFn(connectorId, evReadyInput), connectorId);
 }
 
 void ao_setEvseReadyInput(InputBool evseReadyInput) {
     setEvseReadyInput(adaptFn(evseReadyInput));
 }
-void ao_setEvseReadyInput_m(unsigned int connectorId, InputBool evseReadyInput) {
-    setEvseReadyInput(adaptFn(evseReadyInput), connectorId);
+void ao_setEvseReadyInput_m(unsigned int connectorId, InputBool_m evseReadyInput) {
+    setEvseReadyInput(adaptFn(connectorId, evseReadyInput), connectorId);
 }
 
 void ao_addErrorCodeInput(InputString errorCodeInput) {
     addErrorCodeInput(adaptFn(errorCodeInput));
 }
-void ao_addErrorCodeInput_m(unsigned int connectorId, InputString errorCodeInput) {
-    addErrorCodeInput(adaptFn(errorCodeInput), connectorId);
+void ao_addErrorCodeInput_m(unsigned int connectorId, InputString_m errorCodeInput) {
+    addErrorCodeInput(adaptFn(connectorId, errorCodeInput), connectorId);
 }
 
 void ao_addMeterValueInputInt(InputInt valueInput, const char *measurand, const char *unit, const char *location, const char *phase) {
-    addMeterValueInput(adaptFn(valueInput), 1, measurand, unit, location, phase);
+    addMeterValueInput(adaptFn(valueInput), measurand, unit, location, phase, 1);
 }
-void ao_addMeterValueInputInt_m(unsigned int connectorId, InputInt valueInput, const char *measurand, const char *unit, const char *location, const char *phase) {
-    addMeterValueInput(adaptFn(valueInput), connectorId, measurand, unit, location, phase);
+void ao_addMeterValueInputInt_m(unsigned int connectorId, InputInt_m valueInput, const char *measurand, const char *unit, const char *location, const char *phase) {
+    addMeterValueInput(adaptFn(connectorId, valueInput), measurand, unit, location, phase, connectorId);
 }
 
 void ao_addMeterValueInput(MeterValueInput *meterValueInput) {
@@ -209,36 +281,24 @@ void ao_addMeterValueInput_m(unsigned int connectorId, MeterValueInput *meterVal
 }
 
 void ao_setOnUnlockConnectorInOut(PollBool onUnlockConnectorInOut) {
-    ao_setOnUnlockConnectorInOut_m(1, onUnlockConnectorInOut);
+    setOnUnlockConnectorInOut(adaptFn(onUnlockConnectorInOut));
 }
-void ao_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollBool onUnlockConnectorInOut) {
-    setOnUnlockConnectorInOut([onUnlockConnectorInOut] () -> ArduinoOcpp::PollResult<bool> {
-        auto res = onUnlockConnectorInOut();
-        if (res == OptionalTrue) {
-            return true;
-        } else if (res == OptionalFalse) {
-            return false;
-        } else if (res == OptionalUndefined) {
-            return ArduinoOcpp::PollResult<bool>::Await();
-        } else {
-            AO_DBG_ERR("illegal argument");
-            return false;
-        }
-    }, connectorId);
+void ao_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollBool_m onUnlockConnectorInOut) {
+    setOnUnlockConnectorInOut(adaptFn(connectorId, onUnlockConnectorInOut), connectorId);
 }
 
 void ao_setConnectorLockInOut(TxStepInOut lockConnectorInOut) {
     setConnectorLockInOut(adaptFn(lockConnectorInOut));
 }
-void ao_setConnectorLockInOut_m(unsigned int connectorId, TxStepInOut lockConnectorInOut) {
-    setConnectorLockInOut(adaptFn(lockConnectorInOut), connectorId);
+void ao_setConnectorLockInOut_m(unsigned int connectorId, TxStepInOut_m lockConnectorInOut) {
+    setConnectorLockInOut(adaptFn(connectorId, lockConnectorInOut), connectorId);
 }
 
 void ao_setTxBasedMeterInOut(TxStepInOut txMeterInOut) {
     setTxBasedMeterInOut(adaptFn(txMeterInOut));
 }
-void ao_setTxBasedMeterInOut_m(unsigned int connectorId, TxStepInOut txMeterInOut) {
-    setTxBasedMeterInOut(adaptFn(txMeterInOut), connectorId);
+void ao_setTxBasedMeterInOut_m(unsigned int connectorId, TxStepInOut_m txMeterInOut) {
+    setTxBasedMeterInOut(adaptFn(connectorId, txMeterInOut), connectorId);
 }
 
 bool ao_isOperative() {

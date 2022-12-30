@@ -12,17 +12,22 @@ namespace Ocpp16 {
 
 class ChangeConfiguration : public OcppMessage {
 private:
-  bool err = false;
-  bool rebootRequired = false;
-  bool readOnly = false;
+    bool reject = false;
+    bool rebootRequired = false;
+    bool readOnly = false;
+    bool notSupported = false;
+
+    const char *errorCode = nullptr;
 public:
-  ChangeConfiguration();
+    ChangeConfiguration();
 
-  const char* getOcppOperationType();
+    const char* getOcppOperationType();
 
-  void processReq(JsonObject payload);
+    void processReq(JsonObject payload);
 
-  std::unique_ptr<DynamicJsonDocument> createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf();
+
+    const char *getErrorCode() {return errorCode;}
 
 };
 
