@@ -137,7 +137,7 @@ void authorize(
  * Returns true if it was possible to create a transaction. If it returned false, either another
  * transaction is still running or you need to try it again later.
  */
-bool beginTransaction(const char *idTag, uint connectorId = 1);
+bool beginTransaction(const char *idTag, unsigned int connectorId = 1);
 
 /*
  * End the transaction process by terminating the transaction and setting a reason for its termination.
@@ -150,13 +150,13 @@ bool beginTransaction(const char *idTag, uint connectorId = 1);
  * 
  * Returns true if this action actually ended a transaction. False otherwise
  */
-bool endTransaction(const char *reason = nullptr, uint connectorId = 1);
+bool endTransaction(const char *reason = nullptr, unsigned int connectorId = 1);
 
 /*
  * Returns if the library has started the transaction by sending a StartTransaction and if it hasn't
  * been stopped already by sending a StopTransaction.
  */
-bool isTransactionRunning(uint connectorId = 1);
+bool isTransactionRunning(unsigned int connectorId = 1);
 
 /* 
  * Returns if the OCPP library allows the EVSE to charge at the moment.
@@ -164,7 +164,7 @@ bool isTransactionRunning(uint connectorId = 1);
  * If you integrate it into a J1772 charger, true means that the Control Pilot can send the PWM signal
  * and false means that the Control Pilot must be at a DC voltage.
  */
-bool ocppPermitsCharge(uint connectorId = 1);
+bool ocppPermitsCharge(unsigned int connectorId = 1);
 
 /*
  * Define the Inputs and Outputs of this library.
@@ -186,13 +186,13 @@ bool ocppPermitsCharge(uint connectorId = 1);
  * Configure the library with Inputs and Outputs once in the setup() function.
  */
 
-void setConnectorPluggedInput(std::function<bool()> pluggedInput, uint connectorId = 1); //Input about if an EV is plugged to this EVSE
+void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int connectorId = 1); //Input about if an EV is plugged to this EVSE
 
-void setEnergyMeterInput(std::function<float()> energyInput, uint connectorId = 1); //Input of the electricity meter register
+void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connectorId = 1); //Input of the electricity meter register
 
-void setPowerMeterInput(std::function<float()> powerInput, uint connectorId = 1); //Input of the power meter reading
+void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId = 1); //Input of the power meter reading
 
-void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, uint connectorId = 1); //Output for the Smart Charging limit
+void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId = 1); //Output for the Smart Charging limit
 
 /*
  * Define the Inputs and Outputs of this library. (Advanced)
@@ -200,15 +200,15 @@ void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, uint
  * These Inputs and Outputs are optional depending on the use case of your charger.
  */
 
-void setEvReadyInput(std::function<bool()> evReadyInput, uint connectorId = 1); //Input if EV is ready to charge (= J1772 State C)
+void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorId = 1); //Input if EV is ready to charge (= J1772 State C)
 
-void setEvseReadyInput(std::function<bool()> evseReadyInput, uint connectorId = 1); //Input if EVSE allows charge (= PWM signal on)
+void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connectorId = 1); //Input if EVSE allows charge (= PWM signal on)
 
-void addErrorCodeInput(std::function<const char *()> errorCodeInput, uint connectorId = 1); //Input for Error codes (please refer to OCPP 1.6, Edit2, p. 71 and 72 for valid error codes)
+void addErrorCodeInput(std::function<const char *()> errorCodeInput, unsigned int connectorId = 1); //Input for Error codes (please refer to OCPP 1.6, Edit2, p. 71 and 72 for valid error codes)
 
-void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measurand = nullptr, const char *unit = nullptr, const char *location = nullptr, const char *phase = nullptr, uint connectorId = 1); //integrate further metering Inputs
+void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measurand = nullptr, const char *unit = nullptr, const char *location = nullptr, const char *phase = nullptr, unsigned int connectorId = 1); //integrate further metering Inputs
 
-void addMeterValueInput(std::unique_ptr<ArduinoOcpp::SampledValueSampler> valueInput, uint connectorId = 1); //integrate further metering Inputs (more extensive alternative)
+void addMeterValueInput(std::unique_ptr<ArduinoOcpp::SampledValueSampler> valueInput, unsigned int connectorId = 1); //integrate further metering Inputs (more extensive alternative)
 
 void setOnResetNotify(std::function<bool(bool)> onResetNotify); //call onResetNotify(isHard) before Reset. If you return false, Reset will be aborted. Optional
 
@@ -220,7 +220,7 @@ void setOnResetExecute(std::function<void(bool)> onResetExecute); //reset handle
  * Return values: true on success, false on failure, PollResult::Await if not known yet
  * Continues to call the Cb as long as it returns PollResult::Await
  */
-void setOnUnlockConnectorInOut(std::function<ArduinoOcpp::PollResult<bool>()> onUnlockConnectorInOut, uint connectorId = 1);
+void setOnUnlockConnectorInOut(std::function<ArduinoOcpp::PollResult<bool>()> onUnlockConnectorInOut, unsigned int connectorId = 1);
 
 /*
  * Set an Input/Output for setting the state of the connector lock. Called in the course of normal
@@ -233,7 +233,7 @@ void setOnUnlockConnectorInOut(std::function<ArduinoOcpp::PollResult<bool>()> on
  *     - TxEnableState::Inactive if connector lock is released
  *     - TxEnableState::Pending otherwise, e.g. if transitioning between the states
  */
-void setConnectorLockInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> lockConnectorInOut, uint connectorId = 1);
+void setConnectorLockInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> lockConnectorInOut, unsigned int connectorId = 1);
 
 /*
  * Set an Input/Output to interact with a transaction-based energy meter. When this OCPP library is
@@ -249,17 +249,17 @@ void setConnectorLockInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp:
  *     - TxEnableState::Inactive if the tx-based meter has transitioned into a non-transaction-mode
  *     - TxEnableState::Pending otherwise, e.g. if transitioning between the states
  */
-void setTxBasedMeterInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> txMeterInOut, uint connectorId = 1);
+void setTxBasedMeterInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> txMeterInOut, unsigned int connectorId = 1);
 
 /*
  * Access further information about the internal state of the library
  */
 
-bool isOperative(uint connectorId = 1); //if the charge point is operative or inoperative (see OCPP1.6 Edit2, p. 45)
+bool isOperative(unsigned int connectorId = 1); //if the charge point is operative or inoperative (see OCPP1.6 Edit2, p. 45)
 
-int getTransactionId(uint connectorId = 1); //returns the txId if known, -1 if no transaction is running and 0 if txId not assigned yet
+int getTransactionId(unsigned int connectorId = 1); //returns the txId if known, -1 if no transaction is running and 0 if txId not assigned yet
 
-const char *getTransactionIdTag(uint connectorId = 1); //returns the authorization token if applicable, or nullptr otherwise
+const char *getTransactionIdTag(unsigned int connectorId = 1); //returns the authorization token if applicable, or nullptr otherwise
 
 void setOnResetRequest(OnReceiveReqListener onReceiveReq);
 

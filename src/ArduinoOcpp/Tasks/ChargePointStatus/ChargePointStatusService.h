@@ -26,9 +26,9 @@ private:
 
     std::function<bool(bool isHard)> preReset; //true: reset is possible; false: reject reset; Await: need more time to determine
     std::function<void(bool isHard)> executeReset; //please disconnect WebSocket (AO remains initialized), shut down device and restart with normal initialization routine; on failure reconnect WebSocket
-    uint outstandingResetRetries = 0; //0 = do not reset device
+    unsigned int outstandingResetRetries = 0; //0 = do not reset device
     bool isHardReset = false;
-    ulong t_resetRetry;
+    unsigned long t_resetRetry;
 
     std::shared_ptr<Configuration<int>> resetRetries;
 

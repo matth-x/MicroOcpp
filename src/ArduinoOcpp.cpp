@@ -233,7 +233,7 @@ void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener 
     ocppEngine->initiateOperation(std::move(authorize));
 }
 
-bool beginTransaction(const char *idTag, uint connectorId) {
+bool beginTransaction(const char *idTag, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
@@ -251,7 +251,7 @@ bool beginTransaction(const char *idTag, uint connectorId) {
     return true;
 }
 
-bool endTransaction(const char *reason, uint connectorId) {
+bool endTransaction(const char *reason, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
@@ -266,7 +266,7 @@ bool endTransaction(const char *reason, uint connectorId) {
     return res;
 }
 
-bool isTransactionRunning(uint connectorId) {
+bool isTransactionRunning(unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
@@ -279,7 +279,7 @@ bool isTransactionRunning(uint connectorId) {
     return connector->isTransactionRunning();
 }
 
-bool ocppPermitsCharge(uint connectorId) {
+bool ocppPermitsCharge(unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return false;
@@ -292,7 +292,7 @@ bool ocppPermitsCharge(uint connectorId) {
     return connector->ocppPermitsCharge();
 }
 
-void setConnectorPluggedInput(std::function<bool()> pluggedInput, uint connectorId) {
+void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -311,7 +311,7 @@ void setConnectorPluggedInput(std::function<bool()> pluggedInput, uint connector
     }
 }
 
-void setEnergyMeterInput(std::function<float()> energyInput, uint connectorId) {
+void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -333,7 +333,7 @@ void setEnergyMeterInput(std::function<float()> energyInput, uint connectorId) {
     model.getMeteringService()->setEnergySampler(connectorId, energyInput);
 }
 
-void setPowerMeterInput(std::function<float()> powerInput, uint connectorId) {
+void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -356,7 +356,7 @@ void setPowerMeterInput(std::function<float()> powerInput, uint connectorId) {
     model.getMeteringService()->setPowerSampler(connectorId, powerInput);
 }
 
-void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, uint connectorId) {
+void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -373,7 +373,7 @@ void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, uint
     model.getSmartChargingService()->setOnLimitChange(chargingLimitOutput);
 }
 
-void setEvReadyInput(std::function<bool()> evReadyInput, uint connectorId) {
+void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -386,7 +386,7 @@ void setEvReadyInput(std::function<bool()> evReadyInput, uint connectorId) {
     connector->setEvRequestsEnergySampler(evReadyInput);
 }
 
-void setEvseReadyInput(std::function<bool()> evseReadyInput, uint connectorId) {
+void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -399,7 +399,7 @@ void setEvseReadyInput(std::function<bool()> evseReadyInput, uint connectorId) {
     connector->setConnectorEnergizedSampler(evseReadyInput);
 }
 
-void addErrorCodeInput(std::function<const char *()> errorCodeInput, uint connectorId) {
+void addErrorCodeInput(std::function<const char *()> errorCodeInput, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -412,7 +412,7 @@ void addErrorCodeInput(std::function<const char *()> errorCodeInput, uint connec
     connector->addConnectorErrorCodeSampler(errorCodeInput);
 }
 
-void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measurand, const char *unit, const char *location, const char *phase, uint connectorId) {
+void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measurand, const char *unit, const char *location, const char *phase, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -445,7 +445,7 @@ void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measur
     addMeterValueInput(std::move(valueSampler), connectorId);
 }
 
-void addMeterValueInput(std::unique_ptr<SampledValueSampler> valueInput, uint connectorId) {
+void addMeterValueInput(std::unique_ptr<SampledValueSampler> valueInput, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -480,7 +480,7 @@ void setOnResetExecute(std::function<void(bool)> onResetExecute) {
     }
 }
 
-void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnectorInOut, uint connectorId) {
+void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnectorInOut, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -493,7 +493,7 @@ void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnect
     connector->setOnUnlockConnector(onUnlockConnectorInOut);
 }
 
-void setConnectorLockInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> lockConnectorInOut, uint connectorId) {
+void setConnectorLockInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> lockConnectorInOut, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -506,7 +506,7 @@ void setConnectorLockInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp:
     connector->setConnectorLock(lockConnectorInOut);
 }
 
-void setTxBasedMeterInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> txMeterInOut, uint connectorId) {
+void setTxBasedMeterInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> txMeterInOut, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -519,7 +519,7 @@ void setTxBasedMeterInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::
     connector->setTxBasedMeterUpdate(txMeterInOut);
 }
 
-bool isOperative(uint connectorId) {
+bool isOperative(unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return true; //assume "true" as default state
@@ -535,7 +535,7 @@ bool isOperative(uint connectorId) {
        &&  (connector->getAvailability() != AVAILABILITY_INOPERATIVE);
 }
 
-int getTransactionId(uint connectorId) {
+int getTransactionId(unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return -1;
@@ -548,7 +548,7 @@ int getTransactionId(uint connectorId) {
     return connector->getTransactionId();
 }
 
-const char *getTransactionIdTag(uint connectorId) {
+const char *getTransactionIdTag(unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return nullptr;

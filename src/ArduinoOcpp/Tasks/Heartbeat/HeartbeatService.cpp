@@ -17,9 +17,9 @@ HeartbeatService::HeartbeatService(OcppEngine& context) : context(context) {
 }
 
 void HeartbeatService::loop() {
-    ulong hbInterval = *heartbeatInterval;
+    unsigned long hbInterval = *heartbeatInterval;
     hbInterval *= 1000UL; //conversion s -> ms
-    ulong now = ao_tick_ms();
+    unsigned long now = ao_tick_ms();
 
     if (now - lastHeartbeat >= hbInterval) {
         lastHeartbeat = now;

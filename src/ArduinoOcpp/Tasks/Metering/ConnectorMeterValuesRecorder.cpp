@@ -184,7 +184,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
     if (*MeterValueSampleInterval >= 1) {
         //record periodic tx data
 
-        if (ao_tick_ms() - lastSampleTime >= (ulong) (*MeterValueSampleInterval * 1000)) {
+        if (ao_tick_ms() - lastSampleTime >= (unsigned long) (*MeterValueSampleInterval * 1000)) {
             auto sampleMeterValues = sampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::SamplePeriodic);
             if (sampleMeterValues) {
                 meterData.push_back(std::move(sampleMeterValues));

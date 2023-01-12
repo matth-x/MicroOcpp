@@ -46,7 +46,7 @@ private:
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
     std::shared_ptr<Configuration<int>> minimumStatusDuration; //in seconds
     OcppEvseState reportedStatus = OcppEvseState::NOT_SET;
-    ulong t_statusTransition = 0;
+    unsigned long t_statusTransition = 0;
 
     std::function<PollResult<bool>()> onUnlockConnector;
 

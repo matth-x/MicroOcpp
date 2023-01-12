@@ -8,7 +8,7 @@
 
 using namespace ArduinoOcpp;
 
-TransactionProcess::TransactionProcess(uint connectorId) {
+TransactionProcess::TransactionProcess(unsigned int connectorId) {
 
 }
 

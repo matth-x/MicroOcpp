@@ -20,7 +20,7 @@ using namespace ArduinoOcpp;
 
 #define AO_TXSTORE_META_FN AO_FILENAME_PREFIX "/txstore.jsn"
 
-ConnectorTransactionStore::ConnectorTransactionStore(TransactionStore& context, uint connectorId, std::shared_ptr<FilesystemAdapter> filesystem) :
+ConnectorTransactionStore::ConnectorTransactionStore(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem) :
         context(context),
         connectorId(connectorId),
         filesystem(filesystem) {
@@ -262,15 +262,15 @@ unsigned int ConnectorTransactionStore::size() {
     return (*txEnd + MAX_TX_CNT - *txBegin) % MAX_TX_CNT;
 }
 
-TransactionStore::TransactionStore(uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem) {
+TransactionStore::TransactionStore(unsigned int nConnectors, std::shared_ptr<FilesystemAdapter> filesystem) {
     
-    for (uint i = 0; i < nConnectors; i++) {
+    for (unsigned int i = 0; i < nConnectors; i++) {
         connectors.push_back(std::unique_ptr<ConnectorTransactionStore>(
             new ConnectorTransactionStore(*this, i, filesystem)));
     }
 }
 
-std::shared_ptr<Transaction> TransactionStore::getLatestTransaction(uint connectorId) {
+std::shared_ptr<Transaction> TransactionStore::getLatestTransaction(unsigned int connectorId) {
     if (connectorId >= connectors.size()) {
         AO_DBG_ERR("Invalid connectorId");
         return nullptr;

@@ -16,7 +16,7 @@ class HeartbeatService {
 private:
     OcppEngine& context;
 
-    ulong lastHeartbeat;
+    unsigned long lastHeartbeat;
     std::shared_ptr<ArduinoOcpp::Configuration<int>> heartbeatInterval;
 
 public:

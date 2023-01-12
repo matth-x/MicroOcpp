@@ -7,8 +7,6 @@
 
 #include <functional>
 
-#include <sys/types.h>
-
 namespace ArduinoOcpp {
 
 using OnTimeoutListener = std::function<void()>;
@@ -36,11 +34,11 @@ public:
 
 class FixedTimeout : public Timeout {
 private:
-    ulong TIMEOUT_DURATION;
-    ulong timeout_start;
+    unsigned long TIMEOUT_DURATION;
+    unsigned long timeout_start;
     bool timeout_active;
 public:
-    FixedTimeout(ulong TIMEOUT_EXPIRE);
+    FixedTimeout(unsigned long TIMEOUT_EXPIRE);
     void timerTick(bool sendingSuccessful);
     void timerRestart();
     bool timerIsExceeded();
@@ -48,12 +46,12 @@ public:
 
 class OfflineSensitiveTimeout : public Timeout {
 private:
-    ulong TIMEOUT_DURATION;
-    ulong timeout_start;
-    ulong last_tick;
+    unsigned long TIMEOUT_DURATION;
+    unsigned long timeout_start;
+    unsigned long last_tick;
     bool timeout_active;
 public:
-    OfflineSensitiveTimeout(ulong TIMEOUT_EXPIRE);
+    OfflineSensitiveTimeout(unsigned long TIMEOUT_EXPIRE);
     void timerTick(bool sendingSuccessful);
     void timerRestart();
     bool timerIsExceeded();

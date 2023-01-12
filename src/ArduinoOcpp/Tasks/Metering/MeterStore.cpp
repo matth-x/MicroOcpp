@@ -102,8 +102,8 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
         return true;
     }
 
-    const uint MISSES_LIMIT = 3;
-    uint misses = 0;
+    const unsigned int MISSES_LIMIT = 3;
+    unsigned int misses = 0;
 
     while (misses < MISSES_LIMIT) { //search until region without mvs found
         
@@ -241,8 +241,8 @@ bool MeterStore::remove(unsigned int connectorId, unsigned int txNr) {
 
     if (filesystem) {
         if (mvCount == 0) {
-            const uint MISSES_LIMIT = 3;
-            uint misses = 0;
+            const unsigned int MISSES_LIMIT = 3;
+            unsigned int misses = 0;
             unsigned int i = 0;
 
             while (misses < MISSES_LIMIT) { //search until region without mvs found

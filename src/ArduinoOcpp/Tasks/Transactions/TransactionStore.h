@@ -23,7 +23,7 @@ class TransactionStore;
 class ConnectorTransactionStore {
 private:
     TransactionStore& context;
-    const uint connectorId;
+    const unsigned int connectorId;
 
     std::shared_ptr<FilesystemAdapter> filesystem;
     std::shared_ptr<Configuration<int>> txBegin; //if txNr < txBegin, tx has been safely deleted
@@ -32,7 +32,7 @@ private:
     std::deque<std::weak_ptr<Transaction>> transactions;
 
 public:
-    ConnectorTransactionStore(TransactionStore& context, uint connectorId, std::shared_ptr<FilesystemAdapter> filesystem);
+    ConnectorTransactionStore(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem);
     
     std::shared_ptr<Transaction> getLatestTransaction();
     bool commit(Transaction *transaction);
@@ -54,9 +54,9 @@ class TransactionStore {
 private:
     std::vector<std::unique_ptr<ConnectorTransactionStore>> connectors;
 public:
-    TransactionStore(uint nConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
+    TransactionStore(unsigned int nConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
-    std::shared_ptr<Transaction> getLatestTransaction(uint connectorId);
+    std::shared_ptr<Transaction> getLatestTransaction(unsigned int connectorId);
     bool commit(Transaction *transaction);
 
     std::shared_ptr<Transaction> getTransaction(unsigned int connectorId, unsigned int txNr);

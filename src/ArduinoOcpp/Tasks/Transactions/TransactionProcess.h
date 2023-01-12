@@ -25,7 +25,7 @@ private:
     
 public:
 
-    TransactionProcess(uint connectorId);
+    TransactionProcess(unsigned int connectorId);
 
     void addPrecondition(std::function<TxPrecondition()> fn) {txPreconditions.push_back(fn);}
 

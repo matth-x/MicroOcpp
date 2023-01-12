@@ -43,7 +43,7 @@ private:
     std::shared_ptr<Configuration<const char *>> stopTxnSampledDataSelect;
     std::shared_ptr<Configuration<const char *>> stopTxnAlignedDataSelect;
 
-    ulong lastSampleTime = 0; //0 means not charging right now
+    unsigned long lastSampleTime = 0; //0 means not charging right now
     OcppTimestamp nextAlignedTime;
     std::shared_ptr<Transaction> transaction;
     bool trackTxRunning = false;

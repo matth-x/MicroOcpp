@@ -38,7 +38,7 @@ bool Timeout::isExceeded() {
     return exceeded;
 }
 
-FixedTimeout::FixedTimeout(ulong TIMEOUT_DURATION) : TIMEOUT_DURATION(TIMEOUT_DURATION) { 
+FixedTimeout::FixedTimeout(unsigned long TIMEOUT_DURATION) : TIMEOUT_DURATION(TIMEOUT_DURATION) { 
     timeout_active = false;
 }
 
@@ -57,12 +57,12 @@ bool FixedTimeout::timerIsExceeded() {
 }
 
 
-OfflineSensitiveTimeout::OfflineSensitiveTimeout(ulong TIMEOUT_DURATION) : TIMEOUT_DURATION(TIMEOUT_DURATION) { 
+OfflineSensitiveTimeout::OfflineSensitiveTimeout(unsigned long TIMEOUT_DURATION) : TIMEOUT_DURATION(TIMEOUT_DURATION) { 
     timeout_active = false;
 }
 
 void OfflineSensitiveTimeout::timerTick(bool sendingSuccessful) {
-    ulong t = ao_tick_ms();
+    unsigned long t = ao_tick_ms();
     
     if (!timeout_active) {
         timeout_active = true;
@@ -77,7 +77,7 @@ void OfflineSensitiveTimeout::timerTick(bool sendingSuccessful) {
     last_tick = t;
 }
 void OfflineSensitiveTimeout::timerRestart() {
-    ulong t = ao_tick_ms();
+    unsigned long t = ao_tick_ms();
     timeout_start = t;
     last_tick = t;
     timeout_active = false;

@@ -16,7 +16,7 @@ private:
   std::string location {};
   OcppTimestamp retreiveDate = OcppTimestamp();
   int retries = 1;
-  ulong retryInterval = 180;
+  unsigned long retryInterval = 180;
   bool formatError = false;
 public:
   UpdateFirmware();

@@ -15,7 +15,7 @@ class GetDiagnostics : public OcppMessage {
 private:
     std::string location {};
     int retries = 1;
-    ulong retryInterval = 180;
+    unsigned long retryInterval = 180;
     OcppTimestamp startTime = OcppTimestamp();
     OcppTimestamp stopTime = OcppTimestamp();
 

@@ -36,10 +36,10 @@ private:
 
     std::unique_ptr<Timeout> timeout{new OfflineSensitiveTimeout(40000)};
 
-    const ulong RETRY_INTERVAL = 3000; //in ms; first retry after ... ms; second retry after 2 * ... ms; third after 4 ...
-    const ulong RETRY_INTERVAL_MAX = 20000; //in ms; 
-    ulong retry_start = 0;
-    ulong retry_interval_mult = 1; // RETRY_INTERVAL * retry_interval_mult gives longer periods with each iteration
+    const unsigned long RETRY_INTERVAL = 3000; //in ms; first retry after ... ms; second retry after 2 * ... ms; third after 4 ...
+    const unsigned long RETRY_INTERVAL_MAX = 20000; //in ms; 
+    unsigned long retry_start = 0;
+    unsigned long retry_interval_mult = 1; // RETRY_INTERVAL * retry_interval_mult gives longer periods with each iteration
 
     uint16_t printReqCounter = 0;
 
