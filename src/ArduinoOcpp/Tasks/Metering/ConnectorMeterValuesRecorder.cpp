@@ -12,6 +12,8 @@
 #include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Debug.h>
 
+#include <cstddef>
+
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
@@ -76,7 +78,7 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
             bool found = false;
             for (size_t i = 0; i < samplers.size(); i++) {
                 auto &measurand = samplers[i]->getProperties().getMeasurand();
-                if (measurand.length() == r - l &&                              //same length
+                if ((std::ptrdiff_t) measurand.length() == r - l &&                              //same length
                         !strncmp(l, measurand.c_str(), measurand.length())) {   //same content
                     found = true;
                     break;
@@ -84,7 +86,7 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
             }
             if (!found) {
                 isValid = false;
-                AO_DBG_WARN("could not find metering device for %.*s", r - l, l);
+                AO_DBG_WARN("could not find metering device for %.*s", (int) (r - l), l);
                 break;
             }
             l = r;
