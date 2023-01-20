@@ -1,3 +1,9 @@
+# matth-x/ArduinoOcpp
+# Copyright Matthias Akstaller 2019 - 2023
+# MIT License
+
+cmake_minimum_required(VERSION 3.15)
+
 set(AO_SRC
     src/ArduinoOcpp/Core/Configuration.cpp
     src/ArduinoOcpp/Core/ConfigurationContainer.cpp
@@ -61,13 +67,35 @@ set(AO_SRC
     src/ArduinoOcpp_c.cpp
 )
 
-idf_component_register(SRCS ${AO_SRC}
-                    INCLUDE_DIRS "./src" "${PROJECT_DIR}/include"
-                    PRIV_REQUIRES spiffs)
+if(ESP_PLATFORM)
 
-target_compile_options(${COMPONENT_TARGET} PUBLIC
-    -DAO_CUSTOM_WS
-    -DAO_CUSTOM_UPDATER
-    -DAO_CUSTOM_RESET
-    -DAO_USE_FILEAPI=ESPIDF_SPIFFS
-    -DAO_PLATFORM=AO_PLATFORM_ESPIDF)
+    idf_component_register(SRCS ${AO_SRC}
+                        INCLUDE_DIRS "./src" "${PROJECT_DIR}/include"
+                        PRIV_REQUIRES spiffs)
+
+    target_compile_options(${COMPONENT_TARGET} PUBLIC
+        -DAO_CUSTOM_WS
+        -DAO_CUSTOM_UPDATER
+        -DAO_CUSTOM_RESET
+        -DAO_PLATFORM=AO_PLATFORM_ESPIDF)
+
+    return()
+endif()
+
+add_library(ArduinoOcpp ${AO_SRC})
+
+target_include_directories(ArduinoOcpp PUBLIC
+                            "./src"
+                            "../ArduinoJson/src"
+                            )
+
+target_compile_definitions(ArduinoOcpp PUBLIC
+    AO_PLATFORM=AO_PLATFORM_UNIX
+    AO_CUSTOM_WS
+    AO_CUSTOM_UPDATER
+    AO_CUSTOM_RESET
+    AO_DBG_LEVEL=AO_DL_DEBUG
+    AO_TRAFFIC_OUT
+    AO_FILENAME_PREFIX="./ao_store"
+    AO_DEACTIVATE_FLASH_SMARTCHARGING
+    )
