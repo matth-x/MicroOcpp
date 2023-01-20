@@ -17,6 +17,7 @@
 #define POSIX_FILEAPI    4
 
 #include <memory>
+#include <ArduinoOcpp/Platform.h>
 
 namespace ArduinoOcpp {
 
@@ -45,11 +46,17 @@ public:
 
 //Set default parameters; assume usage with Arduino if no build flags are present
 #ifndef AO_USE_FILEAPI
+#if AO_PLATFORM == AO_PLATFORM_ARDUINO
 #if defined(ESP32)
 #define AO_USE_FILEAPI ARDUINO_LITTLEFS
 #else
 #define AO_USE_FILEAPI ARDUINO_SPIFFS
 #endif
+#elif AO_PLATFORM == AO_PLATFORM_ESPIDF
+#define AO_USE_FILEAPI ESPIDF_SPIFFS
+#elif AO_PLATFORM == AO_PLATFORM_UNIX
+#define AO_USE_FILEAPI POSIX_FILEAPI
+#endif //switch-case AO_PLATFORM
 #endif //ndef AO_USE_FILEAPI
 
 /*
@@ -57,9 +64,9 @@ public:
  *     - Arduino LittleFs
  *     - Arduino SPIFFS
  *     - ESP-IDF SPIFFS
+ *     - POSIX-like API (tested on Ubuntu 20.04)
  * 
- * You can add support for any file system by passing custom adapters to the initialize
- * function of ArduinoOcpp
+ * You can add support for other file systems by passing a custom adapter to OCPP_initialize(...)
  */
 
 #if AO_USE_FILEAPI == ARDUINO_LITTLEFS || \

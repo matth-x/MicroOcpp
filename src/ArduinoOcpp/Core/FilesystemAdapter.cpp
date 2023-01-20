@@ -8,24 +8,18 @@
 
 #ifndef AO_DEACTIVATE_FLASH
 
-//Set default parameters; assume usage with Arduino if no build flags are present
-#ifndef AO_USE_FILEAPI
-#if defined(ESP32)
-#define AO_USE_FILEAPI ARDUINO_LITTLEFS
-#else
-#define AO_USE_FILEAPI ARDUINO_SPIFFS
-#endif
-#endif //ndef AO_USE_FILEAPI
-
 /*
  * Platform specific implementations. Currently supported:
  *     - Arduino LittleFs
  *     - Arduino SPIFFS
  *     - ESP-IDF SPIFFS
+ *     - POSIX-like API (tested on Ubuntu 20.04)
  * 
- * You can add support for any file system by passing custom adapters to the initialize
- * function of ArduinoOcpp
+ * You can add support for other file systems by passing a custom adapter to OCPP_initialize(...)
  */
+
+
+#if AO_USE_FILEAPI == ARDUINO_LITTLEFS || AO_USE_FILEAPI == ARDUINO_SPIFFS
 
 #if AO_USE_FILEAPI == ARDUINO_LITTLEFS
 #include <LITTLEFS.h>
@@ -33,13 +27,7 @@
 #elif AO_USE_FILEAPI == ARDUINO_SPIFFS
 #include <FS.h>
 #define USE_FS SPIFFS
-#elif AO_USE_FILEAPI == ESPIDF_SPIFFS
-#include <sys/stat.h>
-#include "esp_spiffs.h"
 #endif
-
-
-#if AO_USE_FILEAPI == ARDUINO_LITTLEFS || AO_USE_FILEAPI == ARDUINO_SPIFFS
 
 namespace ArduinoOcpp {
 
@@ -186,6 +174,9 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 } //end namespace ArduinoOcpp
 
 #elif AO_USE_FILEAPI == ESPIDF_SPIFFS
+
+#include <sys/stat.h>
+#include "esp_spiffs.h"
 
 namespace ArduinoOcpp {
 
@@ -393,6 +384,6 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 } //end namespace ArduinoOcpp
 
-#endif
+#endif //switch-case AO_USE_FILEAPI
 
-#endif
+#endif //!AO_DEACTIVATE_FLASH
