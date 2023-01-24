@@ -120,18 +120,6 @@ std::function<void(JsonObject)> adaptFn(OnOcppMessage fn) {
     };
 }
 
-std::function<void(JsonObject)> adaptFn(const char *idTag_cstr, OnAuthorize fn) {
-    if (!fn) return nullptr;
-    std::string idTag = idTag_cstr ? idTag_cstr : "undefined";
-    return [fn, idTag] (JsonObject payload) {
-        auto len = serializeJson(payload, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
-        if (len <= 0) {
-            AO_DBG_WARN("Received payload buffer exceeded. Continue without payload");
-        }
-        fn(idTag.c_str(), len > 0 ? ao_recv_payload_buff : "", len);
-    };
-}
-
 ArduinoOcpp::OnReceiveErrorListener adaptFn(OnOcppError fn) {
     if (!fn) return nullptr;
     return [fn] (const char *code, const char *description, JsonObject details) {
@@ -182,8 +170,27 @@ void ao_bootNotification_full(const char *payloadJson, OnOcppMessage onConfirmat
     bootNotification(std::move(payload), adaptFn(onConfirmation), adaptFn(onAbort), adaptFn(onTimeout), adaptFn(onError));
 }
 
-void ao_authorize(const char *idTag, OnAuthorize onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError) {
-    authorize(idTag, adaptFn(idTag, onConfirmation), adaptFn(onAbort), adaptFn(onTimeout), adaptFn(onError));
+void ao_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data) {
+    
+    std::string idTag_capture = idTag;
+
+    authorize(idTag,
+            onConfirmation ? [onConfirmation, idTag_capture, user_data] (JsonObject payload) {
+                    auto len = serializeJson(payload, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
+                    if (len <= 0) {AO_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
+                    onConfirmation(idTag_capture.c_str(), len > 0 ? ao_recv_payload_buff : "", len, user_data);
+                } : OnReceiveConfListener(nullptr),
+            onAbort ? [onAbort, idTag_capture, user_data] () -> void {
+                    onAbort(idTag_capture.c_str(), user_data);
+                } : OnAbortListener(nullptr),
+            onTimeout ? [onTimeout, idTag_capture, user_data] () {
+                    onTimeout(idTag_capture.c_str(), user_data);
+                } : OnTimeoutListener(nullptr),
+            onError ? [onError, idTag_capture, user_data] (const char *code, const char *description, JsonObject details) {
+                    auto len = serializeJson(details, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
+                    if (len <= 0) {AO_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
+                    onError(idTag_capture.c_str(), code, description, len > 0 ? ao_recv_payload_buff : "", len, user_data);
+                } : OnReceiveErrorListener(nullptr));
 }
 
 void ao_beginTransaction(const char *idTag) {

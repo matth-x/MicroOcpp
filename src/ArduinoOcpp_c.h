@@ -14,10 +14,17 @@ struct OcppHandle;
 typedef struct OcppHandle OcppHandle;
 
 typedef void (*OnOcppMessage) (const char *payload, size_t len);
-typedef void (*OnAuthorize) (const char *idTag, const char *payload, size_t len);
 typedef void (*OnOcppAbort)   ();
 typedef void (*OnOcppTimeout) ();
 typedef void (*OnOcppError)   (const char *code, const char *description, const char *details_json, size_t details_len);
+//typedef void (*ConfCallback)    (const char *payload, size_t len, void* user_data);
+//typedef void (*AbortCallback)   (void* user_data);
+//typedef void (*TimeoutCallback) (void* user_data);
+//typedef void (*ErrorCallback)   (const char *code, const char *description, const char *details_json, size_t details_len, void* user_data);
+typedef void (*AuthorizeConfCallback)    (const char *idTag, const char *payload, size_t len, void *user_data);
+typedef void (*AuthorizeAbortCallback)   (const char *idTag, void* user_data);
+typedef void (*AuthorizeTimeoutCallback) (const char *idTag, void* user_data);
+typedef void (*AuthorizeErrorCallback)   (const char *idTag, const char *code, const char *description, const char *details_json, size_t details_len, void* user_data);
 
 typedef float (*InputFloat)();
 typedef float (*InputFloat_m)(unsigned int connectorId); //multiple connectors version
@@ -62,7 +69,7 @@ void ao_bootNotification(const char *chargePointModel, const char *chargePointVe
 
 void ao_bootNotification_full(const char *payloadJson, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError);
 
-void ao_authorize(const char *idTag, OnAuthorize onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError);
+void ao_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data);
 
 /*
  * Charging session management
