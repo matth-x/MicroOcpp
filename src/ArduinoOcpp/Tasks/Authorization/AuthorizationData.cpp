@@ -4,47 +4,74 @@
 
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationData.h>
 
-#define AUTHDATA_KEY_IDTAG       "it"
-#define AUTHDATA_KEY_EXPIRYDATE  "ed"
-#define AUTHDATA_KEY_PARENTIDTAG "pi"
-#define AUTHDATA_KEY_STATUS      "st"
-
-using ArduinoOcpp::AuthorizationData;
+using namespace ArduinoOcpp;
 
 AuthorizationData::AuthorizationData() {
 
+}
+
+AuthorizationData::AuthorizationData(AuthorizationData&& other) {
+    operator=(std::move(other));
 }
 
 AuthorizationData::~AuthorizationData() {
 
 }
 
-void AuthorizationData::readJson(JsonObject entry) {
-    if (entry.containsKey(AUTHDATA_KEY_IDTAG)) {
-        strncpy(idTag, entry[AUTHDATA_KEY_IDTAG], IDTAG_LEN_MAX + 1);
+AuthorizationData& AuthorizationData::operator=(AuthorizationData&& other) {
+    parentIdTag = std::move(other.parentIdTag);
+    expiryDate = std::move(other.expiryDate);
+    strncpy(idTag, other.idTag, IDTAG_LEN_MAX + 1);
+    idTag[IDTAG_LEN_MAX] = '\0';
+    status = other.status;
+    return *this;
+}
+
+void AuthorizationData::readJson(JsonObject entry, bool compact) {
+    if (entry.containsKey(AUTHDATA_KEY_IDTAG(compact))) {
+        strncpy(idTag, entry[AUTHDATA_KEY_IDTAG(compact)], IDTAG_LEN_MAX + 1);
         idTag[IDTAG_LEN_MAX] = '\0';
+    } else {
+        idTag[0] = '\0';
     }
 
-    if (entry.containsKey(AUTHDATA_KEY_EXPIRYDATE)) {
+    JsonObject idTagInfo;
+    if (compact){
+        idTagInfo = entry;
+    } else {
+        idTagInfo = entry[AUTHDATA_KEY_IDTAGINFO];
+    }
+
+    if (idTagInfo.containsKey(AUTHDATA_KEY_EXPIRYDATE(compact))) {
         expiryDate = std::unique_ptr<OcppTimestamp>(new OcppTimestamp());
-        if (!expiryDate->setTime(entry[AUTHDATA_KEY_EXPIRYDATE])) {
+        if (!expiryDate->setTime(idTagInfo[AUTHDATA_KEY_EXPIRYDATE(compact)])) {
             expiryDate.reset();
         }
+    } else {
+        expiryDate.reset();
     }
 
-    if (entry.containsKey(AUTHDATA_KEY_PARENTIDTAG)) {
+    if (idTagInfo.containsKey(AUTHDATA_KEY_PARENTIDTAG(compact))) {
         parentIdTag = std::unique_ptr<char[]>(new char[IDTAG_LEN_MAX + 1]);
-        strncpy(parentIdTag.get(), entry[AUTHDATA_KEY_PARENTIDTAG], IDTAG_LEN_MAX + 1);
+        strncpy(parentIdTag.get(), idTagInfo[AUTHDATA_KEY_PARENTIDTAG(compact)], IDTAG_LEN_MAX + 1);
         parentIdTag.get()[IDTAG_LEN_MAX] = '\0';
+    } else {
+        parentIdTag.reset();
     }
 
-    if (entry.containsKey(AUTHDATA_KEY_STATUS)) {
-        status = deserializeAuthorizationStatus(entry[AUTHDATA_KEY_STATUS]);
+    if (idTagInfo.containsKey(AUTHDATA_KEY_STATUS(compact))) {
+        status = deserializeAuthorizationStatus(idTagInfo[AUTHDATA_KEY_STATUS(compact)]);
+    } else {
+        if (compact) {
+            status = AuthorizationStatus::Accepted;
+        } else {
+            status = AuthorizationStatus::UNDEFINED;
+        }
     }
 }
 
-size_t AuthorizationData::getJsonCapacity() {
-    return JSON_OBJECT_SIZE(1) +
+size_t AuthorizationData::getJsonCapacity() const {
+    return JSON_OBJECT_SIZE(2) +
             (idTag[0] != '\0' ? 
                 JSON_OBJECT_SIZE(1) : 0) +
             (expiryDate ?
@@ -55,25 +82,38 @@ size_t AuthorizationData::getJsonCapacity() {
                 JSON_OBJECT_SIZE(1) : 0);
 }
 
-void AuthorizationData::writeJson(JsonObject& entry) {
+void AuthorizationData::writeJson(JsonObject& entry, bool compact) {
     if (idTag[0] != '\0') {
-        entry[AUTHDATA_KEY_IDTAG] = (const char*) idTag;
+        entry[AUTHDATA_KEY_IDTAG(compact)] = (const char*) idTag;
+    }
+
+    JsonObject idTagInfo;
+    if (compact) {
+        idTagInfo = entry;
+    } else {
+        idTagInfo = entry.createNestedObject(AUTHDATA_KEY_IDTAGINFO);
     }
 
     if (expiryDate) {
         char buf [JSONDATE_LENGTH + 1];
         if (expiryDate->toJsonString(buf, JSONDATE_LENGTH + 1)) {
-            entry[AUTHDATA_KEY_EXPIRYDATE] = buf;
+            idTagInfo[AUTHDATA_KEY_EXPIRYDATE(compact)] = buf;
         }
     }
 
     if (parentIdTag) {
-        entry[AUTHDATA_KEY_PARENTIDTAG] = (const char *) parentIdTag.get();
+        idTagInfo[AUTHDATA_KEY_PARENTIDTAG(compact)] = (const char *) parentIdTag.get();
     }
 
-    if (status != AuthorizationStatus::UNDEFINED) {
-        entry[AUTHDATA_KEY_STATUS] = serializeAuthorizationStatus(status);
+    if (status != AuthorizationStatus::Accepted) {
+        idTagInfo[AUTHDATA_KEY_STATUS(compact)] = serializeAuthorizationStatus(status);
+    } else if (!compact) {
+        idTagInfo[AUTHDATA_KEY_STATUS(compact)] = serializeAuthorizationStatus(AuthorizationStatus::Invalid);
     }
+}
+
+void AuthorizationData::reset() {
+    idTag[0] = '\0';
 }
 
 const char *ArduinoOcpp::serializeAuthorizationStatus(AuthorizationStatus status) {

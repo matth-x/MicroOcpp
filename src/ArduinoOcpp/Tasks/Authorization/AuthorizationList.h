@@ -8,28 +8,32 @@
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationData.h>
 #include <vector>
 
+#ifndef AO_LocalAuthListMaxLength
+#define AO_LocalAuthListMaxLength 128
+#endif
+
+#define AO_SendLocalListMaxLength AO_LocalAuthListMaxLength
+
 namespace ArduinoOcpp {
 
 class AuthorizationList {
 private:
-    int localAuthListVersion = -1; //version number if list is LocalAuthorizationList
-    std::vector<std::unique_ptr<AuthorizationData>> authData; //sorted list
-
-    uint16_t updateCnt = 0; //used for temporal order of authData elements
-
-    const size_t MAX_SIZE;
-private:
-    AuthorizationList(size_t MAX_SIZE);
+    int listVersion = -1;
+    std::vector<AuthorizationData> localAuthorizationList; //sorted list
+public:
+    AuthorizationList();
     ~AuthorizationList();
 
-    void readJson(JsonObject entry);
+    AuthorizationData *get(const char *idTag);
 
-    size_t getJsonCapacity();
-    void writeJson(JsonObject& entry);
-
-    void update(JsonArray collection);
-    void update(std::unique_ptr<AuthorizationData> entry);
+    bool readJson(JsonObject payload, bool compact = false); //compact: if true, then use compact non-ocpp representation
     void clear();
+
+    size_t getJsonCapacity(bool compact = false);
+    void writeJson(JsonObject& entry, bool compact = false);
+
+    int getListVersion() {return listVersion;}
+
 };
 
 }

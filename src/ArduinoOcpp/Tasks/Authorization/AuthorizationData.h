@@ -12,7 +12,7 @@
 
 namespace ArduinoOcpp {
 
-enum class AuthorizationStatus:uint8_t {
+enum class AuthorizationStatus : uint8_t {
     Accepted,
     Blocked,
     Expired,
@@ -20,6 +20,12 @@ enum class AuthorizationStatus:uint8_t {
     ConcurrentTx,
     UNDEFINED //not part of OCPP 1.6
 };
+
+#define AUTHDATA_KEY_IDTAG(COMPACT)       (COMPACT ? "it" : "idTag")
+#define AUTHDATA_KEY_IDTAGINFO            "idTagInfo"
+#define AUTHDATA_KEY_EXPIRYDATE(COMPACT)  (COMPACT ? "ed" : "expiryDate")
+#define AUTHDATA_KEY_PARENTIDTAG(COMPACT) (COMPACT ? "pi" : "parentIdTag")
+#define AUTHDATA_KEY_STATUS(COMPACT)      (COMPACT ? "st" : "status")
 
 #define AUTHORIZATIONSTATUS_LEN_MAX (sizeof("ConcurrentTx") - 1) //max length of serialized AuthStatus
 
@@ -36,15 +42,24 @@ private:
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
 
     AuthorizationStatus status = AuthorizationStatus::UNDEFINED;
-    uint16_t hist_order;
 public:
     AuthorizationData();
+    AuthorizationData(AuthorizationData&& other);
     ~AuthorizationData();
 
-    void readJson(JsonObject entry);
+    AuthorizationData& operator=(AuthorizationData&& other);
 
-    size_t getJsonCapacity();
-    void writeJson(JsonObject& entry);
+    void readJson(JsonObject entry, bool compact = false); //compact: compressed representation for flash storage
+
+    size_t getJsonCapacity() const;
+    void writeJson(JsonObject& entry, bool compact = false); //compact: compressed representation for flash storage
+
+    const char *getIdTag() const {return idTag;}
+    OcppTimestamp *getExpiryDate() const {return expiryDate.get();}
+    const char *getParentIdTag() const {return parentIdTag.get();}
+    AuthorizationStatus getAuthorizationStatus() const {return status;}
+
+    void reset();
 };
 
 }
