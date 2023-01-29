@@ -6,6 +6,7 @@
 #include <ArduinoOcpp/Debug.h>
 
 #include <algorithm>
+#include <numeric>
 
 using namespace ArduinoOcpp;
 
@@ -188,7 +189,7 @@ void AuthorizationList::writeJson(JsonObject& payload, bool compact) {
     JsonArray collection = payload.createNestedArray("localAuthorizationList");
 
     for (auto& entry : localAuthorizationList) {
-        JsonObject entryJson = collection.addElement();
+        JsonObject entryJson = collection.createNestedObject();
         entry.writeJson(entryJson, compact);
     }
 }
