@@ -43,7 +43,7 @@ ArduinoOcpp::AuthorizationData *AuthorizationList::get(const char *idTag) {
 
 bool AuthorizationList::readJson(JsonObject payload, bool compact) {
 
-    bool differential = strcmp("Differential", payload["updateType"] | "Invalid"); //if Json also contains delete commands
+    bool differential = !strcmp("Differential", payload["updateType"] | "Invalid"); //if Json also contains delete commands
 
     if (compact) {
         //compact representations don't contain remove commands
