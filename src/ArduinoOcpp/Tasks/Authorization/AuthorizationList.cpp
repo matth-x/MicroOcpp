@@ -108,7 +108,6 @@ bool AuthorizationList::readJson(JsonObject payload, bool compact) {
     }
 
     //apply new list
-    listVersion = payload["listVersion"] | -1;
 
     if (compact) {
         localAuthorizationList.clear();
@@ -167,6 +166,12 @@ bool AuthorizationList::readJson(JsonObject payload, bool compact) {
                 return strcmp(lhs.getIdTag(), rhs.getIdTag()) < 0;
             });
     
+    listVersion = payload["listVersion"] | 0;
+    
+    if (localAuthorizationList.empty()) {
+        listVersion = 0;
+    }
+
     return true;
 }
 

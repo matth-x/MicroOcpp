@@ -18,7 +18,7 @@ namespace ArduinoOcpp {
 
 class AuthorizationList {
 private:
-    int listVersion = -1;
+    int listVersion = 0;
     std::vector<AuthorizationData> localAuthorizationList; //sorted list
 public:
     AuthorizationList();
