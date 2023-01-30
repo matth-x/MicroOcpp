@@ -1,10 +1,11 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Core/OperationStore.h>
+#include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
@@ -153,6 +154,10 @@ void StartTransaction::processConf(JsonObject payload) {
 
     transaction->getStartRpcSync().confirm();
     transaction->commit();
+
+    if (ocppModel && ocppModel->getAuthorizationService()) {
+        ocppModel->getAuthorizationService()->notifyAuthorization(transaction->getIdTag(), payload["idTagInfo"]);
+    }
 }
 
 void StartTransaction::processReq(JsonObject payload) {

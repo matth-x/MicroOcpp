@@ -9,7 +9,7 @@
 #include <vector>
 
 #ifndef AO_LocalAuthListMaxLength
-#define AO_LocalAuthListMaxLength 128
+#define AO_LocalAuthListMaxLength 48
 #endif
 
 #define AO_SendLocalListMaxLength AO_LocalAuthListMaxLength

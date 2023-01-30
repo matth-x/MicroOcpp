@@ -6,6 +6,9 @@
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/MessagesV16/StatusNotification.h>
+#include <ArduinoOcpp/Core/OcppOperationTimeout.h>
+#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Debug.h>
 
 #define AO_LOCALAUTHORIZATIONLIST_FN (AO_FILENAME_PREFIX "/localauth.jsn")
@@ -23,8 +26,8 @@ AuthorizationService::AuthorizationService(OcppEngine& context, std::shared_ptr<
         AO_DBG_ERR("initialization error");
     }
 
-    //append "FirmwareManagement" to FeatureProfiles list
-    const char *fpId = "FirmwareManagement";
+    //append "LocalAuthListManagement" to FeatureProfiles list
+    const char *fpId = "LocalAuthListManagement";
     auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
     if (!strstr(*fProfile, fpId)) {
         auto fProfilePlus = std::string(*fProfile);
@@ -65,18 +68,15 @@ bool AuthorizationService::loadLists() {
 
 AuthorizationData *AuthorizationService::getLocalAuthorization(const char *idTag) {
     if (!*localAuthorizeOffline) {
-        AO_DBG_DEBUG("skip local auth");
         return nullptr;
     }
 
     if (!*localAuthListEnabled) {
-        AO_DBG_DEBUG("skip local auth list");
         return nullptr; //auth cache will follow
     }
 
     auto authData = localAuthorizationList.get(idTag);
     if (!authData) {
-        AO_DBG_DEBUG("idTag %s not listed", idTag);
         return nullptr;
     }
 
@@ -108,7 +108,83 @@ bool AuthorizationService::updateLocalList(JsonObject payload) {
         JsonObject root = doc.to<JsonObject>();
         localAuthorizationList.writeJson(root, true);
         success = FilesystemUtils::storeJson(filesystem, AO_LOCALAUTHORIZATIONLIST_FN, doc);
+
+        if (!success) {
+            loadLists();
+        }
     }
 
     return success;
+}
+
+void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idTagInfo) {
+    //check local list conflicts. In future: also update authorization cache
+
+    if (!*localAuthorizeOffline) {
+        return;
+    }
+
+    if (!*localAuthListEnabled) {
+        return; //auth cache will follow
+    }
+
+    if (!idTagInfo.containsKey("status")) {
+        return; //empty idTagInfo
+    }
+
+    auto localInfo = localAuthorizationList.get(idTag);
+    if (!localInfo) {
+        return;
+    }
+
+    //check for conflicts
+
+    auto incomingStatus = deserializeAuthorizationStatus(idTagInfo["status"]);
+    auto localStatus = localInfo->getAuthorizationStatus();
+
+    if (incomingStatus == AuthorizationStatus::UNDEFINED) { //ignore invalid messages (handled elsewhere)
+        return;
+    }
+
+    if (incomingStatus == AuthorizationStatus::ConcurrentTx) { //incoming status ConcurrentTx is equivalent to local Accepted
+        incomingStatus = AuthorizationStatus::Accepted;
+    }
+
+    if (localStatus == AuthorizationStatus::Accepted && localInfo->getExpiryDate()) { //check for expiry
+        auto& t_now = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+        if (t_now > *localInfo->getExpiryDate()) {
+            AO_DBG_DEBUG("local auth expired");
+            localStatus = AuthorizationStatus::Expired;
+        }
+    }
+
+    bool equivalent = true;
+
+    if (incomingStatus != localStatus) {
+        AO_DBG_WARN("local auth list status conflict");
+        equivalent = false;
+    }
+
+    //check if parentIdTag definitions mismatch
+    if (equivalent &&
+            strcmp(localInfo->getParentIdTag() ? localInfo->getParentIdTag() : "", idTagInfo["parentIdTag"] | "")) {
+        AO_DBG_WARN("local auth list parentIdTag conflict");
+        equivalent = false;
+    }
+
+    AO_DBG_DEBUG("idTag %s fully evaluated: %s conflict", idTag, equivalent ? "no" : "contains");
+
+    if (!equivalent) {
+        //send error code "LocalListConflict" to server
+
+        auto statusNotification = makeOcppOperation(new Ocpp16::StatusNotification(
+                    0,
+                    OcppEvseState::NOT_SET, //will be determined in StatusNotification::initiate
+                    context.getOcppModel().getOcppTime().getOcppTimestampNow(),
+                    "LocalListConflict"));
+
+        statusNotification->setTimeout(std::unique_ptr<Timeout>(new FixedTimeout(60000)));
+
+        context.initiateOperation(std::move(statusNotification));
+    }
 }

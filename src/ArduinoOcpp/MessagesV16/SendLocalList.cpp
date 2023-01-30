@@ -35,7 +35,7 @@ void SendLocalList::processReq(JsonObject payload) {
         return;
     }
 
-    if (payload["localAuthorizationList"].as<JsonArray>().size() >= AO_SendLocalListMaxLength) {
+    if (payload["localAuthorizationList"].as<JsonArray>().size() > AO_SendLocalListMaxLength) {
         errorCode = "OccurenceConstraintViolation";
     }
 
@@ -47,10 +47,6 @@ void SendLocalList::processReq(JsonObject payload) {
     }
 
     updateFailure = !authService->updateLocalList(payload);
-
-    if (updateFailure) {
-        authService->loadLists();
-    }
 }
 
 std::unique_ptr<DynamicJsonDocument> SendLocalList::createConf(){

@@ -33,6 +33,8 @@ public:
     int getLocalListVersion() {return localAuthorizationList.getListVersion();}
 
     bool updateLocalList(JsonObject payload);
+
+    void notifyAuthorization(const char *idTag, JsonObject idTagInfo);
 };
 
 }

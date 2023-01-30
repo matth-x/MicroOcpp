@@ -1,10 +1,11 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Core/OperationStore.h>
+#include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
@@ -185,6 +186,10 @@ void StopTransaction::processConf(JsonObject payload) {
     }
 
     AO_DBG_INFO("Request has been accepted!");
+
+    if (ocppModel && ocppModel->getAuthorizationService()) {
+        ocppModel->getAuthorizationService()->notifyAuthorization(transaction->getIdTag(), payload["idTagInfo"]);
+    }
 }
 
 bool StopTransaction::processErr(const char *code, const char *description, JsonObject details) {

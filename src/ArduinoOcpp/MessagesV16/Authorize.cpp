@@ -1,9 +1,10 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/Authorize.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 
 #include <ArduinoOcpp/Debug.h>
@@ -39,11 +40,12 @@ void Authorize::processConf(JsonObject payload){
 
     if (!strcmp(idTagInfo, "Accepted")) {
         AO_DBG_INFO("Request has been accepted");
-
-        //TODO add entry in offline auth cache
-    
     } else {
         AO_DBG_INFO("Request has been denied. Reason: %s", idTagInfo);
+    }
+
+    if (ocppModel && ocppModel->getAuthorizationService()) {
+        ocppModel->getAuthorizationService()->notifyAuthorization(idTag, payload["idTagInfo"]);
     }
 }
 
