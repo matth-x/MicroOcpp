@@ -25,16 +25,20 @@ bool OcppClientSocket::sendTXT(std::string &out) {
 }
 
 void OcppClientSocket::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
-    wsock->onEvent([callback](WStype_t type, uint8_t * payload, size_t length) {
+    auto& captureLastRecv = lastRecv;
+    wsock->onEvent([callback, &captureLastRecv](WStype_t type, uint8_t * payload, size_t length) {
         switch (type) {
             case WStype_DISCONNECTED:
                 AO_DBG_INFO("Disconnected");
                 break;
             case WStype_CONNECTED:
                 AO_DBG_INFO("Connected to url: %s", payload);
+                captureLastRecv = ao_tick_ms();
                 break;
             case WStype_TEXT:
-                if (!callback((const char *) payload, length)) { //forward message to OcppEngine
+                if (callback((const char *) payload, length)) { //forward message to OcppEngine
+                    captureLastRecv = ao_tick_ms();
+                } else {
                     AO_DBG_WARN("Processing WebSocket input event failed");
                 }
                 break;
@@ -44,10 +48,12 @@ void OcppClientSocket::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
             case WStype_PING:
                 // pong will be send automatically
                 AO_DBG_TRAFFIC_IN(8, "WS ping");
+                captureLastRecv = ao_tick_ms();
                 break;
             case WStype_PONG:
                 // answer to a ping we send
                 AO_DBG_TRAFFIC_IN(8, "WS pong");
+                captureLastRecv = ao_tick_ms();
                 break;
             case WStype_FRAGMENT_TEXT_START: //fragments are not supported
             default:
@@ -55,6 +61,10 @@ void OcppClientSocket::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
                 break;
         }
     });
+}
+
+unsigned long OcppClientSocket::getLastRecv() {
+    return lastRecv;
 }
 
 OcppServerSocket::OcppServerSocket(IPAddress &ip_addr) : ip_addr(ip_addr) {

@@ -63,6 +63,7 @@ namespace EspWiFi {
 class OcppClientSocket : public OcppSocket {
 private:
     WebSocketsClient *wsock;
+    unsigned long lastRecv = 0;
 public:
     OcppClientSocket(WebSocketsClient *wsock);
 
@@ -71,6 +72,8 @@ public:
     bool sendTXT(std::string &out);
 
     void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT);
+
+    unsigned long getLastRecv(); //get time of last successful receive in millis
 };
 
 class OcppServerSocket : public OcppSocket {
