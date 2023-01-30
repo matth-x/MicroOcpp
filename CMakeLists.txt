@@ -34,6 +34,7 @@ set(AO_SRC
     src/ArduinoOcpp/MessagesV16/GetCompositeSchedule.cpp
     src/ArduinoOcpp/MessagesV16/GetConfiguration.cpp
     src/ArduinoOcpp/MessagesV16/GetDiagnostics.cpp
+    src/ArduinoOcpp/MessagesV16/GetLocalListVersion.cpp
     src/ArduinoOcpp/MessagesV16/Heartbeat.cpp
     src/ArduinoOcpp/MessagesV16/MeterValues.cpp
     src/ArduinoOcpp/MessagesV16/RemoteStartTransaction.cpp
