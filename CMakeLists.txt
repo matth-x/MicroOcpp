@@ -34,11 +34,13 @@ set(AO_SRC
     src/ArduinoOcpp/MessagesV16/GetCompositeSchedule.cpp
     src/ArduinoOcpp/MessagesV16/GetConfiguration.cpp
     src/ArduinoOcpp/MessagesV16/GetDiagnostics.cpp
+    src/ArduinoOcpp/MessagesV16/GetLocalListVersion.cpp
     src/ArduinoOcpp/MessagesV16/Heartbeat.cpp
     src/ArduinoOcpp/MessagesV16/MeterValues.cpp
     src/ArduinoOcpp/MessagesV16/RemoteStartTransaction.cpp
     src/ArduinoOcpp/MessagesV16/RemoteStopTransaction.cpp
     src/ArduinoOcpp/MessagesV16/Reset.cpp
+    src/ArduinoOcpp/MessagesV16/SendLocalList.cpp
     src/ArduinoOcpp/MessagesV16/SetChargingProfile.cpp
     src/ArduinoOcpp/MessagesV16/StartTransaction.cpp
     src/ArduinoOcpp/MessagesV16/StatusNotification.cpp
@@ -48,6 +50,9 @@ set(AO_SRC
     src/ArduinoOcpp/MessagesV16/UpdateFirmware.cpp
     src/ArduinoOcpp/Platform.cpp
     src/ArduinoOcpp/SimpleOcppOperationFactory.cpp
+    src/ArduinoOcpp/Tasks/Authorization/AuthorizationData.cpp
+    src/ArduinoOcpp/Tasks/Authorization/AuthorizationList.cpp
+    src/ArduinoOcpp/Tasks/Authorization/AuthorizationService.cpp
     src/ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.cpp
     src/ArduinoOcpp/Tasks/ChargePointStatus/ConnectorStatus.cpp
     src/ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.cpp

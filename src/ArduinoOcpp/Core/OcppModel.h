@@ -19,6 +19,7 @@ class MeteringService;
 class FirmwareService;
 class DiagnosticsService;
 class HeartbeatService;
+class AuthorizationService;
 
 class OcppModel {
 private:
@@ -29,6 +30,7 @@ private:
     std::unique_ptr<FirmwareService> firmwareService;
     std::unique_ptr<DiagnosticsService> diagnosticsService;
     std::unique_ptr<HeartbeatService> heartbeatService;
+    std::unique_ptr<AuthorizationService> authorizationService;
     OcppTime ocppTime;
 
 public:
@@ -59,6 +61,9 @@ public:
     DiagnosticsService *getDiagnosticsService() const;
 
     void setHeartbeatService(std::unique_ptr<HeartbeatService> heartbeatService);
+
+    void setAuthorizationService(std::unique_ptr<AuthorizationService> authorizationService);
+    AuthorizationService *getAuthorizationService();
 
     OcppTime &getOcppTime();
 };

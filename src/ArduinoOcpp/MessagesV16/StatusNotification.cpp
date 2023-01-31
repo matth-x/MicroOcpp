@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
@@ -72,16 +72,15 @@ void StatusNotification::initiate() {
             }
         }
         auto connector = cpsService->getConnector(connectorId);
-        if (connector) {
+        if (connector && currentStatus == OcppEvseState::NOT_SET) {
             currentStatus = connector->inferenceStatus();
         }
     }
     
-    if (ocppModel) {
+    if (ocppModel && otimestamp == MIN_TIME) {
         otimestamp = ocppModel->getOcppTime().getOcppTimestampNow();
-    } else {
-        otimestamp = MIN_TIME;
     }
+
     if (currentStatus == OcppEvseState::NOT_SET) {
         AO_DBG_ERR("Could not determine EVSE status");
     }
@@ -119,7 +118,7 @@ void StatusNotification::processConf(JsonObject payload) {
 }
 
 StatusNotification::StatusNotification(int connectorId) : connectorId(connectorId) {
-    
+    otimestamp = MIN_TIME;
 }
 
 /*

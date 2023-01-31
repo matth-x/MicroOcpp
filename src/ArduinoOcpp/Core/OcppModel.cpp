@@ -10,6 +10,7 @@
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
+#include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -103,6 +104,14 @@ DiagnosticsService *OcppModel::getDiagnosticsService() const {
 
 void OcppModel::setHeartbeatService(std::unique_ptr<HeartbeatService> hs) {
     heartbeatService = std::move(hs);
+}
+
+void OcppModel::setAuthorizationService(std::unique_ptr<AuthorizationService> as) {
+    authorizationService = std::move(as);
+}
+
+AuthorizationService *OcppModel::getAuthorizationService() {
+    return authorizationService.get();
 }
 
 OcppTime& OcppModel::getOcppTime() {

@@ -28,6 +28,8 @@
 #include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
 #include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
 #include <ArduinoOcpp/MessagesV16/ClearCache.h>
+#include <ArduinoOcpp/MessagesV16/SendLocalList.h>
+#include <ArduinoOcpp/MessagesV16/GetLocalListVersion.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -272,6 +274,10 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType, int co
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::ChangeAvailability());
     } else if (!strcmp(messageType, "ClearCache")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::ClearCache());
+    } else if (!strcmp(messageType, "SendLocalList")) {
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::SendLocalList());
+    } else if (!strcmp(messageType, "GetLocalListVersion")) {
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::GetLocalListVersion());
     } else {
         AO_DBG_WARN("Operation not supported");
         msg = std::unique_ptr<OcppMessage>(new NotImplemented());

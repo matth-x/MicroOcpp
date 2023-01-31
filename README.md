@@ -63,6 +63,7 @@ In case you use PlatformIO, you can copy all dependencies from `platformio.ini` 
 | **Smart charging** | :heavy_check_mark: |
 | **Remote trigger** | :heavy_check_mark: |
 | **Firmware management** | :heavy_check_mark: |
+| **Local auth list management** | :heavy_check_mark: |
 
 ## Further help
 
