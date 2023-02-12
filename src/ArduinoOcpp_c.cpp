@@ -329,6 +329,13 @@ const char *ao_getTransactionIdTag_m(unsigned int connectorId) {
     return getTransactionIdTag(connectorId);
 }
 
+bool ao_isBlockedByReservation(const char *idTag) {
+    return isBlockedByReservation(idTag);
+}
+bool ao_isBlockedByReservation_m(unsigned int connectorId, const char *idTag) {
+    return isBlockedByReservation(idTag, connectorId);
+}
+
 void ao_setOnResetRequest(OnOcppMessage onRequest) {
     setOnResetRequest(adaptFn(onRequest));
 }
