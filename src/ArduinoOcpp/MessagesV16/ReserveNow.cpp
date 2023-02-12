@@ -55,9 +55,16 @@ void ReserveNow::processReq(JsonObject payload) {
             return;
         }
 
+        auto reserveConnectorZeroSupported = declareConfiguration<bool>("ReserveConnectorZeroSupported", true, CONFIGURATION_VOLATILE);
+        if (connectorId == 0 && (!reserveConnectorZeroSupported || !*reserveConnectorZeroSupported)) {
+            reservationStatus = "Rejected";
+            return;
+        }
+
         if (auto reservation = rService->getReservationById(payload["reservationId"])) {
             reservation->update(payload);
             reservationStatus = "Accepted";
+            return;
         }
 
         ConnectorStatus *connector = nullptr;

@@ -6,6 +6,7 @@
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -18,6 +19,8 @@ ReservationService::ReservationService(OcppEngine& context, unsigned int numConn
             reservations.push_back(Reservation(context.getOcppModel(), i));
         }
     }
+
+    reserveConnectorZeroSupported = declareConfiguration<bool>("ReserveConnectorZeroSupported", true, CONFIGURATION_VOLATILE, false, true, false, false);
 
     //append "Reservation" to FeatureProfiles list
     const char *fpId = "Reservation";
@@ -76,6 +79,11 @@ void ReservationService::loop() {
 }
 
 Reservation *ReservationService::getReservation(unsigned int connectorId) {
+    if (connectorId == 0) {
+        AO_DBG_DEBUG("tried to fetch connectorId 0");
+        return nullptr; //cannot fetch for connectorId 0 because multiple reservations are possible at a time
+    }
+
     for (Reservation& reservation : reservations) {
         if (reservation.isActive() && reservation.matches(connectorId)) {
             return &reservation;
@@ -121,9 +129,11 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
     }
 
     //is there any reservation at this charge point for idTag?
-    if (auto reservation = getReservation(idTag, parentIdTag)) {
-        //yes, can use reservation with different connectorId
-        return reservation;
+    if (idTag) {
+        if (auto reservation = getReservation(idTag, parentIdTag)) {
+            //yes, can use reservation with different connectorId
+            return reservation;
+        }
     }
 
     if (reserveConnectorZeroSupported && !*reserveConnectorZeroSupported) {
@@ -184,11 +194,13 @@ bool ReservationService::updateReservation(JsonObject payload) {
         return true;
     }
 
-    if (getReservation(
-                payload["connectorId"],
-                payload["idTag"],
-                payload.containsKey("parentIdTag") ? payload["parentIdTag"] : nullptr)) {
-        AO_DBG_DEBUG("found blocking reservation");
+// Alternative condition: avoids that one idTag can make two reservations at a time. The specification doesn't
+// mention that double-reservations should be possible but it seems to mean it. 
+    if (auto reservation = getReservation(payload["connectorId"], nullptr, nullptr)) {
+//                payload["idTag"],
+//                payload.containsKey("parentIdTag") ? payload["parentIdTag"] : nullptr)) {
+//    if (auto reservation = getReservation(payload["connectorId"].as<int>())) {
+        AO_DBG_DEBUG("found blocking reservation at connectorId %u", reservation->getConnectorId());
         return false;
     }
 
