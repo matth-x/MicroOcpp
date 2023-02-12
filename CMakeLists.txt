@@ -24,6 +24,7 @@ set(AO_SRC
     src/ArduinoOcpp/Core/OperationStore.cpp
     src/ArduinoOcpp/MessagesV16/Authorize.cpp
     src/ArduinoOcpp/MessagesV16/BootNotification.cpp
+    src/ArduinoOcpp/MessagesV16/CancelReservation.cpp
     src/ArduinoOcpp/MessagesV16/ChangeAvailability.cpp
     src/ArduinoOcpp/MessagesV16/ChangeConfiguration.cpp
     src/ArduinoOcpp/MessagesV16/ClearCache.cpp
@@ -39,6 +40,7 @@ set(AO_SRC
     src/ArduinoOcpp/MessagesV16/MeterValues.cpp
     src/ArduinoOcpp/MessagesV16/RemoteStartTransaction.cpp
     src/ArduinoOcpp/MessagesV16/RemoteStopTransaction.cpp
+    src/ArduinoOcpp/MessagesV16/ReserveNow.cpp
     src/ArduinoOcpp/MessagesV16/Reset.cpp
     src/ArduinoOcpp/MessagesV16/SendLocalList.cpp
     src/ArduinoOcpp/MessagesV16/SetChargingProfile.cpp
@@ -63,6 +65,8 @@ set(AO_SRC
     src/ArduinoOcpp/Tasks/Metering/MeterStore.cpp
     src/ArduinoOcpp/Tasks/Metering/MeterValue.cpp
     src/ArduinoOcpp/Tasks/Metering/SampledValue.cpp
+    src/ArduinoOcpp/Tasks/Reservation/Reservation.cpp
+    src/ArduinoOcpp/Tasks/Reservation/ReservationService.cpp
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.cpp
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.cpp
     src/ArduinoOcpp/Tasks/Transactions/Transaction.cpp
