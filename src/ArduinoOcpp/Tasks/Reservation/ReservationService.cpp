@@ -31,6 +31,50 @@ ReservationService::ReservationService(OcppEngine& context, unsigned int numConn
     }
 }
 
+void ReservationService::loop() {
+    //check if to end reservations
+    auto cpService = context.getOcppModel().getChargePointStatusService();
+    if (!cpService) {
+        return;
+    }
+
+    for (Reservation& reservation : reservations) {
+        if (!reservation.isActive()) {
+            continue;
+        }
+
+        if (auto connector = context.getOcppModel().getConnectorStatus(reservation.getConnectorId())) {
+
+            //check if connector went inoperative
+            auto cStatus = connector->inferenceStatus();
+            if (cStatus == OcppEvseState::Faulted || cStatus == OcppEvseState::Unavailable) {
+                reservation.clear();
+                continue;
+            }
+
+            //check if other tx started at this connector (e.g. due to RemoteStartTransaction)
+            if (connector->getSessionIdTag()) {
+                reservation.clear();
+                continue;
+            }
+        }
+
+        //check if tx with same idTag or reservationId has started
+        for (unsigned int cId = 1; cId < cpService->getNumConnectors(); cId++) {
+            auto& transaction = cpService->getConnector(cId)->getTransaction();
+            if (transaction) {
+                const char *cIdTag = transaction->getIdTag();
+                if (transaction->getReservationId() == reservation.getReservationId() || 
+                        (cIdTag && !strcmp(cIdTag, reservation.getIdTag()))) {
+                    
+                    reservation.clear();
+                    break;
+                }
+            }
+        }
+    }
+}
+
 Reservation *ReservationService::getReservation(unsigned int connectorId) {
     for (Reservation& reservation : reservations) {
         if (reservation.isActive() && reservation.matches(connectorId)) {

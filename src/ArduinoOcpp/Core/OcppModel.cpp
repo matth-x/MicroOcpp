@@ -42,6 +42,9 @@ void OcppModel::loop() {
     
     if (firmwareService)
         firmwareService->loop();
+    
+    if (reservationService)
+        reservationService->loop();
 }
 
 void OcppModel::setTransactionStore(std::unique_ptr<TransactionStore> ts) {

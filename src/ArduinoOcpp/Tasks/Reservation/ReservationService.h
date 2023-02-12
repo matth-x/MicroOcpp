@@ -23,6 +23,8 @@ private:
 public:
     ReservationService(OcppEngine& context, unsigned int numConnectors);
 
+    void loop();
+
     Reservation *getReservation(unsigned int connectorId); //by connectorId
     Reservation *getReservation(const char *idTag, const char *parentIdTag = nullptr); //by idTag
 
