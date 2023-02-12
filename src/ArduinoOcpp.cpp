@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include "ArduinoOcpp.h"
@@ -14,6 +14,7 @@
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
+#include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
@@ -108,6 +109,8 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
         new HeartbeatService(*ocppEngine)));
     model.setAuthorizationService(std::unique_ptr<AuthorizationService>(
         new AuthorizationService(*ocppEngine, filesystem)));
+    model.setReservationService(std::unique_ptr<ReservationService>(
+        new ReservationService(*ocppEngine, AO_NUMCONNECTORS)));
 
 #if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
     model.setFirmwareService(std::unique_ptr<FirmwareService>(

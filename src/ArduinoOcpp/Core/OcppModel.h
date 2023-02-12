@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef OCPPMODEL_H
@@ -20,6 +20,7 @@ class FirmwareService;
 class DiagnosticsService;
 class HeartbeatService;
 class AuthorizationService;
+class ReservationService;
 
 class OcppModel {
 private:
@@ -31,6 +32,7 @@ private:
     std::unique_ptr<DiagnosticsService> diagnosticsService;
     std::unique_ptr<HeartbeatService> heartbeatService;
     std::unique_ptr<AuthorizationService> authorizationService;
+    std::unique_ptr<ReservationService> reservationService;
     OcppTime ocppTime;
 
 public:
@@ -64,6 +66,9 @@ public:
 
     void setAuthorizationService(std::unique_ptr<AuthorizationService> authorizationService);
     AuthorizationService *getAuthorizationService();
+
+    void setReservationService(std::unique_ptr<ReservationService> reservationService);
+    ReservationService *getReservationService();
 
     OcppTime &getOcppTime();
 };

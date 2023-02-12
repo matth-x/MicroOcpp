@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
@@ -30,6 +30,8 @@
 #include <ArduinoOcpp/MessagesV16/ClearCache.h>
 #include <ArduinoOcpp/MessagesV16/SendLocalList.h>
 #include <ArduinoOcpp/MessagesV16/GetLocalListVersion.h>
+#include <ArduinoOcpp/MessagesV16/ReserveNow.h>
+#include <ArduinoOcpp/MessagesV16/CancelReservation.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -278,6 +280,10 @@ std::unique_ptr<OcppOperation> makeOcppOperation(const char *messageType, int co
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::SendLocalList());
     } else if (!strcmp(messageType, "GetLocalListVersion")) {
         msg = std::unique_ptr<OcppMessage>(new Ocpp16::GetLocalListVersion());
+    } else if (!strcmp(messageType, "ReserveNow")) {
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::ReserveNow());
+    } else if (!strcmp(messageType, "CancelReservation")) {
+        msg = std::unique_ptr<OcppMessage>(new Ocpp16::CancelReservation());
     } else {
         AO_DBG_WARN("Operation not supported");
         msg = std::unique_ptr<OcppMessage>(new NotImplemented());

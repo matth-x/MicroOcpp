@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppModel.h>
@@ -11,6 +11,7 @@
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
+#include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -112,6 +113,14 @@ void OcppModel::setAuthorizationService(std::unique_ptr<AuthorizationService> as
 
 AuthorizationService *OcppModel::getAuthorizationService() {
     return authorizationService.get();
+}
+
+void OcppModel::setReservationService(std::unique_ptr<ReservationService> rs) {
+    reservationService = std::move(rs);
+}
+
+ReservationService *OcppModel::getReservationService() {
+    return reservationService.get();
 }
 
 OcppTime& OcppModel::getOcppTime() {
