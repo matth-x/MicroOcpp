@@ -37,6 +37,8 @@ Reservation *ReservationService::getReservation(unsigned int connectorId) {
             return &reservation;
         }
     }
+    
+    return nullptr;
 }
 
 Reservation *ReservationService::getReservation(const char *idTag, const char *parentIdTag) {
@@ -100,7 +102,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
 
     unsigned int availableCount = 0;
     if (auto cpService = context.getOcppModel().getChargePointStatusService()) {
-        for (unsigned int iconn = 1; cpService->getNumConnectors(); iconn++) {
+        for (unsigned int iconn = 1; iconn < cpService->getNumConnectors(); iconn++) {
             if (iconn == connectorId) {
                 //don't count this connector
                 continue;
@@ -128,6 +130,8 @@ Reservation *ReservationService::getReservationById(int reservationId) {
             return &reservation;
         }
     }
+
+    return nullptr;
 }
 
 bool ReservationService::updateReservation(JsonObject payload) {

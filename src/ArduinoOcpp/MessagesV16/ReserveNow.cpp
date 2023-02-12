@@ -45,7 +45,7 @@ void ReserveNow::processReq(JsonObject payload) {
     ReservationService *rService = nullptr;
     ChargePointStatusService *cpService = nullptr;
     if (ocppModel && ocppModel->getReservationService() &&
-                ocppModel->getChargePointStatusService() && cpService->getConnector(0)) {
+                ocppModel->getChargePointStatusService() && ocppModel->getChargePointStatusService()->getConnector(0)) {
         rService = ocppModel->getReservationService();
         cpService = ocppModel->getChargePointStatusService();
         ConnectorStatus *chargePoint = cpService->getConnector(0);
