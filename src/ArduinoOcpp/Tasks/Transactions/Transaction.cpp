@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
@@ -52,6 +52,10 @@ bool Transaction::serializeSessionState(DynamicJsonDocument& out) {
 
     if (start.client.meter >= 0) {
         txStartClientSide["meter"] = start.client.meter;
+    }
+
+    if (start.client.reservationId >= 0) {
+        txStartClientSide["reservationId"] = start.client.reservationId;
     }
 
 
@@ -147,6 +151,10 @@ bool Transaction::deserializeSessionState(JsonObject state) {
 
     if (txStartClientSide.containsKey("meter")) {
         start.client.meter = txStartClientSide["meter"] | 0;
+    }
+
+    if (txStartClientSide.containsKey("reservationId")) {
+        start.client.reservationId = txStartClientSide["reservationId"] | -1;
     }
 
     if (start.rpc.confirmed) {

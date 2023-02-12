@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef TRANSACTION_H
@@ -46,6 +46,7 @@ private:
 
     OcppTimestamp timestamp = MIN_TIME;      //timestamp of StartTx; can be set before actually initiating
     int32_t meter = -1;           //meterStart of StartTx
+    int reservationId = -1;
 };
 
 class ServerTransactionStart {
@@ -158,6 +159,9 @@ public:
     void setMeterStart(int32_t meter) {start.client.meter = meter;}
     bool isMeterStartDefined() {return start.client.meter >= 0;} //should introduce extra variable later
     int32_t getMeterStart() {return start.client.meter;}
+
+    void setReservationId(int reservationId) {start.client.reservationId = reservationId;}
+    int getReservationId() {return start.client.reservationId;}
 
     void setStartTimestamp(OcppTimestamp timestamp) {start.client.timestamp = timestamp;}
     OcppTimestamp& getStartTimestamp() {return start.client.timestamp;}

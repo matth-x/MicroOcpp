@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ConnectorStatus.h>
@@ -17,6 +17,7 @@
 #include <ArduinoOcpp/Debug.h>
 
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
+#include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
 
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
@@ -110,6 +111,8 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
             return OcppEvseState::SuspendedEV;
         }
         return OcppEvseState::Charging;
+    } else if (context.getReservationService() && context.getReservationService()->getReservation(connectorId)) {
+        return OcppEvseState::Reserved;
     } else if (!txProcess.existsActiveTrigger() && txProcess.getState() == TxEnableState::Inactive) {
         return OcppEvseState::Available;
     } else {
@@ -485,6 +488,14 @@ void ConnectorStatus::beginSession(const char *sessionIdTag) {
     }
 
     transaction->setSessionTimestamp(context.getOcppTime().getOcppTimestampNow());
+
+    if (context.getReservationService()) {
+        if (auto reservation = context.getReservationService()->getReservation(connectorId, sessionIdTag, nullptr)) { //TODO set parentIdTag
+            if (reservation->matches(sessionIdTag, nullptr)) { //TODO set parentIdTag
+                transaction->setReservationId(reservation->getReservationId());
+            }
+        }
+    }
 
     transaction->commit();
 }

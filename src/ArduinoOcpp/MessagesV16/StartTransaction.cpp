@@ -114,7 +114,7 @@ bool StartTransaction::restore(StoredOperationHandler *opStore) {
 std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
 
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
-                JSON_OBJECT_SIZE(5) + 
+                JSON_OBJECT_SIZE(6) + 
                 (IDTAG_LEN_MAX + 1) +
                 (JSONDATE_LENGTH + 1)));
                 
@@ -128,6 +128,10 @@ std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
 
     if (transaction->isMeterStartDefined()) {
         payload["meterStart"] = transaction->getMeterStart();
+    }
+
+    if (transaction->getReservationId() >= 0) {
+        payload["reservationId"] = transaction->getReservationId();
     }
 
     if (transaction->getStartTimestamp() > MIN_TIME) {
