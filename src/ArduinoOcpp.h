@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef ARDUINOOCPP_H
@@ -260,6 +260,8 @@ bool isOperative(unsigned int connectorId = 1); //if the charge point is operati
 int getTransactionId(unsigned int connectorId = 1); //returns the txId if known, -1 if no transaction is running and 0 if txId not assigned yet
 
 const char *getTransactionIdTag(unsigned int connectorId = 1); //returns the authorization token if applicable, or nullptr otherwise
+
+bool isBlockedByReservation(const char *idTag, unsigned int connectorId = 1); //if the connector is already reserved for a different idTag
 
 void setOnResetRequest(OnReceiveReqListener onReceiveReq);
 

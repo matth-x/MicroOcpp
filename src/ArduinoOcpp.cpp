@@ -567,6 +567,27 @@ const char *getTransactionIdTag(unsigned int connectorId) {
     return connector->getSessionIdTag();
 }
 
+bool isBlockedByReservation(const char *idTag, unsigned int connectorId) {
+    if (!ocppEngine) {
+        AO_DBG_WARN("Please call OCPP_initialize before");
+        return false;
+    }
+    if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
+        AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
+        return false;
+    }
+    auto rService = ocppEngine->getOcppModel().getReservationService();
+    if (!rService) {
+        AO_DBG_ERR("Could not access reservations. Ignore");
+        return false;
+    }
+    if (auto reservation = rService->getReservation(connectorId, idTag)) {
+        return !reservation->matches(idTag);
+    }
+
+    return false; //no reservation -> nothing blocked
+}
+
 #if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WS)
 ArduinoOcpp::FirmwareService *getFirmwareService() {
     auto& model = ocppEngine->getOcppModel();
