@@ -27,7 +27,7 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
 
     char availabilityKey [CONF_KEYLEN_MAX + 1] = {'\0'};
     snprintf(availabilityKey, CONF_KEYLEN_MAX + 1, "AO_AVAIL_CONN_%d", connectorId);
-    availability = declareConfiguration<int>(availabilityKey, AVAILABILITY_OPERATIVE, CONFIGURATION_FN, false, false, true, false);
+    availability = declareConfiguration<int>(availabilityKey, AVAILABILITY_OPERATIVE, AO_KEYVALUE_FN, false, false, true, false);
 
     connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN, true, true, true, false);
     minimumStatusDuration = declareConfiguration<int>("MinimumStatusDuration", 0, CONFIGURATION_FN, true, true, true, false);

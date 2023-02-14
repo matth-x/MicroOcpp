@@ -52,9 +52,9 @@ SmartChargingService::SmartChargingService(OcppEngine& context, float chargeLimi
     chargingSessionStart = MAX_TIME;
     char max_timestamp [JSONDATE_LENGTH + 1] = {'\0'};
     chargingSessionStart.toJsonString(max_timestamp, JSONDATE_LENGTH + 1);
-    txStartTime = declareConfiguration<const char*>("AO_TXSTARTTIME_CONN_1", max_timestamp, CONFIGURATION_FN, false, false, true, false);
+    txStartTime = declareConfiguration<const char*>("AO_TXSTARTTIME_CONN_1", max_timestamp, AO_KEYVALUE_FN, false, false, true, false);
     chargingSessionTransactionID = -1;
-    sRmtProfileId = declareConfiguration<int>("AO_SRMTPROFILEID_CONN_1", -1, CONFIGURATION_FN, false, false, true, false);
+    sRmtProfileId = declareConfiguration<int>("AO_SRMTPROFILEID_CONN_1", -1, AO_KEYVALUE_FN, false, false, true, false);
     for (int i = 0; i < CHARGEPROFILEMAXSTACKLEVEL; i++) {
         ChargePointMaxProfile[i] = NULL;
         TxDefaultProfile[i] = NULL;

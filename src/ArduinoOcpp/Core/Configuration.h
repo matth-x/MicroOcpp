@@ -15,6 +15,7 @@
 
 #define CONFIGURATION_FN (AO_FILENAME_PREFIX "/arduino-ocpp.cnf")
 #define CONFIGURATION_VOLATILE "/volatile"
+#define AO_KEYVALUE_FN (AO_FILENAME_PREFIX "/client-state.cnf")
 
 namespace ArduinoOcpp {
 

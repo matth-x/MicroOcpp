@@ -33,7 +33,7 @@ void FirmwareService::setBuildNumber(const char *buildNumber) {
     if (buildNumber == nullptr)
         return;
     this->buildNumber = buildNumber;
-    previousBuildNumber = declareConfiguration<const char*>("BUILD_NUMBER", buildNumber, CONFIGURATION_FN, false, false, true, false);
+    previousBuildNumber = declareConfiguration<const char*>("BUILD_NUMBER", buildNumber, AO_KEYVALUE_FN, false, false, true, false);
     checkedSuccessfulFwUpdate = false; //--> CS will be notified
 }
 

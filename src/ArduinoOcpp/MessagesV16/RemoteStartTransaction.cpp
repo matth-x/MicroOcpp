@@ -82,7 +82,7 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
 
     if (canStartTransaction) {
 
-        auto sRmtProfileId = declareConfiguration<int>("AO_SRMTPROFILEID_CONN_1", -1, CONFIGURATION_FN, false, false, true, false);
+        auto sRmtProfileId = declareConfiguration<int>("AO_SRMTPROFILEID_CONN_1", -1, AO_KEYVALUE_FN, false, false, true, false);
 
         if (ocppModel && ocppModel->getSmartChargingService()) {
             auto scService = ocppModel->getSmartChargingService();
