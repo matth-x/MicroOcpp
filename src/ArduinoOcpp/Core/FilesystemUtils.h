@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef AO_FILESYSTEMUTILS_H
@@ -8,6 +8,10 @@
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoJson.h>
 #include <memory>
+
+#ifndef AO_MAX_JSON_CAPACITY
+#define AO_MAX_JSON_CAPACITY 4096
+#endif
 
 namespace ArduinoOcpp {
 

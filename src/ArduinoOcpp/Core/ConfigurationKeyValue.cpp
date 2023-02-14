@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
@@ -34,8 +34,7 @@ void AbstractConfiguration::printKey() {
 }
 
 size_t AbstractConfiguration::getStorageHeaderJsonCapacity() {
-    return JSON_OBJECT_SIZE(1) //key
-            + key.size() + 1;
+    return key.length() + 1;
 }
 
 void AbstractConfiguration::storeStorageHeader(JsonObject &keyValuePair) {
@@ -161,11 +160,11 @@ bool Configuration<T>::isValid() {
 
 template<class T>
 size_t Configuration<T>::getValueJsonCapacity() {
-    return JSON_OBJECT_SIZE(1);
+    return 0;
 }
 
 size_t Configuration<const char *>::getValueJsonCapacity() {
-    return JSON_OBJECT_SIZE(1) + value.size() + 1;
+    return value.size() + 1;
 }
 
 template<class T>

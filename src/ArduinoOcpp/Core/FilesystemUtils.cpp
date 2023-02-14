@@ -1,13 +1,11 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
 #include <ArduinoOcpp/Core/ConfigurationOptions.h> //FilesystemOpt
 #include <ArduinoOcpp/Debug.h>
-
-#define MAX_JSON_CAPACITY 4096
 
 using namespace ArduinoOcpp;
 
@@ -40,25 +38,28 @@ std::unique_ptr<DynamicJsonDocument> FilesystemUtils::loadJson(std::shared_ptr<F
         return nullptr;
     }
 
-    size_t capacity = (3 * fsize) / 2;
-    if (capacity < 32) {
-        capacity = 32;
+    size_t capacity_init = (3 * fsize) / 2;
+
+    //capacity = ceil capacity_init to the next power of two; should be at least 128
+
+    size_t capacity = 128;
+    while (capacity < capacity_init && capacity < AO_MAX_JSON_CAPACITY) {
+        capacity *= 2;
     }
-    if (capacity > MAX_JSON_CAPACITY) {
-        capacity = MAX_JSON_CAPACITY;
+    if (capacity > AO_MAX_JSON_CAPACITY) {
+        capacity = AO_MAX_JSON_CAPACITY;
     }
     
     auto doc = std::unique_ptr<DynamicJsonDocument>(nullptr);
     DeserializationError err = DeserializationError::NoMemory;
     ArduinoJsonFileAdapter fileReader {file.get()};
 
-    while (err == DeserializationError::NoMemory && capacity <= MAX_JSON_CAPACITY) {
+    while (err == DeserializationError::NoMemory && capacity <= AO_MAX_JSON_CAPACITY) {
 
         doc.reset(new DynamicJsonDocument(capacity));
         err = deserializeJson(*doc, fileReader);
 
-        capacity *= 3;
-        capacity /= 2;
+        capacity *= 2;
 
         file->seek(0); //rewind file to beginning
     }
