@@ -44,13 +44,13 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
         }
     }
 
-    size_t capacity = 0;
+    size_t capacity = JSON_OBJECT_SIZE(2); //configurationKey, unknownKey
     std::vector<std::unique_ptr<DynamicJsonDocument>> configurationKeysJson;
 
     for (auto confKey = configurationKeys->begin(); confKey != configurationKeys->end(); confKey++) {
         auto entry = (*confKey)->toJsonOcppMsgEntry();
         if (entry) {
-            capacity += entry->capacity();
+            capacity += entry->memoryUsage();
             configurationKeysJson.push_back(std::move(entry));
         }
     }
@@ -59,9 +59,10 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
         capacity += unknownKey->length() + 1;
     }
 
-    capacity += JSON_OBJECT_SIZE(2) //configurationKey, unknownKey
-                + JSON_ARRAY_SIZE(configurationKeysJson.size())
+    capacity += JSON_ARRAY_SIZE(configurationKeysJson.size())
                 + JSON_ARRAY_SIZE(unknownKeys.size());
+    
+    AO_DBG_DEBUG("GetConfiguration capacity: %zu", capacity);
     
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
 

@@ -42,8 +42,7 @@ void AbstractConfiguration::storeStorageHeader(JsonObject &keyValuePair) {
 }
 
 size_t AbstractConfiguration::getOcppMsgHeaderJsonCapacity() {
-    return JSON_OBJECT_SIZE(2) //key + readonly field
-            + key.size() + 1;
+    return key.size() + 1;
 }
 
 void AbstractConfiguration::storeOcppMsgHeader(JsonObject &keyValuePair) {
@@ -202,16 +201,17 @@ std::unique_ptr<DynamicJsonDocument> Configuration<T>::toJsonOcppMsgEntry() {
     if (!isValid()) {
         return nullptr;
     }
-    const size_t VALUE_MAXSIZE = 50;
     size_t capacity = getOcppMsgHeaderJsonCapacity()
-                + getValueJsonCapacity() + VALUE_MAXSIZE
-                + JSON_OBJECT_SIZE(2); // header, value
+                + JSON_OBJECT_SIZE(3); //header (key + readonly), value
+
+    const size_t VALUE_MAXSIZE = 50;
+    char value_str [VALUE_MAXSIZE] = {'\0'};
+    toCStringValue(value_str, VALUE_MAXSIZE, value);
+    capacity += strlen(value_str) + 1;
     
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
     JsonObject keyValuePair = doc->to<JsonObject>();
     storeOcppMsgHeader(keyValuePair);
-    char value_str [VALUE_MAXSIZE] = {'\0'};
-    toCStringValue(value_str, VALUE_MAXSIZE, value);
     keyValuePair["value"] = value_str;
     return doc;
 }
@@ -238,7 +238,7 @@ std::unique_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonOcppMsgE
     }
     size_t capacity = getOcppMsgHeaderJsonCapacity()
                 + getValueJsonCapacity()
-                + JSON_OBJECT_SIZE(2); // header, value
+                + JSON_OBJECT_SIZE(3); //header (key + readonly), value
     
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
     JsonObject keyValuePair = doc->to<JsonObject>();
