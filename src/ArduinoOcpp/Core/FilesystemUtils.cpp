@@ -90,11 +90,6 @@ bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, c
         return false;
     }
 
-    size_t file_size = 0;
-    if (filesystem->stat(fn, &file_size) == 0) {
-        filesystem->remove(fn);
-    }
-
     auto file = filesystem->open(fn, "w");
     if (!file) {
         AO_DBG_ERR("Could not open file %s", fn);
@@ -107,6 +102,7 @@ bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, c
 
     if (written < 2) {
         AO_DBG_ERR("Error writing file %s", fn);
+        size_t file_size = 0;
         if (filesystem->stat(fn, &file_size) == 0) {
             AO_DBG_DEBUG("Collect invalid file %s", fn);
             filesystem->remove(fn);
