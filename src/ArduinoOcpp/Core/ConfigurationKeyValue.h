@@ -45,8 +45,8 @@ public:
     uint16_t getValueRevision();
     bool keyEquals(const char *other);
 
-    virtual std::shared_ptr<DynamicJsonDocument> toJsonStorageEntry() = 0;
-    virtual std::shared_ptr<DynamicJsonDocument> toJsonOcppMsgEntry() = 0;
+    virtual std::unique_ptr<DynamicJsonDocument> toJsonStorageEntry() = 0;
+    virtual std::unique_ptr<DynamicJsonDocument> toJsonOcppMsgEntry() = 0;
 
     virtual const char *getSerializedType() = 0;
 
@@ -80,8 +80,8 @@ public:
     operator T();
     bool isValid();
 
-    std::shared_ptr<DynamicJsonDocument> toJsonStorageEntry();
-    std::shared_ptr<DynamicJsonDocument> toJsonOcppMsgEntry();
+    std::unique_ptr<DynamicJsonDocument> toJsonStorageEntry();
+    std::unique_ptr<DynamicJsonDocument> toJsonOcppMsgEntry();
 
     const char *getSerializedType() {return SerializedType<T>::get();} //returns "int" or "float" as written to the configuration Json file
 };
@@ -103,8 +103,8 @@ public:
     bool isValid();
     size_t getBuffsize();
 
-    std::shared_ptr<DynamicJsonDocument> toJsonStorageEntry();
-    std::shared_ptr<DynamicJsonDocument> toJsonOcppMsgEntry();
+    std::unique_ptr<DynamicJsonDocument> toJsonStorageEntry();
+    std::unique_ptr<DynamicJsonDocument> toJsonOcppMsgEntry();
 
     const char *getSerializedType() {return SerializedType<const char *>::get();}
 

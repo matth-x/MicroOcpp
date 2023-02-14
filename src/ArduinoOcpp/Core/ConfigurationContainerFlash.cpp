@@ -97,10 +97,10 @@ bool ConfigurationContainerFlash::save() {
 
     size_t jsonCapacity = 2 * JSON_OBJECT_SIZE(2); //head + configurations + head payload
 
-    std::vector<std::shared_ptr<DynamicJsonDocument>> entries;
+    std::vector<std::unique_ptr<DynamicJsonDocument>> entries;
 
     for (auto config = configurations.begin(); config != configurations.end(); config++) {
-        std::shared_ptr<DynamicJsonDocument> entry = (*config)->toJsonStorageEntry();
+        auto entry = (*config)->toJsonStorageEntry();
         if (entry) {
             size_t capacity = entry->memoryUsage(); //entry payload size
 
@@ -109,7 +109,7 @@ bool ConfigurationContainerFlash::save() {
                 break;
             }
 
-            entries.push_back(entry);
+            entries.push_back(std::move(entry));
             jsonCapacity += capacity;
         }
     }

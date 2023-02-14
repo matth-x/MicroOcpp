@@ -168,7 +168,7 @@ size_t Configuration<const char *>::getValueJsonCapacity() {
 }
 
 template<class T>
-std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonStorageEntry() {
+std::unique_ptr<DynamicJsonDocument> Configuration<T>::toJsonStorageEntry() {
     if (!isValid()) {
         return nullptr;
     }
@@ -176,7 +176,7 @@ std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonStorageEntry() {
                 + getValueJsonCapacity()
                 + JSON_OBJECT_SIZE(3); //type, header, value
     
-    std::shared_ptr<DynamicJsonDocument> doc = std::make_shared<DynamicJsonDocument>(capacity);
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
     JsonObject keyValuePair = doc->to<JsonObject>();
     keyValuePair["type"] = SerializedType<T>::get();
     storeStorageHeader(keyValuePair);
@@ -198,7 +198,7 @@ int toCStringValue(char *buf, size_t length, bool value) {
 }
 
 template<class T>
-std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonOcppMsgEntry() {
+std::unique_ptr<DynamicJsonDocument> Configuration<T>::toJsonOcppMsgEntry() {
     if (!isValid()) {
         return nullptr;
     }
@@ -207,7 +207,7 @@ std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonOcppMsgEntry() {
                 + getValueJsonCapacity() + VALUE_MAXSIZE
                 + JSON_OBJECT_SIZE(2); // header, value
     
-    std::shared_ptr<DynamicJsonDocument> doc = std::make_shared<DynamicJsonDocument>(capacity);
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
     JsonObject keyValuePair = doc->to<JsonObject>();
     storeOcppMsgHeader(keyValuePair);
     char value_str [VALUE_MAXSIZE] = {'\0'};
@@ -216,7 +216,7 @@ std::shared_ptr<DynamicJsonDocument> Configuration<T>::toJsonOcppMsgEntry() {
     return doc;
 }
 
-std::shared_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonStorageEntry() {
+std::unique_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonStorageEntry() {
     if (!isValid()) {
         return nullptr;
     }
@@ -224,7 +224,7 @@ std::shared_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonStorageE
                 + getValueJsonCapacity()
                 + JSON_OBJECT_SIZE(3); //type, header, value
     
-    std::shared_ptr<DynamicJsonDocument> doc = std::make_shared<DynamicJsonDocument>(capacity);
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
     JsonObject keyValuePair = doc->to<JsonObject>();
     keyValuePair["type"] = SerializedType<const char *>::get();
     storeStorageHeader(keyValuePair);
@@ -232,7 +232,7 @@ std::shared_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonStorageE
     return doc;
 }
 
-std::shared_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonOcppMsgEntry() {
+std::unique_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonOcppMsgEntry() {
     if (!isValid()) {
         return nullptr;
     }
@@ -240,7 +240,7 @@ std::shared_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonOcppMsgE
                 + getValueJsonCapacity()
                 + JSON_OBJECT_SIZE(2); // header, value
     
-    std::shared_ptr<DynamicJsonDocument> doc = std::make_shared<DynamicJsonDocument>(capacity);
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
     JsonObject keyValuePair = doc->to<JsonObject>();
     storeOcppMsgHeader(keyValuePair);
     keyValuePair["value"] = value;

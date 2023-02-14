@@ -45,13 +45,13 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
     }
 
     size_t capacity = 0;
-    std::vector<std::shared_ptr<DynamicJsonDocument>> configurationKeysJson;
+    std::vector<std::unique_ptr<DynamicJsonDocument>> configurationKeysJson;
 
     for (auto confKey = configurationKeys->begin(); confKey != configurationKeys->end(); confKey++) {
-        std::shared_ptr<DynamicJsonDocument> entry = (*confKey)->toJsonOcppMsgEntry();
+        auto entry = (*confKey)->toJsonOcppMsgEntry();
         if (entry) {
-            configurationKeysJson.push_back(entry);
             capacity += entry->capacity();
+            configurationKeysJson.push_back(std::move(entry));
         }
     }
 
