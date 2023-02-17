@@ -13,10 +13,8 @@ unsigned long custom_timer_cb() {
 }
 
 void loop() {
-    mtime += 1000;
-    OCPP_loop();
-    mtime += 1000;
-    OCPP_loop();
-    mtime += 1000;
-    OCPP_loop();
+    for (int i = 0; i < 30; i++) {
+        mtime += 100;
+        OCPP_loop();
+    }
 }
