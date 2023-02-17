@@ -78,12 +78,7 @@ void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_u
     delete ocppSocket;
     ocppSocket = new EspWiFi::OcppClientSocket(webSocket);
 
-    StaticJsonDocument<256> bootNotificationCrededentialsDoc;
-    JsonObject bn = bootNotificationCrededentialsDoc.to<JsonObject>();
-    bn["chargePointModel"] = chargePointModel;
-    bn["chargePointVendor"] = chargePointVendor;
-
-    OCPP_initialize(*ocppSocket, bn, V_eff, fsOpt);
+    OCPP_initialize(*ocppSocket, ChargerCredentials(chargePointModel, chargePointVendor), V_eff, fsOpt);
 }
 #endif
 
