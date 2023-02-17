@@ -38,7 +38,7 @@ void VolatileOperationsQueue::pop_front() {
 
 void VolatileOperationsQueue::initiate(std::unique_ptr<OcppOperation> op) {
 
-    op->initiate();
+    op->initiate(nullptr);
 
     if (queue.size() >= AO_OPERATIONCACHE_MAXSIZE) {
         AO_DBG_WARN("unsafe number of cached operations");

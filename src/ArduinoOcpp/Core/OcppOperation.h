@@ -101,7 +101,7 @@ public:
      */
     bool sendConf(OcppSocket& ocppSocket);
 
-    void initiate(std::unique_ptr<StoredOperationHandler> opStorage = nullptr);
+    void initiate(std::unique_ptr<StoredOperationHandler> opStorage);
 
     bool restore(std::unique_ptr<StoredOperationHandler> opStorage, std::shared_ptr<OcppModel> oModel);
 
