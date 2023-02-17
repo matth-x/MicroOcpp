@@ -55,6 +55,7 @@ set(AO_SRC
     src/ArduinoOcpp/Tasks/Authorization/AuthorizationData.cpp
     src/ArduinoOcpp/Tasks/Authorization/AuthorizationList.cpp
     src/ArduinoOcpp/Tasks/Authorization/AuthorizationService.cpp
+    src/ArduinoOcpp/Tasks/Boot/BootService.cpp
     src/ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.cpp
     src/ArduinoOcpp/Tasks/ChargePointStatus/ConnectorStatus.cpp
     src/ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.cpp

@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
@@ -25,7 +25,7 @@ void OcppMessage::setOcppModel(std::shared_ptr<OcppModel> ocppModel) {
 }
 
 void OcppMessage::initiate() {
-    //called after initiateOcppOperation(anyMsg)
+    //called after initiateOperation(anyMsg)
 }
 
 std::unique_ptr<DynamicJsonDocument> OcppMessage::createReq() {

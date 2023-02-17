@@ -44,9 +44,38 @@ void OCPP_initialize(
             const char *CS_hostname, //e.g. "example.com"
             uint16_t CS_port,        //e.g. 80
             const char *CS_url,      //e.g. "ws://example.com/steve/websocket/CentralSystemService/charger001"
+            const char *chargePointModel = "Demo Charger",     //model name of this charger
+            const char *chargePointVendor = "My Company Ltd.", //brand name
             float V_eff = 230.f,     //Grid voltage of your country. e.g. 230.f (European voltage)
             ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
 #endif
+
+/*
+ * Convenience initialization: use this for passing the BootNotification payload JSON to the OCPP_initialize(...) below
+ *
+ * Example usage:
+ * 
+ *     OCPP_initialize(osock, ChargerCredentials("Demo Charger", "My Company Ltd."));
+ * 
+ * For a description of the fields, refer to OCPP 1.6 Specification - Edition 2 p. 60
+ */
+struct ChargerCredentials {
+    ChargerCredentials(
+            const char *chargePointModel = "Demo Charger",
+            const char *chargePointVendor = "My Company Ltd.",
+            const char *firmwareVersion = nullptr,
+            const char *chargePointSerialNumber = nullptr,
+            const char *meterSerialNumber = nullptr,
+            const char *meterType = nullptr,
+            const char *chargeBoxSerialNumber = nullptr,
+            const char *iccid = nullptr,
+            const char *imsi = nullptr);
+
+    operator const char *() {return payload;}
+
+private:
+    char payload [512] = {'{', '}', '\0'};
+};
 
 /*
  * Initialize the library with a WebSocket connection which is configured with protocol=ocpp1.6
@@ -62,6 +91,7 @@ void OCPP_initialize(
  */
 void OCPP_initialize(
             ArduinoOcpp::OcppSocket& ocppSocket, //WebSocket adapter for ArduinoOcpp
+            const char *bootNotificationCredentials = ChargerCredentials("Demo Charger", "My Company Ltd."), //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
             float V_eff = 230.f,                 //Grid voltage of your country. e.g. 230.f (European voltage)
             ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
 
@@ -141,7 +171,7 @@ bool beginTransaction(const char *idTag, unsigned int connectorId = 1);
 
 /*
  * End the transaction process by terminating the transaction and setting a reason for its termination.
- * Please refer to to OCPP 1.6 Specification - Edition 2 p. 90 for a list of valid reasons. "reason"
+ * Please refer to OCPP 1.6 Specification - Edition 2 p. 90 for a list of valid reasons. "reason"
  * can also be nullptr.
  * 
  * It is safe to call this function at any time, i.e. when no transaction runs or when the transaction

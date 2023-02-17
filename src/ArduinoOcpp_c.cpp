@@ -5,7 +5,11 @@
 
 ArduinoOcpp::OcppSocket *ocppSocket = nullptr;
 
-void ao_initialize(AOcppSocket *osock,  float V_eff, struct AO_FilesystemOpt fsopt) {
+void ao_initialize(AOcppSocket *osock, const char *chargePointModel, const char *chargePointVendor, float V_eff, struct AO_FilesystemOpt fsopt) {
+    ao_initialize_full(osock, ChargerCredentials(chargePointModel, chargePointVendor), V_eff, fsopt);
+}
+
+void ao_initialize_full(AOcppSocket *osock, const char *bootNotificationCredentials, float V_eff, struct AO_FilesystemOpt fsopt) {
     if (!osock) {
         AO_DBG_ERR("osock is null");
     }
@@ -14,7 +18,7 @@ void ao_initialize(AOcppSocket *osock,  float V_eff, struct AO_FilesystemOpt fso
 
     ArduinoOcpp::FilesystemOpt adaptFsopt = fsopt;
 
-    OCPP_initialize(*ocppSocket, V_eff, adaptFsopt);
+    OCPP_initialize(*ocppSocket, bootNotificationCredentials, V_eff, adaptFsopt);
 }
 
 void ao_deinitialize() {

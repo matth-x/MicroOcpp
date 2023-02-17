@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef OCPPCONNECTION_H
@@ -23,7 +23,7 @@ private:
     std::shared_ptr<OcppModel> baseModel;
     std::shared_ptr<FilesystemAdapter> filesystem;
     
-    OperationsQueue initiatedOcppOperations;
+    std::unique_ptr<OperationsQueue> initiatedOcppOperations;
     std::deque<std::unique_ptr<OcppOperation>> receivedOcppOperations;
 
     void handleConfMessage(JsonDocument& json);
@@ -31,13 +31,15 @@ private:
     void handleReqMessage(JsonDocument& json, std::unique_ptr<OcppOperation> op);
     void handleErrMessage(JsonDocument& json);
 public:
-    OcppConnection(OcppSocket& oSock, std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem);
+    OcppConnection(std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem = nullptr);
 
-    void loop(OcppSocket& oSock);
+    void setSocket(OcppSocket& sock);
 
-    void initiateOcppOperation(std::unique_ptr<OcppOperation> o);
+    void loop(OcppSocket& ocppSock);
+
+    void initiateOperation(std::unique_ptr<OcppOperation> o); //send an OCPP operation request to the server
     
-    bool processOcppSocketInputTXT(const char* payload, size_t length);
+    bool receiveMessage(const char* payload, size_t length); //receive an OCPP operation from the server - either a confirmation or a request
 };
 
 } //end namespace ArduinoOcpp

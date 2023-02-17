@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
@@ -59,7 +59,6 @@ ChargePointStatusService::~ChargePointStatusService() {
 }
 
 void ChargePointStatusService::loop() {
-    if (!booted) return;
     for (auto connector = connectors.begin(); connector != connectors.end(); connector++) {
         auto transactionMsg = (*connector)->loop();
         if (transactionMsg != nullptr) {
@@ -98,39 +97,8 @@ ConnectorStatus *ChargePointStatusService::getConnector(int connectorId) {
     return connectors.at(connectorId).get();
 }
 
-void ChargePointStatusService::boot() {
-    booted = true;
-}
-
-bool ChargePointStatusService::isBooted() {
-    return booted;
-}
-
 int ChargePointStatusService::getNumConnectors() {
     return connectors.size();
-}
-
-void ChargePointStatusService::setChargePointCredentials(DynamicJsonDocument &credentials) {
-    if (!credentials.is<JsonObject>()) {
-        AO_DBG_ERR("Payload must be JSON object");
-        cpCredentials.clear();
-        return;
-    }
-    auto written = serializeJson(credentials, cpCredentials);
-    if (written <= 2) {
-        AO_DBG_ERR("Could not parse CP credentials: %s", written == 2 ? "format violation" : "invalid JSON");
-        cpCredentials.clear();
-        return;
-    }
-    //success
-}
-
-std::string& ChargePointStatusService::getChargePointCredentials() {
-    if (cpCredentials.size() <= 2) {
-        cpCredentials = "{}";
-    }
-
-    return cpCredentials;
 }
 
 void ChargePointStatusService::setPreReset(std::function<bool(bool)> preReset) {

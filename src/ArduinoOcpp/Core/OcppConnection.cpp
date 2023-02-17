@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppConnection.h>
@@ -17,13 +17,22 @@ size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_siz
 
 using namespace ArduinoOcpp;
 
-OcppConnection::OcppConnection(OcppSocket& ocppSock, std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
-            : baseModel{baseModel}, filesystem{filesystem}, initiatedOcppOperations{baseModel, filesystem} {
+OcppConnection::OcppConnection(std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
+            : baseModel{baseModel}, filesystem{filesystem} {
+    
+    if (filesystem) {
+        initiatedOcppOperations.reset(new PersistentOperationsQueue(baseModel, filesystem));
+    } else {
+        initiatedOcppOperations.reset(new VolatileOperationsQueue());
+    }
+}
+
+void OcppConnection::setSocket(OcppSocket& sock) {
     ReceiveTXTcallback callback = [this] (const char *payload, size_t length) {
-        return this->processOcppSocketInputTXT(payload, length);
+        return this->receiveMessage(payload, length);
     };
     
-    ocppSock.setReceiveTXTcallback(callback);
+    sock.setReceiveTXTcallback(callback);
 }
 
 void OcppConnection::loop(OcppSocket& ocppSock) {
@@ -35,11 +44,11 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
      * can be dequeued and the following ocppOperation is processed.
      */
 
-    auto inited = initiatedOcppOperations.front();
+    auto inited = initiatedOcppOperations->front();
     if (inited) {
         bool timeout = inited->sendReq(ocppSock); //The only reason to dequeue elements here is when a timeout occurs. Normally
         if (timeout){                                       //the Conf msg processing routine dequeues finished elements
-            initiatedOcppOperations.pop_front();
+            initiatedOcppOperations->pop_front();
         }
     }
 
@@ -47,8 +56,8 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
      * Activate timeout detection on the msgs other than the first in the queue.
      */
 
-    auto cached = initiatedOcppOperations.begin_tail();
-    while (cached != initiatedOcppOperations.end_tail()) {
+    auto cached = initiatedOcppOperations->begin_tail();
+    while (cached != initiatedOcppOperations->end_tail()) {
         Timeout *timer = (*cached)->getTimeout();
         if (!timer) {
             ++cached; //no timeouts, nothing to do in this iteration
@@ -60,7 +69,7 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
                 (!(*cached)->getStorageHandler() || (*cached)->getStorageHandler()->getOpNr() < 0)) {
             AO_DBG_INFO("Discarding cached due to timeout:");
             (*cached)->print_debug();
-            cached = initiatedOcppOperations.erase_tail(cached);
+            cached = initiatedOcppOperations->erase_tail(cached);
         } else {
             ++cached;
         }
@@ -84,7 +93,7 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
     }
 }
 
-void OcppConnection::initiateOcppOperation(std::unique_ptr<OcppOperation> o){
+void OcppConnection::initiateOperation(std::unique_ptr<OcppOperation> o){
     if (!o) {
         AO_DBG_ERR("Called with null. Ignore");
         return;
@@ -94,10 +103,10 @@ void OcppConnection::initiateOcppOperation(std::unique_ptr<OcppOperation> o){
         return; //o gets destroyed
     }
     
-    initiatedOcppOperations.initiate(std::move(o));
+    initiatedOcppOperations->initiate(std::move(o));
 }
 
-bool OcppConnection::processOcppSocketInputTXT(const char* payload, size_t length) {
+bool OcppConnection::receiveMessage(const char* payload, size_t length) {
 
     AO_DBG_TRAFFIC_IN((int) length, payload);
     
@@ -188,7 +197,7 @@ void OcppConnection::handleConfMessage(JsonDocument& json) {
 
     bool success = false;
 
-    initiatedOcppOperations.drop_if(
+    initiatedOcppOperations->drop_if(
         [&json, &success] (std::unique_ptr<OcppOperation>& operation) {
             bool match = operation->receiveConf(json);
             if (match) {
@@ -228,7 +237,7 @@ void OcppConnection::handleErrMessage(JsonDocument& json) {
 
     bool success = false;
 
-    initiatedOcppOperations.drop_if(
+    initiatedOcppOperations->drop_if(
         [&json, &success] (std::unique_ptr<OcppOperation>& operation) {
             bool match = operation->receiveError(json);
             if (match) {

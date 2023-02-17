@@ -21,6 +21,7 @@ class DiagnosticsService;
 class HeartbeatService;
 class AuthorizationService;
 class ReservationService;
+class BootService;
 
 class OcppModel {
 private:
@@ -33,7 +34,10 @@ private:
     std::unique_ptr<HeartbeatService> heartbeatService;
     std::unique_ptr<AuthorizationService> authorizationService;
     std::unique_ptr<ReservationService> reservationService;
+    std::unique_ptr<BootService> bootService;
     OcppTime ocppTime;
+
+    bool runTasks = false;
 
 public:
     OcppModel(const OcppClock& system_clock);
@@ -42,6 +46,8 @@ public:
     ~OcppModel();
 
     void loop();
+
+    void activateTasks() {runTasks = true;}
 
     void setTransactionStore(std::unique_ptr<TransactionStore> transactionStore);
     TransactionStore *getTransactionStore();
@@ -69,6 +75,9 @@ public:
 
     void setReservationService(std::unique_ptr<ReservationService> reservationService);
     ReservationService *getReservationService();
+
+    void setBootService(std::unique_ptr<BootService> bs);
+    BootService *getBootService() const;
 
     OcppTime &getOcppTime();
 };

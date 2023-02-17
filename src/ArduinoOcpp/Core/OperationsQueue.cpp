@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/OperationsQueue.h>
@@ -16,14 +16,63 @@
 
 using namespace ArduinoOcpp;
 
-OperationsQueue::OperationsQueue(std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
-            : opStore(filesystem), baseModel(baseModel) { }
-
-OperationsQueue::~OperationsQueue() {
+VolatileOperationsQueue::VolatileOperationsQueue() {
 
 }
 
-OcppOperation *OperationsQueue::front() {
+VolatileOperationsQueue::~VolatileOperationsQueue() {
+
+}
+
+OcppOperation *VolatileOperationsQueue::front() {
+    if (!queue.empty()) {
+        return queue.front().get();
+    } else {
+        return nullptr;
+    }
+}
+
+void VolatileOperationsQueue::pop_front() {
+    queue.pop_front();
+}
+
+void VolatileOperationsQueue::initiate(std::unique_ptr<OcppOperation> op) {
+
+    op->initiate();
+
+    if (queue.size() >= AO_OPERATIONCACHE_MAXSIZE) {
+        AO_DBG_WARN("unsafe number of cached operations");
+        (void)0;
+    }
+
+    queue.push_back(std::move(op));
+}
+
+std::deque<std::unique_ptr<OcppOperation>>::iterator VolatileOperationsQueue::begin_tail() {
+    if (queue.begin() != queue.end()) {
+        return queue.begin() + 1;
+    } else {
+        return queue.end();
+    }
+}
+std::deque<std::unique_ptr<OcppOperation>>::iterator VolatileOperationsQueue::end_tail() {
+    return queue.end();
+}
+std::deque<std::unique_ptr<OcppOperation>>::iterator VolatileOperationsQueue::erase_tail(std::deque<std::unique_ptr<OcppOperation>>::iterator el) {
+    return queue.erase(el);
+}
+void VolatileOperationsQueue::drop_if(std::function<bool(std::unique_ptr<OcppOperation>&)> pred) {
+    queue.erase(std::remove_if(queue.begin(), queue.end(), pred), queue.end());
+}
+
+PersistentOperationsQueue::PersistentOperationsQueue(std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
+            : opStore(filesystem), baseModel(baseModel) { }
+
+PersistentOperationsQueue::~PersistentOperationsQueue() {
+
+}
+
+OcppOperation *PersistentOperationsQueue::front() {
     if (!head && !tailCache.empty()) {
         AO_DBG_ERR("invalid state");
         pop_front();
@@ -31,7 +80,7 @@ OcppOperation *OperationsQueue::front() {
     return head.get();
 }
 
-void OperationsQueue::pop_front() {
+void PersistentOperationsQueue::pop_front() {
     
     if (head && head->getStorageHandler() && head->getStorageHandler()->getOpNr() >= 0) {
         opStore.advanceOpNr(head->getStorageHandler()->getOpNr());
@@ -112,7 +161,7 @@ void OperationsQueue::pop_front() {
     AO_DBG_VERBOSE("popped front");
 }
 
-void OperationsQueue::initiate(std::unique_ptr<OcppOperation> op) {
+void PersistentOperationsQueue::initiate(std::unique_ptr<OcppOperation> op) {
 
     op->initiate(opStore.makeOpHandler());
 
@@ -134,7 +183,7 @@ void OperationsQueue::initiate(std::unique_ptr<OcppOperation> op) {
     }
 }
 
-void OperationsQueue::drop_if(std::function<bool(std::unique_ptr<OcppOperation>&)> pred) {
+void PersistentOperationsQueue::drop_if(std::function<bool(std::unique_ptr<OcppOperation>&)> pred) {
 
     while (head && pred(head)) {
         pop_front();
@@ -143,14 +192,14 @@ void OperationsQueue::drop_if(std::function<bool(std::unique_ptr<OcppOperation>&
     tailCache.erase(std::remove_if(tailCache.begin(), tailCache.end(), pred), tailCache.end());
 }
 
-std::deque<std::unique_ptr<OcppOperation>>::iterator OperationsQueue::begin_tail() {
+std::deque<std::unique_ptr<OcppOperation>>::iterator PersistentOperationsQueue::begin_tail() {
     return tailCache.begin();
 }
 
-std::deque<std::unique_ptr<OcppOperation>>::iterator OperationsQueue::end_tail() {
+std::deque<std::unique_ptr<OcppOperation>>::iterator PersistentOperationsQueue::end_tail() {
     return tailCache.end();
 }
 
-std::deque<std::unique_ptr<OcppOperation>>::iterator OperationsQueue::erase_tail(std::deque<std::unique_ptr<OcppOperation>>::iterator el) {
+std::deque<std::unique_ptr<OcppOperation>>::iterator PersistentOperationsQueue::erase_tail(std::deque<std::unique_ptr<OcppOperation>>::iterator el) {
     return tailCache.erase(el);
 }

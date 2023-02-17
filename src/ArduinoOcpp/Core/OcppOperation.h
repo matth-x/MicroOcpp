@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef OCPPOPERATION_H
@@ -101,7 +101,7 @@ public:
      */
     bool sendConf(OcppSocket& ocppSocket);
 
-    void initiate(std::unique_ptr<StoredOperationHandler> opStorage);
+    void initiate(std::unique_ptr<StoredOperationHandler> opStorage = nullptr);
 
     bool restore(std::unique_ptr<StoredOperationHandler> opStorage, std::shared_ptr<OcppModel> oModel);
 

@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <Arduino.h>
@@ -60,7 +60,7 @@ void setup() {
     /*
      * Initialize the OCPP library
      */
-    OCPP_initialize(OCPP_HOST, OCPP_PORT, OCPP_URL);
+    OCPP_initialize(OCPP_HOST, OCPP_PORT, OCPP_URL, "My Charging Station", "My company name");
 
     /*
      * Integrate OCPP functionality. You can leave out the following part if your EVSE doesn't need it.
@@ -81,11 +81,6 @@ void setup() {
     });
 
     //... see ArduinoOcpp.h for more settings
-
-    /*
-     * Notify the Central System that this station is ready
-     */
-    bootNotification("My Charging Station", "My company name");
 }
 
 void loop() {

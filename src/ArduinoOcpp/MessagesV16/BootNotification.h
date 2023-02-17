@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef BOOTNOTIFICATION_H
@@ -19,6 +19,7 @@ namespace Ocpp16 {
 class BootNotification : public OcppMessage {
 private:
     std::unique_ptr<DynamicJsonDocument> credentials;
+    const char *errorCode = nullptr;
 public:
     BootNotification();
 
@@ -37,6 +38,8 @@ public:
     void processReq(JsonObject payload);
 
     std::unique_ptr<DynamicJsonDocument> createConf();
+
+    const char *getErrorCode() {return errorCode;}
 };
 
 } //end namespace Ocpp16

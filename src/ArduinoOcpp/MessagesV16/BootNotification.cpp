@@ -1,10 +1,10 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/Boot/BootService.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
 
@@ -26,18 +26,24 @@ const char* BootNotification::getOcppOperationType(){
 
 void BootNotification::initiate() {
     if (credentials &&
-            ocppModel && ocppModel->getChargePointStatusService()) {
-        auto cpStatus = ocppModel->getChargePointStatusService();
-        cpStatus->setChargePointCredentials(*credentials);
+            ocppModel && ocppModel->getBootService()) {
+        auto bootService = ocppModel->getBootService();
+        std::string credentialsJson;
+        auto written = serializeJson(*credentials, credentialsJson);
+        if (written < 2) {
+            AO_DBG_ERR("serialization error");
+            credentialsJson = "{}";
+        }
+        bootService->setChargePointCredentials(credentialsJson.c_str());
         credentials.reset();
     }
 }
 
 std::unique_ptr<DynamicJsonDocument> BootNotification::createReq() {
 
-    if (ocppModel && ocppModel->getChargePointStatusService()) {
-        auto cpStatus = ocppModel->getChargePointStatusService();
-        const auto& cpCredentials = cpStatus->getChargePointCredentials();
+    if (ocppModel && ocppModel->getBootService()) {
+        auto bootService = ocppModel->getBootService();
+        const auto& cpCredentials = bootService->getChargePointCredentials();
     
         std::unique_ptr<DynamicJsonDocument> doc;
         size_t capacity = JSON_OBJECT_SIZE(9) + cpCredentials.size();
@@ -46,8 +52,7 @@ std::unique_ptr<DynamicJsonDocument> BootNotification::createReq() {
             doc.reset(new DynamicJsonDocument(capacity));
             err = deserializeJson(*doc, cpCredentials);
 
-            capacity *= 3;
-            capacity /= 2;
+            capacity *= 2;
         }
 
         if (!err) {
@@ -72,32 +77,52 @@ void BootNotification::processConf(JsonObject payload){
             //success
         } else {
             AO_DBG_ERR("Time string format violation. Expect format like 2022-02-01T20:53:32.486Z");
+            errorCode = "PropertyConstraintViolation";
+            return;
         }
     } else {
         AO_DBG_ERR("Missing attribute currentTime");
+        errorCode = "FormationViolation";
+        return;
     }
     
     int interval = payload["interval"] | -1;
+    if (interval < 0) {
+        errorCode = "FormationViolation";
+        return;
+    }
 
-    //only write if in valid range
-    if (interval >= 1) {
-        std::shared_ptr<Configuration<int>> intervalConf = declareConfiguration<int>("HeartbeatInterval", 86400);
-        if (intervalConf && interval != *intervalConf) {
-            *intervalConf = interval;
-            configuration_save();
+    RegistrationStatus status = deserializeRegistrationStatus(payload["status"] | "Invalid");
+    
+    if (status == RegistrationStatus::UNDEFINED) {
+        errorCode = "FormationViolation";
+        return;
+    }
+
+    if (status == RegistrationStatus::Accepted) {
+        //only write if in valid range
+        if (interval >= 1) {
+            std::shared_ptr<Configuration<int>> intervalConf = declareConfiguration<int>("HeartbeatInterval", 86400);
+            if (intervalConf && interval != *intervalConf) {
+                *intervalConf = interval;
+                configuration_save();
+            }
         }
     }
 
-    const char* status = payload["status"] | "Invalid";
+    if (ocppModel && ocppModel->getBootService()) {
+        auto bootService = ocppModel->getBootService();
 
-    if (!strcmp(status, "Accepted")) {
-        AO_DBG_INFO("Request has been accepted");
-        if (ocppModel && ocppModel->getChargePointStatusService() != nullptr) {
-            ocppModel->getChargePointStatusService()->boot();
+        if (status != RegistrationStatus::Accepted) {
+            bootService->setRetryInterval(interval);
         }
-    } else {
-        AO_DBG_WARN("Request unsuccessful");
+
+        bootService->notifyRegistrationStatus(status);
     }
+
+    AO_DBG_INFO("request has been %s", status == RegistrationStatus::Accepted ? "Accepted" :
+                                       status == RegistrationStatus::Pending ? "replied with Pending" :
+                                       "Rejected");
 }
 
 void BootNotification::processReq(JsonObject payload){

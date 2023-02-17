@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef CHARGEPOINTSTATUSSERVICE_H
@@ -20,10 +20,6 @@ private:
     
     std::vector<std::unique_ptr<ConnectorStatus>> connectors;
 
-    bool booted = false;
-
-    std::string cpCredentials;
-
     std::function<bool(bool isHard)> preReset; //true: reset is possible; false: reject reset; Await: need more time to determine
     std::function<void(bool isHard)> executeReset; //please disconnect WebSocket (AO remains initialized), shut down device and restart with normal initialization routine; on failure reconnect WebSocket
     unsigned int outstandingResetRetries = 0; //0 = do not reset device
@@ -39,14 +35,8 @@ public:
     
     void loop();
 
-    void boot();
-    bool isBooted();
-
     ConnectorStatus *getConnector(int connectorId);
     int getNumConnectors();
-
-    void setChargePointCredentials(DynamicJsonDocument &credentials);
-    std::string& getChargePointCredentials();
 
     void setPreReset(std::function<bool(bool isHard)> preReset);
     std::function<bool(bool isHard)> getPreReset();

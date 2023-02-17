@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/TriggerMessage.h>
@@ -83,7 +83,7 @@ std::unique_ptr<DynamicJsonDocument> TriggerMessage::createConf(){
     if (defaultOcppEngine) {
         auto op = triggeredOperations.begin();
         while (op != triggeredOperations.end()) {
-            defaultOcppEngine->initiateOperation(std::move(triggeredOperations.front()));
+            defaultOcppEngine->initiatePreBootOperation(std::move(triggeredOperations.front()));
             op = triggeredOperations.erase(op);
         }
     }

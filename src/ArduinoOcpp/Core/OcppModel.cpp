@@ -12,6 +12,7 @@
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
+#include <ArduinoOcpp/Tasks/Boot/BootService.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -25,6 +26,15 @@ OcppModel::OcppModel(const OcppClock& system_clock)
 OcppModel::~OcppModel() = default;
 
 void OcppModel::loop() {
+
+    if (bootService) {
+        bootService->loop();
+    }
+
+    if (!runTasks) {
+        return;
+    }
+
     if (chargePointStatusService)
         chargePointStatusService->loop();
     
@@ -124,6 +134,14 @@ void OcppModel::setReservationService(std::unique_ptr<ReservationService> rs) {
 
 ReservationService *OcppModel::getReservationService() {
     return reservationService.get();
+}
+
+void OcppModel::setBootService(std::unique_ptr<BootService> bs){
+    bootService = std::move(bs);
+}
+
+BootService *OcppModel::getBootService() const {
+    return bootService.get();
 }
 
 OcppTime& OcppModel::getOcppTime() {

@@ -15,6 +15,7 @@
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
+#include <ArduinoOcpp/Tasks/Boot/BootService.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
@@ -44,7 +45,6 @@ float voltage_eff {230.f};
 #endif
 
 #define OCPP_ID_OF_CP 0
-bool OCPP_booted = false; //if BootNotification succeeded
 
 } //end namespace ArduinoOcpp::Facade
 } //end namespace ArduinoOcpp
@@ -54,7 +54,7 @@ using namespace ArduinoOcpp::Facade;
 using namespace ArduinoOcpp::Ocpp16;
 
 #ifndef AO_CUSTOM_WS
-void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt) {
+void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *chargePointModel, const char *chargePointVendor, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt) {
     if (ocppEngine) {
         AO_DBG_WARN("Can't be called two times. Either restart ESP, or call OCPP_deinitialize() before");
         return;
@@ -78,11 +78,50 @@ void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_u
     delete ocppSocket;
     ocppSocket = new EspWiFi::OcppClientSocket(webSocket);
 
-    OCPP_initialize(*ocppSocket, V_eff, fsOpt);
+    StaticJsonDocument<256> bootNotificationCrededentialsDoc;
+    JsonObject bn = bootNotificationCrededentialsDoc.to<JsonObject>();
+    bn["chargePointModel"] = chargePointModel;
+    bn["chargePointVendor"] = chargePointVendor;
+
+    OCPP_initialize(*ocppSocket, bn, V_eff, fsOpt);
 }
 #endif
 
-void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt) {
+ChargerCredentials::ChargerCredentials(const char *cpModel, const char *cpVendor, const char *fWv, const char *cpSNr, const char *meterSNr, const char *meterType, const char *cbSNr, const char *iccid, const char *imsi) {
+
+    StaticJsonDocument<512> creds;
+    if (cbSNr)
+        creds["chargeBoxSerialNumber"] = cbSNr;
+    if (cpModel)
+        creds["chargePointModel"] = cpModel;
+    if (cpSNr)
+        creds["chargePointSerialNumber"] = cpSNr;
+    if (cpVendor)
+        creds["chargePointVendor"] = cpVendor;
+    if (fWv)
+        creds["firmwareVersion"] = fWv;
+    if (iccid)
+        creds["iccid"] = iccid;
+    if (imsi)
+        creds["imsi"] = imsi;
+    if (meterSNr)
+        creds["meterSerialNumber"] = meterSNr;
+    if (meterType)
+        creds["meterType"] = meterType;
+    
+    if (creds.overflowed()) {
+        AO_DBG_ERR("Charger Credentials too long");
+    }
+
+    size_t written = serializeJson(creds, payload, 512);
+
+    if (written < 2) {
+        AO_DBG_ERR("Charger Credentials could not be written");
+        sprintf(payload, "{}");
+    }
+}
+
+void OCPP_initialize(OcppSocket& ocppSocket, const char *bootNotificationCredentials, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt) {
     if (ocppEngine) {
         AO_DBG_WARN("Can't be called two times. To change the credentials, either restart ESP, or call OCPP_deinitialize() before");
         return;
@@ -103,6 +142,8 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
 
     model.setTransactionStore(std::unique_ptr<TransactionStore>(
         new TransactionStore(AO_NUMCONNECTORS, filesystem)));
+    model.setBootService(std::unique_ptr<BootService>(
+        new BootService(*ocppEngine)));
     model.setChargePointStatusService(std::unique_ptr<ChargePointStatusService>(
         new ChargePointStatusService(*ocppEngine, AO_NUMCONNECTORS)));
     model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
@@ -111,7 +152,7 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
         new AuthorizationService(*ocppEngine, filesystem)));
     model.setReservationService(std::unique_ptr<ReservationService>(
         new ReservationService(*ocppEngine, AO_NUMCONNECTORS)));
-
+    
 #if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
     model.setFirmwareService(std::unique_ptr<FirmwareService>(
         EspWiFi::makeFirmwareService(*ocppEngine, "1234578901"))); //instantiate FW service + ESP installation routine
@@ -133,7 +174,7 @@ void OCPP_initialize(OcppSocket& ocppSocket, float V_eff, ArduinoOcpp::Filesyste
         model.getChargePointStatusService()->setExecuteReset(makeDefaultResetFn());
 #endif
 
-    ocppEngine->setRunOcppTasks(false); //prevent OCPP classes from doing anything while booting
+    model.getBootService()->setChargePointCredentials(bootNotificationCredentials);
 }
 
 void OCPP_deinitialize() {
@@ -152,8 +193,6 @@ void OCPP_deinitialize() {
 
     fileSystemOpt = FilesystemOpt();
     voltage_eff = 230.f;
-
-    OCPP_booted = false;
 }
 
 void OCPP_loop() {
@@ -163,18 +202,6 @@ void OCPP_loop() {
     }
 
     ocppEngine->loop();
-
-
-    if (!OCPP_booted) {
-        auto csService = ocppEngine->getOcppModel().getChargePointStatusService();
-        if (!csService || csService->isBooted()) {
-            OCPP_booted = true;
-            ocppEngine->setRunOcppTasks(true);
-        } else {
-            return; //wait until the first BootNotification succeeded
-        }
-    }
-
 }
 
 void bootNotification(const char *chargePointModel, const char *chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
