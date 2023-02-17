@@ -131,7 +131,7 @@ bool ConfigurationContainerFlash::save() {
     if (success) {
         AO_DBG_DEBUG("Saving configurations finished");
     } else {
-        AO_DBG_ERR("could not save configs file: %", getFilename());
+        AO_DBG_ERR("could not save configs file: %s", getFilename());
     }
 
     return success;
