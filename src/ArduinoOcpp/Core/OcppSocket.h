@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef OCPPSOCKET_H
@@ -18,11 +18,22 @@ public:
     OcppSocket() = default;
     virtual ~OcppSocket() = default;
 
+    /*
+     * The OCPP library will call this function frequently. If you need to execute regular routines, like
+     * calling the loop-function of the WebSocket library, implement them here
+     */
     virtual void loop() = 0;
 
+    /*
+     * The OCPP library calls this function for sending out OCPP messages to the server
+     */
     virtual bool sendTXT(std::string &out) = 0;
 
-    virtual void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) = 0; //ReceiveTXTcallback is defined in OcppServer.h
+    /*
+     * The OCPP library calls this function once during initialization. It passes a callback function to
+     * the socket. The socket should forward any incoming payload from the OCPP server to the receiveTXT callback
+     */
+    virtual void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) = 0;
 };
 
 class OcppEchoSocket : public OcppSocket {
