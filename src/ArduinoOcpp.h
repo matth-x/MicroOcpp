@@ -12,7 +12,6 @@
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
 #include <ArduinoOcpp/Core/OcppOperationCallbacks.h>
-#include <ArduinoOcpp/Core/OcppOperationTimeout.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionPrerequisites.h>
@@ -24,8 +23,6 @@ using ArduinoOcpp::OnSendConfListener;
 using ArduinoOcpp::OnAbortListener;
 using ArduinoOcpp::OnTimeoutListener;
 using ArduinoOcpp::OnReceiveErrorListener;
-
-using ArduinoOcpp::Timeout;
 
 #ifndef AO_CUSTOM_WS
 //use links2004/WebSockets library
@@ -138,7 +135,7 @@ void bootNotification(
             OnAbortListener onAbort = nullptr,           //callback (confirmation not received), optional
             OnTimeoutListener onTimeout = nullptr,       //callback (timeout expired), optional
             OnReceiveErrorListener onError = nullptr,    //callback (error code received), optional
-            std::unique_ptr<Timeout> timeout = nullptr); //custom timeout behavior, optional
+            unsigned int timeout = 0); //custom timeout behavior, optional
 
 //Alternative version for sending a complete BootNotification payload
 void bootNotification(
@@ -147,7 +144,7 @@ void bootNotification(
             OnAbortListener onAbort = nullptr,           //callback (confirmation not received), optional
             OnTimeoutListener onTimeout = nullptr,       //callback (timeout expired), optional
             OnReceiveErrorListener onError = nullptr,    //callback (error code received), optional
-            std::unique_ptr<Timeout> timeout = nullptr); //custom timeout behavior, optional
+            unsigned int timeout = 0); //custom timeout behavior, optional
 
 void authorize(
             const char *idTag,                           //RFID tag (e.g. ISO 14443 UID tag with 4 or 7 bytes)
@@ -155,7 +152,7 @@ void authorize(
             OnAbortListener onAbort = nullptr,           //callback (confirmation not received), optional
             OnTimeoutListener onTimeout = nullptr,       //callback (timeout expired), optional
             OnReceiveErrorListener onError = nullptr,    //callback (error code received), optional
-            std::unique_ptr<Timeout> timeout = nullptr); //custom timeout behavior, optional
+            unsigned int timeout = 0); //custom timeout behavior, optional
 
 /*
  * Transaction management.
@@ -343,8 +340,8 @@ void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq);
 
 void setOnResetSendConf(OnSendConfListener onSendConf);
 
-bool startTransaction(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
+bool startTransaction(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, unsigned int timeout = 0);
 
-bool stopTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, std::unique_ptr<Timeout> timeout = nullptr);
+bool stopTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, unsigned int timeout = 0);
 
 #endif

@@ -63,7 +63,7 @@ void ChargePointStatusService::loop() {
         auto transactionMsg = (*connector)->loop();
         if (transactionMsg != nullptr) {
             auto transactionOp = makeOcppOperation(transactionMsg);
-            transactionOp->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
+            transactionOp->setTimeout(0);
             context.initiateOperation(std::move(transactionOp));
         }
     }

@@ -25,7 +25,7 @@ void MeteringService::loop(){
         auto meterValuesMsg = connectors[i]->loop();
         if (meterValuesMsg != nullptr) {
             auto meterValues = makeOcppOperation(meterValuesMsg);
-            meterValues->setTimeout(std::unique_ptr<Timeout>{new FixedTimeout(120000)});
+            meterValues->setTimeout(120000);
             context.initiateOperation(std::move(meterValues));
         }
     }
@@ -73,7 +73,7 @@ std::unique_ptr<OcppOperation> MeteringService::takeTriggeredMeterValues(int con
         auto msg = connector->takeTriggeredMeterValues();
         if (msg) {
             auto meterValues = makeOcppOperation(msg);
-            meterValues->setTimeout(std::unique_ptr<Timeout>{new FixedTimeout(120000)});
+            meterValues->setTimeout(120000);
             return meterValues;
         }
         AO_DBG_DEBUG("Did not take any samples for connectorId %d", connectorId);

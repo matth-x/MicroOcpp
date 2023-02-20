@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppOperation.h>
@@ -47,18 +47,20 @@ void OcppOperation::setOcppModel(std::shared_ptr<OcppModel> oModel) {
     ocppMessage->setOcppModel(oModel);
 }
 
-void OcppOperation::setTimeout(std::unique_ptr<Timeout> to){
-    if (!to){
-        AO_DBG_ERR("Passed nullptr! Ignore");
-        return;
-    }
-    timeout = std::move(to);
-    timeout->setOnTimeoutListener(onTimeoutListener);
-    timeout->setOnAbortListener(onAbortListener);
+void OcppOperation::setTimeout(unsigned long timeout) {
+    this->timeout_period = timeout;
 }
 
-Timeout *OcppOperation::getTimeout() {
-    return timeout.get();
+bool OcppOperation::isTimeoutExceeded() {
+    return timed_out || (timeout_period && ao_tick_ms() - timeout_start >= timeout_period);
+}
+
+void OcppOperation::executeTimeout() {
+    if (!timed_out) {
+        onTimeoutListener();
+        onAbortListener();
+    }
+    timed_out = true;
 }
 
 void OcppOperation::setMessageID(const std::string &id){
@@ -78,18 +80,7 @@ const std::string *OcppOperation::getMessageID() {
     return &messageID;
 }
 
-bool OcppOperation::sendReq(OcppSocket& ocppSocket){
-
-    /*
-     * timeout behaviour
-     * 
-     * if timeout, print out error message and treat this operation as completed (-> return true)
-     */
-    if (timeout->isExceeded()) {
-        //cancel this operation
-        AO_DBG_INFO("%s has timed out! Discard operation", ocppMessage->getOcppOperationType());
-        return true;
-    }
+void OcppOperation::sendReq(OcppSocket& ocppSocket){
 
     /*
      * retry behaviour
@@ -98,18 +89,20 @@ bool OcppOperation::sendReq(OcppSocket& ocppSocket){
      */
     if (ao_tick_ms() <= retry_start + RETRY_INTERVAL * retry_interval_mult) {
         //NO retry
-        return false;
+        return;
     }
+
     // Do retry. Increase timer by factor 2
-    if (RETRY_INTERVAL * retry_interval_mult * 2 <= RETRY_INTERVAL_MAX)
+    if (RETRY_INTERVAL * retry_interval_mult * 2 <= RETRY_INTERVAL_MAX) {
         retry_interval_mult *= 2;
+    }
 
     /*
      * Create the OCPP message
      */
     auto requestPayload = ocppMessage->createReq();
     if (!requestPayload) {
-        return false;
+        return;
     }
 
     /*
@@ -141,8 +134,6 @@ bool OcppOperation::sendReq(OcppSocket& ocppSocket){
     
     bool success = ocppSocket.sendTXT(out);
 
-    timeout->tick(success);
-
     if (success) {
         AO_DBG_TRAFFIC_OUT(out.c_str());
         retry_start = ao_tick_ms();
@@ -151,8 +142,6 @@ bool OcppOperation::sendReq(OcppSocket& ocppSocket){
         retry_start = 0;
         retry_interval_mult = 1;
     }
-
-    return false;
 }
 
 bool OcppOperation::receiveConf(JsonDocument& confJson){
@@ -201,7 +190,7 @@ bool OcppOperation::receiveError(JsonDocument& confJson){
         onAbortListener();
     } else {
         //restart operation
-        timeout->restart();
+        timeout_start = ao_tick_ms();
         retry_start = 0;
         retry_interval_mult = 1;
     }
@@ -314,6 +303,9 @@ bool OcppOperation::sendConf(OcppSocket& ocppSocket){
 }
 
 void OcppOperation::initiate(std::unique_ptr<StoredOperationHandler> opStorage) {
+
+    timeout_start = ao_tick_ms();
+
     if (ocppMessage) {
 
         /*
@@ -448,6 +440,6 @@ void OcppOperation::rebaseMsgId(int msgIdCounter) {
     getMessageID(); //apply msgIdCounter to this operation
 }
 
-void OcppOperation::getOcppOperationType() {
+const char *OcppOperation::getOcppOperationType() {
     return ocppMessage ? ocppMessage->getOcppOperationType() : "UNDEFINED";
 }

@@ -35,41 +35,25 @@ void OcppConnection::setSocket(OcppSocket& sock) {
 
 void OcppConnection::loop(OcppSocket& ocppSock) {
 
+    /*
+     * Sort out timed out operations
+     */
+    initiatedOcppOperations->drop_if([] (std::unique_ptr<OcppOperation>& op) -> bool {
+        bool timed_out = op->isTimeoutExceeded();
+        if (timed_out) {
+            AO_DBG_INFO("operation timeout: %s", op->getOcppOperationType());
+            op->executeTimeout();
+        }
+        return timed_out;
+    });
+
     /**
-     * Work through the initiatedOcppOperations queue. Start with the first element by calling req() on it. If
-     * the operation is (still) pending, it will return false and therefore each other queued element must
-     * wait until this operation is over. If an ocppOperation is finished, it returns true on a req() call, 
-     * can be dequeued and the following ocppOperation is processed.
+     * Send pending req message
      */
 
     auto inited = initiatedOcppOperations->front();
     if (inited) {
-        bool timeout = inited->sendReq(ocppSock); //The only reason to dequeue elements here is when a timeout occurs. Normally
-        if (timeout){                                       //the Conf msg processing routine dequeues finished elements
-            initiatedOcppOperations->pop_front();
-        }
-    }
-
-    /*
-     * Activate timeout detection on the msgs other than the first in the queue.
-     */
-
-    auto cached = initiatedOcppOperations->begin_tail();
-    while (cached != initiatedOcppOperations->end_tail()) {
-        Timeout *timer = (*cached)->getTimeout();
-        if (!timer) {
-            ++cached; //no timeouts, nothing to do in this iteration
-            continue;
-        }
-        timer->tick(false); //false: did not send a frame prior to calling tick
-        if (timer->isExceeded() &&
-                //dropping operations out-of-order is only possible if they do not own an opNr
-                (!(*cached)->getStorageHandler() || (*cached)->getStorageHandler()->getOpNr() < 0)) {
-            AO_DBG_INFO("Discarding cached due to timeout: %s", (*cached)->getOcppOperationType());
-            cached = initiatedOcppOperations->erase_tail(cached);
-        } else {
-            ++cached;
-        }
+        inited->sendReq(ocppSock);
     }
     
     /**
@@ -84,8 +68,8 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
             received = receivedOcppOperations.erase(received);
         } else {
             //There will be another attempt to send this conf message in a future loop call.
-            //Go on with the next element in the queue, which is now at receivedOcppOperations[i+1]
-            ++received; //TODO review: this makes confs out-of-order. But if the first Op fails because of lacking RAM, this could save the device. 
+            //Go on with the next element in the queue.
+            ++received; //this makes confs out-of-order. But if the first Op fails because of lacking RAM, this could save the device. 
         }
     }
 }
@@ -106,7 +90,7 @@ void OcppConnection::initiateOperation(std::unique_ptr<OcppOperation> o){
 bool OcppConnection::receiveMessage(const char* payload, size_t length) {
 
     AO_DBG_TRAFFIC_IN((int) length, payload);
-    
+
     size_t capacity_init = (3 * length) / 2;
 
     //capacity = ceil capacity_init to the next power of two; should be at least 128
@@ -118,8 +102,8 @@ bool OcppConnection::receiveMessage(const char* payload, size_t length) {
     if (capacity > AO_MAX_JSON_CAPACITY) {
         capacity = AO_MAX_JSON_CAPACITY;
     }
-
-    DynamicJsonDocument doc;
+    
+    DynamicJsonDocument doc {0};
     DeserializationError err = DeserializationError::NoMemory;
 
     while (err == DeserializationError::NoMemory && capacity <= AO_MAX_JSON_CAPACITY) {
@@ -133,26 +117,27 @@ bool OcppConnection::receiveMessage(const char* payload, size_t length) {
     bool success = false;
 
     switch (err.code()) {
-        case DeserializationError::Ok:
+        case DeserializationError::Ok: {
             int messageTypeId = doc[0] | -1;
-                switch(messageTypeId) {
-                    case MESSAGE_TYPE_CALL:
+            switch(messageTypeId) {
+                case MESSAGE_TYPE_CALL:
                     handleReqMessage(doc);      
                     success = true;
-                        break;
-                    case MESSAGE_TYPE_CALLRESULT:
+                    break;
+                case MESSAGE_TYPE_CALLRESULT:
                     handleConfMessage(doc);
                     success = true;
-                        break;
-                    case MESSAGE_TYPE_CALLERROR:
+                    break;
+                case MESSAGE_TYPE_CALLERROR:
                     handleErrMessage(doc);
                     success = true;
-                        break;
-                    default:
-                        AO_DBG_WARN("Invalid OCPP message! (though JSON has successfully been deserialized)");
-                        break;
+                    break;
+                default:
+                    AO_DBG_WARN("Invalid OCPP message! (though JSON has successfully been deserialized)");
+                    break;
             }
             break;
+        }
         case DeserializationError::InvalidInput:
             AO_DBG_WARN("Invalid input! Not a JSON");
             break;
@@ -169,7 +154,7 @@ bool OcppConnection::receiveMessage(const char* payload, size_t length) {
                 doc =  DynamicJsonDocument(200);
                 char onlyRpcHeader[200];
                 size_t onlyRpcHeader_len = removePayload(payload, length, onlyRpcHeader, sizeof(onlyRpcHeader));
-                DeserializationError err2 = deserializeJson(*doc, onlyRpcHeader, onlyRpcHeader_len);
+                DeserializationError err2 = deserializeJson(doc, onlyRpcHeader, onlyRpcHeader_len);
                 if (err2.code() == DeserializationError::Ok) {
                     int messageTypeId2 = doc[0] | -1;
                     if (messageTypeId2 == MESSAGE_TYPE_CALL) {

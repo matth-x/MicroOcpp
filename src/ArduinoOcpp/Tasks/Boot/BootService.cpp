@@ -62,7 +62,7 @@ void BootService::loop() {
      * this class and notify this class about the response
      */
     auto bootNotification = makeOcppOperation(new Ocpp16::BootNotification());
-    bootNotification->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
+    bootNotification->setTimeout(0);
     context.initiatePreBootOperation(std::move(bootNotification));
 
     lastBootNotification = ao_tick_ms();

@@ -199,7 +199,7 @@ void OCPP_loop() {
     ocppEngine->loop();
 }
 
-void bootNotification(const char *chargePointModel, const char *chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+void bootNotification(const char *chargePointModel, const char *chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -210,10 +210,10 @@ void bootNotification(const char *chargePointModel, const char *chargePointVendo
     (*credentials)["chargePointModel"] = (char*) chargePointModel;
     (*credentials)["chargePointVendor"] = (char*) chargePointVendor;
 
-    bootNotification(std::move(credentials), onConf, onAbort, onTimeout, onError, std::move(timeout));
+    bootNotification(std::move(credentials), onConf, onAbort, onTimeout, onError, timeout);
 }
 
-void bootNotification(std::unique_ptr<DynamicJsonDocument> payload, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+void bootNotification(std::unique_ptr<DynamicJsonDocument> payload, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -229,13 +229,13 @@ void bootNotification(std::unique_ptr<DynamicJsonDocument> payload, OnReceiveCon
     if (onError)
         bootNotification->setOnReceiveErrorListener(onError);
     if (timeout)
-        bootNotification->setTimeout(std::move(timeout));
+        bootNotification->setTimeout(timeout);
     else
-        bootNotification->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
+        bootNotification->setTimeout(0);
     ocppEngine->initiateOperation(std::move(bootNotification));
 }
 
-void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -255,9 +255,9 @@ void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener 
     if (onError)
         authorize->setOnReceiveErrorListener(onError);
     if (timeout)
-        authorize->setTimeout(std::move(timeout));
+        authorize->setTimeout(timeout);
     else
-        authorize->setTimeout(std::unique_ptr<Timeout>(new FixedTimeout(20000)));
+        authorize->setTimeout(20000);
     ocppEngine->initiateOperation(std::move(authorize));
 }
 
@@ -659,7 +659,7 @@ void setOnResetRequest(OnReceiveReqListener onReceiveReq) {
 
 #define OCPP_ID_OF_CONNECTOR 1
 
-bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
@@ -700,15 +700,15 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
     if (onError)
         startTransaction->setOnReceiveErrorListener(onError);
     if (timeout)
-        startTransaction->setTimeout(std::move(timeout));
+        startTransaction->setTimeout(timeout);
     else
-        startTransaction->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
+        startTransaction->setTimeout(0);
     ocppEngine->initiateOperation(std::move(startTransaction));
 
     return true;
 }
 
-bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, std::unique_ptr<Timeout> timeout) {
+bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
@@ -745,9 +745,9 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
     if (onError)
         stopTransaction->setOnReceiveErrorListener(onError);
     if (timeout)
-        stopTransaction->setTimeout(std::move(timeout));
+        stopTransaction->setTimeout(timeout);
     else
-        stopTransaction->setTimeout(std::unique_ptr<Timeout>(new SuppressedTimeout()));
+        stopTransaction->setTimeout(0);
     ocppEngine->initiateOperation(std::move(stopTransaction));
 
     return true;

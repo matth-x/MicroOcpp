@@ -7,7 +7,6 @@
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
-#include <ArduinoOcpp/Core/OcppOperationTimeout.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Debug.h>
 
@@ -183,7 +182,7 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
                     context.getOcppModel().getOcppTime().getOcppTimestampNow(),
                     "LocalListConflict"));
 
-        statusNotification->setTimeout(std::unique_ptr<Timeout>(new FixedTimeout(60000)));
+        statusNotification->setTimeout(60000);
 
         context.initiateOperation(std::move(statusNotification));
     }

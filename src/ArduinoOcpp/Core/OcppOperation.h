@@ -34,7 +34,9 @@ private:
     OnAbortListener onAbortListener = [] () {};
     bool reqExecuted = false;
 
-    std::unique_ptr<Timeout> timeout{new OfflineSensitiveTimeout(40000)};
+    unsigned long timeout_start = 0;
+    unsigned long timeout_period = 40000;
+    bool timed_out = false;
 
     const unsigned long RETRY_INTERVAL = 3000; //in ms; first retry after ... ms; second retry after 2 * ... ms; third after 4 ...
     const unsigned long RETRY_INTERVAL_MAX = 20000; //in ms; 
@@ -56,9 +58,11 @@ public:
 
     void setOcppModel(std::shared_ptr<OcppModel> oModel);
 
-    void setTimeout(std::unique_ptr<Timeout> timeout);
+    void setTimeout(unsigned long timeout); //0 = disable timeout
 
-    Timeout *getTimeout();
+    bool isTimeoutExceeded();
+
+    void executeTimeout(); //call Timeout handler
 
     /**
      * Sends the message(s) that belong to the OCPP Operation. This function puts a JSON message on the lower protocol layer.
@@ -66,11 +70,9 @@ public:
      * For instance operation Authorize: sends Authorize.req(idTag)
      * 
      * This function is usually called multiple times by the Arduino loop(). On first call, the request is initially sent. In the
-     * succeeding calls, the implementers decide to either resend the request, or do nothing as the operation is still pending. When
-     * the operation is completed (for example when conf() has been called), return true. When the operation is still pending, return
-     * false.
+     * succeeding calls, the implementers decide to either resend the request, or do nothing as the operation is still pending.
      */
-    bool sendReq(OcppSocket& ocppSocket);
+    void sendReq(OcppSocket& ocppSocket);
 
    /**
     * Decides if message belongs to this operation instance and if yes, proccesses it. For example, multiple instances of an
