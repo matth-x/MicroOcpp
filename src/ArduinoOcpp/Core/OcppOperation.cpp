@@ -448,10 +448,6 @@ void OcppOperation::rebaseMsgId(int msgIdCounter) {
     getMessageID(); //apply msgIdCounter to this operation
 }
 
-void OcppOperation::print_debug() {
-    if (ocppMessage) {
-        AO_CONSOLE_PRINTF("OcppOperation of type %s\n", ocppMessage->getOcppOperationType());
-    } else {
-        AO_CONSOLE_PRINTF("OcppOperation (no type)\n");
-    }
+void OcppOperation::getOcppOperationType() {
+    return ocppMessage ? ocppMessage->getOcppOperationType() : "UNDEFINED";
 }

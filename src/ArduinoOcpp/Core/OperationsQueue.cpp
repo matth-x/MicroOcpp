@@ -174,8 +174,7 @@ void PersistentOperationsQueue::initiate(std::unique_ptr<OcppOperation> op) {
         head = std::move(op);
     } else {
         if (tailCache.size() >= AO_OPERATIONCACHE_MAXSIZE) {
-            AO_DBG_INFO("Replace cached operation (cache full): ");
-            tailCache.front()->print_debug();
+            AO_DBG_INFO("Replace cached operation (cache full): %s", tailCache.front()->getOcppOperationType();
             tailCache.pop_front();
         }
 

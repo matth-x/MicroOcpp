@@ -67,8 +67,7 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
         if (timer->isExceeded() &&
                 //dropping operations out-of-order is only possible if they do not own an opNr
                 (!(*cached)->getStorageHandler() || (*cached)->getStorageHandler()->getOpNr() < 0)) {
-            AO_DBG_INFO("Discarding cached due to timeout:");
-            (*cached)->print_debug();
+            AO_DBG_INFO("Discarding cached due to timeout: %s", (*cached)->getOcppOperationType());
             cached = initiatedOcppOperations->erase_tail(cached);
         } else {
             ++cached;

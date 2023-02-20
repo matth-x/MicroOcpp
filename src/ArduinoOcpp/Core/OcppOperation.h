@@ -137,7 +137,7 @@ public:
 
     void rebaseMsgId(int msgIdCounter); //workaround; remove when random UUID msg IDs are introduced
 
-    void print_debug();
+    const char *getOcppOperationType();
 };
 
 } //end namespace ArduinoOcpp
