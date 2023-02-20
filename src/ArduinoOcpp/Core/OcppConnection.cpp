@@ -11,8 +11,6 @@
 
 #include <ArduinoOcpp/Debug.h>
 
-#define HEAP_GUARD 2000UL //will not accept JSON messages if it will result in less than HEAP_GUARD free bytes in heap
-
 size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_size);
 
 using namespace ArduinoOcpp;
@@ -109,45 +107,50 @@ bool OcppConnection::receiveMessage(const char* payload, size_t length) {
 
     AO_DBG_TRAFFIC_IN((int) length, payload);
     
-    bool deserializationSuccess = false;
+    size_t capacity_init = (3 * length) / 2;
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>{nullptr};
-    size_t capacity = length + 100;
+    //capacity = ceil capacity_init to the next power of two; should be at least 128
 
-    DeserializationError err = DeserializationError::NoMemory;
-    while (capacity + HEAP_GUARD < ao_avail_heap() && err == DeserializationError::NoMemory) {
-        doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
-        err = deserializeJson(*doc, payload, length);
-
-        capacity *= 3;
-        capacity /= 2;
+    size_t capacity = 128;
+    while (capacity < capacity_init && capacity < AO_MAX_JSON_CAPACITY) {
+        capacity *= 2;
+    }
+    if (capacity > AO_MAX_JSON_CAPACITY) {
+        capacity = AO_MAX_JSON_CAPACITY;
     }
 
-    //TODO insert validateRpcHeader at suitable position
+    DynamicJsonDocument doc;
+    DeserializationError err = DeserializationError::NoMemory;
+
+    while (err == DeserializationError::NoMemory && capacity <= AO_MAX_JSON_CAPACITY) {
+
+        doc = DynamicJsonDocument(capacity);
+        err = deserializeJson(doc, payload, length);
+
+        capacity *= 2;
+    }
+
+    bool success = false;
 
     switch (err.code()) {
         case DeserializationError::Ok:
-            if (doc != nullptr){
-                int messageTypeId = (*doc)[0] | -1;
+            int messageTypeId = doc[0] | -1;
                 switch(messageTypeId) {
                     case MESSAGE_TYPE_CALL:
-                        handleReqMessage(*doc);      
-                        deserializationSuccess = true;
+                    handleReqMessage(doc);      
+                    success = true;
                         break;
                     case MESSAGE_TYPE_CALLRESULT:
-                        handleConfMessage(*doc);
-                        deserializationSuccess = true;
+                    handleConfMessage(doc);
+                    success = true;
                         break;
                     case MESSAGE_TYPE_CALLERROR:
-                        handleErrMessage(*doc);
-                        deserializationSuccess = true;
+                    handleErrMessage(doc);
+                    success = true;
                         break;
                     default:
                         AO_DBG_WARN("Invalid OCPP message! (though JSON has successfully been deserialized)");
                         break;
-                }
-            } else { //unlikely corner case
-                AO_DBG_ERR("Deserialization is okay but doc is nullptr");
             }
             break;
         case DeserializationError::InvalidInput:
@@ -155,7 +158,7 @@ bool OcppConnection::receiveMessage(const char* payload, size_t length) {
             break;
         case DeserializationError::NoMemory:
             {
-                AO_DBG_WARN("OOP! Incoming operation exceeds reserved heap. Input length = %zu, free heap = %u", length, ao_avail_heap());
+                AO_DBG_WARN("OOP! Incoming operation exceeds reserved heap. Input length = %zu, max capacity = %d", length, AO_MAX_JSON_CAPACITY);
 
                 /*
                  * If websocket input is of message type MESSAGE_TYPE_CALL, send back a message of type MESSAGE_TYPE_CALLERROR.
@@ -163,16 +166,16 @@ bool OcppConnection::receiveMessage(const char* payload, size_t length) {
                  * If the input type is MESSAGE_TYPE_CALLRESULT, it can be ignored. This controller will automatically resend the corresponding request message.
                  */
 
-                doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(200));
+                doc =  DynamicJsonDocument(200);
                 char onlyRpcHeader[200];
                 size_t onlyRpcHeader_len = removePayload(payload, length, onlyRpcHeader, sizeof(onlyRpcHeader));
                 DeserializationError err2 = deserializeJson(*doc, onlyRpcHeader, onlyRpcHeader_len);
                 if (err2.code() == DeserializationError::Ok) {
-                    int messageTypeId2 = (*doc)[0] | -1;
+                    int messageTypeId2 = doc[0] | -1;
                     if (messageTypeId2 == MESSAGE_TYPE_CALL) {
-                        deserializationSuccess = true;
-                        auto op = makeOcppOperation(new OutOfMemory(ao_avail_heap(), length));
-                        handleReqMessage(*doc, std::move(op));
+                        success = true;
+                        auto op = makeOcppOperation(new OutOfMemory(AO_MAX_JSON_CAPACITY, length));
+                        handleReqMessage(doc, std::move(op));
                     }
                 }
             }
@@ -182,7 +185,7 @@ bool OcppConnection::receiveMessage(const char* payload, size_t length) {
             break;
     }
 
-    return deserializationSuccess;
+    return success;
 }
 
 /**

@@ -9,10 +9,6 @@
 #include <ArduinoJson.h>
 #include <memory>
 
-#ifndef AO_MAX_JSON_CAPACITY
-#define AO_MAX_JSON_CAPACITY 4096
-#endif
-
 namespace ArduinoOcpp {
 
 class ArduinoJsonFileAdapter {

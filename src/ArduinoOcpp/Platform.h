@@ -84,15 +84,11 @@ unsigned long ao_tick_ms_unix();
 #endif
 #endif
 
-#ifndef ao_avail_heap
-#if AO_PLATFORM == AO_PLATFORM_ARDUINO
-#include <Arduino.h>
-#define ao_avail_heap ESP.getFreeHeap
-#elif AO_PLATFORM == AO_PLATFORM_ESPIDF
-#include "freertos/FreeRTOS.h"
-#define ao_avail_heap xPortGetFreeHeapSize
-#elif AO_PLATFORM == AO_PLATFORM_UNIX
-#define ao_avail_heap(X) 1000000 //suppress this technique on unix
+#ifndef AO_MAX_JSON_CAPACITY
+#if AO_PLATFORM == AO_PLATFORM_UNIX
+#define AO_MAX_JSON_CAPACITY 16384
+#else
+#define AO_MAX_JSON_CAPACITY 4096
 #endif
 #endif
 

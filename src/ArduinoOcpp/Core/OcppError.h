@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef OCPPERROR_H
@@ -20,10 +20,10 @@ public:
 
 class OutOfMemory : public OcppMessage {
 private:
-    uint32_t freeHeap;
+    size_t maxCapacity;
     size_t msgLen;
 public:
-    OutOfMemory(uint32_t freeHeap, size_t msgLen) : freeHeap(freeHeap), msgLen(msgLen) { }
+    OutOfMemory(size_t maxCapacity, size_t msgLen) : maxCapacity(maxCapacity), msgLen(msgLen) { }
     const char *getErrorCode() {
         return "InternalError";
     }
@@ -33,7 +33,7 @@ public:
     std::unique_ptr<DynamicJsonDocument> getErrorDetails() {
         auto errDoc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
         JsonObject err = errDoc->to<JsonObject>();
-        err["free_heap"] = freeHeap;
+        err["max_capacity"] = maxCapacity;
         err["msg_length"] = msgLen;
         return errDoc;
     }
