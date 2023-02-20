@@ -48,19 +48,6 @@ void VolatileOperationsQueue::initiate(std::unique_ptr<OcppOperation> op) {
     queue.push_back(std::move(op));
 }
 
-std::deque<std::unique_ptr<OcppOperation>>::iterator VolatileOperationsQueue::begin_tail() {
-    if (queue.begin() != queue.end()) {
-        return queue.begin() + 1;
-    } else {
-        return queue.end();
-    }
-}
-std::deque<std::unique_ptr<OcppOperation>>::iterator VolatileOperationsQueue::end_tail() {
-    return queue.end();
-}
-std::deque<std::unique_ptr<OcppOperation>>::iterator VolatileOperationsQueue::erase_tail(std::deque<std::unique_ptr<OcppOperation>>::iterator el) {
-    return queue.erase(el);
-}
 void VolatileOperationsQueue::drop_if(std::function<bool(std::unique_ptr<OcppOperation>&)> pred) {
     queue.erase(std::remove_if(queue.begin(), queue.end(), pred), queue.end());
 }
@@ -190,16 +177,4 @@ void PersistentOperationsQueue::drop_if(std::function<bool(std::unique_ptr<OcppO
     }
 
     tailCache.erase(std::remove_if(tailCache.begin(), tailCache.end(), pred), tailCache.end());
-}
-
-std::deque<std::unique_ptr<OcppOperation>>::iterator PersistentOperationsQueue::begin_tail() {
-    return tailCache.begin();
-}
-
-std::deque<std::unique_ptr<OcppOperation>>::iterator PersistentOperationsQueue::end_tail() {
-    return tailCache.end();
-}
-
-std::deque<std::unique_ptr<OcppOperation>>::iterator PersistentOperationsQueue::erase_tail(std::deque<std::unique_ptr<OcppOperation>>::iterator el) {
-    return tailCache.erase(el);
 }

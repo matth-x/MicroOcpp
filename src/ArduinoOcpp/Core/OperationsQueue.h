@@ -26,9 +26,6 @@ public:
 
     virtual void initiate(std::unique_ptr<OcppOperation> op) = 0;
 
-    virtual std::deque<std::unique_ptr<OcppOperation>>::iterator begin_tail() = 0; //iterator for all cached elements except head
-    virtual std::deque<std::unique_ptr<OcppOperation>>::iterator end_tail() = 0;
-    virtual std::deque<std::unique_ptr<OcppOperation>>::iterator erase_tail(std::deque<std::unique_ptr<OcppOperation>>::iterator el) = 0;
     virtual void drop_if(std::function<bool(std::unique_ptr<OcppOperation>&)> pred) = 0; //drops operations from this queue where pred(operation) == true. Executes pred in order
 };
 
@@ -44,9 +41,6 @@ public:
 
     void initiate(std::unique_ptr<OcppOperation> op) override;
 
-    std::deque<std::unique_ptr<OcppOperation>>::iterator begin_tail() override; //iterator for all cached elements except head
-    std::deque<std::unique_ptr<OcppOperation>>::iterator end_tail() override;
-    std::deque<std::unique_ptr<OcppOperation>>::iterator erase_tail(std::deque<std::unique_ptr<OcppOperation>>::iterator el) override;
     void drop_if(std::function<bool(std::unique_ptr<OcppOperation>&)> pred) override; //drops operations from this queue where pred(operation) == true. Executes pred in order
 };
 
@@ -67,9 +61,6 @@ public:
 
     void initiate(std::unique_ptr<OcppOperation> op) override;
 
-    std::deque<std::unique_ptr<OcppOperation>>::iterator begin_tail() override; //iterator for all cached elements except head
-    std::deque<std::unique_ptr<OcppOperation>>::iterator end_tail() override;
-    std::deque<std::unique_ptr<OcppOperation>>::iterator erase_tail(std::deque<std::unique_ptr<OcppOperation>>::iterator el) override;
     void drop_if(std::function<bool(std::unique_ptr<OcppOperation>&)> pred) override; //drops operations from this queue where pred(operation) == true. Executes pred in order
 
 };
