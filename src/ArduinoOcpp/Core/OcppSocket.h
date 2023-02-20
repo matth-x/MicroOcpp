@@ -66,7 +66,6 @@ public:
 #ifndef AO_CUSTOM_WS
 
 #include <WebSocketsClient.h>
-#include <WebSocketsServer.h>
 
 namespace ArduinoOcpp {
 namespace EspWiFi {
@@ -85,20 +84,6 @@ public:
     void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT);
 
     unsigned long getLastRecv(); //get time of last successful receive in millis
-};
-
-class OcppServerSocket : public OcppSocket {
-private:
-    IPAddress ip_addr;
-public:
-    OcppServerSocket(IPAddress &ip_addr);
-    ~OcppServerSocket();
-
-    void loop();
-
-    bool sendTXT(std::string &out);
-
-    void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT);
 };
 
 } //end namespace EspWiFi

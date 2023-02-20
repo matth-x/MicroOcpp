@@ -17,7 +17,6 @@ set(AO_SRC
     src/ArduinoOcpp/Core/OcppModel.cpp
     src/ArduinoOcpp/Core/OcppOperation.cpp
     src/ArduinoOcpp/Core/OcppOperationTimeout.cpp
-    src/ArduinoOcpp/Core/OcppServer.cpp
     src/ArduinoOcpp/Core/OcppSocket.cpp
     src/ArduinoOcpp/Core/OcppTime.cpp
     src/ArduinoOcpp/Core/OperationsQueue.cpp

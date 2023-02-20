@@ -1,9 +1,8 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppSocket.h>
-#include <ArduinoOcpp/Core/OcppServer.h>
 #include <ArduinoOcpp/Debug.h>
 
 #ifndef AO_CUSTOM_WS
@@ -65,27 +64,6 @@ void OcppClientSocket::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
 
 unsigned long OcppClientSocket::getLastRecv() {
     return lastRecv;
-}
-
-OcppServerSocket::OcppServerSocket(IPAddress &ip_addr) : ip_addr(ip_addr) {
-    
-}
-
-OcppServerSocket::~OcppServerSocket() {
-    OcppServer::getInstance()->removeReceiveTXTcallback(this->ip_addr);
-}
-
-void OcppServerSocket::loop() {
-    //nothing here. The client must call the EspWiFi server loop function
-}
-
-bool OcppServerSocket::sendTXT(std::string &out) {
-    AO_DBG_TRAFFIC_OUT(out.c_str());
-    return OcppServer::getInstance()->sendTXT(ip_addr, out);
-}
-
-void OcppServerSocket::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
-    OcppServer::getInstance()->setReceiveTXTcallback(ip_addr, callback);
 }
 
 #endif
