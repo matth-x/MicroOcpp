@@ -59,7 +59,6 @@ private:
     std::shared_ptr<Configuration<bool>> stopTransactionOnInvalidId;
     std::shared_ptr<Configuration<bool>> stopTransactionOnEVSideDisconnect;
     std::shared_ptr<Configuration<bool>> unlockConnectorOnEVSideDisconnect;
-    std::shared_ptr<Configuration<bool>> localAuthorizeOffline;
     std::shared_ptr<Configuration<bool>> localPreAuthorize;
 
     std::shared_ptr<Configuration<bool>> silentOfflineTransactions;

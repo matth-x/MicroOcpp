@@ -34,7 +34,6 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
     stopTransactionOnInvalidId = declareConfiguration<bool>("StopTransactionOnInvalidId", true, CONFIGURATION_FN, true, true, true, false);
     stopTransactionOnEVSideDisconnect = declareConfiguration<bool>("StopTransactionOnEVSideDisconnect", true, CONFIGURATION_FN, true, true, true, false);
     unlockConnectorOnEVSideDisconnect = declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", true, CONFIGURATION_FN, true, true, true, false);
-    localAuthorizeOffline = declareConfiguration<bool>("LocalAuthorizeOffline", false, CONFIGURATION_FN, true, true, true, false);
     localPreAuthorize = declareConfiguration<bool>("LocalPreAuthorize", false, CONFIGURATION_FN, true, true, true, false);
 
     //if the EVSE goes offline, can it continue to charge without sending StartTx / StopTx to the server when going online again?
