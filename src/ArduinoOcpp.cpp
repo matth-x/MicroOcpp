@@ -52,7 +52,7 @@ using namespace ArduinoOcpp::Facade;
 using namespace ArduinoOcpp::Ocpp16;
 
 #ifndef AO_CUSTOM_WS
-void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt) {
+void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *login, const char *password, const char *fingerprint, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt) {
     if (ocppEngine) {
         AO_DBG_WARN("Can't be called two times. Either restart ESP, or call OCPP_deinitialize() before");
         return;
@@ -61,8 +61,8 @@ void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_u
     if (!webSocket)
         webSocket = new WebSocketsClient();
 
-    // server address, port and URL
-    webSocket->begin(CS_hostname, CS_port, CS_url, "ocpp1.6");
+    // server address, port, URL and SSL fingerprint
+    webSocket->beginSSL(CS_hostname, CS_port, CS_url, fingerprint, "ocpp1.6");
 
     // try ever 5000 again if connection has failed
     webSocket->setReconnectInterval(5000);
@@ -72,6 +72,9 @@ void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_u
     // expect pong from server within 3000 ms
     // consider connection disconnected if pong is not received 2 times
     webSocket->enableHeartbeat(15000, 3000, 2); //comment this one out to for specific OCPP servers
+
+    // add authentication data (optional)
+    webSocket->setAuthorization(login, password);
 
     delete ocppSocket;
     ocppSocket = new EspWiFi::OcppClientSocket(webSocket);
