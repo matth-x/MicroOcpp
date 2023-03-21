@@ -52,7 +52,7 @@ using namespace ArduinoOcpp::Facade;
 using namespace ArduinoOcpp::Ocpp16;
 
 #ifndef AO_CUSTOM_WS
-void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *login, const char *password, const char *fingerprint, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt) {
+void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *login, const char *password, const char *CA_cert, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt) {
     if (ocppEngine) {
         AO_DBG_WARN("Can't be called two times. Either restart ESP, or call OCPP_deinitialize() before");
         return;
@@ -61,8 +61,16 @@ void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_u
     if (!webSocket)
         webSocket = new WebSocketsClient();
 
-    // server address, port, URL and SSL fingerprint
-    webSocket->beginSSL(CS_hostname, CS_port, CS_url, fingerprint, "ocpp1.6");
+    if (!strncmp(CS_url,"wss",3) || !strncmp(CS_url,"https",5))
+    {
+        // server address, port, URL and TLS certificate
+        webSocket->beginSslWithCA(CS_hostname, CS_port, CS_url, CA_cert, "ocpp1.6");
+    }
+    else
+    {
+        // server address, port, URL
+        webSocket->begin(CS_hostname, CS_port, CS_url, "ocpp1.6");
+    }
 
     // try ever 5000 again if connection has failed
     webSocket->setReconnectInterval(5000);

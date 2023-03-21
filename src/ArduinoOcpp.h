@@ -46,7 +46,7 @@ void OCPP_initialize(
             const char *CS_url,      //e.g. "ws://example.com/steve/websocket/CentralSystemService/charger001"
             const char *login = "", //login present in the websocket message header
             const char *password = "", //password present in the websocket message header
-            const char *fingerprint = "", //SSL fingerprint
+            const char *CA_cert = NULL, //TLS certificate
             float V_eff = 230.f,     //Grid voltage of your country. e.g. 230.f (European voltage)
             ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
 #endif
