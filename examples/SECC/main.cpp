@@ -25,6 +25,9 @@
  * Interface to the SECC (Supply Equipment Communication Controller, e.g. the SAE J1772 module)
  */
 #define AMPERAGE_PIN 4 //modulated as PWM
+#if defined(ESP32)
+#define PWM_CHANNEL 0 //PWM channel (only for ESP32)
+#endif
 
 #define EV_PLUG_PIN 14 // Input pin | Read if an EV is connected to the EVSE
 #if defined(ESP32)
@@ -132,9 +135,9 @@ void setup() {
     pinMode(AMPERAGE_PIN, OUTPUT);
 #if defined(ESP32)
     pinMode(AMPERAGE_PIN, OUTPUT);
-    ledcSetup(0, 1000, 8); //channel=0, freq=1000Hz, range=(2^8)-1
-    ledcAttachPin(AMPERAGE_PIN, 0);
-    ledcWrite(AMPERAGE_PIN, 256); //256 is constant +3.3V DC
+    ledcSetup(PWM_CHANNEL, 1000, 8); //channel=PWM_CHANNEL, freq=1000Hz, range=(2^8)-1
+    ledcAttachPin(AMPERAGE_PIN, PWM_CHANNEL); //pin, channel
+    ledcWrite(PWM_CHANNEL, 256); //channel, duty cycle (256 is constant +3.3V DC)
 #elif defined(ESP8266)
     analogWriteRange(255); //range=(2^8)-1
     analogWriteFreq(1000); //freq=1000Hz
@@ -257,7 +260,7 @@ void setup() {
         }
 
 #if defined(ESP32)
-        ledcWrite(AMPERAGE_PIN, pwmVal);
+        ledcWrite(PWM_CHANNEL, pwmVal);
 #elif defined(ESP8266)
         analogWrite(AMPERAGE_PIN, pwmVal);
 #endif
