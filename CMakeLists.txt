@@ -50,6 +50,7 @@ set(AO_SRC
     src/ArduinoOcpp/MessagesV16/UpdateFirmware.cpp
     src/ArduinoOcpp/Platform.cpp
     src/ArduinoOcpp/SimpleOcppOperationFactory.cpp
+    src/ArduinoOcpp/OperationDeserializer.cpp
     src/ArduinoOcpp/Tasks/Authorization/AuthorizationData.cpp
     src/ArduinoOcpp/Tasks/Authorization/AuthorizationList.cpp
     src/ArduinoOcpp/Tasks/Authorization/AuthorizationService.cpp

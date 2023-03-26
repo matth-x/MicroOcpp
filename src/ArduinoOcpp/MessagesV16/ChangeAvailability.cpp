@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
@@ -10,7 +10,7 @@
 
 using ArduinoOcpp::Ocpp16::ChangeAvailability;
 
-ChangeAvailability::ChangeAvailability() {
+ChangeAvailability::ChangeAvailability(OcppModel& context) : context(context) {
 
 }
 
@@ -20,10 +20,10 @@ const char* ChangeAvailability::getOcppOperationType(){
 
 void ChangeAvailability::processReq(JsonObject payload) {
     int connectorId = payload["connectorId"] | -1;
-    if (!ocppModel || !ocppModel->getChargePointStatusService()) {
+    auto cpStatus = context.getChargePointStatusService();
+    if (!cpStatus) {
         return;
     }
-    auto cpStatus = ocppModel->getChargePointStatusService();
     if (connectorId < 0 || connectorId >= cpStatus->getNumConnectors()) {
         return;
     }

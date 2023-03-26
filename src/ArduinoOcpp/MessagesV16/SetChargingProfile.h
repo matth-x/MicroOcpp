@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef SETCHARGINGPROFILE_H
@@ -8,15 +8,19 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
 namespace ArduinoOcpp {
+
+class OcppModel;
+
 namespace Ocpp16 {
 
 class SetChargingProfile : public OcppMessage {
 private:
+    OcppModel& context;
     std::unique_ptr<DynamicJsonDocument> payloadToClient;
 public:
-    SetChargingProfile();
+    SetChargingProfile(OcppModel& context);
 
-    SetChargingProfile(std::unique_ptr<DynamicJsonDocument> payloadToClient);
+    SetChargingProfile(OcppModel& context, std::unique_ptr<DynamicJsonDocument> payloadToClient);
 
     ~SetChargingProfile();
 

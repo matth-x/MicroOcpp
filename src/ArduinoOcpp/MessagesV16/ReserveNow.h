@@ -8,14 +8,18 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
 namespace ArduinoOcpp {
+
+class OcppModel;
+
 namespace Ocpp16 {
 
 class ReserveNow : public OcppMessage {
 private:
+    OcppModel& context;
     const char *errorCode = nullptr;
     const char *reservationStatus = nullptr;
 public:
-    ReserveNow();
+    ReserveNow(OcppModel& context);
 
     ~ReserveNow();
 

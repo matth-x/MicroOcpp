@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/GetDiagnostics.h>
@@ -9,7 +9,7 @@
 
 using ArduinoOcpp::Ocpp16::GetDiagnostics;
 
-GetDiagnostics::GetDiagnostics() {
+GetDiagnostics::GetDiagnostics(OcppModel& context) : context(context) {
 
 }
 
@@ -53,8 +53,8 @@ void GetDiagnostics::processReq(JsonObject payload) {
 }
 
 std::unique_ptr<DynamicJsonDocument> GetDiagnostics::createConf(){
-    if (ocppModel && ocppModel->getDiagnosticsService()) {
-        fileName = ocppModel->getDiagnosticsService()->requestDiagnosticsUpload(location, retries, retryInterval, startTime, stopTime);
+    if (auto diagService = context.getDiagnosticsService()) {
+        fileName = diagService->requestDiagnosticsUpload(location, retries, retryInterval, startTime, stopTime);
     } else {
         AO_DBG_WARN("DiagnosticsService has not been initialized before! Please have a look at ArduinoOcpp.cpp for an example. Abort");
         return createEmptyDocument();

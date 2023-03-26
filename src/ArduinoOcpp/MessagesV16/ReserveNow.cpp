@@ -10,7 +10,7 @@
 
 using ArduinoOcpp::Ocpp16::ReserveNow;
 
-ReserveNow::ReserveNow() {
+ReserveNow::ReserveNow(OcppModel& context) : context(context) {
   
 }
 
@@ -42,13 +42,12 @@ void ReserveNow::processReq(JsonObject payload) {
 
     int connectorId = payload["connectorId"];
 
-    ReservationService *rService = nullptr;
-    ChargePointStatusService *cpService = nullptr;
-    if (ocppModel && ocppModel->getReservationService() &&
-                ocppModel->getChargePointStatusService() && ocppModel->getChargePointStatusService()->getConnector(0)) {
-        rService = ocppModel->getReservationService();
-        cpService = ocppModel->getChargePointStatusService();
-        ConnectorStatus *chargePoint = cpService->getConnector(0);
+    if (context.getReservationService() &&
+                context.getChargePointStatusService() &&
+                context.getChargePointStatusService()->getConnector(0)) {
+        auto rService = context.getReservationService();
+        auto cpService = context.getChargePointStatusService();
+        auto chargePoint = cpService->getConnector(0);
 
         if (connectorId >= cpService->getNumConnectors()) {
             errorCode = "PropertyConstraintViolation";

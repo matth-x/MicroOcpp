@@ -18,6 +18,9 @@ TEST_CASE( "Charging sessions" ) {
     OcppEchoSocket echoSocket;
     OCPP_initialize(echoSocket);
 
+    auto engine = getOcppEngine();
+    auto& checkMsg = engine->getOperationDeserializer();
+
     ao_set_timer(custom_timer_cb);
 
     auto connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN);
@@ -27,7 +30,8 @@ TEST_CASE( "Charging sessions" ) {
     
     std::array<const char*, 2> expectedSN {"Available", "Available"};
     std::array<bool, 2> checkedSN {false, false};
-    registerCustomOcppMessage("StatusNotification", [] () {return new Ocpp16::StatusNotification();},
+    checkMsg.registerOcppOperation("StatusNotification", [] () -> OcppMessage* {return new Ocpp16::StatusNotification(0, OcppEvseState::NOT_SET, MIN_TIME);});
+    checkMsg.setOnRequest("StatusNotification",
         [&checkedSN, &expectedSN] (JsonObject request) {
             int connectorId = request["connectorId"] | -1;
             checkedSN[connectorId] = !strcmp(request["status"] | "Invalid", expectedSN[connectorId]);
@@ -38,7 +42,8 @@ TEST_CASE( "Charging sessions" ) {
     SECTION("Check idle state"){
 
         bool checkedBN = false;
-        registerCustomOcppMessage("BootNotification", [] () {return new Ocpp16::BootNotification();},
+        checkMsg.registerOcppOperation("BootNotification", [engine] () -> OcppMessage* {return new Ocpp16::BootNotification(engine->getOcppModel(), std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(0)));});
+        checkMsg.setOnRequest("BootNotification",
             [&checkedBN] (JsonObject request) {
                 checkedBN = !strcmp(request["chargePointModel"] | "Invalid", "dummy1234");
             });

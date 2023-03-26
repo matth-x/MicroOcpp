@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
@@ -29,10 +29,6 @@ MeterValues::~MeterValues(){
 
 const char* MeterValues::getOcppOperationType(){
     return "MeterValues";
-}
-
-void MeterValues::initiate() {
-
 }
 
 std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {

@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
@@ -7,8 +7,10 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/OperationDeserializer.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 
+#include <ArduinoOcpp/MessagesV16/UpdateFirmware.h>
 #include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
 
 #include <ArduinoOcpp/Platform.h>
@@ -27,6 +29,13 @@ FirmwareService::FirmwareService(OcppEngine& context) : context(context) {
         fProfilePlus += fpId;
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
+    
+    context.getOperationDeserializer().registerOcppOperation("UpdateFirmware", [&context] () {
+        return new Ocpp16::UpdateFirmware(context.getOcppModel());});
+
+    //Register message handler for TriggerMessage operation
+    context.getOperationDeserializer().registerOcppOperation("FirmwareStatusNotification", [this] () {
+        return new Ocpp16::FirmwareStatusNotification(getFirmwareStatus());});
 }
 
 void FirmwareService::setBuildNumber(const char *buildNumber) {

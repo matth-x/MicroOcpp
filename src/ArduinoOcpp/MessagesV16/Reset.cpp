@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/Reset.h>
@@ -8,7 +8,7 @@
 
 using ArduinoOcpp::Ocpp16::Reset;
 
-Reset::Reset() {
+Reset::Reset(OcppModel& context) : context(context) {
   
 }
 
@@ -23,8 +23,7 @@ void Reset::processReq(JsonObject payload) {
      */
     bool isHard = !strcmp(payload["type"] | "undefined", "Hard");
 
-    if (ocppModel && ocppModel->getChargePointStatusService()) {
-        auto cpsService = ocppModel->getChargePointStatusService();
+    if (auto cpsService = context.getChargePointStatusService()) {
         if (!cpsService->getExecuteReset()) {
             AO_DBG_ERR("No reset handler set. Abort operation");
             (void)0;

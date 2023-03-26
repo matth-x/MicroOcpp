@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef STARTTRANSACTION_H
@@ -12,25 +12,24 @@
 
 namespace ArduinoOcpp {
 
+class OcppModel;
 class Transaction;
-class TransactionRPC;
-class StoredOperationHandler;
 
 namespace Ocpp16 {
 
 class StartTransaction : public OcppMessage {
 private:
+    OcppModel& context;
     std::shared_ptr<Transaction> transaction;
 public:
 
-    StartTransaction(std::shared_ptr<Transaction> transaction);
+    StartTransaction(OcppModel& context, std::shared_ptr<Transaction> transaction);
 
-    StartTransaction() = default; //for debugging only. Make this for the server pendant
+    ~StartTransaction();
 
     const char* getOcppOperationType();
 
-    void initiate();
-    bool initiate(StoredOperationHandler *opStore) override;
+    void initiate(StoredOperationHandler *opStore) override;
 
     bool restore(StoredOperationHandler *opStore) override;
 

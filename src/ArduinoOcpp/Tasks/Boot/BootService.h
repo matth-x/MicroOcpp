@@ -44,8 +44,9 @@ public:
 
     void loop();
 
-    void setChargePointCredentials(const char *credentialsJson);
-    std::string& getChargePointCredentials();
+    void setChargePointCredentials(JsonObject credentials);
+    void setChargePointCredentials(const char *credentials); //credentials: serialized BootNotification payload
+    std::unique_ptr<DynamicJsonDocument> getChargePointCredentials();
 
     void notifyRegistrationStatus(RegistrationStatus status);
     void setRetryInterval(unsigned long interval);

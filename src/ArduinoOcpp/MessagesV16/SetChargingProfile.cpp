@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/SetChargingProfile.h>
@@ -9,13 +9,12 @@
 
 using ArduinoOcpp::Ocpp16::SetChargingProfile;
 
-SetChargingProfile::SetChargingProfile() {
+SetChargingProfile::SetChargingProfile(OcppModel& context) : context(context) {
 
 }
 
-SetChargingProfile::SetChargingProfile(std::unique_ptr<DynamicJsonDocument> payloadToClient) 
-  : payloadToClient{std::move(payloadToClient)} {
-
+SetChargingProfile::SetChargingProfile(OcppModel& context, std::unique_ptr<DynamicJsonDocument> payloadToClient)
+        : context(context), payloadToClient{std::move(payloadToClient)} {
 }
 
 SetChargingProfile::~SetChargingProfile() {
@@ -32,9 +31,8 @@ void SetChargingProfile::processReq(JsonObject payload) {
 
     JsonObject csChargingProfiles = payload["csChargingProfiles"];
 
-    if (ocppModel && ocppModel->getSmartChargingService()) {
-        auto smartChargingService = ocppModel->getSmartChargingService();
-        smartChargingService->setChargingProfile(csChargingProfiles);
+    if (auto scService = context.getSmartChargingService()) {
+        scService->setChargingProfile(csChargingProfiles);
     }
 }
 

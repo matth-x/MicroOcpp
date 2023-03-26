@@ -14,10 +14,10 @@ using namespace ArduinoOcpp;
 OcppEngine *ArduinoOcpp::defaultOcppEngine = nullptr;
 
 OcppEngine::OcppEngine(OcppSocket& ocppSocket, const OcppClock& system_clock, std::shared_ptr<FilesystemAdapter> filesystem)
-        : oSock(ocppSocket), oModel{std::make_shared<OcppModel>(system_clock)}, oConn{oModel, filesystem} {
+        : oSock(ocppSocket), oModel{std::make_shared<OcppModel>(system_clock)}, oConn{operationDeserializer, oModel, filesystem} {
     defaultOcppEngine = this;
 
-    preBootConn = std::unique_ptr<OcppConnection>(new OcppConnection(oModel, nullptr)); //pre boot queue doesn't need persistency
+    preBootConn = std::unique_ptr<OcppConnection>(new OcppConnection(operationDeserializer, oModel, nullptr)); //pre boot queue doesn't need persistency
     preBootConn->setSocket(oSock);
 }
 
@@ -45,16 +45,14 @@ void OcppEngine::activatePostBootCommunication() {
 
 void OcppEngine::initiateOperation(std::unique_ptr<OcppOperation> op) {
     if (op) {
-        op->setOcppModel(oModel);
-        oConn.initiateOperation(std::move(op));
+        oConn.sendRequest(std::move(op));
     }
 }
 
 void OcppEngine::initiatePreBootOperation(std::unique_ptr<OcppOperation> op) {
     if (op) {
         if (preBootConn) {
-            op->setOcppModel(oModel);
-            preBootConn->initiateOperation(std::move(op));
+            preBootConn->sendRequest(std::move(op));
         } else {
             //not in pre boot mode anymore - initiate normally
             initiateOperation(std::move(op));
@@ -64,4 +62,8 @@ void OcppEngine::initiatePreBootOperation(std::unique_ptr<OcppOperation> op) {
 
 OcppModel& OcppEngine::getOcppModel() {
     return *oModel;
+}
+
+OperationDeserializer& OcppEngine::getOperationDeserializer() {
+    return operationDeserializer;
 }

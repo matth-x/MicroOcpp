@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef TRIGGERMESSAGE_H
@@ -11,18 +11,20 @@
 
 namespace ArduinoOcpp {
 
+class OcppModel;
 class OcppOperation;
 
 namespace Ocpp16 {
 
 class TriggerMessage : public OcppMessage {
 private:
+    OcppModel& context;
     std::vector<std::unique_ptr<OcppOperation>> triggeredOperations;
     const char *statusMessage {nullptr};
 
     const char *errorCode = nullptr;
 public:
-    TriggerMessage() = default;
+    TriggerMessage(OcppModel& context);
 
     const char* getOcppOperationType();
 

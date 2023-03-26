@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 /**
@@ -21,19 +21,13 @@
 #include <ArduinoJson.h>
 #include <memory>
 
+#include <ArduinoOcpp/Core/OperationStore.h>
+
 namespace ArduinoOcpp {
 
 std::unique_ptr<DynamicJsonDocument> createEmptyDocument();
 
-class OcppModel;
-class TransactionRPC;
-class StoredOperationHandler;
-
 class OcppMessage {
-private:
-    bool ocppModelInitialized = false;
-protected:
-    std::shared_ptr<OcppModel> ocppModel;
 public:
     OcppMessage();
 
@@ -41,12 +35,9 @@ public:
     
     virtual const char* getOcppOperationType();
 
-    void setOcppModel(std::shared_ptr<OcppModel> ocppModel);
+    virtual void initiate(StoredOperationHandler *rpcData);
 
-    virtual void initiate();
-    virtual bool initiate(StoredOperationHandler *rpcData) {return false;}
-
-    virtual bool restore(StoredOperationHandler *rpcData) {return false;}
+    virtual bool restore(StoredOperationHandler *rpcData);
 
     /**
      * Create the payload for the respective OCPP message

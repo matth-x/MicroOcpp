@@ -6,18 +6,21 @@
 #define OCPPENGINE_H
 
 #include <ArduinoOcpp/Core/OcppConnection.h>
+#include <ArduinoOcpp/OperationDeserializer.h>
 #include <ArduinoOcpp/Core/OcppTime.h>
 #include <memory>
 
 namespace ArduinoOcpp {
 
 class OcppSocket;
+class OperationDeserializer;
 class OcppModel;
 class FilesystemAdapter;
 
 class OcppEngine {
 private:
     OcppSocket& oSock;
+    OperationDeserializer operationDeserializer;
     std::shared_ptr<OcppModel> oModel;
     OcppConnection oConn;
 
@@ -37,6 +40,8 @@ public:
     void initiatePreBootOperation(std::unique_ptr<OcppOperation> op);
 
     OcppModel& getOcppModel();
+
+    OperationDeserializer& getOperationDeserializer();
 };
 
 extern OcppEngine *defaultOcppEngine;

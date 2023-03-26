@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef METERVALUES_H
@@ -33,8 +33,6 @@ public:
     ~MeterValues();
 
     const char* getOcppOperationType();
-
-    void initiate() override;
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 

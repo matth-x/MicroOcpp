@@ -9,7 +9,7 @@
 
 using ArduinoOcpp::Ocpp16::CancelReservation;
 
-CancelReservation::CancelReservation() {
+CancelReservation::CancelReservation(OcppModel& context) : context(context) {
   
 }
 
@@ -23,8 +23,8 @@ void CancelReservation::processReq(JsonObject payload) {
         return;
     }
 
-    if (ocppModel && ocppModel->getReservationService()) {
-        if (auto reservation = ocppModel->getReservationService()->getReservationById(payload["reservationId"])) {
+    if (context.getReservationService()) {
+        if (auto reservation = context.getReservationService()->getReservationById(payload["reservationId"])) {
             found = true;
             reservation->clear();
         }

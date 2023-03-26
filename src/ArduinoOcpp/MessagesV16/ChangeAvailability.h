@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef CHANGEAVAILABILITY_H
@@ -8,14 +8,18 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
 namespace ArduinoOcpp {
+
+class OcppModel;
+
 namespace Ocpp16 {
 
 class ChangeAvailability : public OcppMessage {
 private:
+    OcppModel& context;
     bool scheduled = false;
     bool accepted = false;
 public:
-    ChangeAvailability();
+    ChangeAvailability(OcppModel& context);
 
     const char* getOcppOperationType();
 

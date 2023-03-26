@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/UpdateFirmware.h>
@@ -9,7 +9,7 @@
 
 using ArduinoOcpp::Ocpp16::UpdateFirmware;
 
-UpdateFirmware::UpdateFirmware() {
+UpdateFirmware::UpdateFirmware(OcppModel& context) : context(context) {
 
 }
 
@@ -41,8 +41,7 @@ void UpdateFirmware::processReq(JsonObject payload) {
 }
 
 std::unique_ptr<DynamicJsonDocument> UpdateFirmware::createConf(){
-    if (ocppModel && ocppModel->getFirmwareService()) {
-        auto fwService = ocppModel->getFirmwareService();
+    if (auto fwService = context.getFirmwareService()) {
         fwService->scheduleFirmwareUpdate(location, retreiveDate, retries, retryInterval);
     } else {
         AO_DBG_ERR("FirmwareService has not been initialized before! Please have a look at ArduinoOcpp.cpp for an example. Abort");

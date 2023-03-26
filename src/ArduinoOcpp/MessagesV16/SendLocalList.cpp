@@ -8,7 +8,7 @@
 
 using ArduinoOcpp::Ocpp16::SendLocalList;
 
-SendLocalList::SendLocalList() {
+SendLocalList::SendLocalList(OcppModel& context) : context(context) {
   
 }
 
@@ -26,11 +26,9 @@ void SendLocalList::processReq(JsonObject payload) {
         return;
     }
 
-    AuthorizationService *authService;
+    auto authService = context.getAuthorizationService();
 
-    if (ocppModel && ocppModel->getAuthorizationService()) {
-        authService = ocppModel->getAuthorizationService();
-    } else {
+    if (!authService) {
         errorCode = "InternalError";
         return;
     }

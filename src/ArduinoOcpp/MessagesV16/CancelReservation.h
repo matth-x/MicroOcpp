@@ -8,14 +8,18 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
 namespace ArduinoOcpp {
+
+class OcppModel;
+
 namespace Ocpp16 {
 
 class CancelReservation : public OcppMessage {
 private:
+    OcppModel& context;
     bool found = false;
     const char *errorCode = nullptr;
 public:
-    CancelReservation();
+    CancelReservation(OcppModel& context);
 
     const char* getOcppOperationType();
 

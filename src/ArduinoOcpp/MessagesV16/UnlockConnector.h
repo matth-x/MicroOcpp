@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef UNLOCKCONNECTOR_H
@@ -10,16 +10,20 @@
 #include <functional>
 
 namespace ArduinoOcpp {
+
+class OcppModel;
+
 namespace Ocpp16 {
 
 class UnlockConnector : public OcppMessage {
 private:
+    OcppModel& context;
     bool err = false;
     std::function<PollResult<bool> ()> unlockConnector;
     PollResult<bool> cbUnlockResult;
     unsigned long timerStart = 0; //for timeout
 public:
-    UnlockConnector();
+    UnlockConnector(OcppModel& context);
 
     const char* getOcppOperationType();
 

@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef AUTHORIZE_H
@@ -9,15 +9,19 @@
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 namespace ArduinoOcpp {
+
+class OcppModel;
+
 namespace Ocpp16 {
 
 class Authorize : public OcppMessage {
 private:
+    OcppModel& context;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
 public:
 //    Authorize();
 
-    Authorize(const char *idTag);
+    Authorize(OcppModel& context, const char *idTag);
 
     const char* getOcppOperationType();
 

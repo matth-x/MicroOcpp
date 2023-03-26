@@ -123,11 +123,6 @@ void PersistentOperationsQueue::pop_front() {
                 AO_DBG_ERR("could not restore operation");
                 fetched.reset();
             }
-
-            if (!fetched->isFullyConfigured()) {
-                AO_DBG_ERR("stored op initialization failure");
-                fetched.reset();
-            }
         }
 
         if (fetched) {

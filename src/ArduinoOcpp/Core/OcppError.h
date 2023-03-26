@@ -18,17 +18,17 @@ public:
     }
 };
 
-class OutOfMemory : public OcppMessage {
+class MsgBufferExceeded : public OcppMessage {
 private:
     size_t maxCapacity;
     size_t msgLen;
 public:
-    OutOfMemory(size_t maxCapacity, size_t msgLen) : maxCapacity(maxCapacity), msgLen(msgLen) { }
+    MsgBufferExceeded(size_t maxCapacity, size_t msgLen) : maxCapacity(maxCapacity), msgLen(msgLen) { }
     const char *getErrorCode() {
-        return "InternalError";
+        return "GenericError";
     }
     const char *getErrorDescription() {
-        return "Too little free memory on the controller. Operation denied";
+        return "JSON too long or too many fields. Cannot deserialize";
     }
     std::unique_ptr<DynamicJsonDocument> getErrorDetails() {
         auto errDoc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
@@ -36,19 +36,6 @@ public:
         err["max_capacity"] = maxCapacity;
         err["msg_length"] = msgLen;
         return errDoc;
-    }
-};
-
-class WebSocketError : public OcppMessage {
-private:
-    const char *description;
-public:
-    WebSocketError(const char *description) : description(description) { }
-    const char *getErrorCode() {
-        return "GenericError";
-    }
-    const char *getErrorDescription() {
-        return description;
     }
 };
 

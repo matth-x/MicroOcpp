@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
@@ -11,7 +11,7 @@ using ArduinoOcpp::Ocpp16::UnlockConnector;
 
 #define AO_UNLOCK_TIMEOUT 10000
 
-UnlockConnector::UnlockConnector() {
+UnlockConnector::UnlockConnector(OcppModel& context) : context(context) {
   
 }
 
@@ -23,12 +23,12 @@ void UnlockConnector::processReq(JsonObject payload) {
     
     auto connectorId = payload["connectorId"] | -1;
 
-    if (!ocppModel || !ocppModel->getConnectorStatus(connectorId)) {
+    auto connector = context.getConnectorStatus(connectorId);
+
+    if (!connector) {
         err = true;
         return;
     }
-
-    auto connector = ocppModel->getConnectorStatus(connectorId);
 
     connector->endSession("UnlockCommand");
 

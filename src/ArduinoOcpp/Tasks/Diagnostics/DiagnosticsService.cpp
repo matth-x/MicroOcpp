@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
@@ -9,6 +9,7 @@
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
 
+#include <ArduinoOcpp/MessagesV16/GetDiagnostics.h>
 #include <ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.h>
 
 using namespace ArduinoOcpp;
@@ -24,6 +25,13 @@ DiagnosticsService::DiagnosticsService(OcppEngine& context) : context(context) {
         fProfilePlus += fpId;
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
+    
+    context.getOperationDeserializer().registerOcppOperation("GetDiagnostics", [&context] () {
+        return new Ocpp16::GetDiagnostics(context.getOcppModel());});
+
+    //Register message handler for TriggerMessage operation
+    context.getOperationDeserializer().registerOcppOperation("DiagnosticsStatusNotification", [this] () {
+        return new Ocpp16::DiagnosticsStatusNotification(getDiagnosticsStatus());});
 }
 
 void DiagnosticsService::loop() {

@@ -17,15 +17,12 @@ const char* OcppMessage::getOcppOperationType(){
     return "CustomOperation";
 }
 
-void OcppMessage::setOcppModel(std::shared_ptr<OcppModel> ocppModel) {
-    if (!ocppModelInitialized) { //prevent the ocppModel from being overwritten
-        this->ocppModel = ocppModel; //can still be nullptr
-        ocppModelInitialized = true;
-    }
+void OcppMessage::initiate(StoredOperationHandler *rpcData) {
+    //called after initiateOperation(anyMsg)
 }
 
-void OcppMessage::initiate() {
-    //called after initiateOperation(anyMsg)
+bool OcppMessage::restore(StoredOperationHandler *rpcData) {
+    return false;
 }
 
 std::unique_ptr<DynamicJsonDocument> OcppMessage::createReq() {

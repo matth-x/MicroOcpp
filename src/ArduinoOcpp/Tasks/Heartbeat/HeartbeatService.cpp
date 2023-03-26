@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
@@ -14,6 +14,10 @@ using namespace ArduinoOcpp;
 HeartbeatService::HeartbeatService(OcppEngine& context) : context(context) {
     heartbeatInterval = declareConfiguration("HeartbeatInterval", 86400);
     lastHeartbeat = ao_tick_ms();
+
+    //Register message handler for TriggerMessage operation
+    context.getOperationDeserializer().registerOcppOperation("Heartbeat", [&context] () {
+        return new Ocpp16::Heartbeat(context.getOcppModel());});
 }
 
 void HeartbeatService::loop() {
@@ -24,7 +28,7 @@ void HeartbeatService::loop() {
     if (now - lastHeartbeat >= hbInterval) {
         lastHeartbeat = now;
 
-        auto heartbeat = makeOcppOperation("Heartbeat");
+        auto heartbeat = makeOcppOperation(new Ocpp16::Heartbeat(context.getOcppModel()));
         context.initiateOperation(std::move(heartbeat));
     }
 }

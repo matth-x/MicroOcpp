@@ -15,7 +15,7 @@ using ArduinoOcpp::Ocpp16::Authorize;
 //    snprintf(this->idTag, IDTAG_LEN_MAX + 1, "A0-00-00-00"); //Use a default payload. In the typical use case of this library, you probably you don't even need Authorization at all
 //}
 
-Authorize::Authorize(const char *idTagIn) {
+Authorize::Authorize(OcppModel& context, const char *idTagIn) : context(context) {
     if (idTagIn && strnlen(idTagIn, IDTAG_LEN_MAX + 2) <= IDTAG_LEN_MAX) {
         snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
     } else {
@@ -44,8 +44,8 @@ void Authorize::processConf(JsonObject payload){
         AO_DBG_INFO("Request has been denied. Reason: %s", idTagInfo);
     }
 
-    if (ocppModel && ocppModel->getAuthorizationService()) {
-        ocppModel->getAuthorizationService()->notifyAuthorization(idTag, payload["idTagInfo"]);
+    if (context.getAuthorizationService()) {
+        context.getAuthorizationService()->notifyAuthorization(idTag, payload["idTagInfo"]);
     }
 }
 

@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/RemoteStopTransaction.h>
@@ -8,7 +8,7 @@
 
 using ArduinoOcpp::Ocpp16::RemoteStopTransaction;
 
-RemoteStopTransaction::RemoteStopTransaction() {
+RemoteStopTransaction::RemoteStopTransaction(OcppModel& context) : context(context) {
   
 }
 
@@ -26,8 +26,7 @@ std::unique_ptr<DynamicJsonDocument> RemoteStopTransaction::createConf(){
     
     bool canStopTransaction = false;
 
-    if (ocppModel && ocppModel->getChargePointStatusService()) {
-        auto cpStatusService = ocppModel->getChargePointStatusService();
+    if (auto cpStatusService = context.getChargePointStatusService()) {
         for (int i = 0; i < cpStatusService->getNumConnectors(); i++) {
             auto connIter = cpStatusService->getConnector(i);
             if (connIter->getTransactionId() == transactionId) {

@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
@@ -8,15 +8,6 @@
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 
 using ArduinoOcpp::Ocpp16::FirmwareStatusNotification;
-
-FirmwareStatusNotification::FirmwareStatusNotification() {
-    if (defaultOcppEngine && defaultOcppEngine->getOcppModel().getFirmwareService()) {
-        auto firmwareService = defaultOcppEngine->getOcppModel().getFirmwareService();
-        status = firmwareService->getFirmwareStatus();
-    } else {
-        status = FirmwareStatus::Idle;
-    }
-}
 
 FirmwareStatusNotification::FirmwareStatusNotification(FirmwareStatus status) : status{status} {
 

@@ -35,6 +35,10 @@ BootService::BootService(OcppEngine& context) : context(context) {
         AO_DBG_ERR("initialization error");
         (void)0;
     }
+
+    //Register message handler for TriggerMessage operation
+    context.getOperationDeserializer().registerOcppOperation("BootNotification", [this] () {
+        return new Ocpp16::BootNotification(this->context.getOcppModel(), getChargePointCredentials());});
 }
 
 void BootService::loop() {
@@ -61,26 +65,49 @@ void BootService::loop() {
      * Create BootNotification. The BootNotifaction object will fetch its paremeters from
      * this class and notify this class about the response
      */
-    auto bootNotification = makeOcppOperation(new Ocpp16::BootNotification());
+    auto bootNotification = makeOcppOperation(new Ocpp16::BootNotification(context.getOcppModel(), getChargePointCredentials()));
     bootNotification->setTimeout(0);
     context.initiatePreBootOperation(std::move(bootNotification));
 
     lastBootNotification = ao_tick_ms();
 }
 
-void BootService::setChargePointCredentials(const char *credentialsJson) {
-    cpCredentials = credentialsJson;
+void BootService::setChargePointCredentials(JsonObject credentials) {
+    auto written = serializeJson(credentials, cpCredentials);
+    if (written < 2) {
+        AO_DBG_ERR("serialization error");
+        cpCredentials = "{}";
+    }
+}
+
+void BootService::setChargePointCredentials(const char *credentials) {
+    cpCredentials = credentials;
     if (cpCredentials.size() < 2) {
         cpCredentials = "{}";
     }
 }
 
-std::string& BootService::getChargePointCredentials() {
+std::unique_ptr<DynamicJsonDocument> BootService::getChargePointCredentials() {
     if (cpCredentials.size() <= 2) {
-        cpCredentials = "{}";
+        return createEmptyDocument();
     }
 
-    return cpCredentials;
+    std::unique_ptr<DynamicJsonDocument> doc;
+    size_t capacity = JSON_OBJECT_SIZE(9) + cpCredentials.size();
+    DeserializationError err = DeserializationError::NoMemory;
+    while (err == DeserializationError::NoMemory && capacity <= AO_MAX_JSON_CAPACITY) {
+        doc.reset(new DynamicJsonDocument(capacity));
+        err = deserializeJson(*doc, cpCredentials);
+
+        capacity *= 2;
+    }
+
+    if (!err) {
+        return doc;
+    } else {
+        AO_DBG_ERR("could not parse stored credentials: %s", err.c_str());
+        return nullptr;
+    }
 }
 
 void BootService::notifyRegistrationStatus(RegistrationStatus status) {

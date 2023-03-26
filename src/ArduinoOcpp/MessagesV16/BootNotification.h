@@ -14,22 +14,22 @@
 #define FW_VERSION_LEN_MAX      CiString50TypeLen
 
 namespace ArduinoOcpp {
+
+class OcppModel;
+
 namespace Ocpp16 {
 
 class BootNotification : public OcppMessage {
 private:
+    OcppModel& context;
     std::unique_ptr<DynamicJsonDocument> credentials;
     const char *errorCode = nullptr;
 public:
-    BootNotification();
+    BootNotification(OcppModel& context, std::unique_ptr<DynamicJsonDocument> payload);
 
     ~BootNotification() = default;
 
-    BootNotification(std::unique_ptr<DynamicJsonDocument> payload);
-
     const char* getOcppOperationType();
-
-    void initiate();
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 

@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
@@ -7,6 +7,7 @@
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/MessagesV16/MeterValues.h>
 #include <ArduinoOcpp/Debug.h>
 
 using namespace ArduinoOcpp;
@@ -17,6 +18,14 @@ MeteringService::MeteringService(OcppEngine& context, int numConn, std::shared_p
     for (int i = 0; i < numConn; i++) {
         connectors.push_back(std::unique_ptr<ConnectorMeterValuesRecorder>(new ConnectorMeterValuesRecorder(context.getOcppModel(), i, meterStore)));
     }
+
+    /*
+     * Register further message handlers to support echo mode: when this library
+     * is connected with a WebSocket echo server, let it reply to its own requests.
+     * Mocking an OCPP Server on the same device makes running (unit) tests easier.
+     */
+    context.getOperationDeserializer().registerOcppOperation("MeterValues", [] () {
+        return new Ocpp16::MeterValues();});
 }
 
 void MeteringService::loop(){

@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/Heartbeat.h>
@@ -9,7 +9,7 @@
 
 using ArduinoOcpp::Ocpp16::Heartbeat;
 
-Heartbeat::Heartbeat()  {
+Heartbeat::Heartbeat(OcppModel& context) : context(context) {
   
 }
 
@@ -25,7 +25,7 @@ void Heartbeat::processConf(JsonObject payload) {
   
     const char* currentTime = payload["currentTime"] | "Invalid";
     if (strcmp(currentTime, "Invalid")) {
-        if (ocppModel && ocppModel->getOcppTime().setOcppTime(currentTime)) {
+        if (context.getOcppTime().setOcppTime(currentTime)) {
             //success
             AO_DBG_DEBUG("Request has been accepted");
         } else {
@@ -51,12 +51,10 @@ std::unique_ptr<DynamicJsonDocument> Heartbeat::createConf(){
     //safety mechanism; in some test setups the library could have to answer Heartbeats without valid system time
     OcppTimestamp ocppTimeReference = OcppTimestamp(2019,10,0,11,59,55); 
     OcppTimestamp ocppSelect = ocppTimeReference;
-    if (ocppModel) {
-        auto& ocppNow = ocppModel->getOcppTime().getOcppTimestampNow();
-        if (ocppNow > ocppTimeReference) {
-            //time has already been set
-            ocppSelect = ocppNow;
-        }
+    auto& ocppNow = context.getOcppTime().getOcppTimestampNow();
+    if (ocppNow > ocppTimeReference) {
+        //time has already been set
+        ocppSelect = ocppNow;
     }
 
     char ocppNowJson [JSONDATE_LENGTH + 1] = {'\0'};

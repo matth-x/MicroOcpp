@@ -4,7 +4,6 @@
 
 #include <ArduinoOcpp/Core/OcppOperation.h>
 #include <ArduinoOcpp/Core/OcppMessage.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/OperationStore.h>
@@ -35,18 +34,6 @@ void OcppOperation::setOcppMessage(std::unique_ptr<OcppMessage> msg){
     ocppMessage = std::move(msg);
 }
 
-void OcppOperation::setOcppModel(std::shared_ptr<OcppModel> oModel) {
-    if (!ocppMessage) {
-        AO_DBG_ERR("Must be called after setOcppMessage(). Abort");
-        return;
-    }
-    if (!oModel) {
-        AO_DBG_ERR("Passed nullptr. Ignore");
-        return;
-    }
-    ocppMessage->setOcppModel(oModel);
-}
-
 void OcppOperation::setTimeout(unsigned long timeout) {
     this->timeout_period = timeout;
 }
@@ -63,6 +50,10 @@ void OcppOperation::executeTimeout() {
     timed_out = true;
 }
 
+unsigned int OcppOperation::getTrialNo() {
+    return trialNo;
+}
+
 void OcppOperation::setMessageID(const std::string &id){
     if (!messageID.empty()){
         AO_DBG_WARN("MessageID is set twice or is set after first usage!");
@@ -70,146 +61,113 @@ void OcppOperation::setMessageID(const std::string &id){
     messageID = id;
 }
 
-const std::string *OcppOperation::getMessageID() {
-    if (messageID.empty()) {
-        char id_str [16] = {'\0'};
-        sprintf(id_str, "%d", unique_id_counter++);
-        messageID = std::string {id_str};
-        //messageID = std::to_string(unique_id_counter++);
-    }
-    return &messageID;
+const char *OcppOperation::getMessageID() {
+    return messageID.c_str();
 }
 
-void OcppOperation::sendReq(OcppSocket& ocppSocket){
-
-    /*
-     * retry behaviour
-     * 
-     * if retry, run the rest of this function, i.e. resend the message. If not, just return false
-     */
-    if (ao_tick_ms() <= retry_start + RETRY_INTERVAL * retry_interval_mult) {
-        //NO retry
-        return;
-    }
-
-    // Do retry. Increase timer by factor 2
-    if (RETRY_INTERVAL * retry_interval_mult * 2 <= RETRY_INTERVAL_MAX) {
-        retry_interval_mult *= 2;
-    }
+std::unique_ptr<DynamicJsonDocument> OcppOperation::createRequest(){
 
     /*
      * Create the OCPP message
      */
     auto requestPayload = ocppMessage->createReq();
     if (!requestPayload) {
-        return;
+        return nullptr;
     }
 
     /*
      * Create OCPP-J Remote Procedure Call header
      */
-    size_t json_buffsize = JSON_ARRAY_SIZE(4) + (getMessageID()->length() + 1) + requestPayload->capacity();
-    DynamicJsonDocument requestJson(json_buffsize);
+    size_t json_buffsize = JSON_ARRAY_SIZE(4) + (messageID.length() + 1) + requestPayload->capacity();
+    auto requestJson = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(json_buffsize));
 
-    requestJson.add(MESSAGE_TYPE_CALL);                    //MessageType
-    requestJson.add(*getMessageID());                      //Unique message ID
-    requestJson.add(ocppMessage->getOcppOperationType());  //Action
-    requestJson.add(*requestPayload);                      //Payload
+    requestJson->add(MESSAGE_TYPE_CALL);                    //MessageType
+    requestJson->add(messageID);                      //Unique message ID
+    requestJson->add(ocppMessage->getOcppOperationType());  //Action
+    requestJson->add(*requestPayload);                      //Payload
 
-    /*
-     * Serialize and send. Destroy serialization and JSON object. 
-     * 
-     * If sending was successful, start timer
-     * 
-     * Return that this function must be called again (-> false)
-     */
-    std::string out {};
-    serializeJson(requestJson, out);
+    if (AO_DBG_LEVEL >= AO_DL_DEBUG && ao_tick_ms() - debugRequest_start >= 10000) { //print contents on the console
+        debugRequest_start = ao_tick_ms();
 
-    if (printReqCounter > 5000) {
-        printReqCounter = 0;
-        AO_DBG_DEBUG("Try to send request: %s", out.c_str());
+        char *buf = new char[1024];
+        size_t len = 0;
+        if (buf) {
+            len = serializeJson(*requestJson, buf, 1024);
+        }
+
+        if (!buf || len < 1) {
+            AO_DBG_DEBUG("Try to send request: %s", ocppMessage->getOcppOperationType());
+        } else {
+            AO_DBG_DEBUG("Try to send request: %.*s ...", 128, ocppMessage->getOcppOperationType());
+        }
+
+        delete buf;
     }
-    printReqCounter++;
-    
-    bool success = ocppSocket.sendTXT(out);
 
-    if (success) {
-        AO_DBG_TRAFFIC_OUT(out.c_str());
-        retry_start = ao_tick_ms();
-    } else {
-        //ocppSocket is not able to put any data on TCP stack. Maybe because we're offline
-        retry_start = 0;
-        retry_interval_mult = 1;
-    }
+    trialNo++;
+
+    return requestJson;
 }
 
-bool OcppOperation::receiveConf(JsonDocument& confJson){
+bool OcppOperation::receiveResponse(JsonArray response){
     /*
      * check if messageIDs match. If yes, continue with this function. If not, return false for message not consumed
      */
-    if (*getMessageID() != confJson[1].as<std::string>()){
+    if (messageID != response[1].as<std::string>()){
         return false;
     }
 
-    /*
-     * Hand the payload over to the OcppMessage object
-     */
-    JsonObject payload = confJson[2];
-    ocppMessage->processConf(payload);
+    int messageTypeId = response[0] | -1;
 
-    /*
-     * Hand the payload over to the onReceiveConf Callback
-     */
-    onReceiveConfListener(payload);
+    if (messageTypeId == MESSAGE_TYPE_CALLRESULT) {
 
-    /*
-     * return true as this message has been consumed
-     */
-    return true;
-}
+        /*
+        * Hand the payload over to the OcppMessage object
+        */
+        JsonObject payload = response[2];
+        ocppMessage->processConf(payload);
 
-bool OcppOperation::receiveError(JsonDocument& confJson){
-    /*
-     * check if messageIDs match. If yes, continue with this function. If not, return false for message not consumed
-     */
-    if (*getMessageID() != confJson[1].as<std::string>()){
-        return false;
-    }
+        /*
+        * Hand the payload over to the onReceiveConf Callback
+        */
+        onReceiveConfListener(payload);
 
-    /*
-     * Hand the error over to the OcppMessage object
-     */
-    const char *errorCode = confJson[2];
-    const char *errorDescription = confJson[3];
-    JsonObject errorDetails = confJson[4];
-    bool abortOperation = ocppMessage->processErr(errorCode, errorDescription, errorDetails);
+        /*
+        * return true as this message has been consumed
+        */
+        return true;
+    } else if (messageTypeId == MESSAGE_TYPE_CALLERROR) {
 
-    if (abortOperation) {
-        onReceiveErrorListener(errorCode, errorDescription, errorDetails);
-        onAbortListener();
+        /*
+        * Hand the error over to the OcppMessage object
+        */
+        const char *errorCode = response[2];
+        const char *errorDescription = response[3];
+        JsonObject errorDetails = response[4];
+        bool abortOperation = ocppMessage->processErr(errorCode, errorDescription, errorDetails);
+
+        if (abortOperation) {
+            onReceiveErrorListener(errorCode, errorDescription, errorDetails);
+            onAbortListener();
+        }
+
+        return abortOperation;
     } else {
-        //restart operation
-        timeout_start = ao_tick_ms();
-        retry_start = 0;
-        retry_interval_mult = 1;
+        AO_DBG_WARN("invalid response");
+        return false; //don't discard this message but retry sending it
     }
 
-    return abortOperation;
 }
 
-bool OcppOperation::receiveReq(JsonDocument& reqJson){
+bool OcppOperation::receiveRequest(JsonArray request){
   
-    std::string reqId = reqJson[1];
-    setMessageID(reqId);
-
-    //TODO What if client receives requests two times? Can happen if previous conf is lost. In the Smart Charging Profile
-    //     it probably doesn't matter to repeat an operation on the EVSE. Change in future?
+    std::string msgId = request[1];
+    setMessageID(msgId);
     
     /*
      * Hand the payload over to the OcppOperation object
      */
-    JsonObject payload = reqJson[3];
+    JsonObject payload = request[3];
     ocppMessage->processReq(payload);
     
     /*
@@ -217,29 +175,22 @@ bool OcppOperation::receiveReq(JsonDocument& reqJson){
      */
     onReceiveReqListener(payload);
 
-    reqExecuted = true; //ensure that the conf is only sent after the req has been executed
-
-    return true; //true because everything was successful. If there will be an error check in future, this value becomes more reasonable
+    return true; //success
 }
 
-bool OcppOperation::sendConf(OcppSocket& ocppSocket){
-
-    if (!reqExecuted) {
-        //wait until req has been executed
-        return false;
-    }
+std::unique_ptr<DynamicJsonDocument> OcppOperation::createResponse(){
 
     /*
      * Create the OCPP message
      */
-    std::unique_ptr<DynamicJsonDocument> confJson = nullptr;
-    std::unique_ptr<DynamicJsonDocument> confPayload = ocppMessage->createConf();
+    std::unique_ptr<DynamicJsonDocument> response = nullptr;
+    std::unique_ptr<DynamicJsonDocument> payload = ocppMessage->createConf();
     std::unique_ptr<DynamicJsonDocument> errorDetails = nullptr;
     
     bool operationFailure = ocppMessage->getErrorCode() != nullptr;
 
-    if (!operationFailure && !confPayload) {
-        return false; //confirmation message still pending
+    if (!operationFailure && !payload) {
+        return nullptr; //confirmation message still pending
     }
 
     if (!operationFailure) {
@@ -247,12 +198,12 @@ bool OcppOperation::sendConf(OcppSocket& ocppSocket){
         /*
          * Create OCPP-J Remote Procedure Call header
          */
-        size_t json_buffsize = JSON_ARRAY_SIZE(3) + (getMessageID()->length() + 1) + confPayload->capacity();
-        confJson = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(json_buffsize));
+        size_t json_buffsize = JSON_ARRAY_SIZE(3) + (messageID.length() + 1) + payload->capacity();
+        response = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(json_buffsize));
 
-        confJson->add(MESSAGE_TYPE_CALLRESULT);   //MessageType
-        confJson->add(*getMessageID());            //Unique message ID
-        confJson->add(*confPayload);              //Payload
+        response->add(MESSAGE_TYPE_CALLRESULT);   //MessageType
+        response->add(messageID);            //Unique message ID
+        response->add(*payload);              //Payload
     } else {
         //operation failure. Send error message instead
 
@@ -269,68 +220,54 @@ bool OcppOperation::sendConf(OcppSocket& ocppSocket){
          * Create OCPP-J Remote Procedure Call header
          */
         size_t json_buffsize = JSON_ARRAY_SIZE(5)
-                    + (getMessageID()->length() + 1)
+                    + (messageID.length() + 1)
                     + strlen(errorCode) + 1
                     + strlen(errorDescription) + 1
                     + errorDetails->capacity();
-        confJson = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(json_buffsize));
+        response = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(json_buffsize));
 
-        confJson->add(MESSAGE_TYPE_CALLERROR);   //MessageType
-        confJson->add(*getMessageID());            //Unique message ID
-        confJson->add(errorCode);
-        confJson->add(errorDescription);
-        confJson->add(*errorDetails);              //Error description
+        response->add(MESSAGE_TYPE_CALLERROR);   //MessageType
+        response->add(messageID);            //Unique message ID
+        response->add(errorCode);
+        response->add(errorDescription);
+        response->add(*errorDetails);              //Error description
     }
 
-    /*
-     * Serialize and send. Destroy serialization and JSON object. 
-     */
-    std::string out {};
-    serializeJson(*confJson, out);
-    bool wsSuccess = ocppSocket.sendTXT(out);
-
-    if (wsSuccess) {
-        if (!operationFailure) {
-            AO_DBG_TRAFFIC_OUT(out.c_str());
-            onSendConfListener(confPayload->as<JsonObject>());
-        } else {
-            AO_DBG_WARN("Operation failed. JSON CallError message: %s", out.c_str());
-            onAbortListener();
-        }
-    }
-
-    return wsSuccess;
+    return response;
 }
 
 void OcppOperation::initiate(std::unique_ptr<StoredOperationHandler> opStorage) {
 
     timeout_start = ao_tick_ms();
+    debugRequest_start = ao_tick_ms();
+
+    //assign messageID
+    char id_str [16] = {'\0'};
+    sprintf(id_str, "%d", unique_id_counter++);
+    messageID = std::string {id_str};
 
     if (ocppMessage) {
 
         /*
-         * Create OCPP-J Remote Procedure Call header as storage data (doesn't necessarily have to comply with OCPP RPC header)
+         * Create OCPP-J Remote Procedure Call header storage entry
          */
-        if (opStorage) {
-            opStore = std::move(opStorage);
-            size_t json_buffsize = JSON_ARRAY_SIZE(3) + (getMessageID()->length() + 1);
+        opStore = std::move(opStorage);
+
+        if (opStore) {
+            size_t json_buffsize = JSON_ARRAY_SIZE(3) + (messageID.length() + 1);
             auto rpcData = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(json_buffsize));
 
             rpcData->add(MESSAGE_TYPE_CALL);                    //MessageType
-            rpcData->add(*getMessageID());                      //Unique message ID
+            rpcData->add(messageID);                      //Unique message ID
             rpcData->add(ocppMessage->getOcppOperationType());  //Action
 
             opStore->setRpc(std::move(rpcData));
         }
         
-        bool inited = ocppMessage->initiate(opStore.get());
+        ocppMessage->initiate(opStore.get());
 
         if (opStore) {
             opStore->clearBuffer();
-        }
-        
-        if (!inited) { //legacy support
-            ocppMessage->initiate();
         }
     } else {
         AO_DBG_ERR("Missing ocppMessage instance");
@@ -372,17 +309,15 @@ bool OcppOperation::restore(std::unique_ptr<StoredOperationHandler> opStorage, s
     }
 
     if (!strcmp(opType.c_str(), "StartTransaction")) { //TODO this will get a nicer solution
-        ocppMessage = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction());
+        ocppMessage = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction(*oModel.get(), nullptr));
     } else if (!strcmp(opType.c_str(), "StopTransaction")) {
-        ocppMessage = std::unique_ptr<OcppMessage>(new Ocpp16::StopTransaction());
+        ocppMessage = std::unique_ptr<OcppMessage>(new Ocpp16::StopTransaction(*oModel.get(), nullptr));
     }
 
     if (!ocppMessage) {
         AO_DBG_ERR("cannot create msg");
         return false;
     }
-
-    ocppMessage->setOcppModel(oModel);
 
     bool success = ocppMessage->restore(opStore.get());
     opStore->clearBuffer();
@@ -429,15 +364,6 @@ void OcppOperation::setOnReceiveErrorListener(OnReceiveErrorListener onReceiveEr
 void OcppOperation::setOnAbortListener(OnAbortListener onAbort) {
     if (onAbort)
         onAbortListener = onAbort;
-}
-
-bool OcppOperation::isFullyConfigured(){
-    return ocppMessage != nullptr;
-}
-
-void OcppOperation::rebaseMsgId(int msgIdCounter) {
-    unique_id_counter = msgIdCounter;
-    getMessageID(); //apply msgIdCounter to this operation
 }
 
 const char *OcppOperation::getOcppOperationType() {

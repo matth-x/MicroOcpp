@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef REMOTESTARTTRANSACTION_H
@@ -9,17 +9,21 @@
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 namespace ArduinoOcpp {
+
+class OcppModel;
+
 namespace Ocpp16 {
 
 class RemoteStartTransaction : public OcppMessage {
 private:
+    OcppModel& context;
     int connectorId;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
     DynamicJsonDocument chargingProfileDoc {0};
     
     const char *errorCode {nullptr};
 public:
-    RemoteStartTransaction();
+    RemoteStartTransaction(OcppModel& context);
 
     const char* getOcppOperationType();
 

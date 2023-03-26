@@ -266,7 +266,7 @@ OcppMessage *ConnectorStatus::loop() {
                     context.getMeteringService()->beginTxMeterData(transaction.get());
                 }
 
-                return new StartTransaction(transaction);
+                return new StartTransaction(context, transaction);
             }
         } else if (transaction->isRunning()) {
 
@@ -317,9 +317,9 @@ OcppMessage *ConnectorStatus::loop() {
                 }
 
                 if (stopTxData) {
-                    return new StopTransaction(std::move(transaction), stopTxData->retrieveStopTxData());
+                    return new StopTransaction(context, std::move(transaction), stopTxData->retrieveStopTxData());
                 } else {
-                    return new StopTransaction(std::move(transaction));
+                    return new StopTransaction(context, std::move(transaction));
                 }
             }
         }

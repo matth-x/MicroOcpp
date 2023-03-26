@@ -17,6 +17,7 @@
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
 #include <ArduinoOcpp/Tasks/Boot/BootService.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/OperationDeserializer.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 
@@ -184,8 +185,6 @@ void OCPP_deinitialize() {
     webSocket = nullptr;
 #endif
 
-    simpleOcppFactory_deinitialize();
-
     fileSystemOpt = FilesystemOpt();
     voltage_eff = 230.f;
 }
@@ -218,8 +217,14 @@ void bootNotification(std::unique_ptr<DynamicJsonDocument> payload, OnReceiveCon
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
+
+    //store credentials for later TriggerMessage
+    if (auto bootService = ocppEngine->getOcppModel().getBootService()) {
+        bootService->setChargePointCredentials(payload->as<JsonObject>());
+    }
+
     auto bootNotification = makeOcppOperation(
-        new BootNotification(std::move(payload)));
+        new BootNotification(ocppEngine->getOcppModel(), std::move(payload)));
     if (onConf)
         bootNotification->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -245,7 +250,7 @@ void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener 
         return;
     }
     auto authorize = makeOcppOperation(
-        new Authorize(idTag));
+        new Authorize(ocppEngine->getOcppModel(), idTag));
     if (onConf)
         authorize->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -634,27 +639,51 @@ OcppEngine *getOcppEngine() {
 }
 
 void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq) {
-     setOnSetChargingProfileRequestListener(onReceiveReq);
+    if (!ocppEngine) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+    ocppEngine->getOperationDeserializer().setOnRequest("SetChargingProfile", onReceiveReq);
 }
 
 void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf) {
-     setOnRemoteStartTransactionSendConfListener(onSendConf);
+    if (!ocppEngine) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+    ocppEngine->getOperationDeserializer().setOnResponse("RemoteStartTransaction", onSendConf);
 }
 
 void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq) {
-     setOnRemoteStopTransactionReceiveRequestListener(onReceiveReq);
+    if (!ocppEngine) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+    ocppEngine->getOperationDeserializer().setOnRequest("RemoteStopTransaction", onReceiveReq);
 }
 
 void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf) {
-     setOnRemoteStopTransactionSendConfListener(onSendConf);
+    if (!ocppEngine) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+    ocppEngine->getOperationDeserializer().setOnResponse("RemoteStopTransaction", onSendConf);
 }
 
 void setOnResetSendConf(OnSendConfListener onSendConf) {
-     setOnResetSendConfListener(onSendConf);
+    if (!ocppEngine) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+    ocppEngine->getOperationDeserializer().setOnResponse("Reset", onSendConf);
 }
 
 void setOnResetRequest(OnReceiveReqListener onReceiveReq) {
-     setOnResetReceiveRequestListener(onReceiveReq);
+    if (!ocppEngine) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+    ocppEngine->getOperationDeserializer().setOnRequest("Reset", onReceiveReq);
 }
 
 #define OCPP_ID_OF_CONNECTOR 1
@@ -688,9 +717,22 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
             return false;
         }
     }
+
+    if (auto mService = ocppEngine->getOcppModel().getMeteringService()) {
+        auto meterStart = mService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionBegin);
+        if (meterStart && *meterStart) {
+            transaction->setMeterStart(meterStart->toInteger());
+        } else {
+            AO_DBG_ERR("MeterStart undefined");
+        }
+    }
+
+    transaction->setStartTimestamp(ocppEngine->getOcppModel().getOcppTime().getOcppTimestampNow());
+
+    transaction->commit();
     
     auto startTransaction = makeOcppOperation(
-        new StartTransaction(transaction));
+        new StartTransaction(ocppEngine->getOcppModel(), transaction));
     if (onConf)
         startTransaction->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -734,8 +776,21 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
     
     transaction->setStopReason("Local");
 
+    if (auto mService = ocppEngine->getOcppModel().getMeteringService()) {
+        auto meterStop = mService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionEnd);
+        if (meterStop && *meterStop) {
+            transaction->setMeterStop(meterStop->toInteger());
+        } else {
+            AO_DBG_ERR("MeterStop undefined");
+        }
+    }
+
+    transaction->setStopTimestamp(ocppEngine->getOcppModel().getOcppTime().getOcppTimestampNow());
+
+    transaction->commit();
+
     auto stopTransaction = makeOcppOperation(
-        new StopTransaction(transaction));
+        new StopTransaction(ocppEngine->getOcppModel(), transaction));
     if (onConf)
         stopTransaction->setOnReceiveConfListener(onConf);
     if (onAbort)

@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef STATUSNOTIFICATION_H
@@ -21,11 +21,7 @@ private:
 public:
     StatusNotification(int connectorId, OcppEvseState currentStatus, const OcppTimestamp &otimestamp, const char *errorCode = nullptr);
 
-    StatusNotification(int connectorId = -1);
-
     const char* getOcppOperationType();
-
-    void initiate();
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 

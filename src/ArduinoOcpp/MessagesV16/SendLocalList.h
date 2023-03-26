@@ -8,15 +8,19 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
 namespace ArduinoOcpp {
+
+class OcppModel;
+
 namespace Ocpp16 {
 
 class SendLocalList : public OcppMessage {
 private:
+    OcppModel& context;
     const char *errorCode = nullptr;
     bool updateFailure = true;
     bool versionMismatch = false;
 public:
-    SendLocalList();
+    SendLocalList(OcppModel& context);
 
     ~SendLocalList();
 

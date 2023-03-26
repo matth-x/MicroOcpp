@@ -3,9 +3,12 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
+#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/MessagesV16/GetLocalListVersion.h>
+#include <ArduinoOcpp/MessagesV16/SendLocalList.h>
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Debug.h>
@@ -35,6 +38,11 @@ AuthorizationService::AuthorizationService(OcppEngine& context, std::shared_ptr<
         fProfilePlus += fpId;
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
+
+    context.getOperationDeserializer().registerOcppOperation("GetLocalListVersion", [&context] () {
+        return new Ocpp16::GetLocalListVersion(context.getOcppModel());});
+    context.getOperationDeserializer().registerOcppOperation("SendLocalList", [&context] () {
+        return new Ocpp16::SendLocalList(context.getOcppModel());});
 
     loadLists();
 }
@@ -176,9 +184,14 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
     if (!equivalent) {
         //send error code "LocalListConflict" to server
 
+        OcppEvseState cpStatus;
+        if (auto cp = context.getOcppModel().getConnectorStatus(0)) {
+            cpStatus = cp->inferenceStatus();
+        }
+
         auto statusNotification = makeOcppOperation(new Ocpp16::StatusNotification(
                     0,
-                    OcppEvseState::NOT_SET, //will be determined in StatusNotification::initiate
+                    cpStatus, //will be determined in StatusNotification::initiate
                     context.getOcppModel().getOcppTime().getOcppTimestampNow(),
                     "LocalListConflict"));
 

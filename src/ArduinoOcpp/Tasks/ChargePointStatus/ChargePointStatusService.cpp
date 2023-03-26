@@ -6,6 +6,20 @@
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
+#include <ArduinoOcpp/MessagesV16/ChangeConfiguration.h>
+#include <ArduinoOcpp/MessagesV16/ClearCache.h>
+#include <ArduinoOcpp/MessagesV16/GetConfiguration.h>
+#include <ArduinoOcpp/MessagesV16/RemoteStartTransaction.h>
+#include <ArduinoOcpp/MessagesV16/RemoteStopTransaction.h>
+#include <ArduinoOcpp/MessagesV16/Reset.h>
+#include <ArduinoOcpp/MessagesV16/TriggerMessage.h>
+#include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
+
+#include <ArduinoOcpp/MessagesV16/Authorize.h>
+#include <ArduinoOcpp/MessagesV16/StartTransaction.h>
+#include <ArduinoOcpp/MessagesV16/StatusNotification.h>
+#include <ArduinoOcpp/MessagesV16/StopTransaction.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -52,6 +66,40 @@ ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned
      */
     declareConfiguration<bool>("AuthorizeRemoteTxRequests",false,CONFIGURATION_VOLATILE,false,true,false,false);
     declareConfiguration<int>("GetConfigurationMaxKeys",30,CONFIGURATION_VOLATILE,false,true,false,false);
+
+    
+    context.getOperationDeserializer().registerOcppOperation("ChangeAvailability", [&context] () {
+        return new Ocpp16::ChangeAvailability(context.getOcppModel());});
+    context.getOperationDeserializer().registerOcppOperation("ChangeConfiguration", [] () {
+        return new Ocpp16::ChangeConfiguration();});
+    context.getOperationDeserializer().registerOcppOperation("ClearCache", [] () {
+        return new Ocpp16::ClearCache();});
+    context.getOperationDeserializer().registerOcppOperation("GetConfiguration", [] () {
+        return new Ocpp16::GetConfiguration();});
+    context.getOperationDeserializer().registerOcppOperation("RemoteStartTransaction", [&context] () {
+        return new Ocpp16::RemoteStartTransaction(context.getOcppModel());});
+    context.getOperationDeserializer().registerOcppOperation("RemoteStopTransaction", [&context] () {
+        return new Ocpp16::RemoteStopTransaction(context.getOcppModel());});
+    context.getOperationDeserializer().registerOcppOperation("Reset", [&context] () {
+        return new Ocpp16::Reset(context.getOcppModel());});
+    context.getOperationDeserializer().registerOcppOperation("TriggerMessage", [&context] () {
+        return new Ocpp16::TriggerMessage(context.getOcppModel());});
+    context.getOperationDeserializer().registerOcppOperation("UnlockConnector", [&context] () {
+        return new Ocpp16::UnlockConnector(context.getOcppModel());});
+
+    /*
+     * Register further message handlers to support echo mode: when this library
+     * is connected with a WebSocket echo server, let it reply to its own requests.
+     * Mocking an OCPP Server on the same device makes running (unit) tests easier.
+     */
+    context.getOperationDeserializer().registerOcppOperation("Authorize", [&context] () {
+        return new Ocpp16::Authorize(context.getOcppModel(), nullptr);});
+    context.getOperationDeserializer().registerOcppOperation("StartTransaction", [&context] () {
+        return new Ocpp16::StartTransaction(context.getOcppModel(), nullptr);});
+    context.getOperationDeserializer().registerOcppOperation("StatusNotification", [&context] () {
+        return new Ocpp16::StatusNotification(-1, OcppEvseState::NOT_SET, OcppTimestamp());});
+    context.getOperationDeserializer().registerOcppOperation("StopTransaction", [&context] () {
+        return new Ocpp16::StopTransaction(context.getOcppModel(), nullptr);});
 }
 
 ChargePointStatusService::~ChargePointStatusService() {

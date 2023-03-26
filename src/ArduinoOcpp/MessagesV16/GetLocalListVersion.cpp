@@ -9,7 +9,7 @@
 
 using ArduinoOcpp::Ocpp16::GetLocalListVersion;
 
-GetLocalListVersion::GetLocalListVersion() {
+GetLocalListVersion::GetLocalListVersion(OcppModel& context) : context(context) {
   
 }
 
@@ -24,8 +24,8 @@ void GetLocalListVersion::processReq(JsonObject payload) {
 std::unique_ptr<DynamicJsonDocument> GetLocalListVersion::createConf(){
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
-    if (ocppModel && ocppModel->getAuthorizationService()) {
-        payload["listVersion"] = ocppModel->getAuthorizationService()->getLocalListVersion();
+    if (auto authService = context.getAuthorizationService()) {
+        payload["listVersion"] = authService->getLocalListVersion();
     } else {
         payload["listVersion"] = -1;
     }

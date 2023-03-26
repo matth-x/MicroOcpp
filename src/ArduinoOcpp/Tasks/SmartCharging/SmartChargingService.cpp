@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
@@ -7,6 +7,9 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Core/Configuration.h>
+#include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
+#include <ArduinoOcpp/MessagesV16/GetCompositeSchedule.h>
+#include <ArduinoOcpp/MessagesV16/SetChargingProfile.h>
 #include <ArduinoOcpp/Debug.h>
 
 #if !defined(AO_DEACTIVATE_FLASH) && defined(AO_DEACTIVATE_FLASH_SMARTCHARGING)
@@ -74,6 +77,13 @@ SmartChargingService::SmartChargingService(OcppEngine& context, float chargeLimi
         fProfilePlus += fpId;
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
+
+    context.getOperationDeserializer().registerOcppOperation("ClearChargingProfile", [&context] () {
+        return new Ocpp16::ClearChargingProfile(context.getOcppModel());});
+    context.getOperationDeserializer().registerOcppOperation("GetCompositeSchedule", [&context] () {
+        return new Ocpp16::GetCompositeSchedule(context.getOcppModel());});
+    context.getOperationDeserializer().registerOcppOperation("SetChargingProfile", [&context] () {
+        return new Ocpp16::SetChargingProfile(context.getOcppModel());});
 
     loadProfiles();
 }

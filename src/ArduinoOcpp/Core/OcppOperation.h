@@ -17,14 +17,12 @@ namespace ArduinoOcpp {
 
 class OcppMessage;
 class OcppModel;
-class OcppSocket;
 class StoredOperationHandler;
 
 class OcppOperation {
 private:
     std::string messageID {};
     std::unique_ptr<OcppMessage> ocppMessage;
-    const std::string *getMessageID();
     void setMessageID(const std::string &id);
     OnReceiveConfListener onReceiveConfListener = [] (JsonObject payload) {};
     OnReceiveReqListener onReceiveReqListener = [] (JsonObject payload) {};
@@ -32,18 +30,14 @@ private:
     OnTimeoutListener onTimeoutListener = [] () {};
     OnReceiveErrorListener onReceiveErrorListener = [] (const char *code, const char *description, JsonObject details) {};
     OnAbortListener onAbortListener = [] () {};
-    bool reqExecuted = false;
 
     unsigned long timeout_start = 0;
     unsigned long timeout_period = 40000;
     bool timed_out = false;
 
-    const unsigned long RETRY_INTERVAL = 3000; //in ms; first retry after ... ms; second retry after 2 * ... ms; third after 4 ...
-    const unsigned long RETRY_INTERVAL_MAX = 20000; //in ms; 
-    unsigned long retry_start = 0;
-    unsigned long retry_interval_mult = 1; // RETRY_INTERVAL * retry_interval_mult gives longer periods with each iteration
-
-    uint16_t printReqCounter = 0;
+    unsigned int trialNo = 0;
+    
+    unsigned long debugRequest_start = 0;
 
     std::unique_ptr<StoredOperationHandler> opStore;
 public:
@@ -56,13 +50,11 @@ public:
 
     void setOcppMessage(std::unique_ptr<OcppMessage> msg);
 
-    void setOcppModel(std::shared_ptr<OcppModel> oModel);
-
     void setTimeout(unsigned long timeout); //0 = disable timeout
-
     bool isTimeoutExceeded();
-
     void executeTimeout(); //call Timeout handler
+
+    unsigned int getTrialNo(); //how many times createRequest() has been tried (used for retry behavior)
 
     /**
      * Sends the message(s) that belong to the OCPP Operation. This function puts a JSON message on the lower protocol layer.
@@ -72,36 +64,28 @@ public:
      * This function is usually called multiple times by the Arduino loop(). On first call, the request is initially sent. In the
      * succeeding calls, the implementers decide to either resend the request, or do nothing as the operation is still pending.
      */
-    void sendReq(OcppSocket& ocppSocket);
+    std::unique_ptr<DynamicJsonDocument> createRequest();
 
    /**
-    * Decides if message belongs to this operation instance and if yes, proccesses it. For example, multiple instances of an
-    * operation type can run in the case of Metering Data being sent.
+    * Decides if message belongs to this operation instance and if yes, proccesses it. Receives both Confirmations and Errors
     * 
     * Returns true if JSON object has been consumed, false otherwise.
     */
-    bool receiveConf(JsonDocument& json);
-
-    /**
-    * Decides if message belongs to this operation instance and if yes, notifies the OcppMessage object about the CallError.
-    * 
-    * Returns true if JSON object has been consumed, false otherwise.
-    */
-    bool receiveError(JsonDocument& json);
+    bool receiveResponse(JsonArray json);
 
     /**
      * Processes the request in the JSON document. Returns true on success, false on error.
      * 
      * Returns false if the request doesn't belong to the corresponding operation instance
      */
-    bool receiveReq(JsonDocument& json);
+    bool receiveRequest(JsonArray json);
 
     /**
      * After processing a request sent by the communication counterpart, this function sends a confirmation
      * message. Returns true on success, false otherwise. Returns also true if a CallError has successfully
      * been sent
      */
-    bool sendConf(OcppSocket& ocppSocket);
+    std::unique_ptr<DynamicJsonDocument> createResponse();
 
     void initiate(std::unique_ptr<StoredOperationHandler> opStorage);
 
@@ -135,10 +119,7 @@ public:
      */
     void setOnAbortListener(OnAbortListener onAbort);
 
-    bool isFullyConfigured();
-
-    void rebaseMsgId(int msgIdCounter); //workaround; remove when random UUID msg IDs are introduced
-
+    const char *getMessageID();
     const char *getOcppOperationType();
 };
 

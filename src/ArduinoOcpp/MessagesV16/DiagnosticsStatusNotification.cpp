@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.h>
@@ -8,15 +8,6 @@
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 
 using ArduinoOcpp::Ocpp16::DiagnosticsStatusNotification;
-
-DiagnosticsStatusNotification::DiagnosticsStatusNotification() {
-    if (defaultOcppEngine && defaultOcppEngine->getOcppModel().getDiagnosticsService()) {
-        auto diagnosticsService = defaultOcppEngine->getOcppModel().getDiagnosticsService();
-        status = diagnosticsService->getDiagnosticsStatus();
-    } else {
-        status = DiagnosticsStatus::Idle;
-    }
-}
 
 DiagnosticsStatusNotification::DiagnosticsStatusNotification(DiagnosticsStatus status) : status(status) {
     

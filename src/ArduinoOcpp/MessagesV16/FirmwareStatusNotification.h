@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
@@ -14,11 +14,9 @@ namespace Ocpp16 {
 
 class FirmwareStatusNotification : public OcppMessage {
 private:
-    FirmwareStatus status;
+    FirmwareStatus status = FirmwareStatus::Idle;
     static const char *cstrFromFwStatus(FirmwareStatus status);
 public:
-    FirmwareStatusNotification();
-
     FirmwareStatusNotification(FirmwareStatus status);
 
     const char* getOcppOperationType() {return "FirmwareStatusNotification"; }

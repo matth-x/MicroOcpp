@@ -8,6 +8,7 @@
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/OcppError.h>
 #include <ArduinoOcpp/Core/OperationStore.h>
+#include <ArduinoOcpp/OperationDeserializer.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -15,8 +16,8 @@ size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_siz
 
 using namespace ArduinoOcpp;
 
-OcppConnection::OcppConnection(std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
-            : baseModel{baseModel}, filesystem{filesystem} {
+OcppConnection::OcppConnection(OperationDeserializer& operationDeserializer, std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
+            : operationDeserializer(operationDeserializer) {
     
     if (filesystem) {
         initiatedOcppOperations.reset(new PersistentOperationsQueue(baseModel, filesystem));
@@ -48,43 +49,83 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
     });
 
     /**
+     * Send and dequeue a pending confirmation message, if existing. If the first operation is awaiting,
+     * try with the subsequent operations.
+     * 
+     * If a message has been sent, terminate this loop() function.
+     */
+    for (auto received = receivedOcppOperations.begin(); received != receivedOcppOperations.end(); ++received) {
+    
+        auto response = (*received)->createResponse();
+
+        if (response) {
+            std::string out;
+            serializeJson(*response, out);
+    
+            bool success = ocppSock.sendTXT(out);
+
+            if (success) {
+                AO_DBG_TRAFFIC_OUT(out.c_str());
+                received = receivedOcppOperations.erase(received);
+            }
+
+            return;
+        } //else: There will be another attempt to send this conf message in a future loop call.
+          //      Go on with the next element in the queue.
+    }
+
+    /**
      * Send pending req message
      */
+    auto initedOp = initiatedOcppOperations->front();
 
-    auto inited = initiatedOcppOperations->front();
-    if (inited) {
-        inited->sendReq(ocppSock);
+    if (!initedOp) {
+        //queue empty
+        return;
     }
+
+    //check backoff time
+
+    if (initedOp->getTrialNo() == 0) {
+        //send immediately
+        sendBackoffPeriod = 0;
+    }
+
+    if (ao_tick_ms() - sendBackoffTime < sendBackoffPeriod) {
+        //still in backoff period
+        return;
+    }
+
+    auto request = initedOp->createRequest();
+
+    if (!request) {
+        //request not ready yet or OOM
+        return;
+    }
+
+    //send request
+    std::string out;
+    serializeJson(*request, out);
+
+    bool success = ocppSock.sendTXT(out);
+
+    if (success) {
+        AO_DBG_TRAFFIC_OUT(out.c_str());
+    }
+
+    //update backoff time
+    sendBackoffTime = ao_tick_ms();
+    sendBackoffPeriod = std::min(sendBackoffPeriod + BACKOFF_PERIOD_INCREMENT, BACKOFF_PERIOD_MAX);
     
-    /**
-     * Work through the receivedOcppOperations queue. Start with the first element by calling conf() on it. 
-     * If an ocppOperation is finished, it returns true on a conf() call, and is dequeued.
-     */
-
-    auto received = receivedOcppOperations.begin();
-    while (received != receivedOcppOperations.end()){
-        bool success = (*received)->sendConf(ocppSock);
-        if (success){
-            received = receivedOcppOperations.erase(received);
-        } else {
-            //There will be another attempt to send this conf message in a future loop call.
-            //Go on with the next element in the queue.
-            ++received; //this makes confs out-of-order. But if the first Op fails because of lacking RAM, this could save the device. 
-        }
-    }
 }
 
-void OcppConnection::initiateOperation(std::unique_ptr<OcppOperation> o){
-    if (!o) {
+void OcppConnection::sendRequest(std::unique_ptr<OcppOperation> op){
+    if (!op) {
         AO_DBG_ERR("Called with null. Ignore");
         return;
     }
-    if (!o->isFullyConfigured()){
-        AO_DBG_ERR("Called without the operation being configured and ready to send. Discard operation!");
-        return; //o gets destroyed
-    }
     
-    initiatedOcppOperations->initiate(std::move(o));
+    initiatedOcppOperations->initiate(std::move(op));
 }
 
 bool OcppConnection::receiveMessage(const char* payload, size_t length) {
@@ -119,52 +160,50 @@ bool OcppConnection::receiveMessage(const char* payload, size_t length) {
     switch (err.code()) {
         case DeserializationError::Ok: {
             int messageTypeId = doc[0] | -1;
-            switch(messageTypeId) {
-                case MESSAGE_TYPE_CALL:
-                    handleReqMessage(doc);      
-                    success = true;
-                    break;
-                case MESSAGE_TYPE_CALLRESULT:
-                    handleConfMessage(doc);
-                    success = true;
-                    break;
-                case MESSAGE_TYPE_CALLERROR:
-                    handleErrMessage(doc);
-                    success = true;
-                    break;
-                default:
-                    AO_DBG_WARN("Invalid OCPP message! (though JSON has successfully been deserialized)");
-                    break;
+
+            if (messageTypeId == MESSAGE_TYPE_CALL) {
+                receiveRequest(doc.as<JsonArray>());      
+                success = true;
+            } else if (messageTypeId == MESSAGE_TYPE_CALLRESULT ||
+                    messageTypeId == MESSAGE_TYPE_CALLERROR) {
+                receiveResponse(doc.as<JsonArray>());
+                success = true;
+            } else {
+                AO_DBG_WARN("Invalid OCPP message! (though JSON has successfully been deserialized)");
             }
-            break;
+            break; 
         }
         case DeserializationError::InvalidInput:
             AO_DBG_WARN("Invalid input! Not a JSON");
             break;
-        case DeserializationError::NoMemory:
-            {
-                AO_DBG_WARN("OOP! Incoming operation exceeds reserved heap. Input length = %zu, max capacity = %d", length, AO_MAX_JSON_CAPACITY);
+        case DeserializationError::NoMemory: {
+            AO_DBG_WARN("incoming operation exceeds buffer capacity. Input length = %zu, max capacity = %d", length, AO_MAX_JSON_CAPACITY);
 
-                /*
-                 * If websocket input is of message type MESSAGE_TYPE_CALL, send back a message of type MESSAGE_TYPE_CALLERROR.
-                 * Then the communication counterpart knows that this operation failed.
-                 * If the input type is MESSAGE_TYPE_CALLRESULT, it can be ignored. This controller will automatically resend the corresponding request message.
-                 */
+            /*
+                * If websocket input is of message type MESSAGE_TYPE_CALL, send back a message of type MESSAGE_TYPE_CALLERROR.
+                * Then the communication counterpart knows that this operation failed.
+                * If the input type is MESSAGE_TYPE_CALLRESULT, then abort the operation to avoid getting stalled.
+                */
 
-                doc =  DynamicJsonDocument(200);
-                char onlyRpcHeader[200];
-                size_t onlyRpcHeader_len = removePayload(payload, length, onlyRpcHeader, sizeof(onlyRpcHeader));
-                DeserializationError err2 = deserializeJson(doc, onlyRpcHeader, onlyRpcHeader_len);
-                if (err2.code() == DeserializationError::Ok) {
-                    int messageTypeId2 = doc[0] | -1;
-                    if (messageTypeId2 == MESSAGE_TYPE_CALL) {
-                        success = true;
-                        auto op = makeOcppOperation(new OutOfMemory(AO_MAX_JSON_CAPACITY, length));
-                        handleReqMessage(doc, std::move(op));
-                    }
+            doc = DynamicJsonDocument(200);
+            char onlyRpcHeader[200];
+            size_t onlyRpcHeader_len = removePayload(payload, length, onlyRpcHeader, sizeof(onlyRpcHeader));
+            DeserializationError err2 = deserializeJson(doc, onlyRpcHeader, onlyRpcHeader_len);
+            if (err2.code() == DeserializationError::Ok) {
+                int messageTypeId = doc[0] | -1;
+                if (messageTypeId == MESSAGE_TYPE_CALL) {
+                    success = true;
+                    auto op = makeOcppOperation(new MsgBufferExceeded(AO_MAX_JSON_CAPACITY, length));
+                    receiveRequest(doc.as<JsonArray>(), std::move(op));
+                } else if (messageTypeId == MESSAGE_TYPE_CALLRESULT ||
+                            messageTypeId == MESSAGE_TYPE_CALLERROR) {
+                    success = true;
+                    AO_DBG_WARN("crop incoming response");
+                    receiveResponse(doc.as<JsonArray>());
                 }
             }
             break;
+        }
         default:
             AO_DBG_WARN("Deserialization failed: %s", err.c_str());
             break;
@@ -180,13 +219,13 @@ bool OcppConnection::receiveMessage(const char* payload, size_t length) {
  * This function could result in improper behavior in Charging Stations, because messages are not
  * guaranteed to be received and therefore processed in the right order.
  */
-void OcppConnection::handleConfMessage(JsonDocument& json) {
+void OcppConnection::receiveResponse(JsonArray json) {
 
     bool success = false;
 
     initiatedOcppOperations->drop_if(
         [&json, &success] (std::unique_ptr<OcppOperation>& operation) {
-            bool match = operation->receiveConf(json);
+            bool match = operation->receiveResponse(json);
             if (match) {
                 success = true;
                 //operation will be deleted by the surrounding drop_if
@@ -196,56 +235,35 @@ void OcppConnection::handleConfMessage(JsonDocument& json) {
 
     if (!success) {
         //didn't find matching OcppOperation
-        AO_DBG_WARN("Received CALLRESULT doesn't match any pending operation");
-        (void)0;
+        if (json[0] == MESSAGE_TYPE_CALLERROR) {
+            AO_DBG_DEBUG("Received CALLERROR did not abort a pending operation");
+            (void)0;
+        } else {
+            AO_DBG_WARN("Received response doesn't match any pending operation");
+            (void)0;
+        }
     }
 }
 
-void OcppConnection::handleReqMessage(JsonDocument& json) {
-    auto op = makeFromJson(json);
+void OcppConnection::receiveRequest(JsonArray json) {
+    auto op = operationDeserializer.deserializeOperation(json[2] | "UNDEFINED");
     if (op == nullptr) {
-        AO_DBG_WARN("Couldn't make OppOperation from Request. Ignore request");
+        AO_DBG_WARN("OOM");
         return;
     }
-    handleReqMessage(json, std::move(op));
+    receiveRequest(json, std::move(op));
 }
 
-void OcppConnection::handleReqMessage(JsonDocument& json, std::unique_ptr<OcppOperation> op) {
-    if (op == nullptr) {
-        AO_DBG_ERR("Invalid argument");
-        return;
-    }
-    op->setOcppModel(baseModel);
-    op->receiveReq(json); //"fire" the operation
+void OcppConnection::receiveRequest(JsonArray json, std::unique_ptr<OcppOperation> op) {
+    op->receiveRequest(json); //execute the operation
     receivedOcppOperations.push_back(std::move(op)); //enqueue so loop() plans conf sending
-}
-
-void OcppConnection::handleErrMessage(JsonDocument& json) {
-
-    bool success = false;
-
-    initiatedOcppOperations->drop_if(
-        [&json, &success] (std::unique_ptr<OcppOperation>& operation) {
-            bool match = operation->receiveError(json);
-            if (match) {
-                success = true;
-                //operation will be deleted by the surrounding drop_if
-            }
-            return match;
-        }); //executes in order and drops every operation where predicate(op) == true
-
-    if (!success) {
-        //No OcppOperation was aborted because of the error message
-        AO_DBG_WARN("Received CALLERROR did not abort a pending operation");
-        (void)0;
-    }
 }
 
 /*
  * Tries to recover the Ocpp-Operation header from a broken message.
  * 
  * Example input: 
- * [2, "75705e50-682d-404e-b400-1bca33d41e19", "ChangeConfiguration", {"key":"now the msg breaks...
+ * [2, "75705e50-682d-404e-b400-1bca33d41e19", "ChangeConfiguration", {"key":"now the message breaks...
  * 
  * The Json library returns an error code when trying to deserialize that broken message. This
  * function searches for the first occurence of the character '{' and writes "}]" after it.

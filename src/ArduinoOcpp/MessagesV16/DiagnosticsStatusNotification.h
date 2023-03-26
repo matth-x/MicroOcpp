@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/OcppMessage.h>
@@ -13,11 +13,9 @@ namespace Ocpp16 {
 
 class DiagnosticsStatusNotification : public OcppMessage {
 private:
-    DiagnosticsStatus status;
+    DiagnosticsStatus status = DiagnosticsStatus::Idle;
     static const char *cstrFromStatus(DiagnosticsStatus status);
 public:
-    DiagnosticsStatusNotification();
-
     DiagnosticsStatusNotification(DiagnosticsStatus status);
 
     const char* getOcppOperationType() {return "DiagnosticsStatusNotification"; }

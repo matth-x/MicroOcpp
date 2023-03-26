@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/GetCompositeSchedule.h>
@@ -12,11 +12,11 @@
 
 using ArduinoOcpp::Ocpp16::GetCompositeSchedule;
 
-GetCompositeSchedule::GetCompositeSchedule() {
+GetCompositeSchedule::GetCompositeSchedule(OcppModel& context) : context(context) {
 
 }
 
-const char* GetCompositeSchedule::getOcppOperationType(){
+const char* GetCompositeSchedule::getOcppOperationType() {
     return "GetCompositeSchedule";
 }
 
@@ -34,8 +34,8 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
         errorCode = "PropertyConstraintViolation";
     }
 
-    if (ocppModel && ocppModel->getChargePointStatusService()) {
-        if (connectorId >= ocppModel->getChargePointStatusService()->getNumConnectors()) {
+    if (auto cpService = context.getChargePointStatusService()) {
+        if (connectorId >= cpService->getNumConnectors()) {
             errorCode = "PropertyConstraintViolation";
         }
     }
@@ -44,21 +44,19 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
         errorCode = "FormationViolation";
     }
 
-    if (!ocppModel || !ocppModel->getSmartChargingService()) {
+    if (!context.getSmartChargingService()) {
         AO_DBG_ERR("SmartChargingService not initialized! Ignore request");
         errorCode = "NotSupported";
     }
 }
 
 std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
-    if (!ocppModel || !ocppModel->getSmartChargingService()) {
-        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
-        JsonObject payload = doc->to<JsonObject>();
-        payload["status"] = "Rejected";
-        return doc;
+    auto scService = context.getSmartChargingService();
+    if (!scService) {
+        AO_DBG_ERR("invalid state");
+        return createEmptyDocument();
     }
 
-    auto scService = ocppModel->getSmartChargingService();
     ChargingSchedule *composite = scService->getCompositeSchedule(connectorId, duration);
     DynamicJsonDocument *compositeJson {nullptr};
 
@@ -80,7 +78,7 @@ std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
         if (startSchedule[0] != '\0') {
             strncpy(scheduleStart, startSchedule, JSONDATE_LENGTH + 1);
         } else {
-            ocppModel->getOcppTime().getOcppTimestampNow().toJsonString(scheduleStart, JSONDATE_LENGTH + 1);
+            context.getOcppTime().getOcppTimestampNow().toJsonString(scheduleStart, JSONDATE_LENGTH + 1);
         }
         payload["scheduleStart"] = scheduleStart;
         

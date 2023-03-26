@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef STOPTRANSACTION_H
@@ -12,30 +12,29 @@
 
 namespace ArduinoOcpp {
 
+class OcppModel;
+
 class SampledValue;
 class MeterValue;
 
 class Transaction;
-class TransactionRPC;
 
 namespace Ocpp16 {
 
 class StopTransaction : public OcppMessage {
 private:
+    OcppModel& context;
     std::shared_ptr<Transaction> transaction;
     std::vector<std::unique_ptr<MeterValue>> transactionData;
 public:
 
-    StopTransaction(std::shared_ptr<Transaction> transaction);
+    StopTransaction(OcppModel& context, std::shared_ptr<Transaction> transaction);
 
-    StopTransaction(std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData);
-    
-    StopTransaction(); //for debugging only. Make this for the server pendant
+    StopTransaction(OcppModel& context, std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData);
 
     const char* getOcppOperationType() override;
 
-    void initiate() override;
-    bool initiate(StoredOperationHandler *opStore) override;
+    void initiate(StoredOperationHandler *opStore) override;
 
     bool restore(StoredOperationHandler *opStore) override;
 

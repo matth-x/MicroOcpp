@@ -13,6 +13,7 @@
 
 namespace ArduinoOcpp {
 
+class OperationDeserializer;
 class OcppModel;
 class OcppSocket;
 class OcppOperation;
@@ -20,26 +21,29 @@ class FilesystemAdapter;
 
 class OcppConnection {
 private:
-    std::shared_ptr<OcppModel> baseModel;
-    std::shared_ptr<FilesystemAdapter> filesystem;
+    OperationDeserializer& operationDeserializer;
     
     std::unique_ptr<OperationsQueue> initiatedOcppOperations;
     std::deque<std::unique_ptr<OcppOperation>> receivedOcppOperations;
 
-    void handleConfMessage(JsonDocument& json);
-    void handleReqMessage(JsonDocument& json);
-    void handleReqMessage(JsonDocument& json, std::unique_ptr<OcppOperation> op);
-    void handleErrMessage(JsonDocument& json);
+    void receiveRequest(JsonArray json);
+    void receiveRequest(JsonArray json, std::unique_ptr<OcppOperation> op);
+    void receiveResponse(JsonArray json);
+
+    unsigned long sendBackoffTime = 0;
+    unsigned long sendBackoffPeriod = 0;
+    const unsigned long BACKOFF_PERIOD_MAX = 65536;
+    const unsigned long BACKOFF_PERIOD_INCREMENT = BACKOFF_PERIOD_MAX / 4;
 public:
-    OcppConnection(std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem = nullptr);
+    OcppConnection(OperationDeserializer& operationDeserializer, std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem = nullptr);
 
     void setSocket(OcppSocket& sock);
 
     void loop(OcppSocket& ocppSock);
 
-    void initiateOperation(std::unique_ptr<OcppOperation> o); //send an OCPP operation request to the server
+    void sendRequest(std::unique_ptr<OcppOperation> o); //send an OCPP operation request to the server
     
-    bool receiveMessage(const char* payload, size_t length); //receive an OCPP operation from the server - either a confirmation or a request
+    bool receiveMessage(const char* payload, size_t length); //receive from  server: either a request or response
 };
 
 } //end namespace ArduinoOcpp

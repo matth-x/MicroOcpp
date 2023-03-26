@@ -16,52 +16,24 @@
 using ArduinoOcpp::Ocpp16::StopTransaction;
 using ArduinoOcpp::TransactionRPC;
 
-StopTransaction::StopTransaction(std::shared_ptr<Transaction> transaction)
-        : transaction(transaction) {
+StopTransaction::StopTransaction(OcppModel& context, std::shared_ptr<Transaction> transaction)
+        : context(context), transaction(transaction) {
 
 }
 
-StopTransaction::StopTransaction(std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData)
-        : transaction(transaction), transactionData(std::move(transactionData)) {
+StopTransaction::StopTransaction(OcppModel& context, std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData)
+        : context(context), transaction(transaction), transactionData(std::move(transactionData)) {
 
 }
 
-StopTransaction::StopTransaction() { }
-
-const char* StopTransaction::getOcppOperationType(){
+const char* StopTransaction::getOcppOperationType() {
     return "StopTransaction";
 }
 
-void StopTransaction::initiate() {
-
-    if (ocppModel && transaction && !transaction->getStopRpcSync().isRequested()) {
-        //fill out tx data if not happened before
-
-        auto meteringService = ocppModel->getMeteringService();
-        if (transaction->getMeterStop() < 0 && meteringService) {
-            auto meterStop = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionEnd);
-            if (meterStop && *meterStop) {
-                transaction->setMeterStop(meterStop->toInteger());
-            } else {
-                AO_DBG_ERR("MeterStop undefined");
-            }
-        }
-
-        if (transaction->getStopTimestamp() <= MIN_TIME) {
-            transaction->setStopTimestamp(ocppModel->getOcppTime().getOcppTimestampNow());
-        }
-
-        transaction->getStopRpcSync().setRequested();
-
-        transaction->commit();
-    }
-    AO_DBG_INFO("StopTransaction initiated!");
-}
-
-bool StopTransaction::initiate(StoredOperationHandler *opStore) {
-    if (!opStore || !ocppModel || !transaction) {
-        AO_DBG_ERR("-> legacy");
-        return false; //execute legacy initiate instead
+void StopTransaction::initiate(StoredOperationHandler *opStore) {
+    if (!transaction || transaction->getStartRpcSync().isRequested()) {
+        AO_DBG_ERR("initialization error");
+        return;
     }
     
     auto payload = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
@@ -76,15 +48,10 @@ bool StopTransaction::initiate(StoredOperationHandler *opStore) {
 
     transaction->commit();
 
-    return true; //don't execute legacy initiate
+    AO_DBG_INFO("StopTransaction initiated");
 }
 
 bool StopTransaction::restore(StoredOperationHandler *opStore) {
-    if (!ocppModel) {
-        AO_DBG_ERR("invalid state");
-        return false;
-    }
-
     if (!opStore) {
         AO_DBG_ERR("invalid argument");
         return false;
@@ -103,7 +70,7 @@ bool StopTransaction::restore(StoredOperationHandler *opStore) {
         return false;
     }
 
-    auto txStore = ocppModel->getTransactionStore();
+    auto txStore = context.getTransactionStore();
 
     if (!txStore) {
         AO_DBG_ERR("invalid state");
@@ -116,7 +83,7 @@ bool StopTransaction::restore(StoredOperationHandler *opStore) {
         return false;
     }
 
-    if (auto mSerivce = ocppModel->getMeteringService()) {
+    if (auto mSerivce = context.getMeteringService()) {
         if (auto txData = mSerivce->getStopTxMeterData(transaction.get())) {
             transactionData = txData->retrieveStopTxData();
         }
@@ -187,8 +154,8 @@ void StopTransaction::processConf(JsonObject payload) {
 
     AO_DBG_INFO("Request has been accepted!");
 
-    if (ocppModel && ocppModel->getAuthorizationService()) {
-        ocppModel->getAuthorizationService()->notifyAuthorization(transaction->getIdTag(), payload["idTagInfo"]);
+    if (auto authService = context.getAuthorizationService()) {
+        authService->notifyAuthorization(transaction->getIdTag(), payload["idTagInfo"]);
     }
 }
 

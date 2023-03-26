@@ -8,11 +8,16 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 
 namespace ArduinoOcpp {
+
+class OcppModel;
+
 namespace Ocpp16 {
 
 class GetLocalListVersion : public OcppMessage {
+private:
+    OcppModel& context;
 public:
-    GetLocalListVersion();
+    GetLocalListVersion(OcppModel& context);
 
     const char* getOcppOperationType();
 

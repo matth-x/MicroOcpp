@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
@@ -11,7 +11,7 @@
 
 using ArduinoOcpp::Ocpp16::ClearChargingProfile;
 
-ClearChargingProfile::ClearChargingProfile() {
+ClearChargingProfile::ClearChargingProfile(OcppModel& context) : context(context) {
 
 }
 
@@ -63,12 +63,12 @@ void ClearChargingProfile::processReq(JsonObject payload) {
         return true;
     };
 
-    if (!ocppModel || !ocppModel->getSmartChargingService()) {
-        AO_DBG_ERR("SmartChargingService not initialized! Ignore request");
-        return;
+    if (auto scService = context.getSmartChargingService()) {
+        matchingProfilesFound = scService->clearChargingProfile(filter);
+    } else {
+        AO_DBG_ERR("SmartChargingService not initialized");
+        errorCode = "NotSupported";
     }
-
-    matchingProfilesFound = ocppModel->getSmartChargingService()->clearChargingProfile(filter);
 }
 
 std::unique_ptr<DynamicJsonDocument> ClearChargingProfile::createConf(){

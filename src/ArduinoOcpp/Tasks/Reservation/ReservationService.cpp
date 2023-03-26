@@ -7,6 +7,8 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
+#include <ArduinoOcpp/MessagesV16/CancelReservation.h>
+#include <ArduinoOcpp/MessagesV16/ReserveNow.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -32,6 +34,11 @@ ReservationService::ReservationService(OcppEngine& context, unsigned int numConn
         fProfilePlus += fpId;
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
+    
+    context.getOperationDeserializer().registerOcppOperation("CancelReservation", [&context] () {
+        return new Ocpp16::CancelReservation(context.getOcppModel());});
+    context.getOperationDeserializer().registerOcppOperation("ReserveNow", [&context] () {
+        return new Ocpp16::ReserveNow(context.getOcppModel());});
 }
 
 void ReservationService::loop() {
@@ -63,7 +70,7 @@ void ReservationService::loop() {
         }
 
         //check if tx with same idTag or reservationId has started
-        for (unsigned int cId = 1; cId < cpService->getNumConnectors(); cId++) {
+        for (int cId = 1; cId < cpService->getNumConnectors(); cId++) {
             auto& transaction = cpService->getConnector(cId)->getTransaction();
             if (transaction) {
                 const char *cIdTag = transaction->getIdTag();
@@ -156,7 +163,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
 
     unsigned int availableCount = 0;
     if (auto cpService = context.getOcppModel().getChargePointStatusService()) {
-        for (unsigned int iconn = 1; iconn < cpService->getNumConnectors(); iconn++) {
+        for (int iconn = 1; iconn < cpService->getNumConnectors(); iconn++) {
             if (iconn == connectorId) {
                 //don't count this connector
                 continue;

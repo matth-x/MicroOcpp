@@ -5,12 +5,17 @@
 #include <ArduinoOcpp/MessagesV16/TriggerMessage.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
+#include <ArduinoOcpp/MessagesV16/StatusNotification.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::TriggerMessage;
+
+TriggerMessage::TriggerMessage(OcppModel& context) : context(context) {
+
+}
 
 const char* TriggerMessage::getOcppOperationType(){
     return "TriggerMessage";
@@ -26,8 +31,7 @@ void TriggerMessage::processReq(JsonObject payload) {
     statusMessage = "Rejected";
 
     if (!strcmp(requestedMessage, "MeterValues")) {
-        if (ocppModel && ocppModel->getMeteringService()) {
-            auto mService = ocppModel->getMeteringService();
+        if (auto mService = context.getMeteringService()) {
             if (connectorId < 0) {
                 auto nConnectors = mService->getNumConnectors();
                 for (decltype(nConnectors) i = 0; i < nConnectors; i++) {
@@ -40,21 +44,32 @@ void TriggerMessage::processReq(JsonObject payload) {
             }
         }
     } else if (!strcmp(requestedMessage, "StatusNotification")) {
-        if (ocppModel && ocppModel->getChargePointStatusService()) {
-            auto cpsService = ocppModel->getChargePointStatusService();
+        if (auto cpsService = context.getChargePointStatusService()) {
+            unsigned int cIdRangeBegin = 0, cIdRangeEnd = 0;
             if (connectorId < 0) {
-                auto nConnectors = cpsService->getNumConnectors();
-                for (decltype(nConnectors) i = 0; i < nConnectors; i++) {
-                    triggeredOperations.push_back(makeOcppOperation(requestedMessage, i));
-                }
+                cIdRangeEnd = cpsService->getNumConnectors();
             } else if (connectorId < cpsService->getNumConnectors()) {
-                triggeredOperations.push_back(makeOcppOperation(requestedMessage, connectorId));
+                cIdRangeBegin = connectorId;
+                cIdRangeEnd = connectorId + 1;
             } else {
                 errorCode = "PropertyConstraintViolation";
             }
+
+            for (auto i = cIdRangeBegin; i < cIdRangeEnd; i++) {
+                auto connector = cpsService->getConnector(i);
+
+                auto statusNotification = makeOcppOperation(new Ocpp16::StatusNotification(
+                            i,
+                            connector->inferenceStatus(), //will be determined in StatusNotification::initiate
+                            context.getOcppTime().getOcppTimestampNow()));
+
+                statusNotification->setTimeout(60000);
+
+                triggeredOperations.push_back(std::move(statusNotification));
+            }
         }
     } else {
-        auto msg = makeOcppOperation(requestedMessage, connectorId);
+        auto msg = defaultOcppEngine->getOperationDeserializer().deserializeOperation(requestedMessage);
         if (msg) {
             triggeredOperations.push_back(std::move(msg));
         } else {

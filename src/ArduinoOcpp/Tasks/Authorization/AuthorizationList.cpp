@@ -52,7 +52,7 @@ bool AuthorizationList::readJson(JsonObject payload, bool compact) {
 
     JsonArray collection = payload["localAuthorizationList"];
 
-    for (int i = 0; i < collection.size(); i++) {
+    for (size_t i = 0; i < collection.size(); i++) {
 
         //check if JSON object is valid
         if (!collection[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAG(compact))) {
@@ -76,7 +76,7 @@ bool AuthorizationList::readJson(JsonObject payload, bool compact) {
         //also, build index here
         collection_index = std::vector<int>(collection.size(), -1);
 
-        for (int i = 0; i < collection.size(); i++) {
+        for (size_t i = 0; i < collection.size(); i++) {
 
             //check if locally stored auth info is present; if yes, apply it to the index
             AuthorizationData *found = get(collection[i][AUTHDATA_KEY_IDTAG(compact)]);
@@ -112,13 +112,13 @@ bool AuthorizationList::readJson(JsonObject payload, bool compact) {
     if (compact) {
         localAuthorizationList.clear();
 
-        for (int i = 0; i < collection.size(); i++) {
+        for (size_t i = 0; i < collection.size(); i++) {
             localAuthorizationList.push_back(AuthorizationData());
             localAuthorizationList.back().readJson(collection[i], compact);
         }
     } else if (differential) {
 
-        for (int i = 0; i < collection.size(); i++) {
+        for (size_t i = 0; i < collection.size(); i++) {
 
             //is entry a remove command?
             if (!collection[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
@@ -148,7 +148,7 @@ bool AuthorizationList::readJson(JsonObject payload, bool compact) {
     } else {
         localAuthorizationList.clear();
 
-        for (int i = 0; i < collection.size(); i++) {
+        for (size_t i = 0; i < collection.size(); i++) {
             if (collection[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
                 localAuthorizationList.push_back(AuthorizationData());
                 localAuthorizationList.back().readJson(collection[i], compact);
