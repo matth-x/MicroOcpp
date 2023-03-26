@@ -33,6 +33,19 @@ public:
     static int32_t toInteger(int32_t& val) {return val;}
 };
 
+template <>
+class SampledValueDeSerializer<float> { // Used in meterValues
+public:
+    static float deserialize(const char *str) {return atof(str);}
+    static bool ready(float& val) {return true;} //float is always valid
+    static std::string serialize(float& val) {
+        char str[20];
+        dtostrf(val,4,9,str);
+        return std::string(str);
+    }
+    static int32_t toInteger(float& val) {return (int32_t) val;}
+};
+
 class SampledValueProperties {
 private:
     std::string format;

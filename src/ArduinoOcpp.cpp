@@ -324,8 +324,8 @@ void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connec
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Energy.Active.Import.Register");
     meterProperties.setUnit("Wh");
-    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>>(
-                           new SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>(
+    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<float, SampledValueDeSerializer<float>>>(
+                           new SampledValueSamplerConcrete<float, SampledValueDeSerializer<float>>(
             meterProperties,
             [energyInput] (ReadingContext) {return energyInput();}
     ));
@@ -347,8 +347,8 @@ void setPowerMeterInput(std::function<float()> powerInput, unsigned int connecto
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Power.Active.Import");
     meterProperties.setUnit("W");
-    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>>(
-                           new SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>(
+    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<float, SampledValueDeSerializer<float>>>(
+                           new SampledValueSamplerConcrete<float, SampledValueDeSerializer<float>>(
             meterProperties,
             [powerInput] (ReadingContext) {return powerInput();}
     ));
@@ -412,7 +412,7 @@ void addErrorCodeInput(std::function<const char *()> errorCodeInput, unsigned in
     connector->addConnectorErrorCodeSampler(errorCodeInput);
 }
 
-void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measurand, const char *unit, const char *location, const char *phase, unsigned int connectorId) {
+void addMeterValueInput(std::function<float ()> valueInput, const char *measurand, const char *unit, const char *location, const char *phase, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -438,10 +438,10 @@ void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measur
     if (phase)
         properties.setPhase(phase);
 
-    auto valueSampler = std::unique_ptr<ArduinoOcpp::SampledValueSamplerConcrete<int32_t, ArduinoOcpp::SampledValueDeSerializer<int32_t>>>(
-                                    new ArduinoOcpp::SampledValueSamplerConcrete<int32_t, ArduinoOcpp::SampledValueDeSerializer<int32_t>>(
+    auto valueSampler = std::unique_ptr<ArduinoOcpp::SampledValueSamplerConcrete<float, ArduinoOcpp::SampledValueDeSerializer<float>>>(
+                                    new ArduinoOcpp::SampledValueSamplerConcrete<float, ArduinoOcpp::SampledValueDeSerializer<float>>(
                 properties,
-                [valueInput] (ArduinoOcpp::ReadingContext) -> int32_t {return valueInput();}));
+                [valueInput] (ArduinoOcpp::ReadingContext) {return valueInput();}));
     addMeterValueInput(std::move(valueSampler), connectorId);
 }
 
