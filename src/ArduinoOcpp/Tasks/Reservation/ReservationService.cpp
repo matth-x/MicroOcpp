@@ -164,7 +164,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
     unsigned int availableCount = 0;
     if (auto cpService = context.getOcppModel().getChargePointStatusService()) {
         for (int iconn = 1; iconn < cpService->getNumConnectors(); iconn++) {
-            if (iconn == connectorId) {
+            if (iconn == (int) connectorId) {
                 //don't count this connector
                 continue;
             }
@@ -208,6 +208,7 @@ bool ReservationService::updateReservation(JsonObject payload) {
 //                payload.containsKey("parentIdTag") ? payload["parentIdTag"] : nullptr)) {
 //    if (auto reservation = getReservation(payload["connectorId"].as<int>())) {
         AO_DBG_DEBUG("found blocking reservation at connectorId %u", reservation->getConnectorId());
+        (void)reservation;
         return false;
     }
 

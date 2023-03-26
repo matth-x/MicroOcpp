@@ -184,7 +184,7 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
     if (!equivalent) {
         //send error code "LocalListConflict" to server
 
-        OcppEvseState cpStatus;
+        OcppEvseState cpStatus = OcppEvseState::NOT_SET;
         if (auto cp = context.getOcppModel().getConnectorStatus(0)) {
             cpStatus = cp->inferenceStatus();
         }
