@@ -27,6 +27,7 @@ set(AO_SRC
     src/ArduinoOcpp/MessagesV16/ChangeConfiguration.cpp
     src/ArduinoOcpp/MessagesV16/ClearCache.cpp
     src/ArduinoOcpp/MessagesV16/ClearChargingProfile.cpp
+    src/ArduinoOcpp/MessagesV16/CustomMessage.cpp
     src/ArduinoOcpp/MessagesV16/DataTransfer.cpp
     src/ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.cpp
     src/ArduinoOcpp/MessagesV16/FirmwareStatusNotification.cpp
