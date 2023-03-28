@@ -13,11 +13,11 @@ CustomMessage::CustomMessage(const char *operationType,
             std::function<void (StoredOperationHandler*)> fn_initiate,
             std::function<bool (StoredOperationHandler*)> fn_restore) :
         operationType{operationType},
+        fn_initiate{fn_initiate},
+        fn_restore{fn_restore},
         fn_createReq{fn_createReq},
         fn_processConf{fn_processConf},
-        fn_processErr{fn_processErr},
-        fn_initiate{fn_initiate},
-        fn_restore{fn_restore} {
+        fn_processErr{fn_processErr} {
     
 }
 
