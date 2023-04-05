@@ -353,6 +353,7 @@ OcppMessage *ConnectorStatus::loop() {
     }
 
     if (reportedStatus != currentStatus &&
+            context.getOcppTime().getOcppTimestampNow() >= OcppTimestamp(2010,0,0,0,0,0) &&
             (*minimumStatusDuration <= 0 || //MinimumStatusDuration disabled
             ao_tick_ms() - t_statusTransition >= ((unsigned long) *minimumStatusDuration) * 1000UL)) {
         reportedStatus = currentStatus;

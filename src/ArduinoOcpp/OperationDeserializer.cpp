@@ -18,7 +18,6 @@ OperationDeserializer::OperationDeserializer() {
 OcppMessageCreator *OperationDeserializer::findCreator(const char *operationType) {
     for (auto it = registry.begin(); it != registry.end(); ++it) {
         if (!strcmp(it->operationType, operationType)) {
-            AO_DBG_ERR("success");
             return &*it;
         }
     }

@@ -99,7 +99,7 @@ AuthorizationData *AuthorizationService::getLocalAuthorization(const char *idTag
     //check status
     if (authData->getAuthorizationStatus() != AuthorizationStatus::Accepted) {
         AO_DBG_DEBUG("idTag %s local auth status %s", idTag, serializeAuthorizationStatus(authData->getAuthorizationStatus()));
-        return nullptr;
+        return authData;
     }
 
     return authData;
