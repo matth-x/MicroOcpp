@@ -308,6 +308,8 @@ bool OcppOperation::restore(std::unique_ptr<StoredOperationHandler> opStorage, s
         //skip this step but don't abort restore
     }
 
+    timeout_period = 0; //disable timeout by default for restored msgs
+
     if (!strcmp(opType.c_str(), "StartTransaction")) { //TODO this will get a nicer solution
         ocppMessage = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction(*oModel.get(), nullptr));
     } else if (!strcmp(opType.c_str(), "StopTransaction")) {

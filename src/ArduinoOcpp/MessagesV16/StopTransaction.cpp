@@ -31,7 +31,7 @@ const char* StopTransaction::getOcppOperationType() {
 }
 
 void StopTransaction::initiate(StoredOperationHandler *opStore) {
-    if (!transaction || transaction->getStartRpcSync().isRequested()) {
+    if (!transaction || transaction->getStopRpcSync().isRequested()) {
         AO_DBG_ERR("initialization error");
         return;
     }
@@ -40,9 +40,10 @@ void StopTransaction::initiate(StoredOperationHandler *opStore) {
     (*payload)["connectorId"] = transaction->getConnectorId();
     (*payload)["txNr"] = transaction->getTxNr();
 
-    opStore->setPayload(std::move(payload));
-
-    opStore->commit();
+    if (opStore) {
+        opStore->setPayload(std::move(payload));
+        opStore->commit();
+    }
 
     transaction->getStopRpcSync().setRequested();
 

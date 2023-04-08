@@ -66,7 +66,7 @@ void BootService::loop() {
      * this class and notify this class about the response
      */
     auto bootNotification = makeOcppOperation(new Ocpp16::BootNotification(context.getOcppModel(), getChargePointCredentials()));
-    bootNotification->setTimeout(0);
+    bootNotification->setTimeout(interval_s * 1000UL);
     context.initiatePreBootOperation(std::move(bootNotification));
 
     lastBootNotification = ao_tick_ms();
@@ -112,6 +112,7 @@ std::unique_ptr<DynamicJsonDocument> BootService::getChargePointCredentials() {
 
 void BootService::notifyRegistrationStatus(RegistrationStatus status) {
     this->status = status;
+    lastBootNotification = ao_tick_ms();
 }
 
 void BootService::setRetryInterval(unsigned long interval_s) {
@@ -120,4 +121,5 @@ void BootService::setRetryInterval(unsigned long interval_s) {
     } else {
         this->interval_s = interval_s;
     }
+    lastBootNotification = ao_tick_ms();
 }
