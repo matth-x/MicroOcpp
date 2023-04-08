@@ -16,11 +16,13 @@ Fully integrated into the Arduino platform and the ESP32 / ESP8266. Runs on ESP-
 
 This library allows your EVSE to communicate with an OCPP Backend and to participate in commercial charging networks. You can integrate it into an existing firmware development, or start a new EVSE project from scratch with it.
 
-:heavy_check_mark: Works with [SteVe](https://github.com/RWTH-i5-IDSG/steve), [The Mobility House OCPP package](https://github.com/mobilityhouse/ocpp) and further commercial Central Systems
+:heavy_check_mark: Works with [SteVe](https://github.com/RWTH-i5-IDSG/steve) and [15+ commercial Central Systems](https://www.arduino-ocpp.com/#h.314525e8447cc93c_81)
 
 :heavy_check_mark: Tested in many charging stations
 
 :heavy_check_mark: Eligible for public chargers (Eichrecht-compliant)
+
+Try it (no hardware required): [ArduinoOcppSimulator](https://github.com/matth-x/ArduinoOcppSimulator)
 
 ### Features
 
