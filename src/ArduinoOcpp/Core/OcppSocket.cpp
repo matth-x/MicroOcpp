@@ -5,9 +5,31 @@
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/Debug.h>
 
-#ifndef AO_CUSTOM_WS
-
 using namespace ArduinoOcpp;
+
+void OcppEchoSocket::loop() { }
+
+bool OcppEchoSocket::sendTXT(std::string &out) {
+    if (!connected) {
+        return true;
+    }
+    if (receiveTXT) {
+        lastRecv = ao_tick_ms();
+        return receiveTXT(out.c_str(), out.length());
+    } else {
+        return false;
+    }
+}
+
+void OcppEchoSocket::setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) {
+    this->receiveTXT = receiveTXT;
+}
+
+unsigned long OcppEchoSocket::getLastRecv() {
+    return lastRecv;
+}
+
+#ifndef AO_CUSTOM_WS
 
 using namespace ArduinoOcpp::EspWiFi;
 

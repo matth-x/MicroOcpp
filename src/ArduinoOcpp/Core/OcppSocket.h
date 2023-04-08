@@ -34,6 +34,11 @@ public:
      * the socket. The socket should forward any incoming payload from the OCPP server to the receiveTXT callback
      */
     virtual void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) = 0;
+
+    /*
+     * Returns the timestamp of the last incoming message. Use ao_tick_ms() for creating the correct timestamp
+     */
+    virtual unsigned long getLastRecv() {return 0;}
 };
 
 class OcppEchoSocket : public OcppSocket {
@@ -41,21 +46,12 @@ private:
     ReceiveTXTcallback receiveTXT;
 
     bool connected = true; //for simulating connection losses
+    unsigned long lastRecv = 0;
 public:
-    void loop() override { }
-    bool sendTXT(std::string &out) override {
-        if (!connected) {
-            return true;
-        }
-        if (receiveTXT) {
-            return receiveTXT(out.c_str(), out.length());
-        } else {
-            return false;
-        }
-    }
-    void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) override {
-        this->receiveTXT = receiveTXT;
-    }
+    void loop() override;
+    bool sendTXT(std::string &out) override;
+    void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) override;
+    unsigned long getLastRecv() override;
 
     void setConnected(bool connected) {this->connected = connected;}
     bool isConnected() {return connected;}
@@ -83,7 +79,7 @@ public:
 
     void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT);
 
-    unsigned long getLastRecv(); //get time of last successful receive in millis
+    unsigned long getLastRecv() override; //get time of last successful receive in millis
 };
 
 } //end namespace EspWiFi

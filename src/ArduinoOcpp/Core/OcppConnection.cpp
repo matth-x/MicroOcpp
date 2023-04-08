@@ -87,9 +87,15 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
     //check backoff time
 
     if (initedOp->getTrialNo() == 0) {
-        //send immediately
+        //first trial -> send immediately
         sendBackoffPeriod = 0;
     }
+
+    if (sockTrackLastRecv != ocppSock.getLastRecv()) {
+        //connection active (again) -> send immediately
+        sendBackoffPeriod = 0;
+    }
+    sockTrackLastRecv = ocppSock.getLastRecv();
 
     if (ao_tick_ms() - sendBackoffTime < sendBackoffPeriod) {
         //still in backoff period
