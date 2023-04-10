@@ -27,7 +27,7 @@ public:
     static bool ready(int32_t& val) {return true;} //int32_t is always valid
     static std::string serialize(int32_t& val) {
         char str [12] = {'\0'};
-        snprintf(str, 12, "%d", val);
+        snprintf(str, 12, "%ld", val);
         return std::string(str);
     }
     static int32_t toInteger(int32_t& val) {return val;}

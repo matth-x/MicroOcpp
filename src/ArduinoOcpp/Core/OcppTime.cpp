@@ -34,6 +34,10 @@ OcppTimestamp::OcppTimestamp() {
     
 }
 
+OcppTimestamp::OcppTimestamp(const OcppTimestamp& other) {
+    *this = other;
+}
+
 int noDays(int month, int year) {
     return (month == 0 || month == 2 || month == 4 || month == 6 || month == 7 || month == 9 || month == 11) ? 31 :
             ((month == 3 || month == 5 || month == 8 || month == 10) ? 30 :

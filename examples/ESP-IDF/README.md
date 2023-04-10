@@ -6,15 +6,16 @@ To run ArduinoOcpp on the ESP-IDF platform, please take this example as the star
 
 ### Dependencies
 
-Please clone the following repositories into the respective components-directory:
+Please clone the following repositories into the respective components-directories:
 
-- [Mongoose (ESP-IDF integration)](https://github.com/cesanta/mongoose-esp-idf) into `components/mongoose`
 - [ArduinoOcpp](https://github.com/matth-x/ArduinoOcpp) into `components/ArduinoOcpp`
-- [Mongoose adapter for ArduinoOcpp](https://github.com/matth-x/AOcppMongoose) into `components/AOcppMongoose`
+- [Mongoose (ESP-IDF integration)](https://github.com/cesanta/mongoose-esp-idf) into `components/mongoose`
+- [Mongoose adapter for ArduinoOcpp](https://github.com/matth-x/AOcppMongoose) into `components/ArduinoOcppMongoose`
+- [ArduinoJson](https://github.com/bblanchon/ArduinoJson) into `components/ArduinoJson`
 
-The following header-only library needs to go into the include-section:
+Alternatively, ArduinoJson can go into into an include folder as it is a header-only library:
 
-- [ArduinoJson header file](https://github.com/bblanchon/ArduinoJson/releases/download/v6.19.4/ArduinoJson-v6.19.4.h), renamed and moved to `include/ArduinoJson.h`
+- [ArduinoJson header file](https://github.com/bblanchon/ArduinoJson/releases/download/v6.19.4/ArduinoJson-v6.19.4.h), renamed and moved to `include/ArduinoJson.h`. Any other location will work too as long as the header file `ArduinoJson.h` is on the include-path and can be found by the statement `#include <ArduinoJson.h>`
 
 For setup, the following commands could come handy (change to the root directory of the ESP-IDF project first):
 
@@ -22,10 +23,19 @@ For setup, the following commands could come handy (change to the root directory
 rm components/mongoose/.gitkeep
 rm components/ArduinoOcpp/.gitkeep
 rm components/AOcppMongoose/.gitkeep
-git clone --recurse-submodules https://github.com/cesanta/mongoose-esp-idf.git components/mongoose
 git clone https://github.com/matth-x/ArduinoOcpp components/ArduinoOcpp
+git clone --recurse-submodules https://github.com/cesanta/mongoose-esp-idf.git components/mongoose
 git clone https://github.com/matth-x/AOcppMongoose components/AOcppMongoose
-wget -Uri https://github.com/bblanchon/ArduinoJson/releases/download/v6.19.4/ArduinoJson-v6.19.4.h -O ./include/ArduinoJson.h
+git clone https://github.com/bblanchon/ArduinoJson
+```
+
+The setup is done if the following include statements work:
+
+```cpp
+#include <ArduinoOcpp.h>
+#include <mongoose.h>
+#include <ArduinoOcppMongooseClient.h>
+#include <ArduinoJson.h>
 ```
 
 ### Configure the project
@@ -42,4 +52,3 @@ In the `Example Configuration` menu:
     * Set `AuthorizationKey`, or leave empty if not necessary
 
 Optional: If you need, change the other options according to your requirements.
-

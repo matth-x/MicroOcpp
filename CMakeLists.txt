@@ -80,7 +80,7 @@ set(AO_SRC
 if(ESP_PLATFORM)
 
     idf_component_register(SRCS ${AO_SRC}
-                        INCLUDE_DIRS "./src" "${PROJECT_DIR}/include"
+                        INCLUDE_DIRS "./src" "../ArduinoJson/src"
                         PRIV_REQUIRES spiffs)
 
     target_compile_options(${COMPONENT_TARGET} PUBLIC

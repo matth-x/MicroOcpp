@@ -43,6 +43,8 @@ public:
 
     OcppTimestamp();
 
+    OcppTimestamp(const OcppTimestamp& other);
+
     OcppTimestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second) :
                 year(year), month(month), day(day), hour(hour), minute(minute), second(second) { };
 
