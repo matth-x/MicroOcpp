@@ -395,7 +395,7 @@ void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, unsi
         return;
     }
     if (connectorId != 1) {
-        AO_DBG_WARN("Smart charging for multiple connectorId %u not implemented yet", connectorId);
+        AO_DBG_WARN("Only one connector supported at the moment for Smart Charging");
         return;
     }
     auto& model = ocppEngine->getOcppModel();

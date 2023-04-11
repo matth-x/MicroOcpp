@@ -84,10 +84,11 @@ if(ESP_PLATFORM)
                         PRIV_REQUIRES spiffs)
 
     target_compile_options(${COMPONENT_TARGET} PUBLIC
+        -DAO_PLATFORM=AO_PLATFORM_ESPIDF
         -DAO_CUSTOM_WS
         -DAO_CUSTOM_UPDATER
         -DAO_CUSTOM_RESET
-        -DAO_PLATFORM=AO_PLATFORM_ESPIDF)
+        )
 
     return()
 endif()
@@ -104,8 +105,4 @@ target_compile_definitions(ArduinoOcpp PUBLIC
     AO_CUSTOM_WS
     AO_CUSTOM_UPDATER
     AO_CUSTOM_RESET
-    AO_DBG_LEVEL=AO_DL_DEBUG
-    AO_TRAFFIC_OUT
-    AO_FILENAME_PREFIX="./ao_store"
-    AO_DEACTIVATE_FLASH_SMARTCHARGING
     )

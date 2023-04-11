@@ -18,7 +18,7 @@
 
 #ifndef AO_DEACTIVATE_FLASH
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
-#if AO_USE_FILEAPI == ESPIDF_SPIFFS
+#if AO_USE_FILEAPI == ESPIDF_SPIFFS || AO_USE_FILEAPI == POSIX_FILEAPI
 #define AO_DEACTIVATE_FLASH //migrate to File utils
 #endif
 #endif
@@ -47,7 +47,7 @@ SmartChargingService::SmartChargingService(OcppEngine& context, float chargeLimi
       : context(context), DEFAULT_CHARGE_LIMIT{chargeLimit}, V_eff{V_eff}, filesystemOpt{filesystemOpt} {
   
     if (numConnectors > 2) {
-        AO_DBG_ERR("Only one connector supported at the moment");
+        AO_DBG_WARN("Only one connector supported at the moment");
     }
     
     limitBeforeChange = -1.0f;
