@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef SAMPLEDVALUE_H
@@ -23,14 +23,10 @@ public:
 template <>
 class SampledValueDeSerializer<int32_t> { // example class
 public:
-    static int32_t deserialize(const char *str) {return strtol(str, nullptr,10);}
+    static int32_t deserialize(const char *str);
     static bool ready(int32_t& val) {return true;} //int32_t is always valid
-    static std::string serialize(int32_t& val) {
-        char str [12] = {'\0'};
-        snprintf(str, 12, "%ld", val);
-        return std::string(str);
-    }
-    static int32_t toInteger(int32_t& val) {return val;}
+    static std::string serialize(int32_t& val);
+    static int32_t toInteger(int32_t& val) {return val;} //no conversion required
 };
 
 class SampledValueProperties {

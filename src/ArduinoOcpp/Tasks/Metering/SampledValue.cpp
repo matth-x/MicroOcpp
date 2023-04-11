@@ -1,11 +1,23 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 #include <ArduinoOcpp/Debug.h>
+#include <cinttypes>
 
 using ArduinoOcpp::SampledValue;
+using ArduinoOcpp::SampledValueDeSerializer;
+
+int32_t SampledValueDeSerializer<int32_t>::deserialize(const char *str) {
+    return strtol(str, nullptr, 10);
+}
+
+std::string SampledValueDeSerializer<int32_t>::serialize(int32_t& val) {
+    char str [12] = {'\0'};
+    snprintf(str, 12, "%" PRId32, val);
+    return std::string(str);
+}
 
 //helper function
 namespace ArduinoOcpp {
