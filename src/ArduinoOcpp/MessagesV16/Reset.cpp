@@ -35,7 +35,7 @@ void Reset::processReq(JsonObject payload) {
                 for (int i = 0; i < cpsService->getNumConnectors(); i++) {
                     auto connector = cpsService->getConnector(i);
                     if (connector) {
-                        connector->endSession(isHard ? "HardReset" : "SoftReset");
+                        connector->endTransaction(isHard ? "HardReset" : "SoftReset");
                     }
                 }
             }

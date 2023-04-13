@@ -34,7 +34,7 @@ ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned
       : context(context) {
 
     for (unsigned int i = 0; i < numConn; i++) {
-        connectors.push_back(std::unique_ptr<ConnectorStatus>(new ConnectorStatus(context.getOcppModel(), i)));
+        connectors.push_back(std::unique_ptr<ConnectorStatus>(new ConnectorStatus(context, i)));
     }
     
     std::shared_ptr<Configuration<int>> numberOfConnectors =

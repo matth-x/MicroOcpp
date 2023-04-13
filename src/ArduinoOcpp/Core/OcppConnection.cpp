@@ -93,7 +93,7 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
 
     if (sockTrackLastRecv != ocppSock.getLastRecv()) {
         //connection active (again) -> send immediately
-        sendBackoffPeriod = 0;
+        sendBackoffPeriod = std::min(sendBackoffPeriod, 1000UL);
     }
     sockTrackLastRecv = ocppSock.getLastRecv();
 

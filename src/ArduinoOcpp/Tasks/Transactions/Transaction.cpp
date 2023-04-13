@@ -23,6 +23,9 @@ bool Transaction::serializeSessionState(DynamicJsonDocument& out) {
     if (session.idTag[0] != '\0') {
         sessionState["idTag"] = session.idTag;
     }
+    if (session.authorized) {
+        sessionState["authorized"] = session.authorized;
+    }
     if (session.timestamp > MIN_TIME) {
         char timeStr [JSONDATE_LENGTH + 1] = {'\0'};
         session.timestamp.toJsonString(timeStr, JSONDATE_LENGTH + 1);
@@ -123,6 +126,9 @@ bool Transaction::deserializeSessionState(JsonObject state) {
             AO_DBG_ERR("Read err");
             return false;
         }
+    }
+    if (sessionState.containsKey("authorized")) {
+        session.authorized = sessionState["authorized"] | false;
     }
     if (sessionState.containsKey("timestamp")) {
         session.timestamp.setTime(sessionState["timestamp"] | "Invalid");

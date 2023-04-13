@@ -91,7 +91,7 @@ void loop() {
     OCPP_loop();
 
     /*
-     * Check internal OCPP state and bind EVSE hardware to it
+     * Energize EV plug if OCPP transaction is up and running
      */
     if (ocppPermitsCharge()) {
         //OCPP set up and transaction running. Energize the EV plug here
@@ -100,31 +100,29 @@ void loop() {
     }
 
     /*
-     * Detect if something physical happened at your EVSE and trigger the corresponding OCPP messages
+     * Use NFC reader to start and stop transactions
      */
     if (/* RFID chip detected? */ false) {
         String idTag = "0123456789ABCD"; //e.g. idTag = RFID.readIdTag();
 
         if (!getTransactionIdTag()) {
             //no idTag registered yet. Start a new transaction
+            Serial.printf("[main] Begin Transaction with idTag %s\n", idTag.c_str());
 
-            authorize(idTag.c_str(), [idTag] (JsonObject response) {
-                //check if user with idTag is authorized
-                if (!strcmp("Accepted", response["idTagInfo"]["status"] | "Invalid")){
-                    Serial.println(F("[main] User is authorized to start a transaction"));
+            /*
+             * Begin Transaction. The OCPP lib will prepare transaction by checking the Authorization
+             * and listen to the ConnectorPlugged Input. When the Authorization succeeds and an EV
+             * is plugged, the OCPP lib will send the StartTransaction
+             */
+            auto ret = beginTransaction(idTag.c_str());
 
-                    auto ret = beginTransaction(idTag.c_str()); //begin Tx locally
+            if (ret) {
+                Serial.println(F("[main] Transaction initiated. OCPP lib will send a StartTransaction when" \
+                                 "ConnectorPlugged Input becomes true and if the Authorization succeeds"));
+            } else {
+                Serial.println(F("[main] No transaction initiated"));
+            }
 
-                    if (ret) {
-                        Serial.println(F("[main] Transaction initiated. StartTransaction will be sent when ConnectorPlugged Input becomes true"));
-                    } else {
-                        Serial.println(F("[main] No transaction initiated"));
-                    }
-                } else {
-                    Serial.printf("[main] Authorize denied. Reason: %s\n", response["idTagInfo"]["status"] | "");
-                }
-            });
-            Serial.printf("[main] Authorizing user with idTag %s\n", idTag.c_str());
         } else {
             //Transaction already initiated. Check if to stop current Tx by RFID card
             if (idTag.equals(getTransactionIdTag())) {

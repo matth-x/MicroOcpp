@@ -22,17 +22,20 @@
 
 namespace ArduinoOcpp {
 
+class OcppEngine;
 class OcppModel;
 class OcppMessage;
 class Transaction;
 
 class ConnectorStatus {
 private:
-    OcppModel& context;
+    OcppEngine& context;
+    OcppModel& model;
     
     const int connectorId;
 
     std::shared_ptr<Transaction> transaction;
+    void allocateTransaction(const char *idTag);
 
     std::shared_ptr<Configuration<int>> availability;
     int availabilityVolatile = AVAILABILITY_OPERATIVE;
@@ -60,26 +63,32 @@ private:
     std::shared_ptr<Configuration<bool>> stopTransactionOnEVSideDisconnect;
     std::shared_ptr<Configuration<bool>> unlockConnectorOnEVSideDisconnect;
     std::shared_ptr<Configuration<bool>> localPreAuthorize;
+    std::shared_ptr<Configuration<bool>> allowOfflineTxForUnknownId;
 
     std::shared_ptr<Configuration<bool>> silentOfflineTransactions;
+    std::shared_ptr<Configuration<int>> authorizationTimeout; //in seconds
     std::shared_ptr<Configuration<bool>> freeVendActive;
     std::shared_ptr<Configuration<const char*>> freeVendIdTag;
     bool freeVendTrackPlugged = false;
 public:
-    ConnectorStatus(OcppModel& context, int connectorId);
+    ConnectorStatus(OcppEngine& context, int connectorId);
 
     /*
-     * Relation Session <-> Transaction
-     * Session: the EV user is authorized and the OCPP transaction can start immediately without
-     *          further confirmation by the user or the OCPP backend
-     * Transaction: started by "StartTransaction" and stopped by "StopTransaction".
+     * beginTransaction begins the transaction process which eventually leads to a StartTransaction
+     * request in the normal case.
      * 
-     * A session (between the EV user and the OCPP system) is on of two prerequisites to start a
-     * transaction. The other prerequisite is that the EV is properly connected to the EVSE
-     * (given by ConnectorPluggedSampler and no error code)
+     * If the transaction process begins successfully, a Transaction object is returned
+     * If no transaction process begins due to this call, nullptr is returned (e.g. memory allocation failed)
      */
-    void beginSession(const char *idTag);
-    void endSession(const char *reason = nullptr);
+    std::shared_ptr<Transaction> beginTransaction(const char *idTag);
+    std::shared_ptr<Transaction> beginTransaction_authorized(const char *idTag, const char *parentIdTag = nullptr);
+
+    /*
+     * End the current transaction process, if existing and not ended yet. This eventually leads to
+     * a StopTransaction request, if the transaction process has actually ended due to this call. It
+     * is safe to call this function at any time even if no transaction is running
+     */
+    void endTransaction(const char *reason = nullptr);
     const char *getSessionIdTag();
     uint16_t getSessionWriteCount();
     bool isTransactionRunning();

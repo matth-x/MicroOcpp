@@ -94,6 +94,7 @@ private:
     friend class Transaction;
     
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
+    bool authorized = false;    //if the given idTag was authorized
     OcppTimestamp timestamp = MIN_TIME;
     int txProfileId = -1;
 
@@ -149,6 +150,9 @@ public:
     const char *getStopReason() {return stop.client.reason;}
     void setStopReason(const char *reason) {snprintf(stop.client.reason, REASON_LEN_MAX + 1, "%s", reason);}
     void endSession() {session.active = false;}
+
+    void setAuthorized() {session.authorized = true;}
+    bool isAuthorized() {return session.authorized && start.server.authorized;}
 
     void setIdTagDeauthorized() {start.server.authorized = false;}
     bool isIdTagDeauthorized() {return start.rpc.isConfirmed() && !start.server.authorized;}

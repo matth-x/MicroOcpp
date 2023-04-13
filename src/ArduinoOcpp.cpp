@@ -280,7 +280,7 @@ bool beginTransaction(const char *idTag, unsigned int connectorId) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
     }
-    connector->beginSession(idTag);
+    connector->beginTransaction(idTag);
     return true;
 }
 
@@ -295,7 +295,7 @@ bool endTransaction(const char *reason, unsigned int connectorId) {
         return false;
     }
     bool res = connector->getSessionIdTag();
-    connector->endSession(reason);
+    connector->endTransaction(reason);
     return res;
 }
 
@@ -767,7 +767,7 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
         return false;
     }
 
-    connector->endSession("Local");
+    connector->endTransaction("Local");
 
     const char *idTag = transaction->getIdTag();
     if (idTag) {

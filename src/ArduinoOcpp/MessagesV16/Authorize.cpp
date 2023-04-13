@@ -11,16 +11,12 @@
 
 using ArduinoOcpp::Ocpp16::Authorize;
 
-//Authorize::Authorize() {
-//    snprintf(this->idTag, IDTAG_LEN_MAX + 1, "A0-00-00-00"); //Use a default payload. In the typical use case of this library, you probably you don't even need Authorization at all
-//}
-
 Authorize::Authorize(OcppModel& context, const char *idTagIn) : context(context) {
     if (idTagIn && strnlen(idTagIn, IDTAG_LEN_MAX + 2) <= IDTAG_LEN_MAX) {
         snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
     } else {
-        AO_DBG_WARN("Format violation of idTag. Use default idTag");
-        snprintf(idTag, IDTAG_LEN_MAX + 1, "A0-00-00-00");
+        AO_DBG_WARN("Format violation of idTag. Discard idTag");
+        (void)0;
     }
 }
 

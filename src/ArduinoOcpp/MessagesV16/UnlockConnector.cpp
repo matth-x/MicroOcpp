@@ -30,7 +30,7 @@ void UnlockConnector::processReq(JsonObject payload) {
         return;
     }
 
-    connector->endSession("UnlockCommand");
+    connector->endTransaction("UnlockCommand");
 
     unlockConnector = connector->getOnUnlockConnector();
     if (unlockConnector != nullptr) {

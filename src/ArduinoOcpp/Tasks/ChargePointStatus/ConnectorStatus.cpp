@@ -4,11 +4,13 @@
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ConnectorStatus.h>
 
+#include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
+#include <ArduinoOcpp/MessagesV16/Authorize.h>
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
@@ -18,12 +20,15 @@
 
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
+#include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
+
+#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
-        : context(context), connectorId{connectorId}, txProcess(connectorId) {
+ConnectorStatus::ConnectorStatus(OcppEngine& context, int connectorId)
+        : context(context), model(context.getOcppModel()), connectorId{connectorId}, txProcess(connectorId) {
 
     char availabilityKey [CONF_KEYLEN_MAX + 1] = {'\0'};
     snprintf(availabilityKey, CONF_KEYLEN_MAX + 1, "AO_AVAIL_CONN_%d", connectorId);
@@ -35,9 +40,13 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
     stopTransactionOnEVSideDisconnect = declareConfiguration<bool>("StopTransactionOnEVSideDisconnect", true, CONFIGURATION_FN, true, true, true, false);
     unlockConnectorOnEVSideDisconnect = declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", true, CONFIGURATION_FN, true, true, true, false);
     localPreAuthorize = declareConfiguration<bool>("LocalPreAuthorize", false, CONFIGURATION_FN, true, true, true, false);
+    allowOfflineTxForUnknownId = ArduinoOcpp::declareConfiguration<bool>("AllowOfflineTxForUnknownId", false, CONFIGURATION_FN);
 
     //if the EVSE goes offline, can it continue to charge without sending StartTx / StopTx to the server when going online again?
     silentOfflineTransactions = declareConfiguration<bool>("AO_SilentOfflineTransactions", false, CONFIGURATION_FN, true, true, true, false);
+
+    //how long the EVSE tries the Authorize request before it enters offline mode
+    authorizationTimeout = ArduinoOcpp::declareConfiguration<int>("AO_AuthorizationTimeout", 20, CONFIGURATION_FN);
 
     //FreeVend mode
     freeVendActive = declareConfiguration<bool>("AO_FreeVendActive", false, CONFIGURATION_FN, true, true, true, false);
@@ -68,14 +77,15 @@ ConnectorStatus::ConnectorStatus(OcppModel& context, int connectorId)
         return cond == TxTrigger::Active ? TxEnableState::Active : TxEnableState::Inactive;
     });
     txProcess.addEnableStep([this] (TxTrigger cond) -> TxEnableState {
+        //check optional behavior UnlockConnectorOnEVSideDisconnect: if the 
         if (onConnectorLockPollTx) {
             return onConnectorLockPollTx(cond);
         }
         return cond == TxTrigger::Active ? TxEnableState::Active : TxEnableState::Inactive;
     });
 
-    if (context.getTransactionStore()) {
-        transaction = context.getTransactionStore()->getLatestTransaction(connectorId);
+    if (model.getTransactionStore()) {
+        transaction = model.getTransactionStore()->getLatestTransaction(connectorId);
     } else {
         AO_DBG_ERR("must initialize TxStore before ConnectorStatus");
         (void)0;
@@ -110,7 +120,7 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
             return OcppEvseState::SuspendedEV;
         }
         return OcppEvseState::Charging;
-    } else if (context.getReservationService() && context.getReservationService()->getReservation(connectorId)) {
+    } else if (model.getReservationService() && model.getReservationService()->getReservation(connectorId)) {
         return OcppEvseState::Reserved;
     } else if (!txProcess.existsActiveTrigger() && txProcess.getState() == TxEnableState::Inactive) {
         return OcppEvseState::Available;
@@ -169,16 +179,16 @@ OcppMessage *ConnectorStatus::loop() {
         //If the transaction is aborted (invalidated before started), delete all artifacts from flash
         //This is an optimization. The memory management will attempt to remove those files again later
         bool removed = true;
-        if (auto mService = context.getMeteringService()) {
+        if (auto mService = model.getMeteringService()) {
             removed &= mService->removeTxMeterData(connectorId, transaction->getTxNr());
         }
 
         if (removed) {
-            removed &= context.getTransactionStore()->remove(connectorId, transaction->getTxNr());
+            removed &= model.getTransactionStore()->remove(connectorId, transaction->getTxNr());
         }
 
         if (removed) {
-            context.getTransactionStore()->setTxEnd(connectorId, transaction->getTxNr()); //roll back creation of last tx entry
+            model.getTransactionStore()->setTxEnd(connectorId, transaction->getTxNr()); //roll back creation of last tx entry
         }
 
         AO_DBG_DEBUG("collect aborted transaction %u-%u %s", connectorId, transaction->getTxNr(), removed ? "" : "failure");
@@ -209,7 +219,7 @@ OcppMessage *ConnectorStatus::loop() {
                 !transaction->getStartRpcSync().isRequested() &&
                 transaction->getSessionTimestamp() > MIN_TIME &&
                 connectionTimeOut && *connectionTimeOut > 0 &&
-                context.getOcppTime().getOcppTimestampNow() - transaction->getSessionTimestamp() >= (otime_t) *connectionTimeOut) {
+                model.getOcppTime().getOcppTimestampNow() - transaction->getSessionTimestamp() >= (otime_t) *connectionTimeOut) {
                 
             AO_DBG_INFO("Session mngt: timeout");
             transaction->endSession();
@@ -238,7 +248,7 @@ OcppMessage *ConnectorStatus::loop() {
 
                 AO_DBG_INFO("Session mngt: trigger StartTransaction");
 
-                auto meteringService = context.getMeteringService();
+                auto meteringService = model.getMeteringService();
                 if (transaction->getMeterStart() < 0 && meteringService) {
                     auto meterStart = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionBegin);
                     if (meterStart && *meterStart) {
@@ -249,7 +259,7 @@ OcppMessage *ConnectorStatus::loop() {
                 }
 
                 if (transaction->getStartTimestamp() <= MIN_TIME) {
-                    transaction->setStartTimestamp(context.getOcppTime().getOcppTimestampNow());
+                    transaction->setStartTimestamp(model.getOcppTime().getOcppTimestampNow());
                 }
 
                 if (transaction->isSilent()) {
@@ -262,11 +272,11 @@ OcppMessage *ConnectorStatus::loop() {
 
                 transaction->commit();
 
-                if (context.getMeteringService()) {
-                    context.getMeteringService()->beginTxMeterData(transaction.get());
+                if (model.getMeteringService()) {
+                    model.getMeteringService()->beginTxMeterData(transaction.get());
                 }
 
-                return new StartTransaction(context, transaction);
+                return new StartTransaction(model, transaction);
             }
         } else if (transaction->isRunning()) {
 
@@ -285,16 +295,16 @@ OcppMessage *ConnectorStatus::loop() {
                     AO_DBG_INFO("silent Transaction: omit StopTx");
                     transaction->getStopRpcSync().setRequested();
                     transaction->getStopRpcSync().confirm();
-                    if (auto mService = context.getMeteringService()) {
+                    if (auto mService = model.getMeteringService()) {
                         mService->removeTxMeterData(connectorId, transaction->getTxNr());
                     }
-                    context.getTransactionStore()->remove(connectorId, transaction->getTxNr());
-                    context.getTransactionStore()->setTxEnd(connectorId, transaction->getTxNr());
+                    model.getTransactionStore()->remove(connectorId, transaction->getTxNr());
+                    model.getTransactionStore()->setTxEnd(connectorId, transaction->getTxNr());
                     transaction = nullptr;
                     return nullptr;
                 }
                 
-                auto meteringService = context.getMeteringService();
+                auto meteringService = model.getMeteringService();
                 if (transaction->getMeterStop() < 0 && meteringService) {
                     auto meterStop = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionEnd);
                     if (meterStop && *meterStop) {
@@ -305,7 +315,7 @@ OcppMessage *ConnectorStatus::loop() {
                 }
 
                 if (transaction->getStopTimestamp() <= MIN_TIME) {
-                    transaction->setStopTimestamp(context.getOcppTime().getOcppTimestampNow());
+                    transaction->setStopTimestamp(model.getOcppTime().getOcppTimestampNow());
                 }
 
                 transaction->commit();
@@ -317,9 +327,9 @@ OcppMessage *ConnectorStatus::loop() {
                 }
 
                 if (stopTxData) {
-                    return new StopTransaction(context, std::move(transaction), stopTxData->retrieveStopTxData());
+                    return new StopTransaction(model, std::move(transaction), stopTxData->retrieveStopTxData());
                 } else {
-                    return new StopTransaction(context, std::move(transaction));
+                    return new StopTransaction(model, std::move(transaction));
                 }
             }
         }
@@ -333,7 +343,7 @@ OcppMessage *ConnectorStatus::loop() {
                 idTag = "A0000000";
             }
             AO_DBG_INFO("begin FreeVend Tx using idTag %s", idTag);
-            beginSession(idTag);
+            beginTransaction(idTag);
             
             if (!transaction) {
                 AO_DBG_ERR("could not begin FreeVend Tx");
@@ -353,11 +363,11 @@ OcppMessage *ConnectorStatus::loop() {
     }
 
     if (reportedStatus != currentStatus &&
-            context.getOcppTime().getOcppTimestampNow() >= OcppTimestamp(2010,0,0,0,0,0) &&
+            model.getOcppTime().getOcppTimestampNow() >= OcppTimestamp(2010,0,0,0,0,0) &&
             (*minimumStatusDuration <= 0 || //MinimumStatusDuration disabled
             ao_tick_ms() - t_statusTransition >= ((unsigned long) *minimumStatusDuration) * 1000UL)) {
         reportedStatus = currentStatus;
-        OcppTimestamp reportedTimestamp = context.getOcppTime().getOcppTimestampNow();
+        OcppTimestamp reportedTimestamp = model.getOcppTime().getOcppTimestampNow();
         reportedTimestamp -= (ao_tick_ms() - t_statusTransition) / 1000UL;
 
         return new StatusNotification(connectorId, reportedStatus, reportedTimestamp, getErrorCode());
@@ -376,50 +386,46 @@ const char *ConnectorStatus::getErrorCode() {
     return nullptr;
 }
 
-void ConnectorStatus::beginSession(const char *sessionIdTag) {
-    //(special case: tx already exists -> update the sessionIdTag and good)
+void ConnectorStatus::allocateTransaction(const char *idTag) {
 
-    if (!transaction) {
-        //no tx running, before creating new one, clean possible aorted tx
-
-        auto txr = context.getTransactionStore()->getTxEnd(connectorId);
-        auto txsize = context.getTransactionStore()->size(connectorId);
-        for (decltype(txsize) i = 0; i < txsize; i++) {
-            txr = (txr + MAX_TX_CNT - 1) % MAX_TX_CNT; //decrement by 1
-            
-            auto tx = context.getTransactionStore()->getTransaction(connectorId, txr);
-            //check if dangling silent tx, aborted tx, or corrupted entry (tx == null)
-            if (!tx || tx->isSilent() || tx->isAborted()) {
-                //yes, remove
-                bool removed = true;
-                if (auto mService = context.getMeteringService()) {
-                    removed &= mService->removeTxMeterData(connectorId, txr);
-                }
-                if (removed) {
-                    removed &= context.getTransactionStore()->remove(connectorId, txr);
-                }
-                if (removed) {
-                    context.getTransactionStore()->setTxEnd(connectorId, txr);
-                    AO_DBG_WARN("deleted dangling silent tx for new transaction");
-                } else {
-                    AO_DBG_ERR("memory corruption");
-                    break;
-                }
+    //clean possible aorted tx
+    auto txr = model.getTransactionStore()->getTxEnd(connectorId);
+    auto txsize = model.getTransactionStore()->size(connectorId);
+    for (decltype(txsize) i = 0; i < txsize; i++) {
+        txr = (txr + MAX_TX_CNT - 1) % MAX_TX_CNT; //decrement by 1
+        
+        auto tx = model.getTransactionStore()->getTransaction(connectorId, txr);
+        //check if dangling silent tx, aborted tx, or corrupted entry (tx == null)
+        if (!tx || tx->isSilent() || tx->isAborted()) {
+            //yes, remove
+            bool removed = true;
+            if (auto mService = model.getMeteringService()) {
+                removed &= mService->removeTxMeterData(connectorId, txr);
+            }
+            if (removed) {
+                removed &= model.getTransactionStore()->remove(connectorId, txr);
+            }
+            if (removed) {
+                model.getTransactionStore()->setTxEnd(connectorId, txr);
+                AO_DBG_WARN("deleted dangling silent tx for new transaction");
             } else {
-                //no, tx record trimmed, end
+                AO_DBG_ERR("memory corruption");
                 break;
             }
+        } else {
+            //no, tx record trimmed, end
+            break;
         }
-
-        //try to create new transaction
-        transaction = context.getTransactionStore()->createTransaction(connectorId);
     }
+
+    //try to create new transaction
+    transaction = model.getTransactionStore()->createTransaction(connectorId);
 
     if (!transaction) {
         //could not create transaction - now, try to replace tx history entry
 
-        auto txl = context.getTransactionStore()->getTxBegin(connectorId);
-        auto txsize = context.getTransactionStore()->size(connectorId);
+        auto txl = model.getTransactionStore()->getTxBegin(connectorId);
+        auto txsize = model.getTransactionStore()->size(connectorId);
 
         for (decltype(txsize) i = 0; i < txsize; i++) {
 
@@ -430,22 +436,22 @@ void ConnectorStatus::beginSession(const char *sessionIdTag) {
 
             //no transaction allocated, delete history entry to make space
 
-            auto txhist = context.getTransactionStore()->getTransaction(connectorId, txl);
+            auto txhist = model.getTransactionStore()->getTransaction(connectorId, txl);
             //oldest entry, now check if it's history and can be removed or corrupted entry
             if (!txhist || txhist->isCompleted()) {
                 //yes, remove
                 bool removed = true;
-                if (auto mService = context.getMeteringService()) {
+                if (auto mService = model.getMeteringService()) {
                     removed &= mService->removeTxMeterData(connectorId, txl);
                 }
                 if (removed) {
-                    removed &= context.getTransactionStore()->remove(connectorId, txl);
+                    removed &= model.getTransactionStore()->remove(connectorId, txl);
                 }
                 if (removed) {
-                    context.getTransactionStore()->setTxBegin(connectorId, (txl + 1) % MAX_TX_CNT);
+                    model.getTransactionStore()->setTxBegin(connectorId, (txl + 1) % MAX_TX_CNT);
                     AO_DBG_DEBUG("deleted tx history entry for new transaction");
 
-                    transaction = context.getTransactionStore()->createTransaction(connectorId);
+                    transaction = model.getTransactionStore()->createTransaction(connectorId);
                 } else {
                     AO_DBG_ERR("memory corruption");
                     break;
@@ -465,7 +471,7 @@ void ConnectorStatus::beginSession(const char *sessionIdTag) {
         //couldn't create normal transaction -> check if to start charging without real transaction
         if (silentOfflineTransactions && *silentOfflineTransactions) {
             //try to handle charging session without sending StartTx or StopTx to the server
-            transaction = context.getTransactionStore()->createTransaction(connectorId, true);
+            transaction = model.getTransactionStore()->createTransaction(connectorId, true);
 
             if (transaction) {
                 AO_DBG_DEBUG("created silent transaction");
@@ -475,32 +481,206 @@ void ConnectorStatus::beginSession(const char *sessionIdTag) {
     }
 
     if (!transaction) {
-        AO_DBG_ERR("could not allocate Tx");
         return;
     }
     
-    AO_DBG_DEBUG("Begin session with idTag %s, overwriting idTag %s", sessionIdTag != nullptr ? sessionIdTag : "", transaction->getIdTag());
-    if (!sessionIdTag || *sessionIdTag == '\0') {
+    if (!idTag || *idTag == '\0') {
         //input string is empty
-        transaction->setIdTag("A0-00-00-00");
+        transaction->setIdTag("");
     } else {
-        transaction->setIdTag(sessionIdTag);
+        transaction->setIdTag(idTag);
     }
 
-    transaction->setSessionTimestamp(context.getOcppTime().getOcppTimestampNow());
+    transaction->setSessionTimestamp(model.getOcppTime().getOcppTimestampNow());
 
-    if (context.getReservationService()) {
-        if (auto reservation = context.getReservationService()->getReservation(connectorId, sessionIdTag, nullptr)) { //TODO set parentIdTag
-            if (reservation->matches(sessionIdTag, nullptr)) { //TODO set parentIdTag
+}
+
+std::shared_ptr<Transaction> ConnectorStatus::beginTransaction(const char *idTag) {
+
+    if (transaction) {
+        AO_DBG_WARN("tx process still running. Please call endTransaction(...) before");
+        return nullptr;
+    }
+
+    auto rService = model.getReservationService();
+    AuthorizationData *localAuth = nullptr;
+    bool expiredLocalAuth = false;
+
+    //check local OCPP whitelist
+    if (auto authService = model.getAuthorizationService()) {
+        
+        localAuth = authService->getLocalAuthorization(idTag);
+
+        //check if blocked by reservation
+        Reservation *reservation = nullptr;
+        if (localAuth && rService) {
+            reservation = rService->getReservation(
+                        connectorId,
+                        idTag,
+                        localAuth->getParentIdTag() ? localAuth->getParentIdTag() : nullptr);
+            if (reservation && !reservation->matches(
+                        idTag,
+                        localAuth->getParentIdTag() ? localAuth->getParentIdTag() : nullptr)) {
+                //reservation found for connector but does not match idTag or parentIdTag
+                AO_DBG_DEBUG("reservation blocks local auth at connector %u", connectorId);
+                localAuth = nullptr;;
+            }
+        }
+
+        if (localAuth && localAuth->getAuthorizationStatus() != AuthorizationStatus::Accepted) {
+            AO_DBG_DEBUG("local auth denied (%s)", idTag);
+            localAuth = nullptr;
+        }
+
+        //check expiry
+        if (localAuth && localAuth->getExpiryDate()) {
+            auto& tnow = model.getOcppTime().getOcppTimestampNow();
+            if (tnow >= *localAuth->getExpiryDate()) {
+                AO_DBG_DEBUG("idTag %s local auth entry expired", idTag);
+                localAuth = nullptr;
+                expiredLocalAuth = true;
+            }
+        }
+    }
+
+    allocateTransaction(idTag);
+
+    if (!transaction) {
+        AO_DBG_ERR("could not allocate Tx");
+        return nullptr;
+    }
+
+    AO_DBG_DEBUG("Begin transaction process (%s), prepare", idTag != nullptr ? idTag : "");
+
+    //check for local preauthorization
+    if (localPreAuthorize && *localPreAuthorize) {
+        if (localAuth && localAuth->getAuthorizationStatus() == AuthorizationStatus::Accepted) {
+            AO_DBG_DEBUG("Begin transaction process (%s), preauthorized locally", idTag != nullptr ? idTag : "");
+
+            transaction->setAuthorized();
+        }
+    }
+
+    transaction->commit();
+
+    auto authorize = makeOcppOperation(new Ocpp16::Authorize(context.getOcppModel(), idTag));
+    authorize->setTimeout(authorizationTimeout && *authorizationTimeout > 0 ? *authorizationTimeout * 1000UL : 20UL * 1000UL);
+    auto tx = transaction;
+    authorize->setOnReceiveReqListener([this, tx] (JsonObject response) {
+        JsonObject idTagInfo = response["idTagInfo"];
+
+        if (strcmp("Accepted", idTagInfo["status"] | "UNDEFINED")) {
+            //Authorization rejected, abort transaction
+            AO_DBG_DEBUG("Authorize rejected (%s), abort tx process", tx->getIdTag());
+            if (tx->isRunning()) {
+                //handle dangling Authorize request. Deauthorized tx will be handled according to StopTransactionOnInvalidId
+                tx->setIdTagDeauthorized();
+            } else {
+                tx->endSession();
+            }
+            tx->commit();
+            return;
+        }
+
+        if (model.getReservationService()) {
+            auto reservation = model.getReservationService()->getReservation(
+                        connectorId,
+                        tx->getIdTag(),
+                        idTagInfo["parentIdTag"] | (const char*) nullptr);
+            if (reservation && !reservation->matches(
+                        tx->getIdTag(),
+                        idTagInfo["parentIdTag"] | (const char*) nullptr)) {
+                //reservation found for connector but does not match idTag or parentIdTag
+                AO_DBG_INFO("connector %u reserved - abort transaction", connectorId);
+                tx->endSession();
+                tx->commit();
+                return;
+            }
+        }
+
+        AO_DBG_DEBUG("Authorized transaction process (%s)", tx->getIdTag());
+        tx->setAuthorized();
+    });
+    authorize->setOnTimeoutListener([this, tx, localAuth, expiredLocalAuth] () {
+
+        if (expiredLocalAuth) {
+            //local auth entry exists, but is expired -> avoid offline tx
+            AO_DBG_DEBUG("Abort transaction process (%s), timeout, expired local auth", tx->getIdTag());
+            tx->endSession();
+            tx->commit();
+            return;
+        }
+        
+        if (localAuth) {
+            AO_DBG_DEBUG("Offline transaction process (%s), locally authorized", tx->getIdTag());
+            tx->setAuthorized();
+            tx->commit();
+            return;
+        }
+
+        if (model.getReservationService()) {
+            auto reservation = model.getReservationService()->getReservation(
+                        connectorId,
+                        tx->getIdTag());
+            if (reservation && !reservation->matches(
+                        tx->getIdTag())) {
+                //reservation found for connector but does not match idTag or parentIdTag
+                AO_DBG_INFO("connector %u reserved (offline) - abort transaction", connectorId);
+                tx->endSession();
+                tx->commit();
+                return;
+            }
+        }
+
+        if (allowOfflineTxForUnknownId && (bool) *allowOfflineTxForUnknownId) {
+            AO_DBG_DEBUG("Offline transaction process (%s), allow unknown ID", tx->getIdTag());
+            tx->setAuthorized();
+            tx->commit();
+            return;
+        }
+        
+        AO_DBG_DEBUG("Abort transaction process (%s): timeout", tx->getIdTag());
+        tx->endSession();
+        tx->commit();
+        return; //offline tx disabled
+    });
+    context.initiateOperation(std::move(authorize));
+
+    return transaction;
+}
+
+std::shared_ptr<Transaction> ConnectorStatus::beginTransaction_authorized(const char *idTag, const char *parentIdTag) {
+    
+    if (transaction) {
+        AO_DBG_WARN("tx process still running. Please call endTransaction(...) before");
+        return nullptr;
+    }
+
+    allocateTransaction(idTag);
+
+    if (!transaction) {
+        AO_DBG_ERR("could not allocate Tx");
+        return nullptr;
+    }
+    
+    AO_DBG_DEBUG("Begin transaction process (%s), already authorized", idTag != nullptr ? idTag : "");
+
+    transaction->setAuthorized();
+    
+    if (model.getReservationService()) {
+        if (auto reservation = model.getReservationService()->getReservation(connectorId, idTag, nullptr)) { //TODO set parentIdTag
+            if (reservation->matches(idTag, nullptr)) { //TODO set parentIdTag
                 transaction->setReservationId(reservation->getReservationId());
             }
         }
     }
 
     transaction->commit();
+
+    return transaction;
 }
 
-void ConnectorStatus::endSession(const char *reason) {
+void ConnectorStatus::endTransaction(const char *reason) {
 
     if (!transaction) {
         AO_DBG_WARN("Cannot end session if no transaction running");

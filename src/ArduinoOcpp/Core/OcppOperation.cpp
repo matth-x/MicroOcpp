@@ -98,7 +98,7 @@ std::unique_ptr<DynamicJsonDocument> OcppOperation::createRequest(){
         if (!buf || len < 1) {
             AO_DBG_DEBUG("Try to send request: %s", ocppMessage->getOcppOperationType());
         } else {
-            AO_DBG_DEBUG("Try to send request: %.*s ...", 128, ocppMessage->getOcppOperationType());
+            AO_DBG_DEBUG("Try to send request: %.*s (...)", 128, buf);
         }
 
         delete buf;

@@ -87,15 +87,6 @@ AuthorizationData *AuthorizationService::getLocalAuthorization(const char *idTag
         return nullptr;
     }
 
-    //check expiry
-    if (authData->getExpiryDate()) {
-        auto& tnow = context.getOcppModel().getOcppTime().getOcppTimestampNow();
-        if (tnow >= *authData->getExpiryDate()) {
-            AO_DBG_DEBUG("idTag %s local auth entry expired", idTag);
-            return nullptr;
-        }
-    }
-
     //check status
     if (authData->getAuthorizationStatus() != AuthorizationStatus::Accepted) {
         AO_DBG_DEBUG("idTag %s local auth status %s", idTag, serializeAuthorizationStatus(authData->getAuthorizationStatus()));
