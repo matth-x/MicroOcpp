@@ -44,8 +44,8 @@ void ao_console_out(const char *msg);
             do { \
                 X("[AO] CONSOLE ERROR: ao_set_console_out ignored if AO_CUSTOM_CONSOLE " \
                   "not defined\n"); \
-                char msg [100]; \
-                snprintf(msg, 100, "     > see %s:%i",__FILE__,__LINE__); \
+                char msg [196]; \
+                snprintf(msg, 196, "     > see %s:%i",__FILE__,__LINE__); \
                 X(msg); \
                 X("\n     > see ArduinoOcpp/Platform.h\n"); \
             } while (0)

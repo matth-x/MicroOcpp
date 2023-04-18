@@ -15,8 +15,8 @@ std::unique_ptr<DynamicJsonDocument> FilesystemUtils::loadJson(std::shared_ptr<F
         return nullptr;
     }
 
-    if (strnlen(fn, MAX_PATH_SIZE) >= MAX_PATH_SIZE) {
-        AO_DBG_ERR("Fn too long: %.*s", MAX_PATH_SIZE, fn);
+    if (strnlen(fn, AO_MAX_PATH_SIZE) >= AO_MAX_PATH_SIZE) {
+        AO_DBG_ERR("Fn too long: %.*s", AO_MAX_PATH_SIZE, fn);
         return nullptr;
     }
     
@@ -81,8 +81,8 @@ bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, c
         return false;
     }
 
-    if (strnlen(fn, MAX_PATH_SIZE) >= MAX_PATH_SIZE) {
-        AO_DBG_ERR("Fn too long: %.*s", MAX_PATH_SIZE, fn);
+    if (strnlen(fn, AO_MAX_PATH_SIZE) >= AO_MAX_PATH_SIZE) {
+        AO_DBG_ERR("Fn too long: %.*s", AO_MAX_PATH_SIZE, fn);
         return false;
     }
 

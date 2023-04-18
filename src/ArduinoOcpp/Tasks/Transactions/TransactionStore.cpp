@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
@@ -73,9 +73,9 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
         return nullptr;
     }
 
-    char fn [MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, txNr);
-    if (ret < 0 || ret >= MAX_PATH_SIZE) {
+    char fn [AO_MAX_PATH_SIZE] = {'\0'};
+    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, txNr);
+    if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
         AO_DBG_ERR("fn error: %i", ret);
         return nullptr;
     }
@@ -168,9 +168,9 @@ bool ConnectorTransactionStore::commit(Transaction *transaction) {
         return true;
     }
 
-    char fn [MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, transaction->getTxNr());
-    if (ret < 0 || ret >= MAX_PATH_SIZE) {
+    char fn [AO_MAX_PATH_SIZE] = {'\0'};
+    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, transaction->getTxNr());
+    if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
         AO_DBG_ERR("fn error: %i", ret);
         return false;
     }
@@ -197,9 +197,9 @@ bool ConnectorTransactionStore::remove(unsigned int txNr) {
         return true;
     }
 
-    char fn [MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, txNr);
-    if (ret < 0 || ret >= MAX_PATH_SIZE) {
+    char fn [AO_MAX_PATH_SIZE] = {'\0'};
+    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, txNr);
+    if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
         AO_DBG_ERR("fn error: %i", ret);
         return false;
     }

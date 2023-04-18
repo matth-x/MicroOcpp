@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/OperationStore.h>
@@ -35,9 +35,9 @@ bool StoredOperationHandler::commit() {
 
     opNr = context.reserveOpNr();
 
-    char fn [MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, MAX_PATH_SIZE, AO_OPSTORE_DIR "op" "-%u.jsn", opNr);
-    if (ret < 0 || ret >= MAX_PATH_SIZE) {
+    char fn [AO_MAX_PATH_SIZE] = {'\0'};
+    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_OPSTORE_DIR "op" "-%u.jsn", opNr);
+    if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
         AO_DBG_ERR("fn error: %i", ret);
         return false;
     }
@@ -67,9 +67,9 @@ bool StoredOperationHandler::restore(unsigned int opNrToLoad) {
 
     opNr = opNrToLoad;
 
-    char fn [MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, MAX_PATH_SIZE, AO_OPSTORE_DIR "op" "-%u.jsn", opNr);
-    if (ret < 0 || ret >= MAX_PATH_SIZE) {
+    char fn [AO_MAX_PATH_SIZE] = {'\0'};
+    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_OPSTORE_DIR "op" "-%u.jsn", opNr);
+    if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
         AO_DBG_ERR("fn error: %i", ret);
         return false;
     }
@@ -110,9 +110,9 @@ OperationStore::OperationStore(std::shared_ptr<FilesystemAdapter> filesystem) : 
         unsigned int misses = 0;
         unsigned int i = opEnd;
         while (misses < 3) {
-            char fn [MAX_PATH_SIZE] = {'\0'};
-            auto ret = snprintf(fn, MAX_PATH_SIZE, AO_OPSTORE_DIR "op" "-%u.jsn", i);
-            if (ret < 0 || ret >= MAX_PATH_SIZE) {
+            char fn [AO_MAX_PATH_SIZE] = {'\0'};
+            auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_OPSTORE_DIR "op" "-%u.jsn", i);
+            if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
                 AO_DBG_ERR("fn error: %i", ret);
                 misses++;
                 i = (i + 1) % AO_MAX_OPNR;
@@ -174,9 +174,9 @@ void OperationStore::advanceOpNr(unsigned int oldOpNr) {
     for (unsigned int i = 0; i < rangeSize; i++) {
         unsigned int op = ((unsigned int) *opBegin + i + AO_MAX_OPNR - AO_OPHISTORY_SIZE) % AO_MAX_OPNR;
 
-        char fn [MAX_PATH_SIZE] = {'\0'};
-        auto ret = snprintf(fn, MAX_PATH_SIZE, AO_OPSTORE_DIR "op" "-%u.jsn", op);
-        if (ret < 0 || ret >= MAX_PATH_SIZE) {
+        char fn [AO_MAX_PATH_SIZE] = {'\0'};
+        auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_OPSTORE_DIR "op" "-%u.jsn", op);
+        if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
             AO_DBG_ERR("fn error: %i", ret);
             break;
         }

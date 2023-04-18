@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef AO_FILESYSTEMADAPTER_H
@@ -8,8 +8,6 @@
 #ifndef AO_FILENAME_PREFIX
 #define AO_FILENAME_PREFIX ""
 #endif
-
-#define MAX_PATH_SIZE 30
 
 #define ARDUINO_LITTLEFS 1
 #define ARDUINO_SPIFFS   2
@@ -44,7 +42,7 @@ public:
 
 #ifndef AO_DEACTIVATE_FLASH
 
-//Set default parameters; assume usage with Arduino if no build flags are present
+// choose FileAPI if not given by build flag; assume usage with Arduino if no build flags are present
 #ifndef AO_USE_FILEAPI
 #if AO_PLATFORM == AO_PLATFORM_ARDUINO
 #if defined(ESP32)
@@ -58,6 +56,15 @@ public:
 #define AO_USE_FILEAPI POSIX_FILEAPI
 #endif //switch-case AO_PLATFORM
 #endif //ndef AO_USE_FILEAPI
+
+// set default max path size parameters
+#ifndef AO_MAX_PATH_SIZE
+#if AO_USE_FILEAPI == POSIX_FILEAPI
+#define AO_MAX_PATH_SIZE 128
+#else
+#define AO_MAX_PATH_SIZE 30
+#endif
+#endif
 
 /*
  * Platform specific implementations. Currently supported:
