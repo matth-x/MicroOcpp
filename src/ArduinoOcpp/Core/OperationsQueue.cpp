@@ -102,26 +102,29 @@ void PersistentOperationsQueue::pop_front() {
         
         std::unique_ptr<OcppOperation> fetched;
 
-        bool exists = false;
         unsigned int range = (opStore.getOpEnd() + AO_MAX_OPNR - nextOpNr) % AO_MAX_OPNR;
         for (size_t i = 0; i < range; i++) {
-            exists = storageHandler->restore(nextOpNr);
+            bool exists = storageHandler->restore(nextOpNr);
             if (exists) {
-                break;
-            }
-            nextOpNr++;
-            nextOpNr %= AO_MAX_OPNR;
-        }
+                //case B) -> load operation from flash and take it as front element
 
-        if (exists) {
-            //case B) -> load operation from flash and take it as front element
-            fetched = makeOcppOperation();
-            
-            bool success = fetched->restore(std::move(storageHandler), baseModel);
+                fetched = makeOcppOperation();
 
-            if (!success) {
+                bool success = fetched->restore(std::move(storageHandler), baseModel);
+
+                if (success) {
+                    //loaded operation from flash and will place it at head position of the queue
+                    break;
+                }
+
                 AO_DBG_ERR("could not restore operation");
                 fetched.reset();
+                opStore.advanceOpNr(nextOpNr);
+                nextOpNr = opStore.getOpBegin();
+            } else {
+                //didn't find anything at this slot. Try next slot
+                nextOpNr++;
+                nextOpNr %= AO_MAX_OPNR;
             }
         }
 

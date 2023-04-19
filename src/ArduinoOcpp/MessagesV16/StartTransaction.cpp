@@ -7,6 +7,7 @@
 #include <ArduinoOcpp/Core/OperationStore.h>
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>
@@ -78,6 +79,11 @@ bool StartTransaction::restore(StoredOperationHandler *opStore) {
     transaction = txStore->getTransaction(connectorId, txNr);
     if (!transaction) {
         AO_DBG_ERR("referential integrity violation");
+
+        //clean up possible tx records
+        if (auto mSerivce = context.getMeteringService()) {
+            mSerivce->removeTxMeterData(connectorId, txNr);
+        }
         return false;
     }
 

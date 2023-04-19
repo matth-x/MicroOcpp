@@ -81,6 +81,11 @@ bool StopTransaction::restore(StoredOperationHandler *opStore) {
     transaction = txStore->getTransaction(connectorId, txNr);
     if (!transaction) {
         AO_DBG_ERR("referential integrity violation");
+
+        //clean up possible tx records
+        if (auto mSerivce = context.getMeteringService()) {
+            mSerivce->removeTxMeterData(connectorId, txNr);
+        }
         return false;
     }
 
