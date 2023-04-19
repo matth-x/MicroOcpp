@@ -88,6 +88,9 @@ void ao_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, Autho
 void ao_beginTransaction(const char *idTag);
 void ao_beginTransaction_m(unsigned int connectorId, const char *idTag); //multiple connectors version
 
+void ao_beginTransaction_authorized(const char *idTag);
+void ao_beginTransaction_authorized_m(unsigned int connectorId, const char *idTag, const char *parentIdTag);
+
 bool ao_endTransaction(const char *reason); //reason can be NULL
 bool ao_endTransaction_m(unsigned int connectorId, const char *reason); //reason can be NULL
 

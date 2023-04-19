@@ -157,14 +157,29 @@ void authorize(
 /*
  * Transaction management.
  * 
- * Begin the transaction process by creating a new transaction and setting its user identification.
- * The OCPP library will try to send a StartTransaction request with all data as soon as possible
- * after all requirements for a transaction are met (i.e. the connector is plugged).
+ * Begin the transaction process and prepare it. When all conditions for the transaction are true,
+ * eventually send a StartTransaction request to the OCPP server.
+ * Conditions:
+ *     1) the connector is operative (no faults reported, not set "Unavailable" by the backend)
+ *     2) no reservation blocks the connector
+ *     3) the idTag is authorized for charging. The transaction process will send an Authorize message
+ *        to the server for approval, except if the charger is offline, then the Local Authorization
+ *        rules will apply as in the specification.
+ *     4) the vehicle is already plugged or will be plugged soon (only applicable if the
+ *        ConnectorPlugged Input is set)
  * 
- * Returns true if it was possible to create a transaction. If it returned false, either another
- * transaction is still running or you need to try it again later.
+ * See beginTransaction_authorized for skipping steps 1) to 3)
+ * 
+ * Returns true if it was possible to create the transaction process. If it returned false, either
+ * another transaction process is still active or you need to try it again later.
  */
 bool beginTransaction(const char *idTag, unsigned int connectorId = 1);
+
+/*
+ * Begin the transaction process and skip the OCPP-side authorization. See beginTransaction(...) for a
+ * complete description
+ */
+bool beginTransaction_authorized(const char *idTag, const char *parentIdTag = nullptr, unsigned int connectorId = 1);
 
 /*
  * End the transaction process by terminating the transaction and setting a reason for its termination.

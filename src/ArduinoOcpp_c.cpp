@@ -204,6 +204,13 @@ void ao_beginTransaction_m(unsigned int connectorId, const char *idTag) {
     beginTransaction(idTag, connectorId);
 }
 
+void ao_beginTransaction_authorized(const char *idTag, const char *parentIdTag) {
+    beginTransaction_authorized(idTag, parentIdTag);
+}
+void ao_beginTransaction_authorized_m(unsigned int connectorId, const char *idTag, const char *parentIdTag) {
+    beginTransaction_authorized(idTag, parentIdTag, connectorId);
+}
+
 bool ao_endTransaction(const char *reason) {
     return endTransaction(reason);
 }

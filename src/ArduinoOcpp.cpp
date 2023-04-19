@@ -284,6 +284,25 @@ bool beginTransaction(const char *idTag, unsigned int connectorId) {
     return true;
 }
 
+bool beginTransaction_authorized(const char *idTag, const char *parentIdTag, unsigned int connectorId) {
+    if (!ocppEngine) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return false;
+    }
+    if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX ||
+        !parentIdTag || strnlen(parentIdTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
+        AO_DBG_ERR("(parent)idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
+        return false;
+    }
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return false;
+    }
+    connector->beginTransaction_authorized(idTag, parentIdTag);
+    return true;
+}
+
 bool endTransaction(const char *reason, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
