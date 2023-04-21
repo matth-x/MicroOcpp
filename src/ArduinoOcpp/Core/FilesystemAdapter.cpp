@@ -87,20 +87,6 @@ public:
 #endif
         } //end if mustMount()
 
-#if AO_DBG_LEVEL >= AO_DL_DEBUG
-        if (valid) {
-            File root = USE_FS.open("/");
-            File file = root.openNextFile();
-
-            AO_DBG_DEBUG("filesystem content:");
-            while(file) {
-                AO_CONSOLE_PRINTF("[AO]     > %s\n", file.name() ? file.name() : "null");
-                file = root.openNextFile();       
-            }
-
-            root.close();
-        }
-#endif //endif AO_DBG_LEVEL >= AO_DL_DBUG
     }
 
     ~ArduinoFilesystemAdapter() {
@@ -149,15 +135,16 @@ public:
 #if AO_USE_FILEAPI == ARDUINO_LITTLEFS
 
 #elif AO_USE_FILEAPI == ARDUINO_SPIFFS
-        auto dir = USE_FS.open(AO_FILENAME_PREFIX);
-        if (!dir) {
-            AO_DBG_ERR("cannot open root directory: " AO_FILENAME_PREFIX);
-            return -1;
-        }
-
+        auto dir = USE_FS.openDir(AO_FILENAME_PREFIX);
         int err = 0;
-        while (auto entry = dir.openNextFile()) {
-            err = fn(entry.name());
+        while (dir.next()) {
+            auto fname = dir.fileName();
+            if (fname.c_str()) {
+                err = fn(fname.c_str() + strlen(AO_FILENAME_PREFIX));
+            } else {
+                AO_DBG_ERR("fs error");
+                err = -1;
+            }
             if (err) {
                 break;
             }
