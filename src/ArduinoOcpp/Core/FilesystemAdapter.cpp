@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
@@ -145,6 +145,28 @@ public:
     bool remove(const char *fn) override {
         return USE_FS.remove(fn);
     };
+    int ftw_root(std::function<int(const char *fpath)> fn) {
+#if AO_USE_FILEAPI == ARDUINO_LITTLEFS
+
+#elif AO_USE_FILEAPI == ARDUINO_SPIFFS
+        auto dir = USE_FS.open(AO_FILENAME_PREFIX);
+        if (!dir) {
+            AO_DBG_ERR("cannot open root directory: " AO_FILENAME_PREFIX);
+            return -1;
+        }
+
+        int err = 0;
+        while (auto entry = dir.openNextFile()) {
+            err = fn(entry.name());
+            if (err) {
+                break;
+            }
+        }
+        return err;
+#else
+#error
+#endif
+    }
 };
 
 std::weak_ptr<FilesystemAdapter> filesystemCache;
@@ -299,6 +321,7 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 #include <cstdio>
 #include <sys/stat.h>
+#include <dirent.h>
 
 namespace ArduinoOcpp {
 
@@ -357,6 +380,25 @@ public:
 
     bool remove(const char *fn) override {
         return ::remove(fn) == 0;
+    }
+
+    int ftw_root(std::function<int(const char *fpath)> fn) {
+        auto dir = opendir(AO_FILENAME_PREFIX); // use c_str() to convert the path string to a C-style string
+        if (!dir) {
+            AO_DBG_ERR("cannot open root directory: " AO_FILENAME_PREFIX);
+            return -1;
+        }
+
+        int err = 0;
+        while (auto entry = readdir(dir)) {
+            err = fn(entry->d_name);
+            if (err) {
+                break;
+            }
+        }
+
+        closedir(dir);
+        return err;
     }
 };
 

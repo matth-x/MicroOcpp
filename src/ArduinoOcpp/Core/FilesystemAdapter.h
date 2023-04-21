@@ -15,6 +15,7 @@
 #define POSIX_FILEAPI    4
 
 #include <memory>
+#include <functional>
 #include <ArduinoOcpp/Platform.h>
 
 namespace ArduinoOcpp {
@@ -36,6 +37,7 @@ public:
     virtual int stat(const char *path, size_t *size) = 0;
     virtual std::unique_ptr<FileAdapter> open(const char *fn, const char *mode) = 0;
     virtual bool remove(const char *fn) = 0;
+    virtual int ftw_root(std::function<int(const char *fpath)> fn) = 0; //enumerate the files in the ao_store root folder
 };
 
 } //end namespace ArduinoOcpp

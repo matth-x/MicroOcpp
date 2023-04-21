@@ -141,7 +141,7 @@ void OCPP_initialize(OcppSocket& ocppSocket, const char *bootNotificationCredent
     model.setBootService(std::unique_ptr<BootService>(
         new BootService(*ocppEngine)));
     model.setChargePointStatusService(std::unique_ptr<ChargePointStatusService>(
-        new ChargePointStatusService(*ocppEngine, AO_NUMCONNECTORS)));
+        new ChargePointStatusService(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
     model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
         new HeartbeatService(*ocppEngine)));
     model.setAuthorizationService(std::unique_ptr<AuthorizationService>(
