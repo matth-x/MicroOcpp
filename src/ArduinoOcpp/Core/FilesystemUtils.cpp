@@ -120,7 +120,7 @@ bool FilesystemUtils::remove_all(std::shared_ptr<FilesystemAdapter> filesystem, 
         if (!strncmp(fpath, fpath_prefix, strlen(fpath_prefix))) {
 
             char fn [AO_MAX_PATH_SIZE] = {'\0'};
-            auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "/%s", fpath);
+            auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "%s", fpath);
             if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
                 AO_DBG_ERR("fn error: %i", ret);
                 return -1;

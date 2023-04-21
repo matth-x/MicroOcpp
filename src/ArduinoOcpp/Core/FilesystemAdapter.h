@@ -6,7 +6,7 @@
 #define AO_FILESYSTEMADAPTER_H
 
 #ifndef AO_FILENAME_PREFIX
-#define AO_FILENAME_PREFIX ""
+#define AO_FILENAME_PREFIX "/"
 #endif
 
 #define ARDUINO_LITTLEFS 1
