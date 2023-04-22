@@ -208,6 +208,7 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 #elif AO_USE_FILEAPI == ESPIDF_SPIFFS
 
 #include <sys/stat.h>
+#include <dirent.h>
 #include "esp_spiffs.h"
 
 namespace ArduinoOcpp {
@@ -272,6 +273,38 @@ public:
 
     bool remove(const char *fn) override {
         return unlink(fn) == 0;
+    }
+
+    int ftw_root(std::function<int(const char *fpath)> fn) {
+        //open AO root directory
+        char dname [AO_MAX_PATH_SIZE];
+        auto dlen = snprintf(dname, AO_MAX_PATH_SIZE, "%s", AO_FILENAME_PREFIX);
+        if (dlen < 0 || dlen >= AO_MAX_PATH_SIZE) {
+            AO_DBG_ERR("fn error: %i", dlen);
+            return -1;
+        }
+
+        // trim trailing '/' if not root directory
+        if (dlen >= 2 && dname[dlen - 1] == '/') {
+            dname[dlen - 1] = '\0';
+        }
+
+        auto dir = opendir(dname);
+        if (!dir) {
+            AO_DBG_ERR("cannot open root directory: %s", dname);
+            return -1;
+        }
+
+        int err = 0;
+        while (auto entry = readdir(dir)) {
+            err = fn(entry->d_name);
+            if (err) {
+                break;
+            }
+        }
+
+        closedir(dir);
+        return err;
     }
 };
 
