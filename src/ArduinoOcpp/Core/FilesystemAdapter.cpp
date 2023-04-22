@@ -133,7 +133,30 @@ public:
     };
     int ftw_root(std::function<int(const char *fpath)> fn) {
 #if AO_USE_FILEAPI == ARDUINO_LITTLEFS
+        auto dir = USE_FS.open(AO_FILENAME_PREFIX);
+        if (!dir) {
+            AO_DBG_ERR("cannot open root directory: " AO_FILENAME_PREFIX);
+            return -1;
+        }
 
+        int err = 0;
+        while (auto entry = dir.openNextFile()) {
+
+            char fname [AO_MAX_PATH_SIZE];
+            auto ret = snprintf(fname, AO_MAX_PATH_SIZE, "%s", entry.name() + strlen(AO_FILENAME_PREFIX));
+            entry.close();
+
+            if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
+                AO_DBG_ERR("fn error: %i", ret);
+                return -1;
+            }
+
+            err = fn(fname);
+            if (err) {
+                break;
+            }
+        }
+        return err;
 #elif AO_USE_FILEAPI == ARDUINO_SPIFFS
         auto dir = USE_FS.openDir(AO_FILENAME_PREFIX);
         int err = 0;
