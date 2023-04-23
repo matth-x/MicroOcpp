@@ -211,7 +211,7 @@ bool Transaction::deserializeSessionState(JsonObject state) {
     }
 
     AO_DBG_DEBUG("DUMP TX");
-    AO_DBG_DEBUG("Session   | idTag %s", session.idTag);
+    AO_DBG_DEBUG("Session   | idTag %s, active: %i, authorized: %i, deauthorized: %i", session.idTag, session.active, session.authorized, session.deauthorized);
     AO_DBG_DEBUG("Start RPC | req: %i, conf: %i", start.rpc.requested, start.rpc.confirmed);
     AO_DBG_DEBUG("Stop  RPC | req: %i, conf: %i",  stop.rpc.requested, stop.rpc.confirmed);
     if (silent) {

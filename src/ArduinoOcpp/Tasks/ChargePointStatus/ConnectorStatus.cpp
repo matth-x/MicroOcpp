@@ -343,7 +343,7 @@ OcppMessage *ConnectorStatus::loop() {
                 idTag = "A0000000";
             }
             AO_DBG_INFO("begin FreeVend Tx using idTag %s", idTag);
-            beginTransaction(idTag);
+            beginTransaction_authorized(idTag);
             
             if (!transaction) {
                 AO_DBG_ERR("could not begin FreeVend Tx");
@@ -595,6 +595,7 @@ std::shared_ptr<Transaction> ConnectorStatus::beginTransaction(const char *idTag
 
         AO_DBG_DEBUG("Authorized transaction process (%s)", tx->getIdTag());
         tx->setAuthorized();
+        tx->commit();
     });
     authorize->setOnTimeoutListener([this, tx, localAuth, expiredLocalAuth] () {
 

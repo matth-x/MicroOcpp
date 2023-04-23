@@ -16,7 +16,7 @@ TEST_CASE( "Charging sessions" ) {
 
     //initialize OcppEngine with dummy socket
     OcppEchoSocket echoSocket;
-    OCPP_initialize(echoSocket);
+    OCPP_initialize(echoSocket, ChargerCredentials("test-runner1234"));
 
     auto engine = getOcppEngine();
     auto& checkMsg = engine->getOperationDeserializer();
@@ -37,15 +37,13 @@ TEST_CASE( "Charging sessions" ) {
             checkedSN[connectorId] = !strcmp(request["status"] | "Invalid", expectedSN[connectorId]);
         });
 
-    bootNotification("dummy1234", "");
-
     SECTION("Check idle state"){
 
         bool checkedBN = false;
         checkMsg.registerOcppOperation("BootNotification", [engine] () -> OcppMessage* {return new Ocpp16::BootNotification(engine->getOcppModel(), std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(0)));});
         checkMsg.setOnRequest("BootNotification",
             [&checkedBN] (JsonObject request) {
-                checkedBN = !strcmp(request["chargePointModel"] | "Invalid", "dummy1234");
+                checkedBN = !strcmp(request["chargePointModel"] | "Invalid", "test-runner1234");
             });
         
         loop();

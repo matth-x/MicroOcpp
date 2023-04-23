@@ -24,8 +24,6 @@ TEST_CASE( "Transaction safety" ) {
     auto connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN);
         *connectionTimeOut = 30;
 
-    bootNotification("dummy1234", "");
-
     SECTION("Basic transaction") {
         AO_DBG_DEBUG("Basic transaction");
         loop();
@@ -58,6 +56,7 @@ TEST_CASE( "Transaction safety" ) {
         setConnectorPluggedInput([] () {return false;});
         loop();
         beginTransaction("mIdTag");
+        loop();
         OCPP_deinitialize(); //reset and jump to next section
     }
 
