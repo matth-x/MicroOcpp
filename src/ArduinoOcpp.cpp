@@ -729,7 +729,7 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
         }
         transaction->setIdTag(idTag);
     } else {
-        beginTransaction(idTag); //request new transaction object
+        beginTransaction_authorized(idTag); //request new transaction object
         transaction = connector->getTransaction();
         if (!transaction) {
             AO_DBG_WARN("Transaction queue full");
