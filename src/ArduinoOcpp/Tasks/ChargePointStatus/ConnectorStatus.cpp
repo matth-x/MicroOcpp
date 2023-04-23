@@ -64,7 +64,7 @@ ConnectorStatus::ConnectorStatus(OcppEngine& context, int connectorId)
      *     - instruct the tx-based meter to begin a transaction (if tx-based meter handler is set)
      */
     txProcess.addTrigger([this] () -> TxTrigger {
-        if (transaction && transaction->isInSession() && transaction->isActive()) {
+        if (transaction && transaction->isActive() && transaction->isAuthorized()) {
             return TxTrigger::Active;
         } else {
             return TxTrigger::Inactive;
@@ -205,7 +205,7 @@ OcppMessage *ConnectorStatus::loop() {
     if (transaction) { //begin exclusively transaction-related operations
             
         if (connectorPluggedSampler) {
-            if (transaction->isRunning() && transaction->isInSession() && !connectorPluggedSampler()) {
+            if (transaction->isRunning() && transaction->isActive() && !connectorPluggedSampler()) {
                 if (!stopTransactionOnEVSideDisconnect || *stopTransactionOnEVSideDisconnect) {
                     AO_DBG_DEBUG("Stop Tx due to EV disconnect");
                     transaction->setStopReason("EVDisconnected");
@@ -215,7 +215,7 @@ OcppMessage *ConnectorStatus::loop() {
             }
         }
 
-        if (transaction->isInSession() &&
+        if (transaction->isActive() &&
                 !transaction->getStartRpcSync().isRequested() &&
                 transaction->getSessionTimestamp() > MIN_TIME &&
                 connectionTimeOut && *connectionTimeOut > 0 &&
@@ -226,7 +226,7 @@ OcppMessage *ConnectorStatus::loop() {
             transaction->commit();
         }
 
-        if (transaction->isInSession() && transaction->isIdTagDeauthorized()) {
+        if (transaction->isActive() && transaction->isIdTagDeauthorized()) {
             if (!stopTransactionOnInvalidId || *stopTransactionOnInvalidId) {
                 AO_DBG_DEBUG("DeAuthorize session");
                 transaction->setStopReason("DeAuthorized");
@@ -280,7 +280,7 @@ OcppMessage *ConnectorStatus::loop() {
             }
         } else if (transaction->isRunning()) {
 
-            if (transaction->isInSession()) {
+            if (transaction->isActive()) {
                 AO_DBG_DEBUG("Tx process not active");
                 transaction->endSession();
                 transaction->commit();
@@ -407,7 +407,7 @@ void ConnectorStatus::allocateTransaction(const char *idTag) {
             }
             if (removed) {
                 model.getTransactionStore()->setTxEnd(connectorId, txr);
-                AO_DBG_WARN("deleted dangling silent tx for new transaction");
+                AO_DBG_WARN("deleted dangling silent or aborted tx for new transaction");
             } else {
                 AO_DBG_ERR("memory corruption");
                 break;
@@ -566,18 +566,13 @@ std::shared_ptr<Transaction> ConnectorStatus::beginTransaction(const char *idTag
     auto authorize = makeOcppOperation(new Ocpp16::Authorize(context.getOcppModel(), idTag));
     authorize->setTimeout(authorizationTimeout && *authorizationTimeout > 0 ? *authorizationTimeout * 1000UL : 20UL * 1000UL);
     auto tx = transaction;
-    authorize->setOnReceiveReqListener([this, tx] (JsonObject response) {
+    authorize->setOnReceiveConfListener([this, tx] (JsonObject response) {
         JsonObject idTagInfo = response["idTagInfo"];
 
         if (strcmp("Accepted", idTagInfo["status"] | "UNDEFINED")) {
             //Authorization rejected, abort transaction
             AO_DBG_DEBUG("Authorize rejected (%s), abort tx process", tx->getIdTag());
-            if (tx->isRunning()) {
-                //handle dangling Authorize request. Deauthorized tx will be handled according to StopTransactionOnInvalidId
-                tx->setIdTagDeauthorized();
-            } else {
-                tx->endSession();
-            }
+            tx->setIdTagDeauthorized();
             tx->commit();
             return;
         }
@@ -668,8 +663,8 @@ std::shared_ptr<Transaction> ConnectorStatus::beginTransaction_authorized(const 
     transaction->setAuthorized();
     
     if (model.getReservationService()) {
-        if (auto reservation = model.getReservationService()->getReservation(connectorId, idTag, nullptr)) { //TODO set parentIdTag
-            if (reservation->matches(idTag, nullptr)) { //TODO set parentIdTag
+        if (auto reservation = model.getReservationService()->getReservation(connectorId, idTag, parentIdTag)) {
+            if (reservation->matches(idTag, parentIdTag)) {
                 transaction->setReservationId(reservation->getReservationId());
             }
         }
@@ -687,7 +682,7 @@ void ConnectorStatus::endTransaction(const char *reason) {
         return;
     }
 
-    if (transaction->isInSession()) {
+    if (transaction->isActive()) {
         AO_DBG_DEBUG("End session with idTag %s for reason %s, %s previous reason",
                                 transaction->getIdTag(), reason ? reason : "undefined",
                                 *transaction->getStopReason() ? "overruled by" : "no");
@@ -706,7 +701,7 @@ const char *ConnectorStatus::getSessionIdTag() {
         return nullptr;
     }
 
-    return transaction->isInSession() ? transaction->getIdTag() : nullptr;
+    return transaction->isActive() ? transaction->getIdTag() : nullptr;
 }
 
 uint16_t ConnectorStatus::getSessionWriteCount() {

@@ -13,7 +13,7 @@
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Debug.h>
 
-#define AO_LOCALAUTHORIZATIONLIST_FN (AO_FILENAME_PREFIX "/localauth.jsn")
+#define AO_LOCALAUTHORIZATIONLIST_FN (AO_FILENAME_PREFIX "localauth.jsn")
 
 using namespace ArduinoOcpp;
 

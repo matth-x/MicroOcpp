@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
@@ -87,20 +87,6 @@ public:
 #endif
         } //end if mustMount()
 
-#if AO_DBG_LEVEL >= AO_DL_DEBUG
-        if (valid) {
-            File root = USE_FS.open("/");
-            File file = root.openNextFile();
-
-            AO_DBG_DEBUG("filesystem content:");
-            while(file) {
-                AO_CONSOLE_PRINTF("[AO]     > %s\n", file.name() ? file.name() : "null");
-                file = root.openNextFile();       
-            }
-
-            root.close();
-        }
-#endif //endif AO_DBG_LEVEL >= AO_DL_DBUG
     }
 
     ~ArduinoFilesystemAdapter() {
@@ -145,6 +131,52 @@ public:
     bool remove(const char *fn) override {
         return USE_FS.remove(fn);
     };
+    int ftw_root(std::function<int(const char *fpath)> fn) {
+#if AO_USE_FILEAPI == ARDUINO_LITTLEFS
+        auto dir = USE_FS.open(AO_FILENAME_PREFIX);
+        if (!dir) {
+            AO_DBG_ERR("cannot open root directory: " AO_FILENAME_PREFIX);
+            return -1;
+        }
+
+        int err = 0;
+        while (auto entry = dir.openNextFile()) {
+
+            char fname [AO_MAX_PATH_SIZE];
+            auto ret = snprintf(fname, AO_MAX_PATH_SIZE, "%s", entry.name() + strlen(AO_FILENAME_PREFIX));
+            entry.close();
+
+            if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
+                AO_DBG_ERR("fn error: %i", ret);
+                return -1;
+            }
+
+            err = fn(fname);
+            if (err) {
+                break;
+            }
+        }
+        return err;
+#elif AO_USE_FILEAPI == ARDUINO_SPIFFS
+        auto dir = USE_FS.openDir(AO_FILENAME_PREFIX);
+        int err = 0;
+        while (dir.next()) {
+            auto fname = dir.fileName();
+            if (fname.c_str()) {
+                err = fn(fname.c_str() + strlen(AO_FILENAME_PREFIX));
+            } else {
+                AO_DBG_ERR("fs error");
+                err = -1;
+            }
+            if (err) {
+                break;
+            }
+        }
+        return err;
+#else
+#error
+#endif
+    }
 };
 
 std::weak_ptr<FilesystemAdapter> filesystemCache;
@@ -176,6 +208,7 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 #elif AO_USE_FILEAPI == ESPIDF_SPIFFS
 
 #include <sys/stat.h>
+#include <dirent.h>
 #include "esp_spiffs.h"
 
 namespace ArduinoOcpp {
@@ -241,6 +274,38 @@ public:
     bool remove(const char *fn) override {
         return unlink(fn) == 0;
     }
+
+    int ftw_root(std::function<int(const char *fpath)> fn) {
+        //open AO root directory
+        char dname [AO_MAX_PATH_SIZE];
+        auto dlen = snprintf(dname, AO_MAX_PATH_SIZE, "%s", AO_FILENAME_PREFIX);
+        if (dlen < 0 || dlen >= AO_MAX_PATH_SIZE) {
+            AO_DBG_ERR("fn error: %i", dlen);
+            return -1;
+        }
+
+        // trim trailing '/' if not root directory
+        if (dlen >= 2 && dname[dlen - 1] == '/') {
+            dname[dlen - 1] = '\0';
+        }
+
+        auto dir = opendir(dname);
+        if (!dir) {
+            AO_DBG_ERR("cannot open root directory: %s", dname);
+            return -1;
+        }
+
+        int err = 0;
+        while (auto entry = readdir(dir)) {
+            err = fn(entry->d_name);
+            if (err) {
+                break;
+            }
+        }
+
+        closedir(dir);
+        return err;
+    }
 };
 
 std::weak_ptr<FilesystemAdapter> filesystemCache;
@@ -299,6 +364,7 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 #include <cstdio>
 #include <sys/stat.h>
+#include <dirent.h>
 
 namespace ArduinoOcpp {
 
@@ -357,6 +423,25 @@ public:
 
     bool remove(const char *fn) override {
         return ::remove(fn) == 0;
+    }
+
+    int ftw_root(std::function<int(const char *fpath)> fn) {
+        auto dir = opendir(AO_FILENAME_PREFIX); // use c_str() to convert the path string to a C-style string
+        if (!dir) {
+            AO_DBG_ERR("cannot open root directory: " AO_FILENAME_PREFIX);
+            return -1;
+        }
+
+        int err = 0;
+        while (auto entry = readdir(dir)) {
+            err = fn(entry->d_name);
+            if (err) {
+                break;
+            }
+        }
+
+        closedir(dir);
+        return err;
     }
 };
 

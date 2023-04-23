@@ -8,11 +8,7 @@
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
 
-#ifndef AO_OPSTORE_DIR
-#define AO_OPSTORE_DIR AO_FILENAME_PREFIX "/"
-#endif
-
-#define AO_OPSTORE_FN AO_FILENAME_PREFIX "/opstore.cnf"
+#define AO_OPSTORE_FN AO_FILENAME_PREFIX "opstore.cnf"
 
 #define AO_OPHISTORY_SIZE 3
 
@@ -36,7 +32,7 @@ bool StoredOperationHandler::commit() {
     opNr = context.reserveOpNr();
 
     char fn [AO_MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_OPSTORE_DIR "op" "-%u.jsn", opNr);
+    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "op" "-%u.jsn", opNr);
     if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
         AO_DBG_ERR("fn error: %i", ret);
         return false;
@@ -68,7 +64,7 @@ bool StoredOperationHandler::restore(unsigned int opNrToLoad) {
     opNr = opNrToLoad;
 
     char fn [AO_MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_OPSTORE_DIR "op" "-%u.jsn", opNr);
+    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "op" "-%u.jsn", opNr);
     if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
         AO_DBG_ERR("fn error: %i", ret);
         return false;
@@ -111,7 +107,7 @@ OperationStore::OperationStore(std::shared_ptr<FilesystemAdapter> filesystem) : 
         unsigned int i = opEnd;
         while (misses < 3) {
             char fn [AO_MAX_PATH_SIZE] = {'\0'};
-            auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_OPSTORE_DIR "op" "-%u.jsn", i);
+            auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "op" "-%u.jsn", i);
             if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
                 AO_DBG_ERR("fn error: %i", ret);
                 misses++;
@@ -175,7 +171,7 @@ void OperationStore::advanceOpNr(unsigned int oldOpNr) {
         unsigned int op = ((unsigned int) *opBegin + i + AO_MAX_OPNR - AO_OPHISTORY_SIZE) % AO_MAX_OPNR;
 
         char fn [AO_MAX_PATH_SIZE] = {'\0'};
-        auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_OPSTORE_DIR "op" "-%u.jsn", op);
+        auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "op" "-%u.jsn", op);
         if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
             AO_DBG_ERR("fn error: %i", ret);
             break;

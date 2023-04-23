@@ -6,6 +6,7 @@
 #define CHARGEPOINTSTATUSSERVICE_H
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ConnectorStatus.h>
+#include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoOcpp/Platform.h>
 
 #include <vector>
@@ -29,7 +30,7 @@ private:
     std::shared_ptr<Configuration<int>> resetRetries;
 
 public:
-    ChargePointStatusService(OcppEngine& context, unsigned int numConnectors);
+    ChargePointStatusService(OcppEngine& context, unsigned int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
     ~ChargePointStatusService();
     

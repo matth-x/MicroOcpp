@@ -30,7 +30,7 @@
 
 using namespace ArduinoOcpp;
 
-ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned int numConn)
+ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned int numConn, std::shared_ptr<FilesystemAdapter> filesystem)
       : context(context) {
 
     for (unsigned int i = 0; i < numConn; i++) {
@@ -72,8 +72,8 @@ ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned
         return new Ocpp16::ChangeAvailability(context.getOcppModel());});
     context.getOperationDeserializer().registerOcppOperation("ChangeConfiguration", [] () {
         return new Ocpp16::ChangeConfiguration();});
-    context.getOperationDeserializer().registerOcppOperation("ClearCache", [] () {
-        return new Ocpp16::ClearCache();});
+    context.getOperationDeserializer().registerOcppOperation("ClearCache", [filesystem] () {
+        return new Ocpp16::ClearCache(filesystem);});
     context.getOperationDeserializer().registerOcppOperation("GetConfiguration", [] () {
         return new Ocpp16::GetConfiguration();});
     context.getOperationDeserializer().registerOcppOperation("RemoteStartTransaction", [&context] () {

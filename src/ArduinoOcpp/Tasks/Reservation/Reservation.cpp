@@ -7,7 +7,7 @@
 #include <ArduinoOcpp/Debug.h>
 
 #ifndef RESERVATION_FN
-#define RESERVATION_FN (AO_FILENAME_PREFIX "/reservations.jsn")
+#define RESERVATION_FN (AO_FILENAME_PREFIX "reservations.jsn")
 #endif
 
 using namespace ArduinoOcpp;

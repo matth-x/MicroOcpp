@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef CONFIGURATION_H
@@ -13,9 +13,9 @@
 #include <memory>
 #include <vector>
 
-#define CONFIGURATION_FN (AO_FILENAME_PREFIX "/arduino-ocpp.cnf")
+#define CONFIGURATION_FN (AO_FILENAME_PREFIX "arduino-ocpp.cnf")
 #define CONFIGURATION_VOLATILE "/volatile"
-#define AO_KEYVALUE_FN (AO_FILENAME_PREFIX "/client-state.cnf")
+#define AO_KEYVALUE_FN (AO_FILENAME_PREFIX "client-state.cnf")
 
 namespace ArduinoOcpp {
 

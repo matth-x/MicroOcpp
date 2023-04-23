@@ -53,7 +53,6 @@ class ServerTransactionStart {
 private:
     friend class Transaction;
 
-    bool authorized = true;      //authorization status; only valid if confirmed = true
     int transactionId = -1; //only valid if confirmed = true
 };
 
@@ -95,6 +94,7 @@ private:
     
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
     bool authorized = false;    //if the given idTag was authorized
+    bool deauthorized = false;  //if the server revoked a local authorization
     OcppTimestamp timestamp = MIN_TIME;
     int txProfileId = -1;
 
@@ -137,12 +137,11 @@ public:
 
     bool isAborted() {return !start.rpc.requested && !session.active;}
     bool isCompleted() {return stop.rpc.isConfirmed();}
-    bool isPreparing() {return session.active && !start.rpc.isRequested() && !stop.rpc.isRequested();}
+    bool isPreparing() {return session.active && !start.rpc.isRequested();}
     bool isRunning() {return start.rpc.isRequested() && !stop.rpc.isRequested();}
-    bool isActive() {return session.active && !stop.rpc.isRequested();}
-    bool isInSession() {return isActive() && *session.idTag;}
+    bool isActive() {return session.active;}
 
-    const char *getIdTag() {return session.idTag;} //only for testing in StartTx.req
+    const char *getIdTag() {return session.idTag;}
     void setIdTag(const char *idTag) {snprintf(session.idTag, IDTAG_LEN_MAX + 1, "%s", idTag);}
     OcppTimestamp& getSessionTimestamp() {return session.timestamp;}
     void setSessionTimestamp(OcppTimestamp timestamp) {session.timestamp = timestamp;}
@@ -152,16 +151,16 @@ public:
     void endSession() {session.active = false;}
 
     void setAuthorized() {session.authorized = true;}
-    bool isAuthorized() {return session.authorized && start.server.authorized;}
+    bool isAuthorized() {return session.authorized;}
 
-    void setIdTagDeauthorized() {start.server.authorized = false;}
-    bool isIdTagDeauthorized() {return start.rpc.isConfirmed() && !start.server.authorized;}
+    void setIdTagDeauthorized() {session.deauthorized = true;}
+    bool isIdTagDeauthorized() {return session.deauthorized;}
 
     int getTransactionId() {return start.server.transactionId;}
     void setTransactionId(int transactionId) {start.server.transactionId = transactionId;}
 
     void setMeterStart(int32_t meter) {start.client.meter = meter;}
-    bool isMeterStartDefined() {return start.client.meter >= 0;} //should introduce extra variable later
+    bool isMeterStartDefined() {return start.client.meter >= 0;}
     int32_t getMeterStart() {return start.client.meter;}
 
     void setReservationId(int reservationId) {start.client.reservationId = reservationId;}
@@ -171,13 +170,13 @@ public:
     OcppTimestamp& getStartTimestamp() {return start.client.timestamp;}
 
     void setMeterStop(int32_t meter) {stop.client.meter = meter;}
-    bool isMeterStopDefined() {return stop.client.meter >= 0;} //should introduce extra variable later
+    bool isMeterStopDefined() {return stop.client.meter >= 0;}
     int32_t getMeterStop() {return stop.client.meter;}
 
     void setStopTimestamp(OcppTimestamp timestamp) {stop.client.timestamp = timestamp;}
     OcppTimestamp& getStopTimestamp() {return stop.client.timestamp;}
 
-    const char *getStopIdTag() {return stop.client.idTag;} //only for testing in StartTx.req
+    const char *getStopIdTag() {return stop.client.idTag;}
     void setStopIdTag(const char *idTag) {snprintf(stop.client.idTag, IDTAG_LEN_MAX + 1, "%s", idTag);}
 
     bool commit();

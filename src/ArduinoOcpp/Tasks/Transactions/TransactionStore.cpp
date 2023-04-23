@@ -14,11 +14,7 @@
 
 using namespace ArduinoOcpp;
 
-#ifndef AO_TXSTORE_DIR
-#define AO_TXSTORE_DIR AO_FILENAME_PREFIX "/"
-#endif
-
-#define AO_TXSTORE_META_FN AO_FILENAME_PREFIX "/txstore.jsn"
+#define AO_TXSTORE_META_FN AO_FILENAME_PREFIX "txstore.jsn"
 
 ConnectorTransactionStore::ConnectorTransactionStore(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem) :
         context(context),
@@ -74,7 +70,7 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
     }
 
     char fn [AO_MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, txNr);
+    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "tx" "-%u-%u.jsn", connectorId, txNr);
     if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
         AO_DBG_ERR("fn error: %i", ret);
         return nullptr;
@@ -169,7 +165,7 @@ bool ConnectorTransactionStore::commit(Transaction *transaction) {
     }
 
     char fn [AO_MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, transaction->getTxNr());
+    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "tx" "-%u-%u.jsn", connectorId, transaction->getTxNr());
     if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
         AO_DBG_ERR("fn error: %i", ret);
         return false;
@@ -198,7 +194,7 @@ bool ConnectorTransactionStore::remove(unsigned int txNr) {
     }
 
     char fn [AO_MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_TXSTORE_DIR "tx" "-%u-%u.jsn", connectorId, txNr);
+    auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "tx" "-%u-%u.jsn", connectorId, txNr);
     if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
         AO_DBG_ERR("fn error: %i", ret);
         return false;

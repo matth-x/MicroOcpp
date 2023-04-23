@@ -9,10 +9,6 @@
 
 #include <algorithm>
 
-#ifndef AO_METERSTORE_DIR
-#define AO_METERSTORE_DIR AO_FILENAME_PREFIX "/"
-#endif
-
 #define AO_MAX_STOPTXDATA_LEN 4
 
 using namespace ArduinoOcpp;
@@ -54,7 +50,7 @@ bool TransactionMeterData::addTxData(std::unique_ptr<MeterValue> mv) {
         }
 
         char fn [AO_MAX_PATH_SIZE] = {'\0'};
-        auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_METERSTORE_DIR "sd" "-%u-%u-%u.jsn", connectorId, txNr, mvIndex);
+        auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, mvIndex);
         if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
             AO_DBG_ERR("fn error: %i", ret);
             return false;
@@ -108,7 +104,7 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
     while (misses < MISSES_LIMIT) { //search until region without mvs found
         
         char fn [AO_MAX_PATH_SIZE] = {'\0'};
-        auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_METERSTORE_DIR "sd" "-%u-%u-%u.jsn", connectorId, txNr, mvCount);
+        auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, mvCount);
         if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
             AO_DBG_ERR("fn error: %i", ret);
             return false; //all files have same length
@@ -193,7 +189,7 @@ std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuild
     
     if (filesystem) {
         char fn [AO_MAX_PATH_SIZE] = {'\0'};
-        auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_METERSTORE_DIR "sd" "-%u-%u-%u.jsn", connectorId, txNr, 0);
+        auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, 0);
         if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
             AO_DBG_ERR("fn error: %i", ret);
             return nullptr; //cannot store
@@ -248,7 +244,7 @@ bool MeterStore::remove(unsigned int connectorId, unsigned int txNr) {
             while (misses < MISSES_LIMIT) { //search until region without mvs found
                 
                 char fn [AO_MAX_PATH_SIZE] = {'\0'};
-                auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_METERSTORE_DIR "sd" "-%u-%u-%u.jsn", connectorId, txNr, i);
+                auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, i);
                 if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
                     AO_DBG_ERR("fn error: %i", ret);
                     return false; //all files have same length
@@ -273,7 +269,7 @@ bool MeterStore::remove(unsigned int connectorId, unsigned int txNr) {
             unsigned int sd = mvCount - 1U - i;
         
             char fn [AO_MAX_PATH_SIZE] = {'\0'};
-            auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_METERSTORE_DIR "sd" "-%u-%u-%u.jsn", connectorId, txNr, sd);
+            auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, sd);
             if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
                 AO_DBG_ERR("fn error: %i", ret);
                 return false;
