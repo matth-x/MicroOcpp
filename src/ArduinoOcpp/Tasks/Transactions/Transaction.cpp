@@ -26,6 +26,9 @@ bool Transaction::serializeSessionState(DynamicJsonDocument& out) {
     if (session.authorized) {
         sessionState["authorized"] = session.authorized;
     }
+    if (session.deauthorized) {
+        sessionState["deauthorized"] = session.deauthorized;
+    }
     if (session.timestamp > MIN_TIME) {
         char timeStr [JSONDATE_LENGTH + 1] = {'\0'};
         session.timestamp.toJsonString(timeStr, JSONDATE_LENGTH + 1);
@@ -65,7 +68,6 @@ bool Transaction::serializeSessionState(DynamicJsonDocument& out) {
     if (start.rpc.confirmed) {
         JsonObject txStartServerSide = txStart.createNestedObject("server");
         txStartServerSide["transactionId"] = start.server.transactionId;
-        txStartServerSide["authorized"] = start.server.authorized;
     }
 
     JsonObject txStop = state.createNestedObject("stop");
@@ -130,6 +132,9 @@ bool Transaction::deserializeSessionState(JsonObject state) {
     if (sessionState.containsKey("authorized")) {
         session.authorized = sessionState["authorized"] | false;
     }
+    if (sessionState.containsKey("deauthorized")) {
+        session.deauthorized = sessionState["deauthorized"] | false;
+    }
     if (sessionState.containsKey("timestamp")) {
         session.timestamp.setTime(sessionState["timestamp"] | "Invalid");
     }
@@ -166,7 +171,6 @@ bool Transaction::deserializeSessionState(JsonObject state) {
     if (start.rpc.confirmed) {
         JsonObject txStartServerSide = txStart["server"];
         start.server.transactionId = txStartServerSide["transactionId"] | -1;
-        start.server.authorized = txStartServerSide["authorized"] | false;
     }
 
     JsonObject txStop = state["stop"];
