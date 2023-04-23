@@ -290,7 +290,7 @@ bool beginTransaction_authorized(const char *idTag, const char *parentIdTag, uns
         return false;
     }
     if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX ||
-        !parentIdTag || strnlen(parentIdTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
+        (parentIdTag && strnlen(parentIdTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX)) {
         AO_DBG_ERR("(parent)idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return false;
     }
