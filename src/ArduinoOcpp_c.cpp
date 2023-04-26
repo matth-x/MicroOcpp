@@ -355,7 +355,7 @@ void ao_set_console_out_c(void (*console_out)(const char *msg)) {
     ao_set_console_out(console_out);
 }
 
-OcppHandle *getOcppHandle() {
+OcppHandle *ao_getOcppHandle() {
     return reinterpret_cast<OcppHandle*>(getOcppEngine());
 }
 
