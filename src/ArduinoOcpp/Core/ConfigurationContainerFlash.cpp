@@ -46,20 +46,26 @@ bool ConfigurationContainerFlash::load() {
     }
 
     auto jsonCapacity = std::max(file_size, (size_t) 256);
-    DynamicJsonDocument doc {0};
+    DynamicJsonDocument *doc = NULL;
     DeserializationError err = DeserializationError::NoMemory;
 
     while (err == DeserializationError::NoMemory) {
         if (jsonCapacity > MAX_CONFJSON_CAPACITY) {
             AO_DBG_ERR("JSON capacity exceeded");
+            if (doc) {
+                delete(doc);
+            }
             return false;
         }
 
         AO_DBG_DEBUG("Configs JSON capacity: %zu", jsonCapacity);
 
-        doc = DynamicJsonDocument(jsonCapacity);
+        if (doc) {
+            delete(doc);
+        }
+        doc = new DynamicJsonDocument(jsonCapacity);
         ArduinoJsonFileAdapter file_adapt {file.get()};
-        err = deserializeJson(doc, file_adapt);
+        err = deserializeJson(*doc, file_adapt);
 
         jsonCapacity *= 3;
         jsonCapacity /= 2;
@@ -68,24 +74,28 @@ bool ConfigurationContainerFlash::load() {
 
     if (err) {
         AO_DBG_ERR("Unable to initialize: config file deserialization failed: %s", err.c_str());
+        delete(doc);
         return false;
     }
 
-    JsonObject configHeader = doc["head"];
+    JsonObject configHeader = (*doc)["head"];
 
     if (strcmp(configHeader["content-type"] | "Invalid", "ao_configuration_file")) {
         AO_DBG_ERR("Unable to initialize: unrecognized configuration file format");
+        delete(doc);
         return false;
     }
 
     if (strcmp(configHeader["version"] | "Invalid", "1.1")) {
         AO_DBG_ERR("Unable to initialize: unsupported version");
+        delete(doc);
         return false;
     }
     
-    JsonArray configurationsArray = doc["configurations"];
+    JsonArray configurationsArray = (*doc)["configurations"];
     if (configurationsArray.size() > MAX_CONFIGURATIONS) {
         AO_DBG_ERR("Unable to initialize: configurations_len is too big (=%zu)", configurationsArray.size());
+        delete(doc);
         return false;
     }
 
@@ -114,6 +124,7 @@ bool ConfigurationContainerFlash::load() {
     configurationsUpdated();
 
     AO_DBG_DEBUG("Initialization finished");
+    delete(doc);
     return true;
 }
 
@@ -159,42 +170,50 @@ bool ConfigurationContainerFlash::save() {
     }
 
     jsonCapacity = std::max(jsonCapacity, (size_t) 256);
-    DynamicJsonDocument doc {0};
+    DynamicJsonDocument *doc = NULL;
     bool jsonDocOverflow = true;
 
     while (jsonDocOverflow) {
         if (jsonCapacity > MAX_CONFJSON_CAPACITY) {
             AO_DBG_ERR("JSON capacity exceeded");
+            if (doc) {
+                delete(doc);
+            }
             return false;
         }
 
         file->seek(0);
 
-        doc = DynamicJsonDocument(jsonCapacity);
-        JsonObject head = doc.createNestedObject("head");
+        if (doc) {
+            delete(doc);
+        }
+        doc = new DynamicJsonDocument(jsonCapacity);
+        JsonObject head = doc->createNestedObject("head");
         head["content-type"] = "ao_configuration_file";
         head["version"] = "1.1";
 
-        JsonArray configurationsArray = doc.createNestedArray("configurations");
+        JsonArray configurationsArray = doc->createNestedArray("configurations");
         for (auto entry = entries.begin(); entry != entries.end(); entry++) {
             configurationsArray.add((*entry)->as<JsonObject>());
         }
 
         ArduinoJsonFileAdapter file_adapt {file.get()};
-        size_t written = serializeJson(doc, file_adapt);
+        size_t written = serializeJson(*doc, file_adapt);
 
         jsonCapacity *= 3;
         jsonCapacity /= 2;
-        jsonDocOverflow = doc.overflowed();
+        jsonDocOverflow = doc->overflowed();
 
         if (!jsonDocOverflow && written < 20) { //plausibility check
             AO_DBG_ERR("Config serialization: unkown error for file %s", getFilename());
+            delete(doc);
             return false;
         }
     }
 
     //success
     AO_DBG_DEBUG("Saving configurations finished");
+    delete(doc);
     return true;
 }
 

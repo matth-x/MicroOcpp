@@ -43,8 +43,11 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
             errorCode = chargingProfile.containsKey("chargingProfileId") ? 
                         "PropertyConstraintViolation" : "FormationViolation";
         }
-        chargingProfileDoc = DynamicJsonDocument(chargingProfile.memoryUsage()); //copy TxProfile
-        chargingProfileDoc.set(chargingProfile);
+        if (chargingProfileDoc) {
+            delete(chargingProfileDoc);
+        }
+        chargingProfileDoc = new DynamicJsonDocument(chargingProfile.memoryUsage()); //copy TxProfile
+        chargingProfileDoc->set(chargingProfile);
     }
 }
 
@@ -106,11 +109,11 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
             connector->beginSession(idTag);
         }
 
-        if (!chargingProfileDoc.isNull()
+        if (chargingProfileDoc
                 && (ocppModel && ocppModel->getSmartChargingService())) {
             auto scService = ocppModel->getSmartChargingService();
 
-            JsonObject chargingProfile = chargingProfileDoc.as<JsonObject>();
+            JsonObject chargingProfile = chargingProfileDoc->as<JsonObject>();
             scService->setChargingProfile(chargingProfile);
             *sRmtProfileId = chargingProfile["chargingProfileId"].as<int>();
             AO_DBG_DEBUG("Charging Profile from RemoteStartTx set");

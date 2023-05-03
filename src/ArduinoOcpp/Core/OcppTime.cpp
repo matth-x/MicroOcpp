@@ -9,8 +9,8 @@
 
 namespace ArduinoOcpp {
 
-const OcppTimestamp MIN_TIME = OcppTimestamp(2010, 0, 0, 0, 0, 0);
-const OcppTimestamp MAX_TIME = OcppTimestamp(2037, 0, 0, 0, 0, 0);
+// const OcppTimestamp MIN_TIME = OcppTimestamp(2010, 0, 0, 0, 0, 0);
+// const OcppTimestamp MAX_TIME = OcppTimestamp(2037, 0, 0, 0, 0, 0);
 
 namespace Clocks {
 

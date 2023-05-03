@@ -15,7 +15,7 @@ class RemoteStartTransaction : public OcppMessage {
 private:
     int connectorId;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
-    DynamicJsonDocument chargingProfileDoc {0};
+    DynamicJsonDocument *chargingProfileDoc = NULL;
     
     const char *errorCode {nullptr};
 public:

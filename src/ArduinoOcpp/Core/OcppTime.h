@@ -81,8 +81,10 @@ public:
     friend bool operator>=(const OcppTimestamp &lhs, const OcppTimestamp &rhs);
 };
 
-extern const OcppTimestamp MIN_TIME;
-extern const OcppTimestamp MAX_TIME;
+// extern const OcppTimestamp MIN_TIME;
+// extern const OcppTimestamp MAX_TIME;
+#define MIN_TIME OcppTimestamp(2010, 0, 0, 0, 0, 0)
+#define MAX_TIME OcppTimestamp(2037, 0, 0, 0, 0, 0)
 
 class OcppTime {
 private:

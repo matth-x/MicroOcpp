@@ -78,7 +78,7 @@ std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
         char scheduleStart [JSONDATE_LENGTH + 1] {'\0'};
         auto startSchedule = (*compositeJson)["startSchedule"] | "";
         if (startSchedule[0] != '\0') {
-            strncpy(scheduleStart, startSchedule, JSONDATE_LENGTH + 1);
+            strncpy(scheduleStart, startSchedule, JSONDATE_LENGTH);
         } else {
             ocppModel->getOcppTime().getOcppTimestampNow().toJsonString(scheduleStart, JSONDATE_LENGTH + 1);
         }

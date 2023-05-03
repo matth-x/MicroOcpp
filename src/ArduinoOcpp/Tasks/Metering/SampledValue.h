@@ -8,6 +8,7 @@
 #include <ArduinoJson.h>
 #include <memory>
 #include <functional>
+#include <inttypes.h>
 
 namespace ArduinoOcpp {
 
@@ -27,7 +28,7 @@ public:
     static bool ready(int32_t& val) {return true;} //int32_t is always valid
     static std::string serialize(int32_t& val) {
         char str [12] = {'\0'};
-        snprintf(str, 12, "%d", val);
+        snprintf(str, 12, "%" PRId32, val);
         return std::string(str);
     }
     static int32_t toInteger(int32_t& val) {return val;}
@@ -40,7 +41,8 @@ public:
     static bool ready(float& val) {return true;} //float is always valid
     static std::string serialize(float& val) {
         char str[20];
-        dtostrf(val,4,9,str);
+        snprintf(str, sizeof(str)-1, "%f", val);
+        // dtostrf(val,4,9,str);
         return std::string(str);
     }
     static int32_t toInteger(float& val) {return (int32_t) val;}

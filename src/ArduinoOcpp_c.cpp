@@ -187,10 +187,10 @@ void ao_authorize(const char *idTag, OnAuthorize onConfirmation, OnOcppAbort onA
 }
 
 void ao_beginTransaction(const char *idTag) {
-    ao_beginTransaction(idTag);
+    beginTransaction(idTag);
 }
 void ao_beginTransaction_m(unsigned int connectorId, const char *idTag) {
-    beginTransaction(idTag, 1);
+    beginTransaction(idTag, connectorId);
 }
 
 bool ao_endTransaction(const char *reason) {
