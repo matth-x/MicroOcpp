@@ -149,7 +149,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
         if (dt <= 0 ||                              //normal case: interval elapsed
                 dt > *ClockAlignedDataInterval) {   //special case: clock has been adjusted or first run
 
-            AO_DBG_DEBUG("Clock aligned measurement %ds: %s", dt,
+            AO_DBG_DEBUG("Clock aligned measurement %" PRIu32 "s: %s", dt,
                 abs(dt) <= 60 ?
                 "in time (tolerance <= 60s)" : "off, e.g. because of first run. Ignore");
             if (abs(dt) <= 60) { //is measurement still "clock-aligned"?
