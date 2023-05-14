@@ -35,7 +35,7 @@ private:
     const int connectorId;
 
     std::shared_ptr<Transaction> transaction;
-    void allocateTransaction(const char *idTag);
+    std::shared_ptr<Transaction> allocateTransaction();
 
     std::shared_ptr<Configuration<int>> availability;
     int availabilityVolatile = AVAILABILITY_OPERATIVE;

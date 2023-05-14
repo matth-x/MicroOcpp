@@ -386,7 +386,9 @@ const char *ConnectorStatus::getErrorCode() {
     return nullptr;
 }
 
-void ConnectorStatus::allocateTransaction(const char *idTag) {
+std::shared_ptr<Transaction> ConnectorStatus::allocateTransaction() {
+
+    decltype(allocateTransaction()) tx;
 
     //clean possible aorted tx
     auto txr = model.getTransactionStore()->getTxEnd(connectorId);
@@ -419,9 +421,9 @@ void ConnectorStatus::allocateTransaction(const char *idTag) {
     }
 
     //try to create new transaction
-    transaction = model.getTransactionStore()->createTransaction(connectorId);
+    tx = model.getTransactionStore()->createTransaction(connectorId);
 
-    if (!transaction) {
+    if (!tx) {
         //could not create transaction - now, try to replace tx history entry
 
         auto txl = model.getTransactionStore()->getTxBegin(connectorId);
@@ -429,7 +431,7 @@ void ConnectorStatus::allocateTransaction(const char *idTag) {
 
         for (decltype(txsize) i = 0; i < txsize; i++) {
 
-            if (transaction) {
+            if (tx) {
                 //success, finished here
                 break;
             }
@@ -451,7 +453,7 @@ void ConnectorStatus::allocateTransaction(const char *idTag) {
                     model.getTransactionStore()->setTxBegin(connectorId, (txl + 1) % MAX_TX_CNT);
                     AO_DBG_DEBUG("deleted tx history entry for new transaction");
 
-                    transaction = model.getTransactionStore()->createTransaction(connectorId);
+                    tx = model.getTransactionStore()->createTransaction(connectorId);
                 } else {
                     AO_DBG_ERR("memory corruption");
                     break;
@@ -467,32 +469,20 @@ void ConnectorStatus::allocateTransaction(const char *idTag) {
         }
     }
 
-    if (!transaction) {
+    if (!tx) {
         //couldn't create normal transaction -> check if to start charging without real transaction
         if (silentOfflineTransactions && *silentOfflineTransactions) {
             //try to handle charging session without sending StartTx or StopTx to the server
-            transaction = model.getTransactionStore()->createTransaction(connectorId, true);
+            tx = model.getTransactionStore()->createTransaction(connectorId, true);
 
-            if (transaction) {
+            if (tx) {
                 AO_DBG_DEBUG("created silent transaction");
                 (void)0;
             }
         }
     }
 
-    if (!transaction) {
-        return;
-    }
-    
-    if (!idTag || *idTag == '\0') {
-        //input string is empty
-        transaction->setIdTag("");
-    } else {
-        transaction->setIdTag(idTag);
-    }
-
-    transaction->setSessionTimestamp(model.getOcppTime().getOcppTimestampNow());
-
+    return tx;
 }
 
 std::shared_ptr<Transaction> ConnectorStatus::beginTransaction(const char *idTag) {
@@ -543,12 +533,21 @@ std::shared_ptr<Transaction> ConnectorStatus::beginTransaction(const char *idTag
         }
     }
 
-    allocateTransaction(idTag);
+    transaction = allocateTransaction();
 
     if (!transaction) {
         AO_DBG_ERR("could not allocate Tx");
         return nullptr;
     }
+
+    if (!idTag || *idTag == '\0') {
+        //input string is empty
+        transaction->setIdTag("");
+    } else {
+        transaction->setIdTag(idTag);
+    }
+
+    transaction->setSessionTimestamp(model.getOcppTime().getOcppTimestampNow());
 
     AO_DBG_DEBUG("Begin transaction process (%s), prepare", idTag != nullptr ? idTag : "");
 
@@ -652,12 +651,21 @@ std::shared_ptr<Transaction> ConnectorStatus::beginTransaction_authorized(const 
         return nullptr;
     }
 
-    allocateTransaction(idTag);
+    transaction = allocateTransaction();
 
     if (!transaction) {
         AO_DBG_ERR("could not allocate Tx");
         return nullptr;
     }
+
+    if (!idTag || *idTag == '\0') {
+        //input string is empty
+        transaction->setIdTag("");
+    } else {
+        transaction->setIdTag(idTag);
+    }
+
+    transaction->setSessionTimestamp(model.getOcppTime().getOcppTimestampNow());
     
     AO_DBG_DEBUG("Begin transaction process (%s), already authorized", idTag != nullptr ? idTag : "");
 
