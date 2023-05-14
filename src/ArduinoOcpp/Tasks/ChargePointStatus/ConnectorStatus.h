@@ -35,7 +35,6 @@ private:
     const int connectorId;
 
     std::shared_ptr<Transaction> transaction;
-    std::shared_ptr<Transaction> allocateTransaction();
 
     std::shared_ptr<Configuration<int>> availability;
     int availabilityVolatile = AVAILABILITY_OPERATIVE;
@@ -95,6 +94,9 @@ public:
     int getTransactionId();
     int getTransactionIdSync();
     std::shared_ptr<Transaction>& getTransaction();
+
+    //create detached transaction - won't have any side-effects with the transaction handling of this lib
+    std::shared_ptr<Transaction> allocateTransaction(); 
 
     int getAvailability();
     void setAvailability(bool available);
