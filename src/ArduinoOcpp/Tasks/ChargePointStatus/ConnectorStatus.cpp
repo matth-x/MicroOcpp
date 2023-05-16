@@ -112,9 +112,11 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
         return OcppEvseState::Unavailable;
     } else if (transaction && transaction->isRunning()) {
         //Transaction is currently running
+        if (connectorPluggedSampler && !connectorPluggedSampler()) { //special case when StopTransactionOnEVSideDisconnect is false
+            return OcppEvseState::SuspendedEV;
+        }
         if (!ocppPermitsCharge() ||
-                (connectorEnergizedSampler && !connectorEnergizedSampler()) ||
-                (!connectorEnergizedSampler && connectorPluggedSampler && !connectorPluggedSampler())) { //special case when StopTransactionOnEVSideDisconnect is false
+                (connectorEnergizedSampler && !connectorEnergizedSampler())) { 
             return OcppEvseState::SuspendedEVSE;
         }
         if (evRequestsEnergySampler && !evRequestsEnergySampler()) {
