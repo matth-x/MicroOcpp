@@ -113,7 +113,8 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
     } else if (transaction && transaction->isRunning()) {
         //Transaction is currently running
         if (!ocppPermitsCharge() ||
-                (connectorEnergizedSampler && !connectorEnergizedSampler())) {
+                (connectorEnergizedSampler && !connectorEnergizedSampler()) ||
+                (!connectorEnergizedSampler && connectorPluggedSampler && !connectorPluggedSampler())) { //special case when StopTransactionOnEVSideDisconnect is false
             return OcppEvseState::SuspendedEVSE;
         }
         if (evRequestsEnergySampler && !evRequestsEnergySampler()) {
@@ -784,6 +785,14 @@ void ConnectorStatus::setAvailabilityVolatile(bool available) {
 void ConnectorStatus::setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
     this->connectorPluggedSampler = connectorPlugged;
     txProcess.addTrigger([this] () -> TxTrigger {
+        
+        //special case when StopTransactionOnEVSideDisconnect is false
+        if (stopTransactionOnEVSideDisconnect && !*stopTransactionOnEVSideDisconnect &&
+                transaction && transaction->isRunning()) {
+            //ignore connectorPluggedSampler while transaction is running
+            return TxTrigger::Active;
+        }
+
         return connectorPluggedSampler() ? TxTrigger::Active : TxTrigger::Inactive;
     });
 }
