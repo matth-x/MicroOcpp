@@ -59,3 +59,11 @@ unsigned long ao_tick_ms_unix() {
     return (unsigned long) ms.count();
 }
 #endif
+
+#if AO_PLATFORM == AO_PLATFORM_ESPIDF
+void dtostrf(float value, int min_width, int num_digits_after_decimal, char *target){
+    char fmt[20];
+    sprintf(fmt, "%%%d.%df", min_width, num_digits_after_decimal);
+    sprintf(target, fmt, value);
+}
+#endif

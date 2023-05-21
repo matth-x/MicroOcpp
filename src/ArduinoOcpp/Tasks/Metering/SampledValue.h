@@ -9,6 +9,8 @@
 #include <memory>
 #include <functional>
 
+#include <ArduinoOcpp/Platform.h>
+
 namespace ArduinoOcpp {
 
 template <class T>
