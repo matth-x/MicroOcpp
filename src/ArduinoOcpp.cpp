@@ -187,6 +187,8 @@ void OCPP_deinitialize() {
 
     fileSystemOpt = FilesystemOpt();
     voltage_eff = 230.f;
+
+    configuration_deinit();
 }
 
 void OCPP_loop() {

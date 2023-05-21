@@ -34,6 +34,8 @@ namespace Ocpp16 {
 }
 
 bool configuration_init(std::shared_ptr<FilesystemAdapter> filesytem);
+void configuration_deinit();
+
 bool configuration_save();
 
 } //end namespace ArduinoOcpp

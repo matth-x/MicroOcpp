@@ -209,6 +209,12 @@ bool configuration_init(std::shared_ptr<FilesystemAdapter> _filesystem) {
     return success;
 }
 
+void configuration_deinit() {
+    configurationContainers.clear();
+    filesystem.reset();
+    configuration_inited = false;
+}
+
 bool configuration_save() {
     bool success = true;
 
