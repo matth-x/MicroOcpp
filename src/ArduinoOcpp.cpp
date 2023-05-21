@@ -545,7 +545,7 @@ void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnect
     connector->setOnUnlockConnector(onUnlockConnectorInOut);
 }
 
-void setConnectorLockInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> lockConnectorInOut, unsigned int connectorId) {
+void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -555,10 +555,10 @@ void setConnectorLockInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp:
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
-    connector->setConnectorLock(lockConnectorInOut);
+    connector->setStartTxReadyInput(startTxReady);
 }
 
-void setTxBasedMeterInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> txMeterInOut, unsigned int connectorId) {
+void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connectorId) {
     if (!ocppEngine) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -568,7 +568,20 @@ void setTxBasedMeterInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
-    connector->setTxBasedMeterUpdate(txMeterInOut);
+    connector->setStopTxReadyInput(stopTxReady);
+}
+
+void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId) {
+    if (!ocppEngine) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return;
+    }
+    connector->setOccupiedInput(occupied);
 }
 
 bool isOperative(unsigned int connectorId) {

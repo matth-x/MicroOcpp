@@ -28,7 +28,7 @@ using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
 ConnectorStatus::ConnectorStatus(OcppEngine& context, int connectorId)
-        : context(context), model(context.getOcppModel()), connectorId{connectorId}, txProcess(connectorId) {
+        : context(context), model(context.getOcppModel()), connectorId{connectorId} {
 
     char availabilityKey [CONF_KEYLEN_MAX + 1] = {'\0'};
     snprintf(availabilityKey, CONF_KEYLEN_MAX + 1, "AO_AVAIL_CONN_%d", connectorId);
@@ -55,34 +55,6 @@ ConnectorStatus::ConnectorStatus(OcppEngine& context, int connectorId)
     if (!availability) {
         AO_DBG_ERR("Cannot declare availability");
     }
-
-    /*
-     * Initialize standard EVSE behavior.
-     * By default, transactions are triggered by a valid IdTag (+ connected plug as soon as set)
-     * The default necessary steps before starting a transaction are
-     *     - lock the connector (if handler is set)
-     *     - instruct the tx-based meter to begin a transaction (if tx-based meter handler is set)
-     */
-    txProcess.addTrigger([this] () -> TxTrigger {
-        if (transaction && transaction->isActive() && transaction->isAuthorized()) {
-            return TxTrigger::Active;
-        } else {
-            return TxTrigger::Inactive;
-        }
-    });
-    txProcess.addEnableStep([this] (TxTrigger cond) -> TxEnableState {
-        if (onTxBasedMeterPollTx) {
-            return onTxBasedMeterPollTx(cond);
-        }
-        return cond == TxTrigger::Active ? TxEnableState::Active : TxEnableState::Inactive;
-    });
-    txProcess.addEnableStep([this] (TxTrigger cond) -> TxEnableState {
-        //check optional behavior UnlockConnectorOnEVSideDisconnect: if the 
-        if (onConnectorLockPollTx) {
-            return onConnectorLockPollTx(cond);
-        }
-        return cond == TxTrigger::Active ? TxEnableState::Active : TxEnableState::Inactive;
-    });
 
     if (model.getTransactionStore()) {
         transaction = model.getTransactionStore()->getLatestTransaction(connectorId);
@@ -125,7 +97,9 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
         return OcppEvseState::Charging;
     } else if (model.getReservationService() && model.getReservationService()->getReservation(connectorId)) {
         return OcppEvseState::Reserved;
-    } else if (!txProcess.existsActiveTrigger() && txProcess.getState() == TxEnableState::Inactive) {
+    } else if ((!transaction || !transaction->isActive()) &&                 //no transaction preparation
+               (!connectorPluggedSampler || !connectorPluggedSampler()) &&   //no vehicle plugged
+               (!occupiedInput || !occupiedInput())) {                       //occupied override clear
         return OcppEvseState::Available;
     } else {
         /*
@@ -203,8 +177,6 @@ OcppMessage *ConnectorStatus::loop() {
         transaction = nullptr;
     }
 
-    txProcess.evaluateProcessSteps();
-
     if (transaction) { //begin exclusively transaction-related operations
             
         if (connectorPluggedSampler) {
@@ -238,15 +210,17 @@ OcppMessage *ConnectorStatus::loop() {
             }
         }
 
-        auto txEnable = txProcess.getState();
-
         /*
         * Check conditions for start or stop transaction
         */
 
-        if (txEnable == TxEnableState::Active) {
-            
-            if (transaction->isPreparing() && !getErrorCode()) {
+        if (!transaction->isRunning()) {
+            //start tx?
+
+            if (transaction->isActive() && transaction->isAuthorized() &&  //tx must be authorized
+                    (!connectorPluggedSampler || connectorPluggedSampler()) && //if applicable, connector must be plugged
+                    !getErrorCode() && //only start tx if charger is free of error conditions
+                    (!startTxReadyInput || startTxReadyInput())) { //if defined, user Input for allowing StartTx must be true
                 //start Transaction
 
                 AO_DBG_INFO("Session mngt: trigger StartTransaction");
@@ -281,15 +255,11 @@ OcppMessage *ConnectorStatus::loop() {
 
                 return new StartTransaction(model, transaction);
             }
-        } else if (transaction->isRunning()) {
+        } else  {
+            //stop tx?
 
-            if (transaction->isActive()) {
-                AO_DBG_DEBUG("Tx process not active");
-                transaction->endSession();
-                transaction->commit();
-            }
-
-            if (txEnable == TxEnableState::Inactive) {
+            if (!transaction->isActive() &&
+                    (!stopTxReadyInput || stopTxReadyInput())) {
                 //stop transaction
 
                 AO_DBG_INFO("Session mngt: trigger StopTransaction");
@@ -786,17 +756,6 @@ void ConnectorStatus::setAvailabilityVolatile(bool available) {
 
 void ConnectorStatus::setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
     this->connectorPluggedSampler = connectorPlugged;
-    txProcess.addTrigger([this] () -> TxTrigger {
-        
-        //special case when StopTransactionOnEVSideDisconnect is false
-        if (stopTransactionOnEVSideDisconnect && !*stopTransactionOnEVSideDisconnect &&
-                transaction && transaction->isRunning()) {
-            //ignore connectorPluggedSampler while transaction is running
-            return TxTrigger::Active;
-        }
-
-        return connectorPluggedSampler() ? TxTrigger::Active : TxTrigger::Inactive;
-    });
 }
 
 void ConnectorStatus::setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy) {
@@ -819,10 +778,14 @@ std::function<PollResult<bool>()> ConnectorStatus::getOnUnlockConnector() {
     return this->onUnlockConnector;
 }
 
-void ConnectorStatus::setConnectorLock(std::function<TxEnableState(TxTrigger)> onConnectorLockPollTx) {
-    this->onConnectorLockPollTx = onConnectorLockPollTx;
+void ConnectorStatus::setStartTxReadyInput(std::function<bool()> startTxReady) {
+    this->startTxReadyInput = startTxReady;
 }
 
-void ConnectorStatus::setTxBasedMeterUpdate(std::function<TxEnableState(TxTrigger)> onTxBasedMeterPollTx) {
-    this->onTxBasedMeterPollTx = onTxBasedMeterPollTx;
+void ConnectorStatus::setStopTxReadyInput(std::function<bool()> stopTxReady) {
+    this->stopTxReadyInput = stopTxReady;
+}
+
+void ConnectorStatus::setOccupiedInput(std::function<bool()> occupied) {
+    this->occupiedInput = occupied;
 }

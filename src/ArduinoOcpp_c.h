@@ -39,10 +39,6 @@ typedef void (*OutputFloat_m)(unsigned int connectorId, float limit);
 enum OptionalBool {OptionalTrue, OptionalFalse, OptionalNone};
 typedef enum OptionalBool (*PollBool)();
 typedef enum OptionalBool (*PollBool_m)(unsigned int connectorId);
-enum TxTrigger_t {TxTrg_Active, TxTrg_Inactive};
-enum TxEnableState_t {TxEna_Active, TxEna_Inactive, TxEna_Pending};
-typedef enum TxEnableState_t (*TxStepInOut)(enum TxTrigger_t triggerIn);
-typedef enum TxEnableState_t (*TxStepInOut_m)(unsigned int connectorId, enum TxTrigger_t triggerIn);
 
 
 #ifdef __cplusplus
@@ -138,11 +134,14 @@ void ao_addMeterValueInput_m(unsigned int connectorId, MeterValueInput *meterVal
 void ao_setOnUnlockConnectorInOut(PollBool onUnlockConnectorInOut);
 void ao_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollBool_m onUnlockConnectorInOut);
 
-void ao_setConnectorLockInOut(TxStepInOut lockConnectorInOut);
-void ao_setConnectorLockInOut_m(unsigned int connectorId, TxStepInOut_m lockConnectorInOut);
+void ao_setStartTxReadyInput(InputBool startTxReady);
+void ao_setStartTxReadyInput_m(unsigned int connectorId, InputBool_m startTxReady);
 
-void ao_setTxBasedMeterInOut(TxStepInOut txMeterInOut);
-void ao_setTxBasedMeterInOut_m(unsigned int connectorId, TxStepInOut_m txMeterInOut);
+void ao_setStartTxReadyInput(InputBool startTxReady);
+void ao_setStartTxReadyInput_m(unsigned int connectorId, InputBool_m startTxReady);
+
+void ao_setOccupiedInput(InputBool occupied);
+void ao_setOccupiedInput_m(unsigned int connectorId, InputBool_m occupied);
 
 /*
  * Access further information about the internal state of the library

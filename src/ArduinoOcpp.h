@@ -14,7 +14,6 @@
 #include <ArduinoOcpp/Core/OcppOperationCallbacks.h>
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/Core/PollResult.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionPrerequisites.h>
 #include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 
 using ArduinoOcpp::OnReceiveConfListener;
@@ -264,34 +263,11 @@ void setOnResetExecute(std::function<void(bool)> onResetExecute); //reset handle
  */
 void setOnUnlockConnectorInOut(std::function<ArduinoOcpp::PollResult<bool>()> onUnlockConnectorInOut, unsigned int connectorId = 1);
 
-/*
- * Set an Input/Output for setting the state of the connector lock. Called in the course of normal
- * transactions (not as part of UnlockConnector).
- * Param. values: 
- *     - TxTrigger::Active if connector should be locked
- *     - TxTrigger::Inactive if connector should be unlocked
- * Return values:
- *     - TxEnableState::Active if connector is locked and ready for transaction
- *     - TxEnableState::Inactive if connector lock is released
- *     - TxEnableState::Pending otherwise, e.g. if transitioning between the states
- */
-void setConnectorLockInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> lockConnectorInOut, unsigned int connectorId = 1);
+void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int connectorId = 1); //Input if the charger is ready for StartTransaction
 
-/*
- * Set an Input/Output to interact with a transaction-based energy meter. When this OCPP library is
- * about to start a transaction, it toggles the Output to the energy meter to TxTrigger::Active so
- * the energy meter can take a measurement right before a transaction. The same goes for the stop of
- * transactions. With the Input, the energy meter signals if the measurement is ready and the
- * transaction can finally start / stop.
- * Param. values:
- *     - TxTrigger::Active if the tx-based meter should be in transaction-mode
- *     - TxTrigger::Inactive if the tx-based meter should be in non-transaction-mode
- * Return values:
- *     - TxEnableState::Active if the tx-based meter confirms to be in the transaction-mode
- *     - TxEnableState::Inactive if the tx-based meter has transitioned into a non-transaction-mode
- *     - TxEnableState::Pending otherwise, e.g. if transitioning between the states
- */
-void setTxBasedMeterInOut(std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> txMeterInOut, unsigned int connectorId = 1);
+void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connectorId = 1); //Input if charger is ready for StopTransaction
+
+void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId = 1); //Input if instead of Available, send StatusNotification Preparing / Finishing
 
 /*
  * Access further information about the internal state of the library

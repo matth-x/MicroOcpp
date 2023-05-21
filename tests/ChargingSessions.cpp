@@ -2,6 +2,7 @@
 #include <ArduinoOcpp/Core/OcppSocket.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
@@ -169,71 +170,6 @@ TEST_CASE( "Charging sessions" ) {
             stopTransaction();
         }
         loop();
-    }
-
-    SECTION("Advanced session management") {
-        bool connectorPlugged = false;
-        setConnectorPluggedInput([&connectorPlugged] () {return connectorPlugged;});
-
-        TxEnableState meterState = TxEnableState::Inactive;
-        setTxBasedMeterInOut([&meterState] (TxTrigger) {return meterState;});
-
-        TxEnableState lockState = TxEnableState::Inactive;
-        setConnectorLockInOut([&lockState] (TxTrigger) {return lockState;});
-
-        beginTransaction("mIdTag");
-        loop();
-        REQUIRE(!ocppPermitsCharge());
-
-        connectorPlugged = true;
-        loop();
-        REQUIRE(!ocppPermitsCharge());
-        
-        meterState = TxEnableState::Active;
-        loop();
-        REQUIRE(!ocppPermitsCharge());
-        
-        meterState = TxEnableState::Pending;
-        lockState = TxEnableState::Active;
-        loop();
-        REQUIRE(!ocppPermitsCharge());
-        
-        meterState = TxEnableState::Active;
-        lockState = TxEnableState::Pending;
-        loop();
-        REQUIRE(!ocppPermitsCharge());
-
-        checkedSN[1] = false;
-        expectedSN[1] = "Charging";
-        
-        lockState = TxEnableState::Active;
-        loop();
-        REQUIRE(ocppPermitsCharge());
-        REQUIRE(checkedSN[1]);
-
-        checkedSN[1] = false;
-        expectedSN[1] = "SuspendedEVSE";
-
-        lockState = TxEnableState::Pending;
-        loop();
-        REQUIRE(!ocppPermitsCharge());
-        REQUIRE(!getTransactionIdTag());
-        REQUIRE(checkedSN[1]);
-
-        checkedSN[1] = false;
-        expectedSN[1] = "Finishing";
-
-        meterState = TxEnableState::Inactive;
-        lockState = TxEnableState::Inactive;
-        loop();
-        REQUIRE(checkedSN[1]);
-
-        checkedSN[1] = false;
-        expectedSN[1] = "Available";
-
-        connectorPlugged = false;
-        loop();
-        REQUIRE(checkedSN[1]);
     }
 
     OCPP_deinitialize();

@@ -46,23 +46,6 @@ ArduinoOcpp::PollResult<bool> adaptScl(enum OptionalBool v) {
     }
 }
 
-enum TxTrigger_t adaptScl(ArduinoOcpp::TxTrigger v) {
-    return v == ArduinoOcpp::TxTrigger::Active ? TxTrigger_t::TxTrg_Active : TxTrigger_t::TxTrg_Inactive;
-}
-
-ArduinoOcpp::TxEnableState adaptScl(enum TxEnableState_t v) {
-    if (v == TxEna_Pending) {
-        return ArduinoOcpp::TxEnableState::Pending;
-    } else if (v == TxEna_Active) {
-        return ArduinoOcpp::TxEnableState::Active;
-    } else if (v == TxEna_Inactive) {
-        return ArduinoOcpp::TxEnableState::Inactive;
-    } else {
-        AO_DBG_ERR("illegal argument");
-        return ArduinoOcpp::TxEnableState::Inactive;
-    }
-}
-
 std::function<bool()> adaptFn(InputBool fn) {
     return fn;
 }
@@ -141,22 +124,6 @@ std::function<ArduinoOcpp::PollResult<bool>()> adaptFn(PollBool fn) {
 
 std::function<ArduinoOcpp::PollResult<bool>()> adaptFn(unsigned int connectorId, PollBool_m fn) {
     return [fn, connectorId] () {return adaptScl(fn(connectorId));};
-}
-
-std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> adaptFn(TxStepInOut fn) {
-    if (!fn) return nullptr;
-    return [fn] (ArduinoOcpp::TxTrigger trigger) -> ArduinoOcpp::TxEnableState {
-        auto res = fn(adaptScl(trigger));
-        return adaptScl(res);
-    };
-}
-
-std::function<ArduinoOcpp::TxEnableState(ArduinoOcpp::TxTrigger)> adaptFn(unsigned int connectorId, TxStepInOut_m fn) {
-    if (!fn) return nullptr;
-    return [fn, connectorId] (ArduinoOcpp::TxTrigger trigger) -> ArduinoOcpp::TxEnableState {
-        auto res = fn(connectorId, adaptScl(trigger));
-        return adaptScl(res);
-    };
 }
 
 void ao_bootNotification(const char *chargePointModel, const char *chargePointVendor, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError) {
@@ -305,18 +272,25 @@ void ao_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollBool_m onUnloc
     setOnUnlockConnectorInOut(adaptFn(connectorId, onUnlockConnectorInOut), connectorId);
 }
 
-void ao_setConnectorLockInOut(TxStepInOut lockConnectorInOut) {
-    setConnectorLockInOut(adaptFn(lockConnectorInOut));
+void ao_setStartTxReadyInput(InputBool startTxReady) {
+    setStartTxReadyInput(adaptFn(startTxReady));
 }
-void ao_setConnectorLockInOut_m(unsigned int connectorId, TxStepInOut_m lockConnectorInOut) {
-    setConnectorLockInOut(adaptFn(connectorId, lockConnectorInOut), connectorId);
+void ao_setStartTxReadyInput_m(unsigned int connectorId, InputBool_m startTxReady) {
+    setStartTxReadyInput(adaptFn(connectorId, startTxReady), connectorId);
 }
 
-void ao_setTxBasedMeterInOut(TxStepInOut txMeterInOut) {
-    setTxBasedMeterInOut(adaptFn(txMeterInOut));
+void ao_setStopTxReadyInput(InputBool stopTxReady) {
+    setStopTxReadyInput(adaptFn(stopTxReady));
 }
-void ao_setTxBasedMeterInOut_m(unsigned int connectorId, TxStepInOut_m txMeterInOut) {
-    setTxBasedMeterInOut(adaptFn(connectorId, txMeterInOut), connectorId);
+void ao_setStopTxReadyInput_m(unsigned int connectorId, InputBool_m stopTxReady) {
+    setStopTxReadyInput(adaptFn(connectorId, stopTxReady), connectorId);
+}
+
+void ao_setOccupiedInput(InputBool occupied) {
+    setOccupiedInput(adaptFn(occupied));
+}
+void ao_setOccupiedInput_m(unsigned int connectorId, InputBool_m occupied) {
+    setOccupiedInput(adaptFn(connectorId, occupied), connectorId);
 }
 
 bool ao_isOperative() {

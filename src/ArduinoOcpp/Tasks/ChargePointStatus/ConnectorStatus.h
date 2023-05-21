@@ -1,13 +1,11 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef CONNECTORSTATUS_H
 #define CONNECTORSTATUS_H
 
 #include <ArduinoOcpp/Tasks/ChargePointStatus/OcppEvseState.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionPrerequisites.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionProcess.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
@@ -52,10 +50,9 @@ private:
 
     std::function<PollResult<bool>()> onUnlockConnector;
 
-    std::function<TxEnableState(TxTrigger)> onConnectorLockPollTx;
-    std::function<TxEnableState(TxTrigger)> onTxBasedMeterPollTx;
-
-    TransactionProcess txProcess;
+    std::function<bool()> startTxReadyInput; //the StartTx request will be delayed while this Input is false
+    std::function<bool()> stopTxReadyInput; //the StopTx request will be delayed while this Input is false
+    std::function<bool()> occupiedInput; //instead of Available, go into Preparing / Finishing state
 
     std::shared_ptr<Configuration<int>> connectionTimeOut; //in seconds
     std::shared_ptr<Configuration<bool>> stopTransactionOnInvalidId;
@@ -116,8 +113,9 @@ public:
     void setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector);
     std::function<PollResult<bool>()> getOnUnlockConnector();
 
-    void setConnectorLock(std::function<TxEnableState(TxTrigger)> lockConnector);
-    void setTxBasedMeterUpdate(std::function<TxEnableState(TxTrigger)> updateTxBasedMeter);
+    void setStartTxReadyInput(std::function<bool()> startTxReady);
+    void setStopTxReadyInput(std::function<bool()> stopTxReady);
+    void setOccupiedInput(std::function<bool()> occupied);
 };
 
 } //end namespace ArduinoOcpp
