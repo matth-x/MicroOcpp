@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef CHARGECONTROLSERVICE_H
-#define CHARGECONTROLSERVICE_H
+#ifndef CHARGECONTROLCOMMON_H
+#define CHARGECONTROLCOMMON_H
 
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 
@@ -11,11 +11,11 @@ namespace ArduinoOcpp {
 
 class OcppEngine;
 
-class ChargeControlService {
+class ChargeControlCommon {
 private:
     OcppEngine& context;
 public:
-    ChargeControlService(OcppEngine& context, unsigned int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
+    ChargeControlCommon(OcppEngine& context, unsigned int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
     void loop();
 };

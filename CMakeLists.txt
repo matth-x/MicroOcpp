@@ -56,7 +56,7 @@ set(AO_SRC
     src/ArduinoOcpp/Tasks/Authorization/AuthorizationList.cpp
     src/ArduinoOcpp/Tasks/Authorization/AuthorizationService.cpp
     src/ArduinoOcpp/Tasks/Boot/BootService.cpp
-    src/ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.cpp
+    src/ArduinoOcpp/Tasks/ChargeControl/ChargeControlCommon.cpp
     src/ArduinoOcpp/Tasks/ChargeControl/Connector.cpp
     src/ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.cpp
     src/ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.cpp

@@ -8,7 +8,7 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlCommon.h>
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
@@ -141,8 +141,8 @@ void OCPP_initialize(OcppSocket& ocppSocket, const char *bootNotificationCredent
         new TransactionStore(AO_NUMCONNECTORS, filesystem)));
     model.setBootService(std::unique_ptr<BootService>(
         new BootService(*ocppEngine)));
-    model.setChargeControlService(std::unique_ptr<ChargeControlService>(
-        new ChargeControlService(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
+    model.setChargeControlCommon(std::unique_ptr<ChargeControlCommon>(
+        new ChargeControlCommon(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
     std::vector<Connector> connectors;
     for (unsigned int connectorId = 0; connectorId < AO_NUMCONNECTORS; connectorId++) {
         connectors.push_back(Connector(*ocppEngine, connectorId));

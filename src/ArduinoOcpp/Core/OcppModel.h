@@ -14,7 +14,7 @@ namespace ArduinoOcpp {
 
 class TransactionStore;
 class SmartChargingService;
-class ChargeControlService;
+class ChargeControlCommon;
 class MeteringService;
 class FirmwareService;
 class DiagnosticsService;
@@ -29,7 +29,7 @@ private:
     std::vector<Connector> connectors;
     std::unique_ptr<TransactionStore> transactionStore;
     std::unique_ptr<SmartChargingService> smartChargingService;
-    std::unique_ptr<ChargeControlService> chargeControlService;
+    std::unique_ptr<ChargeControlCommon> chargeControlCommon;
     std::unique_ptr<MeteringService> meteringService;
     std::unique_ptr<FirmwareService> firmwareService;
     std::unique_ptr<DiagnosticsService> diagnosticsService;
@@ -58,8 +58,8 @@ public:
     void setSmartChargingService(std::unique_ptr<SmartChargingService> scs);
     SmartChargingService* getSmartChargingService() const;
 
-    void setChargeControlService(std::unique_ptr<ChargeControlService> ccs);
-    ChargeControlService *getChargeControlService();
+    void setChargeControlCommon(std::unique_ptr<ChargeControlCommon> ccs);
+    ChargeControlCommon *getChargeControlCommon();
 
     void setConnectors(std::vector<Connector>&& connectors);
     unsigned int getNumConnectors() const;

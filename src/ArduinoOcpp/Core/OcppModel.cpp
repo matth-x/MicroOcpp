@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlCommon.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
@@ -40,8 +40,8 @@ void OcppModel::loop() {
         connector.loop();
     }
 
-    if (chargeControlService)
-        chargeControlService->loop();
+    if (chargeControlCommon)
+        chargeControlCommon->loop();
     
     if (smartChargingService)
         smartChargingService->loop();
@@ -78,12 +78,12 @@ SmartChargingService* OcppModel::getSmartChargingService() const {
     return smartChargingService.get();
 }
 
-void OcppModel::setChargeControlService(std::unique_ptr<ChargeControlService> ccs) {
-    chargeControlService = std::move(ccs);
+void OcppModel::setChargeControlCommon(std::unique_ptr<ChargeControlCommon> ccs) {
+    chargeControlCommon = std::move(ccs);
 }
 
-ChargeControlService *OcppModel::getChargeControlService() {
-    return chargeControlService.get();
+ChargeControlCommon *OcppModel::getChargeControlCommon() {
+    return chargeControlCommon.get();
 }
 
 void OcppModel::setConnectors(std::vector<Connector>&& connectors) {
