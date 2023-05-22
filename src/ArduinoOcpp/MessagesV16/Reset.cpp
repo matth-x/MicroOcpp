@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/MessagesV16/Reset.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
+#include <ArduinoOcpp/Tasks/Reset/ResetService.h>
 
 using ArduinoOcpp::Ocpp16::Reset;
 
@@ -23,20 +23,17 @@ void Reset::processReq(JsonObject payload) {
      */
     bool isHard = !strcmp(payload["type"] | "undefined", "Hard");
 
-    if (auto cpsService = context.getChargeControlService()) {
-        if (!cpsService->getExecuteReset()) {
+    if (auto rService = context.getResetService()) {
+        if (!rService->getExecuteReset()) {
             AO_DBG_ERR("No reset handler set. Abort operation");
             (void)0;
             //resetAccepted remains false
         } else {
-            if (!cpsService->getPreReset() || cpsService->getPreReset()(isHard) || isHard) {
+            if (!rService->getPreReset() || rService->getPreReset()(isHard) || isHard) {
                 resetAccepted = true;
-                cpsService->initiateReset(isHard);
-                for (int i = 0; i < cpsService->getNumConnectors(); i++) {
-                    auto connector = cpsService->getConnector(i);
-                    if (connector) {
-                        connector->endTransaction(isHard ? "HardReset" : "SoftReset");
-                    }
+                rService->initiateReset(isHard);
+                for (unsigned int cId = 0; cId < context.getNumConnectors(); cId++) {
+                    context.getConnector(cId)->endTransaction(isHard ? "HardReset" : "SoftReset");
                 }
             }
         }

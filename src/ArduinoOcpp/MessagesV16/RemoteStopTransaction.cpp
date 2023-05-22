@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/MessagesV16/RemoteStopTransaction.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 
 using ArduinoOcpp::Ocpp16::RemoteStopTransaction;
 
@@ -26,13 +26,11 @@ std::unique_ptr<DynamicJsonDocument> RemoteStopTransaction::createConf(){
     
     bool canStopTransaction = false;
 
-    if (auto cpStatusService = context.getChargeControlService()) {
-        for (int i = 0; i < cpStatusService->getNumConnectors(); i++) {
-            auto connIter = cpStatusService->getConnector(i);
-            if (connIter->getTransactionId() == transactionId) {
-                canStopTransaction = true;
-                connIter->endTransaction("Remote");
-            }
+    for (unsigned int cId = 0; cId < context.getNumConnectors(); cId++) {
+        auto connector = context.getConnector(cId);
+        if (connector->getTransactionId() == transactionId) {
+            canStopTransaction = true;
+            connector->endTransaction("Remote");
         }
     }
 

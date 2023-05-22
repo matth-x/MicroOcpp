@@ -13,6 +13,7 @@
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
 #include <ArduinoOcpp/Tasks/Boot/BootService.h>
+#include <ArduinoOcpp/Tasks/Reset/ResetService.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -35,8 +36,12 @@ void OcppModel::loop() {
         return;
     }
 
-    if (chargePointStatusService)
-        chargePointStatusService->loop();
+    for (auto& connector : connectors) {
+        connector.loop();
+    }
+
+    if (chargeControlService)
+        chargeControlService->loop();
     
     if (smartChargingService)
         smartChargingService->loop();
@@ -73,23 +78,29 @@ SmartChargingService* OcppModel::getSmartChargingService() const {
     return smartChargingService.get();
 }
 
-void OcppModel::setChargeControlService(std::unique_ptr<ChargeControlService> cpss){
-    chargePointStatusService = std::move(cpss);
+void OcppModel::setChargeControlService(std::unique_ptr<ChargeControlService> ccs) {
+    chargeControlService = std::move(ccs);
 }
 
-ChargeControlService *OcppModel::getChargeControlService() const {
-    return chargePointStatusService.get();
+ChargeControlService *OcppModel::getChargeControlService() {
+    return chargeControlService.get();
 }
 
-Connector *OcppModel::getConnector(int connectorId) const {
-    if (getChargeControlService() == nullptr) return nullptr;
+void OcppModel::setConnectors(std::vector<Connector>&& connectors) {
+    this->connectors = std::move(connectors);
+}
 
-    auto result = getChargeControlService()->getConnector(connectorId);
-    if (result == nullptr) {
-        AO_DBG_ERR("Cannot fetch connector with given connectorId. Return nullptr");
-        //no error catch 
+unsigned int OcppModel::getNumConnectors() const {
+    return connectors.size();
+}
+
+Connector *OcppModel::getConnector(unsigned int connectorId) {
+    if (connectorId >= connectors.size()) {
+        AO_DBG_ERR("connector with connectorId %u does not exist", connectorId);
+        return nullptr;
     }
-    return result;
+
+    return &connectors[connectorId];
 }
 
 void OcppModel::setMeteringSerivce(std::unique_ptr<MeteringService> ms) {
@@ -142,6 +153,14 @@ void OcppModel::setBootService(std::unique_ptr<BootService> bs){
 
 BootService *OcppModel::getBootService() const {
     return bootService.get();
+}
+
+void OcppModel::setResetService(std::unique_ptr<ResetService> rs) {
+    this->resetService = std::move(rs);
+}
+
+ResetService *OcppModel::getResetService() const {
+    return resetService.get();
 }
 
 OcppTime& OcppModel::getOcppTime() {

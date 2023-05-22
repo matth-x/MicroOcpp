@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/MessagesV16/ReserveNow.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Platform.h>
 
 using ArduinoOcpp::Ocpp16::ReserveNow;
@@ -43,13 +43,12 @@ void ReserveNow::processReq(JsonObject payload) {
     int connectorId = payload["connectorId"];
 
     if (context.getReservationService() &&
-                context.getChargeControlService() &&
-                context.getChargeControlService()->getConnector(0)) {
+                context.getNumConnectors() > 0) {
         auto rService = context.getReservationService();
         auto cpService = context.getChargeControlService();
-        auto chargePoint = cpService->getConnector(0);
+        auto chargePoint = context.getConnector(0);
 
-        if (connectorId >= cpService->getNumConnectors()) {
+        if (connectorId >= context.getNumConnectors()) {
             errorCode = "PropertyConstraintViolation";
             return;
         }
@@ -69,7 +68,7 @@ void ReserveNow::processReq(JsonObject payload) {
         Connector *connector = nullptr;
         
         if (connectorId > 0) {
-            connector = cpService->getConnector(connectorId);
+            connector = context.getConnector(connectorId);
         }
 
         if (chargePoint->inferenceStatus() == OcppEvseState::Faulted ||

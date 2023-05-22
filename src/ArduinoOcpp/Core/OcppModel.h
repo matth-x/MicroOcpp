@@ -5,16 +5,16 @@
 #ifndef OCPPMODEL_H
 #define OCPPMODEL_H
 
-#include <ArduinoOcpp/Core/OcppTime.h>
-
 #include <memory>
+
+#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 
 namespace ArduinoOcpp {
 
 class TransactionStore;
 class SmartChargingService;
 class ChargeControlService;
-class Connector;
 class MeteringService;
 class FirmwareService;
 class DiagnosticsService;
@@ -22,12 +22,14 @@ class HeartbeatService;
 class AuthorizationService;
 class ReservationService;
 class BootService;
+class ResetService;
 
 class OcppModel {
 private:
+    std::vector<Connector> connectors;
     std::unique_ptr<TransactionStore> transactionStore;
     std::unique_ptr<SmartChargingService> smartChargingService;
-    std::unique_ptr<ChargeControlService> chargePointStatusService;
+    std::unique_ptr<ChargeControlService> chargeControlService;
     std::unique_ptr<MeteringService> meteringService;
     std::unique_ptr<FirmwareService> firmwareService;
     std::unique_ptr<DiagnosticsService> diagnosticsService;
@@ -35,6 +37,7 @@ private:
     std::unique_ptr<AuthorizationService> authorizationService;
     std::unique_ptr<ReservationService> reservationService;
     std::unique_ptr<BootService> bootService;
+    std::unique_ptr<ResetService> resetService;
     OcppTime ocppTime;
 
     bool runTasks = false;
@@ -55,9 +58,12 @@ public:
     void setSmartChargingService(std::unique_ptr<SmartChargingService> scs);
     SmartChargingService* getSmartChargingService() const;
 
-    void setChargeControlService(std::unique_ptr<ChargeControlService> cpss);
-    ChargeControlService *getChargeControlService() const;
-    Connector *getConnector(int connectorId) const;
+    void setChargeControlService(std::unique_ptr<ChargeControlService> ccs);
+    ChargeControlService *getChargeControlService();
+
+    void setConnectors(std::vector<Connector>&& connectors);
+    unsigned int getNumConnectors() const;
+    Connector *getConnector(unsigned int connectorId);
 
     void setMeteringSerivce(std::unique_ptr<MeteringService> meteringService);
     MeteringService* getMeteringService() const;
@@ -78,6 +84,9 @@ public:
 
     void setBootService(std::unique_ptr<BootService> bs);
     BootService *getBootService() const;
+
+    void setResetService(std::unique_ptr<ResetService> rs);
+    ResetService *getResetService() const;
 
     OcppTime &getOcppTime();
 };

@@ -68,6 +68,7 @@ private:
     bool freeVendTrackPlugged = false;
 public:
     Connector(OcppEngine& context, int connectorId);
+    Connector(Connector&& other) = default;
 
     /*
      * beginTransaction begins the transaction process which eventually leads to a StartTransaction
@@ -104,7 +105,7 @@ public:
     void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
     void addConnectorErrorCodeSampler(std::function<const char*()> connectorErrorCode);
 
-    OcppMessage *loop();
+    void loop();
 
     OcppEvseState inferenceStatus();
 

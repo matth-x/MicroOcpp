@@ -68,6 +68,7 @@ set(AO_SRC
     src/ArduinoOcpp/Tasks/Metering/SampledValue.cpp
     src/ArduinoOcpp/Tasks/Reservation/Reservation.cpp
     src/ArduinoOcpp/Tasks/Reservation/ReservationService.cpp
+    src/ArduinoOcpp/Tasks/Reset/ResetService.cpp
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.cpp
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.cpp
     src/ArduinoOcpp/Tasks/Transactions/Transaction.cpp

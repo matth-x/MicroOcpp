@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/TriggerMessage.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
@@ -34,8 +34,8 @@ void TriggerMessage::processReq(JsonObject payload) {
         if (auto mService = context.getMeteringService()) {
             if (connectorId < 0) {
                 auto nConnectors = mService->getNumConnectors();
-                for (decltype(nConnectors) i = 0; i < nConnectors; i++) {
-                    triggeredOperations.push_back(mService->takeTriggeredMeterValues(i));
+                for (decltype(nConnectors) cId = 0; cId < nConnectors; cId++) {
+                    triggeredOperations.push_back(mService->takeTriggeredMeterValues(cId));
                 }
             } else if (connectorId < mService->getNumConnectors()) {
                 triggeredOperations.push_back(mService->takeTriggeredMeterValues(connectorId));
@@ -44,29 +44,27 @@ void TriggerMessage::processReq(JsonObject payload) {
             }
         }
     } else if (!strcmp(requestedMessage, "StatusNotification")) {
-        if (auto cpsService = context.getChargeControlService()) {
-            unsigned int cIdRangeBegin = 0, cIdRangeEnd = 0;
-            if (connectorId < 0) {
-                cIdRangeEnd = cpsService->getNumConnectors();
-            } else if (connectorId < cpsService->getNumConnectors()) {
-                cIdRangeBegin = connectorId;
-                cIdRangeEnd = connectorId + 1;
-            } else {
-                errorCode = "PropertyConstraintViolation";
-            }
+        unsigned int cIdRangeBegin = 0, cIdRangeEnd = 0;
+        if (connectorId < 0) {
+            cIdRangeEnd = context.getNumConnectors();
+        } else if (connectorId < context.getNumConnectors()) {
+            cIdRangeBegin = connectorId;
+            cIdRangeEnd = connectorId + 1;
+        } else {
+            errorCode = "PropertyConstraintViolation";
+        }
 
-            for (auto i = cIdRangeBegin; i < cIdRangeEnd; i++) {
-                auto connector = cpsService->getConnector(i);
+        for (auto i = cIdRangeBegin; i < cIdRangeEnd; i++) {
+            auto connector = context.getConnector(i);
 
-                auto statusNotification = makeOcppOperation(new Ocpp16::StatusNotification(
-                            i,
-                            connector->inferenceStatus(), //will be determined in StatusNotification::initiate
-                            context.getOcppTime().getOcppTimestampNow()));
+            auto statusNotification = makeOcppOperation(new Ocpp16::StatusNotification(
+                        i,
+                        connector->inferenceStatus(), //will be determined in StatusNotification::initiate
+                        context.getOcppTime().getOcppTimestampNow()));
 
-                statusNotification->setTimeout(60000);
+            statusNotification->setTimeout(60000);
 
-                triggeredOperations.push_back(std::move(statusNotification));
-            }
+            triggeredOperations.push_back(std::move(statusNotification));
         }
     } else {
         auto msg = defaultOcppEngine->getOperationDeserializer().deserializeOperation(requestedMessage);

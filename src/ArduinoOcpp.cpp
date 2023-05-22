@@ -16,6 +16,7 @@
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
 #include <ArduinoOcpp/Tasks/Boot/BootService.h>
+#include <ArduinoOcpp/Tasks/Reset/ResetService.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/OperationDeserializer.h>
 #include <ArduinoOcpp/Core/Configuration.h>
@@ -142,12 +143,19 @@ void OCPP_initialize(OcppSocket& ocppSocket, const char *bootNotificationCredent
         new BootService(*ocppEngine)));
     model.setChargeControlService(std::unique_ptr<ChargeControlService>(
         new ChargeControlService(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
+    std::vector<Connector> connectors;
+    for (unsigned int connectorId = 0; connectorId < AO_NUMCONNECTORS; connectorId++) {
+        connectors.push_back(Connector(*ocppEngine, connectorId));
+    }
+    model.setConnectors(std::move(connectors));
     model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
         new HeartbeatService(*ocppEngine)));
     model.setAuthorizationService(std::unique_ptr<AuthorizationService>(
         new AuthorizationService(*ocppEngine, filesystem)));
     model.setReservationService(std::unique_ptr<ReservationService>(
         new ReservationService(*ocppEngine, AO_NUMCONNECTORS)));
+    model.setResetService(std::unique_ptr<ResetService>(
+        new ResetService(*ocppEngine)));
     
 #if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
     model.setFirmwareService(std::unique_ptr<FirmwareService>(
@@ -166,8 +174,8 @@ void OCPP_initialize(OcppSocket& ocppSocket, const char *bootNotificationCredent
 #endif
 
 #if AO_PLATFORM == AO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
-    if (!model.getChargeControlService()->getExecuteReset())
-        model.getChargeControlService()->setExecuteReset(makeDefaultResetFn());
+    if (!model.getResetService()->getExecuteReset())
+        model.getResetService()->setExecuteReset(makeDefaultResetFn());
 #endif
 
     model.getBootService()->setChargePointCredentials(bootNotificationCredentials);
@@ -518,8 +526,8 @@ void setOnResetNotify(std::function<bool(bool)> onResetNotify) {
         return;
     }
 
-    if (auto csService = ocppEngine->getOcppModel().getChargeControlService()) {
-        csService->setPreReset(onResetNotify);
+    if (auto rService = ocppEngine->getOcppModel().getResetService()) {
+        rService->setPreReset(onResetNotify);
     }
 }
 
@@ -529,8 +537,8 @@ void setOnResetExecute(std::function<void(bool)> onResetExecute) {
         return;
     }
 
-    if (auto csService = ocppEngine->getOcppModel().getChargeControlService()) {
-        csService->setExecuteReset(onResetExecute);
+    if (auto rService = ocppEngine->getOcppModel().getResetService()) {
+        rService->setExecuteReset(onResetExecute);
     }
 }
 

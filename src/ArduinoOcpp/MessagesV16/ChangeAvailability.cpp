@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 
 #include <functional>
 
@@ -20,11 +20,7 @@ const char* ChangeAvailability::getOcppOperationType(){
 
 void ChangeAvailability::processReq(JsonObject payload) {
     int connectorId = payload["connectorId"] | -1;
-    auto cpStatus = context.getChargeControlService();
-    if (!cpStatus) {
-        return;
-    }
-    if (connectorId < 0 || connectorId >= cpStatus->getNumConnectors()) {
+    if (connectorId < 0 || connectorId >= context.getNumConnectors()) {
         return;
     }
 
@@ -42,15 +38,17 @@ void ChangeAvailability::processReq(JsonObject payload) {
     }
 
     if (connectorId == 0) {
-        for (int i = 0; i < cpStatus->getNumConnectors(); i++) {
-            cpStatus->getConnector(i)->setAvailability(available);
-            if (cpStatus->getConnector(i)->getAvailability() == AVAILABILITY_INOPERATIVE_SCHEDULED) {
+        for (unsigned int cId = 0; cId < context.getNumConnectors(); cId++) {
+            auto connector = context.getConnector(cId);
+            connector->setAvailability(available);
+            if (connector->getAvailability() == AVAILABILITY_INOPERATIVE_SCHEDULED) {
                 scheduled = true;
             }
         }
     } else {
-        cpStatus->getConnector(connectorId)->setAvailability(available);
-        if (cpStatus->getConnector(connectorId)->getAvailability() == AVAILABILITY_INOPERATIVE_SCHEDULED) {
+        auto connector = context.getConnector(connectorId);
+        connector->setAvailability(available);
+        if (connector->getAvailability() == AVAILABILITY_INOPERATIVE_SCHEDULED) {
             scheduled = true;
         }
     }

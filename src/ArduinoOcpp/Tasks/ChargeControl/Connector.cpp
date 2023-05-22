@@ -6,6 +6,7 @@
 
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/OcppOperation.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Core/Configuration.h>
@@ -140,7 +141,7 @@ bool Connector::ocppPermitsCharge() {
             !suspendDeAuthorizedIdTag;
 }
 
-OcppMessage *Connector::loop() {
+void Connector::loop() {
 
     if (!isTransactionRunning()) {
         if (*availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
@@ -244,7 +245,7 @@ OcppMessage *Connector::loop() {
                     transaction->getStartRpcSync().setRequested();
                     transaction->getStartRpcSync().confirm();
                     transaction->commit();
-                    return nullptr;
+                    return;
                 }
 
                 transaction->commit();
@@ -253,7 +254,10 @@ OcppMessage *Connector::loop() {
                     model.getMeteringService()->beginTxMeterData(transaction.get());
                 }
 
-                return new StartTransaction(model, transaction);
+                auto startTx = makeOcppOperation(new StartTransaction(model, transaction));
+                startTx->setTimeout(0);
+                context.initiateOperation(std::move(startTx));
+                return;
             }
         } else  {
             //stop tx?
@@ -274,7 +278,7 @@ OcppMessage *Connector::loop() {
                     model.getTransactionStore()->remove(connectorId, transaction->getTxNr());
                     model.getTransactionStore()->setTxEnd(connectorId, transaction->getTxNr());
                     transaction = nullptr;
-                    return nullptr;
+                    return;
                 }
                 
                 auto meteringService = model.getMeteringService();
@@ -299,11 +303,16 @@ OcppMessage *Connector::loop() {
                     stopTxData = meteringService->endTxMeterData(transaction.get());
                 }
 
+                std::unique_ptr<OcppOperation> stopTx;
+
                 if (stopTxData) {
-                    return new StopTransaction(model, std::move(transaction), stopTxData->retrieveStopTxData());
+                    stopTx = makeOcppOperation(new StopTransaction(model, std::move(transaction), stopTxData->retrieveStopTxData()));
                 } else {
-                    return new StopTransaction(model, std::move(transaction));
+                    stopTx = makeOcppOperation(new StopTransaction(model, std::move(transaction)));
                 }
+                stopTx->setTimeout(0);
+                context.initiateOperation(std::move(stopTx));
+                return;
             }
         }
     } //end transaction-related operations
@@ -343,10 +352,14 @@ OcppMessage *Connector::loop() {
         OcppTimestamp reportedTimestamp = model.getOcppTime().getOcppTimestampNow();
         reportedTimestamp -= (ao_tick_ms() - t_statusTransition) / 1000UL;
 
-        return new StatusNotification(connectorId, reportedStatus, reportedTimestamp, getErrorCode());
+        auto statusNotification = makeOcppOperation(
+                new StatusNotification(connectorId, reportedStatus, reportedTimestamp, getErrorCode()));
+        statusNotification->setTimeout(0);
+        context.initiateOperation(std::move(statusNotification));
+        return;
     }
 
-    return nullptr;
+    return;
 }
 
 const char *Connector::getErrorCode() {
