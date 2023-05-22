@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 
@@ -43,7 +43,7 @@ TEST_CASE( "Configuration Behavior" ) {
     auto engine = getOcppEngine();
     auto& checkMsg = engine->getOperationDeserializer();
 
-    auto connector = engine->getOcppModel().getConnectorStatus(1);
+    auto connector = engine->getOcppModel().getConnector(1);
 
     ao_set_timer(custom_timer_cb);
 

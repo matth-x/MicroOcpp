@@ -6,7 +6,7 @@
 #include <ArduinoOcpp/Tasks/Metering/MeterStore.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
 #include <ArduinoOcpp/Platform.h>
@@ -103,8 +103,8 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
 OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
     bool txBreak = false;
-    if (context.getConnectorStatus(connectorId)) {
-        auto &curTx = context.getConnectorStatus(connectorId)->getTransaction();
+    if (context.getConnector(connectorId)) {
+        auto &curTx = context.getConnector(connectorId)->getTransaction();
         txBreak = (curTx && curTx->isRunning()) != trackTxRunning;
         trackTxRunning = (curTx && curTx->isRunning());
     }
@@ -119,9 +119,9 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
         return meterValues;
     }
 
-    if (context.getConnectorStatus(connectorId)) {
-        if (transaction != context.getConnectorStatus(connectorId)->getTransaction()) {
-            transaction = context.getConnectorStatus(connectorId)->getTransaction();
+    if (context.getConnector(connectorId)) {
+        if (transaction != context.getConnector(connectorId)->getTransaction()) {
+            transaction = context.getConnector(connectorId)->getTransaction();
         }
         
         if (transaction && transaction->isRunning() && !transaction->isSilent()) {
@@ -222,8 +222,8 @@ OcppMessage *ConnectorMeterValuesRecorder::takeTriggeredMeterValues() {
     mv_now.push_back(std::move(sample));
 
     std::shared_ptr<Transaction> transaction = nullptr;
-    if (context.getConnectorStatus(connectorId)) {
-        transaction = context.getConnectorStatus(connectorId)->getTransaction();
+    if (context.getConnector(connectorId)) {
+        transaction = context.getConnector(connectorId)->getTransaction();
     }
 
     return new MeterValues(std::move(mv_now), connectorId, transaction);

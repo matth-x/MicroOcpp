@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
@@ -30,11 +30,11 @@
 
 using namespace ArduinoOcpp;
 
-ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned int numConn, std::shared_ptr<FilesystemAdapter> filesystem)
+ChargeControlService::ChargeControlService(OcppEngine& context, unsigned int numConn, std::shared_ptr<FilesystemAdapter> filesystem)
       : context(context) {
 
     for (unsigned int i = 0; i < numConn; i++) {
-        connectors.push_back(std::unique_ptr<ConnectorStatus>(new ConnectorStatus(context, i)));
+        connectors.push_back(std::unique_ptr<Connector>(new Connector(context, i)));
     }
     
     std::shared_ptr<Configuration<int>> numberOfConnectors =
@@ -102,11 +102,11 @@ ChargePointStatusService::ChargePointStatusService(OcppEngine& context, unsigned
         return new Ocpp16::StopTransaction(context.getOcppModel(), nullptr);});
 }
 
-ChargePointStatusService::~ChargePointStatusService() {
+ChargeControlService::~ChargeControlService() {
 
 }
 
-void ChargePointStatusService::loop() {
+void ChargeControlService::loop() {
     for (auto connector = connectors.begin(); connector != connectors.end(); connector++) {
         auto transactionMsg = (*connector)->loop();
         if (transactionMsg != nullptr) {
@@ -136,7 +136,7 @@ void ChargePointStatusService::loop() {
     }
 }
 
-ConnectorStatus *ChargePointStatusService::getConnector(int connectorId) {
+Connector *ChargeControlService::getConnector(int connectorId) {
     if (connectorId < 0 || connectorId >= (int) connectors.size()) {
         AO_DBG_ERR("connectorId is out of bounds");
         return nullptr;
@@ -145,27 +145,27 @@ ConnectorStatus *ChargePointStatusService::getConnector(int connectorId) {
     return connectors.at(connectorId).get();
 }
 
-int ChargePointStatusService::getNumConnectors() {
+int ChargeControlService::getNumConnectors() {
     return connectors.size();
 }
 
-void ChargePointStatusService::setPreReset(std::function<bool(bool)> preReset) {
+void ChargeControlService::setPreReset(std::function<bool(bool)> preReset) {
     this->preReset = preReset;
 }
 
-std::function<bool(bool)> ChargePointStatusService::getPreReset() {
+std::function<bool(bool)> ChargeControlService::getPreReset() {
     return this->preReset;
 }
 
-void ChargePointStatusService::setExecuteReset(std::function<void(bool)> executeReset) {
+void ChargeControlService::setExecuteReset(std::function<void(bool)> executeReset) {
     this->executeReset = executeReset;
 }
 
-std::function<void(bool)> ChargePointStatusService::getExecuteReset() {
+std::function<void(bool)> ChargeControlService::getExecuteReset() {
     return this->executeReset;
 }
 
-void ChargePointStatusService::initiateReset(bool isHard) {
+void ChargeControlService::initiateReset(bool isHard) {
     isHardReset = isHard;
     outstandingResetRetries = 1 + *resetRetries; //one initial try + no. of retries
     if (outstandingResetRetries > 5) {

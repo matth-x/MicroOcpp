@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
@@ -73,18 +73,18 @@ SmartChargingService* OcppModel::getSmartChargingService() const {
     return smartChargingService.get();
 }
 
-void OcppModel::setChargePointStatusService(std::unique_ptr<ChargePointStatusService> cpss){
+void OcppModel::setChargeControlService(std::unique_ptr<ChargeControlService> cpss){
     chargePointStatusService = std::move(cpss);
 }
 
-ChargePointStatusService *OcppModel::getChargePointStatusService() const {
+ChargeControlService *OcppModel::getChargeControlService() const {
     return chargePointStatusService.get();
 }
 
-ConnectorStatus *OcppModel::getConnectorStatus(int connectorId) const {
-    if (getChargePointStatusService() == nullptr) return nullptr;
+Connector *OcppModel::getConnector(int connectorId) const {
+    if (getChargeControlService() == nullptr) return nullptr;
 
-    auto result = getChargePointStatusService()->getConnector(connectorId);
+    auto result = getChargeControlService()->getConnector(connectorId);
     if (result == nullptr) {
         AO_DBG_ERR("Cannot fetch connector with given connectorId. Return nullptr");
         //no error catch 

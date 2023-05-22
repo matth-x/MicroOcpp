@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
@@ -176,7 +176,7 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
         //send error code "LocalListConflict" to server
 
         OcppEvseState cpStatus = OcppEvseState::NOT_SET;
-        if (auto cp = context.getOcppModel().getConnectorStatus(0)) {
+        if (auto cp = context.getOcppModel().getConnector(0)) {
             cpStatus = cp->inferenceStatus();
         }
 

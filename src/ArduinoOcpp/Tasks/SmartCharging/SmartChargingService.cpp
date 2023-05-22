@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
 #include <ArduinoOcpp/MessagesV16/GetCompositeSchedule.h>
@@ -246,11 +246,11 @@ ChargingSchedule *SmartChargingService::getCompositeSchedule(int connectorId, ot
 }
 
 void SmartChargingService::refreshChargingSessionState() {
-    if (!context.getOcppModel().getConnectorStatus(SINGLE_CONNECTOR_ID)) {
+    if (!context.getOcppModel().getConnector(SINGLE_CONNECTOR_ID)) {
         return; //charging session state does not apply
     }
 
-    auto connector = context.getOcppModel().getConnectorStatus(SINGLE_CONNECTOR_ID);
+    auto connector = context.getOcppModel().getConnector(SINGLE_CONNECTOR_ID);
 
     if (!chargingSessionStateInitialized) {
         chargingSessionStateInitialized = true;

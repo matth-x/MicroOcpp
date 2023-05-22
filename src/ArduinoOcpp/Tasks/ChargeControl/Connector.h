@@ -2,10 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef CONNECTORSTATUS_H
-#define CONNECTORSTATUS_H
+#ifndef CONNECTOR_H
+#define CONNECTOR_H
 
-#include <ArduinoOcpp/Tasks/ChargePointStatus/OcppEvseState.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/OcppEvseState.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
@@ -25,7 +25,7 @@ class OcppModel;
 class OcppMessage;
 class Transaction;
 
-class ConnectorStatus {
+class Connector {
 private:
     OcppEngine& context;
     OcppModel& model;
@@ -67,7 +67,7 @@ private:
     std::shared_ptr<Configuration<const char*>> freeVendIdTag;
     bool freeVendTrackPlugged = false;
 public:
-    ConnectorStatus(OcppEngine& context, int connectorId);
+    Connector(OcppEngine& context, int connectorId);
 
     /*
      * beginTransaction begins the transaction process which eventually leads to a StartTransaction

@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/OperationDeserializer.h>
 #include <ArduinoOcpp/SimpleOcppOperationFactory.h>
@@ -59,14 +59,14 @@ void FirmwareService::loop() {
     OcppTimestamp timestampNow = context.getOcppModel().getOcppTime().getOcppTimestampNow();
     if (retries > 0 && timestampNow >= retreiveDate) {
 
-        auto cpStatusService = context.getOcppModel().getChargePointStatusService();
+        auto cpStatusService = context.getOcppModel().getChargeControlService();
         
         //if (!downloadIssued) {
         if (stage == UpdateStage::Idle) {
             AO_DBG_INFO("Start update");
 
             if (cpStatusService) {
-                ConnectorStatus *evse = cpStatusService->getConnector(0);
+                Connector *evse = cpStatusService->getConnector(0);
                 evse->setAvailabilityVolatile(false);
             }
             if (onDownload == nullptr) {

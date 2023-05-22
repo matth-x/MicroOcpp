@@ -13,8 +13,8 @@ namespace ArduinoOcpp {
 
 class TransactionStore;
 class SmartChargingService;
-class ChargePointStatusService;
-class ConnectorStatus;
+class ChargeControlService;
+class Connector;
 class MeteringService;
 class FirmwareService;
 class DiagnosticsService;
@@ -27,7 +27,7 @@ class OcppModel {
 private:
     std::unique_ptr<TransactionStore> transactionStore;
     std::unique_ptr<SmartChargingService> smartChargingService;
-    std::unique_ptr<ChargePointStatusService> chargePointStatusService;
+    std::unique_ptr<ChargeControlService> chargePointStatusService;
     std::unique_ptr<MeteringService> meteringService;
     std::unique_ptr<FirmwareService> firmwareService;
     std::unique_ptr<DiagnosticsService> diagnosticsService;
@@ -55,9 +55,9 @@ public:
     void setSmartChargingService(std::unique_ptr<SmartChargingService> scs);
     SmartChargingService* getSmartChargingService() const;
 
-    void setChargePointStatusService(std::unique_ptr<ChargePointStatusService> cpss);
-    ChargePointStatusService *getChargePointStatusService() const;
-    ConnectorStatus *getConnectorStatus(int connectorId) const;
+    void setChargeControlService(std::unique_ptr<ChargeControlService> cpss);
+    ChargeControlService *getChargeControlService() const;
+    Connector *getConnector(int connectorId) const;
 
     void setMeteringSerivce(std::unique_ptr<MeteringService> meteringService);
     MeteringService* getMeteringService() const;

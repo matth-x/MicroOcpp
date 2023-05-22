@@ -8,7 +8,7 @@
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
@@ -140,8 +140,8 @@ void OCPP_initialize(OcppSocket& ocppSocket, const char *bootNotificationCredent
         new TransactionStore(AO_NUMCONNECTORS, filesystem)));
     model.setBootService(std::unique_ptr<BootService>(
         new BootService(*ocppEngine)));
-    model.setChargePointStatusService(std::unique_ptr<ChargePointStatusService>(
-        new ChargePointStatusService(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
+    model.setChargeControlService(std::unique_ptr<ChargeControlService>(
+        new ChargeControlService(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
     model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
         new HeartbeatService(*ocppEngine)));
     model.setAuthorizationService(std::unique_ptr<AuthorizationService>(
@@ -166,8 +166,8 @@ void OCPP_initialize(OcppSocket& ocppSocket, const char *bootNotificationCredent
 #endif
 
 #if AO_PLATFORM == AO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
-    if (!model.getChargePointStatusService()->getExecuteReset())
-        model.getChargePointStatusService()->setExecuteReset(makeDefaultResetFn());
+    if (!model.getChargeControlService()->getExecuteReset())
+        model.getChargeControlService()->setExecuteReset(makeDefaultResetFn());
 #endif
 
     model.getBootService()->setChargePointCredentials(bootNotificationCredentials);
@@ -277,7 +277,7 @@ bool beginTransaction(const char *idTag, unsigned int connectorId) {
         AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
@@ -296,7 +296,7 @@ bool beginTransaction_authorized(const char *idTag, const char *parentIdTag, uns
         AO_DBG_ERR("(parent)idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
@@ -310,7 +310,7 @@ bool endTransaction(const char *reason, unsigned int connectorId) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
@@ -325,7 +325,7 @@ bool isTransactionRunning(unsigned int connectorId) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
@@ -338,7 +338,7 @@ bool ocppPermitsCharge(unsigned int connectorId) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
@@ -351,7 +351,7 @@ void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int c
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -432,7 +432,7 @@ void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorI
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -445,7 +445,7 @@ void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connec
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -458,7 +458,7 @@ void addErrorCodeInput(std::function<const char *()> errorCodeInput, unsigned in
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -518,7 +518,7 @@ void setOnResetNotify(std::function<bool(bool)> onResetNotify) {
         return;
     }
 
-    if (auto csService = ocppEngine->getOcppModel().getChargePointStatusService()) {
+    if (auto csService = ocppEngine->getOcppModel().getChargeControlService()) {
         csService->setPreReset(onResetNotify);
     }
 }
@@ -529,7 +529,7 @@ void setOnResetExecute(std::function<void(bool)> onResetExecute) {
         return;
     }
 
-    if (auto csService = ocppEngine->getOcppModel().getChargePointStatusService()) {
+    if (auto csService = ocppEngine->getOcppModel().getChargeControlService()) {
         csService->setExecuteReset(onResetExecute);
     }
 }
@@ -539,7 +539,7 @@ void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnect
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -552,7 +552,7 @@ void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int conne
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -565,7 +565,7 @@ void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connect
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -578,7 +578,7 @@ void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId) 
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -592,8 +592,8 @@ bool isOperative(unsigned int connectorId) {
         return true; //assume "true" as default state
     }
     auto& model = ocppEngine->getOcppModel();
-    auto chargePoint = model.getConnectorStatus(OCPP_ID_OF_CP);
-    auto connector = model.getConnectorStatus(connectorId);
+    auto chargePoint = model.getConnector(OCPP_ID_OF_CP);
+    auto connector = model.getConnector(connectorId);
     if (!chargePoint || !connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return true; //assume "true" as default state
@@ -607,7 +607,7 @@ int getTransactionId(unsigned int connectorId) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return -1;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return -1;
@@ -620,7 +620,7 @@ const char *getTransactionIdTag(unsigned int connectorId) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return nullptr;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(connectorId);
+    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return nullptr;
@@ -731,7 +731,7 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
         AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    auto connector = ocppEngine->getOcppModel().getConnector(OCPP_ID_OF_CONNECTOR);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
@@ -789,7 +789,7 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnectorStatus(OCPP_ID_OF_CONNECTOR);
+    auto connector = ocppEngine->getOcppModel().getConnector(OCPP_ID_OF_CONNECTOR);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;

@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/MessagesV16/ReserveNow.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Platform.h>
 
 using ArduinoOcpp::Ocpp16::ReserveNow;
@@ -43,10 +43,10 @@ void ReserveNow::processReq(JsonObject payload) {
     int connectorId = payload["connectorId"];
 
     if (context.getReservationService() &&
-                context.getChargePointStatusService() &&
-                context.getChargePointStatusService()->getConnector(0)) {
+                context.getChargeControlService() &&
+                context.getChargeControlService()->getConnector(0)) {
         auto rService = context.getReservationService();
-        auto cpService = context.getChargePointStatusService();
+        auto cpService = context.getChargeControlService();
         auto chargePoint = cpService->getConnector(0);
 
         if (connectorId >= cpService->getNumConnectors()) {
@@ -66,7 +66,7 @@ void ReserveNow::processReq(JsonObject payload) {
             return;
         }
 
-        ConnectorStatus *connector = nullptr;
+        Connector *connector = nullptr;
         
         if (connectorId > 0) {
             connector = cpService->getConnector(connectorId);

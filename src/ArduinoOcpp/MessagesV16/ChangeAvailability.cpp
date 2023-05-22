@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 
 #include <functional>
 
@@ -20,7 +20,7 @@ const char* ChangeAvailability::getOcppOperationType(){
 
 void ChangeAvailability::processReq(JsonObject payload) {
     int connectorId = payload["connectorId"] | -1;
-    auto cpStatus = context.getChargePointStatusService();
+    auto cpStatus = context.getChargeControlService();
     if (!cpStatus) {
         return;
     }

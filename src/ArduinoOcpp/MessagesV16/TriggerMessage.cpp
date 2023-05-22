@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/TriggerMessage.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
@@ -44,7 +44,7 @@ void TriggerMessage::processReq(JsonObject payload) {
             }
         }
     } else if (!strcmp(requestedMessage, "StatusNotification")) {
-        if (auto cpsService = context.getChargePointStatusService()) {
+        if (auto cpsService = context.getChargeControlService()) {
             unsigned int cIdRangeBegin = 0, cIdRangeEnd = 0;
             if (connectorId < 0) {
                 cIdRangeEnd = cpsService->getNumConnectors();

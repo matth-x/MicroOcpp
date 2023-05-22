@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::UnlockConnector;
@@ -23,7 +23,7 @@ void UnlockConnector::processReq(JsonObject payload) {
     
     auto connectorId = payload["connectorId"] | -1;
 
-    auto connector = context.getConnectorStatus(connectorId);
+    auto connector = context.getConnector(connectorId);
 
     if (!connector) {
         err = true;

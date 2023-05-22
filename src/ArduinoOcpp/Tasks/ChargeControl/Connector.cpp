@@ -2,11 +2,11 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ConnectorStatus.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
@@ -27,7 +27,7 @@
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-ConnectorStatus::ConnectorStatus(OcppEngine& context, int connectorId)
+Connector::Connector(OcppEngine& context, int connectorId)
         : context(context), model(context.getOcppModel()), connectorId{connectorId} {
 
     char availabilityKey [CONF_KEYLEN_MAX + 1] = {'\0'};
@@ -59,14 +59,14 @@ ConnectorStatus::ConnectorStatus(OcppEngine& context, int connectorId)
     if (model.getTransactionStore()) {
         transaction = model.getTransactionStore()->getLatestTransaction(connectorId);
     } else {
-        AO_DBG_ERR("must initialize TxStore before ConnectorStatus");
+        AO_DBG_ERR("must initialize TxStore before Connector");
         (void)0;
     }
 }
 
-OcppEvseState ConnectorStatus::inferenceStatus() {
+OcppEvseState Connector::inferenceStatus() {
     /*
-    * Handle special case: This is the ConnectorStatus for the whole CP (i.e. connectorId=0) --> only states Available, Unavailable, Faulted are possible
+    * Handle special case: This is the Connector for the whole CP (i.e. connectorId=0) --> only states Available, Unavailable, Faulted are possible
     */
     if (connectorId == 0) {
         if (getErrorCode() != nullptr) {
@@ -120,7 +120,7 @@ OcppEvseState ConnectorStatus::inferenceStatus() {
     return OcppEvseState::Faulted; //internal error
 }
 
-bool ConnectorStatus::ocppPermitsCharge() {
+bool Connector::ocppPermitsCharge() {
     if (connectorId == 0) {
         AO_DBG_WARN("not supported for connectorId == 0");
         return false;
@@ -140,7 +140,7 @@ bool ConnectorStatus::ocppPermitsCharge() {
             !suspendDeAuthorizedIdTag;
 }
 
-OcppMessage *ConnectorStatus::loop() {
+OcppMessage *Connector::loop() {
 
     if (!isTransactionRunning()) {
         if (*availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
@@ -349,7 +349,7 @@ OcppMessage *ConnectorStatus::loop() {
     return nullptr;
 }
 
-const char *ConnectorStatus::getErrorCode() {
+const char *Connector::getErrorCode() {
     for (auto s = connectorErrorCodeSamplers.begin(); s != connectorErrorCodeSamplers.end(); s++) {
         const char *err = s->operator()();
         if (err != nullptr) {
@@ -359,7 +359,7 @@ const char *ConnectorStatus::getErrorCode() {
     return nullptr;
 }
 
-std::shared_ptr<Transaction> ConnectorStatus::allocateTransaction() {
+std::shared_ptr<Transaction> Connector::allocateTransaction() {
 
     decltype(allocateTransaction()) tx;
 
@@ -458,7 +458,7 @@ std::shared_ptr<Transaction> ConnectorStatus::allocateTransaction() {
     return tx;
 }
 
-std::shared_ptr<Transaction> ConnectorStatus::beginTransaction(const char *idTag) {
+std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
     if (transaction) {
         AO_DBG_WARN("tx process still running. Please call endTransaction(...) before");
@@ -617,7 +617,7 @@ std::shared_ptr<Transaction> ConnectorStatus::beginTransaction(const char *idTag
     return transaction;
 }
 
-std::shared_ptr<Transaction> ConnectorStatus::beginTransaction_authorized(const char *idTag, const char *parentIdTag) {
+std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *idTag, const char *parentIdTag) {
     
     if (transaction) {
         AO_DBG_WARN("tx process still running. Please call endTransaction(...) before");
@@ -657,7 +657,7 @@ std::shared_ptr<Transaction> ConnectorStatus::beginTransaction_authorized(const 
     return transaction;
 }
 
-void ConnectorStatus::endTransaction(const char *reason) {
+void Connector::endTransaction(const char *reason) {
 
     if (!transaction) {
         AO_DBG_WARN("Cannot end session if no transaction running");
@@ -677,7 +677,7 @@ void ConnectorStatus::endTransaction(const char *reason) {
     }
 }
 
-const char *ConnectorStatus::getSessionIdTag() {
+const char *Connector::getSessionIdTag() {
 
     if (!transaction) {
         return nullptr;
@@ -686,11 +686,11 @@ const char *ConnectorStatus::getSessionIdTag() {
     return transaction->isActive() ? transaction->getIdTag() : nullptr;
 }
 
-uint16_t ConnectorStatus::getSessionWriteCount() {
+uint16_t Connector::getSessionWriteCount() {
     return transaction ? transaction->getTxNr() : 0;
 }
 
-bool ConnectorStatus::isTransactionRunning() {
+bool Connector::isTransactionRunning() {
     if (!transaction) {
         return false;
     }
@@ -698,7 +698,7 @@ bool ConnectorStatus::isTransactionRunning() {
     return transaction->isRunning();
 }
 
-int ConnectorStatus::getTransactionId() {
+int Connector::getTransactionId() {
     
     if (!transaction) {
         return -1;
@@ -715,11 +715,11 @@ int ConnectorStatus::getTransactionId() {
     }
 }
 
-std::shared_ptr<Transaction>& ConnectorStatus::getTransaction() {
+std::shared_ptr<Transaction>& Connector::getTransaction() {
     return transaction;
 }
 
-int ConnectorStatus::getAvailability() {
+int Connector::getAvailability() {
     if (availabilityVolatile == AVAILABILITY_INOPERATIVE || *availability == AVAILABILITY_INOPERATIVE) {
         return AVAILABILITY_INOPERATIVE;
     } else if (availabilityVolatile == AVAILABILITY_INOPERATIVE_SCHEDULED || *availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
@@ -729,7 +729,7 @@ int ConnectorStatus::getAvailability() {
     }
 }
 
-void ConnectorStatus::setAvailability(bool available) {
+void Connector::setAvailability(bool available) {
     if (available) {
         *availability = AVAILABILITY_OPERATIVE;
     } else {
@@ -742,7 +742,7 @@ void ConnectorStatus::setAvailability(bool available) {
     configuration_save();
 }
 
-void ConnectorStatus::setAvailabilityVolatile(bool available) {
+void Connector::setAvailabilityVolatile(bool available) {
     if (available) {
         availabilityVolatile = AVAILABILITY_OPERATIVE;
     } else {
@@ -754,38 +754,38 @@ void ConnectorStatus::setAvailabilityVolatile(bool available) {
     }
 }
 
-void ConnectorStatus::setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
+void Connector::setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
     this->connectorPluggedSampler = connectorPlugged;
 }
 
-void ConnectorStatus::setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy) {
+void Connector::setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy) {
     this->evRequestsEnergySampler = evRequestsEnergy;
 }
 
-void ConnectorStatus::setConnectorEnergizedSampler(std::function<bool()> connectorEnergized) {
+void Connector::setConnectorEnergizedSampler(std::function<bool()> connectorEnergized) {
     this->connectorEnergizedSampler = connectorEnergized;
 }
 
-void ConnectorStatus::addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
+void Connector::addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
     this->connectorErrorCodeSamplers.push_back(connectorErrorCode);
 }
 
-void ConnectorStatus::setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector) {
+void Connector::setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector) {
     this->onUnlockConnector = unlockConnector;
 }
 
-std::function<PollResult<bool>()> ConnectorStatus::getOnUnlockConnector() {
+std::function<PollResult<bool>()> Connector::getOnUnlockConnector() {
     return this->onUnlockConnector;
 }
 
-void ConnectorStatus::setStartTxReadyInput(std::function<bool()> startTxReady) {
+void Connector::setStartTxReadyInput(std::function<bool()> startTxReady) {
     this->startTxReadyInput = startTxReady;
 }
 
-void ConnectorStatus::setStopTxReadyInput(std::function<bool()> stopTxReady) {
+void Connector::setStopTxReadyInput(std::function<bool()> stopTxReady) {
     this->stopTxReadyInput = stopTxReady;
 }
 
-void ConnectorStatus::setOccupiedInput(std::function<bool()> occupied) {
+void Connector::setOccupiedInput(std::function<bool()> occupied) {
     this->occupiedInput = occupied;
 }

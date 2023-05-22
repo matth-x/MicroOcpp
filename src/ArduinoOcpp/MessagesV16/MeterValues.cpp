@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>

@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
 #include <ArduinoOcpp/Core/OcppEngine.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/MessagesV16/CancelReservation.h>
 #include <ArduinoOcpp/MessagesV16/ReserveNow.h>
@@ -43,7 +43,7 @@ ReservationService::ReservationService(OcppEngine& context, unsigned int numConn
 
 void ReservationService::loop() {
     //check if to end reservations
-    auto cpService = context.getOcppModel().getChargePointStatusService();
+    auto cpService = context.getOcppModel().getChargeControlService();
     if (!cpService) {
         return;
     }
@@ -53,7 +53,7 @@ void ReservationService::loop() {
             continue;
         }
 
-        if (auto connector = context.getOcppModel().getConnectorStatus(reservation.getConnectorId())) {
+        if (auto connector = context.getOcppModel().getConnector(reservation.getConnectorId())) {
 
             //check if connector went inoperative
             auto cStatus = connector->inferenceStatus();
@@ -162,7 +162,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
     }
 
     unsigned int availableCount = 0;
-    if (auto cpService = context.getOcppModel().getChargePointStatusService()) {
+    if (auto cpService = context.getOcppModel().getChargeControlService()) {
         for (int iconn = 1; iconn < cpService->getNumConnectors(); iconn++) {
             if (iconn == (int) connectorId) {
                 //don't count this connector

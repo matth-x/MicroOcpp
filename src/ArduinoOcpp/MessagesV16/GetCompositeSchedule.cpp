@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/MessagesV16/GetCompositeSchedule.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Debug.h>
 
@@ -34,7 +34,7 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
         errorCode = "PropertyConstraintViolation";
     }
 
-    if (auto cpService = context.getChargePointStatusService()) {
+    if (auto cpService = context.getChargeControlService()) {
         if (connectorId >= cpService->getNumConnectors()) {
             errorCode = "PropertyConstraintViolation";
         }

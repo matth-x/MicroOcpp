@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/MessagesV16/Reset.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Tasks/ChargePointStatus/ChargePointStatusService.h>
+#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 
 using ArduinoOcpp::Ocpp16::Reset;
 
@@ -23,7 +23,7 @@ void Reset::processReq(JsonObject payload) {
      */
     bool isHard = !strcmp(payload["type"] | "undefined", "Hard");
 
-    if (auto cpsService = context.getChargePointStatusService()) {
+    if (auto cpsService = context.getChargeControlService()) {
         if (!cpsService->getExecuteReset()) {
             AO_DBG_ERR("No reset handler set. Abort operation");
             (void)0;
