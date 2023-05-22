@@ -5,7 +5,6 @@
 #include <ArduinoOcpp/Core/OcppMessage.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 

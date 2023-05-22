@@ -5,7 +5,6 @@
 #include <ArduinoOcpp/MessagesV16/Authorize.h>
 #include <ArduinoOcpp/Core/OcppModel.h>
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlService.h>
 
 #include <ArduinoOcpp/Debug.h>
 
