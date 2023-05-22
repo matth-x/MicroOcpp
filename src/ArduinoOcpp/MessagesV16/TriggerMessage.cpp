@@ -47,7 +47,7 @@ void TriggerMessage::processReq(JsonObject payload) {
         unsigned int cIdRangeBegin = 0, cIdRangeEnd = 0;
         if (connectorId < 0) {
             cIdRangeEnd = context.getNumConnectors();
-        } else if (connectorId < context.getNumConnectors()) {
+        } else if ((unsigned int) connectorId < context.getNumConnectors()) {
             cIdRangeBegin = connectorId;
             cIdRangeEnd = connectorId + 1;
         } else {

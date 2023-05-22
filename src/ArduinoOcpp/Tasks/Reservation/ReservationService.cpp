@@ -43,10 +43,6 @@ ReservationService::ReservationService(OcppEngine& context, unsigned int numConn
 
 void ReservationService::loop() {
     //check if to end reservations
-    auto cpService = context.getOcppModel().getChargeControlService();
-    if (!cpService) {
-        return;
-    }
 
     for (Reservation& reservation : reservations) {
         if (!reservation.isActive()) {
@@ -162,16 +158,14 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
     }
 
     unsigned int availableCount = 0;
-    if (auto cpService = context.getOcppModel().getChargeControlService()) {
-        for (unsigned int cId = 1; cId < context.getOcppModel().getNumConnectors(); cId++) {
-            if (cId == (int) connectorId) {
-                //don't count this connector
-                continue;
-            }
-            if (auto connector = context.getOcppModel().getConnector(cId)) {
-                if (connector->inferenceStatus() == OcppEvseState::Available) {
-                    availableCount++;
-                }
+    for (unsigned int cId = 1; cId < context.getOcppModel().getNumConnectors(); cId++) {
+        if (cId == connectorId) {
+            //don't count this connector
+            continue;
+        }
+        if (auto connector = context.getOcppModel().getConnector(cId)) {
+            if (connector->inferenceStatus() == OcppEvseState::Available) {
+                availableCount++;
             }
         }
     }

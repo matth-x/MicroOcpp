@@ -18,6 +18,8 @@ private:
     OcppModel& context;
     bool scheduled = false;
     bool accepted = false;
+
+    const char *errorCode {nullptr};
 public:
     ChangeAvailability(OcppModel& context);
 
@@ -26,6 +28,8 @@ public:
     void processReq(JsonObject payload);
 
     std::unique_ptr<DynamicJsonDocument> createConf();
+
+    const char *getErrorCode() {return errorCode;}
 };
 
 } //end namespace Ocpp16

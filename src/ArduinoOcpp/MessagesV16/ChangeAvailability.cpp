@@ -19,8 +19,15 @@ const char* ChangeAvailability::getOcppOperationType(){
 }
 
 void ChangeAvailability::processReq(JsonObject payload) {
-    int connectorId = payload["connectorId"] | -1;
-    if (connectorId < 0 || connectorId >= context.getNumConnectors()) {
+    int connectorIdRaw = payload["connectorId"] | -1;
+    if (connectorIdRaw < 0) {
+        errorCode = "FormationViolation";
+        return;
+    }
+    unsigned int connectorId = (unsigned int) connectorIdRaw;
+
+    if (connectorId >= context.getNumConnectors()) {
+        errorCode = "PropertyConstraintViolation";
         return;
     }
 

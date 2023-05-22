@@ -40,12 +40,11 @@ void ReserveNow::processReq(JsonObject payload) {
         return;
     }
 
-    int connectorId = payload["connectorId"];
+    unsigned int connectorId = payload["connectorId"];
 
     if (context.getReservationService() &&
                 context.getNumConnectors() > 0) {
         auto rService = context.getReservationService();
-        auto cpService = context.getChargeControlService();
         auto chargePoint = context.getConnector(0);
 
         if (connectorId >= context.getNumConnectors()) {

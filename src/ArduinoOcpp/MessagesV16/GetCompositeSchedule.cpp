@@ -24,6 +24,16 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
 
     connectorId = payload["connectorId"] | -1;
     duration = payload["duration"] | 0;
+
+    if (connectorId < 0 || !payload.containsKey("duration")) {
+        errorCode = "FormationViolation";
+        return;
+    }
+
+    if ((unsigned int) connectorId >= context.getNumConnectors()) {
+        errorCode = "PropertyConstraintViolation";
+    }
+
     auto unitString =  payload["chargingRateUnit"] | "W";
 
     if (unitString[0] == 'A' || unitString[0] == 'a') {
@@ -32,14 +42,6 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
         chargingRateUnit = ChargingRateUnitType::Watt;
     } else {
         errorCode = "PropertyConstraintViolation";
-    }
-
-    if (connectorId >= context.getNumConnectors()) {
-        errorCode = "PropertyConstraintViolation";
-    }
-
-    if (connectorId < 0 || !payload.containsKey("duration")) {
-        errorCode = "FormationViolation";
     }
 
     if (!context.getSmartChargingService()) {
@@ -55,7 +57,7 @@ std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
         return createEmptyDocument();
     }
 
-    ChargingSchedule *composite = scService->getCompositeSchedule(connectorId, duration);
+    ChargingSchedule *composite = scService->getCompositeSchedule((unsigned int) connectorId, duration);
     DynamicJsonDocument *compositeJson {nullptr};
 
     if (composite) {
