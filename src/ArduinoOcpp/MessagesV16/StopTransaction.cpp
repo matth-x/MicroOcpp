@@ -13,7 +13,6 @@
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::StopTransaction;
-using ArduinoOcpp::TransactionRPC;
 
 StopTransaction::StopTransaction(Model& model, std::shared_ptr<Transaction> transaction)
         : model(model), transaction(transaction) {
@@ -30,7 +29,7 @@ const char* StopTransaction::getOperationType() {
 }
 
 void StopTransaction::initiate(StoredOperationHandler *opStore) {
-    if (!transaction || transaction->getStopRpcData().isRequested()) {
+    if (!transaction || transaction->getStopRpcSync().isRequested()) {
         AO_DBG_ERR("initialization error");
         return;
     }
@@ -44,7 +43,7 @@ void StopTransaction::initiate(StoredOperationHandler *opStore) {
         opStore->commit();
     }
 
-    transaction->getStopRpcData().setRequested();
+    transaction->getStopRpcSync().setRequested();
 
     transaction->commit();
 
@@ -153,7 +152,7 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
 void StopTransaction::processConf(JsonObject payload) {
 
     if (transaction) {
-        transaction->getStopRpcData().confirm();
+        transaction->getStopRpcSync().confirm();
         transaction->commit();
     }
 
@@ -167,7 +166,7 @@ void StopTransaction::processConf(JsonObject payload) {
 bool StopTransaction::processErr(const char *code, const char *description, JsonObject details) {
 
     if (transaction) {
-        transaction->getStopRpcData().confirm(); //no retry behavior for now; consider data "arrived" at server
+        transaction->getStopRpcSync().confirm(); //no retry behavior for now; consider data "arrived" at server
         transaction->commit();
     }
 

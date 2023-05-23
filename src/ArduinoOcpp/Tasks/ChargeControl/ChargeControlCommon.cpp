@@ -57,23 +57,23 @@ ChargeControlCommon::ChargeControlCommon(Context& context, unsigned int numConn,
     declareConfiguration<bool>("AuthorizeRemoteTxRequests",false,CONFIGURATION_VOLATILE,false,true,false,false);
     declareConfiguration<int>("GetConfigurationMaxKeys",30,CONFIGURATION_VOLATILE,false,true,false,false);
     
-    context.getOperationRegistry().registerRequest("ChangeAvailability", [&context] () {
+    context.getOperationRegistry().registerOperation("ChangeAvailability", [&context] () {
         return new Ocpp16::ChangeAvailability(context.getModel());});
-    context.getOperationRegistry().registerRequest("ChangeConfiguration", [] () {
+    context.getOperationRegistry().registerOperation("ChangeConfiguration", [] () {
         return new Ocpp16::ChangeConfiguration();});
-    context.getOperationRegistry().registerRequest("ClearCache", [filesystem] () {
+    context.getOperationRegistry().registerOperation("ClearCache", [filesystem] () {
         return new Ocpp16::ClearCache(filesystem);});
-    context.getOperationRegistry().registerRequest("GetConfiguration", [] () {
+    context.getOperationRegistry().registerOperation("GetConfiguration", [] () {
         return new Ocpp16::GetConfiguration();});
-    context.getOperationRegistry().registerRequest("RemoteStartTransaction", [&context] () {
+    context.getOperationRegistry().registerOperation("RemoteStartTransaction", [&context] () {
         return new Ocpp16::RemoteStartTransaction(context.getModel());});
-    context.getOperationRegistry().registerRequest("RemoteStopTransaction", [&context] () {
+    context.getOperationRegistry().registerOperation("RemoteStopTransaction", [&context] () {
         return new Ocpp16::RemoteStopTransaction(context.getModel());});
-    context.getOperationRegistry().registerRequest("Reset", [&context] () {
+    context.getOperationRegistry().registerOperation("Reset", [&context] () {
         return new Ocpp16::Reset(context.getModel());});
-    context.getOperationRegistry().registerRequest("TriggerMessage", [&context] () {
+    context.getOperationRegistry().registerOperation("TriggerMessage", [&context] () {
         return new Ocpp16::TriggerMessage(context.getModel());});
-    context.getOperationRegistry().registerRequest("UnlockConnector", [&context] () {
+    context.getOperationRegistry().registerOperation("UnlockConnector", [&context] () {
         return new Ocpp16::UnlockConnector(context.getModel());});
 
     /*
@@ -81,13 +81,13 @@ ChargeControlCommon::ChargeControlCommon(Context& context, unsigned int numConn,
      * is connected with a WebSocket echo server, let it reply to its own requests.
      * Mocking an OCPP Server on the same device makes running (unit) tests easier.
      */
-    context.getOperationRegistry().registerRequest("Authorize", [&context] () {
+    context.getOperationRegistry().registerOperation("Authorize", [&context] () {
         return new Ocpp16::Authorize(context.getModel(), nullptr);});
-    context.getOperationRegistry().registerRequest("StartTransaction", [&context] () {
+    context.getOperationRegistry().registerOperation("StartTransaction", [&context] () {
         return new Ocpp16::StartTransaction(context.getModel(), nullptr);});
-    context.getOperationRegistry().registerRequest("StatusNotification", [&context] () {
+    context.getOperationRegistry().registerOperation("StatusNotification", [&context] () {
         return new Ocpp16::StatusNotification(-1, OcppEvseState::NOT_SET, Timestamp());});
-    context.getOperationRegistry().registerRequest("StopTransaction", [&context] () {
+    context.getOperationRegistry().registerOperation("StopTransaction", [&context] () {
         return new Ocpp16::StopTransaction(context.getModel(), nullptr);});
 }
 

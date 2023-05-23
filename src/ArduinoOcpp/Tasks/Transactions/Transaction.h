@@ -23,7 +23,7 @@ namespace ArduinoOcpp {
 
 class ConnectorTransactionStore;
 
-class TransactionRPC {
+class RpcSync {
 private:
     friend class Transaction;
     
@@ -60,7 +60,7 @@ class TransactionStart {
 private:
     friend class Transaction;
     
-    TransactionRPC rpc;
+    RpcSync rpc;
     ClientTransactionStart client;
     ServerTransactionStart server;
 };
@@ -83,7 +83,7 @@ class TransactionStop {
 private:
     friend class Transaction;
 
-    TransactionRPC rpc;
+    RpcSync rpc;
     ClientTransactionStop client;
     ServerTransactionStop server;
 };
@@ -131,9 +131,9 @@ public:
     unsigned int getTxNr() {return txNr;} //only valid if getConnectorId() >= 0
     void setTxNr(unsigned int txNr) {this->txNr = txNr;}
 
-    TransactionRPC& getStartRpcSync() {return start.rpc;}
+    RpcSync& getStartRpcSync() {return start.rpc;}
 
-    TransactionRPC& getStopRpcSync() {return stop.rpc;}
+    RpcSync& getStopRpcSync() {return stop.rpc;}
 
     bool isAborted() {return !start.rpc.requested && !session.active;}
     bool isCompleted() {return stop.rpc.isConfirmed();}

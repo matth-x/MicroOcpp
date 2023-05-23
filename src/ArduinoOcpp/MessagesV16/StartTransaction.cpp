@@ -12,7 +12,6 @@
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::StartTransaction;
-using ArduinoOcpp::TransactionRPC;
 
 
 StartTransaction::StartTransaction(Model& model, std::shared_ptr<Transaction> transaction) : model(model), transaction(transaction) {
@@ -28,7 +27,7 @@ const char* StartTransaction::getOperationType() {
 }
 
 void StartTransaction::initiate(StoredOperationHandler *opStore) {
-    if (!transaction || transaction->getStartRpcData().isRequested()) {
+    if (!transaction || transaction->getStartRpcSync().isRequested()) {
         AO_DBG_ERR("initialization error");
         return;
     }
@@ -42,7 +41,7 @@ void StartTransaction::initiate(StoredOperationHandler *opStore) {
         opStore->commit();
     }
 
-    transaction->getStartRpcData().setRequested();
+    transaction->getStartRpcSync().setRequested();
 
     transaction->commit();
 
@@ -134,7 +133,7 @@ void StartTransaction::processConf(JsonObject payload) {
     int transactionId = payload["transactionId"] | -1;
     transaction->setTransactionId(transactionId);
 
-    transaction->getStartRpcData().confirm();
+    transaction->getStartRpcSync().confirm();
     transaction->commit();
 
     if (auto authService = model.getAuthorizationService()) {

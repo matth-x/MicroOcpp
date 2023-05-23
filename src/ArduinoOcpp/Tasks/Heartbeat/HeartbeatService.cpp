@@ -16,7 +16,7 @@ HeartbeatService::HeartbeatService(Context& context) : context(context) {
     lastHeartbeat = ao_tick_ms();
 
     //Register message handler for TriggerMessage operation
-    context.getOperationRegistry().registerRequest("Heartbeat", [&context] () {
+    context.getOperationRegistry().registerOperation("Heartbeat", [&context] () {
         return new Ocpp16::Heartbeat(context.getModel());});
 }
 

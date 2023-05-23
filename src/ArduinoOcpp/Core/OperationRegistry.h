@@ -31,7 +31,7 @@ private:
 public:
     OperationRegistry();
 
-    void registerRequest(const char *operationType, std::function<Operation*()> creator);
+    void registerOperation(const char *operationType, std::function<Operation*()> creator);
     void setOnRequest(const char *operationType, OnReceiveReqListener onRequest);
     void setOnResponse(const char *operationType, OnSendConfListener onResponse);
     

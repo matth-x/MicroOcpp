@@ -24,7 +24,7 @@ OperationCreator *OperationRegistry::findCreator(const char *operationType) {
     return nullptr;
 }
 
-void OperationRegistry::registerRequest(const char *operationType, std::function<Operation*()> creator) {
+void OperationRegistry::registerOperation(const char *operationType, std::function<Operation*()> creator) {
     registry.erase(std::remove_if(registry.begin(), registry.end(),
                 [operationType] (const OperationCreator& el) {
                     return !strcmp(operationType, el.operationType);
@@ -64,6 +64,7 @@ std::unique_ptr<Request> OperationRegistry::deserializeOperation(const char *ope
             auto result = std::unique_ptr<Request>(new Request(
                                 std::unique_ptr<Operation>(payload)));
             result->setOnReceiveReqListener(entry->onRequest);
+            result->setOnSendConfListener(entry->onResponse);
             return result;
         }
     }

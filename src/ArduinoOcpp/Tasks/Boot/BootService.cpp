@@ -37,7 +37,7 @@ BootService::BootService(Context& context) : context(context) {
     }
 
     //Register message handler for TriggerMessage operation
-    context.getOperationRegistry().registerRequest("BootNotification", [this] () {
+    context.getOperationRegistry().registerOperation("BootNotification", [this] () {
         return new Ocpp16::BootNotification(this->context.getModel(), getChargePointCredentials());});
 }
 

@@ -82,7 +82,7 @@ TEST_CASE( "Configuration Behavior" ) {
     SECTION("StopTransactionOnInvalidId") {
         auto config = declareConfiguration<bool>("StopTransactionOnInvalidId", true);
 
-        checkMsg.registerRequest("StartTransaction", [] () {return new CustomStartTransaction("Invalid");});
+        checkMsg.registerOperation("StartTransaction", [] () {return new CustomStartTransaction("Invalid");});
 
         SECTION("set true") {
             *config = true;

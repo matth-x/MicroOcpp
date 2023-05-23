@@ -746,7 +746,7 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
     }
     auto transaction = connector->getTransaction();
     if (transaction) {
-        if (transaction->getStartRpcData().isRequested()) {
+        if (transaction->getStartRpcSync().isRequested()) {
             AO_DBG_ERR("Transaction already in progress. Must call stopTransaction()");
             return false;
         }

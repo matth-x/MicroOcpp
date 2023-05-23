@@ -28,7 +28,7 @@ ResetService::ResetService(Context& context)
 
     resetRetries = declareConfiguration<int>("ResetRetries", 2, CONFIGURATION_FN, true, true, false, false);
 
-    context.getOperationRegistry().registerRequest("Reset", [&context] () {
+    context.getOperationRegistry().registerOperation("Reset", [&context] () {
         return new Ocpp16::Reset(context.getModel());});
 }
 

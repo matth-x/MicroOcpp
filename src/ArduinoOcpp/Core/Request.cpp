@@ -204,6 +204,10 @@ std::unique_ptr<DynamicJsonDocument> Request::createResponse(){
         response->add(MESSAGE_TYPE_CALLRESULT);   //MessageType
         response->add(messageID);            //Unique message ID
         response->add(*payload);              //Payload
+
+        if (onSendConfListener) {
+            onSendConfListener(payload->as<JsonObject>());
+        }
     } else {
         //operation failure. Send error message instead
 

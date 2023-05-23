@@ -9,7 +9,7 @@
 
 using namespace ArduinoOcpp;
 
-bool TransactionRPC::serializeSessionState(JsonObject rpc) {
+bool RpcSync::serializeSessionState(JsonObject rpc) {
     rpc["requested"] = requested;
     rpc["confirmed"] = confirmed;
     return true;
@@ -109,7 +109,7 @@ bool Transaction::serializeSessionState(DynamicJsonDocument& out) {
     return true;
 }
 
-bool TransactionRPC::deserializeSessionState(JsonObject rpc) {
+bool RpcSync::deserializeSessionState(JsonObject rpc) {
     if (rpc["requested"] | false) {
         requested = true;
     }

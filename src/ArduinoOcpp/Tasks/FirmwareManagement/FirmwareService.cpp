@@ -30,11 +30,11 @@ FirmwareService::FirmwareService(Context& context) : context(context) {
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
     
-    context.getOperationRegistry().registerRequest("UpdateFirmware", [&context] () {
+    context.getOperationRegistry().registerOperation("UpdateFirmware", [&context] () {
         return new Ocpp16::UpdateFirmware(context.getModel());});
 
     //Register message handler for TriggerMessage operation
-    context.getOperationRegistry().registerRequest("FirmwareStatusNotification", [this] () {
+    context.getOperationRegistry().registerOperation("FirmwareStatusNotification", [this] () {
         return new Ocpp16::FirmwareStatusNotification(getFirmwareStatus());});
 }
 

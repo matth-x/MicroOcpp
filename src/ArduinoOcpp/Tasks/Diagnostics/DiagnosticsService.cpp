@@ -26,11 +26,11 @@ DiagnosticsService::DiagnosticsService(Context& context) : context(context) {
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
     
-    context.getOperationRegistry().registerRequest("GetDiagnostics", [&context] () {
+    context.getOperationRegistry().registerOperation("GetDiagnostics", [&context] () {
         return new Ocpp16::GetDiagnostics(context.getModel());});
 
     //Register message handler for TriggerMessage operation
-    context.getOperationRegistry().registerRequest("DiagnosticsStatusNotification", [this] () {
+    context.getOperationRegistry().registerOperation("DiagnosticsStatusNotification", [this] () {
         return new Ocpp16::DiagnosticsStatusNotification(getDiagnosticsStatus());});
 }
 

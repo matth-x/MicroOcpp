@@ -77,11 +77,11 @@ SmartChargingService::SmartChargingService(Context& context, float chargeLimit, 
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
 
-    context.getOperationRegistry().registerRequest("ClearChargingProfile", [&context] () {
+    context.getOperationRegistry().registerOperation("ClearChargingProfile", [&context] () {
         return new Ocpp16::ClearChargingProfile(context.getModel());});
-    context.getOperationRegistry().registerRequest("GetCompositeSchedule", [&context] () {
+    context.getOperationRegistry().registerOperation("GetCompositeSchedule", [&context] () {
         return new Ocpp16::GetCompositeSchedule(context.getModel());});
-    context.getOperationRegistry().registerRequest("SetChargingProfile", [&context] () {
+    context.getOperationRegistry().registerOperation("SetChargingProfile", [&context] () {
         return new Ocpp16::SetChargingProfile(context.getModel());});
 
     loadProfiles();

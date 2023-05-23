@@ -30,7 +30,7 @@ TEST_CASE( "Charging sessions" ) {
     
     std::array<const char*, 2> expectedSN {"Available", "Available"};
     std::array<bool, 2> checkedSN {false, false};
-    checkMsg.registerRequest("StatusNotification", [] () -> Operation* {return new Ocpp16::StatusNotification(0, OcppEvseState::NOT_SET, MIN_TIME);});
+    checkMsg.registerOperation("StatusNotification", [] () -> Operation* {return new Ocpp16::StatusNotification(0, OcppEvseState::NOT_SET, MIN_TIME);});
     checkMsg.setOnRequest("StatusNotification",
         [&checkedSN, &expectedSN] (JsonObject request) {
             int connectorId = request["connectorId"] | -1;
@@ -40,7 +40,7 @@ TEST_CASE( "Charging sessions" ) {
     SECTION("Check idle state"){
 
         bool checkedBN = false;
-        checkMsg.registerRequest("BootNotification", [engine] () -> Operation* {return new Ocpp16::BootNotification(engine->getModel(), std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(0)));});
+        checkMsg.registerOperation("BootNotification", [engine] () -> Operation* {return new Ocpp16::BootNotification(engine->getModel(), std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(0)));});
         checkMsg.setOnRequest("BootNotification",
             [&checkedBN] (JsonObject request) {
                 checkedBN = !strcmp(request["chargePointModel"] | "Invalid", "test-runner1234");

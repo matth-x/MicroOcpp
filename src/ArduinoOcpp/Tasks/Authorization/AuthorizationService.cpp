@@ -5,19 +5,20 @@
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Core/OperationRegistry.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/MessagesV16/GetLocalListVersion.h>
 #include <ArduinoOcpp/MessagesV16/SendLocalList.h>
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
 #include <ArduinoOcpp/Debug.h>
 
 #define AO_LOCALAUTHORIZATIONLIST_FN (AO_FILENAME_PREFIX "localauth.jsn")
 
 using namespace ArduinoOcpp;
 
-AuthorizationService::AuthorizationService(OcppEngine& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
+AuthorizationService::AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
     
     localAuthorizeOffline = declareConfiguration<bool>("LocalAuthorizeOffline", true, CONFIGURATION_FN, true, true, true, false);
     localAuthListEnabled = declareConfiguration<bool>("LocalAuthListEnabled", true, CONFIGURATION_FN, true, true, true, false);
@@ -39,10 +40,10 @@ AuthorizationService::AuthorizationService(OcppEngine& context, std::shared_ptr<
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
 
-    context.getOperationDeserializer().registerOcppOperation("GetLocalListVersion", [&context] () {
-        return new Ocpp16::GetLocalListVersion(context.getOcppModel());});
-    context.getOperationDeserializer().registerOcppOperation("SendLocalList", [&context] () {
-        return new Ocpp16::SendLocalList(context.getOcppModel());});
+    context.getOperationRegistry().registerOperation("GetLocalListVersion", [&context] () {
+        return new Ocpp16::GetLocalListVersion(context.getModel());});
+    context.getOperationRegistry().registerOperation("SendLocalList", [&context] () {
+        return new Ocpp16::SendLocalList(context.getModel());});
 
     loadLists();
 }
@@ -149,7 +150,7 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
     }
 
     if (localStatus == AuthorizationStatus::Accepted && localInfo->getExpiryDate()) { //check for expiry
-        auto& t_now = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+        auto& t_now = context.getModel().getTime().getTimestampNow();
         if (t_now > *localInfo->getExpiryDate()) {
             AO_DBG_DEBUG("local auth expired");
             localStatus = AuthorizationStatus::Expired;
@@ -176,18 +177,18 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
         //send error code "LocalListConflict" to server
 
         OcppEvseState cpStatus = OcppEvseState::NOT_SET;
-        if (context.getOcppModel().getNumConnectors() > 0) {
-            cpStatus = context.getOcppModel().getConnector(0)->inferenceStatus();
+        if (context.getModel().getNumConnectors() > 0) {
+            cpStatus = context.getModel().getConnector(0)->inferenceStatus();
         }
 
-        auto statusNotification = makeOcppOperation(new Ocpp16::StatusNotification(
+        auto statusNotification = makeRequest(new Ocpp16::StatusNotification(
                     0,
                     cpStatus, //will be determined in StatusNotification::initiate
-                    context.getOcppModel().getOcppTime().getOcppTimestampNow(),
+                    context.getModel().getTime().getTimestampNow(),
                     "LocalListConflict"));
 
         statusNotification->setTimeout(60000);
 
-        context.initiateOperation(std::move(statusNotification));
+        context.initiateRequest(std::move(statusNotification));
     }
 }

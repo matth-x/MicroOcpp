@@ -35,9 +35,9 @@ ReservationService::ReservationService(Context& context, unsigned int numConnect
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
     
-    context.getOperationRegistry().registerRequest("CancelReservation", [&context] () {
+    context.getOperationRegistry().registerOperation("CancelReservation", [&context] () {
         return new Ocpp16::CancelReservation(context.getModel());});
-    context.getOperationRegistry().registerRequest("ReserveNow", [&context] () {
+    context.getOperationRegistry().registerOperation("ReserveNow", [&context] () {
         return new Ocpp16::ReserveNow(context.getModel());});
 }
 
