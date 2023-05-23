@@ -96,13 +96,46 @@ endif()
 add_library(ArduinoOcpp ${AO_SRC})
 
 target_include_directories(ArduinoOcpp PUBLIC
-                            "./src"
-                            "../ArduinoJson/src"
-                            )
+    "./src"
+    "../ArduinoJson/src"
+)
 
 target_compile_definitions(ArduinoOcpp PUBLIC
     AO_PLATFORM=AO_PLATFORM_UNIX
     AO_CUSTOM_WS
     AO_CUSTOM_UPDATER
     AO_CUSTOM_RESET
-    )
+)
+
+# Unit tests
+
+set(AO_SRC_UNIT
+    tests/helpers/testHelper.cpp
+    tests/ocppEngineLifecycle.cpp
+    tests/TransactionSafety.cpp
+    tests/ChargingSessions.cpp
+    tests/ConfigurationBehavior.cpp
+)
+
+add_executable(ao_unit_tests
+    ${AO_SRC}
+    ${AO_SRC_UNIT}
+    ./tests/catch2/catchMain.cpp
+)
+
+target_include_directories(ao_unit_tests PUBLIC
+    "./tests/catch2"
+    "./tests/helpers"
+    "./src"
+)
+
+target_compile_definitions(ao_unit_tests PUBLIC
+    AO_PLATFORM=AO_PLATFORM_UNIX
+    AO_CUSTOM_TIMER
+    AO_CUSTOM_WS
+    AO_CUSTOM_UPDATER
+    AO_CUSTOM_RESET
+    AO_DBG_LEVEL=AO_DL_DEBUG
+    AO_TRAFFIC_OUT
+    AO_FILENAME_PREFIX="./ao_store/"
+)
