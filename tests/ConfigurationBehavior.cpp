@@ -10,6 +10,23 @@
 
 using namespace ArduinoOcpp;
 
+class CustomAuthorize : public Operation {
+private:
+    const char *status;
+public:
+    CustomAuthorize(const char *status) : status(status) { };
+    const char *getOperationType() override {return "Authorize";}
+    void processReq(JsonObject payload) override {
+        //ignore payload - result is determined at construction time
+    }
+    std::unique_ptr<DynamicJsonDocument> createConf() override {
+        auto res = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1)));
+        auto payload = res->to<JsonObject>();
+        payload["idTagInfo"]["status"] = status;
+        return res;
+    }
+};
+
 class CustomStartTransaction : public Operation {
 private:
     const char *status;
@@ -82,10 +99,16 @@ TEST_CASE( "Configuration Behavior" ) {
     SECTION("StopTransactionOnInvalidId") {
         auto config = declareConfiguration<bool>("StopTransactionOnInvalidId", true);
 
+        checkMsg.registerOperation("Authorize", [] () {return new CustomAuthorize("Invalid");});
         checkMsg.registerOperation("StartTransaction", [] () {return new CustomStartTransaction("Invalid");});
 
         SECTION("set true") {
             *config = true;
+
+            beginTransaction("mIdTag");
+            loop();
+
+            REQUIRE(connector->inferenceStatus() == OcppEvseState::Available);
 
             beginTransaction_authorized("mIdTag");
             loop();
@@ -95,6 +118,11 @@ TEST_CASE( "Configuration Behavior" ) {
 
         SECTION("set false") {
             *config = false;
+
+            beginTransaction("mIdTag");
+            loop();
+
+            REQUIRE(connector->inferenceStatus() == OcppEvseState::Available);
 
             beginTransaction_authorized("mIdTag");
             loop();

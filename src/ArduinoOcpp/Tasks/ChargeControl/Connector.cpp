@@ -201,13 +201,15 @@ void Connector::loop() {
             transaction->commit();
         }
 
-        if (transaction->isActive() && transaction->isIdTagDeauthorized()) {
-            if (!stopTransactionOnInvalidId || *stopTransactionOnInvalidId) {
-                AO_DBG_DEBUG("DeAuthorize session");
-                transaction->setStopReason("DeAuthorized");
-                transaction->endSession();
-                transaction->commit();
-            }
+        if (transaction->isActive() &&
+                transaction->isIdTagDeauthorized() && ( //transaction has been deAuthorized
+                    !transaction->isRunning() ||        //if transaction hasn't started yet, always end
+                    !stopTransactionOnInvalidId || *stopTransactionOnInvalidId)) { //if transaction is running, behavior depends on StopTransactionOnInvalidId
+            
+            AO_DBG_DEBUG("DeAuthorize session");
+            transaction->setStopReason("DeAuthorized");
+            transaction->endSession();
+            transaction->commit();
         }
 
         /*
