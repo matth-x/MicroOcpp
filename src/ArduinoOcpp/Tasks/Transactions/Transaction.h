@@ -5,7 +5,7 @@
 #ifndef TRANSACTION_H
 #define TRANSACTION_H
 
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Time.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
 #include <memory>
 #include <ArduinoJson.h>
@@ -44,7 +44,7 @@ class ClientTransactionStart {
 private:
     friend class Transaction;
 
-    OcppTimestamp timestamp = MIN_TIME;      //timestamp of StartTx; can be set before actually initiating
+    Timestamp timestamp = MIN_TIME;      //timestamp of StartTx; can be set before actually initiating
     int32_t meter = -1;           //meterStart of StartTx
     int reservationId = -1;
 };
@@ -70,7 +70,7 @@ private:
     friend class Transaction;
 
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
-    OcppTimestamp timestamp = MIN_TIME;
+    Timestamp timestamp = MIN_TIME;
     int32_t meter = -1;
     char reason [REASON_LEN_MAX + 1] = {'\0'};
 };
@@ -95,7 +95,7 @@ private:
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
     bool authorized = false;    //if the given idTag was authorized
     bool deauthorized = false;  //if the server revoked a local authorization
-    OcppTimestamp timestamp = MIN_TIME;
+    Timestamp timestamp = MIN_TIME;
     int txProfileId = -1;
 
     bool active = true;         //true: ignore
@@ -143,8 +143,8 @@ public:
 
     const char *getIdTag() {return session.idTag;}
     void setIdTag(const char *idTag) {snprintf(session.idTag, IDTAG_LEN_MAX + 1, "%s", idTag);}
-    OcppTimestamp& getSessionTimestamp() {return session.timestamp;}
-    void setSessionTimestamp(OcppTimestamp timestamp) {session.timestamp = timestamp;}
+    Timestamp& getSessionTimestamp() {return session.timestamp;}
+    void setSessionTimestamp(Timestamp timestamp) {session.timestamp = timestamp;}
 
     const char *getStopReason() {return stop.client.reason;}
     void setStopReason(const char *reason) {snprintf(stop.client.reason, REASON_LEN_MAX + 1, "%s", reason);}
@@ -166,15 +166,15 @@ public:
     void setReservationId(int reservationId) {start.client.reservationId = reservationId;}
     int getReservationId() {return start.client.reservationId;}
 
-    void setStartTimestamp(OcppTimestamp timestamp) {start.client.timestamp = timestamp;}
-    OcppTimestamp& getStartTimestamp() {return start.client.timestamp;}
+    void setStartTimestamp(Timestamp timestamp) {start.client.timestamp = timestamp;}
+    Timestamp& getStartTimestamp() {return start.client.timestamp;}
 
     void setMeterStop(int32_t meter) {stop.client.meter = meter;}
     bool isMeterStopDefined() {return stop.client.meter >= 0;}
     int32_t getMeterStop() {return stop.client.meter;}
 
-    void setStopTimestamp(OcppTimestamp timestamp) {stop.client.timestamp = timestamp;}
-    OcppTimestamp& getStopTimestamp() {return stop.client.timestamp;}
+    void setStopTimestamp(Timestamp timestamp) {stop.client.timestamp = timestamp;}
+    Timestamp& getStopTimestamp() {return stop.client.timestamp;}
 
     const char *getStopIdTag() {return stop.client.idTag;}
     void setStopIdTag(const char *idTag) {snprintf(stop.client.idTag, IDTAG_LEN_MAX + 1, "%s", idTag);}

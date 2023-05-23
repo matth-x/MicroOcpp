@@ -10,7 +10,7 @@
 
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareStatus.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Time.h>
 
 namespace ArduinoOcpp {
 
@@ -26,12 +26,12 @@ enum class InstallationStatus {
     InstallationFailed
 };
 
-class OcppEngine;
-class OcppOperation;
+class Context;
+class Request;
 
 class FirmwareService {
 private:
-    OcppEngine& context;
+    Context& context;
     
     std::shared_ptr<Configuration<const char *>> previousBuildNumber = NULL;
     const char *buildNumber = NULL;
@@ -46,7 +46,7 @@ private:
     bool checkedSuccessfulFwUpdate = false;
 
     std::string location {};
-    OcppTimestamp retreiveDate = OcppTimestamp();
+    Timestamp retreiveDate = Timestamp();
     int retries = 0;
     unsigned int retryInterval = 0;
 
@@ -67,16 +67,16 @@ private:
 
     void resetStage();
 
-    std::unique_ptr<OcppOperation> getFirmwareStatusNotification();
+    std::unique_ptr<Request> getFirmwareStatusNotification();
 
 public:
-    FirmwareService(OcppEngine& context);
+    FirmwareService(Context& context);
 
     void setBuildNumber(const char *buildNumber);
 
     void loop();
 
-    void scheduleFirmwareUpdate(const std::string &location, OcppTimestamp retreiveDate, int retries = 1, unsigned int retryInterval = 0);
+    void scheduleFirmwareUpdate(const std::string &location, Timestamp retreiveDate, int retries = 1, unsigned int retryInterval = 0);
 
     Ocpp16::FirmwareStatus getFirmwareStatus();
 
@@ -97,7 +97,7 @@ public:
 namespace ArduinoOcpp {
 namespace EspWiFi {
 
-FirmwareService *makeFirmwareService(OcppEngine& context, const char *buildNumber);
+FirmwareService *makeFirmwareService(Context& context, const char *buildNumber);
 
 }
 }

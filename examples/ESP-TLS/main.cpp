@@ -14,7 +14,7 @@ ESP8266WiFiMulti WiFiMulti;
 #endif
 
 #include <ArduinoOcpp.h>
-#include <ArduinoOcpp/Core/OcppSocket.h> //need for setting TLS credentials
+#include <ArduinoOcpp/Core/Connection.h> //need for setting TLS credentials
 
 #define STASSID  "YOUR_WIFI_SSID"
 #define STAPSK   "YOUR_WIFI_PW"
@@ -66,7 +66,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 )EOF";
 
 WebSocketsClient wsockSecure {};
-ArduinoOcpp::EspWiFi::OcppClientSocket osockSecure {&wsockSecure};
+ArduinoOcpp::EspWiFi::WSClient osockSecure {&wsockSecure};
 
 void setup() {
 

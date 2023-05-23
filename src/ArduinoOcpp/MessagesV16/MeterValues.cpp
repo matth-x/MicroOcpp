@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>
@@ -26,7 +26,7 @@ MeterValues::~MeterValues(){
 
 }
 
-const char* MeterValues::getOcppOperationType(){
+const char* MeterValues::getOperationType(){
     return "MeterValues";
 }
 

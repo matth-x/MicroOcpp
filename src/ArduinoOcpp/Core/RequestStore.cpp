@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/OperationStore.h>
+#include <ArduinoOcpp/Core/RequestStore.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
 #include <ArduinoOcpp/Core/Configuration.h>
@@ -95,7 +95,7 @@ bool StoredOperationHandler::restore(unsigned int opNrToLoad) {
     return true;
 }
 
-OperationStore::OperationStore(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem(filesystem) {
+RequestStore::RequestStore(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem(filesystem) {
     opBegin = declareConfiguration<int>("AO_opBegin", 0, AO_OPSTORE_FN, false, false, true, false);
 
     if (!opBegin || *opBegin < 0) {
@@ -131,11 +131,11 @@ OperationStore::OperationStore(std::shared_ptr<FilesystemAdapter> filesystem) : 
     }
 }
 
-std::unique_ptr<StoredOperationHandler> OperationStore::makeOpHandler() {
+std::unique_ptr<StoredOperationHandler> RequestStore::makeOpHandler() {
     return std::unique_ptr<StoredOperationHandler>(new StoredOperationHandler(*this, filesystem));
 }
 
-unsigned int OperationStore::reserveOpNr() {
+unsigned int RequestStore::reserveOpNr() {
     AO_DBG_DEBUG("reserved opNr %u", opEnd);
     auto res = opEnd;
     opEnd++;
@@ -143,7 +143,7 @@ unsigned int OperationStore::reserveOpNr() {
     return res;
 }
 
-void OperationStore::advanceOpNr(unsigned int oldOpNr) {
+void RequestStore::advanceOpNr(unsigned int oldOpNr) {
     if (!opBegin || *opBegin < 0) {
         AO_DBG_ERR("init failure");
         return;
@@ -195,7 +195,7 @@ void OperationStore::advanceOpNr(unsigned int oldOpNr) {
     configuration_save();
 }
 
-unsigned int OperationStore::getOpBegin() {
+unsigned int RequestStore::getOpBegin() {
     if (!opBegin || *opBegin < 0) {
         AO_DBG_ERR("invalid state");
         return 0;

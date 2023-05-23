@@ -12,7 +12,7 @@ ClearCache::ClearCache(std::shared_ptr<FilesystemAdapter> filesystem) : filesyst
   
 }
 
-const char* ClearCache::getOcppOperationType(){
+const char* ClearCache::getOperationType(){
     return "ClearCache";
 }
 

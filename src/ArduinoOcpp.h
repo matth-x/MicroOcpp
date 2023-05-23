@@ -10,9 +10,9 @@
 #include <functional>
 
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
-#include <ArduinoOcpp/Core/OcppOperationCallbacks.h>
-#include <ArduinoOcpp/Core/OcppSocket.h>
+#include <ArduinoOcpp/Core/Time.h>
+#include <ArduinoOcpp/Core/RequestCallbacks.h>
+#include <ArduinoOcpp/Core/Connection.h>
 #include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 
@@ -75,18 +75,18 @@ private:
 
 /*
  * Initialize the library with a WebSocket connection which is configured with protocol=ocpp1.6
- * (=OcppSocket), EVSE voltage and filesystem configuration. This library requires that you handle
+ * (=Connection), EVSE voltage and filesystem configuration. This library requires that you handle
  * establishing the connection and keeping it alive. Please refer to
  * https://github.com/matth-x/ArduinoOcpp/tree/master/examples/ESP-TLS for an example how to use it.
  * 
- * This GitHub project also delivers an OcppSocket implementation based on links2004/WebSockets. If
- * you need another WebSockets implementation, you can subclass the OcppSocket class and pass it to
+ * This GitHub project also delivers an Connection implementation based on links2004/WebSockets. If
+ * you need another WebSockets implementation, you can subclass the Connection class and pass it to
  * this initialize() function. Please refer to
- * https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/MongooseOcppSocketClient.cpp for
+ * https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/MongooseConnectionClient.cpp for
  * an example.
  */
 void OCPP_initialize(
-            ArduinoOcpp::OcppSocket& ocppSocket, //WebSocket adapter for ArduinoOcpp
+            ArduinoOcpp::Connection& connection, //WebSocket adapter for ArduinoOcpp
             const char *bootNotificationCredentials = ChargerCredentials("Demo Charger", "My Company Ltd."), //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
             float V_eff = 230.f,                 //Grid voltage of your country. e.g. 230.f (European voltage)
             ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
@@ -311,12 +311,12 @@ ArduinoOcpp::DiagnosticsService *getDiagnosticsService();
 #endif
 
 namespace ArduinoOcpp {
-class OcppEngine;
+class Context;
 }
 
-//Get access to internal functions and data structures. The returned OcppEngine object allows
+//Get access to internal functions and data structures. The returned Context object allows
 //you to bypass the facade functions of this header and implement custom functionality.
-ArduinoOcpp::OcppEngine *getOcppEngine();
+ArduinoOcpp::Context *getOcppContext();
 
 /*
  * Deprecated functions or functions to be moved to ArduinoOcppExtended.h

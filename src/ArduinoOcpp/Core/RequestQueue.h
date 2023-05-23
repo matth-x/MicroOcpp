@@ -5,7 +5,7 @@
 #ifndef OCPPCONNECTION_H
 #define OCPPCONNECTION_H
 
-#include <ArduinoOcpp/Core/OperationsQueue.h>
+#include <ArduinoOcpp/Core/RequestQueueStorageStrategy.h>
 
 #include <deque>
 #include <memory>
@@ -13,21 +13,21 @@
 
 namespace ArduinoOcpp {
 
-class OperationDeserializer;
-class OcppModel;
-class OcppSocket;
-class OcppOperation;
+class OperationRegistry;
+class Model;
+class Connection;
+class Request;
 class FilesystemAdapter;
 
-class OcppConnection {
+class RequestQueue {
 private:
-    OperationDeserializer& operationDeserializer;
+    OperationRegistry& operationRegistry;
     
-    std::unique_ptr<OperationsQueue> initiatedOcppOperations;
-    std::deque<std::unique_ptr<OcppOperation>> receivedOcppOperations;
+    std::unique_ptr<RequestQueueStorageStrategy> initiatedRequests;
+    std::deque<std::unique_ptr<Request>> receivedRequests;
 
     void receiveRequest(JsonArray json);
-    void receiveRequest(JsonArray json, std::unique_ptr<OcppOperation> op);
+    void receiveRequest(JsonArray json, std::unique_ptr<Request> op);
     void receiveResponse(JsonArray json);
 
     unsigned long sendBackoffTime = 0;
@@ -36,13 +36,13 @@ private:
     const unsigned long BACKOFF_PERIOD_MAX = 65536;
     const unsigned long BACKOFF_PERIOD_INCREMENT = BACKOFF_PERIOD_MAX / 4;
 public:
-    OcppConnection(OperationDeserializer& operationDeserializer, std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem = nullptr);
+    RequestQueue(OperationRegistry& operationRegistry, std::shared_ptr<Model> baseModel, std::shared_ptr<FilesystemAdapter> filesystem = nullptr);
 
-    void setSocket(OcppSocket& sock);
+    void setConnection(Connection& sock);
 
-    void loop(OcppSocket& ocppSock);
+    void loop(Connection& ocppSock);
 
-    void sendRequest(std::unique_ptr<OcppOperation> o); //send an OCPP operation request to the server
+    void sendRequest(std::unique_ptr<Request> o); //send an OCPP operation request to the server
     
     bool receiveMessage(const char* payload, size_t length); //receive from  server: either a request or response
 };

@@ -6,17 +6,17 @@
 #define SIMPLEOCPPOPERATIONFACTORY_H
 
 #include <ArduinoJson.h>
-#include <ArduinoOcpp/Core/OcppOperation.h>
+#include <ArduinoOcpp/Core/Request.h>
 #include <memory>
 #include <functional>
 
 namespace ArduinoOcpp {
 
-class OcppMessage;
+class Operation;
 
-std::unique_ptr<OcppOperation> makeOcppOperation();
+std::unique_ptr<Request> makeRequest();
 
-std::unique_ptr<OcppOperation> makeOcppOperation(OcppMessage *msg);
+std::unique_ptr<Request> makeRequest(Operation *msg);
 
 } //end namespace ArduinoOcpp
 #endif

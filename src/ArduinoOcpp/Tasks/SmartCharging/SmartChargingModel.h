@@ -6,7 +6,7 @@
 #define SMARTCHARGINGMODEL_H
 
 #include <ArduinoJson.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Time.h>
 #include <memory>
 #include <vector>
 
@@ -54,7 +54,7 @@ public:
 class ChargingSchedule {
 private:
     int duration = -1;
-    OcppTimestamp startSchedule;
+    Timestamp startSchedule;
     ChargingRateUnitType chargingRateUnit;
     std::vector<std::unique_ptr<ChargingSchedulePeriod>> chargingSchedulePeriod;
     float minChargingRate = -1.0f;
@@ -64,7 +64,7 @@ private:
 public:
     ChargingSchedule(JsonObject &json, ChargingProfileKindType chargingProfileKind, RecurrencyKindType recurrencyKind);
     ChargingSchedule(ChargingSchedule &other);
-    ChargingSchedule(const OcppTimestamp &startSchedule, int duration);
+    ChargingSchedule(const Timestamp &startSchedule, int duration);
 
     /**
      * limit: output parameter
@@ -74,7 +74,7 @@ public:
      *       if true, limit and nextChange will be set according to this Schedule
      *       if false, only nextChange will be set
      */
-    bool inferenceLimit(const OcppTimestamp &t, const OcppTimestamp &startOfCharging, float *limit, OcppTimestamp *nextChange);
+    bool inferenceLimit(const Timestamp &t, const Timestamp &startOfCharging, float *limit, Timestamp *nextChange);
 
     bool addChargingSchedulePeriod(std::unique_ptr<ChargingSchedulePeriod> period);
 
@@ -97,8 +97,8 @@ private:
     ChargingProfilePurposeType chargingProfilePurpose {ChargingProfilePurposeType::TxProfile};
     ChargingProfileKindType chargingProfileKind {ChargingProfileKindType::Relative}; //copied to ChargingSchedule to increase cohesion of limit inferencing methods
     RecurrencyKindType recurrencyKind {RecurrencyKindType::NOT_SET}; // copied to ChargingSchedule to increase cohesion
-    OcppTimestamp validFrom;
-    OcppTimestamp validTo;
+    Timestamp validFrom;
+    Timestamp validTo;
     std::unique_ptr<ChargingSchedule> chargingSchedule;
 public:
     ChargingProfile(JsonObject &json);
@@ -111,12 +111,12 @@ public:
      *       if true, limit and nextChange will be set according to this Schedule
      *       if false, only nextChange will be set
      */
-    bool inferenceLimit(const OcppTimestamp &t, const OcppTimestamp &startOfCharging, float *limit, OcppTimestamp *nextChange);
+    bool inferenceLimit(const Timestamp &t, const Timestamp &startOfCharging, float *limit, Timestamp *nextChange);
 
     /*
     * Simpler function if startOfCharging is not available. Caution: This likely will differ from inference with startOfCharging
     */
-    bool inferenceLimit(const OcppTimestamp &t, float *limit, OcppTimestamp *nextChange);
+    bool inferenceLimit(const Timestamp &t, float *limit, Timestamp *nextChange);
 
     /*
     * Check if this profile belongs to transaction with ID txId or idTag alternatively

@@ -4,8 +4,8 @@
 #include <stddef.h>
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
 
-struct AOcppSocket;
-typedef struct AOcppSocket AOcppSocket;
+struct AConnection;
+typedef struct AConnection AConnection;
 
 struct MeterValueInput;
 typedef struct MeterValueInput MeterValueInput;
@@ -13,10 +13,10 @@ typedef struct MeterValueInput MeterValueInput;
 struct OcppHandle;
 typedef struct OcppHandle OcppHandle;
 
-typedef void (*OnOcppMessage) (const char *payload, size_t len);
-typedef void (*OnOcppAbort)   ();
-typedef void (*OnOcppTimeout) ();
-typedef void (*OnOcppError)   (const char *code, const char *description, const char *details_json, size_t details_len);
+typedef void (*OnMessage) (const char *payload, size_t len);
+typedef void (*OnAbort)   ();
+typedef void (*OnTimeout) ();
+typedef void (*OnCallError)   (const char *code, const char *description, const char *details_json, size_t details_len);
 //typedef void (*ConfCallback)    (const char *payload, size_t len, void* user_data);
 //typedef void (*AbortCallback)   (void* user_data);
 //typedef void (*TimeoutCallback) (void* user_data);
@@ -50,7 +50,7 @@ extern "C" {
  */
 
 void ao_initialize(
-            AOcppSocket *osock,  //WebSocket adapter for ArduinoOcpp
+            AConnection *osock,  //WebSocket adapter for ArduinoOcpp
             const char *chargePointModel,     //model name of this charger (e.g. "")
             const char *chargePointVendor, //brand name
             float V_eff, //Grid voltage of your country. e.g. 230.f (European voltage)
@@ -58,7 +58,7 @@ void ao_initialize(
 
 //same as above, but more fields for the BootNotification
 void ao_initialize_full(
-            AOcppSocket *osock,  //WebSocket adapter for ArduinoOcpp
+            AConnection *osock,  //WebSocket adapter for ArduinoOcpp
             const char *bootNotificationCredentials, //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
             float V_eff, //Grid voltage of your country. e.g. 230.f (European voltage)
             struct AO_FilesystemOpt fsopt); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
@@ -71,9 +71,9 @@ void ao_loop();
  * Send OCPP operations
  */
 
-void ao_bootNotification(const char *chargePointModel, const char *chargePointVendor, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError);
+void ao_bootNotification(const char *chargePointModel, const char *chargePointVendor, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError);
 
-void ao_bootNotification_full(const char *payloadJson, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError);
+void ao_bootNotification_full(const char *payloadJson, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError);
 
 void ao_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data);
 
@@ -159,7 +159,7 @@ const char *ao_getTransactionIdTag_m(unsigned int connectorId);
 bool ao_isBlockedByReservation(const char *idTag);
 bool ao_isBlockedByReservation_m(unsigned int connectorId, const char *idTag);
 
-void ao_setOnResetRequest(OnOcppMessage onRequest);
+void ao_setOnResetRequest(OnMessage onRequest);
 
 /*
  * If build flag AO_CUSTOM_CONSOLE is set, all console output will be forwarded to the print
@@ -177,16 +177,16 @@ OcppHandle *ao_getOcppHandle();
  * Deprecated functions or functions to be moved to ArduinoOcppExtended.h
  */
 
-void ao_onRemoteStartTransactionSendConf(OnOcppMessage onSendConf); //important, energize the power plug here and capture the idTag
+void ao_onRemoteStartTransactionSendConf(OnMessage onSendConf); //important, energize the power plug here and capture the idTag
 
-void ao_onRemoteStopTransactionSendConf(OnOcppMessage onSendConf); //important, de-energize the power plug here
-void ao_onRemoteStopTransactionRequest(OnOcppMessage onRequest); //optional, to de-energize the power plug immediately
+void ao_onRemoteStopTransactionSendConf(OnMessage onSendConf); //important, de-energize the power plug here
+void ao_onRemoteStopTransactionRequest(OnMessage onRequest); //optional, to de-energize the power plug immediately
 
-void ao_setOnResetSendConf(OnOcppMessage onSendConf);
+void ao_setOnResetSendConf(OnMessage onSendConf);
 
-void ao_startTransaction(const char *idTag, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError);
+void ao_startTransaction(const char *idTag, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError);
 
-void ao_stopTransaction(OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError);
+void ao_stopTransaction(OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError);
 
 #ifdef __cplusplus
 }

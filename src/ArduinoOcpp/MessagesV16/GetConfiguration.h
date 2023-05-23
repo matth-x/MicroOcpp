@@ -5,20 +5,20 @@
 #ifndef GETCONFIGURATION_H
 #define GETCONFIGURATION_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 #include <vector>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 
-class GetConfiguration : public OcppMessage {
+class GetConfiguration : public Operation {
 private:
     std::vector<std::string> keys;
 public:
     GetConfiguration();
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

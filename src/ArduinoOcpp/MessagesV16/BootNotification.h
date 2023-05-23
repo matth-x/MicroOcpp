@@ -5,7 +5,7 @@
 #ifndef BOOTNOTIFICATION_H
 #define BOOTNOTIFICATION_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 #define CP_MODEL_LEN_MAX        CiString20TypeLen
@@ -15,21 +15,21 @@
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class BootNotification : public OcppMessage {
+class BootNotification : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     std::unique_ptr<DynamicJsonDocument> credentials;
     const char *errorCode = nullptr;
 public:
-    BootNotification(OcppModel& context, std::unique_ptr<DynamicJsonDocument> payload);
+    BootNotification(Model& model, std::unique_ptr<DynamicJsonDocument> payload);
 
     ~BootNotification() = default;
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 

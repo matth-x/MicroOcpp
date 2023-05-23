@@ -156,7 +156,7 @@ void app_main(void)
     /* Initialize ArduinoOcpp */
     struct AO_FilesystemOpt fsopt = { .use = true, .mount = true, .formatFsOnFail = true};
 
-    AOcppSocket *osock = ao_makeOcppSocket(&mgr,
+    AConnection *osock = ao_makeConnection(&mgr,
             EXAMPLE_AO_OCPP_BACKEND, 
             EXAMPLE_AO_CHARGEBOXID, 
             EXAMPLE_AO_AUTHORIZATIONKEY, "", fsopt);
@@ -171,7 +171,7 @@ void app_main(void)
     }
     
     /* Deallocate ressources */
-    ao_deinitOcppSocket(osock);
+    ao_deinitConnection(osock);
     ao_deinitialize();
     mg_mgr_free(&mgr);
     return;

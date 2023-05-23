@@ -5,14 +5,14 @@
 #ifndef STOPTRANSACTION_H
 #define STOPTRANSACTION_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Operation.h>
+#include <ArduinoOcpp/Core/Time.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
 #include <vector>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 class SampledValue;
 class MeterValue;
@@ -21,18 +21,18 @@ class Transaction;
 
 namespace Ocpp16 {
 
-class StopTransaction : public OcppMessage {
+class StopTransaction : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     std::shared_ptr<Transaction> transaction;
     std::vector<std::unique_ptr<MeterValue>> transactionData;
 public:
 
-    StopTransaction(OcppModel& context, std::shared_ptr<Transaction> transaction);
+    StopTransaction(Model& model, std::shared_ptr<Transaction> transaction);
 
-    StopTransaction(OcppModel& context, std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData);
+    StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData);
 
-    const char* getOcppOperationType() override;
+    const char* getOperationType() override;
 
     void initiate(StoredOperationHandler *opStore) override;
 

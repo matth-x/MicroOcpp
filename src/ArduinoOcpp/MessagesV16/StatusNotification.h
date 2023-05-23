@@ -5,23 +5,23 @@
 #ifndef STATUSNOTIFICATION_H
 #define STATUSNOTIFICATION_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Operation.h>
+#include <ArduinoOcpp/Core/Time.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/OcppEvseState.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 
-class StatusNotification : public OcppMessage {
+class StatusNotification : public Operation {
 private:
     int connectorId = 1;
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
-    OcppTimestamp otimestamp;
+    Timestamp timestamp;
     const char *errorCode = nullptr; //nullptr is equivalent to "NoError"
 public:
-    StatusNotification(int connectorId, OcppEvseState currentStatus, const OcppTimestamp &otimestamp, const char *errorCode = nullptr);
+    StatusNotification(int connectorId, OcppEvseState currentStatus, const Timestamp &timestamp, const char *errorCode = nullptr);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 

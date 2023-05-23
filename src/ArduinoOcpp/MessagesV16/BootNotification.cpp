@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/Boot/BootService.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
@@ -12,11 +12,11 @@
 
 using ArduinoOcpp::Ocpp16::BootNotification;
 
-BootNotification::BootNotification(OcppModel& context, std::unique_ptr<DynamicJsonDocument> payload) : context(context), credentials(std::move(payload)) {
+BootNotification::BootNotification(Model& model, std::unique_ptr<DynamicJsonDocument> payload) : model(model), credentials(std::move(payload)) {
     
 }
 
-const char* BootNotification::getOcppOperationType(){
+const char* BootNotification::getOperationType(){
     return "BootNotification";
 }
 
@@ -32,7 +32,7 @@ std::unique_ptr<DynamicJsonDocument> BootNotification::createReq() {
 void BootNotification::processConf(JsonObject payload) {
     const char* currentTime = payload["currentTime"] | "Invalid";
     if (strcmp(currentTime, "Invalid")) {
-        if (context.getOcppTime().setOcppTime(currentTime)) {
+        if (model.getTime().setTime(currentTime)) {
             //success
         } else {
             AO_DBG_ERR("Time string format violation. Expect format like 2022-02-01T20:53:32.486Z");
@@ -69,7 +69,7 @@ void BootNotification::processConf(JsonObject payload) {
         }
     }
 
-    if (auto bootService = context.getBootService()) {
+    if (auto bootService = model.getBootService()) {
 
         if (status != RegistrationStatus::Accepted) {
             bootService->setRetryInterval(interval);
@@ -94,10 +94,10 @@ std::unique_ptr<DynamicJsonDocument> BootNotification::createConf(){
     JsonObject payload = doc->to<JsonObject>();
 
     //safety mechanism; in some test setups the library has to answer BootNotifications without valid system time
-    OcppTimestamp ocppTimeReference = OcppTimestamp(2022,0,27,11,59,55); 
-    OcppTimestamp ocppSelect = ocppTimeReference;
-    auto& ocppTime = context.getOcppTime();
-    OcppTimestamp ocppNow = ocppTime.getOcppTimestampNow();
+    Timestamp ocppTimeReference = Timestamp(2022,0,27,11,59,55); 
+    Timestamp ocppSelect = ocppTimeReference;
+    auto& ocppTime = model.getTime();
+    Timestamp ocppNow = ocppTime.getTimestampNow();
     if (ocppNow > ocppTimeReference) {
         //time has already been set
         ocppSelect = ocppNow;

@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Debug.h>
 
 #include <string.h>
@@ -43,13 +43,13 @@ const char *cstrFromOcppEveState(OcppEvseState state) {
 }
 }} //end namespaces
 
-StatusNotification::StatusNotification(int connectorId, OcppEvseState currentStatus, const OcppTimestamp &otimestamp, const char *errorCode) 
-  : connectorId(connectorId), currentStatus(currentStatus), otimestamp(otimestamp), errorCode(errorCode) {
+StatusNotification::StatusNotification(int connectorId, OcppEvseState currentStatus, const Timestamp &timestamp, const char *errorCode) 
+  : connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorCode(errorCode) {
 
     AO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
 }
 
-const char* StatusNotification::getOcppOperationType(){
+const char* StatusNotification::getOperationType(){
     return "StatusNotification";
 }
 
@@ -70,9 +70,9 @@ std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
 
     payload["status"] = cstrFromOcppEveState(currentStatus);
 
-    char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
-    otimestamp.toJsonString(timestamp, JSONDATE_LENGTH + 1);
-    payload["timestamp"] = timestamp;
+    char timestamp_cstr[JSONDATE_LENGTH + 1] = {'\0'};
+    timestamp.toJsonString(timestamp_cstr, JSONDATE_LENGTH + 1);
+    payload["timestamp"] = timestamp_cstr;
 
     return doc;
 }

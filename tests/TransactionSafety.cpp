@@ -1,9 +1,9 @@
 #include <ArduinoOcpp.h>
-#include <ArduinoOcpp/Core/OcppSocket.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Connection.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
 #include <ArduinoOcpp/Debug.h>
@@ -15,9 +15,9 @@ using namespace ArduinoOcpp;
 
 TEST_CASE( "Transaction safety" ) {
 
-    //initialize OcppEngine with dummy socket
-    OcppEchoSocket echoSocket;
-    OCPP_initialize(echoSocket);
+    //initialize Context with dummy socket
+    LoopbackConnection loopback;
+    OCPP_initialize(loopback);
 
     ao_set_timer(custom_timer_cb);
 

@@ -2,13 +2,13 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/OcppConnection.h>
-#include <ArduinoOcpp/Core/OcppOperation.h>
-#include <ArduinoOcpp/Core/OcppSocket.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/RequestQueue.h>
+#include <ArduinoOcpp/Core/Request.h>
+#include <ArduinoOcpp/Core/Connection.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Core/OcppError.h>
-#include <ArduinoOcpp/Core/OperationStore.h>
-#include <ArduinoOcpp/OperationDeserializer.h>
+#include <ArduinoOcpp/Core/RequestStore.h>
+#include <ArduinoOcpp/Core/OperationRegistry.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -16,17 +16,17 @@ size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_siz
 
 using namespace ArduinoOcpp;
 
-OcppConnection::OcppConnection(OperationDeserializer& operationDeserializer, std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
-            : operationDeserializer(operationDeserializer) {
+RequestQueue::RequestQueue(OperationRegistry& operationRegistry, std::shared_ptr<Model> baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
+            : operationRegistry(operationRegistry) {
     
     if (filesystem) {
-        initiatedOcppOperations.reset(new PersistentOperationsQueue(baseModel, filesystem));
+        initiatedRequests.reset(new PersistentRequestQueue(baseModel, filesystem));
     } else {
-        initiatedOcppOperations.reset(new VolatileOperationsQueue());
+        initiatedRequests.reset(new VolatileRequestQueue());
     }
 }
 
-void OcppConnection::setSocket(OcppSocket& sock) {
+void RequestQueue::setConnection(Connection& sock) {
     ReceiveTXTcallback callback = [this] (const char *payload, size_t length) {
         return this->receiveMessage(payload, length);
     };
@@ -34,15 +34,15 @@ void OcppConnection::setSocket(OcppSocket& sock) {
     sock.setReceiveTXTcallback(callback);
 }
 
-void OcppConnection::loop(OcppSocket& ocppSock) {
+void RequestQueue::loop(Connection& ocppSock) {
 
     /*
      * Sort out timed out operations
      */
-    initiatedOcppOperations->drop_if([] (std::unique_ptr<OcppOperation>& op) -> bool {
+    initiatedRequests->drop_if([] (std::unique_ptr<Request>& op) -> bool {
         bool timed_out = op->isTimeoutExceeded();
         if (timed_out) {
-            AO_DBG_INFO("operation timeout: %s", op->getOcppOperationType());
+            AO_DBG_INFO("operation timeout: %s", op->getOperationType());
             op->executeTimeout();
         }
         return timed_out;
@@ -54,7 +54,7 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
      * 
      * If a message has been sent, terminate this loop() function.
      */
-    for (auto received = receivedOcppOperations.begin(); received != receivedOcppOperations.end(); ++received) {
+    for (auto received = receivedRequests.begin(); received != receivedRequests.end(); ++received) {
     
         auto response = (*received)->createResponse();
 
@@ -66,7 +66,7 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
 
             if (success) {
                 AO_DBG_TRAFFIC_OUT(out.c_str());
-                received = receivedOcppOperations.erase(received);
+                received = receivedRequests.erase(received);
             }
 
             return;
@@ -77,7 +77,7 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
     /**
      * Send pending req message
      */
-    auto initedOp = initiatedOcppOperations->front();
+    auto initedOp = initiatedRequests->front();
 
     if (!initedOp) {
         //queue empty
@@ -125,16 +125,16 @@ void OcppConnection::loop(OcppSocket& ocppSock) {
     
 }
 
-void OcppConnection::sendRequest(std::unique_ptr<OcppOperation> op){
+void RequestQueue::sendRequest(std::unique_ptr<Request> op){
     if (!op) {
         AO_DBG_ERR("Called with null. Ignore");
         return;
     }
     
-    initiatedOcppOperations->initiate(std::move(op));
+    initiatedRequests->push_back(std::move(op));
 }
 
-bool OcppConnection::receiveMessage(const char* payload, size_t length) {
+bool RequestQueue::receiveMessage(const char* payload, size_t length) {
 
     AO_DBG_TRAFFIC_IN((int) length, payload);
 
@@ -199,7 +199,7 @@ bool OcppConnection::receiveMessage(const char* payload, size_t length) {
                 int messageTypeId = doc[0] | -1;
                 if (messageTypeId == MESSAGE_TYPE_CALL) {
                     success = true;
-                    auto op = makeOcppOperation(new MsgBufferExceeded(AO_MAX_JSON_CAPACITY, length));
+                    auto op = makeRequest(new MsgBufferExceeded(AO_MAX_JSON_CAPACITY, length));
                     receiveRequest(doc.as<JsonArray>(), std::move(op));
                 } else if (messageTypeId == MESSAGE_TYPE_CALLRESULT ||
                             messageTypeId == MESSAGE_TYPE_CALLERROR) {
@@ -225,12 +225,12 @@ bool OcppConnection::receiveMessage(const char* payload, size_t length) {
  * This function could result in improper behavior in Charging Stations, because messages are not
  * guaranteed to be received and therefore processed in the right order.
  */
-void OcppConnection::receiveResponse(JsonArray json) {
+void RequestQueue::receiveResponse(JsonArray json) {
 
     bool success = false;
 
-    initiatedOcppOperations->drop_if(
-        [&json, &success] (std::unique_ptr<OcppOperation>& operation) {
+    initiatedRequests->drop_if(
+        [&json, &success] (std::unique_ptr<Request>& operation) {
             bool match = operation->receiveResponse(json);
             if (match) {
                 success = true;
@@ -240,7 +240,7 @@ void OcppConnection::receiveResponse(JsonArray json) {
         }); //executes in order and drops every operation where predicate(op) == true
 
     if (!success) {
-        //didn't find matching OcppOperation
+        //didn't find matching Request
         if (json[0] == MESSAGE_TYPE_CALLERROR) {
             AO_DBG_DEBUG("Received CALLERROR did not abort a pending operation");
             (void)0;
@@ -251,8 +251,8 @@ void OcppConnection::receiveResponse(JsonArray json) {
     }
 }
 
-void OcppConnection::receiveRequest(JsonArray json) {
-    auto op = operationDeserializer.deserializeOperation(json[2] | "UNDEFINED");
+void RequestQueue::receiveRequest(JsonArray json) {
+    auto op = operationRegistry.deserializeOperation(json[2] | "UNDEFINED");
     if (op == nullptr) {
         AO_DBG_WARN("OOM");
         return;
@@ -260,9 +260,9 @@ void OcppConnection::receiveRequest(JsonArray json) {
     receiveRequest(json, std::move(op));
 }
 
-void OcppConnection::receiveRequest(JsonArray json, std::unique_ptr<OcppOperation> op) {
+void RequestQueue::receiveRequest(JsonArray json, std::unique_ptr<Request> op) {
     op->receiveRequest(json); //execute the operation
-    receivedOcppOperations.push_back(std::move(op)); //enqueue so loop() plans conf sending
+    receivedRequests.push_back(std::move(op)); //enqueue so loop() plans conf sending
 }
 
 /*

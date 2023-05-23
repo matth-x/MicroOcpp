@@ -5,7 +5,7 @@
 #include <string>
 
 #include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlCommon.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
 #include <ArduinoOcpp/MessagesV16/ChangeConfiguration.h>
@@ -26,7 +26,7 @@
 
 using namespace ArduinoOcpp;
 
-ChargeControlCommon::ChargeControlCommon(OcppEngine& context, unsigned int numConn, std::shared_ptr<FilesystemAdapter> filesystem) :
+ChargeControlCommon::ChargeControlCommon(Context& context, unsigned int numConn, std::shared_ptr<FilesystemAdapter> filesystem) :
         context(context) {
     
     std::shared_ptr<Configuration<int>> numberOfConnectors =
@@ -57,38 +57,38 @@ ChargeControlCommon::ChargeControlCommon(OcppEngine& context, unsigned int numCo
     declareConfiguration<bool>("AuthorizeRemoteTxRequests",false,CONFIGURATION_VOLATILE,false,true,false,false);
     declareConfiguration<int>("GetConfigurationMaxKeys",30,CONFIGURATION_VOLATILE,false,true,false,false);
     
-    context.getOperationDeserializer().registerOcppOperation("ChangeAvailability", [&context] () {
-        return new Ocpp16::ChangeAvailability(context.getOcppModel());});
-    context.getOperationDeserializer().registerOcppOperation("ChangeConfiguration", [] () {
+    context.getOperationRegistry().registerRequest("ChangeAvailability", [&context] () {
+        return new Ocpp16::ChangeAvailability(context.getModel());});
+    context.getOperationRegistry().registerRequest("ChangeConfiguration", [] () {
         return new Ocpp16::ChangeConfiguration();});
-    context.getOperationDeserializer().registerOcppOperation("ClearCache", [filesystem] () {
+    context.getOperationRegistry().registerRequest("ClearCache", [filesystem] () {
         return new Ocpp16::ClearCache(filesystem);});
-    context.getOperationDeserializer().registerOcppOperation("GetConfiguration", [] () {
+    context.getOperationRegistry().registerRequest("GetConfiguration", [] () {
         return new Ocpp16::GetConfiguration();});
-    context.getOperationDeserializer().registerOcppOperation("RemoteStartTransaction", [&context] () {
-        return new Ocpp16::RemoteStartTransaction(context.getOcppModel());});
-    context.getOperationDeserializer().registerOcppOperation("RemoteStopTransaction", [&context] () {
-        return new Ocpp16::RemoteStopTransaction(context.getOcppModel());});
-    context.getOperationDeserializer().registerOcppOperation("Reset", [&context] () {
-        return new Ocpp16::Reset(context.getOcppModel());});
-    context.getOperationDeserializer().registerOcppOperation("TriggerMessage", [&context] () {
-        return new Ocpp16::TriggerMessage(context.getOcppModel());});
-    context.getOperationDeserializer().registerOcppOperation("UnlockConnector", [&context] () {
-        return new Ocpp16::UnlockConnector(context.getOcppModel());});
+    context.getOperationRegistry().registerRequest("RemoteStartTransaction", [&context] () {
+        return new Ocpp16::RemoteStartTransaction(context.getModel());});
+    context.getOperationRegistry().registerRequest("RemoteStopTransaction", [&context] () {
+        return new Ocpp16::RemoteStopTransaction(context.getModel());});
+    context.getOperationRegistry().registerRequest("Reset", [&context] () {
+        return new Ocpp16::Reset(context.getModel());});
+    context.getOperationRegistry().registerRequest("TriggerMessage", [&context] () {
+        return new Ocpp16::TriggerMessage(context.getModel());});
+    context.getOperationRegistry().registerRequest("UnlockConnector", [&context] () {
+        return new Ocpp16::UnlockConnector(context.getModel());});
 
     /*
      * Register further message handlers to support echo mode: when this library
      * is connected with a WebSocket echo server, let it reply to its own requests.
      * Mocking an OCPP Server on the same device makes running (unit) tests easier.
      */
-    context.getOperationDeserializer().registerOcppOperation("Authorize", [&context] () {
-        return new Ocpp16::Authorize(context.getOcppModel(), nullptr);});
-    context.getOperationDeserializer().registerOcppOperation("StartTransaction", [&context] () {
-        return new Ocpp16::StartTransaction(context.getOcppModel(), nullptr);});
-    context.getOperationDeserializer().registerOcppOperation("StatusNotification", [&context] () {
-        return new Ocpp16::StatusNotification(-1, OcppEvseState::NOT_SET, OcppTimestamp());});
-    context.getOperationDeserializer().registerOcppOperation("StopTransaction", [&context] () {
-        return new Ocpp16::StopTransaction(context.getOcppModel(), nullptr);});
+    context.getOperationRegistry().registerRequest("Authorize", [&context] () {
+        return new Ocpp16::Authorize(context.getModel(), nullptr);});
+    context.getOperationRegistry().registerRequest("StartTransaction", [&context] () {
+        return new Ocpp16::StartTransaction(context.getModel(), nullptr);});
+    context.getOperationRegistry().registerRequest("StatusNotification", [&context] () {
+        return new Ocpp16::StatusNotification(-1, OcppEvseState::NOT_SET, Timestamp());});
+    context.getOperationRegistry().registerRequest("StopTransaction", [&context] () {
+        return new Ocpp16::StopTransaction(context.getModel(), nullptr);});
 }
 
 void ChargeControlCommon::loop() {

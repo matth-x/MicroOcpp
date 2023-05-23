@@ -40,7 +40,7 @@ CustomMessage::~CustomMessage() {
 
 }
 
-const char* CustomMessage::getOcppOperationType() {
+const char* CustomMessage::getOperationType() {
     return operationType.c_str();
 }
 

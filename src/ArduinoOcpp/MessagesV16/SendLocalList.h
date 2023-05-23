@@ -5,26 +5,26 @@
 #ifndef SENDLOCALLIST_H
 #define SENDLOCALLIST_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class SendLocalList : public OcppMessage {
+class SendLocalList : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     const char *errorCode = nullptr;
     bool updateFailure = true;
     bool versionMismatch = false;
 public:
-    SendLocalList(OcppModel& context);
+    SendLocalList(Model& model);
 
     ~SendLocalList();
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

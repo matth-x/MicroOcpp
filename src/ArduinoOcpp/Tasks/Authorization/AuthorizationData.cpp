@@ -43,7 +43,7 @@ void AuthorizationData::readJson(JsonObject entry, bool compact) {
     }
 
     if (idTagInfo.containsKey(AUTHDATA_KEY_EXPIRYDATE(compact))) {
-        expiryDate = std::unique_ptr<OcppTimestamp>(new OcppTimestamp());
+        expiryDate = std::unique_ptr<Timestamp>(new Timestamp());
         if (!expiryDate->setTime(idTagInfo[AUTHDATA_KEY_EXPIRYDATE(compact)])) {
             expiryDate.reset();
         }

@@ -5,27 +5,27 @@
 #ifndef UPDATEFIRMWARE_H
 #define UPDATEFIRMWARE_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Operation.h>
+#include <ArduinoOcpp/Core/Time.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class UpdateFirmware : public OcppMessage {
+class UpdateFirmware : public Operation {
 private:
-  OcppModel& context;
+  Model& model;
   std::string location {};
-  OcppTimestamp retreiveDate = OcppTimestamp();
+  Timestamp retreiveDate = Timestamp();
   int retries = 1;
   unsigned long retryInterval = 180;
   bool formatError = false;
 public:
-  UpdateFirmware(OcppModel& context);
+  UpdateFirmware(Model& model);
 
-  const char* getOcppOperationType() {return "UpdateFirmware";}
+  const char* getOperationType() {return "UpdateFirmware";}
 
   void processReq(JsonObject payload);
 

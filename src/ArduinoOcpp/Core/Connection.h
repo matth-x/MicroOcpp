@@ -13,10 +13,10 @@ namespace ArduinoOcpp {
 
 using ReceiveTXTcallback = std::function<bool(const char*, size_t)>;
 
-class OcppSocket {
+class Connection {
 public:
-    OcppSocket() = default;
-    virtual ~OcppSocket() = default;
+    Connection() = default;
+    virtual ~Connection() = default;
 
     /*
      * The OCPP library will call this function frequently. If you need to execute regular routines, like
@@ -41,7 +41,7 @@ public:
     virtual unsigned long getLastRecv() {return 0;}
 };
 
-class OcppEchoSocket : public OcppSocket {
+class LoopbackConnection : public Connection {
 private:
     ReceiveTXTcallback receiveTXT;
 
@@ -66,12 +66,12 @@ public:
 namespace ArduinoOcpp {
 namespace EspWiFi {
 
-class OcppClientSocket : public OcppSocket {
+class WSClient : public Connection {
 private:
     WebSocketsClient *wsock;
     unsigned long lastRecv = 0;
 public:
-    OcppClientSocket(WebSocketsClient *wsock);
+    WSClient(WebSocketsClient *wsock);
 
     void loop();
 

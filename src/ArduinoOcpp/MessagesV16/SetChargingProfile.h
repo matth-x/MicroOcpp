@@ -5,26 +5,26 @@
 #ifndef SETCHARGINGPROFILE_H
 #define SETCHARGINGPROFILE_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class SetChargingProfile : public OcppMessage {
+class SetChargingProfile : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     std::unique_ptr<DynamicJsonDocument> payloadToClient;
 public:
-    SetChargingProfile(OcppModel& context);
+    SetChargingProfile(Model& model);
 
-    SetChargingProfile(OcppModel& context, std::unique_ptr<DynamicJsonDocument> payloadToClient);
+    SetChargingProfile(Model& model, std::unique_ptr<DynamicJsonDocument> payloadToClient);
 
     ~SetChargingProfile();
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

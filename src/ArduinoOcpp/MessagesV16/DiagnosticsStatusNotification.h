@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsStatus.h>
 
 #ifndef DIAGNOSTICSSTATUSNOTIFICATION_H
@@ -11,14 +11,14 @@
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 
-class DiagnosticsStatusNotification : public OcppMessage {
+class DiagnosticsStatusNotification : public Operation {
 private:
     DiagnosticsStatus status = DiagnosticsStatus::Idle;
     static const char *cstrFromStatus(DiagnosticsStatus status);
 public:
     DiagnosticsStatusNotification(DiagnosticsStatus status);
 
-    const char* getOcppOperationType() {return "DiagnosticsStatusNotification"; }
+    const char* getOperationType() {return "DiagnosticsStatusNotification"; }
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 

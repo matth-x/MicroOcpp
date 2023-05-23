@@ -6,18 +6,18 @@
 #include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::TriggerMessage;
 
-TriggerMessage::TriggerMessage(OcppModel& context) : context(context) {
+TriggerMessage::TriggerMessage(Model& model) : model(model) {
 
 }
 
-const char* TriggerMessage::getOcppOperationType(){
+const char* TriggerMessage::getOperationType(){
     return "TriggerMessage";
 }
 
@@ -31,7 +31,7 @@ void TriggerMessage::processReq(JsonObject payload) {
     statusMessage = "Rejected";
 
     if (!strcmp(requestedMessage, "MeterValues")) {
-        if (auto mService = context.getMeteringService()) {
+        if (auto mService = model.getMeteringService()) {
             if (connectorId < 0) {
                 auto nConnectors = mService->getNumConnectors();
                 for (decltype(nConnectors) cId = 0; cId < nConnectors; cId++) {
@@ -46,8 +46,8 @@ void TriggerMessage::processReq(JsonObject payload) {
     } else if (!strcmp(requestedMessage, "StatusNotification")) {
         unsigned int cIdRangeBegin = 0, cIdRangeEnd = 0;
         if (connectorId < 0) {
-            cIdRangeEnd = context.getNumConnectors();
-        } else if ((unsigned int) connectorId < context.getNumConnectors()) {
+            cIdRangeEnd = model.getNumConnectors();
+        } else if ((unsigned int) connectorId < model.getNumConnectors()) {
             cIdRangeBegin = connectorId;
             cIdRangeEnd = connectorId + 1;
         } else {
@@ -55,19 +55,19 @@ void TriggerMessage::processReq(JsonObject payload) {
         }
 
         for (auto i = cIdRangeBegin; i < cIdRangeEnd; i++) {
-            auto connector = context.getConnector(i);
+            auto connector = model.getConnector(i);
 
-            auto statusNotification = makeOcppOperation(new Ocpp16::StatusNotification(
+            auto statusNotification = makeRequest(new Ocpp16::StatusNotification(
                         i,
                         connector->inferenceStatus(), //will be determined in StatusNotification::initiate
-                        context.getOcppTime().getOcppTimestampNow()));
+                        model.getTime().getTimestampNow()));
 
             statusNotification->setTimeout(60000);
 
             triggeredOperations.push_back(std::move(statusNotification));
         }
     } else {
-        auto msg = defaultOcppEngine->getOperationDeserializer().deserializeOperation(requestedMessage);
+        auto msg = defaultContext->getOperationRegistry().deserializeOperation(requestedMessage);
         if (msg) {
             triggeredOperations.push_back(std::move(msg));
         } else {
@@ -93,10 +93,10 @@ std::unique_ptr<DynamicJsonDocument> TriggerMessage::createConf(){
     
     payload["status"] = statusMessage;
 
-    if (defaultOcppEngine) {
+    if (defaultContext) {
         auto op = triggeredOperations.begin();
         while (op != triggeredOperations.end()) {
-            defaultOcppEngine->initiatePreBootOperation(std::move(triggeredOperations.front()));
+            defaultContext->initiatePreBootOperation(std::move(triggeredOperations.front()));
             op = triggeredOperations.erase(op);
         }
     }

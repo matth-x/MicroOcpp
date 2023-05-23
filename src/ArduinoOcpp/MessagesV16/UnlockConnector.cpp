@@ -3,18 +3,18 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::UnlockConnector;
 
 #define AO_UNLOCK_TIMEOUT 10000
 
-UnlockConnector::UnlockConnector(OcppModel& context) : context(context) {
+UnlockConnector::UnlockConnector(Model& model) : model(model) {
   
 }
 
-const char* UnlockConnector::getOcppOperationType(){
+const char* UnlockConnector::getOperationType(){
     return "UnlockConnector";
 }
 
@@ -22,7 +22,7 @@ void UnlockConnector::processReq(JsonObject payload) {
     
     auto connectorId = payload["connectorId"] | -1;
 
-    auto connector = context.getConnector(connectorId);
+    auto connector = model.getConnector(connectorId);
 
     if (!connector) {
         err = true;

@@ -5,22 +5,22 @@
 #ifndef REMOTESTOPTRANSACTION_H
 #define REMOTESTOPTRANSACTION_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class RemoteStopTransaction : public OcppMessage {
+class RemoteStopTransaction : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     int transactionId;
 public:
-    RemoteStopTransaction(OcppModel& context);
+    RemoteStopTransaction(Model& model);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

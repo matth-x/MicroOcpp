@@ -5,27 +5,27 @@
 #ifndef UNLOCKCONNECTOR_H
 #define UNLOCKCONNECTOR_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/Core/PollResult.h>
 #include <functional>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class UnlockConnector : public OcppMessage {
+class UnlockConnector : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     bool err = false;
     std::function<PollResult<bool> ()> unlockConnector;
     PollResult<bool> cbUnlockResult;
     unsigned long timerStart = 0; //for timeout
 public:
-    UnlockConnector(OcppModel& context);
+    UnlockConnector(Model& model);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

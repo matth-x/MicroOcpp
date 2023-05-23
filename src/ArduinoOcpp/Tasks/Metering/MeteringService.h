@@ -18,18 +18,18 @@ namespace ArduinoOcpp {
 using PowerSampler = std::function<float()>;  //in Watts (W)
 using EnergySampler = std::function<float()>; //in Watt-hours (Wh)
 
-class OcppEngine;
-class OcppOperation;
+class Context;
+class Request;
 class FilesystemAdapter;
 
 class MeteringService {
 private:
-    OcppEngine& context;
+    Context& context;
     MeterStore meterStore;
 
     std::vector<std::unique_ptr<ConnectorMeterValuesRecorder>> connectors;
 public:
-    MeteringService(OcppEngine& context, int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
+    MeteringService(Context& context, int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
     void loop();
 
@@ -41,7 +41,7 @@ public:
 
     std::unique_ptr<SampledValue> readTxEnergyMeter(int connectorId, ReadingContext reason);
 
-    std::unique_ptr<OcppOperation> takeTriggeredMeterValues(int connectorId); //snapshot of all meters now
+    std::unique_ptr<Request> takeTriggeredMeterValues(int connectorId); //snapshot of all meters now
 
     void beginTxMeterData(Transaction *transaction);
 

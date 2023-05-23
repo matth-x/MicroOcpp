@@ -7,7 +7,7 @@
 
 #include <memory>
 
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Time.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 
 namespace ArduinoOcpp {
@@ -24,7 +24,7 @@ class ReservationService;
 class BootService;
 class ResetService;
 
-class OcppModel {
+class Model {
 private:
     std::vector<Connector> connectors;
     std::unique_ptr<TransactionStore> transactionStore;
@@ -38,15 +38,15 @@ private:
     std::unique_ptr<ReservationService> reservationService;
     std::unique_ptr<BootService> bootService;
     std::unique_ptr<ResetService> resetService;
-    OcppTime ocppTime;
+    Time time;
 
     bool runTasks = false;
 
 public:
-    OcppModel(const OcppClock& system_clock);
-    OcppModel() = delete;
-    OcppModel(const OcppModel& rhs) = delete;
-    ~OcppModel();
+    Model(const Clock& system_clock);
+    Model() = delete;
+    Model(const Model& rhs) = delete;
+    ~Model();
 
     void loop();
 
@@ -88,7 +88,7 @@ public:
     void setResetService(std::unique_ptr<ResetService> rs);
     ResetService *getResetService() const;
 
-    OcppTime &getOcppTime();
+    Time &getTime();
 };
 
 } //end namespace ArduinoOcpp

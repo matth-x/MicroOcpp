@@ -3,18 +3,18 @@
 
 #include <ArduinoOcpp/Debug.h>
 
-ArduinoOcpp::OcppSocket *ocppSocket = nullptr;
+ArduinoOcpp::Connection *ocppSocket = nullptr;
 
-void ao_initialize(AOcppSocket *osock, const char *chargePointModel, const char *chargePointVendor, float V_eff, struct AO_FilesystemOpt fsopt) {
+void ao_initialize(AConnection *osock, const char *chargePointModel, const char *chargePointVendor, float V_eff, struct AO_FilesystemOpt fsopt) {
     ao_initialize_full(osock, ChargerCredentials(chargePointModel, chargePointVendor), V_eff, fsopt);
 }
 
-void ao_initialize_full(AOcppSocket *osock, const char *bootNotificationCredentials, float V_eff, struct AO_FilesystemOpt fsopt) {
+void ao_initialize_full(AConnection *osock, const char *bootNotificationCredentials, float V_eff, struct AO_FilesystemOpt fsopt) {
     if (!osock) {
         AO_DBG_ERR("osock is null");
     }
 
-    ocppSocket = reinterpret_cast<ArduinoOcpp::OcppSocket*>(osock);
+    ocppSocket = reinterpret_cast<ArduinoOcpp::Connection*>(osock);
 
     ArduinoOcpp::FilesystemOpt adaptFsopt = fsopt;
 
@@ -96,7 +96,7 @@ std::function<void(void)> adaptFn(void (*fn)(void)) {
 
 char ao_recv_payload_buff [AO_RECEIVE_PAYLOAD_BUFSIZE] = {'\0'};
 
-std::function<void(JsonObject)> adaptFn(OnOcppMessage fn) {
+std::function<void(JsonObject)> adaptFn(OnMessage fn) {
     if (!fn) return nullptr;
     return [fn] (JsonObject payload) {
         auto len = serializeJson(payload, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
@@ -107,7 +107,7 @@ std::function<void(JsonObject)> adaptFn(OnOcppMessage fn) {
     };
 }
 
-ArduinoOcpp::OnReceiveErrorListener adaptFn(OnOcppError fn) {
+ArduinoOcpp::OnReceiveErrorListener adaptFn(OnCallError fn) {
     if (!fn) return nullptr;
     return [fn] (const char *code, const char *description, JsonObject details) {
         auto len = serializeJson(details, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
@@ -126,11 +126,11 @@ std::function<ArduinoOcpp::PollResult<bool>()> adaptFn(unsigned int connectorId,
     return [fn, connectorId] () {return adaptScl(fn(connectorId));};
 }
 
-void ao_bootNotification(const char *chargePointModel, const char *chargePointVendor, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError) {
+void ao_bootNotification(const char *chargePointModel, const char *chargePointVendor, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError) {
     bootNotification(chargePointModel, chargePointVendor, adaptFn(onConfirmation), adaptFn(onAbort), adaptFn(onTimeout), adaptFn(onError));
 }
 
-void ao_bootNotification_full(const char *payloadJson, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError) {
+void ao_bootNotification_full(const char *payloadJson, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError) {
     auto payload = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(9) + 230 + 9)); // BootNotification has at most 9 attributes with at most 230 chars + null terminators
     auto err = deserializeJson(*payload, payloadJson);
     if (err) {
@@ -321,7 +321,7 @@ bool ao_isBlockedByReservation_m(unsigned int connectorId, const char *idTag) {
     return isBlockedByReservation(idTag, connectorId);
 }
 
-void ao_setOnResetRequest(OnOcppMessage onRequest) {
+void ao_setOnResetRequest(OnMessage onRequest) {
     setOnResetRequest(adaptFn(onRequest));
 }
 
@@ -330,29 +330,29 @@ void ao_set_console_out_c(void (*console_out)(const char *msg)) {
 }
 
 OcppHandle *ao_getOcppHandle() {
-    return reinterpret_cast<OcppHandle*>(getOcppEngine());
+    return reinterpret_cast<OcppHandle*>(getOcppContext());
 }
 
-void ao_onRemoteStartTransactionSendConf(OnOcppMessage onSendConf) {
+void ao_onRemoteStartTransactionSendConf(OnMessage onSendConf) {
     setOnRemoteStopTransactionSendConf(adaptFn(onSendConf));
 }
 
-void ao_onRemoteStopTransactionSendConf(OnOcppMessage onSendConf) {
+void ao_onRemoteStopTransactionSendConf(OnMessage onSendConf) {
     setOnRemoteStopTransactionSendConf(adaptFn(onSendConf));
 }
 
-void ao_onRemoteStopTransactionRequest(OnOcppMessage onRequest) {
+void ao_onRemoteStopTransactionRequest(OnMessage onRequest) {
     setOnRemoteStopTransactionReceiveReq(adaptFn(onRequest));
 }
 
-void ao_onResetSendConf(OnOcppMessage onSendConf) {
+void ao_onResetSendConf(OnMessage onSendConf) {
     setOnResetSendConf(adaptFn(onSendConf));
 }
 
-void ao_startTransaction(const char *idTag, OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError) {
+void ao_startTransaction(const char *idTag, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError) {
     startTransaction(idTag, adaptFn(onConfirmation), adaptFn(onAbort), adaptFn(onTimeout), adaptFn(onError));
 }
 
-void ao_stopTransaction(OnOcppMessage onConfirmation, OnOcppAbort onAbort, OnOcppTimeout onTimeout, OnOcppError onError) {
+void ao_stopTransaction(OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError) {
     stopTransaction(adaptFn(onConfirmation), adaptFn(onAbort), adaptFn(onTimeout), adaptFn(onError));
 }

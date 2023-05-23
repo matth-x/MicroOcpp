@@ -1,8 +1,8 @@
 #include <ArduinoOcpp.h>
-#include <ArduinoOcpp/Core/OcppSocket.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Connection.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
 #include "./catch2/catch.hpp"
@@ -10,12 +10,12 @@
 
 using namespace ArduinoOcpp;
 
-class CustomStartTransaction : public OcppMessage {
+class CustomStartTransaction : public Operation {
 private:
     const char *status;
 public:
     CustomStartTransaction(const char *status) : status(status) { };
-    const char *getOcppOperationType() override {return "StartTransaction";}
+    const char *getOperationType() override {return "StartTransaction";}
     void processReq(JsonObject payload) override {
         //ignore payload - result is determined at construction time
     }
@@ -35,14 +35,14 @@ TEST_CASE( "Configuration Behavior" ) {
     AO_DBG_DEBUG("remove all");
     FilesystemUtils::remove_all(filesystem, "");
 
-    //initialize OcppEngine with dummy socket
-    OcppEchoSocket echoSocket;
-    OCPP_initialize(echoSocket, ChargerCredentials("test-runner1234"));
+    //initialize Context with dummy socket
+    LoopbackConnection loopback;
+    OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-    auto engine = getOcppEngine();
-    auto& checkMsg = engine->getOperationDeserializer();
+    auto engine = getOcppContext();
+    auto& checkMsg = engine->getOperationRegistry();
 
-    auto connector = engine->getOcppModel().getConnector(1);
+    auto connector = engine->getModel().getConnector(1);
 
     ao_set_timer(custom_timer_cb);
 
@@ -82,7 +82,7 @@ TEST_CASE( "Configuration Behavior" ) {
     SECTION("StopTransactionOnInvalidId") {
         auto config = declareConfiguration<bool>("StopTransactionOnInvalidId", true);
 
-        checkMsg.registerOcppOperation("StartTransaction", [] () {return new CustomStartTransaction("Invalid");});
+        checkMsg.registerRequest("StartTransaction", [] () {return new CustomStartTransaction("Invalid");});
 
         SECTION("set true") {
             *config = true;
@@ -113,7 +113,7 @@ TEST_CASE( "Configuration Behavior" ) {
         auto authorizationTimeout = ArduinoOcpp::declareConfiguration<int>("AO_AuthorizationTimeout", 1);
         *authorizationTimeout = 1; //try normal Authorize for 1s, then enter offline mode
 
-        echoSocket.setConnected(false); //connection loss
+        loopback.setConnected(false); //connection loss
 
         SECTION("set true") {
             *config = true;
@@ -141,7 +141,7 @@ TEST_CASE( "Configuration Behavior" ) {
         }
 
         endTransaction();
-        echoSocket.setConnected(true);
+        loopback.setConnected(true);
     }
 
     SECTION("LocalPreAuthorize") {
@@ -156,10 +156,10 @@ TEST_CASE( "Configuration Behavior" ) {
 
         //define local auth list with entry local-idtag
         std::string localListMsg = "[2,\"testmsg-01\",\"SendLocalList\",{\"listVersion\":1,\"localAuthorizationList\":[{\"idTag\":\"local-idtag\",\"idTagInfo\":{\"status\":\"Accepted\"}}],\"updateType\":\"Full\"}]";
-        echoSocket.sendTXT(localListMsg);
+        loopback.sendTXT(localListMsg);
         loop();
 
-        echoSocket.setConnected(false); //connection loss
+        loopback.setConnected(false); //connection loss
 
         SECTION("set true - accepted idtag") {
             *config = true;
@@ -178,7 +178,7 @@ TEST_CASE( "Configuration Behavior" ) {
 
             REQUIRE(connector->inferenceStatus() == OcppEvseState::Preparing);
 
-            echoSocket.setConnected(true);
+            loopback.setConnected(true);
             mtime += 20000; //Authorize will be retried after a few seconds
             loop();
 
@@ -186,7 +186,7 @@ TEST_CASE( "Configuration Behavior" ) {
         }
 
         endTransaction();
-        echoSocket.setConnected(true);
+        loopback.setConnected(true);
     }
 
     OCPP_deinitialize();

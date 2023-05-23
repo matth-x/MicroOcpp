@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Reservation/Reservation.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Debug.h>
 
 #ifndef RESERVATION_FN
@@ -12,7 +12,7 @@
 
 using namespace ArduinoOcpp;
 
-Reservation::Reservation(OcppModel& context, unsigned int slot) : context(context), slot(slot) {
+Reservation::Reservation(Model& model, unsigned int slot) : model(model), slot(slot) {
     const size_t KEY_SIZE = 50;
     char key [KEY_SIZE] = {'\0'};
 
@@ -44,7 +44,7 @@ bool Reservation::isActive() {
         return false;
     }
 
-    auto& t_now = context.getOcppTime().getOcppTimestampNow();
+    auto& t_now = model.getTime().getTimestampNow();
     if (t_now > expiryDate) {
         //reservation expired
         return false;
@@ -77,7 +77,7 @@ int Reservation::getConnectorId() {
     return *connectorId;
 }
 
-OcppTimestamp& Reservation::getExpiryDate() {
+Timestamp& Reservation::getExpiryDate() {
     return expiryDate;
 }
 

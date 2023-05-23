@@ -2,14 +2,14 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/OcppSocket.h>
+#include <ArduinoOcpp/Core/Connection.h>
 #include <ArduinoOcpp/Debug.h>
 
 using namespace ArduinoOcpp;
 
-void OcppEchoSocket::loop() { }
+void LoopbackConnection::loop() { }
 
-bool OcppEchoSocket::sendTXT(std::string &out) {
+bool LoopbackConnection::sendTXT(std::string &out) {
     if (!connected) {
         return true;
     }
@@ -21,11 +21,11 @@ bool OcppEchoSocket::sendTXT(std::string &out) {
     }
 }
 
-void OcppEchoSocket::setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) {
+void LoopbackConnection::setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) {
     this->receiveTXT = receiveTXT;
 }
 
-unsigned long OcppEchoSocket::getLastRecv() {
+unsigned long LoopbackConnection::getLastRecv() {
     return lastRecv;
 }
 
@@ -33,19 +33,19 @@ unsigned long OcppEchoSocket::getLastRecv() {
 
 using namespace ArduinoOcpp::EspWiFi;
 
-OcppClientSocket::OcppClientSocket(WebSocketsClient *wsock) : wsock(wsock) {
+WSClient::WSClient(WebSocketsClient *wsock) : wsock(wsock) {
 
 }
 
-void OcppClientSocket::loop() {
+void WSClient::loop() {
     wsock->loop();
 }
 
-bool OcppClientSocket::sendTXT(std::string &out) {
+bool WSClient::sendTXT(std::string &out) {
     return wsock->sendTXT(out.c_str(), out.length());
 }
 
-void OcppClientSocket::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
+void WSClient::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
     auto& captureLastRecv = lastRecv;
     wsock->onEvent([callback, &captureLastRecv](WStype_t type, uint8_t * payload, size_t length) {
         switch (type) {
@@ -57,7 +57,7 @@ void OcppClientSocket::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
                 captureLastRecv = ao_tick_ms();
                 break;
             case WStype_TEXT:
-                if (callback((const char *) payload, length)) { //forward message to OcppEngine
+                if (callback((const char *) payload, length)) { //forward message to RequestQueue
                     captureLastRecv = ao_tick_ms();
                 } else {
                     AO_DBG_WARN("Processing WebSocket input event failed");
@@ -84,7 +84,7 @@ void OcppClientSocket::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
     });
 }
 
-unsigned long OcppClientSocket::getLastRecv() {
+unsigned long WSClient::getLastRecv() {
     return lastRecv;
 }
 

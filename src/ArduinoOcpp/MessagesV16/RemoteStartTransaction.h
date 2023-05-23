@@ -5,27 +5,27 @@
 #ifndef REMOTESTARTTRANSACTION_H
 #define REMOTESTARTTRANSACTION_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class RemoteStartTransaction : public OcppMessage {
+class RemoteStartTransaction : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     int connectorId;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
     DynamicJsonDocument chargingProfileDoc {0};
     
     const char *errorCode {nullptr};
 public:
-    RemoteStartTransaction(OcppModel& context);
+    RemoteStartTransaction(Model& model);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 

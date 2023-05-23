@@ -3,8 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 
 using ArduinoOcpp::Ocpp16::DiagnosticsStatusNotification;

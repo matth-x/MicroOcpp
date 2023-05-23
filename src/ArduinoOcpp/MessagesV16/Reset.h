@@ -5,22 +5,22 @@
 #ifndef RESET_H
 #define RESET_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class Reset : public OcppMessage {
+class Reset : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     bool resetAccepted {false};
 public:
-    Reset(OcppModel& context);
+    Reset(Model& model);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

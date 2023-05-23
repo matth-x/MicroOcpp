@@ -5,8 +5,8 @@
 #ifndef METERVALUES_H
 #define METERVALUES_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Operation.h>
+#include <ArduinoOcpp/Core/Time.h>
 
 #include <vector>
 
@@ -17,7 +17,7 @@ class Transaction;
 
 namespace Ocpp16 {
 
-class MeterValues : public OcppMessage {
+class MeterValues : public Operation {
 private:
     std::vector<std::unique_ptr<MeterValue>> meterValue;
 
@@ -32,7 +32,7 @@ public:
 
     ~MeterValues();
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 

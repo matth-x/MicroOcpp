@@ -6,26 +6,26 @@
 #define RESERVATION_H
 
 #include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Time.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 class Reservation {
 private:
-    OcppModel& context;
+    Model& model;
     const unsigned int slot;
 
     std::shared_ptr<Configuration<int>> connectorId;
     std::shared_ptr<Configuration<const char *>> expiryDateRaw;
-    OcppTimestamp expiryDate;
+    Timestamp expiryDate;
     std::shared_ptr<Configuration<const char *>> idTag;
     std::shared_ptr<Configuration<int>> reservationId;
     std::shared_ptr<Configuration<const char *>> parentIdTag;
 
 public:
-    Reservation(OcppModel& context, unsigned int slot);
+    Reservation(Model& model, unsigned int slot);
 
     bool isActive(); //if this object contains a valid, unexpired reservation
 
@@ -33,7 +33,7 @@ public:
     bool matches(const char *idTag, const char *parentIdTag = nullptr); //idTag == parentIdTag == nullptr -> return True
 
     int getConnectorId();
-    OcppTimestamp& getExpiryDate();
+    Timestamp& getExpiryDate();
     const char *getIdTag();
     int getReservationId();
     const char *getParentIdTag();

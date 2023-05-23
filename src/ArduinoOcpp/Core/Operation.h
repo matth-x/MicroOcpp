@@ -7,10 +7,10 @@
  * destination properly (the "Remote procedure call" header, e.g. message Id). Second, transmit the application data
  * as specified in the OCPP 1.6 document.
  * 
- * The remote procedure call (RPC) part is implemented by the class OcppOperation. The application data part is implemented by
- * the respective OcppMessage subclasses, e.g. BootNotification, StartTransaction, ect.
+ * The remote procedure call (RPC) part is implemented by the class Request. The application data part is implemented by
+ * the respective Operation subclasses, e.g. BootNotification, StartTransaction, ect.
  * 
- * The resulting structure is that the RPC header (=instance of OcppOperation) holds a reference to the payload
+ * The resulting structure is that the RPC header (=instance of Request) holds a reference to the payload
  * message creator (=instance of BootNotification, StartTransaction, ...). Both objects working together give the complete
  * OCPP operation.
  */
@@ -21,19 +21,19 @@
 #include <ArduinoJson.h>
 #include <memory>
 
-#include <ArduinoOcpp/Core/OperationStore.h>
+#include <ArduinoOcpp/Core/RequestStore.h>
 
 namespace ArduinoOcpp {
 
 std::unique_ptr<DynamicJsonDocument> createEmptyDocument();
 
-class OcppMessage {
+class Operation {
 public:
-    OcppMessage();
+    Operation();
 
-    virtual ~OcppMessage();
+    virtual ~Operation();
     
-    virtual const char* getOcppOperationType();
+    virtual const char* getOperationType();
 
     virtual void initiate(StoredOperationHandler *rpcData);
 

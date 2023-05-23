@@ -5,23 +5,23 @@
 #ifndef CLEARCHARGINGPROFILE_H
 #define CLEARCHARGINGPROFILE_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class ClearChargingProfile : public OcppMessage {
+class ClearChargingProfile : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     bool matchingProfilesFound = false;
     const char *errorCode;
 public:
-    ClearChargingProfile(OcppModel& context);
+    ClearChargingProfile(Model& model);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

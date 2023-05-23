@@ -5,21 +5,21 @@
 #ifndef HEARTBEAT_H
 #define HEARTBEAT_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class Heartbeat : public OcppMessage {
+class Heartbeat : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
 public:
-    Heartbeat(OcppModel& context);
+    Heartbeat(Model& model);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 

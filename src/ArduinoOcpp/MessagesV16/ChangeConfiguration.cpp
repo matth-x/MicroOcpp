@@ -15,7 +15,7 @@ ChangeConfiguration::ChangeConfiguration() {
   
 }
 
-const char* ChangeConfiguration::getOcppOperationType(){
+const char* ChangeConfiguration::getOperationType(){
     return "ChangeConfiguration";
 }
 

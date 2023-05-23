@@ -2,11 +2,11 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/OcppOperation.h>
-#include <ArduinoOcpp/Core/OcppMessage.h>
-#include <ArduinoOcpp/Core/OcppSocket.h>
+#include <ArduinoOcpp/Core/Request.h>
+#include <ArduinoOcpp/Core/Operation.h>
+#include <ArduinoOcpp/Core/Connection.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
-#include <ArduinoOcpp/Core/OperationStore.h>
+#include <ArduinoOcpp/Core/RequestStore.h>
 
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
@@ -18,31 +18,31 @@ int unique_id_counter = 1000000;
 
 using namespace ArduinoOcpp;
 
-OcppOperation::OcppOperation(std::unique_ptr<OcppMessage> msg) : ocppMessage(std::move(msg)) {
+Request::Request(std::unique_ptr<Operation> msg) : operation(std::move(msg)) {
 
 }
 
-OcppOperation::OcppOperation() {
+Request::Request() {
 
 }
 
-OcppOperation::~OcppOperation(){
+Request::~Request(){
 
 }
 
-void OcppOperation::setOcppMessage(std::unique_ptr<OcppMessage> msg){
-    ocppMessage = std::move(msg);
+void Request::setOperation(std::unique_ptr<Operation> msg){
+    operation = std::move(msg);
 }
 
-void OcppOperation::setTimeout(unsigned long timeout) {
+void Request::setTimeout(unsigned long timeout) {
     this->timeout_period = timeout;
 }
 
-bool OcppOperation::isTimeoutExceeded() {
+bool Request::isTimeoutExceeded() {
     return timed_out || (timeout_period && ao_tick_ms() - timeout_start >= timeout_period);
 }
 
-void OcppOperation::executeTimeout() {
+void Request::executeTimeout() {
     if (!timed_out) {
         onTimeoutListener();
         onAbortListener();
@@ -50,27 +50,27 @@ void OcppOperation::executeTimeout() {
     timed_out = true;
 }
 
-unsigned int OcppOperation::getTrialNo() {
+unsigned int Request::getTrialNo() {
     return trialNo;
 }
 
-void OcppOperation::setMessageID(const std::string &id){
+void Request::setMessageID(const std::string &id){
     if (!messageID.empty()){
         AO_DBG_WARN("MessageID is set twice or is set after first usage!");
     }
     messageID = id;
 }
 
-const char *OcppOperation::getMessageID() {
+const char *Request::getMessageID() {
     return messageID.c_str();
 }
 
-std::unique_ptr<DynamicJsonDocument> OcppOperation::createRequest(){
+std::unique_ptr<DynamicJsonDocument> Request::createRequest(){
 
     /*
      * Create the OCPP message
      */
-    auto requestPayload = ocppMessage->createReq();
+    auto requestPayload = operation->createReq();
     if (!requestPayload) {
         return nullptr;
     }
@@ -83,7 +83,7 @@ std::unique_ptr<DynamicJsonDocument> OcppOperation::createRequest(){
 
     requestJson->add(MESSAGE_TYPE_CALL);                    //MessageType
     requestJson->add(messageID);                      //Unique message ID
-    requestJson->add(ocppMessage->getOcppOperationType());  //Action
+    requestJson->add(operation->getOperationType());  //Action
     requestJson->add(*requestPayload);                      //Payload
 
     if (AO_DBG_LEVEL >= AO_DL_DEBUG && ao_tick_ms() - debugRequest_start >= 10000) { //print contents on the console
@@ -96,7 +96,7 @@ std::unique_ptr<DynamicJsonDocument> OcppOperation::createRequest(){
         }
 
         if (!buf || len < 1) {
-            AO_DBG_DEBUG("Try to send request: %s", ocppMessage->getOcppOperationType());
+            AO_DBG_DEBUG("Try to send request: %s", operation->getOperationType());
         } else {
             AO_DBG_DEBUG("Try to send request: %.*s (...)", 128, buf);
         }
@@ -109,7 +109,7 @@ std::unique_ptr<DynamicJsonDocument> OcppOperation::createRequest(){
     return requestJson;
 }
 
-bool OcppOperation::receiveResponse(JsonArray response){
+bool Request::receiveResponse(JsonArray response){
     /*
      * check if messageIDs match. If yes, continue with this function. If not, return false for message not consumed
      */
@@ -122,10 +122,10 @@ bool OcppOperation::receiveResponse(JsonArray response){
     if (messageTypeId == MESSAGE_TYPE_CALLRESULT) {
 
         /*
-        * Hand the payload over to the OcppMessage object
+        * Hand the payload over to the Operation object
         */
         JsonObject payload = response[2];
-        ocppMessage->processConf(payload);
+        operation->processConf(payload);
 
         /*
         * Hand the payload over to the onReceiveConf Callback
@@ -139,12 +139,12 @@ bool OcppOperation::receiveResponse(JsonArray response){
     } else if (messageTypeId == MESSAGE_TYPE_CALLERROR) {
 
         /*
-        * Hand the error over to the OcppMessage object
+        * Hand the error over to the Operation object
         */
         const char *errorCode = response[2];
         const char *errorDescription = response[3];
         JsonObject errorDetails = response[4];
-        bool abortOperation = ocppMessage->processErr(errorCode, errorDescription, errorDetails);
+        bool abortOperation = operation->processErr(errorCode, errorDescription, errorDetails);
 
         if (abortOperation) {
             onReceiveErrorListener(errorCode, errorDescription, errorDetails);
@@ -159,16 +159,16 @@ bool OcppOperation::receiveResponse(JsonArray response){
 
 }
 
-bool OcppOperation::receiveRequest(JsonArray request){
+bool Request::receiveRequest(JsonArray request){
   
     std::string msgId = request[1];
     setMessageID(msgId);
     
     /*
-     * Hand the payload over to the OcppOperation object
+     * Hand the payload over to the Request object
      */
     JsonObject payload = request[3];
-    ocppMessage->processReq(payload);
+    operation->processReq(payload);
     
     /*
      * Hand the payload over to the first Callback. It is a callback that notifies the client that request has been processed in the OCPP-library
@@ -178,16 +178,16 @@ bool OcppOperation::receiveRequest(JsonArray request){
     return true; //success
 }
 
-std::unique_ptr<DynamicJsonDocument> OcppOperation::createResponse(){
+std::unique_ptr<DynamicJsonDocument> Request::createResponse(){
 
     /*
      * Create the OCPP message
      */
     std::unique_ptr<DynamicJsonDocument> response = nullptr;
-    std::unique_ptr<DynamicJsonDocument> payload = ocppMessage->createConf();
+    std::unique_ptr<DynamicJsonDocument> payload = operation->createConf();
     std::unique_ptr<DynamicJsonDocument> errorDetails = nullptr;
     
-    bool operationFailure = ocppMessage->getErrorCode() != nullptr;
+    bool operationFailure = operation->getErrorCode() != nullptr;
 
     if (!operationFailure && !payload) {
         return nullptr; //confirmation message still pending
@@ -207,9 +207,9 @@ std::unique_ptr<DynamicJsonDocument> OcppOperation::createResponse(){
     } else {
         //operation failure. Send error message instead
 
-        const char *errorCode = ocppMessage->getErrorCode();
-        const char *errorDescription = ocppMessage->getErrorDescription();
-        errorDetails = std::unique_ptr<DynamicJsonDocument>(ocppMessage->getErrorDetails());
+        const char *errorCode = operation->getErrorCode();
+        const char *errorDescription = operation->getErrorDescription();
+        errorDetails = std::unique_ptr<DynamicJsonDocument>(operation->getErrorDetails());
         if (!errorCode) { //catch corner case when payload is null but errorCode is not set too!
             errorCode = "GenericError";
             errorDescription = "Could not create payload (createConf() returns Null)";
@@ -236,7 +236,7 @@ std::unique_ptr<DynamicJsonDocument> OcppOperation::createResponse(){
     return response;
 }
 
-void OcppOperation::initiate(std::unique_ptr<StoredOperationHandler> opStorage) {
+void Request::initiate(std::unique_ptr<StoredOperationHandler> opStorage) {
 
     timeout_start = ao_tick_ms();
     debugRequest_start = ao_tick_ms();
@@ -246,7 +246,7 @@ void OcppOperation::initiate(std::unique_ptr<StoredOperationHandler> opStorage) 
     sprintf(id_str, "%d", unique_id_counter++);
     messageID = std::string {id_str};
 
-    if (ocppMessage) {
+    if (operation) {
 
         /*
          * Create OCPP-J Remote Procedure Call header storage entry
@@ -259,22 +259,22 @@ void OcppOperation::initiate(std::unique_ptr<StoredOperationHandler> opStorage) 
 
             rpcData->add(MESSAGE_TYPE_CALL);                    //MessageType
             rpcData->add(messageID);                      //Unique message ID
-            rpcData->add(ocppMessage->getOcppOperationType());  //Action
+            rpcData->add(operation->getOperationType());  //Action
 
-            opStore->setRpc(std::move(rpcData));
+            opStore->setRpcData(std::move(rpcData));
         }
         
-        ocppMessage->initiate(opStore.get());
+        operation->initiate(opStore.get());
 
         if (opStore) {
             opStore->clearBuffer();
         }
     } else {
-        AO_DBG_ERR("Missing ocppMessage instance");
+        AO_DBG_ERR("Missing operation instance");
     }
 }
 
-bool OcppOperation::restore(std::unique_ptr<StoredOperationHandler> opStorage, std::shared_ptr<OcppModel> oModel) {
+bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, std::shared_ptr<Model> model) {
     if (!opStorage) {
         AO_DBG_ERR("invalid argument");
         return false;
@@ -282,7 +282,7 @@ bool OcppOperation::restore(std::unique_ptr<StoredOperationHandler> opStorage, s
 
     opStore = std::move(opStorage);
 
-    auto rpcData = opStore->getRpc();
+    auto rpcData = opStore->getRpcData();
     if (!rpcData) {
         AO_DBG_ERR("corrupted storage");
         return false;
@@ -311,21 +311,21 @@ bool OcppOperation::restore(std::unique_ptr<StoredOperationHandler> opStorage, s
     timeout_period = 0; //disable timeout by default for restored msgs
 
     if (!strcmp(opType.c_str(), "StartTransaction")) { //TODO this will get a nicer solution
-        ocppMessage = std::unique_ptr<OcppMessage>(new Ocpp16::StartTransaction(*oModel.get(), nullptr));
+        operation = std::unique_ptr<Operation>(new Ocpp16::StartTransaction(*model.get(), nullptr));
     } else if (!strcmp(opType.c_str(), "StopTransaction")) {
-        ocppMessage = std::unique_ptr<OcppMessage>(new Ocpp16::StopTransaction(*oModel.get(), nullptr));
+        operation = std::unique_ptr<Operation>(new Ocpp16::StopTransaction(*model.get(), nullptr));
     }
 
-    if (!ocppMessage) {
+    if (!operation) {
         AO_DBG_ERR("cannot create msg");
         return false;
     }
 
-    bool success = ocppMessage->restore(opStore.get());
+    bool success = operation->restore(opStore.get());
     opStore->clearBuffer();
 
     if (success) {
-        AO_DBG_DEBUG("restored opNr %i: %s", opStore->getOpNr(), ocppMessage->getOcppOperationType());
+        AO_DBG_DEBUG("restored opNr %i: %s", opStore->getOpNr(), operation->getOperationType());
         (void)0;
     } else {
         AO_DBG_ERR("restore opNr %i error", opStore->getOpNr());
@@ -335,7 +335,7 @@ bool OcppOperation::restore(std::unique_ptr<StoredOperationHandler> opStorage, s
     return success;
 }
 
-void OcppOperation::setOnReceiveConfListener(OnReceiveConfListener onReceiveConf){
+void Request::setOnReceiveConfListener(OnReceiveConfListener onReceiveConf){
     if (onReceiveConf)
         onReceiveConfListener = onReceiveConf;
 }
@@ -343,31 +343,31 @@ void OcppOperation::setOnReceiveConfListener(OnReceiveConfListener onReceiveConf
 /**
  * Sets a Listener that is called after this machine processed a request by the communication counterpart
  */
-void OcppOperation::setOnReceiveReqListener(OnReceiveReqListener onReceiveReq){
+void Request::setOnReceiveReqListener(OnReceiveReqListener onReceiveReq){
     if (onReceiveReq)
         onReceiveReqListener = onReceiveReq;
 }
 
-void OcppOperation::setOnSendConfListener(OnSendConfListener onSendConf){
+void Request::setOnSendConfListener(OnSendConfListener onSendConf){
     if (onSendConf)
         onSendConfListener = onSendConf;
 }
 
-void OcppOperation::setOnTimeoutListener(OnTimeoutListener onTimeout) {
+void Request::setOnTimeoutListener(OnTimeoutListener onTimeout) {
     if (onTimeout)
         onTimeoutListener = onTimeout;
 }
 
-void OcppOperation::setOnReceiveErrorListener(OnReceiveErrorListener onReceiveError) {
+void Request::setOnReceiveErrorListener(OnReceiveErrorListener onReceiveError) {
     if (onReceiveError)
         onReceiveErrorListener = onReceiveError;
 }
 
-void OcppOperation::setOnAbortListener(OnAbortListener onAbort) {
+void Request::setOnAbortListener(OnAbortListener onAbort) {
     if (onAbort)
         onAbortListener = onAbort;
 }
 
-const char *OcppOperation::getOcppOperationType() {
-    return ocppMessage ? ocppMessage->getOcppOperationType() : "UNDEFINED";
+const char *Request::getOperationType() {
+    return operation ? operation->getOperationType() : "UNDEFINED";
 }

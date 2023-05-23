@@ -5,28 +5,28 @@
 #ifndef GETCOMPOSITESCHEDULE_H
 #define GETCOMPOSITESCHEDULE_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Operation.h>
+#include <ArduinoOcpp/Core/Time.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class GetCompositeSchedule : public OcppMessage {
+class GetCompositeSchedule : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     int connectorId {-1};
     otime_t duration {0};
     ChargingRateUnitType chargingRateUnit {ChargingRateUnitType::Watt};
 
     const char *errorCode {nullptr};
 public:
-    GetCompositeSchedule(OcppModel& context);
+    GetCompositeSchedule(Model& model);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

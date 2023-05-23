@@ -19,14 +19,14 @@ namespace ArduinoOcpp {
 using PowerSampler = std::function<float()>;
 using EnergySampler = std::function<float()>;
 
-class OcppModel;
-class OcppMessage;
+class Model;
+class Operation;
 class Transaction;
 class MeterStore;
 
 class ConnectorMeterValuesRecorder {
 private:
-    OcppModel& context;
+    Model& context;
     const int connectorId;
     MeterStore& meterStore;
     
@@ -44,7 +44,7 @@ private:
     std::shared_ptr<Configuration<const char *>> stopTxnAlignedDataSelect;
 
     unsigned long lastSampleTime = 0; //0 means not charging right now
-    OcppTimestamp nextAlignedTime;
+    Timestamp nextAlignedTime;
     std::shared_ptr<Transaction> transaction;
     bool trackTxRunning = false;
  
@@ -61,9 +61,9 @@ private:
     std::shared_ptr<Configuration<bool>> MeterValuesInTxOnly;
     std::shared_ptr<Configuration<bool>> StopTxnDataCapturePeriodic;
 public:
-    ConnectorMeterValuesRecorder(OcppModel& context, int connectorId, MeterStore& meterStore);
+    ConnectorMeterValuesRecorder(Model& context, int connectorId, MeterStore& meterStore);
 
-    OcppMessage *loop();
+    Operation *loop();
 
     void setPowerSampler(PowerSampler powerSampler);
 
@@ -73,7 +73,7 @@ public:
 
     std::unique_ptr<SampledValue> readTxEnergyMeter(ReadingContext context);
 
-    OcppMessage *takeTriggeredMeterValues();
+    Operation *takeTriggeredMeterValues();
 
     void beginTxMeterData(Transaction *transaction);
 

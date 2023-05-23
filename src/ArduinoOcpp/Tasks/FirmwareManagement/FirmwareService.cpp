@@ -3,12 +3,12 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/OperationDeserializer.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/OperationRegistry.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 
 #include <ArduinoOcpp/MessagesV16/UpdateFirmware.h>
 #include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
@@ -19,7 +19,7 @@
 using namespace ArduinoOcpp;
 using ArduinoOcpp::Ocpp16::FirmwareStatus;
 
-FirmwareService::FirmwareService(OcppEngine& context) : context(context) {
+FirmwareService::FirmwareService(Context& context) : context(context) {
     const char *fpId = "FirmwareManagement";
     auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
     if (!strstr(*fProfile, fpId)) {
@@ -30,11 +30,11 @@ FirmwareService::FirmwareService(OcppEngine& context) : context(context) {
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
     
-    context.getOperationDeserializer().registerOcppOperation("UpdateFirmware", [&context] () {
-        return new Ocpp16::UpdateFirmware(context.getOcppModel());});
+    context.getOperationRegistry().registerRequest("UpdateFirmware", [&context] () {
+        return new Ocpp16::UpdateFirmware(context.getModel());});
 
     //Register message handler for TriggerMessage operation
-    context.getOperationDeserializer().registerOcppOperation("FirmwareStatusNotification", [this] () {
+    context.getOperationRegistry().registerRequest("FirmwareStatusNotification", [this] () {
         return new Ocpp16::FirmwareStatusNotification(getFirmwareStatus());});
 }
 
@@ -49,22 +49,22 @@ void FirmwareService::setBuildNumber(const char *buildNumber) {
 void FirmwareService::loop() {
     auto notification = getFirmwareStatusNotification();
     if (notification) {
-        context.initiateOperation(std::move(notification));
+        context.initiateRequest(std::move(notification));
     }
 
     if (ao_tick_ms() - timestampTransition < delayTransition) {
         return;
     }
 
-    OcppTimestamp timestampNow = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+    Timestamp timestampNow = context.getModel().getTime().getTimestampNow();
     if (retries > 0 && timestampNow >= retreiveDate) {
 
         //if (!downloadIssued) {
         if (stage == UpdateStage::Idle) {
             AO_DBG_INFO("Start update");
 
-            if (context.getOcppModel().getNumConnectors() > 0) {
-                auto cp = context.getOcppModel().getConnector(0);
+            if (context.getModel().getNumConnectors() > 0) {
+                auto cp = context.getModel().getConnector(0);
                 cp->setAvailabilityVolatile(false);
             }
             if (onDownload == nullptr) {
@@ -126,8 +126,8 @@ void FirmwareService::loop() {
         //if (!installationIssued) {
         if (stage == UpdateStage::AfterDownload) {
             bool ongoingTx = false;
-            for (unsigned int cId = 0; cId < context.getOcppModel().getNumConnectors(); cId++) {
-                auto connector = context.getOcppModel().getConnector(cId);
+            for (unsigned int cId = 0; cId < context.getModel().getNumConnectors(); cId++) {
+                auto connector = context.getModel().getConnector(cId);
                 if (connector && connector->getTransactionId() >= 0) {
                     ongoingTx = true;
                     break;
@@ -198,7 +198,7 @@ void FirmwareService::loop() {
     }
 }
 
-void FirmwareService::scheduleFirmwareUpdate(const std::string &location, OcppTimestamp retreiveDate, int retries, unsigned int retryInterval) {
+void FirmwareService::scheduleFirmwareUpdate(const std::string &location, Timestamp retreiveDate, int retries, unsigned int retryInterval) {
     this->location = location;
     this->retreiveDate = retreiveDate;
     this->retries = retries;
@@ -248,7 +248,7 @@ FirmwareStatus FirmwareService::getFirmwareStatus() {
     return FirmwareStatus::Idle;
 }
 
-std::unique_ptr<OcppOperation> FirmwareService::getFirmwareStatusNotification() {
+std::unique_ptr<Request> FirmwareService::getFirmwareStatusNotification() {
     /*
      * Check if FW has been updated previously, but only once
      */
@@ -262,8 +262,8 @@ std::unique_ptr<OcppOperation> FirmwareService::getFirmwareStatusNotification() 
             configuration_save();
 
             lastReportedStatus = FirmwareStatus::Installed;
-            OcppMessage *fwNotificationMsg = new Ocpp16::FirmwareStatusNotification(lastReportedStatus);
-            auto fwNotification = makeOcppOperation(fwNotificationMsg);
+            Operation *fwNotificationMsg = new Ocpp16::FirmwareStatusNotification(lastReportedStatus);
+            auto fwNotification = makeRequest(fwNotificationMsg);
             return fwNotification;
         }
     }
@@ -271,8 +271,8 @@ std::unique_ptr<OcppOperation> FirmwareService::getFirmwareStatusNotification() 
     if (getFirmwareStatus() != lastReportedStatus) {
         lastReportedStatus = getFirmwareStatus();
         if (lastReportedStatus != FirmwareStatus::Idle && lastReportedStatus != FirmwareStatus::Installed) {
-            OcppMessage *fwNotificationMsg = new Ocpp16::FirmwareStatusNotification(lastReportedStatus);
-            auto fwNotification = makeOcppOperation(fwNotificationMsg);
+            Operation *fwNotificationMsg = new Ocpp16::FirmwareStatusNotification(lastReportedStatus);
+            auto fwNotification = makeRequest(fwNotificationMsg);
             return fwNotification;
         }
     }
@@ -307,7 +307,7 @@ void FirmwareService::resetStage() {
 
 #include <HTTPUpdate.h>
 
-FirmwareService *EspWiFi::makeFirmwareService(OcppEngine& context, const char *buildNumber) {
+FirmwareService *EspWiFi::makeFirmwareService(Context& context, const char *buildNumber) {
     FirmwareService *fwService = new FirmwareService(context);
     fwService->setBuildNumber(buildNumber);
 
@@ -370,7 +370,7 @@ FirmwareService *EspWiFi::makeFirmwareService(OcppEngine& context, const char *b
 
 #include <ESP8266httpUpdate.h>
 
-FirmwareService *EspWiFi::makeFirmwareService(OcppEngine& context, const char *buildNumber) {
+FirmwareService *EspWiFi::makeFirmwareService(Context& context, const char *buildNumber) {
     FirmwareService *fwService = new FirmwareService(context);
     fwService->setBuildNumber(buildNumber);
 

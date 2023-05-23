@@ -12,7 +12,7 @@ GetConfiguration::GetConfiguration() {
 
 }
 
-const char* GetConfiguration::getOcppOperationType(){
+const char* GetConfiguration::getOperationType(){
     return "GetConfiguration";
 }
 

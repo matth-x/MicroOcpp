@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlCommon.h>
@@ -19,14 +19,14 @@
 
 using namespace ArduinoOcpp;
 
-OcppModel::OcppModel(const OcppClock& system_clock)
-        : ocppTime{system_clock} {
+Model::Model(const Clock& system_clock)
+        : time{system_clock} {
     
 }
 
-OcppModel::~OcppModel() = default;
+Model::~Model() = default;
 
-void OcppModel::loop() {
+void Model::loop() {
 
     if (bootService) {
         bootService->loop();
@@ -62,39 +62,39 @@ void OcppModel::loop() {
         reservationService->loop();
 }
 
-void OcppModel::setTransactionStore(std::unique_ptr<TransactionStore> ts) {
+void Model::setTransactionStore(std::unique_ptr<TransactionStore> ts) {
     transactionStore = std::move(ts);
 }
 
-TransactionStore *OcppModel::getTransactionStore() {
+TransactionStore *Model::getTransactionStore() {
     return transactionStore.get();
 }
 
-void OcppModel::setSmartChargingService(std::unique_ptr<SmartChargingService> scs) {
+void Model::setSmartChargingService(std::unique_ptr<SmartChargingService> scs) {
     smartChargingService = std::move(scs);
 }
 
-SmartChargingService* OcppModel::getSmartChargingService() const {
+SmartChargingService* Model::getSmartChargingService() const {
     return smartChargingService.get();
 }
 
-void OcppModel::setChargeControlCommon(std::unique_ptr<ChargeControlCommon> ccs) {
+void Model::setChargeControlCommon(std::unique_ptr<ChargeControlCommon> ccs) {
     chargeControlCommon = std::move(ccs);
 }
 
-ChargeControlCommon *OcppModel::getChargeControlCommon() {
+ChargeControlCommon *Model::getChargeControlCommon() {
     return chargeControlCommon.get();
 }
 
-void OcppModel::setConnectors(std::vector<Connector>&& connectors) {
+void Model::setConnectors(std::vector<Connector>&& connectors) {
     this->connectors = std::move(connectors);
 }
 
-unsigned int OcppModel::getNumConnectors() const {
+unsigned int Model::getNumConnectors() const {
     return connectors.size();
 }
 
-Connector *OcppModel::getConnector(unsigned int connectorId) {
+Connector *Model::getConnector(unsigned int connectorId) {
     if (connectorId >= connectors.size()) {
         AO_DBG_ERR("connector with connectorId %u does not exist", connectorId);
         return nullptr;
@@ -103,66 +103,66 @@ Connector *OcppModel::getConnector(unsigned int connectorId) {
     return &connectors[connectorId];
 }
 
-void OcppModel::setMeteringSerivce(std::unique_ptr<MeteringService> ms) {
+void Model::setMeteringSerivce(std::unique_ptr<MeteringService> ms) {
     meteringService = std::move(ms);
 }
 
-MeteringService* OcppModel::getMeteringService() const {
+MeteringService* Model::getMeteringService() const {
     return meteringService.get();
 }
 
-void OcppModel::setFirmwareService(std::unique_ptr<FirmwareService> fws) {
+void Model::setFirmwareService(std::unique_ptr<FirmwareService> fws) {
     firmwareService = std::move(fws);
 }
 
-FirmwareService *OcppModel::getFirmwareService() const {
+FirmwareService *Model::getFirmwareService() const {
     return firmwareService.get();
 }
 
-void OcppModel::setDiagnosticsService(std::unique_ptr<DiagnosticsService> ds) {
+void Model::setDiagnosticsService(std::unique_ptr<DiagnosticsService> ds) {
     diagnosticsService = std::move(ds);
 }
 
-DiagnosticsService *OcppModel::getDiagnosticsService() const {
+DiagnosticsService *Model::getDiagnosticsService() const {
     return diagnosticsService.get();
 }
 
-void OcppModel::setHeartbeatService(std::unique_ptr<HeartbeatService> hs) {
+void Model::setHeartbeatService(std::unique_ptr<HeartbeatService> hs) {
     heartbeatService = std::move(hs);
 }
 
-void OcppModel::setAuthorizationService(std::unique_ptr<AuthorizationService> as) {
+void Model::setAuthorizationService(std::unique_ptr<AuthorizationService> as) {
     authorizationService = std::move(as);
 }
 
-AuthorizationService *OcppModel::getAuthorizationService() {
+AuthorizationService *Model::getAuthorizationService() {
     return authorizationService.get();
 }
 
-void OcppModel::setReservationService(std::unique_ptr<ReservationService> rs) {
+void Model::setReservationService(std::unique_ptr<ReservationService> rs) {
     reservationService = std::move(rs);
 }
 
-ReservationService *OcppModel::getReservationService() {
+ReservationService *Model::getReservationService() {
     return reservationService.get();
 }
 
-void OcppModel::setBootService(std::unique_ptr<BootService> bs){
+void Model::setBootService(std::unique_ptr<BootService> bs){
     bootService = std::move(bs);
 }
 
-BootService *OcppModel::getBootService() const {
+BootService *Model::getBootService() const {
     return bootService.get();
 }
 
-void OcppModel::setResetService(std::unique_ptr<ResetService> rs) {
+void Model::setResetService(std::unique_ptr<ResetService> rs) {
     this->resetService = std::move(rs);
 }
 
-ResetService *OcppModel::getResetService() const {
+ResetService *Model::getResetService() const {
     return resetService.get();
 }
 
-OcppTime& OcppModel::getOcppTime() {
-    return ocppTime;
+Time& Model::getTime() {
+    return time;
 }

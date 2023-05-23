@@ -1,24 +1,24 @@
 #include <ArduinoOcpp.h>
-#include <ArduinoOcpp/Core/OcppSocket.h>
+#include <ArduinoOcpp/Core/Connection.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 
-TEST_CASE( "OcppEngine lifecycle" ) {
+TEST_CASE( "Context lifecycle" ) {
 
     //set console output to the cpp console to display outputs
     //ao_set_console_out(cpp_console_out);
 
-    //initialize OcppEngine with dummy socket
-    ArduinoOcpp::OcppEchoSocket echoSocket;
-    OCPP_initialize(echoSocket);
+    //initialize Context with dummy socket
+    ArduinoOcpp::LoopbackConnection loopback;
+    OCPP_initialize(loopback);
 
     SECTION("OCPP is initialized"){
-        REQUIRE( getOcppEngine() );
+        REQUIRE( getOcppContext() );
     }
 
     OCPP_deinitialize();
 
     SECTION("OCPP is deinitialized"){
-        REQUIRE( !( getOcppEngine() ) );
+        REQUIRE( !( getOcppContext() ) );
     }
 }

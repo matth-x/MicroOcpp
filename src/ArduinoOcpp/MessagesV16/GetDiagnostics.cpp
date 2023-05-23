@@ -3,13 +3,13 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/GetDiagnostics.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::GetDiagnostics;
 
-GetDiagnostics::GetDiagnostics(OcppModel& context) : context(context) {
+GetDiagnostics::GetDiagnostics(Model& model) : model(model) {
 
 }
 
@@ -53,7 +53,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
 }
 
 std::unique_ptr<DynamicJsonDocument> GetDiagnostics::createConf(){
-    if (auto diagService = context.getDiagnosticsService()) {
+    if (auto diagService = model.getDiagnosticsService()) {
         fileName = diagService->requestDiagnosticsUpload(location, retries, retryInterval, startTime, stopTime);
     } else {
         AO_DBG_WARN("DiagnosticsService has not been initialized before! Please have a look at ArduinoOcpp.cpp for an example. Abort");

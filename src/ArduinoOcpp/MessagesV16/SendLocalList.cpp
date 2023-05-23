@@ -3,12 +3,12 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/SendLocalList.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 
 using ArduinoOcpp::Ocpp16::SendLocalList;
 
-SendLocalList::SendLocalList(OcppModel& context) : context(context) {
+SendLocalList::SendLocalList(Model& model) : model(model) {
   
 }
 
@@ -16,7 +16,7 @@ SendLocalList::~SendLocalList() {
   
 }
 
-const char* SendLocalList::getOcppOperationType(){
+const char* SendLocalList::getOperationType(){
     return "SendLocalList";
 }
 
@@ -26,7 +26,7 @@ void SendLocalList::processReq(JsonObject payload) {
         return;
     }
 
-    auto authService = context.getAuthorizationService();
+    auto authService = model.getAuthorizationService();
 
     if (!authService) {
         errorCode = "InternalError";

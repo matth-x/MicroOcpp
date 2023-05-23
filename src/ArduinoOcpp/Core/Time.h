@@ -13,7 +13,7 @@ namespace ArduinoOcpp {
 
 typedef int32_t otime_t; //requires 32bit signed integer or bigger
 #define OTIME_MAX ((otime_t) INT32_MAX)
-typedef std::function<otime_t()> OcppClock;
+typedef std::function<otime_t()> Clock;
 
 #define INFINITY_THLD (OTIME_MAX - ((otime_t) (400 * 24 * 3600))) //Upper limiter for valid time range. From this value on, a scalar time means "infinity". It's 400 days before the "year 2038" problem.
 #define JSONDATE_LENGTH 24
@@ -23,10 +23,10 @@ namespace Clocks {
 /*
  * Basic clock implementation. Works if ao_tick_ms() is exact enough for you and if device doesn't go in sleep mode. 
  */
-extern OcppClock DEFAULT_CLOCK;
+extern Clock DEFAULT_CLOCK;
 } //end namespace Clocks
 
-class OcppTimestamp {
+class Timestamp {
 private:
     /*
      * Internal representation of the current time. The initial values correspond to UNIX-time 0. January
@@ -41,11 +41,11 @@ private:
 
 public:
 
-    OcppTimestamp();
+    Timestamp();
 
-    OcppTimestamp(const OcppTimestamp& other);
+    Timestamp(const Timestamp& other);
 
-    OcppTimestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second) :
+    Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second) :
                 year(year), month(month), day(day), hour(hour), minute(minute), second(second) { };
 
     /**
@@ -65,48 +65,48 @@ public:
 
     bool toJsonString(char *out, size_t buffsize) const;
 
-    OcppTimestamp &operator=(const OcppTimestamp &rhs);
+    Timestamp &operator=(const Timestamp &rhs);
 
-    OcppTimestamp &operator+=(int secs);
-    OcppTimestamp &operator-=(int secs);
+    Timestamp &operator+=(int secs);
+    Timestamp &operator-=(int secs);
 
-    otime_t operator-(const OcppTimestamp &rhs) const;
+    otime_t operator-(const Timestamp &rhs) const;
 
-    friend OcppTimestamp operator+(const OcppTimestamp &lhs, int secs);
-    friend OcppTimestamp operator-(const OcppTimestamp &lhs, int secs);
+    friend Timestamp operator+(const Timestamp &lhs, int secs);
+    friend Timestamp operator-(const Timestamp &lhs, int secs);
 
-    friend bool operator==(const OcppTimestamp &lhs, const OcppTimestamp &rhs);
-    friend bool operator!=(const OcppTimestamp &lhs, const OcppTimestamp &rhs);
-    friend bool operator<(const OcppTimestamp &lhs, const OcppTimestamp &rhs);
-    friend bool operator<=(const OcppTimestamp &lhs, const OcppTimestamp &rhs);
-    friend bool operator>(const OcppTimestamp &lhs, const OcppTimestamp &rhs);
-    friend bool operator>=(const OcppTimestamp &lhs, const OcppTimestamp &rhs);
+    friend bool operator==(const Timestamp &lhs, const Timestamp &rhs);
+    friend bool operator!=(const Timestamp &lhs, const Timestamp &rhs);
+    friend bool operator<(const Timestamp &lhs, const Timestamp &rhs);
+    friend bool operator<=(const Timestamp &lhs, const Timestamp &rhs);
+    friend bool operator>(const Timestamp &lhs, const Timestamp &rhs);
+    friend bool operator>=(const Timestamp &lhs, const Timestamp &rhs);
 };
 
-extern const OcppTimestamp MIN_TIME;
-extern const OcppTimestamp MAX_TIME;
+extern const Timestamp MIN_TIME;
+extern const Timestamp MAX_TIME;
 
-class OcppTime {
+class Time {
 private:
 
-    OcppTimestamp ocpp_basetime = OcppTimestamp();
+    Timestamp ocpp_basetime = Timestamp();
     otime_t system_basetime = 0; //your system clock's time at the moment when the OCPP server's time was taken
-    bool ocppTimeIsSet = false;
+    bool timeIsSet = false;
 
-    OcppClock system_clock = [] () {return (otime_t) 0;};
+    Clock system_clock = [] () {return (otime_t) 0;};
 
-    OcppTimestamp currentTime = OcppTimestamp();
+    Timestamp currentTime = Timestamp();
     otime_t previousUpdate = -1;
 
 public:
 
-    OcppTime(const OcppClock& system_clock);
-    //OcppTime(const OcppTime& ocppTime) = default;
+    Time(const Clock& system_clock);
+    //Time(const Time& time) = default;
 
-    otime_t getOcppTimeScalar(); //returns current time of the OCPP server in non-UNIX but signed integer format. t2 - t1 is the time difference in seconds. 
-    const OcppTimestamp &getOcppTimestampNow();
-    OcppTimestamp createTimestamp(otime_t scalar); //creates a timestamp in a JSON-serializable format. createTimestamp(getOcppTimeScalar()) will return the current OCPP time
-    otime_t toOcppTimeScalar(const OcppTimestamp &otimestamp);
+    otime_t getTimeScalar(); //returns current time of the OCPP server in non-UNIX but signed integer format. t2 - t1 is the time difference in seconds. 
+    const Timestamp &getTimestampNow();
+    Timestamp createTimestamp(otime_t scalar); //creates a timestamp in a JSON-serializable format. createTimestamp(getTimeScalar()) will return the current OCPP time
+    otime_t toTimeScalar(const Timestamp &timestamp);
 
     /**
      * Expects a date string like
@@ -121,9 +121,9 @@ public:
      * 
      * jsonDateString: 0-terminated string
      */
-    bool setOcppTime(const char* jsonDateString);
+    bool setTime(const char* jsonDateString);
 
-    bool isValid() {return ocppTimeIsSet;}
+    bool isValid() {return timeIsSet;}
 };
 
 }

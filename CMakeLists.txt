@@ -11,15 +11,15 @@ set(AO_SRC
     src/ArduinoOcpp/Core/ConfigurationKeyValue.cpp
     src/ArduinoOcpp/Core/FilesystemAdapter.cpp
     src/ArduinoOcpp/Core/FilesystemUtils.cpp
-    src/ArduinoOcpp/Core/OcppConnection.cpp
-    src/ArduinoOcpp/Core/OcppEngine.cpp
-    src/ArduinoOcpp/Core/OcppMessage.cpp
-    src/ArduinoOcpp/Core/OcppModel.cpp
-    src/ArduinoOcpp/Core/OcppOperation.cpp
-    src/ArduinoOcpp/Core/OcppSocket.cpp
-    src/ArduinoOcpp/Core/OcppTime.cpp
-    src/ArduinoOcpp/Core/OperationsQueue.cpp
-    src/ArduinoOcpp/Core/OperationStore.cpp
+    src/ArduinoOcpp/Core/RequestQueue.cpp
+    src/ArduinoOcpp/Core/Context.cpp
+    src/ArduinoOcpp/Core/Operation.cpp
+    src/ArduinoOcpp/Core/Model.cpp
+    src/ArduinoOcpp/Core/Request.cpp
+    src/ArduinoOcpp/Core/Connection.cpp
+    src/ArduinoOcpp/Core/Time.cpp
+    src/ArduinoOcpp/Core/RequestQueueStorageStrategy.cpp
+    src/ArduinoOcpp/Core/RequestStore.cpp
     src/ArduinoOcpp/MessagesV16/Authorize.cpp
     src/ArduinoOcpp/MessagesV16/BootNotification.cpp
     src/ArduinoOcpp/MessagesV16/CancelReservation.cpp
@@ -50,8 +50,8 @@ set(AO_SRC
     src/ArduinoOcpp/MessagesV16/UnlockConnector.cpp
     src/ArduinoOcpp/MessagesV16/UpdateFirmware.cpp
     src/ArduinoOcpp/Platform.cpp
-    src/ArduinoOcpp/SimpleOcppOperationFactory.cpp
-    src/ArduinoOcpp/OperationDeserializer.cpp
+    src/ArduinoOcpp/Core/SimpleRequestFactory.cpp
+    src/ArduinoOcpp/Core/OperationRegistry.cpp
     src/ArduinoOcpp/Tasks/Authorization/AuthorizationData.cpp
     src/ArduinoOcpp/Tasks/Authorization/AuthorizationList.cpp
     src/ArduinoOcpp/Tasks/Authorization/AuthorizationService.cpp

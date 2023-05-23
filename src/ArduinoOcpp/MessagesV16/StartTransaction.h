@@ -5,29 +5,29 @@
 #ifndef STARTTRANSACTION_H
 #define STARTTRANSACTION_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Operation.h>
+#include <ArduinoOcpp/Core/Time.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
 #include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 class Transaction;
 
 namespace Ocpp16 {
 
-class StartTransaction : public OcppMessage {
+class StartTransaction : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     std::shared_ptr<Transaction> transaction;
 public:
 
-    StartTransaction(OcppModel& context, std::shared_ptr<Transaction> transaction);
+    StartTransaction(Model& model, std::shared_ptr<Transaction> transaction);
 
     ~StartTransaction();
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void initiate(StoredOperationHandler *opStore) override;
 

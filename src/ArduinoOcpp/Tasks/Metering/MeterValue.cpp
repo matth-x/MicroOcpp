@@ -79,7 +79,7 @@ void MeterValueBuilder::updateObservedSamplers() {
     }
 }
 
-std::unique_ptr<MeterValue> MeterValueBuilder::takeSample(const OcppTimestamp& timestamp, const ReadingContext& context) {
+std::unique_ptr<MeterValue> MeterValueBuilder::takeSample(const Timestamp& timestamp, const ReadingContext& context) {
     if (select_observe != select->getValueRevision() || //OCPP server has changed configuration about which measurands to take
             samplers.size() != select_mask.size()) {    //Client has added another Measurand; synchronize lists
         AO_DBG_DEBUG("Updating observed samplers due to config change or samplers added");
@@ -104,7 +104,7 @@ std::unique_ptr<MeterValue> MeterValueBuilder::takeSample(const OcppTimestamp& t
 
 std::unique_ptr<MeterValue> MeterValueBuilder::deserializeSample(const JsonObject mvJson) {
 
-    OcppTimestamp timestamp;
+    Timestamp timestamp;
     bool ret = timestamp.setTime(mvJson["timestamp"] | "Invalid");
     if (!ret) {
         AO_DBG_ERR("invalid timestamp");

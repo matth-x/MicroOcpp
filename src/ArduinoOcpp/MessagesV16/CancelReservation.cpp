@@ -3,17 +3,17 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/CancelReservation.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::CancelReservation;
 
-CancelReservation::CancelReservation(OcppModel& context) : context(context) {
+CancelReservation::CancelReservation(Model& model) : model(model) {
   
 }
 
-const char* CancelReservation::getOcppOperationType(){
+const char* CancelReservation::getOperationType(){
     return "CancelReservation";
 }
 
@@ -23,8 +23,8 @@ void CancelReservation::processReq(JsonObject payload) {
         return;
     }
 
-    if (context.getReservationService()) {
-        if (auto reservation = context.getReservationService()->getReservationById(payload["reservationId"])) {
+    if (model.getReservationService()) {
+        if (auto reservation = model.getReservationService()->getReservationById(payload["reservationId"])) {
             found = true;
             reservation->clear();
         }

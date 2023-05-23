@@ -2,43 +2,43 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 #include <ArduinoOcpp/Debug.h>
 
-using ArduinoOcpp::OcppMessage;
+using ArduinoOcpp::Operation;
 
-OcppMessage::OcppMessage() {}
+Operation::Operation() {}
 
-OcppMessage::~OcppMessage() {}
+Operation::~Operation() {}
   
-const char* OcppMessage::getOcppOperationType(){
-    AO_DBG_ERR("Unsupported operation: getOcppOperationType() is not implemented");
+const char* Operation::getOperationType(){
+    AO_DBG_ERR("Unsupported operation: getOperationType() is not implemented");
     return "CustomOperation";
 }
 
-void OcppMessage::initiate(StoredOperationHandler *rpcData) {
-    //called after initiateOperation(anyMsg)
+void Operation::initiate(StoredOperationHandler *rpcData) {
+    //called after initiateRequest(anyMsg)
 }
 
-bool OcppMessage::restore(StoredOperationHandler *rpcData) {
+bool Operation::restore(StoredOperationHandler *rpcData) {
     return false;
 }
 
-std::unique_ptr<DynamicJsonDocument> OcppMessage::createReq() {
+std::unique_ptr<DynamicJsonDocument> Operation::createReq() {
     AO_DBG_ERR("Unsupported operation: createReq() is not implemented");
     return nullptr;
 }
 
-void OcppMessage::processConf(JsonObject payload) {
+void Operation::processConf(JsonObject payload) {
     AO_DBG_ERR("Unsupported operation: processConf() is not implemented");
 }
 
-void OcppMessage::processReq(JsonObject payload) {
+void Operation::processReq(JsonObject payload) {
     AO_DBG_ERR("Unsupported operation: processReq() is not implemented");
 }
 
-std::unique_ptr<DynamicJsonDocument> OcppMessage::createConf() {
+std::unique_ptr<DynamicJsonDocument> Operation::createConf() {
     AO_DBG_ERR("Unsupported operation: createConf() is not implemented");
     return nullptr;
 }

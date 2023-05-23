@@ -11,18 +11,18 @@
 
 #include <memory>
 
-#include <ArduinoOcpp/Core/OcppOperationCallbacks.h>
+#include <ArduinoOcpp/Core/RequestCallbacks.h>
 
 namespace ArduinoOcpp {
 
-class OcppMessage;
-class OcppModel;
+class Operation;
+class Model;
 class StoredOperationHandler;
 
-class OcppOperation {
+class Request {
 private:
     std::string messageID {};
-    std::unique_ptr<OcppMessage> ocppMessage;
+    std::unique_ptr<Operation> operation;
     void setMessageID(const std::string &id);
     OnReceiveConfListener onReceiveConfListener = [] (JsonObject payload) {};
     OnReceiveReqListener onReceiveReqListener = [] (JsonObject payload) {};
@@ -42,13 +42,13 @@ private:
     std::unique_ptr<StoredOperationHandler> opStore;
 public:
 
-    OcppOperation(std::unique_ptr<OcppMessage> msg);
+    Request(std::unique_ptr<Operation> msg);
 
-    OcppOperation();
+    Request();
 
-    ~OcppOperation();
+    ~Request();
 
-    void setOcppMessage(std::unique_ptr<OcppMessage> msg);
+    void setOperation(std::unique_ptr<Operation> msg);
 
     void setTimeout(unsigned long timeout); //0 = disable timeout
     bool isTimeoutExceeded();
@@ -89,7 +89,7 @@ public:
 
     void initiate(std::unique_ptr<StoredOperationHandler> opStorage);
 
-    bool restore(std::unique_ptr<StoredOperationHandler> opStorage, std::shared_ptr<OcppModel> oModel);
+    bool restore(std::unique_ptr<StoredOperationHandler> opStorage, std::shared_ptr<Model> model);
 
     StoredOperationHandler *getStorageHandler() {return opStore.get();}
 
@@ -120,7 +120,7 @@ public:
     void setOnAbortListener(OnAbortListener onAbort);
 
     const char *getMessageID();
-    const char *getOcppOperationType();
+    const char *getOperationType();
 };
 
 } //end namespace ArduinoOcpp

@@ -10,17 +10,17 @@
 
 namespace ArduinoOcpp {
 
-class OcppEngine;
+class Context;
 
 class HeartbeatService {
 private:
-    OcppEngine& context;
+    Context& context;
 
     unsigned long lastHeartbeat;
     std::shared_ptr<ArduinoOcpp::Configuration<int>> heartbeatInterval;
 
 public:
-    HeartbeatService(OcppEngine& context);
+    HeartbeatService(Context& context);
 
     void loop();
 };

@@ -3,8 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Core/OperationStore.h>
+#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Core/RequestStore.h>
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
@@ -15,22 +15,22 @@
 using ArduinoOcpp::Ocpp16::StopTransaction;
 using ArduinoOcpp::TransactionRPC;
 
-StopTransaction::StopTransaction(OcppModel& context, std::shared_ptr<Transaction> transaction)
-        : context(context), transaction(transaction) {
+StopTransaction::StopTransaction(Model& model, std::shared_ptr<Transaction> transaction)
+        : model(model), transaction(transaction) {
 
 }
 
-StopTransaction::StopTransaction(OcppModel& context, std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData)
-        : context(context), transaction(transaction), transactionData(std::move(transactionData)) {
+StopTransaction::StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData)
+        : model(model), transaction(transaction), transactionData(std::move(transactionData)) {
 
 }
 
-const char* StopTransaction::getOcppOperationType() {
+const char* StopTransaction::getOperationType() {
     return "StopTransaction";
 }
 
 void StopTransaction::initiate(StoredOperationHandler *opStore) {
-    if (!transaction || transaction->getStopRpcSync().isRequested()) {
+    if (!transaction || transaction->getStopRpcData().isRequested()) {
         AO_DBG_ERR("initialization error");
         return;
     }
@@ -44,7 +44,7 @@ void StopTransaction::initiate(StoredOperationHandler *opStore) {
         opStore->commit();
     }
 
-    transaction->getStopRpcSync().setRequested();
+    transaction->getStopRpcData().setRequested();
 
     transaction->commit();
 
@@ -70,7 +70,7 @@ bool StopTransaction::restore(StoredOperationHandler *opStore) {
         return false;
     }
 
-    auto txStore = context.getTransactionStore();
+    auto txStore = model.getTransactionStore();
 
     if (!txStore) {
         AO_DBG_ERR("invalid state");
@@ -82,13 +82,13 @@ bool StopTransaction::restore(StoredOperationHandler *opStore) {
         AO_DBG_ERR("referential integrity violation");
 
         //clean up possible tx records
-        if (auto mSerivce = context.getMeteringService()) {
+        if (auto mSerivce = model.getMeteringService()) {
             mSerivce->removeTxMeterData(connectorId, txNr);
         }
         return false;
     }
 
-    if (auto mSerivce = context.getMeteringService()) {
+    if (auto mSerivce = model.getMeteringService()) {
         if (auto txData = mSerivce->getStopTxMeterData(transaction.get())) {
             transactionData = txData->retrieveStopTxData();
         }
@@ -153,13 +153,13 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
 void StopTransaction::processConf(JsonObject payload) {
 
     if (transaction) {
-        transaction->getStopRpcSync().confirm();
+        transaction->getStopRpcData().confirm();
         transaction->commit();
     }
 
     AO_DBG_INFO("Request has been accepted!");
 
-    if (auto authService = context.getAuthorizationService()) {
+    if (auto authService = model.getAuthorizationService()) {
         authService->notifyAuthorization(transaction->getIdTag(), payload["idTagInfo"]);
     }
 }
@@ -167,7 +167,7 @@ void StopTransaction::processConf(JsonObject payload) {
 bool StopTransaction::processErr(const char *code, const char *description, JsonObject details) {
 
     if (transaction) {
-        transaction->getStopRpcSync().confirm(); //no retry behavior for now; consider data "arrived" at server
+        transaction->getStopRpcData().confirm(); //no retry behavior for now; consider data "arrived" at server
         transaction->commit();
     }
 

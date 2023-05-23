@@ -3,14 +3,14 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/Authorize.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::Authorize;
 
-Authorize::Authorize(OcppModel& context, const char *idTagIn) : context(context) {
+Authorize::Authorize(Model& model, const char *idTagIn) : model(model) {
     if (idTagIn && strnlen(idTagIn, IDTAG_LEN_MAX + 2) <= IDTAG_LEN_MAX) {
         snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
     } else {
@@ -19,7 +19,7 @@ Authorize::Authorize(OcppModel& context, const char *idTagIn) : context(context)
     }
 }
 
-const char* Authorize::getOcppOperationType(){
+const char* Authorize::getOperationType(){
     return "Authorize";
 }
 
@@ -39,8 +39,8 @@ void Authorize::processConf(JsonObject payload){
         AO_DBG_INFO("Request has been denied. Reason: %s", idTagInfo);
     }
 
-    if (context.getAuthorizationService()) {
-        context.getAuthorizationService()->notifyAuthorization(idTag, payload["idTagInfo"]);
+    if (model.getAuthorizationService()) {
+        model.getAuthorizationService()->notifyAuthorization(idTag, payload["idTagInfo"]);
     }
 }
 

@@ -3,16 +3,16 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/RemoteStopTransaction.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 
 using ArduinoOcpp::Ocpp16::RemoteStopTransaction;
 
-RemoteStopTransaction::RemoteStopTransaction(OcppModel& context) : context(context) {
+RemoteStopTransaction::RemoteStopTransaction(Model& model) : model(model) {
   
 }
 
-const char* RemoteStopTransaction::getOcppOperationType(){
+const char* RemoteStopTransaction::getOperationType(){
     return "RemoteStopTransaction";
 }
 
@@ -26,8 +26,8 @@ std::unique_ptr<DynamicJsonDocument> RemoteStopTransaction::createConf(){
     
     bool canStopTransaction = false;
 
-    for (unsigned int cId = 0; cId < context.getNumConnectors(); cId++) {
-        auto connector = context.getConnector(cId);
+    for (unsigned int cId = 0; cId < model.getNumConnectors(); cId++) {
+        auto connector = model.getConnector(cId);
         if (connector->getTransactionId() == transactionId) {
             canStopTransaction = true;
             connector->endTransaction("Remote");

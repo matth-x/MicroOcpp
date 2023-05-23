@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.h>
 #include <ArduinoOcpp/Tasks/Metering/MeterStore.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
 #include <ArduinoOcpp/Platform.h>
@@ -17,7 +17,7 @@
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, int connectorId, MeterStore& meterStore)
+ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(Model& context, int connectorId, MeterStore& meterStore)
         : context(context), connectorId{connectorId}, meterStore(meterStore) {
 
     auto MeterValuesSampledData = declareConfiguration<const char*>(
@@ -99,7 +99,7 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(OcppModel& context, i
     StopTxnAlignedData->setValidator(validateSelectString);
 }
 
-OcppMessage *ConnectorMeterValuesRecorder::loop() {
+Operation *ConnectorMeterValuesRecorder::loop() {
 
     bool txBreak = false;
     if (context.getConnector(connectorId)) {
@@ -144,7 +144,7 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
     if (*ClockAlignedDataInterval >= 1) {
 
-        auto& timestampNow = context.getOcppTime().getOcppTimestampNow();
+        auto& timestampNow = context.getTime().getTimestampNow();
         auto dt = nextAlignedTime - timestampNow;
         if (dt <= 0 ||                              //normal case: interval elapsed
                 dt > *ClockAlignedDataInterval) {   //special case: clock has been adjusted or first run
@@ -153,13 +153,13 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
                 abs(dt) <= 60 ?
                 "in time (tolerance <= 60s)" : "off, e.g. because of first run. Ignore");
             if (abs(dt) <= 60) { //is measurement still "clock-aligned"?
-                auto alignedMeterValues = alignedDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::SampleClock);
+                auto alignedMeterValues = alignedDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::SampleClock);
                 if (alignedMeterValues) {
                     meterData.push_back(std::move(alignedMeterValues));
                 }
 
                 if (stopTxnData) {
-                    auto alignedStopTx = stopTxnAlignedDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::SampleClock);
+                    auto alignedStopTx = stopTxnAlignedDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::SampleClock);
                     if (alignedStopTx) {
                         stopTxnData->addTxData(std::move(alignedStopTx));
                     }
@@ -167,10 +167,10 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
 
             }
             
-            OcppTimestamp midnightBase = OcppTimestamp(2010,0,0,0,0,0);
+            Timestamp midnightBase = Timestamp(2010,0,0,0,0,0);
             auto intervall = timestampNow - midnightBase;
             intervall %= 3600 * 24;
-            OcppTimestamp midnight = timestampNow - intervall;
+            Timestamp midnight = timestampNow - intervall;
             intervall += *ClockAlignedDataInterval;
             if (intervall >= 3600 * 24) {
                 //next measurement is tomorrow; set to precisely 00:00 
@@ -187,13 +187,13 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
         //record periodic tx data
 
         if (ao_tick_ms() - lastSampleTime >= (unsigned long) (*MeterValueSampleInterval * 1000)) {
-            auto sampleMeterValues = sampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::SamplePeriodic);
+            auto sampleMeterValues = sampledDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::SamplePeriodic);
             if (sampleMeterValues) {
                 meterData.push_back(std::move(sampleMeterValues));
             }
 
             if (stopTxnData && StopTxnDataCapturePeriodic && *StopTxnDataCapturePeriodic) {
-                auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::SamplePeriodic);
+                auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::SamplePeriodic);
                 if (sampleStopTx) {
                     stopTxnData->addTxData(std::move(sampleStopTx));
                 }
@@ -209,9 +209,9 @@ OcppMessage *ConnectorMeterValuesRecorder::loop() {
     return nullptr; //successful method completition. Currently there is no reason to send a MeterValues Msg.
 }
 
-OcppMessage *ConnectorMeterValuesRecorder::takeTriggeredMeterValues() {
+Operation *ConnectorMeterValuesRecorder::takeTriggeredMeterValues() {
 
-    auto sample = sampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::Trigger);
+    auto sample = sampledDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::Trigger);
 
     if (!sample) {
         return nullptr;
@@ -258,7 +258,7 @@ void ConnectorMeterValuesRecorder::beginTxMeterData(Transaction *transaction) {
     }
 
     if (stopTxnData) {
-        auto sampleTxBegin = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::TransactionBegin);
+        auto sampleTxBegin = stopTxnSampledDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::TransactionBegin);
         if (sampleTxBegin) {
             stopTxnData->addTxData(std::move(sampleTxBegin));
         }
@@ -271,7 +271,7 @@ std::shared_ptr<TransactionMeterData> ConnectorMeterValuesRecorder::endTxMeterDa
     }
 
     if (stopTxnData) {
-        auto sampleTxEnd = stopTxnSampledDataBuilder->takeSample(context.getOcppTime().getOcppTimestampNow(), ReadingContext::TransactionEnd);
+        auto sampleTxEnd = stopTxnSampledDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::TransactionEnd);
         if (sampleTxEnd) {
             stopTxnData->addTxData(std::move(sampleTxEnd));
         }

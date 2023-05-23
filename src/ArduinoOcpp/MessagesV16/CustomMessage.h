@@ -5,7 +5,7 @@
 #ifndef FUNCTIONALMESSAGE_H
 #define FUNCTIONALMESSAGE_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 #include <functional>
 
@@ -13,7 +13,7 @@ namespace ArduinoOcpp {
 
 namespace Ocpp16 {
 
-class CustomMessage : public OcppMessage {
+class CustomMessage : public Operation {
 private:
     std::string operationType;
     std::function<void (StoredOperationHandler*)> fn_initiate; //optional
@@ -46,7 +46,7 @@ public:
     
     ~CustomMessage();
 
-    const char* getOcppOperationType() override;
+    const char* getOperationType() override;
 
     void initiate(StoredOperationHandler *opStore) override;
 

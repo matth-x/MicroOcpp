@@ -20,15 +20,15 @@
 
 namespace ArduinoOcpp {
 
-class OcppEngine;
-class OcppModel;
-class OcppMessage;
+class Context;
+class Model;
+class Operation;
 class Transaction;
 
 class Connector {
 private:
-    OcppEngine& context;
-    OcppModel& model;
+    Context& context;
+    Model& model;
     
     const int connectorId;
 
@@ -67,7 +67,7 @@ private:
     std::shared_ptr<Configuration<const char*>> freeVendIdTag;
     bool freeVendTrackPlugged = false;
 public:
-    Connector(OcppEngine& context, int connectorId);
+    Connector(Context& context, int connectorId);
     Connector(Connector&& other) = default;
 
     /*

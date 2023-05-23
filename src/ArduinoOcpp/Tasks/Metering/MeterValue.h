@@ -5,7 +5,7 @@
 #ifndef METERVALUE_H
 #define METERVALUE_H
 
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Time.h>
 #include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoJson.h>
@@ -16,10 +16,10 @@ namespace ArduinoOcpp {
 
 class MeterValue {
 private:
-    OcppTimestamp timestamp;
+    Timestamp timestamp;
     std::vector<std::unique_ptr<SampledValue>> sampledValue;
 public:
-    MeterValue(OcppTimestamp timestamp) : timestamp(timestamp) { }
+    MeterValue(Timestamp timestamp) : timestamp(timestamp) { }
     MeterValue(const MeterValue& other) = delete;
 
     void addSampledValue(std::unique_ptr<SampledValue> sample) {sampledValue.push_back(std::move(sample));}
@@ -40,7 +40,7 @@ public:
     MeterValueBuilder(const std::vector<std::unique_ptr<SampledValueSampler>> &samplers,
             std::shared_ptr<Configuration<const char*>> samplers_select);
     
-    std::unique_ptr<MeterValue> takeSample(const OcppTimestamp& timestamp, const ReadingContext& context);
+    std::unique_ptr<MeterValue> takeSample(const Timestamp& timestamp, const ReadingContext& context);
 
     std::unique_ptr<MeterValue> deserializeSample(const JsonObject mvJson);
 };

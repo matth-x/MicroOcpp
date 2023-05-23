@@ -2,10 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef OPERATIONSQUEUE_H
-#define OPERATIONSQUEUE_H
+#ifndef REQUESTQUEUESTORAGESTRATEGY_H
+#define REQUESTQUEUESTORAGESTRATEGY_H
 
-#include <ArduinoOcpp/Core/OperationStore.h>
+#include <ArduinoOcpp/Core/RequestStore.h>
 
 #include <memory>
 #include <deque>
@@ -14,54 +14,54 @@
 namespace ArduinoOcpp {
 
 class FilesystemAdapter;
-class OcppOperation;
-class OcppModel;
+class Request;
+class Model;
 
-class OperationsQueue {
+class RequestQueueStorageStrategy {
 public:
-    virtual ~OperationsQueue() = default;
+    virtual ~RequestQueueStorageStrategy() = default;
 
-    virtual OcppOperation *front() = 0;
+    virtual Request *front() = 0;
     virtual void pop_front() = 0;
 
-    virtual void initiate(std::unique_ptr<OcppOperation> op) = 0;
+    virtual void push_back(std::unique_ptr<Request> op) = 0;
 
-    virtual void drop_if(std::function<bool(std::unique_ptr<OcppOperation>&)> pred) = 0; //drops operations from this queue where pred(operation) == true. Executes pred in order
+    virtual void drop_if(std::function<bool(std::unique_ptr<Request>&)> pred) = 0; //drops operations from this queue where pred(operation) == true. Executes pred in order
 };
 
-class VolatileOperationsQueue : public OperationsQueue {
+class VolatileRequestQueue : public RequestQueueStorageStrategy {
 private:
-    std::deque<std::unique_ptr<OcppOperation>> queue;
+    std::deque<std::unique_ptr<Request>> queue;
 public:
-    VolatileOperationsQueue();
-    ~VolatileOperationsQueue();
+    VolatileRequestQueue();
+    ~VolatileRequestQueue();
 
-    OcppOperation *front() override;
+    Request *front() override;
     void pop_front() override;
 
-    void initiate(std::unique_ptr<OcppOperation> op) override;
+    void push_back(std::unique_ptr<Request> op) override;
 
-    void drop_if(std::function<bool(std::unique_ptr<OcppOperation>&)> pred) override; //drops operations from this queue where pred(operation) == true. Executes pred in order
+    void drop_if(std::function<bool(std::unique_ptr<Request>&)> pred) override; //drops operations from this queue where pred(operation) == true. Executes pred in order
 };
 
-class PersistentOperationsQueue : public OperationsQueue {
+class PersistentRequestQueue : public RequestQueueStorageStrategy {
 private:
-    OperationStore opStore;
-    std::shared_ptr<OcppModel> baseModel;
+    RequestStore opStore;
+    std::shared_ptr<Model> baseModel;
 
-    std::unique_ptr<OcppOperation> head;
-    std::deque<std::unique_ptr<OcppOperation>> tailCache;
+    std::unique_ptr<Request> head;
+    std::deque<std::unique_ptr<Request>> tailCache;
 public:
 
-    PersistentOperationsQueue(std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem);
-    ~PersistentOperationsQueue();
+    PersistentRequestQueue(std::shared_ptr<Model> baseModel, std::shared_ptr<FilesystemAdapter> filesystem);
+    ~PersistentRequestQueue();
 
-    OcppOperation *front() override;
+    Request *front() override;
     void pop_front() override;
 
-    void initiate(std::unique_ptr<OcppOperation> op) override;
+    void push_back(std::unique_ptr<Request> op) override;
 
-    void drop_if(std::function<bool(std::unique_ptr<OcppOperation>&)> pred) override; //drops operations from this queue where pred(operation) == true. Executes pred in order
+    void drop_if(std::function<bool(std::unique_ptr<Request>&)> pred) override; //drops operations from this queue where pred(operation) == true. Executes pred in order
 
 };
 

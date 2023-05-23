@@ -21,11 +21,11 @@ enum class RegistrationStatus {
 
 RegistrationStatus deserializeRegistrationStatus(const char *serialized);
 
-class OcppEngine;
+class Context;
 
 class BootService {
 private:
-    OcppEngine& context;
+    Context& context;
 
     unsigned long interval_s = AO_BOOT_INTERVAL_DEFAULT;
     unsigned long lastBootNotification = -1UL / 2;
@@ -40,7 +40,7 @@ private:
     bool activatedPostBootCommunication = false;
 
 public:
-    BootService(OcppEngine& context);
+    BootService(Context& context);
 
     void loop();
 

@@ -5,31 +5,31 @@
 #ifndef GETDIAGNOSTICS_H
 #define GETDIAGNOSTICS_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Operation.h>
+#include <ArduinoOcpp/Core/Time.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class GetDiagnostics : public OcppMessage {
+class GetDiagnostics : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     std::string location {};
     int retries = 1;
     unsigned long retryInterval = 180;
-    OcppTimestamp startTime = OcppTimestamp();
-    OcppTimestamp stopTime = OcppTimestamp();
+    Timestamp startTime = Timestamp();
+    Timestamp stopTime = Timestamp();
 
     std::string fileName {};
     
     bool formatError = false;
 public:
-    GetDiagnostics(OcppModel& context);
+    GetDiagnostics(Model& model);
 
-    const char* getOcppOperationType() {return "GetDiagnostics";}
+    const char* getOperationType() {return "GetDiagnostics";}
 
     void processReq(JsonObject payload);
 

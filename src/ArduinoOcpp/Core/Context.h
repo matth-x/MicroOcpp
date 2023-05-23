@@ -5,46 +5,46 @@
 #ifndef OCPPENGINE_H
 #define OCPPENGINE_H
 
-#include <ArduinoOcpp/Core/OcppConnection.h>
-#include <ArduinoOcpp/OperationDeserializer.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/RequestQueue.h>
+#include <ArduinoOcpp/Core/OperationRegistry.h>
+#include <ArduinoOcpp/Core/Time.h>
 #include <memory>
 
 namespace ArduinoOcpp {
 
-class OcppSocket;
-class OperationDeserializer;
-class OcppModel;
+class Connection;
+class OperationRegistry;
+class Model;
 class FilesystemAdapter;
 
-class OcppEngine {
+class Context {
 private:
-    OcppSocket& oSock;
-    OperationDeserializer operationDeserializer;
-    std::shared_ptr<OcppModel> oModel;
-    OcppConnection oConn;
+    Connection& connection;
+    OperationRegistry operationRegistry;
+    std::shared_ptr<Model> model;
+    RequestQueue reqQueue;
 
-    std::unique_ptr<OcppConnection> preBootConn;
+    std::unique_ptr<RequestQueue> preBootQueue;
 
 public:
-    OcppEngine(OcppSocket& ocppSocket, const OcppClock& system_clock, std::shared_ptr<FilesystemAdapter> filesystem);
-    ~OcppEngine();
+    Context(Connection& connection, const Clock& system_clock, std::shared_ptr<FilesystemAdapter> filesystem);
+    ~Context();
 
     void loop();
 
     void activatePostBootCommunication();
 
-    void initiateOperation(std::unique_ptr<OcppOperation> op);
+    void initiateRequest(std::unique_ptr<Request> op);
     
     //for BootNotification and TriggerMessage: initiate operations before the first BootNotification was accepted (pre-boot mode)
-    void initiatePreBootOperation(std::unique_ptr<OcppOperation> op);
+    void initiatePreBootOperation(std::unique_ptr<Request> op);
 
-    OcppModel& getOcppModel();
+    Model& getModel();
 
-    OperationDeserializer& getOperationDeserializer();
+    OperationRegistry& getOperationRegistry();
 };
 
-extern OcppEngine *defaultOcppEngine;
+extern Context *defaultContext;
 
 } //end namespace ArduinoOcpp
 

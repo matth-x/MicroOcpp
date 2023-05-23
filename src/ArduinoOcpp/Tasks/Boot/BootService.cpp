@@ -3,10 +3,10 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Boot/BootService.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
 #include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Debug.h>
@@ -26,7 +26,7 @@ RegistrationStatus ArduinoOcpp::deserializeRegistrationStatus(const char *serial
     }
 }
 
-BootService::BootService(OcppEngine& context) : context(context) {
+BootService::BootService(Context& context) : context(context) {
     
     //if transactions can start before the BootNotification succeeds
     preBootTransactions = declareConfiguration<bool>("AO_PreBootTransactions", false, CONFIGURATION_FN, true, true, true, false);
@@ -37,8 +37,8 @@ BootService::BootService(OcppEngine& context) : context(context) {
     }
 
     //Register message handler for TriggerMessage operation
-    context.getOperationDeserializer().registerOcppOperation("BootNotification", [this] () {
-        return new Ocpp16::BootNotification(this->context.getOcppModel(), getChargePointCredentials());});
+    context.getOperationRegistry().registerRequest("BootNotification", [this] () {
+        return new Ocpp16::BootNotification(this->context.getModel(), getChargePointCredentials());});
 }
 
 void BootService::loop() {
@@ -49,7 +49,7 @@ void BootService::loop() {
     }
 
     if (!activatedModel && (status == RegistrationStatus::Accepted || *preBootTransactions)) {
-        context.getOcppModel().activateTasks();
+        context.getModel().activateTasks();
         activatedModel = true;
     }
 
@@ -65,7 +65,7 @@ void BootService::loop() {
      * Create BootNotification. The BootNotifaction object will fetch its paremeters from
      * this class and notify this class about the response
      */
-    auto bootNotification = makeOcppOperation(new Ocpp16::BootNotification(context.getOcppModel(), getChargePointCredentials()));
+    auto bootNotification = makeRequest(new Ocpp16::BootNotification(context.getModel(), getChargePointCredentials()));
     bootNotification->setTimeout(interval_s * 1000UL);
     context.initiatePreBootOperation(std::move(bootNotification));
 

@@ -5,23 +5,23 @@
 #ifndef CANCELRESERVATION_H
 #define CANCELRESERVATION_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class CancelReservation : public OcppMessage {
+class CancelReservation : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     bool found = false;
     const char *errorCode = nullptr;
 public:
-    CancelReservation(OcppModel& context);
+    CancelReservation(Model& model);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

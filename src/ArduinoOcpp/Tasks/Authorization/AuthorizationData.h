@@ -6,7 +6,7 @@
 #define AUTHORIZATIONDATA_H
 
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Time.h>
 #include <ArduinoJson.h>
 #include <memory>
 
@@ -37,7 +37,7 @@ private:
     //data structure optimized for memory consumption
 
     std::unique_ptr<char[]> parentIdTag;
-    std::unique_ptr<OcppTimestamp> expiryDate;
+    std::unique_ptr<Timestamp> expiryDate;
 
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
 
@@ -55,7 +55,7 @@ public:
     void writeJson(JsonObject& entry, bool compact = false); //compact: compressed representation for flash storage
 
     const char *getIdTag() const {return idTag;}
-    OcppTimestamp *getExpiryDate() const {return expiryDate.get();}
+    Timestamp *getExpiryDate() const {return expiryDate.get();}
     const char *getParentIdTag() const {return parentIdTag.get();}
     AuthorizationStatus getAuthorizationStatus() const {return status;}
 

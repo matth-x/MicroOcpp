@@ -5,25 +5,25 @@
 #ifndef RESERVENOW_H
 #define RESERVENOW_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class ReserveNow : public OcppMessage {
+class ReserveNow : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     const char *errorCode = nullptr;
     const char *reservationStatus = nullptr;
 public:
-    ReserveNow(OcppModel& context);
+    ReserveNow(Model& model);
 
     ~ReserveNow();
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

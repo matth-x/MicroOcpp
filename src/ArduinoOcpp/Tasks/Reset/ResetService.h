@@ -9,11 +9,11 @@
 
 namespace ArduinoOcpp {
 
-class OcppEngine;
+class Context;
 
 class ResetService {
 private:
-    OcppEngine& context;
+    Context& context;
 
     std::function<bool(bool isHard)> preReset; //true: reset is possible; false: reject reset; Await: need more time to determine
     std::function<void(bool isHard)> executeReset; //please disconnect WebSocket (AO remains initialized), shut down device and restart with normal initialization routine; on failure reconnect WebSocket
@@ -24,7 +24,7 @@ private:
     std::shared_ptr<Configuration<int>> resetRetries;
 
 public:
-    ResetService(OcppEngine& context);
+    ResetService(Context& context);
 
     ~ResetService();
     

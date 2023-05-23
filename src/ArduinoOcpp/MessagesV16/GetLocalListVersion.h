@@ -5,21 +5,21 @@
 #ifndef GETLOCALLISTVERSION_H
 #define GETLOCALLISTVERSION_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class GetLocalListVersion : public OcppMessage {
+class GetLocalListVersion : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
 public:
-    GetLocalListVersion(OcppModel& context);
+    GetLocalListVersion(Model& model);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/GetCompositeSchedule.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Debug.h>
@@ -12,11 +12,11 @@
 
 using ArduinoOcpp::Ocpp16::GetCompositeSchedule;
 
-GetCompositeSchedule::GetCompositeSchedule(OcppModel& context) : context(context) {
+GetCompositeSchedule::GetCompositeSchedule(Model& model) : model(model) {
 
 }
 
-const char* GetCompositeSchedule::getOcppOperationType() {
+const char* GetCompositeSchedule::getOperationType() {
     return "GetCompositeSchedule";
 }
 
@@ -30,7 +30,7 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
         return;
     }
 
-    if ((unsigned int) connectorId >= context.getNumConnectors()) {
+    if ((unsigned int) connectorId >= model.getNumConnectors()) {
         errorCode = "PropertyConstraintViolation";
     }
 
@@ -44,14 +44,14 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
         errorCode = "PropertyConstraintViolation";
     }
 
-    if (!context.getSmartChargingService()) {
+    if (!model.getSmartChargingService()) {
         AO_DBG_ERR("SmartChargingService not initialized! Ignore request");
         errorCode = "NotSupported";
     }
 }
 
 std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
-    auto scService = context.getSmartChargingService();
+    auto scService = model.getSmartChargingService();
     if (!scService) {
         AO_DBG_ERR("invalid state");
         return createEmptyDocument();
@@ -78,7 +78,7 @@ std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
         if (startSchedule[0] != '\0') {
             strncpy(scheduleStart, startSchedule, JSONDATE_LENGTH + 1);
         } else {
-            context.getOcppTime().getOcppTimestampNow().toJsonString(scheduleStart, JSONDATE_LENGTH + 1);
+            model.getTime().getTimestampNow().toJsonString(scheduleStart, JSONDATE_LENGTH + 1);
         }
         payload["scheduleStart"] = scheduleStart;
         

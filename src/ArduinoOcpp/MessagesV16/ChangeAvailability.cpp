@@ -3,18 +3,18 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 
 #include <functional>
 
 using ArduinoOcpp::Ocpp16::ChangeAvailability;
 
-ChangeAvailability::ChangeAvailability(OcppModel& context) : context(context) {
+ChangeAvailability::ChangeAvailability(Model& model) : model(model) {
 
 }
 
-const char* ChangeAvailability::getOcppOperationType(){
+const char* ChangeAvailability::getOperationType(){
     return "ChangeAvailability";
 }
 
@@ -26,7 +26,7 @@ void ChangeAvailability::processReq(JsonObject payload) {
     }
     unsigned int connectorId = (unsigned int) connectorIdRaw;
 
-    if (connectorId >= context.getNumConnectors()) {
+    if (connectorId >= model.getNumConnectors()) {
         errorCode = "PropertyConstraintViolation";
         return;
     }
@@ -45,15 +45,15 @@ void ChangeAvailability::processReq(JsonObject payload) {
     }
 
     if (connectorId == 0) {
-        for (unsigned int cId = 0; cId < context.getNumConnectors(); cId++) {
-            auto connector = context.getConnector(cId);
+        for (unsigned int cId = 0; cId < model.getNumConnectors(); cId++) {
+            auto connector = model.getConnector(cId);
             connector->setAvailability(available);
             if (connector->getAvailability() == AVAILABILITY_INOPERATIVE_SCHEDULED) {
                 scheduled = true;
             }
         }
     } else {
-        auto connector = context.getConnector(connectorId);
+        auto connector = model.getConnector(connectorId);
         connector->setAvailability(available);
         if (connector->getAvailability() == AVAILABILITY_INOPERATIVE_SCHEDULED) {
             scheduled = true;

@@ -3,21 +3,21 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/MessagesV16/Heartbeat.h>
 #include <ArduinoOcpp/Platform.h>
 
 using namespace ArduinoOcpp;
 
-HeartbeatService::HeartbeatService(OcppEngine& context) : context(context) {
+HeartbeatService::HeartbeatService(Context& context) : context(context) {
     heartbeatInterval = declareConfiguration("HeartbeatInterval", 86400);
     lastHeartbeat = ao_tick_ms();
 
     //Register message handler for TriggerMessage operation
-    context.getOperationDeserializer().registerOcppOperation("Heartbeat", [&context] () {
-        return new Ocpp16::Heartbeat(context.getOcppModel());});
+    context.getOperationRegistry().registerRequest("Heartbeat", [&context] () {
+        return new Ocpp16::Heartbeat(context.getModel());});
 }
 
 void HeartbeatService::loop() {
@@ -28,7 +28,7 @@ void HeartbeatService::loop() {
     if (now - lastHeartbeat >= hbInterval) {
         lastHeartbeat = now;
 
-        auto heartbeat = makeOcppOperation(new Ocpp16::Heartbeat(context.getOcppModel()));
-        context.initiateOperation(std::move(heartbeat));
+        auto heartbeat = makeRequest(new Ocpp16::Heartbeat(context.getModel()));
+        context.initiateRequest(std::move(heartbeat));
     }
 }

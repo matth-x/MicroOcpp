@@ -2,11 +2,11 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/OperationsQueue.h>
-#include <ArduinoOcpp/Core/OperationStore.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/RequestQueueStorageStrategy.h>
+#include <ArduinoOcpp/Core/RequestStore.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 
-#include <ArduinoOcpp/Core/OcppOperation.h>
+#include <ArduinoOcpp/Core/Request.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoOcpp/Debug.h>
 
@@ -16,15 +16,15 @@
 
 using namespace ArduinoOcpp;
 
-VolatileOperationsQueue::VolatileOperationsQueue() {
+VolatileRequestQueue::VolatileRequestQueue() {
 
 }
 
-VolatileOperationsQueue::~VolatileOperationsQueue() {
+VolatileRequestQueue::~VolatileRequestQueue() {
 
 }
 
-OcppOperation *VolatileOperationsQueue::front() {
+Request *VolatileRequestQueue::front() {
     if (!queue.empty()) {
         return queue.front().get();
     } else {
@@ -32,11 +32,11 @@ OcppOperation *VolatileOperationsQueue::front() {
     }
 }
 
-void VolatileOperationsQueue::pop_front() {
+void VolatileRequestQueue::pop_front() {
     queue.pop_front();
 }
 
-void VolatileOperationsQueue::initiate(std::unique_ptr<OcppOperation> op) {
+void VolatileRequestQueue::push_back(std::unique_ptr<Request> op) {
 
     op->initiate(nullptr);
 
@@ -48,18 +48,18 @@ void VolatileOperationsQueue::initiate(std::unique_ptr<OcppOperation> op) {
     queue.push_back(std::move(op));
 }
 
-void VolatileOperationsQueue::drop_if(std::function<bool(std::unique_ptr<OcppOperation>&)> pred) {
+void VolatileRequestQueue::drop_if(std::function<bool(std::unique_ptr<Request>&)> pred) {
     queue.erase(std::remove_if(queue.begin(), queue.end(), pred), queue.end());
 }
 
-PersistentOperationsQueue::PersistentOperationsQueue(std::shared_ptr<OcppModel> baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
+PersistentRequestQueue::PersistentRequestQueue(std::shared_ptr<Model> baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
             : opStore(filesystem), baseModel(baseModel) { }
 
-PersistentOperationsQueue::~PersistentOperationsQueue() {
+PersistentRequestQueue::~PersistentRequestQueue() {
 
 }
 
-OcppOperation *PersistentOperationsQueue::front() {
+Request *PersistentRequestQueue::front() {
     if (!head && !tailCache.empty()) {
         AO_DBG_ERR("invalid state");
         pop_front();
@@ -67,7 +67,7 @@ OcppOperation *PersistentOperationsQueue::front() {
     return head.get();
 }
 
-void PersistentOperationsQueue::pop_front() {
+void PersistentRequestQueue::pop_front() {
     
     if (head && head->getStorageHandler() && head->getStorageHandler()->getOpNr() >= 0) {
         opStore.advanceOpNr(head->getStorageHandler()->getOpNr());
@@ -86,7 +86,7 @@ void PersistentOperationsQueue::pop_front() {
      */
 
     auto found = std::find_if(tailCache.begin(), tailCache.end(),
-        [nextOpNr] (std::unique_ptr<OcppOperation>& op) {
+        [nextOpNr] (std::unique_ptr<Request>& op) {
             return op->getStorageHandler() &&
                    op->getStorageHandler()->getOpNr() >= 0 &&
                    (unsigned int) op->getStorageHandler()->getOpNr() == nextOpNr;
@@ -100,7 +100,7 @@ void PersistentOperationsQueue::pop_front() {
         //cache miss -> case B) or A) -> try to fetch operation from flash (check for case B)) or take first cached element as front
         auto storageHandler = opStore.makeOpHandler();
         
-        std::unique_ptr<OcppOperation> fetched;
+        std::unique_ptr<Request> fetched;
 
         unsigned int range = (opStore.getOpEnd() + AO_MAX_OPNR - nextOpNr) % AO_MAX_OPNR;
         for (size_t i = 0; i < range; i++) {
@@ -108,7 +108,7 @@ void PersistentOperationsQueue::pop_front() {
             if (exists) {
                 //case B) -> load operation from flash and take it as front element
 
-                fetched = makeOcppOperation();
+                fetched = makeRequest();
 
                 bool success = fetched->restore(std::move(storageHandler), baseModel);
 
@@ -146,7 +146,7 @@ void PersistentOperationsQueue::pop_front() {
     AO_DBG_VERBOSE("popped front");
 }
 
-void PersistentOperationsQueue::initiate(std::unique_ptr<OcppOperation> op) {
+void PersistentRequestQueue::push_back(std::unique_ptr<Request> op) {
 
     op->initiate(opStore.makeOpHandler());
 
@@ -159,7 +159,7 @@ void PersistentOperationsQueue::initiate(std::unique_ptr<OcppOperation> op) {
         head = std::move(op);
     } else {
         if (tailCache.size() >= AO_OPERATIONCACHE_MAXSIZE) {
-            AO_DBG_INFO("Replace cached operation (cache full): %s", tailCache.front()->getOcppOperationType());
+            AO_DBG_INFO("Replace cached operation (cache full): %s", tailCache.front()->getOperationType());
             tailCache.front()->executeTimeout();
             tailCache.pop_front();
         }
@@ -168,7 +168,7 @@ void PersistentOperationsQueue::initiate(std::unique_ptr<OcppOperation> op) {
     }
 }
 
-void PersistentOperationsQueue::drop_if(std::function<bool(std::unique_ptr<OcppOperation>&)> pred) {
+void PersistentRequestQueue::drop_if(std::function<bool(std::unique_ptr<Request>&)> pred) {
 
     while (head && pred(head)) {
         pop_front();

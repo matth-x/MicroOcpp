@@ -11,7 +11,7 @@ DataTransfer::DataTransfer(const std::string &msg) {
     this->msg = msg;
 }
 
-const char* DataTransfer::getOcppOperationType(){
+const char* DataTransfer::getOperationType(){
     return "DataTransfer";
 }
 

@@ -4,9 +4,9 @@
 
 #include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Core/OcppOperation.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Core/Request.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
@@ -22,13 +22,13 @@
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-Connector::Connector(OcppEngine& context, int connectorId)
-        : context(context), model(context.getOcppModel()), connectorId{connectorId} {
+Connector::Connector(Context& context, int connectorId)
+        : context(context), model(context.getModel()), connectorId{connectorId} {
 
     char availabilityKey [CONF_KEYLEN_MAX + 1] = {'\0'};
     snprintf(availabilityKey, CONF_KEYLEN_MAX + 1, "AO_AVAIL_CONN_%d", connectorId);
@@ -194,7 +194,7 @@ void Connector::loop() {
                 !transaction->getStartRpcSync().isRequested() &&
                 transaction->getSessionTimestamp() > MIN_TIME &&
                 connectionTimeOut && *connectionTimeOut > 0 &&
-                model.getOcppTime().getOcppTimestampNow() - transaction->getSessionTimestamp() >= (otime_t) *connectionTimeOut) {
+                model.getTime().getTimestampNow() - transaction->getSessionTimestamp() >= (otime_t) *connectionTimeOut) {
                 
             AO_DBG_INFO("Session mngt: timeout");
             transaction->endSession();
@@ -236,7 +236,7 @@ void Connector::loop() {
                 }
 
                 if (transaction->getStartTimestamp() <= MIN_TIME) {
-                    transaction->setStartTimestamp(model.getOcppTime().getOcppTimestampNow());
+                    transaction->setStartTimestamp(model.getTime().getTimestampNow());
                 }
 
                 if (transaction->isSilent()) {
@@ -253,9 +253,9 @@ void Connector::loop() {
                     model.getMeteringService()->beginTxMeterData(transaction.get());
                 }
 
-                auto startTx = makeOcppOperation(new StartTransaction(model, transaction));
+                auto startTx = makeRequest(new StartTransaction(model, transaction));
                 startTx->setTimeout(0);
-                context.initiateOperation(std::move(startTx));
+                context.initiateRequest(std::move(startTx));
                 return;
             }
         } else  {
@@ -291,7 +291,7 @@ void Connector::loop() {
                 }
 
                 if (transaction->getStopTimestamp() <= MIN_TIME) {
-                    transaction->setStopTimestamp(model.getOcppTime().getOcppTimestampNow());
+                    transaction->setStopTimestamp(model.getTime().getTimestampNow());
                 }
 
                 transaction->commit();
@@ -302,15 +302,15 @@ void Connector::loop() {
                     stopTxData = meteringService->endTxMeterData(transaction.get());
                 }
 
-                std::unique_ptr<OcppOperation> stopTx;
+                std::unique_ptr<Request> stopTx;
 
                 if (stopTxData) {
-                    stopTx = makeOcppOperation(new StopTransaction(model, std::move(transaction), stopTxData->retrieveStopTxData()));
+                    stopTx = makeRequest(new StopTransaction(model, std::move(transaction), stopTxData->retrieveStopTxData()));
                 } else {
-                    stopTx = makeOcppOperation(new StopTransaction(model, std::move(transaction)));
+                    stopTx = makeRequest(new StopTransaction(model, std::move(transaction)));
                 }
                 stopTx->setTimeout(0);
-                context.initiateOperation(std::move(stopTx));
+                context.initiateRequest(std::move(stopTx));
                 return;
             }
         }
@@ -344,17 +344,17 @@ void Connector::loop() {
     }
 
     if (reportedStatus != currentStatus &&
-            model.getOcppTime().getOcppTimestampNow() >= OcppTimestamp(2010,0,0,0,0,0) &&
+            model.getTime().getTimestampNow() >= Timestamp(2010,0,0,0,0,0) &&
             (*minimumStatusDuration <= 0 || //MinimumStatusDuration disabled
             ao_tick_ms() - t_statusTransition >= ((unsigned long) *minimumStatusDuration) * 1000UL)) {
         reportedStatus = currentStatus;
-        OcppTimestamp reportedTimestamp = model.getOcppTime().getOcppTimestampNow();
+        Timestamp reportedTimestamp = model.getTime().getTimestampNow();
         reportedTimestamp -= (ao_tick_ms() - t_statusTransition) / 1000UL;
 
-        auto statusNotification = makeOcppOperation(
+        auto statusNotification = makeRequest(
                 new StatusNotification(connectorId, reportedStatus, reportedTimestamp, getErrorCode()));
         statusNotification->setTimeout(0);
-        context.initiateOperation(std::move(statusNotification));
+        context.initiateRequest(std::move(statusNotification));
         return;
     }
 
@@ -509,7 +509,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
         //check expiry
         if (localAuth && localAuth->getExpiryDate()) {
-            auto& tnow = model.getOcppTime().getOcppTimestampNow();
+            auto& tnow = model.getTime().getTimestampNow();
             if (tnow >= *localAuth->getExpiryDate()) {
                 AO_DBG_DEBUG("idTag %s local auth entry expired", idTag);
                 localAuth = nullptr;
@@ -532,7 +532,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         transaction->setIdTag(idTag);
     }
 
-    transaction->setSessionTimestamp(model.getOcppTime().getOcppTimestampNow());
+    transaction->setSessionTimestamp(model.getTime().getTimestampNow());
 
     AO_DBG_DEBUG("Begin transaction process (%s), prepare", idTag != nullptr ? idTag : "");
 
@@ -547,7 +547,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
     transaction->commit();
 
-    auto authorize = makeOcppOperation(new Ocpp16::Authorize(context.getOcppModel(), idTag));
+    auto authorize = makeRequest(new Ocpp16::Authorize(context.getModel(), idTag));
     authorize->setTimeout(authorizationTimeout && *authorizationTimeout > 0 ? *authorizationTimeout * 1000UL : 20UL * 1000UL);
     auto tx = transaction;
     authorize->setOnReceiveConfListener([this, tx] (JsonObject response) {
@@ -624,7 +624,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         tx->commit();
         return; //offline tx disabled
     });
-    context.initiateOperation(std::move(authorize));
+    context.initiateRequest(std::move(authorize));
 
     return transaction;
 }
@@ -650,7 +650,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
         transaction->setIdTag(idTag);
     }
 
-    transaction->setSessionTimestamp(model.getOcppTime().getOcppTimestampNow());
+    transaction->setSessionTimestamp(model.getTime().getTimestampNow());
     
     AO_DBG_DEBUG("Begin transaction process (%s), already authorized", idTag != nullptr ? idTag : "");
 

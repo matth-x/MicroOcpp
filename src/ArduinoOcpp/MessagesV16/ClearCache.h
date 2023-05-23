@@ -5,20 +5,20 @@
 #ifndef CLEARCACHE_H
 #define CLEARCACHE_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 
-class ClearCache : public OcppMessage {
+class ClearCache : public Operation {
 private:
     std::shared_ptr<FilesystemAdapter> filesystem;
     bool success = true;
 public:
     ClearCache(std::shared_ptr<FilesystemAdapter> filesystem);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

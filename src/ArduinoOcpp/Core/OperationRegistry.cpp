@@ -2,20 +2,20 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/OperationDeserializer.h>
-#include <ArduinoOcpp/Core/OcppMessage.h>
-#include <ArduinoOcpp/Core/OcppOperation.h>
+#include <ArduinoOcpp/Core/OperationRegistry.h>
+#include <ArduinoOcpp/Core/Operation.h>
+#include <ArduinoOcpp/Core/Request.h>
 #include <ArduinoOcpp/Core/OcppError.h>
 #include <ArduinoOcpp/Debug.h>
 #include <algorithm>
 
 using namespace ArduinoOcpp;
 
-OperationDeserializer::OperationDeserializer() {
+OperationRegistry::OperationRegistry() {
 
 }
 
-OcppMessageCreator *OperationDeserializer::findCreator(const char *operationType) {
+OperationCreator *OperationRegistry::findCreator(const char *operationType) {
     for (auto it = registry.begin(); it != registry.end(); ++it) {
         if (!strcmp(it->operationType, operationType)) {
             return &*it;
@@ -24,14 +24,14 @@ OcppMessageCreator *OperationDeserializer::findCreator(const char *operationType
     return nullptr;
 }
 
-void OperationDeserializer::registerOcppOperation(const char *operationType, std::function<OcppMessage*()> creator) {
+void OperationRegistry::registerRequest(const char *operationType, std::function<Operation*()> creator) {
     registry.erase(std::remove_if(registry.begin(), registry.end(),
-                [operationType] (const OcppMessageCreator& el) {
+                [operationType] (const OperationCreator& el) {
                     return !strcmp(operationType, el.operationType);
                 }),
             registry.end());
     
-    OcppMessageCreator entry;
+    OperationCreator entry;
     entry.operationType = operationType;
     entry.creator = creator;
 
@@ -40,7 +40,7 @@ void OperationDeserializer::registerOcppOperation(const char *operationType, std
     AO_DBG_DEBUG("registered operation %s", operationType);
 }
 
-void OperationDeserializer::setOnRequest(const char *operationType, OnReceiveReqListener onRequest) {
+void OperationRegistry::setOnRequest(const char *operationType, OnReceiveReqListener onRequest) {
     if (auto entry = findCreator(operationType)) {
         entry->onRequest = onRequest;
     } else {
@@ -48,7 +48,7 @@ void OperationDeserializer::setOnRequest(const char *operationType, OnReceiveReq
     }
 }
 
-void OperationDeserializer::setOnResponse(const char *operationType, OnSendConfListener onResponse) {
+void OperationRegistry::setOnResponse(const char *operationType, OnSendConfListener onResponse) {
     if (auto entry = findCreator(operationType)) {
         entry->onResponse = onResponse;
     } else {
@@ -56,23 +56,23 @@ void OperationDeserializer::setOnResponse(const char *operationType, OnSendConfL
     }
 }
 
-std::unique_ptr<OcppOperation> OperationDeserializer::deserializeOperation(const char *operationType) {
+std::unique_ptr<Request> OperationRegistry::deserializeOperation(const char *operationType) {
     
     if (auto entry = findCreator(operationType)) {
         auto payload = entry->creator();
         if (payload) {
-            auto result = std::unique_ptr<OcppOperation>(new OcppOperation(
-                                std::unique_ptr<OcppMessage>(payload)));
+            auto result = std::unique_ptr<Request>(new Request(
+                                std::unique_ptr<Operation>(payload)));
             result->setOnReceiveReqListener(entry->onRequest);
             return result;
         }
     }
 
-    return std::unique_ptr<OcppOperation>(new OcppOperation(
-                std::unique_ptr<OcppMessage>(new NotImplemented())));
+    return std::unique_ptr<Request>(new Request(
+                std::unique_ptr<Operation>(new NotImplemented())));
 }
 
-void OperationDeserializer::debugPrint() {
+void OperationRegistry::debugPrint() {
     for (auto& creator : registry) {
         AO_CONSOLE_PRINTF("[AO]     > %s\n", creator.operationType);
     }

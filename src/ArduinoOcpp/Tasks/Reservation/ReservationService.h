@@ -9,11 +9,11 @@
 
 namespace ArduinoOcpp {
 
-class OcppEngine;
+class Context;
 
 class ReservationService {
 private:
-    OcppEngine& context;
+    Context& context;
 
     const int maxReservations; // = number of physical connectors
     std::vector<Reservation> reservations;
@@ -21,7 +21,7 @@ private:
     std::shared_ptr<Configuration<bool>> reserveConnectorZeroSupported;
 
 public:
-    ReservationService(OcppEngine& context, unsigned int numConnectors);
+    ReservationService(Context& context, unsigned int numConnectors);
 
     void loop();
 

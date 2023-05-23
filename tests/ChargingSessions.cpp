@@ -1,9 +1,9 @@
 #include <ArduinoOcpp.h>
-#include <ArduinoOcpp/Core/OcppSocket.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Connection.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/MessagesV16/BootNotification.h>
 #include <ArduinoOcpp/MessagesV16/StatusNotification.h>
 #include "./catch2/catch.hpp"
@@ -14,12 +14,12 @@ using namespace ArduinoOcpp;
 
 TEST_CASE( "Charging sessions" ) {
 
-    //initialize OcppEngine with dummy socket
-    OcppEchoSocket echoSocket;
-    OCPP_initialize(echoSocket, ChargerCredentials("test-runner1234"));
+    //initialize Context with dummy socket
+    LoopbackConnection loopback;
+    OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-    auto engine = getOcppEngine();
-    auto& checkMsg = engine->getOperationDeserializer();
+    auto engine = getOcppContext();
+    auto& checkMsg = engine->getOperationRegistry();
 
     ao_set_timer(custom_timer_cb);
 
@@ -30,7 +30,7 @@ TEST_CASE( "Charging sessions" ) {
     
     std::array<const char*, 2> expectedSN {"Available", "Available"};
     std::array<bool, 2> checkedSN {false, false};
-    checkMsg.registerOcppOperation("StatusNotification", [] () -> OcppMessage* {return new Ocpp16::StatusNotification(0, OcppEvseState::NOT_SET, MIN_TIME);});
+    checkMsg.registerRequest("StatusNotification", [] () -> Operation* {return new Ocpp16::StatusNotification(0, OcppEvseState::NOT_SET, MIN_TIME);});
     checkMsg.setOnRequest("StatusNotification",
         [&checkedSN, &expectedSN] (JsonObject request) {
             int connectorId = request["connectorId"] | -1;
@@ -40,7 +40,7 @@ TEST_CASE( "Charging sessions" ) {
     SECTION("Check idle state"){
 
         bool checkedBN = false;
-        checkMsg.registerOcppOperation("BootNotification", [engine] () -> OcppMessage* {return new Ocpp16::BootNotification(engine->getOcppModel(), std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(0)));});
+        checkMsg.registerRequest("BootNotification", [engine] () -> Operation* {return new Ocpp16::BootNotification(engine->getModel(), std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(0)));});
         checkMsg.setOnRequest("BootNotification",
             [&checkedBN] (JsonObject request) {
                 checkedBN = !strcmp(request["chargePointModel"] | "Invalid", "test-runner1234");

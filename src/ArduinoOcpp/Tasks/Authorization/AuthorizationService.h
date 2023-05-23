@@ -11,11 +11,11 @@
 
 namespace ArduinoOcpp {
 
-class OcppEngine;
+class Context;
 
 class AuthorizationService {
 private:
-    OcppEngine& context;
+    Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
     AuthorizationList localAuthorizationList;
 
@@ -23,7 +23,7 @@ private:
     std::shared_ptr<Configuration<bool>> localAuthListEnabled;
 
 public:
-    AuthorizationService(OcppEngine& context, std::shared_ptr<FilesystemAdapter> filesystem);
+    AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem);
     ~AuthorizationService();
 
     bool loadLists();

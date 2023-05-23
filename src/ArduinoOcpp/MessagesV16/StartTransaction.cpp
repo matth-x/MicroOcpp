@@ -3,8 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/Core/OperationStore.h>
+#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Core/RequestStore.h>
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
@@ -15,7 +15,7 @@ using ArduinoOcpp::Ocpp16::StartTransaction;
 using ArduinoOcpp::TransactionRPC;
 
 
-StartTransaction::StartTransaction(OcppModel& context, std::shared_ptr<Transaction> transaction) : context(context), transaction(transaction) {
+StartTransaction::StartTransaction(Model& model, std::shared_ptr<Transaction> transaction) : model(model), transaction(transaction) {
     
 }
 
@@ -23,12 +23,12 @@ StartTransaction::~StartTransaction() {
     
 }
 
-const char* StartTransaction::getOcppOperationType() {
+const char* StartTransaction::getOperationType() {
     return "StartTransaction";
 }
 
 void StartTransaction::initiate(StoredOperationHandler *opStore) {
-    if (!transaction || transaction->getStartRpcSync().isRequested()) {
+    if (!transaction || transaction->getStartRpcData().isRequested()) {
         AO_DBG_ERR("initialization error");
         return;
     }
@@ -42,7 +42,7 @@ void StartTransaction::initiate(StoredOperationHandler *opStore) {
         opStore->commit();
     }
 
-    transaction->getStartRpcSync().setRequested();
+    transaction->getStartRpcData().setRequested();
 
     transaction->commit();
 
@@ -68,7 +68,7 @@ bool StartTransaction::restore(StoredOperationHandler *opStore) {
         return false;
     }
 
-    auto txStore = context.getTransactionStore();
+    auto txStore = model.getTransactionStore();
 
     if (!txStore) {
         AO_DBG_ERR("invalid state");
@@ -80,7 +80,7 @@ bool StartTransaction::restore(StoredOperationHandler *opStore) {
         AO_DBG_ERR("referential integrity violation");
 
         //clean up possible tx records
-        if (auto mSerivce = context.getMeteringService()) {
+        if (auto mSerivce = model.getMeteringService()) {
             mSerivce->removeTxMeterData(connectorId, txNr);
         }
         return false;
@@ -134,10 +134,10 @@ void StartTransaction::processConf(JsonObject payload) {
     int transactionId = payload["transactionId"] | -1;
     transaction->setTransactionId(transactionId);
 
-    transaction->getStartRpcSync().confirm();
+    transaction->getStartRpcData().confirm();
     transaction->commit();
 
-    if (auto authService = context.getAuthorizationService()) {
+    if (auto authService = model.getAuthorizationService()) {
         authService->notifyAuthorization(transaction->getIdTag(), payload["idTagInfo"]);
     }
 }

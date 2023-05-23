@@ -14,17 +14,17 @@
 
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.h>
 #include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Time.h>
 
 namespace ArduinoOcpp {
 
 using OnLimitChange = std::function<void(float)>;
 
-class OcppEngine;
+class Context;
 
 class SmartChargingService {
 private:
-    OcppEngine& context;
+    Context& context;
     
     const float DEFAULT_CHARGE_LIMIT;
     const float V_eff; //use for approximation: chargingLimit in A * V_eff = chargingLimit in W
@@ -33,11 +33,11 @@ private:
     ChargingProfile *TxProfile[CHARGEPROFILEMAXSTACKLEVEL];
     OnLimitChange onLimitChange = NULL;
     float limitBeforeChange;
-    OcppTimestamp nextChange;
+    Timestamp nextChange;
 
     bool chargingSessionStateInitialized {false};
     std::shared_ptr<Configuration<const char*>> txStartTime;
-    OcppTimestamp chargingSessionStart;
+    Timestamp chargingSessionStart;
     int chargingSessionTransactionID;
     std::shared_ptr<Configuration<int>> sRmtProfileId;
     uint16_t sRmtProfileIdRev {0};
@@ -50,10 +50,10 @@ private:
     bool loadProfiles();
   
 public:
-    SmartChargingService(OcppEngine& context, float chargeLimit, float V_eff, int numConnectors, FilesystemOpt filesystemOpt = FilesystemOpt::Use_Mount_FormatOnFail);
+    SmartChargingService(Context& context, float chargeLimit, float V_eff, int numConnectors, FilesystemOpt filesystemOpt = FilesystemOpt::Use_Mount_FormatOnFail);
     void setChargingProfile(JsonObject json);
     bool clearChargingProfile(const std::function<bool(int, int, ChargingProfilePurposeType, int)>& filter);
-    void inferenceLimit(const OcppTimestamp &t, float *limit, OcppTimestamp *validTo);
+    void inferenceLimit(const Timestamp &t, float *limit, Timestamp *validTo);
     float inferenceLimitNow();
     void setOnLimitChange(OnLimitChange onLimitChange);
     ChargingSchedule *getCompositeSchedule(int connectorId, otime_t duration);

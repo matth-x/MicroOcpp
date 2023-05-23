@@ -3,14 +3,14 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/ReserveNow.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Platform.h>
 
 using ArduinoOcpp::Ocpp16::ReserveNow;
 
-ReserveNow::ReserveNow(OcppModel& context) : context(context) {
+ReserveNow::ReserveNow(Model& model) : model(model) {
   
 }
 
@@ -18,7 +18,7 @@ ReserveNow::~ReserveNow() {
   
 }
 
-const char* ReserveNow::getOcppOperationType(){
+const char* ReserveNow::getOperationType(){
     return "ReserveNow";
 }
 
@@ -33,7 +33,7 @@ void ReserveNow::processReq(JsonObject payload) {
         return;
     }
 
-    OcppTimestamp validateTimestamp;
+    Timestamp validateTimestamp;
     if (!validateTimestamp.setTime(payload["expiryDate"])) {
         AO_DBG_WARN("bad time format");
         errorCode = "PropertyConstraintViolation";
@@ -42,12 +42,12 @@ void ReserveNow::processReq(JsonObject payload) {
 
     unsigned int connectorId = payload["connectorId"];
 
-    if (context.getReservationService() &&
-                context.getNumConnectors() > 0) {
-        auto rService = context.getReservationService();
-        auto chargePoint = context.getConnector(0);
+    if (model.getReservationService() &&
+                model.getNumConnectors() > 0) {
+        auto rService = model.getReservationService();
+        auto chargePoint = model.getConnector(0);
 
-        if (connectorId >= context.getNumConnectors()) {
+        if (connectorId >= model.getNumConnectors()) {
             errorCode = "PropertyConstraintViolation";
             return;
         }
@@ -67,7 +67,7 @@ void ReserveNow::processReq(JsonObject payload) {
         Connector *connector = nullptr;
         
         if (connectorId > 0) {
-            connector = context.getConnector(connectorId);
+            connector = model.getConnector(connectorId);
         }
 
         if (chargePoint->inferenceStatus() == OcppEvseState::Faulted ||

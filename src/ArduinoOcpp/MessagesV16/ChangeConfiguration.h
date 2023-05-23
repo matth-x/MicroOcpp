@@ -5,12 +5,12 @@
 #ifndef CHANGECONFIGURATION_H
 #define CHANGECONFIGURATION_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
 
-class ChangeConfiguration : public OcppMessage {
+class ChangeConfiguration : public Operation {
 private:
     bool reject = false;
     bool rebootRequired = false;
@@ -21,7 +21,7 @@ private:
 public:
     ChangeConfiguration();
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

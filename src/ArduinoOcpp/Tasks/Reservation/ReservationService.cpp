@@ -3,8 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/MessagesV16/CancelReservation.h>
@@ -14,11 +14,11 @@
 
 using namespace ArduinoOcpp;
 
-ReservationService::ReservationService(OcppEngine& context, unsigned int numConnectors) : context(context), maxReservations((int) numConnectors - 1) {
+ReservationService::ReservationService(Context& context, unsigned int numConnectors) : context(context), maxReservations((int) numConnectors - 1) {
     if (maxReservations > 0) {
         reservations.reserve((size_t) maxReservations);
         for (int i = 0; i < maxReservations; i++) {
-            reservations.push_back(Reservation(context.getOcppModel(), i));
+            reservations.push_back(Reservation(context.getModel(), i));
         }
     }
 
@@ -35,10 +35,10 @@ ReservationService::ReservationService(OcppEngine& context, unsigned int numConn
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
     
-    context.getOperationDeserializer().registerOcppOperation("CancelReservation", [&context] () {
-        return new Ocpp16::CancelReservation(context.getOcppModel());});
-    context.getOperationDeserializer().registerOcppOperation("ReserveNow", [&context] () {
-        return new Ocpp16::ReserveNow(context.getOcppModel());});
+    context.getOperationRegistry().registerRequest("CancelReservation", [&context] () {
+        return new Ocpp16::CancelReservation(context.getModel());});
+    context.getOperationRegistry().registerRequest("ReserveNow", [&context] () {
+        return new Ocpp16::ReserveNow(context.getModel());});
 }
 
 void ReservationService::loop() {
@@ -49,7 +49,7 @@ void ReservationService::loop() {
             continue;
         }
 
-        if (auto connector = context.getOcppModel().getConnector(reservation.getConnectorId())) {
+        if (auto connector = context.getModel().getConnector(reservation.getConnectorId())) {
 
             //check if connector went inoperative
             auto cStatus = connector->inferenceStatus();
@@ -66,8 +66,8 @@ void ReservationService::loop() {
         }
 
         //check if tx with same idTag or reservationId has started
-        for (unsigned int cId = 1; cId < context.getOcppModel().getNumConnectors(); cId++) {
-            auto& transaction = context.getOcppModel().getConnector(cId)->getTransaction();
+        for (unsigned int cId = 1; cId < context.getModel().getNumConnectors(); cId++) {
+            auto& transaction = context.getModel().getConnector(cId)->getTransaction();
             if (transaction) {
                 const char *cIdTag = transaction->getIdTag();
                 if (transaction->getReservationId() == reservation.getReservationId() || 
@@ -158,12 +158,12 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
     }
 
     unsigned int availableCount = 0;
-    for (unsigned int cId = 1; cId < context.getOcppModel().getNumConnectors(); cId++) {
+    for (unsigned int cId = 1; cId < context.getModel().getNumConnectors(); cId++) {
         if (cId == connectorId) {
             //don't count this connector
             continue;
         }
-        if (auto connector = context.getOcppModel().getConnector(cId)) {
+        if (auto connector = context.getModel().getConnector(cId)) {
             if (connector->inferenceStatus() == OcppEvseState::Available) {
                 availableCount++;
             }

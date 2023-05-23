@@ -5,28 +5,28 @@
 #ifndef TRIGGERMESSAGE_H
 #define TRIGGERMESSAGE_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 #include <vector>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
-class OcppOperation;
+class Model;
+class Request;
 
 namespace Ocpp16 {
 
-class TriggerMessage : public OcppMessage {
+class TriggerMessage : public Operation {
 private:
-    OcppModel& context;
-    std::vector<std::unique_ptr<OcppOperation>> triggeredOperations;
+    Model& model;
+    std::vector<std::unique_ptr<Request>> triggeredOperations;
     const char *statusMessage {nullptr};
 
     const char *errorCode = nullptr;
 public:
-    TriggerMessage(OcppModel& context);
+    TriggerMessage(Model& model);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

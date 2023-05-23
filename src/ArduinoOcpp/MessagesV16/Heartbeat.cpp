@@ -3,17 +3,17 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/Heartbeat.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Debug.h>
 #include <string.h>
 
 using ArduinoOcpp::Ocpp16::Heartbeat;
 
-Heartbeat::Heartbeat(OcppModel& context) : context(context) {
+Heartbeat::Heartbeat(Model& model) : model(model) {
   
 }
 
-const char* Heartbeat::getOcppOperationType(){
+const char* Heartbeat::getOperationType(){
     return "Heartbeat";
 }
 
@@ -25,7 +25,7 @@ void Heartbeat::processConf(JsonObject payload) {
   
     const char* currentTime = payload["currentTime"] | "Invalid";
     if (strcmp(currentTime, "Invalid")) {
-        if (context.getOcppTime().setOcppTime(currentTime)) {
+        if (model.getTime().setTime(currentTime)) {
             //success
             AO_DBG_DEBUG("Request has been accepted");
         } else {
@@ -49,9 +49,9 @@ std::unique_ptr<DynamicJsonDocument> Heartbeat::createConf(){
     JsonObject payload = doc->to<JsonObject>();
 
     //safety mechanism; in some test setups the library could have to answer Heartbeats without valid system time
-    OcppTimestamp ocppTimeReference = OcppTimestamp(2019,10,0,11,59,55); 
-    OcppTimestamp ocppSelect = ocppTimeReference;
-    auto& ocppNow = context.getOcppTime().getOcppTimestampNow();
+    Timestamp ocppTimeReference = Timestamp(2019,10,0,11,59,55); 
+    Timestamp ocppSelect = ocppTimeReference;
+    auto& ocppNow = model.getTime().getTimestampNow();
     if (ocppNow > ocppTimeReference) {
         //time has already been set
         ocppSelect = ocppNow;

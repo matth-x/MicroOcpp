@@ -3,16 +3,16 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/Reset.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/Reset/ResetService.h>
 
 using ArduinoOcpp::Ocpp16::Reset;
 
-Reset::Reset(OcppModel& context) : context(context) {
+Reset::Reset(Model& model) : model(model) {
   
 }
 
-const char* Reset::getOcppOperationType(){
+const char* Reset::getOperationType(){
     return "Reset";
 }
 
@@ -23,7 +23,7 @@ void Reset::processReq(JsonObject payload) {
      */
     bool isHard = !strcmp(payload["type"] | "undefined", "Hard");
 
-    if (auto rService = context.getResetService()) {
+    if (auto rService = model.getResetService()) {
         if (!rService->getExecuteReset()) {
             AO_DBG_ERR("No reset handler set. Abort operation");
             (void)0;
@@ -32,8 +32,8 @@ void Reset::processReq(JsonObject payload) {
             if (!rService->getPreReset() || rService->getPreReset()(isHard) || isHard) {
                 resetAccepted = true;
                 rService->initiateReset(isHard);
-                for (unsigned int cId = 0; cId < context.getNumConnectors(); cId++) {
-                    context.getConnector(cId)->endTransaction(isHard ? "HardReset" : "SoftReset");
+                for (unsigned int cId = 0; cId < model.getNumConnectors(); cId++) {
+                    model.getConnector(cId)->endTransaction(isHard ? "HardReset" : "SoftReset");
                 }
             }
         }

@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Debug.h>
 
@@ -11,11 +11,11 @@
 
 using ArduinoOcpp::Ocpp16::ClearChargingProfile;
 
-ClearChargingProfile::ClearChargingProfile(OcppModel& context) : context(context) {
+ClearChargingProfile::ClearChargingProfile(Model& model) : model(model) {
 
 }
 
-const char* ClearChargingProfile::getOcppOperationType(){
+const char* ClearChargingProfile::getOperationType(){
     return "ClearChargingProfile";
 }
 
@@ -63,7 +63,7 @@ void ClearChargingProfile::processReq(JsonObject payload) {
         return true;
     };
 
-    if (auto scService = context.getSmartChargingService()) {
+    if (auto scService = model.getSmartChargingService()) {
         matchingProfilesFound = scService->clearChargingProfile(filter);
     } else {
         AO_DBG_ERR("SmartChargingService not initialized");

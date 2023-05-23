@@ -3,17 +3,17 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/GetLocalListVersion.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::GetLocalListVersion;
 
-GetLocalListVersion::GetLocalListVersion(OcppModel& context) : context(context) {
+GetLocalListVersion::GetLocalListVersion(Model& model) : model(model) {
   
 }
 
-const char* GetLocalListVersion::getOcppOperationType(){
+const char* GetLocalListVersion::getOperationType(){
     return "GetLocalListVersion";
 }
 
@@ -24,7 +24,7 @@ void GetLocalListVersion::processReq(JsonObject payload) {
 std::unique_ptr<DynamicJsonDocument> GetLocalListVersion::createConf(){
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
-    if (auto authService = context.getAuthorizationService()) {
+    if (auto authService = model.getAuthorizationService()) {
         payload["listVersion"] = authService->getLocalListVersion();
     } else {
         payload["listVersion"] = -1;

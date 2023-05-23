@@ -9,13 +9,13 @@
 
 namespace ArduinoOcpp {
 
-class OcppEngine;
+class Context;
 
 class ChargeControlCommon {
 private:
-    OcppEngine& context;
+    Context& context;
 public:
-    ChargeControlCommon(OcppEngine& context, unsigned int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
+    ChargeControlCommon(Context& context, unsigned int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
     void loop();
 };

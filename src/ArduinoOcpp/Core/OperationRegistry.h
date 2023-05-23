@@ -9,33 +9,33 @@
 #include <vector>
 #include <memory>
 #include <ArduinoJson.h>
-#include <ArduinoOcpp/Core/OcppOperationCallbacks.h>
+#include <ArduinoOcpp/Core/RequestCallbacks.h>
 
 namespace ArduinoOcpp {
 
-class OcppMessage;
-class OcppOperation;
+class Operation;
+class Request;
 
-struct OcppMessageCreator {
+struct OperationCreator {
     const char *operationType {nullptr};
-    std::function<OcppMessage*()> creator {nullptr};
+    std::function<Operation*()> creator {nullptr};
     OnReceiveReqListener onRequest {nullptr};
     OnSendConfListener onResponse {nullptr};
 };
 
-class OperationDeserializer {
+class OperationRegistry {
 private:
-    std::vector<OcppMessageCreator> registry;
-    OcppMessageCreator *findCreator(const char *operationType);
+    std::vector<OperationCreator> registry;
+    OperationCreator *findCreator(const char *operationType);
 
 public:
-    OperationDeserializer();
+    OperationRegistry();
 
-    void registerOcppOperation(const char *operationType, std::function<OcppMessage*()> creator);
+    void registerRequest(const char *operationType, std::function<Operation*()> creator);
     void setOnRequest(const char *operationType, OnReceiveReqListener onRequest);
     void setOnResponse(const char *operationType, OnSendConfListener onResponse);
     
-    std::unique_ptr<OcppOperation> deserializeOperation(const char *operationType);
+    std::unique_ptr<Request> deserializeOperation(const char *operationType);
 
     void debugPrint();
 };

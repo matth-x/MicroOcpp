@@ -7,7 +7,7 @@
 
 #include <functional>
 #include <memory>
-#include <ArduinoOcpp/Core/OcppTime.h>
+#include <ArduinoOcpp/Core/Time.h>
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsStatus.h>
 #include <string>
 
@@ -19,42 +19,42 @@ enum class UploadStatus {
     UploadFailed
 };
 
-class OcppEngine;
-class OcppOperation;
+class Context;
+class Request;
 
 class DiagnosticsService {
 private:
-    OcppEngine& context;
+    Context& context;
     
     std::string location {};
     int retries = 0;
     unsigned int retryInterval = 0;
-    OcppTimestamp startTime = OcppTimestamp();
-    OcppTimestamp stopTime = OcppTimestamp();
+    Timestamp startTime = Timestamp();
+    Timestamp stopTime = Timestamp();
 
-    OcppTimestamp nextTry = OcppTimestamp();
+    Timestamp nextTry = Timestamp();
 
-    std::function<bool(const std::string &location, OcppTimestamp &startTime, OcppTimestamp &stopTime)> onUpload = nullptr;
+    std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload = nullptr;
     std::function<UploadStatus()> uploadStatusSampler = nullptr;
     bool uploadIssued = false;
 
-    std::unique_ptr<OcppOperation> getDiagnosticsStatusNotification();
+    std::unique_ptr<Request> getDiagnosticsStatusNotification();
 
     Ocpp16::DiagnosticsStatus lastReportedStatus = Ocpp16::DiagnosticsStatus::Idle;
 
 public:
-    DiagnosticsService(OcppEngine& context);
+    DiagnosticsService(Context& context);
 
     void loop();
 
     //timestamps before year 2021 will be treated as "undefined"
     //returns empty std::string if onUpload is missing or upload cannot be scheduled for another reason
     //returns fileName of diagnostics file to be uploaded if upload has been scheduled
-    std::string requestDiagnosticsUpload(const std::string &location, int retries = 1, unsigned int retryInterval = 0, OcppTimestamp startTime = OcppTimestamp(), OcppTimestamp stopTime = OcppTimestamp());
+    std::string requestDiagnosticsUpload(const std::string &location, int retries = 1, unsigned int retryInterval = 0, Timestamp startTime = Timestamp(), Timestamp stopTime = Timestamp());
 
     Ocpp16::DiagnosticsStatus getDiagnosticsStatus();
 
-    void setOnUpload(std::function<bool(const std::string &location, OcppTimestamp &startTime, OcppTimestamp &stopTime)> onUpload);
+    void setOnUpload(std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload);
 
     void setOnUploadStatusSampler(std::function<UploadStatus()> uploadStatusSampler);
 };
@@ -64,7 +64,7 @@ public:
 
 namespace EspWiFi {
 
-DiagnosticsService *makeDiagnosticsService(OcppEngine& context);
+DiagnosticsService *makeDiagnosticsService(Context& context);
 
 }
 

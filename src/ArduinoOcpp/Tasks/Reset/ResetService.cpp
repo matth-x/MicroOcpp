@@ -3,9 +3,9 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Reset/ResetService.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/MessagesV16/Reset.h>
 
@@ -23,13 +23,13 @@
 
 using namespace ArduinoOcpp;
 
-ResetService::ResetService(OcppEngine& context)
+ResetService::ResetService(Context& context)
       : context(context) {
 
     resetRetries = declareConfiguration<int>("ResetRetries", 2, CONFIGURATION_FN, true, true, false, false);
 
-    context.getOperationDeserializer().registerOcppOperation("Reset", [&context] () {
-        return new Ocpp16::Reset(context.getOcppModel());});
+    context.getOperationRegistry().registerRequest("Reset", [&context] () {
+        return new Ocpp16::Reset(context.getModel());});
 }
 
 ResetService::~ResetService() {
@@ -51,8 +51,8 @@ void ResetService::loop() {
         AO_DBG_ERR("Reset device failure. %s", outstandingResetRetries == 0 ? "Abort" : "Retry");
 
         if (outstandingResetRetries <= 0) {
-            for (unsigned int cId = 0; cId < context.getOcppModel().getNumConnectors(); cId++) {
-                auto connector = context.getOcppModel().getConnector(cId);
+            for (unsigned int cId = 0; cId < context.getModel().getNumConnectors(); cId++) {
+                auto connector = context.getModel().getConnector(cId);
                 connector->setAvailabilityVolatile(true);
             }
         }
@@ -84,8 +84,8 @@ void ResetService::initiateReset(bool isHard) {
     }
     t_resetRetry = ao_tick_ms();
 
-    for (unsigned int cId = 0; cId < context.getOcppModel().getNumConnectors(); cId++) {
-        auto connector = context.getOcppModel().getConnector(cId);
+    for (unsigned int cId = 0; cId < context.getModel().getNumConnectors(); cId++) {
+        auto connector = context.getModel().getConnector(cId);
         connector->setAvailabilityVolatile(false);
     }
 }

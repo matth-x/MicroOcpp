@@ -61,7 +61,7 @@ ChargingSchedule::ChargingSchedule(JsonObject &json, ChargingProfileKindType cha
       , recurrencyKind(recurrencyKind) {  
   
     duration = json["duration"] | -1;
-    startSchedule = OcppTimestamp();
+    startSchedule = Timestamp();
     if (!startSchedule.setTime(json["startSchedule"] | "Invalid")) {
         //non-success
         startSchedule = MIN_TIME;
@@ -109,7 +109,7 @@ ChargingSchedule::ChargingSchedule(ChargingSchedule &other) {
     minChargingRate = other.minChargingRate;
 }
 
-ChargingSchedule::ChargingSchedule(const OcppTimestamp &startT, int duration) {
+ChargingSchedule::ChargingSchedule(const Timestamp &startT, int duration) {
     //create empty but valid Charging Schedule
     this->duration = duration;
     startSchedule = startT;
@@ -120,8 +120,8 @@ ChargingSchedule::ChargingSchedule(const OcppTimestamp &startT, int duration) {
     recurrencyKind = RecurrencyKindType::NOT_SET; //copied from ChargingProfile to increase cohesion of limit inferencing methods
 }
 
-bool ChargingSchedule::inferenceLimit(const OcppTimestamp &t, const OcppTimestamp &startOfCharging, float *limit, OcppTimestamp *nextChange) {
-    OcppTimestamp basis = OcppTimestamp(); //point in time to which schedule-related times are relative
+bool ChargingSchedule::inferenceLimit(const Timestamp &t, const Timestamp &startOfCharging, float *limit, Timestamp *nextChange) {
+    Timestamp basis = Timestamp(); //point in time to which schedule-related times are relative
     *nextChange = MAX_TIME; //defaulted to Infinity
     switch (chargingProfileKind) {
         case (ChargingProfileKindType::Absolute):
@@ -335,7 +335,7 @@ ChargingProfile::ChargingProfile(JsonObject &json){
     chargingSchedule = std::unique_ptr<ChargingSchedule>(new ChargingSchedule(schedule, chargingProfileKind, recurrencyKind));
 }
 
-bool ChargingProfile::inferenceLimit(const OcppTimestamp &t, const OcppTimestamp &startOfCharging, float *limit, OcppTimestamp *nextChange){
+bool ChargingProfile::inferenceLimit(const Timestamp &t, const Timestamp &startOfCharging, float *limit, Timestamp *nextChange){
     if (t > validTo && validTo > MIN_TIME) {
         *nextChange = MAX_TIME;
         return false; //no limit defined
@@ -348,7 +348,7 @@ bool ChargingProfile::inferenceLimit(const OcppTimestamp &t, const OcppTimestamp
     return chargingSchedule->inferenceLimit(t, startOfCharging, limit, nextChange);
 }
 
-bool ChargingProfile::inferenceLimit(const OcppTimestamp &t, float *limit, OcppTimestamp *nextChange){
+bool ChargingProfile::inferenceLimit(const Timestamp &t, float *limit, Timestamp *nextChange){
     return inferenceLimit(t, MAX_TIME, limit, nextChange);
 }
 

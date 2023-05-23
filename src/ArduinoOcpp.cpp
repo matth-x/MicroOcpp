@@ -4,8 +4,8 @@
 
 #include "ArduinoOcpp.h"
 
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlCommon.h>
@@ -17,8 +17,8 @@
 #include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
 #include <ArduinoOcpp/Tasks/Boot/BootService.h>
 #include <ArduinoOcpp/Tasks/Reset/ResetService.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
-#include <ArduinoOcpp/OperationDeserializer.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
+#include <ArduinoOcpp/Core/OperationRegistry.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 
@@ -34,10 +34,10 @@ namespace Facade {
 
 #ifndef AO_CUSTOM_WS
 WebSocketsClient *webSocket {nullptr};
-OcppSocket *ocppSocket {nullptr};
+Connection *connection {nullptr};
 #endif
 
-OcppEngine *ocppEngine {nullptr};
+Context *context {nullptr};
 std::shared_ptr<FilesystemAdapter> filesystem;
 FilesystemOpt fileSystemOpt {};
 float voltage_eff {230.f};
@@ -57,7 +57,7 @@ using namespace ArduinoOcpp::Ocpp16;
 
 #ifndef AO_CUSTOM_WS
 void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *chargePointModel, const char *chargePointVendor, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt) {
-    if (ocppEngine) {
+    if (context) {
         AO_DBG_WARN("Can't be called two times. Either restart ESP, or call OCPP_deinitialize() before");
         return;
     }
@@ -77,10 +77,10 @@ void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_u
     // consider connection disconnected if pong is not received 2 times
     webSocket->enableHeartbeat(15000, 3000, 2); //comment this one out to for specific OCPP servers
 
-    delete ocppSocket;
-    ocppSocket = new EspWiFi::OcppClientSocket(webSocket);
+    delete connection;
+    connection = new EspWiFi::WSClient(webSocket);
 
-    OCPP_initialize(*ocppSocket, ChargerCredentials(chargePointModel, chargePointVendor), V_eff, fsOpt);
+    OCPP_initialize(*connection, ChargerCredentials(chargePointModel, chargePointVendor), V_eff, fsOpt);
 }
 #endif
 
@@ -118,8 +118,8 @@ ChargerCredentials::ChargerCredentials(const char *cpModel, const char *cpVendor
     }
 }
 
-void OCPP_initialize(OcppSocket& ocppSocket, const char *bootNotificationCredentials, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt) {
-    if (ocppEngine) {
+void OCPP_initialize(Connection& connection, const char *bootNotificationCredentials, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt) {
+    if (context) {
         AO_DBG_WARN("Can't be called two times. To change the credentials, either restart ESP, or call OCPP_deinitialize() before");
         return;
     }
@@ -134,43 +134,43 @@ void OCPP_initialize(OcppSocket& ocppSocket, const char *bootNotificationCredent
     
     configuration_init(filesystem); //call before each other library call
 
-    ocppEngine = new OcppEngine(ocppSocket, Clocks::DEFAULT_CLOCK, filesystem);
-    auto& model = ocppEngine->getOcppModel();
+    context = new Context(connection, Clocks::DEFAULT_CLOCK, filesystem);
+    auto& model = context->getModel();
 
     model.setTransactionStore(std::unique_ptr<TransactionStore>(
         new TransactionStore(AO_NUMCONNECTORS, filesystem)));
     model.setBootService(std::unique_ptr<BootService>(
-        new BootService(*ocppEngine)));
+        new BootService(*context)));
     model.setChargeControlCommon(std::unique_ptr<ChargeControlCommon>(
-        new ChargeControlCommon(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
+        new ChargeControlCommon(*context, AO_NUMCONNECTORS, filesystem)));
     std::vector<Connector> connectors;
     for (unsigned int connectorId = 0; connectorId < AO_NUMCONNECTORS; connectorId++) {
-        connectors.push_back(Connector(*ocppEngine, connectorId));
+        connectors.push_back(Connector(*context, connectorId));
     }
     model.setConnectors(std::move(connectors));
     model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
-        new HeartbeatService(*ocppEngine)));
+        new HeartbeatService(*context)));
     model.setAuthorizationService(std::unique_ptr<AuthorizationService>(
-        new AuthorizationService(*ocppEngine, filesystem)));
+        new AuthorizationService(*context, filesystem)));
     model.setReservationService(std::unique_ptr<ReservationService>(
-        new ReservationService(*ocppEngine, AO_NUMCONNECTORS)));
+        new ReservationService(*context, AO_NUMCONNECTORS)));
     model.setResetService(std::unique_ptr<ResetService>(
-        new ResetService(*ocppEngine)));
+        new ResetService(*context)));
     
 #if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
     model.setFirmwareService(std::unique_ptr<FirmwareService>(
-        EspWiFi::makeFirmwareService(*ocppEngine, "1234578901"))); //instantiate FW service + ESP installation routine
+        EspWiFi::makeFirmwareService(*context, "1234578901"))); //instantiate FW service + ESP installation routine
 #else
     model.setFirmwareService(std::unique_ptr<FirmwareService>(
-        new FirmwareService(*ocppEngine))); //only instantiate FW service
+        new FirmwareService(*context))); //only instantiate FW service
 #endif
 
 #if !defined(AO_CUSTOM_DIAGNOSTICS) && !defined(AO_CUSTOM_WS)
     model.setDiagnosticsService(std::unique_ptr<DiagnosticsService>(
-        EspWiFi::makeDiagnosticsService(*ocppEngine))); //will only return "Rejected" because client needs to implement logging
+        EspWiFi::makeDiagnosticsService(*context))); //will only return "Rejected" because client needs to implement logging
 #else
     model.setDiagnosticsService(std::unique_ptr<DiagnosticsService>(
-        new DiagnosticsService(*ocppEngine)));
+        new DiagnosticsService(*context)));
 #endif
 
 #if AO_PLATFORM == AO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
@@ -183,12 +183,12 @@ void OCPP_initialize(OcppSocket& ocppSocket, const char *bootNotificationCredent
 
 void OCPP_deinitialize() {
     
-    delete ocppEngine;
-    ocppEngine = nullptr;
+    delete context;
+    context = nullptr;
 
 #ifndef AO_CUSTOM_WS
-    delete ocppSocket;
-    ocppSocket = nullptr;
+    delete connection;
+    connection = nullptr;
     delete webSocket;
     webSocket = nullptr;
 #endif
@@ -200,16 +200,16 @@ void OCPP_deinitialize() {
 }
 
 void OCPP_loop() {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return;
     }
 
-    ocppEngine->loop();
+    context->loop();
 }
 
 void bootNotification(const char *chargePointModel, const char *chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
@@ -223,18 +223,18 @@ void bootNotification(const char *chargePointModel, const char *chargePointVendo
 }
 
 void bootNotification(std::unique_ptr<DynamicJsonDocument> payload, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
 
     //store credentials for later TriggerMessage
-    if (auto bootService = ocppEngine->getOcppModel().getBootService()) {
+    if (auto bootService = context->getModel().getBootService()) {
         bootService->setChargePointCredentials(payload->as<JsonObject>());
     }
 
-    auto bootNotification = makeOcppOperation(
-        new BootNotification(ocppEngine->getOcppModel(), std::move(payload)));
+    auto bootNotification = makeRequest(
+        new BootNotification(context->getModel(), std::move(payload)));
     if (onConf)
         bootNotification->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -247,11 +247,11 @@ void bootNotification(std::unique_ptr<DynamicJsonDocument> payload, OnReceiveCon
         bootNotification->setTimeout(timeout);
     else
         bootNotification->setTimeout(0);
-    ocppEngine->initiateOperation(std::move(bootNotification));
+    context->initiateRequest(std::move(bootNotification));
 }
 
 void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
@@ -259,8 +259,8 @@ void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener 
         AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return;
     }
-    auto authorize = makeOcppOperation(
-        new Authorize(ocppEngine->getOcppModel(), idTag));
+    auto authorize = makeRequest(
+        new Authorize(context->getModel(), idTag));
     if (onConf)
         authorize->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -273,11 +273,11 @@ void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener 
         authorize->setTimeout(timeout);
     else
         authorize->setTimeout(20000);
-    ocppEngine->initiateOperation(std::move(authorize));
+    context->initiateRequest(std::move(authorize));
 }
 
 bool beginTransaction(const char *idTag, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
     }
@@ -285,7 +285,7 @@ bool beginTransaction(const char *idTag, unsigned int connectorId) {
         AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
@@ -295,7 +295,7 @@ bool beginTransaction(const char *idTag, unsigned int connectorId) {
 }
 
 bool beginTransaction_authorized(const char *idTag, const char *parentIdTag, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
     }
@@ -304,7 +304,7 @@ bool beginTransaction_authorized(const char *idTag, const char *parentIdTag, uns
         AO_DBG_ERR("(parent)idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
@@ -314,11 +314,11 @@ bool beginTransaction_authorized(const char *idTag, const char *parentIdTag, uns
 }
 
 bool endTransaction(const char *reason, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
@@ -329,11 +329,11 @@ bool endTransaction(const char *reason, unsigned int connectorId) {
 }
 
 bool isTransactionRunning(unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
@@ -342,11 +342,11 @@ bool isTransactionRunning(unsigned int connectorId) {
 }
 
 bool ocppPermitsCharge(unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
@@ -355,11 +355,11 @@ bool ocppPermitsCharge(unsigned int connectorId) {
 }
 
 void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -374,14 +374,14 @@ void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int c
 }
 
 void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto& model = ocppEngine->getOcppModel();
+    auto& model = context->getModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
+            new MeteringService(*context, AO_NUMCONNECTORS, filesystem)));
     }
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Energy.Active.Import.Register");
@@ -396,15 +396,15 @@ void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connec
 }
 
 void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
 
-    auto& model = ocppEngine->getOcppModel();
+    auto& model = context->getModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
+            new MeteringService(*context, AO_NUMCONNECTORS, filesystem)));
     }
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Power.Active.Import");
@@ -419,7 +419,7 @@ void setPowerMeterInput(std::function<float()> powerInput, unsigned int connecto
 }
 
 void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
@@ -427,20 +427,20 @@ void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, unsi
         AO_DBG_WARN("Only one connector supported at the moment for Smart Charging");
         return;
     }
-    auto& model = ocppEngine->getOcppModel();
+    auto& model = context->getModel();
     if (!model.getSmartChargingService()) {
         model.setSmartChargingService(std::unique_ptr<SmartChargingService>(
-            new SmartChargingService(*ocppEngine, 11000.0f, voltage_eff, AO_NUMCONNECTORS, fileSystemOpt))); //default charging limit: 11kW
+            new SmartChargingService(*context, 11000.0f, voltage_eff, AO_NUMCONNECTORS, fileSystemOpt))); //default charging limit: 11kW
     }
     model.getSmartChargingService()->setOnLimitChange(chargingLimitOutput);
 }
 
 void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -449,11 +449,11 @@ void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorI
 }
 
 void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -462,11 +462,11 @@ void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connec
 }
 
 void addErrorCodeInput(std::function<const char *()> errorCodeInput, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -475,7 +475,7 @@ void addErrorCodeInput(std::function<const char *()> errorCodeInput, unsigned in
 }
 
 void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measurand, const char *unit, const char *location, const char *phase, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
@@ -508,46 +508,46 @@ void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measur
 }
 
 void addMeterValueInput(std::unique_ptr<SampledValueSampler> valueInput, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto& model = ocppEngine->getOcppModel();
+    auto& model = context->getModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*ocppEngine, AO_NUMCONNECTORS, filesystem)));
+            new MeteringService(*context, AO_NUMCONNECTORS, filesystem)));
     }
     model.getMeteringService()->addMeterValueSampler(connectorId, std::move(valueInput));
 }
 
 void setOnResetNotify(std::function<bool(bool)> onResetNotify) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
 
-    if (auto rService = ocppEngine->getOcppModel().getResetService()) {
+    if (auto rService = context->getModel().getResetService()) {
         rService->setPreReset(onResetNotify);
     }
 }
 
 void setOnResetExecute(std::function<void(bool)> onResetExecute) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
 
-    if (auto rService = ocppEngine->getOcppModel().getResetService()) {
+    if (auto rService = context->getModel().getResetService()) {
         rService->setExecuteReset(onResetExecute);
     }
 }
 
 void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnectorInOut, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -556,11 +556,11 @@ void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnect
 }
 
 void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -569,11 +569,11 @@ void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int conne
 }
 
 void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -582,11 +582,11 @@ void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connect
 }
 
 void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
@@ -595,11 +595,11 @@ void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId) 
 }
 
 bool isOperative(unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return true; //assume "true" as default state
     }
-    auto& model = ocppEngine->getOcppModel();
+    auto& model = context->getModel();
     auto chargePoint = model.getConnector(OCPP_ID_OF_CP);
     auto connector = model.getConnector(connectorId);
     if (!chargePoint || !connector) {
@@ -611,11 +611,11 @@ bool isOperative(unsigned int connectorId) {
 }
 
 int getTransactionId(unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return -1;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return -1;
@@ -624,11 +624,11 @@ int getTransactionId(unsigned int connectorId) {
 }
 
 const char *getTransactionIdTag(unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return nullptr;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(connectorId);
+    auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return nullptr;
@@ -637,7 +637,7 @@ const char *getTransactionIdTag(unsigned int connectorId) {
 }
 
 bool isBlockedByReservation(const char *idTag, unsigned int connectorId) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_WARN("Please call OCPP_initialize before");
         return false;
     }
@@ -645,7 +645,7 @@ bool isBlockedByReservation(const char *idTag, unsigned int connectorId) {
         AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return false;
     }
-    auto rService = ocppEngine->getOcppModel().getReservationService();
+    auto rService = context->getModel().getReservationService();
     if (!rService) {
         AO_DBG_ERR("Could not access reservations. Ignore");
         return false;
@@ -659,79 +659,79 @@ bool isBlockedByReservation(const char *idTag, unsigned int connectorId) {
 
 #if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WS)
 ArduinoOcpp::FirmwareService *getFirmwareService() {
-    auto& model = ocppEngine->getOcppModel();
+    auto& model = context->getModel();
     return model.getFirmwareService();
 }
 #endif
 
 #if defined(AO_CUSTOM_DIAGNOSTICS) || defined(AO_CUSTOM_WS)
 ArduinoOcpp::DiagnosticsService *getDiagnosticsService() {
-    auto& model = ocppEngine->getOcppModel();
+    auto& model = context->getModel();
     return model.getDiagnosticsService();
 }
 #endif
 
-OcppEngine *getOcppEngine() {
-    if (!ocppEngine) {
+Context *getOcppContext() {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return nullptr;
     }
 
-    return ocppEngine;
+    return context;
 }
 
 void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    ocppEngine->getOperationDeserializer().setOnRequest("SetChargingProfile", onReceiveReq);
+    context->getOperationRegistry().setOnRequest("SetChargingProfile", onReceiveReq);
 }
 
 void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    ocppEngine->getOperationDeserializer().setOnResponse("RemoteStartTransaction", onSendConf);
+    context->getOperationRegistry().setOnResponse("RemoteStartTransaction", onSendConf);
 }
 
 void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    ocppEngine->getOperationDeserializer().setOnRequest("RemoteStopTransaction", onReceiveReq);
+    context->getOperationRegistry().setOnRequest("RemoteStopTransaction", onReceiveReq);
 }
 
 void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    ocppEngine->getOperationDeserializer().setOnResponse("RemoteStopTransaction", onSendConf);
+    context->getOperationRegistry().setOnResponse("RemoteStopTransaction", onSendConf);
 }
 
 void setOnResetSendConf(OnSendConfListener onSendConf) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    ocppEngine->getOperationDeserializer().setOnResponse("Reset", onSendConf);
+    context->getOperationRegistry().setOnResponse("Reset", onSendConf);
 }
 
 void setOnResetRequest(OnReceiveReqListener onReceiveReq) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    ocppEngine->getOperationDeserializer().setOnRequest("Reset", onReceiveReq);
+    context->getOperationRegistry().setOnRequest("Reset", onReceiveReq);
 }
 
 #define OCPP_ID_OF_CONNECTOR 1
 
 bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
     }
@@ -739,14 +739,14 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
         AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(OCPP_ID_OF_CONNECTOR);
+    auto connector = context->getModel().getConnector(OCPP_ID_OF_CONNECTOR);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
     }
     auto transaction = connector->getTransaction();
     if (transaction) {
-        if (transaction->getStartRpcSync().isRequested()) {
+        if (transaction->getStartRpcData().isRequested()) {
             AO_DBG_ERR("Transaction already in progress. Must call stopTransaction()");
             return false;
         }
@@ -760,7 +760,7 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
         }
     }
 
-    if (auto mService = ocppEngine->getOcppModel().getMeteringService()) {
+    if (auto mService = context->getModel().getMeteringService()) {
         auto meterStart = mService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionBegin);
         if (meterStart && *meterStart) {
             transaction->setMeterStart(meterStart->toInteger());
@@ -769,12 +769,12 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
         }
     }
 
-    transaction->setStartTimestamp(ocppEngine->getOcppModel().getOcppTime().getOcppTimestampNow());
+    transaction->setStartTimestamp(context->getModel().getTime().getTimestampNow());
 
     transaction->commit();
     
-    auto startTransaction = makeOcppOperation(
-        new StartTransaction(ocppEngine->getOcppModel(), transaction));
+    auto startTransaction = makeRequest(
+        new StartTransaction(context->getModel(), transaction));
     if (onConf)
         startTransaction->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -787,17 +787,17 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
         startTransaction->setTimeout(timeout);
     else
         startTransaction->setTimeout(0);
-    ocppEngine->initiateOperation(std::move(startTransaction));
+    context->initiateRequest(std::move(startTransaction));
 
     return true;
 }
 
 bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
-    if (!ocppEngine) {
+    if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
     }
-    auto connector = ocppEngine->getOcppModel().getConnector(OCPP_ID_OF_CONNECTOR);
+    auto connector = context->getModel().getConnector(OCPP_ID_OF_CONNECTOR);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
@@ -818,7 +818,7 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
     
     transaction->setStopReason("Local");
 
-    if (auto mService = ocppEngine->getOcppModel().getMeteringService()) {
+    if (auto mService = context->getModel().getMeteringService()) {
         auto meterStop = mService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionEnd);
         if (meterStop && *meterStop) {
             transaction->setMeterStop(meterStop->toInteger());
@@ -827,12 +827,12 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
         }
     }
 
-    transaction->setStopTimestamp(ocppEngine->getOcppModel().getOcppTime().getOcppTimestampNow());
+    transaction->setStopTimestamp(context->getModel().getTime().getTimestampNow());
 
     transaction->commit();
 
-    auto stopTransaction = makeOcppOperation(
-        new StopTransaction(ocppEngine->getOcppModel(), transaction));
+    auto stopTransaction = makeRequest(
+        new StopTransaction(context->getModel(), transaction));
     if (onConf)
         stopTransaction->setOnReceiveConfListener(onConf);
     if (onAbort)
@@ -845,7 +845,7 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
         stopTransaction->setTimeout(timeout);
     else
         stopTransaction->setTimeout(0);
-    ocppEngine->initiateOperation(std::move(stopTransaction));
+    context->initiateRequest(std::move(stopTransaction));
 
     return true;
 }

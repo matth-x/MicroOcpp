@@ -7,18 +7,18 @@
 
 #include <ArduinoJson.h>
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 namespace ArduinoOcpp {
 
-class NotImplemented : public OcppMessage {
+class NotImplemented : public Operation {
 public:
     const char *getErrorCode() {
         return "NotImplemented";
     }
 };
 
-class MsgBufferExceeded : public OcppMessage {
+class MsgBufferExceeded : public Operation {
 private:
     size_t maxCapacity;
     size_t msgLen;

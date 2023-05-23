@@ -3,25 +3,25 @@
 // MIT License
 
 #include <ArduinoOcpp/MessagesV16/SetChargingProfile.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::SetChargingProfile;
 
-SetChargingProfile::SetChargingProfile(OcppModel& context) : context(context) {
+SetChargingProfile::SetChargingProfile(Model& model) : model(model) {
 
 }
 
-SetChargingProfile::SetChargingProfile(OcppModel& context, std::unique_ptr<DynamicJsonDocument> payloadToClient)
-        : context(context), payloadToClient{std::move(payloadToClient)} {
+SetChargingProfile::SetChargingProfile(Model& model, std::unique_ptr<DynamicJsonDocument> payloadToClient)
+        : model(model), payloadToClient{std::move(payloadToClient)} {
 }
 
 SetChargingProfile::~SetChargingProfile() {
 
 }
 
-const char* SetChargingProfile::getOcppOperationType(){
+const char* SetChargingProfile::getOperationType(){
     return "SetChargingProfile";
 }
 
@@ -31,7 +31,7 @@ void SetChargingProfile::processReq(JsonObject payload) {
 
     JsonObject csChargingProfiles = payload["csChargingProfiles"];
 
-    if (auto scService = context.getSmartChargingService()) {
+    if (auto scService = model.getSmartChargingService()) {
         scService->setChargingProfile(csChargingProfiles);
     }
 }

@@ -5,25 +5,25 @@
 #ifndef CHANGEAVAILABILITY_H
 #define CHANGEAVAILABILITY_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class ChangeAvailability : public OcppMessage {
+class ChangeAvailability : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     bool scheduled = false;
     bool accepted = false;
 
     const char *errorCode {nullptr};
 public:
-    ChangeAvailability(OcppModel& context);
+    ChangeAvailability(Model& model);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     void processReq(JsonObject payload);
 

@@ -3,8 +3,8 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
 #include <ArduinoOcpp/MessagesV16/GetCompositeSchedule.h>
@@ -42,7 +42,7 @@
 
 using namespace::ArduinoOcpp;
 
-SmartChargingService::SmartChargingService(OcppEngine& context, float chargeLimit, float V_eff, int numConnectors, FilesystemOpt filesystemOpt)
+SmartChargingService::SmartChargingService(Context& context, float chargeLimit, float V_eff, int numConnectors, FilesystemOpt filesystemOpt)
       : context(context), DEFAULT_CHARGE_LIMIT{chargeLimit}, V_eff{V_eff}, filesystemOpt{filesystemOpt} {
   
     if (numConnectors > 2) {
@@ -77,12 +77,12 @@ SmartChargingService::SmartChargingService(OcppEngine& context, float chargeLimi
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
 
-    context.getOperationDeserializer().registerOcppOperation("ClearChargingProfile", [&context] () {
-        return new Ocpp16::ClearChargingProfile(context.getOcppModel());});
-    context.getOperationDeserializer().registerOcppOperation("GetCompositeSchedule", [&context] () {
-        return new Ocpp16::GetCompositeSchedule(context.getOcppModel());});
-    context.getOperationDeserializer().registerOcppOperation("SetChargingProfile", [&context] () {
-        return new Ocpp16::SetChargingProfile(context.getOcppModel());});
+    context.getOperationRegistry().registerRequest("ClearChargingProfile", [&context] () {
+        return new Ocpp16::ClearChargingProfile(context.getModel());});
+    context.getOperationRegistry().registerRequest("GetCompositeSchedule", [&context] () {
+        return new Ocpp16::GetCompositeSchedule(context.getModel());});
+    context.getOperationRegistry().registerRequest("SetChargingProfile", [&context] () {
+        return new Ocpp16::SetChargingProfile(context.getModel());});
 
     loadProfiles();
 }
@@ -94,10 +94,10 @@ void SmartChargingService::loop(){
     /**
      * check if to call onLimitChange
      */
-    if (context.getOcppModel().getOcppTime().getOcppTimestampNow() >= nextChange){
-        auto& tNow = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+    if (context.getModel().getTime().getTimestampNow() >= nextChange){
+        auto& tNow = context.getModel().getTime().getTimestampNow();
         float limit = -1.0f;
-        OcppTimestamp validTo = OcppTimestamp();
+        Timestamp validTo = Timestamp();
         inferenceLimit(tNow, &limit, &validTo);
 
 #if (AO_DBG_LEVEL >= AO_DL_INFO)
@@ -121,8 +121,8 @@ void SmartChargingService::loop(){
 
 float SmartChargingService::inferenceLimitNow(){
     float limit = 0.0f;
-    OcppTimestamp validTo = OcppTimestamp(); //not needed
-    auto& tNow = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+    Timestamp validTo = Timestamp(); //not needed
+    auto& tNow = context.getModel().getTime().getTimestampNow();
     inferenceLimit(tNow, &limit, &validTo);
     return limit;
 }
@@ -136,8 +136,8 @@ void SmartChargingService::setOnLimitChange(OnLimitChange onLtChg){
  * account if the next Profile will be a prevailing one. If the profile at time t ends before any
  * other profile engages, the end of this profile will be written into validToOutParam.
  */
-void SmartChargingService::inferenceLimit(const OcppTimestamp &t, float *limitOutParam, OcppTimestamp *validToOutParam){
-    OcppTimestamp validToMin = MAX_TIME;
+void SmartChargingService::inferenceLimit(const Timestamp &t, float *limitOutParam, Timestamp *validToOutParam){
+    Timestamp validToMin = MAX_TIME;
     /*
     * TxProfile rules over TxDefaultProfile. ChargePointMaxProfile rules over both of them
     * 
@@ -157,7 +157,7 @@ void SmartChargingService::inferenceLimit(const OcppTimestamp &t, float *limitOu
             continue;
         if (!TxProfile[i]->checkTransactionAssignment(chargingSessionTransactionID, *sRmtProfileId))
             continue;
-        OcppTimestamp nextChange = MAX_TIME;
+        Timestamp nextChange = MAX_TIME;
         limit_defined_tx = TxProfile[i]->inferenceLimit(t, chargingSessionStart, &limit_tx, &nextChange);
         if (nextChange < validToMin)
             validToMin = nextChange; //nextChange is always >= t here
@@ -172,7 +172,7 @@ void SmartChargingService::inferenceLimit(const OcppTimestamp &t, float *limitOu
     bool limit_defined_txdef = false;
     for (int i = CHARGEPROFILEMAXSTACKLEVEL - 1; i >= 0; i--){
         if (TxDefaultProfile[i] == NULL) continue;
-        OcppTimestamp nextChange = MAX_TIME;
+        Timestamp nextChange = MAX_TIME;
         limit_defined_txdef = TxDefaultProfile[i]->inferenceLimit(t, chargingSessionStart, &limit_txdef, &nextChange);
         if (nextChange < validToMin)
             validToMin = nextChange; //nextChange is always >= t here
@@ -187,7 +187,7 @@ void SmartChargingService::inferenceLimit(const OcppTimestamp &t, float *limitOu
     bool limit_defined_cpmax = false;
     for (int i = CHARGEPROFILEMAXSTACKLEVEL - 1; i >= 0; i--){
         if (ChargePointMaxProfile[i] == NULL) continue;
-        OcppTimestamp nextChange = MAX_TIME;
+        Timestamp nextChange = MAX_TIME;
         limit_defined_cpmax = ChargePointMaxProfile[i]->inferenceLimit(t, chargingSessionStart, &limit_cpmax, &nextChange);
         if (nextChange < validToMin)
             validToMin = nextChange; //nextChange is always >= t here
@@ -228,10 +228,10 @@ void SmartChargingService::inferenceLimit(const OcppTimestamp &t, float *limitOu
 }
 
 ChargingSchedule *SmartChargingService::getCompositeSchedule(int connectorId, otime_t duration){
-    auto& startSchedule = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+    auto& startSchedule = context.getModel().getTime().getTimestampNow();
     ChargingSchedule *result = new ChargingSchedule(startSchedule, duration);
-    OcppTimestamp periodBegin = OcppTimestamp(startSchedule);
-    OcppTimestamp periodStop = OcppTimestamp(startSchedule);
+    Timestamp periodBegin = Timestamp(startSchedule);
+    Timestamp periodStop = Timestamp(startSchedule);
     while (periodBegin - startSchedule < duration) {
         float limit = 0.f;
         inferenceLimit(periodBegin, &limit, &periodStop);
@@ -245,11 +245,11 @@ ChargingSchedule *SmartChargingService::getCompositeSchedule(int connectorId, ot
 }
 
 void SmartChargingService::refreshChargingSessionState() {
-    if (!context.getOcppModel().getConnector(SINGLE_CONNECTOR_ID)) {
+    if (!context.getModel().getConnector(SINGLE_CONNECTOR_ID)) {
         return; //charging session state does not apply
     }
 
-    auto connector = context.getOcppModel().getConnector(SINGLE_CONNECTOR_ID);
+    auto connector = context.getModel().getConnector(SINGLE_CONNECTOR_ID);
 
     if (!chargingSessionStateInitialized) {
         chargingSessionStateInitialized = true;
@@ -273,7 +273,7 @@ void SmartChargingService::refreshChargingSessionState() {
 
         bool txStartUpdated = false;
         if (chargingSessionTransactionID != 0 && connector->getTransactionId() >= 0) {
-            chargingSessionStart = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+            chargingSessionStart = context.getModel().getTime().getTimestampNow();
             txStartUpdated = true;
         } else if (chargingSessionTransactionID >= 0 && connector->getTransactionId() < 0) {
             chargingSessionStart = MAX_TIME;
@@ -287,7 +287,7 @@ void SmartChargingService::refreshChargingSessionState() {
             configuration_save();
         }
 
-        nextChange = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+        nextChange = context.getModel().getTime().getTimestampNow();
     }
   
     if (*sRmtProfileId >= 0 && //Remote profile set? Check if to delete
@@ -357,7 +357,7 @@ ChargingProfile *SmartChargingService::updateProfileStack(JsonObject json){
      * Invalidate the last limit inference by setting the nextChange to now. By the next loop()-call, the limit
      * and nextChange will be recalculated and onLimitChanged will be called.
      */
-    nextChange = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+    nextChange = context.getModel().getTime().getTimestampNow();
 
     return chargingProfile;
 }
@@ -412,7 +412,7 @@ bool SmartChargingService::clearChargingProfile(const std::function<bool(int, in
      * Invalidate the last limit inference by setting the nextChange to now. By the next loop()-call, the limit
      * and nextChange will be recalculated and onLimitChanged will be called.
      */
-    nextChange = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+    nextChange = context.getModel().getTime().getTimestampNow();
 
     return nMatches > 0;
 }

@@ -4,19 +4,19 @@
 
 #include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
+#include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/MessagesV16/MeterValues.h>
 #include <ArduinoOcpp/Debug.h>
 
 using namespace ArduinoOcpp;
 
-MeteringService::MeteringService(OcppEngine& context, int numConn, std::shared_ptr<FilesystemAdapter> filesystem)
+MeteringService::MeteringService(Context& context, int numConn, std::shared_ptr<FilesystemAdapter> filesystem)
       : context(context), meterStore(filesystem) {
 
     for (int i = 0; i < numConn; i++) {
-        connectors.push_back(std::unique_ptr<ConnectorMeterValuesRecorder>(new ConnectorMeterValuesRecorder(context.getOcppModel(), i, meterStore)));
+        connectors.push_back(std::unique_ptr<ConnectorMeterValuesRecorder>(new ConnectorMeterValuesRecorder(context.getModel(), i, meterStore)));
     }
 
     /*
@@ -24,7 +24,7 @@ MeteringService::MeteringService(OcppEngine& context, int numConn, std::shared_p
      * is connected with a WebSocket echo server, let it reply to its own requests.
      * Mocking an OCPP Server on the same device makes running (unit) tests easier.
      */
-    context.getOperationDeserializer().registerOcppOperation("MeterValues", [] () {
+    context.getOperationRegistry().registerRequest("MeterValues", [] () {
         return new Ocpp16::MeterValues();});
 }
 
@@ -33,9 +33,9 @@ void MeteringService::loop(){
     for (unsigned int i = 0; i < connectors.size(); i++){
         auto meterValuesMsg = connectors[i]->loop();
         if (meterValuesMsg != nullptr) {
-            auto meterValues = makeOcppOperation(meterValuesMsg);
+            auto meterValues = makeRequest(meterValuesMsg);
             meterValues->setTimeout(120000);
-            context.initiateOperation(std::move(meterValues));
+            context.initiateRequest(std::move(meterValues));
         }
     }
 }
@@ -72,7 +72,7 @@ std::unique_ptr<SampledValue> MeteringService::readTxEnergyMeter(int connectorId
     return connectors[connectorId]->readTxEnergyMeter(context);
 }
 
-std::unique_ptr<OcppOperation> MeteringService::takeTriggeredMeterValues(int connectorId) {
+std::unique_ptr<Request> MeteringService::takeTriggeredMeterValues(int connectorId) {
     if (connectorId < 0 || connectorId >= (int) connectors.size()) {
         AO_DBG_ERR("connectorId out of bounds. Ignore");
         return nullptr;
@@ -81,7 +81,7 @@ std::unique_ptr<OcppOperation> MeteringService::takeTriggeredMeterValues(int con
     if (connector.get()) {
         auto msg = connector->takeTriggeredMeterValues();
         if (msg) {
-            auto meterValues = makeOcppOperation(msg);
+            auto meterValues = makeRequest(msg);
             meterValues->setTimeout(120000);
             return meterValues;
         }

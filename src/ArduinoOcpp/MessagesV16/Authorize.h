@@ -5,25 +5,25 @@
 #ifndef AUTHORIZE_H
 #define AUTHORIZE_H
 
-#include <ArduinoOcpp/Core/OcppMessage.h>
+#include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
 
 namespace ArduinoOcpp {
 
-class OcppModel;
+class Model;
 
 namespace Ocpp16 {
 
-class Authorize : public OcppMessage {
+class Authorize : public Operation {
 private:
-    OcppModel& context;
+    Model& model;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
 public:
 //    Authorize();
 
-    Authorize(OcppModel& context, const char *idTag);
+    Authorize(Model& model, const char *idTag);
 
-    const char* getOcppOperationType();
+    const char* getOperationType();
 
     std::unique_ptr<DynamicJsonDocument> createReq();
 

@@ -4,7 +4,7 @@
 
 
 #include <ArduinoOcpp/MessagesV16/RemoteStartTransaction.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
+#include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
@@ -12,11 +12,11 @@
 
 using ArduinoOcpp::Ocpp16::RemoteStartTransaction;
 
-RemoteStartTransaction::RemoteStartTransaction(OcppModel& context) : context(context) {
+RemoteStartTransaction::RemoteStartTransaction(Model& model) : model(model) {
   
 }
 
-const char* RemoteStartTransaction::getOcppOperationType() {
+const char* RemoteStartTransaction::getOperationType() {
     return "RemoteStartTransaction";
 }
 
@@ -55,7 +55,7 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
     bool canStartTransaction = false;
     if (connectorId >= 1) {
         //connectorId specified for given connector, try to start Transaction here
-        if (auto connector = context.getConnector(connectorId)){
+        if (auto connector = model.getConnector(connectorId)){
             if (connector->getTransactionId() < 0 &&
                         connector->getAvailability() == AVAILABILITY_OPERATIVE &&
                         connector->getSessionIdTag() == nullptr) {
@@ -64,8 +64,8 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
         }
     } else {
         //connectorId not specified. Find free connector
-        for (unsigned int cid = 1; cid < context.getNumConnectors(); cid++) {
-            auto connector = context.getConnector(cid);
+        for (unsigned int cid = 1; cid < model.getNumConnectors(); cid++) {
+            auto connector = model.getConnector(cid);
             if (connector->getTransactionId() < 0 && 
                         connector->getAvailability() == AVAILABILITY_OPERATIVE &&
                         connector->getSessionIdTag() == nullptr) {
@@ -80,7 +80,7 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
 
         auto sRmtProfileId = declareConfiguration<int>("AO_SRMTPROFILEID_CONN_1", -1, AO_KEYVALUE_FN, false, false, true, false);
 
-        if (auto scService = context.getSmartChargingService()) {
+        if (auto scService = model.getSmartChargingService()) {
 
             if (*sRmtProfileId >= 0) {
                 int clearProfileId = *sRmtProfileId;
@@ -95,13 +95,13 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
             }
         }
 
-        if (auto connector = context.getConnector(connectorId)) {
+        if (auto connector = model.getConnector(connectorId)) {
             connector->beginTransaction(idTag);
         }
 
         if (!chargingProfileDoc.isNull()
-                && (context.getSmartChargingService())) {
-            auto scService = context.getSmartChargingService();
+                && (model.getSmartChargingService())) {
+            auto scService = model.getSmartChargingService();
 
             JsonObject chargingProfile = chargingProfileDoc.as<JsonObject>();
             scService->setChargingProfile(chargingProfile);

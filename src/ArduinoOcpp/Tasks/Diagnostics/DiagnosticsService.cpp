@@ -3,9 +3,9 @@
 // MIT License
 
 #include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
-#include <ArduinoOcpp/Core/OcppEngine.h>
-#include <ArduinoOcpp/Core/OcppModel.h>
-#include <ArduinoOcpp/SimpleOcppOperationFactory.h>
+#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
 
@@ -15,7 +15,7 @@
 using namespace ArduinoOcpp;
 using Ocpp16::DiagnosticsStatus;
 
-DiagnosticsService::DiagnosticsService(OcppEngine& context) : context(context) {
+DiagnosticsService::DiagnosticsService(Context& context) : context(context) {
     const char *fpId = "FirmwareManagement";
     auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
     if (!strstr(*fProfile, fpId)) {
@@ -26,21 +26,21 @@ DiagnosticsService::DiagnosticsService(OcppEngine& context) : context(context) {
         fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
     
-    context.getOperationDeserializer().registerOcppOperation("GetDiagnostics", [&context] () {
-        return new Ocpp16::GetDiagnostics(context.getOcppModel());});
+    context.getOperationRegistry().registerRequest("GetDiagnostics", [&context] () {
+        return new Ocpp16::GetDiagnostics(context.getModel());});
 
     //Register message handler for TriggerMessage operation
-    context.getOperationDeserializer().registerOcppOperation("DiagnosticsStatusNotification", [this] () {
+    context.getOperationRegistry().registerRequest("DiagnosticsStatusNotification", [this] () {
         return new Ocpp16::DiagnosticsStatusNotification(getDiagnosticsStatus());});
 }
 
 void DiagnosticsService::loop() {
     auto notification = getDiagnosticsStatusNotification();
     if (notification) {
-        context.initiateOperation(std::move(notification));
+        context.initiateRequest(std::move(notification));
     }
 
-    const auto& timestampNow = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+    const auto& timestampNow = context.getModel().getTime().getTimestampNow();
     if (retries > 0 && timestampNow >= nextTry) {
 
         if (!uploadIssued) {
@@ -92,7 +92,7 @@ void DiagnosticsService::loop() {
 }
 
 //timestamps before year 2021 will be treated as "undefined"
-std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &location, int retries, unsigned int retryInterval, OcppTimestamp startTime, OcppTimestamp stopTime) {
+std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &location, int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime) {
     if (onUpload == nullptr) //maybe add further plausibility checks
         return nullptr;
     
@@ -101,11 +101,11 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &loca
     this->retryInterval = retryInterval;
     this->startTime = startTime;
     
-    OcppTimestamp stopMin = OcppTimestamp(2021,0,0,0,0,0);
+    Timestamp stopMin = Timestamp(2021,0,0,0,0,0);
     if (stopTime >= stopMin) {
         this->stopTime = stopTime;
     } else {
-        auto newStop = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+        auto newStop = context.getModel().getTime().getTimestampNow();
         newStop += 3600 * 24 * 365; //set new stop time one year in future
         this->stopTime = newStop;
     }
@@ -127,7 +127,7 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &loca
             dbuf,
             dbuf2);
 
-    nextTry = context.getOcppModel().getOcppTime().getOcppTimestampNow();
+    nextTry = context.getModel().getTime().getTimestampNow();
     nextTry += 5; //wait for 5s before upload
     uploadIssued = false;
 
@@ -155,13 +155,13 @@ DiagnosticsStatus DiagnosticsService::getDiagnosticsStatus() {
     return DiagnosticsStatus::Idle;
 }
 
-std::unique_ptr<OcppOperation> DiagnosticsService::getDiagnosticsStatusNotification() {
+std::unique_ptr<Request> DiagnosticsService::getDiagnosticsStatusNotification() {
 
     if (getDiagnosticsStatus() != lastReportedStatus) {
         lastReportedStatus = getDiagnosticsStatus();
         if (lastReportedStatus != DiagnosticsStatus::Idle) {
-            OcppMessage *diagNotificationMsg = new Ocpp16::DiagnosticsStatusNotification(lastReportedStatus);
-            auto diagNotification = makeOcppOperation(diagNotificationMsg);
+            Operation *diagNotificationMsg = new Ocpp16::DiagnosticsStatusNotification(lastReportedStatus);
+            auto diagNotification = makeRequest(diagNotificationMsg);
             return diagNotification;
         }
     }
@@ -169,7 +169,7 @@ std::unique_ptr<OcppOperation> DiagnosticsService::getDiagnosticsStatusNotificat
     return nullptr;
 }
 
-void DiagnosticsService::setOnUpload(std::function<bool(const std::string &location, OcppTimestamp &startTime, OcppTimestamp &stopTime)> onUpload) {
+void DiagnosticsService::setOnUpload(std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload) {
     this->onUpload = onUpload;
 }
 
@@ -180,7 +180,7 @@ void DiagnosticsService::setOnUploadStatusSampler(std::function<UploadStatus()> 
 #if !defined(AO_CUSTOM_DIAGNOSTICS) && !defined(AO_CUSTOM_WS)
 #if defined(ESP32) || defined(ESP8266)
 
-DiagnosticsService *EspWiFi::makeDiagnosticsService(OcppEngine& context) {
+DiagnosticsService *EspWiFi::makeDiagnosticsService(Context& context) {
     auto diagService = new DiagnosticsService(context);
 
     /*
