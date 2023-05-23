@@ -64,6 +64,7 @@ std::unique_ptr<OcppOperation> OperationDeserializer::deserializeOperation(const
             auto result = std::unique_ptr<OcppOperation>(new OcppOperation(
                                 std::unique_ptr<OcppMessage>(payload)));
             result->setOnReceiveReqListener(entry->onRequest);
+            result->setOnSendConfListener(entry->onResponse);
             return result;
         }
     }
