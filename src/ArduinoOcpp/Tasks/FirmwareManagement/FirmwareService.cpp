@@ -56,7 +56,7 @@ void FirmwareService::loop() {
         return;
     }
 
-    Timestamp timestampNow = context.getModel().getTime().getTimestampNow();
+    Timestamp timestampNow = context.getModel().getClock().now();
     if (retries > 0 && timestampNow >= retreiveDate) {
 
         //if (!downloadIssued) {

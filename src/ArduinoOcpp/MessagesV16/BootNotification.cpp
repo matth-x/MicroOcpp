@@ -32,7 +32,7 @@ std::unique_ptr<DynamicJsonDocument> BootNotification::createReq() {
 void BootNotification::processConf(JsonObject payload) {
     const char* currentTime = payload["currentTime"] | "Invalid";
     if (strcmp(currentTime, "Invalid")) {
-        if (model.getTime().setTime(currentTime)) {
+        if (model.getClock().setTime(currentTime)) {
             //success
         } else {
             AO_DBG_ERR("Time string format violation. Expect format like 2022-02-01T20:53:32.486Z");
@@ -96,8 +96,8 @@ std::unique_ptr<DynamicJsonDocument> BootNotification::createConf(){
     //safety mechanism; in some test setups the library has to answer BootNotifications without valid system time
     Timestamp ocppTimeReference = Timestamp(2022,0,27,11,59,55); 
     Timestamp ocppSelect = ocppTimeReference;
-    auto& ocppTime = model.getTime();
-    Timestamp ocppNow = ocppTime.getTimestampNow();
+    auto& ocppTime = model.getClock();
+    Timestamp ocppNow = ocppTime.now();
     if (ocppNow > ocppTimeReference) {
         //time has already been set
         ocppSelect = ocppNow;

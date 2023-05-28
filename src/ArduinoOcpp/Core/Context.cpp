@@ -13,8 +13,8 @@ using namespace ArduinoOcpp;
 
 Context *ArduinoOcpp::defaultContext = nullptr;
 
-Context::Context(Connection& connection, const Clock& system_clock, std::shared_ptr<FilesystemAdapter> filesystem)
-        : connection(connection), model{std::make_shared<Model>(system_clock)}, reqQueue{operationRegistry, model, filesystem} {
+Context::Context(Connection& connection, std::shared_ptr<FilesystemAdapter> filesystem)
+        : connection(connection), model{std::make_shared<Model>()}, reqQueue{operationRegistry, model, filesystem} {
     defaultContext = this;
 
     preBootQueue = std::unique_ptr<RequestQueue>(new RequestQueue(operationRegistry, model, nullptr)); //pre boot queue doesn't need persistency

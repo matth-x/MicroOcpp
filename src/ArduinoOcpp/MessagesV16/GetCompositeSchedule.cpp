@@ -78,7 +78,7 @@ std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
         if (startSchedule[0] != '\0') {
             strncpy(scheduleStart, startSchedule, JSONDATE_LENGTH + 1);
         } else {
-            model.getTime().getTimestampNow().toJsonString(scheduleStart, JSONDATE_LENGTH + 1);
+            model.getClock().now().toJsonString(scheduleStart, JSONDATE_LENGTH + 1);
         }
         payload["scheduleStart"] = scheduleStart;
         

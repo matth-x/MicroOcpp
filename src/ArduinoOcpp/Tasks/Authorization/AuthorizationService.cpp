@@ -150,7 +150,7 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
     }
 
     if (localStatus == AuthorizationStatus::Accepted && localInfo->getExpiryDate()) { //check for expiry
-        auto& t_now = context.getModel().getTime().getTimestampNow();
+        auto& t_now = context.getModel().getClock().now();
         if (t_now > *localInfo->getExpiryDate()) {
             AO_DBG_DEBUG("local auth expired");
             localStatus = AuthorizationStatus::Expired;
@@ -184,7 +184,7 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
         auto statusNotification = makeRequest(new Ocpp16::StatusNotification(
                     0,
                     cpStatus, //will be determined in StatusNotification::initiate
-                    context.getModel().getTime().getTimestampNow(),
+                    context.getModel().getClock().now(),
                     "LocalListConflict"));
 
         statusNotification->setTimeout(60000);

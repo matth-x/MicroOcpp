@@ -25,7 +25,7 @@ void Heartbeat::processConf(JsonObject payload) {
   
     const char* currentTime = payload["currentTime"] | "Invalid";
     if (strcmp(currentTime, "Invalid")) {
-        if (model.getTime().setTime(currentTime)) {
+        if (model.getClock().setTime(currentTime)) {
             //success
             AO_DBG_DEBUG("Request has been accepted");
         } else {
@@ -51,7 +51,7 @@ std::unique_ptr<DynamicJsonDocument> Heartbeat::createConf(){
     //safety mechanism; in some test setups the library could have to answer Heartbeats without valid system time
     Timestamp ocppTimeReference = Timestamp(2019,10,0,11,59,55); 
     Timestamp ocppSelect = ocppTimeReference;
-    auto& ocppNow = model.getTime().getTimestampNow();
+    auto& ocppNow = model.getClock().now();
     if (ocppNow > ocppTimeReference) {
         //time has already been set
         ocppSelect = ocppNow;

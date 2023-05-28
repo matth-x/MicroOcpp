@@ -19,7 +19,7 @@ class GetCompositeSchedule : public Operation {
 private:
     Model& model;
     int connectorId {-1};
-    otime_t duration {0};
+    int duration {0};
     ChargingRateUnitType chargingRateUnit {ChargingRateUnitType::Watt};
 
     const char *errorCode {nullptr};

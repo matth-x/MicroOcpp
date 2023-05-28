@@ -27,7 +27,7 @@ private:
     std::unique_ptr<RequestQueue> preBootQueue;
 
 public:
-    Context(Connection& connection, const Clock& system_clock, std::shared_ptr<FilesystemAdapter> filesystem);
+    Context(Connection& connection, std::shared_ptr<FilesystemAdapter> filesystem);
     ~Context();
 
     void loop();

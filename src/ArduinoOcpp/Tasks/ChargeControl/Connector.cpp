@@ -194,7 +194,7 @@ void Connector::loop() {
                 !transaction->getStartRpcSync().isRequested() &&
                 transaction->getSessionTimestamp() > MIN_TIME &&
                 connectionTimeOut && *connectionTimeOut > 0 &&
-                model.getTime().getTimestampNow() - transaction->getSessionTimestamp() >= (otime_t) *connectionTimeOut) {
+                model.getClock().now() - transaction->getSessionTimestamp() >= *connectionTimeOut) {
                 
             AO_DBG_INFO("Session mngt: timeout");
             transaction->endSession();
@@ -238,7 +238,7 @@ void Connector::loop() {
                 }
 
                 if (transaction->getStartTimestamp() <= MIN_TIME) {
-                    transaction->setStartTimestamp(model.getTime().getTimestampNow());
+                    transaction->setStartTimestamp(model.getClock().now());
                 }
 
                 if (transaction->isSilent()) {
@@ -293,7 +293,7 @@ void Connector::loop() {
                 }
 
                 if (transaction->getStopTimestamp() <= MIN_TIME) {
-                    transaction->setStopTimestamp(model.getTime().getTimestampNow());
+                    transaction->setStopTimestamp(model.getClock().now());
                 }
 
                 transaction->commit();
@@ -346,11 +346,11 @@ void Connector::loop() {
     }
 
     if (reportedStatus != currentStatus &&
-            model.getTime().getTimestampNow() >= Timestamp(2010,0,0,0,0,0) &&
+            model.getClock().now() >= Timestamp(2010,0,0,0,0,0) &&
             (*minimumStatusDuration <= 0 || //MinimumStatusDuration disabled
             ao_tick_ms() - t_statusTransition >= ((unsigned long) *minimumStatusDuration) * 1000UL)) {
         reportedStatus = currentStatus;
-        Timestamp reportedTimestamp = model.getTime().getTimestampNow();
+        Timestamp reportedTimestamp = model.getClock().now();
         reportedTimestamp -= (ao_tick_ms() - t_statusTransition) / 1000UL;
 
         auto statusNotification = makeRequest(
@@ -511,7 +511,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
         //check expiry
         if (localAuth && localAuth->getExpiryDate()) {
-            auto& tnow = model.getTime().getTimestampNow();
+            auto& tnow = model.getClock().now();
             if (tnow >= *localAuth->getExpiryDate()) {
                 AO_DBG_DEBUG("idTag %s local auth entry expired", idTag);
                 localAuth = nullptr;
@@ -534,7 +534,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         transaction->setIdTag(idTag);
     }
 
-    transaction->setSessionTimestamp(model.getTime().getTimestampNow());
+    transaction->setSessionTimestamp(model.getClock().now());
 
     AO_DBG_DEBUG("Begin transaction process (%s), prepare", idTag != nullptr ? idTag : "");
 
@@ -652,7 +652,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
         transaction->setIdTag(idTag);
     }
 
-    transaction->setSessionTimestamp(model.getTime().getTimestampNow());
+    transaction->setSessionTimestamp(model.getClock().now());
     
     AO_DBG_DEBUG("Begin transaction process (%s), already authorized", idTag != nullptr ? idTag : "");
 

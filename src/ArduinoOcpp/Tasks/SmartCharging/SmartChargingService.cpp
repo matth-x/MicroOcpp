@@ -94,8 +94,8 @@ void SmartChargingService::loop(){
     /**
      * check if to call onLimitChange
      */
-    if (context.getModel().getTime().getTimestampNow() >= nextChange){
-        auto& tNow = context.getModel().getTime().getTimestampNow();
+    if (context.getModel().getClock().now() >= nextChange){
+        auto& tNow = context.getModel().getClock().now();
         float limit = -1.0f;
         Timestamp validTo = Timestamp();
         inferenceLimit(tNow, &limit, &validTo);
@@ -122,7 +122,7 @@ void SmartChargingService::loop(){
 float SmartChargingService::inferenceLimitNow(){
     float limit = 0.0f;
     Timestamp validTo = Timestamp(); //not needed
-    auto& tNow = context.getModel().getTime().getTimestampNow();
+    auto& tNow = context.getModel().getClock().now();
     inferenceLimit(tNow, &limit, &validTo);
     return limit;
 }
@@ -227,8 +227,8 @@ void SmartChargingService::inferenceLimit(const Timestamp &t, float *limitOutPar
     }
 }
 
-ChargingSchedule *SmartChargingService::getCompositeSchedule(int connectorId, otime_t duration){
-    auto& startSchedule = context.getModel().getTime().getTimestampNow();
+ChargingSchedule *SmartChargingService::getCompositeSchedule(int connectorId, int duration){
+    auto& startSchedule = context.getModel().getClock().now();
     ChargingSchedule *result = new ChargingSchedule(startSchedule, duration);
     Timestamp periodBegin = Timestamp(startSchedule);
     Timestamp periodStop = Timestamp(startSchedule);
@@ -273,7 +273,7 @@ void SmartChargingService::refreshChargingSessionState() {
 
         bool txStartUpdated = false;
         if (chargingSessionTransactionID != 0 && connector->getTransactionId() >= 0) {
-            chargingSessionStart = context.getModel().getTime().getTimestampNow();
+            chargingSessionStart = context.getModel().getClock().now();
             txStartUpdated = true;
         } else if (chargingSessionTransactionID >= 0 && connector->getTransactionId() < 0) {
             chargingSessionStart = MAX_TIME;
@@ -287,7 +287,7 @@ void SmartChargingService::refreshChargingSessionState() {
             configuration_save();
         }
 
-        nextChange = context.getModel().getTime().getTimestampNow();
+        nextChange = context.getModel().getClock().now();
     }
   
     if (*sRmtProfileId >= 0 && //Remote profile set? Check if to delete
@@ -357,7 +357,7 @@ ChargingProfile *SmartChargingService::updateProfileStack(JsonObject json){
      * Invalidate the last limit inference by setting the nextChange to now. By the next loop()-call, the limit
      * and nextChange will be recalculated and onLimitChanged will be called.
      */
-    nextChange = context.getModel().getTime().getTimestampNow();
+    nextChange = context.getModel().getClock().now();
 
     return chargingProfile;
 }
@@ -412,7 +412,7 @@ bool SmartChargingService::clearChargingProfile(const std::function<bool(int, in
      * Invalidate the last limit inference by setting the nextChange to now. By the next loop()-call, the limit
      * and nextChange will be recalculated and onLimitChanged will be called.
      */
-    nextChange = context.getModel().getTime().getTimestampNow();
+    nextChange = context.getModel().getClock().now();
 
     return nMatches > 0;
 }

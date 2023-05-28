@@ -1,5 +1,5 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef OCPPTIME_H
@@ -9,22 +9,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
-namespace ArduinoOcpp {
+#include <ArduinoOcpp/Platform.h>
 
-typedef int32_t otime_t; //requires 32bit signed integer or bigger
-#define OTIME_MAX ((otime_t) INT32_MAX)
-typedef std::function<otime_t()> Clock;
-
-#define INFINITY_THLD (OTIME_MAX - ((otime_t) (400 * 24 * 3600))) //Upper limiter for valid time range. From this value on, a scalar time means "infinity". It's 400 days before the "year 2038" problem.
 #define JSONDATE_LENGTH 24
 
-namespace Clocks {
-
-/*
- * Basic clock implementation. Works if ao_tick_ms() is exact enough for you and if device doesn't go in sleep mode. 
- */
-extern Clock DEFAULT_CLOCK;
-} //end namespace Clocks
+namespace ArduinoOcpp {
 
 class Timestamp {
 private:
@@ -38,6 +27,7 @@ private:
     int32_t hour = 0;
     int32_t minute = 0;
     int32_t second = 0;
+    int32_t ms = 0;
 
 public:
 
@@ -45,8 +35,8 @@ public:
 
     Timestamp(const Timestamp& other);
 
-    Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second) :
-                year(year), month(month), day(day), hour(hour), minute(minute), second(second) { };
+    Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second, int32_t ms = 0) :
+                year(year), month(month), day(day), hour(hour), minute(minute), second(second), ms(ms) { };
 
     /**
      * Expects a date string like
@@ -67,10 +57,15 @@ public:
 
     Timestamp &operator=(const Timestamp &rhs);
 
+    Timestamp &addMilliseconds(int ms);
+
+    /*
+     * Time periods are given in seconds for all of the following arithmetic operations
+     */
     Timestamp &operator+=(int secs);
     Timestamp &operator-=(int secs);
 
-    otime_t operator-(const Timestamp &rhs) const;
+    int operator-(const Timestamp &rhs) const;
 
     friend Timestamp operator+(const Timestamp &lhs, int secs);
     friend Timestamp operator-(const Timestamp &lhs, int secs);
@@ -86,27 +81,23 @@ public:
 extern const Timestamp MIN_TIME;
 extern const Timestamp MAX_TIME;
 
-class Time {
+class Clock {
 private:
 
     Timestamp ocpp_basetime = Timestamp();
-    otime_t system_basetime = 0; //your system clock's time at the moment when the OCPP server's time was taken
-    bool timeIsSet = false;
-
-    Clock system_clock = [] () {return (otime_t) 0;};
+    decltype(ao_tick_ms()) system_basetime = 0; //the value of ao_tick_ms() when OCPP server's time was taken
+    decltype(ao_tick_ms()) lastUpdate = 0;
 
     Timestamp currentTime = Timestamp();
-    otime_t previousUpdate = -1;
 
 public:
 
-    Time(const Clock& system_clock);
-    //Time(const Time& time) = default;
+    Clock();
+    Clock(const Clock&) = delete;
+    Clock(const Clock&&) = delete;
+    Clock& operator=(const Clock&) = delete;
 
-    otime_t getTimeScalar(); //returns current time of the OCPP server in non-UNIX but signed integer format. t2 - t1 is the time difference in seconds. 
-    const Timestamp &getTimestampNow();
-    Timestamp createTimestamp(otime_t scalar); //creates a timestamp in a JSON-serializable format. createTimestamp(getTimeScalar()) will return the current OCPP time
-    otime_t toTimeScalar(const Timestamp &timestamp);
+    const Timestamp &now();
 
     /**
      * Expects a date string like
@@ -122,8 +113,6 @@ public:
      * jsonDateString: 0-terminated string
      */
     bool setTime(const char* jsonDateString);
-
-    bool isValid() {return timeIsSet;}
 };
 
 }

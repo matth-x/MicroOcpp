@@ -10,7 +10,6 @@
 #include <functional>
 
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
-#include <ArduinoOcpp/Core/Time.h>
 #include <ArduinoOcpp/Core/RequestCallbacks.h>
 #include <ArduinoOcpp/Core/Connection.h>
 #include <ArduinoOcpp/Core/PollResult.h>

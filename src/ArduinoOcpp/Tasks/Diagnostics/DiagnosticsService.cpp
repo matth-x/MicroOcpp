@@ -40,7 +40,7 @@ void DiagnosticsService::loop() {
         context.initiateRequest(std::move(notification));
     }
 
-    const auto& timestampNow = context.getModel().getTime().getTimestampNow();
+    const auto& timestampNow = context.getModel().getClock().now();
     if (retries > 0 && timestampNow >= nextTry) {
 
         if (!uploadIssued) {
@@ -105,7 +105,7 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &loca
     if (stopTime >= stopMin) {
         this->stopTime = stopTime;
     } else {
-        auto newStop = context.getModel().getTime().getTimestampNow();
+        auto newStop = context.getModel().getClock().now();
         newStop += 3600 * 24 * 365; //set new stop time one year in future
         this->stopTime = newStop;
     }
@@ -127,7 +127,7 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &loca
             dbuf,
             dbuf2);
 
-    nextTry = context.getModel().getTime().getTimestampNow();
+    nextTry = context.getModel().getClock().now();
     nextTry += 5; //wait for 5s before upload
     uploadIssued = false;
 

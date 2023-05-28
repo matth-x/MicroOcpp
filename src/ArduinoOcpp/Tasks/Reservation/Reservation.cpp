@@ -44,7 +44,7 @@ bool Reservation::isActive() {
         return false;
     }
 
-    auto& t_now = model.getTime().getTimestampNow();
+    auto& t_now = model.getClock().now();
     if (t_now > expiryDate) {
         //reservation expired
         return false;

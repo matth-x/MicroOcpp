@@ -19,8 +19,7 @@
 
 using namespace ArduinoOcpp;
 
-Model::Model(const Clock& system_clock)
-        : time{system_clock} {
+Model::Model() {
     
 }
 
@@ -163,6 +162,6 @@ ResetService *Model::getResetService() const {
     return resetService.get();
 }
 
-Time& Model::getTime() {
-    return time;
+Clock& Model::getClock() {
+    return clock;
 }

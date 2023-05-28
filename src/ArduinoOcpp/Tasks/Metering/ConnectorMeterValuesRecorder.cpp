@@ -144,7 +144,7 @@ Operation *ConnectorMeterValuesRecorder::loop() {
 
     if (*ClockAlignedDataInterval >= 1) {
 
-        auto& timestampNow = context.getTime().getTimestampNow();
+        auto& timestampNow = context.getClock().now();
         auto dt = nextAlignedTime - timestampNow;
         if (dt <= 0 ||                              //normal case: interval elapsed
                 dt > *ClockAlignedDataInterval) {   //special case: clock has been adjusted or first run
@@ -153,13 +153,13 @@ Operation *ConnectorMeterValuesRecorder::loop() {
                 abs(dt) <= 60 ?
                 "in time (tolerance <= 60s)" : "off, e.g. because of first run. Ignore");
             if (abs(dt) <= 60) { //is measurement still "clock-aligned"?
-                auto alignedMeterValues = alignedDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::SampleClock);
+                auto alignedMeterValues = alignedDataBuilder->takeSample(context.getClock().now(), ReadingContext::SampleClock);
                 if (alignedMeterValues) {
                     meterData.push_back(std::move(alignedMeterValues));
                 }
 
                 if (stopTxnData) {
-                    auto alignedStopTx = stopTxnAlignedDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::SampleClock);
+                    auto alignedStopTx = stopTxnAlignedDataBuilder->takeSample(context.getClock().now(), ReadingContext::SampleClock);
                     if (alignedStopTx) {
                         stopTxnData->addTxData(std::move(alignedStopTx));
                     }
@@ -187,13 +187,13 @@ Operation *ConnectorMeterValuesRecorder::loop() {
         //record periodic tx data
 
         if (ao_tick_ms() - lastSampleTime >= (unsigned long) (*MeterValueSampleInterval * 1000)) {
-            auto sampleMeterValues = sampledDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::SamplePeriodic);
+            auto sampleMeterValues = sampledDataBuilder->takeSample(context.getClock().now(), ReadingContext::SamplePeriodic);
             if (sampleMeterValues) {
                 meterData.push_back(std::move(sampleMeterValues));
             }
 
             if (stopTxnData && StopTxnDataCapturePeriodic && *StopTxnDataCapturePeriodic) {
-                auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::SamplePeriodic);
+                auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(context.getClock().now(), ReadingContext::SamplePeriodic);
                 if (sampleStopTx) {
                     stopTxnData->addTxData(std::move(sampleStopTx));
                 }
@@ -211,7 +211,7 @@ Operation *ConnectorMeterValuesRecorder::loop() {
 
 Operation *ConnectorMeterValuesRecorder::takeTriggeredMeterValues() {
 
-    auto sample = sampledDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::Trigger);
+    auto sample = sampledDataBuilder->takeSample(context.getClock().now(), ReadingContext::Trigger);
 
     if (!sample) {
         return nullptr;
@@ -258,7 +258,7 @@ void ConnectorMeterValuesRecorder::beginTxMeterData(Transaction *transaction) {
     }
 
     if (stopTxnData) {
-        auto sampleTxBegin = stopTxnSampledDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::TransactionBegin);
+        auto sampleTxBegin = stopTxnSampledDataBuilder->takeSample(context.getClock().now(), ReadingContext::TransactionBegin);
         if (sampleTxBegin) {
             stopTxnData->addTxData(std::move(sampleTxBegin));
         }
@@ -271,7 +271,7 @@ std::shared_ptr<TransactionMeterData> ConnectorMeterValuesRecorder::endTxMeterDa
     }
 
     if (stopTxnData) {
-        auto sampleTxEnd = stopTxnSampledDataBuilder->takeSample(context.getTime().getTimestampNow(), ReadingContext::TransactionEnd);
+        auto sampleTxEnd = stopTxnSampledDataBuilder->takeSample(context.getClock().now(), ReadingContext::TransactionEnd);
         if (sampleTxEnd) {
             stopTxnData->addTxData(std::move(sampleTxEnd));
         }

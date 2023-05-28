@@ -1,9 +1,8 @@
 // matth-x/ArduinoOcpp
-// Copyright Matthias Akstaller 2019 - 2022
+// Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Platform.h>
 #include <string.h>
 #include <ctype.h>	
 
@@ -11,24 +10,6 @@ namespace ArduinoOcpp {
 
 const Timestamp MIN_TIME = Timestamp(2010, 0, 0, 0, 0, 0);
 const Timestamp MAX_TIME = Timestamp(2037, 0, 0, 0, 0, 0);
-
-namespace Clocks {
-
-unsigned long lastClockReading = 0;
-otime_t lastClockValue = 0;
-
-/*
- * Basic clock implementation. Works if ao_tick_ms() is exact enough for you and if device doesn't go in sleep mode. 
- */
-Clock DEFAULT_CLOCK = [] () {
-    unsigned long tReading = (ao_tick_ms() - lastClockReading) / 1000UL;
-    if (tReading > 0) {
-        lastClockValue += tReading;
-        lastClockReading += tReading * 1000UL;
-    }
-    return lastClockValue;};
-} //end namespace Clocks
-
 
 Timestamp::Timestamp() {
     
@@ -89,14 +70,29 @@ bool Timestamp::setTime(const char *jsonDateString) {
                 (jsonDateString[15] - '0');
     int second = (jsonDateString[17] - '0') * 10 +
                 (jsonDateString[18] - '0');
-    //ignore fractals
+
+    //optional fractals
+    int ms = 0;
+    if (jsonDateString[19] == '.') {
+        if (isdigit(jsonDateString[20]) ||   //1
+            isdigit(jsonDateString[21]) ||   //2
+            isdigit(jsonDateString[22])) {
+            
+            ms  =  (jsonDateString[20] - '0') * 100 +
+                    (jsonDateString[21] - '0') * 10 +
+                    (jsonDateString[22] - '0');
+        } else {
+            return false;
+        }
+    }
 
     if (year < 1970 || year >= 2038 ||
         month < 0 || month >= 12 ||
         day < 0 || day >= noDays(month, year) ||
         hour < 0 || hour >= 24 ||
         minute < 0 || minute >= 60 ||
-        second < 0 || second > 60) { //tolerate leap seconds -- (23:59:60) can be a valid time
+        second < 0 || second > 60 || //tolerate leap seconds -- (23:59:60) can be a valid time
+        ms < 0 || ms >= 1000) {
         return false;
     }
 
@@ -106,6 +102,7 @@ bool Timestamp::setTime(const char *jsonDateString) {
     this->hour = hour;
     this->minute = minute;
     this->second = second;
+    this->ms = ms;
     
     return true;
 }
@@ -133,9 +130,9 @@ bool Timestamp::toJsonString(char *jsonDateString, size_t buffsize) const {
     jsonDateString[17] = ((char) ((second / 10) % 10))  + '0';
     jsonDateString[18] = ((char) ((second / 1) % 10))  + '0';
     jsonDateString[19] = '.';
-    jsonDateString[20] = '0'; //ignore fractals
-    jsonDateString[21] = '0';
-    jsonDateString[22] = '0';
+    jsonDateString[20] = ((char) ((ms / 100) % 10))  + '0';
+    jsonDateString[21] = ((char) ((ms / 10) % 10))  + '0';
+    jsonDateString[22] = ((char) ((ms / 1) % 10))  + '0';
     jsonDateString[23] = 'Z';
 
     return true;
@@ -194,11 +191,26 @@ Timestamp &Timestamp::operator+=(int secs) {
     return *this;
 };
 
+Timestamp &Timestamp::addMilliseconds(int val) {
+
+    ms += val;
+
+    if (ms >= 0 && ms < 1000) return *this;
+    
+    auto dsecond = ms / 1000;
+    ms %= 1000;
+    if (ms < 0) {
+        dsecond--;
+        ms += 1000;
+    }
+    return this->operator+=(dsecond);
+}
+
 Timestamp &Timestamp::operator-=(int secs) {
     return operator+=(-secs);
 }
 
-otime_t Timestamp::operator-(const Timestamp &rhs) const {
+int Timestamp::operator-(const Timestamp &rhs) const {
     //dt = rhs - ocpp_base
     
     int16_t year_base, year_end;
@@ -224,7 +236,7 @@ otime_t Timestamp::operator-(const Timestamp &rhs) const {
         }
     }
 
-    otime_t dt = (lhsDays - rhsDays) * (24 * 3600) + (hour - rhs.hour) * 3600 + (minute - rhs.minute) * 60 + second - rhs.second;
+    int dt = (lhsDays - rhsDays) * (24 * 3600) + (hour - rhs.hour) * 3600 + (minute - rhs.minute) * 60 + second - rhs.second;
     return dt;
 }
 
@@ -235,6 +247,7 @@ Timestamp &Timestamp::operator=(const Timestamp &rhs) {
     hour = rhs.hour;
     minute = rhs.minute;
     second = rhs.second;
+    ms = rhs.ms;
 
     return *this;
 }
@@ -250,7 +263,7 @@ Timestamp operator-(const Timestamp &lhs, int secs) {
 }
 
 bool operator==(const Timestamp &lhs, const Timestamp &rhs) {
-    return lhs.year == rhs.year && lhs.month == rhs.month && lhs.day == rhs.day && lhs.hour == rhs.hour && lhs.minute == rhs.minute && lhs.second == rhs.second;
+    return lhs.year == rhs.year && lhs.month == rhs.month && lhs.day == rhs.day && lhs.hour == rhs.hour && lhs.minute == rhs.minute && lhs.second == rhs.second && lhs.ms == rhs.ms;
 }
 
 bool operator!=(const Timestamp &lhs, const Timestamp &rhs) {
@@ -270,6 +283,8 @@ bool operator<(const Timestamp &lhs, const Timestamp &rhs) {
         return lhs.minute < rhs.minute;
     if (lhs.second != rhs.second)
         return lhs.second < rhs.second;
+    if (lhs.ms != rhs.ms)
+        return lhs.ms < rhs.ms;
     return false;  
 }
 
@@ -286,11 +301,11 @@ bool operator>=(const Timestamp &lhs, const Timestamp &rhs) {
 }
 
 
-Time::Time(const Clock& system_clock) : system_clock(system_clock) {
+Clock::Clock() {
 
 }
 
-bool Time::setTime(const char* jsonDateString) {
+bool Clock::setTime(const char* jsonDateString) {
 
     Timestamp timestamp = Timestamp();
     
@@ -298,37 +313,23 @@ bool Time::setTime(const char* jsonDateString) {
         return false;
     }
 
-    system_basetime = system_clock();
+    system_basetime = ao_tick_ms();
     ocpp_basetime = timestamp;
-    timeIsSet = true;
 
     currentTime = ocpp_basetime;
-    previousUpdate = system_basetime;
+    lastUpdate = system_basetime;
 
     return true;
 }
 
-otime_t Time::getTimeScalar() {
-    return system_clock();
-}
+const Timestamp &Clock::now() {
+    auto tReading = ao_tick_ms();
+    auto delta = tReading - lastUpdate;
 
-const Timestamp &Time::getTimestampNow() {
-    otime_t tNow = system_clock();
-    if (previousUpdate != tNow) {
-        currentTime += (tNow - previousUpdate);
-        previousUpdate = tNow;
-    }
+    currentTime.addMilliseconds(delta);
+    lastUpdate = tReading;
+
     return currentTime;
-}
-
-Timestamp Time::createTimestamp(otime_t scalar) {
-    Timestamp res = ocpp_basetime + (scalar - system_basetime);
-
-    return res;
-}
-
-otime_t Time::toTimeScalar(const Timestamp &timestamp) {
-    return timestamp.operator-(ocpp_basetime);
 }
 
 }

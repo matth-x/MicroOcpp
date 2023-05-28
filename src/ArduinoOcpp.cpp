@@ -134,7 +134,7 @@ void OCPP_initialize(Connection& connection, const char *bootNotificationCredent
     
     configuration_init(filesystem); //call before each other library call
 
-    context = new Context(connection, Clocks::DEFAULT_CLOCK, filesystem);
+    context = new Context(connection, filesystem);
     auto& model = context->getModel();
 
     model.setTransactionStore(std::unique_ptr<TransactionStore>(
@@ -769,7 +769,7 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
         }
     }
 
-    transaction->setStartTimestamp(context->getModel().getTime().getTimestampNow());
+    transaction->setStartTimestamp(context->getModel().getClock().now());
 
     transaction->commit();
     
@@ -827,7 +827,7 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
         }
     }
 
-    transaction->setStopTimestamp(context->getModel().getTime().getTimestampNow());
+    transaction->setStopTimestamp(context->getModel().getClock().now());
 
     transaction->commit();
 

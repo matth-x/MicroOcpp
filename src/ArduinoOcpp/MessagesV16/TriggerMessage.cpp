@@ -60,7 +60,7 @@ void TriggerMessage::processReq(JsonObject payload) {
             auto statusNotification = makeRequest(new Ocpp16::StatusNotification(
                         i,
                         connector->inferenceStatus(), //will be determined in StatusNotification::initiate
-                        model.getTime().getTimestampNow()));
+                        model.getClock().now()));
 
             statusNotification->setTimeout(60000);
 

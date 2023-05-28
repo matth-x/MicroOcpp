@@ -38,13 +38,12 @@ private:
     std::unique_ptr<ReservationService> reservationService;
     std::unique_ptr<BootService> bootService;
     std::unique_ptr<ResetService> resetService;
-    Time time;
+    Clock clock;
 
     bool runTasks = false;
 
 public:
-    Model(const Clock& system_clock);
-    Model() = delete;
+    Model();
     Model(const Model& rhs) = delete;
     ~Model();
 
@@ -88,7 +87,7 @@ public:
     void setResetService(std::unique_ptr<ResetService> rs);
     ResetService *getResetService() const;
 
-    Time &getTime();
+    Clock &getClock();
 };
 
 } //end namespace ArduinoOcpp

@@ -56,7 +56,7 @@ public:
     void inferenceLimit(const Timestamp &t, float *limit, Timestamp *validTo);
     float inferenceLimitNow();
     void setOnLimitChange(OnLimitChange onLimitChange);
-    ChargingSchedule *getCompositeSchedule(int connectorId, otime_t duration);
+    ChargingSchedule *getCompositeSchedule(int connectorId, int duration);
     void loop();
 };
 
