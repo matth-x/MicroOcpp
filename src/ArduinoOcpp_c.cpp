@@ -301,17 +301,17 @@ bool ao_isOperative_m(unsigned int connectorId) {
 }
 
 int ao_getTransactionId() {
-    return getTransactionId();
+    return getTransaction() ? getTransaction()->getTransactionId() : -1;
 }
 int ao_getTransactionId_m(unsigned int connectorId) {
-    return getTransactionId(connectorId);
+    return getTransaction(connectorId) ? getTransaction(connectorId)->getTransactionId() : -1;
 }
 
 const char *ao_getTransactionIdTag() {
-    return getTransactionIdTag();
+    return getTransaction() ? getTransaction()->getIdTag() : nullptr;
 }
 const char *ao_getTransactionIdTag_m(unsigned int connectorId) {
-    return getTransactionIdTag(connectorId);
+    return getTransaction(connectorId) ? getTransaction(connectorId)->getIdTag() : nullptr;
 }
 
 bool ao_isBlockedByReservation(const char *idTag) {

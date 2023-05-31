@@ -4,6 +4,7 @@
 
 #include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
+#include <ArduinoOcpp/Tasks/Transactions/TransactionDeSerialize.h>
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
@@ -91,7 +92,7 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
 
     auto transaction = std::make_shared<Transaction>(*this, connectorId, txNr);
     JsonObject txJson = doc->as<JsonObject>();
-    if (!transaction->deserializeSessionState(txJson)) {
+    if (!deserializeTransaction(*transaction, txJson)) {
         AO_DBG_ERR("deserialization error");
         return nullptr;
     }
@@ -172,7 +173,7 @@ bool ConnectorTransactionStore::commit(Transaction *transaction) {
     }
     
     DynamicJsonDocument txDoc {0};
-    if (!transaction->serializeSessionState(txDoc)) {
+    if (!serializeTransaction(*transaction, txDoc)) {
         AO_DBG_ERR("Serialization error");
         return false;
     }

@@ -184,20 +184,20 @@ void Connector::loop() {
                 if (!stopTransactionOnEVSideDisconnect || *stopTransactionOnEVSideDisconnect) {
                     AO_DBG_DEBUG("Stop Tx due to EV disconnect");
                     transaction->setStopReason("EVDisconnected");
-                    transaction->endSession();
+                    transaction->setInactive();
                     transaction->commit();
                 }
             }
         }
 
         if (transaction->isActive() &&
-                !transaction->getStartRpcSync().isRequested() &&
-                transaction->getSessionTimestamp() > MIN_TIME &&
+                !transaction->getStartSync().isRequested() &&
+                transaction->getBeginTimestamp() > MIN_TIME &&
                 connectionTimeOut && *connectionTimeOut > 0 &&
-                model.getClock().now() - transaction->getSessionTimestamp() >= *connectionTimeOut) {
+                model.getClock().now() - transaction->getBeginTimestamp() >= *connectionTimeOut) {
                 
             AO_DBG_INFO("Session mngt: timeout");
-            transaction->endSession();
+            transaction->setInactive();
             transaction->commit();
         }
 
@@ -208,7 +208,7 @@ void Connector::loop() {
             
             AO_DBG_DEBUG("DeAuthorize session");
             transaction->setStopReason("DeAuthorized");
-            transaction->endSession();
+            transaction->setInactive();
             transaction->commit();
         }
 
@@ -243,8 +243,8 @@ void Connector::loop() {
 
                 if (transaction->isSilent()) {
                     AO_DBG_INFO("silent Transaction: omit StartTx");
-                    transaction->getStartRpcSync().setRequested();
-                    transaction->getStartRpcSync().confirm();
+                    transaction->getStartSync().setRequested();
+                    transaction->getStartSync().confirm();
                     transaction->commit();
                     return;
                 }
@@ -271,8 +271,8 @@ void Connector::loop() {
 
                 if (transaction->isSilent()) {
                     AO_DBG_INFO("silent Transaction: omit StopTx");
-                    transaction->getStopRpcSync().setRequested();
-                    transaction->getStopRpcSync().confirm();
+                    transaction->getStopSync().setRequested();
+                    transaction->getStopSync().confirm();
                     if (auto mService = model.getMeteringService()) {
                         mService->removeTxMeterData(connectorId, transaction->getTxNr());
                     }
@@ -534,7 +534,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         transaction->setIdTag(idTag);
     }
 
-    transaction->setSessionTimestamp(model.getClock().now());
+    transaction->setBeginTimestamp(model.getClock().now());
 
     AO_DBG_DEBUG("Begin transaction process (%s), prepare", idTag != nullptr ? idTag : "");
 
@@ -573,7 +573,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
                         idTagInfo["parentIdTag"] | (const char*) nullptr)) {
                 //reservation found for connector but does not match idTag or parentIdTag
                 AO_DBG_INFO("connector %u reserved - abort transaction", connectorId);
-                tx->endSession();
+                tx->setInactive();
                 tx->commit();
                 return;
             }
@@ -588,7 +588,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         if (expiredLocalAuth) {
             //local auth entry exists, but is expired -> avoid offline tx
             AO_DBG_DEBUG("Abort transaction process (%s), timeout, expired local auth", tx->getIdTag());
-            tx->endSession();
+            tx->setInactive();
             tx->commit();
             return;
         }
@@ -608,7 +608,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
                         tx->getIdTag())) {
                 //reservation found for connector but does not match idTag or parentIdTag
                 AO_DBG_INFO("connector %u reserved (offline) - abort transaction", connectorId);
-                tx->endSession();
+                tx->setInactive();
                 tx->commit();
                 return;
             }
@@ -622,7 +622,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         }
         
         AO_DBG_DEBUG("Abort transaction process (%s): timeout", tx->getIdTag());
-        tx->endSession();
+        tx->setInactive();
         tx->commit();
         return; //offline tx disabled
     });
@@ -652,7 +652,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
         transaction->setIdTag(idTag);
     }
 
-    transaction->setSessionTimestamp(model.getClock().now());
+    transaction->setBeginTimestamp(model.getClock().now());
     
     AO_DBG_DEBUG("Begin transaction process (%s), already authorized", idTag != nullptr ? idTag : "");
 
@@ -686,7 +686,7 @@ void Connector::endTransaction(const char *reason) {
         if (reason) {
             transaction->setStopReason(reason);
         }
-        transaction->endSession();
+        transaction->setInactive();
         transaction->commit();
     }
 }
@@ -719,7 +719,7 @@ int Connector::getTransactionId() {
     }
 
     if (transaction->isRunning()) {
-        if (transaction->getStartRpcSync().isConfirmed()) {
+        if (transaction->getStartSync().isConfirmed()) {
             return transaction->getTransactionId();
         } else {
             return 0;

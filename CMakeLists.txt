@@ -72,6 +72,7 @@ set(AO_SRC
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.cpp
     src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.cpp
     src/ArduinoOcpp/Tasks/Transactions/Transaction.cpp
+    src/ArduinoOcpp/Tasks/Transactions/TransactionDeserialize.cpp
     src/ArduinoOcpp/Tasks/Transactions/TransactionStore.cpp
     src/ArduinoOcpp.cpp
     src/ArduinoOcpp_c.cpp

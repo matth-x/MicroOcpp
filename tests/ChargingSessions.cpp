@@ -52,7 +52,7 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE( checkedSN[0] );
         REQUIRE( checkedSN[1] );
         REQUIRE( isOperative() );
-        REQUIRE( !getTransactionIdTag() );
+        REQUIRE( !getTransaction() );
         REQUIRE( !ocppPermitsCharge() );
     }
 

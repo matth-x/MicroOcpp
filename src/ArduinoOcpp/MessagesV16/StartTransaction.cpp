@@ -27,7 +27,7 @@ const char* StartTransaction::getOperationType() {
 }
 
 void StartTransaction::initiate(StoredOperationHandler *opStore) {
-    if (!transaction || transaction->getStartRpcSync().isRequested()) {
+    if (!transaction || transaction->getStartSync().isRequested()) {
         AO_DBG_ERR("initialization error");
         return;
     }
@@ -41,7 +41,7 @@ void StartTransaction::initiate(StoredOperationHandler *opStore) {
         opStore->commit();
     }
 
-    transaction->getStartRpcSync().setRequested();
+    transaction->getStartSync().setRequested();
 
     transaction->commit();
 
@@ -133,7 +133,7 @@ void StartTransaction::processConf(JsonObject payload) {
     int transactionId = payload["transactionId"] | -1;
     transaction->setTransactionId(transactionId);
 
-    transaction->getStartRpcSync().confirm();
+    transaction->getStartSync().confirm();
     transaction->commit();
 
     if (auto authService = model.getAuthorizationService()) {

@@ -14,6 +14,7 @@
 #include <ArduinoOcpp/Core/Connection.h>
 #include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
+#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 
 using ArduinoOcpp::OnReceiveConfListener;
 using ArduinoOcpp::OnReceiveReqListener;
@@ -168,16 +169,16 @@ void authorize(
  * 
  * See beginTransaction_authorized for skipping steps 1) to 3)
  * 
- * Returns true if it was possible to create the transaction process. If it returned false, either
- * another transaction process is still active or you need to try it again later.
+ * Returns the transaction object if it was possible to create the transaction process. Returns
+ * nullptr if either another transaction process is still active or you need to try it again later.
  */
-bool beginTransaction(const char *idTag, unsigned int connectorId = 1);
+std::shared_ptr<ArduinoOcpp::Transaction> beginTransaction(const char *idTag, unsigned int connectorId = 1);
 
 /*
  * Begin the transaction process and skip the OCPP-side authorization. See beginTransaction(...) for a
  * complete description
  */
-bool beginTransaction_authorized(const char *idTag, const char *parentIdTag = nullptr, unsigned int connectorId = 1);
+std::shared_ptr<ArduinoOcpp::Transaction> beginTransaction_authorized(const char *idTag, const char *parentIdTag = nullptr, unsigned int connectorId = 1);
 
 /*
  * End the transaction process by terminating the transaction and setting a reason for its termination.
@@ -274,13 +275,22 @@ void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId =
 
 bool isOperative(unsigned int connectorId = 1); //if the charge point is operative or inoperative (see OCPP1.6 Edit2, p. 45)
 
-int getTransactionId(unsigned int connectorId = 1); //returns the txId if known, -1 if no transaction is running and 0 if txId not assigned yet
-
-const char *getTransactionIdTag(unsigned int connectorId = 1); //returns the authorization token if applicable, or nullptr otherwise
+/*
+ * Returns the current transaction process. Returns nullptr if no transaction is running, preparing or finishing
+ *
+ * See the class definition in ArduinoOcpp/Tasks/Transactions/Transaction.h for possible uses of this object
+ * 
+ * Examples:
+ * auto tx = getTransaction(); //fetch tx object
+ * if (tx) { //check if tx object exists
+ *     bool active = tx->isActive(); //active tells if the transaction is preparing or continuing to run
+ *     int transactionId = tx->getTransactionId(); //the transactionId as assigned by the OCPP server
+ *     bool deauthorized = tx->isIdTagDeauthorized(); //if StartTransaction has been rejected
+ * }
+ */
+std::shared_ptr<ArduinoOcpp::Transaction>& getTransaction(unsigned int connectorId = 1);
 
 bool isBlockedByReservation(const char *idTag, unsigned int connectorId = 1); //if the connector is already reserved for a different idTag
-
-void setOnResetRequest(OnReceiveReqListener onReceiveReq);
 
 /*
  * Configure the device management
@@ -329,6 +339,7 @@ void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf);
 void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq);
 
 void setOnResetSendConf(OnSendConfListener onSendConf);
+void setOnResetRequest(OnReceiveReqListener onReceiveReq);
 
 bool startTransaction(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, unsigned int timeout = 0);
 

@@ -7,8 +7,6 @@
 
 #include <ArduinoOcpp/Core/Time.h>
 #include <ArduinoOcpp/MessagesV16/CiStrings.h>
-#include <memory>
-#include <ArduinoJson.h>
 
 namespace ArduinoOcpp {
 
@@ -17,105 +15,63 @@ namespace ArduinoOcpp {
  * The client side of a transaction is all data that is generated or collected at the charging station. The
  * server side is all transaction data that is assigned by the central system.
  * 
- * "ClientTransaction" is short for the client-side data, and the same goes for "ServerTranaction". The rest
- * of the terminology is documented in OCPP 1.6 Specification - Edition 2, sections 3.6, 4.8, 4.10 and 5.11. 
+ * See OCPP 1.6 Specification - Edition 2, sections 3.6, 4.8, 4.10 and 5.11. 
  */
 
 class ConnectorTransactionStore;
 
-class RpcSync {
+class SendStatus {
 private:
-    friend class Transaction;
-    
     bool requested = false;
     bool confirmed = false;
-
-    bool serializeSessionState(JsonObject out);
-    bool deserializeSessionState(JsonObject in);
 public:
     void setRequested() {this->requested = true;}
     bool isRequested() {return requested;}
     void confirm() {confirmed = true;}
     bool isConfirmed() {return confirmed;}
-    bool isCompleted() {return isRequested() && isConfirmed();}
-};
-
-class ClientTransactionStart {
-private:
-    friend class Transaction;
-
-    Timestamp timestamp = MIN_TIME;      //timestamp of StartTx; can be set before actually initiating
-    int32_t meter = -1;           //meterStart of StartTx
-    int reservationId = -1;
-};
-
-class ServerTransactionStart {
-private:
-    friend class Transaction;
-
-    int transactionId = -1; //only valid if confirmed = true
-};
-
-class TransactionStart {
-private:
-    friend class Transaction;
-    
-    RpcSync rpc;
-    ClientTransactionStart client;
-    ServerTransactionStart server;
-};
-
-class ClientTransactionStop {
-private:
-    friend class Transaction;
-
-    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
-    Timestamp timestamp = MIN_TIME;
-    int32_t meter = -1;
-    char reason [REASON_LEN_MAX + 1] = {'\0'};
-};
-
-class ServerTransactionStop {
-//no data at the moment
-};
-
-class TransactionStop {
-private:
-    friend class Transaction;
-
-    RpcSync rpc;
-    ClientTransactionStop client;
-    ServerTransactionStop server;
-};
-
-class ChargingSession {
-private:
-    friend class Transaction;
-    
-    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
-    bool authorized = false;    //if the given idTag was authorized
-    bool deauthorized = false;  //if the server revoked a local authorization
-    Timestamp timestamp = MIN_TIME;
-    int txProfileId = -1;
-
-    bool active = true;         //true: ignore
-                                //false before StartTx init: abort 
-                                //false between StartTx init and StopTx init: end
-                                //false after StopTx init: ignore
 };
 
 class Transaction {
 private:
     ConnectorTransactionStore& context;
 
-    ChargingSession session;
-    TransactionStart start;
-    TransactionStop stop;
+    bool active = true; //once active is false, the tx must stop (or cannot start at all)
 
+    /*
+     * Attributes existing before StartTransaction
+     */
+    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
+    bool authorized = false;    //if the given idTag was authorized
+    bool deauthorized = false;  //if the server revoked a local authorization
+    Timestamp begin_timestamp = MIN_TIME;
+    int reservationId = -1;
+    int txProfileId = -1;
+
+    /*
+     * Attributes of StartTransaction
+     */
+    SendStatus start_sync;
+    int32_t start_meter = -1;           //meterStart of StartTx
+    Timestamp start_timestamp = MIN_TIME;      //timestamp of StartTx; can be set before actually initiating
+    int transactionId = -1; //only valid if confirmed = true
+
+    /*
+     * Attributes of StopTransaction
+     */
+    SendStatus stop_sync;
+    char stop_idTag [IDTAG_LEN_MAX + 1] = {'\0'};
+    int32_t stop_meter = -1;
+    Timestamp stop_timestamp = MIN_TIME;
+    char stop_reason [REASON_LEN_MAX + 1] = {'\0'};
+
+    /*
+     * General attributes
+     */
     unsigned int connectorId = 0;
-    unsigned int txNr = 0;
+    unsigned int txNr = 0; //client-side key of this tx object (!= transactionId)
 
     bool silent = false; //silent Tx: process tx locally, without reporting to the server
+
 public:
     Transaction(ConnectorTransactionStore& context, unsigned int connectorId, unsigned int txNr, bool silent = false) : 
                 context(context),
@@ -123,63 +79,79 @@ public:
                 txNr(txNr),
                 silent(silent) {}
 
-    bool serializeSessionState(DynamicJsonDocument& out);
-    bool deserializeSessionState(JsonObject in);
+    /*
+     * data assigned by OCPP server
+     */
+    int getTransactionId() {return transactionId;}
+    bool isAuthorized() {return authorized;} //Authorize has been accepted
+    bool isIdTagDeauthorized() {return deauthorized;} //StartTransaction has been rejected
 
-    unsigned int getConnectorId() {return connectorId;}
-    void setConnectorId(unsigned int connectorId) {this->connectorId = connectorId;}
-    unsigned int getTxNr() {return txNr;} //only valid if getConnectorId() >= 0
-    void setTxNr(unsigned int txNr) {this->txNr = txNr;}
+    /*
+     * Transaction life cycle
+     */
+    bool isRunning() {return start_sync.isRequested() && !stop_sync.isRequested();} //tx is running
+    bool isActive() {return active;} //tx continues to run or is preparing
+    bool isAborted() {return !start_sync.isRequested() && !active;} //tx ended before startTx was sent
+    bool isCompleted() {return stop_sync.isConfirmed();} //tx ended and startTx and stopTx have been confirmed by server
 
-    RpcSync& getStartRpcSync() {return start.rpc;}
-
-    RpcSync& getStopRpcSync() {return stop.rpc;}
-
-    bool isAborted() {return !start.rpc.requested && !session.active;}
-    bool isCompleted() {return stop.rpc.isConfirmed();}
-    bool isPreparing() {return session.active && !start.rpc.isRequested();}
-    bool isRunning() {return start.rpc.isRequested() && !stop.rpc.isRequested();}
-    bool isActive() {return session.active;}
-
-    const char *getIdTag() {return session.idTag;}
-    void setIdTag(const char *idTag) {snprintf(session.idTag, IDTAG_LEN_MAX + 1, "%s", idTag);}
-    Timestamp& getSessionTimestamp() {return session.timestamp;}
-    void setSessionTimestamp(Timestamp timestamp) {session.timestamp = timestamp;}
-
-    const char *getStopReason() {return stop.client.reason;}
-    void setStopReason(const char *reason) {snprintf(stop.client.reason, REASON_LEN_MAX + 1, "%s", reason);}
-    void endSession() {session.active = false;}
-
-    void setAuthorized() {session.authorized = true;}
-    bool isAuthorized() {return session.authorized;}
-
-    void setIdTagDeauthorized() {session.deauthorized = true;}
-    bool isIdTagDeauthorized() {return session.deauthorized;}
-
-    int getTransactionId() {return start.server.transactionId;}
-    void setTransactionId(int transactionId) {start.server.transactionId = transactionId;}
-
-    void setMeterStart(int32_t meter) {start.client.meter = meter;}
-    bool isMeterStartDefined() {return start.client.meter >= 0;}
-    int32_t getMeterStart() {return start.client.meter;}
-
-    void setReservationId(int reservationId) {start.client.reservationId = reservationId;}
-    int getReservationId() {return start.client.reservationId;}
-
-    void setStartTimestamp(Timestamp timestamp) {start.client.timestamp = timestamp;}
-    Timestamp& getStartTimestamp() {return start.client.timestamp;}
-
-    void setMeterStop(int32_t meter) {stop.client.meter = meter;}
-    bool isMeterStopDefined() {return stop.client.meter >= 0;}
-    int32_t getMeterStop() {return stop.client.meter;}
-
-    void setStopTimestamp(Timestamp timestamp) {stop.client.timestamp = timestamp;}
-    Timestamp& getStopTimestamp() {return stop.client.timestamp;}
-
-    const char *getStopIdTag() {return stop.client.idTag;}
-    void setStopIdTag(const char *idTag) {snprintf(stop.client.idTag, IDTAG_LEN_MAX + 1, "%s", idTag);}
-
+    /*
+     * After modifying a field of tx, commit to make the data persistent
+     */
     bool commit();
+
+    /*
+     * Getters and setters for (mostly) internal use
+     */
+    void setInactive() {active = false;}
+
+    bool setIdTag(const char *idTag);
+    const char *getIdTag() {return idTag;}
+
+    void setAuthorized() {authorized = true;}
+    void setIdTagDeauthorized() {deauthorized = true;}
+
+    void setBeginTimestamp(Timestamp timestamp) {begin_timestamp = timestamp;}
+    const Timestamp& getBeginTimestamp() {return begin_timestamp;}
+
+    void setReservationId(int reservationId) {this->reservationId = reservationId;}
+    int getReservationId() {return reservationId;}
+
+    void setTxProfileId(int txProfileId) {this->txProfileId = txProfileId;}
+    int getTxProfileId() {return txProfileId;}
+
+    SendStatus& getStartSync() {return start_sync;}
+
+    void setMeterStart(int32_t meter) {start_meter = meter;}
+    bool isMeterStartDefined() {return start_meter >= 0;}
+    int32_t getMeterStart() {return start_meter;}
+
+    void setStartTimestamp(Timestamp timestamp) {start_timestamp = timestamp;}
+    const Timestamp& getStartTimestamp() {return start_timestamp;}
+
+    void setTransactionId(int transactionId) {transactionId = transactionId;}
+
+    SendStatus& getStopSync() {return stop_sync;}
+
+    bool setStopIdTag(const char *idTag);
+    const char *getStopIdTag() {return stop_idTag;}
+
+    void setMeterStop(int32_t meter) {stop_meter = meter;}
+    bool isMeterStopDefined() {return stop_meter >= 0;}
+    int32_t getMeterStop() {return stop_meter;}
+
+    void setStopTimestamp(Timestamp timestamp) {stop_timestamp = timestamp;}
+    const Timestamp& getStopTimestamp() {return stop_timestamp;}
+
+    bool setStopReason(const char *reason);
+    const char *getStopReason() {return stop_reason;}
+
+    void setConnectorId(unsigned int connectorId) {this->connectorId = connectorId;}
+    unsigned int getConnectorId() {return connectorId;}
+
+    void setTxNr(unsigned int txNr) {this->txNr = txNr;}
+    unsigned int getTxNr() {return txNr;} //internal primary key of this tx object
+
+    void setSilent() {silent = true;}
     bool isSilent() {return silent;} //no data will be sent to server and server will not assign transactionId
 };
 

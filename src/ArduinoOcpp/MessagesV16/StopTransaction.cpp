@@ -29,7 +29,7 @@ const char* StopTransaction::getOperationType() {
 }
 
 void StopTransaction::initiate(StoredOperationHandler *opStore) {
-    if (!transaction || transaction->getStopRpcSync().isRequested()) {
+    if (!transaction || transaction->getStopSync().isRequested()) {
         AO_DBG_ERR("initialization error");
         return;
     }
@@ -43,7 +43,7 @@ void StopTransaction::initiate(StoredOperationHandler *opStore) {
         opStore->commit();
     }
 
-    transaction->getStopRpcSync().setRequested();
+    transaction->getStopSync().setRequested();
 
     transaction->commit();
 
@@ -152,7 +152,7 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
 void StopTransaction::processConf(JsonObject payload) {
 
     if (transaction) {
-        transaction->getStopRpcSync().confirm();
+        transaction->getStopSync().confirm();
         transaction->commit();
     }
 
@@ -166,7 +166,7 @@ void StopTransaction::processConf(JsonObject payload) {
 bool StopTransaction::processErr(const char *code, const char *description, JsonObject details) {
 
     if (transaction) {
-        transaction->getStopRpcSync().confirm(); //no retry behavior for now; consider data "arrived" at server
+        transaction->getStopSync().confirm(); //no retry behavior for now; consider data "arrived" at server
         transaction->commit();
     }
 

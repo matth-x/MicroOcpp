@@ -56,7 +56,7 @@ using namespace ArduinoOcpp::Facade;
 using namespace ArduinoOcpp::Ocpp16;
 
 #ifndef AO_CUSTOM_WS
-void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *chargePointModel, const char *chargePointVendor, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt) {
+void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *chargePointModel, const char *chargePointVendor, float V_eff, FilesystemOpt fsOpt) {
     if (context) {
         AO_DBG_WARN("Can't be called two times. Either restart ESP, or call OCPP_deinitialize() before");
         return;
@@ -118,7 +118,7 @@ ChargerCredentials::ChargerCredentials(const char *cpModel, const char *cpVendor
     }
 }
 
-void OCPP_initialize(Connection& connection, const char *bootNotificationCredentials, float V_eff, ArduinoOcpp::FilesystemOpt fsOpt) {
+void OCPP_initialize(Connection& connection, const char *bootNotificationCredentials, float V_eff, FilesystemOpt fsOpt) {
     if (context) {
         AO_DBG_WARN("Can't be called two times. To change the credentials, either restart ESP, or call OCPP_deinitialize() before");
         return;
@@ -276,41 +276,41 @@ void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener 
     context->initiateRequest(std::move(authorize));
 }
 
-bool beginTransaction(const char *idTag, unsigned int connectorId) {
+std::shared_ptr<Transaction> beginTransaction(const char *idTag, unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
-        return false;
+        return nullptr;
     }
     if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
         AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
-        return false;
+        return nullptr;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
-        return false;
+        return nullptr;
     }
-    connector->beginTransaction(idTag);
-    return true;
+
+    return connector->beginTransaction(idTag);
 }
 
-bool beginTransaction_authorized(const char *idTag, const char *parentIdTag, unsigned int connectorId) {
+std::shared_ptr<Transaction> beginTransaction_authorized(const char *idTag, const char *parentIdTag, unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
-        return false;
+        return nullptr;
     }
     if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX ||
         (parentIdTag && strnlen(parentIdTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX)) {
         AO_DBG_ERR("(parent)idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
-        return false;
+        return nullptr;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
-        return false;
+        return nullptr;
     }
-    connector->beginTransaction_authorized(idTag, parentIdTag);
-    return true;
+    
+    return connector->beginTransaction_authorized(idTag, parentIdTag);
 }
 
 bool endTransaction(const char *reason, unsigned int connectorId) {
@@ -500,10 +500,10 @@ void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measur
     if (phase)
         properties.setPhase(phase);
 
-    auto valueSampler = std::unique_ptr<ArduinoOcpp::SampledValueSamplerConcrete<int32_t, ArduinoOcpp::SampledValueDeSerializer<int32_t>>>(
-                                    new ArduinoOcpp::SampledValueSamplerConcrete<int32_t, ArduinoOcpp::SampledValueDeSerializer<int32_t>>(
+    auto valueSampler = std::unique_ptr<SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>>(
+                                    new SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>(
                 properties,
-                [valueInput] (ArduinoOcpp::ReadingContext) -> int32_t {return valueInput();}));
+                [valueInput] (ReadingContext) -> int32_t {return valueInput();}));
     addMeterValueInput(std::move(valueSampler), connectorId);
 }
 
@@ -610,30 +610,19 @@ bool isOperative(unsigned int connectorId) {
        &&  (connector->getAvailability() != AVAILABILITY_INOPERATIVE);
 }
 
-int getTransactionId(unsigned int connectorId) {
-    if (!context) {
-        AO_DBG_WARN("Please call OCPP_initialize before");
-        return -1;
-    }
-    auto connector = context->getModel().getConnector(connectorId);
-    if (!connector) {
-        AO_DBG_ERR("Could not find connector. Ignore");
-        return -1;
-    }
-    return connector->getTransactionId();
-}
+std::shared_ptr<Transaction> ao_undefinedTx;
 
-const char *getTransactionIdTag(unsigned int connectorId) {
+std::shared_ptr<Transaction>& getTransaction(unsigned int connectorId) {
     if (!context) {
         AO_DBG_WARN("Please call OCPP_initialize before");
-        return nullptr;
+        return ao_undefinedTx;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         AO_DBG_ERR("Could not find connector. Ignore");
-        return nullptr;
+        return ao_undefinedTx;
     }
-    return connector->getSessionIdTag();
+    return connector->getTransaction();
 }
 
 bool isBlockedByReservation(const char *idTag, unsigned int connectorId) {
@@ -658,14 +647,14 @@ bool isBlockedByReservation(const char *idTag, unsigned int connectorId) {
 }
 
 #if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WS)
-ArduinoOcpp::FirmwareService *getFirmwareService() {
+FirmwareService *getFirmwareService() {
     auto& model = context->getModel();
     return model.getFirmwareService();
 }
 #endif
 
 #if defined(AO_CUSTOM_DIAGNOSTICS) || defined(AO_CUSTOM_WS)
-ArduinoOcpp::DiagnosticsService *getDiagnosticsService() {
+DiagnosticsService *getDiagnosticsService() {
     auto& model = context->getModel();
     return model.getDiagnosticsService();
 }
@@ -746,7 +735,7 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
     }
     auto transaction = connector->getTransaction();
     if (transaction) {
-        if (transaction->getStartRpcSync().isRequested()) {
+        if (transaction->getStartSync().isRequested()) {
             AO_DBG_ERR("Transaction already in progress. Must call stopTransaction()");
             return false;
         }
