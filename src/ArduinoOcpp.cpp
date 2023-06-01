@@ -23,9 +23,9 @@
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 
 #include <ArduinoOcpp/MessagesV16/Authorize.h>
-#include <ArduinoOcpp/MessagesV16/BootNotification.h>
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
+#include <ArduinoOcpp/MessagesV16/CustomMessage.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -47,6 +47,7 @@ float voltage_eff {230.f};
 #endif
 
 #define OCPP_ID_OF_CP 0
+#define OCPP_ID_OF_CONNECTOR 1
 
 } //end namespace ArduinoOcpp::Facade
 } //end namespace ArduinoOcpp
@@ -206,74 +207,6 @@ void OCPP_loop() {
     }
 
     context->loop();
-}
-
-void bootNotification(const char *chargePointModel, const char *chargePointVendor, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
-    if (!context) {
-        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
-        return;
-    }
-    
-    auto credentials = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
-        JSON_OBJECT_SIZE(2) + strlen(chargePointModel) + strlen(chargePointVendor) + 2));
-    (*credentials)["chargePointModel"] = (char*) chargePointModel;
-    (*credentials)["chargePointVendor"] = (char*) chargePointVendor;
-
-    bootNotification(std::move(credentials), onConf, onAbort, onTimeout, onError, timeout);
-}
-
-void bootNotification(std::unique_ptr<DynamicJsonDocument> payload, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
-    if (!context) {
-        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
-        return;
-    }
-
-    //store credentials for later TriggerMessage
-    if (auto bootService = context->getModel().getBootService()) {
-        bootService->setChargePointCredentials(payload->as<JsonObject>());
-    }
-
-    auto bootNotification = makeRequest(
-        new BootNotification(context->getModel(), std::move(payload)));
-    if (onConf)
-        bootNotification->setOnReceiveConfListener(onConf);
-    if (onAbort)
-        bootNotification->setOnAbortListener(onAbort);
-    if (onTimeout)
-        bootNotification->setOnTimeoutListener(onTimeout);
-    if (onError)
-        bootNotification->setOnReceiveErrorListener(onError);
-    if (timeout)
-        bootNotification->setTimeout(timeout);
-    else
-        bootNotification->setTimeout(0);
-    context->initiateRequest(std::move(bootNotification));
-}
-
-void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
-    if (!context) {
-        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
-        return;
-    }
-    if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
-        AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
-        return;
-    }
-    auto authorize = makeRequest(
-        new Authorize(context->getModel(), idTag));
-    if (onConf)
-        authorize->setOnReceiveConfListener(onConf);
-    if (onAbort)
-        authorize->setOnAbortListener(onAbort);
-    if (onTimeout)
-        authorize->setOnTimeoutListener(onTimeout);
-    if (onError)
-        authorize->setOnReceiveErrorListener(onError);
-    if (timeout)
-        authorize->setTimeout(timeout);
-    else
-        authorize->setTimeout(20000);
-    context->initiateRequest(std::move(authorize));
 }
 
 std::shared_ptr<Transaction> beginTransaction(const char *idTag, unsigned int connectorId) {
@@ -669,55 +602,92 @@ Context *getOcppContext() {
     return context;
 }
 
-void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq) {
+void setOnReceiveRequest(const char *operationType, OnReceiveReqListener onReceiveReq) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    context->getOperationRegistry().setOnRequest("SetChargingProfile", onReceiveReq);
+    if (!operationType) {
+        AO_DBG_ERR("invalid args");
+        return;
+    }
+    context->getOperationRegistry().setOnRequest(operationType, onReceiveReq);
 }
 
-void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf) {
+void setOnSendConf(const char *operationType, OnSendConfListener onSendConf) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    context->getOperationRegistry().setOnResponse("RemoteStartTransaction", onSendConf);
+    if (!operationType) {
+        AO_DBG_ERR("invalid args");
+        return;
+    }
+    context->getOperationRegistry().setOnResponse(operationType, onSendConf);
 }
 
-void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq) {
+void sendCustomRequest(const char *operationType,
+            std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createReq,
+            std::function<void (JsonObject)> fn_processConf) {
+
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    context->getOperationRegistry().setOnRequest("RemoteStopTransaction", onReceiveReq);
+    if (!operationType || !fn_createReq || !fn_processConf) {
+        AO_DBG_ERR("invalid args");
+        return;
+    }
+
+    auto request = makeRequest(new CustomMessage(operationType, fn_createReq, fn_processConf));
+    context->initiateRequest(std::move(request));
 }
 
-void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf) {
+void setCustomRequestHandler(const char *operationType,
+            std::function<void (JsonObject)> fn_processReq,
+            std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createConf) {
+
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    context->getOperationRegistry().setOnResponse("RemoteStopTransaction", onSendConf);
+    if (!operationType || !fn_processReq || !fn_createConf) {
+        AO_DBG_ERR("invalid args");
+        return;
+    }
+
+    std::string captureOpType = operationType;
+
+    context->getOperationRegistry().registerOperation(operationType, [captureOpType, fn_processReq, fn_createConf] () {
+        return new CustomMessage(captureOpType.c_str(), fn_processReq, fn_createConf);
+    });
 }
 
-void setOnResetSendConf(OnSendConfListener onSendConf) {
+void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    context->getOperationRegistry().setOnResponse("Reset", onSendConf);
-}
-
-void setOnResetRequest(OnReceiveReqListener onReceiveReq) {
-    if (!context) {
-        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+    if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
+        AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return;
     }
-    context->getOperationRegistry().setOnRequest("Reset", onReceiveReq);
+    auto authorize = makeRequest(
+        new Authorize(context->getModel(), idTag));
+    if (onConf)
+        authorize->setOnReceiveConfListener(onConf);
+    if (onAbort)
+        authorize->setOnAbortListener(onAbort);
+    if (onTimeout)
+        authorize->setOnTimeoutListener(onTimeout);
+    if (onError)
+        authorize->setOnReceiveErrorListener(onError);
+    if (timeout)
+        authorize->setTimeout(timeout);
+    else
+        authorize->setTimeout(20000);
+    context->initiateRequest(std::move(authorize));
 }
-
-#define OCPP_ID_OF_CONNECTOR 1
 
 bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
     if (!context) {

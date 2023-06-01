@@ -67,15 +67,6 @@ void ao_initialize_full(
 void ao_deinitialize();
 
 void ao_loop();
-/*
- * Send OCPP operations
- */
-
-void ao_bootNotification(const char *chargePointModel, const char *chargePointVendor, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError);
-
-void ao_bootNotification_full(const char *payloadJson, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError);
-
-void ao_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data);
 
 /*
  * Charging session management
@@ -159,7 +150,9 @@ const char *ao_getTransactionIdTag_m(unsigned int connectorId);
 bool ao_isBlockedByReservation(const char *idTag);
 bool ao_isBlockedByReservation_m(unsigned int connectorId, const char *idTag);
 
-void ao_setOnResetRequest(OnMessage onRequest);
+void ao_setOnReceiveRequest(const char *operationType, OnMessage onRequest);
+
+void ao_setOnSendConf(const char *operationType, OnMessage onConfirmation);
 
 /*
  * If build flag AO_CUSTOM_CONSOLE is set, all console output will be forwarded to the print
@@ -174,15 +167,9 @@ void ao_set_console_out_c(void (*console_out)(const char *msg));
 OcppHandle *ao_getOcppHandle();
 
 /*
- * Deprecated functions or functions to be moved to ArduinoOcppExtended.h
+ * Send OCPP operations
  */
-
-void ao_onRemoteStartTransactionSendConf(OnMessage onSendConf); //important, energize the power plug here and capture the idTag
-
-void ao_onRemoteStopTransactionSendConf(OnMessage onSendConf); //important, de-energize the power plug here
-void ao_onRemoteStopTransactionRequest(OnMessage onRequest); //optional, to de-energize the power plug immediately
-
-void ao_setOnResetSendConf(OnMessage onSendConf);
+void ao_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data);
 
 void ao_startTransaction(const char *idTag, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError);
 

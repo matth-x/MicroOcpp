@@ -102,58 +102,6 @@ void OCPP_deinitialize();
 void OCPP_loop();
 
 /*
- * Send OCPP operations.
- * 
- * You only need to send the following operation types manually:
- *     - BootNotification: Notify the OCPP server that this EVSE is ready and start the OCPP
- *           routines.
- *     - Authorize: Validate an RFID tag before using it for a transaction
- * 
- * All other operation types are handled automatically by this library.
- * 
- * On receipt of the .conf() response the library calls the callback function
- * "OnReceiveConfListener onConf" and passes the OCPP payload to it.
- * 
- * For your first EVSE integration, the `onReceiveConfListener` is probably sufficient. For
- * advanced EVSE projects, the other listeners likely become relevant:
- * - `onAbortListener`: will be called whenever the engine stops trying to finish an operation
- *           normally which was initiated by this device.
- * - `onTimeoutListener`: will be executed when the operation is not answered until the timeout
- *           expires. Note that timeouts also trigger the `onAbortListener`.
- * - `onReceiveErrorListener`: will be called when the Central System returns a CallError.
- *           Again, each error also triggers the `onAbortListener`.
- * 
- * The functions for sending OCPP operations are non-blocking. The program will resume immediately
- * with the code after with the subsequent code in any case.
- */
-
-void bootNotification(
-            const char *chargePointModel,                //model name of the EVSE
-            const char *chargePointVendor,               //vendor name
-            OnReceiveConfListener onConf = nullptr,      //callback (confirmation received)
-            OnAbortListener onAbort = nullptr,           //callback (confirmation not received), optional
-            OnTimeoutListener onTimeout = nullptr,       //callback (timeout expired), optional
-            OnReceiveErrorListener onError = nullptr,    //callback (error code received), optional
-            unsigned int timeout = 0); //custom timeout behavior, optional
-
-//Alternative version for sending a complete BootNotification payload
-void bootNotification(
-            std::unique_ptr<DynamicJsonDocument> payload,//manually defined payload
-            OnReceiveConfListener onConf = nullptr,      //callback (confirmation received)
-            OnAbortListener onAbort = nullptr,           //callback (confirmation not received), optional
-            OnTimeoutListener onTimeout = nullptr,       //callback (timeout expired), optional
-            OnReceiveErrorListener onError = nullptr,    //callback (error code received), optional
-            unsigned int timeout = 0); //custom timeout behavior, optional
-
-void authorize(
-            const char *idTag,                           //RFID tag (e.g. ISO 14443 UID tag with 4 or 7 bytes)
-            OnReceiveConfListener onConf = nullptr,      //callback (confirmation received)
-            OnAbortListener onAbort = nullptr,           //callback (confirmation not received), optional
-            OnTimeoutListener onTimeout = nullptr,       //callback (timeout expired), optional
-            OnReceiveErrorListener onError = nullptr,    //callback (error code received), optional
-            unsigned int timeout = 0); //custom timeout behavior, optional
-
-/*
  * Transaction management.
  * 
  * Begin the transaction process and prepare it. When all conditions for the transaction are true,
@@ -284,6 +232,7 @@ bool isOperative(unsigned int connectorId = 1); //if the charge point is operati
  * auto tx = getTransaction(); //fetch tx object
  * if (tx) { //check if tx object exists
  *     bool active = tx->isActive(); //active tells if the transaction is preparing or continuing to run
+ *                                   //inactive means that the transaction is about to stop, stopped or won't be started anymore
  *     int transactionId = tx->getTransactionId(); //the transactionId as assigned by the OCPP server
  *     bool deauthorized = tx->isIdTagDeauthorized(); //if StartTransaction has been rejected
  * }
@@ -319,6 +268,10 @@ ArduinoOcpp::FirmwareService *getFirmwareService();
 ArduinoOcpp::DiagnosticsService *getDiagnosticsService();
 #endif
 
+/*
+ * Add features and customize the behavior of the OCPP client
+ */
+
 namespace ArduinoOcpp {
 class Context;
 }
@@ -328,21 +281,161 @@ class Context;
 ArduinoOcpp::Context *getOcppContext();
 
 /*
- * Deprecated functions or functions to be moved to ArduinoOcppExtended.h
+ * Set a listener which is notified when the OCPP lib processes an incoming operation of type
+ * operationType. After the operation has been interpreted, onReceiveReq will be called with
+ * the original message from the OCPP server.
+ * 
+ * Example usage:
+ * 
+ * setOnReceiveRequest("SetChargingProfile", [] (JsonObject payload) {
+ *     Serial.print("[main] received charging profile for connector: "; //Arduino print function
+ *     Serial.printf("update connector %i with chargingProfileId %i\n",
+ *             payload["connectorId"],                                  //ArduinoJson object access
+ *             payload["csChargingProfiles"]["chargingProfileId"]);
+ * });
+ */
+void setOnReceiveRequest(const char *operationType, OnReceiveReqListener onReceiveReq);
+
+/*
+ * Set a listener which is notified when the OCPP lib sends the confirmation to an incoming
+ * operation of type operation type. onSendConf will be passed the original output of the
+ * OCPP lib.
+ * 
+ * Example usage:
+ * 
+ * setOnSendConf("RemoteStopTransaction", [] (JsonObject payload) -> void {
+ *     if (!strcmp(payload["status"], "Rejected")) {
+ *         //the OCPP lib rejected the RemoteStopTransaction command. In this example, the customer
+ *         //wishes to stop the running transaction in any case and to log this case
+ *         endTransaction("Remote"); //end transaction and send StopTransaction if a transaction is running
+ *         Serial.println("[main] override rejected RemoteStopTransaction"); //Arduino print function
+ *     }
+ * });
+ * 
+ */
+void setOnSendConf(const char *operationType, OnSendConfListener onSendConf);
+
+/*
+ * Create and send an operation without using the built-in Operation class. This function bypasses
+ * the business logic which comes with this library. E.g. you can send unknown operations, extend
+ * OCPP or replace parts of the business logic with custom behavior.
+ * 
+ * Use case 1, extend the library by sending additional operations. E.g. DataTransfer:
+ * 
+ * sendCustomRequest("DataTransfer", [] () -> std::unique_ptr<DynamicJsonDocument> {
+ *     //will be called to create the request once this operation is being sent out
+ *     size_t capacity = JSON_OBJECT_SIZE(3) +
+ *                       JSON_OBJECT_SIZE(2); //for calculating the required capacity, see https://arduinojson.org/v6/assistant/
+ *     auto res = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity)); 
+ *     JsonObject request = *res;
+ *     request["vendorId"] = "My company Ltd.";
+ *     request["messageId"] = "TargetValues";
+ *     request["data"]["battery_capacity"] = 89;
+ *     request["data"]["battery_soc"] = 34;
+ *     return res;
+ * }, [] (JsonObject response) -> void {
+ *     //will be called with the confirmation response of the server
+ *     if (!strcmp(response["status"], "Accepted")) {
+ *         //DataTransfer has been accepted
+ *         int max_energy = response["data"]["max_energy"];
+ *     }
+ * });
+ * 
+ * Use case 2, bypass the business logic of this library for custom behavior. E.g. StartTransaction:
+ * 
+ * sendCustomRequest("StartTransaction", [] () -> std::unique_ptr<DynamicJsonDocument> {
+ *     //will be called to create the request once this operation is being sent out
+ *     size_t capacity = JSON_OBJECT_SIZE(4); //for calculating the required capacity, see https://arduinojson.org/v6/assistant/
+ *     auto res = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity)); 
+ *     JsonObject request = *res;
+ *     request["connectorId"] = 1;
+ *     request["idTag"] = "A9C3CE1D7B71EA";
+ *     request["meterStart"] = 1234;
+ *     request["timestamp"] = "2023-06-01T11:07:43Z"; //e.g. some historic transaction
+ *     return res;
+ * }, [] (JsonObject response) -> void {
+ *     //will be called with the confirmation response of the server
+ *     const char *status = response["idTagInfo"]["status"];
+ *     int transactionId = response["transactionId"];
+ * });
+ * 
+ * In Use case 2, the library won't send any further StatusNotification or StopTransaction on
+ * its own.
+ */
+void sendCustomRequest(const char *operationType,
+            std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createReq,
+            std::function<void (JsonObject)> fn_processConf);
+
+/*
+ * Set a custom handler for an incoming operation type. This will update the core Operation registry
+ * of the library, potentially replacing the built-in Operation handler and bypassing the
+ * business logic of this library.
+ * 
+ * Note that when replacing an operation handler, the attached listeners will be reset.
+ * 
+ * Example usage:
+ * 
+ * setCustomRequestHandler("DataTransfer", [] (JsonObject request) -> void {
+ *     //will be called with the request message from the server
+ *     const char *vendorId = request["vendorId"];
+ *     const char *messageId = request["messageId"];
+ *     int battery_capacity = request["data"]["battery_capacity"];
+ *     int battery_soc = request["data"]["battery_soc"];
+ * }, [] () -> std::unique_ptr<DynamicJsonDocument> {
+ *     //will be called  to create the response once this operation is being sent out
+ *     size_t capacity = JSON_OBJECT_SIZE(2) +
+ *                       JSON_OBJECT_SIZE(1); //for calculating the required capacity, see https://arduinojson.org/v6/assistant/
+ *     auto res = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity)); 
+ *     JsonObject response = *res;
+ *     response["status"] = "Accepted";
+ *     response["data"]["max_energy"] = 59;
+ *     return res;
+ * });
+ */
+void setCustomRequestHandler(const char *operationType,
+            std::function<void (JsonObject)> fn_processReq,
+            std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createConf);
+
+/*
+ * Send OCPP operations manually not bypassing the internal business logic
+ * 
+ * On receipt of the .conf() response the library calls the callback function
+ * "OnReceiveConfListener onConf" and passes the OCPP payload to it.
+ * 
+ * For your first EVSE integration, the `onReceiveConfListener` is probably sufficient. For
+ * advanced EVSE projects, the other listeners likely become relevant:
+ * - `onAbortListener`: will be called whenever the engine stops trying to finish an operation
+ *           normally which was initiated by this device.
+ * - `onTimeoutListener`: will be executed when the operation is not answered until the timeout
+ *           expires. Note that timeouts also trigger the `onAbortListener`.
+ * - `onReceiveErrorListener`: will be called when the Central System returns a CallError.
+ *           Again, each error also triggers the `onAbortListener`.
+ * 
+ * The functions for sending OCPP operations are non-blocking. The program will resume immediately
+ * with the code after with the subsequent code in any case.
  */
 
-void setOnSetChargingProfileRequest(OnReceiveReqListener onReceiveReq); //optional
+void authorize(
+            const char *idTag,                           //RFID tag (e.g. ISO 14443 UID tag with 4 or 7 bytes)
+            OnReceiveConfListener onConf = nullptr,      //callback (confirmation received)
+            OnAbortListener onAbort = nullptr,           //callback (confirmation not received), optional
+            OnTimeoutListener onTimeout = nullptr,       //callback (timeout expired), optional
+            OnReceiveErrorListener onError = nullptr,    //callback (error code received), optional
+            unsigned int timeout = 0); //custom timeout behavior, optional
 
-void setOnRemoteStartTransactionSendConf(OnSendConfListener onSendConf);
+bool startTransaction(
+            const char *idTag,
+            OnReceiveConfListener onConf = nullptr,
+            OnAbortListener onAbort = nullptr,
+            OnTimeoutListener onTimeout = nullptr,
+            OnReceiveErrorListener onError = nullptr,
+            unsigned int timeout = 0);
 
-void setOnRemoteStopTransactionSendConf(OnSendConfListener onSendConf);
-void setOnRemoteStopTransactionReceiveReq(OnReceiveReqListener onReceiveReq);
-
-void setOnResetSendConf(OnSendConfListener onSendConf);
-void setOnResetRequest(OnReceiveReqListener onReceiveReq);
-
-bool startTransaction(const char *idTag, OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, unsigned int timeout = 0);
-
-bool stopTransaction(OnReceiveConfListener onConf = nullptr, OnAbortListener onAbort = nullptr, OnTimeoutListener onTimeout = nullptr, OnReceiveErrorListener onError = nullptr, unsigned int timeout = 0);
+bool stopTransaction(
+            OnReceiveConfListener onConf = nullptr,
+            OnAbortListener onAbort = nullptr,
+            OnTimeoutListener onTimeout = nullptr,
+            OnReceiveErrorListener onError = nullptr,
+            unsigned int timeout = 0);
 
 #endif

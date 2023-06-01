@@ -126,44 +126,6 @@ std::function<ArduinoOcpp::PollResult<bool>()> adaptFn(unsigned int connectorId,
     return [fn, connectorId] () {return adaptScl(fn(connectorId));};
 }
 
-void ao_bootNotification(const char *chargePointModel, const char *chargePointVendor, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError) {
-    bootNotification(chargePointModel, chargePointVendor, adaptFn(onConfirmation), adaptFn(onAbort), adaptFn(onTimeout), adaptFn(onError));
-}
-
-void ao_bootNotification_full(const char *payloadJson, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError) {
-    auto payload = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(9) + 230 + 9)); // BootNotification has at most 9 attributes with at most 230 chars + null terminators
-    auto err = deserializeJson(*payload, payloadJson);
-    if (err) {
-        AO_DBG_ERR("Could not process input: %s", err.c_str());
-        (void)0;
-    }
-
-    bootNotification(std::move(payload), adaptFn(onConfirmation), adaptFn(onAbort), adaptFn(onTimeout), adaptFn(onError));
-}
-
-void ao_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data) {
-    
-    std::string idTag_capture = idTag;
-
-    authorize(idTag,
-            onConfirmation ? [onConfirmation, idTag_capture, user_data] (JsonObject payload) {
-                    auto len = serializeJson(payload, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
-                    if (len <= 0) {AO_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
-                    onConfirmation(idTag_capture.c_str(), len > 0 ? ao_recv_payload_buff : "", len, user_data);
-                } : OnReceiveConfListener(nullptr),
-            onAbort ? [onAbort, idTag_capture, user_data] () -> void {
-                    onAbort(idTag_capture.c_str(), user_data);
-                } : OnAbortListener(nullptr),
-            onTimeout ? [onTimeout, idTag_capture, user_data] () {
-                    onTimeout(idTag_capture.c_str(), user_data);
-                } : OnTimeoutListener(nullptr),
-            onError ? [onError, idTag_capture, user_data] (const char *code, const char *description, JsonObject details) {
-                    auto len = serializeJson(details, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
-                    if (len <= 0) {AO_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
-                    onError(idTag_capture.c_str(), code, description, len > 0 ? ao_recv_payload_buff : "", len, user_data);
-                } : OnReceiveErrorListener(nullptr));
-}
-
 void ao_beginTransaction(const char *idTag) {
     beginTransaction(idTag);
 }
@@ -321,10 +283,6 @@ bool ao_isBlockedByReservation_m(unsigned int connectorId, const char *idTag) {
     return isBlockedByReservation(idTag, connectorId);
 }
 
-void ao_setOnResetRequest(OnMessage onRequest) {
-    setOnResetRequest(adaptFn(onRequest));
-}
-
 void ao_set_console_out_c(void (*console_out)(const char *msg)) {
     ao_set_console_out(console_out);
 }
@@ -333,20 +291,27 @@ OcppHandle *ao_getOcppHandle() {
     return reinterpret_cast<OcppHandle*>(getOcppContext());
 }
 
-void ao_onRemoteStartTransactionSendConf(OnMessage onSendConf) {
-    setOnRemoteStopTransactionSendConf(adaptFn(onSendConf));
-}
+void ao_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data) {
+    
+    std::string idTag_capture = idTag;
 
-void ao_onRemoteStopTransactionSendConf(OnMessage onSendConf) {
-    setOnRemoteStopTransactionSendConf(adaptFn(onSendConf));
-}
-
-void ao_onRemoteStopTransactionRequest(OnMessage onRequest) {
-    setOnRemoteStopTransactionReceiveReq(adaptFn(onRequest));
-}
-
-void ao_onResetSendConf(OnMessage onSendConf) {
-    setOnResetSendConf(adaptFn(onSendConf));
+    authorize(idTag,
+            onConfirmation ? [onConfirmation, idTag_capture, user_data] (JsonObject payload) {
+                    auto len = serializeJson(payload, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
+                    if (len <= 0) {AO_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
+                    onConfirmation(idTag_capture.c_str(), len > 0 ? ao_recv_payload_buff : "", len, user_data);
+                } : OnReceiveConfListener(nullptr),
+            onAbort ? [onAbort, idTag_capture, user_data] () -> void {
+                    onAbort(idTag_capture.c_str(), user_data);
+                } : OnAbortListener(nullptr),
+            onTimeout ? [onTimeout, idTag_capture, user_data] () {
+                    onTimeout(idTag_capture.c_str(), user_data);
+                } : OnTimeoutListener(nullptr),
+            onError ? [onError, idTag_capture, user_data] (const char *code, const char *description, JsonObject details) {
+                    auto len = serializeJson(details, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
+                    if (len <= 0) {AO_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
+                    onError(idTag_capture.c_str(), code, description, len > 0 ? ao_recv_payload_buff : "", len, user_data);
+                } : OnReceiveErrorListener(nullptr));
 }
 
 void ao_startTransaction(const char *idTag, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError) {
