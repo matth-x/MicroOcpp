@@ -13,7 +13,7 @@ namespace ArduinoOcpp {
 
 namespace Ocpp16 {
 
-class CustomMessage : public Operation {
+class CustomOperation : public Operation {
 private:
     std::string operationType;
     std::function<void (StoredOperationHandler*)> fn_initiate; //optional
@@ -29,7 +29,7 @@ private:
 public:
 
     //for operations initiated at this device
-    CustomMessage(const char *operationType,
+    CustomOperation(const char *operationType,
             std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createReq,
             std::function<void (JsonObject)> fn_processConf,
             std::function<bool (const char*, const char*, JsonObject)> fn_processErr = nullptr,
@@ -37,14 +37,14 @@ public:
             std::function<bool (StoredOperationHandler*)> fn_restore = nullptr);
     
     //for operations receied from remote
-    CustomMessage(const char *operationType,
+    CustomOperation(const char *operationType,
             std::function<void (JsonObject)> fn_processReq,
             std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createConf,
             std::function<const char* ()> fn_getErrorCode = nullptr,
             std::function<const char* ()> fn_getErrorDescription = nullptr,
             std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_getErrorDetails = nullptr);
     
-    ~CustomMessage();
+    ~CustomOperation();
 
     const char* getOperationType() override;
 

@@ -25,7 +25,7 @@
 #include <ArduinoOcpp/MessagesV16/Authorize.h>
 #include <ArduinoOcpp/MessagesV16/StartTransaction.h>
 #include <ArduinoOcpp/MessagesV16/StopTransaction.h>
-#include <ArduinoOcpp/MessagesV16/CustomMessage.h>
+#include <ArduinoOcpp/MessagesV16/CustomOperation.h>
 
 #include <ArduinoOcpp/Debug.h>
 
@@ -639,7 +639,7 @@ void sendCustomRequest(const char *operationType,
         return;
     }
 
-    auto request = makeRequest(new CustomMessage(operationType, fn_createReq, fn_processConf));
+    auto request = makeRequest(new CustomOperation(operationType, fn_createReq, fn_processConf));
     context->initiateRequest(std::move(request));
 }
 
@@ -659,7 +659,7 @@ void setCustomRequestHandler(const char *operationType,
     std::string captureOpType = operationType;
 
     context->getOperationRegistry().registerOperation(operationType, [captureOpType, fn_processReq, fn_createConf] () {
-        return new CustomMessage(captureOpType.c_str(), fn_processReq, fn_createConf);
+        return new CustomOperation(captureOpType.c_str(), fn_processReq, fn_createConf);
     });
 }
 

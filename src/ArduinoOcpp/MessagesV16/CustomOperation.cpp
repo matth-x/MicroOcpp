@@ -2,11 +2,11 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/CustomMessage.h>
+#include <ArduinoOcpp/MessagesV16/CustomOperation.h>
 
-using ArduinoOcpp::Ocpp16::CustomMessage;
+using ArduinoOcpp::Ocpp16::CustomOperation;
 
-CustomMessage::CustomMessage(const char *operationType,
+CustomOperation::CustomOperation(const char *operationType,
             std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createReq,
             std::function<void (JsonObject)> fn_processConf,
             std::function<bool (const char*, const char*, JsonObject)> fn_processErr,
@@ -21,7 +21,7 @@ CustomMessage::CustomMessage(const char *operationType,
     
 }
 
-CustomMessage::CustomMessage(const char *operationType,
+CustomOperation::CustomOperation(const char *operationType,
             std::function<void (JsonObject)> fn_processReq,
             std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createConf,
             std::function<const char* ()> fn_getErrorCode,
@@ -36,21 +36,21 @@ CustomMessage::CustomMessage(const char *operationType,
     
 }
 
-CustomMessage::~CustomMessage() {
+CustomOperation::~CustomOperation() {
 
 }
 
-const char* CustomMessage::getOperationType() {
+const char* CustomOperation::getOperationType() {
     return operationType.c_str();
 }
 
-void CustomMessage::initiate(StoredOperationHandler *opStore) {
+void CustomOperation::initiate(StoredOperationHandler *opStore) {
     if (fn_initiate) {
         fn_initiate(opStore);
     }
 }
 
-bool CustomMessage::restore(StoredOperationHandler *opStore) {
+bool CustomOperation::restore(StoredOperationHandler *opStore) {
     if (fn_restore) {
         return fn_restore(opStore);
     } else {
@@ -58,23 +58,23 @@ bool CustomMessage::restore(StoredOperationHandler *opStore) {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> CustomMessage::createReq() {
+std::unique_ptr<DynamicJsonDocument> CustomOperation::createReq() {
     return fn_createReq();
 }
 
-void CustomMessage::processConf(JsonObject payload) {
+void CustomOperation::processConf(JsonObject payload) {
     return fn_processConf(payload);
 }
 
-void CustomMessage::processReq(JsonObject payload) {
+void CustomOperation::processReq(JsonObject payload) {
     return fn_processReq(payload);
 }
 
-std::unique_ptr<DynamicJsonDocument> CustomMessage::createConf() {
+std::unique_ptr<DynamicJsonDocument> CustomOperation::createConf() {
     return fn_createConf();
 }
 
-const char *CustomMessage::getErrorCode() {
+const char *CustomOperation::getErrorCode() {
     if (fn_getErrorCode) {
         return fn_getErrorCode();
     } else {
@@ -82,7 +82,7 @@ const char *CustomMessage::getErrorCode() {
     }
 }
 
-const char *CustomMessage::getErrorDescription() {
+const char *CustomOperation::getErrorDescription() {
     if (fn_getErrorDescription) {
         return fn_getErrorDescription();
     } else {
@@ -90,7 +90,7 @@ const char *CustomMessage::getErrorDescription() {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> CustomMessage::getErrorDetails() {
+std::unique_ptr<DynamicJsonDocument> CustomOperation::getErrorDetails() {
     if (fn_getErrorDetails) {
         return fn_getErrorDetails();
     } else {
