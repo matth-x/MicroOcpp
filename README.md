@@ -35,6 +35,8 @@ Try it (no hardware required): [ArduinoOcppSimulator](https://github.com/matth-x
 
 For simple chargers, the necessary hardware and internet integration is usually far below 1000 LOCs.
 
+Technical introduction: [ArduinoOcpp Docs](https://matth-x.github.io/ArduinoOcpp/intro-tech)
+
 ## Developers guide
 
 Please take `examples/ESP/main.cpp` as the starting point for your first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. The API documentation can be found in [`ArduinoOcpp.h`](https://github.com/matth-x/ArduinoOcpp/blob/master/src/ArduinoOcpp.h).
