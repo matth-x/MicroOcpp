@@ -43,9 +43,9 @@ const char *cstrFromOcppEveState(OcppEvseState state) {
 }
 }} //end namespaces
 
-StatusNotification::StatusNotification(int connectorId, OcppEvseState currentStatus, const Timestamp &timestamp, const char *errorCode) 
-  : connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorCode(errorCode) {
-
+StatusNotification(int connectorId, OcppEvseState currentStatus, const Timestamp &timestamp, ErrorCode errorCode)
+        : connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorCode(errorCode) {
+    
     AO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
 }
 

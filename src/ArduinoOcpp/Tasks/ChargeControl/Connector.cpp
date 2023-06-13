@@ -69,7 +69,7 @@ OcppEvseState Connector::inferenceStatus() {
     * Handle special case: This is the Connector for the whole CP (i.e. connectorId=0) --> only states Available, Unavailable, Faulted are possible
     */
     if (connectorId == 0) {
-        if (getErrorCode() != nullptr) {
+        if (isFaulted()) {
             return OcppEvseState::Faulted;
         } else if (getAvailability() == AVAILABILITY_INOPERATIVE) {
             return OcppEvseState::Unavailable;
@@ -78,7 +78,7 @@ OcppEvseState Connector::inferenceStatus() {
         }
     }
 
-    if (getErrorCode() != nullptr) {
+    if (isFaulted()) {
         return OcppEvseState::Faulted;
     } else if (getAvailability() == AVAILABILITY_INOPERATIVE) {
         return OcppEvseState::Unavailable;
@@ -136,7 +136,7 @@ bool Connector::ocppPermitsCharge() {
     return transaction &&
             transaction->isRunning() &&
             transaction->isActive() &&
-            !getErrorCode() &&
+            !isFaulted() &&
             !suspendDeAuthorizedIdTag;
 }
 
@@ -221,7 +221,7 @@ void Connector::loop() {
 
             if (transaction->isActive() && transaction->isAuthorized() &&  //tx must be authorized
                     (!connectorPluggedSampler || connectorPluggedSampler()) && //if applicable, connector must be plugged
-                    !getErrorCode() && //only start tx if charger is free of error conditions
+                    !isFaulted() && //only start tx if charger is free of error conditions
                     (!startTxReadyInput || startTxReadyInput())) { //if defined, user Input for allowing StartTx must be true
                 //start Transaction
 
@@ -338,6 +338,25 @@ void Connector::loop() {
     }
 
     auto inferedStatus = inferenceStatus();
+
+    for (auto i = std::min(errorCodeInputs.size(), trackErrorCodeInputs.size()); i >= 1; i--) {
+        auto index = i - 1;
+        auto error = errorCodeInputs[index].operator();
+        if (error.isError && !trackErrorCodeInputs[index]) {
+            //new error
+            auto statusNotification = makeRequest(
+                    new StatusNotification(connectorId, inferedStatus, model.getClock().now(), error));
+            statusNotification->setTimeout(0);
+            context.initiateRequest(std::move(statusNotification));
+
+            currentStatus = inferedStatus;
+            reportedStatus = inferedStatus;
+            trackErrorCodeInputs[index] = true;
+        } else if (!error.isError && trackErrorCodeInputs[index]) {
+            //reset error
+            trackErrorCodeInputs[index] = false;
+        }
+    }
     
     if (inferedStatus != currentStatus) {
         currentStatus = inferedStatus;
@@ -363,11 +382,19 @@ void Connector::loop() {
     return;
 }
 
+bool Connector::isFaulted() {
+    for (auto i = errorCodeInputs.begin(); i != errorCodeInputs.end(); ++i) {
+        if (i->operator().isFaulted) {
+            return true;
+        }
+    }
+}
+
 const char *Connector::getErrorCode() {
-    for (auto s = connectorErrorCodeSamplers.begin(); s != connectorErrorCodeSamplers.end(); s++) {
-        const char *err = s->operator()();
-        if (err != nullptr) {
-            return err;
+    for (auto i = errorCodeInputs.size(); i >= 1; i--) {
+        auto error = errorCodeInputs[i-1]->operator();
+        if (error.isError && error.errorCode) {
+            return error.errorCode;
         }
     }
     return nullptr;
@@ -781,7 +808,14 @@ void Connector::setConnectorEnergizedSampler(std::function<bool()> connectorEner
 }
 
 void Connector::addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
-    this->connectorErrorCodeSamplers.push_back(connectorErrorCode);
+    addConnectorErrorCodeInput([connectorErrorCode] () -> ErrorCode {
+        return ErrorCode(connectorErrorCode());
+    });
+}
+
+void Connector::addConnectorErrorCodeInput(std::function<ErrorCode ()> errorCodeInput) {
+    this->errorCodeInputs.push_back(errorCodeInput);
+    this->trackErrorCodeInputs.push_back(false);
 }
 
 void Connector::setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector) {

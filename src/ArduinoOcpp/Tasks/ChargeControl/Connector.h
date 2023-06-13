@@ -40,7 +40,9 @@ private:
     std::function<bool()> connectorPluggedSampler;
     std::function<bool()> evRequestsEnergySampler;
     std::function<bool()> connectorEnergizedSampler;
-    std::vector<std::function<const char *()>> connectorErrorCodeSamplers;
+    std::vector<std::function<ErrorCode ()>> errorCodeInputs;
+    std::vector<bool> trackErrorCodeInputs;
+    bool isFaulted();
     const char *getErrorCode();
 
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
@@ -104,6 +106,7 @@ public:
     void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
     void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
     void addConnectorErrorCodeSampler(std::function<const char*()> connectorErrorCode);
+    void addConnectorErrorCodeInput(std::function<ErrorCode ()> errorCodeInput);
 
     void loop();
 

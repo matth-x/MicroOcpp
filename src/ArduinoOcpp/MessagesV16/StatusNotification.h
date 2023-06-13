@@ -17,9 +17,9 @@ private:
     int connectorId = 1;
     OcppEvseState currentStatus = OcppEvseState::NOT_SET;
     Timestamp timestamp;
-    const char *errorCode = nullptr; //nullptr is equivalent to "NoError"
+    ErrorCode errorCode;
 public:
-    StatusNotification(int connectorId, OcppEvseState currentStatus, const Timestamp &timestamp, const char *errorCode = nullptr);
+    StatusNotification(int connectorId, OcppEvseState currentStatus, const Timestamp &timestamp, ErrorCode errorCode = nullptr);
 
     const char* getOperationType();
 
