@@ -128,7 +128,7 @@ public:
     void setStartTimestamp(Timestamp timestamp) {start_timestamp = timestamp;}
     const Timestamp& getStartTimestamp() {return start_timestamp;}
 
-    void setTransactionId(int transactionId) {transactionId = transactionId;}
+    void setTransactionId(int transactionId) {this->transactionId = transactionId;}
 
     SendStatus& getStopSync() {return stop_sync;}
 

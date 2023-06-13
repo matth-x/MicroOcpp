@@ -59,6 +59,9 @@ void Model::loop() {
     
     if (reservationService)
         reservationService->loop();
+    
+    if (resetService)
+        resetService->loop();
 }
 
 void Model::setTransactionStore(std::unique_ptr<TransactionStore> ts) {

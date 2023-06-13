@@ -96,7 +96,7 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
         }
 
         if (auto connector = model.getConnector(connectorId)) {
-            connector->beginTransaction(idTag);
+            connector->beginTransaction_authorized(idTag);
         }
 
         if (!chargingProfileDoc.isNull()

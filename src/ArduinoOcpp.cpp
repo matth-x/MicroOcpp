@@ -325,7 +325,6 @@ void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connec
             [energyInput] (ReadingContext) {return energyInput();}
     ));
     model.getMeteringService()->addMeterValueSampler(connectorId, std::move(mvs));
-    model.getMeteringService()->setEnergySampler(connectorId, energyInput);
 }
 
 void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId) {
@@ -348,7 +347,6 @@ void setPowerMeterInput(std::function<float()> powerInput, unsigned int connecto
             [powerInput] (ReadingContext) {return powerInput();}
     ));
     model.getMeteringService()->addMeterValueSampler(connectorId, std::move(mvs));
-    model.getMeteringService()->setPowerSampler(connectorId, powerInput);
 }
 
 void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId) {

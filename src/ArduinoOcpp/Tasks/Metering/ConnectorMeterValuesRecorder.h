@@ -48,8 +48,6 @@ private:
     std::shared_ptr<Transaction> transaction;
     bool trackTxRunning = false;
  
-    PowerSampler powerSampler = nullptr;
-    EnergySampler energySampler = nullptr;
     std::vector<std::unique_ptr<SampledValueSampler>> samplers;
     int energySamplerIndex {-1};
 
@@ -64,10 +62,6 @@ public:
     ConnectorMeterValuesRecorder(Model& context, int connectorId, MeterStore& meterStore);
 
     Operation *loop();
-
-    void setPowerSampler(PowerSampler powerSampler);
-
-    void setEnergySampler(EnergySampler energySampler);
 
     void addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler);
 

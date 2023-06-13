@@ -33,10 +33,6 @@ public:
 
     void loop();
 
-    void setPowerSampler(int connectorId, PowerSampler powerSampler);
-
-    void setEnergySampler(int connectorId, EnergySampler energySampler);
-
     void addMeterValueSampler(int connectorId, std::unique_ptr<SampledValueSampler> meterValueSampler);
 
     std::unique_ptr<SampledValue> readTxEnergyMeter(int connectorId, ReadingContext reason);

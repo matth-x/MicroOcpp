@@ -228,14 +228,6 @@ Operation *ConnectorMeterValuesRecorder::takeTriggeredMeterValues() {
     return new MeterValues(std::move(mv_now), connectorId, transaction);
 }
 
-void ConnectorMeterValuesRecorder::setPowerSampler(PowerSampler ps){
-    this->powerSampler = ps;
-}
-
-void ConnectorMeterValuesRecorder::setEnergySampler(EnergySampler es){
-    this->energySampler = es;
-}
-
 void ConnectorMeterValuesRecorder::addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler) {
     if (!meterValueSampler->getProperties().getMeasurand().compare("Energy.Active.Import.Register")) {
         energySamplerIndex = samplers.size();

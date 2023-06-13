@@ -28,6 +28,8 @@ struct ErrorCode {
     const char *vendorId = nullptr; //vendor-specific implementation identifier
     const char *vendorErrorCode = nullptr; //vendor-specific error code
 
+    ErrorCode() = default;
+
     ErrorCode(const char *errorCode) : errorCode(errorCode) {
         if (errorCode) {
             isError = true;

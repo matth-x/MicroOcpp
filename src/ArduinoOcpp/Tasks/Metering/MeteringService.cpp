@@ -40,22 +40,6 @@ void MeteringService::loop(){
     }
 }
 
-void MeteringService::setPowerSampler(int connectorId, PowerSampler ps){
-    if (connectorId < 0 || connectorId >= (int) connectors.size()) {
-        AO_DBG_ERR("connectorId is out of bounds");
-        return;
-    }
-    connectors[connectorId]->setPowerSampler(ps);
-}
-
-void MeteringService::setEnergySampler(int connectorId, EnergySampler es){
-    if (connectorId < 0 || connectorId >= (int) connectors.size()) {
-        AO_DBG_ERR("connectorId is out of bounds");
-        return;
-    }
-    connectors[connectorId]->setEnergySampler(es);
-}
-
 void MeteringService::addMeterValueSampler(int connectorId, std::unique_ptr<SampledValueSampler> meterValueSampler) {
     if (connectorId < 0 || connectorId >= (int) connectors.size()) {
         AO_DBG_ERR("connectorId is out of bounds");
