@@ -106,7 +106,7 @@ public:
     void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
     void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
     void addConnectorErrorCodeSampler(std::function<const char*()> connectorErrorCode);
-    void addConnectorErrorCodeInput(std::function<ErrorCode ()> errorCodeInput);
+    void addErrorCodeInput(std::function<ErrorCode ()> errorCodeInput);
 
     void loop();
 

@@ -383,11 +383,13 @@ void Connector::loop() {
 }
 
 bool Connector::isFaulted() {
-    for (auto i = errorCodeInputs.begin(); i != errorCodeInputs.end(); ++i) {
-        if (i->operator()().isFaulted) {
+    //for (auto i = errorCodeInputs.begin(); i != errorCodeInputs.end(); ++i) {
+    for (size_t i = 0; i < errorCodeInputs.size(); i++) {
+        if (errorCodeInputs[i].operator()().isFaulted) {
             return true;
         }
     }
+    return false;
 }
 
 const char *Connector::getErrorCode() {
@@ -808,12 +810,12 @@ void Connector::setConnectorEnergizedSampler(std::function<bool()> connectorEner
 }
 
 void Connector::addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
-    addConnectorErrorCodeInput([connectorErrorCode] () -> ErrorCode {
+    addErrorCodeInput([connectorErrorCode] () -> ErrorCode {
         return ErrorCode(connectorErrorCode());
     });
 }
 
-void Connector::addConnectorErrorCodeInput(std::function<ErrorCode ()> errorCodeInput) {
+void Connector::addErrorCodeInput(std::function<ErrorCode ()> errorCodeInput) {
     this->errorCodeInputs.push_back(errorCodeInput);
     this->trackErrorCodeInputs.push_back(false);
 }
