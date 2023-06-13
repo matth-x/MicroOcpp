@@ -341,7 +341,7 @@ void Connector::loop() {
 
     for (auto i = std::min(errorCodeInputs.size(), trackErrorCodeInputs.size()); i >= 1; i--) {
         auto index = i - 1;
-        auto error = errorCodeInputs[index].operator();
+        auto error = errorCodeInputs[index].operator()();
         if (error.isError && !trackErrorCodeInputs[index]) {
             //new error
             auto statusNotification = makeRequest(
@@ -384,7 +384,7 @@ void Connector::loop() {
 
 bool Connector::isFaulted() {
     for (auto i = errorCodeInputs.begin(); i != errorCodeInputs.end(); ++i) {
-        if (i->operator().isFaulted) {
+        if (i->operator()().isFaulted) {
             return true;
         }
     }
@@ -392,7 +392,7 @@ bool Connector::isFaulted() {
 
 const char *Connector::getErrorCode() {
     for (auto i = errorCodeInputs.size(); i >= 1; i--) {
-        auto error = errorCodeInputs[i-1]->operator();
+        auto error = errorCodeInputs[i-1].operator()();
         if (error.isError && error.errorCode) {
             return error.errorCode;
         }

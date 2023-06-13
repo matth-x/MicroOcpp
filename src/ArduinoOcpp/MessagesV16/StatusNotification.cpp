@@ -43,7 +43,7 @@ const char *cstrFromOcppEveState(OcppEvseState state) {
 }
 }} //end namespaces
 
-StatusNotification(int connectorId, OcppEvseState currentStatus, const Timestamp &timestamp, ErrorCode errorCode)
+StatusNotification::StatusNotification(int connectorId, OcppEvseState currentStatus, const Timestamp &timestamp, ErrorCode errorCode)
         : connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorCode(errorCode) {
     
     AO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
@@ -55,12 +55,23 @@ const char* StatusNotification::getOperationType(){
 
 //TODO if the status has changed again when sendReq() is called, abort the operation completely (note: if req is already sent, stick with listening to conf). The OcppEvseStateService will enqueue a new operation itself
 std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1)));
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(7) + (JSONDATE_LENGTH + 1)));
     JsonObject payload = doc->to<JsonObject>();
     
     payload["connectorId"] = connectorId;
-    if (errorCode != nullptr) {
-        payload["errorCode"] = errorCode;
+    if (errorCode.isError) {
+        if (errorCode.errorCode) {
+            payload["errorCode"] = errorCode.errorCode;
+        }
+        if (errorCode.info) {
+            payload["info"] = errorCode.info;
+        }
+        if (errorCode.vendorId) {
+            payload["vendorId"] = errorCode.vendorId;
+        }
+        if (errorCode.vendorErrorCode) {
+            payload["vendorErrorCode"] = errorCode.vendorErrorCode;
+        }
     } else if (currentStatus == OcppEvseState::NOT_SET) {
         AO_DBG_ERR("Reporting undefined status");
         payload["errorCode"] = "InternalError";
