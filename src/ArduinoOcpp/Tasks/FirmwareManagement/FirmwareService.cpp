@@ -6,6 +6,7 @@
 #include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Core/Model.h>
 #include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/OperationRegistry.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
@@ -15,6 +16,11 @@
 
 #include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Debug.h>
+
+//debug option: update immediately and don't wait for the retreive date
+#ifndef AO_IGNORE_FW_RETR_DATE
+#define AO_IGNORE_FW_RETR_DATE 0
+#endif
 
 using namespace ArduinoOcpp;
 using ArduinoOcpp::Ocpp16::FirmwareStatus;
@@ -42,7 +48,7 @@ void FirmwareService::setBuildNumber(const char *buildNumber) {
     if (buildNumber == nullptr)
         return;
     this->buildNumber = buildNumber;
-    previousBuildNumber = declareConfiguration<const char*>("BUILD_NUMBER", buildNumber, AO_KEYVALUE_FN, false, false, true, false);
+    previousBuildNumber = declareConfiguration<const char*>("BUILD_NUMBER", this->buildNumber.c_str(), AO_KEYVALUE_FN, false, false, true, false);
     checkedSuccessfulFwUpdate = false; //--> CS will be notified
 }
 
@@ -56,10 +62,9 @@ void FirmwareService::loop() {
         return;
     }
 
-    Timestamp timestampNow = context.getModel().getClock().now();
+    auto& timestampNow = context.getModel().getClock().now();
     if (retries > 0 && timestampNow >= retreiveDate) {
 
-        //if (!downloadIssued) {
         if (stage == UpdateStage::Idle) {
             AO_DBG_INFO("Start update");
 
@@ -78,57 +83,49 @@ void FirmwareService::loop() {
             }
         }
 
-        //if (!onDownloadCalled) {
         if (stage == UpdateStage::AwaitDownload) {
             AO_DBG_INFO("Start download");
             stage = UpdateStage::Downloading;
             if (onDownload != nullptr) {
                 onDownload(location);
                 timestampTransition = ao_tick_ms();
-                delayTransition = 30000; //give the download at least 30s
+                delayTransition = downloadStatusSampler ? 1000 : 30000; //give the download at least 30s
                 return;
             }
         }
 
-        const int DOWNLOAD_TIMEOUT = 120;
-        //if (downloadIssued && !installationIssued &&
         if (stage == UpdateStage::Downloading) {
 
-            //check if client reports download to be finished
-            if (downloadStatusSampler != nullptr && downloadStatusSampler() == DownloadStatus::Downloaded) {
-                stage = UpdateStage::AfterDownload;
-            }
+            if (downloadStatusSampler) {
+                //check if client reports download to be finished
 
-            //if client doesn't report download state, assume download to be finished (at least 30s download time have passed until here)
-            if (downloadStatusSampler == nullptr) {
-                stage = UpdateStage::AfterDownload;
-            }
-
-            //check for timeout or error condition
-            if (timestampNow - retreiveDate >= DOWNLOAD_TIMEOUT
-                    || (downloadStatusSampler != nullptr && downloadStatusSampler() == DownloadStatus::DownloadFailed)) {
-                
-                AO_DBG_INFO("Download timeout or failed! Retry");
-                if (retryInterval < DOWNLOAD_TIMEOUT)
+                if (downloadStatusSampler() == DownloadStatus::Downloaded) {
+                    //passed download stage
+                    stage = UpdateStage::AfterDownload;
+                } else if (downloadStatusSampler() == DownloadStatus::DownloadFailed) {
+                    AO_DBG_INFO("Download timeout or failed! Retry");
                     retreiveDate = timestampNow;
-                else
                     retreiveDate += retryInterval;
-                retries--;
-                resetStage();
+                    retries--;
+                    resetStage();
 
-                timestampTransition = ao_tick_ms();
-                delayTransition = 10000;
-                return;
+                    timestampTransition = ao_tick_ms();
+                    delayTransition = 10000;
+                    return;
+                }
+            } else {
+                //if client doesn't report download state, assume download to be finished (at least 30s download time have passed until here)
+                if (downloadStatusSampler == nullptr) {
+                    stage = UpdateStage::AfterDownload;
+                }
             }
-
         }
 
-        //if (!installationIssued) {
         if (stage == UpdateStage::AfterDownload) {
             bool ongoingTx = false;
             for (unsigned int cId = 0; cId < context.getModel().getNumConnectors(); cId++) {
                 auto connector = context.getModel().getConnector(cId);
-                if (connector && connector->getTransactionId() >= 0) {
+                if (connector && connector->getTransaction() && connector->getTransaction()->isRunning()) {
                     ongoingTx = true;
                     break;
                 }
@@ -149,44 +146,41 @@ void FirmwareService::loop() {
             AO_DBG_INFO("Installing");
             stage = UpdateStage::Installing;
 
-            if (onInstall != nullptr) {
+            if (onInstall) {
                 onInstall(location); //should restart the device on success
             } else {
                 AO_DBG_WARN("onInstall must be set! (see setOnInstall). Will abort");
             }
 
             timestampTransition = ao_tick_ms();
-            delayTransition = 40000;
+            delayTransition = installationStatusSampler ? 1000 : 120 * 1000;
             return;
         }
 
         if (stage == UpdateStage::Installing) {
 
-            //check if client reports installation to be finished
-            if (installationStatusSampler == nullptr || installationStatusSampler() == InstallationStatus::Installed) {
-                        //if client doesn't report installation state, assume download to be finished (at least 40s installation time have passed until here)
-                
+            if (installationStatusSampler) {
+                if (installationStatusSampler() == InstallationStatus::Installed) {
+                    AO_DBG_INFO("FW update finished");
+                    //Client should reboot during onInstall. If not, client is responsible to reboot at a later point
+                    resetStage();
+                    retries = 0; //End of update routine. Client must reboot on its own
+                } else if (installationStatusSampler() == InstallationStatus::InstallationFailed) {
+                    AO_DBG_INFO("Installation timeout or failed! Retry");
+                    retreiveDate = timestampNow;
+                    retreiveDate += retryInterval;
+                    retries--;
+                    resetStage();
+
+                    timestampTransition = ao_tick_ms();
+                    delayTransition = 10000;
+                }
+                return;
+            } else {
+                AO_DBG_INFO("FW update finished");
                 //Client should reboot during onInstall. If not, client is responsible to reboot at a later point
                 resetStage();
                 retries = 0; //End of update routine. Client must reboot on its own
-                return;
-            }
-
-            //check for timeout or error condition
-            const int INSTALLATION_TIMEOUT = 120;
-            if ((timestampNow - retreiveDate >= INSTALLATION_TIMEOUT + DOWNLOAD_TIMEOUT)
-                    || (installationStatusSampler != nullptr && installationStatusSampler() == InstallationStatus::InstallationFailed)) {
-
-                AO_DBG_INFO("Installation timeout or failed! Retry");
-                if (retryInterval < INSTALLATION_TIMEOUT + DOWNLOAD_TIMEOUT)
-                    retreiveDate = timestampNow;
-                else
-                    retreiveDate += retryInterval;
-                retries--;
-                resetStage();
-
-                timestampTransition = ao_tick_ms();
-                delayTransition = 10000;
                 return;
             }
         }
@@ -204,6 +198,11 @@ void FirmwareService::scheduleFirmwareUpdate(const std::string &location, Timest
     this->retries = retries;
     this->retryInterval = retryInterval;
 
+    if (AO_IGNORE_FW_RETR_DATE) {
+        AO_DBG_DEBUG("ignore FW update retreive date");
+        this->retreiveDate = context.getModel().getClock().now();
+    }
+
     char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
     this->retreiveDate.toJsonString(dbuf, JSONDATE_LENGTH + 1);
 
@@ -216,6 +215,9 @@ void FirmwareService::scheduleFirmwareUpdate(const std::string &location, Timest
             dbuf,
             this->retries,
             this->retryInterval);
+
+    timestampTransition = ao_tick_ms();
+    delayTransition = 1000;
 
     resetStage();
 }
@@ -252,14 +254,18 @@ std::unique_ptr<Request> FirmwareService::getFirmwareStatusNotification() {
     /*
      * Check if FW has been updated previously, but only once
      */
-    if (!checkedSuccessfulFwUpdate && buildNumber != nullptr && previousBuildNumber != nullptr) {
+    if (!checkedSuccessfulFwUpdate && !buildNumber.empty() && previousBuildNumber != nullptr) {
         checkedSuccessfulFwUpdate = true;
+
+        AO_DBG_DEBUG("Previous build number: %s, new build number: %s", *previousBuildNumber, buildNumber.c_str());
         
         size_t buildNoSize = previousBuildNumber->getBuffsize();
-        if (strncmp(buildNumber, *previousBuildNumber, buildNoSize)) {
+        if (strncmp(buildNumber.c_str(), *previousBuildNumber, buildNoSize)) {
             //new FW
-            previousBuildNumber->setValue(buildNumber, strlen(buildNumber) + 1);
+            previousBuildNumber->setValue(buildNumber.c_str(), buildNumber.length() + 1);
             configuration_save();
+
+            buildNumber.clear();
 
             lastReportedStatus = FirmwareStatus::Installed;
             Operation *fwNotificationMsg = new Ocpp16::FirmwareStatusNotification(lastReportedStatus);
@@ -307,9 +313,8 @@ void FirmwareService::resetStage() {
 
 #include <HTTPUpdate.h>
 
-FirmwareService *EspWiFi::makeFirmwareService(Context& context, const char *buildNumber) {
+FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
     FirmwareService *fwService = new FirmwareService(context);
-    fwService->setBuildNumber(buildNumber);
 
     /*
      * example of how to integrate a separate download phase (optional)
@@ -370,9 +375,8 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context, const char *buil
 
 #include <ESP8266httpUpdate.h>
 
-FirmwareService *EspWiFi::makeFirmwareService(Context& context, const char *buildNumber) {
+FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
     FirmwareService *fwService = new FirmwareService(context);
-    fwService->setBuildNumber(buildNumber);
 
     fwService->setOnInstall([fwService] (const std::string &location) {
         

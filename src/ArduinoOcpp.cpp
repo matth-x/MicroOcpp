@@ -157,10 +157,11 @@ void OCPP_initialize(Connection& connection, const char *bootNotificationCredent
         new ReservationService(*context, AO_NUMCONNECTORS)));
     model.setResetService(std::unique_ptr<ResetService>(
         new ResetService(*context)));
+
     
 #if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
     model.setFirmwareService(std::unique_ptr<FirmwareService>(
-        EspWiFi::makeFirmwareService(*context, "1234578901"))); //instantiate FW service + ESP installation routine
+        EspWiFi::makeFirmwareService(*context))); //instantiate FW service + ESP installation routine
 #else
     model.setFirmwareService(std::unique_ptr<FirmwareService>(
         new FirmwareService(*context))); //only instantiate FW service
@@ -180,6 +181,12 @@ void OCPP_initialize(Connection& connection, const char *bootNotificationCredent
 #endif
 
     model.getBootService()->setChargePointCredentials(bootNotificationCredentials);
+
+    auto credsJson = model.getBootService()->getChargePointCredentials();
+    if (credsJson && credsJson->containsKey("firmwareVersion")) {
+        model.getFirmwareService()->setBuildNumber((*credsJson)["firmwareVersion"]);
+    }
+    credsJson.reset();
 }
 
 void OCPP_deinitialize() {

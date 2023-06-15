@@ -55,6 +55,19 @@ void ResetService::loop() {
                 auto connector = context.getModel().getConnector(cId);
                 connector->setAvailabilityVolatile(true);
             }
+
+            OcppEvseState cpStatus = OcppEvseState::NOT_SET;
+            if (context.getModel().getNumConnectors() > 0) {
+                cpStatus = context.getModel().getConnector(0)->inferenceStatus();
+            }
+
+            auto statusNotification = makeRequest(new Ocpp16::StatusNotification(
+                        0,
+                        cpStatus, //will be determined in StatusNotification::initiate
+                        context.getModel().getClock().now(),
+                        "ResetFailure"));
+            statusNotification->setTimeout(60000);
+            context.initiateRequest(std::move(statusNotification));
         }
     }
 }

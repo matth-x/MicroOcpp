@@ -33,13 +33,13 @@ class FirmwareService {
 private:
     Context& context;
     
-    std::shared_ptr<Configuration<const char *>> previousBuildNumber = NULL;
-    const char *buildNumber = NULL;
+    std::shared_ptr<Configuration<const char *>> previousBuildNumber;
+    std::string buildNumber;
 
-    std::function<DownloadStatus()> downloadStatusSampler = NULL;
+    std::function<DownloadStatus()> downloadStatusSampler;
     bool downloadIssued = false;
 
-    std::function<InstallationStatus()> installationStatusSampler = NULL;
+    std::function<InstallationStatus()> installationStatusSampler;
     bool installationIssued = false;
 
     Ocpp16::FirmwareStatus lastReportedStatus = Ocpp16::FirmwareStatus::Idle;
@@ -50,8 +50,8 @@ private:
     int retries = 0;
     unsigned int retryInterval = 0;
 
-    std::function<bool(const std::string &location)> onDownload = NULL;
-    std::function<bool(const std::string &location)> onInstall = NULL;
+    std::function<bool(const std::string &location)> onDownload;
+    std::function<bool(const std::string &location)> onInstall;
 
     unsigned long delayTransition = 0;
     unsigned long timestampTransition = 0;
@@ -97,7 +97,7 @@ public:
 namespace ArduinoOcpp {
 namespace EspWiFi {
 
-FirmwareService *makeFirmwareService(Context& context, const char *buildNumber);
+FirmwareService *makeFirmwareService(Context& context);
 
 }
 }

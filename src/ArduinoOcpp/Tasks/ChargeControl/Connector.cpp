@@ -702,22 +702,21 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
 
 void Connector::endTransaction(const char *reason) {
 
-    if (!transaction) {
-        AO_DBG_WARN("Cannot end session if no transaction running");
+    if (!transaction || !transaction->isActive()) {
+        //transaction already ended / not active anymore
         return;
     }
 
-    if (transaction->isActive()) {
-        AO_DBG_DEBUG("End session with idTag %s for reason %s, %s previous reason",
-                                transaction->getIdTag(), reason ? reason : "undefined",
-                                *transaction->getStopReason() ? "overruled by" : "no");
+    AO_DBG_DEBUG("End session with idTag %s for reason %s, %s previous reason",
+                            transaction->getIdTag(), reason ? reason : "undefined",
+                            *transaction->getStopReason() ? "overruled by" : "no");
 
-        if (reason) {
-            transaction->setStopReason(reason);
-        }
-        transaction->setInactive();
-        transaction->commit();
+    if (reason) {
+        transaction->setStopReason(reason);
     }
+    
+    transaction->setInactive();
+    transaction->commit();
 }
 
 const char *Connector::getSessionIdTag() {
