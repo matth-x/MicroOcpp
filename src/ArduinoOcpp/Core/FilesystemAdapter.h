@@ -42,8 +42,6 @@ public:
 
 } //end namespace ArduinoOcpp
 
-#ifndef AO_DEACTIVATE_FLASH
-
 // choose FileAPI if not given by build flag; assume usage with Arduino if no build flags are present
 #ifndef AO_USE_FILEAPI
 #if AO_PLATFORM == AO_PLATFORM_ARDUINO
@@ -67,6 +65,8 @@ public:
 #define AO_MAX_PATH_SIZE 30
 #endif
 #endif
+
+#ifndef AO_DEACTIVATE_FLASH
 
 /*
  * Platform specific implementations. Currently supported:
