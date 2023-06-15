@@ -18,12 +18,62 @@
 #define AO_DBG_LEVEL AO_DL_INFO  //default
 #endif
 
+#define AO_DF_MINIMAL 0x00   //don't reveal origin of a debug message
+#define AO_DF_MODULE_LINE 0x01 //print module by file name and line number
+#define AO_DF_FILE_LINE 0x02 //print file and line number
+#define AO_DF_FULL    0x03   //print path and file and line numbr
+
+#ifndef AO_DBG_FORMAT
+#define AO_DBG_FORMAT AO_DF_FILE_LINE //default
+#endif
+
+
+#if AO_DBG_FORMAT == AO_DF_MINIMAL
+#define AO_DBG(level, X)   \
+    do {                        \
+        AO_CONSOLE_PRINTF("[AO] ");           \
+        AO_CONSOLE_PRINTF X;  \
+        AO_CONSOLE_PRINTF("\n");         \
+    } while (0);
+
+#elif AO_DBG_FORMAT == AO_DF_MODULE_LINE
+#define AO_DBG(level, X)   \
+    do {                        \
+        const char *_ao_file = __FILE__;         \
+        size_t _ao_l = sizeof(__FILE__);         \
+        size_t _ao_r = _ao_l;         \
+        while (_ao_l > 0 && _ao_file[_ao_l-1] != '/' && _ao_file[_ao_l-1] != '\\') {         \
+            _ao_l--;         \
+            if (_ao_file[_ao_l] == '.') _ao_r = _ao_l;         \
+        }         \
+        AO_CONSOLE_PRINTF("[AO] %s (%.*s:%i): ",level, (int) (_ao_r - _ao_l), _ao_file + _ao_l,__LINE__);           \
+        AO_CONSOLE_PRINTF X;  \
+        AO_CONSOLE_PRINTF("\n");         \
+    } while (0);
+
+#elif AO_DBG_FORMAT == AO_DF_FILE_LINE
+#define AO_DBG(level, X)   \
+    do {                        \
+        const char *_ao_file = __FILE__;         \
+        size_t _ao_l = sizeof(__FILE__);         \
+        for (; _ao_l > 0 && _ao_file[_ao_l-1] != '/' && _ao_file[_ao_l-1] != '\\'; _ao_l--);         \
+        AO_CONSOLE_PRINTF("[AO] %s (%s:%i): ",level, _ao_file + _ao_l,__LINE__);           \
+        AO_CONSOLE_PRINTF X;  \
+        AO_CONSOLE_PRINTF("\n");         \
+    } while (0);
+
+#elif AO_DBG_FORMAT == AO_DF_FULL
 #define AO_DBG(level, X)   \
     do {                        \
         AO_CONSOLE_PRINTF("[AO] %s (%s:%i): ",level, __FILE__,__LINE__);           \
         AO_CONSOLE_PRINTF X;  \
         AO_CONSOLE_PRINTF("\n");         \
     } while (0);
+
+#else
+#error invalid AO_DBG_FORMAT definition
+#endif
+
 
 #if AO_DBG_LEVEL >= AO_DL_ERROR
 #define AO_DBG_ERR(...) AO_DBG("ERROR",(__VA_ARGS__))
