@@ -257,7 +257,7 @@ std::unique_ptr<Request> FirmwareService::getFirmwareStatusNotification() {
     if (!checkedSuccessfulFwUpdate && !buildNumber.empty() && previousBuildNumber != nullptr) {
         checkedSuccessfulFwUpdate = true;
 
-        AO_DBG_DEBUG("Previous build number: %s, new build number: %s", *previousBuildNumber, buildNumber.c_str());
+        AO_DBG_DEBUG("Previous build number: %s, new build number: %s", (const char*) *previousBuildNumber, buildNumber.c_str());
         
         size_t buildNoSize = previousBuildNumber->getBuffsize();
         if (strncmp(buildNumber.c_str(), *previousBuildNumber, buildNoSize)) {
