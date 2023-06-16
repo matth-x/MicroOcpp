@@ -368,7 +368,7 @@ void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, unsi
     auto& model = context->getModel();
     if (!model.getSmartChargingService()) {
         model.setSmartChargingService(std::unique_ptr<SmartChargingService>(
-            new SmartChargingService(*context, 11000.0f, voltage_eff, AO_NUMCONNECTORS, fileSystemOpt))); //default charging limit: 11kW
+            new SmartChargingService(*context, -1.f, voltage_eff, AO_NUMCONNECTORS, fileSystemOpt))); //default charging limit: 11kW
     }
     model.getSmartChargingService()->setOnLimitChange(chargingLimitOutput);
 }

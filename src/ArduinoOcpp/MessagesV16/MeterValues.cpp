@@ -53,7 +53,7 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
     auto payload = doc->to<JsonObject>();
     payload["connectorId"] = connectorId;
 
-    if (transaction && !transaction->isSilent()) { //add txId if MVs are assigned to a tx with txId
+    if (transaction && transaction->getTransactionId() > 0) { //add txId if MVs are assigned to a tx with txId
         payload["transactionId"] = transaction->getTransactionId();
     }
 
