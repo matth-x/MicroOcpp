@@ -7,7 +7,7 @@
 
 #include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/OcppEvseState.h>
+#include <ArduinoOcpp/Model/ChargeControl/OcppEvseState.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {

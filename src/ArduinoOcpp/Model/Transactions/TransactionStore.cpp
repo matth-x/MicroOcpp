@@ -2,11 +2,11 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
-#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionDeSerialize.h>
-#include <ArduinoOcpp/MessagesV16/StartTransaction.h>
-#include <ArduinoOcpp/MessagesV16/StopTransaction.h>
+#include <ArduinoOcpp/Model/Transactions/TransactionStore.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
+#include <ArduinoOcpp/Model/Transactions/TransactionDeSerialize.h>
+#include <ArduinoOcpp/Operations/StartTransaction.h>
+#include <ArduinoOcpp/Operations/StopTransaction.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
 #include <ArduinoOcpp/Debug.h>

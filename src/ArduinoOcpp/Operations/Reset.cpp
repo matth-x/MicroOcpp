@@ -2,9 +2,9 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/Reset.h>
-#include <ArduinoOcpp/Core/Model.h>
-#include <ArduinoOcpp/Tasks/Reset/ResetService.h>
+#include <ArduinoOcpp/Operations/Reset.h>
+#include <ArduinoOcpp/Model/Model.h>
+#include <ArduinoOcpp/Model/Reset/ResetService.h>
 
 using ArduinoOcpp::Ocpp16::Reset;
 

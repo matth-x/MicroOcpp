@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Authorization/AuthorizationList.h>
+#include <ArduinoOcpp/Model/Authorization/AuthorizationList.h>
 #include <ArduinoOcpp/Debug.h>
 
 #include <algorithm>

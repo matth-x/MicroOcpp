@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/DataTransfer.h>
+#include <ArduinoOcpp/Operations/DataTransfer.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::DataTransfer;

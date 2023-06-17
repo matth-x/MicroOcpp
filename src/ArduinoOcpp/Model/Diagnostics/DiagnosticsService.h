@@ -8,7 +8,7 @@
 #include <functional>
 #include <memory>
 #include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsStatus.h>
+#include <ArduinoOcpp/Model/Diagnostics/DiagnosticsStatus.h>
 #include <string>
 
 namespace ArduinoOcpp {

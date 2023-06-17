@@ -5,7 +5,7 @@
 #ifndef TRANSACTIONSTORE_H
 #define TRANSACTIONSTORE_H
 
-#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <deque>

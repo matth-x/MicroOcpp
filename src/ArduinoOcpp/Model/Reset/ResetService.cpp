@@ -2,17 +2,17 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Reset/ResetService.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Model/Reset/ResetService.h>
+#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/MessagesV16/Reset.h>
+#include <ArduinoOcpp/Operations/Reset.h>
 
-#include <ArduinoOcpp/MessagesV16/Authorize.h>
-#include <ArduinoOcpp/MessagesV16/StartTransaction.h>
-#include <ArduinoOcpp/MessagesV16/StatusNotification.h>
-#include <ArduinoOcpp/MessagesV16/StopTransaction.h>
+#include <ArduinoOcpp/Operations/Authorize.h>
+#include <ArduinoOcpp/Operations/StartTransaction.h>
+#include <ArduinoOcpp/Operations/StatusNotification.h>
+#include <ArduinoOcpp/Operations/StopTransaction.h>
 
 #include <ArduinoOcpp/Debug.h>
 

@@ -2,12 +2,12 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.h>
-#include <ArduinoOcpp/Tasks/Metering/MeterStore.h>
-#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Model/Metering/ConnectorMeterValuesRecorder.h>
+#include <ArduinoOcpp/Model/Metering/MeterStore.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
+#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/MessagesV16/MeterValues.h>
+#include <ArduinoOcpp/Operations/MeterValues.h>
 #include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Debug.h>
 

@@ -2,9 +2,9 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
-#include <ArduinoOcpp/Core/Model.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Operations/ChangeAvailability.h>
+#include <ArduinoOcpp/Model/Model.h>
+#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
 
 #include <functional>
 

@@ -2,18 +2,18 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/Model.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
-#include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlCommon.h>
-#include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
-#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
-#include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
-#include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
-#include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
-#include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
-#include <ArduinoOcpp/Tasks/Boot/BootService.h>
-#include <ArduinoOcpp/Tasks/Reset/ResetService.h>
+#include <ArduinoOcpp/Model/Model.h>
+#include <ArduinoOcpp/Model/Transactions/TransactionStore.h>
+#include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
+#include <ArduinoOcpp/Model/ChargeControl/ChargeControlCommon.h>
+#include <ArduinoOcpp/Model/Metering/MeteringService.h>
+#include <ArduinoOcpp/Model/FirmwareManagement/FirmwareService.h>
+#include <ArduinoOcpp/Model/Diagnostics/DiagnosticsService.h>
+#include <ArduinoOcpp/Model/Heartbeat/HeartbeatService.h>
+#include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
+#include <ArduinoOcpp/Model/Reservation/ReservationService.h>
+#include <ArduinoOcpp/Model/Boot/BootService.h>
+#include <ArduinoOcpp/Model/Reset/ResetService.h>
 
 #include <ArduinoOcpp/Debug.h>
 

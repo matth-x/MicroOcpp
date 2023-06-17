@@ -12,68 +12,68 @@ set(AO_SRC
     src/ArduinoOcpp/Core/FilesystemAdapter.cpp
     src/ArduinoOcpp/Core/FilesystemUtils.cpp
     src/ArduinoOcpp/Core/RequestQueue.cpp
-    src/ArduinoOcpp/Core/Context.cpp
+    src/ArduinoOcpp/Context.cpp
     src/ArduinoOcpp/Core/Operation.cpp
-    src/ArduinoOcpp/Core/Model.cpp
+    src/ArduinoOcpp/Model/Model.cpp
     src/ArduinoOcpp/Core/Request.cpp
     src/ArduinoOcpp/Core/Connection.cpp
     src/ArduinoOcpp/Core/Time.cpp
     src/ArduinoOcpp/Core/RequestQueueStorageStrategy.cpp
     src/ArduinoOcpp/Core/RequestStore.cpp
-    src/ArduinoOcpp/MessagesV16/Authorize.cpp
-    src/ArduinoOcpp/MessagesV16/BootNotification.cpp
-    src/ArduinoOcpp/MessagesV16/CancelReservation.cpp
-    src/ArduinoOcpp/MessagesV16/ChangeAvailability.cpp
-    src/ArduinoOcpp/MessagesV16/ChangeConfiguration.cpp
-    src/ArduinoOcpp/MessagesV16/ClearCache.cpp
-    src/ArduinoOcpp/MessagesV16/ClearChargingProfile.cpp
-    src/ArduinoOcpp/MessagesV16/CustomOperation.cpp
-    src/ArduinoOcpp/MessagesV16/DataTransfer.cpp
-    src/ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.cpp
-    src/ArduinoOcpp/MessagesV16/FirmwareStatusNotification.cpp
-    src/ArduinoOcpp/MessagesV16/GetCompositeSchedule.cpp
-    src/ArduinoOcpp/MessagesV16/GetConfiguration.cpp
-    src/ArduinoOcpp/MessagesV16/GetDiagnostics.cpp
-    src/ArduinoOcpp/MessagesV16/GetLocalListVersion.cpp
-    src/ArduinoOcpp/MessagesV16/Heartbeat.cpp
-    src/ArduinoOcpp/MessagesV16/MeterValues.cpp
-    src/ArduinoOcpp/MessagesV16/RemoteStartTransaction.cpp
-    src/ArduinoOcpp/MessagesV16/RemoteStopTransaction.cpp
-    src/ArduinoOcpp/MessagesV16/ReserveNow.cpp
-    src/ArduinoOcpp/MessagesV16/Reset.cpp
-    src/ArduinoOcpp/MessagesV16/SendLocalList.cpp
-    src/ArduinoOcpp/MessagesV16/SetChargingProfile.cpp
-    src/ArduinoOcpp/MessagesV16/StartTransaction.cpp
-    src/ArduinoOcpp/MessagesV16/StatusNotification.cpp
-    src/ArduinoOcpp/MessagesV16/StopTransaction.cpp
-    src/ArduinoOcpp/MessagesV16/TriggerMessage.cpp
-    src/ArduinoOcpp/MessagesV16/UnlockConnector.cpp
-    src/ArduinoOcpp/MessagesV16/UpdateFirmware.cpp
+    src/ArduinoOcpp/Operations/Authorize.cpp
+    src/ArduinoOcpp/Operations/BootNotification.cpp
+    src/ArduinoOcpp/Operations/CancelReservation.cpp
+    src/ArduinoOcpp/Operations/ChangeAvailability.cpp
+    src/ArduinoOcpp/Operations/ChangeConfiguration.cpp
+    src/ArduinoOcpp/Operations/ClearCache.cpp
+    src/ArduinoOcpp/Operations/ClearChargingProfile.cpp
+    src/ArduinoOcpp/Operations/CustomOperation.cpp
+    src/ArduinoOcpp/Operations/DataTransfer.cpp
+    src/ArduinoOcpp/Operations/DiagnosticsStatusNotification.cpp
+    src/ArduinoOcpp/Operations/FirmwareStatusNotification.cpp
+    src/ArduinoOcpp/Operations/GetCompositeSchedule.cpp
+    src/ArduinoOcpp/Operations/GetConfiguration.cpp
+    src/ArduinoOcpp/Operations/GetDiagnostics.cpp
+    src/ArduinoOcpp/Operations/GetLocalListVersion.cpp
+    src/ArduinoOcpp/Operations/Heartbeat.cpp
+    src/ArduinoOcpp/Operations/MeterValues.cpp
+    src/ArduinoOcpp/Operations/RemoteStartTransaction.cpp
+    src/ArduinoOcpp/Operations/RemoteStopTransaction.cpp
+    src/ArduinoOcpp/Operations/ReserveNow.cpp
+    src/ArduinoOcpp/Operations/Reset.cpp
+    src/ArduinoOcpp/Operations/SendLocalList.cpp
+    src/ArduinoOcpp/Operations/SetChargingProfile.cpp
+    src/ArduinoOcpp/Operations/StartTransaction.cpp
+    src/ArduinoOcpp/Operations/StatusNotification.cpp
+    src/ArduinoOcpp/Operations/StopTransaction.cpp
+    src/ArduinoOcpp/Operations/TriggerMessage.cpp
+    src/ArduinoOcpp/Operations/UnlockConnector.cpp
+    src/ArduinoOcpp/Operations/UpdateFirmware.cpp
     src/ArduinoOcpp/Platform.cpp
     src/ArduinoOcpp/Core/SimpleRequestFactory.cpp
     src/ArduinoOcpp/Core/OperationRegistry.cpp
-    src/ArduinoOcpp/Tasks/Authorization/AuthorizationData.cpp
-    src/ArduinoOcpp/Tasks/Authorization/AuthorizationList.cpp
-    src/ArduinoOcpp/Tasks/Authorization/AuthorizationService.cpp
-    src/ArduinoOcpp/Tasks/Boot/BootService.cpp
-    src/ArduinoOcpp/Tasks/ChargeControl/ChargeControlCommon.cpp
-    src/ArduinoOcpp/Tasks/ChargeControl/Connector.cpp
-    src/ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.cpp
-    src/ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.cpp
-    src/ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.cpp
-    src/ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.cpp
-    src/ArduinoOcpp/Tasks/Metering/MeteringService.cpp
-    src/ArduinoOcpp/Tasks/Metering/MeterStore.cpp
-    src/ArduinoOcpp/Tasks/Metering/MeterValue.cpp
-    src/ArduinoOcpp/Tasks/Metering/SampledValue.cpp
-    src/ArduinoOcpp/Tasks/Reservation/Reservation.cpp
-    src/ArduinoOcpp/Tasks/Reservation/ReservationService.cpp
-    src/ArduinoOcpp/Tasks/Reset/ResetService.cpp
-    src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.cpp
-    src/ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.cpp
-    src/ArduinoOcpp/Tasks/Transactions/Transaction.cpp
-    src/ArduinoOcpp/Tasks/Transactions/TransactionDeserialize.cpp
-    src/ArduinoOcpp/Tasks/Transactions/TransactionStore.cpp
+    src/ArduinoOcpp/Model/Authorization/AuthorizationData.cpp
+    src/ArduinoOcpp/Model/Authorization/AuthorizationList.cpp
+    src/ArduinoOcpp/Model/Authorization/AuthorizationService.cpp
+    src/ArduinoOcpp/Model/Boot/BootService.cpp
+    src/ArduinoOcpp/Model/ChargeControl/ChargeControlCommon.cpp
+    src/ArduinoOcpp/Model/ChargeControl/Connector.cpp
+    src/ArduinoOcpp/Model/Diagnostics/DiagnosticsService.cpp
+    src/ArduinoOcpp/Model/FirmwareManagement/FirmwareService.cpp
+    src/ArduinoOcpp/Model/Heartbeat/HeartbeatService.cpp
+    src/ArduinoOcpp/Model/Metering/ConnectorMeterValuesRecorder.cpp
+    src/ArduinoOcpp/Model/Metering/MeteringService.cpp
+    src/ArduinoOcpp/Model/Metering/MeterStore.cpp
+    src/ArduinoOcpp/Model/Metering/MeterValue.cpp
+    src/ArduinoOcpp/Model/Metering/SampledValue.cpp
+    src/ArduinoOcpp/Model/Reservation/Reservation.cpp
+    src/ArduinoOcpp/Model/Reservation/ReservationService.cpp
+    src/ArduinoOcpp/Model/Reset/ResetService.cpp
+    src/ArduinoOcpp/Model/SmartCharging/SmartChargingModel.cpp
+    src/ArduinoOcpp/Model/SmartCharging/SmartChargingService.cpp
+    src/ArduinoOcpp/Model/Transactions/Transaction.cpp
+    src/ArduinoOcpp/Model/Transactions/TransactionDeserialize.cpp
+    src/ArduinoOcpp/Model/Transactions/TransactionStore.cpp
     src/ArduinoOcpp.cpp
     src/ArduinoOcpp_c.cpp
 )

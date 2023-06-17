@@ -2,16 +2,16 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
+#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/OperationRegistry.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
-#include <ArduinoOcpp/MessagesV16/GetLocalListVersion.h>
-#include <ArduinoOcpp/MessagesV16/SendLocalList.h>
-#include <ArduinoOcpp/MessagesV16/StatusNotification.h>
+#include <ArduinoOcpp/Operations/GetLocalListVersion.h>
+#include <ArduinoOcpp/Operations/SendLocalList.h>
+#include <ArduinoOcpp/Operations/StatusNotification.h>
 #include <ArduinoOcpp/Debug.h>
 
 #define AO_LOCALAUTHORIZATIONLIST_FN (AO_FILENAME_PREFIX "localauth.jsn")

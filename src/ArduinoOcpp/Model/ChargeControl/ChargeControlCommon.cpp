@@ -4,23 +4,23 @@
 
 #include <string>
 
-#include <ArduinoOcpp/Tasks/ChargeControl/ChargeControlCommon.h>
-#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Model/ChargeControl/ChargeControlCommon.h>
+#include <ArduinoOcpp/Context.h>
 #include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/MessagesV16/ChangeAvailability.h>
-#include <ArduinoOcpp/MessagesV16/ChangeConfiguration.h>
-#include <ArduinoOcpp/MessagesV16/ClearCache.h>
-#include <ArduinoOcpp/MessagesV16/GetConfiguration.h>
-#include <ArduinoOcpp/MessagesV16/RemoteStartTransaction.h>
-#include <ArduinoOcpp/MessagesV16/RemoteStopTransaction.h>
-#include <ArduinoOcpp/MessagesV16/Reset.h>
-#include <ArduinoOcpp/MessagesV16/TriggerMessage.h>
-#include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
+#include <ArduinoOcpp/Operations/ChangeAvailability.h>
+#include <ArduinoOcpp/Operations/ChangeConfiguration.h>
+#include <ArduinoOcpp/Operations/ClearCache.h>
+#include <ArduinoOcpp/Operations/GetConfiguration.h>
+#include <ArduinoOcpp/Operations/RemoteStartTransaction.h>
+#include <ArduinoOcpp/Operations/RemoteStopTransaction.h>
+#include <ArduinoOcpp/Operations/Reset.h>
+#include <ArduinoOcpp/Operations/TriggerMessage.h>
+#include <ArduinoOcpp/Operations/UnlockConnector.h>
 
-#include <ArduinoOcpp/MessagesV16/Authorize.h>
-#include <ArduinoOcpp/MessagesV16/StartTransaction.h>
-#include <ArduinoOcpp/MessagesV16/StatusNotification.h>
-#include <ArduinoOcpp/MessagesV16/StopTransaction.h>
+#include <ArduinoOcpp/Operations/Authorize.h>
+#include <ArduinoOcpp/Operations/StartTransaction.h>
+#include <ArduinoOcpp/Operations/StatusNotification.h>
+#include <ArduinoOcpp/Operations/StopTransaction.h>
 
 #include <ArduinoOcpp/Debug.h>
 

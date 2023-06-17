@@ -2,9 +2,9 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/UpdateFirmware.h>
-#include <ArduinoOcpp/Core/Model.h>
-#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
+#include <ArduinoOcpp/Operations/UpdateFirmware.h>
+#include <ArduinoOcpp/Model/Model.h>
+#include <ArduinoOcpp/Model/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::UpdateFirmware;

@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/CustomOperation.h>
+#include <ArduinoOcpp/Operations/CustomOperation.h>
 
 using ArduinoOcpp::Ocpp16::CustomOperation;
 

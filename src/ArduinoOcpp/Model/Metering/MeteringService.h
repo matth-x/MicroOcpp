@@ -9,9 +9,9 @@
 #include <vector>
 #include <memory>
 
-#include <ArduinoOcpp/Tasks/Metering/ConnectorMeterValuesRecorder.h>
-#include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
-#include <ArduinoOcpp/Tasks/Metering/MeterStore.h>
+#include <ArduinoOcpp/Model/Metering/ConnectorMeterValuesRecorder.h>
+#include <ArduinoOcpp/Model/Metering/SampledValue.h>
+#include <ArduinoOcpp/Model/Metering/MeterStore.h>
 
 namespace ArduinoOcpp {
 

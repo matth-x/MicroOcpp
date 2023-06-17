@@ -5,7 +5,7 @@
 #ifndef AUTHORIZATIONDATA_H
 #define AUTHORIZATIONDATA_H
 
-#include <ArduinoOcpp/MessagesV16/CiStrings.h>
+#include <ArduinoOcpp/Operations/CiStrings.h>
 #include <ArduinoOcpp/Core/Time.h>
 #include <ArduinoJson.h>
 #include <memory>

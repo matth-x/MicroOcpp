@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Reservation/Reservation.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Model/Reservation/Reservation.h>
+#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Debug.h>
 
 #ifndef RESERVATION_FN

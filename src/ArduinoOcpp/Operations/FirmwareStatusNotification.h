@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/Core/Operation.h>
 
-#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareStatus.h>
+#include <ArduinoOcpp/Model/FirmwareManagement/FirmwareStatus.h>
 
 #ifndef FIRMWARESTATUSNOTIFICATION_H
 #define FIRMWARESTATUSNOTIFICATION_H

@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.h>
+#include <ArduinoOcpp/Model/SmartCharging/SmartChargingModel.h>
 #include <ArduinoOcpp/Debug.h>
 
 #include <string.h>

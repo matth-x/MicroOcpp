@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/ClearCache.h>
+#include <ArduinoOcpp/Operations/ClearCache.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
 #include <ArduinoOcpp/Debug.h>
 

@@ -2,13 +2,13 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/StartTransaction.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Operations/StartTransaction.h>
+#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/RequestStore.h>
-#include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
-#include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
-#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
+#include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
+#include <ArduinoOcpp/Model/Metering/MeteringService.h>
+#include <ArduinoOcpp/Model/Transactions/TransactionStore.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::StartTransaction;

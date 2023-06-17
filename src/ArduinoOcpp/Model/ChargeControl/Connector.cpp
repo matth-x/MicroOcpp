@@ -2,25 +2,25 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
 
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/Request.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
+#include <ArduinoOcpp/Model/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 
-#include <ArduinoOcpp/MessagesV16/Authorize.h>
-#include <ArduinoOcpp/MessagesV16/StatusNotification.h>
-#include <ArduinoOcpp/MessagesV16/StartTransaction.h>
-#include <ArduinoOcpp/MessagesV16/StopTransaction.h>
-#include <ArduinoOcpp/MessagesV16/CiStrings.h>
+#include <ArduinoOcpp/Operations/Authorize.h>
+#include <ArduinoOcpp/Operations/StatusNotification.h>
+#include <ArduinoOcpp/Operations/StartTransaction.h>
+#include <ArduinoOcpp/Operations/StopTransaction.h>
+#include <ArduinoOcpp/Operations/CiStrings.h>
 
 #include <ArduinoOcpp/Debug.h>
 
-#include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
-#include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
-#include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
+#include <ArduinoOcpp/Model/Metering/MeteringService.h>
+#include <ArduinoOcpp/Model/Reservation/ReservationService.h>
+#include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
 
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 

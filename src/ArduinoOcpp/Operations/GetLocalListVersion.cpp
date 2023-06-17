@@ -2,9 +2,9 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/GetLocalListVersion.h>
-#include <ArduinoOcpp/Core/Model.h>
-#include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
+#include <ArduinoOcpp/Operations/GetLocalListVersion.h>
+#include <ArduinoOcpp/Model/Model.h>
+#include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::GetLocalListVersion;

@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
+#include <ArduinoOcpp/Model/Metering/SampledValue.h>
 #include <ArduinoOcpp/Debug.h>
 #include <cinttypes>
 

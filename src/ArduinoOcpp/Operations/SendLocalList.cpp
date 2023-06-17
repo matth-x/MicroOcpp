@@ -2,9 +2,9 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/SendLocalList.h>
-#include <ArduinoOcpp/Core/Model.h>
-#include <ArduinoOcpp/Tasks/Authorization/AuthorizationService.h>
+#include <ArduinoOcpp/Operations/SendLocalList.h>
+#include <ArduinoOcpp/Model/Model.h>
+#include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
 
 using ArduinoOcpp::Ocpp16::SendLocalList;
 

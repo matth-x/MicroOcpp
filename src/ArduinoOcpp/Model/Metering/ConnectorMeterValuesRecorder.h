@@ -9,9 +9,9 @@
 #include <memory>
 #include <vector>
 
-#include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
-#include <ArduinoOcpp/Tasks/Metering/MeterStore.h>
-#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
+#include <ArduinoOcpp/Model/Metering/MeterValue.h>
+#include <ArduinoOcpp/Model/Metering/MeterStore.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 
 namespace ArduinoOcpp {

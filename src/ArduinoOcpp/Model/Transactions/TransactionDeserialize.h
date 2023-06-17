@@ -5,7 +5,7 @@
 #ifndef TRANSACTIONDESERIALIZE_H
 #define TRANSACTIONDESERIALIZE_H
 
-#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
 
 #include <ArduinoJson.h>
 

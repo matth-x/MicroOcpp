@@ -2,13 +2,13 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Core/Model.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
-#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
-#include <ArduinoOcpp/MessagesV16/CancelReservation.h>
-#include <ArduinoOcpp/MessagesV16/ReserveNow.h>
+#include <ArduinoOcpp/Model/Reservation/ReservationService.h>
+#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Model/Model.h>
+#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
+#include <ArduinoOcpp/Operations/CancelReservation.h>
+#include <ArduinoOcpp/Operations/ReserveNow.h>
 
 #include <ArduinoOcpp/Debug.h>
 

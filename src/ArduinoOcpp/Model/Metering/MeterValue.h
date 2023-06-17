@@ -6,7 +6,7 @@
 #define METERVALUE_H
 
 #include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
+#include <ArduinoOcpp/Model/Metering/SampledValue.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoJson.h>
 #include <memory>

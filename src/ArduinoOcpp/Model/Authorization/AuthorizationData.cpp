@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Authorization/AuthorizationData.h>
+#include <ArduinoOcpp/Model/Authorization/AuthorizationData.h>
 
 using namespace ArduinoOcpp;
 

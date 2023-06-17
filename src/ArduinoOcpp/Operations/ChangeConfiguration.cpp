@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/ChangeConfiguration.h>
+#include <ArduinoOcpp/Operations/ChangeConfiguration.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
 

@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/UnlockConnector.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Operations/UnlockConnector.h>
+#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::UnlockConnector;

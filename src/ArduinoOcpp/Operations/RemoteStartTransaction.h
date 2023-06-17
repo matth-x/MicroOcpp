@@ -6,7 +6,7 @@
 #define REMOTESTARTTRANSACTION_H
 
 #include <ArduinoOcpp/Core/Operation.h>
-#include <ArduinoOcpp/MessagesV16/CiStrings.h>
+#include <ArduinoOcpp/Operations/CiStrings.h>
 
 namespace ArduinoOcpp {
 

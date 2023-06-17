@@ -13,8 +13,8 @@
 #include <ArduinoOcpp/Core/RequestCallbacks.h>
 #include <ArduinoOcpp/Core/Connection.h>
 #include <ArduinoOcpp/Core/PollResult.h>
-#include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
-#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
+#include <ArduinoOcpp/Model/Metering/SampledValue.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
 
 using ArduinoOcpp::OnReceiveConfListener;
 using ArduinoOcpp::OnReceiveReqListener;
@@ -226,7 +226,7 @@ bool isOperative(unsigned int connectorId = 1); //if the charge point is operati
 /*
  * Returns the current transaction process. Returns nullptr if no transaction is running, preparing or finishing
  *
- * See the class definition in ArduinoOcpp/Tasks/Transactions/Transaction.h for possible uses of this object
+ * See the class definition in ArduinoOcpp/Model/Transactions/Transaction.h for possible uses of this object
  * 
  * Examples:
  * auto tx = getTransaction(); //fetch tx object
@@ -246,24 +246,24 @@ bool isBlockedByReservation(const char *idTag, unsigned int connectorId = 1); //
  */
 
 #if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WS)
-#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
+#include <ArduinoOcpp/Model/FirmwareManagement/FirmwareService.h>
 
 /*
  * You need to configure this object if FW updates are relevant for you. This project already
  * brings a simple configuration for the ESP32 and ESP8266 for prototyping purposes, however
  * for the productive system you will have to develop a configuration targeting the specific
  * OCPP backend.
- * See ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h 
+ * See ArduinoOcpp/Model/FirmwareManagement/FirmwareService.h 
  */
 ArduinoOcpp::FirmwareService *getFirmwareService();
 #endif
 
 #if defined(AO_CUSTOM_DIAGNOSTICS) || defined(AO_CUSTOM_WS)
-#include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
+#include <ArduinoOcpp/Model/Diagnostics/DiagnosticsService.h>
 /*
  * This library implements the OCPP messaging side of Diagnostics, but no logging or the
  * log upload to your backend.
- * To integrate Diagnostics, see ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h
+ * To integrate Diagnostics, see ArduinoOcpp/Model/Diagnostics/DiagnosticsService.h
  */
 ArduinoOcpp::DiagnosticsService *getDiagnosticsService();
 #endif

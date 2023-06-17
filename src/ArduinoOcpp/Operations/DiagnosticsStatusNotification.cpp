@@ -2,10 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Core/Model.h>
-#include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
+#include <ArduinoOcpp/Operations/DiagnosticsStatusNotification.h>
+#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Model/Model.h>
+#include <ArduinoOcpp/Model/Diagnostics/DiagnosticsService.h>
 
 using ArduinoOcpp::Ocpp16::DiagnosticsStatusNotification;
 

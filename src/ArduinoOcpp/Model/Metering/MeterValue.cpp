@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
+#include <ArduinoOcpp/Model/Metering/MeterValue.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
 

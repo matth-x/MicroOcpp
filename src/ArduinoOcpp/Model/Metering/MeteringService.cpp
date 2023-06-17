@@ -2,12 +2,12 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Metering/MeteringService.h>
-#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
-#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Model/Metering/MeteringService.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
+#include <ArduinoOcpp/Context.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
-#include <ArduinoOcpp/MessagesV16/MeterValues.h>
+#include <ArduinoOcpp/Operations/MeterValues.h>
 #include <ArduinoOcpp/Debug.h>
 
 using namespace ArduinoOcpp;

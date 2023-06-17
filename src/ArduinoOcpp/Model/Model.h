@@ -8,7 +8,7 @@
 #include <memory>
 
 #include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
 
 namespace ArduinoOcpp {
 

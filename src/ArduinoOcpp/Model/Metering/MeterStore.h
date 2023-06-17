@@ -5,8 +5,8 @@
 #ifndef METERSTORE_H
 #define METERSTORE_H
 
-#include <ArduinoOcpp/Tasks/Metering/MeterValue.h>
-#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
+#include <ArduinoOcpp/Model/Metering/MeterValue.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 
 #include <vector>

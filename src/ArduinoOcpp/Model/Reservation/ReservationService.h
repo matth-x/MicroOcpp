@@ -5,7 +5,7 @@
 #ifndef RESERVATIONSERVICE_H
 #define RESERVATIONSERVICE_H
 
-#include <ArduinoOcpp/Tasks/Reservation/Reservation.h>
+#include <ArduinoOcpp/Model/Reservation/Reservation.h>
 
 namespace ArduinoOcpp {
 

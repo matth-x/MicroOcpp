@@ -12,7 +12,7 @@
 #include <ArduinoJson.h>
 #include <functional>
 
-#include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.h>
+#include <ArduinoOcpp/Model/SmartCharging/SmartChargingModel.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/Time.h>
 

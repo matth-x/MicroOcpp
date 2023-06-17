@@ -1,11 +1,11 @@
 #include <ArduinoOcpp.h>
 #include <ArduinoOcpp/Core/Connection.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
-#include <ArduinoOcpp/MessagesV16/BootNotification.h>
-#include <ArduinoOcpp/MessagesV16/StatusNotification.h>
+#include <ArduinoOcpp/Operations/BootNotification.h>
+#include <ArduinoOcpp/Operations/StatusNotification.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 

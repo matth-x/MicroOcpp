@@ -3,11 +3,11 @@
 // MIT License
 
 
-#include <ArduinoOcpp/MessagesV16/RemoteStartTransaction.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Operations/RemoteStartTransaction.h>
+#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
-#include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
+#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::RemoteStartTransaction;

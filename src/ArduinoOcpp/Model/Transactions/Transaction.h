@@ -6,7 +6,7 @@
 #define TRANSACTION_H
 
 #include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/MessagesV16/CiStrings.h>
+#include <ArduinoOcpp/Operations/CiStrings.h>
 
 namespace ArduinoOcpp {
 

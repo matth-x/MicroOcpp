@@ -7,7 +7,7 @@
 
 #include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingModel.h>
+#include <ArduinoOcpp/Model/SmartCharging/SmartChargingModel.h>
 
 namespace ArduinoOcpp {
 

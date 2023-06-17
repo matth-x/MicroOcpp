@@ -5,7 +5,7 @@
 #ifndef AUTHORIZATIONLIST_H
 #define AUTHORIZATIONLIST_H
 
-#include <ArduinoOcpp/Tasks/Authorization/AuthorizationData.h>
+#include <ArduinoOcpp/Model/Authorization/AuthorizationData.h>
 #include <vector>
 
 #ifndef AO_LocalAuthListMaxLength

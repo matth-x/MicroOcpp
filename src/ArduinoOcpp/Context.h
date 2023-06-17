@@ -2,12 +2,11 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef OCPPENGINE_H
-#define OCPPENGINE_H
+#ifndef AO_CONTEXT_H
+#define AO_CONTEXT_H
 
 #include <ArduinoOcpp/Core/RequestQueue.h>
 #include <ArduinoOcpp/Core/OperationRegistry.h>
-#include <ArduinoOcpp/Core/Time.h>
 #include <memory>
 
 namespace ArduinoOcpp {

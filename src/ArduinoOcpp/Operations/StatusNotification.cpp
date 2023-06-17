@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/StatusNotification.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Operations/StatusNotification.h>
+#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Debug.h>
 
 #include <string.h>

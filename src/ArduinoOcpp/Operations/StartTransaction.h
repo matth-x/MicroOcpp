@@ -7,8 +7,8 @@
 
 #include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/MessagesV16/CiStrings.h>
-#include <ArduinoOcpp/Tasks/Metering/SampledValue.h>
+#include <ArduinoOcpp/Operations/CiStrings.h>
+#include <ArduinoOcpp/Model/Metering/SampledValue.h>
 
 namespace ArduinoOcpp {
 

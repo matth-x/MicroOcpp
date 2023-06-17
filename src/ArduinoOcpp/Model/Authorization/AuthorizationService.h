@@ -5,7 +5,7 @@
 #ifndef AUTHORIZATIONSERVICE_H
 #define AUTHORIZATIONSERVICE_H
 
-#include <ArduinoOcpp/Tasks/Authorization/AuthorizationList.h>
+#include <ArduinoOcpp/Model/Authorization/AuthorizationList.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 

@@ -2,17 +2,17 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareService.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Core/Model.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
-#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
+#include <ArduinoOcpp/Model/FirmwareManagement/FirmwareService.h>
+#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Model/Model.h>
+#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/OperationRegistry.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 
-#include <ArduinoOcpp/MessagesV16/UpdateFirmware.h>
-#include <ArduinoOcpp/MessagesV16/FirmwareStatusNotification.h>
+#include <ArduinoOcpp/Operations/UpdateFirmware.h>
+#include <ArduinoOcpp/Operations/FirmwareStatusNotification.h>
 
 #include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Debug.h>

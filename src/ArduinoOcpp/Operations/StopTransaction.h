@@ -7,7 +7,7 @@
 
 #include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/MessagesV16/CiStrings.h>
+#include <ArduinoOcpp/Operations/CiStrings.h>
 #include <vector>
 
 namespace ArduinoOcpp {

@@ -2,15 +2,15 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Diagnostics/DiagnosticsService.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Model/Diagnostics/DiagnosticsService.h>
+#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
 
-#include <ArduinoOcpp/MessagesV16/GetDiagnostics.h>
-#include <ArduinoOcpp/MessagesV16/DiagnosticsStatusNotification.h>
+#include <ArduinoOcpp/Operations/GetDiagnostics.h>
+#include <ArduinoOcpp/Operations/DiagnosticsStatusNotification.h>
 
 using namespace ArduinoOcpp;
 using Ocpp16::DiagnosticsStatus;

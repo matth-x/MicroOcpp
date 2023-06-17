@@ -5,11 +5,11 @@
 #include <ArduinoOcpp/Core/Request.h>
 #include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/Core/Connection.h>
-#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/RequestStore.h>
 
-#include <ArduinoOcpp/MessagesV16/StartTransaction.h>
-#include <ArduinoOcpp/MessagesV16/StopTransaction.h>
+#include <ArduinoOcpp/Operations/StartTransaction.h>
+#include <ArduinoOcpp/Operations/StopTransaction.h>
 
 #include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Debug.h>

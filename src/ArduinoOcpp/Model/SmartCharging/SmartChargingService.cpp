@@ -2,13 +2,13 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
+#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/MessagesV16/ClearChargingProfile.h>
-#include <ArduinoOcpp/MessagesV16/GetCompositeSchedule.h>
-#include <ArduinoOcpp/MessagesV16/SetChargingProfile.h>
+#include <ArduinoOcpp/Operations/ClearChargingProfile.h>
+#include <ArduinoOcpp/Operations/GetCompositeSchedule.h>
+#include <ArduinoOcpp/Operations/SetChargingProfile.h>
 #include <ArduinoOcpp/Debug.h>
 
 #if !defined(AO_DEACTIVATE_FLASH) && defined(AO_DEACTIVATE_FLASH_SMARTCHARGING)

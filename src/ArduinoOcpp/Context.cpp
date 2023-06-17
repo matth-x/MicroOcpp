@@ -2,10 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Context.h>
 #include <ArduinoOcpp/Core/Request.h>
 #include <ArduinoOcpp/Core/Connection.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Model/Model.h>
 
 #include <ArduinoOcpp/Debug.h>
 

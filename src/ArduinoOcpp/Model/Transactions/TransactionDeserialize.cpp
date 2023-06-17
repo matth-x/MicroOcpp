@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Transactions/TransactionDeserialize.h>
+#include <ArduinoOcpp/Model/Transactions/TransactionDeserialize.h>
 #include <ArduinoOcpp/Debug.h>
 
 namespace ArduinoOcpp {

@@ -2,10 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/ReserveNow.h>
-#include <ArduinoOcpp/Core/Model.h>
-#include <ArduinoOcpp/Tasks/Reservation/ReservationService.h>
-#include <ArduinoOcpp/Tasks/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Operations/ReserveNow.h>
+#include <ArduinoOcpp/Model/Model.h>
+#include <ArduinoOcpp/Model/Reservation/ReservationService.h>
+#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Platform.h>
 
 using ArduinoOcpp::Ocpp16::ReserveNow;

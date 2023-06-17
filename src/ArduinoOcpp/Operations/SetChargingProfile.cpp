@@ -2,9 +2,9 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/MessagesV16/SetChargingProfile.h>
-#include <ArduinoOcpp/Core/Model.h>
-#include <ArduinoOcpp/Tasks/SmartCharging/SmartChargingService.h>
+#include <ArduinoOcpp/Operations/SetChargingProfile.h>
+#include <ArduinoOcpp/Model/Model.h>
+#include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::SetChargingProfile;

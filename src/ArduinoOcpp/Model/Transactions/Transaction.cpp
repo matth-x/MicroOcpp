@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Transactions/Transaction.h>
-#include <ArduinoOcpp/Tasks/Transactions/TransactionStore.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
+#include <ArduinoOcpp/Model/Transactions/TransactionStore.h>
 
 using namespace ArduinoOcpp;
 

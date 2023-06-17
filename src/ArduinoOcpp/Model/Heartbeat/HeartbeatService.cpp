@@ -2,11 +2,11 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Heartbeat/HeartbeatService.h>
-#include <ArduinoOcpp/Core/Context.h>
+#include <ArduinoOcpp/Model/Heartbeat/HeartbeatService.h>
+#include <ArduinoOcpp/Context.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/MessagesV16/Heartbeat.h>
+#include <ArduinoOcpp/Operations/Heartbeat.h>
 #include <ArduinoOcpp/Platform.h>
 
 using namespace ArduinoOcpp;

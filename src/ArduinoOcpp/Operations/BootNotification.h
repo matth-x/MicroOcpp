@@ -6,7 +6,7 @@
 #define BOOTNOTIFICATION_H
 
 #include <ArduinoOcpp/Core/Operation.h>
-#include <ArduinoOcpp/MessagesV16/CiStrings.h>
+#include <ArduinoOcpp/Operations/CiStrings.h>
 
 #define CP_MODEL_LEN_MAX        CiString20TypeLen
 #define CP_SERIALNUMBER_LEN_MAX CiString25TypeLen

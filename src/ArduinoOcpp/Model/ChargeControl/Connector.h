@@ -5,10 +5,10 @@
 #ifndef CONNECTOR_H
 #define CONNECTOR_H
 
-#include <ArduinoOcpp/Tasks/ChargeControl/OcppEvseState.h>
+#include <ArduinoOcpp/Model/ChargeControl/OcppEvseState.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/Core/PollResult.h>
-#include <ArduinoOcpp/MessagesV16/CiStrings.h>
+#include <ArduinoOcpp/Operations/CiStrings.h>
 
 #include <vector>
 #include <functional>

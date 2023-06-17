@@ -2,12 +2,12 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Boot/BootService.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Core/Model.h>
+#include <ArduinoOcpp/Model/Boot/BootService.h>
+#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
-#include <ArduinoOcpp/MessagesV16/BootNotification.h>
+#include <ArduinoOcpp/Operations/BootNotification.h>
 #include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Debug.h>
 

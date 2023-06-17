@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Tasks/Metering/MeterStore.h>
+#include <ArduinoOcpp/Model/Metering/MeterStore.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
 
 #include <ArduinoOcpp/Debug.h>

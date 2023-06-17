@@ -9,7 +9,7 @@
 #include <memory>
 
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
-#include <ArduinoOcpp/Tasks/FirmwareManagement/FirmwareStatus.h>
+#include <ArduinoOcpp/Model/FirmwareManagement/FirmwareStatus.h>
 #include <ArduinoOcpp/Core/Time.h>
 
 namespace ArduinoOcpp {
