@@ -268,6 +268,20 @@ bool endTransaction(const char *reason, unsigned int connectorId) {
     return res;
 }
 
+bool isTransactionActive(unsigned int connectorId) {
+    if (!context) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return false;
+    }
+    auto connector = context->getModel().getConnector(connectorId);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return false;
+    }
+    auto& tx = connector->getTransaction();
+    return tx ? tx->isActive() : false;
+}
+
 bool isTransactionRunning(unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
@@ -278,7 +292,8 @@ bool isTransactionRunning(unsigned int connectorId) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
     }
-    return connector->isTransactionRunning();
+    auto& tx = connector->getTransaction();
+    return tx ? tx->isRunning() : false;
 }
 
 bool ocppPermitsCharge(unsigned int connectorId) {

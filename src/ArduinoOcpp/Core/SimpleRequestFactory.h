@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef SIMPLEOCPPOPERATIONFACTORY_H
-#define SIMPLEOCPPOPERATIONFACTORY_H
+#ifndef AO_SIMPLEREQUESTFACTORY_H
+#define AO_SIMPLEREQUESTFACTORY_H
 
 #include <ArduinoJson.h>
 #include <ArduinoOcpp/Core/Request.h>

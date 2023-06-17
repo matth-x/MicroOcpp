@@ -16,7 +16,7 @@ size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_siz
 
 using namespace ArduinoOcpp;
 
-RequestQueue::RequestQueue(OperationRegistry& operationRegistry, std::shared_ptr<Model> baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
+RequestQueue::RequestQueue(OperationRegistry& operationRegistry, Model *baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
             : operationRegistry(operationRegistry) {
     
     if (filesystem) {

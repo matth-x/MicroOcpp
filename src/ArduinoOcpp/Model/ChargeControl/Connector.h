@@ -90,9 +90,7 @@ public:
     void endTransaction(const char *reason = nullptr);
     const char *getSessionIdTag();
     uint16_t getSessionWriteCount();
-    bool isTransactionRunning();
     int getTransactionId();
-    int getTransactionIdSync();
     std::shared_ptr<Transaction>& getTransaction();
 
     //create detached transaction - won't have any side-effects with the transaction handling of this lib

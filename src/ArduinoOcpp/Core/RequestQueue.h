@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef OCPPCONNECTION_H
-#define OCPPCONNECTION_H
+#ifndef AO_REQUESTQUEUE_H
+#define AO_REQUESTQUEUE_H
 
 #include <ArduinoOcpp/Core/RequestQueueStorageStrategy.h>
 
@@ -36,7 +36,7 @@ private:
     const unsigned long BACKOFF_PERIOD_MAX = 65536;
     const unsigned long BACKOFF_PERIOD_INCREMENT = BACKOFF_PERIOD_MAX / 4;
 public:
-    RequestQueue(OperationRegistry& operationRegistry, std::shared_ptr<Model> baseModel, std::shared_ptr<FilesystemAdapter> filesystem = nullptr);
+    RequestQueue(OperationRegistry& operationRegistry, Model *baseModel, std::shared_ptr<FilesystemAdapter> filesystem = nullptr);
 
     void setConnection(Connection& sock);
 

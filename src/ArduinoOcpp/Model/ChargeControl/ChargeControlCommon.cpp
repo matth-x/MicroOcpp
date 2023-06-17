@@ -72,7 +72,7 @@ ChargeControlCommon::ChargeControlCommon(Context& context, unsigned int numConn,
     context.getOperationRegistry().registerOperation("Reset", [&context] () {
         return new Ocpp16::Reset(context.getModel());});
     context.getOperationRegistry().registerOperation("TriggerMessage", [&context] () {
-        return new Ocpp16::TriggerMessage(context.getModel());});
+        return new Ocpp16::TriggerMessage(context);});
     context.getOperationRegistry().registerOperation("UnlockConnector", [&context] () {
         return new Ocpp16::UnlockConnector(context.getModel());});
 

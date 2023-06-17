@@ -142,7 +142,7 @@ bool Connector::ocppPermitsCharge() {
 
 void Connector::loop() {
 
-    if (!isTransactionRunning()) {
+    if (!transaction || !transaction->isRunning()) {
         if (*availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
             *availability = AVAILABILITY_INOPERATIVE;
             configuration_save();
@@ -732,14 +732,6 @@ uint16_t Connector::getSessionWriteCount() {
     return transaction ? transaction->getTxNr() : 0;
 }
 
-bool Connector::isTransactionRunning() {
-    if (!transaction) {
-        return false;
-    }
-
-    return transaction->isRunning();
-}
-
 int Connector::getTransactionId() {
     
     if (!transaction) {
@@ -775,7 +767,7 @@ void Connector::setAvailability(bool available) {
     if (available) {
         *availability = AVAILABILITY_OPERATIVE;
     } else {
-        if (isTransactionRunning()) {
+        if (transaction && transaction->isRunning()) {
             *availability = AVAILABILITY_INOPERATIVE_SCHEDULED;
         } else {
             *availability = AVAILABILITY_INOPERATIVE;
@@ -788,7 +780,7 @@ void Connector::setAvailabilityVolatile(bool available) {
     if (available) {
         availabilityVolatile = AVAILABILITY_OPERATIVE;
     } else {
-        if (isTransactionRunning()) {
+        if (!transaction || !transaction->isRunning()) {
             availabilityVolatile = AVAILABILITY_INOPERATIVE_SCHEDULED;
         } else {
             availabilityVolatile = AVAILABILITY_INOPERATIVE;

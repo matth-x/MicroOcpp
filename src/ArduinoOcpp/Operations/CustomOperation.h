@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef FUNCTIONALMESSAGE_H
-#define FUNCTIONALMESSAGE_H
+#ifndef AO_CUSTOMOPERATION_H
+#define AO_CUSTOMOPERATION_H
 
 #include <ArduinoOcpp/Core/Operation.h>
 

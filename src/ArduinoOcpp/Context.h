@@ -5,22 +5,22 @@
 #ifndef AO_CONTEXT_H
 #define AO_CONTEXT_H
 
-#include <ArduinoOcpp/Core/RequestQueue.h>
-#include <ArduinoOcpp/Core/OperationRegistry.h>
 #include <memory>
+
+#include <ArduinoOcpp/Core/OperationRegistry.h>
+#include <ArduinoOcpp/Core/RequestQueue.h>
+#include <ArduinoOcpp/Model/Model.h>
 
 namespace ArduinoOcpp {
 
 class Connection;
-class OperationRegistry;
-class Model;
 class FilesystemAdapter;
 
 class Context {
 private:
     Connection& connection;
     OperationRegistry operationRegistry;
-    std::shared_ptr<Model> model;
+    Model model;
     RequestQueue reqQueue;
 
     std::unique_ptr<RequestQueue> preBootQueue;
@@ -42,8 +42,6 @@ public:
 
     OperationRegistry& getOperationRegistry();
 };
-
-extern Context *defaultContext;
 
 } //end namespace ArduinoOcpp
 

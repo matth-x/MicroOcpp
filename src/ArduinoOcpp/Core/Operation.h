@@ -15,8 +15,8 @@
  * OCPP operation.
  */
 
- #ifndef OCPPMESSAGE_H
- #define OCPPMESSAGE_H
+ #ifndef AO_OPERATION_H
+ #define AO_OPERATION_H
 
 #include <ArduinoJson.h>
 #include <memory>

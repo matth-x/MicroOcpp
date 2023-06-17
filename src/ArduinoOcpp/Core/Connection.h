@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef OCPPSOCKET_H
-#define OCPPSOCKET_H
+#ifndef AO_CONNECTION_H
+#define AO_CONNECTION_H
 
 #include <functional>
 #include <memory>

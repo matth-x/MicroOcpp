@@ -52,7 +52,7 @@ void VolatileRequestQueue::drop_if(std::function<bool(std::unique_ptr<Request>&)
     queue.erase(std::remove_if(queue.begin(), queue.end(), pred), queue.end());
 }
 
-PersistentRequestQueue::PersistentRequestQueue(std::shared_ptr<Model> baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
+PersistentRequestQueue::PersistentRequestQueue(Model *baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
             : opStore(filesystem), baseModel(baseModel) { }
 
 PersistentRequestQueue::~PersistentRequestQueue() {

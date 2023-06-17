@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef OCPPOPERATION_H
-#define OCPPOPERATION_H
+#ifndef AO_REQUEST_H
+#define AO_REQUEST_H
 
 #define MESSAGE_TYPE_CALL 2
 #define MESSAGE_TYPE_CALLRESULT 3
@@ -89,7 +89,7 @@ public:
 
     void initiate(std::unique_ptr<StoredOperationHandler> opStorage);
 
-    bool restore(std::unique_ptr<StoredOperationHandler> opStorage, std::shared_ptr<Model> model);
+    bool restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *model);
 
     StoredOperationHandler *getStorageHandler() {return opStore.get();}
 

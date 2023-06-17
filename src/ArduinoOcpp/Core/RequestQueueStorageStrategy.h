@@ -47,13 +47,13 @@ public:
 class PersistentRequestQueue : public RequestQueueStorageStrategy {
 private:
     RequestStore opStore;
-    std::shared_ptr<Model> baseModel;
+    Model *baseModel;
 
     std::unique_ptr<Request> head;
     std::deque<std::unique_ptr<Request>> tailCache;
 public:
 
-    PersistentRequestQueue(std::shared_ptr<Model> baseModel, std::shared_ptr<FilesystemAdapter> filesystem);
+    PersistentRequestQueue(Model *baseModel, std::shared_ptr<FilesystemAdapter> filesystem);
     ~PersistentRequestQueue();
 
     Request *front() override;

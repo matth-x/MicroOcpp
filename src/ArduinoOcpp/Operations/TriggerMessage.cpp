@@ -13,7 +13,7 @@
 
 using ArduinoOcpp::Ocpp16::TriggerMessage;
 
-TriggerMessage::TriggerMessage(Model& model) : model(model) {
+TriggerMessage::TriggerMessage(Context& context) : context(context) {
 
 }
 
@@ -31,7 +31,7 @@ void TriggerMessage::processReq(JsonObject payload) {
     statusMessage = "Rejected";
 
     if (!strcmp(requestedMessage, "MeterValues")) {
-        if (auto mService = model.getMeteringService()) {
+        if (auto mService = context.getModel().getMeteringService()) {
             if (connectorId < 0) {
                 auto nConnectors = mService->getNumConnectors();
                 for (decltype(nConnectors) cId = 0; cId < nConnectors; cId++) {
@@ -46,8 +46,8 @@ void TriggerMessage::processReq(JsonObject payload) {
     } else if (!strcmp(requestedMessage, "StatusNotification")) {
         unsigned int cIdRangeBegin = 0, cIdRangeEnd = 0;
         if (connectorId < 0) {
-            cIdRangeEnd = model.getNumConnectors();
-        } else if ((unsigned int) connectorId < model.getNumConnectors()) {
+            cIdRangeEnd = context.getModel().getNumConnectors();
+        } else if ((unsigned int) connectorId < context.getModel().getNumConnectors()) {
             cIdRangeBegin = connectorId;
             cIdRangeEnd = connectorId + 1;
         } else {
@@ -55,19 +55,19 @@ void TriggerMessage::processReq(JsonObject payload) {
         }
 
         for (auto i = cIdRangeBegin; i < cIdRangeEnd; i++) {
-            auto connector = model.getConnector(i);
+            auto connector = context.getModel().getConnector(i);
 
             auto statusNotification = makeRequest(new Ocpp16::StatusNotification(
                         i,
                         connector->inferenceStatus(), //will be determined in StatusNotification::initiate
-                        model.getClock().now()));
+                        context.getModel().getClock().now()));
 
             statusNotification->setTimeout(60000);
 
             triggeredOperations.push_back(std::move(statusNotification));
         }
     } else {
-        auto msg = defaultContext->getOperationRegistry().deserializeOperation(requestedMessage);
+        auto msg = context.getOperationRegistry().deserializeOperation(requestedMessage);
         if (msg) {
             triggeredOperations.push_back(std::move(msg));
         } else {
@@ -93,12 +93,10 @@ std::unique_ptr<DynamicJsonDocument> TriggerMessage::createConf(){
     
     payload["status"] = statusMessage;
 
-    if (defaultContext) {
-        auto op = triggeredOperations.begin();
-        while (op != triggeredOperations.end()) {
-            defaultContext->initiatePreBootOperation(std::move(triggeredOperations.front()));
-            op = triggeredOperations.erase(op);
-        }
+    auto op = triggeredOperations.begin();
+    while (op != triggeredOperations.end()) {
+        context.initiatePreBootOperation(std::move(triggeredOperations.front()));
+        op = triggeredOperations.erase(op);
     }
 
     return doc;

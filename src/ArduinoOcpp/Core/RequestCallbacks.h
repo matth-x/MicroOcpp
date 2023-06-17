@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef OCPP_OPERATION_CALLBACKS
-#define OCPP_OPERATION_CALLBACKS
+#ifndef AO_REQUESTCALLBACKS_H
+#define AO_REQUESTCALLBACKS_H
 
 #include <ArduinoJson.h>
 #include <functional>

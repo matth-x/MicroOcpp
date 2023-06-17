@@ -11,20 +11,20 @@
 
 namespace ArduinoOcpp {
 
-class Model;
+class Context;
 class Request;
 
 namespace Ocpp16 {
 
 class TriggerMessage : public Operation {
 private:
-    Model& model;
+    Context& context;
     std::vector<std::unique_ptr<Request>> triggeredOperations;
     const char *statusMessage {nullptr};
 
     const char *errorCode = nullptr;
 public:
-    TriggerMessage(Model& model);
+    TriggerMessage(Context& context);
 
     const char* getOperationType();
 

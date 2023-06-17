@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef OPERATIONDESERIALIZER_H
-#define OPERATIONDESERIALIZER_H
+#ifndef AO_OPERATIONREGISTRY_H
+#define AO_OPERATIONREGISTRY_H
 
 #include <functional>
 #include <vector>

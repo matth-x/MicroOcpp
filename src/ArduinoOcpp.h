@@ -142,9 +142,26 @@ std::shared_ptr<ArduinoOcpp::Transaction> beginTransaction_authorized(const char
 bool endTransaction(const char *reason = nullptr, unsigned int connectorId = 1);
 
 /*
- * Returns if the library has started the transaction by sending a StartTransaction and if it hasn't
- * been stopped already by sending a StopTransaction.
+ * Get information about the current Transaction lifecycle. A transaction can enter the following
+ * states:
+ *     - Idle: no transaction running or being started
+ *     - Preparing: before a potential transaction
+ *     - Aborted: transaction not started and never will be started
+ *     - Running: transaction started and running
+ *     - Running/StopTxAwait: transaction still running but will end at the next possible time
+ *     - Finished: transaction stopped
+ * 
+ * isTransactionActive() and isTransactionRunning() give the status by combining them:
+ * 
+ *     State               | isTransactionActive() | isTransactionRunning()
+ *     --------------------+-----------------------+-----------------------
+ *     Preparing           | true                  | false
+ *     Running             | true                  | true
+ *     Running/StopTxAwait | false                 | true
+ *     Finished / Aborted  |                       |
+ *                  / Idle | false                 | false
  */
+bool isTransactionActive(unsigned int connectorId = 1);
 bool isTransactionRunning(unsigned int connectorId = 1);
 
 /* 

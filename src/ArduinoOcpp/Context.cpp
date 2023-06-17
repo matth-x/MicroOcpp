@@ -11,18 +11,15 @@
 
 using namespace ArduinoOcpp;
 
-Context *ArduinoOcpp::defaultContext = nullptr;
-
 Context::Context(Connection& connection, std::shared_ptr<FilesystemAdapter> filesystem)
-        : connection(connection), model{std::make_shared<Model>()}, reqQueue{operationRegistry, model, filesystem} {
-    defaultContext = this;
+        : connection(connection), model{}, reqQueue{operationRegistry, &model, filesystem} {
 
-    preBootQueue = std::unique_ptr<RequestQueue>(new RequestQueue(operationRegistry, model, nullptr)); //pre boot queue doesn't need persistency
+    preBootQueue = std::unique_ptr<RequestQueue>(new RequestQueue(operationRegistry, &model, nullptr)); //pre boot queue doesn't need persistency
     preBootQueue->setConnection(connection);
 }
 
 Context::~Context() {
-    defaultContext = nullptr;
+
 }
 
 void Context::loop() {
@@ -34,7 +31,7 @@ void Context::loop() {
         reqQueue.loop(connection);
     }
 
-    model->loop();
+    model.loop();
 }
 
 void Context::activatePostBootCommunication() {
@@ -61,7 +58,7 @@ void Context::initiatePreBootOperation(std::unique_ptr<Request> op) {
 }
 
 Model& Context::getModel() {
-    return *model;
+    return model;
 }
 
 OperationRegistry& Context::getOperationRegistry() {

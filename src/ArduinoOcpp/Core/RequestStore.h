@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef OPERATIONSTORE_H
-#define OPERATIONSTORE_H
+#ifndef AO_REQUESTSTORE_H
+#define AO_REQUESTSTORE_H
 
 #include <memory>
 #include <deque>

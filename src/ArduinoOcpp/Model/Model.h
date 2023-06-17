@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef OCPPMODEL_H
-#define OCPPMODEL_H
+#ifndef AO_MODEL_H
+#define AO_MODEL_H
 
 #include <memory>
 

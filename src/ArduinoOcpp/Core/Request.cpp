@@ -278,7 +278,7 @@ void Request::initiate(std::unique_ptr<StoredOperationHandler> opStorage) {
     }
 }
 
-bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, std::shared_ptr<Model> model) {
+bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *model) {
     if (!opStorage) {
         AO_DBG_ERR("invalid argument");
         return false;
@@ -314,10 +314,10 @@ bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, std::sh
 
     timeout_period = 0; //disable timeout by default for restored msgs
 
-    if (!strcmp(opType.c_str(), "StartTransaction")) { //TODO this will get a nicer solution
-        operation = std::unique_ptr<Operation>(new Ocpp16::StartTransaction(*model.get(), nullptr));
-    } else if (!strcmp(opType.c_str(), "StopTransaction")) {
-        operation = std::unique_ptr<Operation>(new Ocpp16::StopTransaction(*model.get(), nullptr));
+    if (!strcmp(opType.c_str(), "StartTransaction") && model) { //TODO this will get a nicer solution
+        operation = std::unique_ptr<Operation>(new Ocpp16::StartTransaction(*model, nullptr));
+    } else if (!strcmp(opType.c_str(), "StopTransaction") && model) {
+        operation = std::unique_ptr<Operation>(new Ocpp16::StopTransaction(*model, nullptr));
     }
 
     if (!operation) {

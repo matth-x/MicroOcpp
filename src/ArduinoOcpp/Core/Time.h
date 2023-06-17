@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef OCPPTIME_H
-#define OCPPTIME_H
+#ifndef AO_TIME_H
+#define AO_TIME_H
 
 #include <functional>
 #include <stdint.h>
