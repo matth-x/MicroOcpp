@@ -186,7 +186,7 @@ bool ChargingProfile::calculateLimit(const Timestamp &t, const Timestamp &startO
 }
 
 bool ChargingProfile::calculateLimit(const Timestamp &t, ChargeRate& limit, Timestamp& nextChange){
-    return calculateLimit(t, MAX_TIME, limit, nextChange);
+    return calculateLimit(t, MIN_TIME, limit, nextChange);
 }
 
 int ChargingProfile::getChargingProfileId() {
@@ -350,63 +350,6 @@ bool loadChargingSchedulePeriod(JsonObject& json, ChargingSchedulePeriod& out) {
 
 } //end namespace ArduinoOcpp
 
-bool ArduinoOcpp::loadChargingSchedule(JsonObject& json, ChargingSchedule& out) {
-    if (json.containsKey("duration")) {
-        int duration = json["duration"] | -1;
-        if (duration >= 0) {
-            out.duration = duration;
-        } else {
-            AO_DBG_WARN("format violation");
-            return false;
-        }
-    }
-
-    if (json.containsKey("startSchedule")) {
-        if (!out.startSchedule.setTime(json["startSchedule"] | "Invalid")) {
-            //non-success
-            AO_DBG_WARN("datetime format violation, expect format like 2022-02-01T20:53:32.486Z");
-            return false;
-        }
-    } else {
-        out.startSchedule = MIN_TIME;
-    }
-
-    const char *unit = json["chargingRateUnit"] | "_Undefined";
-    if (unit[0] == 'a' || unit[0] == 'A') {
-        out.chargingRateUnit = ChargingRateUnitType::Amp;
-    } else if (unit[0] == 'w' || unit[0] == 'W') {
-        out.chargingRateUnit = ChargingRateUnitType::Watt;
-    } else {
-        AO_DBG_WARN("format violation");
-        return false;
-    }
-    
-    JsonArray periodJsonArray = json["chargingSchedulePeriod"];
-    if (periodJsonArray.size() < 1) {
-        AO_DBG_WARN("format violation");
-        return false;
-    }
-
-    for (JsonObject periodJson : periodJsonArray) {
-        out.chargingSchedulePeriod.push_back(ChargingSchedulePeriod());
-        if (!loadChargingSchedulePeriod(periodJson, out.chargingSchedulePeriod.back())) {
-            return false;
-        }
-    }
-    
-    if (json.containsKey("minChargingRate")) {
-        float minChargingRate = json["minChargingRate"];
-        if (minChargingRate >= 0.f) {
-            out.minChargingRate = minChargingRate;
-        } else {
-            AO_DBG_WARN("format violation");
-            return false;
-        }
-    }
-
-    return true;
-}
-
 std::unique_ptr<ChargingProfile> ArduinoOcpp::loadChargingProfile(JsonObject& json) {
     auto res = std::unique_ptr<ChargingProfile>(new ChargingProfile());
 
@@ -496,4 +439,61 @@ std::unique_ptr<ChargingProfile> ArduinoOcpp::loadChargingProfile(JsonObject& js
     schedule.recurrencyKind = res->recurrencyKind;
 
     return res;
+}
+
+bool ArduinoOcpp::loadChargingSchedule(JsonObject& json, ChargingSchedule& out) {
+    if (json.containsKey("duration")) {
+        int duration = json["duration"] | -1;
+        if (duration >= 0) {
+            out.duration = duration;
+        } else {
+            AO_DBG_WARN("format violation");
+            return false;
+        }
+    }
+
+    if (json.containsKey("startSchedule")) {
+        if (!out.startSchedule.setTime(json["startSchedule"] | "Invalid")) {
+            //non-success
+            AO_DBG_WARN("datetime format violation, expect format like 2022-02-01T20:53:32.486Z");
+            return false;
+        }
+    } else {
+        out.startSchedule = MIN_TIME;
+    }
+
+    const char *unit = json["chargingRateUnit"] | "_Undefined";
+    if (unit[0] == 'a' || unit[0] == 'A') {
+        out.chargingRateUnit = ChargingRateUnitType::Amp;
+    } else if (unit[0] == 'w' || unit[0] == 'W') {
+        out.chargingRateUnit = ChargingRateUnitType::Watt;
+    } else {
+        AO_DBG_WARN("format violation");
+        return false;
+    }
+    
+    JsonArray periodJsonArray = json["chargingSchedulePeriod"];
+    if (periodJsonArray.size() < 1) {
+        AO_DBG_WARN("format violation");
+        return false;
+    }
+
+    for (JsonObject periodJson : periodJsonArray) {
+        out.chargingSchedulePeriod.push_back(ChargingSchedulePeriod());
+        if (!loadChargingSchedulePeriod(periodJson, out.chargingSchedulePeriod.back())) {
+            return false;
+        }
+    }
+    
+    if (json.containsKey("minChargingRate")) {
+        float minChargingRate = json["minChargingRate"];
+        if (minChargingRate >= 0.f) {
+            out.minChargingRate = minChargingRate;
+        } else {
+            AO_DBG_WARN("format violation");
+            return false;
+        }
+    }
+
+    return true;
 }

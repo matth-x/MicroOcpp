@@ -49,6 +49,10 @@ private:
 
     ChargeRate trackLimitOutput;
 
+    void calculateLimit(const Timestamp &t, ChargeRate& limitOut, Timestamp& validToOut);
+
+    void trackTransaction();
+
 public:
     SmartChargingConnector(Model& model, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ProfileStack& ChargePointMaxProfile, ProfileStack& ChargePointTxDefaultProfile);
     SmartChargingConnector(SmartChargingConnector&&) = default;
@@ -57,10 +61,6 @@ public:
     void loop();
 
     void setSmartChargingOutput(std::function<void(float,float,int)> limitOutput); //read maximum Watt x Amps x numberPhases
-
-    void calculateLimit(const Timestamp &t, ChargeRate& limitOut, Timestamp& validToOut);
-
-    void trackTransaction();
 
     ChargingProfile *updateProfiles(std::unique_ptr<ChargingProfile> chargingProfile);
 
@@ -93,10 +93,14 @@ private:
 
     ChargingProfile *updateProfiles(unsigned int connectorId, std::unique_ptr<ChargingProfile> chargingProfile);
     bool loadProfiles();
+
+    void calculateLimit(const Timestamp &t, ChargeRate& limitOut, Timestamp& validToOut);
   
 public:
     SmartChargingService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int numConnectors);
     ~SmartChargingService();
+
+    void loop();
 
     void setSmartChargingOutput(unsigned int connectorId, std::function<void(float,float,int)> limitOutput); //read maximum Watt x Amps x numberPhases
     void updateAllowedChargingRateUnit(bool powerSupported, bool currentSupported); //set supported measurand of SmartChargingOutput
@@ -104,9 +108,8 @@ public:
     bool setChargingProfile(unsigned int connectorId, std::unique_ptr<ChargingProfile> chargingProfile);
 
     bool clearChargingProfile(std::function<bool(int, int, ChargingProfilePurposeType, int)> filter);
-    void calculateLimit(const Timestamp &t, ChargeRate& limitOut, Timestamp& validToOut);
+
     std::unique_ptr<ChargingSchedule> getCompositeSchedule(unsigned int connectorId, int duration, ChargingRateUnitType_Optional unit = ChargingRateUnitType_Optional::None);
-    void loop();
 };
 
 //filesystem-related helper functions

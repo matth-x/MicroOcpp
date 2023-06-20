@@ -24,198 +24,6 @@ SmartChargingConnector::~SmartChargingConnector() {
 
 }
 
-void SmartChargingConnector::loop(){
-
-    trackTransaction();
-
-    /**
-     * check if to call onLimitChange
-     */
-    auto& tnow = model.getClock().now();
-
-    if (tnow >= nextChange){
-
-        ChargeRate limit;
-        nextChange = MAX_TIME; //reset nextChange to default value and refresh it
-
-        calculateLimit(tnow, limit, nextChange);
-
-        if (trackLimitOutput != limit) {
-            if (limitOutput) {
-
-                limitOutput(
-                    limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
-                    limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
-                    limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
-                trackLimitOutput = limit;
-            }
-        }
-    }
-}
-
-void SmartChargingConnector::setSmartChargingOutput(std::function<void(float,float,int)> limitOutput) {
-    if (this->limitOutput) {
-        AO_DBG_WARN("replacing existing SmartChargingOutput");
-        (void)0;
-    }
-    this->limitOutput = limitOutput;
-}
-
-SmartChargingService::SmartChargingService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int numConnectors)
-      : context(context), filesystem{filesystem}, numConnectors(numConnectors) {
-    
-    for (unsigned int cId = 1; cId < numConnectors; cId++) {
-        connectors.push_back(std::move(SmartChargingConnector(context.getModel(), filesystem, cId, ChargePointMaxProfile, ChargePointTxDefaultProfile)));
-    }
-
-    declareConfiguration<int>("ChargeProfileMaxStackLevel", CHARGEPROFILEMAXSTACKLEVEL, CONFIGURATION_VOLATILE, false, true, false, false);
-    declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE, false);
-    declareConfiguration<int>("ChargingScheduleMaxPeriods", CHARGINGSCHEDULEMAXPERIODS, CONFIGURATION_VOLATILE, false, true, false, false);
-    declareConfiguration<int>("MaxChargingProfilesInstalled", MAXCHARGINGPROFILESINSTALLED, CONFIGURATION_VOLATILE, false, true, false, false);
-
-    const char *fpId = "SmartCharging";
-    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
-    if (!strstr(*fProfile, fpId)) {
-        auto fProfilePlus = std::string(*fProfile);
-        if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
-            fProfilePlus += ",";
-        fProfilePlus += fpId;
-        fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
-    }
-
-    context.getOperationRegistry().registerOperation("ClearChargingProfile", [this] () {
-        return new Ocpp16::ClearChargingProfile(*this);});
-    context.getOperationRegistry().registerOperation("GetCompositeSchedule", [&context, this] () {
-        return new Ocpp16::GetCompositeSchedule(context.getModel(), *this);});
-    context.getOperationRegistry().registerOperation("SetChargingProfile", [&context, this] () {
-        return new Ocpp16::SetChargingProfile(context.getModel(), *this);});
-
-    loadProfiles();
-}
-
-SmartChargingService::~SmartChargingService() {
-
-}
-
-void SmartChargingService::updateAllowedChargingRateUnit(bool powerSupported, bool currentSupported) {
-    if ((powerSupported != this->powerSupported) || (currentSupported != this->currentSupported)) {
-
-        auto chargingScheduleAllowedChargingRateUnit = declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE, false);
-        if (chargingScheduleAllowedChargingRateUnit) {
-            if (powerSupported && currentSupported) {
-                *chargingScheduleAllowedChargingRateUnit = "Current,Power";
-            } else if (powerSupported) {
-                *chargingScheduleAllowedChargingRateUnit = "Power";
-            } else if (currentSupported) {
-                *chargingScheduleAllowedChargingRateUnit = "Current";
-            }
-        }
-
-        this->powerSupported = powerSupported;
-        this->currentSupported = currentSupported;
-    }
-}
-
-void SmartChargingService::setSmartChargingOutput(unsigned int connectorId, std::function<void(float,float,int)> limitOutput) {
-    if ((connectorId > 0 && !getScConnectorById(connectorId))) {
-        AO_DBG_ERR("invalid args");
-        return;
-    }
-
-    if (connectorId == 0) {
-        if (this->limitOutput) {
-            AO_DBG_WARN("replacing existing SmartChargingOutput");
-            (void)0;
-        }
-        this->limitOutput = limitOutput;
-    } else {
-        getScConnectorById(connectorId)->setSmartChargingOutput(limitOutput);
-    }
-}
-
-void SmartChargingService::loop(){
-
-    for (size_t i = 0; i < connectors.size(); i++) {
-        connectors[i].loop();
-    }
-
-    /**
-     * check if to call onLimitChange
-     */
-    auto& tnow = context.getModel().getClock().now();
-
-    if (tnow >= nextChange){
-        
-        ChargeRate limit;
-        nextChange = MAX_TIME; //reset nextChange to default value and refresh it
-
-        calculateLimit(tnow, limit, nextChange);
-
-#if (AO_DBG_LEVEL >= AO_DL_INFO)
-        char timestamp1[JSONDATE_LENGTH + 1] = {'\0'};
-        tnow.toJsonString(timestamp1, JSONDATE_LENGTH + 1);
-        char timestamp2[JSONDATE_LENGTH + 1] = {'\0'};
-        nextChange.toJsonString(timestamp2, JSONDATE_LENGTH + 1);
-        AO_DBG_INFO("New limit for connector 1, scheduled at = %s, nextChange = %s, limit = {%f,%f,%i}",
-                            timestamp1, timestamp2, limit.power, limit.current, limit.nphases);
-#endif
-
-        if (trackLimitOutput != limit) {
-            if (limitOutput) {
-
-                limitOutput(
-                    limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
-                    limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
-                    limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
-                trackLimitOutput = limit;
-            }
-        }
-    }
-}
-
-void SmartChargingConnector::trackTransaction() {
-
-    Transaction *tx = nullptr;
-    if (model.getConnector(connectorId)) {
-        tx = model.getConnector(connectorId)->getTransaction().get();
-    }
-
-    bool update = false;
-
-    if (tx) {
-        if (tx->getTxProfileId() != trackTxRmtProfileId) {
-            update = true;
-            trackTxRmtProfileId = tx->getTxProfileId();
-        }
-        if (tx->getStartSync().isRequested() && tx->getStartTimestamp() != trackTxStart) {
-            update = true;
-            trackTxStart = tx->getStartTimestamp();
-        }
-        if (tx->getStartSync().isConfirmed() && tx->getTransactionId() != trackTxId) {
-            update = true;
-            trackTxId = tx->getTransactionId();
-        }
-    } else {
-        //check if transaction has just been completed
-        if (trackTxRmtProfileId >= 0 || trackTxStart < MAX_TIME || trackTxId >= 0) {
-            //yes, clear data
-            update = true;
-            trackTxRmtProfileId = -1;
-            trackTxStart = MAX_TIME;
-            trackTxId = -1;
-
-            clearChargingProfile([this] (int, int connectorId, ChargingProfilePurposeType purpose, int) {
-                return purpose == ChargingProfilePurposeType::TxProfile &&
-                       (int) this->connectorId == connectorId;
-            });
-        }
-    }
-
-    if (update) {
-        nextChange = model.getClock().now(); //will refresh limit calculation
-    }
-}
-
 /*
  * limitOut: the calculated maximum charge rate at the moment, or the default value if no limit is defined
  * validToOut: The begin of the next SmartCharging restriction after time t
@@ -280,7 +88,7 @@ void SmartChargingConnector::calculateLimit(const Timestamp &t, ChargeRate& limi
     for (int i = CHARGEPROFILEMAXSTACKLEVEL; i >= 0; i--) {
         if (ChargePointMaxProfile[i]) {
             ChargeRate crOut;
-            bool defined = ChargePointMaxProfile[i]->calculateLimit(t, MAX_TIME, crOut, validToOut);
+            bool defined = ChargePointMaxProfile[i]->calculateLimit(t, trackTxStart, crOut, validToOut);
             if (defined) {
                 cpLimit = crOut;
                 break;
@@ -292,27 +100,127 @@ void SmartChargingConnector::calculateLimit(const Timestamp &t, ChargeRate& limi
     limitOut = chargeRate_min(txLimit, cpLimit);
 }
 
-/*
- * limitOut: the calculated maximum charge rate at the moment, or the default value if no limit is defined
- * validToOut: The begin of the next SmartCharging restriction after time t
- */
-void SmartChargingService::calculateLimit(const Timestamp &t, ChargeRate& limitOut, Timestamp& validToOut){
-    
-    //initialize output parameters with the default values
-    limitOut = ChargeRate();
-    validToOut = MAX_TIME;
+void SmartChargingConnector::trackTransaction() {
 
-    //get ChargePointMaxProfile with the highest stackLevel
-    for (int i = CHARGEPROFILEMAXSTACKLEVEL; i >= 0; i--) {
-        if (ChargePointMaxProfile[i]) {
-            ChargeRate crOut;
-            bool defined = ChargePointMaxProfile[i]->calculateLimit(t, MAX_TIME, crOut, validToOut);
-            if (defined) {
-                limitOut = crOut;
-                break;
+    Transaction *tx = nullptr;
+    if (model.getConnector(connectorId)) {
+        tx = model.getConnector(connectorId)->getTransaction().get();
+    }
+
+    bool update = false;
+
+    if (tx) {
+        if (tx->getTxProfileId() != trackTxRmtProfileId) {
+            update = true;
+            trackTxRmtProfileId = tx->getTxProfileId();
+        }
+        if (tx->getStartSync().isRequested() && tx->getStartTimestamp() != trackTxStart) {
+            update = true;
+            trackTxStart = tx->getStartTimestamp();
+        }
+        if (tx->getStartSync().isConfirmed() && tx->getTransactionId() != trackTxId) {
+            update = true;
+            trackTxId = tx->getTransactionId();
+        }
+    } else {
+        //check if transaction has just been completed
+        if (trackTxRmtProfileId >= 0 || trackTxStart < MAX_TIME || trackTxId >= 0) {
+            //yes, clear data
+            update = true;
+            trackTxRmtProfileId = -1;
+            trackTxStart = MAX_TIME;
+            trackTxId = -1;
+
+            clearChargingProfile([this] (int, int connectorId, ChargingProfilePurposeType purpose, int) {
+                return purpose == ChargingProfilePurposeType::TxProfile &&
+                       (int) this->connectorId == connectorId;
+            });
+        }
+    }
+
+    if (update) {
+        nextChange = model.getClock().now(); //will refresh limit calculation
+    }
+}
+
+void SmartChargingConnector::loop(){
+
+    trackTransaction();
+
+    /**
+     * check if to call onLimitChange
+     */
+    auto& tnow = model.getClock().now();
+
+    if (tnow >= nextChange){
+
+        ChargeRate limit;
+        nextChange = MAX_TIME; //reset nextChange to default value and refresh it
+
+        calculateLimit(tnow, limit, nextChange);
+
+        if (trackLimitOutput != limit) {
+            if (limitOutput) {
+
+                limitOutput(
+                    limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
+                    limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
+                    limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
+                trackLimitOutput = limit;
             }
         }
     }
+}
+
+void SmartChargingConnector::setSmartChargingOutput(std::function<void(float,float,int)> limitOutput) {
+    if (this->limitOutput) {
+        AO_DBG_WARN("replacing existing SmartChargingOutput");
+        (void)0;
+    }
+    this->limitOutput = limitOutput;
+}
+
+ChargingProfile *SmartChargingConnector::updateProfiles(std::unique_ptr<ChargingProfile> chargingProfile) {
+    
+    int stackLevel = chargingProfile->getStackLevel(); //already validated
+    
+    switch (chargingProfile->getChargingProfilePurpose()) {
+        case (ChargingProfilePurposeType::ChargePointMaxProfile):
+            break;
+        case (ChargingProfilePurposeType::TxDefaultProfile):
+            TxDefaultProfile[stackLevel] = std::move(chargingProfile);
+            return TxDefaultProfile[stackLevel].get();
+        case (ChargingProfilePurposeType::TxProfile):
+            TxProfile[stackLevel] = std::move(chargingProfile);
+            return TxProfile[stackLevel].get();
+    }
+
+    AO_DBG_ERR("invalid args");
+    return nullptr;
+}
+
+void SmartChargingConnector::notifyProfilesUpdated() {
+    nextChange = model.getClock().now();
+}
+
+bool SmartChargingConnector::clearChargingProfile(const std::function<bool(int, int, ChargingProfilePurposeType, int)> filter) {
+    bool found = false;
+
+    ProfileStack *profileStacks [] = {&TxProfile, &TxDefaultProfile};
+
+    for (auto stack : profileStacks) {
+        for (size_t iLevel = 0; iLevel < stack->size(); iLevel++) {
+            if (auto& profile = stack->at(iLevel)) {
+                if (profile && filter(profile->getChargingProfileId(), connectorId, profile->getChargingProfilePurpose(), iLevel)) {
+                    found = true;
+                    SmartChargingServiceUtils::removeProfile(filesystem, connectorId, profile->getChargingProfilePurpose(), iLevel);
+                    profile.reset();
+                }
+            }
+        }
+    }
+
+    return found;
 }
 
 std::unique_ptr<ChargingSchedule> SmartChargingConnector::getCompositeSchedule(int duration, ChargingRateUnitType_Optional unit) {
@@ -376,121 +284,52 @@ size_t SmartChargingConnector::getChargingProfilesCount() {
     return chargingProfilesCount;
 }
 
-std::unique_ptr<ChargingSchedule> SmartChargingService::getCompositeSchedule(unsigned int connectorId, int duration, ChargingRateUnitType_Optional unit) {
-
-    if (connectorId > 0 && !getScConnectorById(connectorId)) {
-        AO_DBG_ERR("invalid args");
+SmartChargingConnector *SmartChargingService::getScConnectorById(unsigned int connectorId) {
+    if (connectorId == 0) {
         return nullptr;
     }
-    
-    if (unit == ChargingRateUnitType_Optional::None) {
-        if (powerSupported && !currentSupported) {
-            unit = ChargingRateUnitType_Optional::Watt;
-        } else if (!powerSupported && currentSupported) {
-            unit = ChargingRateUnitType_Optional::Amp;
-        }
+
+    if (connectorId - 1 >= connectors.size()) {
+        return nullptr;
     }
 
-    if (connectorId > 0) {
-        return getScConnectorById(connectorId)->getCompositeSchedule(duration, unit);
-    }
-    
-    auto& startSchedule = context.getModel().getClock().now();
-
-    auto schedule = std::unique_ptr<ChargingSchedule>(new ChargingSchedule());
-    schedule->duration = duration;
-    schedule->startSchedule = startSchedule;
-    schedule->chargingProfileKind = ChargingProfileKindType::Absolute;
-    schedule->recurrencyKind = RecurrencyKindType::NOT_SET;
-
-    auto& periods = schedule->chargingSchedulePeriod;
-
-    Timestamp periodBegin = Timestamp(startSchedule);
-    Timestamp periodStop = Timestamp(startSchedule);
-
-    while (periodBegin - startSchedule < duration && periods.size() < CHARGINGSCHEDULEMAXPERIODS) {
-
-        //calculate limit
-        ChargeRate limit;
-        calculateLimit(periodBegin, limit, periodStop);
-
-        //if the unit is still unspecified, guess by taking the unit of the first limit
-        if (unit == ChargingRateUnitType_Optional::None) {
-            if (limit.power < limit.current) {
-                unit = ChargingRateUnitType_Optional::Watt;
-            } else {
-                unit = ChargingRateUnitType_Optional::Amp;
-            }
-        }
-
-        periods.push_back(ChargingSchedulePeriod());
-        float limit_opt = unit == ChargingRateUnitType_Optional::Watt ? limit.power : limit.current;
-        periods.back().limit = limit_opt != std::numeric_limits<float>::max() ? limit_opt : -1.f;
-        periods.back().numberPhases = limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1;
-        periods.back().startPeriod = periodBegin - startSchedule;
-
-        periodBegin = periodStop;
-    }
-
-    if (unit == ChargingRateUnitType_Optional::Watt) {
-        schedule->chargingRateUnit = ChargingRateUnitType::Watt;
-    } else {
-        schedule->chargingRateUnit = ChargingRateUnitType::Amp;
-    }
-
-    return schedule;
+    return &connectors[connectorId-1];
 }
 
-bool SmartChargingService::setChargingProfile(unsigned int connectorId, std::unique_ptr<ChargingProfile> chargingProfile) {
-
-    if ((connectorId > 0 && !getScConnectorById(connectorId)) || !chargingProfile) {
-        AO_DBG_ERR("invalid args");
-        return false;
+SmartChargingService::SmartChargingService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int numConnectors)
+      : context(context), filesystem{filesystem}, numConnectors(numConnectors) {
+    
+    for (unsigned int cId = 1; cId < numConnectors; cId++) {
+        connectors.push_back(std::move(SmartChargingConnector(context.getModel(), filesystem, cId, ChargePointMaxProfile, ChargePointTxDefaultProfile)));
     }
 
-    int chargingProfileId = chargingProfile->getChargingProfileId();
-    clearChargingProfile([chargingProfileId] (int id, int, ChargingProfilePurposeType, int) {
-        return id == chargingProfileId;
-    });
+    declareConfiguration<int>("ChargeProfileMaxStackLevel", CHARGEPROFILEMAXSTACKLEVEL, CONFIGURATION_VOLATILE, false, true, false, false);
+    declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE, false);
+    declareConfiguration<int>("ChargingScheduleMaxPeriods", CHARGINGSCHEDULEMAXPERIODS, CONFIGURATION_VOLATILE, false, true, false, false);
+    declareConfiguration<int>("MaxChargingProfilesInstalled", MAXCHARGINGPROFILESINSTALLED, CONFIGURATION_VOLATILE, false, true, false, false);
 
-    bool success = false;
-
-    auto profilePtr = updateProfiles(connectorId, std::move(chargingProfile));
-
-    if (profilePtr) {
-        success = SmartChargingServiceUtils::storeProfile(filesystem, connectorId, profilePtr);
-
-        if (!success) {
-            clearChargingProfile([chargingProfileId] (int id, int, ChargingProfilePurposeType, int) {
-                return id == chargingProfileId;
-            });
-        }
+    const char *fpId = "SmartCharging";
+    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
+    if (!strstr(*fProfile, fpId)) {
+        auto fProfilePlus = std::string(*fProfile);
+        if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
+            fProfilePlus += ",";
+        fProfilePlus += fpId;
+        fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
     }
 
-    return success;
+    context.getOperationRegistry().registerOperation("ClearChargingProfile", [this] () {
+        return new Ocpp16::ClearChargingProfile(*this);});
+    context.getOperationRegistry().registerOperation("GetCompositeSchedule", [&context, this] () {
+        return new Ocpp16::GetCompositeSchedule(context.getModel(), *this);});
+    context.getOperationRegistry().registerOperation("SetChargingProfile", [&context, this] () {
+        return new Ocpp16::SetChargingProfile(context.getModel(), *this);});
+
+    loadProfiles();
 }
 
-ChargingProfile *SmartChargingConnector::updateProfiles(std::unique_ptr<ChargingProfile> chargingProfile) {
-    
-    int stackLevel = chargingProfile->getStackLevel(); //already validated
-    
-    switch (chargingProfile->getChargingProfilePurpose()) {
-        case (ChargingProfilePurposeType::ChargePointMaxProfile):
-            break;
-        case (ChargingProfilePurposeType::TxDefaultProfile):
-            TxDefaultProfile[stackLevel] = std::move(chargingProfile);
-            return TxDefaultProfile[stackLevel].get();
-        case (ChargingProfilePurposeType::TxProfile):
-            TxProfile[stackLevel] = std::move(chargingProfile);
-            return TxProfile[stackLevel].get();
-    }
+SmartChargingService::~SmartChargingService() {
 
-    AO_DBG_ERR("invalid args");
-    return nullptr;
-}
-
-void SmartChargingConnector::notifyProfilesUpdated() {
-    nextChange = model.getClock().now();
 }
 
 ChargingProfile *SmartChargingService::updateProfiles(unsigned int connectorId, std::unique_ptr<ChargingProfile> chargingProfile){
@@ -575,59 +414,6 @@ ChargingProfile *SmartChargingService::updateProfiles(unsigned int connectorId, 
     return res;
 }
 
-bool SmartChargingConnector::clearChargingProfile(const std::function<bool(int, int, ChargingProfilePurposeType, int)> filter) {
-    bool found = false;
-
-    ProfileStack *profileStacks [] = {&TxProfile, &TxDefaultProfile};
-
-    for (auto stack : profileStacks) {
-        for (size_t iLevel = 0; iLevel < stack->size(); iLevel++) {
-            if (auto& profile = stack->at(iLevel)) {
-                if (profile && filter(profile->getChargingProfileId(), connectorId, profile->getChargingProfilePurpose(), iLevel)) {
-                    found = true;
-                    SmartChargingServiceUtils::removeProfile(filesystem, connectorId, profile->getChargingProfilePurpose(), iLevel);
-                    profile.reset();
-                }
-            }
-        }
-    }
-
-    return found;
-}
-
-bool SmartChargingService::clearChargingProfile(std::function<bool(int, int, ChargingProfilePurposeType, int)> filter) {
-    bool found = false;
-
-    for (size_t cId = 0; cId < connectors.size(); cId++) {
-        found |= connectors[cId].clearChargingProfile(filter);
-    }
-
-    ProfileStack *profileStacks [] = {&ChargePointMaxProfile, &ChargePointTxDefaultProfile};
-
-    for (auto stack : profileStacks) {
-        for (size_t iLevel = 0; iLevel < stack->size(); iLevel++) {
-            if (auto& profile = stack->at(iLevel)) {
-                if (filter(profile->getChargingProfileId(), 0, profile->getChargingProfilePurpose(), iLevel)) {
-                    found = true;
-                    SmartChargingServiceUtils::removeProfile(filesystem, 0, profile->getChargingProfilePurpose(), iLevel);
-                    profile.reset();
-                }
-            }
-        }
-    }
-
-    /**
-     * Invalidate the last limit inference by setting the nextChange to now. By the next loop()-call, the limit
-     * and nextChange will be recalculated and onLimitChanged will be called.
-     */
-    nextChange = context.getModel().getClock().now();
-    for (size_t i = 0; i < connectors.size(); i++) {
-        connectors[i].notifyProfilesUpdated();
-    }
-
-    return found;
-}
-
 bool SmartChargingService::loadProfiles() {
 
     bool success = true;
@@ -684,16 +470,230 @@ bool SmartChargingService::loadProfiles() {
     return success;
 }
 
-SmartChargingConnector *SmartChargingService::getScConnectorById(unsigned int connectorId) {
+/*
+ * limitOut: the calculated maximum charge rate at the moment, or the default value if no limit is defined
+ * validToOut: The begin of the next SmartCharging restriction after time t
+ */
+void SmartChargingService::calculateLimit(const Timestamp &t, ChargeRate& limitOut, Timestamp& validToOut){
+    
+    //initialize output parameters with the default values
+    limitOut = ChargeRate();
+    validToOut = MAX_TIME;
+
+    //get ChargePointMaxProfile with the highest stackLevel
+    for (int i = CHARGEPROFILEMAXSTACKLEVEL; i >= 0; i--) {
+        if (ChargePointMaxProfile[i]) {
+            ChargeRate crOut;
+            bool defined = ChargePointMaxProfile[i]->calculateLimit(t, crOut, validToOut);
+            if (defined) {
+                limitOut = crOut;
+                break;
+            }
+        }
+    }
+}
+
+void SmartChargingService::loop(){
+
+    for (size_t i = 0; i < connectors.size(); i++) {
+        connectors[i].loop();
+    }
+
+    /**
+     * check if to call onLimitChange
+     */
+    auto& tnow = context.getModel().getClock().now();
+
+    if (tnow >= nextChange){
+        
+        ChargeRate limit;
+        nextChange = MAX_TIME; //reset nextChange to default value and refresh it
+
+        calculateLimit(tnow, limit, nextChange);
+
+#if (AO_DBG_LEVEL >= AO_DL_INFO)
+        char timestamp1[JSONDATE_LENGTH + 1] = {'\0'};
+        tnow.toJsonString(timestamp1, JSONDATE_LENGTH + 1);
+        char timestamp2[JSONDATE_LENGTH + 1] = {'\0'};
+        nextChange.toJsonString(timestamp2, JSONDATE_LENGTH + 1);
+        AO_DBG_INFO("New limit for connector 1, scheduled at = %s, nextChange = %s, limit = {%f,%f,%i}",
+                            timestamp1, timestamp2, limit.power, limit.current, limit.nphases);
+#endif
+
+        if (trackLimitOutput != limit) {
+            if (limitOutput) {
+
+                limitOutput(
+                    limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
+                    limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
+                    limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
+                trackLimitOutput = limit;
+            }
+        }
+    }
+}
+
+void SmartChargingService::setSmartChargingOutput(unsigned int connectorId, std::function<void(float,float,int)> limitOutput) {
+    if ((connectorId > 0 && !getScConnectorById(connectorId))) {
+        AO_DBG_ERR("invalid args");
+        return;
+    }
+
     if (connectorId == 0) {
-        return nullptr;
+        if (this->limitOutput) {
+            AO_DBG_WARN("replacing existing SmartChargingOutput");
+            (void)0;
+        }
+        this->limitOutput = limitOutput;
+    } else {
+        getScConnectorById(connectorId)->setSmartChargingOutput(limitOutput);
+    }
+}
+
+void SmartChargingService::updateAllowedChargingRateUnit(bool powerSupported, bool currentSupported) {
+    if ((powerSupported != this->powerSupported) || (currentSupported != this->currentSupported)) {
+
+        auto chargingScheduleAllowedChargingRateUnit = declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE, false);
+        if (chargingScheduleAllowedChargingRateUnit) {
+            if (powerSupported && currentSupported) {
+                *chargingScheduleAllowedChargingRateUnit = "Current,Power";
+            } else if (powerSupported) {
+                *chargingScheduleAllowedChargingRateUnit = "Power";
+            } else if (currentSupported) {
+                *chargingScheduleAllowedChargingRateUnit = "Current";
+            }
+        }
+
+        this->powerSupported = powerSupported;
+        this->currentSupported = currentSupported;
+    }
+}
+
+bool SmartChargingService::setChargingProfile(unsigned int connectorId, std::unique_ptr<ChargingProfile> chargingProfile) {
+
+    if ((connectorId > 0 && !getScConnectorById(connectorId)) || !chargingProfile) {
+        AO_DBG_ERR("invalid args");
+        return false;
     }
 
-    if (connectorId - 1 >= connectors.size()) {
-        return nullptr;
+    int chargingProfileId = chargingProfile->getChargingProfileId();
+    clearChargingProfile([chargingProfileId] (int id, int, ChargingProfilePurposeType, int) {
+        return id == chargingProfileId;
+    });
+
+    bool success = false;
+
+    auto profilePtr = updateProfiles(connectorId, std::move(chargingProfile));
+
+    if (profilePtr) {
+        success = SmartChargingServiceUtils::storeProfile(filesystem, connectorId, profilePtr);
+
+        if (!success) {
+            clearChargingProfile([chargingProfileId] (int id, int, ChargingProfilePurposeType, int) {
+                return id == chargingProfileId;
+            });
+        }
     }
 
-    return &connectors[connectorId-1];
+    return success;
+}
+
+bool SmartChargingService::clearChargingProfile(std::function<bool(int, int, ChargingProfilePurposeType, int)> filter) {
+    bool found = false;
+
+    for (size_t cId = 0; cId < connectors.size(); cId++) {
+        found |= connectors[cId].clearChargingProfile(filter);
+    }
+
+    ProfileStack *profileStacks [] = {&ChargePointMaxProfile, &ChargePointTxDefaultProfile};
+
+    for (auto stack : profileStacks) {
+        for (size_t iLevel = 0; iLevel < stack->size(); iLevel++) {
+            if (auto& profile = stack->at(iLevel)) {
+                if (filter(profile->getChargingProfileId(), 0, profile->getChargingProfilePurpose(), iLevel)) {
+                    found = true;
+                    SmartChargingServiceUtils::removeProfile(filesystem, 0, profile->getChargingProfilePurpose(), iLevel);
+                    profile.reset();
+                }
+            }
+        }
+    }
+
+    /**
+     * Invalidate the last limit inference by setting the nextChange to now. By the next loop()-call, the limit
+     * and nextChange will be recalculated and onLimitChanged will be called.
+     */
+    nextChange = context.getModel().getClock().now();
+    for (size_t i = 0; i < connectors.size(); i++) {
+        connectors[i].notifyProfilesUpdated();
+    }
+
+    return found;
+}
+
+std::unique_ptr<ChargingSchedule> SmartChargingService::getCompositeSchedule(unsigned int connectorId, int duration, ChargingRateUnitType_Optional unit) {
+
+    if (connectorId > 0 && !getScConnectorById(connectorId)) {
+        AO_DBG_ERR("invalid args");
+        return nullptr;
+    }
+    
+    if (unit == ChargingRateUnitType_Optional::None) {
+        if (powerSupported && !currentSupported) {
+            unit = ChargingRateUnitType_Optional::Watt;
+        } else if (!powerSupported && currentSupported) {
+            unit = ChargingRateUnitType_Optional::Amp;
+        }
+    }
+
+    if (connectorId > 0) {
+        return getScConnectorById(connectorId)->getCompositeSchedule(duration, unit);
+    }
+    
+    auto& startSchedule = context.getModel().getClock().now();
+
+    auto schedule = std::unique_ptr<ChargingSchedule>(new ChargingSchedule());
+    schedule->duration = duration;
+    schedule->startSchedule = startSchedule;
+    schedule->chargingProfileKind = ChargingProfileKindType::Absolute;
+    schedule->recurrencyKind = RecurrencyKindType::NOT_SET;
+
+    auto& periods = schedule->chargingSchedulePeriod;
+
+    Timestamp periodBegin = Timestamp(startSchedule);
+    Timestamp periodStop = Timestamp(startSchedule);
+
+    while (periodBegin - startSchedule < duration && periods.size() < CHARGINGSCHEDULEMAXPERIODS) {
+
+        //calculate limit
+        ChargeRate limit;
+        calculateLimit(periodBegin, limit, periodStop);
+
+        //if the unit is still unspecified, guess by taking the unit of the first limit
+        if (unit == ChargingRateUnitType_Optional::None) {
+            if (limit.power < limit.current) {
+                unit = ChargingRateUnitType_Optional::Watt;
+            } else {
+                unit = ChargingRateUnitType_Optional::Amp;
+            }
+        }
+
+        periods.push_back(ChargingSchedulePeriod());
+        float limit_opt = unit == ChargingRateUnitType_Optional::Watt ? limit.power : limit.current;
+        periods.back().limit = limit_opt != std::numeric_limits<float>::max() ? limit_opt : -1.f;
+        periods.back().numberPhases = limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1;
+        periods.back().startPeriod = periodBegin - startSchedule;
+
+        periodBegin = periodStop;
+    }
+
+    if (unit == ChargingRateUnitType_Optional::Watt) {
+        schedule->chargingRateUnit = ChargingRateUnitType::Watt;
+    } else {
+        schedule->chargingRateUnit = ChargingRateUnitType::Amp;
+    }
+
+    return schedule;
 }
 
 bool SmartChargingServiceUtils::printProfileFileName(char *out, size_t bufsize, unsigned int connectorId, ChargingProfilePurposeType purpose, unsigned int stackLevel) {
