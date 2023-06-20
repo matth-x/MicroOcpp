@@ -117,6 +117,7 @@ void setup() {
     wsockSecure.setReconnectInterval(5000);
     wsockSecure.enableHeartbeat(15000, 3000, 2);
     wsockSecure.setAuthorization(OCPP_AUTH_ID, OCPP_AUTH_KEY); // => Authorization: Basic QUwxMDAwOgABAgMEBQYH////////////////
+    
     OCPP_initialize(osockSecure, ChargerCredentials("My Charging Station", "My company name"));
 
     /*

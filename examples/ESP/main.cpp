@@ -70,7 +70,7 @@ void setup() {
         return 0.f;
     });
 
-    setSmartChargingOutput([](float limit) {
+    setSmartChargingCurrentOutput([](float limit) {
         //set the SAE J1772 Control Pilot value here
         Serial.printf("[main] Smart Charging allows maximum charge rate: %.0f\n", limit);
     });
@@ -105,8 +105,8 @@ void loop() {
     if (/* RFID chip detected? */ false) {
         String idTag = "0123456789ABCD"; //e.g. idTag = RFID.readIdTag();
 
-        if (!getTransactionIdTag()) {
-            //no idTag registered yet. Start a new transaction
+        if (!getTransaction()) {
+            //no transaction running or preparing. Begin a new transaction
             Serial.printf("[main] Begin Transaction with idTag %s\n", idTag.c_str());
 
             /*
