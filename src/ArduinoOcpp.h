@@ -260,6 +260,12 @@ bool isOperative(unsigned int connectorId = 1); //if the charge point is operati
  */
 std::shared_ptr<ArduinoOcpp::Transaction>& getTransaction(unsigned int connectorId = 1);
 
+/*
+ * Get the idTag which has been used to start the transaction. If no transaction process is
+ * running, this function returns nullptr
+ */
+const char *getTransactionIdTag(unsigned int connectorId = 1);
+
 bool isBlockedByReservation(const char *idTag, unsigned int connectorId = 1); //if the connector is already reserved for a different idTag
 
 /*

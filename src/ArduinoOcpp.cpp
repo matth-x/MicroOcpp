@@ -641,6 +641,20 @@ std::shared_ptr<Transaction>& getTransaction(unsigned int connectorId) {
     return connector->getTransaction();
 }
 
+const char *getTransactionIdTag(unsigned int connectorId) {
+    if (!context) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return nullptr;
+    }
+    auto connector = context->getModel().getConnector(connectorId);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return nullptr;
+    }
+    auto& tx = connector->getTransaction();
+    return tx ? tx->getIdTag() : nullptr;
+}
+
 bool isBlockedByReservation(const char *idTag, unsigned int connectorId) {
     if (!context) {
         AO_DBG_WARN("Please call OCPP_initialize before");
