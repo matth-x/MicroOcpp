@@ -183,10 +183,10 @@ void ao_setPowerMeterInput_m(unsigned int connectorId, InputFloat_m powerInput) 
 }
 
 void ao_setSmartChargingOutput(OutputFloat chargingLimitOutput) {
-    setSmartChargingOutput(adaptFn(chargingLimitOutput));
+    setSmartChargingPowerOutput(adaptFn(chargingLimitOutput));
 }
 void ao_setSmartChargingOutput_m(unsigned int connectorId, OutputFloat_m chargingLimitOutput) {
-    setSmartChargingOutput(adaptFn(connectorId, chargingLimitOutput), connectorId);
+    setSmartChargingPowerOutput(adaptFn(connectorId, chargingLimitOutput), connectorId);
 }
 
 void ao_setEvReadyInput(InputBool evReadyInput) {

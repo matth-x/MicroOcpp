@@ -7,7 +7,7 @@
 
 #include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Model/SmartCharging/SmartChargingModel.h>
+#include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
 
 namespace ArduinoOcpp {
 
@@ -18,13 +18,14 @@ namespace Ocpp16 {
 class GetCompositeSchedule : public Operation {
 private:
     Model& model;
-    int connectorId {-1};
-    int duration {0};
-    ChargingRateUnitType chargingRateUnit {ChargingRateUnitType::Watt};
+    SmartChargingService& scService;
+    int connectorId = -1;
+    int duration = -1;
+    ChargingRateUnitType_Optional chargingRateUnit = ChargingRateUnitType_Optional::None;
 
     const char *errorCode {nullptr};
 public:
-    GetCompositeSchedule(Model& model);
+    GetCompositeSchedule(Model& model, SmartChargingService& scService);
 
     const char* getOperationType();
 

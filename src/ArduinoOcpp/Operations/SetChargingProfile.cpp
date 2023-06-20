@@ -5,16 +5,13 @@
 #include <ArduinoOcpp/Operations/SetChargingProfile.h>
 #include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::SetChargingProfile;
 
-SetChargingProfile::SetChargingProfile(Model& model) : model(model) {
+SetChargingProfile::SetChargingProfile(Model& model, SmartChargingService& scService) : model(model), scService(scService) {
 
-}
-
-SetChargingProfile::SetChargingProfile(Model& model, std::unique_ptr<DynamicJsonDocument> payloadToClient)
-        : model(model), payloadToClient{std::move(payloadToClient)} {
 }
 
 SetChargingProfile::~SetChargingProfile() {
@@ -27,33 +24,64 @@ const char* SetChargingProfile::getOperationType(){
 
 void SetChargingProfile::processReq(JsonObject payload) {
 
-    //int connectorID = payload["connectorId"];
+    int connectorId = payload["connectorId"] | -1;
+    if (connectorId < 0 || !payload.containsKey("csChargingProfiles")) {
+        errorCode = "FormationViolation";
+        return;
+    }
+
+    if ((unsigned int) connectorId >= model.getNumConnectors()) {
+        errorCode = "PropertyConstraintViolation";
+        return;
+    }
 
     JsonObject csChargingProfiles = payload["csChargingProfiles"];
 
-    if (auto scService = model.getSmartChargingService()) {
-        scService->setChargingProfile(csChargingProfiles);
+    auto chargingProfile = loadChargingProfile(csChargingProfiles);
+    if (!chargingProfile) {
+        errorCode = "PropertyConstraintViolation";
+        errorDescription = "csChargingProfiles validation failed";
+        return;
     }
+
+    if (chargingProfile->getChargingProfilePurpose() == ChargingProfilePurposeType::TxProfile) {
+        // if TxProfile, check if a transaction is running
+
+        if (connectorId == 0) {
+            errorCode = "PropertyConstraintViolation";
+            errorDescription = "Cannot set TxProfile at connectorId 0";
+            return;
+        }
+        Connector *connector = model.getConnector(connectorId);
+        if (!connector) {
+            errorCode = "PropertyConstraintViolation";
+            return;
+        }
+        if (!connector->getTransaction() || !connector->getTransaction()->isRunning()) {
+            //no transaction running, reject profile
+            accepted = false;
+            return;
+        }
+
+        //seems good
+    } else if (chargingProfile->getChargingProfilePurpose() == ChargingProfilePurposeType::ChargePointMaxProfile) {
+        if (connectorId > 0) {
+            errorCode = "PropertyConstraintViolation";
+            errorDescription = "Cannot set ChargePointMaxProfile at connectorId > 0";
+            return;
+        }
+    }
+
+    accepted = scService.setChargingProfile(connectorId, std::move(chargingProfile));
 }
 
-std::unique_ptr<DynamicJsonDocument> SetChargingProfile::createConf(){ //TODO review
+std::unique_ptr<DynamicJsonDocument> SetChargingProfile::createConf(){
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
-    payload["status"] = "Accepted";
+    if (accepted) {
+        payload["status"] = "Accepted";
+    } else {
+        payload["status"] = "Rejected";
+    }
     return doc;
-}
-
-std::unique_ptr<DynamicJsonDocument> SetChargingProfile::createReq() {
-    if (payloadToClient != nullptr) {
-        auto result = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(*payloadToClient));
-        return result;
-    }
-    return nullptr;
-}
-
-void SetChargingProfile::processConf(JsonObject payload) {
-    const char* status = payload["status"] | "Invalid";
-    if (strcmp(status, "Accepted")) {
-        AO_DBG_WARN("Send profile: rejected by client");
-    }
 }

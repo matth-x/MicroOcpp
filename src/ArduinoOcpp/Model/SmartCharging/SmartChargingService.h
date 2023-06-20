@@ -5,60 +5,117 @@
 #ifndef SMARTCHARGINGSERVICE_H
 #define SMARTCHARGINGSERVICE_H
 
-#define CHARGEPROFILEMAXSTACKLEVEL 8
-#define CHARGINGSCHEDULEMAXPERIODS 24
-#define MAXCHARGINGPROFILESINSTALLED 10
+#include <functional>
+#include <array>
 
 #include <ArduinoJson.h>
-#include <functional>
 
 #include <ArduinoOcpp/Model/SmartCharging/SmartChargingModel.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/Time.h>
+#include <ArduinoOcpp/Core/FilesystemAdapter.h>
 
 namespace ArduinoOcpp {
 
-using OnLimitChange = std::function<void(float)>;
+enum class ChargingRateUnitType_Optional {
+    Watt,
+    Amp,
+    None
+};
 
 class Context;
+class Model;
+
+using ProfileStack = std::array<std::unique_ptr<ChargingProfile>, CHARGEPROFILEMAXSTACKLEVEL + 1>;
+
+class SmartChargingConnector {
+private:
+    Model& model;
+    std::shared_ptr<FilesystemAdapter> filesystem;
+    const unsigned int connectorId;
+
+    ProfileStack& ChargePointMaxProfile;
+    ProfileStack& ChargePointTxDefaultProfile;
+    ProfileStack TxDefaultProfile;
+    ProfileStack TxProfile;
+
+    std::function<void(float,float,int)> limitOutput;
+
+    int trackTxRmtProfileId = -1; //optional Charging Profile ID when tx is started via RemoteStartTx
+    Timestamp trackTxStart = MAX_TIME; //time basis for relative profiles
+    int trackTxId = -1; //transactionId assigned by OCPP server
+
+    Timestamp nextChange = MIN_TIME;
+
+    ChargeRate trackLimitOutput;
+
+public:
+    SmartChargingConnector(Model& model, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ProfileStack& ChargePointMaxProfile, ProfileStack& ChargePointTxDefaultProfile);
+    SmartChargingConnector(SmartChargingConnector&&) = default;
+    ~SmartChargingConnector();
+
+    void loop();
+
+    void setSmartChargingOutput(std::function<void(float,float,int)> limitOutput); //read maximum Watt x Amps x numberPhases
+
+    void calculateLimit(const Timestamp &t, ChargeRate& limitOut, Timestamp& validToOut);
+
+    void trackTransaction();
+
+    ChargingProfile *updateProfiles(std::unique_ptr<ChargingProfile> chargingProfile);
+
+    void notifyProfilesUpdated();
+
+    bool clearChargingProfile(std::function<bool(int, int, ChargingProfilePurposeType, int)> filter);
+
+    std::unique_ptr<ChargingSchedule> getCompositeSchedule(int duration, ChargingRateUnitType_Optional unit);
+
+    size_t getChargingProfilesCount();
+};
 
 class SmartChargingService {
 private:
     Context& context;
+    std::shared_ptr<FilesystemAdapter> filesystem;
+    std::vector<SmartChargingConnector> connectors; //connectorId 0 excluded
+    SmartChargingConnector *getScConnectorById(unsigned int connectorId);
+    unsigned int numConnectors; //connectorId 0 included
     
-    const float DEFAULT_CHARGE_LIMIT;
-    const float V_eff; //use for approximation: chargingLimit in A * V_eff = chargingLimit in W
-    ChargingProfile *ChargePointMaxProfile[CHARGEPROFILEMAXSTACKLEVEL];
-    ChargingProfile *TxDefaultProfile[CHARGEPROFILEMAXSTACKLEVEL];
-    ChargingProfile *TxProfile[CHARGEPROFILEMAXSTACKLEVEL];
-    OnLimitChange onLimitChange = NULL;
-    float limitBeforeChange;
-    Timestamp nextChange;
+    ProfileStack ChargePointMaxProfile;
+    ProfileStack ChargePointTxDefaultProfile;
 
-    bool chargingSessionStateInitialized {false};
-    std::shared_ptr<Configuration<const char*>> txStartTime;
-    Timestamp chargingSessionStart;
-    int chargingSessionTransactionID;
-    std::shared_ptr<Configuration<int>> sRmtProfileId;
-    uint16_t sRmtProfileIdRev {0};
-    uint16_t sessionIdTagRev {0};
-    void refreshChargingSessionState();
+    std::function<void(float,float,int)> limitOutput;
+    ChargeRate trackLimitOutput;
+    bool powerSupported = false;
+    bool currentSupported = false;
 
-    ChargingProfile *updateProfileStack(JsonObject json);
-    FilesystemOpt filesystemOpt;
-    bool writeProfileToFlash(JsonObject json, ChargingProfile *chargingProfile);
+    Timestamp nextChange = MIN_TIME;
+
+    ChargingProfile *updateProfiles(unsigned int connectorId, std::unique_ptr<ChargingProfile> chargingProfile);
     bool loadProfiles();
   
 public:
-    SmartChargingService(Context& context, float chargeLimit, float V_eff, int numConnectors, FilesystemOpt filesystemOpt = FilesystemOpt::Use_Mount_FormatOnFail);
-    void setChargingProfile(JsonObject json);
-    bool clearChargingProfile(const std::function<bool(int, int, ChargingProfilePurposeType, int)>& filter);
-    void inferenceLimit(const Timestamp &t, float *limit, Timestamp *validTo);
-    float inferenceLimitNow();
-    void setOnLimitChange(OnLimitChange onLimitChange);
-    ChargingSchedule *getCompositeSchedule(int connectorId, int duration);
+    SmartChargingService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int numConnectors);
+    ~SmartChargingService();
+
+    void setSmartChargingOutput(unsigned int connectorId, std::function<void(float,float,int)> limitOutput); //read maximum Watt x Amps x numberPhases
+    void updateAllowedChargingRateUnit(bool powerSupported, bool currentSupported); //set supported measurand of SmartChargingOutput
+
+    bool setChargingProfile(unsigned int connectorId, std::unique_ptr<ChargingProfile> chargingProfile);
+
+    bool clearChargingProfile(std::function<bool(int, int, ChargingProfilePurposeType, int)> filter);
+    void calculateLimit(const Timestamp &t, ChargeRate& limitOut, Timestamp& validToOut);
+    std::unique_ptr<ChargingSchedule> getCompositeSchedule(unsigned int connectorId, int duration, ChargingRateUnitType_Optional unit = ChargingRateUnitType_Optional::None);
     void loop();
 };
 
+//filesystem-related helper functions
+namespace SmartChargingServiceUtils {
+bool printProfileFileName(char *out, size_t bufsize, unsigned int connectorId, ChargingProfilePurposeType purpose, unsigned int stackLevel);
+bool storeProfile(std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ChargingProfile *chargingProfile);
+bool removeProfile(std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ChargingProfilePurposeType purpose, unsigned int stackLevel);
+}
+
 } //end namespace ArduinoOcpp
+
 #endif

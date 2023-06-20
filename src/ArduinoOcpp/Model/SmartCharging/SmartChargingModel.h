@@ -5,10 +5,17 @@
 #ifndef SMARTCHARGINGMODEL_H
 #define SMARTCHARGINGMODEL_H
 
-#include <ArduinoJson.h>
-#include <ArduinoOcpp/Core/Time.h>
+#define CHARGEPROFILEMAXSTACKLEVEL 8
+#define CHARGINGSCHEDULEMAXPERIODS 24
+#define MAXCHARGINGPROFILESINSTALLED 10
+
 #include <memory>
 #include <vector>
+#include <limits>
+
+#include <ArduinoJson.h>
+
+#include <ArduinoOcpp/Core/Time.h>
 
 namespace ArduinoOcpp {
 
@@ -35,36 +42,41 @@ enum class ChargingRateUnitType {
     Amp
 };
 
+struct ChargeRate {
+    float power = std::numeric_limits<float>::max();
+    float current = std::numeric_limits<float>::max();
+    int nphases = std::numeric_limits<int>::max();
+
+    bool operator==(const ChargeRate& rhs) {
+        return power == rhs.power &&
+               current == rhs.current &&
+               nphases == rhs.nphases;
+    }
+    bool operator!=(const ChargeRate& rhs) {
+        return !(*this == rhs);
+    }
+};
+
+//returns a new vector with the minimum of each component
+ChargeRate chargeRate_min(const ChargeRate& a, const ChargeRate& b);
+
 class ChargingSchedulePeriod {
-private:
-    int startPeriod;
-    float limit; //one fractural digit at most
-    int numberPhases = -1;
 public:
-    ChargingSchedulePeriod(JsonObject &json);
-    ChargingSchedulePeriod(int startPeriod, float limit);
-    int getStartPeriod();
-    float getLimit();
-    void scale(float factor);
-    void add(float value);
-    int getNumberPhases();
-    void printPeriod();
+    int startPeriod;
+    float limit;
+    int numberPhases = 3;
 };
 
 class ChargingSchedule {
-private:
+public:
     int duration = -1;
     Timestamp startSchedule;
     ChargingRateUnitType chargingRateUnit;
-    std::vector<std::unique_ptr<ChargingSchedulePeriod>> chargingSchedulePeriod;
+    std::vector<ChargingSchedulePeriod> chargingSchedulePeriod;
     float minChargingRate = -1.0f;
 
     ChargingProfileKindType chargingProfileKind; //copied from ChargingProfile to increase cohesion of limit inferencing methods
-    RecurrencyKindType recurrencyKind; //copied from ChargingProfile to increase cohesion of limit inferencing methods
-public:
-    ChargingSchedule(JsonObject &json, ChargingProfileKindType chargingProfileKind, RecurrencyKindType recurrencyKind);
-    ChargingSchedule(ChargingSchedule &other);
-    ChargingSchedule(const Timestamp &startSchedule, int duration);
+    RecurrencyKindType recurrencyKind = RecurrencyKindType::NOT_SET; //copied from ChargingProfile to increase cohesion of limit inferencing methods
 
     /**
      * limit: output parameter
@@ -74,14 +86,9 @@ public:
      *       if true, limit and nextChange will be set according to this Schedule
      *       if false, only nextChange will be set
      */
-    bool inferenceLimit(const Timestamp &t, const Timestamp &startOfCharging, float *limit, Timestamp *nextChange);
+    bool calculateLimit(const Timestamp &t, const Timestamp &startOfCharging, ChargeRate& limit, Timestamp& nextChange);
 
-    bool addChargingSchedulePeriod(std::unique_ptr<ChargingSchedulePeriod> period);
-
-    void scale(float factor);
-    void translate(float offset);
-
-    DynamicJsonDocument *toJsonDocument();
+    bool toJson(DynamicJsonDocument& out);
 
     /*
     * print on console
@@ -90,7 +97,7 @@ public:
 };
 
 class ChargingProfile {
-private:
+public:
     int chargingProfileId = -1;
     int transactionId = -1;
     int stackLevel = 0;
@@ -99,9 +106,7 @@ private:
     RecurrencyKindType recurrencyKind {RecurrencyKindType::NOT_SET}; // copied to ChargingSchedule to increase cohesion
     Timestamp validFrom;
     Timestamp validTo;
-    std::unique_ptr<ChargingSchedule> chargingSchedule;
-public:
-    ChargingProfile(JsonObject &json);
+    ChargingSchedule chargingSchedule;
 
     /**
      * limit: output parameter
@@ -111,23 +116,20 @@ public:
      *       if true, limit and nextChange will be set according to this Schedule
      *       if false, only nextChange will be set
      */
-    bool inferenceLimit(const Timestamp &t, const Timestamp &startOfCharging, float *limit, Timestamp *nextChange);
+    bool calculateLimit(const Timestamp &t, const Timestamp &startOfCharging, ChargeRate& limit, Timestamp& nextChange);
 
     /*
     * Simpler function if startOfCharging is not available. Caution: This likely will differ from inference with startOfCharging
     */
-    bool inferenceLimit(const Timestamp &t, float *limit, Timestamp *nextChange);
+    bool calculateLimit(const Timestamp &t, ChargeRate& limit, Timestamp& nextChange);
 
-    /*
-    * Check if this profile belongs to transaction with ID txId or idTag alternatively
-    */
-    bool checkTransactionAssignment(int txId, int profileId);
-
+    int getChargingProfileId();
+    int getTransactionId();
     int getStackLevel();
     
     ChargingProfilePurposeType getChargingProfilePurpose();
 
-    int getChargingProfileId();
+    bool toJson(DynamicJsonDocument& out);
 
     /*
     * print on console
@@ -135,5 +137,10 @@ public:
     void printProfile();
 };
 
+std::unique_ptr<ChargingProfile> loadChargingProfile(JsonObject& json);
+
+bool loadChargingSchedule(JsonObject& json, ChargingSchedule& out);
+
 } //end namespace ArduinoOcpp
+
 #endif

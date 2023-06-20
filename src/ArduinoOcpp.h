@@ -198,7 +198,11 @@ void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connec
 
 void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId = 1); //Input of the power meter reading
 
-void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId = 1); //Output for the Smart Charging limit
+//Smart Charging Output, alternative for Watts only, Current only, or Watts x Current x numberPhases. Only one
+//of them can be set at a time
+void setSmartChargingPowerOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId = 1); //Output (in Watts) for the Smart Charging limit
+void setSmartChargingCurrentOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId = 1); //Output (in Amps) for the Smart Charging limit
+void setSmartChargingOutput(std::function<void(float,float,int)> chargingLimitOutput, unsigned int connectorId = 1); //Output (in Watts, Amps, numberPhases) for the Smart Charging limit
 
 /*
  * Define the Inputs and Outputs of this library. (Advanced)

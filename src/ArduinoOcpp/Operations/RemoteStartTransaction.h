@@ -11,6 +11,7 @@
 namespace ArduinoOcpp {
 
 class Model;
+class ChargingProfile;
 
 namespace Ocpp16 {
 
@@ -19,9 +20,11 @@ private:
     Model& model;
     int connectorId;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
-    DynamicJsonDocument chargingProfileDoc {0};
+
+    std::unique_ptr<ChargingProfile> chargingProfile;
     
     const char *errorCode {nullptr};
+    const char *errorDescription = "";
 public:
     RemoteStartTransaction(Model& model);
 
@@ -36,6 +39,7 @@ public:
     std::unique_ptr<DynamicJsonDocument> createConf();
 
     const char *getErrorCode() {return errorCode;}
+    const char *getErrorDescription() override {return errorDescription;}
 };
 
 } //end namespace Ocpp16

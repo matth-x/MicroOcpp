@@ -371,21 +371,84 @@ void setPowerMeterInput(std::function<float()> powerInput, unsigned int connecto
     model.getMeteringService()->addMeterValueSampler(connectorId, std::move(mvs));
 }
 
-void setSmartChargingOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId) {
+void setSmartChargingPowerOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
     }
-    if (connectorId != 1) {
-        AO_DBG_WARN("Only one connector supported at the moment for Smart Charging");
+    if (!context->getModel().getConnector(connectorId)) {
+        AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
-    auto& model = context->getModel();
-    if (!model.getSmartChargingService()) {
-        model.setSmartChargingService(std::unique_ptr<SmartChargingService>(
-            new SmartChargingService(*context, -1.f, voltage_eff, AO_NUMCONNECTORS, fileSystemOpt))); //default charging limit: 11kW
+
+    if (chargingLimitOutput) {
+        setSmartChargingOutput([chargingLimitOutput] (float power, float current, int nphases) -> void {
+            chargingLimitOutput(power);
+        }, connectorId);
+    } else {
+        setSmartChargingOutput(nullptr, connectorId);
     }
-    model.getSmartChargingService()->setOnLimitChange(chargingLimitOutput);
+
+    if (auto scService = context->getModel().getSmartChargingService()) {
+        if (chargingLimitOutput) {
+            scService->updateAllowedChargingRateUnit(true, false);
+        } else {
+            scService->updateAllowedChargingRateUnit(false, false);
+        }
+    }
+}
+
+void setSmartChargingCurrentOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId) {
+    if (!context) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+    if (!context->getModel().getConnector(connectorId)) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return;
+    }
+
+    if (chargingLimitOutput) {
+        setSmartChargingOutput([chargingLimitOutput] (float power, float current, int nphases) -> void {
+            chargingLimitOutput(current);
+        }, connectorId);
+    } else {
+        setSmartChargingOutput(nullptr, connectorId);
+    }
+
+    if (auto scService = context->getModel().getSmartChargingService()) {
+        if (chargingLimitOutput) {
+            scService->updateAllowedChargingRateUnit(false, true);
+        } else {
+            scService->updateAllowedChargingRateUnit(false, false);
+        }
+    }
+}
+
+void setSmartChargingOutput(std::function<void(float,float,int)> chargingLimitOutput, unsigned int connectorId) {
+    if (!context) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+    if (!context->getModel().getConnector(connectorId)) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return;
+    }
+
+    auto& model = context->getModel();
+    if (!model.getSmartChargingService() && chargingLimitOutput) {
+        model.setSmartChargingService(std::unique_ptr<SmartChargingService>(
+            new SmartChargingService(*context, filesystem, AO_NUMCONNECTORS)));
+    }
+
+    if (auto scService = context->getModel().getSmartChargingService()) {
+        scService->setSmartChargingOutput(connectorId, chargingLimitOutput);
+        if (chargingLimitOutput) {
+            scService->updateAllowedChargingRateUnit(true, true);
+        } else {
+            scService->updateAllowedChargingRateUnit(false, false);
+        }
+    }
 }
 
 void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorId) {

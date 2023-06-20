@@ -4,15 +4,12 @@
 
 #include <ArduinoOcpp/Operations/GetCompositeSchedule.h>
 #include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Debug.h>
 
-#include <functional>
-
 using ArduinoOcpp::Ocpp16::GetCompositeSchedule;
 
-GetCompositeSchedule::GetCompositeSchedule(Model& model) : model(model) {
+GetCompositeSchedule::GetCompositeSchedule(Model& model, SmartChargingService& scService) : model{model}, scService{scService} {
 
 }
 
@@ -34,63 +31,46 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
         errorCode = "PropertyConstraintViolation";
     }
 
-    auto unitString =  payload["chargingRateUnit"] | "W";
+    const char *unitStr =  payload["chargingRateUnit"] | "_Undefined";
 
-    if (unitString[0] == 'A' || unitString[0] == 'a') {
-        chargingRateUnit = ChargingRateUnitType::Amp;
-    } else if (unitString[0] == 'W' || unitString[0] == 'w') {
-        chargingRateUnit = ChargingRateUnitType::Watt;
-    } else {
-        errorCode = "PropertyConstraintViolation";
-    }
-
-    if (!model.getSmartChargingService()) {
-        AO_DBG_ERR("SmartChargingService not initialized! Ignore request");
-        errorCode = "NotSupported";
+    if (unitStr[0] == 'A' || unitStr[0] == 'a') {
+        chargingRateUnit = ChargingRateUnitType_Optional::Amp;
+    } else if (unitStr[0] == 'W' || unitStr[0] == 'w') {
+        chargingRateUnit = ChargingRateUnitType_Optional::Watt;
     }
 }
 
 std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
-    auto scService = model.getSmartChargingService();
-    if (!scService) {
-        AO_DBG_ERR("invalid state");
-        return createEmptyDocument();
+
+    bool success = false;
+
+    auto chargingSchedule = scService.getCompositeSchedule((unsigned int) connectorId, duration, chargingRateUnit);
+    DynamicJsonDocument chargingScheduleDoc {0};
+
+    if (chargingSchedule) {
+        success = chargingSchedule->toJson(chargingScheduleDoc);
     }
 
-    ChargingSchedule *composite = scService->getCompositeSchedule((unsigned int) connectorId, duration);
-    DynamicJsonDocument *compositeJson {nullptr};
+    char scheduleStart_str [JSONDATE_LENGTH + 1] = {'\0'};
 
-    if (composite) {
-        compositeJson = composite->toJsonDocument();
+    if (success && chargingSchedule) {
+        success = chargingSchedule->startSchedule.toJsonString(scheduleStart_str, JSONDATE_LENGTH + 1);
     }
 
-    std::unique_ptr<DynamicJsonDocument> doc;
-
-    if (compositeJson) {
-        doc.reset(new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + JSONDATE_LENGTH + 1 + compositeJson->capacity()));
+    if (success && chargingSchedule) {
+        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+                        JSON_OBJECT_SIZE(4) +
+                        chargingScheduleDoc.memoryUsage()));
         JsonObject payload = doc->to<JsonObject>();
         payload["status"] = "Accepted";
-        if (connectorId > 0)
-            payload["connectorId"] = connectorId;
-
-        char scheduleStart [JSONDATE_LENGTH + 1] {'\0'};
-        auto startSchedule = (*compositeJson)["startSchedule"] | "";
-        if (startSchedule[0] != '\0') {
-            strncpy(scheduleStart, startSchedule, JSONDATE_LENGTH + 1);
-        } else {
-            model.getClock().now().toJsonString(scheduleStart, JSONDATE_LENGTH + 1);
-        }
-        payload["scheduleStart"] = scheduleStart;
-        
-        payload["chargingSchedule"] = *compositeJson;
+        payload["connectorId"] = connectorId;
+        payload["scheduleStart"] = scheduleStart_str;
+        payload["chargingSchedule"] = chargingScheduleDoc;
+        return doc;
     } else {
-        doc.reset(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
         JsonObject payload = doc->to<JsonObject>();
         payload["status"] = "Rejected";
+        return doc;
     }
-
-    delete compositeJson;
-    delete composite;
-
-    return doc;
 }

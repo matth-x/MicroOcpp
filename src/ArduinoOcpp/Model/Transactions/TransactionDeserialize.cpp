@@ -86,7 +86,7 @@ bool serializeTransaction(Transaction& tx, DynamicJsonDocument& out) {
         txStop["idTag"] = tx.getStopIdTag();
     }
 
-    if (tx.isMeterStopDefined() >= 0) {
+    if (tx.isMeterStopDefined()) {
         txStop["meter"] = tx.getMeterStop();
     }
 

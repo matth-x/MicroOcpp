@@ -3,7 +3,6 @@
 // MIT License
 
 #include <ArduinoOcpp/Operations/ClearChargingProfile.h>
-#include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Debug.h>
 
@@ -11,7 +10,7 @@
 
 using ArduinoOcpp::Ocpp16::ClearChargingProfile;
 
-ClearChargingProfile::ClearChargingProfile(Model& model) : model(model) {
+ClearChargingProfile::ClearChargingProfile(SmartChargingService& scService) : scService{scService} {
 
 }
 
@@ -25,13 +24,17 @@ void ClearChargingProfile::processReq(JsonObject payload) {
             (int chargingProfileId, int connectorId, ChargingProfilePurposeType chargingProfilePurpose, int stackLevel) {
         
         if (payload.containsKey("id")) {
-            if (chargingProfileId != (payload["id"] | -1)) {
+            if (chargingProfileId == (payload["id"] | -1)) {
+                return true;
+            } else {
                 return false;
             }
         }
 
         if (payload.containsKey("connectorId")) {
-            AO_DBG_WARN("Smart Charging does not implement multiple connectors yet. Ignore connectorId");
+            if (connectorId != (payload["connectorId"] | -1)) {
+                return false;
+            }
         }
 
         if (payload.containsKey("chargingProfilePurpose")) {
@@ -63,12 +66,7 @@ void ClearChargingProfile::processReq(JsonObject payload) {
         return true;
     };
 
-    if (auto scService = model.getSmartChargingService()) {
-        matchingProfilesFound = scService->clearChargingProfile(filter);
-    } else {
-        AO_DBG_ERR("SmartChargingService not initialized");
-        errorCode = "NotSupported";
-    }
+    matchingProfilesFound = scService.clearChargingProfile(filter);
 }
 
 std::unique_ptr<DynamicJsonDocument> ClearChargingProfile::createConf(){

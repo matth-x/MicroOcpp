@@ -116,6 +116,7 @@ set(AO_SRC_UNIT
     tests/TransactionSafety.cpp
     tests/ChargingSessions.cpp
     tests/ConfigurationBehavior.cpp
+    tests/SmartCharging.cpp
 )
 
 add_executable(ao_unit_tests

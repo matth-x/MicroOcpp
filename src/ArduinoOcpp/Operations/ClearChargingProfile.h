@@ -9,17 +9,17 @@
 
 namespace ArduinoOcpp {
 
-class Model;
+class SmartChargingService;
 
 namespace Ocpp16 {
 
 class ClearChargingProfile : public Operation {
 private:
-    Model& model;
+    SmartChargingService& scService;
     bool matchingProfilesFound = false;
     const char *errorCode;
 public:
-    ClearChargingProfile(Model& model);
+    ClearChargingProfile(SmartChargingService& scService);
 
     const char* getOperationType();
 

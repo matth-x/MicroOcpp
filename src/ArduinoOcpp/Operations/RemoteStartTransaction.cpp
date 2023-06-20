@@ -5,9 +5,9 @@
 
 #include <ArduinoOcpp/Operations/RemoteStartTransaction.h>
 #include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Model/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::RemoteStartTransaction;
@@ -23,28 +23,44 @@ const char* RemoteStartTransaction::getOperationType() {
 void RemoteStartTransaction::processReq(JsonObject payload) {
     connectorId = payload["connectorId"] | -1;
 
-    const char *idTagIn = payload["idTag"] | "";
-    size_t len = strnlen(idTagIn, IDTAG_LEN_MAX + 2);
-    if (len <= IDTAG_LEN_MAX) {
-        snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
-    }
-
-    if (*idTag == '\0') {
-        AO_DBG_WARN("idTag format violation");
+    if (!payload.containsKey("idTag")) {
         errorCode = "FormationViolation";
+        return;
     }
 
-    if (payload.containsKey("chargingProfile")) {
+    const char *idTagIn = payload["idTag"] | "";
+    size_t len = strnlen(idTagIn, IDTAG_LEN_MAX + 1);
+    if (len > 0 && len <= IDTAG_LEN_MAX) {
+        snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
+    } else {
+        errorCode = "PropertyConstraintViolation";
+        errorDescription = "idTag empty or too long";
+        return;
+    }
+
+    if (payload.containsKey("chargingProfile") && model.getSmartChargingService()) {
         AO_DBG_INFO("Setting Charging profile via RemoteStartTransaction");
 
-        JsonObject chargingProfile = payload["chargingProfile"];
-        if ((chargingProfile["chargingProfileId"] | -1) < 0) {
-            AO_DBG_WARN("RemoteStartTx profile requires non-negative chargingProfileId");
-            errorCode = chargingProfile.containsKey("chargingProfileId") ? 
-                        "PropertyConstraintViolation" : "FormationViolation";
+        JsonObject chargingProfileJson = payload["chargingProfile"];
+        chargingProfile = loadChargingProfile(chargingProfileJson);
+
+        if (!chargingProfile) {
+            errorCode = "PropertyConstraintViolation";
+            errorDescription = "chargingProfile validation failed";
+            return;
         }
-        chargingProfileDoc = DynamicJsonDocument(chargingProfile.memoryUsage()); //copy TxProfile
-        chargingProfileDoc.set(chargingProfile);
+
+        if (chargingProfile->getChargingProfilePurpose() != ChargingProfilePurposeType::TxProfile) {
+            errorCode = "PropertyConstraintViolation";
+            errorDescription = "Can only set TxProfile here";
+            return;
+        }
+
+        if (chargingProfile->getChargingProfileId() < 0) {
+            errorCode = "PropertyConstraintViolation";
+            errorDescription = "RemoteStartTx profile requires non-negative chargingProfileId";
+            return;
+        }
     }
 }
 
@@ -52,14 +68,14 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
     
-    bool canStartTransaction = false;
+    Connector *selectConnector = nullptr;
     if (connectorId >= 1) {
         //connectorId specified for given connector, try to start Transaction here
         if (auto connector = model.getConnector(connectorId)){
             if (connector->getTransactionId() < 0 &&
                         connector->getAvailability() == AVAILABILITY_OPERATIVE &&
-                        connector->getSessionIdTag() == nullptr) {
-                canStartTransaction = true;
+                        !connector->getTransaction()) {
+                selectConnector = connector;
             }
         }
     } else {
@@ -68,49 +84,41 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
             auto connector = model.getConnector(cid);
             if (connector->getTransactionId() < 0 && 
                         connector->getAvailability() == AVAILABILITY_OPERATIVE &&
-                        connector->getSessionIdTag() == nullptr) {
-                canStartTransaction = true;
+                        !connector->getTransaction()) {
+                selectConnector = connector;
                 connectorId = cid;
                 break;
             }
         }
     }
 
-    if (canStartTransaction) {
+    if (selectConnector) {
 
-        auto sRmtProfileId = declareConfiguration<int>("AO_SRMTPROFILEID_CONN_1", -1, AO_KEYVALUE_FN, false, false, true, false);
+        bool success = true;
 
-        if (auto scService = model.getSmartChargingService()) {
+        int chargingProfileId = -1; //keep Id after moving charging profile to SCService
 
-            if (*sRmtProfileId >= 0) {
-                int clearProfileId = *sRmtProfileId;
-                bool ret = scService->clearChargingProfile([clearProfileId](int id, int, ChargingProfilePurposeType, int) {
-                    return id == clearProfileId;
-                });
-                (void)ret;
+        if (chargingProfile && model.getSmartChargingService()) {
+            chargingProfileId = chargingProfile->getChargingProfileId();
+            success = model.getSmartChargingService()->setChargingProfile(connectorId, std::move(chargingProfile));
+        }
 
-                *sRmtProfileId = -1;
-                AO_DBG_DEBUG("Cleared Charging Profile from previous RemoteStartTx: %s", ret ? "success" : "already cleared");
-                configuration_save();
+        if (success) {
+            auto tx = selectConnector->beginTransaction_authorized(idTag);
+            if (tx) {
+                if (chargingProfileId >= 0) {
+                    tx->setTxProfileId(chargingProfileId);
+                }
+            } else {
+                success = false;
             }
         }
 
-        if (auto connector = model.getConnector(connectorId)) {
-            connector->beginTransaction_authorized(idTag);
+        if (success) {
+            payload["status"] = "Accepted";
+        } else {
+            payload["status"] = "Rejected";
         }
-
-        if (!chargingProfileDoc.isNull()
-                && (model.getSmartChargingService())) {
-            auto scService = model.getSmartChargingService();
-
-            JsonObject chargingProfile = chargingProfileDoc.as<JsonObject>();
-            scService->setChargingProfile(chargingProfile);
-            *sRmtProfileId = chargingProfile["chargingProfileId"].as<int>();
-            AO_DBG_DEBUG("Charging Profile from RemoteStartTx set");
-            configuration_save();
-        }
-
-        payload["status"] = "Accepted";
     } else {
         AO_DBG_INFO("No connector to start transaction");
         payload["status"] = "Rejected";
@@ -123,7 +131,7 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createReq() {
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
 
-    payload["idTag"] = "A0-00-00-00";
+    payload["idTag"] = "A0000000";
 
     return doc;
 }

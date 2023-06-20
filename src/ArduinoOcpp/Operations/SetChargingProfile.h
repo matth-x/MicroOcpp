@@ -10,17 +10,20 @@
 namespace ArduinoOcpp {
 
 class Model;
+class SmartChargingService;
 
 namespace Ocpp16 {
 
 class SetChargingProfile : public Operation {
 private:
     Model& model;
-    std::unique_ptr<DynamicJsonDocument> payloadToClient;
-public:
-    SetChargingProfile(Model& model);
+    SmartChargingService& scService;
 
-    SetChargingProfile(Model& model, std::unique_ptr<DynamicJsonDocument> payloadToClient);
+    bool accepted = false;
+    const char *errorCode = nullptr;
+    const char *errorDescription = "";
+public:
+    SetChargingProfile(Model& model, SmartChargingService& scService);
 
     ~SetChargingProfile();
 
@@ -30,9 +33,8 @@ public:
 
     std::unique_ptr<DynamicJsonDocument> createConf();
 
-    std::unique_ptr<DynamicJsonDocument> createReq();
-
-    void processConf(JsonObject payload);
+    const char *getErrorCode() override {return errorCode;}
+    const char *getErrorDescription() override {return errorDescription;}
 };
 
 } //end namespace Ocpp16
