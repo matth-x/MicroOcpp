@@ -10,7 +10,7 @@
 
 using ArduinoOcpp::Ocpp16::ClearChargingProfile;
 
-ClearChargingProfile::ClearChargingProfile(SmartChargingService& scService) : scService{scService} {
+ClearChargingProfile::ClearChargingProfile(SmartChargingService& scService) : scService(scService) {
 
 }
 
