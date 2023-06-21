@@ -9,6 +9,16 @@
 #include <memory>
 #include <string>
 
+#include <ArduinoOcpp/Platform.h>
+
+//On all platforms other than Arduino, the integrated WS lib (links2004/arduinoWebSockets) cannot be
+//used. On Arduino it's usage is optional.
+#ifndef AO_CUSTOM_WS
+#if AO_PLATFORM != AO_PLATFORM_ARDUINO
+#define AO_CUSTOM_WS
+#endif
+#endif //ndef AO_CUSTOM_WS
+
 namespace ArduinoOcpp {
 
 using ReceiveTXTcallback = std::function<bool(const char*, size_t)>;

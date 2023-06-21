@@ -9,7 +9,7 @@
 
 using ArduinoOcpp::Ocpp16::GetCompositeSchedule;
 
-GetCompositeSchedule::GetCompositeSchedule(Model& model, SmartChargingService& scService) : model{model}, scService{scService} {
+GetCompositeSchedule::GetCompositeSchedule(Model& model, SmartChargingService& scService) : model(model), scService(scService) {
 
 }
 

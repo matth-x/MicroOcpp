@@ -16,7 +16,7 @@
 using namespace::ArduinoOcpp;
 
 SmartChargingConnector::SmartChargingConnector(Model& model, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ProfileStack& ChargePointMaxProfile, ProfileStack& ChargePointTxDefaultProfile) :
-        model{model}, filesystem{filesystem}, connectorId{connectorId}, ChargePointMaxProfile{ChargePointMaxProfile}, ChargePointTxDefaultProfile{ChargePointTxDefaultProfile} {
+        model(model), filesystem{filesystem}, connectorId{connectorId}, ChargePointMaxProfile(ChargePointMaxProfile), ChargePointTxDefaultProfile(ChargePointTxDefaultProfile) {
     
 }
 
@@ -711,7 +711,7 @@ bool SmartChargingServiceUtils::printProfileFileName(char *out, size_t bufsize, 
             break;
     }
 
-    if (pret < 0 || pret >= bufsize) {
+    if (pret < 0 || (size_t) pret >= bufsize) {
         AO_DBG_ERR("fn error: %i", pret);
         return false;
     }
