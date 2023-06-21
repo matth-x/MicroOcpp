@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/Model/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Model/Transactions/TransactionDeSerialize.h>
+#include <ArduinoOcpp/Model/Transactions/TransactionDeserialize.h>
 #include <ArduinoOcpp/Operations/StartTransaction.h>
 #include <ArduinoOcpp/Operations/StopTransaction.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
