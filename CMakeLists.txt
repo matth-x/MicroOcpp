@@ -4,6 +4,9 @@
 
 cmake_minimum_required(VERSION 3.15)
 
+project(ArduinoOcpp
+        VERSION 0.2.0)
+
 set(AO_SRC
     src/ArduinoOcpp/Core/Configuration.cpp
     src/ArduinoOcpp/Core/ConfigurationContainer.cpp
