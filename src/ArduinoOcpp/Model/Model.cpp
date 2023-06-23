@@ -19,7 +19,7 @@
 
 using namespace ArduinoOcpp;
 
-Model::Model() {
+Model::Model(uint16_t bootNr) : bootNr(bootNr) {
     
 }
 
@@ -167,4 +167,8 @@ ResetService *Model::getResetService() const {
 
 Clock& Model::getClock() {
     return clock;
+}
+
+uint16_t Model::getBootNr() {
+    return bootNr;
 }

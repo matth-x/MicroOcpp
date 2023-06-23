@@ -53,6 +53,7 @@ private:
     SendStatus start_sync;
     int32_t start_meter = -1;           //meterStart of StartTx
     Timestamp start_timestamp = MIN_TIME;      //timestamp of StartTx; can be set before actually initiating
+    uint16_t start_bootNr = 0;
     int transactionId = -1; //only valid if confirmed = true
 
     /*
@@ -62,6 +63,7 @@ private:
     char stop_idTag [IDTAG_LEN_MAX + 1] = {'\0'};
     int32_t stop_meter = -1;
     Timestamp stop_timestamp = MIN_TIME;
+    uint16_t stop_bootNr = 0;
     char stop_reason [REASON_LEN_MAX + 1] = {'\0'};
 
     /*
@@ -128,6 +130,9 @@ public:
     void setStartTimestamp(Timestamp timestamp) {start_timestamp = timestamp;}
     const Timestamp& getStartTimestamp() {return start_timestamp;}
 
+    void setStartBootNr(uint16_t bootNr) {start_bootNr = bootNr;} 
+    uint16_t getStartBootNr() {return start_bootNr;}
+
     void setTransactionId(int transactionId) {this->transactionId = transactionId;}
 
     SendStatus& getStopSync() {return stop_sync;}
@@ -141,6 +146,9 @@ public:
 
     void setStopTimestamp(Timestamp timestamp) {stop_timestamp = timestamp;}
     const Timestamp& getStopTimestamp() {return stop_timestamp;}
+
+    void setStopBootNr(uint16_t bootNr) {stop_bootNr = bootNr;} 
+    uint16_t getStopBootNr() {return stop_bootNr;}
 
     bool setStopReason(const char *reason);
     const char *getStopReason() {return stop_reason;}

@@ -333,4 +333,12 @@ const Timestamp &Clock::now() {
     return currentTime;
 }
 
+Timestamp Clock::adjustPrebootTimestamp(const Timestamp& t) {
+    auto systemtime_in = t - Timestamp();
+    if (systemtime_in > (int) system_basetime / 1000) {
+        return ocpp_basetime;
+    }
+    return ocpp_basetime - ((int) (system_basetime / 1000) - systemtime_in);
+}
+
 }

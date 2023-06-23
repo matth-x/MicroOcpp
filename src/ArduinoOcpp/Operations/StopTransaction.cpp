@@ -87,6 +87,17 @@ bool StopTransaction::restore(StoredOperationHandler *opStore) {
         return false;
     }
 
+    if (transaction->isSilent()) {
+        //transaction has been set silent after initializing StopTx - discard operation record
+        AO_DBG_WARN("tx has been set silent - discard StopTx");
+
+        //clean up possible tx records
+        if (auto mSerivce = model.getMeteringService()) {
+            mSerivce->removeTxMeterData(connectorId, txNr);
+        }
+        return false;
+    }
+
     if (auto mSerivce = model.getMeteringService()) {
         if (auto txData = mSerivce->getStopTxMeterData(transaction.get())) {
             transactionData = txData->retrieveStopTxData();
@@ -97,6 +108,37 @@ bool StopTransaction::restore(StoredOperationHandler *opStore) {
 }
 
 std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
+
+    /*
+     * Adjust timestamps in case they were taken before initial Clock setting
+     */
+    if (transaction->getStopTimestamp() < MIN_TIME) {
+        //Timestamp taken before Clock value defined. Determine timestamp
+        if (transaction->getStopBootNr() == model.getBootNr()) {
+            //possible to calculate real timestamp
+            Timestamp adjusted = model.getClock().adjustPrebootTimestamp(transaction->getStopTimestamp());
+            transaction->setStopTimestamp(adjusted);
+        } else if (transaction->getStartTimestamp() >= MIN_TIME) {
+            AO_DBG_WARN("set stopTime = startTime because correct time is not available");
+            transaction->setStopTimestamp(transaction->getStartTimestamp() + 1); //1s behind startTime to keep order in backend DB
+        } else {
+            AO_DBG_ERR("failed to determine StopTx timestamp");
+            (void)0; //send invalid value
+        }
+    }
+
+    for (auto mv = transactionData.begin(); mv != transactionData.end(); mv++) {
+        if ((*mv)->getTimestamp() < MIN_TIME) {
+            //time off. Try to adjust, otherwise send invalid value
+            if ((*mv)->getReadingContext() == ReadingContext::TransactionBegin) {
+                (*mv)->setTimestamp(transaction->getStartTimestamp());
+            } else if ((*mv)->getReadingContext() == ReadingContext::TransactionEnd) {
+                (*mv)->setTimestamp(transaction->getStopTimestamp());
+            } else {
+                (*mv)->setTimestamp(transaction->getStartTimestamp() + 1);
+            }
+        }
+    }
 
     std::vector<std::unique_ptr<DynamicJsonDocument>> txDataJson;
     size_t txDataJson_size = 0;
@@ -126,15 +168,11 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
         payload["idTag"] = (char*) transaction->getStopIdTag();
     }
 
-    if (transaction->isMeterStopDefined()) {
-        payload["meterStop"] = transaction->getMeterStop();
-    }
+    payload["meterStop"] = transaction->getMeterStop();
 
-    if (transaction->getStopTimestamp() > MIN_TIME) {
-        char timestamp [JSONDATE_LENGTH + 1] = {'\0'};
-        transaction->getStopTimestamp().toJsonString(timestamp, JSONDATE_LENGTH + 1);
-        payload["timestamp"] = timestamp;
-    }
+    char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
+    transaction->getStopTimestamp().toJsonString(timestamp, JSONDATE_LENGTH + 1);
+    payload["timestamp"] = timestamp;
 
     payload["transactionId"] = transaction->getTransactionId();
     

@@ -85,6 +85,22 @@ bool StartTransaction::restore(StoredOperationHandler *opStore) {
         return false;
     }
 
+    if (transaction->getStartTimestamp() < MIN_TIME &&
+            transaction->getStartBootNr() != model.getBootNr()) {
+        //time not set, cannot be restored anymore -> invalid tx
+        AO_DBG_ERR("cannot recover tx from previus run");
+
+        //clean up possible tx records
+        if (auto mSerivce = model.getMeteringService()) {
+            mSerivce->removeTxMeterData(connectorId, txNr);
+        }
+
+        transaction->setSilent();
+        transaction->setInactive();
+        transaction->commit();
+        return false;
+    }
+
     return true;
 }
 
@@ -98,24 +114,23 @@ std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
     JsonObject payload = doc->to<JsonObject>();
 
     payload["connectorId"] = transaction->getConnectorId();
-
-    if (transaction->getIdTag() && *transaction->getIdTag()) {
-        payload["idTag"] = (char*) transaction->getIdTag();
-    }
-
-    if (transaction->isMeterStartDefined()) {
-        payload["meterStart"] = transaction->getMeterStart();
-    }
+    payload["idTag"] = (char*) transaction->getIdTag();
+    payload["meterStart"] = transaction->getMeterStart();
 
     if (transaction->getReservationId() >= 0) {
         payload["reservationId"] = transaction->getReservationId();
     }
 
-    if (transaction->getStartTimestamp() > MIN_TIME) {
-        char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
-        transaction->getStartTimestamp().toJsonString(timestamp, JSONDATE_LENGTH + 1);
-        payload["timestamp"] = timestamp;
+    if (transaction->getStartTimestamp() < MIN_TIME &&
+            transaction->getStartBootNr() == model.getBootNr()) {
+        AO_DBG_DEBUG("adjust preboot StartTx timestamp");
+        Timestamp adjusted = model.getClock().adjustPrebootTimestamp(transaction->getStartTimestamp());
+        transaction->setStartTimestamp(adjusted);
     }
+
+    char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
+    transaction->getStartTimestamp().toJsonString(timestamp, JSONDATE_LENGTH + 1);
+    payload["timestamp"] = timestamp;
 
     return doc;
 }

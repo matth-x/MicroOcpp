@@ -239,6 +239,7 @@ void Connector::loop() {
 
                 if (transaction->getStartTimestamp() <= MIN_TIME) {
                     transaction->setStartTimestamp(model.getClock().now());
+                    transaction->setStartBootNr(model.getBootNr());
                 }
 
                 if (transaction->isSilent()) {
@@ -294,6 +295,7 @@ void Connector::loop() {
 
                 if (transaction->getStopTimestamp() <= MIN_TIME) {
                     transaction->setStopTimestamp(model.getClock().now());
+                    transaction->setStopBootNr(model.getBootNr());
                 }
 
                 transaction->commit();
@@ -578,7 +580,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
     transaction->commit();
 
-    auto authorize = makeRequest(new Ocpp16::Authorize(context.getModel(), idTag));
+    auto authorize = makeRequest(new Authorize(context.getModel(), idTag));
     authorize->setTimeout(authorizationTimeout && *authorizationTimeout > 0 ? *authorizationTimeout * 1000UL : 20UL * 1000UL);
     auto tx = transaction;
     authorize->setOnReceiveConfListener([this, tx] (JsonObject response) {

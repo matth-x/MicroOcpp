@@ -25,6 +25,11 @@ public:
     void addSampledValue(std::unique_ptr<SampledValue> sample) {sampledValue.push_back(std::move(sample));}
 
     std::unique_ptr<DynamicJsonDocument> toJson();
+
+    const Timestamp& getTimestamp();
+    void setTimestamp(Timestamp timestamp);
+
+    ReadingContext getReadingContext();
 };
 
 class MeterValueBuilder {

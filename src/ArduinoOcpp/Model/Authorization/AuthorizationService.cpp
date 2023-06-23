@@ -55,7 +55,13 @@ AuthorizationService::~AuthorizationService() {
 bool AuthorizationService::loadLists() {
     if (!filesystem) {
         AO_DBG_WARN("no fs access");
-        return false;
+        return true;
+    }
+
+    size_t msize = 0;
+    if (filesystem->stat(AO_LOCALAUTHORIZATIONLIST_FN, &msize) != 0) {
+        AO_DBG_DEBUG("no local authorization list stored already");
+        return true;
     }
     
     auto doc = FilesystemUtils::loadJson(filesystem, AO_LOCALAUTHORIZATIONLIST_FN);

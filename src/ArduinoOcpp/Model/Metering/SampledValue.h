@@ -90,6 +90,8 @@ public:
 
     virtual operator bool() = 0;
     virtual int32_t toInteger() = 0;
+
+    ReadingContext getReadingContext();
 };
 
 template <class T, class DeSerializer>

@@ -2,6 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
+#include <limits>
+
 #include <ArduinoOcpp/Model/Transactions/TransactionDeserialize.h>
 #include <ArduinoOcpp/Debug.h>
 
@@ -66,11 +68,11 @@ bool serializeTransaction(Transaction& tx, DynamicJsonDocument& out) {
         txStart["meter"] = tx.getMeterStart();
     }
 
-    if (tx.getStartTimestamp() > MIN_TIME) {
-        char timeStr [JSONDATE_LENGTH + 1] = {'\0'};
-        tx.getStartTimestamp().toJsonString(timeStr, JSONDATE_LENGTH + 1);
-        txStart["timestamp"] = timeStr;
-    }
+    char startTimeStr [JSONDATE_LENGTH + 1] = {'\0'};
+    tx.getStartTimestamp().toJsonString(startTimeStr, JSONDATE_LENGTH + 1);
+    txStart["timestamp"] = startTimeStr;
+
+    txStart["bootNr"] = tx.getStartBootNr();
 
     if (tx.getStartSync().isConfirmed()) {
         txStart["transactionId"] = tx.getTransactionId();
@@ -90,11 +92,11 @@ bool serializeTransaction(Transaction& tx, DynamicJsonDocument& out) {
         txStop["meter"] = tx.getMeterStop();
     }
 
-    if (tx.getStopTimestamp() > MIN_TIME) {
-        char timeStr [JSONDATE_LENGTH + 1] = {'\0'};
-        tx.getStopTimestamp().toJsonString(timeStr, JSONDATE_LENGTH + 1);
-        txStop["timestamp"] = timeStr;
-    }
+    char stopTimeStr [JSONDATE_LENGTH + 1] = {'\0'};
+    tx.getStopTimestamp().toJsonString(stopTimeStr, JSONDATE_LENGTH + 1);
+    txStop["timestamp"] = stopTimeStr;
+    
+    txStop["bootNr"] = tx.getStopBootNr();
 
     if (tx.getStopReason()[0] != '\0') {
         txStop["reason"] = tx.getStopReason();
@@ -164,11 +166,21 @@ bool deserializeTransaction(Transaction& tx, JsonObject state) {
 
     if (txStart.containsKey("timestamp")) {
         Timestamp timestamp;
-        if (!timestamp.setTime(sessionState["timestamp"] | "Invalid")) {
+        if (!timestamp.setTime(txStart["timestamp"] | "Invalid")) {
             AO_DBG_ERR("read err");
             return false;
         }
         tx.setStartTimestamp(timestamp);
+    }
+
+    if (txStart.containsKey("bootNr")) {
+        int bootNrIn = txStart["bootNr"];
+        if (bootNrIn >= 0 && bootNrIn <= std::numeric_limits<uint16_t>::max()) {
+            tx.setStartBootNr((uint16_t) bootNrIn);
+        } else {
+            AO_DBG_ERR("read err");
+            return false;
+        }
     }
 
     if (txStart.containsKey("transactionId")) {
@@ -199,6 +211,16 @@ bool deserializeTransaction(Transaction& tx, JsonObject state) {
             return false;
         }
         tx.setStopTimestamp(timestamp);
+    }
+
+    if (txStop.containsKey("bootNr")) {
+        int bootNrIn = txStop["bootNr"];
+        if (bootNrIn >= 0 && bootNrIn <= std::numeric_limits<uint16_t>::max()) {
+            tx.setStopBootNr((uint16_t) bootNrIn);
+        } else {
+            AO_DBG_ERR("read err");
+            return false;
+        }
     }
 
     if (txStop.containsKey("reason")) {

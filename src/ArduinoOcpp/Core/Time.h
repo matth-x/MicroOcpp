@@ -105,7 +105,7 @@ public:
      * 
      * as generated in JavaScript by calling toJSON() on a Date object
      * 
-     * Only processes the first 19 characters. The subsequent are ignored until terminating 0.
+     * Only processes the first 23 characters. The subsequent are ignored
      * 
      * Has a semi-sophisticated type check included. Will return true on successful time set and false if
      * the given string is not a JSON Date string.
@@ -113,6 +113,13 @@ public:
      * jsonDateString: 0-terminated string
      */
     bool setTime(const char* jsonDateString);
+
+    /*
+     * Timestamps which were taken before the Clock was initially set can be adjusted retrospectively. Two
+     * conditions must be true: the Clock was set in the meantime and the Timestamp was taken at the same
+     * run of this library. The caller must check this
+     */
+    Timestamp adjustPrebootTimestamp(const Timestamp& t);
 };
 
 }

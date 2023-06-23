@@ -6,8 +6,7 @@
 #include <ArduinoOcpp/Debug.h>
 #include <cinttypes>
 
-using ArduinoOcpp::SampledValue;
-using ArduinoOcpp::SampledValueDeSerializer;
+using namespace ArduinoOcpp;
 
 int32_t SampledValueDeSerializer<int32_t>::deserialize(const char *str) {
     return strtol(str, nullptr, 10);
@@ -109,4 +108,8 @@ std::unique_ptr<DynamicJsonDocument> SampledValue::toJson() {
     if (!properties.getUnit().empty())
         payload["unit"] = properties.getUnit();
     return result;
+}
+
+ReadingContext SampledValue::getReadingContext() {
+    return context;
 }

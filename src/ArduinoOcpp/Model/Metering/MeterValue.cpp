@@ -6,8 +6,7 @@
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Debug.h>
 
-using ArduinoOcpp::MeterValue;
-using ArduinoOcpp::MeterValueBuilder;
+using namespace ArduinoOcpp;
 
 std::unique_ptr<DynamicJsonDocument> MeterValue::toJson() {
     size_t capacity = 0;
@@ -37,6 +36,24 @@ std::unique_ptr<DynamicJsonDocument> MeterValue::toJson() {
         jsonMeterValue.add(**entry);
     }
     return result;
+}
+
+const Timestamp& MeterValue::getTimestamp() {
+    return timestamp;
+}
+
+void MeterValue::setTimestamp(Timestamp timestamp) {
+    this->timestamp = timestamp;
+}
+
+ReadingContext MeterValue::getReadingContext() {
+    //all sampledValues have the same ReadingContext. Just get the first result
+    for (auto sample = sampledValue.begin(); sample != sampledValue.end(); sample++) {
+        if ((*sample)->getReadingContext() != ReadingContext::NOT_SET) {
+            return (*sample)->getReadingContext();
+        }
+    }
+    return ReadingContext::NOT_SET;
 }
 
 MeterValueBuilder::MeterValueBuilder(const std::vector<std::unique_ptr<SampledValueSampler>> &samplers,

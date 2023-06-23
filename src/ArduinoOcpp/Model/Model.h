@@ -42,8 +42,10 @@ private:
 
     bool runTasks = false;
 
+    const uint16_t bootNr = 0; //each boot of this lib has a unique number
+
 public:
-    Model();
+    Model(uint16_t bootNr = 0);
     Model(const Model& rhs) = delete;
     ~Model();
 
@@ -88,6 +90,8 @@ public:
     ResetService *getResetService() const;
 
     Clock &getClock();
+
+    uint16_t getBootNr();
 };
 
 } //end namespace ArduinoOcpp

@@ -50,7 +50,7 @@ TEST_CASE( "Configuration Behavior" ) {
     //clean state
     auto filesystem = makeDefaultFilesystemAdapter(ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail);
     AO_DBG_DEBUG("remove all");
-    FilesystemUtils::remove_all(filesystem, "");
+    FilesystemUtils::remove_if(filesystem, [] (const char*) {return true;});
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;
