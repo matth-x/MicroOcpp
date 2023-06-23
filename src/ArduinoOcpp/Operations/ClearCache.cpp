@@ -24,9 +24,11 @@ void ClearCache::processReq(JsonObject payload) {
         return;
     }
 
-    success &= FilesystemUtils::remove_all(filesystem, "sd");
-    success &= FilesystemUtils::remove_all(filesystem, "tx");
-    success &= FilesystemUtils::remove_all(filesystem, "op");
+    success = FilesystemUtils::remove_if(filesystem, [] (const char *fname) -> bool {
+        return !strncmp(fname, "sd", strlen("sd")) ||
+               !strncmp(fname, "tx", strlen("tx")) ||
+               !strncmp(fname, "op", strlen("op"));
+    });
 }
 
 std::unique_ptr<DynamicJsonDocument> ClearCache::createConf(){

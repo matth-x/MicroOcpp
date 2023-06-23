@@ -2,14 +2,21 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
+#include <limits>
+
 #include <ArduinoOcpp/Model/Boot/BootService.h>
 #include <ArduinoOcpp/Context.h>
 #include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
+#include <ArduinoOcpp/Core/FilesystemUtils.h>
 #include <ArduinoOcpp/Operations/BootNotification.h>
 #include <ArduinoOcpp/Platform.h>
 #include <ArduinoOcpp/Debug.h>
+
+#ifndef AO_BOOTSTATS_LONGTIME_MS
+#define AO_BOOTSTATS_LONGTIME_MS 180 * 1000
+#endif
 
 using namespace ArduinoOcpp;
 
@@ -26,7 +33,7 @@ RegistrationStatus ArduinoOcpp::deserializeRegistrationStatus(const char *serial
     }
 }
 
-BootService::BootService(Context& context) : context(context) {
+BootService::BootService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
     
     //if transactions can start before the BootNotification succeeds
     preBootTransactions = declareConfiguration<bool>("AO_PreBootTransactions", false, CONFIGURATION_FN, true, true, true, false);
@@ -42,6 +49,20 @@ BootService::BootService(Context& context) : context(context) {
 }
 
 void BootService::loop() {
+
+    if (!executedFirstTime) {
+        executedFirstTime = true;
+        firstExecutionTimestamp = ao_tick_ms();
+    }
+
+    if (!executedLongTime && ao_tick_ms() - firstExecutionTimestamp >= AO_BOOTSTATS_LONGTIME_MS) {
+        executedLongTime = true;
+        AO_DBG_DEBUG("boot success timer reached");
+        BootStats bootstats;
+        loadBootStats(filesystem, bootstats);
+        bootstats.lastBootSuccess = bootstats.bootNr;
+        storeBootStats(filesystem, bootstats);
+    }
 
     if (!activatedPostBootCommunication && status == RegistrationStatus::Accepted) {
         context.activatePostBootCommunication();
@@ -122,4 +143,58 @@ void BootService::setRetryInterval(unsigned long interval_s) {
         this->interval_s = interval_s;
     }
     lastBootNotification = ao_tick_ms();
+}
+
+bool BootService::loadBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats) {
+    if (!filesystem) {
+        return false;
+    }
+
+    size_t msize = 0;
+    if (filesystem->stat(AO_FILENAME_PREFIX "bootstats.jsn", &msize) == 0) {
+        
+        bool success = true;
+
+        auto json = FilesystemUtils::loadJson(filesystem, AO_FILENAME_PREFIX "bootstats.jsn");
+        if (json) {
+            int bootNrIn = (*json)["bootNr"] | -1;
+            if (bootNrIn >= 0 && bootNrIn <= std::numeric_limits<uint16_t>::max()) {
+                bstats.bootNr = (uint16_t) bootNrIn;
+            } else {
+                success = false;
+            }
+
+            int lastSuccessIn = (*json)["lastSuccess"] | -1;
+            if (lastSuccessIn >= 0 && lastSuccessIn <= std::numeric_limits<uint16_t>::max()) {
+                bstats.lastBootSuccess = (uint16_t) lastSuccessIn;
+            } else {
+                success = false;
+            }
+        } else {
+            success = false;
+        }
+
+        if (!success) {
+            AO_DBG_ERR("bootstats corrupted");
+            filesystem->remove(AO_FILENAME_PREFIX "bootstats.jsn");
+            bstats = BootStats();
+        }
+
+        return success;
+    } else {
+        return false;
+    }
+}
+
+bool BootService::storeBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats bstats) {
+    if (!filesystem) {
+        return false;
+    }
+
+    DynamicJsonDocument json {JSON_OBJECT_SIZE(2)};
+
+    json["bootNr"] = bstats.bootNr;
+    json["lastSuccess"] = bstats.lastBootSuccess;
+
+    return FilesystemUtils::storeJson(filesystem, AO_FILENAME_PREFIX "bootstats.jsn", json);
 }

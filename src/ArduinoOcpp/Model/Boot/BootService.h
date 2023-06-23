@@ -6,11 +6,21 @@
 #define BOOTSERVICE_H
 
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
+#include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <memory>
 
 #define AO_BOOT_INTERVAL_DEFAULT 60
 
 namespace ArduinoOcpp {
+
+struct BootStats {
+    uint16_t bootNr = 0;
+    uint16_t lastBootSuccess = 0;
+
+    uint16_t getBootFailureCount() {
+        return bootNr - lastBootSuccess;
+    }
+};
 
 enum class RegistrationStatus {
     Accepted,
@@ -26,6 +36,7 @@ class Context;
 class BootService {
 private:
     Context& context;
+    std::shared_ptr<FilesystemAdapter> filesystem;
 
     unsigned long interval_s = AO_BOOT_INTERVAL_DEFAULT;
     unsigned long lastBootNotification = -1UL / 2;
@@ -39,8 +50,12 @@ private:
     bool activatedModel = false;
     bool activatedPostBootCommunication = false;
 
+    unsigned long firstExecutionTimestamp = 0;
+    bool executedFirstTime = false;
+    bool executedLongTime = false;
+
 public:
-    BootService(Context& context);
+    BootService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem);
 
     void loop();
 
@@ -50,6 +65,9 @@ public:
 
     void notifyRegistrationStatus(RegistrationStatus status);
     void setRetryInterval(unsigned long interval);
+
+    static bool loadBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& out);
+    static bool storeBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats bstats);
 };
 
 }

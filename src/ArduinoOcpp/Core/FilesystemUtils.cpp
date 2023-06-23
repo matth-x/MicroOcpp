@@ -115,10 +115,9 @@ bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, c
     return true;
 }
 
-bool FilesystemUtils::remove_all(std::shared_ptr<FilesystemAdapter> filesystem, const char *fpath_prefix) {
-    return filesystem->ftw_root([filesystem, fpath_prefix] (const char *fpath) {
-        if (!strncmp(fpath, fpath_prefix, strlen(fpath_prefix)) &&
-                fpath[0] != '.') {
+bool FilesystemUtils::remove_if(std::shared_ptr<FilesystemAdapter> filesystem, std::function<bool(const char*)> pred) {
+    return filesystem->ftw_root([filesystem, pred] (const char *fpath) {
+        if (pred(fpath) && fpath[0] != '.') {
 
             char fn [AO_MAX_PATH_SIZE] = {'\0'};
             auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "%s", fpath);

@@ -39,7 +39,7 @@ namespace FilesystemUtils {
 std::unique_ptr<DynamicJsonDocument> loadJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn);
 bool storeJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn, const DynamicJsonDocument& doc);
 
-bool remove_all(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn_prefix);
+bool remove_if(std::shared_ptr<FilesystemAdapter> filesystem, std::function<bool(const char*)> pred);
 
 }
 

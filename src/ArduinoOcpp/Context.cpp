@@ -11,8 +11,8 @@
 
 using namespace ArduinoOcpp;
 
-Context::Context(Connection& connection, std::shared_ptr<FilesystemAdapter> filesystem)
-        : connection(connection), model{}, reqQueue{operationRegistry, &model, filesystem} {
+Context::Context(Connection& connection, std::shared_ptr<FilesystemAdapter> filesystem, uint16_t bootNr)
+        : connection(connection), model{bootNr}, reqQueue{operationRegistry, &model, filesystem} {
 
     preBootQueue = std::unique_ptr<RequestQueue>(new RequestQueue(operationRegistry, &model, nullptr)); //pre boot queue doesn't need persistency
     preBootQueue->setConnection(connection);

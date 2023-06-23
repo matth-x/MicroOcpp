@@ -21,6 +21,7 @@
 #include <ArduinoOcpp/Core/OperationRegistry.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
+#include <ArduinoOcpp/Core/FilesystemUtils.h>
 
 #include <ArduinoOcpp/Operations/Authorize.h>
 #include <ArduinoOcpp/Operations/StartTransaction.h>
@@ -39,8 +40,6 @@ Connection *connection {nullptr};
 
 Context *context {nullptr};
 std::shared_ptr<FilesystemAdapter> filesystem;
-FilesystemOpt fileSystemOpt {};
-float voltage_eff {230.f};
 
 #ifndef AO_NUMCONNECTORS
 #define AO_NUMCONNECTORS 2
@@ -125,23 +124,38 @@ void OCPP_initialize(Connection& connection, const char *bootNotificationCredent
         return;
     }
 
-    voltage_eff = V_eff;
-    fileSystemOpt = fsOpt;
-
 #ifndef AO_DEACTIVATE_FLASH
-    filesystem = makeDefaultFilesystemAdapter(fileSystemOpt);
+    filesystem = makeDefaultFilesystemAdapter(fsOpt);
 #endif
     AO_DBG_DEBUG("filesystem %s", filesystem ? "loaded" : "error");
+
+    BootStats bootstats;
+    BootService::loadBootStats(filesystem, bootstats);
+
+    if (bootstats.getBootFailureCount() > 3) {
+        AO_DBG_ERR("multiple initialization failures detected");
+        if (filesystem) {
+            bool success = FilesystemUtils::remove_if(filesystem, [] (const char *fname) -> bool {
+                return strcmp(fname, "ocpp-creds.jsn");
+            });
+            AO_DBG_ERR("clear local state folder (except WS creds): %s", success ? "success" : "not completed");
+
+            bootstats = BootStats();
+        }
+    }
+
+    bootstats.bootNr++; //assign new boot number to this run
+    BootService::storeBootStats(filesystem, bootstats);
     
     configuration_init(filesystem); //call before each other library call
 
-    context = new Context(connection, filesystem);
+    context = new Context(connection, filesystem, bootstats.bootNr);
     auto& model = context->getModel();
 
     model.setTransactionStore(std::unique_ptr<TransactionStore>(
         new TransactionStore(AO_NUMCONNECTORS, filesystem)));
     model.setBootService(std::unique_ptr<BootService>(
-        new BootService(*context)));
+        new BootService(*context, filesystem)));
     model.setChargeControlCommon(std::unique_ptr<ChargeControlCommon>(
         new ChargeControlCommon(*context, AO_NUMCONNECTORS, filesystem)));
     std::vector<Connector> connectors;
@@ -158,7 +172,6 @@ void OCPP_initialize(Connection& connection, const char *bootNotificationCredent
     model.setResetService(std::unique_ptr<ResetService>(
         new ResetService(*context)));
 
-    
 #if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
     model.setFirmwareService(std::unique_ptr<FirmwareService>(
         EspWiFi::makeFirmwareService(*context))); //instantiate FW service + ESP installation routine
@@ -190,6 +203,17 @@ void OCPP_initialize(Connection& connection, const char *bootNotificationCredent
 }
 
 void OCPP_deinitialize() {
+
+    if (context) {
+        //release bootstats recovery mechanism
+        BootStats bootstats;
+        BootService::loadBootStats(filesystem, bootstats);
+        if (bootstats.lastBootSuccess != bootstats.bootNr) {
+            AO_DBG_DEBUG("boot success timer override");
+            bootstats.lastBootSuccess = bootstats.bootNr;
+            BootService::storeBootStats(filesystem, bootstats);
+        }
+    }
     
     delete context;
     context = nullptr;
@@ -201,8 +225,7 @@ void OCPP_deinitialize() {
     webSocket = nullptr;
 #endif
 
-    fileSystemOpt = FilesystemOpt();
-    voltage_eff = 230.f;
+    filesystem.reset();
 
     configuration_deinit();
 }
