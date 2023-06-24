@@ -2,23 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef OCPP_EVSE_STATE
-#define OCPP_EVSE_STATE
+#ifndef AO_CHARGEPOINTERRORCODE_H
+#define AO_CHARGEPOINTERRORCODE_H
 
 namespace ArduinoOcpp {
-
-enum class OcppEvseState {
-    Available,
-    Preparing,
-    Charging,
-    SuspendedEVSE,
-    SuspendedEV,
-    Finishing,
-    Reserved,
-    Unavailable,
-    Faulted,
-    NOT_SET //internal value for "undefined"
-};
 
 struct ErrorCode {
     bool isError = false; //if any error information is set
@@ -38,5 +25,6 @@ struct ErrorCode {
     }
 };
 
-} //end namespace ArduinoOcpp
+}
+
 #endif

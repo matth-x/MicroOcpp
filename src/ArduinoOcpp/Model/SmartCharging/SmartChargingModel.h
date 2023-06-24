@@ -75,8 +75,8 @@ public:
     std::vector<ChargingSchedulePeriod> chargingSchedulePeriod;
     float minChargingRate = -1.0f;
 
-    ChargingProfileKindType chargingProfileKind; //copied from ChargingProfile to increase cohesion of limit inferencing methods
-    RecurrencyKindType recurrencyKind = RecurrencyKindType::NOT_SET; //copied from ChargingProfile to increase cohesion of limit inferencing methods
+    ChargingProfileKindType chargingProfileKind; //copied from ChargingProfile to increase cohesion of limit algorithms
+    RecurrencyKindType recurrencyKind = RecurrencyKindType::NOT_SET; //copied from ChargingProfile to increase cohesion of limit algorithms
 
     /**
      * limit: output parameter
@@ -102,7 +102,7 @@ public:
     int transactionId = -1;
     int stackLevel = 0;
     ChargingProfilePurposeType chargingProfilePurpose {ChargingProfilePurposeType::TxProfile};
-    ChargingProfileKindType chargingProfileKind {ChargingProfileKindType::Relative}; //copied to ChargingSchedule to increase cohesion of limit inferencing methods
+    ChargingProfileKindType chargingProfileKind {ChargingProfileKindType::Relative}; //copied to ChargingSchedule to increase cohesion of limit algorithms
     RecurrencyKindType recurrencyKind {RecurrencyKindType::NOT_SET}; // copied to ChargingSchedule to increase cohesion
     Timestamp validFrom;
     Timestamp validTo;
@@ -119,7 +119,7 @@ public:
     bool calculateLimit(const Timestamp &t, const Timestamp &startOfCharging, ChargeRate& limit, Timestamp& nextChange);
 
     /*
-    * Simpler function if startOfCharging is not available. Caution: This likely will differ from inference with startOfCharging
+    * Simpler function if startOfCharging is not available. Caution: This likely will differ from function with startOfCharging
     */
     bool calculateLimit(const Timestamp &t, ChargeRate& limit, Timestamp& nextChange);
 

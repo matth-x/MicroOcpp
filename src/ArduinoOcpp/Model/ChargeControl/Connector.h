@@ -5,7 +5,9 @@
 #ifndef CONNECTOR_H
 #define CONNECTOR_H
 
-#include <ArduinoOcpp/Model/ChargeControl/OcppEvseState.h>
+#include <ArduinoOcpp/Model/ChargeControl/ChargePointStatus.h>
+#include <ArduinoOcpp/Model/ChargeControl/ChargePointErrorCode.h>
+#include <ArduinoOcpp/Model/ChargeControl/Notification.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/Operations/CiStrings.h>
@@ -34,8 +36,8 @@ private:
 
     std::shared_ptr<Transaction> transaction;
 
-    std::shared_ptr<Configuration<int>> availability;
-    int availabilityVolatile = AVAILABILITY_OPERATIVE;
+    std::shared_ptr<Configuration<bool>> availability;
+    bool availabilityVolatile = true;
 
     std::function<bool()> connectorPluggedSampler;
     std::function<bool()> evRequestsEnergySampler;
@@ -45,9 +47,9 @@ private:
     bool isFaulted();
     const char *getErrorCode();
 
-    OcppEvseState currentStatus = OcppEvseState::NOT_SET;
+    ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
     std::shared_ptr<Configuration<int>> minimumStatusDuration; //in seconds
-    OcppEvseState reportedStatus = OcppEvseState::NOT_SET;
+    ChargePointStatus reportedStatus = ChargePointStatus::NOT_SET;
     unsigned long t_statusTransition = 0;
 
     std::function<PollResult<bool>()> onUnlockConnector;
@@ -55,6 +57,8 @@ private:
     std::function<bool()> startTxReadyInput; //the StartTx request will be delayed while this Input is false
     std::function<bool()> stopTxReadyInput; //the StopTx request will be delayed while this Input is false
     std::function<bool()> occupiedInput; //instead of Available, go into Preparing / Finishing state
+
+    std::function<void(TxNotification,Transaction*)> txNotificationOutput;
 
     std::shared_ptr<Configuration<int>> connectionTimeOut; //in seconds
     std::shared_ptr<Configuration<bool>> stopTransactionOnInvalidId;
@@ -68,6 +72,8 @@ private:
     std::shared_ptr<Configuration<bool>> freeVendActive;
     std::shared_ptr<Configuration<const char*>> freeVendIdTag;
     bool freeVendTrackPlugged = false;
+
+    bool trackLoopExecute = false; //if loop has been executed once
 public:
     Connector(Context& context, int connectorId);
     Connector(Connector&& other) = default;
@@ -96,7 +102,7 @@ public:
     //create detached transaction - won't have any side-effects with the transaction handling of this lib
     std::shared_ptr<Transaction> allocateTransaction(); 
 
-    int getAvailability();
+    bool isOperative();
     void setAvailability(bool available);
     void setAvailabilityVolatile(bool available); //set inoperative state but keep only until reboot at most
     void setAuthorizationProvider(std::function<const char *()> authorization);
@@ -108,7 +114,7 @@ public:
 
     void loop();
 
-    OcppEvseState inferenceStatus();
+    ChargePointStatus getStatus();
 
     bool ocppPermitsCharge();
 
@@ -118,6 +124,9 @@ public:
     void setStartTxReadyInput(std::function<bool()> startTxReady);
     void setStopTxReadyInput(std::function<bool()> stopTxReady);
     void setOccupiedInput(std::function<bool()> occupied);
+
+    void setTxNotificationOutput(std::function<void(TxNotification, Transaction*)> txNotificationOutput);
+    void updateTxNotification(TxNotification event);
 };
 
 } //end namespace ArduinoOcpp

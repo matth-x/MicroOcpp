@@ -56,9 +56,9 @@ void ResetService::loop() {
                 connector->setAvailabilityVolatile(true);
             }
 
-            OcppEvseState cpStatus = OcppEvseState::NOT_SET;
+            ChargePointStatus cpStatus = ChargePointStatus::NOT_SET;
             if (context.getModel().getNumConnectors() > 0) {
-                cpStatus = context.getModel().getConnector(0)->inferenceStatus();
+                cpStatus = context.getModel().getConnector(0)->getStatus();
             }
 
             auto statusNotification = makeRequest(new Ocpp16::StatusNotification(

@@ -13,37 +13,37 @@ using ArduinoOcpp::Ocpp16::StatusNotification;
 //helper function
 namespace ArduinoOcpp {
 namespace Ocpp16 {
-const char *cstrFromOcppEveState(OcppEvseState state) {
+const char *cstrFromOcppEveState(ChargePointStatus state) {
     switch (state) {
-        case (OcppEvseState::Available):
+        case (ChargePointStatus::Available):
             return "Available";
-        case (OcppEvseState::Preparing):
+        case (ChargePointStatus::Preparing):
             return "Preparing";
-        case (OcppEvseState::Charging):
+        case (ChargePointStatus::Charging):
             return "Charging";
-        case (OcppEvseState::SuspendedEVSE):
+        case (ChargePointStatus::SuspendedEVSE):
             return "SuspendedEVSE";
-        case (OcppEvseState::SuspendedEV):
+        case (ChargePointStatus::SuspendedEV):
             return "SuspendedEV";
-        case (OcppEvseState::Finishing):
+        case (ChargePointStatus::Finishing):
             return "Finishing";
-        case (OcppEvseState::Reserved):
+        case (ChargePointStatus::Reserved):
             return "Reserved";
-        case (OcppEvseState::Unavailable):
+        case (ChargePointStatus::Unavailable):
             return "Unavailable";
-        case (OcppEvseState::Faulted):
+        case (ChargePointStatus::Faulted):
             return "Faulted";
         default:
-            AO_DBG_ERR("OcppEvseState not specified");
+            AO_DBG_ERR("ChargePointStatus not specified");
             (void)0;
             /* fall through */
-        case (OcppEvseState::NOT_SET):
+        case (ChargePointStatus::NOT_SET):
             return "NOT_SET";
     }
 }
 }} //end namespaces
 
-StatusNotification::StatusNotification(int connectorId, OcppEvseState currentStatus, const Timestamp &timestamp, ErrorCode errorCode)
+StatusNotification::StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorCode errorCode)
         : connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorCode(errorCode) {
     
     AO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
@@ -53,7 +53,7 @@ const char* StatusNotification::getOperationType(){
     return "StatusNotification";
 }
 
-//TODO if the status has changed again when sendReq() is called, abort the operation completely (note: if req is already sent, stick with listening to conf). The OcppEvseStateService will enqueue a new operation itself
+//TODO if the status has changed again when sendReq() is called, abort the operation completely (note: if req is already sent, stick with listening to conf). The ChargePointStatusService will enqueue a new operation itself
 std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(7) + (JSONDATE_LENGTH + 1)));
     JsonObject payload = doc->to<JsonObject>();
@@ -72,7 +72,7 @@ std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
         if (errorCode.vendorErrorCode) {
             payload["vendorErrorCode"] = errorCode.vendorErrorCode;
         }
-    } else if (currentStatus == OcppEvseState::NOT_SET) {
+    } else if (currentStatus == ChargePointStatus::NOT_SET) {
         AO_DBG_ERR("Reporting undefined status");
         payload["errorCode"] = "InternalError";
     } else {

@@ -160,7 +160,7 @@ void app_main(void)
             EXAMPLE_AO_OCPP_BACKEND, 
             EXAMPLE_AO_CHARGEBOXID, 
             EXAMPLE_AO_AUTHORIZATIONKEY, "", fsopt);
-    ao_initialize(osock, 230.f /* European grid voltage */, fsopt);
+    ao_initialize(osock, fsopt);
 
     ao_bootNotification("ESP-IDF charger", "Your brand name here", NULL, NULL, NULL, NULL); //send first OCPP message
 

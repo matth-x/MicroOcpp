@@ -7,7 +7,8 @@
 
 #include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Model/ChargeControl/OcppEvseState.h>
+#include <ArduinoOcpp/Model/ChargeControl/ChargePointStatus.h>
+#include <ArduinoOcpp/Model/ChargeControl/ChargePointErrorCode.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
@@ -15,11 +16,11 @@ namespace Ocpp16 {
 class StatusNotification : public Operation {
 private:
     int connectorId = 1;
-    OcppEvseState currentStatus = OcppEvseState::NOT_SET;
+    ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
     Timestamp timestamp;
     ErrorCode errorCode;
 public:
-    StatusNotification(int connectorId, OcppEvseState currentStatus, const Timestamp &timestamp, ErrorCode errorCode = nullptr);
+    StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorCode errorCode = nullptr);
 
     const char* getOperationType();
 
@@ -32,7 +33,7 @@ public:
     std::unique_ptr<DynamicJsonDocument> createConf();
 };
 
-const char *cstrFromOcppEveState(OcppEvseState state);
+const char *cstrFromOcppEveState(ChargePointStatus state);
 
 } //end namespace Ocpp16
 } //end namespace ArduinoOcpp

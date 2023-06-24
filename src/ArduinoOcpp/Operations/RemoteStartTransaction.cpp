@@ -73,7 +73,7 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
         //connectorId specified for given connector, try to start Transaction here
         if (auto connector = model.getConnector(connectorId)){
             if (connector->getTransactionId() < 0 &&
-                        connector->getAvailability() == AVAILABILITY_OPERATIVE &&
+                        connector->isOperative() &&
                         !connector->getTransaction()) {
                 selectConnector = connector;
             }
@@ -83,7 +83,7 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
         for (unsigned int cid = 1; cid < model.getNumConnectors(); cid++) {
             auto connector = model.getConnector(cid);
             if (connector->getTransactionId() < 0 && 
-                        connector->getAvailability() == AVAILABILITY_OPERATIVE &&
+                        connector->isOperative() &&
                         !connector->getTransaction()) {
                 selectConnector = connector;
                 connectorId = cid;
@@ -105,6 +105,7 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
 
         if (success) {
             auto tx = selectConnector->beginTransaction_authorized(idTag);
+            selectConnector->updateTxNotification(TxNotification::RemoteStart);
             if (tx) {
                 if (chargingProfileId >= 0) {
                     tx->setTxProfileId(chargingProfileId);

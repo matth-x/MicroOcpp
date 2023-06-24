@@ -86,7 +86,7 @@ ChargeControlCommon::ChargeControlCommon(Context& context, unsigned int numConn,
     context.getOperationRegistry().registerOperation("StartTransaction", [&context] () {
         return new Ocpp16::StartTransaction(context.getModel(), nullptr);});
     context.getOperationRegistry().registerOperation("StatusNotification", [&context] () {
-        return new Ocpp16::StatusNotification(-1, OcppEvseState::NOT_SET, Timestamp());});
+        return new Ocpp16::StatusNotification(-1, ChargePointStatus::NOT_SET, Timestamp());});
     context.getOperationRegistry().registerOperation("StopTransaction", [&context] () {
         return new Ocpp16::StopTransaction(context.getModel(), nullptr);});
 }

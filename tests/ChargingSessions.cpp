@@ -6,6 +6,7 @@
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Operations/BootNotification.h>
 #include <ArduinoOcpp/Operations/StatusNotification.h>
+#include <ArduinoOcpp/Operations/CustomOperation.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 
@@ -32,7 +33,7 @@ TEST_CASE( "Charging sessions" ) {
     
     std::array<const char*, 2> expectedSN {"Available", "Available"};
     std::array<bool, 2> checkedSN {false, false};
-    checkMsg.registerOperation("StatusNotification", [] () -> Operation* {return new Ocpp16::StatusNotification(0, OcppEvseState::NOT_SET, MIN_TIME);});
+    checkMsg.registerOperation("StatusNotification", [] () -> Operation* {return new Ocpp16::StatusNotification(0, ChargePointStatus::NOT_SET, MIN_TIME);});
     checkMsg.setOnRequest("StatusNotification",
         [&checkedSN, &expectedSN] (JsonObject request) {
             int connectorId = request["connectorId"] | -1;
@@ -48,6 +49,8 @@ TEST_CASE( "Charging sessions" ) {
                 checkedBN = !strcmp(request["chargePointModel"] | "Invalid", "test-runner1234");
             });
         
+        REQUIRE( !isOperative() ); //not operative before reaching loop stage
+
         loop();
         loop();
         REQUIRE( checkedBN );
@@ -331,6 +334,61 @@ TEST_CASE( "Charging sessions" ) {
         loop();
 
         REQUIRE(checkProcessed);
+    }
+
+    SECTION("Set Unavaible"){
+
+        beginTransaction("mIdTag");
+
+        loop();
+
+        auto connector = getOcppContext()->getModel().getConnector(1);
+        REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+        REQUIRE(isOperative());
+
+        bool checkProcessed = false;
+
+        auto changeAvailability = makeRequest(new Ocpp16::CustomOperation(
+                "ChangeAvailability",
+                [] () {
+                    //create req
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+                    auto payload = doc->to<JsonObject>();
+                    payload["connectorId"] = 1;
+                    payload["type"] = "Inoperative";
+                    return doc;},
+                [&checkProcessed] (JsonObject payload) {
+                    //receive conf
+                    checkProcessed = true;
+
+                    REQUIRE(!strcmp(payload["status"], "Scheduled"));}));
+
+        getOcppContext()->initiateRequest(std::move(changeAvailability));
+
+        loop();
+
+        REQUIRE(checkProcessed);
+        REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+        REQUIRE(isOperative());
+
+        OCPP_deinitialize();
+
+        OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+        connector = getOcppContext()->getModel().getConnector(1);
+
+        loop();
+
+        REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+        REQUIRE(isOperative());
+
+        endTransaction();
+
+        loop();
+
+        REQUIRE(connector->getStatus() == ChargePointStatus::Unavailable);
+        REQUIRE(!isOperative());
+
+        connector->setAvailability(true);
     }
 
     OCPP_deinitialize();

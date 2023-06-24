@@ -56,7 +56,7 @@ using namespace ArduinoOcpp::Facade;
 using namespace ArduinoOcpp::Ocpp16;
 
 #ifndef AO_CUSTOM_WS
-void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *chargePointModel, const char *chargePointVendor, float V_eff, FilesystemOpt fsOpt) {
+void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *chargePointModel, const char *chargePointVendor, FilesystemOpt fsOpt) {
     if (context) {
         AO_DBG_WARN("Can't be called two times. Either restart ESP, or call OCPP_deinitialize() before");
         return;
@@ -80,7 +80,7 @@ void OCPP_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_u
     delete connection;
     connection = new EspWiFi::WSClient(webSocket);
 
-    OCPP_initialize(*connection, ChargerCredentials(chargePointModel, chargePointVendor), V_eff, fsOpt);
+    OCPP_initialize(*connection, ChargerCredentials(chargePointModel, chargePointVendor), fsOpt);
 }
 #endif
 
@@ -118,7 +118,7 @@ ChargerCredentials::ChargerCredentials(const char *cpModel, const char *cpVendor
     }
 }
 
-void OCPP_initialize(Connection& connection, const char *bootNotificationCredentials, float V_eff, FilesystemOpt fsOpt) {
+void OCPP_initialize(Connection& connection, const char *bootNotificationCredentials, FilesystemOpt fsOpt) {
     if (context) {
         AO_DBG_WARN("Can't be called two times. To change the credentials, either restart ESP, or call OCPP_deinitialize() before");
         return;
@@ -645,8 +645,7 @@ bool isOperative(unsigned int connectorId) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return true; //assume "true" as default state
     }
-    return (chargePoint->getAvailability() != AVAILABILITY_INOPERATIVE)
-       &&  (connector->getAvailability() != AVAILABILITY_INOPERATIVE);
+    return chargePoint->isOperative() && connector->isOperative();
 }
 
 std::shared_ptr<Transaction> ao_undefinedTx;
@@ -676,6 +675,19 @@ const char *getTransactionIdTag(unsigned int connectorId) {
     }
     auto& tx = connector->getTransaction();
     return tx ? tx->getIdTag() : nullptr;
+}
+
+void setTxNotificationOutput(std::function<void(ArduinoOcpp::TxNotification,ArduinoOcpp::Transaction*)> notificationOutput, unsigned int connectorId) {
+    if (!context) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+    auto connector = context->getModel().getConnector(connectorId);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return;
+    }
+    connector->setTxNotificationOutput(notificationOutput);
 }
 
 bool isBlockedByReservation(const char *idTag, unsigned int connectorId) {

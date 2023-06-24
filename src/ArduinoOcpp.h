@@ -15,6 +15,7 @@
 #include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/Model/Metering/SampledValue.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
+#include <ArduinoOcpp/Model/ChargeControl/Notification.h>
 
 using ArduinoOcpp::OnReceiveConfListener;
 using ArduinoOcpp::OnReceiveReqListener;
@@ -88,7 +89,6 @@ private:
 void OCPP_initialize(
             ArduinoOcpp::Connection& connection, //WebSocket adapter for ArduinoOcpp
             const char *bootNotificationCredentials = ChargerCredentials("Demo Charger", "My Company Ltd."), //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
-            float V_eff = 230.f,                 //Grid voltage of your country. e.g. 230.f (European voltage)
             ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
 
 /*
@@ -242,7 +242,7 @@ void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId =
  * Access further information about the internal state of the library
  */
 
-bool isOperative(unsigned int connectorId = 1); //if the charge point is operative or inoperative (see OCPP1.6 Edit2, p. 45)
+bool isOperative(unsigned int connectorId = 1); //if the charge point is operative (see OCPP1.6 Edit2, p. 45) and ready for transactions
 
 /*
  * Returns the current transaction process. Returns nullptr if no transaction is running, preparing or finishing
@@ -265,6 +265,8 @@ std::shared_ptr<ArduinoOcpp::Transaction>& getTransaction(unsigned int connector
  * running, this function returns nullptr
  */
 const char *getTransactionIdTag(unsigned int connectorId = 1);
+
+void setTxNotificationOutput(std::function<void(ArduinoOcpp::TxNotification,ArduinoOcpp::Transaction*)> notificationOutput, unsigned int connectorId = 1);
 
 bool isBlockedByReservation(const char *idTag, unsigned int connectorId = 1); //if the connector is already reserved for a different idTag
 

@@ -73,7 +73,7 @@ bool ChargingSchedule::calculateLimit(const Timestamp &t, const Timestamp &start
     if (duration > 0){
         //duration is set
 
-        //check if duration is exceeded and if yes, abort inferencing limit
+        //check if duration is exceeded and if yes, abort limit algorithm
         //if no, the duration is an upper limit for the validity of the schedule
         if (t_toBasis >= duration) { //"duration" is given relative to basis
             return false;
@@ -87,7 +87,7 @@ bool ChargingSchedule::calculateLimit(const Timestamp &t, const Timestamp &start
     * and make nextChange equal the beginning of the following period. If the right period is the last one, nextChange
     * will remain the time determined before.
     */
-    float limit_res = -1.0f; //If limit_res is still -1 after the loop, the inference process failed
+    float limit_res = -1.0f; //If limit_res is still -1 after the loop, the limit algorithm failed
     int nphases_res = -1;
     for (auto period = chargingSchedulePeriod.begin(); period != chargingSchedulePeriod.end(); period++) {
         if (period->startPeriod > t_toBasis) {

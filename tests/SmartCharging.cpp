@@ -505,7 +505,7 @@ TEST_CASE( "SmartCharging" ) {
                     //receive conf
                     checkProcessed = true;
 
-                    REQUIRE(payload["status"] == "Accepted");
+                    REQUIRE(!strcmp(payload["status"], "Accepted"));
                     REQUIRE(payload["connectorId"] == 1);
                     
                     char checkScheduleStart [JSONDATE_LENGTH + 1];

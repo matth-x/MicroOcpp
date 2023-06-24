@@ -53,14 +53,12 @@ void ao_initialize(
             AConnection *osock,  //WebSocket adapter for ArduinoOcpp
             const char *chargePointModel,     //model name of this charger (e.g. "")
             const char *chargePointVendor, //brand name
-            float V_eff, //Grid voltage of your country. e.g. 230.f (European voltage)
             struct AO_FilesystemOpt fsopt); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
 
 //same as above, but more fields for the BootNotification
 void ao_initialize_full(
             AConnection *osock,  //WebSocket adapter for ArduinoOcpp
             const char *bootNotificationCredentials, //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
-            float V_eff, //Grid voltage of your country. e.g. 230.f (European voltage)
             struct AO_FilesystemOpt fsopt); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
 
 

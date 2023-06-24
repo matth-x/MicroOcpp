@@ -52,8 +52,8 @@ void ReservationService::loop() {
         if (auto connector = context.getModel().getConnector(reservation.getConnectorId())) {
 
             //check if connector went inoperative
-            auto cStatus = connector->inferenceStatus();
-            if (cStatus == OcppEvseState::Faulted || cStatus == OcppEvseState::Unavailable) {
+            auto cStatus = connector->getStatus();
+            if (cStatus == ChargePointStatus::Faulted || cStatus == ChargePointStatus::Unavailable) {
                 reservation.clear();
                 continue;
             }
@@ -164,7 +164,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
             continue;
         }
         if (auto connector = context.getModel().getConnector(cId)) {
-            if (connector->inferenceStatus() == OcppEvseState::Available) {
+            if (connector->getStatus() == ChargePointStatus::Available) {
                 availableCount++;
             }
         }

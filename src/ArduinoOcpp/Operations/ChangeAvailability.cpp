@@ -48,14 +48,14 @@ void ChangeAvailability::processReq(JsonObject payload) {
         for (unsigned int cId = 0; cId < model.getNumConnectors(); cId++) {
             auto connector = model.getConnector(cId);
             connector->setAvailability(available);
-            if (connector->getAvailability() == AVAILABILITY_INOPERATIVE_SCHEDULED) {
+            if (connector->isOperative() && !available) {
                 scheduled = true;
             }
         }
     } else {
         auto connector = model.getConnector(connectorId);
         connector->setAvailability(available);
-        if (connector->getAvailability() == AVAILABILITY_INOPERATIVE_SCHEDULED) {
+        if (connector->isOperative() && !available) {
             scheduled = true;
         }
     }

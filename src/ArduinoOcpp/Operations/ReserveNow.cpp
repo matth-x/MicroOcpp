@@ -70,19 +70,19 @@ void ReserveNow::processReq(JsonObject payload) {
             connector = model.getConnector(connectorId);
         }
 
-        if (chargePoint->inferenceStatus() == OcppEvseState::Faulted ||
-                (connector && connector->inferenceStatus() == OcppEvseState::Faulted)) {
+        if (chargePoint->getStatus() == ChargePointStatus::Faulted ||
+                (connector && connector->getStatus() == ChargePointStatus::Faulted)) {
             reservationStatus = "Faulted";
             return;
         }
 
-        if (chargePoint->getAvailability() != AVAILABILITY_OPERATIVE ||
-                (connector && connector->getAvailability() == AVAILABILITY_INOPERATIVE)) {
+        if (chargePoint->getStatus() == ChargePointStatus::Unavailable ||
+                (connector && connector->getStatus() == ChargePointStatus::Unavailable)) {
             reservationStatus = "Unavailable";
             return;
         }
 
-        if (connector && connector->inferenceStatus() != OcppEvseState::Available) {
+        if (connector && connector->getStatus() != ChargePointStatus::Available) {
             reservationStatus = "Occupied";
             return;
         }

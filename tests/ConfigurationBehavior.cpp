@@ -78,7 +78,7 @@ TEST_CASE( "Configuration Behavior" ) {
             setConnectorPluggedInput([] () {return false;});
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
         }
 
         SECTION("set false") {
@@ -87,12 +87,12 @@ TEST_CASE( "Configuration Behavior" ) {
             setConnectorPluggedInput([] () {return false;});
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::SuspendedEV);
+            REQUIRE(connector->getStatus() == ChargePointStatus::SuspendedEV);
 
             endTransaction();
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
         }
     }
 
@@ -108,12 +108,12 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("mIdTag");
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
 
             beginTransaction_authorized("mIdTag");
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
         }
 
         SECTION("set false") {
@@ -122,17 +122,17 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("mIdTag");
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
 
             beginTransaction_authorized("mIdTag");
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::SuspendedEVSE);
+            REQUIRE(connector->getStatus() == ChargePointStatus::SuspendedEVSE);
 
             endTransaction();
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
         }
     }
 
@@ -149,23 +149,23 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("mIdTag");
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::Charging);
+            REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
 
             endTransaction();
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
         }
 
         SECTION("set false") {
             *config = false;
 
             beginTransaction("mIdTag");
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::Preparing);
+            REQUIRE(connector->getStatus() == ChargePointStatus::Preparing);
 
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
         }
 
         endTransaction();
@@ -195,7 +195,7 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("local-idtag");
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::Charging);
+            REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
         }
 
         SECTION("set false") {
@@ -204,13 +204,13 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("local-idtag");
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::Preparing);
+            REQUIRE(connector->getStatus() == ChargePointStatus::Preparing);
 
             loopback.setConnected(true);
             mtime += 20000; //Authorize will be retried after a few seconds
             loop();
 
-            REQUIRE(connector->inferenceStatus() == OcppEvseState::Charging);
+            REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
         }
 
         endTransaction();

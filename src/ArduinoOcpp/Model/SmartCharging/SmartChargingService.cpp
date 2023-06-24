@@ -401,7 +401,7 @@ ChargingProfile *SmartChargingService::updateProfiles(unsigned int connectorId, 
     }
 
     /**
-     * Invalidate the last limit inference by setting the nextChange to now. By the next loop()-call, the limit
+     * Invalidate the last limit by setting the nextChange to now. By the next loop()-call, the limit
      * and nextChange will be recalculated and onLimitChanged will be called.
      */
     if (res) {
@@ -620,7 +620,7 @@ bool SmartChargingService::clearChargingProfile(std::function<bool(int, int, Cha
     }
 
     /**
-     * Invalidate the last limit inference by setting the nextChange to now. By the next loop()-call, the limit
+     * Invalidate the last limit by setting the nextChange to now. By the next loop()-call, the limit
      * and nextChange will be recalculated and onLimitChanged will be called.
      */
     nextChange = context.getModel().getClock().now();

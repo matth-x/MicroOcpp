@@ -32,7 +32,7 @@ Connector::Connector(Context& context, int connectorId)
 
     char availabilityKey [CONF_KEYLEN_MAX + 1] = {'\0'};
     snprintf(availabilityKey, CONF_KEYLEN_MAX + 1, "AO_AVAIL_CONN_%d", connectorId);
-    availability = declareConfiguration<int>(availabilityKey, AVAILABILITY_OPERATIVE, AO_KEYVALUE_FN, false, false, true, false);
+    availability = declareConfiguration<bool>(availabilityKey, true, AO_KEYVALUE_FN, false, false, true, false);
 
     connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN, true, true, true, false);
     minimumStatusDuration = declareConfiguration<int>("MinimumStatusDuration", 0, CONFIGURATION_FN, true, true, true, false);
@@ -64,60 +64,60 @@ Connector::Connector(Context& context, int connectorId)
     }
 }
 
-OcppEvseState Connector::inferenceStatus() {
+ChargePointStatus Connector::getStatus() {
     /*
     * Handle special case: This is the Connector for the whole CP (i.e. connectorId=0) --> only states Available, Unavailable, Faulted are possible
     */
     if (connectorId == 0) {
         if (isFaulted()) {
-            return OcppEvseState::Faulted;
-        } else if (getAvailability() == AVAILABILITY_INOPERATIVE) {
-            return OcppEvseState::Unavailable;
+            return ChargePointStatus::Faulted;
+        } else if (!isOperative()) {
+            return ChargePointStatus::Unavailable;
         } else {
-            return OcppEvseState::Available;
+            return ChargePointStatus::Available;
         }
     }
 
     if (isFaulted()) {
-        return OcppEvseState::Faulted;
-    } else if (getAvailability() == AVAILABILITY_INOPERATIVE) {
-        return OcppEvseState::Unavailable;
+        return ChargePointStatus::Faulted;
+    } else if (!isOperative()) {
+        return ChargePointStatus::Unavailable;
     } else if (transaction && transaction->isRunning()) {
         //Transaction is currently running
         if (connectorPluggedSampler && !connectorPluggedSampler()) { //special case when StopTransactionOnEVSideDisconnect is false
-            return OcppEvseState::SuspendedEV;
+            return ChargePointStatus::SuspendedEV;
         }
         if (!ocppPermitsCharge() ||
                 (connectorEnergizedSampler && !connectorEnergizedSampler())) { 
-            return OcppEvseState::SuspendedEVSE;
+            return ChargePointStatus::SuspendedEVSE;
         }
         if (evRequestsEnergySampler && !evRequestsEnergySampler()) {
-            return OcppEvseState::SuspendedEV;
+            return ChargePointStatus::SuspendedEV;
         }
-        return OcppEvseState::Charging;
+        return ChargePointStatus::Charging;
     } else if (model.getReservationService() && model.getReservationService()->getReservation(connectorId)) {
-        return OcppEvseState::Reserved;
+        return ChargePointStatus::Reserved;
     } else if ((!transaction || !transaction->isActive()) &&                 //no transaction preparation
                (!connectorPluggedSampler || !connectorPluggedSampler()) &&   //no vehicle plugged
                (!occupiedInput || !occupiedInput())) {                       //occupied override clear
-        return OcppEvseState::Available;
+        return ChargePointStatus::Available;
     } else {
         /*
          * Either in Preparing or Finishing state. Only way to know is from previous state
          */
         const auto previous = currentStatus;
-        if (previous == OcppEvseState::Finishing ||
-                previous == OcppEvseState::Charging ||
-                previous == OcppEvseState::SuspendedEV ||
-                previous == OcppEvseState::SuspendedEVSE) {
-            return OcppEvseState::Finishing;
+        if (previous == ChargePointStatus::Finishing ||
+                previous == ChargePointStatus::Charging ||
+                previous == ChargePointStatus::SuspendedEV ||
+                previous == ChargePointStatus::SuspendedEVSE) {
+            return ChargePointStatus::Finishing;
         } else {
-            return OcppEvseState::Preparing;
+            return ChargePointStatus::Preparing;
         }
     }
 
-    AO_DBG_VERBOSE("Cannot infere status");
-    return OcppEvseState::Faulted; //internal error
+    AO_DBG_DEBUG("status undefined");
+    return ChargePointStatus::Faulted; //internal error
 }
 
 bool Connector::ocppPermitsCharge() {
@@ -142,14 +142,8 @@ bool Connector::ocppPermitsCharge() {
 
 void Connector::loop() {
 
-    if (!transaction || !transaction->isRunning()) {
-        if (*availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
-            *availability = AVAILABILITY_INOPERATIVE;
-            configuration_save();
-        }
-        if (availabilityVolatile == AVAILABILITY_INOPERATIVE_SCHEDULED) {
-            availabilityVolatile = AVAILABILITY_INOPERATIVE;
-        }
+    if (!trackLoopExecute) {
+        trackLoopExecute = true;
     }
 
     if (transaction && transaction->isAborted()) {
@@ -199,6 +193,8 @@ void Connector::loop() {
             AO_DBG_INFO("Session mngt: timeout");
             transaction->setInactive();
             transaction->commit();
+
+            updateTxNotification(TxNotification::ConnectionTimeout);
         }
 
         if (transaction->isActive() &&
@@ -221,7 +217,7 @@ void Connector::loop() {
 
             if (transaction->isActive() && transaction->isAuthorized() &&  //tx must be authorized
                     (!connectorPluggedSampler || connectorPluggedSampler()) && //if applicable, connector must be plugged
-                    !isFaulted() && //only start tx if charger is free of error conditions
+                    isOperative() && //only start tx if charger is free of error conditions
                     (!startTxReadyInput || startTxReadyInput())) { //if defined, user Input for allowing StartTx must be true
                 //start Transaction
 
@@ -242,6 +238,8 @@ void Connector::loop() {
                     transaction->setStartBootNr(model.getBootNr());
                 }
 
+                updateTxNotification(TxNotification::StartTx);
+
                 if (transaction->isSilent()) {
                     AO_DBG_INFO("silent Transaction: omit StartTx");
                     transaction->getStartSync().setRequested();
@@ -258,6 +256,14 @@ void Connector::loop() {
 
                 auto startTx = makeRequest(new StartTransaction(model, transaction));
                 startTx->setTimeout(0);
+                startTx->setOnReceiveConfListener([this] (JsonObject response) {
+                    //fetch authorization status from StartTransaction.conf() for user notification
+
+                    const char* idTagInfoStatus = response["idTagInfo"]["status"] | "_Undefined";
+                    if (strcmp(idTagInfoStatus, "Accepted")) {
+                        updateTxNotification(TxNotification::DeAuthorized);
+                    }
+                });
                 context.initiateRequest(std::move(startTx));
                 return;
             }
@@ -272,6 +278,7 @@ void Connector::loop() {
 
                 if (transaction->isSilent()) {
                     AO_DBG_INFO("silent Transaction: omit StopTx");
+                    updateTxNotification(TxNotification::StopTx);
                     transaction->getStopSync().setRequested();
                     transaction->getStopSync().confirm();
                     if (auto mService = model.getMeteringService()) {
@@ -299,6 +306,8 @@ void Connector::loop() {
                 }
 
                 transaction->commit();
+
+                updateTxNotification(TxNotification::StopTx);
 
                 std::shared_ptr<TransactionMeterData> stopTxData;
 
@@ -339,7 +348,7 @@ void Connector::loop() {
         freeVendTrackPlugged = connectorPluggedSampler();
     }
 
-    auto inferedStatus = inferenceStatus();
+    auto status = getStatus();
 
     for (auto i = std::min(errorCodeInputs.size(), trackErrorCodeInputs.size()); i >= 1; i--) {
         auto index = i - 1;
@@ -347,12 +356,12 @@ void Connector::loop() {
         if (error.isError && !trackErrorCodeInputs[index]) {
             //new error
             auto statusNotification = makeRequest(
-                    new StatusNotification(connectorId, inferedStatus, model.getClock().now(), error));
+                    new StatusNotification(connectorId, status, model.getClock().now(), error));
             statusNotification->setTimeout(0);
             context.initiateRequest(std::move(statusNotification));
 
-            currentStatus = inferedStatus;
-            reportedStatus = inferedStatus;
+            currentStatus = status;
+            reportedStatus = status;
             trackErrorCodeInputs[index] = true;
         } else if (!error.isError && trackErrorCodeInputs[index]) {
             //reset error
@@ -360,8 +369,8 @@ void Connector::loop() {
         }
     }
     
-    if (inferedStatus != currentStatus) {
-        currentStatus = inferedStatus;
+    if (status != currentStatus) {
+        currentStatus = status;
         t_statusTransition = ao_tick_ms();
         AO_DBG_DEBUG("Status changed%s", *minimumStatusDuration ? ", will report delayed" : "");
     }
@@ -575,6 +584,8 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             AO_DBG_DEBUG("Begin transaction process (%s), preauthorized locally", idTag != nullptr ? idTag : "");
 
             transaction->setAuthorized();
+
+            updateTxNotification(TxNotification::Authorized);
         }
     }
 
@@ -591,6 +602,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             AO_DBG_DEBUG("Authorize rejected (%s), abort tx process", tx->getIdTag());
             tx->setIdTagDeauthorized();
             tx->commit();
+            updateTxNotification(TxNotification::AuthorizationRejected);
             return;
         }
 
@@ -606,6 +618,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
                 AO_DBG_INFO("connector %u reserved - abort transaction", connectorId);
                 tx->setInactive();
                 tx->commit();
+                updateTxNotification(TxNotification::ReservationConflict);
                 return;
             }
         }
@@ -613,6 +626,8 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         AO_DBG_DEBUG("Authorized transaction process (%s)", tx->getIdTag());
         tx->setAuthorized();
         tx->commit();
+
+        updateTxNotification(TxNotification::Authorized);
     });
     authorize->setOnTimeoutListener([this, tx, localAuth, expiredLocalAuth] () {
 
@@ -621,6 +636,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             AO_DBG_DEBUG("Abort transaction process (%s), timeout, expired local auth", tx->getIdTag());
             tx->setInactive();
             tx->commit();
+            updateTxNotification(TxNotification::AuthorizationTimeout);
             return;
         }
         
@@ -628,6 +644,8 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             AO_DBG_DEBUG("Offline transaction process (%s), locally authorized", tx->getIdTag());
             tx->setAuthorized();
             tx->commit();
+
+            updateTxNotification(TxNotification::Authorized);
             return;
         }
 
@@ -641,6 +659,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
                 AO_DBG_INFO("connector %u reserved (offline) - abort transaction", connectorId);
                 tx->setInactive();
                 tx->commit();
+                updateTxNotification(TxNotification::ReservationConflict);
                 return;
             }
         }
@@ -649,12 +668,14 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             AO_DBG_DEBUG("Offline transaction process (%s), allow unknown ID", tx->getIdTag());
             tx->setAuthorized();
             tx->commit();
+            updateTxNotification(TxNotification::Authorized);
             return;
         }
         
         AO_DBG_DEBUG("Abort transaction process (%s): timeout", tx->getIdTag());
         tx->setInactive();
         tx->commit();
+        updateTxNotification(TxNotification::AuthorizationTimeout);
         return; //offline tx disabled
     });
     context.initiateRequest(std::move(authorize));
@@ -696,6 +717,8 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
             }
         }
     }
+
+    updateTxNotification(TxNotification::Authorized);
 
     transaction->commit();
 
@@ -755,39 +778,29 @@ std::shared_ptr<Transaction>& Connector::getTransaction() {
     return transaction;
 }
 
-int Connector::getAvailability() {
-    if (availabilityVolatile == AVAILABILITY_INOPERATIVE || *availability == AVAILABILITY_INOPERATIVE) {
-        return AVAILABILITY_INOPERATIVE;
-    } else if (availabilityVolatile == AVAILABILITY_INOPERATIVE_SCHEDULED || *availability == AVAILABILITY_INOPERATIVE_SCHEDULED) {
-        return AVAILABILITY_INOPERATIVE_SCHEDULED;
-    } else {
-        return AVAILABILITY_OPERATIVE;
+bool Connector::isOperative() {
+    if (isFaulted()) {
+        return false;
     }
+
+    if (!trackLoopExecute) {
+        return false;
+    }
+
+    if (transaction && transaction->isRunning()) {
+        return true;
+    }
+
+    return availabilityVolatile && *availability;
 }
 
 void Connector::setAvailability(bool available) {
-    if (available) {
-        *availability = AVAILABILITY_OPERATIVE;
-    } else {
-        if (transaction && transaction->isRunning()) {
-            *availability = AVAILABILITY_INOPERATIVE_SCHEDULED;
-        } else {
-            *availability = AVAILABILITY_INOPERATIVE;
-        }
-    }
+    *availability = available;
     configuration_save();
 }
 
 void Connector::setAvailabilityVolatile(bool available) {
-    if (available) {
-        availabilityVolatile = AVAILABILITY_OPERATIVE;
-    } else {
-        if (!transaction || !transaction->isRunning()) {
-            availabilityVolatile = AVAILABILITY_INOPERATIVE_SCHEDULED;
-        } else {
-            availabilityVolatile = AVAILABILITY_INOPERATIVE;
-        }
-    }
+    availabilityVolatile = available;
 }
 
 void Connector::setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
@@ -831,4 +844,14 @@ void Connector::setStopTxReadyInput(std::function<bool()> stopTxReady) {
 
 void Connector::setOccupiedInput(std::function<bool()> occupied) {
     this->occupiedInput = occupied;
+}
+
+void Connector::setTxNotificationOutput(std::function<void(TxNotification, Transaction*)> txNotificationOutput) {
+    this->txNotificationOutput = txNotificationOutput;
+}
+
+void Connector::updateTxNotification(TxNotification event) {
+    if (txNotificationOutput) {
+        txNotificationOutput(event, transaction.get());
+    }
 }
