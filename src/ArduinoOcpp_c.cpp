@@ -270,10 +270,10 @@ int ao_getTransactionId_m(unsigned int connectorId) {
 }
 
 const char *ao_getTransactionIdTag() {
-    return getTransaction() ? getTransaction()->getIdTag() : nullptr;
+    return getTransactionIdTag();
 }
 const char *ao_getTransactionIdTag_m(unsigned int connectorId) {
-    return getTransaction(connectorId) ? getTransaction(connectorId)->getIdTag() : nullptr;
+    return getTransactionIdTag(connectorId);
 }
 
 bool ao_isBlockedByReservation(const char *idTag) {

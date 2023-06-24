@@ -94,9 +94,7 @@ public:
      * is safe to call this function at any time even if no transaction is running
      */
     void endTransaction(const char *reason = nullptr);
-    const char *getSessionIdTag();
-    uint16_t getSessionWriteCount();
-    int getTransactionId();
+    
     std::shared_ptr<Transaction>& getTransaction();
 
     //create detached transaction - won't have any side-effects with the transaction handling of this lib

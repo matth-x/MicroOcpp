@@ -59,7 +59,7 @@ void ReservationService::loop() {
             }
 
             //check if other tx started at this connector (e.g. due to RemoteStartTransaction)
-            if (connector->getSessionIdTag()) {
+            if (connector->getTransaction() && connector->getTransaction()->isActive()) {
                 reservation.clear();
                 continue;
             }

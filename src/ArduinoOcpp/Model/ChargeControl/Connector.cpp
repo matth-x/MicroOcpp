@@ -744,36 +744,6 @@ void Connector::endTransaction(const char *reason) {
     transaction->commit();
 }
 
-const char *Connector::getSessionIdTag() {
-
-    if (!transaction) {
-        return nullptr;
-    }
-
-    return transaction->isActive() ? transaction->getIdTag() : nullptr;
-}
-
-uint16_t Connector::getSessionWriteCount() {
-    return transaction ? transaction->getTxNr() : 0;
-}
-
-int Connector::getTransactionId() {
-    
-    if (!transaction) {
-        return -1;
-    }
-
-    if (transaction->isRunning()) {
-        if (transaction->getStartSync().isConfirmed()) {
-            return transaction->getTransactionId();
-        } else {
-            return 0;
-        }
-    } else {
-        return -1;
-    }
-}
-
 std::shared_ptr<Transaction>& Connector::getTransaction() {
     return transaction;
 }

@@ -286,7 +286,7 @@ bool endTransaction(const char *reason, unsigned int connectorId) {
         AO_DBG_ERR("Could not find connector. Ignore");
         return false;
     }
-    bool res = connector->getSessionIdTag();
+    auto res = isTransactionActive(connectorId);
     connector->endTransaction(reason);
     return res;
 }

@@ -72,9 +72,8 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
     if (connectorId >= 1) {
         //connectorId specified for given connector, try to start Transaction here
         if (auto connector = model.getConnector(connectorId)){
-            if (connector->getTransactionId() < 0 &&
-                        connector->isOperative() &&
-                        !connector->getTransaction()) {
+            if (!connector->getTransaction() &&
+                        connector->isOperative()) {
                 selectConnector = connector;
             }
         }
@@ -82,9 +81,8 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
         //connectorId not specified. Find free connector
         for (unsigned int cid = 1; cid < model.getNumConnectors(); cid++) {
             auto connector = model.getConnector(cid);
-            if (connector->getTransactionId() < 0 && 
-                        connector->isOperative() &&
-                        !connector->getTransaction()) {
+            if (!connector->getTransaction() &&
+                        connector->isOperative()) {
                 selectConnector = connector;
                 connectorId = cid;
                 break;

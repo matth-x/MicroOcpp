@@ -5,6 +5,7 @@
 #include <ArduinoOcpp/Operations/RemoteStopTransaction.h>
 #include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Model/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
 
 using ArduinoOcpp::Ocpp16::RemoteStopTransaction;
 
@@ -28,7 +29,8 @@ std::unique_ptr<DynamicJsonDocument> RemoteStopTransaction::createConf(){
 
     for (unsigned int cId = 0; cId < model.getNumConnectors(); cId++) {
         auto connector = model.getConnector(cId);
-        if (connector->getTransactionId() == transactionId) {
+        if (connector->getTransaction() &&
+                connector->getTransaction()->getTransactionId() == transactionId) {
             canStopTransaction = true;
             connector->endTransaction("Remote");
         }
