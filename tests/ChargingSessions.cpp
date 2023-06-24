@@ -389,6 +389,9 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE(!isOperative());
 
         connector->setAvailability(true);
+
+        REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+        REQUIRE(isOperative());
     }
 
     OCPP_deinitialize();
