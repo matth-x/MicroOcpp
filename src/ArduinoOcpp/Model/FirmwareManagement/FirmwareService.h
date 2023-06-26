@@ -36,10 +36,10 @@ private:
     std::shared_ptr<Configuration<const char *>> previousBuildNumber;
     std::string buildNumber;
 
-    std::function<DownloadStatus()> downloadStatusSampler;
+    std::function<DownloadStatus()> downloadStatusInput;
     bool downloadIssued = false;
 
-    std::function<InstallationStatus()> installationStatusSampler;
+    std::function<InstallationStatus()> installationStatusInput;
     bool installationIssued = false;
 
     Ocpp16::FirmwareStatus lastReportedStatus = Ocpp16::FirmwareStatus::Idle;
@@ -82,11 +82,11 @@ public:
 
     void setOnDownload(std::function<bool(const std::string &location)> onDownload);
 
-    void setDownloadStatusSampler(std::function<DownloadStatus()> downloadStatusSampler);
+    void setDownloadStatusInput(std::function<DownloadStatus()> downloadStatusInput);
 
     void setOnInstall(std::function<bool(const std::string &location)> onInstall);
 
-    void setInstallationStatusSampler(std::function<InstallationStatus()> installationStatusSampler);
+    void setInstallationStatusInput(std::function<InstallationStatus()> installationStatusInput);
 };
 
 } //endif namespace ArduinoOcpp

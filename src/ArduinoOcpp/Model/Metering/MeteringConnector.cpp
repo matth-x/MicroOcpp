@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/Metering/ConnectorMeterValuesRecorder.h>
+#include <ArduinoOcpp/Model/Metering/MeteringConnector.h>
 #include <ArduinoOcpp/Model/Metering/MeterStore.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Model/Model.h>
@@ -17,7 +17,7 @@
 using namespace ArduinoOcpp;
 using namespace ArduinoOcpp::Ocpp16;
 
-ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(Model& context, int connectorId, MeterStore& meterStore)
+MeteringConnector::MeteringConnector(Model& context, int connectorId, MeterStore& meterStore)
         : context(context), connectorId{connectorId}, meterStore(meterStore) {
 
     auto MeterValuesSampledData = declareConfiguration<const char*>(
@@ -99,7 +99,7 @@ ConnectorMeterValuesRecorder::ConnectorMeterValuesRecorder(Model& context, int c
     StopTxnAlignedData->setValidator(validateSelectString);
 }
 
-Operation *ConnectorMeterValuesRecorder::loop() {
+Operation *MeteringConnector::loop() {
 
     bool txBreak = false;
     if (context.getConnector(connectorId)) {
@@ -209,7 +209,7 @@ Operation *ConnectorMeterValuesRecorder::loop() {
     return nullptr; //successful method completition. Currently there is no reason to send a MeterValues Msg.
 }
 
-Operation *ConnectorMeterValuesRecorder::takeTriggeredMeterValues() {
+Operation *MeteringConnector::takeTriggeredMeterValues() {
 
     auto sample = sampledDataBuilder->takeSample(context.getClock().now(), ReadingContext::Trigger);
 
@@ -228,14 +228,14 @@ Operation *ConnectorMeterValuesRecorder::takeTriggeredMeterValues() {
     return new MeterValues(std::move(mv_now), connectorId, transaction);
 }
 
-void ConnectorMeterValuesRecorder::addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler) {
+void MeteringConnector::addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler) {
     if (!meterValueSampler->getProperties().getMeasurand().compare("Energy.Active.Import.Register")) {
         energySamplerIndex = samplers.size();
     }
     samplers.push_back(std::move(meterValueSampler));
 }
 
-std::unique_ptr<SampledValue> ConnectorMeterValuesRecorder::readTxEnergyMeter(ReadingContext context) {
+std::unique_ptr<SampledValue> MeteringConnector::readTxEnergyMeter(ReadingContext context) {
     if (energySamplerIndex >= 0 && (size_t) energySamplerIndex < samplers.size()) {
         return samplers[energySamplerIndex]->takeValue(context);
     } else {
@@ -244,7 +244,7 @@ std::unique_ptr<SampledValue> ConnectorMeterValuesRecorder::readTxEnergyMeter(Re
     }
 }
 
-void ConnectorMeterValuesRecorder::beginTxMeterData(Transaction *transaction) {
+void MeteringConnector::beginTxMeterData(Transaction *transaction) {
     if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
         stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
     }
@@ -257,7 +257,7 @@ void ConnectorMeterValuesRecorder::beginTxMeterData(Transaction *transaction) {
     }
 }
 
-std::shared_ptr<TransactionMeterData> ConnectorMeterValuesRecorder::endTxMeterData(Transaction *transaction) {
+std::shared_ptr<TransactionMeterData> MeteringConnector::endTxMeterData(Transaction *transaction) {
     if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
         stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
     }
@@ -272,7 +272,7 @@ std::shared_ptr<TransactionMeterData> ConnectorMeterValuesRecorder::endTxMeterDa
     return std::move(stopTxnData);
 }
 
-std::shared_ptr<TransactionMeterData> ConnectorMeterValuesRecorder::getStopTxMeterData(Transaction *transaction) {
+std::shared_ptr<TransactionMeterData> MeteringConnector::getStopTxMeterData(Transaction *transaction) {
     auto txData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
 
     if (!txData) {

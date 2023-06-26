@@ -39,9 +39,9 @@ private:
     std::shared_ptr<Configuration<bool>> availability;
     bool availabilityVolatile = true;
 
-    std::function<bool()> connectorPluggedSampler;
-    std::function<bool()> evRequestsEnergySampler;
-    std::function<bool()> connectorEnergizedSampler;
+    std::function<bool()> connectorPluggedInput;
+    std::function<bool()> evReadyInput;
+    std::function<bool()> evseReadyInput;
     std::vector<std::function<ErrorCode ()>> errorCodeInputs;
     std::vector<bool> trackErrorCodeInputs;
     bool isFaulted();
@@ -104,10 +104,10 @@ public:
     void setAvailability(bool available);
     void setAvailabilityVolatile(bool available); //set inoperative state but keep only until reboot at most
     void setAuthorizationProvider(std::function<const char *()> authorization);
-    void setConnectorPluggedSampler(std::function<bool()> connectorPlugged);
-    void setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy);
-    void setConnectorEnergizedSampler(std::function<bool()> connectorEnergized);
-    void addConnectorErrorCodeSampler(std::function<const char*()> connectorErrorCode);
+    void setConnectorPluggedInput(std::function<bool()> connectorPlugged);
+    void setEvReadyInput(std::function<bool()> evRequestsEnergy);
+    void setEvseReadyInput(std::function<bool()> connectorEnergized);
+    void addErrorCodeInput(std::function<const char*()> connectorErrorCode);
     void addErrorCodeInput(std::function<ErrorCode ()> errorCodeInput);
 
     void loop();

@@ -56,7 +56,7 @@ void DiagnosticsService::loop() {
         }
 
         if (uploadIssued) {
-            if (uploadStatusSampler != nullptr && uploadStatusSampler() == UploadStatus::Uploaded) {
+            if (uploadStatusInput != nullptr && uploadStatusInput() == UploadStatus::Uploaded) {
                 //success!
                 AO_DBG_DEBUG("end upload routine (by status)")
                 uploadIssued = false;
@@ -66,10 +66,10 @@ void DiagnosticsService::loop() {
             //check if maximum time elapsed or failed
             const int UPLOAD_TIMEOUT = 60;
             if (timestampNow - nextTry >= UPLOAD_TIMEOUT
-                    || (uploadStatusSampler != nullptr && uploadStatusSampler() == UploadStatus::UploadFailed)) {
+                    || (uploadStatusInput != nullptr && uploadStatusInput() == UploadStatus::UploadFailed)) {
                 //maximum upload time elapsed or failed
 
-                if (uploadStatusSampler == nullptr) {
+                if (uploadStatusInput == nullptr) {
                     //No way to find out if failed. But maximum time has elapsed. Assume success
                     AO_DBG_DEBUG("end upload routine (by timer)");
                     uploadIssued = false;
@@ -140,8 +140,8 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &loca
 
 DiagnosticsStatus DiagnosticsService::getDiagnosticsStatus() {
     if (uploadIssued) {
-        if (uploadStatusSampler != nullptr) {
-            switch (uploadStatusSampler()) {
+        if (uploadStatusInput != nullptr) {
+            switch (uploadStatusInput()) {
                 case UploadStatus::NotUploaded:
                     return DiagnosticsStatus::Uploading;
                 case UploadStatus::Uploaded:
@@ -173,8 +173,8 @@ void DiagnosticsService::setOnUpload(std::function<bool(const std::string &locat
     this->onUpload = onUpload;
 }
 
-void DiagnosticsService::setOnUploadStatusSampler(std::function<UploadStatus()> uploadStatusSampler) {
-    this->uploadStatusSampler = uploadStatusSampler;
+void DiagnosticsService::setOnUploadStatusInput(std::function<UploadStatus()> uploadStatusInput) {
+    this->uploadStatusInput = uploadStatusInput;
 }
 
 #if !defined(AO_CUSTOM_DIAGNOSTICS) && !defined(AO_CUSTOM_WS)
@@ -184,7 +184,7 @@ DiagnosticsService *EspWiFi::makeDiagnosticsService(Context& context) {
     auto diagService = new DiagnosticsService(context);
 
     /*
-     * add onUpload and uploadStatusSampler when logging was implemented
+     * add onUpload and uploadStatusInput when logging was implemented
      */
 
     return diagService;

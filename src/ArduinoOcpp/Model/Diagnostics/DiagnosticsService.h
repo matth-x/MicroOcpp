@@ -35,7 +35,7 @@ private:
     Timestamp nextTry = Timestamp();
 
     std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload = nullptr;
-    std::function<UploadStatus()> uploadStatusSampler = nullptr;
+    std::function<UploadStatus()> uploadStatusInput = nullptr;
     bool uploadIssued = false;
 
     std::unique_ptr<Request> getDiagnosticsStatusNotification();
@@ -56,7 +56,7 @@ public:
 
     void setOnUpload(std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload);
 
-    void setOnUploadStatusSampler(std::function<UploadStatus()> uploadStatusSampler);
+    void setOnUploadStatusInput(std::function<UploadStatus()> uploadStatusInput);
 };
 
 #if !defined(AO_CUSTOM_DIAGNOSTICS) && !defined(AO_CUSTOM_WS)

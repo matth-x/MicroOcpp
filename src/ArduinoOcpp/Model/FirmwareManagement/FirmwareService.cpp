@@ -89,20 +89,20 @@ void FirmwareService::loop() {
             if (onDownload != nullptr) {
                 onDownload(location);
                 timestampTransition = ao_tick_ms();
-                delayTransition = downloadStatusSampler ? 1000 : 30000; //give the download at least 30s
+                delayTransition = downloadStatusInput ? 1000 : 30000; //give the download at least 30s
                 return;
             }
         }
 
         if (stage == UpdateStage::Downloading) {
 
-            if (downloadStatusSampler) {
+            if (downloadStatusInput) {
                 //check if client reports download to be finished
 
-                if (downloadStatusSampler() == DownloadStatus::Downloaded) {
+                if (downloadStatusInput() == DownloadStatus::Downloaded) {
                     //passed download stage
                     stage = UpdateStage::AfterDownload;
-                } else if (downloadStatusSampler() == DownloadStatus::DownloadFailed) {
+                } else if (downloadStatusInput() == DownloadStatus::DownloadFailed) {
                     AO_DBG_INFO("Download timeout or failed! Retry");
                     retreiveDate = timestampNow;
                     retreiveDate += retryInterval;
@@ -115,7 +115,7 @@ void FirmwareService::loop() {
                 }
             } else {
                 //if client doesn't report download state, assume download to be finished (at least 30s download time have passed until here)
-                if (downloadStatusSampler == nullptr) {
+                if (downloadStatusInput == nullptr) {
                     stage = UpdateStage::AfterDownload;
                 }
             }
@@ -153,19 +153,19 @@ void FirmwareService::loop() {
             }
 
             timestampTransition = ao_tick_ms();
-            delayTransition = installationStatusSampler ? 1000 : 120 * 1000;
+            delayTransition = installationStatusInput ? 1000 : 120 * 1000;
             return;
         }
 
         if (stage == UpdateStage::Installing) {
 
-            if (installationStatusSampler) {
-                if (installationStatusSampler() == InstallationStatus::Installed) {
+            if (installationStatusInput) {
+                if (installationStatusInput() == InstallationStatus::Installed) {
                     AO_DBG_INFO("FW update finished");
                     //Client should reboot during onInstall. If not, client is responsible to reboot at a later point
                     resetStage();
                     retries = 0; //End of update routine. Client must reboot on its own
-                } else if (installationStatusSampler() == InstallationStatus::InstallationFailed) {
+                } else if (installationStatusInput() == InstallationStatus::InstallationFailed) {
                     AO_DBG_INFO("Installation timeout or failed! Retry");
                     retreiveDate = timestampNow;
                     retreiveDate += retryInterval;
@@ -224,10 +224,10 @@ void FirmwareService::scheduleFirmwareUpdate(const std::string &location, Timest
 
 FirmwareStatus FirmwareService::getFirmwareStatus() {
     if (installationIssued) {
-        if (installationStatusSampler != nullptr) {
-            if (installationStatusSampler() == InstallationStatus::Installed) {
+        if (installationStatusInput != nullptr) {
+            if (installationStatusInput() == InstallationStatus::Installed) {
                 return FirmwareStatus::Installed;
-            } else if (installationStatusSampler() == InstallationStatus::InstallationFailed) {
+            } else if (installationStatusInput() == InstallationStatus::InstallationFailed) {
                 return FirmwareStatus::InstallationFailed;
             }
         }
@@ -236,10 +236,10 @@ FirmwareStatus FirmwareService::getFirmwareStatus() {
     }
     
     if (downloadIssued) {
-        if (downloadStatusSampler != nullptr) {
-            if (downloadStatusSampler() == DownloadStatus::Downloaded) {
+        if (downloadStatusInput != nullptr) {
+            if (downloadStatusInput() == DownloadStatus::Downloaded) {
                 return FirmwareStatus::Downloaded;
-            } else if (downloadStatusSampler() == DownloadStatus::DownloadFailed) {
+            } else if (downloadStatusInput() == DownloadStatus::DownloadFailed) {
                 return FirmwareStatus::DownloadFailed;
             }
         }
@@ -290,16 +290,16 @@ void FirmwareService::setOnDownload(std::function<bool(const std::string &locati
     this->onDownload = onDownload;
 }
 
-void FirmwareService::setDownloadStatusSampler(std::function<DownloadStatus()> downloadStatusSampler) {
-    this->downloadStatusSampler = downloadStatusSampler;
+void FirmwareService::setDownloadStatusInput(std::function<DownloadStatus()> downloadStatusInput) {
+    this->downloadStatusInput = downloadStatusInput;
 }
 
 void FirmwareService::setOnInstall(std::function<bool(const std::string &location)> onInstall) {
     this->onInstall = onInstall;
 }
 
-void FirmwareService::setInstallationStatusSampler(std::function<InstallationStatus()> installationStatusSampler) {
-    this->installationStatusSampler = installationStatusSampler;
+void FirmwareService::setInstallationStatusInput(std::function<InstallationStatus()> installationStatusInput) {
+    this->installationStatusInput = installationStatusInput;
 }
 
 void FirmwareService::resetStage() {
@@ -326,7 +326,7 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
         return true;
     });
 
-    fwService->setDownloadStatusSampler([] () {
+    fwService->setDownloadStatusInput([] () {
         //report the download progress
         //...
         return DownloadStatus::NotDownloaded;
@@ -335,7 +335,7 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
 
     fwService->setOnInstall([fwService] (const std::string &location) {
 
-        fwService->setInstallationStatusSampler([](){return InstallationStatus::NotInstalled;});
+        fwService->setInstallationStatusInput([](){return InstallationStatus::NotInstalled;});
 
         WiFiClient client;
         //WiFiClientSecure client;
@@ -347,15 +347,15 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
 
         switch (ret) {
             case HTTP_UPDATE_FAILED:
-                fwService->setInstallationStatusSampler([](){return InstallationStatus::InstallationFailed;});
+                fwService->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
                 AO_DBG_WARN("HTTP_UPDATE_FAILED Error (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
                 break;
             case HTTP_UPDATE_NO_UPDATES:
-                fwService->setInstallationStatusSampler([](){return InstallationStatus::InstallationFailed;});
+                fwService->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
                 AO_DBG_WARN("HTTP_UPDATE_NO_UPDATES");
                 break;
             case HTTP_UPDATE_OK:
-                fwService->setInstallationStatusSampler([](){return InstallationStatus::Installed;});
+                fwService->setInstallationStatusInput([](){return InstallationStatus::Installed;});
                 AO_DBG_INFO("HTTP_UPDATE_OK");
                 ESP.restart();
                 break;
@@ -364,7 +364,7 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
         return true;
     });
 
-    fwService->setInstallationStatusSampler([] () {
+    fwService->setInstallationStatusInput([] () {
         return InstallationStatus::NotInstalled;
     });
 
@@ -391,15 +391,15 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
 
         switch (ret) {
             case HTTP_UPDATE_FAILED:
-                fwService->setInstallationStatusSampler([](){return InstallationStatus::InstallationFailed;});
+                fwService->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
                 AO_DBG_WARN("HTTP_UPDATE_FAILED Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
                 break;
             case HTTP_UPDATE_NO_UPDATES:
-                fwService->setInstallationStatusSampler([](){return InstallationStatus::InstallationFailed;});
+                fwService->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
                 AO_DBG_WARN("HTTP_UPDATE_NO_UPDATES");
                 break;
             case HTTP_UPDATE_OK:
-                fwService->setInstallationStatusSampler([](){return InstallationStatus::Installed;});
+                fwService->setInstallationStatusInput([](){return InstallationStatus::Installed;});
                 AO_DBG_INFO("HTTP_UPDATE_OK");
                 ESP.restart();
                 break;
@@ -408,7 +408,7 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
         return true;
     });
 
-    fwService->setInstallationStatusSampler([] () {
+    fwService->setInstallationStatusInput([] () {
         return InstallationStatus::NotInstalled;
     });
 

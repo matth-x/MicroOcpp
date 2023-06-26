@@ -16,7 +16,7 @@ MeteringService::MeteringService(Context& context, int numConn, std::shared_ptr<
       : context(context), meterStore(filesystem) {
 
     for (int i = 0; i < numConn; i++) {
-        connectors.push_back(std::unique_ptr<ConnectorMeterValuesRecorder>(new ConnectorMeterValuesRecorder(context.getModel(), i, meterStore)));
+        connectors.push_back(std::unique_ptr<MeteringConnector>(new MeteringConnector(context.getModel(), i, meterStore)));
     }
 
     /*

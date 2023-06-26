@@ -9,14 +9,11 @@
 #include <vector>
 #include <memory>
 
-#include <ArduinoOcpp/Model/Metering/ConnectorMeterValuesRecorder.h>
+#include <ArduinoOcpp/Model/Metering/MeteringConnector.h>
 #include <ArduinoOcpp/Model/Metering/SampledValue.h>
 #include <ArduinoOcpp/Model/Metering/MeterStore.h>
 
 namespace ArduinoOcpp {
-
-using PowerSampler = std::function<float()>;  //in Watts (W)
-using EnergySampler = std::function<float()>; //in Watt-hours (Wh)
 
 class Context;
 class Request;
@@ -27,7 +24,7 @@ private:
     Context& context;
     MeterStore meterStore;
 
-    std::vector<std::unique_ptr<ConnectorMeterValuesRecorder>> connectors;
+    std::vector<std::unique_ptr<MeteringConnector>> connectors;
 public:
     MeteringService(Context& context, int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 

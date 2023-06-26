@@ -84,21 +84,21 @@ ChargePointStatus Connector::getStatus() {
         return ChargePointStatus::Unavailable;
     } else if (transaction && transaction->isRunning()) {
         //Transaction is currently running
-        if (connectorPluggedSampler && !connectorPluggedSampler()) { //special case when StopTransactionOnEVSideDisconnect is false
+        if (connectorPluggedInput && !connectorPluggedInput()) { //special case when StopTransactionOnEVSideDisconnect is false
             return ChargePointStatus::SuspendedEV;
         }
         if (!ocppPermitsCharge() ||
-                (connectorEnergizedSampler && !connectorEnergizedSampler())) { 
+                (evseReadyInput && !evseReadyInput())) { 
             return ChargePointStatus::SuspendedEVSE;
         }
-        if (evRequestsEnergySampler && !evRequestsEnergySampler()) {
+        if (evReadyInput && !evReadyInput()) {
             return ChargePointStatus::SuspendedEV;
         }
         return ChargePointStatus::Charging;
     } else if (model.getReservationService() && model.getReservationService()->getReservation(connectorId)) {
         return ChargePointStatus::Reserved;
     } else if ((!transaction || !transaction->isActive()) &&                 //no transaction preparation
-               (!connectorPluggedSampler || !connectorPluggedSampler()) &&   //no vehicle plugged
+               (!connectorPluggedInput || !connectorPluggedInput()) &&   //no vehicle plugged
                (!occupiedInput || !occupiedInput())) {                       //occupied override clear
         return ChargePointStatus::Available;
     } else {
@@ -173,8 +173,8 @@ void Connector::loop() {
 
     if (transaction) { //begin exclusively transaction-related operations
             
-        if (connectorPluggedSampler) {
-            if (transaction->isRunning() && transaction->isActive() && !connectorPluggedSampler()) {
+        if (connectorPluggedInput) {
+            if (transaction->isRunning() && transaction->isActive() && !connectorPluggedInput()) {
                 if (!stopTransactionOnEVSideDisconnect || *stopTransactionOnEVSideDisconnect) {
                     AO_DBG_DEBUG("Stop Tx due to EV disconnect");
                     transaction->setStopReason("EVDisconnected");
@@ -216,7 +216,7 @@ void Connector::loop() {
             //start tx?
 
             if (transaction->isActive() && transaction->isAuthorized() &&  //tx must be authorized
-                    (!connectorPluggedSampler || connectorPluggedSampler()) && //if applicable, connector must be plugged
+                    (!connectorPluggedInput || connectorPluggedInput()) && //if applicable, connector must be plugged
                     isOperative() && //only start tx if charger is free of error conditions
                     (!startTxReadyInput || startTxReadyInput())) { //if defined, user Input for allowing StartTx must be true
                 //start Transaction
@@ -330,8 +330,8 @@ void Connector::loop() {
     } //end transaction-related operations
 
     //handle FreeVend mode
-    if (freeVendActive && *freeVendActive && connectorPluggedSampler) {
-        if (!freeVendTrackPlugged && connectorPluggedSampler() && !transaction) {
+    if (freeVendActive && *freeVendActive && connectorPluggedInput) {
+        if (!freeVendTrackPlugged && connectorPluggedInput() && !transaction) {
             const char *idTag = freeVendIdTag && *freeVendIdTag ? *freeVendIdTag : "";
             if (!idTag || *idTag == '\0') {
                 idTag = "A0000000";
@@ -345,7 +345,7 @@ void Connector::loop() {
             }
         }
 
-        freeVendTrackPlugged = connectorPluggedSampler();
+        freeVendTrackPlugged = connectorPluggedInput();
     }
 
     auto status = getStatus();
@@ -773,19 +773,19 @@ void Connector::setAvailabilityVolatile(bool available) {
     availabilityVolatile = available;
 }
 
-void Connector::setConnectorPluggedSampler(std::function<bool()> connectorPlugged) {
-    this->connectorPluggedSampler = connectorPlugged;
+void Connector::setConnectorPluggedInput(std::function<bool()> connectorPlugged) {
+    this->connectorPluggedInput = connectorPlugged;
 }
 
-void Connector::setEvRequestsEnergySampler(std::function<bool()> evRequestsEnergy) {
-    this->evRequestsEnergySampler = evRequestsEnergy;
+void Connector::setEvReadyInput(std::function<bool()> evRequestsEnergy) {
+    this->evReadyInput = evRequestsEnergy;
 }
 
-void Connector::setConnectorEnergizedSampler(std::function<bool()> connectorEnergized) {
-    this->connectorEnergizedSampler = connectorEnergized;
+void Connector::setEvseReadyInput(std::function<bool()> connectorEnergized) {
+    this->evseReadyInput = connectorEnergized;
 }
 
-void Connector::addConnectorErrorCodeSampler(std::function<const char *()> connectorErrorCode) {
+void Connector::addErrorCodeInput(std::function<const char *()> connectorErrorCode) {
     addErrorCodeInput([connectorErrorCode] () -> ErrorCode {
         return ErrorCode(connectorErrorCode());
     });

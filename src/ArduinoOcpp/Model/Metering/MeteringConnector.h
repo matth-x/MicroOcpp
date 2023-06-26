@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef CONNECTOR_METER_VALUES_RECORDER
-#define CONNECTOR_METER_VALUES_RECORDER
+#ifndef METERING_CONNECTOR_H
+#define METERING_CONNECTOR_H
 
 #include <functional>
 #include <memory>
@@ -16,15 +16,12 @@
 
 namespace ArduinoOcpp {
 
-using PowerSampler = std::function<float()>;
-using EnergySampler = std::function<float()>;
-
 class Model;
 class Operation;
 class Transaction;
 class MeterStore;
 
-class ConnectorMeterValuesRecorder {
+class MeteringConnector {
 private:
     Model& context;
     const int connectorId;
@@ -59,7 +56,7 @@ private:
     std::shared_ptr<Configuration<bool>> MeterValuesInTxOnly;
     std::shared_ptr<Configuration<bool>> StopTxnDataCapturePeriodic;
 public:
-    ConnectorMeterValuesRecorder(Model& context, int connectorId, MeterStore& meterStore);
+    MeteringConnector(Model& context, int connectorId, MeterStore& meterStore);
 
     Operation *loop();
 

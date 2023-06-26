@@ -342,12 +342,12 @@ void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int c
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
-    connector->setConnectorPluggedSampler(pluggedInput);
+    connector->setConnectorPluggedInput(pluggedInput);
 
     if (pluggedInput) {
-        AO_DBG_INFO("Added ConnectorPluggedSampler. Transaction-management is in auto mode now");
+        AO_DBG_INFO("Added ConnectorPluggedInput. Transaction-management is in auto mode now");
     } else {
-        AO_DBG_INFO("Reset ConnectorPluggedSampler. Transaction-management is in manual mode now");
+        AO_DBG_INFO("Reset ConnectorPluggedInput. Transaction-management is in manual mode now");
     }
 }
 
@@ -484,7 +484,7 @@ void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorI
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
-    connector->setEvRequestsEnergySampler(evReadyInput);
+    connector->setEvReadyInput(evReadyInput);
 }
 
 void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connectorId) {
@@ -497,7 +497,7 @@ void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connec
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
-    connector->setConnectorEnergizedSampler(evseReadyInput);
+    connector->setEvseReadyInput(evseReadyInput);
 }
 
 void addErrorCodeInput(std::function<const char *()> errorCodeInput, unsigned int connectorId) {
@@ -510,7 +510,7 @@ void addErrorCodeInput(std::function<const char *()> errorCodeInput, unsigned in
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
-    connector->addConnectorErrorCodeSampler(errorCodeInput);
+    connector->addErrorCodeInput(errorCodeInput);
 }
 
 void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measurand, const char *unit, const char *location, const char *phase, unsigned int connectorId) {

@@ -64,7 +64,7 @@ set(AO_SRC
     src/ArduinoOcpp/Model/Diagnostics/DiagnosticsService.cpp
     src/ArduinoOcpp/Model/FirmwareManagement/FirmwareService.cpp
     src/ArduinoOcpp/Model/Heartbeat/HeartbeatService.cpp
-    src/ArduinoOcpp/Model/Metering/ConnectorMeterValuesRecorder.cpp
+    src/ArduinoOcpp/Model/Metering/MeteringConnector.cpp
     src/ArduinoOcpp/Model/Metering/MeteringService.cpp
     src/ArduinoOcpp/Model/Metering/MeterStore.cpp
     src/ArduinoOcpp/Model/Metering/MeterValue.cpp
