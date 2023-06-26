@@ -115,7 +115,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
     if ((txBreak || meterData.size() >= (size_t) *MeterValueCacheSize) && !meterData.empty()) {
         auto meterValues = std::unique_ptr<MeterValues>(new MeterValues(std::move(meterData), connectorId, transaction));
         meterData.clear();
-        return meterValues;
+        return std::move(meterValues);
     }
 
     if (model.getConnector(connectorId)) {
