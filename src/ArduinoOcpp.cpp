@@ -513,6 +513,19 @@ void addErrorCodeInput(std::function<const char *()> errorCodeInput, unsigned in
     connector->addErrorCodeInput(errorCodeInput);
 }
 
+void addErrorCodeInput(std::function<ArduinoOcpp::ErrorCode()> errorCodeInput, unsigned int connectorId) {
+    if (!context) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+    auto connector = context->getModel().getConnector(connectorId);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return;
+    }
+    connector->addErrorCodeInput(errorCodeInput);
+}
+
 void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measurand, const char *unit, const char *location, const char *phase, unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before

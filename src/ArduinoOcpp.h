@@ -16,6 +16,7 @@
 #include <ArduinoOcpp/Model/Metering/SampledValue.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Model/ChargeControl/Notification.h>
+#include <ArduinoOcpp/Model/ChargeControl/ChargePointErrorCode.h>
 
 using ArduinoOcpp::OnReceiveConfListener;
 using ArduinoOcpp::OnReceiveReqListener;
@@ -214,6 +215,7 @@ void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorI
 void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connectorId = 1); //Input if EVSE allows charge (= PWM signal on)
 
 void addErrorCodeInput(std::function<const char *()> errorCodeInput, unsigned int connectorId = 1); //Input for Error codes (please refer to OCPP 1.6, Edit2, p. 71 and 72 for valid error codes)
+void addErrorCodeInput(std::function<ArduinoOcpp::ErrorCode()> errorCodeInput, unsigned int connectorId = 1);
 
 void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measurand = nullptr, const char *unit = nullptr, const char *location = nullptr, const char *phase = nullptr, unsigned int connectorId = 1); //integrate further metering Inputs
 
