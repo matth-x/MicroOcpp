@@ -16,7 +16,8 @@ class Operation;
 
 std::unique_ptr<Request> makeRequest();
 
-std::unique_ptr<Request> makeRequest(Operation *msg);
+std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> op);
+std::unique_ptr<Request> makeRequest(Operation *op); //takes ownership of op
 
 } //end namespace ArduinoOcpp
 #endif

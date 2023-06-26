@@ -23,7 +23,7 @@ class MeterStore;
 
 class MeteringConnector {
 private:
-    Model& context;
+    Model& model;
     const int connectorId;
     MeterStore& meterStore;
     
@@ -56,15 +56,15 @@ private:
     std::shared_ptr<Configuration<bool>> MeterValuesInTxOnly;
     std::shared_ptr<Configuration<bool>> StopTxnDataCapturePeriodic;
 public:
-    MeteringConnector(Model& context, int connectorId, MeterStore& meterStore);
+    MeteringConnector(Model& model, int connectorId, MeterStore& meterStore);
 
-    Operation *loop();
+    std::unique_ptr<Operation> loop();
 
     void addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler);
 
-    std::unique_ptr<SampledValue> readTxEnergyMeter(ReadingContext context);
+    std::unique_ptr<SampledValue> readTxEnergyMeter(ReadingContext model);
 
-    Operation *takeTriggeredMeterValues();
+    std::unique_ptr<Operation> takeTriggeredMeterValues();
 
     void beginTxMeterData(Transaction *transaction);
 

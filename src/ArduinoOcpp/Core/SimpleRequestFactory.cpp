@@ -7,13 +7,17 @@
 
 namespace ArduinoOcpp {
 
-std::unique_ptr<Request> makeRequest(Operation *msg){
-    if (msg == nullptr) {
+std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> operation){
+    if (operation == nullptr) {
         return nullptr;
     }
-    auto operation = makeRequest();
-    operation->setOperation(std::unique_ptr<Operation>(msg));
-    return operation;
+    auto request = makeRequest();
+    request->setOperation(std::move(operation));
+    return request;
+}
+
+std::unique_ptr<Request> makeRequest(Operation *operation) {
+    return makeRequest(std::unique_ptr<Operation>(operation));
 }
 
 std::unique_ptr<Request> makeRequest(){

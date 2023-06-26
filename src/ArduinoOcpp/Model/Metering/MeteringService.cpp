@@ -33,7 +33,7 @@ void MeteringService::loop(){
     for (unsigned int i = 0; i < connectors.size(); i++){
         auto meterValuesMsg = connectors[i]->loop();
         if (meterValuesMsg != nullptr) {
-            auto meterValues = makeRequest(meterValuesMsg);
+            auto meterValues = makeRequest(std::move(meterValuesMsg));
             meterValues->setTimeout(120000);
             context.initiateRequest(std::move(meterValues));
         }
@@ -65,7 +65,7 @@ std::unique_ptr<Request> MeteringService::takeTriggeredMeterValues(int connector
     if (connector.get()) {
         auto msg = connector->takeTriggeredMeterValues();
         if (msg) {
-            auto meterValues = makeRequest(msg);
+            auto meterValues = makeRequest(std::move(msg));
             meterValues->setTimeout(120000);
             return meterValues;
         }

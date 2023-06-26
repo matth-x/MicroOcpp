@@ -268,7 +268,7 @@ std::unique_ptr<Request> FirmwareService::getFirmwareStatusNotification() {
             buildNumber.clear();
 
             lastReportedStatus = FirmwareStatus::Installed;
-            Operation *fwNotificationMsg = new Ocpp16::FirmwareStatusNotification(lastReportedStatus);
+            auto fwNotificationMsg = new Ocpp16::FirmwareStatusNotification(lastReportedStatus);
             auto fwNotification = makeRequest(fwNotificationMsg);
             return fwNotification;
         }
@@ -277,7 +277,7 @@ std::unique_ptr<Request> FirmwareService::getFirmwareStatusNotification() {
     if (getFirmwareStatus() != lastReportedStatus) {
         lastReportedStatus = getFirmwareStatus();
         if (lastReportedStatus != FirmwareStatus::Idle && lastReportedStatus != FirmwareStatus::Installed) {
-            Operation *fwNotificationMsg = new Ocpp16::FirmwareStatusNotification(lastReportedStatus);
+            auto fwNotificationMsg = new Ocpp16::FirmwareStatusNotification(lastReportedStatus);
             auto fwNotification = makeRequest(fwNotificationMsg);
             return fwNotification;
         }
