@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
+#include <ArduinoOcpp/Model/ChargeControl/ChargePointErrorCode.h>
 
 struct AConnection;
 typedef struct AConnection AConnection;
@@ -34,6 +35,8 @@ typedef bool  (*InputBool)();
 typedef bool  (*InputBool_m)(unsigned int connectorId);
 typedef const char* (*InputString)();
 typedef const char* (*InputString_m)(unsigned int connectorId);
+typedef ChargePointErrorCode_c (*InputErrorCode)();
+typedef ChargePointErrorCode_c (*InputErrorCode_m)(unsigned int connectorId);
 typedef void (*OutputFloat)(float limit);
 typedef void (*OutputFloat_m)(unsigned int connectorId, float limit);
 enum OptionalBool {OptionalTrue, OptionalFalse, OptionalNone};
@@ -111,8 +114,8 @@ void ao_setEvReadyInput_m(unsigned int connectorId, InputBool_m evReadyInput);
 void ao_setEvseReadyInput(InputBool evseReadyInput);
 void ao_setEvseReadyInput_m(unsigned int connectorId, InputBool_m evseReadyInput);
 
-void ao_addErrorCodeInput(InputString errorCodeInput);
-void ao_addErrorCodeInput_m(unsigned int connectorId, InputString_m errorCodeInput);
+void ao_addErrorCodeInput(InputErrorCode errorCodeInput);
+void ao_addErrorCodeInput_m(unsigned int connectorId, InputErrorCode_m errorCodeInput);
 
 void ao_addMeterValueInputInt(InputInt valueInput, const char *measurand, const char *unit, const char *location, const char *phase); //measurand, unit, location and phase can be NULL
 void ao_addMeterValueInputInt_m(unsigned int connectorId, InputInt_m valueInput, const char *measurand, const char *unit, const char *location, const char *phase); //measurand, unit, location and phase can be NULL

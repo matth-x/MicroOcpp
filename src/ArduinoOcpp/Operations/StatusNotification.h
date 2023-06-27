@@ -18,9 +18,9 @@ private:
     int connectorId = 1;
     ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
     Timestamp timestamp;
-    ErrorCode errorCode;
+    ErrorData errorData;
 public:
-    StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorCode errorCode = nullptr);
+    StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorData errorData = ErrorCode::NoError);
 
     const char* getOperationType();
 

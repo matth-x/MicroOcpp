@@ -500,7 +500,7 @@ void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connec
     connector->setEvseReadyInput(evseReadyInput);
 }
 
-void addErrorCodeInput(std::function<const char *()> errorCodeInput, unsigned int connectorId) {
+void addErrorCodeInput(std::function<ArduinoOcpp::ErrorCode()> errorCodeInput, unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -513,7 +513,7 @@ void addErrorCodeInput(std::function<const char *()> errorCodeInput, unsigned in
     connector->addErrorCodeInput(errorCodeInput);
 }
 
-void addErrorCodeInput(std::function<ArduinoOcpp::ErrorCode()> errorCodeInput, unsigned int connectorId) {
+void addErrorDataInput(std::function<ArduinoOcpp::ErrorData()> errorDataInput, unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -523,7 +523,7 @@ void addErrorCodeInput(std::function<ArduinoOcpp::ErrorCode()> errorCodeInput, u
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
-    connector->addErrorCodeInput(errorCodeInput);
+    connector->addErrorDataInput(errorDataInput);
 }
 
 void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measurand, const char *unit, const char *location, const char *phase, unsigned int connectorId) {

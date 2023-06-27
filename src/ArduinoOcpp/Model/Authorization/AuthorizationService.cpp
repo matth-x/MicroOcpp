@@ -191,7 +191,7 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
                     0,
                     cpStatus, //will be determined in StatusNotification::initiate
                     context.getModel().getClock().now(),
-                    "LocalListConflict"));
+                    ChargePointErrorCode::LocalListConflict));
 
         statusNotification->setTimeout(60000);
 

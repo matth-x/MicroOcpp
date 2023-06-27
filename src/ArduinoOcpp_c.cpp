@@ -54,6 +54,14 @@ std::function<bool()> adaptFn(unsigned int connectorId, InputBool_m fn) {
     return [fn, connectorId] () {return fn(connectorId);};
 }
 
+std::function<ChargePointErrorCode()> adaptFn(InputErrorCode fn) {
+    return [fn] () {return ArduinoOcpp::adaptErrorCode(fn());};
+}
+
+std::function<ChargePointErrorCode()> adaptFn(unsigned int connectorId, InputErrorCode_m fn) {
+    return [fn, connectorId] () {return ArduinoOcpp::adaptErrorCode(fn(connectorId));};
+}
+
 std::function<const char*()> adaptFn(InputString fn) {
     return fn;
 }
@@ -203,10 +211,10 @@ void ao_setEvseReadyInput_m(unsigned int connectorId, InputBool_m evseReadyInput
     setEvseReadyInput(adaptFn(connectorId, evseReadyInput), connectorId);
 }
 
-void ao_addErrorCodeInput(InputString errorCodeInput) {
+void ao_addErrorCodeInput(InputErrorCode errorCodeInput) {
     addErrorCodeInput(adaptFn(errorCodeInput));
 }
-void ao_addErrorCodeInput_m(unsigned int connectorId, InputString_m errorCodeInput) {
+void ao_addErrorCodeInput_m(unsigned int connectorId, InputErrorCode_m errorCodeInput) {
     addErrorCodeInput(adaptFn(connectorId, errorCodeInput), connectorId);
 }
 

@@ -350,10 +350,10 @@ void Connector::loop() {
 
     auto status = getStatus();
 
-    for (auto i = std::min(errorCodeInputs.size(), trackErrorCodeInputs.size()); i >= 1; i--) {
+    for (auto i = std::min(errorDataInputs.size(), trackErrorDataInputs.size()); i >= 1; i--) {
         auto index = i - 1;
-        auto error = errorCodeInputs[index].operator()();
-        if (error.isError && !trackErrorCodeInputs[index]) {
+        auto error = errorDataInputs[index].operator()();
+        if (error.isError && !trackErrorDataInputs[index]) {
             //new error
             auto statusNotification = makeRequest(
                     new StatusNotification(connectorId, status, model.getClock().now(), error));
@@ -362,10 +362,10 @@ void Connector::loop() {
 
             currentStatus = status;
             reportedStatus = status;
-            trackErrorCodeInputs[index] = true;
-        } else if (!error.isError && trackErrorCodeInputs[index]) {
+            trackErrorDataInputs[index] = true;
+        } else if (!error.isError && trackErrorDataInputs[index]) {
             //reset error
-            trackErrorCodeInputs[index] = false;
+            trackErrorDataInputs[index] = false;
         }
     }
     
@@ -394,23 +394,23 @@ void Connector::loop() {
 }
 
 bool Connector::isFaulted() {
-    //for (auto i = errorCodeInputs.begin(); i != errorCodeInputs.end(); ++i) {
-    for (size_t i = 0; i < errorCodeInputs.size(); i++) {
-        if (errorCodeInputs[i].operator()().isFaulted) {
+    //for (auto i = errorDataInputs.begin(); i != errorDataInputs.end(); ++i) {
+    for (size_t i = 0; i < errorDataInputs.size(); i++) {
+        if (errorDataInputs[i].operator()().isFaulted) {
             return true;
         }
     }
     return false;
 }
 
-const char *Connector::getErrorCode() {
-    for (auto i = errorCodeInputs.size(); i >= 1; i--) {
-        auto error = errorCodeInputs[i-1].operator()();
-        if (error.isError && error.errorCode) {
+ChargePointErrorCode Connector::getErrorCode() {
+    for (auto i = errorDataInputs.size(); i >= 1; i--) {
+        auto error = errorDataInputs[i-1].operator()();
+        if (error.isError && error.errorCode != ErrorCode::NoError) {
             return error.errorCode;
         }
     }
-    return nullptr;
+    return ErrorCode::NoError;
 }
 
 std::shared_ptr<Transaction> Connector::allocateTransaction() {
@@ -718,8 +718,6 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
         }
     }
 
-    updateTxNotification(TxNotification::Authorized);
-
     transaction->commit();
 
     return transaction;
@@ -785,15 +783,15 @@ void Connector::setEvseReadyInput(std::function<bool()> connectorEnergized) {
     this->evseReadyInput = connectorEnergized;
 }
 
-void Connector::addErrorCodeInput(std::function<const char *()> connectorErrorCode) {
-    addErrorCodeInput([connectorErrorCode] () -> ErrorCode {
-        return ErrorCode(connectorErrorCode());
+void Connector::addErrorCodeInput(std::function<ErrorCode ()> connectorErrorCode) {
+    addErrorDataInput([connectorErrorCode] () -> ErrorData {
+        return ErrorData(connectorErrorCode());
     });
 }
 
-void Connector::addErrorCodeInput(std::function<ErrorCode ()> errorCodeInput) {
-    this->errorCodeInputs.push_back(errorCodeInput);
-    this->trackErrorCodeInputs.push_back(false);
+void Connector::addErrorDataInput(std::function<ErrorData ()> errorDataInput) {
+    this->errorDataInputs.push_back(errorDataInput);
+    this->trackErrorDataInputs.push_back(false);
 }
 
 void Connector::setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector) {

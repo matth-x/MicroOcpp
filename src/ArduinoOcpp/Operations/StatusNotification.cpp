@@ -43,8 +43,8 @@ const char *cstrFromOcppEveState(ChargePointStatus state) {
 }
 }} //end namespaces
 
-StatusNotification::StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorCode errorCode)
-        : connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorCode(errorCode) {
+StatusNotification::StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorData errorData)
+        : connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
     
     AO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
 }
@@ -59,18 +59,16 @@ std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
     JsonObject payload = doc->to<JsonObject>();
     
     payload["connectorId"] = connectorId;
-    if (errorCode.isError) {
-        if (errorCode.errorCode) {
-            payload["errorCode"] = errorCode.errorCode;
+    if (errorData.isError) {
+        payload["errorCode"] = serializeErrorCode(errorData.errorCode);
+        if (errorData.info) {
+            payload["info"] = errorData.info;
         }
-        if (errorCode.info) {
-            payload["info"] = errorCode.info;
+        if (errorData.vendorId) {
+            payload["vendorId"] = errorData.vendorId;
         }
-        if (errorCode.vendorId) {
-            payload["vendorId"] = errorCode.vendorId;
-        }
-        if (errorCode.vendorErrorCode) {
-            payload["vendorErrorCode"] = errorCode.vendorErrorCode;
+        if (errorData.vendorErrorCode) {
+            payload["vendorErrorCode"] = errorData.vendorErrorCode;
         }
     } else if (currentStatus == ChargePointStatus::NOT_SET) {
         AO_DBG_ERR("Reporting undefined status");

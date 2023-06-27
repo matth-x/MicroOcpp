@@ -42,10 +42,10 @@ private:
     std::function<bool()> connectorPluggedInput;
     std::function<bool()> evReadyInput;
     std::function<bool()> evseReadyInput;
-    std::vector<std::function<ErrorCode ()>> errorCodeInputs;
-    std::vector<bool> trackErrorCodeInputs;
+    std::vector<std::function<ErrorData ()>> errorDataInputs;
+    std::vector<bool> trackErrorDataInputs;
     bool isFaulted();
-    const char *getErrorCode();
+    ChargePointErrorCode getErrorCode();
 
     ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
     std::shared_ptr<Configuration<int>> minimumStatusDuration; //in seconds
@@ -107,8 +107,8 @@ public:
     void setConnectorPluggedInput(std::function<bool()> connectorPlugged);
     void setEvReadyInput(std::function<bool()> evRequestsEnergy);
     void setEvseReadyInput(std::function<bool()> connectorEnergized);
-    void addErrorCodeInput(std::function<const char*()> connectorErrorCode);
-    void addErrorCodeInput(std::function<ErrorCode ()> errorCodeInput);
+    void addErrorCodeInput(std::function<ErrorCode ()> connectorErrorCode);
+    void addErrorDataInput(std::function<ErrorData ()> errorCodeInput);
 
     void loop();
 
