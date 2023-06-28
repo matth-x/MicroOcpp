@@ -8,6 +8,7 @@
 #include <ArduinoOcpp/Model/ChargeControl/ChargePointStatus.h>
 #include <ArduinoOcpp/Model/ChargeControl/ChargePointErrorCode.h>
 #include <ArduinoOcpp/Model/ChargeControl/Notification.h>
+#include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/Operations/CiStrings.h>
@@ -25,7 +26,6 @@ namespace ArduinoOcpp {
 class Context;
 class Model;
 class Operation;
-class Transaction;
 
 class Connector {
 private:
@@ -93,7 +93,7 @@ public:
      * a StopTransaction request, if the transaction process has actually ended due to this call. It
      * is safe to call this function at any time even if no transaction is running
      */
-    void endTransaction(const char *reason = nullptr);
+    void endTransaction(const char *idTag = nullptr, StopTxReason reason = StopTxReason::Local);
     
     std::shared_ptr<Transaction>& getTransaction();
 

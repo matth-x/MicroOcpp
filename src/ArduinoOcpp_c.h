@@ -79,8 +79,8 @@ void ao_beginTransaction_m(unsigned int connectorId, const char *idTag); //multi
 void ao_beginTransaction_authorized(const char *idTag, const char *parentIdTag);
 void ao_beginTransaction_authorized_m(unsigned int connectorId, const char *idTag, const char *parentIdTag);
 
-bool ao_endTransaction(const char *reason); //reason can be NULL
-bool ao_endTransaction_m(unsigned int connectorId, const char *reason); //reason can be NULL
+bool ao_endTransaction(const char *idTag, const char *reason); //idTag, reason can be NULL
+bool ao_endTransaction_m(unsigned int connectorId, const char *idTag, const char *reason); //idTag, reason can be NULL
 
 bool ao_isTransactionRunning();
 bool ao_isTransactionRunning_m(unsigned int connectorId);

@@ -1,6 +1,8 @@
 #include "ArduinoOcpp_c.h"
 #include "ArduinoOcpp.h"
 
+#include <ArduinoOcpp/Model/Transactions/TransactionDeserialize.h>
+
 #include <ArduinoOcpp/Debug.h>
 
 ArduinoOcpp::Connection *ocppSocket = nullptr;
@@ -148,11 +150,16 @@ void ao_beginTransaction_authorized_m(unsigned int connectorId, const char *idTa
     beginTransaction_authorized(idTag, parentIdTag, connectorId);
 }
 
-bool ao_endTransaction(const char *reason) {
-    return endTransaction(reason);
+bool ao_endTransaction(const char *idTag, const char *reason_cstr) {
+    return ao_endTransaction_m(1, idTag, reason_cstr);
 }
-bool ao_endTransaction_m(unsigned int connectorId, const char *reason) {
-    return endTransaction(reason, connectorId);
+bool ao_endTransaction_m(unsigned int connectorId, const char *idTag, const char *reason_cstr) {
+    StopTxReason reason = StopTxReason::Local;
+    if (reason_cstr && !ArduinoOcpp::deserializeStopTxReason(reason_cstr, reason)) {
+        AO_DBG_ERR("invalid reason");
+        reason = StopTxReason::Local;
+    }
+    return endTransaction(idTag, reason, connectorId);
 }
 
 bool ao_isTransactionRunning() {

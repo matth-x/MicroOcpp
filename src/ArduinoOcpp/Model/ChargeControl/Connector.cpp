@@ -177,7 +177,7 @@ void Connector::loop() {
             if (transaction->isRunning() && transaction->isActive() && !connectorPluggedInput()) {
                 if (!stopTransactionOnEVSideDisconnect || *stopTransactionOnEVSideDisconnect) {
                     AO_DBG_DEBUG("Stop Tx due to EV disconnect");
-                    transaction->setStopReason("EVDisconnected");
+                    transaction->setStopReason(StopTxReason::EVDisconnected);
                     transaction->setInactive();
                     transaction->commit();
                 }
@@ -203,7 +203,7 @@ void Connector::loop() {
                     !stopTransactionOnInvalidId || *stopTransactionOnInvalidId)) { //if transaction is running, behavior depends on StopTransactionOnInvalidId
             
             AO_DBG_DEBUG("DeAuthorize session");
-            transaction->setStopReason("DeAuthorized");
+            transaction->setStopReason(StopTxReason::DeAuthorized);
             transaction->setInactive();
             transaction->commit();
         }
@@ -723,21 +723,28 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
     return transaction;
 }
 
-void Connector::endTransaction(const char *reason) {
+void Connector::endTransaction(const char *idTag, StopTxReason reason) {
 
     if (!transaction || !transaction->isActive()) {
         //transaction already ended / not active anymore
         return;
     }
 
-    AO_DBG_DEBUG("End session with idTag %s for reason %s, %s previous reason",
-                            transaction->getIdTag(), reason ? reason : "undefined",
-                            *transaction->getStopReason() ? "overruled by" : "no");
+    if (idTag && *idTag != '\0' && !strcmp(idTag, transaction->getIdTag())) {
+        //given stop idTag differs from start idTag. Make Authorization check first
 
-    if (reason) {
-        transaction->setStopReason(reason);
+        AO_DBG_WARN("authorization status of stop idTag not checked automatically yet");
+        (void)0;
+    }
+
+    AO_DBG_DEBUG("End session started by idTag %s",
+                            transaction->getIdTag());
+    
+    if (idTag && *idTag != '\0') {
+        transaction->setStopIdTag(idTag);
     }
     
+    transaction->setStopReason(reason);
     transaction->setInactive();
     transaction->commit();
 }

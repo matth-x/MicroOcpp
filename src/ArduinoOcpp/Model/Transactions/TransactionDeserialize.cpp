@@ -9,6 +9,78 @@
 
 namespace ArduinoOcpp {
 
+const char *serializeStopTxReason(StopTxReason reason) {
+    const char *res = "Local";
+
+    switch (reason) {
+        case StopTxReason::DeAuthorized:
+            res = "DeAuthorized";
+            break;
+        case StopTxReason::EmergencyStop:
+            res = "EmergencyStop";
+            break;
+        case StopTxReason::EVDisconnected:
+            res = "EVDisconnected";
+            break;
+        case StopTxReason::HardReset:
+            res = "HardReset";
+            break;
+        case StopTxReason::Local:
+            res = "Local";
+            break;
+        case StopTxReason::Other:
+            res = "Other";
+            break;
+        case StopTxReason::PowerLoss:
+            res = "PowerLoss";
+            break;
+        case StopTxReason::Reboot:
+            res = "Reboot";
+            break;
+        case StopTxReason::Remote:
+            res = "Remote";
+            break;
+        case StopTxReason::SoftReset:
+            res = "SoftReset";
+            break;
+        case StopTxReason::UnlockCommand:
+            res = "UnlockCommand";
+            break;
+    }
+
+    return res;
+}
+
+bool deserializeStopTxReason(const char *reason_cstr, StopTxReason& out) {
+    if (!strcmp(reason_cstr, "DeAuthorized")) {
+        out = StopTxReason::DeAuthorized;
+    } else if (!strcmp(reason_cstr, "EmergencyStop")) {
+        out = StopTxReason::EmergencyStop;
+    } else if (!strcmp(reason_cstr, "EVDisconnected")) {
+        out = StopTxReason::EVDisconnected;
+    } else if (!strcmp(reason_cstr, "HardReset")) {
+        out = StopTxReason::HardReset;
+    } else if (!strcmp(reason_cstr, "Local")) {
+        out = StopTxReason::Local;
+    } else if (!strcmp(reason_cstr, "Other")) {
+        out = StopTxReason::Other;
+    } else if (!strcmp(reason_cstr, "PowerLoss")) {
+        out = StopTxReason::PowerLoss;
+    } else if (!strcmp(reason_cstr, "Reboot")) {
+        out = StopTxReason::Reboot;
+    } else if (!strcmp(reason_cstr, "Remote")) {
+        out = StopTxReason::Remote;
+    } else if (!strcmp(reason_cstr, "SoftReset")) {
+        out = StopTxReason::SoftReset;
+    } else if (!strcmp(reason_cstr, "UnlockCommand")) {
+        out = StopTxReason::UnlockCommand;
+    } else {
+        return false;
+    }
+
+    return true;
+}
+
 bool serializeSendStatus(SendStatus& status, JsonObject out) {
     if (status.isRequested()) {
         out["requested"] = true;
@@ -98,8 +170,8 @@ bool serializeTransaction(Transaction& tx, DynamicJsonDocument& out) {
     
     txStop["bootNr"] = tx.getStopBootNr();
 
-    if (tx.getStopReason()[0] != '\0') {
-        txStop["reason"] = tx.getStopReason();
+    if (tx.getStopReason() != StopTxReason::Local) {
+        txStop["reason"] = serializeStopTxReason(tx.getStopReason());
     }
 
     if (tx.isSilent()) {
@@ -224,10 +296,12 @@ bool deserializeTransaction(Transaction& tx, JsonObject state) {
     }
 
     if (txStop.containsKey("reason")) {
-        if (!tx.setStopReason(txStop["reason"] | "")) {
+        StopTxReason mreason = StopTxReason::Local;
+        if (!deserializeStopTxReason(txStop["reason"] | "_Undefined", mreason)) {
             AO_DBG_ERR("read err");
             return false;
         }
+        tx.setStopReason(mreason);
     }
 
     if (state["silent"] | false) {

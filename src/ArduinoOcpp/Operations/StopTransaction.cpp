@@ -10,6 +10,7 @@
 #include <ArduinoOcpp/Model/Metering/MeterValue.h>
 #include <ArduinoOcpp/Model/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
+#include <ArduinoOcpp/Model/Transactions/TransactionDeserialize.h>
 #include <ArduinoOcpp/Debug.h>
 
 using ArduinoOcpp::Ocpp16::StopTransaction;
@@ -160,7 +161,6 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
                 JSON_OBJECT_SIZE(6) + //total of 6 fields
                 (IDTAG_LEN_MAX + 1) + //stop idTag
                 (JSONDATE_LENGTH + 1) + //timestamp string
-                (REASON_LEN_MAX + 1) + //reason string
                 txDataDoc.capacity()));
     JsonObject payload = doc->to<JsonObject>();
 
@@ -176,8 +176,8 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
 
     payload["transactionId"] = transaction->getTransactionId();
     
-    if (transaction->getStopReason() && *transaction->getStopReason()) {
-        payload["reason"] = (char*) transaction->getStopReason();
+    if (transaction->getStopReason() != StopTxReason::Local) {
+        payload["reason"] = serializeStopTxReason(transaction->getStopReason());
     }
 
     if (!transactionData.empty()) {

@@ -19,7 +19,4 @@
 #define IDTAG_LEN_MAX CiString20TypeLen
 #define CONF_KEYLEN_MAX CiString50TypeLen
 
-//not specified by OCPP
-#define REASON_LEN_MAX CiString25TypeLen
-
 #endif

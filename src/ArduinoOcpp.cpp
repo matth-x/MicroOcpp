@@ -276,7 +276,7 @@ std::shared_ptr<Transaction> beginTransaction_authorized(const char *idTag, cons
     return connector->beginTransaction_authorized(idTag, parentIdTag);
 }
 
-bool endTransaction(const char *reason, unsigned int connectorId) {
+bool endTransaction(const char *idTag, StopTxReason reason, unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
@@ -287,7 +287,7 @@ bool endTransaction(const char *reason, unsigned int connectorId) {
         return false;
     }
     auto res = isTransactionActive(connectorId);
-    connector->endTransaction(reason);
+    connector->endTransaction(idTag, reason);
     return res;
 }
 
@@ -913,14 +913,12 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
         return false;
     }
 
-    connector->endTransaction("Local");
+    connector->endTransaction(transaction->getIdTag(), StopTxReason::Local);
 
     const char *idTag = transaction->getIdTag();
     if (idTag) {
         transaction->setStopIdTag(idTag);
     }
-    
-    transaction->setStopReason("Local");
 
     if (auto mService = context->getModel().getMeteringService()) {
         auto meterStop = mService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionEnd);

@@ -11,6 +11,9 @@
 
 namespace ArduinoOcpp {
 
+const char *serializeStopTxReason(StopTxReason reason);
+bool deserializeStopTxReason(const char *reason_cstr, StopTxReason& out);
+
 bool serializeTransaction(Transaction& tx, DynamicJsonDocument& out);
 bool deserializeTransaction(Transaction& tx, JsonObject in);
 

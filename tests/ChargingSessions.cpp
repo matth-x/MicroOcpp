@@ -141,7 +141,7 @@ TEST_CASE( "Charging sessions" ) {
         }
 
         SECTION("via session management - deauthorize") {
-            endTransaction("Local");
+            endTransaction();
             loop();
             REQUIRE(checkedSN[1]);
             REQUIRE(!ocppPermitsCharge());
@@ -150,7 +150,7 @@ TEST_CASE( "Charging sessions" ) {
         SECTION("via session management - deauthorize first") {
             expectedSN[1] = "Finishing";
             setConnectorPluggedInput([] () {return true;});
-            endTransaction("Local");
+            endTransaction();
             loop();
             REQUIRE(checkedSN[1]);
             REQUIRE(!ocppPermitsCharge());
