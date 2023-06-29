@@ -30,6 +30,8 @@ jobs:
       run: mkdir ao_store
     - name: Run tests
       run: ./build/ao_unit_tests
+    - name: Create coverage report
+      run: gcovr --exclude test --exclude src/ArduinoJson.h > coverage.info
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
       env:

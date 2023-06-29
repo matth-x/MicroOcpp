@@ -145,3 +145,13 @@ target_compile_definitions(ao_unit_tests PUBLIC
     AO_TRAFFIC_OUT
     AO_FILENAME_PREFIX="./ao_store/"
 )
+
+target_compile_options(ao_unit_tests PUBLIC
+    -O0
+    -g
+    --coverage
+)
+
+target_link_options(ao_unit_tests PUBLIC
+    --coverage
+)
