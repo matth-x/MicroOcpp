@@ -32,4 +32,5 @@ jobs:
       run: ./build/ao_unit_tests
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
-      env: CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
