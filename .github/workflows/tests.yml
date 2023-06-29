@@ -13,10 +13,10 @@ jobs:
     steps:
     - name: Check out repository code
       uses: actions/checkout@v3
-    - name: Get gcc compiler
+    - name: Get build tools
       run: |
         sudo apt update
-        sudo apt install build-essential cmake
+        sudo apt install build-essential cmake gcovr
         sudo apt -y install gcc-9 g++-9
         g++ --version
         echo "g++ version must be 9.4.0"
