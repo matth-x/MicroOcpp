@@ -31,7 +31,9 @@ jobs:
     - name: Run tests
       run: ./build/ao_unit_tests
     - name: Create coverage report
-      run: lcov --remove coverage.info '/usr/*' '*/tests/*' '*/ArduinoJson.h' --output-file coverage.info
+      run: |
+        lcov --directory . --capture --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' '*/tests/*' '*/ArduinoJson.h' --output-file coverage.info
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
       env:
