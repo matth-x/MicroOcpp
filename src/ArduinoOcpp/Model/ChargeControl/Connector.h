@@ -6,7 +6,7 @@
 #define CONNECTOR_H
 
 #include <ArduinoOcpp/Model/ChargeControl/ChargePointStatus.h>
-#include <ArduinoOcpp/Model/ChargeControl/ChargePointErrorCode.h>
+#include <ArduinoOcpp/Model/ChargeControl/ChargePointErrorData.h>
 #include <ArduinoOcpp/Model/ChargeControl/Notification.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/Core/PollResult.h>
@@ -45,7 +45,7 @@ private:
     std::vector<std::function<ErrorData ()>> errorDataInputs;
     std::vector<bool> trackErrorDataInputs;
     bool isFaulted();
-    ChargePointErrorCode getErrorCode();
+    const char *getErrorCode();
 
     ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
     std::shared_ptr<Configuration<int>> minimumStatusDuration; //in seconds
@@ -107,7 +107,7 @@ public:
     void setConnectorPluggedInput(std::function<bool()> connectorPlugged);
     void setEvReadyInput(std::function<bool()> evRequestsEnergy);
     void setEvseReadyInput(std::function<bool()> connectorEnergized);
-    void addErrorCodeInput(std::function<ErrorCode ()> connectorErrorCode);
+    void addErrorCodeInput(std::function<const char*()> connectorErrorCode);
     void addErrorDataInput(std::function<ErrorData ()> errorCodeInput);
 
     void loop();

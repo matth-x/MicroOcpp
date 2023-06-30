@@ -403,14 +403,14 @@ bool Connector::isFaulted() {
     return false;
 }
 
-ChargePointErrorCode Connector::getErrorCode() {
+const char *Connector::getErrorCode() {
     for (auto i = errorDataInputs.size(); i >= 1; i--) {
         auto error = errorDataInputs[i-1].operator()();
-        if (error.isError && error.errorCode != ErrorCode::NoError) {
+        if (error.isError && error.errorCode) {
             return error.errorCode;
         }
     }
-    return ErrorCode::NoError;
+    return nullptr;
 }
 
 std::shared_ptr<Transaction> Connector::allocateTransaction() {
@@ -792,7 +792,7 @@ void Connector::setEvseReadyInput(std::function<bool()> connectorEnergized) {
     this->evseReadyInput = connectorEnergized;
 }
 
-void Connector::addErrorCodeInput(std::function<ErrorCode ()> connectorErrorCode) {
+void Connector::addErrorCodeInput(std::function<const char*()> connectorErrorCode) {
     addErrorDataInput([connectorErrorCode] () -> ErrorData {
         return ErrorData(connectorErrorCode());
     });

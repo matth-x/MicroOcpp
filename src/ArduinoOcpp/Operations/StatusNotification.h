@@ -8,7 +8,7 @@
 #include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/Core/Time.h>
 #include <ArduinoOcpp/Model/ChargeControl/ChargePointStatus.h>
-#include <ArduinoOcpp/Model/ChargeControl/ChargePointErrorCode.h>
+#include <ArduinoOcpp/Model/ChargeControl/ChargePointErrorData.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {
@@ -20,7 +20,7 @@ private:
     Timestamp timestamp;
     ErrorData errorData;
 public:
-    StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorData errorData = ErrorCode::NoError);
+    StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorData errorData = nullptr);
 
     const char* getOperationType();
 

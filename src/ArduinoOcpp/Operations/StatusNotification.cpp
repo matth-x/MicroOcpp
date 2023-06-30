@@ -60,7 +60,9 @@ std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
     
     payload["connectorId"] = connectorId;
     if (errorData.isError) {
-        payload["errorCode"] = serializeErrorCode(errorData.errorCode);
+        if (errorData.errorCode) {
+            payload["errorCode"] = errorData.errorCode;
+        }
         if (errorData.info) {
             payload["info"] = errorData.info;
         }

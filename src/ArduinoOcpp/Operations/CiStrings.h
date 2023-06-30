@@ -20,6 +20,6 @@
 #define CONF_KEYLEN_MAX CiString50TypeLen
 
 //not specified by OCPP
-#define REASON_LEN_MAX CiString25TypeLen
+#define REASON_LEN_MAX 15
 
 #endif

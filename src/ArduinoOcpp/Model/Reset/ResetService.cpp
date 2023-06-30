@@ -65,7 +65,7 @@ void ResetService::loop() {
                         0,
                         cpStatus, //will be determined in StatusNotification::initiate
                         context.getModel().getClock().now(),
-                        ChargePointErrorCode::ResetFailure));
+                        "ResetFailure"));
             statusNotification->setTimeout(60000);
             context.initiateRequest(std::move(statusNotification));
         }

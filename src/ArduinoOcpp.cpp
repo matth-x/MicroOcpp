@@ -500,7 +500,7 @@ void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connec
     connector->setEvseReadyInput(evseReadyInput);
 }
 
-void addErrorCodeInput(std::function<ArduinoOcpp::ErrorCode()> errorCodeInput, unsigned int connectorId) {
+void addErrorCodeInput(std::function<const char*()> errorCodeInput, unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
