@@ -10,20 +10,6 @@
 
 namespace ArduinoOcpp {
 
-enum class StopTxReason {
-    DeAuthorized,
-    EmergencyStop,
-    EVDisconnected,
-    HardReset,
-    Local,
-    Other,
-    PowerLoss,
-    Reboot,
-    Remote,
-    SoftReset,
-    UnlockCommand
-};
-
 /*
  * A transaction is initiated by the client (charging station) and processed by the server (central system).
  * The client side of a transaction is all data that is generated or collected at the charging station. The
@@ -78,7 +64,7 @@ private:
     int32_t stop_meter = -1;
     Timestamp stop_timestamp = MIN_TIME;
     uint16_t stop_bootNr = 0;
-    StopTxReason stop_reason = StopTxReason::Local;
+    char stop_reason [REASON_LEN_MAX + 1] = {'\0'};
 
     /*
      * General attributes
@@ -164,8 +150,8 @@ public:
     void setStopBootNr(uint16_t bootNr) {stop_bootNr = bootNr;} 
     uint16_t getStopBootNr() {return stop_bootNr;}
 
-    void setStopReason(StopTxReason reason) {stop_reason = reason;}
-    StopTxReason getStopReason() {return stop_reason;}
+    bool setStopReason(const char *reason);
+    const char *getStopReason() {return stop_reason;}
 
     void setConnectorId(unsigned int connectorId) {this->connectorId = connectorId;}
     unsigned int getConnectorId() {return connectorId;}

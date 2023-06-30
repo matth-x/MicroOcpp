@@ -25,7 +25,6 @@ using ArduinoOcpp::OnAbortListener;
 using ArduinoOcpp::OnTimeoutListener;
 using ArduinoOcpp::OnReceiveErrorListener;
 using ArduinoOcpp::ChargePointErrorCode;
-using ArduinoOcpp::StopTxReason;
 
 #ifndef AO_CUSTOM_WS
 //use links2004/WebSockets library
@@ -136,7 +135,8 @@ std::shared_ptr<ArduinoOcpp::Transaction> beginTransaction_authorized(const char
  * If the transaction is ended by swiping an RFID card, then idTag should contain its identifier. If
  * charging stops for a different reason than swiping the card, idTag should be null or empty.
  * 
- * Please refer to OCPP 1.6 Specification - Edition 2 p. 90 for a list of reasons.
+ * Please refer to OCPP 1.6 Specification - Edition 2 p. 90 for a list of valid reasons. "reason"
+ * can also be nullptr.
  * 
  * It is safe to call this function at any time, i.e. when no transaction runs or when the transaction
  * has already been ended. For example you can place
@@ -145,7 +145,7 @@ std::shared_ptr<ArduinoOcpp::Transaction> beginTransaction_authorized(const char
  * 
  * Returns true if there is a transaction which could eventually be ended by this action
  */
-bool endTransaction(const char *idTag = nullptr, StopTxReason reason = StopTxReason::Local, unsigned int connectorId = 1);
+bool endTransaction(const char *idTag = nullptr, const char *reason = nullptr, unsigned int connectorId = 1);
 
 /*
  * Get information about the current Transaction lifecycle. A transaction can enter the following
@@ -275,8 +275,6 @@ const char *getTransactionIdTag(unsigned int connectorId = 1);
 
 void setTxNotificationOutput(std::function<void(ArduinoOcpp::TxNotification,ArduinoOcpp::Transaction*)> notificationOutput, unsigned int connectorId = 1);
 
-bool isBlockedByReservation(const char *idTag, unsigned int connectorId = 1); //if the connector is already reserved for a different idTag
-
 /*
  * Configure the device management
  */
@@ -343,7 +341,7 @@ void setOnReceiveRequest(const char *operationType, OnReceiveReqListener onRecei
  *     if (!strcmp(payload["status"], "Rejected")) {
  *         //the OCPP lib rejected the RemoteStopTransaction command. In this example, the customer
  *         //wishes to stop the running transaction in any case and to log this case
- *         endTransaction(nullptr, StopTxReason::Remote); //end transaction and send StopTransaction
+ *         endTransaction(nullptr, "Remote"); //end transaction and send StopTransaction
  *         Serial.println("[main] override rejected RemoteStopTransaction"); //Arduino print function
  *     }
  * });

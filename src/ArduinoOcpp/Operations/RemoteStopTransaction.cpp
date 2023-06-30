@@ -32,7 +32,7 @@ std::unique_ptr<DynamicJsonDocument> RemoteStopTransaction::createConf(){
         if (connector->getTransaction() &&
                 connector->getTransaction()->getTransactionId() == transactionId) {
             canStopTransaction = true;
-            connector->endTransaction(nullptr, StopTxReason::Remote);
+            connector->endTransaction(nullptr, "Remote");
         }
     }
 

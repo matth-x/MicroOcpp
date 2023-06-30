@@ -177,7 +177,7 @@ void Connector::loop() {
             if (transaction->isRunning() && transaction->isActive() && !connectorPluggedInput()) {
                 if (!stopTransactionOnEVSideDisconnect || *stopTransactionOnEVSideDisconnect) {
                     AO_DBG_DEBUG("Stop Tx due to EV disconnect");
-                    transaction->setStopReason(StopTxReason::EVDisconnected);
+                    transaction->setStopReason("EVDisconnected");
                     transaction->setInactive();
                     transaction->commit();
                 }
@@ -203,7 +203,7 @@ void Connector::loop() {
                     !stopTransactionOnInvalidId || *stopTransactionOnInvalidId)) { //if transaction is running, behavior depends on StopTransactionOnInvalidId
             
             AO_DBG_DEBUG("DeAuthorize session");
-            transaction->setStopReason(StopTxReason::DeAuthorized);
+            transaction->setStopReason("DeAuthorized");
             transaction->setInactive();
             transaction->commit();
         }
@@ -723,7 +723,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
     return transaction;
 }
 
-void Connector::endTransaction(const char *idTag, StopTxReason reason) {
+void Connector::endTransaction(const char *idTag, const char *reason) {
 
     if (!transaction || !transaction->isActive()) {
         //transaction already ended / not active anymore
@@ -744,7 +744,9 @@ void Connector::endTransaction(const char *idTag, StopTxReason reason) {
         transaction->setStopIdTag(idTag);
     }
     
-    transaction->setStopReason(reason);
+    if (reason) {
+        transaction->setStopReason(reason);
+    }
     transaction->setInactive();
     transaction->commit();
 }

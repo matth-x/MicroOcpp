@@ -17,6 +17,11 @@ bool Transaction::setStopIdTag(const char *idTag) {
     return ret >= 0 && ret < IDTAG_LEN_MAX + 1;
 }
 
+bool Transaction::setStopReason(const char *reason) {
+    auto ret = snprintf(stop_reason, REASON_LEN_MAX + 1, "%s", reason);
+    return ret >= 0 && ret < REASON_LEN_MAX + 1;
+}
+
 bool Transaction::commit() {
     return context.commit(this);
 }

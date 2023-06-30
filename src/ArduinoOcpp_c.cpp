@@ -1,8 +1,6 @@
 #include "ArduinoOcpp_c.h"
 #include "ArduinoOcpp.h"
 
-#include <ArduinoOcpp/Model/Transactions/TransactionDeserialize.h>
-
 #include <ArduinoOcpp/Debug.h>
 
 ArduinoOcpp::Connection *ocppSocket = nullptr;
@@ -150,15 +148,10 @@ void ao_beginTransaction_authorized_m(unsigned int connectorId, const char *idTa
     beginTransaction_authorized(idTag, parentIdTag, connectorId);
 }
 
-bool ao_endTransaction(const char *idTag, const char *reason_cstr) {
-    return ao_endTransaction_m(1, idTag, reason_cstr);
+bool ao_endTransaction(const char *idTag, const char *reason) {
+    return endTransaction(idTag, reason);
 }
-bool ao_endTransaction_m(unsigned int connectorId, const char *idTag, const char *reason_cstr) {
-    StopTxReason reason = StopTxReason::Local;
-    if (reason_cstr && !ArduinoOcpp::deserializeStopTxReason(reason_cstr, reason)) {
-        AO_DBG_ERR("invalid reason");
-        reason = StopTxReason::Local;
-    }
+bool ao_endTransaction_m(unsigned int connectorId, const char *idTag, const char *reason) {
     return endTransaction(idTag, reason, connectorId);
 }
 
@@ -289,13 +282,6 @@ const char *ao_getTransactionIdTag() {
 }
 const char *ao_getTransactionIdTag_m(unsigned int connectorId) {
     return getTransactionIdTag(connectorId);
-}
-
-bool ao_isBlockedByReservation(const char *idTag) {
-    return isBlockedByReservation(idTag);
-}
-bool ao_isBlockedByReservation_m(unsigned int connectorId, const char *idTag) {
-    return isBlockedByReservation(idTag, connectorId);
 }
 
 void ao_set_console_out_c(void (*console_out)(const char *msg)) {

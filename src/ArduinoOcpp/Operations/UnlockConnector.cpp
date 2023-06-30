@@ -29,7 +29,7 @@ void UnlockConnector::processReq(JsonObject payload) {
         return;
     }
 
-    connector->endTransaction(nullptr, StopTxReason::UnlockCommand);
+    connector->endTransaction(nullptr, "UnlockCommand");
     connector->updateTxNotification(TxNotification::RemoteStop);
 
     unlockConnector = connector->getOnUnlockConnector();

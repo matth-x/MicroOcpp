@@ -276,7 +276,7 @@ std::shared_ptr<Transaction> beginTransaction_authorized(const char *idTag, cons
     return connector->beginTransaction_authorized(idTag, parentIdTag);
 }
 
-bool endTransaction(const char *idTag, StopTxReason reason, unsigned int connectorId) {
+bool endTransaction(const char *idTag, const char *reason, unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return false;
@@ -703,27 +703,6 @@ void setTxNotificationOutput(std::function<void(ArduinoOcpp::TxNotification,Ardu
     connector->setTxNotificationOutput(notificationOutput);
 }
 
-bool isBlockedByReservation(const char *idTag, unsigned int connectorId) {
-    if (!context) {
-        AO_DBG_WARN("Please call OCPP_initialize before");
-        return false;
-    }
-    if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
-        AO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
-        return false;
-    }
-    auto rService = context->getModel().getReservationService();
-    if (!rService) {
-        AO_DBG_ERR("Could not access reservations. Ignore");
-        return false;
-    }
-    if (auto reservation = rService->getReservation(connectorId, idTag)) {
-        return !reservation->matches(idTag);
-    }
-
-    return false; //no reservation -> nothing blocked
-}
-
 #if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WS)
 FirmwareService *getFirmwareService() {
     auto& model = context->getModel();
@@ -913,7 +892,7 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
         return false;
     }
 
-    connector->endTransaction(transaction->getIdTag(), StopTxReason::Local);
+    connector->endTransaction(transaction->getIdTag(), "Local");
 
     const char *idTag = transaction->getIdTag();
     if (idTag) {
