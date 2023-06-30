@@ -61,6 +61,7 @@ set(AO_SRC
     src/ArduinoOcpp/Model/Boot/BootService.cpp
     src/ArduinoOcpp/Model/ChargeControl/ChargeControlCommon.cpp
     src/ArduinoOcpp/Model/ChargeControl/Connector.cpp
+    src/ArduinoOcpp/Model/ChargeControl/Notification.cpp
     src/ArduinoOcpp/Model/Diagnostics/DiagnosticsService.cpp
     src/ArduinoOcpp/Model/FirmwareManagement/FirmwareService.cpp
     src/ArduinoOcpp/Model/Heartbeat/HeartbeatService.cpp

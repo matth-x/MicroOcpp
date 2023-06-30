@@ -169,6 +169,28 @@ bool endTransaction(const char *idTag = nullptr, const char *reason = nullptr, u
 bool isTransactionActive(unsigned int connectorId = 1);
 bool isTransactionRunning(unsigned int connectorId = 1);
 
+/*
+ * Get the idTag which has been used to start the transaction. If no transaction process is
+ * running, this function returns nullptr
+ */
+const char *getTransactionIdTag(unsigned int connectorId = 1);
+
+/*
+ * Returns the current transaction process. Returns nullptr if no transaction is running, preparing or finishing
+ *
+ * See the class definition in ArduinoOcpp/Model/Transactions/Transaction.h for possible uses of this object
+ * 
+ * Examples:
+ * auto tx = getTransaction(); //fetch tx object
+ * if (tx) { //check if tx object exists
+ *     bool active = tx->isActive(); //active tells if the transaction is preparing or continuing to run
+ *                                   //inactive means that the transaction is about to stop, stopped or won't be started anymore
+ *     int transactionId = tx->getTransactionId(); //the transactionId as assigned by the OCPP server
+ *     bool deauthorized = tx->isIdTagDeauthorized(); //if StartTransaction has been rejected
+ * }
+ */
+std::shared_ptr<ArduinoOcpp::Transaction>& getTransaction(unsigned int connectorId = 1);
+
 /* 
  * Returns if the OCPP library allows the EVSE to charge at the moment.
  *
@@ -230,6 +252,14 @@ void setOnResetNotify(std::function<bool(bool)> onResetNotify); //call onResetNo
 
 void setOnResetExecute(std::function<void(bool)> onResetExecute); //reset handler. This function should reboot this controller immediately. Already defined for the ESP32 on Arduino
 
+void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId = 1); //Input if instead of Available, send StatusNotification Preparing / Finishing
+
+void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int connectorId = 1); //Input if the charger is ready for StartTransaction
+
+void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connectorId = 1); //Input if charger is ready for StopTransaction
+
+void setTxNotificationOutput(std::function<void(ArduinoOcpp::TxNotification,ArduinoOcpp::Transaction*)> notificationOutput, unsigned int connectorId = 1);
+
 /*
  * Set an InputOutput (reads and sets information at the same time) for forcing to unlock the
  * connector. Called as part of the OCPP operation "UnlockConnector"
@@ -238,41 +268,11 @@ void setOnResetExecute(std::function<void(bool)> onResetExecute); //reset handle
  */
 void setOnUnlockConnectorInOut(std::function<ArduinoOcpp::PollResult<bool>()> onUnlockConnectorInOut, unsigned int connectorId = 1);
 
-void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int connectorId = 1); //Input if the charger is ready for StartTransaction
-
-void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connectorId = 1); //Input if charger is ready for StopTransaction
-
-void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId = 1); //Input if instead of Available, send StatusNotification Preparing / Finishing
-
 /*
  * Access further information about the internal state of the library
  */
 
 bool isOperative(unsigned int connectorId = 1); //if the charge point is operative (see OCPP1.6 Edit2, p. 45) and ready for transactions
-
-/*
- * Returns the current transaction process. Returns nullptr if no transaction is running, preparing or finishing
- *
- * See the class definition in ArduinoOcpp/Model/Transactions/Transaction.h for possible uses of this object
- * 
- * Examples:
- * auto tx = getTransaction(); //fetch tx object
- * if (tx) { //check if tx object exists
- *     bool active = tx->isActive(); //active tells if the transaction is preparing or continuing to run
- *                                   //inactive means that the transaction is about to stop, stopped or won't be started anymore
- *     int transactionId = tx->getTransactionId(); //the transactionId as assigned by the OCPP server
- *     bool deauthorized = tx->isIdTagDeauthorized(); //if StartTransaction has been rejected
- * }
- */
-std::shared_ptr<ArduinoOcpp::Transaction>& getTransaction(unsigned int connectorId = 1);
-
-/*
- * Get the idTag which has been used to start the transaction. If no transaction process is
- * running, this function returns nullptr
- */
-const char *getTransactionIdTag(unsigned int connectorId = 1);
-
-void setTxNotificationOutput(std::function<void(ArduinoOcpp::TxNotification,ArduinoOcpp::Transaction*)> notificationOutput, unsigned int connectorId = 1);
 
 /*
  * Configure the device management

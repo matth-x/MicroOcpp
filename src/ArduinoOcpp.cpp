@@ -19,7 +19,6 @@
 #include <ArduinoOcpp/Model/Reset/ResetService.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Core/OperationRegistry.h>
-#include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
 
@@ -319,6 +318,35 @@ bool isTransactionRunning(unsigned int connectorId) {
     return tx ? tx->isRunning() : false;
 }
 
+const char *getTransactionIdTag(unsigned int connectorId) {
+    if (!context) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return nullptr;
+    }
+    auto connector = context->getModel().getConnector(connectorId);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return nullptr;
+    }
+    auto& tx = connector->getTransaction();
+    return tx ? tx->getIdTag() : nullptr;
+}
+
+std::shared_ptr<Transaction> ao_undefinedTx;
+
+std::shared_ptr<Transaction>& getTransaction(unsigned int connectorId) {
+    if (!context) {
+        AO_DBG_WARN("Please call OCPP_initialize before");
+        return ao_undefinedTx;
+    }
+    auto connector = context->getModel().getConnector(connectorId);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return ao_undefinedTx;
+    }
+    return connector->getTransaction();
+}
+
 bool ocppPermitsCharge(unsigned int connectorId) {
     if (!context) {
         AO_DBG_WARN("Please call OCPP_initialize before");
@@ -594,7 +622,7 @@ void setOnResetExecute(std::function<void(bool)> onResetExecute) {
     }
 }
 
-void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnectorInOut, unsigned int connectorId) {
+void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -604,7 +632,7 @@ void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnect
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
-    connector->setOnUnlockConnector(onUnlockConnectorInOut);
+    connector->setOccupiedInput(occupied);
 }
 
 void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int connectorId) {
@@ -633,7 +661,7 @@ void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connect
     connector->setStopTxReadyInput(stopTxReady);
 }
 
-void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId) {
+void setTxNotificationOutput(std::function<void(ArduinoOcpp::TxNotification,ArduinoOcpp::Transaction*)> notificationOutput, unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
         return;
@@ -643,7 +671,20 @@ void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId) 
         AO_DBG_ERR("Could not find connector. Ignore");
         return;
     }
-    connector->setOccupiedInput(occupied);
+    connector->setTxNotificationOutput(notificationOutput);
+}
+
+void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnectorInOut, unsigned int connectorId) {
+    if (!context) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+    auto connector = context->getModel().getConnector(connectorId);
+    if (!connector) {
+        AO_DBG_ERR("Could not find connector. Ignore");
+        return;
+    }
+    connector->setOnUnlockConnector(onUnlockConnectorInOut);
 }
 
 bool isOperative(unsigned int connectorId) {
@@ -659,48 +700,6 @@ bool isOperative(unsigned int connectorId) {
         return true; //assume "true" as default state
     }
     return chargePoint->isOperative() && connector->isOperative();
-}
-
-std::shared_ptr<Transaction> ao_undefinedTx;
-
-std::shared_ptr<Transaction>& getTransaction(unsigned int connectorId) {
-    if (!context) {
-        AO_DBG_WARN("Please call OCPP_initialize before");
-        return ao_undefinedTx;
-    }
-    auto connector = context->getModel().getConnector(connectorId);
-    if (!connector) {
-        AO_DBG_ERR("Could not find connector. Ignore");
-        return ao_undefinedTx;
-    }
-    return connector->getTransaction();
-}
-
-const char *getTransactionIdTag(unsigned int connectorId) {
-    if (!context) {
-        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
-        return nullptr;
-    }
-    auto connector = context->getModel().getConnector(connectorId);
-    if (!connector) {
-        AO_DBG_ERR("Could not find connector. Ignore");
-        return nullptr;
-    }
-    auto& tx = connector->getTransaction();
-    return tx ? tx->getIdTag() : nullptr;
-}
-
-void setTxNotificationOutput(std::function<void(ArduinoOcpp::TxNotification,ArduinoOcpp::Transaction*)> notificationOutput, unsigned int connectorId) {
-    if (!context) {
-        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
-        return;
-    }
-    auto connector = context->getModel().getConnector(connectorId);
-    if (!connector) {
-        AO_DBG_ERR("Could not find connector. Ignore");
-        return;
-    }
-    connector->setTxNotificationOutput(notificationOutput);
 }
 
 #if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WS)

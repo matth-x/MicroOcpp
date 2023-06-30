@@ -1,3 +1,7 @@
+// matth-x/ArduinoOcpp
+// Copyright Matthias Akstaller 2019 - 2023
+// MIT License
+
 #include "ArduinoOcpp_c.h"
 #include "ArduinoOcpp.h"
 
@@ -5,16 +9,16 @@
 
 ArduinoOcpp::Connection *ocppSocket = nullptr;
 
-void ao_initialize(AConnection *osock, const char *chargePointModel, const char *chargePointVendor, struct AO_FilesystemOpt fsopt) {
-    ao_initialize_full(osock, ChargerCredentials(chargePointModel, chargePointVendor), fsopt);
+void ao_initialize(OcppConnection *conn, const char *chargePointModel, const char *chargePointVendor, struct AO_FilesystemOpt fsopt) {
+    ao_initialize_full(conn, ChargerCredentials(chargePointModel, chargePointVendor), fsopt);
 }
 
-void ao_initialize_full(AConnection *osock, const char *bootNotificationCredentials, struct AO_FilesystemOpt fsopt) {
-    if (!osock) {
-        AO_DBG_ERR("osock is null");
+void ao_initialize_full(OcppConnection *conn, const char *bootNotificationCredentials, struct AO_FilesystemOpt fsopt) {
+    if (!conn) {
+        AO_DBG_ERR("conn is null");
     }
 
-    ocppSocket = reinterpret_cast<ArduinoOcpp::Connection*>(osock);
+    ocppSocket = reinterpret_cast<ArduinoOcpp::Connection*>(conn);
 
     ArduinoOcpp::FilesystemOpt adaptFsopt = fsopt;
 
@@ -82,6 +86,14 @@ std::function<void(float)> adaptFn(OutputFloat fn) {
     return fn;
 }
 
+std::function<void(float, float, int)> adaptFn(OutputSmartCharging fn) {
+    return fn;
+}
+
+std::function<void(float, float, int)> adaptFn(unsigned int connectorId, OutputSmartCharging_m fn) {
+    return [fn, connectorId] (float power, float current, int nphases) {fn(connectorId, power, current, nphases);};
+}
+
 std::function<void(float)> adaptFn(unsigned int connectorId, OutputFloat_m fn) {
     return [fn, connectorId] (float value) {return fn(connectorId, value);};
 }
@@ -147,11 +159,25 @@ bool ao_endTransaction_m(unsigned int connectorId, const char *idTag, const char
     return endTransaction(idTag, reason, connectorId);
 }
 
+bool ao_isTransactionActive() {
+    return isTransactionActive();
+}
+bool ao_isTransactionActive_m(unsigned int connectorId) {
+    return isTransactionActive(connectorId);
+}
+
 bool ao_isTransactionRunning() {
     return isTransactionRunning();
 }
 bool ao_isTransactionRunning_m(unsigned int connectorId) {
     return isTransactionRunning(connectorId);
+}
+
+const char *ao_getTransactionIdTag() {
+    return getTransactionIdTag();
+}
+const char *ao_getTransactionIdTag_m(unsigned int connectorId) {
+    return getTransactionIdTag(connectorId);
 }
 
 bool ao_ocppPermitsCharge() {
@@ -182,11 +208,23 @@ void ao_setPowerMeterInput_m(unsigned int connectorId, InputFloat_m powerInput) 
     setPowerMeterInput(adaptFn(connectorId, powerInput), connectorId);
 }
 
-void ao_setSmartChargingOutput(OutputFloat chargingLimitOutput) {
-    setSmartChargingPowerOutput(adaptFn(chargingLimitOutput));
+void ao_setSmartChargingPowerOutput(OutputFloat maxPowerOutput) {
+    setSmartChargingPowerOutput(adaptFn(maxPowerOutput));
 }
-void ao_setSmartChargingOutput_m(unsigned int connectorId, OutputFloat_m chargingLimitOutput) {
-    setSmartChargingPowerOutput(adaptFn(connectorId, chargingLimitOutput), connectorId);
+void ao_setSmartChargingPowerOutput_m(unsigned int connectorId, OutputFloat_m maxPowerOutput) {
+    setSmartChargingPowerOutput(adaptFn(connectorId, maxPowerOutput), connectorId);
+}
+void ao_setSmartChargingCurrentOutput(OutputFloat maxCurrentOutput) {
+    setSmartChargingCurrentOutput(adaptFn(maxCurrentOutput));
+}
+void ao_setSmartChargingCurrentOutput_m(unsigned int connectorId, OutputFloat_m maxCurrentOutput) {
+    setSmartChargingCurrentOutput(adaptFn(connectorId, maxCurrentOutput), connectorId);
+}
+void ao_setSmartChargingOutput(OutputSmartCharging chargingLimitOutput) {
+    setSmartChargingOutput(adaptFn(chargingLimitOutput));
+}
+void ao_setSmartChargingOutput_m(unsigned int connectorId, OutputSmartCharging_m chargingLimitOutput) {
+    setSmartChargingOutput(adaptFn(connectorId, chargingLimitOutput), connectorId);
 }
 
 void ao_setEvReadyInput(InputBool evReadyInput) {
@@ -226,6 +264,13 @@ void ao_addMeterValueInput_m(unsigned int connectorId, MeterValueInput *meterVal
     
     addMeterValueInput(std::move(svs), connectorId);
 }
+void ao_setOnResetNotify(bool (*onResetNotify)(bool)) {
+    setOnResetNotify([onResetNotify] (bool isHard) {return onResetNotify(isHard);});
+}
+
+void ao_setOnResetExecute(void (*onResetExecute)(bool)) {
+    setOnResetExecute([onResetExecute] (bool isHard) {onResetExecute(isHard);});
+}
 
 void ao_setOnUnlockConnectorInOut(PollBool onUnlockConnectorInOut) {
     setOnUnlockConnectorInOut(adaptFn(onUnlockConnectorInOut));
@@ -248,6 +293,17 @@ void ao_setStopTxReadyInput_m(unsigned int connectorId, InputBool_m stopTxReady)
     setStopTxReadyInput(adaptFn(connectorId, stopTxReady), connectorId);
 }
 
+void ao_setTxNotificationOutput(void (*notificationOutput)(AOTxNotification_c, AOTransaction_c*)) {
+    setTxNotificationOutput([notificationOutput] (ArduinoOcpp::TxNotification notification, ArduinoOcpp::Transaction *tx) {
+        notificationOutput(convertTxNotification(notification), reinterpret_cast<AOTransaction_c*>(tx));
+    });
+}
+void ao_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, AOTxNotification_c, AOTransaction_c*)) {
+    setTxNotificationOutput([notificationOutput, connectorId] (ArduinoOcpp::TxNotification notification, ArduinoOcpp::Transaction *tx) {
+        notificationOutput(connectorId, convertTxNotification(notification), reinterpret_cast<AOTransaction_c*>(tx));
+    });
+}
+
 void ao_setOccupiedInput(InputBool occupied) {
     setOccupiedInput(adaptFn(occupied));
 }
@@ -262,26 +318,16 @@ bool ao_isOperative_m(unsigned int connectorId) {
     return isOperative(connectorId);
 }
 
-int ao_getTransactionId() {
-    return getTransaction() ? getTransaction()->getTransactionId() : -1;
-}
-int ao_getTransactionId_m(unsigned int connectorId) {
-    return getTransaction(connectorId) ? getTransaction(connectorId)->getTransactionId() : -1;
+void ao_setOnReceiveRequest(const char *operationType, OnMessage onRequest) {
+    setOnReceiveRequest(operationType, adaptFn(onRequest));
 }
 
-const char *ao_getTransactionIdTag() {
-    return getTransactionIdTag();
-}
-const char *ao_getTransactionIdTag_m(unsigned int connectorId) {
-    return getTransactionIdTag(connectorId);
+void ao_setOnSendConf(const char *operationType, OnMessage onConfirmation) {
+    setOnSendConf(operationType, adaptFn(onConfirmation));
 }
 
 void ao_set_console_out_c(void (*console_out)(const char *msg)) {
     ao_set_console_out(console_out);
-}
-
-OcppHandle *ao_getOcppHandle() {
-    return reinterpret_cast<OcppHandle*>(getOcppContext());
 }
 
 void ao_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data) {
