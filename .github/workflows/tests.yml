@@ -16,7 +16,7 @@ jobs:
     - name: Get build tools
       run: |
         sudo apt update
-        sudo apt install build-essential cmake gcovr
+        sudo apt install build-essential cmake
         sudo apt -y install gcc-9 g++-9
         g++ --version
         echo "g++ version must be 9.4.0"
@@ -31,7 +31,7 @@ jobs:
     - name: Run tests
       run: ./build/ao_unit_tests
     - name: Create coverage report
-      run: gcovr --xml -e test -e src/ArduinoJson.h -o coverage.xml
+      run: lcov --remove coverage.info '/usr/*' '*/tests/*' '*/ArduinoJson.h' --output-file coverage.info
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
       env:
