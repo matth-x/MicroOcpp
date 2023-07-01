@@ -4,20 +4,16 @@
 #include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
-#include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Operations/CustomOperation.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"
 #define SCPROFILE "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":0,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"duration\":1000000,\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3}]}}}]";
 
-using namespace ArduinoOcpp;
-
 TEST_CASE( "C++ API test" ) {
 
     //initialize Context with dummy socket
-    LoopbackConnection loopback;
+    ArduinoOcpp::LoopbackConnection loopback;
     OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
 
     auto context = getOcppContext();
@@ -190,7 +186,7 @@ TEST_CASE( "C API test" ) {
     fsopt.mount = true;
     fsopt.formatFsOnFail = true;
 
-    LoopbackConnection loopback;
+    ArduinoOcpp::LoopbackConnection loopback;
     ao_initialize(reinterpret_cast<AO_Connection*>(&loopback), "test-runner1234", "vendor", fsopt);
     
     auto context = getOcppContext();

@@ -71,6 +71,10 @@ void MeterValueBuilder::updateObservedSamplers() {
         select_mask.resize(samplers.size(), false);
         select_n = 0;
     }
+
+    for (size_t i = 0; i < select_mask.size(); i++) {
+        select_mask[i] = false;
+    }
     
     auto selectStr = select->operator const char *();
     size_t sl = 0, sr = 0;

@@ -99,12 +99,13 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
     }
 
     const unsigned int MISSES_LIMIT = 3;
+    unsigned int i = 0;
     unsigned int misses = 0;
 
     while (misses < MISSES_LIMIT) { //search until region without mvs found
         
         char fn [AO_MAX_PATH_SIZE] = {'\0'};
-        auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, mvCount);
+        auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, i);
         if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
             AO_DBG_ERR("fn error: %i", ret);
             return false; //all files have same length
@@ -114,7 +115,7 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
 
         if (!doc) {
             misses++;
-            mvCount++;
+            i++;
             continue;
         }
 
@@ -124,7 +125,7 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
         if (!mv) {
             AO_DBG_ERR("Deserialization error");
             misses++;
-            mvCount++;
+            i++;
             continue;
         }
 
@@ -135,7 +136,8 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
 
         txData.push_back(std::move(mv));
 
-        mvCount++;
+        mvCount = i;
+        i++;
         misses = 0;
     }
 
