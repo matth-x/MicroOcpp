@@ -138,6 +138,7 @@ target_include_directories(ao_unit_tests PUBLIC
 
 target_compile_definitions(ao_unit_tests PUBLIC
     AO_PLATFORM=AO_PLATFORM_UNIX
+    AO_NUMCONNECTORS=3
     AO_CUSTOM_TIMER
     AO_CUSTOM_WS
     AO_CUSTOM_UPDATER

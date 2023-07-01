@@ -180,6 +180,17 @@ const char *ao_getTransactionIdTag_m(unsigned int connectorId) {
     return getTransactionIdTag(connectorId);
 }
 
+AOTransaction_c *ao_getTransaction() {
+    return ao_getTransaction_m(1);
+}
+AOTransaction_c *ao_getTransaction_m(unsigned int connectorId) {
+    if (getTransaction(connectorId)) {
+        return reinterpret_cast<AOTransaction_c*>(getTransaction(connectorId).get());
+    } else {
+        return NULL;
+    }
+}
+
 bool ao_ocppPermitsCharge() {
     return ocppPermitsCharge();
 }
@@ -294,7 +305,7 @@ void ao_setTxNotificationOutput(void (*notificationOutput)(AOTxNotification_c, A
 void ao_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, AOTxNotification_c, AOTransaction_c*)) {
     setTxNotificationOutput([notificationOutput, connectorId] (ArduinoOcpp::TxNotification notification, ArduinoOcpp::Transaction *tx) {
         notificationOutput(connectorId, convertTxNotification(notification), reinterpret_cast<AOTransaction_c*>(tx));
-    });
+    }, connectorId);
 }
 
 void ao_setOccupiedInput(InputBool occupied) {

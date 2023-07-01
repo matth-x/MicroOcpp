@@ -90,6 +90,9 @@ bool ao_isTransactionRunning_m(unsigned int connectorId);
 const char *ao_getTransactionIdTag();
 const char *ao_getTransactionIdTag_m(unsigned int connectorId);
 
+AOTransaction_c *ao_getTransaction();
+AOTransaction_c *ao_getTransaction_m(unsigned int connectorId);
+
 bool ao_ocppPermitsCharge();
 bool ao_ocppPermitsCharge_m(unsigned int connectorId);
 
