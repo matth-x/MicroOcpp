@@ -20,39 +20,19 @@ using namespace ArduinoOcpp::Ocpp16;
 MeteringConnector::MeteringConnector(Model& model, int connectorId, MeterStore& meterStore)
         : model(model), connectorId{connectorId}, meterStore(meterStore) {
 
-    auto MeterValuesSampledData = declareConfiguration<const char*>(
-        "MeterValuesSampledData",
-        "Energy.Active.Import.Register,Power.Active.Import",
-        CONFIGURATION_FN,
-        true,true,true,false
-    );
+    auto MeterValuesSampledData = declareConfiguration<const char*>("MeterValuesSampledData", "", CONFIGURATION_FN);
     declareConfiguration<int>("MeterValuesSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, false, true, false, false);
     MeterValueCacheSize = declareConfiguration("AO_MeterValueCacheSize", 1, CONFIGURATION_FN, true, true, true, false);
     MeterValueSampleInterval = declareConfiguration("MeterValueSampleInterval", 60);
     
-    auto StopTxnSampledData = declareConfiguration<const char*>(
-        "StopTxnSampledData",
-        "",
-        CONFIGURATION_FN,
-        true,true,true,false
-    );
+    auto StopTxnSampledData = declareConfiguration<const char*>("StopTxnSampledData", "", CONFIGURATION_FN);
     declareConfiguration<int>("StopTxnSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, false, true, false, false);
     
-    auto MeterValuesAlignedData = declareConfiguration<const char*>(
-        "MeterValuesAlignedData",
-        "Energy.Active.Import.Register,Power.Active.Import",
-        CONFIGURATION_FN,
-        true,true,true,false
-    );
+    auto MeterValuesAlignedData = declareConfiguration<const char*>("MeterValuesAlignedData", "", CONFIGURATION_FN);
     declareConfiguration<int>("MeterValuesAlignedDataMaxLength", 8, CONFIGURATION_VOLATILE, false, true, false, false);
     ClockAlignedDataInterval  = declareConfiguration("ClockAlignedDataInterval", 0);
     
-    auto StopTxnAlignedData = declareConfiguration<const char*>(
-        "StopTxnAlignedData",
-        "",
-        CONFIGURATION_FN,
-        true,true,true,false
-    );
+    auto StopTxnAlignedData = declareConfiguration<const char*>("StopTxnAlignedData", "", CONFIGURATION_FN);
 
     MeterValuesInTxOnly = declareConfiguration<bool>("AO_MeterValuesInTxOnly", true, CONFIGURATION_FN, true, true, true, false);
     StopTxnDataCapturePeriodic = declareConfiguration<bool>("AO_StopTxnDataCapturePeriodic", false, CONFIGURATION_FN, true, true, true, false);
@@ -61,42 +41,6 @@ MeteringConnector::MeteringConnector(Model& model, int connectorId, MeterStore& 
     alignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesAlignedData));
     stopTxnSampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, StopTxnSampledData));
     stopTxnAlignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, StopTxnAlignedData));
-
-    std::function<bool(const char*)> validateSelectString = [this] (const char *csl) {
-        bool isValid = true;
-        const char *l = csl; //the beginning of an entry of the comma-separated list
-        const char *r = l; //one place after the last character of the entry beginning with l
-        while (*l) {
-            if (*l == ',') {
-                l++;
-                continue;
-            }
-            r = l + 1;
-            while (*r != '\0' && *r != ',') {
-                r++;
-            }
-            bool found = false;
-            for (size_t i = 0; i < samplers.size(); i++) {
-                auto &measurand = samplers[i]->getProperties().getMeasurand();
-                if ((std::ptrdiff_t) measurand.length() == r - l &&                              //same length
-                        !strncmp(l, measurand.c_str(), measurand.length())) {   //same content
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                isValid = false;
-                AO_DBG_WARN("could not find metering device for %.*s", (int) (r - l), l);
-                break;
-            }
-            l = r;
-        }
-        return isValid;
-    };
-    MeterValuesSampledData->setValidator(validateSelectString);
-    StopTxnSampledData->setValidator(validateSelectString);
-    MeterValuesAlignedData->setValidator(validateSelectString);
-    StopTxnAlignedData->setValidator(validateSelectString);
 }
 
 std::unique_ptr<Operation> MeteringConnector::loop() {
@@ -281,4 +225,15 @@ std::shared_ptr<TransactionMeterData> MeteringConnector::getStopTxMeterData(Tran
     }
 
     return txData;
+}
+
+bool MeteringConnector::existsSampler(const char *measurand, size_t len) {
+    for (size_t i = 0; i < samplers.size(); i++) {
+        if (samplers[i]->getProperties().getMeasurand().length() == len &&
+                !strncmp(measurand, samplers[i]->getProperties().getMeasurand().c_str(), len)) {
+            return true;
+        }
+    }
+
+    return false;
 }

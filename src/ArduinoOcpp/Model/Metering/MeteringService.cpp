@@ -5,6 +5,7 @@
 #include <ArduinoOcpp/Model/Metering/MeteringService.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Operations/MeterValues.h>
@@ -15,9 +16,71 @@ using namespace ArduinoOcpp;
 MeteringService::MeteringService(Context& context, int numConn, std::shared_ptr<FilesystemAdapter> filesystem)
       : context(context), meterStore(filesystem) {
 
+    auto MeterValuesSampledData = declareConfiguration<const char*>(
+        "MeterValuesSampledData",
+        "Energy.Active.Import.Register,Power.Active.Import",
+        CONFIGURATION_FN,
+        true,true,true,false
+    );
+    
+    auto StopTxnSampledData = declareConfiguration<const char*>(
+        "StopTxnSampledData",
+        "",
+        CONFIGURATION_FN,
+        true,true,true,false
+    );
+    
+    auto MeterValuesAlignedData = declareConfiguration<const char*>(
+        "MeterValuesAlignedData",
+        "Energy.Active.Import.Register,Power.Active.Import",
+        CONFIGURATION_FN,
+        true,true,true,false
+    );
+    
+    auto StopTxnAlignedData = declareConfiguration<const char*>(
+        "StopTxnAlignedData",
+        "",
+        CONFIGURATION_FN,
+        true,true,true,false
+    );
+    
     for (int i = 0; i < numConn; i++) {
         connectors.push_back(std::unique_ptr<MeteringConnector>(new MeteringConnector(context.getModel(), i, meterStore)));
     }
+
+    std::function<bool(const char*)> validateSelectString = [this] (const char *csl) {
+        bool isValid = true;
+        const char *l = csl; //the beginning of an entry of the comma-separated list
+        const char *r = l; //one place after the last character of the entry beginning with l
+        while (*l) {
+            if (*l == ',') {
+                l++;
+                continue;
+            }
+            r = l + 1;
+            while (*r != '\0' && *r != ',') {
+                r++;
+            }
+            bool found = false;
+            for (size_t cId = 0; cId < connectors.size(); cId++) {
+                if (connectors[cId]->existsSampler(l, (size_t) (r - l))) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                isValid = false;
+                AO_DBG_WARN("could not find metering device for %.*s", (int) (r - l), l);
+                break;
+            }
+            l = r;
+        }
+        return isValid;
+    };
+    MeterValuesSampledData->setValidator(validateSelectString);
+    StopTxnSampledData->setValidator(validateSelectString);
+    MeterValuesAlignedData->setValidator(validateSelectString);
+    StopTxnAlignedData->setValidator(validateSelectString);
 
     /*
      * Register further message handlers to support echo mode: when this library

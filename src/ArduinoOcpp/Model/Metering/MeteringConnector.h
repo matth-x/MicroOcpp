@@ -72,6 +72,8 @@ public:
 
     std::shared_ptr<TransactionMeterData> getStopTxMeterData(Transaction *transaction);
 
+    bool existsSampler(const char *measurand, size_t len);
+
 };
 
 } //end namespace ArduinoOcpp
