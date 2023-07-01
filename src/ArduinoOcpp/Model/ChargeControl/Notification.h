@@ -31,7 +31,7 @@ enum class TxNotification {
 extern "C" {
 #endif //__cplusplus
 
-enum AOTxNotification_c {
+enum AO_TxNotification {
     //Authorization events
     Authorized, //success
     AuthorizationRejected, //IdTag not authorized
@@ -53,7 +53,7 @@ enum AOTxNotification_c {
 
 namespace ArduinoOcpp {
 
-AOTxNotification_c convertTxNotification(TxNotification txn);
+AO_TxNotification convertTxNotification(TxNotification txn);
 
 } //end namespace ArduinoOcpp
 

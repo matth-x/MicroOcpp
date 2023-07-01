@@ -11,8 +11,8 @@
 #include <ArduinoOcpp/Model/ChargeControl/Notification.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
 
-struct OcppConnection;
-typedef struct OcppConnection OcppConnection;
+struct AO_Connection;
+typedef struct AO_Connection AO_Connection;
 
 struct MeterValueInput;
 typedef struct MeterValueInput MeterValueInput;
@@ -52,14 +52,14 @@ extern "C" {
  */
 
 void ao_initialize(
-            OcppConnection *conn,  //WebSocket adapter for ArduinoOcpp
+            AO_Connection *conn,  //WebSocket adapter for ArduinoOcpp
             const char *chargePointModel,     //model name of this charger (e.g. "")
             const char *chargePointVendor, //brand name
             struct AO_FilesystemOpt fsopt); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
 
 //same as above, but more fields for the BootNotification
 void ao_initialize_full(
-            OcppConnection *conn,  //WebSocket adapter for ArduinoOcpp
+            AO_Connection *conn,  //WebSocket adapter for ArduinoOcpp
             const char *bootNotificationCredentials, //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
             struct AO_FilesystemOpt fsopt); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
 
@@ -90,8 +90,8 @@ bool ao_isTransactionRunning_m(unsigned int connectorId);
 const char *ao_getTransactionIdTag();
 const char *ao_getTransactionIdTag_m(unsigned int connectorId);
 
-AOTransaction_c *ao_getTransaction();
-AOTransaction_c *ao_getTransaction_m(unsigned int connectorId);
+AO_Transaction *ao_getTransaction();
+AO_Transaction *ao_getTransaction_m(unsigned int connectorId);
 
 bool ao_ocppPermitsCharge();
 bool ao_ocppPermitsCharge_m(unsigned int connectorId);
@@ -144,8 +144,8 @@ void ao_setStartTxReadyInput_m(unsigned int connectorId, InputBool_m startTxRead
 void ao_setStopTxReadyInput(InputBool stopTxReady);
 void ao_setStopTxReadyInput_m(unsigned int connectorId, InputBool_m stopTxReady);
 
-void ao_setTxNotificationOutput(void (*notificationOutput)(AOTxNotification_c, AOTransaction_c*));
-void ao_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, AOTxNotification_c, AOTransaction_c*));
+void ao_setTxNotificationOutput(void (*notificationOutput)(AO_TxNotification, AO_Transaction*));
+void ao_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, AO_TxNotification, AO_Transaction*));
 
 void ao_setOnUnlockConnectorInOut(PollBool onUnlockConnectorInOut);
 void ao_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollBool_m onUnlockConnectorInOut);

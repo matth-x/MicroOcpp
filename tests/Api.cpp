@@ -191,7 +191,7 @@ TEST_CASE( "C API test" ) {
     fsopt.formatFsOnFail = true;
 
     LoopbackConnection loopback;
-    ao_initialize(reinterpret_cast<OcppConnection*>(&loopback), "test-runner1234", "vendor", fsopt);
+    ao_initialize(reinterpret_cast<AO_Connection*>(&loopback), "test-runner1234", "vendor", fsopt);
     
     auto context = getOcppContext();
     auto& model = context->getModel();
@@ -245,8 +245,8 @@ TEST_CASE( "C API test" ) {
         ao_setStartTxReadyInput_m(2, [] (unsigned int) -> bool {checkpointsc[21] = true; return true;}); ncheckc++;
         ao_setStopTxReadyInput([] () -> bool {checkpointsc[22] = true; return true;}); ncheckc++;
         ao_setStopTxReadyInput_m(2, [] (unsigned int) -> bool {checkpointsc[23] = true; return true;}); ncheckc++;
-        ao_setTxNotificationOutput([] (AOTxNotification_c, AOTransaction_c*) {checkpointsc[24] = true;}); ncheckc++;
-        ao_setTxNotificationOutput_m(2, [] (unsigned int, AOTxNotification_c, AOTransaction_c*) {checkpointsc[25] = true;}); ncheckc++;
+        ao_setTxNotificationOutput([] (AO_TxNotification, AO_Transaction*) {checkpointsc[24] = true;}); ncheckc++;
+        ao_setTxNotificationOutput_m(2, [] (unsigned int, AO_TxNotification, AO_Transaction*) {checkpointsc[25] = true;}); ncheckc++;
         ao_setOnUnlockConnectorInOut([] () -> OptionalBool {checkpointsc[26] = true; return OptionalBool::OptionalTrue;}); ncheckc++;
         ao_setOnUnlockConnectorInOut_m(2, [] (unsigned int) -> OptionalBool {checkpointsc[27] = true; return OptionalBool::OptionalTrue;}); ncheckc++;
 

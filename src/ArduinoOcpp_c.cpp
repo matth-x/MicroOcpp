@@ -9,11 +9,11 @@
 
 ArduinoOcpp::Connection *ocppSocket = nullptr;
 
-void ao_initialize(OcppConnection *conn, const char *chargePointModel, const char *chargePointVendor, struct AO_FilesystemOpt fsopt) {
+void ao_initialize(AO_Connection *conn, const char *chargePointModel, const char *chargePointVendor, struct AO_FilesystemOpt fsopt) {
     ao_initialize_full(conn, ChargerCredentials(chargePointModel, chargePointVendor), fsopt);
 }
 
-void ao_initialize_full(OcppConnection *conn, const char *bootNotificationCredentials, struct AO_FilesystemOpt fsopt) {
+void ao_initialize_full(AO_Connection *conn, const char *bootNotificationCredentials, struct AO_FilesystemOpt fsopt) {
     if (!conn) {
         AO_DBG_ERR("conn is null");
     }
@@ -180,12 +180,12 @@ const char *ao_getTransactionIdTag_m(unsigned int connectorId) {
     return getTransactionIdTag(connectorId);
 }
 
-AOTransaction_c *ao_getTransaction() {
+AO_Transaction *ao_getTransaction() {
     return ao_getTransaction_m(1);
 }
-AOTransaction_c *ao_getTransaction_m(unsigned int connectorId) {
+AO_Transaction *ao_getTransaction_m(unsigned int connectorId) {
     if (getTransaction(connectorId)) {
-        return reinterpret_cast<AOTransaction_c*>(getTransaction(connectorId).get());
+        return reinterpret_cast<AO_Transaction*>(getTransaction(connectorId).get());
     } else {
         return NULL;
     }
@@ -297,14 +297,14 @@ void ao_setStopTxReadyInput_m(unsigned int connectorId, InputBool_m stopTxReady)
     setStopTxReadyInput(adaptFn(connectorId, stopTxReady), connectorId);
 }
 
-void ao_setTxNotificationOutput(void (*notificationOutput)(AOTxNotification_c, AOTransaction_c*)) {
+void ao_setTxNotificationOutput(void (*notificationOutput)(AO_TxNotification, AO_Transaction*)) {
     setTxNotificationOutput([notificationOutput] (ArduinoOcpp::TxNotification notification, ArduinoOcpp::Transaction *tx) {
-        notificationOutput(convertTxNotification(notification), reinterpret_cast<AOTransaction_c*>(tx));
+        notificationOutput(convertTxNotification(notification), reinterpret_cast<AO_Transaction*>(tx));
     });
 }
-void ao_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, AOTxNotification_c, AOTransaction_c*)) {
+void ao_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, AO_TxNotification, AO_Transaction*)) {
     setTxNotificationOutput([notificationOutput, connectorId] (ArduinoOcpp::TxNotification notification, ArduinoOcpp::Transaction *tx) {
-        notificationOutput(connectorId, convertTxNotification(notification), reinterpret_cast<AOTransaction_c*>(tx));
+        notificationOutput(connectorId, convertTxNotification(notification), reinterpret_cast<AO_Transaction*>(tx));
     }, connectorId);
 }
 

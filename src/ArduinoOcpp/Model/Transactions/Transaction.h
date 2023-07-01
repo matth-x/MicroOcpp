@@ -170,33 +170,33 @@ public:
 extern "C" {
 #endif //__cplusplus
 
-struct AOTransaction_c;
-typedef struct AOTransaction_c AOTransaction_c;
+struct AO_Transaction;
+typedef struct AO_Transaction AO_Transaction;
 
-int ao_tx_getTransactionId(AOTransaction_c *tx);
-bool ao_tx_isAuthorized(AOTransaction_c *tx);
-bool ao_tx_isIdTagDeauthorized(AOTransaction_c *tx);
+int ao_tx_getTransactionId(AO_Transaction *tx);
+bool ao_tx_isAuthorized(AO_Transaction *tx);
+bool ao_tx_isIdTagDeauthorized(AO_Transaction *tx);
 
-bool ao_tx_isRunning(AOTransaction_c *tx);
-bool ao_tx_isActive(AOTransaction_c *tx);
-bool ao_tx_isAborted(AOTransaction_c *tx);
-bool ao_tx_isCompleted(AOTransaction_c *tx);
+bool ao_tx_isRunning(AO_Transaction *tx);
+bool ao_tx_isActive(AO_Transaction *tx);
+bool ao_tx_isAborted(AO_Transaction *tx);
+bool ao_tx_isCompleted(AO_Transaction *tx);
 
-const char *ao_tx_getIdTag(AOTransaction_c *tx);
+const char *ao_tx_getIdTag(AO_Transaction *tx);
 
-bool ao_tx_getBeginTimestamp(AOTransaction_c *tx, char *buf, size_t len);
+bool ao_tx_getBeginTimestamp(AO_Transaction *tx, char *buf, size_t len);
 
-int32_t ao_tx_getMeterStart(AOTransaction_c *tx);
+int32_t ao_tx_getMeterStart(AO_Transaction *tx);
 
-bool ao_tx_getStartTimestamp(AOTransaction_c *tx, char *buf, size_t len);
+bool ao_tx_getStartTimestamp(AO_Transaction *tx, char *buf, size_t len);
 
-const char *ao_tx_getStopIdTag(AOTransaction_c *tx);
+const char *ao_tx_getStopIdTag(AO_Transaction *tx);
 
-int32_t ao_tx_getMeterStop(AOTransaction_c *tx);
+int32_t ao_tx_getMeterStop(AO_Transaction *tx);
 
-bool ao_tx_getStopTimestamp(AOTransaction_c *tx, char *buf, size_t len);
+bool ao_tx_getStopTimestamp(AO_Transaction *tx, char *buf, size_t len);
 
-const char *ao_tx_getStopReason(AOTransaction_c *tx);
+const char *ao_tx_getStopReason(AO_Transaction *tx);
 
 #ifdef __cplusplus
 } //end extern "C"

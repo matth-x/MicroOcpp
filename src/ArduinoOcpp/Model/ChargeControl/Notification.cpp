@@ -6,39 +6,39 @@
 
 namespace ArduinoOcpp {
 
-AOTxNotification_c convertTxNotification(TxNotification txn) {
-    auto res = AOTxNotification_c::AuthorizationRejected;
+AO_TxNotification convertTxNotification(TxNotification txn) {
+    auto res = AO_TxNotification::AuthorizationRejected;
     
     switch (txn) {
         case TxNotification::AuthorizationRejected:
-            res = AOTxNotification_c::AuthorizationRejected;
+            res = AO_TxNotification::AuthorizationRejected;
             break;
         case TxNotification::AuthorizationTimeout:
-            res = AOTxNotification_c::AuthorizationTimeout;
+            res = AO_TxNotification::AuthorizationTimeout;
             break;
         case TxNotification::Authorized:
-            res = AOTxNotification_c::Authorized;
+            res = AO_TxNotification::Authorized;
             break;
         case TxNotification::ConnectionTimeout:
-            res = AOTxNotification_c::ConnectionTimeout;
+            res = AO_TxNotification::ConnectionTimeout;
             break;
         case TxNotification::DeAuthorized:
-            res = AOTxNotification_c::DeAuthorized;
+            res = AO_TxNotification::DeAuthorized;
             break;
         case TxNotification::RemoteStart:
-            res = AOTxNotification_c::RemoteStart;
+            res = AO_TxNotification::RemoteStart;
             break;
         case TxNotification::RemoteStop:
-            res = AOTxNotification_c::RemoteStop;
+            res = AO_TxNotification::RemoteStop;
             break;
         case TxNotification::ReservationConflict:
-            res = AOTxNotification_c::ReservationConflict;
+            res = AO_TxNotification::ReservationConflict;
             break;
         case TxNotification::StartTx:
-            res = AOTxNotification_c::StartTx;
+            res = AO_TxNotification::StartTx;
             break;
         case TxNotification::StopTx:
-            res = AOTxNotification_c::StopTx;
+            res = AO_TxNotification::StopTx;
             break;
     }
 
