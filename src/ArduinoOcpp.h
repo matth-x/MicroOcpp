@@ -248,10 +248,6 @@ void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measur
 
 void addMeterValueInput(std::unique_ptr<ArduinoOcpp::SampledValueSampler> valueInput, unsigned int connectorId = 1); //integrate further metering Inputs (more extensive alternative)
 
-void setOnResetNotify(std::function<bool(bool)> onResetNotify); //call onResetNotify(isHard) before Reset. If you return false, Reset will be aborted. Optional
-
-void setOnResetExecute(std::function<void(bool)> onResetExecute); //reset handler. This function should reboot this controller immediately. Already defined for the ESP32 on Arduino
-
 void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId = 1); //Input if instead of Available, send StatusNotification Preparing / Finishing
 
 void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int connectorId = 1); //Input if the charger is ready for StartTransaction
@@ -277,6 +273,10 @@ bool isOperative(unsigned int connectorId = 1); //if the charge point is operati
 /*
  * Configure the device management
  */
+
+void setOnResetNotify(std::function<bool(bool)> onResetNotify); //call onResetNotify(isHard) before Reset. If you return false, Reset will be aborted. Optional
+
+void setOnResetExecute(std::function<void(bool)> onResetExecute); //reset handler. This function should reboot this controller immediately. Already defined for the ESP32 on Arduino
 
 #if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WS)
 #include <ArduinoOcpp/Model/FirmwareManagement/FirmwareService.h>

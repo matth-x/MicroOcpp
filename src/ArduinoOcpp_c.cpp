@@ -264,13 +264,6 @@ void ao_addMeterValueInput_m(unsigned int connectorId, MeterValueInput *meterVal
     
     addMeterValueInput(std::move(svs), connectorId);
 }
-void ao_setOnResetNotify(bool (*onResetNotify)(bool)) {
-    setOnResetNotify([onResetNotify] (bool isHard) {return onResetNotify(isHard);});
-}
-
-void ao_setOnResetExecute(void (*onResetExecute)(bool)) {
-    setOnResetExecute([onResetExecute] (bool isHard) {onResetExecute(isHard);});
-}
 
 void ao_setOnUnlockConnectorInOut(PollBool onUnlockConnectorInOut) {
     setOnUnlockConnectorInOut(adaptFn(onUnlockConnectorInOut));
@@ -316,6 +309,13 @@ bool ao_isOperative() {
 }
 bool ao_isOperative_m(unsigned int connectorId) {
     return isOperative(connectorId);
+}
+void ao_setOnResetNotify(bool (*onResetNotify)(bool)) {
+    setOnResetNotify([onResetNotify] (bool isHard) {return onResetNotify(isHard);});
+}
+
+void ao_setOnResetExecute(void (*onResetExecute)(bool)) {
+    setOnResetExecute([onResetExecute] (bool isHard) {onResetExecute(isHard);});
 }
 
 void ao_setOnReceiveRequest(const char *operationType, OnMessage onRequest) {

@@ -132,10 +132,6 @@ void ao_addMeterValueInputInt_m(unsigned int connectorId, InputInt_m valueInput,
 void ao_addMeterValueInput(MeterValueInput *meterValueInput); //takes ownership of meterValueInput
 void ao_addMeterValueInput_m(unsigned int connectorId, MeterValueInput *meterValueInput); //takes ownership of meterValueInput
 
-void ao_setOnResetNotify(bool (*onResetNotify)(bool));
-
-void ao_setOnResetExecute(void (*onResetExecute)(bool));
-
 void ao_setOccupiedInput(InputBool occupied);
 void ao_setOccupiedInput_m(unsigned int connectorId, InputBool_m occupied);
 
@@ -157,6 +153,10 @@ void ao_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollBool_m onUnloc
 
 bool ao_isOperative();
 bool ao_isOperative_m(unsigned int connectorId);
+
+void ao_setOnResetNotify(bool (*onResetNotify)(bool));
+
+void ao_setOnResetExecute(void (*onResetExecute)(bool));
 
 void ao_setOnReceiveRequest(const char *operationType, OnMessage onRequest);
 

@@ -600,28 +600,6 @@ void addMeterValueInput(std::unique_ptr<SampledValueSampler> valueInput, unsigne
     model.getMeteringService()->addMeterValueSampler(connectorId, std::move(valueInput));
 }
 
-void setOnResetNotify(std::function<bool(bool)> onResetNotify) {
-    if (!context) {
-        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
-        return;
-    }
-
-    if (auto rService = context->getModel().getResetService()) {
-        rService->setPreReset(onResetNotify);
-    }
-}
-
-void setOnResetExecute(std::function<void(bool)> onResetExecute) {
-    if (!context) {
-        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
-        return;
-    }
-
-    if (auto rService = context->getModel().getResetService()) {
-        rService->setExecuteReset(onResetExecute);
-    }
-}
-
 void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
@@ -700,6 +678,28 @@ bool isOperative(unsigned int connectorId) {
         return true; //assume "true" as default state
     }
     return chargePoint->isOperative() && connector->isOperative();
+}
+
+void setOnResetNotify(std::function<bool(bool)> onResetNotify) {
+    if (!context) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+
+    if (auto rService = context->getModel().getResetService()) {
+        rService->setPreReset(onResetNotify);
+    }
+}
+
+void setOnResetExecute(std::function<void(bool)> onResetExecute) {
+    if (!context) {
+        AO_DBG_ERR("OCPP uninitialized"); //please call OCPP_initialize before
+        return;
+    }
+
+    if (auto rService = context->getModel().getResetService()) {
+        rService->setExecuteReset(onResetExecute);
+    }
 }
 
 #if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WS)
