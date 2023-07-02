@@ -3,6 +3,7 @@ name: Default Compilation
 on:
   push:
     branches:
+      - master
       - develop
 
 jobs:

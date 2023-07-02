@@ -1,6 +1,8 @@
 # <img src="https://user-images.githubusercontent.com/63792403/133922028-fefc8abb-fde9-460b-826f-09a458502d17.png" alt="Icon" height="24"> &nbsp; ArduinoOcpp
 
 [![Build Status]( https://github.com/matth-x/ArduinoOcpp/workflows/PlatformIO%20CI/badge.svg)](https://github.com/matth-x/ArduinoOcpp/actions)
+[![Unit tests]( https://github.com/matth-x/ArduinoOcpp/workflows/Unit%20tests/badge.svg)](https://github.com/matth-x/ArduinoOcpp/actions)
+[![codecov](https://codecov.io/github/matth-x/ArduinoOcpp/branch/develop/graph/badge.svg?token=UN6LO96HM7)](https://codecov.io/github/matth-x/ArduinoOcpp)
 
 OCPP-J 1.6 client for embedded microcontrollers. Portable C/C++. Compatible with Espressif, NXP, Texas Instruments and STM.
 
