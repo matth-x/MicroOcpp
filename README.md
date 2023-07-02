@@ -8,9 +8,9 @@ OCPP-J 1.6 client for embedded microcontrollers. Portable C/C++. Compatible with
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp)
 
-Try it (no hardware required): [ArduinoOcppSimulator](https://github.com/matth-x/ArduinoOcppSimulator)
+PlatformIO package: [ArduinoOcpp](https://platformio.org/lib/show/11975/ArduinoOcpp)
 
-Technical introduction: [ArduinoOcpp Docs](https://matth-x.github.io/ArduinoOcpp/intro-tech)
+Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
 
 Fully integrated into the Arduino platform and the ESP32 / ESP8266. Runs on ESP-IDF, FreeRTOS and generic embedded C/C++ platforms.
 
@@ -23,6 +23,10 @@ This library allows EVSEs to communicate with an OCPP Backend and to participate
 :heavy_check_mark: Tested in many charging stations
 
 :heavy_check_mark: Eligible for public chargers (Eichrecht-compliant)
+
+Technical introduction: [ArduinoOcpp Docs](https://matth-x.github.io/ArduinoOcpp/intro-tech)
+
+Try it (no hardware required): [ArduinoOcppSimulator](https://github.com/matth-x/ArduinoOcppSimulator)
 
 ### Features
 
@@ -38,8 +42,6 @@ The necessary hardware and internet integration is usually far below 1000 LOCs.
 ## Developers guide
 
 Please take `examples/ESP/main.cpp` as the starting point for the first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. The API documentation can be found in [`ArduinoOcpp.h`](https://github.com/matth-x/ArduinoOcpp/blob/master/src/ArduinoOcpp.h).
-
-PlatformIO package: [ArduinoOcpp](https://platformio.org/lib/show/11975/ArduinoOcpp)
 
 ### Dependencies
 
@@ -75,8 +77,6 @@ However, no public reference for an ISO 15118 integration exists at the moment. 
 Fully OCPP 1.6 compliant :heavy_check_mark:
 
 ## Further help
-
-Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
 
 I hope this guide can help you to successfully integrate an OCPP controller into your EVSE. If something needs clarification or if you have a question, please send me a message.
 
