@@ -16,10 +16,6 @@
 #include <functional>
 #include <memory>
 
-#define AVAILABILITY_OPERATIVE 2
-#define AVAILABILITY_INOPERATIVE_SCHEDULED 1
-#define AVAILABILITY_INOPERATIVE 0
-
 namespace ArduinoOcpp {
 
 class Context;
@@ -103,7 +99,6 @@ public:
     bool isOperative();
     void setAvailability(bool available);
     void setAvailabilityVolatile(bool available); //set inoperative state but keep only until reboot at most
-    void setAuthorizationProvider(std::function<const char *()> authorization);
     void setConnectorPluggedInput(std::function<bool()> connectorPlugged);
     void setEvReadyInput(std::function<bool()> evRequestsEnergy);
     void setEvseReadyInput(std::function<bool()> connectorEnergized);
