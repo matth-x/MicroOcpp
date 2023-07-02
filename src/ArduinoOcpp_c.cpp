@@ -22,15 +22,15 @@ void ao_initialize_full(AO_Connection *conn, const char *bootNotificationCredent
 
     ArduinoOcpp::FilesystemOpt adaptFsopt = fsopt;
 
-    OCPP_initialize(*ocppSocket, bootNotificationCredentials, adaptFsopt);
+    ocpp_initialize(*ocppSocket, bootNotificationCredentials, adaptFsopt);
 }
 
 void ao_deinitialize() {
-    OCPP_deinitialize();
+    ocpp_deinitialize();
 }
 
 void ao_loop() {
-    OCPP_loop();
+    ocpp_loop();
 }
 
 /*

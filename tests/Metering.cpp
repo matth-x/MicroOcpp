@@ -15,7 +15,7 @@ TEST_CASE("Metering") {
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;
-    OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+    ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
     auto context = getOcppContext();
     auto& model = context->getModel();
@@ -42,7 +42,7 @@ TEST_CASE("Metering") {
         bool checkProcessed = false;
 
         //set up measurands and check validation
-        sendCustomRequest("ChangeConfiguration",
+        sendRequest("ChangeConfiguration",
             [] () {
                 //create req
                 auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
@@ -62,7 +62,7 @@ TEST_CASE("Metering") {
 
         checkProcessed = false;
 
-        sendCustomRequest("ChangeConfiguration",
+        sendRequest("ChangeConfiguration",
             [] () {
                 //create req
                 auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
@@ -226,9 +226,9 @@ TEST_CASE("Metering") {
 
         loop();
 
-        OCPP_deinitialize(); //check if StopData is stored over reboots
+        ocpp_deinitialize(); //check if StopData is stored over reboots
 
-        OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         addMeterValueInput([base] () {
             //simulate 3600W consumption
@@ -326,5 +326,5 @@ TEST_CASE("Metering") {
         REQUIRE(checkProcessed);
     }
 
-    OCPP_deinitialize();
+    ocpp_deinitialize();
 }

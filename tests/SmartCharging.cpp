@@ -41,7 +41,7 @@ TEST_CASE( "SmartCharging" ) {
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;
-    OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+    ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
     auto context = getOcppContext();
     auto& model = context->getModel();
@@ -112,9 +112,9 @@ TEST_CASE( "SmartCharging" ) {
         std::string out = SCPROFILE_0;
         loopback.sendTXT(out);
 
-        OCPP_deinitialize();
+        ocpp_deinitialize();
 
-        OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         setSmartChargingOutput([] (float, float, int) {});
         scService = model.getSmartChargingService();
@@ -567,6 +567,6 @@ TEST_CASE( "SmartCharging" ) {
         return true;
     });
 
-    OCPP_deinitialize();
+    ocpp_deinitialize();
 
 }

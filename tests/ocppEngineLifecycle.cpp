@@ -10,13 +10,13 @@ TEST_CASE( "Context lifecycle" ) {
 
     //initialize Context with dummy socket
     ArduinoOcpp::LoopbackConnection loopback;
-    OCPP_initialize(loopback);
+    ocpp_initialize(loopback);
 
     SECTION("OCPP is initialized"){
         REQUIRE( getOcppContext() );
     }
 
-    OCPP_deinitialize();
+    ocpp_deinitialize();
 
     SECTION("OCPP is deinitialized"){
         REQUIRE( !( getOcppContext() ) );

@@ -17,7 +17,7 @@ TEST_CASE( "Transaction safety" ) {
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;
-    OCPP_initialize(loopback);
+    ocpp_initialize(loopback);
 
     ao_set_timer(custom_timer_cb);
 
@@ -34,7 +34,7 @@ TEST_CASE( "Transaction safety" ) {
         loop();
         REQUIRE(!ocppPermitsCharge());
 
-        OCPP_deinitialize();
+        ocpp_deinitialize();
     }
 
     SECTION("Managed transaction") {
@@ -48,7 +48,7 @@ TEST_CASE( "Transaction safety" ) {
         loop();
         REQUIRE(!ocppPermitsCharge());
         
-        OCPP_deinitialize();
+        ocpp_deinitialize();
     }
 
     SECTION("Reset during transaction 01 - interrupt initiation") {
@@ -57,7 +57,7 @@ TEST_CASE( "Transaction safety" ) {
         loop();
         beginTransaction("mIdTag");
         loop();
-        OCPP_deinitialize(); //reset and jump to next section
+        ocpp_deinitialize(); //reset and jump to next section
     }
 
     SECTION("Reset during transaction 02 - interrupt initiation second time") {
@@ -65,7 +65,7 @@ TEST_CASE( "Transaction safety" ) {
         setConnectorPluggedInput([] () {return false;});
         loop();
         REQUIRE(!ocppPermitsCharge());
-        OCPP_deinitialize();
+        ocpp_deinitialize();
     }
 
     SECTION("Reset during transaction 03 - interrupt running tx") {
@@ -73,7 +73,7 @@ TEST_CASE( "Transaction safety" ) {
         setConnectorPluggedInput([] () {return true;});
         loop();
         REQUIRE(ocppPermitsCharge());
-        OCPP_deinitialize();
+        ocpp_deinitialize();
     }
 
     SECTION("Reset during transaction 04 - interrupt stopping tx") {
@@ -82,7 +82,7 @@ TEST_CASE( "Transaction safety" ) {
         loop();
         REQUIRE(ocppPermitsCharge());
         endTransaction();
-        OCPP_deinitialize();
+        ocpp_deinitialize();
     }
 
     SECTION("Reset during transaction 06 - check tx finished") {
@@ -90,7 +90,7 @@ TEST_CASE( "Transaction safety" ) {
         setConnectorPluggedInput([] () {return true;});
         loop();
         REQUIRE(!ocppPermitsCharge());
-        OCPP_deinitialize();
+        ocpp_deinitialize();
     }
 
 }

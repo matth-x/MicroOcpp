@@ -54,7 +54,7 @@ TEST_CASE( "Configuration Behavior" ) {
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;
-    OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+    ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
     auto engine = getOcppContext();
     auto& checkMsg = engine->getOperationRegistry();
@@ -217,5 +217,5 @@ TEST_CASE( "Configuration Behavior" ) {
         loopback.setConnected(true);
     }
 
-    OCPP_deinitialize();
+    ocpp_deinitialize();
 }

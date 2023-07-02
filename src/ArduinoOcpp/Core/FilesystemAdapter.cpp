@@ -15,7 +15,7 @@
  *     - ESP-IDF SPIFFS
  *     - POSIX-like API (tested on Ubuntu 20.04)
  * 
- * You can add support for other file systems by passing a custom adapter to OCPP_initialize(...)
+ * You can add support for other file systems by passing a custom adapter to ocpp_initialize(...)
  */
 
 

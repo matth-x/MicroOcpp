@@ -60,7 +60,7 @@ void setup() {
     /*
      * Initialize the OCPP library
      */
-    OCPP_initialize(OCPP_HOST, OCPP_PORT, OCPP_URL, "My Charging Station", "My company name");
+    ocpp_initialize(OCPP_HOST, OCPP_PORT, OCPP_URL, "My Charging Station", "My company name");
 
     /*
      * Integrate OCPP functionality. You can leave out the following part if your EVSE doesn't need it.
@@ -88,7 +88,7 @@ void loop() {
     /*
      * Do all OCPP stuff (process WebSocket input, send recorded meter values to Central System, etc.)
      */
-    OCPP_loop();
+    ocpp_loop();
 
     /*
      * Energize EV plug if OCPP transaction is up and running

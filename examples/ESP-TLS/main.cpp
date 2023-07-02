@@ -118,7 +118,7 @@ void setup() {
     wsockSecure.enableHeartbeat(15000, 3000, 2);
     wsockSecure.setAuthorization(OCPP_AUTH_ID, OCPP_AUTH_KEY); // => Authorization: Basic QUwxMDAwOgABAgMEBQYH////////////////
     
-    OCPP_initialize(osockSecure, ChargerCredentials("My Charging Station", "My company name"));
+    ocpp_initialize(osockSecure, ChargerCredentials("My Charging Station", "My company name"));
 
     /*
      * ... see ArduinoOcpp.h for how to integrate the EVSE hardware.
@@ -133,7 +133,7 @@ void loop() {
     /*
      * Execute all charge point routines and handle WebSocket
      */
-    OCPP_loop();
+    ocpp_loop();
 
     //... see ArduinoOcpp.h and the other examples for how to integrate the EVSE hardware.
 }

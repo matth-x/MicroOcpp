@@ -19,7 +19,7 @@ TEST_CASE( "Charging sessions" ) {
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;
-    OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+    ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
     auto engine = getOcppContext();
     auto& checkMsg = engine->getOperationRegistry();
@@ -177,10 +177,10 @@ TEST_CASE( "Charging sessions" ) {
     }
 
     SECTION("Preboot transactions - tx before BootNotification") {
-        OCPP_deinitialize();
+        ocpp_deinitialize();
 
         loopback.setConnected(false);
-        OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         *declareConfiguration<bool>("AO_PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
@@ -238,10 +238,10 @@ TEST_CASE( "Charging sessions" ) {
 
     SECTION("Preboot transactions - lose StartTx timestamp") {
 
-        OCPP_deinitialize();
+        ocpp_deinitialize();
 
         loopback.setConnected(false);
-        OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         *declareConfiguration<bool>("AO_PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
@@ -253,9 +253,9 @@ TEST_CASE( "Charging sessions" ) {
 
         REQUIRE(isTransactionRunning());
 
-        OCPP_deinitialize();
+        ocpp_deinitialize();
 
-        OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         *declareConfiguration<bool>("AO_PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
@@ -289,10 +289,10 @@ TEST_CASE( "Charging sessions" ) {
 
         REQUIRE(isTransactionRunning());
 
-        OCPP_deinitialize();
+        ocpp_deinitialize();
 
         loopback.setConnected(false);
-        OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         *declareConfiguration<bool>("AO_PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
@@ -307,9 +307,9 @@ TEST_CASE( "Charging sessions" ) {
 
         REQUIRE(!isTransactionRunning());
 
-        OCPP_deinitialize();
+        ocpp_deinitialize();
 
-        OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         *declareConfiguration<bool>("AO_PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
@@ -371,9 +371,9 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
         REQUIRE(isOperative());
 
-        OCPP_deinitialize();
+        ocpp_deinitialize();
 
-        OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
         connector = getOcppContext()->getModel().getConnector(1);
 
         loop();
@@ -394,6 +394,6 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE(isOperative());
     }
 
-    OCPP_deinitialize();
+    ocpp_deinitialize();
 
 }

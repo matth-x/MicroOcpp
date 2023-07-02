@@ -172,7 +172,7 @@ bool configuration_inited = false;
 bool configuration_init(std::shared_ptr<FilesystemAdapter> _filesystem) {
     if (configuration_inited)
         return true; //configuration_init() already called; tolerate multiple calls so user can use this store for
-                     //credentials outside ArduinoOcpp which need to be loaded before OCPP_initialize()
+                     //credentials outside ArduinoOcpp which need to be loaded before ocpp_initialize()
     
     filesystem = _filesystem;
 

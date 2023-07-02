@@ -14,7 +14,7 @@ TEST_CASE( "C++ API test" ) {
 
     //initialize Context with dummy socket
     ArduinoOcpp::LoopbackConnection loopback;
-    OCPP_initialize(loopback, ChargerCredentials("test-runner1234"));
+    ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
     auto context = getOcppContext();
     auto& model = context->getModel();
@@ -67,13 +67,13 @@ TEST_CASE( "C++ API test" ) {
 
         setOnReceiveRequest("StatusNotification", [c = &checkpoints[ncheck++]] (JsonObject) {*c = true;});
         setOnSendConf("StatusNotification", [c = &checkpoints[ncheck++]] (JsonObject) {*c = true;});
-        sendCustomRequest("DataTransfer", [c = &checkpoints[ncheck++]] () {
+        sendRequest("DataTransfer", [c = &checkpoints[ncheck++]] () {
             *c = true;
             auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
             doc->to<JsonObject>();
             return doc;
         }, [c = &checkpoints[ncheck++]] (JsonObject) {*c = true;});
-        setCustomRequestHandler("DataTransfer", [c = &checkpoints[ncheck++]] (JsonObject) {*c = true;}, [c = &checkpoints[ncheck++]] () {
+        setRequestHandler("DataTransfer", [c = &checkpoints[ncheck++]] (JsonObject) {*c = true;}, [c = &checkpoints[ncheck++]] () {
             *c = true;
             auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
             doc->to<JsonObject>();
@@ -90,7 +90,7 @@ TEST_CASE( "C++ API test" ) {
 
         //run tx management
 
-        OCPP_loop();
+        ocpp_loop();
 
         loop();
 
@@ -136,13 +136,13 @@ TEST_CASE( "C++ API test" ) {
 
         REQUIRE(isOperative());
 
-        sendCustomRequest("UnlockConnector", [] () {
+        sendRequest("UnlockConnector", [] () {
             auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
             (*doc)["connectorId"] = 1;
             return doc;
         }, [] (JsonObject) {});
 
-        sendCustomRequest("Reset", [] () {
+        sendRequest("Reset", [] () {
             auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
             (*doc)["type"] = "Hard";
             return doc;
@@ -167,7 +167,7 @@ TEST_CASE( "C++ API test" ) {
         REQUIRE(checkpointsPassed);
     }
 
-    OCPP_deinitialize();
+    ocpp_deinitialize();
 
     REQUIRE(!getOcppContext());
 }
@@ -319,18 +319,18 @@ TEST_CASE( "C API test" ) {
         REQUIRE(ao_isOperative());
         REQUIRE(ao_isOperative_m(2));
 
-        sendCustomRequest("UnlockConnector", [] () {
+        sendRequest("UnlockConnector", [] () {
             auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
             (*doc)["connectorId"] = 1;
             return doc;
         }, [] (JsonObject) {});
-        sendCustomRequest("UnlockConnector", [] () {
+        sendRequest("UnlockConnector", [] () {
             auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
             (*doc)["connectorId"] = 2;
             return doc;
         }, [] (JsonObject) {});
 
-        sendCustomRequest("Reset", [] () {
+        sendRequest("Reset", [] () {
             auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
             (*doc)["type"] = "Hard";
             return doc;

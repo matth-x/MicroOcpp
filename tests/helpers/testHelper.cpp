@@ -15,6 +15,6 @@ unsigned long custom_timer_cb() {
 void loop() {
     for (int i = 0; i < 30; i++) {
         mtime += 100;
-        OCPP_loop();
+        ocpp_loop();
     }
 }

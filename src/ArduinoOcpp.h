@@ -38,7 +38,7 @@ using ArduinoOcpp::OnReceiveErrorListener;
  * This is a convenience function only available for Arduino. For a full initialization with TLS,
  * please refer to https://github.com/matth-x/ArduinoOcpp/tree/master/examples/ESP-TLS
  */
-void OCPP_initialize(
+void ocpp_initialize(
             const char *CS_hostname, //e.g. "example.com"
             uint16_t CS_port,        //e.g. 80
             const char *CS_url,      //e.g. "ws://example.com/steve/websocket/CentralSystemService/charger001"
@@ -48,11 +48,11 @@ void OCPP_initialize(
 #endif
 
 /*
- * Convenience initialization: use this for passing the BootNotification payload JSON to the OCPP_initialize(...) below
+ * Convenience initialization: use this for passing the BootNotification payload JSON to the ocpp_initialize(...) below
  *
  * Example usage:
  * 
- *     OCPP_initialize(osock, ChargerCredentials("Demo Charger", "My Company Ltd."));
+ *     ocpp_initialize(osock, ChargerCredentials("Demo Charger", "My Company Ltd."));
  * 
  * For a description of the fields, refer to OCPP 1.6 Specification - Edition 2 p. 60
  */
@@ -86,7 +86,7 @@ private:
  * https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/MongooseConnectionClient.cpp for
  * an example.
  */
-void OCPP_initialize(
+void ocpp_initialize(
             ArduinoOcpp::Connection& connection, //WebSocket adapter for ArduinoOcpp
             const char *bootNotificationCredentials = ChargerCredentials("Demo Charger", "My Company Ltd."), //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
             ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
@@ -94,12 +94,12 @@ void OCPP_initialize(
 /*
  * Stop the OCPP library and release allocated resources.
  */
-void OCPP_deinitialize();
+void ocpp_deinitialize();
 
 /*
  * To be called in the main loop (e.g. place it inside loop())
  */
-void OCPP_loop();
+void ocpp_loop();
 
 /*
  * Transaction management.
@@ -355,7 +355,7 @@ void setOnSendConf(const char *operationType, OnSendConfListener onSendConf);
  * 
  * Use case 1, extend the library by sending additional operations. E.g. DataTransfer:
  * 
- * sendCustomRequest("DataTransfer", [] () -> std::unique_ptr<DynamicJsonDocument> {
+ * sendRequest("DataTransfer", [] () -> std::unique_ptr<DynamicJsonDocument> {
  *     //will be called to create the request once this operation is being sent out
  *     size_t capacity = JSON_OBJECT_SIZE(3) +
  *                       JSON_OBJECT_SIZE(2); //for calculating the required capacity, see https://arduinojson.org/v6/assistant/
@@ -376,7 +376,7 @@ void setOnSendConf(const char *operationType, OnSendConfListener onSendConf);
  * 
  * Use case 2, bypass the business logic of this library for custom behavior. E.g. StartTransaction:
  * 
- * sendCustomRequest("StartTransaction", [] () -> std::unique_ptr<DynamicJsonDocument> {
+ * sendRequest("StartTransaction", [] () -> std::unique_ptr<DynamicJsonDocument> {
  *     //will be called to create the request once this operation is being sent out
  *     size_t capacity = JSON_OBJECT_SIZE(4); //for calculating the required capacity, see https://arduinojson.org/v6/assistant/
  *     auto res = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity)); 
@@ -395,7 +395,7 @@ void setOnSendConf(const char *operationType, OnSendConfListener onSendConf);
  * In Use case 2, the library won't send any further StatusNotification or StopTransaction on
  * its own.
  */
-void sendCustomRequest(const char *operationType,
+void sendRequest(const char *operationType,
             std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createReq,
             std::function<void (JsonObject)> fn_processConf);
 
@@ -408,7 +408,7 @@ void sendCustomRequest(const char *operationType,
  * 
  * Example usage:
  * 
- * setCustomRequestHandler("DataTransfer", [] (JsonObject request) -> void {
+ * setRequestHandler("DataTransfer", [] (JsonObject request) -> void {
  *     //will be called with the request message from the server
  *     const char *vendorId = request["vendorId"];
  *     const char *messageId = request["messageId"];
@@ -425,7 +425,7 @@ void sendCustomRequest(const char *operationType,
  *     return res;
  * });
  */
-void setCustomRequestHandler(const char *operationType,
+void setRequestHandler(const char *operationType,
             std::function<void (JsonObject)> fn_processReq,
             std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createConf);
 
