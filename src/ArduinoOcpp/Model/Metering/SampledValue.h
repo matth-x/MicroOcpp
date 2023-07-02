@@ -9,6 +9,8 @@
 #include <memory>
 #include <functional>
 
+#include <ArduinoOcpp/Platform.h>
+
 namespace ArduinoOcpp {
 
 template <class T>
@@ -27,6 +29,19 @@ public:
     static bool ready(int32_t& val) {return true;} //int32_t is always valid
     static std::string serialize(int32_t& val);
     static int32_t toInteger(int32_t& val) {return val;} //no conversion required
+};
+
+template <>
+class SampledValueDeSerializer<float> { // Used in meterValues
+public:
+    static float deserialize(const char *str) {return atof(str);}
+    static bool ready(float& val) {return true;} //float is always valid
+    static std::string serialize(float& val) {
+        char str[20];
+        dtostrf(val,4,9,str);
+        return std::string(str);
+    }
+    static int32_t toInteger(float& val) {return (int32_t) val;}
 };
 
 class SampledValueProperties {

@@ -244,7 +244,7 @@ void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connec
 void addErrorCodeInput(std::function<const char*()> errorCodeInput, unsigned int connectorId = 1); //Input for Error codes (please refer to OCPP 1.6, Edit2, p. 71 and 72 for valid error codes)
 void addErrorDataInput(std::function<ArduinoOcpp::ErrorData()> errorDataInput, unsigned int connectorId = 1);
 
-void addMeterValueInput(std::function<int32_t ()> valueInput, const char *measurand = nullptr, const char *unit = nullptr, const char *location = nullptr, const char *phase = nullptr, unsigned int connectorId = 1); //integrate further metering Inputs
+void addMeterValueInput(std::function<float ()> valueInput, const char *measurand = nullptr, const char *unit = nullptr, const char *location = nullptr, const char *phase = nullptr, unsigned int connectorId = 1); //integrate further metering Inputs
 
 void addMeterValueInput(std::unique_ptr<ArduinoOcpp::SampledValueSampler> valueInput, unsigned int connectorId = 1); //integrate further metering Inputs (more extensive alternative)
 
