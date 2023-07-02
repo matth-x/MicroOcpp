@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/Model/Metering/MeteringService.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>

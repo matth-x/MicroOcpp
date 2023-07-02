@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Model/Reservation/ReservationService.h>
-#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Model/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>

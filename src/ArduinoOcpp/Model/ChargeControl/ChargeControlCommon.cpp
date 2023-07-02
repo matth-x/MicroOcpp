@@ -5,7 +5,7 @@
 #include <string>
 
 #include <ArduinoOcpp/Model/ChargeControl/ChargeControlCommon.h>
-#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Operations/ChangeAvailability.h>
 #include <ArduinoOcpp/Operations/ChangeConfiguration.h>

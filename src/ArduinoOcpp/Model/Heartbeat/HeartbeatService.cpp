@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Model/Heartbeat/HeartbeatService.h>
-#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Operations/Heartbeat.h>

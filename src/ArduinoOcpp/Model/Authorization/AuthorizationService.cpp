@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
 #include <ArduinoOcpp/Model/ChargeControl/Connector.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
-#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/OperationRegistry.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>

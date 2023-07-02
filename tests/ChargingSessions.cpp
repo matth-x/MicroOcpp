@@ -1,6 +1,6 @@
 #include <ArduinoOcpp.h>
 #include <ArduinoOcpp/Core/Connection.h>
-#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>

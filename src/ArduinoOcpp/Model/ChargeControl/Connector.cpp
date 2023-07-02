@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/Model/ChargeControl/Connector.h>
 
-#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Core/Request.h>
 #include <ArduinoOcpp/Model/Transactions/TransactionStore.h>

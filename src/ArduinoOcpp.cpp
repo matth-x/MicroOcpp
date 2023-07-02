@@ -4,7 +4,7 @@
 
 #include "ArduinoOcpp.h"
 
-#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Model/Metering/MeteringService.h>
 #include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>

@@ -15,7 +15,7 @@ set(AO_SRC
     src/ArduinoOcpp/Core/FilesystemAdapter.cpp
     src/ArduinoOcpp/Core/FilesystemUtils.cpp
     src/ArduinoOcpp/Core/RequestQueue.cpp
-    src/ArduinoOcpp/Context.cpp
+    src/ArduinoOcpp/Core/Context.cpp
     src/ArduinoOcpp/Core/Operation.cpp
     src/ArduinoOcpp/Model/Model.cpp
     src/ArduinoOcpp/Core/Request.cpp

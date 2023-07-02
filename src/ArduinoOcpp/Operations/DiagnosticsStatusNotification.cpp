@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Operations/DiagnosticsStatusNotification.h>
-#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Model/Diagnostics/DiagnosticsService.h>
 

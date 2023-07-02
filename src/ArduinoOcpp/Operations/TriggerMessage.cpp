@@ -7,7 +7,7 @@
 #include <ArduinoOcpp/Model/Metering/MeteringService.h>
 #include <ArduinoOcpp/Operations/StatusNotification.h>
 #include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Core/SimpleRequestFactory.h>
 #include <ArduinoOcpp/Debug.h>
 

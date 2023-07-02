@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Context.h>
+#include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/Configuration.h>
