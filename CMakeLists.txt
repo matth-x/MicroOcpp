@@ -4,8 +4,6 @@
 
 cmake_minimum_required(VERSION 3.15)
 
-project(ArduinoOcpp
-        VERSION 0.2.0)
 
 set(AO_SRC
     src/ArduinoOcpp/Core/Configuration.cpp
@@ -97,6 +95,9 @@ if(ESP_PLATFORM)
 
     return()
 endif()
+
+project(ArduinoOcpp
+        VERSION 0.2.0)
 
 add_library(ArduinoOcpp ${AO_SRC})
 
