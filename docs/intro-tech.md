@@ -1,6 +1,6 @@
 # Technical introduction
 
-This chapter covers everything you need to know to understand ArduinoOcpp.
+This chapter covers the technical concepts of ArduinoOcpp.
 
 ## Scope of ArduinoOcpp
 

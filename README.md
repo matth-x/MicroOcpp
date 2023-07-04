@@ -55,13 +55,13 @@ If compiled with the Arduino integration:
 
 In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/ArduinoOcpp` in the PIO library manager.
 
-### OCPP 2.0.1 and ISO 15118
+## OCPP 2.0.1 and ISO 15118
 
 The OCPP 2.0.1 upgrade is being worked on. Further details will be announced soon.
 
-ISO 15118 is a must-have for future chargers. It will hugely improve the security and user-friendliness of EV charging. ArduinoOcpp facilitates the integration of ISO 15118 by handling its OCPP-side communication. This is being verified now in a proprietary firmware development.
+ISO 15118 is a must-have for future chargers. It will hugely improve the security and user-friendliness of EV charging. ArduinoOcpp facilitates the integration of ISO 15118 by handling its OCPP-side communication. This is being validated now in a proprietary firmware development.
 
-However, no public reference for an ISO 15118 integration exists at the moment. If your company can imagine to work on an open source ISO 15118 client, I would be happy to get in touch for a collaboration on an open source OCPP 2.0.1 + ISO 15118 solution.
+However, no public ISO 15118 integration exists at the moment. If your company considers working on an open source ISO 15118 stack, it would be great to discuss a potential collaboration on an open source OCPP 2.0.1 + ISO 15118 solution.
 
 ## Supported Feature Profiles
 

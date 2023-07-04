@@ -4,7 +4,7 @@ The API exposes some of the internal datastructures to the main firmware. This c
 
 ## Context object
 
-The *Context* wraps all runtime data of ArduinoOcpp. Every data object this library creates (except only the Configuration) can be rechaed through the Context instance. So it is the basic entry point to the internals of the library. The structure of the context follows the main architecture as described in [this introduction](intro-tech) and consists of the Request queue and message deserializer for the RPC framework and the Model object for the OCPP model and behavior (see below).
+The *Context* contains all runtime data of ArduinoOcpp. Every data object which this library creates is stored in the Context instance, except only the Configuration. So it is the basic entry point to the internals of the library. The structure of the context follows the main architecture as described in [this introduction](intro-tech) and consists of the Request queue and message deserializer for the RPC framework and the Model object for the OCPP model and behavior (see below).
 
 When the library is initialized, `getOcppContext()` returns the current Context object.
 
@@ -12,7 +12,9 @@ When the library is initialized, `getOcppContext()` returns the current Context 
 
 The *Model* represents the OCPP device model and behavior. OCPP defines a rough charger model, i.e. the hardware parts of the charger and their basic functionality in relation to the OCPP operations. Furthermore, OCPP specifies a few only software related features like the reservation of the charger. This charger model is implemented as straightforward C++ data structures and corresponding algorithms.
 
-Following the structure of the feature profiles in OCPP, the model implementation is split into functional blocks in ArduinoOcpp as well. Each functional block has a top-level *Service* class, executing the behavior in their scope. Consequently, the *Model* object is composed of *Service* objects, it owns them and provides access to them. The following subsections contain a description of each function block.
+The implementation of the Model is structured into a top-level Model class and the subordinate Service classes. Each Service class represents a functional block of the OCPP specification and implements the corresponding data structures and functionality. The definition of the functional blocks in ArduinoOcpp is very similar to the feature profiles in OCPP. Only the Core profile is split into multiple functional blocks to keep a smaller module scope.
+
+The following subsections contain a description of each functional block.
 
 ### Authorization
 
