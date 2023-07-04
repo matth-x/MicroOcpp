@@ -717,11 +717,6 @@ DiagnosticsService *getDiagnosticsService() {
 #endif
 
 Context *getOcppContext() {
-    if (!context) {
-        AO_DBG_ERR("OCPP uninitialized"); //please call ocpp_initialize before
-        return nullptr;
-    }
-
     return context;
 }
 
