@@ -129,8 +129,8 @@ void ao_setEvseReadyInput_m(unsigned int connectorId, InputBool_m evseReadyInput
 void ao_addErrorCodeInput(InputString errorCodeInput);
 void ao_addErrorCodeInput_m(unsigned int connectorId, InputString_m errorCodeInput);
 
-void ao_addMeterValueInputInt(InputInt valueInput, const char *measurand, const char *unit, const char *location, const char *phase); //measurand, unit, location and phase can be NULL
-void ao_addMeterValueInputInt_m(unsigned int connectorId, InputInt_m valueInput, const char *measurand, const char *unit, const char *location, const char *phase); //measurand, unit, location and phase can be NULL
+void ao_addMeterValueInputFloat(InputFloat valueInput, const char *measurand, const char *unit, const char *location, const char *phase); //measurand, unit, location and phase can be NULL
+void ao_addMeterValueInputFloat_m(unsigned int connectorId, InputFloat_m valueInput, const char *measurand, const char *unit, const char *location, const char *phase); //measurand, unit, location and phase can be NULL
 
 void ao_addMeterValueInput(MeterValueInput *meterValueInput); //takes ownership of meterValueInput
 void ao_addMeterValueInput_m(unsigned int connectorId, MeterValueInput *meterValueInput); //takes ownership of meterValueInput

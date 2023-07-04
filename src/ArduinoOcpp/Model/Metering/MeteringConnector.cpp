@@ -78,8 +78,8 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
         } else {
             //check outside of transaction
 
-            if (!MeterValuesInTxOnly || *MeterValuesInTxOnly) {
-                //don't take any MeterValues outside of transactions
+            if (connectorId != 0 && (!MeterValuesInTxOnly || *MeterValuesInTxOnly)) {
+                //don't take any MeterValues outside of transactions on connectorIds other than 0
                 meterData.clear();
                 return nullptr;
             }

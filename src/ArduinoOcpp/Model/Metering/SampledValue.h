@@ -38,7 +38,7 @@ public:
     static bool ready(float& val) {return true;} //float is always valid
     static std::string serialize(float& val) {
         char str[20];
-        dtostrf(val,4,9,str);
+        dtostrf(val,4,1,str);
         return std::string(str);
     }
     static int32_t toInteger(float& val) {return (int32_t) val;}

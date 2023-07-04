@@ -41,8 +41,7 @@ TEST_CASE( "C++ API test" ) {
         setEvseReadyInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return true;});
         addErrorCodeInput([c = &checkpoints[ncheck++]] () -> const char* {*c = true; return nullptr;});
         addErrorDataInput([c = &checkpoints[ncheck++]] () -> ArduinoOcpp::ErrorData {*c = true; return nullptr;});
-        addMeterValueInput([c = &checkpoints[ncheck++]] () -> int32_t {*c = true; return 0.f;},
-                "Current.Import");
+        addMeterValueInput([c = &checkpoints[ncheck++]] () -> float {*c = true; return 0.f;}, "Current.Import");
 
         ArduinoOcpp::SampledValueProperties svprops;
         svprops.setMeasurand("Current.Offered");
@@ -218,8 +217,8 @@ TEST_CASE( "C API test" ) {
         ao_setEvseReadyInput_m(2, [] (unsigned int) -> bool {checkpointsc[11] = true; return true;}); ncheckc++;
         ao_addErrorCodeInput([] () -> const char* {checkpointsc[12] = true; return nullptr;}); ncheckc++;
         ao_addErrorCodeInput_m(2, [] (unsigned int) -> const char* {checkpointsc[13] = true; return nullptr;}); ncheckc++;
-        ao_addMeterValueInputInt([] () -> int {checkpointsc[14] = true; return 0;}, "Current.Import", "A", NULL, NULL); ncheckc++;
-        ao_addMeterValueInputInt_m(2, [] (unsigned int) -> int {checkpointsc[15] = true; return 0;}, "Current.Import", "A", NULL, NULL); ncheckc++;
+        ao_addMeterValueInputFloat([] () -> float {checkpointsc[14] = true; return 0.f;}, "Current.Import", "A", NULL, NULL); ncheckc++;
+        ao_addMeterValueInputFloat_m(2, [] (unsigned int) -> float {checkpointsc[15] = true; return 0.f;}, "Current.Import", "A", NULL, NULL); ncheckc++;
         
         ArduinoOcpp::SampledValueProperties svprops;
         svprops.setMeasurand("Current.Offered");

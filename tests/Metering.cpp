@@ -261,6 +261,46 @@ TEST_CASE("Metering") {
         REQUIRE(checkProcessed);
     }
 
+    SECTION("Capture measurements at connectorId 0") {
+
+        Timestamp base;
+        base.setTime(BASE_TIME);
+
+        const unsigned int connectorId = 0;
+
+        addMeterValueInput([base] () {
+                //simulate 3600W consumption
+                return 3600;
+            }, 
+            "Power.Active.Import",
+            nullptr,
+            nullptr,
+            nullptr,
+            connectorId);
+
+        auto MeterValuesSampledData = declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
+        *MeterValuesSampledData = "Power.Active.Import";
+
+        auto MeterValueSampleInterval = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
+        *MeterValueSampleInterval = 10;
+
+        bool checkProcessed = false;
+
+        setOnReceiveRequest("MeterValues", [base, &checkProcessed] (JsonObject payload) {
+            checkProcessed = true;
+            REQUIRE((!strcmp(payload["meterValue"][0]["sampledValue"][0]["value"] | "", "3600") ||
+                     !strcmp(payload["meterValue"][0]["sampledValue"][0]["value"] | "", "3600.0")));
+        });
+
+        loop();
+
+        mtime += 10 * 1000;
+
+        loop();
+
+        REQUIRE(checkProcessed);
+    }
+
     SECTION("Change measurands live") {
 
         Timestamp base;
