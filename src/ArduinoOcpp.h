@@ -10,6 +10,7 @@
 #include <functional>
 
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
+#include <ArduinoOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoOcpp/Core/RequestCallbacks.h>
 #include <ArduinoOcpp/Core/Connection.h>
 #include <ArduinoOcpp/Core/PollResult.h>
@@ -89,7 +90,8 @@ private:
 void ocpp_initialize(
             ArduinoOcpp::Connection& connection, //WebSocket adapter for ArduinoOcpp
             const char *bootNotificationCredentials = ChargerCredentials("Demo Charger", "My Company Ltd."), //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
-            ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
+            std::shared_ptr<ArduinoOcpp::FilesystemAdapter> filesystem =
+                ArduinoOcpp::makeDefaultFilesystemAdapter(ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail)); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
 
 /*
  * Stop the OCPP library and release allocated resources.

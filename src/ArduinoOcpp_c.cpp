@@ -22,7 +22,7 @@ void ao_initialize_full(AO_Connection *conn, const char *bootNotificationCredent
 
     ArduinoOcpp::FilesystemOpt adaptFsopt = fsopt;
 
-    ocpp_initialize(*ocppSocket, bootNotificationCredentials, adaptFsopt);
+    ocpp_initialize(*ocppSocket, bootNotificationCredentials, ArduinoOcpp::makeDefaultFilesystemAdapter(adaptFsopt));
 }
 
 void ao_deinitialize() {

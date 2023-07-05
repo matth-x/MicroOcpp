@@ -6,8 +6,6 @@
 #include <ArduinoOcpp/Core/ConfigurationOptions.h> //FilesystemOpt
 #include <ArduinoOcpp/Debug.h>
 
-#ifndef AO_DEACTIVATE_FLASH
-
 /*
  * Platform specific implementations. Currently supported:
  *     - Arduino LittleFs
@@ -469,6 +467,10 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 } //end namespace ArduinoOcpp
 
-#endif //switch-case AO_USE_FILEAPI
+#else //filesystem disabled
 
-#endif //!AO_DEACTIVATE_FLASH
+std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config) {
+    return nullptr;
+}
+
+#endif //switch-case AO_USE_FILEAPI

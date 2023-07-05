@@ -79,7 +79,7 @@ void ocpp_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_u
     delete connection;
     connection = new EspWiFi::WSClient(webSocket);
 
-    ocpp_initialize(*connection, ChargerCredentials(chargePointModel, chargePointVendor), fsOpt);
+    ocpp_initialize(*connection, ChargerCredentials(chargePointModel, chargePointVendor), makeDefaultFilesystemAdapter(fsOpt));
 }
 #endif
 
@@ -117,16 +117,14 @@ ChargerCredentials::ChargerCredentials(const char *cpModel, const char *cpVendor
     }
 }
 
-void ocpp_initialize(Connection& connection, const char *bootNotificationCredentials, FilesystemOpt fsOpt) {
+void ocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs) {
     if (context) {
         AO_DBG_WARN("Can't be called two times. To change the credentials, either restart ESP, or call ocpp_deinitialize() before");
         return;
     }
 
-#ifndef AO_DEACTIVATE_FLASH
-    filesystem = makeDefaultFilesystemAdapter(fsOpt);
-#endif
-    AO_DBG_DEBUG("filesystem %s", filesystem ? "loaded" : "error");
+    filesystem = fs;
+    AO_DBG_DEBUG("filesystem %s", filesystem ? "loaded" : "deactivated");
 
     BootStats bootstats;
     BootService::loadBootStats(filesystem, bootstats);
