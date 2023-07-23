@@ -2,6 +2,8 @@ ArduinoOcpp is an OCPP client which runs on microcontrollers and enables EVSEs t
 
 [Technical introduction](intro-tech)
 
+[Modules](modules)
+
 [Development tools and basic prerequisites](prerequisites)
 
 <!-- This chapter shows how to kick-start your OCPP project. -->
