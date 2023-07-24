@@ -46,10 +46,10 @@ Incoming messages are unmarshalled using the *OperationRegistry*. During the ini
 Configurations like the HeartbeatInterval are managed by the *Configuration* module which consists of
 
 - *AbstractConfiguration*: a single configuration as a key-value pair without value type
-- *Configuration*: a concrete configuration with value like `bool` or `const char*`. Inherits from AbstractConfiguration
+    - *Configuration*: a concrete configuration with a value type like `bool` or `const char*`. Inherits from AbstractConfiguration
 - *ConfigurationContainer*: a collection of AbstractConfigurations and an optional storage implementation. Multiple containers can be set for a separation of the configurations and different storage strategies. Each container has a unique file name
-- *ConfigurationContainerVolatile*: no persistency and access to the file system
-- *ConfigurationContainerFlash*: persistency by storing JSON files on the flash
+    - *ConfigurationContainerVolatile*: no persistency and access to the file system
+    - *ConfigurationContainerFlash*: persistency by storing JSON files on the flash
 
 If another storage implementation is required (e.g. for syncing with an external configuration manager), then it's possible to add a custom ConfigurationContainer.
 
