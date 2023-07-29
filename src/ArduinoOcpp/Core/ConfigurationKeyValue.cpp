@@ -133,11 +133,11 @@ const T &Configuration<T>::operator=(const T & newVal) {
             printValue(newVal);
             AO_CONSOLE_PRINTF("\n");
         }
-        initializedValue = true;
-        if (value != newVal) {
+        if (initializedValue == true && value != newVal) {
             value_revision++;
         }
         value = newVal;
+        initializedValue = true;
     } else {
         AO_DBG_ERR("Tried to override read-only configuration:");
         AO_CONSOLE_PRINTF("[AO]     > Key = ");
