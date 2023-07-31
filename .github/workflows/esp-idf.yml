@@ -1,0 +1,46 @@
+name: ESP-IDF CI
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout ESP-IDF example folder structure
+      uses: actions/checkout@v3
+      with:
+        sparse-checkout: examples/ESP-IDF
+    - name: Clean sumodules folders template
+      run: rm -r ./examples/ESP-IDF/components/*
+    - name: Checkout main repo
+      uses: actions/checkout@v3
+      with:
+        path: examples/ESP-IDF/components/ArduinoOcpp
+    - name: Checkout Mongoose
+      uses: actions/checkout@v3
+      with:
+        repository: cesanta/mongoose-esp-idf
+        path: examples/ESP-IDF/components/mongoose
+        submodules: 'recursive'
+    - name: Checkout Mongoose WS adapter
+      uses: actions/checkout@v3
+      with:
+        repository: matth-x/ArduinoOcppMongoose
+        path: examples/ESP-IDF/components/ArduinoOcppMongoose
+    - name: Checkout ArduinoJson
+      uses: actions/checkout@v3
+      with:
+        repository: bblanchon/ArduinoJson
+        path: examples/ESP-IDF/components/ArduinoJson
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@v1
+      with:
+        esp_idf_version: v4.4
+        target: esp32
+        path: './examples/ESP-IDF'

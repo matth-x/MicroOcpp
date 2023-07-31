@@ -19,7 +19,7 @@
 /* ArduinoOcpp includes */
 #include <mongoose.h>
 #include <ArduinoOcpp_c.h> //C-facade of ArduinoOcpp
-#include <AOcppMongooseClient_c.h> //WebSocket integration for ESP-IDF
+#include <ArduinoOcppMongooseClient_c.h> //WebSocket integration for ESP-IDF
 
 /* The examples use WiFi configuration that you can set via project configuration menu
 
@@ -156,13 +156,11 @@ void app_main(void)
     /* Initialize ArduinoOcpp */
     struct AO_FilesystemOpt fsopt = { .use = true, .mount = true, .formatFsOnFail = true};
 
-    AConnection *osock = ao_makeConnection(&mgr,
+    AO_Connection *osock = ao_makeConnection(&mgr,
             EXAMPLE_AO_OCPP_BACKEND, 
             EXAMPLE_AO_CHARGEBOXID, 
             EXAMPLE_AO_AUTHORIZATIONKEY, "", fsopt);
-    ao_initialize(osock, fsopt);
-
-    ao_bootNotification("ESP-IDF charger", "Your brand name here", NULL, NULL, NULL, NULL); //send first OCPP message
+    ao_initialize(osock, "ESP-IDF charger", "Your brand name here", fsopt);
 
     /* Enter infinite loop */
     while (1) {
@@ -171,8 +169,8 @@ void app_main(void)
     }
     
     /* Deallocate ressources */
-    ao_deinitConnection(osock);
     ao_deinitialize();
+    ao_deinitConnection(osock);
     mg_mgr_free(&mgr);
     return;
 }
