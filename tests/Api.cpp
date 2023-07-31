@@ -12,6 +12,8 @@
 
 TEST_CASE( "C++ API test" ) {
 
+#error Embed CI test: this code won't compile. Check if CI triggered by PR fails
+
     //initialize Context with dummy socket
     ArduinoOcpp::LoopbackConnection loopback;
     ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
