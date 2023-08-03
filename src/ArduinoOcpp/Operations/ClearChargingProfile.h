@@ -17,7 +17,6 @@ class ClearChargingProfile : public Operation {
 private:
     SmartChargingService& scService;
     bool matchingProfilesFound = false;
-    const char *errorCode;
 public:
     ClearChargingProfile(SmartChargingService& scService);
 
@@ -26,8 +25,6 @@ public:
     void processReq(JsonObject payload);
 
     std::unique_ptr<DynamicJsonDocument> createConf();
-
-    const char *getErrorCode() {return errorCode;}
     
 };
 
