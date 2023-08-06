@@ -37,7 +37,7 @@ AuthorizationService::AuthorizationService(Context& context, std::shared_ptr<Fil
         if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
             fProfilePlus += ",";
         fProfilePlus += fpId;
-        fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
+        *fProfile = fProfilePlus.c_str();
     }
 
     context.getOperationRegistry().registerOperation("GetLocalListVersion", [&context] () {

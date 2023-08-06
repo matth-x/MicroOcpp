@@ -8,11 +8,11 @@ namespace ArduinoOcpp {
 
 std::shared_ptr<AbstractConfiguration> ConfigurationContainer::getConfiguration(const char *key) {
     for (std::vector<std::shared_ptr<AbstractConfiguration>>::iterator configuration = configurations.begin(); configuration != configurations.end(); configuration++) {
-        if ((*configuration)->keyEquals(key)) {
+        if (!strcmp(key, (*configuration)->getKey())) {
             return *configuration;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 bool ConfigurationContainer::removeConfiguration(std::shared_ptr<AbstractConfiguration> configuration) {

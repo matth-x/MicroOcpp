@@ -25,8 +25,7 @@ protected:
     uint16_t value_revision = 0; //number of memory-relevant changes of subclass-member "value" (deleting counts too). This will be important for the client to detect if there was a change
     bool initializedValue = false;
 
-    AbstractConfiguration();
-    AbstractConfiguration(JsonObject &storedKeyValuePair);
+    AbstractConfiguration(const char *key);
     size_t getStorageHeaderJsonCapacity();
     void storeStorageHeader(JsonObject &keyValuePair);
     size_t getOcppMsgHeaderJsonCapacity();
@@ -36,14 +35,12 @@ protected:
     bool permissionLocalClientCanWrite() {return localClientCanWrite;}
 public:
     virtual ~AbstractConfiguration();
-    bool setKey(const char *key);
-    void printKey();
+    const char *getKey();
 
     void requireRebootWhenChanged();
     bool requiresRebootWhenChanged();
 
     uint16_t getValueRevision();
-    bool keyEquals(const char *other);
 
     virtual std::unique_ptr<DynamicJsonDocument> toJsonStorageEntry() = 0;
     virtual std::unique_ptr<DynamicJsonDocument> toJsonOcppMsgEntry() = 0;
@@ -74,8 +71,7 @@ private:
     T value;
     size_t getValueJsonCapacity();
 public:
-    Configuration();
-    Configuration(JsonObject &storedKeyValuePair);
+    Configuration(const char *key, T value);
     const T &operator=(const T & newVal);
     operator T();
     bool isValid();
@@ -94,10 +90,8 @@ private:
 
     std::function<bool(const char*)> validator;
 public:
-    Configuration();
-    Configuration(JsonObject &storedKeyValuePair);
+    Configuration(const char *key, const char *value);
     ~Configuration();
-    bool setValue(const char *newVal, size_t buffsize);
     const char *operator=(const char *newVal);
     operator const char*();
     bool isValid();

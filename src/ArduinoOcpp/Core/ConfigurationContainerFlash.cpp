@@ -58,18 +58,27 @@ bool ConfigurationContainerFlash::load() {
     }
 
     for (JsonObject config : configurationsArray) {
+        const char *key = config["key"] | "";
+        if (!*key || !config.containsKey("value")) {
+            AO_DBG_ERR("corrupt config");
+            continue;
+        }
+
         const char *type = config["type"] | "Undefined";
 
         std::shared_ptr<AbstractConfiguration> configuration = nullptr;
 
-        if (!strcmp(type, SerializedType<int>::get())){
-            configuration = std::make_shared<Configuration<int>>(config);
-        } else if (!strcmp(type, SerializedType<float>::get())){
-            configuration = std::make_shared<Configuration<float>>(config);
-        } else if (!strcmp(type, SerializedType<bool>::get())){
-            configuration = std::make_shared<Configuration<bool>>(config);
-        } else if (!strcmp(type, SerializedType<const char *>::get())){
-            configuration = std::make_shared<Configuration<const char *>>(config);
+        if (!strcmp(type, SerializedType<int>::get()) && config["value"].is<int>()){
+            configuration = std::make_shared<Configuration<int>>(key, config["value"].as<int>());
+        } else if (!strcmp(type, SerializedType<float>::get()) && config["value"].is<float>()){
+            configuration = std::make_shared<Configuration<float>>(key, config["value"].as<float>());
+        } else if (!strcmp(type, SerializedType<bool>::get()) && config["value"].is<bool>()){
+            configuration = std::make_shared<Configuration<bool>>(key, config["value"].as<bool>());
+        } else if (!strcmp(type, SerializedType<const char *>::get()) && config["value"].is<const char*>()){
+            configuration = std::make_shared<Configuration<const char *>>(key, config["value"].as<const char*>());
+        } else {
+            AO_DBG_ERR("corrupt config");
+            continue;
         }
 
         if (configuration) {
