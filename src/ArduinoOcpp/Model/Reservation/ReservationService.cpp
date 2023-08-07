@@ -32,7 +32,7 @@ ReservationService::ReservationService(Context& context, unsigned int numConnect
         if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
             fProfilePlus += ",";
         fProfilePlus += fpId;
-        fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
+        *fProfile = fProfilePlus.c_str();
     }
     
     context.getOperationRegistry().registerOperation("CancelReservation", [&context] () {

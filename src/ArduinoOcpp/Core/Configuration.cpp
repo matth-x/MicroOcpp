@@ -17,31 +17,24 @@ std::shared_ptr<FilesystemAdapter> filesystem;
 template<class T>
 std::shared_ptr<Configuration<T>> createConfiguration(const char *key, T value) {
 
-    std::shared_ptr<Configuration<T>> configuration = std::make_shared<Configuration<T>>();
-        
-    if (!configuration->setKey(key)) {
-        AO_DBG_ERR("Cannot set key! Abort");
+    if (!key || !*key) {
+        AO_DBG_ERR("invalid args");
         return nullptr;
     }
 
-    *configuration = value;
+    std::shared_ptr<Configuration<T>> configuration = std::make_shared<Configuration<T>>(key, value);
 
     return configuration;
 }
 
 std::shared_ptr<Configuration<const char *>> createConfiguration(const char *key, const char *value) {
 
-    std::shared_ptr<Configuration<const char*>> configuration = std::make_shared<Configuration<const char*>>();
-        
-    if (!configuration->setKey(key)) {
-        AO_DBG_ERR("Cannot set key! Abort");
+    if (!key || !*key || !value) {
+        AO_DBG_ERR("invalid args");
         return nullptr;
     }
 
-    if (!configuration->setValue(value, strlen(value) + 1)) {
-        AO_DBG_ERR("Cannot set value! Abort");
-        return nullptr;
-    }
+    std::shared_ptr<Configuration<const char*>> configuration = std::make_shared<Configuration<const char*>>(key, value);
 
     return configuration;
 }

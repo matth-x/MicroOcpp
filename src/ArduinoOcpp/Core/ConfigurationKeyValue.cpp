@@ -14,23 +14,34 @@
 
 namespace ArduinoOcpp {
 
-AbstractConfiguration::AbstractConfiguration() {
-
+int toCStringValue(char *buf, size_t length, int value) {
+    return snprintf(buf, length, "%d", value);
 }
 
-AbstractConfiguration::AbstractConfiguration(JsonObject &storedKeyValuePair) {
-    if (!setKey(storedKeyValuePair["key"] | "")) {
-        AO_DBG_ERR("validation error");
+int toCStringValue(char *buf, size_t length, float value) {
+    int ilength = (int) std::min((size_t) 100, length);
+    return snprintf(buf, length, "%.*g", ilength >= 7 ? ilength - 7 : 0, value);
+}
+
+int toCStringValue(char *buf, size_t length, bool value) {
+    return snprintf(buf, length, "%s", value ? "true" : "false");
+}
+
+AbstractConfiguration::AbstractConfiguration(const char *key) {
+    if (!key || !*key) {
+        AO_DBG_ERR("invalid argument");
+        return;
     }
+
+    this->key = key;
 }
 
 AbstractConfiguration::~AbstractConfiguration() {
 
 }
 
-void AbstractConfiguration::printKey() {
-    AO_CONSOLE_PRINTF("%s", key.c_str());
-    (void)0;
+const char *AbstractConfiguration::getKey() {
+    return key.c_str();
 }
 
 size_t AbstractConfiguration::getStorageHeaderJsonCapacity() {
@@ -58,21 +69,6 @@ bool AbstractConfiguration::isValid() {
     return initializedValue && !key.empty();
 }
 
-bool AbstractConfiguration::setKey(const char *newKey) {
-    if (!key.empty()) {
-        AO_DBG_ERR("cannot override key");
-        return false;
-    }
-
-    if (!newKey || *newKey == '\0') {
-        AO_DBG_ERR("invalid argument");
-        return false;
-    }
-
-    key = newKey;
-    return true;
-}
-
 void AbstractConfiguration::requireRebootWhenChanged() {
     rebootRequiredWhenChanged = true;
 }
@@ -85,53 +81,20 @@ uint16_t AbstractConfiguration::getValueRevision() {
     return value_revision;
 }
 
-bool AbstractConfiguration::keyEquals(const char *other) {
-    return !key.compare(other);
-}
-
-template <class T>
-Configuration<T>::Configuration() {
-
-}
-
-Configuration<const char *>::Configuration() {
-
-}
-
 template<class T>
-Configuration<T>::Configuration(JsonObject &storedKeyValuePair) : AbstractConfiguration(storedKeyValuePair) {
-    auto jsonEntry = storedKeyValuePair["value"].as<JsonVariant>();
-    if (jsonEntry.is<T>()) {
-        this->operator=(jsonEntry.as<T>());
-    } else {
-        AO_DBG_ERR("Type mismatch: cannot deserialize Json to given type");
-    }
-}
-
-//helper functions
-void printValue(int value) {
-    AO_CONSOLE_PRINTF("%i", value);
-}
-
-void printValue(float value) {
-    AO_CONSOLE_PRINTF("%f", value);
-}
-
-void printValue(bool value) {
-    AO_CONSOLE_PRINTF("%s", value ? "true" : "false");
+Configuration<T>::Configuration(const char *key, T value) : AbstractConfiguration(key) {
+    this->operator=(value);
 }
 
 template <class T>
 const T &Configuration<T>::operator=(const T & newVal) {
 
     if (permissionLocalClientCanWrite() || !initializedValue) {
-        if (AO_DBG_LEVEL >= AO_DL_DEBUG && !initializedValue) {
-            AO_DBG_DEBUG("Initialized config object:");
-            AO_CONSOLE_PRINTF("[AO]     > Key = ");
-            printKey();
-            AO_CONSOLE_PRINTF(", value = ");
-            printValue(newVal);
-            AO_CONSOLE_PRINTF("\n");
+        if (!initializedValue) {
+            const size_t VALUE_MAXSIZE = 50;
+            char value_str [VALUE_MAXSIZE] = {'\0'};
+            toCStringValue(value_str, VALUE_MAXSIZE, newVal);
+            AO_DBG_DEBUG("add config: key = %s, value = %s\n", getKey(), value_str);
         }
         if (initializedValue == true && value != newVal) {
             value_revision++;
@@ -139,10 +102,7 @@ const T &Configuration<T>::operator=(const T & newVal) {
         value = newVal;
         initializedValue = true;
     } else {
-        AO_DBG_ERR("Tried to override read-only configuration:");
-        AO_CONSOLE_PRINTF("[AO]     > Key = ");
-        printKey();
-        AO_CONSOLE_PRINTF("\n");
+        AO_DBG_ERR("Tried to override read-only configuration: %s", getKey());
     }
     return newVal;
 }
@@ -181,19 +141,6 @@ std::unique_ptr<DynamicJsonDocument> Configuration<T>::toJsonStorageEntry() {
     storeStorageHeader(keyValuePair);
     keyValuePair["value"] = value;
     return doc;
-}
-
-int toCStringValue(char *buf, size_t length, int value) {
-    return snprintf(buf, length, "%d", value);
-}
-
-int toCStringValue(char *buf, size_t length, float value) {
-    int ilength = (int) std::min((size_t) 100, length);
-    return snprintf(buf, length, "%.*g", ilength >= 7 ? ilength - 7 : 0, value);
-}
-
-int toCStringValue(char *buf, size_t length, bool value) {
-    return snprintf(buf, length, "%s", value ? "true" : "false");
 }
 
 template<class T>
@@ -247,35 +194,28 @@ std::unique_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonOcppMsgE
     return doc;
 }
 
-Configuration<const char *>::Configuration(JsonObject &storedKeyValuePair) : AbstractConfiguration(storedKeyValuePair) {
-    if (storedKeyValuePair["value"].as<JsonVariant>().is<const char*>()) {
-        const char *storedValue = storedKeyValuePair["value"].as<JsonVariant>().as<const char*>();
-        if (storedValue) {
-            size_t storedValueSize = strlen(storedValue) + 1;
-            storedValueSize++;
-            setValue(storedValue, storedValueSize);
-        } else {
-            AO_DBG_WARN("Stored value is empty");
-        }
-    } else {
-        AO_DBG_ERR("Type mismatch: cannot deserialize Json to given type");
+Configuration<const char *>::Configuration(const char *key, const char *value) : AbstractConfiguration(key) {
+    if (!value) {
+        AO_DBG_ERR("invalid args");
+        return;
     }
+
+    this->operator=(value);
 }
 
 Configuration<const char *>::~Configuration() {
 
 }
 
-bool Configuration<const char *>::setValue(const char *new_value, size_t buffsize) {
-    if (!permissionLocalClientCanWrite() && initializedValue) {
-        AO_DBG_ERR("Tried to override read-only configuration:");
-        AO_CONSOLE_PRINTF("[AO]     > Key = ");
-        return false;
+const char *Configuration<const char *>::operator=(const char *new_value) {
+    if (!new_value) {
+        AO_DBG_ERR("invalid args");
+        return new_value;
     }
 
-    if (!new_value) {
-        AO_DBG_ERR("Argument is null. No change");
-        return false;
+    if (!permissionLocalClientCanWrite() && initializedValue) {
+        AO_DBG_ERR("Tried to override read-only configuration: %s", getKey());
+        return new_value;
     }
 
     if (value.compare(new_value) || !initializedValue) {
@@ -283,21 +223,12 @@ bool Configuration<const char *>::setValue(const char *new_value, size_t buffsiz
         value_revision++;
     }
     
-    if (AO_DBG_LEVEL >= AO_DL_DEBUG && !initializedValue) {
-        AO_DBG_DEBUG("Initialized config object:");
-        AO_CONSOLE_PRINTF("[AO]     > Key = ");
-        printKey();
-        AO_CONSOLE_PRINTF(", value = %s\n", value.c_str());
+    if (!initializedValue) {
+        AO_DBG_DEBUG("add config: key = %s, value = %s\n", getKey(), value.c_str());
+        (void)0;
     }
     initializedValue = true;
-    return true;
-}
-
-const char *Configuration<const char *>::operator=(const char *newVal) {
-    if (!setValue(newVal, strlen(newVal) + 1)) {
-        AO_DBG_ERR("Setting value in operator= was unsuccessful");
-    }
-    return newVal;
+    return new_value;
 }
 
 Configuration<const char *>::operator const char*() {

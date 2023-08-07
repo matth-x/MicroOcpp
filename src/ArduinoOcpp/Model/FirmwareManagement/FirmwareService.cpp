@@ -33,7 +33,7 @@ FirmwareService::FirmwareService(Context& context) : context(context) {
         if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
             fProfilePlus += ",";
         fProfilePlus += fpId;
-        fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
+        *fProfile = fProfilePlus.c_str();
     }
     
     context.getOperationRegistry().registerOperation("UpdateFirmware", [&context] () {
@@ -262,7 +262,7 @@ std::unique_ptr<Request> FirmwareService::getFirmwareStatusNotification() {
         size_t buildNoSize = previousBuildNumber->getBuffsize();
         if (strncmp(buildNumber.c_str(), *previousBuildNumber, buildNoSize)) {
             //new FW
-            previousBuildNumber->setValue(buildNumber.c_str(), buildNumber.length() + 1);
+            *previousBuildNumber = buildNumber.c_str();
             configuration_save();
 
             buildNumber.clear();

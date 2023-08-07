@@ -41,14 +41,14 @@ ChargeControlCommon::ChargeControlCommon(Context& context, unsigned int numConn,
         if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
             fProfilePlus += ",";
         fProfilePlus += fpIdCore;
-        fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
+        *fProfile = fProfilePlus.c_str();
     }
     if (!strstr(*fProfile, fpIdRTrigger)) {
         auto fProfilePlus = std::string(*fProfile);
         if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
             fProfilePlus += ",";
         fProfilePlus += fpIdRTrigger;
-        fProfile->setValue(fProfilePlus.c_str(), fProfilePlus.length() + 1);
+        *fProfile = fProfilePlus.c_str();
     }
     
     /*
