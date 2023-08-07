@@ -117,12 +117,11 @@ void RequestQueue::loop(Connection& ocppSock) {
 
     if (success) {
         AO_DBG_TRAFFIC_OUT(out.c_str());
-    }
 
-    //update backoff time
-    sendBackoffTime = ao_tick_ms();
-    sendBackoffPeriod = std::min(sendBackoffPeriod + BACKOFF_PERIOD_INCREMENT, BACKOFF_PERIOD_MAX);
-    
+        //update backoff time
+        sendBackoffTime = ao_tick_ms();
+        sendBackoffPeriod = std::min(sendBackoffPeriod + BACKOFF_PERIOD_INCREMENT, BACKOFF_PERIOD_MAX);
+    }
 }
 
 void RequestQueue::sendRequest(std::unique_ptr<Request> op){

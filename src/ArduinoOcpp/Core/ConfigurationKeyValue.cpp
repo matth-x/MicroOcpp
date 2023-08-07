@@ -94,7 +94,7 @@ const T &Configuration<T>::operator=(const T & newVal) {
             const size_t VALUE_MAXSIZE = 50;
             char value_str [VALUE_MAXSIZE] = {'\0'};
             toCStringValue(value_str, VALUE_MAXSIZE, newVal);
-            AO_DBG_DEBUG("add config: key = %s, value = %s\n", getKey(), value_str);
+            AO_DBG_DEBUG("add config: key = %s, value = %s", getKey(), value_str);
         }
         if (initializedValue == true && value != newVal) {
             value_revision++;
@@ -224,7 +224,7 @@ const char *Configuration<const char *>::operator=(const char *new_value) {
     }
     
     if (!initializedValue) {
-        AO_DBG_DEBUG("add config: key = %s, value = %s\n", getKey(), value.c_str());
+        AO_DBG_DEBUG("add config: key = %s, value = %s", getKey(), value.c_str());
         (void)0;
     }
     initializedValue = true;

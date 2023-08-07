@@ -11,7 +11,7 @@ void LoopbackConnection::loop() { }
 
 bool LoopbackConnection::sendTXT(std::string &out) {
     if (!connected) {
-        return true;
+        return false;
     }
     if (receiveTXT) {
         lastRecv = ao_tick_ms();
