@@ -49,6 +49,11 @@ public:
      * Returns the timestamp of the last incoming message. Use ao_tick_ms() for creating the correct timestamp
      */
     virtual unsigned long getLastRecv() {return 0;}
+
+    /*
+     * Returns the timestamp of the last time a connection got successfully established. Use ao_tick_ms() for creating the correct timestamp
+     */
+    virtual unsigned long getLastConnected() {return 0;}
 };
 
 class LoopbackConnection : public Connection {
@@ -79,7 +84,7 @@ namespace EspWiFi {
 class WSClient : public Connection {
 private:
     WebSocketsClient *wsock;
-    unsigned long lastRecv = 0;
+    unsigned long lastRecv = 0, lastConnected = 0;
 public:
     WSClient(WebSocketsClient *wsock);
 
@@ -90,6 +95,8 @@ public:
     void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT);
 
     unsigned long getLastRecv() override; //get time of last successful receive in millis
+
+    unsigned long getLastConnected() override; //get last connection creation in millis
 };
 
 } //end namespace EspWiFi

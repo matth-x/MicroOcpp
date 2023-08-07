@@ -47,7 +47,8 @@ bool WSClient::sendTXT(std::string &out) {
 
 void WSClient::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
     auto& captureLastRecv = lastRecv;
-    wsock->onEvent([callback, &captureLastRecv](WStype_t type, uint8_t * payload, size_t length) {
+    auto& captureLastConnected = lastConnected;
+    wsock->onEvent([callback, &captureLastRecv, &captureLastConnected](WStype_t type, uint8_t * payload, size_t length) {
         switch (type) {
             case WStype_DISCONNECTED:
                 AO_DBG_INFO("Disconnected");
@@ -55,6 +56,7 @@ void WSClient::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
             case WStype_CONNECTED:
                 AO_DBG_INFO("Connected to url: %s", payload);
                 captureLastRecv = ao_tick_ms();
+                captureLastConnected = ao_tick_ms();
                 break;
             case WStype_TEXT:
                 if (callback((const char *) payload, length)) { //forward message to RequestQueue
@@ -86,6 +88,10 @@ void WSClient::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
 
 unsigned long WSClient::getLastRecv() {
     return lastRecv;
+}
+
+unsigned long WSClient::getLastConnected() {
+    return lastConnected;
 }
 
 #endif

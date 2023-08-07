@@ -32,8 +32,8 @@ private:
 
     unsigned long sendBackoffTime = 0;
     unsigned long sendBackoffPeriod = 0;
-    unsigned long sockTrackLastRecv = 0;
-    const unsigned long BACKOFF_PERIOD_MAX = 65536;
+    unsigned long sockTrackLastConnected = 0;
+    const unsigned long BACKOFF_PERIOD_MAX = 1048576;
     const unsigned long BACKOFF_PERIOD_INCREMENT = BACKOFF_PERIOD_MAX / 4;
 public:
     RequestQueue(OperationRegistry& operationRegistry, Model *baseModel, std::shared_ptr<FilesystemAdapter> filesystem = nullptr);

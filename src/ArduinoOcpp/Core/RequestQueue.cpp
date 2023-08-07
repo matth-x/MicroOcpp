@@ -91,11 +91,11 @@ void RequestQueue::loop(Connection& ocppSock) {
         sendBackoffPeriod = 0;
     }
 
-    if (sockTrackLastRecv != ocppSock.getLastRecv()) {
+    if (sockTrackLastConnected != ocppSock.getLastConnected()) {
         //connection active (again) -> send immediately
         sendBackoffPeriod = std::min(sendBackoffPeriod, 1000UL);
     }
-    sockTrackLastRecv = ocppSock.getLastRecv();
+    sockTrackLastConnected = ocppSock.getLastConnected();
 
     if (ao_tick_ms() - sendBackoffTime < sendBackoffPeriod) {
         //still in backoff period
