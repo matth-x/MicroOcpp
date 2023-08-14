@@ -764,8 +764,17 @@ bool Connector::isOperative() {
         return false;
     }
 
-    if (transaction && transaction->isRunning()) {
-        return true;
+    //check for running transaction(s) - if yes then the connector is always operative
+    if (connectorId == 0) {
+        for (unsigned int cId = 1; cId < model.getNumConnectors(); cId++) {
+            if (model.getConnector(cId)->getTransaction() && model.getConnector(cId)->getTransaction()->isRunning()) {
+                return true;
+            }
+        }
+    } else {
+        if (transaction && transaction->isRunning()) {
+            return true;
+        }
     }
 
     return availabilityVolatile && *availability;
