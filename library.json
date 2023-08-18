@@ -67,7 +67,7 @@
         "name": "ESP-IDF integration",
         "base": "examples/ESP-IDF",
         "files": [
-            "main.c"
+            "main/main.c"
         ]
       }
     ]
