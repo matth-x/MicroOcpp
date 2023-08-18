@@ -517,7 +517,10 @@ void SmartChargingService::loop(){
         char timestamp2[JSONDATE_LENGTH + 1] = {'\0'};
         nextChange.toJsonString(timestamp2, JSONDATE_LENGTH + 1);
         AO_DBG_INFO("New limit for connector 1, scheduled at = %s, nextChange = %s, limit = {%f,%f,%i}",
-                            timestamp1, timestamp2, limit.power, limit.current, limit.nphases);
+                            timestamp1, timestamp2,
+                            limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
+                            limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
+                            limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
 #endif
 
         if (trackLimitOutput != limit) {
