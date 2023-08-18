@@ -1,6 +1,6 @@
 {
     "name": "ArduinoOcpp",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "OCPP 1.6 Client for the ESP8266 and ESP32",
     "keywords": "OCPP, 1.6, OCPP 1.6, Smart Energy, Smart Charging, client, ESP8266, ESP32, Arduino, EVSE, Charge Point",
     "repository":
@@ -22,18 +22,12 @@
         {
             "owner": "bblanchon",
             "name": "ArduinoJson",
-            "version": "6.19.1"
+            "version": "6.20.1"
         },
         {
             "owner": "links2004",
             "name": "WebSockets",
-            "version": "2.3.6"
-        },
-        {
-            "owner": "lorol",
-            "name": "LittleFS_esp32",
-            "version": "1.0.5",
-            "platforms": ["espressif32"]
+            "version": "2.4.1"
         }
       ],
     "frameworks": "arduino",
@@ -43,19 +37,14 @@
         "include":
         [
             "src/*",
-            "examples/ESP/*",
-            "examples/ESP-TLS/*",
-            "examples/SECC/*",
+            "examples/*",
             "platformio.ini",
             "library.json",
+            "library.properties",
             "README.md",
+            "CMakeLists.txt",
+            "docs/*",
             "LICENSE"
-        ],
-        "exclude":
-        [
-            "src/sdkconfig*",
-            "examples/SECC/WiFiManager*",
-            "src/main*"
         ]
     },
 
@@ -75,13 +64,11 @@
           ]
       },
       {
-        "name": "EVSE Communications Controller",
-        "base": "examples/SECC",
+        "name": "ESP-IDF integration",
+        "base": "examples/ESP-IDF",
         "files": [
-            "main.cpp",
-            "platformio.ini",
-            "README.md"
+            "main.c"
         ]
-    }
-  ]
-  }
+      }
+    ]
+}
