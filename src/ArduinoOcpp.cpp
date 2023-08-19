@@ -55,7 +55,7 @@ using namespace ArduinoOcpp::Facade;
 using namespace ArduinoOcpp::Ocpp16;
 
 #ifndef AO_CUSTOM_WS
-void ocpp_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *chargePointModel, const char *chargePointVendor, FilesystemOpt fsOpt) {
+void ocpp_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *chargePointModel, const char *chargePointVendor, FilesystemOpt fsOpt, const char *login, const char *password, const char *CA_cert) {
     if (context) {
         AO_DBG_WARN("Can't be called two times. Either restart ESP, or call ocpp_deinitialize() before");
         return;
@@ -64,8 +64,16 @@ void ocpp_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_u
     if (!webSocket)
         webSocket = new WebSocketsClient();
 
-    // server address, port and URL
-    webSocket->begin(CS_hostname, CS_port, CS_url, "ocpp1.6");
+    if (!strncmp(CS_url,"wss",3) || !strncmp(CS_url,"https",5))
+    {
+        // server address, port, URL and TLS certificate
+        webSocket->beginSslWithCA(CS_hostname, CS_port, CS_url, CA_cert, "ocpp1.6");
+    }
+    else
+    {
+        // server address, port, URL
+        webSocket->begin(CS_hostname, CS_port, CS_url, "ocpp1.6");
+    }
 
     // try ever 5000 again if connection has failed
     webSocket->setReconnectInterval(5000);
@@ -75,6 +83,11 @@ void ocpp_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_u
     // expect pong from server within 3000 ms
     // consider connection disconnected if pong is not received 2 times
     webSocket->enableHeartbeat(15000, 3000, 2); //comment this one out to for specific OCPP servers
+
+    // add authentication data (optional)
+    if (login && password && strlen(login) + strlen(password) >= 2) {
+        webSocket->setAuthorization(login, password);
+    }
 
     delete connection;
     connection = new EspWiFi::WSClient(webSocket);
