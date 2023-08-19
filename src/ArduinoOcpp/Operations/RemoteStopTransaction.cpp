@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/Operations/RemoteStopTransaction.h>
 #include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
 
 using ArduinoOcpp::Ocpp16::RemoteStopTransaction;

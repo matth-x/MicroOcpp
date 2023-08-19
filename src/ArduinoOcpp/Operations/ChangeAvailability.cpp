@@ -4,7 +4,7 @@
 
 #include <ArduinoOcpp/Operations/ChangeAvailability.h>
 #include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
 
 #include <functional>
 

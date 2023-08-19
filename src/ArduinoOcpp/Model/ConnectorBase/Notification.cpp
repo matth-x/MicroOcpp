@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/ChargeControl/Notification.h>
+#include <ArduinoOcpp/Model/ConnectorBase/Notification.h>
 
 namespace ArduinoOcpp {
 

@@ -4,7 +4,7 @@
 
 #include <string>
 
-#include <ArduinoOcpp/Model/ChargeControl/ChargeControlCommon.h>
+#include <ArduinoOcpp/Model/ConnectorBase/ConnectorsCommon.h>
 #include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Operations/ChangeAvailability.h>
@@ -26,7 +26,7 @@
 
 using namespace ArduinoOcpp;
 
-ChargeControlCommon::ChargeControlCommon(Context& context, unsigned int numConn, std::shared_ptr<FilesystemAdapter> filesystem) :
+ConnectorsCommon::ConnectorsCommon(Context& context, unsigned int numConn, std::shared_ptr<FilesystemAdapter> filesystem) :
         context(context) {
     
     std::shared_ptr<Configuration<int>> numberOfConnectors =
@@ -91,6 +91,6 @@ ChargeControlCommon::ChargeControlCommon(Context& context, unsigned int numConn,
         return new Ocpp16::StopTransaction(context.getModel(), nullptr);});
 }
 
-void ChargeControlCommon::loop() {
+void ConnectorsCommon::loop() {
     //do nothing
 }

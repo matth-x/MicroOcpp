@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/Model/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Core/Configuration.h>
 #include <ArduinoOcpp/Core/OperationRegistry.h>

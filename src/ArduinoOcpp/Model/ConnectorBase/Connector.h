@@ -5,9 +5,9 @@
 #ifndef CONNECTOR_H
 #define CONNECTOR_H
 
-#include <ArduinoOcpp/Model/ChargeControl/ChargePointStatus.h>
-#include <ArduinoOcpp/Model/ChargeControl/ChargePointErrorData.h>
-#include <ArduinoOcpp/Model/ChargeControl/Notification.h>
+#include <ArduinoOcpp/Model/ConnectorBase/ChargePointStatus.h>
+#include <ArduinoOcpp/Model/ConnectorBase/ChargePointErrorData.h>
+#include <ArduinoOcpp/Model/ConnectorBase/Notification.h>
 #include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/Operations/CiStrings.h>

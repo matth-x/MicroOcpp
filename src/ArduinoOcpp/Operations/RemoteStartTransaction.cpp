@@ -5,7 +5,7 @@
 
 #include <ArduinoOcpp/Operations/RemoteStartTransaction.h>
 #include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
 #include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Debug.h>

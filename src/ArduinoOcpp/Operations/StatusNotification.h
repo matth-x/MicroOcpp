@@ -7,8 +7,8 @@
 
 #include <ArduinoOcpp/Core/Operation.h>
 #include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Model/ChargeControl/ChargePointStatus.h>
-#include <ArduinoOcpp/Model/ChargeControl/ChargePointErrorData.h>
+#include <ArduinoOcpp/Model/ConnectorBase/ChargePointStatus.h>
+#include <ArduinoOcpp/Model/ConnectorBase/ChargePointErrorData.h>
 
 namespace ArduinoOcpp {
 namespace Ocpp16 {

@@ -8,7 +8,7 @@
 #include <stddef.h>
 
 #include <ArduinoOcpp/Core/ConfigurationOptions.h>
-#include <ArduinoOcpp/Model/ChargeControl/Notification.h>
+#include <ArduinoOcpp/Model/ConnectorBase/Notification.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
 
 struct AO_Connection;

@@ -3,7 +3,7 @@
 // MIT License
 
 #include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
-#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
 #include <ArduinoOcpp/Core/FilesystemUtils.h>
 #include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Model/Model.h>

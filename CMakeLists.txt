@@ -57,9 +57,9 @@ set(AO_SRC
     src/ArduinoOcpp/Model/Authorization/AuthorizationList.cpp
     src/ArduinoOcpp/Model/Authorization/AuthorizationService.cpp
     src/ArduinoOcpp/Model/Boot/BootService.cpp
-    src/ArduinoOcpp/Model/ChargeControl/ChargeControlCommon.cpp
-    src/ArduinoOcpp/Model/ChargeControl/Connector.cpp
-    src/ArduinoOcpp/Model/ChargeControl/Notification.cpp
+    src/ArduinoOcpp/Model/ConnectorBase/ConnectorsCommon.cpp
+    src/ArduinoOcpp/Model/ConnectorBase/Connector.cpp
+    src/ArduinoOcpp/Model/ConnectorBase/Notification.cpp
     src/ArduinoOcpp/Model/Diagnostics/DiagnosticsService.cpp
     src/ArduinoOcpp/Model/FirmwareManagement/FirmwareService.cpp
     src/ArduinoOcpp/Model/Heartbeat/HeartbeatService.cpp

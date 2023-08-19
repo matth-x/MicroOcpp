@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Model/Transactions/TransactionStore.h>
 #include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Model/ChargeControl/ChargeControlCommon.h>
+#include <ArduinoOcpp/Model/ConnectorBase/ConnectorsCommon.h>
 #include <ArduinoOcpp/Model/Metering/MeteringService.h>
 #include <ArduinoOcpp/Model/FirmwareManagement/FirmwareService.h>
 #include <ArduinoOcpp/Model/Diagnostics/DiagnosticsService.h>
@@ -80,11 +80,11 @@ SmartChargingService* Model::getSmartChargingService() const {
     return smartChargingService.get();
 }
 
-void Model::setChargeControlCommon(std::unique_ptr<ChargeControlCommon> ccs) {
+void Model::setConnectorsCommon(std::unique_ptr<ConnectorsCommon> ccs) {
     chargeControlCommon = std::move(ccs);
 }
 
-ChargeControlCommon *Model::getChargeControlCommon() {
+ConnectorsCommon *Model::getConnectorsCommon() {
     return chargeControlCommon.get();
 }
 

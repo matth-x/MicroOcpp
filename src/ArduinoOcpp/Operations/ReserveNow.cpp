@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/Operations/ReserveNow.h>
 #include <ArduinoOcpp/Model/Model.h>
 #include <ArduinoOcpp/Model/Reservation/ReservationService.h>
-#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
 #include <ArduinoOcpp/Platform.h>
 
 using ArduinoOcpp::Ocpp16::ReserveNow;

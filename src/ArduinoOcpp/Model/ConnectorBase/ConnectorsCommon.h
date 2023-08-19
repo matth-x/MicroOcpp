@@ -11,11 +11,11 @@ namespace ArduinoOcpp {
 
 class Context;
 
-class ChargeControlCommon {
+class ConnectorsCommon {
 private:
     Context& context;
 public:
-    ChargeControlCommon(Context& context, unsigned int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
+    ConnectorsCommon(Context& context, unsigned int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
     void loop();
 };

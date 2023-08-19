@@ -16,8 +16,8 @@
 #include <ArduinoOcpp/Core/PollResult.h>
 #include <ArduinoOcpp/Model/Metering/SampledValue.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Model/ChargeControl/Notification.h>
-#include <ArduinoOcpp/Model/ChargeControl/ChargePointErrorData.h>
+#include <ArduinoOcpp/Model/ConnectorBase/Notification.h>
+#include <ArduinoOcpp/Model/ConnectorBase/ChargePointErrorData.h>
 
 using ArduinoOcpp::OnReceiveConfListener;
 using ArduinoOcpp::OnReceiveReqListener;

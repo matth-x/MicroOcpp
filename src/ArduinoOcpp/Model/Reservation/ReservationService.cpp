@@ -5,7 +5,7 @@
 #include <ArduinoOcpp/Model/Reservation/ReservationService.h>
 #include <ArduinoOcpp/Core/Context.h>
 #include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/ChargeControl/Connector.h>
+#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
 #include <ArduinoOcpp/Model/Transactions/Transaction.h>
 #include <ArduinoOcpp/Operations/CancelReservation.h>
 #include <ArduinoOcpp/Operations/ReserveNow.h>
