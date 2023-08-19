@@ -54,7 +54,7 @@ TEST_CASE( "C++ API test" ) {
         setOccupiedInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return false;});
         setStartTxReadyInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return true;});
         setStopTxReadyInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return true;});
-        setTxNotificationOutput([c = &checkpoints[ncheck++]] (ArduinoOcpp::TxNotification,ArduinoOcpp::Transaction*) {*c = true;});
+        setTxNotificationOutput([c = &checkpoints[ncheck++]] (ArduinoOcpp::Transaction*, ArduinoOcpp::TxNotification) {*c = true;});
         setOnUnlockConnectorInOut([c = &checkpoints[ncheck++]] () -> ArduinoOcpp::PollResult<bool> {*c = true; return true;});
 
         setOnResetNotify([c = &checkpoints[ncheck++]] (bool) -> bool {*c = true; return true;});
@@ -240,8 +240,8 @@ TEST_CASE( "C API test" ) {
         ao_setStartTxReadyInput_m(2, [] (unsigned int) -> bool {checkpointsc[21] = true; return true;}); ncheckc++;
         ao_setStopTxReadyInput([] () -> bool {checkpointsc[22] = true; return true;}); ncheckc++;
         ao_setStopTxReadyInput_m(2, [] (unsigned int) -> bool {checkpointsc[23] = true; return true;}); ncheckc++;
-        ao_setTxNotificationOutput([] (AO_TxNotification, AO_Transaction*) {checkpointsc[24] = true;}); ncheckc++;
-        ao_setTxNotificationOutput_m(2, [] (unsigned int, AO_TxNotification, AO_Transaction*) {checkpointsc[25] = true;}); ncheckc++;
+        ao_setTxNotificationOutput([] (AO_Transaction*, AO_TxNotification) {checkpointsc[24] = true;}); ncheckc++;
+        ao_setTxNotificationOutput_m(2, [] (unsigned int, AO_Transaction*, AO_TxNotification) {checkpointsc[25] = true;}); ncheckc++;
         ao_setOnUnlockConnectorInOut([] () -> OptionalBool {checkpointsc[26] = true; return OptionalBool::OptionalTrue;}); ncheckc++;
         ao_setOnUnlockConnectorInOut_m(2, [] (unsigned int) -> OptionalBool {checkpointsc[27] = true; return OptionalBool::OptionalTrue;}); ncheckc++;
 
