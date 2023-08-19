@@ -637,7 +637,7 @@ void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connect
     connector->setStopTxReadyInput(stopTxReady);
 }
 
-void setTxNotificationOutput(std::function<void(ArduinoOcpp::TxNotification,ArduinoOcpp::Transaction*)> notificationOutput, unsigned int connectorId) {
+void setTxNotificationOutput(std::function<void(ArduinoOcpp::Transaction*,ArduinoOcpp::TxNotification)> notificationOutput, unsigned int connectorId) {
     if (!context) {
         AO_DBG_ERR("OCPP uninitialized"); //please call ocpp_initialize before
         return;

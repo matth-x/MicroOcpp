@@ -54,7 +54,7 @@ private:
     std::function<bool()> stopTxReadyInput; //the StopTx request will be delayed while this Input is false
     std::function<bool()> occupiedInput; //instead of Available, go into Preparing / Finishing state
 
-    std::function<void(TxNotification,Transaction*)> txNotificationOutput;
+    std::function<void(Transaction*,TxNotification)> txNotificationOutput;
 
     std::shared_ptr<Configuration<int>> connectionTimeOut; //in seconds
     std::shared_ptr<Configuration<bool>> stopTransactionOnInvalidId;
@@ -118,7 +118,7 @@ public:
     void setStopTxReadyInput(std::function<bool()> stopTxReady);
     void setOccupiedInput(std::function<bool()> occupied);
 
-    void setTxNotificationOutput(std::function<void(TxNotification, Transaction*)> txNotificationOutput);
+    void setTxNotificationOutput(std::function<void(Transaction*,TxNotification)> txNotificationOutput);
     void updateTxNotification(TxNotification event);
 };
 

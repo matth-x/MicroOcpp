@@ -256,7 +256,7 @@ void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int conne
 
 void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connectorId = 1); //Input if charger is ready for StopTransaction
 
-void setTxNotificationOutput(std::function<void(ArduinoOcpp::TxNotification,ArduinoOcpp::Transaction*)> notificationOutput, unsigned int connectorId = 1);
+void setTxNotificationOutput(std::function<void(ArduinoOcpp::Transaction*,ArduinoOcpp::TxNotification)> notificationOutput, unsigned int connectorId = 1); //called when transaction state changes (see TxNotification for possible events). Transaction can be null
 
 /*
  * Set an InputOutput (reads and sets information at the same time) for forcing to unlock the

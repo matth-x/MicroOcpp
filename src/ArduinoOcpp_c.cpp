@@ -297,14 +297,14 @@ void ao_setStopTxReadyInput_m(unsigned int connectorId, InputBool_m stopTxReady)
     setStopTxReadyInput(adaptFn(connectorId, stopTxReady), connectorId);
 }
 
-void ao_setTxNotificationOutput(void (*notificationOutput)(enum AO_TxNotification, AO_Transaction*)) {
-    setTxNotificationOutput([notificationOutput] (ArduinoOcpp::TxNotification notification, ArduinoOcpp::Transaction *tx) {
-        notificationOutput(convertTxNotification(notification), reinterpret_cast<AO_Transaction*>(tx));
+void ao_setTxNotificationOutput(void (*notificationOutput)(AO_Transaction*, enum AO_TxNotification)) {
+    setTxNotificationOutput([notificationOutput] (ArduinoOcpp::Transaction *tx, ArduinoOcpp::TxNotification notification) {
+        notificationOutput(reinterpret_cast<AO_Transaction*>(tx), convertTxNotification(notification));
     });
 }
-void ao_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, enum AO_TxNotification, AO_Transaction*)) {
-    setTxNotificationOutput([notificationOutput, connectorId] (ArduinoOcpp::TxNotification notification, ArduinoOcpp::Transaction *tx) {
-        notificationOutput(connectorId, convertTxNotification(notification), reinterpret_cast<AO_Transaction*>(tx));
+void ao_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, AO_Transaction*, enum AO_TxNotification)) {
+    setTxNotificationOutput([notificationOutput, connectorId] (ArduinoOcpp::Transaction *tx, ArduinoOcpp::TxNotification notification) {
+        notificationOutput(connectorId, reinterpret_cast<AO_Transaction*>(tx), convertTxNotification(notification));
     }, connectorId);
 }
 

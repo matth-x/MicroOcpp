@@ -144,8 +144,8 @@ void ao_setStartTxReadyInput_m(unsigned int connectorId, InputBool_m startTxRead
 void ao_setStopTxReadyInput(InputBool stopTxReady);
 void ao_setStopTxReadyInput_m(unsigned int connectorId, InputBool_m stopTxReady);
 
-void ao_setTxNotificationOutput(void (*notificationOutput)(enum AO_TxNotification, AO_Transaction*));
-void ao_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, enum AO_TxNotification, AO_Transaction*));
+void ao_setTxNotificationOutput(void (*notificationOutput)(AO_Transaction*, enum AO_TxNotification));
+void ao_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, AO_Transaction*, enum AO_TxNotification));
 
 void ao_setOnUnlockConnectorInOut(PollBool onUnlockConnectorInOut);
 void ao_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollBool_m onUnlockConnectorInOut);

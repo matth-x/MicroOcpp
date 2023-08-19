@@ -832,12 +832,12 @@ void Connector::setOccupiedInput(std::function<bool()> occupied) {
     this->occupiedInput = occupied;
 }
 
-void Connector::setTxNotificationOutput(std::function<void(TxNotification, Transaction*)> txNotificationOutput) {
+void Connector::setTxNotificationOutput(std::function<void(Transaction*, TxNotification)> txNotificationOutput) {
     this->txNotificationOutput = txNotificationOutput;
 }
 
 void Connector::updateTxNotification(TxNotification event) {
     if (txNotificationOutput) {
-        txNotificationOutput(event, transaction.get());
+        txNotificationOutput(transaction.get(), event);
     }
 }
