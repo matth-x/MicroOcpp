@@ -45,7 +45,10 @@ void ocpp_initialize(
             const char *CS_url,      //e.g. "ws://example.com/steve/websocket/CentralSystemService/charger001"
             const char *chargePointModel = "Demo Charger",     //model name of this charger
             const char *chargePointVendor = "My Company Ltd.", //brand name
-            ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
+            ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
+            const char *login = "", //login present in the websocket message header
+            const char *password = "", //password present in the websocket message header
+            const char *CA_cert = NULL); //TLS certificate
 #endif
 
 /*
