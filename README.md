@@ -4,7 +4,7 @@
 [![Unit tests]( https://github.com/matth-x/MicroOcpp/workflows/Unit%20tests/badge.svg)](https://github.com/matth-x/MicroOcpp/actions)
 [![codecov](https://codecov.io/github/matth-x/ArduinoOcpp/branch/develop/graph/badge.svg?token=UN6LO96HM7)](https://codecov.io/github/matth-x/ArduinoOcpp)
 
-**Formerly ArduinoOcpp**: *since the first release in 2020, ArduinoOcpp has increasingly been used on other platforms than Arduino. The goal of this project has evolved to fit seamlessly in a high variety of microcontroller firmwares and so the dependency on Arduino was dropped some time ago. The new name reflects the purpose of this project better and prevents any confusion. Despite the new name, nothing changes for existing users and the Arduino integration will continue to be fully functional.*
+**Formerly ArduinoOcpp ([migration guide](https://github.com/matth-x/MicroOcpp#migrating-to-v10))**: *since the first release in 2020, ArduinoOcpp has increasingly been used on other platforms than Arduino. The goal of this project has evolved to fit seamlessly in a high variety of microcontroller firmwares and so the dependency on Arduino was dropped some time ago. The new name reflects the purpose of this project better and prevents any confusion. Despite the new name, nothing changes for existing users and the Arduino integration will continue to be fully functional.*
 
 OCPP-J 1.6 client for embedded microcontrollers. Portable C/C++. Compatible with Espressif, NXP, Texas Instruments and STM.
 
@@ -64,6 +64,8 @@ Change this if used anywhere:
 
 If using the C-facade, change this as the final step:
 - `ao_` to `ocpp_`
+
+**If something is missing in this guide, please share the issue here:** https://github.com/matth-x/MicroOcpp/issues/176
 
 ## Developers guide
 
