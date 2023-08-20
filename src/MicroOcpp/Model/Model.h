@@ -1,16 +1,16 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef AO_MODEL_H
-#define AO_MODEL_H
+#ifndef MOCPP_MODEL_H
+#define MOCPP_MODEL_H
 
 #include <memory>
 
-#include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Model/ConnectorBase/Connector.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class TransactionStore;
 class SmartChargingService;
@@ -94,6 +94,6 @@ public:
     uint16_t getBootNr();
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

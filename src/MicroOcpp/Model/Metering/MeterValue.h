@@ -1,18 +1,18 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef METERVALUE_H
 #define METERVALUE_H
 
-#include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Model/Metering/SampledValue.h>
-#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Model/Metering/SampledValue.h>
+#include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <ArduinoJson.h>
 #include <memory>
 #include <vector>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class MeterValue {
 private:

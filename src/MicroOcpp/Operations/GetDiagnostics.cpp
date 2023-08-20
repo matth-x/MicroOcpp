@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/GetDiagnostics.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/Diagnostics/DiagnosticsService.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/GetDiagnostics.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::GetDiagnostics;
+using MicroOcpp::Ocpp16::GetDiagnostics;
 
 GetDiagnostics::GetDiagnostics(Model& model) : model(model) {
 
@@ -24,7 +24,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
     //check location URL. Maybe introduce Same-Origin-Policy?
     if (location.empty()) {
         formatError = true;
-        AO_DBG_WARN("Could not read location. Abort");
+        MOCPP_DBG_WARN("Could not read location. Abort");
         return;
     }
     
@@ -36,7 +36,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
         const char *startTimeRaw = payload["startTime"] | "Invalid";
         if (!startTime.setTime(startTimeRaw)) {
             formatError = true;
-            AO_DBG_WARN("Could not read startTime. Abort");
+            MOCPP_DBG_WARN("Could not read startTime. Abort");
             return;
         }
     }
@@ -46,7 +46,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
         const char *stopTimeRaw = payload["stopTime"] | "Invalid";
         if (!stopTime.setTime(stopTimeRaw)) {
             formatError = true;
-            AO_DBG_WARN("Could not read stopTime. Abort");
+            MOCPP_DBG_WARN("Could not read stopTime. Abort");
             return;
         }
     }
@@ -56,7 +56,7 @@ std::unique_ptr<DynamicJsonDocument> GetDiagnostics::createConf(){
     if (auto diagService = model.getDiagnosticsService()) {
         fileName = diagService->requestDiagnosticsUpload(location, retries, retryInterval, startTime, stopTime);
     } else {
-        AO_DBG_WARN("DiagnosticsService has not been initialized before! Please have a look at ArduinoOcpp.cpp for an example. Abort");
+        MOCPP_DBG_WARN("DiagnosticsService has not been initialized before! Please have a look at MicroOcpp.cpp for an example. Abort");
         return createEmptyDocument();
     }
 

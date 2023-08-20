@@ -1,15 +1,15 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef AO_FILESYSTEMUTILS_H
-#define AO_FILESYSTEMUTILS_H
+#ifndef MOCPP_FILESYSTEMUTILS_H
+#define MOCPP_FILESYSTEMUTILS_H
 
-#include <ArduinoOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoJson.h>
 #include <memory>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class ArduinoJsonFileAdapter {
 private:

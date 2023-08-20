@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/GetLocalListVersion.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/GetLocalListVersion.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Authorization/AuthorizationService.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::GetLocalListVersion;
+using MicroOcpp::Ocpp16::GetLocalListVersion;
 
 GetLocalListVersion::GetLocalListVersion(Model& model) : model(model) {
   

@@ -1,12 +1,12 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/Reset.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/Reset/ResetService.h>
+#include <MicroOcpp/Operations/Reset.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Reset/ResetService.h>
 
-using ArduinoOcpp::Ocpp16::Reset;
+using MicroOcpp::Ocpp16::Reset;
 
 Reset::Reset(Model& model) : model(model) {
   
@@ -25,7 +25,7 @@ void Reset::processReq(JsonObject payload) {
 
     if (auto rService = model.getResetService()) {
         if (!rService->getExecuteReset()) {
-            AO_DBG_ERR("No reset handler set. Abort operation");
+            MOCPP_DBG_ERR("No reset handler set. Abort operation");
             (void)0;
             //resetAccepted remains false
         } else {

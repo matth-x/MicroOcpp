@@ -1,14 +1,14 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef RESERVATION_H
 #define RESERVATION_H
 
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/Time.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Model;
 

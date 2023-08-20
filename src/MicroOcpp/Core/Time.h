@@ -1,19 +1,19 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef AO_TIME_H
-#define AO_TIME_H
+#ifndef MOCPP_TIME_H
+#define MOCPP_TIME_H
 
 #include <functional>
 #include <stdint.h>
 #include <stddef.h>
 
-#include <ArduinoOcpp/Platform.h>
+#include <MicroOcpp/Platform.h>
 
 #define JSONDATE_LENGTH 24
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Timestamp {
 private:
@@ -84,9 +84,9 @@ extern const Timestamp MAX_TIME;
 class Clock {
 private:
 
-    Timestamp ocpp_basetime = Timestamp();
-    decltype(ao_tick_ms()) system_basetime = 0; //the value of ao_tick_ms() when OCPP server's time was taken
-    decltype(ao_tick_ms()) lastUpdate = 0;
+    Timestamp mocpp_basetime = Timestamp();
+    decltype(mocpp_tick_ms()) system_basetime = 0; //the value of mocpp_tick_ms() when OCPP server's time was taken
+    decltype(mocpp_tick_ms()) lastUpdate = 0;
 
     Timestamp currentTime = Timestamp();
 

@@ -1,17 +1,17 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/StartTransaction.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Core/RequestStore.h>
-#include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
-#include <ArduinoOcpp/Model/Metering/MeteringService.h>
-#include <ArduinoOcpp/Model/Transactions/TransactionStore.h>
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/StartTransaction.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Core/RequestStore.h>
+#include <MicroOcpp/Model/Authorization/AuthorizationService.h>
+#include <MicroOcpp/Model/Metering/MeteringService.h>
+#include <MicroOcpp/Model/Transactions/TransactionStore.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::StartTransaction;
+using MicroOcpp::Ocpp16::StartTransaction;
 
 
 StartTransaction::StartTransaction(Model& model, std::shared_ptr<Transaction> transaction) : model(model), transaction(transaction) {
@@ -28,7 +28,7 @@ const char* StartTransaction::getOperationType() {
 
 void StartTransaction::initiate(StoredOperationHandler *opStore) {
     if (!transaction || transaction->getStartSync().isRequested()) {
-        AO_DBG_ERR("initialization error");
+        MOCPP_DBG_ERR("initialization error");
         return;
     }
     
@@ -45,38 +45,38 @@ void StartTransaction::initiate(StoredOperationHandler *opStore) {
 
     transaction->commit();
 
-    AO_DBG_INFO("StartTransaction initiated");
+    MOCPP_DBG_INFO("StartTransaction initiated");
 }
 
 bool StartTransaction::restore(StoredOperationHandler *opStore) {
     if (!opStore) {
-        AO_DBG_ERR("invalid argument");
+        MOCPP_DBG_ERR("invalid argument");
         return false;
     }
 
     auto payload = opStore->getPayload();
     if (!payload) {
-        AO_DBG_ERR("memory corruption");
+        MOCPP_DBG_ERR("memory corruption");
         return false;
     }
 
     int connectorId = (*payload)["connectorId"] | -1;
     int txNr = (*payload)["txNr"] | -1;
     if (connectorId < 0 || txNr < 0) {
-        AO_DBG_ERR("record incomplete");
+        MOCPP_DBG_ERR("record incomplete");
         return false;
     }
 
     auto txStore = model.getTransactionStore();
 
     if (!txStore) {
-        AO_DBG_ERR("invalid state");
+        MOCPP_DBG_ERR("invalid state");
         return false;
     }
 
     transaction = txStore->getTransaction(connectorId, txNr);
     if (!transaction) {
-        AO_DBG_ERR("referential integrity violation");
+        MOCPP_DBG_ERR("referential integrity violation");
 
         //clean up possible tx records
         if (auto mSerivce = model.getMeteringService()) {
@@ -88,7 +88,7 @@ bool StartTransaction::restore(StoredOperationHandler *opStore) {
     if (transaction->getStartTimestamp() < MIN_TIME &&
             transaction->getStartBootNr() != model.getBootNr()) {
         //time not set, cannot be restored anymore -> invalid tx
-        AO_DBG_ERR("cannot recover tx from previus run");
+        MOCPP_DBG_ERR("cannot recover tx from previus run");
 
         //clean up possible tx records
         if (auto mSerivce = model.getMeteringService()) {
@@ -123,7 +123,7 @@ std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
 
     if (transaction->getStartTimestamp() < MIN_TIME &&
             transaction->getStartBootNr() == model.getBootNr()) {
-        AO_DBG_DEBUG("adjust preboot StartTx timestamp");
+        MOCPP_DBG_DEBUG("adjust preboot StartTx timestamp");
         Timestamp adjusted = model.getClock().adjustPrebootTimestamp(transaction->getStartTimestamp());
         transaction->setStartTimestamp(adjusted);
     }
@@ -139,9 +139,9 @@ void StartTransaction::processConf(JsonObject payload) {
 
     const char* idTagInfoStatus = payload["idTagInfo"]["status"] | "not specified";
     if (!strcmp(idTagInfoStatus, "Accepted")) {
-        AO_DBG_INFO("Request has been accepted");
+        MOCPP_DBG_INFO("Request has been accepted");
     } else {
-        AO_DBG_INFO("Request has been denied. Reason: %s", idTagInfoStatus);
+        MOCPP_DBG_INFO("Request has been denied. Reason: %s", idTagInfoStatus);
         transaction->setIdTagDeauthorized();
     }
 

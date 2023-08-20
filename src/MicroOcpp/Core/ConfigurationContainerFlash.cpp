@@ -1,16 +1,16 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/ConfigurationContainerFlash.h>
-#include <ArduinoOcpp/Core/FilesystemUtils.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Core/ConfigurationContainerFlash.h>
+#include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Debug.h>
 
 #include <algorithm>
 
 #define MAX_CONFIGURATIONS 50
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 bool ConfigurationContainerFlash::load() {
 
@@ -19,7 +19,7 @@ bool ConfigurationContainerFlash::load() {
     }
 
     if (configurations.size() > 0) {
-        AO_DBG_ERR("Error: declared configurations before calling container->load(). " \
+        MOCPP_DBG_ERR("Error: declared configurations before calling container->load(). " \
                     "All previously declared values won't be written back");
         (void)0;
     }
@@ -27,13 +27,13 @@ bool ConfigurationContainerFlash::load() {
     size_t file_size = 0;
     if (filesystem->stat(getFilename(), &file_size) != 0 // file does not exist
             || file_size == 0) {                         // file exists, but empty
-        AO_DBG_DEBUG("Populate FS: create configuration file");
+        MOCPP_DBG_DEBUG("Populate FS: create configuration file");
         return save();
     }
 
     auto doc = FilesystemUtils::loadJson(filesystem, getFilename());
     if (!doc) {
-        AO_DBG_ERR("failed to load %s", getFilename());
+        MOCPP_DBG_ERR("failed to load %s", getFilename());
         return false;
     }
 
@@ -41,26 +41,28 @@ bool ConfigurationContainerFlash::load() {
 
     JsonObject configHeader = root["head"];
 
-    if (strcmp(configHeader["content-type"] | "Invalid", "ao_configuration_file")) {
-        AO_DBG_ERR("Unable to initialize: unrecognized configuration file format");
+    if (strcmp(configHeader["content-type"] | "Invalid", "ocpp_config_file") &&
+            strcmp(configHeader["content-type"] | "Invalid", "ao_configuration_file")) { //backwards-compatibility
+        MOCPP_DBG_ERR("Unable to initialize: unrecognized configuration file format");
         return false;
     }
 
-    if (strcmp(configHeader["version"] | "Invalid", "1.1")) {
-        AO_DBG_ERR("Unable to initialize: unsupported version");
+    if (strcmp(configHeader["version"] | "Invalid", "2.0") &&
+            strcmp(configHeader["version"] | "Invalid", "1.1")) { //backwards-compatibility
+        MOCPP_DBG_ERR("Unable to initialize: unsupported version");
         return false;
     }
     
     JsonArray configurationsArray = root["configurations"];
     if (configurationsArray.size() > MAX_CONFIGURATIONS) {
-        AO_DBG_ERR("Unable to initialize: configurations_len is too big (=%zu)", configurationsArray.size());
+        MOCPP_DBG_ERR("Unable to initialize: configurations_len is too big (=%zu)", configurationsArray.size());
         return false;
     }
 
     for (JsonObject config : configurationsArray) {
         const char *key = config["key"] | "";
         if (!*key || !config.containsKey("value")) {
-            AO_DBG_ERR("corrupt config");
+            MOCPP_DBG_ERR("corrupt config");
             continue;
         }
 
@@ -77,20 +79,20 @@ bool ConfigurationContainerFlash::load() {
         } else if (!strcmp(type, SerializedType<const char *>::get()) && config["value"].is<const char*>()){
             configuration = std::make_shared<Configuration<const char *>>(key, config["value"].as<const char*>());
         } else {
-            AO_DBG_ERR("corrupt config");
+            MOCPP_DBG_ERR("corrupt config");
             continue;
         }
 
         if (configuration) {
             configurations.push_back(configuration);
         } else {
-            AO_DBG_ERR("Initialization fault: could not read key-value pair %s of type %s", config["key"].as<const char *>(), config["type"].as<const char *>());
+            MOCPP_DBG_ERR("Initialization fault: could not read key-value pair %s of type %s", config["key"].as<const char *>(), config["type"].as<const char *>());
         }
     }
 
     configurationsUpdated();
 
-    AO_DBG_DEBUG("Initialization finished");
+    MOCPP_DBG_DEBUG("Initialization finished");
     return true;
 }
 
@@ -113,8 +115,8 @@ bool ConfigurationContainerFlash::save() {
         if (entry) {
             size_t capacity = entry->memoryUsage(); //entry payload size
 
-            if (jsonCapacity + capacity + JSON_ARRAY_SIZE(entries.size() + 1)  > AO_MAX_JSON_CAPACITY) {
-                AO_DBG_ERR("configs JSON exceeds maximum capacity (%s, %zu entries). Crop configs file (by FCFS)", getFilename(), entries.size());
+            if (jsonCapacity + capacity + JSON_ARRAY_SIZE(entries.size() + 1)  > MOCPP_MAX_JSON_CAPACITY) {
+                MOCPP_DBG_ERR("configs JSON exceeds maximum capacity (%s, %zu entries). Crop configs file (by FCFS)", getFilename(), entries.size());
                 break;
             }
 
@@ -127,8 +129,8 @@ bool ConfigurationContainerFlash::save() {
 
     DynamicJsonDocument doc {jsonCapacity};
     JsonObject head = doc.createNestedObject("head");
-    head["content-type"] = "ao_configuration_file";
-    head["version"] = "1.1";
+    head["content-type"] = "ocpp_config_file";
+    head["version"] = "2.0";
 
     JsonArray configurationsArray = doc.createNestedArray("configurations");
     for (auto entry = entries.begin(); entry != entries.end(); entry++) {
@@ -138,12 +140,12 @@ bool ConfigurationContainerFlash::save() {
     bool success = FilesystemUtils::storeJson(filesystem, getFilename(), doc);
 
     if (success) {
-        AO_DBG_DEBUG("Saving configurations finished");
+        MOCPP_DBG_DEBUG("Saving configurations finished");
     } else {
-        AO_DBG_ERR("could not save configs file: %s", getFilename());
+        MOCPP_DBG_ERR("could not save configs file: %s", getFilename());
     }
 
     return success;
 }
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp

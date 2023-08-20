@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -6,9 +6,9 @@
 #define POLLRESULT_H
 
 #include <utility>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Debug.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 template <class T>
 class PollResult {
@@ -28,7 +28,7 @@ public:
     PollResult(PollResult<T>&& other) : ready(other.ready), value(std::move(other.value)) {}
     T&& toValue() {
         if (!ready) {
-            AO_DBG_ERR("Not ready");
+            MOCPP_DBG_ERR("Not ready");
             (void)0;
         }
         ready = false;
@@ -36,7 +36,7 @@ public:
     }
     T& getValue() const {
         if (!ready) {
-            AO_DBG_ERR("Not ready");
+            MOCPP_DBG_ERR("Not ready");
             (void)0;
         }
         return *value;

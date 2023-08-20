@@ -1,12 +1,12 @@
 {
-    "name": "ArduinoOcpp",
+    "name": "MicroOcpp",
     "version": "0.3.0",
     "description": "OCPP 1.6 Client for the ESP8266 and ESP32",
     "keywords": "OCPP, 1.6, OCPP 1.6, Smart Energy, Smart Charging, client, ESP8266, ESP32, Arduino, EVSE, Charge Point",
     "repository":
     {
         "type": "git",
-        "url": "https://github.com/matth-x/ArduinoOcpp/"
+        "url": "https://github.com/matth-x/MicroOcpp/"
     },
     "authors":
     [

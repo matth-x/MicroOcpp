@@ -1,15 +1,15 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef TRIGGERMESSAGE_H
 #define TRIGGERMESSAGE_H
 
-#include <ArduinoOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Operation.h>
 
 #include <vector>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Context;
 class Request;
@@ -36,5 +36,5 @@ public:
 };
 
 } //end namespace Ocpp16
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

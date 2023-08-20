@@ -1,17 +1,17 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef REQUESTQUEUESTORAGESTRATEGY_H
 #define REQUESTQUEUESTORAGESTRATEGY_H
 
-#include <ArduinoOcpp/Core/RequestStore.h>
+#include <MicroOcpp/Core/RequestStore.h>
 
 #include <memory>
 #include <deque>
 #include <functional>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class FilesystemAdapter;
 class Request;

@@ -1,17 +1,17 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef AO_REQUESTQUEUE_H
-#define AO_REQUESTQUEUE_H
+#ifndef MOCPP_REQUESTQUEUE_H
+#define MOCPP_REQUESTQUEUE_H
 
-#include <ArduinoOcpp/Core/RequestQueueStorageStrategy.h>
+#include <MicroOcpp/Core/RequestQueueStorageStrategy.h>
 
 #include <deque>
 #include <memory>
 #include <ArduinoJson.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class OperationRegistry;
 class Model;
@@ -47,5 +47,5 @@ public:
     bool receiveMessage(const char* payload, size_t length); //receive from  server: either a request or response
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

@@ -1,16 +1,16 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef METERVALUES_H
 #define METERVALUES_H
 
-#include <ArduinoOcpp/Core/Operation.h>
-#include <ArduinoOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Time.h>
 
 #include <vector>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class MeterValue;
 class Transaction;
@@ -44,5 +44,5 @@ public:
 };
 
 } //end namespace Ocpp16
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

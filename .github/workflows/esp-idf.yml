@@ -23,7 +23,7 @@ jobs:
     - name: Checkout main repo
       uses: actions/checkout@v3
       with:
-        path: examples/ESP-IDF/components/ArduinoOcpp
+        path: examples/ESP-IDF/components/MicroOcpp
     - name: Checkout Mongoose
       uses: actions/checkout@v3
       with:
@@ -33,8 +33,8 @@ jobs:
     - name: Checkout Mongoose WS adapter
       uses: actions/checkout@v3
       with:
-        repository: matth-x/ArduinoOcppMongoose
-        path: examples/ESP-IDF/components/ArduinoOcppMongoose
+        repository: matth-x/MicroOcppMongoose
+        path: examples/ESP-IDF/components/MicroOcppMongoose
     - name: Checkout ArduinoJson
       uses: actions/checkout@v3
       with:

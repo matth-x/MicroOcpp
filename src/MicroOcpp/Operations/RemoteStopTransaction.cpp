@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/RemoteStopTransaction.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Operations/RemoteStopTransaction.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/ConnectorBase/Connector.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
 
-using ArduinoOcpp::Ocpp16::RemoteStopTransaction;
+using MicroOcpp::Ocpp16::RemoteStopTransaction;
 
 RemoteStopTransaction::RemoteStopTransaction(Model& model) : model(model) {
   

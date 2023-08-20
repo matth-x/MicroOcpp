@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef RESETSERVICE_H
 #define RESETSERVICE_H
 
-#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/ConfigurationKeyValue.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Context;
 
@@ -16,7 +16,7 @@ private:
     Context& context;
 
     std::function<bool(bool isHard)> preReset; //true: reset is possible; false: reject reset; Await: need more time to determine
-    std::function<void(bool isHard)> executeReset; //please disconnect WebSocket (AO remains initialized), shut down device and restart with normal initialization routine; on failure reconnect WebSocket
+    std::function<void(bool isHard)> executeReset; //please disconnect WebSocket (MO remains initialized), shut down device and restart with normal initialization routine; on failure reconnect WebSocket
     unsigned int outstandingResetRetries = 0; //0 = do not reset device
     bool isHardReset = false;
     unsigned long t_resetRetry;
@@ -39,16 +39,16 @@ public:
     void initiateReset(bool isHard);
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
-#if AO_PLATFORM == AO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
+#if MOCPP_PLATFORM == MOCPP_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 std::function<void(bool isHard)> makeDefaultResetFn();
 
 }
 
-#endif //AO_PLATFORM == AO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
+#endif //MOCPP_PLATFORM == MOCPP_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
 
 #endif

@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -15,15 +15,15 @@
  * OCPP operation.
  */
 
- #ifndef AO_OPERATION_H
- #define AO_OPERATION_H
+ #ifndef MOCPP_OPERATION_H
+ #define MOCPP_OPERATION_H
 
 #include <ArduinoJson.h>
 #include <memory>
 
-#include <ArduinoOcpp/Core/RequestStore.h>
+#include <MicroOcpp/Core/RequestStore.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 std::unique_ptr<DynamicJsonDocument> createEmptyDocument();
 
@@ -73,5 +73,5 @@ public:
     virtual std::unique_ptr<DynamicJsonDocument> getErrorDetails() {return createEmptyDocument();}
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
  #endif

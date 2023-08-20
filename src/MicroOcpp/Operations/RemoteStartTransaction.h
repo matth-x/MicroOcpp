@@ -1,14 +1,14 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef REMOTESTARTTRANSACTION_H
 #define REMOTESTARTTRANSACTION_H
 
-#include <ArduinoOcpp/Core/Operation.h>
-#include <ArduinoOcpp/Operations/CiStrings.h>
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Operations/CiStrings.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Model;
 class ChargingProfile;
@@ -43,5 +43,5 @@ public:
 };
 
 } //end namespace Ocpp16
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

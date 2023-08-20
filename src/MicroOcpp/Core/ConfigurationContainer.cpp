@@ -1,10 +1,10 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/ConfigurationContainer.h>
+#include <MicroOcpp/Core/ConfigurationContainer.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 std::shared_ptr<AbstractConfiguration> ConfigurationContainer::getConfiguration(const char *key) {
     for (std::vector<std::shared_ptr<AbstractConfiguration>>::iterator configuration = configurations.begin(); configuration != configurations.end(); configuration++) {
@@ -71,4 +71,4 @@ bool ConfigurationContainer::configurationsUpdated() {
     return updated;
 }
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp

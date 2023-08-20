@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -13,7 +13,7 @@ ESP8266WiFiMulti WiFiMulti;
 #error only ESP32 or ESP8266 supported at the moment
 #endif
 
-#include <ArduinoOcpp.h>
+#include <MicroOcpp.h>
 
 #define STASSID "YOUR_WIFI_SSID"
 #define STAPSK  "YOUR_WIFI_PW"
@@ -60,7 +60,7 @@ void setup() {
     /*
      * Initialize the OCPP library
      */
-    ocpp_initialize(OCPP_HOST, OCPP_PORT, OCPP_URL, "My Charging Station", "My company name");
+    mocpp_initialize(OCPP_HOST, OCPP_PORT, OCPP_URL, "My Charging Station", "My company name");
 
     /*
      * Integrate OCPP functionality. You can leave out the following part if your EVSE doesn't need it.
@@ -80,7 +80,7 @@ void setup() {
         return false;
     });
 
-    //... see ArduinoOcpp.h for more settings
+    //... see MicroOcpp.h for more settings
 }
 
 void loop() {
@@ -88,7 +88,7 @@ void loop() {
     /*
      * Do all OCPP stuff (process WebSocket input, send recorded meter values to Central System, etc.)
      */
-    ocpp_loop();
+    mocpp_loop();
 
     /*
      * Energize EV plug if OCPP transaction is up and running
@@ -136,5 +136,5 @@ void loop() {
         }
     }
 
-    //... see ArduinoOcpp.h for more possibilities
+    //... see MicroOcpp.h for more possibilities
 }

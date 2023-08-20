@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -15,9 +15,9 @@
 
 #include <ArduinoJson.h>
 
-#include <ArduinoOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Time.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 enum class ChargingProfilePurposeType {
     ChargePointMaxProfile,
@@ -141,6 +141,6 @@ std::unique_ptr<ChargingProfile> loadChargingProfile(JsonObject& json);
 
 bool loadChargingSchedule(JsonObject& json, ChargingSchedule& out);
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

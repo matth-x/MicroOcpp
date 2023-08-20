@@ -1,14 +1,14 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/SetChargingProfile.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/SetChargingProfile.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::SetChargingProfile;
+using MicroOcpp::Ocpp16::SetChargingProfile;
 
 SetChargingProfile::SetChargingProfile(Model& model, SmartChargingService& scService) : model(model), scService(scService) {
 

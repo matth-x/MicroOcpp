@@ -1,20 +1,20 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef AUTHORIZATIONLIST_H
 #define AUTHORIZATIONLIST_H
 
-#include <ArduinoOcpp/Model/Authorization/AuthorizationData.h>
+#include <MicroOcpp/Model/Authorization/AuthorizationData.h>
 #include <vector>
 
-#ifndef AO_LocalAuthListMaxLength
-#define AO_LocalAuthListMaxLength 48
+#ifndef MOCPP_LocalAuthListMaxLength
+#define MOCPP_LocalAuthListMaxLength 48
 #endif
 
-#define AO_SendLocalListMaxLength AO_LocalAuthListMaxLength
+#define MOCPP_SendLocalListMaxLength MOCPP_LocalAuthListMaxLength
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class AuthorizationList {
 private:

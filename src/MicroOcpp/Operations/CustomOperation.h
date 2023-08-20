@@ -1,15 +1,15 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef AO_CUSTOMOPERATION_H
-#define AO_CUSTOMOPERATION_H
+#ifndef MOCPP_CUSTOMOPERATION_H
+#define MOCPP_CUSTOMOPERATION_H
 
-#include <ArduinoOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Operation.h>
 
 #include <functional>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 namespace Ocpp16 {
 
@@ -65,5 +65,5 @@ public:
 };
 
 } //end namespace Ocpp16
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

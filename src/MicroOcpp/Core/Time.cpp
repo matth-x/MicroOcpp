@@ -1,12 +1,12 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Time.h>
 #include <string.h>
 #include <ctype.h>	
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 const Timestamp MIN_TIME = Timestamp(2010, 0, 0, 0, 0, 0);
 const Timestamp MAX_TIME = Timestamp(2037, 0, 0, 0, 0, 0);
@@ -212,7 +212,7 @@ Timestamp &Timestamp::operator-=(int secs) {
 }
 
 int Timestamp::operator-(const Timestamp &rhs) const {
-    //dt = rhs - ocpp_base
+    //dt = rhs - mocpp_base
     
     int16_t year_base, year_end;
     if (year <= rhs.year) {
@@ -314,17 +314,17 @@ bool Clock::setTime(const char* jsonDateString) {
         return false;
     }
 
-    system_basetime = ao_tick_ms();
-    ocpp_basetime = timestamp;
+    system_basetime = mocpp_tick_ms();
+    mocpp_basetime = timestamp;
 
-    currentTime = ocpp_basetime;
+    currentTime = mocpp_basetime;
     lastUpdate = system_basetime;
 
     return true;
 }
 
 const Timestamp &Clock::now() {
-    auto tReading = ao_tick_ms();
+    auto tReading = mocpp_tick_ms();
     auto delta = tReading - lastUpdate;
 
     currentTime.addMilliseconds(delta);
@@ -336,9 +336,9 @@ const Timestamp &Clock::now() {
 Timestamp Clock::adjustPrebootTimestamp(const Timestamp& t) {
     auto systemtime_in = t - Timestamp();
     if (systemtime_in > (int) system_basetime / 1000) {
-        return ocpp_basetime;
+        return mocpp_basetime;
     }
-    return ocpp_basetime - ((int) (system_basetime / 1000) - systemtime_in);
+    return mocpp_basetime - ((int) (system_basetime / 1000) - systemtime_in);
 }
 
 }

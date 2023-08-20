@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -10,12 +10,12 @@
 
 #include <ArduinoJson.h>
 
-#include <ArduinoOcpp/Model/SmartCharging/SmartChargingModel.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Model/SmartCharging/SmartChargingModel.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 enum class ChargingRateUnitType_Optional {
     Watt,
@@ -119,6 +119,6 @@ bool storeProfile(std::shared_ptr<FilesystemAdapter> filesystem, unsigned int co
 bool removeProfile(std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ChargingProfilePurposeType purpose, unsigned int stackLevel);
 }
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

@@ -1,14 +1,14 @@
-#include <ArduinoOcpp.h>
-#include <ArduinoOcpp/Core/Connection.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Core/Operation.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp.h>
+#include <MicroOcpp/Core/Connection.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/FilesystemUtils.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 class CustomAuthorize : public Operation {
 private:
@@ -48,20 +48,20 @@ public:
 TEST_CASE( "Configuration Behavior" ) {
 
     //clean state
-    auto filesystem = makeDefaultFilesystemAdapter(ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail);
-    AO_DBG_DEBUG("remove all");
+    auto filesystem = makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail);
+    MOCPP_DBG_DEBUG("remove all");
     FilesystemUtils::remove_if(filesystem, [] (const char*) {return true;});
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;
-    ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+    mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
     auto engine = getOcppContext();
     auto& checkMsg = engine->getOperationRegistry();
 
     auto connector = engine->getModel().getConnector(1);
 
-    ao_set_timer(custom_timer_cb);
+    mocpp_set_timer(custom_timer_cb);
 
     loop();
 
@@ -138,7 +138,7 @@ TEST_CASE( "Configuration Behavior" ) {
 
     SECTION("AllowOfflineTxForUnknownId") {
         auto config = declareConfiguration<bool>("AllowOfflineTxForUnknownId", true);
-        auto authorizationTimeout = ArduinoOcpp::declareConfiguration<int>("AO_AuthorizationTimeout", 1);
+        auto authorizationTimeout = MicroOcpp::declareConfiguration<int>("MO_AuthorizationTimeout", 1);
         *authorizationTimeout = 1; //try normal Authorize for 1s, then enter offline mode
 
         loopback.setConnected(false); //connection loss
@@ -174,7 +174,7 @@ TEST_CASE( "Configuration Behavior" ) {
 
     SECTION("LocalPreAuthorize") {
         auto config = declareConfiguration<bool>("LocalPreAuthorize", true);
-        auto authorizationTimeout = ArduinoOcpp::declareConfiguration<int>("AO_AuthorizationTimeout", 20);
+        auto authorizationTimeout = MicroOcpp::declareConfiguration<int>("MO_AuthorizationTimeout", 20);
         *authorizationTimeout = 300; //try normal Authorize for 5 minutes
 
         auto localAuthorizeOffline = declareConfiguration<bool>("LocalAuthorizeOffline", true, CONFIGURATION_FN, true, true, true, false);
@@ -217,5 +217,5 @@ TEST_CASE( "Configuration Behavior" ) {
         loopback.setConnected(true);
     }
 
-    ocpp_deinitialize();
+    mocpp_deinitialize();
 }

@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/FirmwareStatusNotification.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/FirmwareManagement/FirmwareService.h>
+#include <MicroOcpp/Operations/FirmwareStatusNotification.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
 
-using ArduinoOcpp::Ocpp16::FirmwareStatusNotification;
+using MicroOcpp::Ocpp16::FirmwareStatusNotification;
 
 FirmwareStatusNotification::FirmwareStatusNotification(FirmwareStatus status) : status{status} {
 

@@ -1,16 +1,16 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 
-#include <ArduinoOcpp/Operations/RemoteStartTransaction.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
-#include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/RemoteStartTransaction.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/ConnectorBase/Connector.h>
+#include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::RemoteStartTransaction;
+using MicroOcpp::Ocpp16::RemoteStartTransaction;
 
 RemoteStartTransaction::RemoteStartTransaction(Model& model) : model(model) {
   
@@ -39,7 +39,7 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
     }
 
     if (payload.containsKey("chargingProfile") && model.getSmartChargingService()) {
-        AO_DBG_INFO("Setting Charging profile via RemoteStartTransaction");
+        MOCPP_DBG_INFO("Setting Charging profile via RemoteStartTransaction");
 
         JsonObject chargingProfileJson = payload["chargingProfile"];
         chargingProfile = loadChargingProfile(chargingProfileJson);
@@ -119,7 +119,7 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
             payload["status"] = "Rejected";
         }
     } else {
-        AO_DBG_INFO("No connector to start transaction");
+        MOCPP_DBG_INFO("No connector to start transaction");
         payload["status"] = "Rejected";
     }
     

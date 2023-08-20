@@ -1,14 +1,14 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef GETDIAGNOSTICS_H
 #define GETDIAGNOSTICS_H
 
-#include <ArduinoOcpp/Core/Operation.h>
-#include <ArduinoOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Time.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Model;
 
@@ -39,6 +39,6 @@ public:
 };
 
 } //end namespace Ocpp16
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

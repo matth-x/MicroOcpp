@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -7,9 +7,9 @@
 
 #include <ArduinoJson.h>
 
-#include <ArduinoOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Operation.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class NotImplemented : public Operation {
 public:
@@ -39,5 +39,5 @@ public:
     }
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

@@ -1,11 +1,11 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/DataTransfer.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/DataTransfer.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::DataTransfer;
+using MicroOcpp::Ocpp16::DataTransfer;
 
 DataTransfer::DataTransfer(const std::string &msg) {
     this->msg = msg;
@@ -27,8 +27,8 @@ void DataTransfer::processConf(JsonObject payload){
     std::string status = payload["status"] | "Invalid";
 
     if (status == "Accepted") {
-        AO_DBG_DEBUG("Request has been accepted");
+        MOCPP_DBG_DEBUG("Request has been accepted");
     } else {
-        AO_DBG_INFO("Request has been denied");
+        MOCPP_DBG_INFO("Request has been denied");
     }
 }

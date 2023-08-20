@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/CancelReservation.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/Reservation/ReservationService.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/CancelReservation.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Reservation/ReservationService.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::CancelReservation;
+using MicroOcpp::Ocpp16::CancelReservation;
 
 CancelReservation::CancelReservation(Model& model) : model(model) {
   

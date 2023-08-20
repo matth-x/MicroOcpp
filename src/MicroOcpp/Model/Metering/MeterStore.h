@@ -1,18 +1,18 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef METERSTORE_H
 #define METERSTORE_H
 
-#include <ArduinoOcpp/Model/Metering/MeterValue.h>
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Model/Metering/MeterValue.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
 
 #include <vector>
 #include <deque>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class TransactionMeterData {
 private:

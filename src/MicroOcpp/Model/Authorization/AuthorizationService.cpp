@@ -1,32 +1,32 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
-#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
-#include <ArduinoOcpp/Core/FilesystemUtils.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Core/OperationRegistry.h>
-#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
-#include <ArduinoOcpp/Operations/GetLocalListVersion.h>
-#include <ArduinoOcpp/Operations/SendLocalList.h>
-#include <ArduinoOcpp/Operations/StatusNotification.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Model/Authorization/AuthorizationService.h>
+#include <MicroOcpp/Model/ConnectorBase/Connector.h>
+#include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Core/OperationRegistry.h>
+#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Operations/GetLocalListVersion.h>
+#include <MicroOcpp/Operations/SendLocalList.h>
+#include <MicroOcpp/Operations/StatusNotification.h>
+#include <MicroOcpp/Debug.h>
 
-#define AO_LOCALAUTHORIZATIONLIST_FN (AO_FILENAME_PREFIX "localauth.jsn")
+#define MOCPP_LOCALAUTHORIZATIONLIST_FN (MOCPP_FILENAME_PREFIX "localauth.jsn")
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 AuthorizationService::AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
     
     localAuthorizeOffline = declareConfiguration<bool>("LocalAuthorizeOffline", true, CONFIGURATION_FN, true, true, true, false);
     localAuthListEnabled = declareConfiguration<bool>("LocalAuthListEnabled", true, CONFIGURATION_FN, true, true, true, false);
-    declareConfiguration<int>("LocalAuthListMaxLength", AO_LocalAuthListMaxLength, CONFIGURATION_VOLATILE, false, true, false, false);
-    declareConfiguration<int>("SendLocalListMaxLength", AO_SendLocalListMaxLength, CONFIGURATION_VOLATILE, false, true, false, false);
+    declareConfiguration<int>("LocalAuthListMaxLength", MOCPP_LocalAuthListMaxLength, CONFIGURATION_VOLATILE, false, true, false, false);
+    declareConfiguration<int>("SendLocalListMaxLength", MOCPP_SendLocalListMaxLength, CONFIGURATION_VOLATILE, false, true, false, false);
 
     if (!localAuthorizeOffline || !localAuthListEnabled) {
-        AO_DBG_ERR("initialization error");
+        MOCPP_DBG_ERR("initialization error");
     }
 
     //append "LocalAuthListManagement" to FeatureProfiles list
@@ -54,26 +54,26 @@ AuthorizationService::~AuthorizationService() {
 
 bool AuthorizationService::loadLists() {
     if (!filesystem) {
-        AO_DBG_WARN("no fs access");
+        MOCPP_DBG_WARN("no fs access");
         return true;
     }
 
     size_t msize = 0;
-    if (filesystem->stat(AO_LOCALAUTHORIZATIONLIST_FN, &msize) != 0) {
-        AO_DBG_DEBUG("no local authorization list stored already");
+    if (filesystem->stat(MOCPP_LOCALAUTHORIZATIONLIST_FN, &msize) != 0) {
+        MOCPP_DBG_DEBUG("no local authorization list stored already");
         return true;
     }
     
-    auto doc = FilesystemUtils::loadJson(filesystem, AO_LOCALAUTHORIZATIONLIST_FN);
+    auto doc = FilesystemUtils::loadJson(filesystem, MOCPP_LOCALAUTHORIZATIONLIST_FN);
     if (!doc) {
-        AO_DBG_ERR("failed to load %s", AO_LOCALAUTHORIZATIONLIST_FN);
+        MOCPP_DBG_ERR("failed to load %s", MOCPP_LOCALAUTHORIZATIONLIST_FN);
         return false;
     }
 
     JsonObject root = doc->as<JsonObject>();
 
     if (!localAuthorizationList.readJson(root, true)) {
-        AO_DBG_ERR("list read failure");
+        MOCPP_DBG_ERR("list read failure");
         return false;
     }
 
@@ -96,7 +96,7 @@ AuthorizationData *AuthorizationService::getLocalAuthorization(const char *idTag
 
     //check status
     if (authData->getAuthorizationStatus() != AuthorizationStatus::Accepted) {
-        AO_DBG_DEBUG("idTag %s local auth status %s", idTag, serializeAuthorizationStatus(authData->getAuthorizationStatus()));
+        MOCPP_DBG_DEBUG("idTag %s local auth status %s", idTag, serializeAuthorizationStatus(authData->getAuthorizationStatus()));
         return authData;
     }
 
@@ -112,7 +112,7 @@ bool AuthorizationService::updateLocalList(JsonObject payload) {
 
         JsonObject root = doc.to<JsonObject>();
         localAuthorizationList.writeJson(root, true);
-        success = FilesystemUtils::storeJson(filesystem, AO_LOCALAUTHORIZATIONLIST_FN, doc);
+        success = FilesystemUtils::storeJson(filesystem, MOCPP_LOCALAUTHORIZATIONLIST_FN, doc);
 
         if (!success) {
             loadLists();
@@ -158,7 +158,7 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
     if (localStatus == AuthorizationStatus::Accepted && localInfo->getExpiryDate()) { //check for expiry
         auto& t_now = context.getModel().getClock().now();
         if (t_now > *localInfo->getExpiryDate()) {
-            AO_DBG_DEBUG("local auth expired");
+            MOCPP_DBG_DEBUG("local auth expired");
             localStatus = AuthorizationStatus::Expired;
         }
     }
@@ -166,18 +166,18 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
     bool equivalent = true;
 
     if (incomingStatus != localStatus) {
-        AO_DBG_WARN("local auth list status conflict");
+        MOCPP_DBG_WARN("local auth list status conflict");
         equivalent = false;
     }
 
     //check if parentIdTag definitions mismatch
     if (equivalent &&
             strcmp(localInfo->getParentIdTag() ? localInfo->getParentIdTag() : "", idTagInfo["parentIdTag"] | "")) {
-        AO_DBG_WARN("local auth list parentIdTag conflict");
+        MOCPP_DBG_WARN("local auth list parentIdTag conflict");
         equivalent = false;
     }
 
-    AO_DBG_DEBUG("idTag %s fully evaluated: %s conflict", idTag, equivalent ? "no" : "contains");
+    MOCPP_DBG_DEBUG("idTag %s fully evaluated: %s conflict", idTag, equivalent ? "no" : "contains");
 
     if (!equivalent) {
         //send error code "LocalListConflict" to server

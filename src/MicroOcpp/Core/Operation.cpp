@@ -1,19 +1,19 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Operation.h>
 
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Operation;
+using MicroOcpp::Operation;
 
 Operation::Operation() {}
 
 Operation::~Operation() {}
   
 const char* Operation::getOperationType(){
-    AO_DBG_ERR("Unsupported operation: getOperationType() is not implemented");
+    MOCPP_DBG_ERR("Unsupported operation: getOperationType() is not implemented");
     return "CustomOperation";
 }
 
@@ -26,24 +26,24 @@ bool Operation::restore(StoredOperationHandler *rpcData) {
 }
 
 std::unique_ptr<DynamicJsonDocument> Operation::createReq() {
-    AO_DBG_ERR("Unsupported operation: createReq() is not implemented");
+    MOCPP_DBG_ERR("Unsupported operation: createReq() is not implemented");
     return nullptr;
 }
 
 void Operation::processConf(JsonObject payload) {
-    AO_DBG_ERR("Unsupported operation: processConf() is not implemented");
+    MOCPP_DBG_ERR("Unsupported operation: processConf() is not implemented");
 }
 
 void Operation::processReq(JsonObject payload) {
-    AO_DBG_ERR("Unsupported operation: processReq() is not implemented");
+    MOCPP_DBG_ERR("Unsupported operation: processReq() is not implemented");
 }
 
 std::unique_ptr<DynamicJsonDocument> Operation::createConf() {
-    AO_DBG_ERR("Unsupported operation: createConf() is not implemented");
+    MOCPP_DBG_ERR("Unsupported operation: createConf() is not implemented");
     return nullptr;
 }
 
-std::unique_ptr<DynamicJsonDocument> ArduinoOcpp::createEmptyDocument() {
+std::unique_ptr<DynamicJsonDocument> MicroOcpp::createEmptyDocument() {
     auto emptyDoc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(0));
     emptyDoc->to<JsonObject>();
     return emptyDoc;

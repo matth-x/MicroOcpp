@@ -1,14 +1,14 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/MeterValues.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/Metering/MeterValue.h>
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/MeterValues.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Metering/MeterValue.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::MeterValues;
+using MicroOcpp::Ocpp16::MeterValues;
 
 #define ENERGY_METER_TIMEOUT_MS 30 * 1000  //after waiting for 30s, send MeterValues without missing readings
 
@@ -41,7 +41,7 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
             capacity += entry->capacity();
             entries.push_back(std::move(entry));
         } else {
-            AO_DBG_ERR("Energy meter reading not convertible to JSON");
+            MOCPP_DBG_ERR("Energy meter reading not convertible to JSON");
             (void)0;
         }
     }
@@ -66,7 +66,7 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
 }
 
 void MeterValues::processConf(JsonObject payload) {
-    AO_DBG_DEBUG("Request has been confirmed");
+    MOCPP_DBG_DEBUG("Request has been confirmed");
 }
 
 

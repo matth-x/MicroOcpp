@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/UpdateFirmware.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/FirmwareManagement/FirmwareService.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/UpdateFirmware.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::UpdateFirmware;
+using MicroOcpp::Ocpp16::UpdateFirmware;
 
 UpdateFirmware::UpdateFirmware(Model& model) : model(model) {
 
@@ -24,7 +24,7 @@ void UpdateFirmware::processReq(JsonObject payload) {
     //check location URL. Maybe introduce Same-Origin-Policy?
     if (location.empty()) {
         formatError = true;
-        AO_DBG_WARN("Could not read location. Abort");
+        MOCPP_DBG_WARN("Could not read location. Abort");
         return;
     }
 
@@ -32,7 +32,7 @@ void UpdateFirmware::processReq(JsonObject payload) {
     const char *retrieveDateRaw = payload["retrieveDate"] | "Invalid";
     if (!retreiveDate.setTime(retrieveDateRaw)) {
         formatError = true;
-        AO_DBG_WARN("Could not read retrieveDate. Abort");
+        MOCPP_DBG_WARN("Could not read retrieveDate. Abort");
         return;
     }
     
@@ -44,7 +44,7 @@ std::unique_ptr<DynamicJsonDocument> UpdateFirmware::createConf(){
     if (auto fwService = model.getFirmwareService()) {
         fwService->scheduleFirmwareUpdate(location, retreiveDate, retries, retryInterval);
     } else {
-        AO_DBG_ERR("FirmwareService has not been initialized before! Please have a look at ArduinoOcpp.cpp for an example. Abort");
+        MOCPP_DBG_ERR("FirmwareService has not been initialized before! Please have a look at MicroOcpp.cpp for an example. Abort");
     }
 
     return createEmptyDocument();

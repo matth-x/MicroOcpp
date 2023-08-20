@@ -1,22 +1,22 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/Request.h>
-#include <ArduinoOcpp/Core/Operation.h>
-#include <ArduinoOcpp/Core/Connection.h>
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Core/RequestStore.h>
+#include <MicroOcpp/Core/Request.h>
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Connection.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Core/RequestStore.h>
 
-#include <ArduinoOcpp/Operations/StartTransaction.h>
-#include <ArduinoOcpp/Operations/StopTransaction.h>
+#include <MicroOcpp/Operations/StartTransaction.h>
+#include <MicroOcpp/Operations/StopTransaction.h>
 
-#include <ArduinoOcpp/Platform.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Platform.h>
+#include <MicroOcpp/Debug.h>
 
 int unique_id_counter = 1000000;
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 Request::Request(std::unique_ptr<Operation> msg) : operation(std::move(msg)) {
 
@@ -39,7 +39,7 @@ void Request::setTimeout(unsigned long timeout) {
 }
 
 bool Request::isTimeoutExceeded() {
-    return timed_out || (timeout_period && ao_tick_ms() - timeout_start >= timeout_period);
+    return timed_out || (timeout_period && mocpp_tick_ms() - timeout_start >= timeout_period);
 }
 
 void Request::executeTimeout() {
@@ -56,7 +56,7 @@ unsigned int Request::getTrialNo() {
 
 void Request::setMessageID(const std::string &id){
     if (!messageID.empty()){
-        AO_DBG_WARN("MessageID is set twice or is set after first usage!");
+        MOCPP_DBG_WARN("MessageID is set twice or is set after first usage!");
     }
     messageID = id;
 }
@@ -86,8 +86,8 @@ std::unique_ptr<DynamicJsonDocument> Request::createRequest(){
     requestJson->add(operation->getOperationType());  //Action
     requestJson->add(*requestPayload);                      //Payload
 
-    if (AO_DBG_LEVEL >= AO_DL_DEBUG && ao_tick_ms() - debugRequest_start >= 10000) { //print contents on the console
-        debugRequest_start = ao_tick_ms();
+    if (MOCPP_DBG_LEVEL >= MOCPP_DL_DEBUG && mocpp_tick_ms() - debugRequest_start >= 10000) { //print contents on the console
+        debugRequest_start = mocpp_tick_ms();
 
         char *buf = new char[1024];
         size_t len = 0;
@@ -96,9 +96,9 @@ std::unique_ptr<DynamicJsonDocument> Request::createRequest(){
         }
 
         if (!buf || len < 1) {
-            AO_DBG_DEBUG("Try to send request: %s", operation->getOperationType());
+            MOCPP_DBG_DEBUG("Try to send request: %s", operation->getOperationType());
         } else {
-            AO_DBG_DEBUG("Try to send request: %.*s (...)", 128, buf);
+            MOCPP_DBG_DEBUG("Try to send request: %.*s (...)", 128, buf);
         }
 
         delete buf;
@@ -153,7 +153,7 @@ bool Request::receiveResponse(JsonArray response){
 
         return abortOperation;
     } else {
-        AO_DBG_WARN("invalid response");
+        MOCPP_DBG_WARN("invalid response");
         return false; //don't discard this message but retry sending it
     }
 
@@ -242,8 +242,8 @@ std::unique_ptr<DynamicJsonDocument> Request::createResponse(){
 
 void Request::initiate(std::unique_ptr<StoredOperationHandler> opStorage) {
 
-    timeout_start = ao_tick_ms();
-    debugRequest_start = ao_tick_ms();
+    timeout_start = mocpp_tick_ms();
+    debugRequest_start = mocpp_tick_ms();
 
     //assign messageID
     char id_str [16] = {'\0'};
@@ -274,13 +274,13 @@ void Request::initiate(std::unique_ptr<StoredOperationHandler> opStorage) {
             opStore->clearBuffer();
         }
     } else {
-        AO_DBG_ERR("Missing operation instance");
+        MOCPP_DBG_ERR("Missing operation instance");
     }
 }
 
 bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *model) {
     if (!opStorage) {
-        AO_DBG_ERR("invalid argument");
+        MOCPP_DBG_ERR("invalid argument");
         return false;
     }
 
@@ -288,14 +288,14 @@ bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *
 
     auto rpcData = opStore->getRpcData();
     if (!rpcData) {
-        AO_DBG_ERR("corrupted storage");
+        MOCPP_DBG_ERR("corrupted storage");
         return false;
     }
 
     messageID = (*rpcData)[1] | std::string();
     std::string opType = (*rpcData)[2] | std::string();
     if (messageID.empty() || opType.empty()) {
-        AO_DBG_ERR("corrupted storage");
+        MOCPP_DBG_ERR("corrupted storage");
         messageID.clear();
         return false;
     }
@@ -303,11 +303,11 @@ bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *
     int parsedMessageID = -1;
     if (sscanf(messageID.c_str(), "%d", &parsedMessageID) == 1) {
         if (parsedMessageID > unique_id_counter) {
-            AO_DBG_DEBUG("restore unique_id_counter with %d", parsedMessageID);
+            MOCPP_DBG_DEBUG("restore unique_id_counter with %d", parsedMessageID);
             unique_id_counter = parsedMessageID + 1; //next unique value is parsedId + 1
         }
     } else {
-        AO_DBG_ERR("cannot set unique msgID counter");
+        MOCPP_DBG_ERR("cannot set unique msgID counter");
         (void)0;
         //skip this step but don't abort restore
     }
@@ -321,7 +321,7 @@ bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *
     }
 
     if (!operation) {
-        AO_DBG_ERR("cannot create msg");
+        MOCPP_DBG_ERR("cannot create msg");
         return false;
     }
 
@@ -329,10 +329,10 @@ bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *
     opStore->clearBuffer();
 
     if (success) {
-        AO_DBG_DEBUG("restored opNr %i: %s", opStore->getOpNr(), operation->getOperationType());
+        MOCPP_DBG_DEBUG("restored opNr %i: %s", opStore->getOpNr(), operation->getOperationType());
         (void)0;
     } else {
-        AO_DBG_ERR("restore opNr %i error", opStore->getOpNr());
+        MOCPP_DBG_ERR("restore opNr %i error", opStore->getOpNr());
         (void)0;
     }
 

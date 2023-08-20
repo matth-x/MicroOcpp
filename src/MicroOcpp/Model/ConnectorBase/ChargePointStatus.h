@@ -1,11 +1,11 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef OCPP_EVSE_STATE
 #define OCPP_EVSE_STATE
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 enum class ChargePointStatus {
     Available,
@@ -20,6 +20,6 @@ enum class ChargePointStatus {
     NOT_SET //internal value for "undefined"
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

@@ -1,19 +1,19 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef BOOTNOTIFICATION_H
 #define BOOTNOTIFICATION_H
 
-#include <ArduinoOcpp/Core/Operation.h>
-#include <ArduinoOcpp/Operations/CiStrings.h>
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Operations/CiStrings.h>
 
 #define CP_MODEL_LEN_MAX        CiString20TypeLen
 #define CP_SERIALNUMBER_LEN_MAX CiString25TypeLen
 #define CP_VENDOR_LEN_MAX       CiString20TypeLen
 #define FW_VERSION_LEN_MAX      CiString50TypeLen
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Model;
 
@@ -43,6 +43,6 @@ public:
 };
 
 } //end namespace Ocpp16
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

@@ -1,12 +1,12 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/GetConfiguration.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/GetConfiguration.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::GetConfiguration;
+using MicroOcpp::Ocpp16::GetConfiguration;
 
 GetConfiguration::GetConfiguration() {
 
@@ -62,7 +62,7 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
     capacity += JSON_ARRAY_SIZE(configurationKeysJson.size())
                 + JSON_ARRAY_SIZE(unknownKeys.size());
     
-    AO_DBG_DEBUG("GetConfiguration capacity: %zu", capacity);
+    MOCPP_DBG_DEBUG("GetConfiguration capacity: %zu", capacity);
     
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
 
@@ -76,7 +76,7 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
     if (unknownKeys.size() > 0) {
         JsonArray jsonUnknownKey = payload.createNestedArray("unknownKey");
         for (auto unknownKey = unknownKeys.begin(); unknownKey != unknownKeys.end(); unknownKey++) {
-            AO_DBG_DEBUG("Unknown key: %s", unknownKey->c_str())
+            MOCPP_DBG_DEBUG("Unknown key: %s", unknownKey->c_str())
             jsonUnknownKey.add(*unknownKey);
         }
     }

@@ -1,22 +1,22 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef TRANSACTIONSTORE_H
 #define TRANSACTIONSTORE_H
 
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <deque>
 
 #define MAX_TX_CNT 100000U
 
-#ifndef AO_TXRECORD_SIZE
-#define AO_TXRECORD_SIZE 4 //no. of tx to hold on flash storage
+#ifndef MOCPP_TXRECORD_SIZE
+#define MOCPP_TXRECORD_SIZE 4 //no. of tx to hold on flash storage
 #endif
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class TransactionStore;
 

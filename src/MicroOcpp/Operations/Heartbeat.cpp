@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/Heartbeat.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/Heartbeat.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Debug.h>
 #include <string.h>
 
-using ArduinoOcpp::Ocpp16::Heartbeat;
+using MicroOcpp::Ocpp16::Heartbeat;
 
 Heartbeat::Heartbeat(Model& model) : model(model) {
   
@@ -27,12 +27,12 @@ void Heartbeat::processConf(JsonObject payload) {
     if (strcmp(currentTime, "Invalid")) {
         if (model.getClock().setTime(currentTime)) {
             //success
-            AO_DBG_DEBUG("Request has been accepted");
+            MOCPP_DBG_DEBUG("Request has been accepted");
         } else {
-            AO_DBG_WARN("Could not read time string. Expect format like 2020-02-01T20:53:32.486Z");
+            MOCPP_DBG_WARN("Could not read time string. Expect format like 2020-02-01T20:53:32.486Z");
         }
     } else {
-        AO_DBG_WARN("Missing field currentTime. Expect format like 2020-02-01T20:53:32.486Z");
+        MOCPP_DBG_WARN("Missing field currentTime. Expect format like 2020-02-01T20:53:32.486Z");
     }
 }
 

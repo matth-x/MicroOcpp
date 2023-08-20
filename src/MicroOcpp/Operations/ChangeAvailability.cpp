@@ -1,14 +1,14 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/ChangeAvailability.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
+#include <MicroOcpp/Operations/ChangeAvailability.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/ConnectorBase/Connector.h>
 
 #include <functional>
 
-using ArduinoOcpp::Ocpp16::ChangeAvailability;
+using MicroOcpp::Ocpp16::ChangeAvailability;
 
 ChangeAvailability::ChangeAvailability(Model& model) : model(model) {
 

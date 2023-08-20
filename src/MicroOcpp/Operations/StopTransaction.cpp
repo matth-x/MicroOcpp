@@ -1,25 +1,25 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/StopTransaction.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Core/RequestStore.h>
-#include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
-#include <ArduinoOcpp/Model/Metering/MeteringService.h>
-#include <ArduinoOcpp/Model/Metering/MeterValue.h>
-#include <ArduinoOcpp/Model/Transactions/TransactionStore.h>
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/StopTransaction.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Core/RequestStore.h>
+#include <MicroOcpp/Model/Authorization/AuthorizationService.h>
+#include <MicroOcpp/Model/Metering/MeteringService.h>
+#include <MicroOcpp/Model/Metering/MeterValue.h>
+#include <MicroOcpp/Model/Transactions/TransactionStore.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::StopTransaction;
+using MicroOcpp::Ocpp16::StopTransaction;
 
 StopTransaction::StopTransaction(Model& model, std::shared_ptr<Transaction> transaction)
         : model(model), transaction(transaction) {
 
 }
 
-StopTransaction::StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData)
+StopTransaction::StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<MicroOcpp::MeterValue>> transactionData)
         : model(model), transaction(transaction), transactionData(std::move(transactionData)) {
 
 }
@@ -30,7 +30,7 @@ const char* StopTransaction::getOperationType() {
 
 void StopTransaction::initiate(StoredOperationHandler *opStore) {
     if (!transaction || transaction->getStopSync().isRequested()) {
-        AO_DBG_ERR("initialization error");
+        MOCPP_DBG_ERR("initialization error");
         return;
     }
     
@@ -47,38 +47,38 @@ void StopTransaction::initiate(StoredOperationHandler *opStore) {
 
     transaction->commit();
 
-    AO_DBG_INFO("StopTransaction initiated");
+    MOCPP_DBG_INFO("StopTransaction initiated");
 }
 
 bool StopTransaction::restore(StoredOperationHandler *opStore) {
     if (!opStore) {
-        AO_DBG_ERR("invalid argument");
+        MOCPP_DBG_ERR("invalid argument");
         return false;
     }
 
     auto payload = opStore->getPayload();
     if (!payload) {
-        AO_DBG_ERR("memory corruption");
+        MOCPP_DBG_ERR("memory corruption");
         return false;
     }
 
     int connectorId = (*payload)["connectorId"] | -1;
     int txNr = (*payload)["txNr"] | -1;
     if (connectorId < 0 || txNr < 0) {
-        AO_DBG_ERR("record incomplete");
+        MOCPP_DBG_ERR("record incomplete");
         return false;
     }
 
     auto txStore = model.getTransactionStore();
 
     if (!txStore) {
-        AO_DBG_ERR("invalid state");
+        MOCPP_DBG_ERR("invalid state");
         return false;
     }
 
     transaction = txStore->getTransaction(connectorId, txNr);
     if (!transaction) {
-        AO_DBG_ERR("referential integrity violation");
+        MOCPP_DBG_ERR("referential integrity violation");
 
         //clean up possible tx records
         if (auto mSerivce = model.getMeteringService()) {
@@ -89,7 +89,7 @@ bool StopTransaction::restore(StoredOperationHandler *opStore) {
 
     if (transaction->isSilent()) {
         //transaction has been set silent after initializing StopTx - discard operation record
-        AO_DBG_WARN("tx has been set silent - discard StopTx");
+        MOCPP_DBG_WARN("tx has been set silent - discard StopTx");
 
         //clean up possible tx records
         if (auto mSerivce = model.getMeteringService()) {
@@ -119,10 +119,10 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
             Timestamp adjusted = model.getClock().adjustPrebootTimestamp(transaction->getStopTimestamp());
             transaction->setStopTimestamp(adjusted);
         } else if (transaction->getStartTimestamp() >= MIN_TIME) {
-            AO_DBG_WARN("set stopTime = startTime because correct time is not available");
+            MOCPP_DBG_WARN("set stopTime = startTime because correct time is not available");
             transaction->setStopTimestamp(transaction->getStartTimestamp() + 1); //1s behind startTime to keep order in backend DB
         } else {
-            AO_DBG_ERR("failed to determine StopTx timestamp");
+            MOCPP_DBG_ERR("failed to determine StopTx timestamp");
             (void)0; //send invalid value
         }
     }
@@ -194,7 +194,7 @@ void StopTransaction::processConf(JsonObject payload) {
         transaction->commit();
     }
 
-    AO_DBG_INFO("Request has been accepted!");
+    MOCPP_DBG_INFO("Request has been accepted!");
 
     if (auto authService = model.getAuthorizationService()) {
         authService->notifyAuthorization(transaction->getIdTag(), payload["idTagInfo"]);
@@ -208,7 +208,7 @@ bool StopTransaction::processErr(const char *code, const char *description, Json
         transaction->commit();
     }
 
-    AO_DBG_ERR("Server error, data loss!");
+    MOCPP_DBG_ERR("Server error, data loss!");
 
     return false;
 }

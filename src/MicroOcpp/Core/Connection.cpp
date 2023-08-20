@@ -1,11 +1,11 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/Connection.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Core/Connection.h>
+#include <MicroOcpp/Debug.h>
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 void LoopbackConnection::loop() { }
 
@@ -14,7 +14,7 @@ bool LoopbackConnection::sendTXT(std::string &out) {
         return false;
     }
     if (receiveTXT) {
-        lastRecv = ao_tick_ms();
+        lastRecv = mocpp_tick_ms();
         return receiveTXT(out.c_str(), out.length());
     } else {
         return false;
@@ -29,9 +29,9 @@ unsigned long LoopbackConnection::getLastRecv() {
     return lastRecv;
 }
 
-#ifndef AO_CUSTOM_WS
+#ifndef MOCPP_CUSTOM_WS
 
-using namespace ArduinoOcpp::EspWiFi;
+using namespace MicroOcpp::EspWiFi;
 
 WSClient::WSClient(WebSocketsClient *wsock) : wsock(wsock) {
 
@@ -51,36 +51,36 @@ void WSClient::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
     wsock->onEvent([callback, &captureLastRecv, &captureLastConnected](WStype_t type, uint8_t * payload, size_t length) {
         switch (type) {
             case WStype_DISCONNECTED:
-                AO_DBG_INFO("Disconnected");
+                MOCPP_DBG_INFO("Disconnected");
                 break;
             case WStype_CONNECTED:
-                AO_DBG_INFO("Connected to url: %s", payload);
-                captureLastRecv = ao_tick_ms();
-                captureLastConnected = ao_tick_ms();
+                MOCPP_DBG_INFO("Connected to url: %s", payload);
+                captureLastRecv = mocpp_tick_ms();
+                captureLastConnected = mocpp_tick_ms();
                 break;
             case WStype_TEXT:
                 if (callback((const char *) payload, length)) { //forward message to RequestQueue
-                    captureLastRecv = ao_tick_ms();
+                    captureLastRecv = mocpp_tick_ms();
                 } else {
-                    AO_DBG_WARN("Processing WebSocket input event failed");
+                    MOCPP_DBG_WARN("Processing WebSocket input event failed");
                 }
                 break;
             case WStype_BIN:
-                AO_DBG_WARN("Binary data stream not supported");
+                MOCPP_DBG_WARN("Binary data stream not supported");
                 break;
             case WStype_PING:
                 // pong will be send automatically
-                AO_DBG_TRAFFIC_IN(8, "WS ping");
-                captureLastRecv = ao_tick_ms();
+                MOCPP_DBG_TRAFFIC_IN(8, "WS ping");
+                captureLastRecv = mocpp_tick_ms();
                 break;
             case WStype_PONG:
                 // answer to a ping we send
-                AO_DBG_TRAFFIC_IN(8, "WS pong");
-                captureLastRecv = ao_tick_ms();
+                MOCPP_DBG_TRAFFIC_IN(8, "WS pong");
+                captureLastRecv = mocpp_tick_ms();
                 break;
             case WStype_FRAGMENT_TEXT_START: //fragments are not supported
             default:
-                AO_DBG_WARN("Unsupported WebSocket event type");
+                MOCPP_DBG_WARN("Unsupported WebSocket event type");
                 break;
         }
     });

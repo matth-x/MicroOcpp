@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -7,11 +7,11 @@
 
 #include <functional>
 #include <memory>
-#include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Model/Diagnostics/DiagnosticsStatus.h>
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Model/Diagnostics/DiagnosticsStatus.h>
 #include <string>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 enum class UploadStatus {
     NotUploaded,
@@ -59,7 +59,7 @@ public:
     void setOnUploadStatusInput(std::function<UploadStatus()> uploadStatusInput);
 };
 
-#if !defined(AO_CUSTOM_DIAGNOSTICS) && !defined(AO_CUSTOM_WS)
+#if !defined(MOCPP_CUSTOM_DIAGNOSTICS) && !defined(MOCPP_CUSTOM_WS)
 #if defined(ESP32) || defined(ESP8266)
 
 namespace EspWiFi {
@@ -69,8 +69,8 @@ DiagnosticsService *makeDiagnosticsService(Context& context);
 }
 
 #endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
+#endif //!defined(MOCPP_CUSTOM_UPDATER) && !defined(MOCPP_CUSTOM_WS)
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

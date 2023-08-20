@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -10,7 +10,7 @@
 #include <functional>
 #include <string>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class AbstractConfiguration {
 private:
@@ -106,6 +106,6 @@ public:
     std::function<bool(const char*)> getValidator();
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

@@ -1,17 +1,17 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/TriggerMessage.h>
-#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
-#include <ArduinoOcpp/Model/Metering/MeteringService.h>
-#include <ArduinoOcpp/Operations/StatusNotification.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/TriggerMessage.h>
+#include <MicroOcpp/Model/ConnectorBase/Connector.h>
+#include <MicroOcpp/Model/Metering/MeteringService.h>
+#include <MicroOcpp/Operations/StatusNotification.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::TriggerMessage;
+using MicroOcpp::Ocpp16::TriggerMessage;
 
 TriggerMessage::TriggerMessage(Context& context) : context(context) {
 
@@ -26,7 +26,7 @@ void TriggerMessage::processReq(JsonObject payload) {
     const char *requestedMessage = payload["requestedMessage"] | "Invalid";
     const int connectorId = payload["connectorId"] | -1;
 
-    AO_DBG_INFO("Execute for message type %s, connectorId = %i", requestedMessage, connectorId);
+    MOCPP_DBG_INFO("Execute for message type %s, connectorId = %i", requestedMessage, connectorId);
 
     statusMessage = "Rejected";
 
@@ -79,9 +79,9 @@ void TriggerMessage::processReq(JsonObject payload) {
         statusMessage = "Accepted";
     } else {
         if (errorCode) {
-            AO_DBG_ERR("errorCode: %s", errorCode);
+            MOCPP_DBG_ERR("errorCode: %s", errorCode);
         } else {
-            AO_DBG_WARN("TriggerMessage denied. statusMessage: %s", statusMessage);
+            MOCPP_DBG_WARN("TriggerMessage denied. statusMessage: %s", statusMessage);
         }
     }
 

@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef AO_NOTIFICATION_H
-#define AO_NOTIFICATION_H
+#ifndef MOCPP_NOTIFICATION_H
+#define MOCPP_NOTIFICATION_H
 
 #ifdef __cplusplus
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 enum class TxNotification {
     //Authorization events
@@ -26,12 +26,12 @@ enum class TxNotification {
     StopTx,
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 extern "C" {
 #endif //__cplusplus
 
-enum AO_TxNotification {
+enum OCPP_TxNotification {
     //Authorization events
     Authorized, //success
     AuthorizationRejected, //IdTag not authorized
@@ -51,11 +51,11 @@ enum AO_TxNotification {
 #ifdef __cplusplus
 } //end extern "C"
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
-AO_TxNotification convertTxNotification(TxNotification txn);
+OCPP_TxNotification convertTxNotification(TxNotification txn);
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif //__cplusplus
 

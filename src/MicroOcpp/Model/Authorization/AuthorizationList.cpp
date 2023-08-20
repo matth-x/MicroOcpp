@@ -1,14 +1,14 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/Authorization/AuthorizationList.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Model/Authorization/AuthorizationList.h>
+#include <MicroOcpp/Debug.h>
 
 #include <algorithm>
 #include <numeric>
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 AuthorizationList::AuthorizationList() {
 
@@ -18,7 +18,7 @@ AuthorizationList::~AuthorizationList() {
     
 }
 
-ArduinoOcpp::AuthorizationData *AuthorizationList::get(const char *idTag) {
+MicroOcpp::AuthorizationData *AuthorizationList::get(const char *idTag) {
     //binary search
 
     if (!idTag) {
@@ -102,8 +102,8 @@ bool AuthorizationList::readJson(JsonObject payload, bool compact) {
         }
     }
 
-    if (resultingListLength > AO_LocalAuthListMaxLength) {
-        AO_DBG_WARN("localAuthList capacity exceeded");
+    if (resultingListLength > MOCPP_LocalAuthListMaxLength) {
+        MOCPP_DBG_WARN("localAuthList capacity exceeded");
         return false;
     }
 

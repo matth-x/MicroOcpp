@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef CLEARCHARGINGPROFILE_H
 #define CLEARCHARGINGPROFILE_H
 
-#include <ArduinoOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Operation.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class SmartChargingService;
 
@@ -29,5 +29,5 @@ public:
 };
 
 } //end namespace Ocpp16
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

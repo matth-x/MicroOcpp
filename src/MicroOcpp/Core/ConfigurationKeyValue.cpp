@@ -1,9 +1,9 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Debug.h>
 
 #include <string.h>
 #include <vector>
@@ -12,7 +12,7 @@
 #define KEY_MAXLEN 60
 #define STRING_VAL_MAXLEN 2000 //allow TLS certificates in ...
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 int toCStringValue(char *buf, size_t length, int value) {
     return snprintf(buf, length, "%d", value);
@@ -29,7 +29,7 @@ int toCStringValue(char *buf, size_t length, bool value) {
 
 AbstractConfiguration::AbstractConfiguration(const char *key) {
     if (!key || !*key) {
-        AO_DBG_ERR("invalid argument");
+        MOCPP_DBG_ERR("invalid argument");
         return;
     }
 
@@ -94,7 +94,7 @@ const T &Configuration<T>::operator=(const T & newVal) {
             const size_t VALUE_MAXSIZE = 50;
             char value_str [VALUE_MAXSIZE] = {'\0'};
             toCStringValue(value_str, VALUE_MAXSIZE, newVal);
-            AO_DBG_DEBUG("add config: key = %s, value = %s", getKey(), value_str);
+            MOCPP_DBG_DEBUG("add config: key = %s, value = %s", getKey(), value_str);
         }
         if (initializedValue == true && value != newVal) {
             value_revision++;
@@ -102,7 +102,7 @@ const T &Configuration<T>::operator=(const T & newVal) {
         value = newVal;
         initializedValue = true;
     } else {
-        AO_DBG_ERR("Tried to override read-only configuration: %s", getKey());
+        MOCPP_DBG_ERR("Tried to override read-only configuration: %s", getKey());
     }
     return newVal;
 }
@@ -196,7 +196,7 @@ std::unique_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonOcppMsgE
 
 Configuration<const char *>::Configuration(const char *key, const char *value) : AbstractConfiguration(key) {
     if (!value) {
-        AO_DBG_ERR("invalid args");
+        MOCPP_DBG_ERR("invalid args");
         return;
     }
 
@@ -209,12 +209,12 @@ Configuration<const char *>::~Configuration() {
 
 const char *Configuration<const char *>::operator=(const char *new_value) {
     if (!new_value) {
-        AO_DBG_ERR("invalid args");
+        MOCPP_DBG_ERR("invalid args");
         return new_value;
     }
 
     if (!permissionLocalClientCanWrite() && initializedValue) {
-        AO_DBG_ERR("Tried to override read-only configuration: %s", getKey());
+        MOCPP_DBG_ERR("Tried to override read-only configuration: %s", getKey());
         return new_value;
     }
 
@@ -224,7 +224,7 @@ const char *Configuration<const char *>::operator=(const char *new_value) {
     }
     
     if (!initializedValue) {
-        AO_DBG_DEBUG("add config: key = %s, value = %s", getKey(), value.c_str());
+        MOCPP_DBG_DEBUG("add config: key = %s, value = %s", getKey(), value.c_str());
         (void)0;
     }
     initializedValue = true;
@@ -256,4 +256,4 @@ template class Configuration<float>;
 template class Configuration<bool>;
 template class Configuration<const char *>;
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp

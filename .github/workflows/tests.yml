@@ -28,11 +28,11 @@ jobs:
     - name: Generate CMake build files
       run: cmake -S . -B ./build
     - name: Compile
-      run: cmake --build ./build -j 16 --target ao_unit_tests
+      run: cmake --build ./build -j 16 --target mo_unit_tests
     - name: Configure FS
-      run: mkdir ao_store
+      run: mkdir mo_store
     - name: Run tests
-      run: ./build/ao_unit_tests
+      run: ./build/mo_unit_tests
     - name: Create coverage report
       run: |
         lcov --directory . --capture --output-file coverage.info

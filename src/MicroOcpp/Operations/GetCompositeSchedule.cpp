@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/GetCompositeSchedule.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/GetCompositeSchedule.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::GetCompositeSchedule;
+using MicroOcpp::Ocpp16::GetCompositeSchedule;
 
 GetCompositeSchedule::GetCompositeSchedule(Model& model, SmartChargingService& scService) : model(model), scService(scService) {
 

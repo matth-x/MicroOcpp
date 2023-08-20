@@ -1,15 +1,15 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/OperationRegistry.h>
-#include <ArduinoOcpp/Core/Operation.h>
-#include <ArduinoOcpp/Core/Request.h>
-#include <ArduinoOcpp/Core/OcppError.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Core/OperationRegistry.h>
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Request.h>
+#include <MicroOcpp/Core/OcppError.h>
+#include <MicroOcpp/Debug.h>
 #include <algorithm>
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 OperationRegistry::OperationRegistry() {
 
@@ -37,14 +37,14 @@ void OperationRegistry::registerOperation(const char *operationType, std::functi
 
     registry.push_back(entry);
 
-    AO_DBG_DEBUG("registered operation %s", operationType);
+    MOCPP_DBG_DEBUG("registered operation %s", operationType);
 }
 
 void OperationRegistry::setOnRequest(const char *operationType, OnReceiveReqListener onRequest) {
     if (auto entry = findCreator(operationType)) {
         entry->onRequest = onRequest;
     } else {
-        AO_DBG_ERR("%s not registered", operationType);
+        MOCPP_DBG_ERR("%s not registered", operationType);
     }
 }
 
@@ -52,7 +52,7 @@ void OperationRegistry::setOnResponse(const char *operationType, OnSendConfListe
     if (auto entry = findCreator(operationType)) {
         entry->onResponse = onResponse;
     } else {
-        AO_DBG_ERR("%s not registered", operationType);
+        MOCPP_DBG_ERR("%s not registered", operationType);
     }
 }
 
@@ -75,6 +75,6 @@ std::unique_ptr<Request> OperationRegistry::deserializeOperation(const char *ope
 
 void OperationRegistry::debugPrint() {
     for (auto& creator : registry) {
-        AO_CONSOLE_PRINTF("[AO]     > %s\n", creator.operationType);
+        MOCPP_CONSOLE_PRINTF("[OCPP]     > %s\n", creator.operationType);
     }
 }

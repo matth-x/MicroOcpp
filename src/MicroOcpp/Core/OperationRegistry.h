@@ -1,17 +1,17 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef AO_OPERATIONREGISTRY_H
-#define AO_OPERATIONREGISTRY_H
+#ifndef MOCPP_OPERATIONREGISTRY_H
+#define MOCPP_OPERATIONREGISTRY_H
 
 #include <functional>
 #include <vector>
 #include <memory>
 #include <ArduinoJson.h>
-#include <ArduinoOcpp/Core/RequestCallbacks.h>
+#include <MicroOcpp/Core/RequestCallbacks.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Operation;
 class Request;

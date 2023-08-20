@@ -1,16 +1,16 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Debug.h>
 
 #include <string.h>
 #include <vector>
 #include <algorithm>
 #include <ArduinoJson.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 std::shared_ptr<FilesystemAdapter> filesystem;
 
@@ -18,7 +18,7 @@ template<class T>
 std::shared_ptr<Configuration<T>> createConfiguration(const char *key, T value) {
 
     if (!key || !*key) {
-        AO_DBG_ERR("invalid args");
+        MOCPP_DBG_ERR("invalid args");
         return nullptr;
     }
 
@@ -30,7 +30,7 @@ std::shared_ptr<Configuration<T>> createConfiguration(const char *key, T value) 
 std::shared_ptr<Configuration<const char *>> createConfiguration(const char *key, const char *value) {
 
     if (!key || !*key || !value) {
-        AO_DBG_ERR("invalid args");
+        MOCPP_DBG_ERR("invalid args");
         return nullptr;
     }
 
@@ -86,20 +86,20 @@ std::shared_ptr<Configuration<T>> declareConfiguration(const char *key, T defaul
     std::shared_ptr<ConfigurationContainer> container = getContainer(filename);
     
     if (!container) {
-        AO_DBG_DEBUG("init new configurations container: %s", filename);
+        MOCPP_DBG_DEBUG("init new configurations container: %s", filename);
 
         container = createConfigurationContainer(filename);
         configurationContainers.push_back(container);
 
         if (!container->load()) {
-            AO_DBG_WARN("Cannot load file contents. Path will be overwritten");
+            MOCPP_DBG_WARN("Cannot load file contents. Path will be overwritten");
         }
     }
 
     std::shared_ptr<AbstractConfiguration> configuration = container->getConfiguration(key);
 
     if (configuration && strcmp(configuration->getSerializedType(), SerializedType<T>::get())) {
-        AO_DBG_ERR("conflicting declared types for %s. Discard old config", key);
+        MOCPP_DBG_ERR("conflicting declared types for %s. Discard old config", key);
         container->removeConfiguration(configuration);
         configuration = nullptr;
     }
@@ -111,7 +111,7 @@ std::shared_ptr<Configuration<T>> declareConfiguration(const char *key, T defaul
         configuration = std::static_pointer_cast<AbstractConfiguration>(configurationConcrete);
 
         if (!configuration) {
-            AO_DBG_ERR("Cannot find configuration stored from previous session and cannot create new one! Abort");
+            MOCPP_DBG_ERR("Cannot find configuration stored from previous session and cannot create new one! Abort");
             return nullptr;
         }
         container->addConfiguration(configuration);
@@ -165,7 +165,7 @@ bool configuration_inited = false;
 bool configuration_init(std::shared_ptr<FilesystemAdapter> _filesystem) {
     if (configuration_inited)
         return true; //configuration_init() already called; tolerate multiple calls so user can use this store for
-                     //credentials outside ArduinoOcpp which need to be loaded before ocpp_initialize()
+                     //credentials outside MicroOcpp which need to be loaded before mocpp_initialize()
     
     filesystem = _filesystem;
 
@@ -185,14 +185,14 @@ bool configuration_init(std::shared_ptr<FilesystemAdapter> _filesystem) {
     bool success = true;
 
     if (containerDefault) {
-        AO_DBG_DEBUG("Found default container before calling configuration_init(). If you added");
-        AO_DBG_DEBUG(" > the container manually, please ensure to call load(). If not, it is a hint");
-        AO_DBG_DEBUG(" > that declareConfiguration() was called too early");
+        MOCPP_DBG_DEBUG("Found default container before calling configuration_init(). If you added");
+        MOCPP_DBG_DEBUG(" > the container manually, please ensure to call load(). If not, it is a hint");
+        MOCPP_DBG_DEBUG(" > that declareConfiguration() was called too early");
         (void)0;
     } else {
         containerDefault = createConfigurationContainer(CONFIGURATION_FN);
         if (!containerDefault->load()) {
-            AO_DBG_ERR("Loading default configurations file failed");
+            MOCPP_DBG_ERR("Loading default configurations file failed");
             success = false;
         }
         configurationContainers.push_back(containerDefault);
@@ -230,4 +230,4 @@ template std::shared_ptr<Configuration<float>> declareConfiguration(const char *
 template std::shared_ptr<Configuration<bool>> declareConfiguration(const char *key, bool defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
 template std::shared_ptr<Configuration<const char *>> declareConfiguration(const char *key, const char *defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp

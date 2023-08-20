@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -9,12 +9,12 @@
 #include <memory>
 #include <vector>
 
-#include <ArduinoOcpp/Model/Metering/MeterValue.h>
-#include <ArduinoOcpp/Model/Metering/MeterStore.h>
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Model/Metering/MeterValue.h>
+#include <MicroOcpp/Model/Metering/MeterStore.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Core/ConfigurationKeyValue.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Model;
 class Operation;
@@ -76,5 +76,5 @@ public:
 
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

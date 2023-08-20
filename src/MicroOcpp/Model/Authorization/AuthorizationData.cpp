@@ -1,10 +1,10 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/Authorization/AuthorizationData.h>
+#include <MicroOcpp/Model/Authorization/AuthorizationData.h>
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 AuthorizationData::AuthorizationData() {
 
@@ -116,7 +116,7 @@ void AuthorizationData::reset() {
     idTag[0] = '\0';
 }
 
-const char *ArduinoOcpp::serializeAuthorizationStatus(AuthorizationStatus status) {
+const char *MicroOcpp::serializeAuthorizationStatus(AuthorizationStatus status) {
     switch (status) {
         case (AuthorizationStatus::Accepted):
             return "Accepted";
@@ -133,7 +133,7 @@ const char *ArduinoOcpp::serializeAuthorizationStatus(AuthorizationStatus status
     }
 }
 
-ArduinoOcpp::AuthorizationStatus ArduinoOcpp::deserializeAuthorizationStatus(const char *cstr) {
+MicroOcpp::AuthorizationStatus MicroOcpp::deserializeAuthorizationStatus(const char *cstr) {
     if (!cstr) {
         return AuthorizationStatus::UNDEFINED;
     }

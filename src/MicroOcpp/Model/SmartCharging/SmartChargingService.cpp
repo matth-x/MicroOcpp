@@ -1,19 +1,19 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Core/FilesystemUtils.h>
-#include <ArduinoOcpp/Operations/ClearChargingProfile.h>
-#include <ArduinoOcpp/Operations/GetCompositeSchedule.h>
-#include <ArduinoOcpp/Operations/SetChargingProfile.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Operations/ClearChargingProfile.h>
+#include <MicroOcpp/Operations/GetCompositeSchedule.h>
+#include <MicroOcpp/Operations/SetChargingProfile.h>
+#include <MicroOcpp/Debug.h>
 
-using namespace::ArduinoOcpp;
+using namespace::MicroOcpp;
 
 SmartChargingConnector::SmartChargingConnector(Model& model, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ProfileStack& ChargePointMaxProfile, ProfileStack& ChargePointTxDefaultProfile) :
         model(model), filesystem{filesystem}, connectorId{connectorId}, ChargePointMaxProfile(ChargePointMaxProfile), ChargePointTxDefaultProfile(ChargePointTxDefaultProfile) {
@@ -174,7 +174,7 @@ void SmartChargingConnector::loop(){
 
 void SmartChargingConnector::setSmartChargingOutput(std::function<void(float,float,int)> limitOutput) {
     if (this->limitOutput) {
-        AO_DBG_WARN("replacing existing SmartChargingOutput");
+        MOCPP_DBG_WARN("replacing existing SmartChargingOutput");
         (void)0;
     }
     this->limitOutput = limitOutput;
@@ -195,7 +195,7 @@ ChargingProfile *SmartChargingConnector::updateProfiles(std::unique_ptr<Charging
             return TxProfile[stackLevel].get();
     }
 
-    AO_DBG_ERR("invalid args");
+    MOCPP_DBG_ERR("invalid args");
     return nullptr;
 }
 
@@ -335,18 +335,18 @@ SmartChargingService::~SmartChargingService() {
 ChargingProfile *SmartChargingService::updateProfiles(unsigned int connectorId, std::unique_ptr<ChargingProfile> chargingProfile){
 
     if ((connectorId > 0 && !getScConnectorById(connectorId)) || !chargingProfile) {
-        AO_DBG_ERR("invalid args");
+        MOCPP_DBG_ERR("invalid args");
         return nullptr;
     }
 
-    if (AO_DBG_LEVEL >= AO_DL_VERBOSE) {
-        AO_DBG_VERBOSE("Charging Profile internal model:");
+    if (MOCPP_DBG_LEVEL >= MOCPP_DL_VERBOSE) {
+        MOCPP_DBG_VERBOSE("Charging Profile internal model:");
         chargingProfile->printProfile();
     }
 
     int stackLevel = chargingProfile->getStackLevel();
     if (stackLevel< 0 || stackLevel >= CHARGEPROFILEMAXSTACKLEVEL + 1) {
-        AO_DBG_ERR("input validation failed");
+        MOCPP_DBG_ERR("input validation failed");
         return nullptr;
     }
 
@@ -364,7 +364,7 @@ ChargingProfile *SmartChargingService::updateProfiles(unsigned int connectorId, 
     }
 
     if (chargingProfilesCount >= MAXCHARGINGPROFILESINSTALLED) {
-        AO_DBG_WARN("number of maximum charging profiles exceeded");
+        MOCPP_DBG_WARN("number of maximum charging profiles exceeded");
         return nullptr;
     }
 
@@ -373,7 +373,7 @@ ChargingProfile *SmartChargingService::updateProfiles(unsigned int connectorId, 
     switch (chargingProfile->getChargingProfilePurpose()) {
         case (ChargingProfilePurposeType::ChargePointMaxProfile):
             if (connectorId != 0) {
-                AO_DBG_WARN("invalid charging profile");
+                MOCPP_DBG_WARN("invalid charging profile");
                 return nullptr;
             }
             ChargePointMaxProfile[stackLevel] = std::move(chargingProfile);
@@ -385,7 +385,7 @@ ChargingProfile *SmartChargingService::updateProfiles(unsigned int connectorId, 
                 res = ChargePointTxDefaultProfile[stackLevel].get();
             } else {
                 if (!getScConnectorById(connectorId)) {
-                    AO_DBG_WARN("invalid charging profile");
+                    MOCPP_DBG_WARN("invalid charging profile");
                     return nullptr;
                 }
                 res = getScConnectorById(connectorId)->updateProfiles(std::move(chargingProfile));
@@ -393,7 +393,7 @@ ChargingProfile *SmartChargingService::updateProfiles(unsigned int connectorId, 
             break;
         case (ChargingProfilePurposeType::TxProfile):
             if (!getScConnectorById(connectorId)) {
-                AO_DBG_WARN("invalid charging profile");
+                MOCPP_DBG_WARN("invalid charging profile");
                 return nullptr;
             }
             res = getScConnectorById(connectorId)->updateProfiles(std::move(chargingProfile));
@@ -419,13 +419,13 @@ bool SmartChargingService::loadProfiles() {
     bool success = true;
 
     if (!filesystem) {
-        AO_DBG_DEBUG("no filesystem");
+        MOCPP_DBG_DEBUG("no filesystem");
         return true; //not an error
     }
 
     ChargingProfilePurposeType purposes[] = {ChargingProfilePurposeType::ChargePointMaxProfile, ChargingProfilePurposeType::TxDefaultProfile, ChargingProfilePurposeType::TxProfile};
 
-    char fn [AO_MAX_PATH_SIZE] = {'\0'};
+    char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
 
     for (auto purpose : purposes) {
         for (unsigned int cId = 0; cId < numConnectors; cId++) {
@@ -434,7 +434,7 @@ bool SmartChargingService::loadProfiles() {
             }
             for (unsigned int iLevel = 0; iLevel < CHARGEPROFILEMAXSTACKLEVEL; iLevel++) {
 
-                if (!SmartChargingServiceUtils::printProfileFileName(fn, AO_MAX_PATH_SIZE, cId, purpose, iLevel)) {
+                if (!SmartChargingServiceUtils::printProfileFileName(fn, MOCPP_MAX_PATH_SIZE, cId, purpose, iLevel)) {
                     return false;
                 }
 
@@ -446,7 +446,7 @@ bool SmartChargingService::loadProfiles() {
                 auto profileDoc = FilesystemUtils::loadJson(filesystem, fn);
                 if (!profileDoc) {
                     success = false;
-                    AO_DBG_ERR("profile corrupt: %s, remove", fn);
+                    MOCPP_DBG_ERR("profile corrupt: %s, remove", fn);
                     filesystem->remove(fn);
                     continue;
                 }
@@ -460,7 +460,7 @@ bool SmartChargingService::loadProfiles() {
                 }
                 if (!valid) {
                     success = false;
-                    AO_DBG_ERR("profile corrupt: %s, remove", fn);
+                    MOCPP_DBG_ERR("profile corrupt: %s, remove", fn);
                     filesystem->remove(fn);
                 }
             }
@@ -511,12 +511,12 @@ void SmartChargingService::loop(){
 
         calculateLimit(tnow, limit, nextChange);
 
-#if (AO_DBG_LEVEL >= AO_DL_INFO)
+#if (MOCPP_DBG_LEVEL >= MOCPP_DL_INFO)
         char timestamp1[JSONDATE_LENGTH + 1] = {'\0'};
         tnow.toJsonString(timestamp1, JSONDATE_LENGTH + 1);
         char timestamp2[JSONDATE_LENGTH + 1] = {'\0'};
         nextChange.toJsonString(timestamp2, JSONDATE_LENGTH + 1);
-        AO_DBG_INFO("New limit for connector 1, scheduled at = %s, nextChange = %s, limit = {%f,%f,%i}",
+        MOCPP_DBG_INFO("New limit for connector 1, scheduled at = %s, nextChange = %s, limit = {%f,%f,%i}",
                             timestamp1, timestamp2,
                             limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
                             limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
@@ -538,13 +538,13 @@ void SmartChargingService::loop(){
 
 void SmartChargingService::setSmartChargingOutput(unsigned int connectorId, std::function<void(float,float,int)> limitOutput) {
     if ((connectorId > 0 && !getScConnectorById(connectorId))) {
-        AO_DBG_ERR("invalid args");
+        MOCPP_DBG_ERR("invalid args");
         return;
     }
 
     if (connectorId == 0) {
         if (this->limitOutput) {
-            AO_DBG_WARN("replacing existing SmartChargingOutput");
+            MOCPP_DBG_WARN("replacing existing SmartChargingOutput");
             (void)0;
         }
         this->limitOutput = limitOutput;
@@ -575,7 +575,7 @@ void SmartChargingService::updateAllowedChargingRateUnit(bool powerSupported, bo
 bool SmartChargingService::setChargingProfile(unsigned int connectorId, std::unique_ptr<ChargingProfile> chargingProfile) {
 
     if ((connectorId > 0 && !getScConnectorById(connectorId)) || !chargingProfile) {
-        AO_DBG_ERR("invalid args");
+        MOCPP_DBG_ERR("invalid args");
         return false;
     }
 
@@ -637,7 +637,7 @@ bool SmartChargingService::clearChargingProfile(std::function<bool(int, int, Cha
 std::unique_ptr<ChargingSchedule> SmartChargingService::getCompositeSchedule(unsigned int connectorId, int duration, ChargingRateUnitType_Optional unit) {
 
     if (connectorId > 0 && !getScConnectorById(connectorId)) {
-        AO_DBG_ERR("invalid args");
+        MOCPP_DBG_ERR("invalid args");
         return nullptr;
     }
     
@@ -704,18 +704,18 @@ bool SmartChargingServiceUtils::printProfileFileName(char *out, size_t bufsize, 
 
     switch (purpose) {
         case (ChargingProfilePurposeType::ChargePointMaxProfile):
-            pret = snprintf(out, bufsize, AO_FILENAME_PREFIX "sc-cm-%u.jsn", stackLevel);
+            pret = snprintf(out, bufsize, MOCPP_FILENAME_PREFIX "sc-cm-%u.jsn", stackLevel);
             break;
         case (ChargingProfilePurposeType::TxDefaultProfile):
-            pret = snprintf(out, bufsize, AO_FILENAME_PREFIX "sc-td-%u-%u.jsn", connectorId, stackLevel);
+            pret = snprintf(out, bufsize, MOCPP_FILENAME_PREFIX "sc-td-%u-%u.jsn", connectorId, stackLevel);
             break;
         case (ChargingProfilePurposeType::TxProfile):
-            pret = snprintf(out, bufsize, AO_FILENAME_PREFIX "sc-tx-%u-%u.jsn", connectorId, stackLevel);
+            pret = snprintf(out, bufsize, MOCPP_FILENAME_PREFIX "sc-tx-%u-%u.jsn", connectorId, stackLevel);
             break;
     }
 
     if (pret < 0 || (size_t) pret >= bufsize) {
-        AO_DBG_ERR("fn error: %i", pret);
+        MOCPP_DBG_ERR("fn error: %i", pret);
         return false;
     }
 
@@ -733,9 +733,9 @@ bool SmartChargingServiceUtils::storeProfile(std::shared_ptr<FilesystemAdapter> 
         return false;
     }
 
-    char fn [AO_MAX_PATH_SIZE] = {'\0'};
+    char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
 
-    if (!printProfileFileName(fn, AO_MAX_PATH_SIZE, connectorId, chargingProfile->getChargingProfilePurpose(), chargingProfile->getStackLevel())) {
+    if (!printProfileFileName(fn, MOCPP_MAX_PATH_SIZE, connectorId, chargingProfile->getChargingProfilePurpose(), chargingProfile->getStackLevel())) {
         return false;
     }
 
@@ -748,9 +748,9 @@ bool SmartChargingServiceUtils::removeProfile(std::shared_ptr<FilesystemAdapter>
         return false;
     }
 
-    char fn [AO_MAX_PATH_SIZE] = {'\0'};
+    char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
 
-    if (!printProfileFileName(fn, AO_MAX_PATH_SIZE, connectorId, purpose, stackLevel)) {
+    if (!printProfileFileName(fn, MOCPP_MAX_PATH_SIZE, connectorId, purpose, stackLevel)) {
         return false;
     }
 

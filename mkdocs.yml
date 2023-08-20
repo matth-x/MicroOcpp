@@ -1,4 +1,4 @@
-site_name: ArduinoOcpp docs
+site_name: MicroOcpp docs
 
 theme:
   name: material

@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-struct AO_FilesystemOpt {
+struct OCPP_FilesystemOpt {
     bool use;
     bool mount;
     bool formatFsOnFail;
@@ -20,7 +20,7 @@ struct AO_FilesystemOpt {
 #ifdef __cplusplus
 }
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class FilesystemOpt{
 private:
@@ -46,7 +46,7 @@ public:
                 break;
         }
     }
-    FilesystemOpt(struct AO_FilesystemOpt fsopt) {
+    FilesystemOpt(struct OCPP_FilesystemOpt fsopt) {
         this->use = fsopt.use;
         this->mount = fsopt.mount;
         this->formatFsOnFail = fsopt.formatFsOnFail;
@@ -57,7 +57,7 @@ public:
     bool formatOnFail() {return formatFsOnFail;}
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif //__cplusplus
 

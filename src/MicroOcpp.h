@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -9,54 +9,54 @@
 #include <memory>
 #include <functional>
 
-#include <ArduinoOcpp/Core/ConfigurationOptions.h>
-#include <ArduinoOcpp/Core/FilesystemAdapter.h>
-#include <ArduinoOcpp/Core/RequestCallbacks.h>
-#include <ArduinoOcpp/Core/Connection.h>
-#include <ArduinoOcpp/Core/PollResult.h>
-#include <ArduinoOcpp/Model/Metering/SampledValue.h>
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Model/ConnectorBase/Notification.h>
-#include <ArduinoOcpp/Model/ConnectorBase/ChargePointErrorData.h>
+#include <MicroOcpp/Core/ConfigurationOptions.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/RequestCallbacks.h>
+#include <MicroOcpp/Core/Connection.h>
+#include <MicroOcpp/Core/PollResult.h>
+#include <MicroOcpp/Model/Metering/SampledValue.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Model/ConnectorBase/Notification.h>
+#include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
 
-using ArduinoOcpp::OnReceiveConfListener;
-using ArduinoOcpp::OnReceiveReqListener;
-using ArduinoOcpp::OnSendConfListener;
-using ArduinoOcpp::OnAbortListener;
-using ArduinoOcpp::OnTimeoutListener;
-using ArduinoOcpp::OnReceiveErrorListener;
+using MicroOcpp::OnReceiveConfListener;
+using MicroOcpp::OnReceiveReqListener;
+using MicroOcpp::OnSendConfListener;
+using MicroOcpp::OnAbortListener;
+using MicroOcpp::OnTimeoutListener;
+using MicroOcpp::OnReceiveErrorListener;
 
-#ifndef AO_CUSTOM_WS
+#ifndef MOCPP_CUSTOM_WS
 //use links2004/WebSockets library
 
 /*
  * Initialize the library with the OCPP URL, EVSE voltage and filesystem configuration.
  * 
  * If the connections fails, please refer to 
- * https://github.com/matth-x/ArduinoOcpp/issues/36#issuecomment-989716573 for recommendations on
+ * https://github.com/matth-x/MicroOcpp/issues/36#issuecomment-989716573 for recommendations on
  * how to track down the issue with the connection.
  * 
  * This is a convenience function only available for Arduino. For a full initialization with TLS,
- * please refer to https://github.com/matth-x/ArduinoOcpp/tree/master/examples/ESP-TLS
+ * please refer to https://github.com/matth-x/MicroOcpp/tree/master/examples/ESP-TLS
  */
-void ocpp_initialize(
+void mocpp_initialize(
             const char *CS_hostname, //e.g. "example.com"
             uint16_t CS_port,        //e.g. 80
             const char *CS_url,      //e.g. "ws://example.com/steve/websocket/CentralSystemService/charger001"
             const char *chargePointModel = "Demo Charger",     //model name of this charger
             const char *chargePointVendor = "My Company Ltd.", //brand name
-            ArduinoOcpp::FilesystemOpt fsOpt = ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail, //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
+            MicroOcpp::FilesystemOpt fsOpt = MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail, //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
             const char *login = "", //login present in the websocket message header
             const char *password = "", //password present in the websocket message header
             const char *CA_cert = NULL); //TLS certificate
 #endif
 
 /*
- * Convenience initialization: use this for passing the BootNotification payload JSON to the ocpp_initialize(...) below
+ * Convenience initialization: use this for passing the BootNotification payload JSON to the mocpp_initialize(...) below
  *
  * Example usage:
  * 
- *     ocpp_initialize(osock, ChargerCredentials("Demo Charger", "My Company Ltd."));
+ *     mocpp_initialize(osock, ChargerCredentials("Demo Charger", "My Company Ltd."));
  * 
  * For a description of the fields, refer to OCPP 1.6 Specification - Edition 2 p. 60
  */
@@ -82,7 +82,7 @@ private:
  * Initialize the library with a WebSocket connection which is configured with protocol=ocpp1.6
  * (=Connection), EVSE voltage and filesystem configuration. This library requires that you handle
  * establishing the connection and keeping it alive. Please refer to
- * https://github.com/matth-x/ArduinoOcpp/tree/master/examples/ESP-TLS for an example how to use it.
+ * https://github.com/matth-x/MicroOcpp/tree/master/examples/ESP-TLS for an example how to use it.
  * 
  * This GitHub project also delivers an Connection implementation based on links2004/WebSockets. If
  * you need another WebSockets implementation, you can subclass the Connection class and pass it to
@@ -90,21 +90,21 @@ private:
  * https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/MongooseConnectionClient.cpp for
  * an example.
  */
-void ocpp_initialize(
-            ArduinoOcpp::Connection& connection, //WebSocket adapter for ArduinoOcpp
+void mocpp_initialize(
+            MicroOcpp::Connection& connection, //WebSocket adapter for MicroOcpp
             const char *bootNotificationCredentials = ChargerCredentials("Demo Charger", "My Company Ltd."), //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
-            std::shared_ptr<ArduinoOcpp::FilesystemAdapter> filesystem =
-                ArduinoOcpp::makeDefaultFilesystemAdapter(ArduinoOcpp::FilesystemOpt::Use_Mount_FormatOnFail)); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
+            std::shared_ptr<MicroOcpp::FilesystemAdapter> filesystem =
+                MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail)); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
 
 /*
  * Stop the OCPP library and release allocated resources.
  */
-void ocpp_deinitialize();
+void mocpp_deinitialize();
 
 /*
  * To be called in the main loop (e.g. place it inside loop())
  */
-void ocpp_loop();
+void mocpp_loop();
 
 /*
  * Transaction management.
@@ -125,13 +125,13 @@ void ocpp_loop();
  * Returns the transaction object if it was possible to create the transaction process. Returns
  * nullptr if either another transaction process is still active or you need to try it again later.
  */
-std::shared_ptr<ArduinoOcpp::Transaction> beginTransaction(const char *idTag, unsigned int connectorId = 1);
+std::shared_ptr<MicroOcpp::Transaction> beginTransaction(const char *idTag, unsigned int connectorId = 1);
 
 /*
  * Begin the transaction process and skip the OCPP-side authorization. See beginTransaction(...) for a
  * complete description
  */
-std::shared_ptr<ArduinoOcpp::Transaction> beginTransaction_authorized(const char *idTag, const char *parentIdTag = nullptr, unsigned int connectorId = 1);
+std::shared_ptr<MicroOcpp::Transaction> beginTransaction_authorized(const char *idTag, const char *parentIdTag = nullptr, unsigned int connectorId = 1);
 
 /*
  * End the transaction process by terminating the transaction and setting a reason for its termination.
@@ -183,7 +183,7 @@ const char *getTransactionIdTag(unsigned int connectorId = 1);
 /*
  * Returns the current transaction process. Returns nullptr if no transaction is running, preparing or finishing
  *
- * See the class definition in ArduinoOcpp/Model/Transactions/Transaction.h for possible uses of this object
+ * See the class definition in MicroOcpp/Model/Transactions/Transaction.h for possible uses of this object
  * 
  * Examples:
  * auto tx = getTransaction(); //fetch tx object
@@ -194,7 +194,7 @@ const char *getTransactionIdTag(unsigned int connectorId = 1);
  *     bool deauthorized = tx->isIdTagDeauthorized(); //if StartTransaction has been rejected
  * }
  */
-std::shared_ptr<ArduinoOcpp::Transaction>& getTransaction(unsigned int connectorId = 1);
+std::shared_ptr<MicroOcpp::Transaction>& getTransaction(unsigned int connectorId = 1);
 
 /* 
  * Returns if the OCPP library allows the EVSE to charge at the moment.
@@ -247,11 +247,11 @@ void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorI
 void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connectorId = 1); //Input if EVSE allows charge (= PWM signal on)
 
 void addErrorCodeInput(std::function<const char*()> errorCodeInput, unsigned int connectorId = 1); //Input for Error codes (please refer to OCPP 1.6, Edit2, p. 71 and 72 for valid error codes)
-void addErrorDataInput(std::function<ArduinoOcpp::ErrorData()> errorDataInput, unsigned int connectorId = 1);
+void addErrorDataInput(std::function<MicroOcpp::ErrorData()> errorDataInput, unsigned int connectorId = 1);
 
 void addMeterValueInput(std::function<float ()> valueInput, const char *measurand = nullptr, const char *unit = nullptr, const char *location = nullptr, const char *phase = nullptr, unsigned int connectorId = 1); //integrate further metering Inputs
 
-void addMeterValueInput(std::unique_ptr<ArduinoOcpp::SampledValueSampler> valueInput, unsigned int connectorId = 1); //integrate further metering Inputs (more extensive alternative)
+void addMeterValueInput(std::unique_ptr<MicroOcpp::SampledValueSampler> valueInput, unsigned int connectorId = 1); //integrate further metering Inputs (more extensive alternative)
 
 void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId = 1); //Input if instead of Available, send StatusNotification Preparing / Finishing
 
@@ -259,7 +259,7 @@ void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int conne
 
 void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connectorId = 1); //Input if charger is ready for StopTransaction
 
-void setTxNotificationOutput(std::function<void(ArduinoOcpp::Transaction*,ArduinoOcpp::TxNotification)> notificationOutput, unsigned int connectorId = 1); //called when transaction state changes (see TxNotification for possible events). Transaction can be null
+void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcpp::TxNotification)> notificationOutput, unsigned int connectorId = 1); //called when transaction state changes (see TxNotification for possible events). Transaction can be null
 
 /*
  * Set an InputOutput (reads and sets information at the same time) for forcing to unlock the
@@ -267,7 +267,7 @@ void setTxNotificationOutput(std::function<void(ArduinoOcpp::Transaction*,Arduin
  * Return values: true on success, false on failure, PollResult::Await if not known yet
  * Continues to call the Cb as long as it returns PollResult::Await
  */
-void setOnUnlockConnectorInOut(std::function<ArduinoOcpp::PollResult<bool>()> onUnlockConnectorInOut, unsigned int connectorId = 1);
+void setOnUnlockConnectorInOut(std::function<MicroOcpp::PollResult<bool>()> onUnlockConnectorInOut, unsigned int connectorId = 1);
 
 /*
  * Access further information about the internal state of the library
@@ -283,40 +283,40 @@ void setOnResetNotify(std::function<bool(bool)> onResetNotify); //call onResetNo
 
 void setOnResetExecute(std::function<void(bool)> onResetExecute); //reset handler. This function should reboot this controller immediately. Already defined for the ESP32 on Arduino
 
-#if defined(AO_CUSTOM_UPDATER) || defined(AO_CUSTOM_WS)
-#include <ArduinoOcpp/Model/FirmwareManagement/FirmwareService.h>
+#if defined(MOCPP_CUSTOM_UPDATER) || defined(MOCPP_CUSTOM_WS)
+#include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
 
 /*
  * You need to configure this object if FW updates are relevant for you. This project already
  * brings a simple configuration for the ESP32 and ESP8266 for prototyping purposes, however
  * for the productive system you will have to develop a configuration targeting the specific
  * OCPP backend.
- * See ArduinoOcpp/Model/FirmwareManagement/FirmwareService.h 
+ * See MicroOcpp/Model/FirmwareManagement/FirmwareService.h 
  */
-ArduinoOcpp::FirmwareService *getFirmwareService();
+MicroOcpp::FirmwareService *getFirmwareService();
 #endif
 
-#if defined(AO_CUSTOM_DIAGNOSTICS) || defined(AO_CUSTOM_WS)
-#include <ArduinoOcpp/Model/Diagnostics/DiagnosticsService.h>
+#if defined(MOCPP_CUSTOM_DIAGNOSTICS) || defined(MOCPP_CUSTOM_WS)
+#include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
 /*
  * This library implements the OCPP messaging side of Diagnostics, but no logging or the
  * log upload to your backend.
- * To integrate Diagnostics, see ArduinoOcpp/Model/Diagnostics/DiagnosticsService.h
+ * To integrate Diagnostics, see MicroOcpp/Model/Diagnostics/DiagnosticsService.h
  */
-ArduinoOcpp::DiagnosticsService *getDiagnosticsService();
+MicroOcpp::DiagnosticsService *getDiagnosticsService();
 #endif
 
 /*
  * Add features and customize the behavior of the OCPP client
  */
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 class Context;
 }
 
 //Get access to internal functions and data structures. The returned Context object allows
 //you to bypass the facade functions of this header and implement custom functionality.
-ArduinoOcpp::Context *getOcppContext();
+MicroOcpp::Context *getOcppContext();
 
 /*
  * Set a listener which is notified when the OCPP lib processes an incoming operation of type

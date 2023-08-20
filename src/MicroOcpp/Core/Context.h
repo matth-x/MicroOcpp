@@ -1,17 +1,17 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef AO_CONTEXT_H
-#define AO_CONTEXT_H
+#ifndef MOCPP_CONTEXT_H
+#define MOCPP_CONTEXT_H
 
 #include <memory>
 
-#include <ArduinoOcpp/Core/OperationRegistry.h>
-#include <ArduinoOcpp/Core/RequestQueue.h>
-#include <ArduinoOcpp/Model/Model.h>
+#include <MicroOcpp/Core/OperationRegistry.h>
+#include <MicroOcpp/Core/RequestQueue.h>
+#include <MicroOcpp/Model/Model.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Connection;
 class FilesystemAdapter;
@@ -43,6 +43,6 @@ public:
     OperationRegistry& getOperationRegistry();
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

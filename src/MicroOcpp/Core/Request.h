@@ -1,9 +1,9 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef AO_REQUEST_H
-#define AO_REQUEST_H
+#ifndef MOCPP_REQUEST_H
+#define MOCPP_REQUEST_H
 
 #define MESSAGE_TYPE_CALL 2
 #define MESSAGE_TYPE_CALLRESULT 3
@@ -11,9 +11,9 @@
 
 #include <memory>
 
-#include <ArduinoOcpp/Core/RequestCallbacks.h>
+#include <MicroOcpp/Core/RequestCallbacks.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Operation;
 class Model;
@@ -123,6 +123,6 @@ public:
     const char *getOperationType();
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
  #endif

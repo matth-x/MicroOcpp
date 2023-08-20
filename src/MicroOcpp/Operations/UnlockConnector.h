@@ -1,15 +1,15 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef UNLOCKCONNECTOR_H
 #define UNLOCKCONNECTOR_H
 
-#include <ArduinoOcpp/Core/Operation.h>
-#include <ArduinoOcpp/Core/PollResult.h>
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/PollResult.h>
 #include <functional>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Model;
 
@@ -33,5 +33,5 @@ public:
 };
 
 } //end namespace Ocpp16
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

@@ -1,18 +1,18 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef AO_FILESYSTEMADAPTER_H
-#define AO_FILESYSTEMADAPTER_H
+#ifndef MOCPP_FILESYSTEMADAPTER_H
+#define MOCPP_FILESYSTEMADAPTER_H
 
 #include <memory>
 #include <functional>
 
-#include <ArduinoOcpp/Platform.h>
-#include <ArduinoOcpp/Core/ConfigurationOptions.h>
+#include <MicroOcpp/Platform.h>
+#include <MicroOcpp/Core/ConfigurationOptions.h>
 
-#ifndef AO_FILENAME_PREFIX
-#define AO_FILENAME_PREFIX "/"
+#ifndef MOCPP_FILENAME_PREFIX
+#define MOCPP_FILENAME_PREFIX "/"
 #endif
 
 #define DISABLE_FS       0
@@ -22,32 +22,32 @@
 #define POSIX_FILEAPI    4
 
 // choose FileAPI if not given by build flag; assume usage with Arduino if no build flags are present
-#ifndef AO_USE_FILEAPI
-#if AO_PLATFORM == AO_PLATFORM_ARDUINO
+#ifndef MOCPP_USE_FILEAPI
+#if MOCPP_PLATFORM == MOCPP_PLATFORM_ARDUINO
 #if defined(ESP32)
-#define AO_USE_FILEAPI ARDUINO_LITTLEFS
+#define MOCPP_USE_FILEAPI ARDUINO_LITTLEFS
 #else
-#define AO_USE_FILEAPI ARDUINO_SPIFFS
+#define MOCPP_USE_FILEAPI ARDUINO_SPIFFS
 #endif
-#elif AO_PLATFORM == AO_PLATFORM_ESPIDF
-#define AO_USE_FILEAPI ESPIDF_SPIFFS
-#elif AO_PLATFORM == AO_PLATFORM_UNIX
-#define AO_USE_FILEAPI POSIX_FILEAPI
+#elif MOCPP_PLATFORM == MOCPP_PLATFORM_ESPIDF
+#define MOCPP_USE_FILEAPI ESPIDF_SPIFFS
+#elif MOCPP_PLATFORM == MOCPP_PLATFORM_UNIX
+#define MOCPP_USE_FILEAPI POSIX_FILEAPI
 #else
-#define AO_USE_FILEAPI DISABLE_FS
-#endif //switch-case AO_PLATFORM
-#endif //ndef AO_USE_FILEAPI
+#define MOCPP_USE_FILEAPI DISABLE_FS
+#endif //switch-case MOCPP_PLATFORM
+#endif //ndef MOCPP_USE_FILEAPI
 
 // set default max path size parameters
-#ifndef AO_MAX_PATH_SIZE
-#if AO_USE_FILEAPI == POSIX_FILEAPI
-#define AO_MAX_PATH_SIZE 128
+#ifndef MOCPP_MAX_PATH_SIZE
+#if MOCPP_USE_FILEAPI == POSIX_FILEAPI
+#define MOCPP_MAX_PATH_SIZE 128
 #else
-#define AO_MAX_PATH_SIZE 30
+#define MOCPP_MAX_PATH_SIZE 30
 #endif
 #endif
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class FileAdapter {
 public:
@@ -65,7 +65,7 @@ public:
     virtual int stat(const char *path, size_t *size) = 0;
     virtual std::unique_ptr<FileAdapter> open(const char *fn, const char *mode) = 0;
     virtual bool remove(const char *fn) = 0;
-    virtual int ftw_root(std::function<int(const char *fpath)> fn) = 0; //enumerate the files in the ao_store root folder
+    virtual int ftw_root(std::function<int(const char *fpath)> fn) = 0; //enumerate the files in the mo_store root folder
 };
 
 /*
@@ -75,12 +75,12 @@ public:
  *     - ESP-IDF SPIFFS
  *     - POSIX-like API (tested on Ubuntu 20.04)
  * 
- * You can add support for other file systems by passing a custom adapter to ocpp_initialize(...)
+ * You can add support for other file systems by passing a custom adapter to mocpp_initialize(...)
  * 
  * Returns null if platform is not supported or Filesystem is disabled
  */
 std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config);
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

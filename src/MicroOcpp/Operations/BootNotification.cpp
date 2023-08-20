@@ -1,16 +1,16 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/BootNotification.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/Boot/BootService.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/BootNotification.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Boot/BootService.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Debug.h>
 
 #include <string.h>
 
-using ArduinoOcpp::Ocpp16::BootNotification;
+using MicroOcpp::Ocpp16::BootNotification;
 
 BootNotification::BootNotification(Model& model, std::unique_ptr<DynamicJsonDocument> payload) : model(model), credentials(std::move(payload)) {
     
@@ -24,7 +24,7 @@ std::unique_ptr<DynamicJsonDocument> BootNotification::createReq() {
     if (credentials) {
         return std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(*credentials));
     } else {
-        AO_DBG_ERR("payload undefined");
+        MOCPP_DBG_ERR("payload undefined");
         return createEmptyDocument();
     }
 }
@@ -35,12 +35,12 @@ void BootNotification::processConf(JsonObject payload) {
         if (model.getClock().setTime(currentTime)) {
             //success
         } else {
-            AO_DBG_ERR("Time string format violation. Expect format like 2022-02-01T20:53:32.486Z");
+            MOCPP_DBG_ERR("Time string format violation. Expect format like 2022-02-01T20:53:32.486Z");
             errorCode = "PropertyConstraintViolation";
             return;
         }
     } else {
-        AO_DBG_ERR("Missing attribute currentTime");
+        MOCPP_DBG_ERR("Missing attribute currentTime");
         errorCode = "FormationViolation";
         return;
     }
@@ -78,7 +78,7 @@ void BootNotification::processConf(JsonObject payload) {
         bootService->notifyRegistrationStatus(status);
     }
 
-    AO_DBG_INFO("request has been %s", status == RegistrationStatus::Accepted ? "Accepted" :
+    MOCPP_DBG_INFO("request has been %s", status == RegistrationStatus::Accepted ? "Accepted" :
                                        status == RegistrationStatus::Pending ? "replied with Pending" :
                                        "Rejected");
 }

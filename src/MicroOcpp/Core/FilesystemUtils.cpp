@@ -1,40 +1,40 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/FilesystemAdapter.h>
-#include <ArduinoOcpp/Core/FilesystemUtils.h>
-#include <ArduinoOcpp/Core/ConfigurationOptions.h> //FilesystemOpt
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Core/ConfigurationOptions.h> //FilesystemOpt
+#include <MicroOcpp/Debug.h>
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 std::unique_ptr<DynamicJsonDocument> FilesystemUtils::loadJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn) {
     if (!filesystem || !fn || *fn == '\0') {
-        AO_DBG_ERR("Format error");
+        MOCPP_DBG_ERR("Format error");
         return nullptr;
     }
 
-    if (strnlen(fn, AO_MAX_PATH_SIZE) >= AO_MAX_PATH_SIZE) {
-        AO_DBG_ERR("Fn too long: %.*s", AO_MAX_PATH_SIZE, fn);
+    if (strnlen(fn, MOCPP_MAX_PATH_SIZE) >= MOCPP_MAX_PATH_SIZE) {
+        MOCPP_DBG_ERR("Fn too long: %.*s", MOCPP_MAX_PATH_SIZE, fn);
         return nullptr;
     }
     
     size_t fsize = 0;
     if (filesystem->stat(fn, &fsize) != 0) {
-        AO_DBG_DEBUG("File does not exist: %s", fn);
+        MOCPP_DBG_DEBUG("File does not exist: %s", fn);
         return nullptr;
     }
 
     if (fsize < 2) {
-        AO_DBG_ERR("File too small for JSON, collect %s", fn);
+        MOCPP_DBG_ERR("File too small for JSON, collect %s", fn);
         filesystem->remove(fn);
         return nullptr;
     }
 
     auto file = filesystem->open(fn, "r");
     if (!file) {
-        AO_DBG_ERR("Could not open file %s", fn);
+        MOCPP_DBG_ERR("Could not open file %s", fn);
         return nullptr;
     }
 
@@ -43,18 +43,18 @@ std::unique_ptr<DynamicJsonDocument> FilesystemUtils::loadJson(std::shared_ptr<F
     //capacity = ceil capacity_init to the next power of two; should be at least 128
 
     size_t capacity = 128;
-    while (capacity < capacity_init && capacity < AO_MAX_JSON_CAPACITY) {
+    while (capacity < capacity_init && capacity < MOCPP_MAX_JSON_CAPACITY) {
         capacity *= 2;
     }
-    if (capacity > AO_MAX_JSON_CAPACITY) {
-        capacity = AO_MAX_JSON_CAPACITY;
+    if (capacity > MOCPP_MAX_JSON_CAPACITY) {
+        capacity = MOCPP_MAX_JSON_CAPACITY;
     }
     
     auto doc = std::unique_ptr<DynamicJsonDocument>(nullptr);
     DeserializationError err = DeserializationError::NoMemory;
     ArduinoJsonFileAdapter fileReader {file.get()};
 
-    while (err == DeserializationError::NoMemory && capacity <= AO_MAX_JSON_CAPACITY) {
+    while (err == DeserializationError::NoMemory && capacity <= MOCPP_MAX_JSON_CAPACITY) {
 
         doc.reset(new DynamicJsonDocument(capacity));
         err = deserializeJson(*doc, fileReader);
@@ -65,35 +65,35 @@ std::unique_ptr<DynamicJsonDocument> FilesystemUtils::loadJson(std::shared_ptr<F
     }
 
     if (err) {
-        AO_DBG_ERR("Error deserializing file %s: %s", fn, err.c_str());
+        MOCPP_DBG_ERR("Error deserializing file %s: %s", fn, err.c_str());
         //skip this file
         return nullptr;
     }
 
-    AO_DBG_DEBUG("Loaded JSON file: %s", fn);
+    MOCPP_DBG_DEBUG("Loaded JSON file: %s", fn);
 
     return doc;
 }
 
 bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn, const DynamicJsonDocument& doc) {
     if (!filesystem || !fn || *fn == '\0') {
-        AO_DBG_ERR("Format error");
+        MOCPP_DBG_ERR("Format error");
         return false;
     }
 
-    if (strnlen(fn, AO_MAX_PATH_SIZE) >= AO_MAX_PATH_SIZE) {
-        AO_DBG_ERR("Fn too long: %.*s", AO_MAX_PATH_SIZE, fn);
+    if (strnlen(fn, MOCPP_MAX_PATH_SIZE) >= MOCPP_MAX_PATH_SIZE) {
+        MOCPP_DBG_ERR("Fn too long: %.*s", MOCPP_MAX_PATH_SIZE, fn);
         return false;
     }
 
     if (doc.isNull() || doc.overflowed()) {
-        AO_DBG_ERR("Invalid JSON %s", fn);
+        MOCPP_DBG_ERR("Invalid JSON %s", fn);
         return false;
     }
 
     auto file = filesystem->open(fn, "w");
     if (!file) {
-        AO_DBG_ERR("Could not open file %s", fn);
+        MOCPP_DBG_ERR("Could not open file %s", fn);
         return false;
     }
 
@@ -102,16 +102,16 @@ bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, c
     size_t written = serializeJson(doc, fileWriter);
 
     if (written < 2) {
-        AO_DBG_ERR("Error writing file %s", fn);
+        MOCPP_DBG_ERR("Error writing file %s", fn);
         size_t file_size = 0;
         if (filesystem->stat(fn, &file_size) == 0) {
-            AO_DBG_DEBUG("Collect invalid file %s", fn);
+            MOCPP_DBG_DEBUG("Collect invalid file %s", fn);
             filesystem->remove(fn);
         }
         return false;
     }
 
-    AO_DBG_DEBUG("Wrote JSON file: %s", fn);
+    MOCPP_DBG_DEBUG("Wrote JSON file: %s", fn);
     return true;
 }
 
@@ -119,10 +119,10 @@ bool FilesystemUtils::remove_if(std::shared_ptr<FilesystemAdapter> filesystem, s
     return filesystem->ftw_root([filesystem, pred] (const char *fpath) {
         if (pred(fpath) && fpath[0] != '.') {
 
-            char fn [AO_MAX_PATH_SIZE] = {'\0'};
-            auto ret = snprintf(fn, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "%s", fpath);
-            if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
-                AO_DBG_ERR("fn error: %i", ret);
+            char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
+            auto ret = snprintf(fn, MOCPP_MAX_PATH_SIZE, MOCPP_FILENAME_PREFIX "%s", fpath);
+            if (ret < 0 || ret >= MOCPP_MAX_PATH_SIZE) {
+                MOCPP_DBG_ERR("fn error: %i", ret);
                 return -1;
             }
 

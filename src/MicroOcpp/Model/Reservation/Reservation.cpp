@@ -1,16 +1,16 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/Reservation/Reservation.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Model/Reservation/Reservation.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Debug.h>
 
 #ifndef RESERVATION_FN
-#define RESERVATION_FN (AO_FILENAME_PREFIX "reservations.jsn")
+#define RESERVATION_FN (MOCPP_FILENAME_PREFIX "reservations.jsn")
 #endif
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 Reservation::Reservation(Model& model, unsigned int slot) : model(model), slot(slot) {
     const size_t KEY_SIZE = 50;
@@ -33,7 +33,7 @@ Reservation::Reservation(Model& model, unsigned int slot) : model(model), slot(s
     parentIdTag = declareConfiguration<const char*>(key, "", RESERVATION_FN, false, false, true, false);
 
     if (!connectorId || !expiryDateRaw || !idTag || !reservationId || !parentIdTag) {
-        AO_DBG_ERR("initialization failure");
+        MOCPP_DBG_ERR("initialization failure");
         (void)0;
     }
 }

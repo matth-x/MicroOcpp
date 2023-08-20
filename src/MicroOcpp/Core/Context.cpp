@@ -1,15 +1,15 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Core/Request.h>
-#include <ArduinoOcpp/Core/Connection.h>
-#include <ArduinoOcpp/Model/Model.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Core/Request.h>
+#include <MicroOcpp/Core/Connection.h>
+#include <MicroOcpp/Model/Model.h>
 
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Debug.h>
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 Context::Context(Connection& connection, std::shared_ptr<FilesystemAdapter> filesystem, uint16_t bootNr)
         : connection(connection), model{bootNr}, reqQueue{operationRegistry, &model, filesystem} {

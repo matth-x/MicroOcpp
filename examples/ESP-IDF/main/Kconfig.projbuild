@@ -18,19 +18,19 @@ menu "Example Configuration"
         help
             Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
     
-    config AO_OCPP_BACKEND
+    config MOCPP_OCPP_BACKEND
         string "OCPP backend URL"
         default "ws://echo.websocket.events/"
         help
             URL of the OCPP backend
     
-    config AO_CHARGEBOXID
+    config MOCPP_CHARGEBOXID
         string "ChargeBoxId"
         default ""
         help
             ChargeBoxId as it appears in the WebSocket connection URL
 
-    config AO_AUTHORIZATIONKEY
+    config MOCPP_AUTHORIZATIONKEY
         string "Authorization Key"
         default ""
         help

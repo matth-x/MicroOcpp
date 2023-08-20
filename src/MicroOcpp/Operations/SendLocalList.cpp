@@ -1,12 +1,12 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/SendLocalList.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
+#include <MicroOcpp/Operations/SendLocalList.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Authorization/AuthorizationService.h>
 
-using ArduinoOcpp::Ocpp16::SendLocalList;
+using MicroOcpp::Ocpp16::SendLocalList;
 
 SendLocalList::SendLocalList(Model& model) : model(model) {
   
@@ -33,7 +33,7 @@ void SendLocalList::processReq(JsonObject payload) {
         return;
     }
 
-    if (payload["localAuthorizationList"].as<JsonArray>().size() > AO_SendLocalListMaxLength) {
+    if (payload["localAuthorizationList"].as<JsonArray>().size() > MOCPP_SendLocalListMaxLength) {
         errorCode = "OccurenceConstraintViolation";
     }
 

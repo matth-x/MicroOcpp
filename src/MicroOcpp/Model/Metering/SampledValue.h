@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -9,9 +9,9 @@
 #include <memory>
 #include <functional>
 
-#include <ArduinoOcpp/Platform.h>
+#include <MicroOcpp/Platform.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 template <class T>
 class SampledValueDeSerializer {
@@ -156,6 +156,6 @@ public:
     }
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

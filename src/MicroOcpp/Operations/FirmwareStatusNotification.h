@@ -1,15 +1,15 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Operation.h>
 
-#include <ArduinoOcpp/Model/FirmwareManagement/FirmwareStatus.h>
+#include <MicroOcpp/Model/FirmwareManagement/FirmwareStatus.h>
 
 #ifndef FIRMWARESTATUSNOTIFICATION_H
 #define FIRMWARESTATUSNOTIFICATION_H
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 namespace Ocpp16 {
 
 class FirmwareStatusNotification : public Operation {
@@ -28,6 +28,6 @@ public:
 };
 
 } //end namespace Ocpp16
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

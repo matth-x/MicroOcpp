@@ -1,28 +1,28 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/Metering/MeteringConnector.h>
-#include <ArduinoOcpp/Model/Metering/MeterStore.h>
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Operations/MeterValues.h>
-#include <ArduinoOcpp/Platform.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Model/Metering/MeteringConnector.h>
+#include <MicroOcpp/Model/Metering/MeterStore.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Operations/MeterValues.h>
+#include <MicroOcpp/Platform.h>
+#include <MicroOcpp/Debug.h>
 
 #include <cstddef>
 #include <cinttypes>
 
-using namespace ArduinoOcpp;
-using namespace ArduinoOcpp::Ocpp16;
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp16;
 
 MeteringConnector::MeteringConnector(Model& model, int connectorId, MeterStore& meterStore)
         : model(model), connectorId{connectorId}, meterStore(meterStore) {
 
     auto MeterValuesSampledData = declareConfiguration<const char*>("MeterValuesSampledData", "", CONFIGURATION_FN);
     declareConfiguration<int>("MeterValuesSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, false, true, false, false);
-    MeterValueCacheSize = declareConfiguration("AO_MeterValueCacheSize", 1, CONFIGURATION_FN, true, true, true, false);
+    MeterValueCacheSize = declareConfiguration("MO_MeterValueCacheSize", 1, CONFIGURATION_FN, true, true, true, false);
     MeterValueSampleInterval = declareConfiguration("MeterValueSampleInterval", 60);
     
     auto StopTxnSampledData = declareConfiguration<const char*>("StopTxnSampledData", "", CONFIGURATION_FN);
@@ -34,8 +34,8 @@ MeteringConnector::MeteringConnector(Model& model, int connectorId, MeterStore& 
     
     auto StopTxnAlignedData = declareConfiguration<const char*>("StopTxnAlignedData", "", CONFIGURATION_FN);
 
-    MeterValuesInTxOnly = declareConfiguration<bool>("AO_MeterValuesInTxOnly", true, CONFIGURATION_FN, true, true, true, false);
-    StopTxnDataCapturePeriodic = declareConfiguration<bool>("AO_StopTxnDataCapturePeriodic", false, CONFIGURATION_FN, true, true, true, false);
+    MeterValuesInTxOnly = declareConfiguration<bool>("MO_MeterValuesInTxOnly", true, CONFIGURATION_FN, true, true, true, false);
+    StopTxnDataCapturePeriodic = declareConfiguration<bool>("MO_StopTxnDataCapturePeriodic", false, CONFIGURATION_FN, true, true, true, false);
 
     sampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesSampledData));
     alignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesAlignedData));
@@ -53,7 +53,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
     }
 
     if (txBreak) {
-        lastSampleTime = ao_tick_ms();
+        lastSampleTime = mocpp_tick_ms();
     }
 
     if ((txBreak || meterData.size() >= (size_t) *MeterValueCacheSize) && !meterData.empty()) {
@@ -71,7 +71,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
             //check during transaction
 
             if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
-                AO_DBG_WARN("reload stopTxnData");
+                MOCPP_DBG_WARN("reload stopTxnData");
                 //reload (e.g. after power cut during transaction)
                 stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction.get());
             }
@@ -93,7 +93,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
         if (dt <= 0 ||                              //normal case: interval elapsed
                 dt > *ClockAlignedDataInterval) {   //special case: clock has been adjusted or first run
 
-            AO_DBG_DEBUG("Clock aligned measurement %" PRId32 "s: %s", dt,
+            MOCPP_DBG_DEBUG("Clock aligned measurement %" PRId32 "s: %s", dt,
                 abs(dt) <= 60 ?
                 "in time (tolerance <= 60s)" : "off, e.g. because of first run. Ignore");
             if (abs(dt) <= 60) { //is measurement still "clock-aligned"?
@@ -130,7 +130,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
     if (*MeterValueSampleInterval >= 1) {
         //record periodic tx data
 
-        if (ao_tick_ms() - lastSampleTime >= (unsigned long) (*MeterValueSampleInterval * 1000)) {
+        if (mocpp_tick_ms() - lastSampleTime >= (unsigned long) (*MeterValueSampleInterval * 1000)) {
             auto sampleMeterValues = sampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::SamplePeriodic);
             if (sampleMeterValues) {
                 meterData.push_back(std::move(sampleMeterValues));
@@ -142,7 +142,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
                     stopTxnData->addTxData(std::move(sampleStopTx));
                 }
             }
-            lastSampleTime = ao_tick_ms();
+            lastSampleTime = mocpp_tick_ms();
         }   
     }
 
@@ -183,7 +183,7 @@ std::unique_ptr<SampledValue> MeteringConnector::readTxEnergyMeter(ReadingContex
     if (energySamplerIndex >= 0 && (size_t) energySamplerIndex < samplers.size()) {
         return samplers[energySamplerIndex]->takeValue(model);
     } else {
-        AO_DBG_DEBUG("Called readTxEnergyMeter(), but no energySampler or handling strategy set");
+        MOCPP_DBG_DEBUG("Called readTxEnergyMeter(), but no energySampler or handling strategy set");
         return nullptr;
     }
 }
@@ -220,7 +220,7 @@ std::shared_ptr<TransactionMeterData> MeteringConnector::getStopTxMeterData(Tran
     auto txData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
 
     if (!txData) {
-        AO_DBG_ERR("could not create TxData");
+        MOCPP_DBG_ERR("could not create TxData");
         return nullptr;
     }
 

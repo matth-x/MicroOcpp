@@ -1,15 +1,15 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/ChangeConfiguration.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/ChangeConfiguration.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Debug.h>
 
 #include <cmath> //for isnan check
 #include <cctype> //for tolower
 
-using ArduinoOcpp::Ocpp16::ChangeConfiguration;
+using MicroOcpp::Ocpp16::ChangeConfiguration;
 
 ChangeConfiguration::ChangeConfiguration() {
   
@@ -23,13 +23,13 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     const char *key = payload["key"] | "";
     if (strlen(key) < 1) {
         errorCode = "FormationViolation";
-        AO_DBG_WARN("Could not read key");
+        MOCPP_DBG_WARN("Could not read key");
         return;
     }
 
     if (!payload["value"].is<const char *>()) {
         errorCode = "FormationViolation";
-        AO_DBG_WARN("Message is lacking value");
+        MOCPP_DBG_WARN("Message is lacking value");
         return;
     }
 
@@ -44,7 +44,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     }
 
     if (!configuration->permissionRemotePeerCanWrite()) {
-        AO_DBG_WARN("Trying to override readonly value");
+        MOCPP_DBG_WARN("Trying to override readonly value");
 
         if (configuration->permissionRemotePeerCanRead()) {
             readOnly = true;
@@ -113,7 +113,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     }
 
     if (nDigits > INT_MAXDIGITS) {
-        AO_DBG_DEBUG("Possible integer overflow: key = %s, value = %s", key, value);
+        MOCPP_DBG_DEBUG("Possible integer overflow: key = %s, value = %s", key, value);
         convertibleInt = false;
     }
 
@@ -150,21 +150,21 @@ void ChangeConfiguration::processReq(JsonObject payload) {
         if (validator && !validator(value)) {
             //validator exists and validation fails
             reject = true;
-            AO_DBG_WARN("validation failed for key=%s value=%s", key, value);
+            MOCPP_DBG_WARN("validation failed for key=%s value=%s", key, value);
             return;
         }
 
         *configurationConcrete = value;
     } else {
         reject = true;
-        AO_DBG_WARN("Value has incompatible type");
+        MOCPP_DBG_WARN("Value has incompatible type");
         return;
     }
 
     //success
 
     if (!configuration_save()) {
-        AO_DBG_ERR("could not write changes to flash");
+        MOCPP_DBG_ERR("could not write changes to flash");
         errorCode = "InternalError";
         return;
     }

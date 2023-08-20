@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef RESERVATIONSERVICE_H
 #define RESERVATIONSERVICE_H
 
-#include <ArduinoOcpp/Model/Reservation/Reservation.h>
+#include <MicroOcpp/Model/Reservation/Reservation.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Context;
 

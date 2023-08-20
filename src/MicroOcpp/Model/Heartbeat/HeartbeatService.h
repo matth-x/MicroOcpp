@@ -1,14 +1,14 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef HEARTBEATSERVICE_H
 #define HEARTBEATSERVICE_H
 
-#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <memory>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Context;
 
@@ -17,7 +17,7 @@ private:
     Context& context;
 
     unsigned long lastHeartbeat;
-    std::shared_ptr<ArduinoOcpp::Configuration<int>> heartbeatInterval;
+    std::shared_ptr<MicroOcpp::Configuration<int>> heartbeatInterval;
 
 public:
     HeartbeatService(Context& context);

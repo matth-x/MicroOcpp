@@ -1,14 +1,14 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/UnlockConnector.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/UnlockConnector.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::UnlockConnector;
+using MicroOcpp::Ocpp16::UnlockConnector;
 
-#define AO_UNLOCK_TIMEOUT 10000
+#define MOCPP_UNLOCK_TIMEOUT 10000
 
 UnlockConnector::UnlockConnector(Model& model) : model(model) {
   
@@ -36,14 +36,14 @@ void UnlockConnector::processReq(JsonObject payload) {
     if (unlockConnector != nullptr) {
         cbUnlockResult = unlockConnector();
     } else {
-        AO_DBG_WARN("Unlock CB undefined");
+        MOCPP_DBG_WARN("Unlock CB undefined");
     }
 
-    timerStart = ao_tick_ms();
+    timerStart = mocpp_tick_ms();
 }
 
 std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf() {
-    if (!err && ao_tick_ms() - timerStart < AO_UNLOCK_TIMEOUT) {
+    if (!err && mocpp_tick_ms() - timerStart < MOCPP_UNLOCK_TIMEOUT) {
         //do poll and if more time is needed, delay creation of conf msg
 
         if (unlockConnector) {

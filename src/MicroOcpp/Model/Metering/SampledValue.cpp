@@ -1,12 +1,12 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/Metering/SampledValue.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Model/Metering/SampledValue.h>
+#include <MicroOcpp/Debug.h>
 #include <cinttypes>
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 int32_t SampledValueDeSerializer<int32_t>::deserialize(const char *str) {
     return strtol(str, nullptr, 10);
@@ -19,7 +19,7 @@ std::string SampledValueDeSerializer<int32_t>::serialize(int32_t& val) {
 }
 
 //helper function
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 namespace Ocpp16 {
 const char *serializeReadingContext(ReadingContext context) {
     switch (context) {
@@ -40,7 +40,7 @@ const char *serializeReadingContext(ReadingContext context) {
         case (ReadingContext::Trigger):
             return "Trigger";
         default:
-            AO_DBG_ERR("ReadingContext not specified");
+            MOCPP_DBG_ERR("ReadingContext not specified");
             /* fall through */
         case (ReadingContext::NOT_SET):
             return nullptr;
@@ -48,12 +48,12 @@ const char *serializeReadingContext(ReadingContext context) {
 }
 ReadingContext deserializeReadingContext(const char *context) {
     if (!context) {
-        AO_DBG_ERR("Invalid argument");
+        MOCPP_DBG_ERR("Invalid argument");
         return ReadingContext::NOT_SET;
     }
 
     if (!strcmp(context, "NOT_SET")) {
-        AO_DBG_DEBUG("Deserialize Null-ReadingContext");
+        MOCPP_DBG_DEBUG("Deserialize Null-ReadingContext");
         return ReadingContext::NOT_SET;
     } else if (!strcmp(context, "Sample.Periodic")) {
         return ReadingContext::SamplePeriodic;
@@ -73,7 +73,7 @@ ReadingContext deserializeReadingContext(const char *context) {
         return ReadingContext::Trigger;
     }
 
-    AO_DBG_ERR("ReadingContext not specified %.10s", context);
+    MOCPP_DBG_ERR("ReadingContext not specified %.10s", context);
     return ReadingContext::NOT_SET;
 }
 }} //end namespaces

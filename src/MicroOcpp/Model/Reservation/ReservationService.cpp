@@ -1,18 +1,18 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/Reservation/ReservationService.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Operations/CancelReservation.h>
-#include <ArduinoOcpp/Operations/ReserveNow.h>
+#include <MicroOcpp/Model/Reservation/ReservationService.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/ConnectorBase/Connector.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Operations/CancelReservation.h>
+#include <MicroOcpp/Operations/ReserveNow.h>
 
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Debug.h>
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 ReservationService::ReservationService(Context& context, unsigned int numConnectors) : context(context), maxReservations((int) numConnectors - 1) {
     if (maxReservations > 0) {
@@ -83,7 +83,7 @@ void ReservationService::loop() {
 
 Reservation *ReservationService::getReservation(unsigned int connectorId) {
     if (connectorId == 0) {
-        AO_DBG_DEBUG("tried to fetch connectorId 0");
+        MOCPP_DBG_DEBUG("tried to fetch connectorId 0");
         return nullptr; //cannot fetch for connectorId 0 because multiple reservations are possible at a time
     }
 
@@ -98,7 +98,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId) {
 
 Reservation *ReservationService::getReservation(const char *idTag, const char *parentIdTag) {
     if (idTag == nullptr) {
-        AO_DBG_ERR("invalid input");
+        MOCPP_DBG_ERR("invalid input");
         return nullptr;
     }
 
@@ -141,7 +141,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
 
     if (reserveConnectorZeroSupported && !*reserveConnectorZeroSupported) {
         //no connectorZero check - all done
-        AO_DBG_DEBUG("no reservation");
+        MOCPP_DBG_DEBUG("no reservation");
         return nullptr;
     }
 
@@ -201,7 +201,7 @@ bool ReservationService::updateReservation(JsonObject payload) {
 //                payload["idTag"],
 //                payload.containsKey("parentIdTag") ? payload["parentIdTag"] : nullptr)) {
 //    if (auto reservation = getReservation(payload["connectorId"].as<int>())) {
-        AO_DBG_DEBUG("found blocking reservation at connectorId %u", reservation->getConnectorId());
+        MOCPP_DBG_DEBUG("found blocking reservation at connectorId %u", reservation->getConnectorId());
         (void)reservation;
         return false;
     }
@@ -214,6 +214,6 @@ bool ReservationService::updateReservation(JsonObject payload) {
         }
     }
 
-    AO_DBG_ERR("error finding blocking reservation");
+    MOCPP_DBG_ERR("error finding blocking reservation");
     return false;
 }

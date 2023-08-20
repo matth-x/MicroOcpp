@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef CHARGECONTROLCOMMON_H
 #define CHARGECONTROLCOMMON_H
 
-#include <ArduinoOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Context;
 
@@ -20,6 +20,6 @@ public:
     void loop();
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

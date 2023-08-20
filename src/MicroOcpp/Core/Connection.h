@@ -1,25 +1,25 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef AO_CONNECTION_H
-#define AO_CONNECTION_H
+#ifndef MOCPP_CONNECTION_H
+#define MOCPP_CONNECTION_H
 
 #include <functional>
 #include <memory>
 #include <string>
 
-#include <ArduinoOcpp/Platform.h>
+#include <MicroOcpp/Platform.h>
 
 //On all platforms other than Arduino, the integrated WS lib (links2004/arduinoWebSockets) cannot be
 //used. On Arduino it's usage is optional.
-#ifndef AO_CUSTOM_WS
-#if AO_PLATFORM != AO_PLATFORM_ARDUINO
-#define AO_CUSTOM_WS
+#ifndef MOCPP_CUSTOM_WS
+#if MOCPP_PLATFORM != MOCPP_PLATFORM_ARDUINO
+#define MOCPP_CUSTOM_WS
 #endif
-#endif //ndef AO_CUSTOM_WS
+#endif //ndef MOCPP_CUSTOM_WS
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 using ReceiveTXTcallback = std::function<bool(const char*, size_t)>;
 
@@ -46,12 +46,12 @@ public:
     virtual void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) = 0;
 
     /*
-     * Returns the timestamp of the last incoming message. Use ao_tick_ms() for creating the correct timestamp
+     * Returns the timestamp of the last incoming message. Use mocpp_tick_ms() for creating the correct timestamp
      */
     virtual unsigned long getLastRecv() {return 0;}
 
     /*
-     * Returns the timestamp of the last time a connection got successfully established. Use ao_tick_ms() for creating the correct timestamp
+     * Returns the timestamp of the last time a connection got successfully established. Use mocpp_tick_ms() for creating the correct timestamp
      */
     virtual unsigned long getLastConnected() {return 0;}
 };
@@ -72,13 +72,13 @@ public:
     bool isConnected() {return connected;}
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
-#ifndef AO_CUSTOM_WS
+#ifndef MOCPP_CUSTOM_WS
 
 #include <WebSocketsClient.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 namespace EspWiFi {
 
 class WSClient : public Connection {
@@ -100,6 +100,6 @@ public:
 };
 
 } //end namespace EspWiFi
-} //end namespace ArduinoOcpp
-#endif //ndef AO_CUSTOM_WS
+} //end namespace MicroOcpp
+#endif //ndef MOCPP_CUSTOM_WS
 #endif

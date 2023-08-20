@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -8,11 +8,11 @@
 #include <functional>
 #include <memory>
 
-#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
-#include <ArduinoOcpp/Model/FirmwareManagement/FirmwareStatus.h>
-#include <ArduinoOcpp/Core/Time.h>
+#include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Model/FirmwareManagement/FirmwareStatus.h>
+#include <MicroOcpp/Core/Time.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 enum class DownloadStatus {
     NotDownloaded, // == before download or during download
@@ -89,12 +89,12 @@ public:
     void setInstallationStatusInput(std::function<InstallationStatus()> installationStatusInput);
 };
 
-} //endif namespace ArduinoOcpp
+} //endif namespace MicroOcpp
 
-#if !defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
+#if !defined(MOCPP_CUSTOM_UPDATER) && !defined(MOCPP_CUSTOM_WS)
 #if defined(ESP32) || defined(ESP8266)
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 namespace EspWiFi {
 
 FirmwareService *makeFirmwareService(Context& context);
@@ -103,6 +103,6 @@ FirmwareService *makeFirmwareService(Context& context);
 }
 
 #endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
+#endif //!defined(MOCPP_CUSTOM_UPDATER) && !defined(MOCPP_CUSTOM_WS)
 
 #endif

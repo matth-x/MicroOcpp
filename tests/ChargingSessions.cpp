@@ -1,30 +1,30 @@
-#include <ArduinoOcpp.h>
-#include <ArduinoOcpp/Core/Connection.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
-#include <ArduinoOcpp/Operations/BootNotification.h>
-#include <ArduinoOcpp/Operations/StatusNotification.h>
-#include <ArduinoOcpp/Operations/CustomOperation.h>
+#include <MicroOcpp.h>
+#include <MicroOcpp/Core/Connection.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Operations/BootNotification.h>
+#include <MicroOcpp/Operations/StatusNotification.h>
+#include <MicroOcpp/Operations/CustomOperation.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 
 TEST_CASE( "Charging sessions" ) {
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;
-    ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+    mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
     auto engine = getOcppContext();
     auto& checkMsg = engine->getOperationRegistry();
 
-    ao_set_timer(custom_timer_cb);
+    mocpp_set_timer(custom_timer_cb);
 
     auto connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN);
         *connectionTimeOut = 30;
@@ -177,12 +177,12 @@ TEST_CASE( "Charging sessions" ) {
     }
 
     SECTION("Preboot transactions - tx before BootNotification") {
-        ocpp_deinitialize();
+        mocpp_deinitialize();
 
         loopback.setConnected(false);
-        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>("AO_PreBootTransactions", true, CONFIGURATION_FN) = true;
+        *declareConfiguration<bool>("MO_PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
 
         loop();
@@ -238,12 +238,12 @@ TEST_CASE( "Charging sessions" ) {
 
     SECTION("Preboot transactions - lose StartTx timestamp") {
 
-        ocpp_deinitialize();
+        mocpp_deinitialize();
 
         loopback.setConnected(false);
-        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>("AO_PreBootTransactions", true, CONFIGURATION_FN) = true;
+        *declareConfiguration<bool>("MO_PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
 
         loop();
@@ -253,11 +253,11 @@ TEST_CASE( "Charging sessions" ) {
 
         REQUIRE(isTransactionRunning());
 
-        ocpp_deinitialize();
+        mocpp_deinitialize();
 
-        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>("AO_PreBootTransactions", true, CONFIGURATION_FN) = true;
+        *declareConfiguration<bool>("MO_PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
 
         bool checkProcessed = false;
@@ -289,12 +289,12 @@ TEST_CASE( "Charging sessions" ) {
 
         REQUIRE(isTransactionRunning());
 
-        ocpp_deinitialize();
+        mocpp_deinitialize();
 
         loopback.setConnected(false);
-        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>("AO_PreBootTransactions", true, CONFIGURATION_FN) = true;
+        *declareConfiguration<bool>("MO_PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
 
         loop();
@@ -307,11 +307,11 @@ TEST_CASE( "Charging sessions" ) {
 
         REQUIRE(!isTransactionRunning());
 
-        ocpp_deinitialize();
+        mocpp_deinitialize();
 
-        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>("AO_PreBootTransactions", true, CONFIGURATION_FN) = true;
+        *declareConfiguration<bool>("MO_PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
 
         bool checkProcessed = false;
@@ -371,9 +371,9 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
         REQUIRE(isOperative());
 
-        ocpp_deinitialize();
+        mocpp_deinitialize();
 
-        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
         connector = getOcppContext()->getModel().getConnector(1);
 
         loop();
@@ -394,6 +394,6 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE(isOperative());
     }
 
-    ocpp_deinitialize();
+    mocpp_deinitialize();
 
 }

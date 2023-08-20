@@ -1,11 +1,11 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/Transactions/Transaction.h>
-#include <ArduinoOcpp/Model/Transactions/TransactionStore.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Model/Transactions/TransactionStore.h>
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 bool Transaction::setIdTag(const char *idTag) {
     auto ret = snprintf(this->idTag, IDTAG_LEN_MAX + 1, "%s", idTag);
@@ -26,57 +26,57 @@ bool Transaction::commit() {
     return context.commit(this);
 }
 
-int ao_tx_getTransactionId(AO_Transaction *tx) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->getTransactionId();
+int ocpp_tx_getTransactionId(OCPP_Transaction *tx) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getTransactionId();
 }
-bool ao_tx_isAuthorized(AO_Transaction *tx) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->isAuthorized();
+bool ocpp_tx_isAuthorized(OCPP_Transaction *tx) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isAuthorized();
 }
-bool ao_tx_isIdTagDeauthorized(AO_Transaction *tx) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->isIdTagDeauthorized();
-}
-
-bool ao_tx_isRunning(AO_Transaction *tx) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->isRunning();
-}
-bool ao_tx_isActive(AO_Transaction *tx) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->isActive();
-}
-bool ao_tx_isAborted(AO_Transaction *tx) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->isAborted();
-}
-bool ao_tx_isCompleted(AO_Transaction *tx) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->isCompleted();
+bool ocpp_tx_isIdTagDeauthorized(OCPP_Transaction *tx) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isIdTagDeauthorized();
 }
 
-const char *ao_tx_getIdTag(AO_Transaction *tx) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->getIdTag();
+bool ocpp_tx_isRunning(OCPP_Transaction *tx) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isRunning();
+}
+bool ocpp_tx_isActive(OCPP_Transaction *tx) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isActive();
+}
+bool ocpp_tx_isAborted(OCPP_Transaction *tx) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isAborted();
+}
+bool ocpp_tx_isCompleted(OCPP_Transaction *tx) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isCompleted();
 }
 
-bool ao_tx_getBeginTimestamp(AO_Transaction *tx, char *buf, size_t len) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->getBeginTimestamp().toJsonString(buf, len);
+const char *ocpp_tx_getIdTag(OCPP_Transaction *tx) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getIdTag();
 }
 
-int32_t ao_tx_getMeterStart(AO_Transaction *tx) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->getMeterStart();
+bool ocpp_tx_getBeginTimestamp(OCPP_Transaction *tx, char *buf, size_t len) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getBeginTimestamp().toJsonString(buf, len);
 }
 
-bool ao_tx_getStartTimestamp(AO_Transaction *tx, char *buf, size_t len) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->getStartTimestamp().toJsonString(buf, len);
+int32_t ocpp_tx_getMeterStart(OCPP_Transaction *tx) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getMeterStart();
 }
 
-const char *ao_tx_getStopIdTag(AO_Transaction *tx) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->getStopIdTag();
+bool ocpp_tx_getStartTimestamp(OCPP_Transaction *tx, char *buf, size_t len) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getStartTimestamp().toJsonString(buf, len);
 }
 
-int32_t ao_tx_getMeterStop(AO_Transaction *tx) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->getMeterStop();
+const char *ocpp_tx_getStopIdTag(OCPP_Transaction *tx) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getStopIdTag();
 }
 
-bool ao_tx_getStopTimestamp(AO_Transaction *tx, char *buf, size_t len) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->getStopTimestamp().toJsonString(buf, len);
+int32_t ocpp_tx_getMeterStop(OCPP_Transaction *tx) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getMeterStop();
 }
 
-const char *ao_tx_getStopReason(AO_Transaction *tx) {
-    return reinterpret_cast<ArduinoOcpp::Transaction*>(tx)->getStopReason();
+bool ocpp_tx_getStopTimestamp(OCPP_Transaction *tx, char *buf, size_t len) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getStopTimestamp().toJsonString(buf, len);
+}
+
+const char *ocpp_tx_getStopReason(OCPP_Transaction *tx) {
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getStopReason();
 }

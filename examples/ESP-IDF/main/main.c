@@ -16,10 +16,10 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-/* ArduinoOcpp includes */
+/* MicroOcpp includes */
 #include <mongoose.h>
-#include <ArduinoOcpp_c.h> //C-facade of ArduinoOcpp
-#include <ArduinoOcppMongooseClient_c.h> //WebSocket integration for ESP-IDF
+#include <MicroOcpp_c.h> //C-facade of MicroOcpp
+#include <MicroOcppMongooseClient_c.h> //WebSocket integration for ESP-IDF
 
 /* The examples use WiFi configuration that you can set via project configuration menu
 
@@ -29,9 +29,9 @@
 #define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
 #define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
 #define EXAMPLE_ESP_MAXIMUM_RETRY  CONFIG_ESP_MAXIMUM_RETRY
-#define EXAMPLE_AO_OCPP_BACKEND    CONFIG_AO_OCPP_BACKEND
-#define EXAMPLE_AO_CHARGEBOXID     CONFIG_AO_CHARGEBOXID
-#define EXAMPLE_AO_AUTHORIZATIONKEY CONFIG_AO_AUTHORIZATIONKEY
+#define EXAMPLE_MOCPP_OCPP_BACKEND    CONFIG_MOCPP_OCPP_BACKEND
+#define EXAMPLE_MOCPP_CHARGEBOXID     CONFIG_MOCPP_CHARGEBOXID
+#define EXAMPLE_MOCPP_AUTHORIZATIONKEY CONFIG_MOCPP_AUTHORIZATIONKEY
 
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
@@ -148,29 +148,29 @@ void app_main(void)
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
 
-    /* Initialize Mongoose (necessary for ArduinoOcpp)*/
+    /* Initialize Mongoose (necessary for MicroOcpp)*/
     struct mg_mgr mgr;        // Event manager
     mg_mgr_init(&mgr);        // Initialise event manager
     mg_log_set(MG_LL_DEBUG);  // Set log level
 
-    /* Initialize ArduinoOcpp */
-    struct AO_FilesystemOpt fsopt = { .use = true, .mount = true, .formatFsOnFail = true};
+    /* Initialize MicroOcpp */
+    struct OCPP_FilesystemOpt fsopt = { .use = true, .mount = true, .formatFsOnFail = true};
 
-    AO_Connection *osock = ao_makeConnection(&mgr,
-            EXAMPLE_AO_OCPP_BACKEND, 
-            EXAMPLE_AO_CHARGEBOXID, 
-            EXAMPLE_AO_AUTHORIZATIONKEY, "", fsopt);
-    ao_initialize(osock, "ESP-IDF charger", "Your brand name here", fsopt);
+    OCPP_Connection *osock = ocpp_makeConnection(&mgr,
+            EXAMPLE_MOCPP_OCPP_BACKEND, 
+            EXAMPLE_MOCPP_CHARGEBOXID, 
+            EXAMPLE_MOCPP_AUTHORIZATIONKEY, "", fsopt);
+    ocpp_initialize(osock, "ESP-IDF charger", "Your brand name here", fsopt);
 
     /* Enter infinite loop */
     while (1) {
         mg_mgr_poll(&mgr, 10);
-        ao_loop();
+        ocpp_loop();
     }
     
     /* Deallocate ressources */
-    ao_deinitialize();
-    ao_deinitConnection(osock);
+    ocpp_deinitialize();
+    ocpp_deinitConnection(osock);
     mg_mgr_free(&mgr);
     return;
 }

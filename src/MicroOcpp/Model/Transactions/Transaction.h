@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -7,10 +7,10 @@
 
 #ifdef __cplusplus
 
-#include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Operations/CiStrings.h>
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Operations/CiStrings.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 /*
  * A transaction is initiated by the client (charging station) and processed by the server (central system).
@@ -170,33 +170,33 @@ public:
 extern "C" {
 #endif //__cplusplus
 
-struct AO_Transaction;
-typedef struct AO_Transaction AO_Transaction;
+struct OCPP_Transaction;
+typedef struct OCPP_Transaction OCPP_Transaction;
 
-int ao_tx_getTransactionId(AO_Transaction *tx);
-bool ao_tx_isAuthorized(AO_Transaction *tx);
-bool ao_tx_isIdTagDeauthorized(AO_Transaction *tx);
+int ocpp_tx_getTransactionId(OCPP_Transaction *tx);
+bool ocpp_tx_isAuthorized(OCPP_Transaction *tx);
+bool ocpp_tx_isIdTagDeauthorized(OCPP_Transaction *tx);
 
-bool ao_tx_isRunning(AO_Transaction *tx);
-bool ao_tx_isActive(AO_Transaction *tx);
-bool ao_tx_isAborted(AO_Transaction *tx);
-bool ao_tx_isCompleted(AO_Transaction *tx);
+bool ocpp_tx_isRunning(OCPP_Transaction *tx);
+bool ocpp_tx_isActive(OCPP_Transaction *tx);
+bool ocpp_tx_isAborted(OCPP_Transaction *tx);
+bool ocpp_tx_isCompleted(OCPP_Transaction *tx);
 
-const char *ao_tx_getIdTag(AO_Transaction *tx);
+const char *ocpp_tx_getIdTag(OCPP_Transaction *tx);
 
-bool ao_tx_getBeginTimestamp(AO_Transaction *tx, char *buf, size_t len);
+bool ocpp_tx_getBeginTimestamp(OCPP_Transaction *tx, char *buf, size_t len);
 
-int32_t ao_tx_getMeterStart(AO_Transaction *tx);
+int32_t ocpp_tx_getMeterStart(OCPP_Transaction *tx);
 
-bool ao_tx_getStartTimestamp(AO_Transaction *tx, char *buf, size_t len);
+bool ocpp_tx_getStartTimestamp(OCPP_Transaction *tx, char *buf, size_t len);
 
-const char *ao_tx_getStopIdTag(AO_Transaction *tx);
+const char *ocpp_tx_getStopIdTag(OCPP_Transaction *tx);
 
-int32_t ao_tx_getMeterStop(AO_Transaction *tx);
+int32_t ocpp_tx_getMeterStop(OCPP_Transaction *tx);
 
-bool ao_tx_getStopTimestamp(AO_Transaction *tx, char *buf, size_t len);
+bool ocpp_tx_getStopTimestamp(OCPP_Transaction *tx, char *buf, size_t len);
 
-const char *ao_tx_getStopReason(AO_Transaction *tx);
+const char *ocpp_tx_getStopReason(OCPP_Transaction *tx);
 
 #ifdef __cplusplus
 } //end extern "C"

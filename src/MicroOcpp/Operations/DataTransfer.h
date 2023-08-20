@@ -1,13 +1,13 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef DATATRANSFER_H
 #define DATATRANSFER_H
 
-#include <ArduinoOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Operation.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 namespace Ocpp16 {
 
 class DataTransfer : public Operation {
@@ -25,5 +25,5 @@ public:
 };
 
 } //end namespace Ocpp16
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

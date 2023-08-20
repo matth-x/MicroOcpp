@@ -1,14 +1,14 @@
-# <img src="https://user-images.githubusercontent.com/63792403/133922028-fefc8abb-fde9-460b-826f-09a458502d17.png" alt="Icon" height="24"> &nbsp; ArduinoOcpp
+# <img src="https://user-images.githubusercontent.com/63792403/133922028-fefc8abb-fde9-460b-826f-09a458502d17.png" alt="Icon" height="24"> &nbsp; MicroOcpp
 
-[![Build Status]( https://github.com/matth-x/ArduinoOcpp/workflows/PlatformIO%20CI/badge.svg)](https://github.com/matth-x/ArduinoOcpp/actions)
-[![Unit tests]( https://github.com/matth-x/ArduinoOcpp/workflows/Unit%20tests/badge.svg)](https://github.com/matth-x/ArduinoOcpp/actions)
-[![codecov](https://codecov.io/github/matth-x/ArduinoOcpp/branch/develop/graph/badge.svg?token=UN6LO96HM7)](https://codecov.io/github/matth-x/ArduinoOcpp)
+[![Build Status]( https://github.com/matth-x/MicroOcpp/workflows/PlatformIO%20CI/badge.svg)](https://github.com/matth-x/MicroOcpp/actions)
+[![Unit tests]( https://github.com/matth-x/MicroOcpp/workflows/Unit%20tests/badge.svg)](https://github.com/matth-x/MicroOcpp/actions)
+[![codecov](https://codecov.io/github/matth-x/MicroOcpp/branch/develop/graph/badge.svg?token=UN6LO96HM7)](https://codecov.io/github/matth-x/MicroOcpp)
 
 OCPP-J 1.6 client for embedded microcontrollers. Portable C/C++. Compatible with Espressif, NXP, Texas Instruments and STM.
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp)
 
-PlatformIO package: [ArduinoOcpp](https://platformio.org/lib/show/11975/ArduinoOcpp)
+PlatformIO package: [MicroOcpp](https://platformio.org/lib/show/11975/MicroOcpp)
 
 Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
 
@@ -24,9 +24,9 @@ This library allows EVSEs to communicate with an OCPP Backend and to participate
 
 :heavy_check_mark: Eligible for public chargers (Eichrecht-compliant)
 
-Technical introduction: [ArduinoOcpp Docs](https://matth-x.github.io/ArduinoOcpp/intro-tech)
+Technical introduction: [MicroOcpp Docs](https://matth-x.github.io/MicroOcpp/intro-tech)
 
-Try it (no hardware required): [ArduinoOcppSimulator](https://github.com/matth-x/ArduinoOcppSimulator)
+Try it (no hardware required): [MicroOcppSimulator](https://github.com/matth-x/MicroOcppSimulator)
 
 ### Features
 
@@ -41,7 +41,7 @@ The necessary hardware and internet integration is usually far below 1000 LOCs.
 
 ## Developers guide
 
-Please take `examples/ESP/main.cpp` as the starting point for the first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. The API documentation can be found in [`ArduinoOcpp.h`](https://github.com/matth-x/ArduinoOcpp/blob/master/src/ArduinoOcpp.h).
+Please take `examples/ESP/main.cpp` as the starting point for the first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. The API documentation can be found in [`MicroOcpp.h`](https://github.com/matth-x/MicroOcpp/blob/master/src/MicroOcpp.h).
 
 ### Dependencies
 
@@ -53,13 +53,13 @@ If compiled with the Arduino integration:
 
 - [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets) (version `2.3.6`)
 
-In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/ArduinoOcpp` in the PIO library manager.
+In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/MicroOcpp` in the PIO library manager.
 
 ## OCPP 2.0.1 and ISO 15118
 
 The OCPP 2.0.1 upgrade is being worked on. Further details will be announced soon.
 
-ISO 15118 is a must-have for future chargers. It will hugely improve the security and user-friendliness of EV charging. ArduinoOcpp facilitates the integration of ISO 15118 by handling its OCPP-side communication. This is being validated now in a proprietary firmware development.
+ISO 15118 is a must-have for future chargers. It will hugely improve the security and user-friendliness of EV charging. MicroOcpp facilitates the integration of ISO 15118 by handling its OCPP-side communication. This is being validated now in a proprietary firmware development.
 
 However, no public ISO 15118 integration exists at the moment. If your company considers working on an open source ISO 15118 stack, it would be great to discuss a potential collaboration on an open source OCPP 2.0.1 + ISO 15118 solution.
 

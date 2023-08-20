@@ -1,11 +1,11 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
-#include <ArduinoOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Operation.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> operation){
     if (operation == nullptr) {
@@ -25,4 +25,4 @@ std::unique_ptr<Request> makeRequest(){
     return result;
 }
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp

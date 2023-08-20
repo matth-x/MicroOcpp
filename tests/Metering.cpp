@@ -1,26 +1,26 @@
-#include <ArduinoOcpp.h>
-#include <ArduinoOcpp/Core/Connection.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp.h>
+#include <MicroOcpp/Core/Connection.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 TEST_CASE("Metering") {
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;
-    ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+    mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
     auto context = getOcppContext();
     auto& model = context->getModel();
 
-    ao_set_timer(custom_timer_cb);
+    mocpp_set_timer(custom_timer_cb);
 
     model.getClock().setTime(BASE_TIME);
 
@@ -97,7 +97,7 @@ TEST_CASE("Metering") {
         auto MeterValueSampleInterval = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
         *MeterValueSampleInterval = 10;
 
-        auto MeterValueCacheSize = declareConfiguration("AO_MeterValueCacheSize", 0, CONFIGURATION_FN);
+        auto MeterValueCacheSize = declareConfiguration("MO_MeterValueCacheSize", 0, CONFIGURATION_FN);
         *MeterValueCacheSize = 2;
 
         bool checkProcessed = false;
@@ -159,7 +159,7 @@ TEST_CASE("Metering") {
         auto MeterValuesAlignedData = declareConfiguration<const char*>("MeterValuesAlignedData", "", CONFIGURATION_FN);
         *MeterValuesAlignedData = "Energy.Active.Import.Register";
 
-        auto MeterValueCacheSize = declareConfiguration("AO_MeterValueCacheSize", 0, CONFIGURATION_FN);
+        auto MeterValueCacheSize = declareConfiguration("MO_MeterValueCacheSize", 0, CONFIGURATION_FN);
         *MeterValueCacheSize = 2;
 
         bool checkProcessed = false;
@@ -226,9 +226,9 @@ TEST_CASE("Metering") {
 
         loop();
 
-        ocpp_deinitialize(); //check if StopData is stored over reboots
+        mocpp_deinitialize(); //check if StopData is stored over reboots
 
-        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         addMeterValueInput([base] () {
             //simulate 3600W consumption
@@ -321,7 +321,7 @@ TEST_CASE("Metering") {
         auto MeterValueSampleInterval = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
         *MeterValueSampleInterval = 10;
 
-        auto MeterValueCacheSize = declareConfiguration("AO_MeterValueCacheSize", 0, CONFIGURATION_FN);
+        auto MeterValueCacheSize = declareConfiguration("MO_MeterValueCacheSize", 0, CONFIGURATION_FN);
         *MeterValueCacheSize = 10;
 
         bool checkProcessed = false;
@@ -366,5 +366,5 @@ TEST_CASE("Metering") {
         REQUIRE(checkProcessed);
     }
 
-    ocpp_deinitialize();
+    mocpp_deinitialize();
 }

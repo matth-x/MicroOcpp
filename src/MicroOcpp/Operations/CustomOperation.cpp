@@ -1,10 +1,10 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/CustomOperation.h>
+#include <MicroOcpp/Operations/CustomOperation.h>
 
-using ArduinoOcpp::Ocpp16::CustomOperation;
+using MicroOcpp::Ocpp16::CustomOperation;
 
 CustomOperation::CustomOperation(const char *operationType,
             std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createReq,

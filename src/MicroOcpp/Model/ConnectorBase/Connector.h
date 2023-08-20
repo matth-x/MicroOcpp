@@ -1,22 +1,22 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef CONNECTOR_H
 #define CONNECTOR_H
 
-#include <ArduinoOcpp/Model/ConnectorBase/ChargePointStatus.h>
-#include <ArduinoOcpp/Model/ConnectorBase/ChargePointErrorData.h>
-#include <ArduinoOcpp/Model/ConnectorBase/Notification.h>
-#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
-#include <ArduinoOcpp/Core/PollResult.h>
-#include <ArduinoOcpp/Operations/CiStrings.h>
+#include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
+#include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
+#include <MicroOcpp/Model/ConnectorBase/Notification.h>
+#include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/PollResult.h>
+#include <MicroOcpp/Operations/CiStrings.h>
 
 #include <vector>
 #include <functional>
 #include <memory>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Context;
 class Model;
@@ -122,5 +122,5 @@ public:
     void updateTxNotification(TxNotification event);
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

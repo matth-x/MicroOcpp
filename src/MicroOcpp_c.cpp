@@ -1,51 +1,51 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include "ArduinoOcpp_c.h"
-#include "ArduinoOcpp.h"
+#include "MicroOcpp_c.h"
+#include "MicroOcpp.h"
 
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Debug.h>
 
-ArduinoOcpp::Connection *ocppSocket = nullptr;
+MicroOcpp::Connection *ocppSocket = nullptr;
 
-void ao_initialize(AO_Connection *conn, const char *chargePointModel, const char *chargePointVendor, struct AO_FilesystemOpt fsopt) {
-    ao_initialize_full(conn, ChargerCredentials(chargePointModel, chargePointVendor), fsopt);
+void ocpp_initialize(OCPP_Connection *conn, const char *chargePointModel, const char *chargePointVendor, struct OCPP_FilesystemOpt fsopt) {
+    ocpp_initialize_full(conn, ChargerCredentials(chargePointModel, chargePointVendor), fsopt);
 }
 
-void ao_initialize_full(AO_Connection *conn, const char *bootNotificationCredentials, struct AO_FilesystemOpt fsopt) {
+void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCredentials, struct OCPP_FilesystemOpt fsopt) {
     if (!conn) {
-        AO_DBG_ERR("conn is null");
+        MOCPP_DBG_ERR("conn is null");
     }
 
-    ocppSocket = reinterpret_cast<ArduinoOcpp::Connection*>(conn);
+    ocppSocket = reinterpret_cast<MicroOcpp::Connection*>(conn);
 
-    ArduinoOcpp::FilesystemOpt adaptFsopt = fsopt;
+    MicroOcpp::FilesystemOpt adaptFsopt = fsopt;
 
-    ocpp_initialize(*ocppSocket, bootNotificationCredentials, ArduinoOcpp::makeDefaultFilesystemAdapter(adaptFsopt));
+    mocpp_initialize(*ocppSocket, bootNotificationCredentials, MicroOcpp::makeDefaultFilesystemAdapter(adaptFsopt));
 }
 
-void ao_deinitialize() {
-    ocpp_deinitialize();
+void ocpp_deinitialize() {
+    mocpp_deinitialize();
 }
 
-void ao_loop() {
-    ocpp_loop();
+void ocpp_loop() {
+    mocpp_loop();
 }
 
 /*
  * Helper functions for transforming callback functions from C-style to C++style
  */
 
-ArduinoOcpp::PollResult<bool> adaptScl(enum OptionalBool v) {
+MicroOcpp::PollResult<bool> adaptScl(enum OptionalBool v) {
     if (v == OptionalTrue) {
         return true;
     } else if (v == OptionalFalse) {
         return false;
     } else if (v == OptionalNone) {
-        return ArduinoOcpp::PollResult<bool>::Await();
+        return MicroOcpp::PollResult<bool>::Await();
     } else {
-        AO_DBG_ERR("illegal argument");
+        MOCPP_DBG_ERR("illegal argument");
         return false;
     }
 }
@@ -102,254 +102,254 @@ std::function<void(void)> adaptFn(void (*fn)(void)) {
     return fn;
 }
 
-#ifndef AO_RECEIVE_PAYLOAD_BUFSIZE
-#define AO_RECEIVE_PAYLOAD_BUFSIZE 512
+#ifndef MOCPP_RECEIVE_PAYLOAD_BUFSIZE
+#define MOCPP_RECEIVE_PAYLOAD_BUFSIZE 512
 #endif
 
-char ao_recv_payload_buff [AO_RECEIVE_PAYLOAD_BUFSIZE] = {'\0'};
+char ocpp_recv_payload_buff [MOCPP_RECEIVE_PAYLOAD_BUFSIZE] = {'\0'};
 
 std::function<void(JsonObject)> adaptFn(OnMessage fn) {
     if (!fn) return nullptr;
     return [fn] (JsonObject payload) {
-        auto len = serializeJson(payload, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
+        auto len = serializeJson(payload, ocpp_recv_payload_buff, MOCPP_RECEIVE_PAYLOAD_BUFSIZE);
         if (len <= 0) {
-            AO_DBG_WARN("Received payload buffer exceeded. Continue without payload");
+            MOCPP_DBG_WARN("Received payload buffer exceeded. Continue without payload");
         }
-        fn(len > 0 ? ao_recv_payload_buff : "", len);
+        fn(len > 0 ? ocpp_recv_payload_buff : "", len);
     };
 }
 
-ArduinoOcpp::OnReceiveErrorListener adaptFn(OnCallError fn) {
+MicroOcpp::OnReceiveErrorListener adaptFn(OnCallError fn) {
     if (!fn) return nullptr;
     return [fn] (const char *code, const char *description, JsonObject details) {
-        auto len = serializeJson(details, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
+        auto len = serializeJson(details, ocpp_recv_payload_buff, MOCPP_RECEIVE_PAYLOAD_BUFSIZE);
         if (len <= 0) {
-            AO_DBG_WARN("Received payload buffer exceeded. Continue without payload");
+            MOCPP_DBG_WARN("Received payload buffer exceeded. Continue without payload");
         }
-        fn(code, description, len > 0 ? ao_recv_payload_buff : "", len);
+        fn(code, description, len > 0 ? ocpp_recv_payload_buff : "", len);
     };
 }
 
-std::function<ArduinoOcpp::PollResult<bool>()> adaptFn(PollBool fn) {
+std::function<MicroOcpp::PollResult<bool>()> adaptFn(PollBool fn) {
     return [fn] () {return adaptScl(fn());};
 }
 
-std::function<ArduinoOcpp::PollResult<bool>()> adaptFn(unsigned int connectorId, PollBool_m fn) {
+std::function<MicroOcpp::PollResult<bool>()> adaptFn(unsigned int connectorId, PollBool_m fn) {
     return [fn, connectorId] () {return adaptScl(fn(connectorId));};
 }
 
-void ao_beginTransaction(const char *idTag) {
+void ocpp_beginTransaction(const char *idTag) {
     beginTransaction(idTag);
 }
-void ao_beginTransaction_m(unsigned int connectorId, const char *idTag) {
+void ocpp_beginTransaction_m(unsigned int connectorId, const char *idTag) {
     beginTransaction(idTag, connectorId);
 }
 
-void ao_beginTransaction_authorized(const char *idTag, const char *parentIdTag) {
+void ocpp_beginTransaction_authorized(const char *idTag, const char *parentIdTag) {
     beginTransaction_authorized(idTag, parentIdTag);
 }
-void ao_beginTransaction_authorized_m(unsigned int connectorId, const char *idTag, const char *parentIdTag) {
+void ocpp_beginTransaction_authorized_m(unsigned int connectorId, const char *idTag, const char *parentIdTag) {
     beginTransaction_authorized(idTag, parentIdTag, connectorId);
 }
 
-bool ao_endTransaction(const char *idTag, const char *reason) {
+bool ocpp_endTransaction(const char *idTag, const char *reason) {
     return endTransaction(idTag, reason);
 }
-bool ao_endTransaction_m(unsigned int connectorId, const char *idTag, const char *reason) {
+bool ocpp_endTransaction_m(unsigned int connectorId, const char *idTag, const char *reason) {
     return endTransaction(idTag, reason, connectorId);
 }
 
-bool ao_isTransactionActive() {
+bool ocpp_isTransactionActive() {
     return isTransactionActive();
 }
-bool ao_isTransactionActive_m(unsigned int connectorId) {
+bool ocpp_isTransactionActive_m(unsigned int connectorId) {
     return isTransactionActive(connectorId);
 }
 
-bool ao_isTransactionRunning() {
+bool ocpp_isTransactionRunning() {
     return isTransactionRunning();
 }
-bool ao_isTransactionRunning_m(unsigned int connectorId) {
+bool ocpp_isTransactionRunning_m(unsigned int connectorId) {
     return isTransactionRunning(connectorId);
 }
 
-const char *ao_getTransactionIdTag() {
+const char *ocpp_getTransactionIdTag() {
     return getTransactionIdTag();
 }
-const char *ao_getTransactionIdTag_m(unsigned int connectorId) {
+const char *ocpp_getTransactionIdTag_m(unsigned int connectorId) {
     return getTransactionIdTag(connectorId);
 }
 
-AO_Transaction *ao_getTransaction() {
-    return ao_getTransaction_m(1);
+OCPP_Transaction *ocpp_getTransaction() {
+    return ocpp_getTransaction_m(1);
 }
-AO_Transaction *ao_getTransaction_m(unsigned int connectorId) {
+OCPP_Transaction *ocpp_getTransaction_m(unsigned int connectorId) {
     if (getTransaction(connectorId)) {
-        return reinterpret_cast<AO_Transaction*>(getTransaction(connectorId).get());
+        return reinterpret_cast<OCPP_Transaction*>(getTransaction(connectorId).get());
     } else {
         return NULL;
     }
 }
 
-bool ao_ocppPermitsCharge() {
+bool ocpp_ocppPermitsCharge() {
     return ocppPermitsCharge();
 }
-bool ao_ocppPermitsCharge_m(unsigned int connectorId) {
+bool ocpp_ocppPermitsCharge_m(unsigned int connectorId) {
     return ocppPermitsCharge(connectorId);
 }
 
-void ao_setConnectorPluggedInput(InputBool pluggedInput) {
+void ocpp_setConnectorPluggedInput(InputBool pluggedInput) {
     setConnectorPluggedInput(adaptFn(pluggedInput));
 }
-void ao_setConnectorPluggedInput_m(unsigned int connectorId, InputBool_m pluggedInput) {
+void ocpp_setConnectorPluggedInput_m(unsigned int connectorId, InputBool_m pluggedInput) {
     setConnectorPluggedInput(adaptFn(connectorId, pluggedInput), connectorId);
 }
 
-void ao_setEnergyMeterInput(InputInt energyInput) {
+void ocpp_setEnergyMeterInput(InputInt energyInput) {
     setEnergyMeterInput(adaptFn(energyInput));
 }
-void ao_setEnergyMeterInput_m(unsigned int connectorId, InputInt_m energyInput) {
+void ocpp_setEnergyMeterInput_m(unsigned int connectorId, InputInt_m energyInput) {
     setEnergyMeterInput(adaptFn(connectorId, energyInput), connectorId);
 }
 
-void ao_setPowerMeterInput(InputFloat powerInput) {
+void ocpp_setPowerMeterInput(InputFloat powerInput) {
     setPowerMeterInput(adaptFn(powerInput));
 }
-void ao_setPowerMeterInput_m(unsigned int connectorId, InputFloat_m powerInput) {
+void ocpp_setPowerMeterInput_m(unsigned int connectorId, InputFloat_m powerInput) {
     setPowerMeterInput(adaptFn(connectorId, powerInput), connectorId);
 }
 
-void ao_setSmartChargingPowerOutput(OutputFloat maxPowerOutput) {
+void ocpp_setSmartChargingPowerOutput(OutputFloat maxPowerOutput) {
     setSmartChargingPowerOutput(adaptFn(maxPowerOutput));
 }
-void ao_setSmartChargingPowerOutput_m(unsigned int connectorId, OutputFloat_m maxPowerOutput) {
+void ocpp_setSmartChargingPowerOutput_m(unsigned int connectorId, OutputFloat_m maxPowerOutput) {
     setSmartChargingPowerOutput(adaptFn(connectorId, maxPowerOutput), connectorId);
 }
-void ao_setSmartChargingCurrentOutput(OutputFloat maxCurrentOutput) {
+void ocpp_setSmartChargingCurrentOutput(OutputFloat maxCurrentOutput) {
     setSmartChargingCurrentOutput(adaptFn(maxCurrentOutput));
 }
-void ao_setSmartChargingCurrentOutput_m(unsigned int connectorId, OutputFloat_m maxCurrentOutput) {
+void ocpp_setSmartChargingCurrentOutput_m(unsigned int connectorId, OutputFloat_m maxCurrentOutput) {
     setSmartChargingCurrentOutput(adaptFn(connectorId, maxCurrentOutput), connectorId);
 }
-void ao_setSmartChargingOutput(OutputSmartCharging chargingLimitOutput) {
+void ocpp_setSmartChargingOutput(OutputSmartCharging chargingLimitOutput) {
     setSmartChargingOutput(adaptFn(chargingLimitOutput));
 }
-void ao_setSmartChargingOutput_m(unsigned int connectorId, OutputSmartCharging_m chargingLimitOutput) {
+void ocpp_setSmartChargingOutput_m(unsigned int connectorId, OutputSmartCharging_m chargingLimitOutput) {
     setSmartChargingOutput(adaptFn(connectorId, chargingLimitOutput), connectorId);
 }
 
-void ao_setEvReadyInput(InputBool evReadyInput) {
+void ocpp_setEvReadyInput(InputBool evReadyInput) {
     setEvReadyInput(adaptFn(evReadyInput));
 }
-void ao_setEvReadyInput_m(unsigned int connectorId, InputBool_m evReadyInput) {
+void ocpp_setEvReadyInput_m(unsigned int connectorId, InputBool_m evReadyInput) {
     setEvReadyInput(adaptFn(connectorId, evReadyInput), connectorId);
 }
 
-void ao_setEvseReadyInput(InputBool evseReadyInput) {
+void ocpp_setEvseReadyInput(InputBool evseReadyInput) {
     setEvseReadyInput(adaptFn(evseReadyInput));
 }
-void ao_setEvseReadyInput_m(unsigned int connectorId, InputBool_m evseReadyInput) {
+void ocpp_setEvseReadyInput_m(unsigned int connectorId, InputBool_m evseReadyInput) {
     setEvseReadyInput(adaptFn(connectorId, evseReadyInput), connectorId);
 }
 
-void ao_addErrorCodeInput(InputString errorCodeInput) {
+void ocpp_addErrorCodeInput(InputString errorCodeInput) {
     addErrorCodeInput(adaptFn(errorCodeInput));
 }
-void ao_addErrorCodeInput_m(unsigned int connectorId, InputString_m errorCodeInput) {
+void ocpp_addErrorCodeInput_m(unsigned int connectorId, InputString_m errorCodeInput) {
     addErrorCodeInput(adaptFn(connectorId, errorCodeInput), connectorId);
 }
 
-void ao_addMeterValueInputFloat(InputFloat valueInput, const char *measurand, const char *unit, const char *location, const char *phase) {
+void ocpp_addMeterValueInputFloat(InputFloat valueInput, const char *measurand, const char *unit, const char *location, const char *phase) {
     addMeterValueInput(adaptFn(valueInput), measurand, unit, location, phase, 1);
 }
-void ao_addMeterValueInputFloat_m(unsigned int connectorId, InputFloat_m valueInput, const char *measurand, const char *unit, const char *location, const char *phase) {
+void ocpp_addMeterValueInputFloat_m(unsigned int connectorId, InputFloat_m valueInput, const char *measurand, const char *unit, const char *location, const char *phase) {
     addMeterValueInput(adaptFn(connectorId, valueInput), measurand, unit, location, phase, connectorId);
 }
 
-void ao_addMeterValueInput(MeterValueInput *meterValueInput) {
-    ao_addMeterValueInput_m(1, meterValueInput);
+void ocpp_addMeterValueInput(MeterValueInput *meterValueInput) {
+    ocpp_addMeterValueInput_m(1, meterValueInput);
 }
-void ao_addMeterValueInput_m(unsigned int connectorId, MeterValueInput *meterValueInput) {
-    auto svs = std::unique_ptr<ArduinoOcpp::SampledValueSampler>(
-        reinterpret_cast<ArduinoOcpp::SampledValueSampler*>(meterValueInput));
+void ocpp_addMeterValueInput_m(unsigned int connectorId, MeterValueInput *meterValueInput) {
+    auto svs = std::unique_ptr<MicroOcpp::SampledValueSampler>(
+        reinterpret_cast<MicroOcpp::SampledValueSampler*>(meterValueInput));
     
     addMeterValueInput(std::move(svs), connectorId);
 }
 
-void ao_setOnUnlockConnectorInOut(PollBool onUnlockConnectorInOut) {
+void ocpp_setOnUnlockConnectorInOut(PollBool onUnlockConnectorInOut) {
     setOnUnlockConnectorInOut(adaptFn(onUnlockConnectorInOut));
 }
-void ao_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollBool_m onUnlockConnectorInOut) {
+void ocpp_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollBool_m onUnlockConnectorInOut) {
     setOnUnlockConnectorInOut(adaptFn(connectorId, onUnlockConnectorInOut), connectorId);
 }
 
-void ao_setStartTxReadyInput(InputBool startTxReady) {
+void ocpp_setStartTxReadyInput(InputBool startTxReady) {
     setStartTxReadyInput(adaptFn(startTxReady));
 }
-void ao_setStartTxReadyInput_m(unsigned int connectorId, InputBool_m startTxReady) {
+void ocpp_setStartTxReadyInput_m(unsigned int connectorId, InputBool_m startTxReady) {
     setStartTxReadyInput(adaptFn(connectorId, startTxReady), connectorId);
 }
 
-void ao_setStopTxReadyInput(InputBool stopTxReady) {
+void ocpp_setStopTxReadyInput(InputBool stopTxReady) {
     setStopTxReadyInput(adaptFn(stopTxReady));
 }
-void ao_setStopTxReadyInput_m(unsigned int connectorId, InputBool_m stopTxReady) {
+void ocpp_setStopTxReadyInput_m(unsigned int connectorId, InputBool_m stopTxReady) {
     setStopTxReadyInput(adaptFn(connectorId, stopTxReady), connectorId);
 }
 
-void ao_setTxNotificationOutput(void (*notificationOutput)(AO_Transaction*, enum AO_TxNotification)) {
-    setTxNotificationOutput([notificationOutput] (ArduinoOcpp::Transaction *tx, ArduinoOcpp::TxNotification notification) {
-        notificationOutput(reinterpret_cast<AO_Transaction*>(tx), convertTxNotification(notification));
+void ocpp_setTxNotificationOutput(void (*notificationOutput)(OCPP_Transaction*, enum OCPP_TxNotification)) {
+    setTxNotificationOutput([notificationOutput] (MicroOcpp::Transaction *tx, MicroOcpp::TxNotification notification) {
+        notificationOutput(reinterpret_cast<OCPP_Transaction*>(tx), convertTxNotification(notification));
     });
 }
-void ao_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, AO_Transaction*, enum AO_TxNotification)) {
-    setTxNotificationOutput([notificationOutput, connectorId] (ArduinoOcpp::Transaction *tx, ArduinoOcpp::TxNotification notification) {
-        notificationOutput(connectorId, reinterpret_cast<AO_Transaction*>(tx), convertTxNotification(notification));
+void ocpp_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, OCPP_Transaction*, enum OCPP_TxNotification)) {
+    setTxNotificationOutput([notificationOutput, connectorId] (MicroOcpp::Transaction *tx, MicroOcpp::TxNotification notification) {
+        notificationOutput(connectorId, reinterpret_cast<OCPP_Transaction*>(tx), convertTxNotification(notification));
     }, connectorId);
 }
 
-void ao_setOccupiedInput(InputBool occupied) {
+void ocpp_setOccupiedInput(InputBool occupied) {
     setOccupiedInput(adaptFn(occupied));
 }
-void ao_setOccupiedInput_m(unsigned int connectorId, InputBool_m occupied) {
+void ocpp_setOccupiedInput_m(unsigned int connectorId, InputBool_m occupied) {
     setOccupiedInput(adaptFn(connectorId, occupied), connectorId);
 }
 
-bool ao_isOperative() {
+bool ocpp_isOperative() {
     return isOperative();
 }
-bool ao_isOperative_m(unsigned int connectorId) {
+bool ocpp_isOperative_m(unsigned int connectorId) {
     return isOperative(connectorId);
 }
-void ao_setOnResetNotify(bool (*onResetNotify)(bool)) {
+void ocpp_setOnResetNotify(bool (*onResetNotify)(bool)) {
     setOnResetNotify([onResetNotify] (bool isHard) {return onResetNotify(isHard);});
 }
 
-void ao_setOnResetExecute(void (*onResetExecute)(bool)) {
+void ocpp_setOnResetExecute(void (*onResetExecute)(bool)) {
     setOnResetExecute([onResetExecute] (bool isHard) {onResetExecute(isHard);});
 }
 
-void ao_setOnReceiveRequest(const char *operationType, OnMessage onRequest) {
+void ocpp_setOnReceiveRequest(const char *operationType, OnMessage onRequest) {
     setOnReceiveRequest(operationType, adaptFn(onRequest));
 }
 
-void ao_setOnSendConf(const char *operationType, OnMessage onConfirmation) {
+void ocpp_setOnSendConf(const char *operationType, OnMessage onConfirmation) {
     setOnSendConf(operationType, adaptFn(onConfirmation));
 }
 
-void ao_set_console_out_c(void (*console_out)(const char *msg)) {
-    ao_set_console_out(console_out);
+void ocpp_set_console_out_c(void (*console_out)(const char *msg)) {
+    mo_set_console_out(console_out);
 }
 
-void ao_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data) {
+void ocpp_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data) {
     
     std::string idTag_capture = idTag;
 
     authorize(idTag,
             onConfirmation ? [onConfirmation, idTag_capture, user_data] (JsonObject payload) {
-                    auto len = serializeJson(payload, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
-                    if (len <= 0) {AO_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
-                    onConfirmation(idTag_capture.c_str(), len > 0 ? ao_recv_payload_buff : "", len, user_data);
+                    auto len = serializeJson(payload, ocpp_recv_payload_buff, MOCPP_RECEIVE_PAYLOAD_BUFSIZE);
+                    if (len <= 0) {MOCPP_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
+                    onConfirmation(idTag_capture.c_str(), len > 0 ? ocpp_recv_payload_buff : "", len, user_data);
                 } : OnReceiveConfListener(nullptr),
             onAbort ? [onAbort, idTag_capture, user_data] () -> void {
                     onAbort(idTag_capture.c_str(), user_data);
@@ -358,16 +358,16 @@ void ao_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, Autho
                     onTimeout(idTag_capture.c_str(), user_data);
                 } : OnTimeoutListener(nullptr),
             onError ? [onError, idTag_capture, user_data] (const char *code, const char *description, JsonObject details) {
-                    auto len = serializeJson(details, ao_recv_payload_buff, AO_RECEIVE_PAYLOAD_BUFSIZE);
-                    if (len <= 0) {AO_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
-                    onError(idTag_capture.c_str(), code, description, len > 0 ? ao_recv_payload_buff : "", len, user_data);
+                    auto len = serializeJson(details, ocpp_recv_payload_buff, MOCPP_RECEIVE_PAYLOAD_BUFSIZE);
+                    if (len <= 0) {MOCPP_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
+                    onError(idTag_capture.c_str(), code, description, len > 0 ? ocpp_recv_payload_buff : "", len, user_data);
                 } : OnReceiveErrorListener(nullptr));
 }
 
-void ao_startTransaction(const char *idTag, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError) {
+void ocpp_startTransaction(const char *idTag, OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError) {
     startTransaction(idTag, adaptFn(onConfirmation), adaptFn(onAbort), adaptFn(onTimeout), adaptFn(onError));
 }
 
-void ao_stopTransaction(OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError) {
+void ocpp_stopTransaction(OnMessage onConfirmation, OnAbort onAbort, OnTimeout onTimeout, OnCallError onError) {
     stopTransaction(adaptFn(onConfirmation), adaptFn(onAbort), adaptFn(onTimeout), adaptFn(onError));
 }

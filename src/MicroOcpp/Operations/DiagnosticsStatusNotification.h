@@ -1,14 +1,14 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Core/Operation.h>
-#include <ArduinoOcpp/Model/Diagnostics/DiagnosticsStatus.h>
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Model/Diagnostics/DiagnosticsStatus.h>
 
 #ifndef DIAGNOSTICSSTATUSNOTIFICATION_H
 #define DIAGNOSTICSSTATUSNOTIFICATION_H
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 namespace Ocpp16 {
 
 class DiagnosticsStatusNotification : public Operation {
@@ -27,6 +27,6 @@ public:
 };
 
 } //end namespace Ocpp16
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

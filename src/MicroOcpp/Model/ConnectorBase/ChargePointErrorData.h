@@ -1,11 +1,11 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef AO_CHARGEPOINTERRORCODE_H
-#define AO_CHARGEPOINTERRORCODE_H
+#ifndef MOCPP_CHARGEPOINTERRORCODE_H
+#define MOCPP_CHARGEPOINTERRORCODE_H
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 struct ErrorData {
     bool isError = false; //if any error information is set

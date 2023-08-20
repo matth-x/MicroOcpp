@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -8,9 +8,9 @@
 #include <vector>
 #include <memory>
 
-#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/ConfigurationKeyValue.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class ConfigurationContainer {
 private:
@@ -49,6 +49,6 @@ public:
     bool save() {return true;}
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

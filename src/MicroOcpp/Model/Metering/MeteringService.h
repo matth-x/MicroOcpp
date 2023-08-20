@@ -1,4 +1,4 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
@@ -9,11 +9,11 @@
 #include <vector>
 #include <memory>
 
-#include <ArduinoOcpp/Model/Metering/MeteringConnector.h>
-#include <ArduinoOcpp/Model/Metering/SampledValue.h>
-#include <ArduinoOcpp/Model/Metering/MeterStore.h>
+#include <MicroOcpp/Model/Metering/MeteringConnector.h>
+#include <MicroOcpp/Model/Metering/SampledValue.h>
+#include <MicroOcpp/Model/Metering/MeterStore.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Context;
 class Request;
@@ -47,5 +47,5 @@ public:
     int getNumConnectors() {return connectors.size();}
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

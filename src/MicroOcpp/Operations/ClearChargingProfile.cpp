@@ -1,14 +1,14 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/ClearChargingProfile.h>
-#include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/ClearChargingProfile.h>
+#include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
+#include <MicroOcpp/Debug.h>
 
 #include <functional>
 
-using ArduinoOcpp::Ocpp16::ClearChargingProfile;
+using MicroOcpp::Ocpp16::ClearChargingProfile;
 
 ClearChargingProfile::ClearChargingProfile(SmartChargingService& scService) : scService(scService) {
 

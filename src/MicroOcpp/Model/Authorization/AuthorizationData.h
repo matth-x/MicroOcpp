@@ -1,16 +1,16 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef AUTHORIZATIONDATA_H
 #define AUTHORIZATIONDATA_H
 
-#include <ArduinoOcpp/Operations/CiStrings.h>
-#include <ArduinoOcpp/Core/Time.h>
+#include <MicroOcpp/Operations/CiStrings.h>
+#include <MicroOcpp/Core/Time.h>
 #include <ArduinoJson.h>
 #include <memory>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 enum class AuthorizationStatus : uint8_t {
     Accepted,

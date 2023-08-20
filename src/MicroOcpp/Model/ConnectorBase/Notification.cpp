@@ -1,48 +1,48 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/ConnectorBase/Notification.h>
+#include <MicroOcpp/Model/ConnectorBase/Notification.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
-AO_TxNotification convertTxNotification(TxNotification txn) {
-    auto res = AO_TxNotification::AuthorizationRejected;
+OCPP_TxNotification convertTxNotification(TxNotification txn) {
+    auto res = OCPP_TxNotification::AuthorizationRejected;
     
     switch (txn) {
         case TxNotification::AuthorizationRejected:
-            res = AO_TxNotification::AuthorizationRejected;
+            res = OCPP_TxNotification::AuthorizationRejected;
             break;
         case TxNotification::AuthorizationTimeout:
-            res = AO_TxNotification::AuthorizationTimeout;
+            res = OCPP_TxNotification::AuthorizationTimeout;
             break;
         case TxNotification::Authorized:
-            res = AO_TxNotification::Authorized;
+            res = OCPP_TxNotification::Authorized;
             break;
         case TxNotification::ConnectionTimeout:
-            res = AO_TxNotification::ConnectionTimeout;
+            res = OCPP_TxNotification::ConnectionTimeout;
             break;
         case TxNotification::DeAuthorized:
-            res = AO_TxNotification::DeAuthorized;
+            res = OCPP_TxNotification::DeAuthorized;
             break;
         case TxNotification::RemoteStart:
-            res = AO_TxNotification::RemoteStart;
+            res = OCPP_TxNotification::RemoteStart;
             break;
         case TxNotification::RemoteStop:
-            res = AO_TxNotification::RemoteStop;
+            res = OCPP_TxNotification::RemoteStop;
             break;
         case TxNotification::ReservationConflict:
-            res = AO_TxNotification::ReservationConflict;
+            res = OCPP_TxNotification::ReservationConflict;
             break;
         case TxNotification::StartTx:
-            res = AO_TxNotification::StartTx;
+            res = OCPP_TxNotification::StartTx;
             break;
         case TxNotification::StopTx:
-            res = AO_TxNotification::StopTx;
+            res = OCPP_TxNotification::StopTx;
             break;
     }
 
     return res;
 }
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp

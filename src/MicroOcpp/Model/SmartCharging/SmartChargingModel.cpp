@@ -1,16 +1,16 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/SmartCharging/SmartChargingModel.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Model/SmartCharging/SmartChargingModel.h>
+#include <MicroOcpp/Debug.h>
 
 #include <string.h>
 #include <algorithm>
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
-ChargeRate ArduinoOcpp::chargeRate_min(const ChargeRate& a, const ChargeRate& b) {
+ChargeRate MicroOcpp::chargeRate_min(const ChargeRate& a, const ChargeRate& b) {
     ChargeRate res;
     res.power = std::min(a.power, b.power);
     res.current = std::min(a.current, b.current);
@@ -35,7 +35,7 @@ bool ChargingSchedule::calculateLimit(const Timestamp &t, const Timestamp &start
             } else if (startOfCharging > MIN_TIME && startOfCharging < t) {
                 basis = startOfCharging;
             } else {
-                AO_DBG_ERR("Absolute profile, but neither startSchedule, nor start of charging are set. Undefined behavior, abort");
+                MOCPP_DBG_ERR("Absolute profile, but neither startSchedule, nor start of charging are set. Undefined behavior, abort");
                 return false;
             }
             break;
@@ -47,7 +47,7 @@ bool ChargingSchedule::calculateLimit(const Timestamp &t, const Timestamp &start
                 basis = t - ((t - startSchedule) % (7 * 24 * 3600));
                 nextChange = std::min(nextChange, basis + (7 * 24 * 3600));
             } else {
-                AO_DBG_ERR("Recurring ChargingProfile but no RecurrencyKindType set. Undefined behavior, assume 'Daily'");
+                MOCPP_DBG_ERR("Recurring ChargingProfile but no RecurrencyKindType set. Undefined behavior, assume 'Daily'");
                 basis = t - ((t - startSchedule) % (24 * 3600));
                 nextChange = std::min(nextChange, basis + (24 * 3600));
             }
@@ -64,7 +64,7 @@ bool ChargingSchedule::calculateLimit(const Timestamp &t, const Timestamp &start
     }
 
     if (t < basis) { //check for error
-        AO_DBG_ERR("time basis is smaller than t, but t must be >= basis");
+        MOCPP_DBG_ERR("time basis is smaller than t, but t must be >= basis");
         return false;
     }
     
@@ -151,7 +151,7 @@ void ChargingSchedule::printSchedule(){
     char tmp[JSONDATE_LENGTH + 1] = {'\0'};
     startSchedule.toJsonString(tmp, JSONDATE_LENGTH + 1);
 
-    AO_CONSOLE_PRINTF("   > CHARGING SCHEDULE:\n" \
+    MOCPP_CONSOLE_PRINTF("   > CHARGING SCHEDULE:\n" \
                 "       > duration: %i\n" \
                 "       > startSchedule: %s\n" \
                 "       > chargingRateUnit: %s\n" \
@@ -163,7 +163,7 @@ void ChargingSchedule::printSchedule(){
                 minChargingRate);
 
     for (auto period = chargingSchedulePeriod.begin(); period != chargingSchedulePeriod.end(); period++) {
-        AO_CONSOLE_PRINTF("       > CHARGING SCHEDULE PERIOD:\n" \
+        MOCPP_CONSOLE_PRINTF("       > CHARGING SCHEDULE PERIOD:\n" \
                 "           > startPeriod: %i\n" \
                 "           > limit: %f\n" \
                 "           > numberPhases: %i\n",
@@ -262,7 +262,7 @@ bool ChargingProfile::toJson(DynamicJsonDocument& doc) {
 
     if (validFrom > MIN_TIME) {
         if (!validFrom.toJsonString(timeStr, JSONDATE_LENGTH + 1)) {
-            AO_DBG_ERR("serialization error");
+            MOCPP_DBG_ERR("serialization error");
             return false;
         }
         doc["validFrom"] = timeStr;
@@ -270,7 +270,7 @@ bool ChargingProfile::toJson(DynamicJsonDocument& doc) {
 
     if (validTo > MIN_TIME) {
         if (!validTo.toJsonString(timeStr, JSONDATE_LENGTH + 1)) {
-            AO_DBG_ERR("serialization error");
+            MOCPP_DBG_ERR("serialization error");
             return false;
         }
         doc["validTo"] = timeStr;
@@ -288,7 +288,7 @@ void ChargingProfile::printProfile(){
     char tmp2[JSONDATE_LENGTH + 1] = {'\0'};
     validTo.toJsonString(tmp2, JSONDATE_LENGTH + 1);
 
-    AO_CONSOLE_PRINTF("   > CHARGING PROFILE:\n" \
+    MOCPP_CONSOLE_PRINTF("   > CHARGING PROFILE:\n" \
                 "   > chargingProfileId: %i\n" \
                 "   > transactionId: %i\n" \
                 "   > stackLevel: %i\n" \
@@ -316,14 +316,14 @@ void ChargingProfile::printProfile(){
     chargingSchedule.printSchedule();
 }
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 bool loadChargingSchedulePeriod(JsonObject& json, ChargingSchedulePeriod& out) {
     int startPeriod = json["startPeriod"] | -1;
     if (startPeriod >= 0) {
         out.startPeriod = startPeriod;
     } else {
-        AO_DBG_WARN("format violation");
+        MOCPP_DBG_WARN("format violation");
         return false;
     }
 
@@ -331,7 +331,7 @@ bool loadChargingSchedulePeriod(JsonObject& json, ChargingSchedulePeriod& out) {
     if (limit >= 0.f) {
         out.limit = limit;
     } else {
-        AO_DBG_WARN("format violation");
+        MOCPP_DBG_WARN("format violation");
         return false;
     }
 
@@ -340,7 +340,7 @@ bool loadChargingSchedulePeriod(JsonObject& json, ChargingSchedulePeriod& out) {
         if (numberPhases >= 0 && numberPhases <= 3) {
             out.numberPhases = numberPhases;
         } else {
-            AO_DBG_WARN("format violation");
+            MOCPP_DBG_WARN("format violation");
             return false;
         }
     }
@@ -348,16 +348,16 @@ bool loadChargingSchedulePeriod(JsonObject& json, ChargingSchedulePeriod& out) {
     return true;
 }
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
-std::unique_ptr<ChargingProfile> ArduinoOcpp::loadChargingProfile(JsonObject& json) {
+std::unique_ptr<ChargingProfile> MicroOcpp::loadChargingProfile(JsonObject& json) {
     auto res = std::unique_ptr<ChargingProfile>(new ChargingProfile());
 
     int chargingProfileId = json["chargingProfileId"] | -1;
     if (chargingProfileId >= 0) {
         res->chargingProfileId = chargingProfileId;
     } else {
-        AO_DBG_WARN("format violation");
+        MOCPP_DBG_WARN("format violation");
         return nullptr;
     }
 
@@ -370,7 +370,7 @@ std::unique_ptr<ChargingProfile> ArduinoOcpp::loadChargingProfile(JsonObject& js
     if (stackLevel >= 0 && stackLevel <= CHARGEPROFILEMAXSTACKLEVEL) {
         res->stackLevel = stackLevel;
     } else {
-        AO_DBG_WARN("format violation");
+        MOCPP_DBG_WARN("format violation");
         return nullptr;
     }
 
@@ -382,7 +382,7 @@ std::unique_ptr<ChargingProfile> ArduinoOcpp::loadChargingProfile(JsonObject& js
     } else if (!strcmp(chargingProfilePurposeStr, "TxProfile")) {
         res->chargingProfilePurpose = ChargingProfilePurposeType::TxProfile;
     } else {
-        AO_DBG_WARN("format violation");
+        MOCPP_DBG_WARN("format violation");
         return nullptr;
     }
 
@@ -394,7 +394,7 @@ std::unique_ptr<ChargingProfile> ArduinoOcpp::loadChargingProfile(JsonObject& js
     } else if (!strcmp(chargingProfileKindStr, "Relative")) {
         res->chargingProfileKind = ChargingProfileKindType::Relative;
     } else {
-        AO_DBG_WARN("format violation");
+        MOCPP_DBG_WARN("format violation");
         return nullptr;
     }
 
@@ -405,12 +405,12 @@ std::unique_ptr<ChargingProfile> ArduinoOcpp::loadChargingProfile(JsonObject& js
         res->recurrencyKind = RecurrencyKindType::Weekly;
     }
 
-    AO_DBG_DEBUG("Deserialize JSON: chargingProfileId=%i, chargingProfilePurpose=%s, recurrencyKind=%s", chargingProfileId, chargingProfilePurposeStr, recurrencyKindStr);
+    MOCPP_DBG_DEBUG("Deserialize JSON: chargingProfileId=%i, chargingProfilePurpose=%s, recurrencyKind=%s", chargingProfileId, chargingProfilePurposeStr, recurrencyKindStr);
 
     if (json.containsKey("validFrom")) {
         if (!res->validFrom.setTime(json["validFrom"] | "Invalid")) {
             //non-success
-            AO_DBG_WARN("datetime format violation, expect format like 2022-02-01T20:53:32.486Z");
+            MOCPP_DBG_WARN("datetime format violation, expect format like 2022-02-01T20:53:32.486Z");
             return nullptr;
         }
     } else {
@@ -420,7 +420,7 @@ std::unique_ptr<ChargingProfile> ArduinoOcpp::loadChargingProfile(JsonObject& js
     if (json.containsKey("validTo")) {
         if (!res->validTo.setTime(json["validTo"] | "Invalid")) {
             //non-success
-            AO_DBG_WARN("datetime format violation, expect format like 2022-02-01T20:53:32.486Z");
+            MOCPP_DBG_WARN("datetime format violation, expect format like 2022-02-01T20:53:32.486Z");
             return nullptr;
         }
     } else {
@@ -441,13 +441,13 @@ std::unique_ptr<ChargingProfile> ArduinoOcpp::loadChargingProfile(JsonObject& js
     return res;
 }
 
-bool ArduinoOcpp::loadChargingSchedule(JsonObject& json, ChargingSchedule& out) {
+bool MicroOcpp::loadChargingSchedule(JsonObject& json, ChargingSchedule& out) {
     if (json.containsKey("duration")) {
         int duration = json["duration"] | -1;
         if (duration >= 0) {
             out.duration = duration;
         } else {
-            AO_DBG_WARN("format violation");
+            MOCPP_DBG_WARN("format violation");
             return false;
         }
     }
@@ -455,7 +455,7 @@ bool ArduinoOcpp::loadChargingSchedule(JsonObject& json, ChargingSchedule& out) 
     if (json.containsKey("startSchedule")) {
         if (!out.startSchedule.setTime(json["startSchedule"] | "Invalid")) {
             //non-success
-            AO_DBG_WARN("datetime format violation, expect format like 2022-02-01T20:53:32.486Z");
+            MOCPP_DBG_WARN("datetime format violation, expect format like 2022-02-01T20:53:32.486Z");
             return false;
         }
     } else {
@@ -468,13 +468,13 @@ bool ArduinoOcpp::loadChargingSchedule(JsonObject& json, ChargingSchedule& out) 
     } else if (unit[0] == 'w' || unit[0] == 'W') {
         out.chargingRateUnit = ChargingRateUnitType::Watt;
     } else {
-        AO_DBG_WARN("format violation");
+        MOCPP_DBG_WARN("format violation");
         return false;
     }
     
     JsonArray periodJsonArray = json["chargingSchedulePeriod"];
     if (periodJsonArray.size() < 1) {
-        AO_DBG_WARN("format violation");
+        MOCPP_DBG_WARN("format violation");
         return false;
     }
 
@@ -490,7 +490,7 @@ bool ArduinoOcpp::loadChargingSchedule(JsonObject& json, ChargingSchedule& out) 
         if (minChargingRate >= 0.f) {
             out.minChargingRate = minChargingRate;
         } else {
-            AO_DBG_WARN("format violation");
+            MOCPP_DBG_WARN("format violation");
             return false;
         }
     }

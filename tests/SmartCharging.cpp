@@ -1,11 +1,11 @@
-#include <ArduinoOcpp.h>
-#include <ArduinoOcpp/Core/Connection.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
-#include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Operations/CustomOperation.h>
+#include <MicroOcpp.h>
+#include <MicroOcpp/Core/Connection.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
+#include <MicroOcpp/Operations/CustomOperation.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 
@@ -34,19 +34,19 @@
 #define SCPROFILE_10_ABSOLUTE_LIMIT_5KW        "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":10,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":5000,\"numberPhases\":3}]}}}]";
 
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 
 TEST_CASE( "SmartCharging" ) {
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;
-    ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+    mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
     auto context = getOcppContext();
     auto& model = context->getModel();
 
-    ao_set_timer(custom_timer_cb);
+    mocpp_set_timer(custom_timer_cb);
 
     model.getClock().setTime(BASE_TIME);
 
@@ -112,9 +112,9 @@ TEST_CASE( "SmartCharging" ) {
         std::string out = SCPROFILE_0;
         loopback.sendTXT(out);
 
-        ocpp_deinitialize();
+        mocpp_deinitialize();
 
-        ocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         setSmartChargingOutput([] (float, float, int) {});
         scService = model.getSmartChargingService();
@@ -567,6 +567,6 @@ TEST_CASE( "SmartCharging" ) {
         return true;
     });
 
-    ocpp_deinitialize();
+    mocpp_deinitialize();
 
 }

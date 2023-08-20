@@ -1,14 +1,14 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/ReserveNow.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/Reservation/ReservationService.h>
-#include <ArduinoOcpp/Model/ConnectorBase/Connector.h>
-#include <ArduinoOcpp/Platform.h>
+#include <MicroOcpp/Operations/ReserveNow.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Reservation/ReservationService.h>
+#include <MicroOcpp/Model/ConnectorBase/Connector.h>
+#include <MicroOcpp/Platform.h>
 
-using ArduinoOcpp::Ocpp16::ReserveNow;
+using MicroOcpp::Ocpp16::ReserveNow;
 
 ReserveNow::ReserveNow(Model& model) : model(model) {
   
@@ -35,7 +35,7 @@ void ReserveNow::processReq(JsonObject payload) {
 
     Timestamp validateTimestamp;
     if (!validateTimestamp.setTime(payload["expiryDate"])) {
-        AO_DBG_WARN("bad time format");
+        MOCPP_DBG_WARN("bad time format");
         errorCode = "PropertyConstraintViolation";
         return;
     }
@@ -104,7 +104,7 @@ std::unique_ptr<DynamicJsonDocument> ReserveNow::createConf(){
     if (reservationStatus) {
         payload["status"] = reservationStatus;
     } else {
-        AO_DBG_ERR("didn't set reservationStatus");
+        MOCPP_DBG_ERR("didn't set reservationStatus");
         payload["status"] = "Rejected";
     }
     

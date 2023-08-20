@@ -1,11 +1,11 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef DIAGNOSTICS_STATUS
 #define DIAGNOSTICS_STATUS
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 namespace Ocpp16 {
 
 enum class DiagnosticsStatus {
@@ -16,5 +16,5 @@ enum class DiagnosticsStatus {
 };
 
 }
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

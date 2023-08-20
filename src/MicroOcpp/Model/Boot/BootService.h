@@ -1,17 +1,17 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef BOOTSERVICE_H
 #define BOOTSERVICE_H
 
-#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
-#include <ArduinoOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <memory>
 
-#define AO_BOOT_INTERVAL_DEFAULT 60
+#define MOCPP_BOOT_INTERVAL_DEFAULT 60
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 struct BootStats {
     uint16_t bootNr = 0;
@@ -38,7 +38,7 @@ private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
 
-    unsigned long interval_s = AO_BOOT_INTERVAL_DEFAULT;
+    unsigned long interval_s = MOCPP_BOOT_INTERVAL_DEFAULT;
     unsigned long lastBootNotification = -1UL / 2;
 
     RegistrationStatus status = RegistrationStatus::Pending;

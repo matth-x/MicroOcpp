@@ -1,12 +1,12 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/Metering/MeterValue.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Model/Metering/MeterValue.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Debug.h>
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 std::unique_ptr<DynamicJsonDocument> MeterValue::toJson() {
     size_t capacity = 0;
@@ -103,7 +103,7 @@ void MeterValueBuilder::updateObservedSamplers() {
 std::unique_ptr<MeterValue> MeterValueBuilder::takeSample(const Timestamp& timestamp, const ReadingContext& context) {
     if (select_observe != select->getValueRevision() || //OCPP server has changed configuration about which measurands to take
             samplers.size() != select_mask.size()) {    //Client has added another Measurand; synchronize lists
-        AO_DBG_DEBUG("Updating observed samplers due to config change or samplers added");
+        MOCPP_DBG_DEBUG("Updating observed samplers due to config change or samplers added");
         updateObservedSamplers();
         select_observe = select->getValueRevision();
     }
@@ -128,7 +128,7 @@ std::unique_ptr<MeterValue> MeterValueBuilder::deserializeSample(const JsonObjec
     Timestamp timestamp;
     bool ret = timestamp.setTime(mvJson["timestamp"] | "Invalid");
     if (!ret) {
-        AO_DBG_ERR("invalid timestamp");
+        MOCPP_DBG_ERR("invalid timestamp");
         return nullptr;
     }
 
@@ -148,13 +148,13 @@ std::unique_ptr<MeterValue> MeterValueBuilder::deserializeSample(const JsonObjec
                 if (dVal) {
                     sample->addSampledValue(std::move(dVal));
                 } else {
-                    AO_DBG_ERR("deserialization error");
+                    MOCPP_DBG_ERR("deserialization error");
                 }
                 break;
             }
         }
     }
 
-    AO_DBG_VERBOSE("deserialized MV");
+    MOCPP_DBG_VERBOSE("deserialized MV");
     return sample;
 }

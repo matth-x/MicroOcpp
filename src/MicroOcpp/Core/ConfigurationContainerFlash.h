@@ -1,14 +1,14 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef CONFIGURATIONCONTAINERFLASH_H
 #define CONFIGURATIONCONTAINERFLASH_H
 
-#include <ArduinoOcpp/Core/ConfigurationContainer.h>
-#include <ArduinoOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/ConfigurationContainer.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class ConfigurationContainerFlash : public ConfigurationContainer {
     std::shared_ptr<FilesystemAdapter> filesystem;
@@ -24,6 +24,6 @@ public:
 
 };
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 
 #endif

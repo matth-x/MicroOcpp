@@ -1,23 +1,23 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Model/Transactions/TransactionStore.h>
-#include <ArduinoOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <ArduinoOcpp/Model/ConnectorBase/ConnectorsCommon.h>
-#include <ArduinoOcpp/Model/Metering/MeteringService.h>
-#include <ArduinoOcpp/Model/FirmwareManagement/FirmwareService.h>
-#include <ArduinoOcpp/Model/Diagnostics/DiagnosticsService.h>
-#include <ArduinoOcpp/Model/Heartbeat/HeartbeatService.h>
-#include <ArduinoOcpp/Model/Authorization/AuthorizationService.h>
-#include <ArduinoOcpp/Model/Reservation/ReservationService.h>
-#include <ArduinoOcpp/Model/Boot/BootService.h>
-#include <ArduinoOcpp/Model/Reset/ResetService.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Transactions/TransactionStore.h>
+#include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
+#include <MicroOcpp/Model/ConnectorBase/ConnectorsCommon.h>
+#include <MicroOcpp/Model/Metering/MeteringService.h>
+#include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
+#include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
+#include <MicroOcpp/Model/Heartbeat/HeartbeatService.h>
+#include <MicroOcpp/Model/Authorization/AuthorizationService.h>
+#include <MicroOcpp/Model/Reservation/ReservationService.h>
+#include <MicroOcpp/Model/Boot/BootService.h>
+#include <MicroOcpp/Model/Reset/ResetService.h>
 
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Debug.h>
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 
 Model::Model(uint16_t bootNr) : bootNr(bootNr) {
     
@@ -98,7 +98,7 @@ unsigned int Model::getNumConnectors() const {
 
 Connector *Model::getConnector(unsigned int connectorId) {
     if (connectorId >= connectors.size()) {
-        AO_DBG_ERR("connector with connectorId %u does not exist", connectorId);
+        MOCPP_DBG_ERR("connector with connectorId %u does not exist", connectorId);
         return nullptr;
     }
 

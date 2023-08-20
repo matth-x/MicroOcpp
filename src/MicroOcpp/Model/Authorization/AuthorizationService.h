@@ -1,15 +1,15 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef AUTHORIZATIONSERVICE_H
 #define AUTHORIZATIONSERVICE_H
 
-#include <ArduinoOcpp/Model/Authorization/AuthorizationList.h>
-#include <ArduinoOcpp/Core/FilesystemAdapter.h>
-#include <ArduinoOcpp/Core/Configuration.h>
+#include <MicroOcpp/Model/Authorization/AuthorizationList.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/Configuration.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Context;
 

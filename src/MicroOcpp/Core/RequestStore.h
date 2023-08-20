@@ -1,17 +1,17 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef AO_REQUESTSTORE_H
-#define AO_REQUESTSTORE_H
+#ifndef MOCPP_REQUESTSTORE_H
+#define MOCPP_REQUESTSTORE_H
 
 #include <memory>
 #include <deque>
 #include <ArduinoJson.h>
 
-#define AO_MAX_OPNR 10000
+#define MOCPP_MAX_OPNR 10000
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class RequestStore;
 class FilesystemAdapter;

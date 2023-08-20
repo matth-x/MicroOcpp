@@ -1,17 +1,17 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/StatusNotification.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/StatusNotification.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Debug.h>
 
 #include <string.h>
 
-using ArduinoOcpp::Ocpp16::StatusNotification;
+using MicroOcpp::Ocpp16::StatusNotification;
 
 //helper function
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 namespace Ocpp16 {
 const char *cstrFromOcppEveState(ChargePointStatus state) {
     switch (state) {
@@ -34,7 +34,7 @@ const char *cstrFromOcppEveState(ChargePointStatus state) {
         case (ChargePointStatus::Faulted):
             return "Faulted";
         default:
-            AO_DBG_ERR("ChargePointStatus not specified");
+            MOCPP_DBG_ERR("ChargePointStatus not specified");
             (void)0;
             /* fall through */
         case (ChargePointStatus::NOT_SET):
@@ -46,7 +46,7 @@ const char *cstrFromOcppEveState(ChargePointStatus state) {
 StatusNotification::StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorData errorData)
         : connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
     
-    AO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
+    MOCPP_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
 }
 
 const char* StatusNotification::getOperationType(){
@@ -73,7 +73,7 @@ std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
             payload["vendorErrorCode"] = errorData.vendorErrorCode;
         }
     } else if (currentStatus == ChargePointStatus::NOT_SET) {
-        AO_DBG_ERR("Reporting undefined status");
+        MOCPP_DBG_ERR("Reporting undefined status");
         payload["errorCode"] = "InternalError";
     } else {
         payload["errorCode"] = "NoError";

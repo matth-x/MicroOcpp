@@ -1,23 +1,23 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
-#include <ArduinoOcpp/Core/ConfigurationKeyValue.h>
-#include <ArduinoOcpp/Core/ConfigurationOptions.h>
-#include <ArduinoOcpp/Core/ConfigurationContainerFlash.h>
-#include <ArduinoOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/ConfigurationOptions.h>
+#include <MicroOcpp/Core/ConfigurationContainerFlash.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
 
 #include <memory>
 #include <vector>
 
-#define CONFIGURATION_FN (AO_FILENAME_PREFIX "arduino-ocpp.cnf")
+#define CONFIGURATION_FN (MOCPP_FILENAME_PREFIX "arduino-ocpp.cnf")
 #define CONFIGURATION_VOLATILE "/volatile"
-#define AO_KEYVALUE_FN (AO_FILENAME_PREFIX "client-state.cnf")
+#define MOCPP_KEYVALUE_FN (MOCPP_FILENAME_PREFIX "client-state.cnf")
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 template <class T>
 std::shared_ptr<Configuration<T>> declareConfiguration(const char *key, T defaultValue, const char *filename = CONFIGURATION_FN, bool remotePeerCanWrite = true, bool remotePeerCanRead = true, bool localClientCanWrite = true, bool rebootRequiredWhenChanged = false);
@@ -38,5 +38,5 @@ void configuration_deinit();
 
 bool configuration_save();
 
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

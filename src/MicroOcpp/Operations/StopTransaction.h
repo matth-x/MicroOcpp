@@ -1,16 +1,16 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef STOPTRANSACTION_H
 #define STOPTRANSACTION_H
 
-#include <ArduinoOcpp/Core/Operation.h>
-#include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Operations/CiStrings.h>
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Operations/CiStrings.h>
 #include <vector>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 
 class Model;
 
@@ -30,7 +30,7 @@ public:
 
     StopTransaction(Model& model, std::shared_ptr<Transaction> transaction);
 
-    StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<ArduinoOcpp::MeterValue>> transactionData);
+    StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<MicroOcpp::MeterValue>> transactionData);
 
     const char* getOperationType() override;
 
@@ -50,5 +50,5 @@ public:
 };
 
 } //end namespace Ocpp16
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

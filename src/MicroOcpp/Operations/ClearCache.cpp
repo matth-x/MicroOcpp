@@ -1,12 +1,12 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Operations/ClearCache.h>
-#include <ArduinoOcpp/Core/FilesystemUtils.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Operations/ClearCache.h>
+#include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Debug.h>
 
-using ArduinoOcpp::Ocpp16::ClearCache;
+using MicroOcpp::Ocpp16::ClearCache;
 
 ClearCache::ClearCache(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem(filesystem) {
   
@@ -17,7 +17,7 @@ const char* ClearCache::getOperationType(){
 }
 
 void ClearCache::processReq(JsonObject payload) {
-    AO_DBG_WARN("Clear transaction log (Authorization Cache not supported)");
+    MOCPP_DBG_WARN("Clear transaction log (Authorization Cache not supported)");
 
     if (!filesystem) {
         //no persistency - nothing to do

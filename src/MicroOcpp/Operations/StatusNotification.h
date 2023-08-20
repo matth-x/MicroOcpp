@@ -1,16 +1,16 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
 #ifndef STATUSNOTIFICATION_H
 #define STATUSNOTIFICATION_H
 
-#include <ArduinoOcpp/Core/Operation.h>
-#include <ArduinoOcpp/Core/Time.h>
-#include <ArduinoOcpp/Model/ConnectorBase/ChargePointStatus.h>
-#include <ArduinoOcpp/Model/ConnectorBase/ChargePointErrorData.h>
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
+#include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
 
-namespace ArduinoOcpp {
+namespace MicroOcpp {
 namespace Ocpp16 {
 
 class StatusNotification : public Operation {
@@ -36,5 +36,5 @@ public:
 const char *cstrFromOcppEveState(ChargePointStatus state);
 
 } //end namespace Ocpp16
-} //end namespace ArduinoOcpp
+} //end namespace MicroOcpp
 #endif

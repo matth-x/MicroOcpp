@@ -1,18 +1,18 @@
-// matth-x/ArduinoOcpp
+// matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#include <ArduinoOcpp/Model/Diagnostics/DiagnosticsService.h>
-#include <ArduinoOcpp/Core/Context.h>
-#include <ArduinoOcpp/Model/Model.h>
-#include <ArduinoOcpp/Core/SimpleRequestFactory.h>
-#include <ArduinoOcpp/Core/Configuration.h>
-#include <ArduinoOcpp/Debug.h>
+#include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Debug.h>
 
-#include <ArduinoOcpp/Operations/GetDiagnostics.h>
-#include <ArduinoOcpp/Operations/DiagnosticsStatusNotification.h>
+#include <MicroOcpp/Operations/GetDiagnostics.h>
+#include <MicroOcpp/Operations/DiagnosticsStatusNotification.h>
 
-using namespace ArduinoOcpp;
+using namespace MicroOcpp;
 using Ocpp16::DiagnosticsStatus;
 
 DiagnosticsService::DiagnosticsService(Context& context) : context(context) {
@@ -45,11 +45,11 @@ void DiagnosticsService::loop() {
 
         if (!uploadIssued) {
             if (onUpload != nullptr) {
-                AO_DBG_DEBUG("Call onUpload");
+                MOCPP_DBG_DEBUG("Call onUpload");
                 onUpload(location, startTime, stopTime);
                 uploadIssued = true;
             } else {
-                AO_DBG_ERR("onUpload must be set! (see setOnUpload). Will abort");
+                MOCPP_DBG_ERR("onUpload must be set! (see setOnUpload). Will abort");
                 retries = 0;
                 uploadIssued = false;
             }
@@ -58,7 +58,7 @@ void DiagnosticsService::loop() {
         if (uploadIssued) {
             if (uploadStatusInput != nullptr && uploadStatusInput() == UploadStatus::Uploaded) {
                 //success!
-                AO_DBG_DEBUG("end upload routine (by status)")
+                MOCPP_DBG_DEBUG("end upload routine (by status)")
                 uploadIssued = false;
                 retries = 0;
             }
@@ -71,12 +71,12 @@ void DiagnosticsService::loop() {
 
                 if (uploadStatusInput == nullptr) {
                     //No way to find out if failed. But maximum time has elapsed. Assume success
-                    AO_DBG_DEBUG("end upload routine (by timer)");
+                    MOCPP_DBG_DEBUG("end upload routine (by timer)");
                     uploadIssued = false;
                     retries = 0;
                 } else {
                     //either we have UploadFailed status or (NotDownloaded + timeout) here
-                    AO_DBG_WARN("Upload timeout or failed");
+                    MOCPP_DBG_WARN("Upload timeout or failed");
                     const int TRANSITION_DELAY = 10;
                     if (retryInterval <= UPLOAD_TIMEOUT + TRANSITION_DELAY) {
                         nextTry = timestampNow;
@@ -115,7 +115,7 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &loca
     this->startTime.toJsonString(dbuf, JSONDATE_LENGTH + 1);
     this->stopTime.toJsonString(dbuf2, JSONDATE_LENGTH + 1);
 
-    AO_DBG_INFO("Scheduled Diagnostics upload!\n" \
+    MOCPP_DBG_INFO("Scheduled Diagnostics upload!\n" \
                     "                  location = %s\n" \
                     "                  retries = %i" \
                     ", retryInterval = %u" \
@@ -132,7 +132,7 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &loca
     uploadIssued = false;
 
     nextTry.toJsonString(dbuf, JSONDATE_LENGTH + 1);
-    AO_DBG_DEBUG("Initial try at %s", dbuf);
+    MOCPP_DBG_DEBUG("Initial try at %s", dbuf);
 
     return "diagnostics.log";
 }
@@ -177,7 +177,7 @@ void DiagnosticsService::setOnUploadStatusInput(std::function<UploadStatus()> up
     this->uploadStatusInput = uploadStatusInput;
 }
 
-#if !defined(AO_CUSTOM_DIAGNOSTICS) && !defined(AO_CUSTOM_WS)
+#if !defined(MOCPP_CUSTOM_DIAGNOSTICS) && !defined(MOCPP_CUSTOM_WS)
 #if defined(ESP32) || defined(ESP8266)
 
 DiagnosticsService *EspWiFi::makeDiagnosticsService(Context& context) {
@@ -191,4 +191,4 @@ DiagnosticsService *EspWiFi::makeDiagnosticsService(Context& context) {
 }
 
 #endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(AO_CUSTOM_UPDATER) && !defined(AO_CUSTOM_WS)
+#endif //!defined(MOCPP_CUSTOM_UPDATER) && !defined(MOCPP_CUSTOM_WS)
