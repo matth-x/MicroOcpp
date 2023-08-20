@@ -41,6 +41,30 @@ Try it (no hardware required): [MicroOcppSimulator](https://github.com/matth-x/M
 
 The necessary hardware and internet integration is usually far below 1000 LOCs.
 
+## Migrating to v1.0
+
+With the new project name, the API has been freezed for the v1.0 release. To migrate existing projects, find and replace the keywords in the following.
+
+If using the C-facade (skip if you don't use anything from *ArduinoOcpp_c.h*):
+- `AO_Connection` to `OCPP_Connection`
+- `AO_Transaction` to `OCPP_Transaction`
+- `AO_FilesystemOpt` to `OCPP_FilesystemOpt`
+- `AO_TxNotification` to `OCPP_TxNotification`
+- `ao_set_console_out_c` to `ocpp_set_console_out_c`
+
+Change this in any case:
+- `ArduinoOcpp` to `MicroOcpp`
+- `"AO_` to `"MO_`
+- `AO_` to `MOCPP_`
+- `ocpp_` to `mocpp_`
+
+Change this if used anywhere:
+- `ao_set_console_out` to `mocpp_set_console_out`
+- `ao_tick_ms` to `mocpp_tick_ms`
+
+If using the C-facade, change this as the final step:
+- `ao_` to `ocpp_`
+
 ## Developers guide
 
 Please take `examples/ESP/main.cpp` as the starting point for the first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. The API documentation can be found in [`MicroOcpp.h`](https://github.com/matth-x/MicroOcpp/blob/master/src/MicroOcpp.h).
