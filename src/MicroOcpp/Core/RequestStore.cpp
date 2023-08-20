@@ -8,7 +8,7 @@
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Debug.h>
 
-#define MOCPP_OPSTORE_FN MOCPP_FILENAME_PREFIX "opstore.cnf"
+#define MOCPP_OPSTORE_FN MOCPP_FILENAME_PREFIX "opstore.jsn"
 
 #define MOCPP_OPHISTORY_SIZE 3
 
