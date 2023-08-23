@@ -23,13 +23,13 @@ ConnectorTransactionStore::ConnectorTransactionStore(TransactionStore& context, 
         filesystem(filesystem) {
 
     char key [30] = {'\0'};
-    if (snprintf(key, 30, "MO_txEnd_%u", connectorId) < 0) {
+    if (snprintf(key, 30, MOCPP_CONFIG_EXT_PREFIX "txEnd_%u", connectorId) < 0) {
         MOCPP_DBG_ERR("Invalid key");
         (void)0;
     }
     txEnd = declareConfiguration<int>(key, 0, MOCPP_TXSTORE_META_FN, false, false, true, false);
 
-    if (snprintf(key, 30, "MO_txBegin_%u", connectorId) < 0) {
+    if (snprintf(key, 30, MOCPP_CONFIG_EXT_PREFIX "txBegin_%u", connectorId) < 0) {
         MOCPP_DBG_ERR("Invalid key");
         (void)0;
     }

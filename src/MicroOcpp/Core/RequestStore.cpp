@@ -96,7 +96,7 @@ bool StoredOperationHandler::restore(unsigned int opNrToLoad) {
 }
 
 RequestStore::RequestStore(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem(filesystem) {
-    opBegin = declareConfiguration<int>("MO_opBegin", 0, MOCPP_OPSTORE_FN, false, false, true, false);
+    opBegin = declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "opBegin", 0, MOCPP_OPSTORE_FN, false, false, true, false);
 
     if (!opBegin || *opBegin < 0) {
         MOCPP_DBG_ERR("init failure");

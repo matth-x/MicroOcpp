@@ -36,7 +36,7 @@ RegistrationStatus MicroOcpp::deserializeRegistrationStatus(const char *serializ
 BootService::BootService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
     
     //if transactions can start before the BootNotification succeeds
-    preBootTransactions = declareConfiguration<bool>("MO_PreBootTransactions", false, CONFIGURATION_FN, true, true, true, false);
+    preBootTransactions = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", false, CONFIGURATION_FN, true, true, true, false);
     
     if (!preBootTransactions) {
         MOCPP_DBG_ERR("initialization error");

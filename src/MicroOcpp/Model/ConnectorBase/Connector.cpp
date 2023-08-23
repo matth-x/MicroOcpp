@@ -31,7 +31,7 @@ Connector::Connector(Context& context, int connectorId)
         : context(context), model(context.getModel()), connectorId{connectorId} {
 
     char availabilityKey [CONF_KEYLEN_MAX + 1] = {'\0'};
-    snprintf(availabilityKey, CONF_KEYLEN_MAX + 1, "MO_AVAIL_CONN_%d", connectorId);
+    snprintf(availabilityKey, CONF_KEYLEN_MAX + 1, MOCPP_CONFIG_EXT_PREFIX "AVAIL_CONN_%d", connectorId);
     availability = declareConfiguration<bool>(availabilityKey, true, MOCPP_KEYVALUE_FN, false, false, true, false);
 
     connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN, true, true, true, false);
@@ -43,14 +43,14 @@ Connector::Connector(Context& context, int connectorId)
     allowOfflineTxForUnknownId = MicroOcpp::declareConfiguration<bool>("AllowOfflineTxForUnknownId", false, CONFIGURATION_FN);
 
     //if the EVSE goes offline, can it continue to charge without sending StartTx / StopTx to the server when going online again?
-    silentOfflineTransactions = declareConfiguration<bool>("MO_SilentOfflineTransactions", false, CONFIGURATION_FN, true, true, true, false);
+    silentOfflineTransactions = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "SilentOfflineTransactions", false, CONFIGURATION_FN, true, true, true, false);
 
     //how long the EVSE tries the Authorize request before it enters offline mode
-    authorizationTimeout = MicroOcpp::declareConfiguration<int>("MO_AuthorizationTimeout", 20, CONFIGURATION_FN);
+    authorizationTimeout = MicroOcpp::declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20, CONFIGURATION_FN);
 
     //FreeVend mode
-    freeVendActive = declareConfiguration<bool>("MO_FreeVendActive", false, CONFIGURATION_FN, true, true, true, false);
-    freeVendIdTag = declareConfiguration<const char*>("MO_FreeVendIdTag", "", CONFIGURATION_FN, true, true, true, false);
+    freeVendActive = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "FreeVendActive", false, CONFIGURATION_FN, true, true, true, false);
+    freeVendIdTag = declareConfiguration<const char*>(MOCPP_CONFIG_EXT_PREFIX "FreeVendIdTag", "", CONFIGURATION_FN, true, true, true, false);
 
     if (!availability) {
         MOCPP_DBG_ERR("Cannot declare availability");

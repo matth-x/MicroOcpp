@@ -138,7 +138,7 @@ TEST_CASE( "Configuration Behavior" ) {
 
     SECTION("AllowOfflineTxForUnknownId") {
         auto config = declareConfiguration<bool>("AllowOfflineTxForUnknownId", true);
-        auto authorizationTimeout = MicroOcpp::declareConfiguration<int>("MO_AuthorizationTimeout", 1);
+        auto authorizationTimeout = MicroOcpp::declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "AuthorizationTimeout", 1);
         *authorizationTimeout = 1; //try normal Authorize for 1s, then enter offline mode
 
         loopback.setConnected(false); //connection loss
@@ -174,7 +174,7 @@ TEST_CASE( "Configuration Behavior" ) {
 
     SECTION("LocalPreAuthorize") {
         auto config = declareConfiguration<bool>("LocalPreAuthorize", true);
-        auto authorizationTimeout = MicroOcpp::declareConfiguration<int>("MO_AuthorizationTimeout", 20);
+        auto authorizationTimeout = MicroOcpp::declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20);
         *authorizationTimeout = 300; //try normal Authorize for 5 minutes
 
         auto localAuthorizeOffline = declareConfiguration<bool>("LocalAuthorizeOffline", true, CONFIGURATION_FN, true, true, true, false);

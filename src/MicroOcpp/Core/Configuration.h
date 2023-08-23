@@ -17,6 +17,10 @@
 #define CONFIGURATION_VOLATILE "/volatile"
 #define MOCPP_KEYVALUE_FN (MOCPP_FILENAME_PREFIX "client-state.jsn")
 
+#ifndef MOCPP_CONFIG_EXT_PREFIX
+#define MOCPP_CONFIG_EXT_PREFIX "Cst_"
+#endif
+
 namespace MicroOcpp {
 
 template <class T>

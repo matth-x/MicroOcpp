@@ -182,7 +182,7 @@ TEST_CASE( "Charging sessions" ) {
         loopback.setConnected(false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>("MO_PreBootTransactions", true, CONFIGURATION_FN) = true;
+        *declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
 
         loop();
@@ -243,7 +243,7 @@ TEST_CASE( "Charging sessions" ) {
         loopback.setConnected(false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>("MO_PreBootTransactions", true, CONFIGURATION_FN) = true;
+        *declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
 
         loop();
@@ -257,7 +257,7 @@ TEST_CASE( "Charging sessions" ) {
 
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>("MO_PreBootTransactions", true, CONFIGURATION_FN) = true;
+        *declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
 
         bool checkProcessed = false;
@@ -294,7 +294,7 @@ TEST_CASE( "Charging sessions" ) {
         loopback.setConnected(false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>("MO_PreBootTransactions", true, CONFIGURATION_FN) = true;
+        *declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
 
         loop();
@@ -311,7 +311,7 @@ TEST_CASE( "Charging sessions" ) {
 
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>("MO_PreBootTransactions", true, CONFIGURATION_FN) = true;
+        *declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN) = true;
         configuration_save();
 
         bool checkProcessed = false;

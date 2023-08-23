@@ -22,7 +22,7 @@ MeteringConnector::MeteringConnector(Model& model, int connectorId, MeterStore& 
 
     auto MeterValuesSampledData = declareConfiguration<const char*>("MeterValuesSampledData", "", CONFIGURATION_FN);
     declareConfiguration<int>("MeterValuesSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, false, true, false, false);
-    MeterValueCacheSize = declareConfiguration("MO_MeterValueCacheSize", 1, CONFIGURATION_FN, true, true, true, false);
+    MeterValueCacheSize = declareConfiguration(MOCPP_CONFIG_EXT_PREFIX "MeterValueCacheSize", 1, CONFIGURATION_FN, true, true, true, false);
     MeterValueSampleInterval = declareConfiguration("MeterValueSampleInterval", 60);
     
     auto StopTxnSampledData = declareConfiguration<const char*>("StopTxnSampledData", "", CONFIGURATION_FN);
@@ -34,8 +34,8 @@ MeteringConnector::MeteringConnector(Model& model, int connectorId, MeterStore& 
     
     auto StopTxnAlignedData = declareConfiguration<const char*>("StopTxnAlignedData", "", CONFIGURATION_FN);
 
-    MeterValuesInTxOnly = declareConfiguration<bool>("MO_MeterValuesInTxOnly", true, CONFIGURATION_FN, true, true, true, false);
-    StopTxnDataCapturePeriodic = declareConfiguration<bool>("MO_StopTxnDataCapturePeriodic", false, CONFIGURATION_FN, true, true, true, false);
+    MeterValuesInTxOnly = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "MeterValuesInTxOnly", true, CONFIGURATION_FN, true, true, true, false);
+    StopTxnDataCapturePeriodic = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "StopTxnDataCapturePeriodic", false, CONFIGURATION_FN, true, true, true, false);
 
     sampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesSampledData));
     alignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesAlignedData));

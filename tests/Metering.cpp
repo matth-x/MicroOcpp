@@ -97,7 +97,7 @@ TEST_CASE("Metering") {
         auto MeterValueSampleInterval = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
         *MeterValueSampleInterval = 10;
 
-        auto MeterValueCacheSize = declareConfiguration("MO_MeterValueCacheSize", 0, CONFIGURATION_FN);
+        auto MeterValueCacheSize = declareConfiguration(MOCPP_CONFIG_EXT_PREFIX "MeterValueCacheSize", 0, CONFIGURATION_FN);
         *MeterValueCacheSize = 2;
 
         bool checkProcessed = false;
@@ -159,7 +159,7 @@ TEST_CASE("Metering") {
         auto MeterValuesAlignedData = declareConfiguration<const char*>("MeterValuesAlignedData", "", CONFIGURATION_FN);
         *MeterValuesAlignedData = "Energy.Active.Import.Register";
 
-        auto MeterValueCacheSize = declareConfiguration("MO_MeterValueCacheSize", 0, CONFIGURATION_FN);
+        auto MeterValueCacheSize = declareConfiguration(MOCPP_CONFIG_EXT_PREFIX "MeterValueCacheSize", 0, CONFIGURATION_FN);
         *MeterValueCacheSize = 2;
 
         bool checkProcessed = false;
@@ -321,7 +321,7 @@ TEST_CASE("Metering") {
         auto MeterValueSampleInterval = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
         *MeterValueSampleInterval = 10;
 
-        auto MeterValueCacheSize = declareConfiguration("MO_MeterValueCacheSize", 0, CONFIGURATION_FN);
+        auto MeterValueCacheSize = declareConfiguration(MOCPP_CONFIG_EXT_PREFIX "MeterValueCacheSize", 0, CONFIGURATION_FN);
         *MeterValueCacheSize = 10;
 
         bool checkProcessed = false;
