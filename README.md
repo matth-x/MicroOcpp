@@ -4,7 +4,7 @@
 [![Unit tests]( https://github.com/matth-x/MicroOcpp/workflows/Unit%20tests/badge.svg)](https://github.com/matth-x/MicroOcpp/actions)
 [![codecov](https://codecov.io/github/matth-x/ArduinoOcpp/branch/develop/graph/badge.svg?token=UN6LO96HM7)](https://codecov.io/github/matth-x/ArduinoOcpp)
 
-**Formerly ArduinoOcpp ([migration guide](https://github.com/matth-x/MicroOcpp#migrating-to-v10))**: *since the first release in 2020, ArduinoOcpp has increasingly been used on other platforms than Arduino. The goal of this project has evolved to fit seamlessly in a high variety of microcontroller firmwares and so the dependency on Arduino was dropped some time ago. The new name reflects the purpose of this project better and prevents any confusion. Despite the new name, nothing changes for existing users and the Arduino integration will continue to be fully functional.*
+**Formerly ArduinoOcpp ([migration guide](https://matth-x.github.io/MicroOcpp/migration/))**: *since the first release in 2020, ArduinoOcpp has increasingly been used on other platforms than Arduino. The goal of this project has evolved to fit seamlessly in a high variety of microcontroller firmwares and so the dependency on Arduino was dropped some time ago. The new name reflects the purpose of this project better and prevents potential confusion. Despite the new name, nothing changes for existing users and the Arduino integration will continue to be fully functional.*
 
 OCPP-J 1.6 client for embedded microcontrollers. Portable C/C++. Compatible with Espressif, NXP, Texas Instruments and STM.
 
@@ -41,35 +41,9 @@ Try it (no hardware required): [MicroOcppSimulator](https://github.com/matth-x/M
 
 The necessary hardware and internet integration is usually far below 1000 LOCs.
 
-## Migrating to v1.0
-
-With the new project name, the API has been freezed for the v1.0 release. To migrate existing projects, find and replace the keywords in the following.
-
-If using the C-facade (skip if you don't use anything from *ArduinoOcpp_c.h*):
-- `AO_Connection` to `OCPP_Connection`
-- `AO_Transaction` to `OCPP_Transaction`
-- `AO_FilesystemOpt` to `OCPP_FilesystemOpt`
-- `AO_TxNotification` to `OCPP_TxNotification`
-- `ao_set_console_out_c` to `ocpp_set_console_out_c`
-
-Change this in any case:
-- `ArduinoOcpp` to `MicroOcpp`
-- `"AO_` to `"MO_`
-- `AO_` to `MOCPP_`
-- `ocpp_` to `mocpp_`
-
-Change this if used anywhere:
-- `ao_set_console_out` to `mocpp_set_console_out`
-- `ao_tick_ms` to `mocpp_tick_ms`
-
-If using the C-facade, change this as the final step:
-- `ao_` to `ocpp_`
-
-**If something is missing in this guide, please share the issue here:** https://github.com/matth-x/MicroOcpp/issues/176
-
 ## Developers guide
 
-Please take `examples/ESP/main.cpp` as the starting point for the first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. The API documentation can be found in [`MicroOcpp.h`](https://github.com/matth-x/MicroOcpp/blob/master/src/MicroOcpp.h).
+Please take `examples/ESP/main.cpp` as the starting point for the first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. The API documentation can be found in [`MicroOcpp.h`](https://github.com/matth-x/MicroOcpp/blob/master/src/MicroOcpp.h). Also check out the [Docs](https://matth-x.github.io/MicroOcpp).
 
 ### Dependencies
 
@@ -79,17 +53,15 @@ Mandatory:
 
 If compiled with the Arduino integration:
 
-- [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets) (version `2.3.6`)
+- [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets) (version `2.4.1`)
 
 In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/ArduinoOcpp@0.3.0` in the PIO library manager.
 
 ## OCPP 2.0.1 and ISO 15118
 
-The OCPP 2.0.1 upgrade is being worked on. Further details will be announced soon.
+**The call for funding for the OCPP 2.0.1 upgrade has been opened.** The version 1.6 support has successfully been funded by private companies who share an interest in using this technology. OCPP is most often seen as a non-differentiating feature of chargers and is therefore perfectly suited for Open Source collaboration. If your company has an interest in the OCPP 2.0.1 upgrade, please use the contact details at the end of this page to receive a pitch with all advantages of joining the group of funders.
 
-ISO 15118 is a must-have for future chargers. It will hugely improve the security and user-friendliness of EV charging. MicroOcpp facilitates the integration of ISO 15118 by handling its OCPP-side communication. This is being validated now in a proprietary firmware development.
-
-However, no public ISO 15118 integration exists at the moment. If your company considers working on an open source ISO 15118 stack, it would be great to discuss a potential collaboration on an open source OCPP 2.0.1 + ISO 15118 solution.
+ISO 15118 will improve the security and user-friendliness of EV charging. MicroOcpp facilitates the integration of ISO 15118 by handling its OCPP-side communication. This is already being validated at the moment. A public demonstration will follow with the first collaboration on an open OCPP 2.0.1 + ISO 15118 integration.
 
 ## Supported Feature Profiles
 
@@ -106,8 +78,8 @@ Fully OCPP 1.6 compliant :heavy_check_mark:
 
 ## Further help
 
-I hope this guide can help you to successfully integrate an OCPP controller into your EVSE. If something needs clarification or if you have a question, please send me a message.
+I hope the given documentation and guidance can help you to successfully integrate an OCPP controller into your EVSE. If something needs clarification or if you have a question, please send me a message.
 
-:envelope: : matthias A⊤ arduino-ocpp DО⊤ com
+:envelope: : matthias [A⊤] arduino-ocpp [DО⊤] com
 
 If you want professional assistance for your EVSE project, you can contact me as well. I'm looking forward to hearing about your ideas!

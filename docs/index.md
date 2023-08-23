@@ -2,9 +2,13 @@ MicroOcpp is an OCPP client which runs on microcontrollers and enables EVSEs to 
 
 [Technical introduction](intro-tech)
 
+[Migrating to v1.0](migration)
+
 [Modules](modules)
 
 [Development tools and basic prerequisites](prerequisites)
+
+[Security whitepaper](security)
 
 <!-- This chapter shows how to kick-start your OCPP project. -->
 
