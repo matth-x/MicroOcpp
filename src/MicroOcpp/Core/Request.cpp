@@ -101,7 +101,7 @@ std::unique_ptr<DynamicJsonDocument> Request::createRequest(){
             MOCPP_DBG_DEBUG("Try to send request: %.*s (...)", 128, buf);
         }
 
-        delete buf;
+        delete[] buf;
     }
 
     trialNo++;
