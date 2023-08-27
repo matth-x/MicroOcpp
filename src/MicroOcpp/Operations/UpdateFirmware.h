@@ -25,13 +25,13 @@ private:
 public:
   UpdateFirmware(Model& model);
 
-  const char* getOperationType() {return "UpdateFirmware";}
+  const char* getOperationType() override {return "UpdateFirmware";}
 
-  void processReq(JsonObject payload);
+  void processReq(JsonObject payload) override;
 
-  std::unique_ptr<DynamicJsonDocument> createConf();
+  std::unique_ptr<DynamicJsonDocument> createConf() override;
 
-  const char *getErrorCode() {if (formatError) return "FormationViolation"; else return NULL;}
+  const char *getErrorCode() override {if (formatError) return "FormationViolation"; else return NULL;}
 };
 
 } //end namespace Ocpp16

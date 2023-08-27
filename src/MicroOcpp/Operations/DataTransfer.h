@@ -16,11 +16,11 @@ private:
 public:
     DataTransfer(const std::string &msg);
 
-    const char* getOperationType();
+    const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq();
+    std::unique_ptr<DynamicJsonDocument> createReq() override;
 
-    void processConf(JsonObject payload);
+    void processConf(JsonObject payload) override;
     
 };
 

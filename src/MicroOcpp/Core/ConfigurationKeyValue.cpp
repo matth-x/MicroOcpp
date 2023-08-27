@@ -254,6 +254,6 @@ std::function<bool(const char*)> Configuration<const char *>::getValidator() {
 template class Configuration<int>;
 template class Configuration<float>;
 template class Configuration<bool>;
-template class Configuration<const char *>;
+//template class Configuration<const char *>; //no effect after explicit specialization
 
 } //end namespace MicroOcpp

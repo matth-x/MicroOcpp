@@ -19,11 +19,11 @@ private:
 public:
     FirmwareStatusNotification(FirmwareStatus status);
 
-    const char* getOperationType() {return "FirmwareStatusNotification"; }
+    const char* getOperationType() override {return "FirmwareStatusNotification"; }
 
-    std::unique_ptr<DynamicJsonDocument> createReq();
+    std::unique_ptr<DynamicJsonDocument> createReq() override;
 
-    void processConf(JsonObject payload);
+    void processConf(JsonObject payload) override;
 
 };
 

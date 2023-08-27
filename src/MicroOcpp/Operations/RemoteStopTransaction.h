@@ -20,11 +20,11 @@ private:
 public:
     RemoteStopTransaction(Model& model);
 
-    const char* getOperationType();
+    const char* getOperationType() override;
 
-    void processReq(JsonObject payload);
+    void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf() override;
 };
 
 } //end namespace Ocpp16

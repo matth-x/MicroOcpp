@@ -141,7 +141,7 @@ public:
     bool remove(const char *fn) override {
         return USE_FS.remove(fn);
     };
-    int ftw_root(std::function<int(const char *fpath)> fn) {
+    int ftw_root(std::function<int(const char *fpath)> fn) override {
 #if MOCPP_USE_FILEAPI == ARDUINO_LITTLEFS
         auto dir = USE_FS.open(MOCPP_FILENAME_PREFIX);
         if (!dir) {
@@ -244,7 +244,7 @@ public:
         return fseek(file, offset, SEEK_SET);
     }
 
-    int read() {
+    int read() override {
         return fgetc(file);
     }
 };
@@ -285,7 +285,7 @@ public:
         return unlink(fn) == 0;
     }
 
-    int ftw_root(std::function<int(const char *fpath)> fn) {
+    int ftw_root(std::function<int(const char *fpath)> fn) override {
         //open MO root directory
         char dname [MOCPP_MAX_PATH_SIZE];
         auto dlen = snprintf(dname, MOCPP_MAX_PATH_SIZE, "%s", MOCPP_FILENAME_PREFIX);
@@ -399,7 +399,7 @@ public:
         return fseek(file, offset, SEEK_SET);
     }
 
-    int read() {
+    int read() override {
         return fgetc(file);
     }
 };
@@ -435,7 +435,7 @@ public:
         return ::remove(fn) == 0;
     }
 
-    int ftw_root(std::function<int(const char *fpath)> fn) {
+    int ftw_root(std::function<int(const char *fpath)> fn) override {
         auto dir = opendir(MOCPP_FILENAME_PREFIX); // use c_str() to convert the path string to a C-style string
         if (!dir) {
             MOCPP_DBG_ERR("cannot open root directory: " MOCPP_FILENAME_PREFIX);
