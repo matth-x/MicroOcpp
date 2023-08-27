@@ -11,19 +11,29 @@
 #define EXT_C
 #endif
 
-#define MOCPP_PLATFORM_ARDUINO 0
-#define MOCPP_PLATFORM_ESPIDF  1
-#define MOCPP_PLATFORM_UNIX    2
+#define MOCPP_PLATFORM_NONE    0
+#define MOCPP_PLATFORM_ARDUINO 1
+#define MOCPP_PLATFORM_ESPIDF  2
+#define MOCPP_PLATFORM_UNIX    3
 
 #ifndef MOCPP_PLATFORM
 #define MOCPP_PLATFORM MOCPP_PLATFORM_ARDUINO
+#endif
+
+#if MOCPP_PLATFORM == MOCPP_PLATFORM_NONE
+#ifndef MOCPP_CUSTOM_CONSOLE
+#define MOCPP_CUSTOM_CONSOLE
+#endif
+#ifndef MOCPP_CUSTOM_TIMER
+#define MOCPP_CUSTOM_TIMER
+#endif
 #endif
 
 #ifdef MOCPP_CUSTOM_CONSOLE
 #include <cstdio>
 
 #ifndef MOCPP_CUSTOM_CONSOLE_MAXMSGSIZE
-#define MOCPP_CUSTOM_CONSOLE_MAXMSGSIZE 196
+#define MOCPP_CUSTOM_CONSOLE_MAXMSGSIZE 192
 #endif
 
 void mo_set_console_out(void (*console_out)(const char *msg));
@@ -34,7 +44,8 @@ void mocpp_console_out(const char *msg);
 #define MOCPP_CONSOLE_PRINTF(X, ...) \
             do { \
                 char msg [MOCPP_CUSTOM_CONSOLE_MAXMSGSIZE]; \
-                if (snprintf(msg, MOCPP_CUSTOM_CONSOLE_MAXMSGSIZE, X, ##__VA_ARGS__) < 0) { \
+                auto _mo_ret = snprintf(msg, MOCPP_CUSTOM_CONSOLE_MAXMSGSIZE, X, ##__VA_ARGS__); \
+                if (_mo_ret < 0 || _mo_ret >= MOCPP_CUSTOM_CONSOLE_MAXMSGSIZE) { \
                     sprintf(msg + MOCPP_CUSTOM_CONSOLE_MAXMSGSIZE - 7, " [...]"); \
                 } \
                 MicroOcpp::mocpp_console_out(msg); \

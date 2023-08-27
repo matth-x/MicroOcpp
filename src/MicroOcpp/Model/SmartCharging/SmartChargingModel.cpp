@@ -292,17 +292,19 @@ void ChargingProfile::printProfile(){
                 "   > chargingProfileId: %i\n" \
                 "   > transactionId: %i\n" \
                 "   > stackLevel: %i\n" \
-                "   > chargingProfilePurpose: %s\n" \
-                "   > chargingProfileKind: %s\n" \
-                "   > recurrencyKind: %s\n" \
-                "   > validFrom: %s\n" \
-                "   > validTo: %s\n",
+                "   > chargingProfilePurpose: %s\n",
                 chargingProfileId,
                 transactionId,
                 stackLevel,
                 chargingProfilePurpose == (ChargingProfilePurposeType::ChargePointMaxProfile) ? "ChargePointMaxProfile" :
                     chargingProfilePurpose == (ChargingProfilePurposeType::TxDefaultProfile) ? "TxDefaultProfile" :
-                    chargingProfilePurpose == (ChargingProfilePurposeType::TxProfile) ? "TxProfile" : "Error",
+                    chargingProfilePurpose == (ChargingProfilePurposeType::TxProfile) ? "TxProfile" : "Error"
+                );
+    MOCPP_CONSOLE_PRINTF(
+                "   > chargingProfileKind: %s\n" \
+                "   > recurrencyKind: %s\n" \
+                "   > validFrom: %s\n" \
+                "   > validTo: %s\n",
                 chargingProfileKind == (ChargingProfileKindType::Absolute) ? "Absolute" :
                     chargingProfileKind == (ChargingProfileKindType::Recurring) ? "Recurring" :
                     chargingProfileKind == (ChargingProfileKindType::Relative) ? "Relative" : "Error",

@@ -481,8 +481,12 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 #else //filesystem disabled
 
+namespace MicroOcpp {
+
 std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config) {
     return nullptr;
 }
+
+} //end namespace MicroOcpp
 
 #endif //switch-case MOCPP_USE_FILEAPI
