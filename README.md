@@ -10,9 +10,9 @@ OCPP-J 1.6 client for embedded microcontrollers. Portable C/C++. Compatible with
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp)
 
-PlatformIO package: [ArduinoOcpp](https://platformio.org/lib/show/11975/ArduinoOcpp)
+Technical introduction: [MicroOcpp Docs](https://matth-x.github.io/MicroOcpp/intro-tech)
 
-Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
+Try it (online): [MicroOcppSimulator](https://github.com/matth-x/MicroOcppSimulator)
 
 Fully integrated into the Arduino platform and the ESP32 / ESP8266. Runs on ESP-IDF, FreeRTOS and generic embedded C/C++ platforms.
 
@@ -26,9 +26,7 @@ This library allows EVSEs to communicate with an OCPP Backend and to participate
 
 :heavy_check_mark: Eligible for public chargers (Eichrecht-compliant)
 
-Technical introduction: [MicroOcpp Docs](https://matth-x.github.io/MicroOcpp/intro-tech)
-
-Try it (no hardware required): [MicroOcppSimulator](https://github.com/matth-x/MicroOcppSimulator)
+Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
 
 ### Features
 
@@ -41,7 +39,23 @@ Try it (no hardware required): [MicroOcppSimulator](https://github.com/matth-x/M
 
 The necessary hardware and internet integration is usually far below 1000 LOCs.
 
+## Demo App
+
+*Main repository: [MicroOcppSimulator](https://github.com/matth-x/MicroOcppSimulator)*
+
+(Beta) The Simulator is a demo & development tool which allows to quickly assess the compatibility of MicroOcpp with OCPP backends. It simulates a full charging station, adds a GUI and basic controls to MicroOcpp and runs in the browser (using WebAssembly): [Try it](https://demo.micro-ocpp.com/)
+
+[![Screenshot](https://github.com/agruenb/arduino-ocpp-dashboard/blob/master/docs/img/status_page.png)](https://demo.micro-ocpp.com/)
+
+### Usage
+
+**OCPP server setup**: Navigate to "Control Center". In the WebSocket options, add the OCPP backend URL, charge box ID and authorization key if existent. Press "Update WebSocket" to save. The Simulator should connect to the OCPP server. To check the connection status, it could be helpful to open the developer tools of the browser.
+
+**RFID authentication**: Go to "Control Center" > "Connectors" > "Transaction" and update the idTag with the desired value.
+
 ## Developers guide
+
+PlatformIO package: [ArduinoOcpp](https://platformio.org/lib/show/11975/ArduinoOcpp)
 
 Please take `examples/ESP/main.cpp` as the starting point for the first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. The API documentation can be found in [`MicroOcpp.h`](https://github.com/matth-x/MicroOcpp/blob/master/src/MicroOcpp.h). Also check out the [Docs](https://matth-x.github.io/MicroOcpp).
 
