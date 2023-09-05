@@ -51,6 +51,8 @@ The necessary hardware and internet integration is usually far below 1000 LOCs.
 
 **OCPP server setup**: Navigate to "Control Center". In the WebSocket options, add the OCPP backend URL, charge box ID and authorization key if existent. Press "Update WebSocket" to save. The Simulator should connect to the OCPP server. To check the connection status, it could be helpful to open the developer tools of the browser.
 
+If you don't have an OCPP server at hand, leave the charge box ID blank and enter the following backend address: `wss://echo.websocket.events/` (this server is sponsored by Lob.com)
+
 **RFID authentication**: Go to "Control Center" > "Connectors" > "Transaction" and update the idTag with the desired value.
 
 ## Developers guide
@@ -73,7 +75,7 @@ In case you use PlatformIO, you can copy all dependencies from `platformio.ini` 
 
 ## OCPP 2.0.1 and ISO 15118
 
-**The call for funding for the OCPP 2.0.1 upgrade has been opened.** The version 1.6 support has successfully been funded by private companies who share an interest in using this technology. OCPP is most often seen as a non-differentiating feature of chargers and is therefore perfectly suited for Open Source collaboration. If your company has an interest in the OCPP 2.0.1 upgrade, please use the contact details at the end of this page to receive a pitch with all advantages of joining the group of funders.
+**The call for funding for the OCPP 2.0.1 upgrade has been opened.** The version 1.6 support has successfully been funded by private companies who share an interest in using this technology. OCPP is most often seen as a non-differentiating feature of chargers and is therefore perfectly suited for Open Source collaboration. If your company has an interest in the OCPP 2.0.1 upgrade, please use the contact details at the end of this page to receive more details about all advantages of participating in the funding campaign.
 
 ISO 15118 will improve the security and user-friendliness of EV charging. MicroOcpp facilitates the integration of ISO 15118 by handling its OCPP-side communication. This is already being validated at the moment. A public demonstration will follow with the first collaboration on an open OCPP 2.0.1 + ISO 15118 integration.
 
