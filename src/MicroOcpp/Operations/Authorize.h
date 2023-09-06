@@ -19,19 +19,17 @@ private:
     Model& model;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
 public:
-//    Authorize();
-
     Authorize(Model& model, const char *idTag);
 
-    const char* getOperationType();
+    const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq();
+    std::unique_ptr<DynamicJsonDocument> createReq() override;
 
-    void processConf(JsonObject payload);
+    void processConf(JsonObject payload) override;
 
-    void processReq(JsonObject payload);
+    void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf() override;
 
 };
 

@@ -23,13 +23,13 @@ private:
 public:
     ChangeAvailability(Model& model);
 
-    const char* getOperationType();
+    const char* getOperationType() override;
 
-    void processReq(JsonObject payload);
+    void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf() override;
 
-    const char *getErrorCode() {return errorCode;}
+    const char *getErrorCode() override {return errorCode;}
 };
 
 } //end namespace Ocpp16

@@ -29,13 +29,13 @@ private:
 public:
     GetDiagnostics(Model& model);
 
-    const char* getOperationType() {return "GetDiagnostics";}
+    const char* getOperationType() override {return "GetDiagnostics";}
 
-    void processReq(JsonObject payload);
+    void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf();
+    std::unique_ptr<DynamicJsonDocument> createConf() override;
 
-    const char *getErrorCode() {return formatError ? "FormationViolation" : nullptr;}
+    const char *getErrorCode() override {return formatError ? "FormationViolation" : nullptr;}
 };
 
 } //end namespace Ocpp16

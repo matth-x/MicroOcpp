@@ -18,11 +18,11 @@ private:
 public:
     DiagnosticsStatusNotification(DiagnosticsStatus status);
 
-    const char* getOperationType() {return "DiagnosticsStatusNotification"; }
+    const char* getOperationType() override {return "DiagnosticsStatusNotification"; }
 
-    std::unique_ptr<DynamicJsonDocument> createReq();
+    std::unique_ptr<DynamicJsonDocument> createReq() override;
 
-    void processConf(JsonObject payload);
+    void processConf(JsonObject payload) override;
 
 };
 
