@@ -117,7 +117,7 @@ TEST_CASE( "SmartCharging" ) {
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         setSmartChargingOutput([] (float, float, int) {});
-        scService = model.getSmartChargingService();
+        scService = getOcppContext()->getModel().getSmartChargingService();
 
         unsigned int count = 0;
         scService->clearChargingProfile([&count] (int, int, ChargingProfilePurposeType, int) {

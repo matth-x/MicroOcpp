@@ -252,7 +252,7 @@ TEST_CASE("Metering") {
 
         loop();
 
-        model.getClock().setTime("2023-01-01T01:00:00Z");
+        getOcppContext()->getModel().getClock().setTime("2023-01-01T01:00:00Z");
 
         endTransaction();
 
