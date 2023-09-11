@@ -58,20 +58,6 @@ In case you use PlatformIO, you can copy all dependencies from `platformio.ini` 
 
 MicroOcpp facilitates the integration of ISO 15118 by handling its OCPP-side communication. This is already being validated at the moment. A public demonstration will follow with the first collaboration on an open OCPP 2.0.1 + ISO 15118 integration.
 
-## Related projects
-
-Full EVSE operating systems:
-- [OpenEVSE](https://github.com/OpenEVSE/openevse_esp32_firmware)
-- [EVerest](https://github.com/EVerest/EVerest)
-- [SwitchEV](https://github.com/SwitchEV/josev)
-
-OCPP RPC frameworks and protocol buffers:
-- [libocpp](https://github.com/EVerest/libocpp) (EVerest)
-- [Mobility House Python package](https://github.com/mobilityhouse/ocpp)
-- [Node.js module](https://github.com/mikuso/ocpp-rpc)
-
-*How is this OCPP lib different?* The scope of MicroOcpp matches the scope of the OCPP standard as close as possible. The standard defines the charger behavior to a large extend and the API of MicroOcpp ensures that the the charger behavior matches the OCPP messages precisely. This prevents compatibility breaks with different OCPP servers. Apart from that, MicroOcpp doesn't add any extra features like a web dashboard. *Full EVSE operating systems* do include everything which is needed on a charger. *OCPP RPC frameworks and protocol buffers* leave the OCPP communication behavior fully open to the vendor.
-
 ## Contact details
 
 I hope the given documentation and guidance can help you to successfully integrate an OCPP controller into your EVSE. I will be happy if you reach out!
