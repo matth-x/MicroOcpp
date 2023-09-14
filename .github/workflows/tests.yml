@@ -19,12 +19,12 @@ jobs:
     - name: Get build tools
       run: |
         sudo apt update
-        sudo apt install build-essential cmake lcov
+        sudo apt install build-essential cmake lcov valgrind
         sudo apt -y install gcc-9 g++-9
         g++ --version
         echo "g++ version must be 9.4.0"
     - name: Get ArduinoJson
-      run: wget -Uri https://github.com/bblanchon/ArduinoJson/releases/download/v6.19.4/ArduinoJson-v6.19.4.h -O ./src/ArduinoJson.h
+      run: wget -Uri https://github.com/bblanchon/ArduinoJson/releases/download/v6.21.3/ArduinoJson-v6.21.3.h -O ./src/ArduinoJson.h
     - name: Generate CMake build files
       run: cmake -S . -B ./build
     - name: Compile
@@ -32,6 +32,16 @@ jobs:
     - name: Configure FS
       run: mkdir mo_store
     - name: Run tests
+      run: ./build/mo_unit_tests
+    - name: Run tests (valgrind)
+      run: valgrind --error-exitcode=1 --leak-check=full ./build/mo_unit_tests
+    - name: Generate CMake build files (AddressSanitizer, UndefinedBehaviorSanitizer)
+      run: |
+        rm -r ./build
+        cmake -S . -B ./build -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -fsanitize=undefined"
+    - name: Compile (ASan, UBSan)
+      run: cmake --build ./build -j 16 --target mo_unit_tests
+    - name: Run tests (ASan, UBSan)
       run: ./build/mo_unit_tests
     - name: Create coverage report
       run: |
