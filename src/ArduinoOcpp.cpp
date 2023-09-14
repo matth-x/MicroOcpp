@@ -146,7 +146,11 @@ void ocpp_initialize(Connection& connection, const char *bootNotificationCredent
         AO_DBG_ERR("multiple initialization failures detected");
         if (filesystem) {
             bool success = FilesystemUtils::remove_if(filesystem, [] (const char *fname) -> bool {
-                return strcmp(fname, "ocpp-creds.jsn");
+                return !strncmp(fname, "sd", strlen("sd")) ||
+                       !strncmp(fname, "tx", strlen("tx")) ||
+                       !strncmp(fname, "op", strlen("op")) ||
+                       !strncmp(fname, "sc-", strlen("sc-")) ||
+                       !strncmp(fname, "reservation", strlen("reservation"));
             });
             AO_DBG_ERR("clear local state folder (except WS creds): %s", success ? "success" : "not completed");
 
