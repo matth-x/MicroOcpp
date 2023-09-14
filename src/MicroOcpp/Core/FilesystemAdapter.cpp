@@ -21,6 +21,7 @@
 
 #if MOCPP_USE_FILEAPI == ARDUINO_LITTLEFS
 #include <LittleFS.h>
+#include <vfs_api.h>
 #define USE_FS LittleFS
 #elif MOCPP_USE_FILEAPI == ARDUINO_SPIFFS
 #include <FS.h>
@@ -96,6 +97,20 @@ public:
     operator bool() {return valid;}
 
     int stat(const char *path, size_t *size) override {
+#if MOCPP_USE_FILEAPI == ARDUINO_LITTLEFS
+        char partition_path [MOCPP_MAX_PATH_SIZE];
+        auto ret = snprintf(partition_path, MOCPP_MAX_PATH_SIZE, "/littlefs%s", path);
+        if (ret < 0 || ret >= MOCPP_MAX_PATH_SIZE) {
+            MOCPP_DBG_ERR("fn error: %i", ret);
+            return -1;
+        }
+        struct ::stat st;
+        auto status = ::stat(partition_path, &st);
+        if (status == 0) {
+            *size = st.st_size;
+        }
+        return status;
+#elif MOCPP_USE_FILEAPI == ARDUINO_SPIFFS
         if (!USE_FS.exists(path)) {
             return -1;
         }
@@ -115,6 +130,9 @@ public:
 
         f.close();
         return status;
+#else
+#error
+#endif
     } //end stat
 
     std::unique_ptr<FileAdapter> open(const char *fn, const char *mode) override {
