@@ -6,7 +6,7 @@
 
 OCPP 1.6 client for microcontrollers. Portable C/C++. Compatible with Espressif, Arduino, NXP, STM and Linux and more.
 
-**Formerly ArduinoOcpp ([migration guide](https://matth-x.github.io/MicroOcpp/migration/))**: *since the first release in 2020, ArduinoOcpp has increasingly been used on other platforms than Arduino. The goal of this project has evolved to fit seamlessly in a high variety of microcontroller firmwares and so the dependency on Arduino was dropped some time ago. The new name reflects the purpose of this project better and prevents potential confusion. Despite the new name, nothing changes for existing users and the Arduino integration will continue to be fully functional.*
+**Formerly ArduinoOcpp ([migration guide](https://matth-x.github.io/MicroOcpp/migration/))**: *the initial version of this library used the Arduino API but this dependency was dropped some time ago and the old name has become outdated. Despite the new name, nothing changes for existing users and the Arduino integration will continue to be fully functional.*
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp) | Technical introduction: [Docs](https://matth-x.github.io/MicroOcpp/intro-tech) | Website: [www.arduino-ocpp.com](https://www.arduino-ocpp.com)
 
@@ -54,9 +54,21 @@ In case you use PlatformIO, you can copy all dependencies from `platformio.ini` 
 
 ## OCPP 2.0.1 and ISO 15118
 
-**The call for funding for the OCPP 2.0.1 upgrade is open.** The version 1.6 support has successfully been funded by private companies who share an interest in using this technology. OCPP is most often seen as a non-differentiating feature of chargers and is therefore perfectly suited for Open Source collaboration. If your company has an interest in the OCPP 2.0.1 upgrade, please use the contact details at the end of this page to receive more details about all advantages of participating in the funding campaign.
+**The call for funding for the OCPP 2.0.1 upgrade is open.** The version 1.6 support has successfully been funded by private companies who share an interest in using this technology. OCPP is most often seen as a non-differentiating feature of chargers and is therefore perfectly suited for Open Source collaboration. If your company needs OCPP 2.0.1, please use the contact details at the end of this page to receive the more details about the funding plan and why it is beneficial to engage in the upgrade (for hardware manufacturers and CPOs).
 
-MicroOcpp facilitates the integration of ISO 15118 by handling its OCPP-side communication. This is already being validated at the moment. A public demonstration will follow with the first collaboration on an open OCPP 2.0.1 + ISO 15118 integration.
+MicroOcpp is a good foundation for starting the OCPP 2.0.1 development:
+
+:tada: Tested by hundreds, including backend operators. The [Simulator](https://github.com/matth-x/MicroOcppSimulator) encourages quick compatibility tests
+
+:hammer: Comes with development tools and a CI/CD specialized for OCPP
+
+:man_teacher: Academic background: started as a research project, evolved into enterprise software
+
+:closed_lock_with_key: Unit tests with valgrind, [AddressSanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer) and [UndefinedBehaviorSanitizer](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html)
+
+:heart: Contributions are highly welcome. Open to building a team
+
+A note on ISO 15118: this library facilitates the integration of ISO 15118 by handling its OCPP-side communication. A public demonstration will follow with the first collaboration on an open OCPP 2.0.1 + ISO 15118 integration.
 
 ## Contact details
 
