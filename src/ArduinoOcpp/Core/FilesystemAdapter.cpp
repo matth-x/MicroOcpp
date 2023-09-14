@@ -98,8 +98,14 @@ public:
 
     int stat(const char *path, size_t *size) override {
 #if AO_USE_FILEAPI == ARDUINO_LITTLEFS
+        char partition_path [AO_MAX_PATH_SIZE];
+        auto ret = snprintf(partition_path, AO_MAX_PATH_SIZE, "/littlefs%s", path);
+        if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
+            AO_DBG_ERR("fn error: %i", ret);
+            return -1;
+        }
         struct ::stat st;
-        auto ret = ::stat(path, &st);
+        auto status = ::stat(partition_path, &st);
         if (ret == 0) {
             *size = st.st_size;
         }
@@ -153,7 +159,7 @@ public:
         while (auto entry = dir.openNextFile()) {
 
             char fname [AO_MAX_PATH_SIZE];
-            auto ret = snprintf(fname, AO_MAX_PATH_SIZE, "%s", entry.name() + strlen(AO_FILENAME_PREFIX));
+            auto ret = snprintf(fname, AO_MAX_PATH_SIZE, "%s", entry.name());
             entry.close();
 
             if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
