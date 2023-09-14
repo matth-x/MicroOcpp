@@ -159,7 +159,7 @@ public:
         while (auto entry = dir.openNextFile()) {
 
             char fname [MOCPP_MAX_PATH_SIZE];
-            auto ret = snprintf(fname, MOCPP_MAX_PATH_SIZE, "%s", entry.name() + strlen(MOCPP_FILENAME_PREFIX));
+            auto ret = snprintf(fname, MOCPP_MAX_PATH_SIZE, "%s", entry.name());
             entry.close();
 
             if (ret < 0 || ret >= MOCPP_MAX_PATH_SIZE) {
