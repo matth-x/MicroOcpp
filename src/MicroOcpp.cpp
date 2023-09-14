@@ -146,9 +146,13 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         MOCPP_DBG_ERR("multiple initialization failures detected");
         if (filesystem) {
             bool success = FilesystemUtils::remove_if(filesystem, [] (const char *fname) -> bool {
-                return strcmp(fname, "ws-conn.jsn");
+                return !strncmp(fname, "sd", strlen("sd")) ||
+                       !strncmp(fname, "tx", strlen("tx")) ||
+                       !strncmp(fname, "op", strlen("op")) ||
+                       !strncmp(fname, "sc-", strlen("sc-")) ||
+                       !strncmp(fname, "reservation", strlen("reservation"));
             });
-            MOCPP_DBG_ERR("clear local state folder (except WS creds): %s", success ? "success" : "not completed");
+            MOCPP_DBG_ERR("clear local state files (recovery): %s", success ? "success" : "not completed");
 
             bootstats = BootStats();
         }
