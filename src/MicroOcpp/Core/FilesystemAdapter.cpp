@@ -21,7 +21,6 @@
 
 #if MOCPP_USE_FILEAPI == ARDUINO_LITTLEFS
 #include <LittleFS.h>
-#include <vfs_api.h>
 #define USE_FS LittleFS
 #elif MOCPP_USE_FILEAPI == ARDUINO_SPIFFS
 #include <FS.h>
@@ -97,14 +96,6 @@ public:
     operator bool() {return valid;}
 
     int stat(const char *path, size_t *size) override {
-#if MOCPP_USE_FILEAPI == ARDUINO_LITTLEFS
-        struct ::stat st;
-        auto ret = ::stat(path, &st);
-        if (ret == 0) {
-            *size = st.st_size;
-        }
-        return ret;
-#elif MOCPP_USE_FILEAPI == ARDUINO_SPIFFS
         if (!USE_FS.exists(path)) {
             return -1;
         }
@@ -124,9 +115,6 @@ public:
 
         f.close();
         return status;
-#else
-#error
-#endif
     } //end stat
 
     std::unique_ptr<FileAdapter> open(const char *fn, const char *mode) override {
