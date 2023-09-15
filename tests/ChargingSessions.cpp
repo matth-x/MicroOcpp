@@ -37,7 +37,9 @@ TEST_CASE( "Charging sessions" ) {
     checkMsg.setOnRequest("StatusNotification",
         [&checkedSN, &expectedSN] (JsonObject request) {
             int connectorId = request["connectorId"] | -1;
-            checkedSN[connectorId] = !strcmp(request["status"] | "Invalid", expectedSN[connectorId]);
+            if (connectorId == 0 || connectorId == 1) { //only test single connector case here
+                checkedSN[connectorId] = !strcmp(request["status"] | "Invalid", expectedSN[connectorId]);
+            }
         });
 
     SECTION("Check idle state"){
