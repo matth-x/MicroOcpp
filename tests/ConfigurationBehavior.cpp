@@ -183,8 +183,8 @@ TEST_CASE( "Configuration Behavior" ) {
         *localAuthListEnabled = true;
 
         //define local auth list with entry local-idtag
-        std::string localListMsg = "[2,\"testmsg-01\",\"SendLocalList\",{\"listVersion\":1,\"localAuthorizationList\":[{\"idTag\":\"local-idtag\",\"idTagInfo\":{\"status\":\"Accepted\"}}],\"updateType\":\"Full\"}]";
-        loopback.sendTXT(localListMsg);
+        const char *localListMsg = "[2,\"testmsg-01\",\"SendLocalList\",{\"listVersion\":1,\"localAuthorizationList\":[{\"idTag\":\"local-idtag\",\"idTagInfo\":{\"status\":\"Accepted\"}}],\"updateType\":\"Full\"}]";
+        loopback.sendTXT(localListMsg, strlen(localListMsg));
         loop();
 
         loopback.setConnected(false); //connection loss

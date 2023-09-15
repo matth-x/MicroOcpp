@@ -9,13 +9,13 @@ using namespace MicroOcpp;
 
 void LoopbackConnection::loop() { }
 
-bool LoopbackConnection::sendTXT(std::string &out) {
+bool LoopbackConnection::sendTXT(const char *msg, size_t length) {
     if (!connected) {
         return false;
     }
     if (receiveTXT) {
         lastRecv = mocpp_tick_ms();
-        return receiveTXT(out.c_str(), out.length());
+        return receiveTXT(msg, length);
     } else {
         return false;
     }
@@ -52,7 +52,7 @@ void WSClient::loop() {
     wsock->loop();
 }
 
-bool WSClient::sendTXT(std::string &out) {
+bool WSClient::sendTXT(const char *msg, size_t length) {
     return wsock->sendTXT(out.c_str(), out.length());
 }
 

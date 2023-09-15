@@ -7,7 +7,6 @@
 
 #include <functional>
 #include <memory>
-#include <string>
 
 #include <MicroOcpp/Platform.h>
 
@@ -37,7 +36,7 @@ public:
     /*
      * The OCPP library calls this function for sending out OCPP messages to the server
      */
-    virtual bool sendTXT(std::string &out) = 0;
+    virtual bool sendTXT(const char *msg, size_t length) = 0;
 
     /*
      * The OCPP library calls this function once during initialization. It passes a callback function to
@@ -65,7 +64,7 @@ private:
     unsigned long lastConn = 0;
 public:
     void loop() override;
-    bool sendTXT(std::string &out) override;
+    bool sendTXT(const char *msg, size_t length) override;
     void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) override;
     unsigned long getLastRecv() override;
     unsigned long getLastConnected() override;
@@ -92,7 +91,7 @@ public:
 
     void loop();
 
-    bool sendTXT(std::string &out);
+    bool sendTXT(const char *msg, size_t length);
 
     void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT);
 

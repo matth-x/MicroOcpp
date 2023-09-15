@@ -11,27 +11,27 @@
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"
 
-#define SCPROFILE_0                            "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":1,\"csChargingProfiles\":{\"chargingProfileId\":0,\"stackLevel\":0,\"chargingProfilePurpose\":\"TxDefaultProfile\",\"chargingProfileKind\":\"Recurring\",\"recurrencyKind\":\"Daily\",\"validFrom\":\"2022-06-12T00:00:00.000Z\",\"validTo\":\"2023-06-21T00:00:00.000Z\",\"chargingSchedule\":{\"duration\":1000000,\"startSchedule\":\"2023-06-18T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3},{\"startPeriod\":18000,\"limit\":32,\"numberPhases\":3}],\"minChargingRate\":6}}}]";
-#define SCPROFILE_0_ALT_SAME_ID                "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":1,\"csChargingProfiles\":{\"chargingProfileId\":0,\"stackLevel\":1,\"chargingProfilePurpose\":\"TxDefaultProfile\",\"chargingProfileKind\":\"Recurring\",\"recurrencyKind\":\"Daily\",\"validFrom\":\"2022-06-12T00:00:00.000Z\",\"validTo\":\"2023-06-21T00:00:00.000Z\",\"chargingSchedule\":{\"duration\":1000000,\"startSchedule\":\"2023-06-18T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3},{\"startPeriod\":18000,\"limit\":32,\"numberPhases\":3}],\"minChargingRate\":6}}}]";
-#define SCPROFILE_0_ALT_SAME_STACKEVEL_PURPOSE "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":1,\"csChargingProfiles\":{\"chargingProfileId\":1,\"stackLevel\":0,\"chargingProfilePurpose\":\"TxDefaultProfile\",\"chargingProfileKind\":\"Recurring\",\"recurrencyKind\":\"Daily\",\"validFrom\":\"2022-06-12T00:00:00.000Z\",\"validTo\":\"2023-06-21T00:00:00.000Z\",\"chargingSchedule\":{\"duration\":1000000,\"startSchedule\":\"2023-06-18T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3},{\"startPeriod\":18000,\"limit\":32,\"numberPhases\":3}],\"minChargingRate\":6}}}]";
+#define SCPROFILE_0                            "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":1,\"csChargingProfiles\":{\"chargingProfileId\":0,\"stackLevel\":0,\"chargingProfilePurpose\":\"TxDefaultProfile\",\"chargingProfileKind\":\"Recurring\",\"recurrencyKind\":\"Daily\",\"validFrom\":\"2022-06-12T00:00:00.000Z\",\"validTo\":\"2023-06-21T00:00:00.000Z\",\"chargingSchedule\":{\"duration\":1000000,\"startSchedule\":\"2023-06-18T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3},{\"startPeriod\":18000,\"limit\":32,\"numberPhases\":3}],\"minChargingRate\":6}}}]"
+#define SCPROFILE_0_ALT_SAME_ID                "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":1,\"csChargingProfiles\":{\"chargingProfileId\":0,\"stackLevel\":1,\"chargingProfilePurpose\":\"TxDefaultProfile\",\"chargingProfileKind\":\"Recurring\",\"recurrencyKind\":\"Daily\",\"validFrom\":\"2022-06-12T00:00:00.000Z\",\"validTo\":\"2023-06-21T00:00:00.000Z\",\"chargingSchedule\":{\"duration\":1000000,\"startSchedule\":\"2023-06-18T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3},{\"startPeriod\":18000,\"limit\":32,\"numberPhases\":3}],\"minChargingRate\":6}}}]"
+#define SCPROFILE_0_ALT_SAME_STACKEVEL_PURPOSE "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":1,\"csChargingProfiles\":{\"chargingProfileId\":1,\"stackLevel\":0,\"chargingProfilePurpose\":\"TxDefaultProfile\",\"chargingProfileKind\":\"Recurring\",\"recurrencyKind\":\"Daily\",\"validFrom\":\"2022-06-12T00:00:00.000Z\",\"validTo\":\"2023-06-21T00:00:00.000Z\",\"chargingSchedule\":{\"duration\":1000000,\"startSchedule\":\"2023-06-18T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3},{\"startPeriod\":18000,\"limit\":32,\"numberPhases\":3}],\"minChargingRate\":6}}}]"
 
-#define SCPROFILE_1_ABSOLUTE_LIMIT_16A         "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":1,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3}]}}}]";
+#define SCPROFILE_1_ABSOLUTE_LIMIT_16A         "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":1,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3}]}}}]"
 
-#define SCPROFILE_2_RELATIVE_TXDEF_24A         "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":1,\"csChargingProfiles\":{\"chargingProfileId\":2,\"stackLevel\":0,\"chargingProfilePurpose\":\"TxDefaultProfile\",\"chargingProfileKind\":\"Relative\",\"chargingSchedule\":{\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":24,\"numberPhases\":3}]}}}]";
+#define SCPROFILE_2_RELATIVE_TXDEF_24A         "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":1,\"csChargingProfiles\":{\"chargingProfileId\":2,\"stackLevel\":0,\"chargingProfilePurpose\":\"TxDefaultProfile\",\"chargingProfileKind\":\"Relative\",\"chargingSchedule\":{\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":24,\"numberPhases\":3}]}}}]"
 
-#define SCPROFILE_3_TXPROF_TXID123_20A         "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":1,\"csChargingProfiles\":{\"chargingProfileId\":3,\"transactionId\":123,\"stackLevel\":0,\"chargingProfilePurpose\":\"TxProfile\",\"chargingProfileKind\":\"Relative\",\"chargingSchedule\":{\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":20,\"numberPhases\":3}]}}}]";
+#define SCPROFILE_3_TXPROF_TXID123_20A         "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":1,\"csChargingProfiles\":{\"chargingProfileId\":3,\"transactionId\":123,\"stackLevel\":0,\"chargingProfilePurpose\":\"TxProfile\",\"chargingProfileKind\":\"Relative\",\"chargingSchedule\":{\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":20,\"numberPhases\":3}]}}}]"
 
-#define SCPROFILE_4_VALID_FROM_2024_16A        "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":4,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"validFrom\":\"2024-01-01T00:00:00.000Z\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3}]}}}]";
-#define SCPROFILE_5_VALID_UNTIL_2022_16A       "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":5,\"stackLevel\":1,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"validTo\":  \"2022-01-01T00:00:00.000Z\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3}]}}}]";
+#define SCPROFILE_4_VALID_FROM_2024_16A        "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":4,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"validFrom\":\"2024-01-01T00:00:00.000Z\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3}]}}}]"
+#define SCPROFILE_5_VALID_UNTIL_2022_16A       "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":5,\"stackLevel\":1,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"validTo\":  \"2022-01-01T00:00:00.000Z\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3}]}}}]"
 
-#define SCPROFILE_6_MULTIPLE_PERIODS_16A_20A   "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":6,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3},{\"startPeriod\":3600,\"limit\":20,\"numberPhases\":3}]}}}]";
+#define SCPROFILE_6_MULTIPLE_PERIODS_16A_20A   "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":6,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3},{\"startPeriod\":3600,\"limit\":20,\"numberPhases\":3}]}}}]"
 
-#define SCPROFILE_7_RECURRING_DAY_2H_16A_20A   "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":7,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Recurring\",\"recurrencyKind\":\"Daily\", \"chargingSchedule\":{\"duration\":7200,\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3},{\"startPeriod\":3600,\"limit\":20,\"numberPhases\":3}]}}}]";
-#define SCPROFILE_8_RECURRING_WEEK_2H_10A_12A  "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":8,\"stackLevel\":1,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Recurring\",\"recurrencyKind\":\"Weekly\",\"chargingSchedule\":{\"duration\":7200,\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":10,\"numberPhases\":3},{\"startPeriod\":3600,\"limit\":12,\"numberPhases\":3}]}}}]";
+#define SCPROFILE_7_RECURRING_DAY_2H_16A_20A   "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":7,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Recurring\",\"recurrencyKind\":\"Daily\", \"chargingSchedule\":{\"duration\":7200,\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3},{\"startPeriod\":3600,\"limit\":20,\"numberPhases\":3}]}}}]"
+#define SCPROFILE_8_RECURRING_WEEK_2H_10A_12A  "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":8,\"stackLevel\":1,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Recurring\",\"recurrencyKind\":\"Weekly\",\"chargingSchedule\":{\"duration\":7200,\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":10,\"numberPhases\":3},{\"startPeriod\":3600,\"limit\":12,\"numberPhases\":3}]}}}]"
 
-#define SCPROFILE_9_VIA_RMTSTARTTX_20A         "[2,\"testmsg\",\"RemoteStartTransaction\",{\"connectorId\":1,\"idTag\":\"mIdTag\",\"chargingProfile\":{\"chargingProfileId\":9,\"stackLevel\":0,\"chargingProfilePurpose\":\"TxProfile\",\"chargingProfileKind\":\"Relative\",\"chargingSchedule\":{\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":20,\"numberPhases\":1}]}}}]";
+#define SCPROFILE_9_VIA_RMTSTARTTX_20A         "[2,\"testmsg\",\"RemoteStartTransaction\",{\"connectorId\":1,\"idTag\":\"mIdTag\",\"chargingProfile\":{\"chargingProfileId\":9,\"stackLevel\":0,\"chargingProfilePurpose\":\"TxProfile\",\"chargingProfileKind\":\"Relative\",\"chargingSchedule\":{\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":20,\"numberPhases\":1}]}}}]"
 
-#define SCPROFILE_10_ABSOLUTE_LIMIT_5KW        "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":10,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":5000,\"numberPhases\":3}]}}}]";
+#define SCPROFILE_10_ABSOLUTE_LIMIT_5KW        "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":10,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":5000,\"numberPhases\":3}]}}}]"
 
 
 using namespace MicroOcpp;
@@ -78,8 +78,7 @@ TEST_CASE( "SmartCharging" ) {
 
         REQUIRE(count == 0);
 
-        std::string out = SCPROFILE_0;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_0, strlen(SCPROFILE_0));
 
         //check if filter works by comparing the outcome of returning false and true and repeating the test
         count = 0;
@@ -109,8 +108,7 @@ TEST_CASE( "SmartCharging" ) {
 
     SECTION("Charging Profiles persistency over reboots") {
 
-        std::string out = SCPROFILE_0;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_0, strlen(SCPROFILE_0));
 
         mocpp_deinitialize();
 
@@ -130,11 +128,9 @@ TEST_CASE( "SmartCharging" ) {
 
     SECTION("Set conflicting profile") {
 
-        std::string out = SCPROFILE_0;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_0, strlen(SCPROFILE_0));
 
-        out = SCPROFILE_0_ALT_SAME_ID;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_0_ALT_SAME_ID, strlen(SCPROFILE_0_ALT_SAME_ID));
 
         unsigned int count = 0;
         scService->clearChargingProfile([&count] (int, int, ChargingProfilePurposeType, int) {
@@ -144,11 +140,9 @@ TEST_CASE( "SmartCharging" ) {
 
         REQUIRE(count == 1);
 
-        out = SCPROFILE_0;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_0, strlen(SCPROFILE_0));
 
-        out = SCPROFILE_0_ALT_SAME_STACKEVEL_PURPOSE;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_0_ALT_SAME_STACKEVEL_PURPOSE, strlen(SCPROFILE_0_ALT_SAME_STACKEVEL_PURPOSE));
 
         count = 0;
         scService->clearChargingProfile([&count] (int, int, ChargingProfilePurposeType, int) {
@@ -168,8 +162,7 @@ TEST_CASE( "SmartCharging" ) {
 
         loop();
 
-        std::string out = SCPROFILE_9_VIA_RMTSTARTTX_20A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_9_VIA_RMTSTARTTX_20A, strlen(SCPROFILE_9_VIA_RMTSTARTTX_20A));
 
         loop();
 
@@ -187,8 +180,7 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
 
-        std::string out = SCPROFILE_1_ABSOLUTE_LIMIT_16A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_1_ABSOLUTE_LIMIT_16A, strlen(SCPROFILE_1_ABSOLUTE_LIMIT_16A));
 
         loop();
 
@@ -202,8 +194,7 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
         
-        std::string out = SCPROFILE_2_RELATIVE_TXDEF_24A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_2_RELATIVE_TXDEF_24A, strlen(SCPROFILE_2_RELATIVE_TXDEF_24A));
 
         loop();
 
@@ -230,8 +221,7 @@ TEST_CASE( "SmartCharging" ) {
         });
         
         //send before transaction - expect rejection
-        std::string out = SCPROFILE_3_TXPROF_TXID123_20A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_3_TXPROF_TXID123_20A, strlen(SCPROFILE_3_TXPROF_TXID123_20A));
 
         unsigned int count = 0;
         scService->clearChargingProfile([&count] (int, int, ChargingProfilePurposeType, int) {
@@ -245,8 +235,7 @@ TEST_CASE( "SmartCharging" ) {
         beginTransaction_authorized("mIdTag");
 
         //send during transaction but wrong txId - expect rejection
-        out = SCPROFILE_3_TXPROF_TXID123_20A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_3_TXPROF_TXID123_20A, strlen(SCPROFILE_3_TXPROF_TXID123_20A));
 
         loop();
 
@@ -261,8 +250,7 @@ TEST_CASE( "SmartCharging" ) {
         getTransaction()->setTransactionId(123);
 
         //send during tx with matchin txId - accept
-        out = SCPROFILE_3_TXPROF_TXID123_20A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_3_TXPROF_TXID123_20A, strlen(SCPROFILE_3_TXPROF_TXID123_20A));
 
         loop();
 
@@ -289,11 +277,9 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
         
-        std::string out = SCPROFILE_4_VALID_FROM_2024_16A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_4_VALID_FROM_2024_16A, strlen(SCPROFILE_4_VALID_FROM_2024_16A));
 
-        out = SCPROFILE_5_VALID_UNTIL_2022_16A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_5_VALID_UNTIL_2022_16A, strlen(SCPROFILE_5_VALID_UNTIL_2022_16A));
 
         loop();
 
@@ -314,8 +300,7 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
 
-        std::string out = SCPROFILE_6_MULTIPLE_PERIODS_16A_20A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_6_MULTIPLE_PERIODS_16A_20A, strlen(SCPROFILE_6_MULTIPLE_PERIODS_16A_20A));
 
         loop();
 
@@ -336,8 +321,7 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
 
-        std::string out = SCPROFILE_7_RECURRING_DAY_2H_16A_20A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_7_RECURRING_DAY_2H_16A_20A, strlen(SCPROFILE_7_RECURRING_DAY_2H_16A_20A));
 
         loop();
 
@@ -365,8 +349,7 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
 
-        std::string out = SCPROFILE_8_RECURRING_WEEK_2H_10A_12A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_8_RECURRING_WEEK_2H_10A_12A, strlen(SCPROFILE_8_RECURRING_WEEK_2H_10A_12A));
 
         loop();
 
@@ -394,11 +377,9 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
 
-        std::string out = SCPROFILE_7_RECURRING_DAY_2H_16A_20A; //stackLevel: 0
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_7_RECURRING_DAY_2H_16A_20A, strlen(SCPROFILE_7_RECURRING_DAY_2H_16A_20A)); //stackLevel: 0
 
-        out = SCPROFILE_8_RECURRING_WEEK_2H_10A_12A; //stackLevel: 1
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_8_RECURRING_WEEK_2H_10A_12A, strlen(SCPROFILE_8_RECURRING_WEEK_2H_10A_12A)); //stackLevel: 1
 
         loop();
 
@@ -437,13 +418,11 @@ TEST_CASE( "SmartCharging" ) {
 
         loop();
 
-        std::string out = SCPROFILE_9_VIA_RMTSTARTTX_20A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_9_VIA_RMTSTARTTX_20A, strlen(SCPROFILE_9_VIA_RMTSTARTTX_20A));
 
         loop();
 
-        out = SCPROFILE_1_ABSOLUTE_LIMIT_16A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_1_ABSOLUTE_LIMIT_16A, strlen(SCPROFILE_1_ABSOLUTE_LIMIT_16A));
 
         loop();
 
@@ -466,13 +445,11 @@ TEST_CASE( "SmartCharging" ) {
 
         loop();
 
-        std::string out = SCPROFILE_9_VIA_RMTSTARTTX_20A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_9_VIA_RMTSTARTTX_20A, strlen(SCPROFILE_9_VIA_RMTSTARTTX_20A));
 
         loop();
 
-        out = SCPROFILE_10_ABSOLUTE_LIMIT_5KW;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_10_ABSOLUTE_LIMIT_5KW, strlen(SCPROFILE_10_ABSOLUTE_LIMIT_5KW));
 
         loop();
 
@@ -486,8 +463,7 @@ TEST_CASE( "SmartCharging" ) {
 
     SECTION("Get composite schedule") {
 
-        std::string out = SCPROFILE_6_MULTIPLE_PERIODS_16A_20A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_6_MULTIPLE_PERIODS_16A_20A, strlen(SCPROFILE_6_MULTIPLE_PERIODS_16A_20A));
 
         bool checkProcessed = false;
 
@@ -538,8 +514,7 @@ TEST_CASE( "SmartCharging" ) {
 
     SECTION("Get composite schedule with definition gap") {
 
-        std::string out = SCPROFILE_7_RECURRING_DAY_2H_16A_20A;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE_7_RECURRING_DAY_2H_16A_20A, strlen(SCPROFILE_7_RECURRING_DAY_2H_16A_20A));
 
         auto schedule = scService->getCompositeSchedule(1, 86401);
 

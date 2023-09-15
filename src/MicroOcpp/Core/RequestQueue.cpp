@@ -62,7 +62,7 @@ void RequestQueue::loop(Connection& ocppSock) {
             std::string out;
             serializeJson(*response, out);
     
-            bool success = ocppSock.sendTXT(out);
+            bool success = ocppSock.sendTXT(out.c_str(), out.length());
 
             if (success) {
                 MOCPP_DBG_TRAFFIC_OUT(out.c_str());
@@ -113,7 +113,7 @@ void RequestQueue::loop(Connection& ocppSock) {
     std::string out;
     serializeJson(*request, out);
 
-    bool success = ocppSock.sendTXT(out);
+    bool success = ocppSock.sendTXT(out.c_str(), out.length());
 
     if (success) {
         MOCPP_DBG_TRAFFIC_OUT(out.c_str());

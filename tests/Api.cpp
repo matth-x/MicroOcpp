@@ -8,7 +8,7 @@
 #include "./helpers/testHelper.h"
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"
-#define SCPROFILE "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":0,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"duration\":1000000,\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3}]}}}]";
+#define SCPROFILE "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":0,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"duration\":1000000,\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3}]}}}]"
 
 TEST_CASE( "C++ API test" ) {
 
@@ -84,8 +84,7 @@ TEST_CASE( "C++ API test" ) {
         auto MeterValuesSampledData = MicroOcpp::declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
         *MeterValuesSampledData = "Energy.Active.Import.Register,Power.Active.Import,Current.Import,Current.Offered";
 
-        std::string out = SCPROFILE;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE, strlen(SCPROFILE));
 
         //run tx management
 
@@ -256,8 +255,7 @@ TEST_CASE( "C API test" ) {
         auto MeterValuesSampledData = MicroOcpp::declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
         *MeterValuesSampledData = "Energy.Active.Import.Register,Power.Active.Import,Current.Import,Current.Offered";
 
-        std::string out = SCPROFILE;
-        loopback.sendTXT(out);
+        loopback.sendTXT(SCPROFILE, strlen(SCPROFILE));
 
         //run tx management
 
