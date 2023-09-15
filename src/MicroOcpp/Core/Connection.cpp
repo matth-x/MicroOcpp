@@ -29,6 +29,17 @@ unsigned long LoopbackConnection::getLastRecv() {
     return lastRecv;
 }
 
+unsigned long LoopbackConnection::getLastConnected() {
+    return lastConn;
+}
+
+void LoopbackConnection::setConnected(bool connected) {
+    if (connected) {
+        lastConn = mocpp_tick_ms();
+    }
+    this->connected = connected;
+}
+
 #ifndef MOCPP_CUSTOM_WS
 
 using namespace MicroOcpp::EspWiFi;

@@ -53,7 +53,7 @@ public:
     /*
      * Returns the timestamp of the last time a connection got successfully established. Use mocpp_tick_ms() for creating the correct timestamp
      */
-    virtual unsigned long getLastConnected() {return 0;}
+    virtual unsigned long getLastConnected() = 0;
 };
 
 class LoopbackConnection : public Connection {
@@ -62,13 +62,15 @@ private:
 
     bool connected = true; //for simulating connection losses
     unsigned long lastRecv = 0;
+    unsigned long lastConn = 0;
 public:
     void loop() override;
     bool sendTXT(std::string &out) override;
     void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) override;
     unsigned long getLastRecv() override;
+    unsigned long getLastConnected() override;
 
-    void setConnected(bool connected) {this->connected = connected;}
+    void setConnected(bool connected);
     bool isConnected() {return connected;}
 };
 
