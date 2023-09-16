@@ -12,98 +12,82 @@
 
 namespace MicroOcpp {
 
-class AbstractConfiguration {
-private:
-    std::string key;
-
-    bool rebootRequiredWhenChanged = false;
-
-    bool remotePeerCanWrite = true;
-    bool remotePeerCanRead = true;
-    bool localClientCanWrite = true;
-protected:
-    uint16_t value_revision = 0; //number of memory-relevant changes of subclass-member "value" (deleting counts too). This will be important for the client to detect if there was a change
-    bool initializedValue = false;
-
-    AbstractConfiguration(const char *key);
-    size_t getStorageHeaderJsonCapacity();
-    void storeStorageHeader(JsonObject &keyValuePair);
-    size_t getOcppMsgHeaderJsonCapacity();
-    void storeOcppMsgHeader(JsonObject &keyValuePair);
-    bool isValid();
-
-    bool permissionLocalClientCanWrite() {return localClientCanWrite;}
-public:
-    virtual ~AbstractConfiguration();
-    const char *getKey();
-
-    void requireRebootWhenChanged();
-    bool requiresRebootWhenChanged();
-
-    uint16_t getValueRevision();
-
-    virtual std::unique_ptr<DynamicJsonDocument> toJsonStorageEntry() = 0;
-    virtual std::unique_ptr<DynamicJsonDocument> toJsonOcppMsgEntry() = 0;
-
-    virtual const char *getSerializedType() = 0;
-
-    bool permissionRemotePeerCanWrite() {return remotePeerCanWrite;}
-    bool permissionRemotePeerCanRead() {return remotePeerCanRead;}
-    void revokePermissionRemotePeerCanWrite() {remotePeerCanWrite = false;}
-    void revokePermissionRemotePeerCanRead() {remotePeerCanRead = false;}
-    void revokePermissionLocalClientCanWrite() {localClientCanWrite = false;}
+enum TConfig : uint8_t {
+    None,
+    Int,
+    Float,
+    String,
+    Bool
 };
 
-
-template<class T>
-struct SerializedType {
-    static const char *get() {return "undefined";}
-};
-
-template<> struct SerializedType<int> {static const char *get() {return "int";}};
-template<> struct SerializedType<float> {static const char *get() {return "float";}};
-template<> struct SerializedType<bool> {static const char *get() {return "bool";}};
-template<> struct SerializedType<const char*> {static const char *get() {return "string";}};
-
-template <class T>
-class Configuration : public AbstractConfiguration {
+class Configuration {
 private:
-    T value;
-    size_t getValueJsonCapacity();
-public:
-    Configuration(const char *key, T value);
-    const T &operator=(const T & newVal);
-    operator T();
-    bool isValid();
-
-    std::unique_ptr<DynamicJsonDocument> toJsonStorageEntry();
-    std::unique_ptr<DynamicJsonDocument> toJsonOcppMsgEntry();
-
-    const char *getSerializedType() {return SerializedType<T>::get();} //returns "int" or "float" as written to the configuration Json file
-};
-
-template <>
-class Configuration<const char *> : public AbstractConfiguration {
-private:
-    std::string value;
-    size_t getValueJsonCapacity();
-
     std::function<bool(const char*)> validator;
+
+    bool rebootRequired = false;
+    bool writePermission = true;
+    bool readPermission = true;
+protected:
+    uint16_t value_revision = 0;
 public:
-    Configuration(const char *key, const char *value);
-    ~Configuration();
-    const char *operator=(const char *newVal);
-    operator const char*();
-    bool isValid();
-    size_t getBuffsize();
 
-    std::unique_ptr<DynamicJsonDocument> toJsonStorageEntry();
-    std::unique_ptr<DynamicJsonDocument> toJsonOcppMsgEntry();
+    virtual const char *getKey() = 0;
 
-    const char *getSerializedType() {return SerializedType<const char *>::get();}
+    virtual void setInt(int) = 0;
+    virtual void setBool(bool) = 0;
+    virtual bool setString(const char*) = 0;
+
+    virtual int getInt() = 0;
+    virtual bool getBool() = 0;
+    virtual const char *getString() = 0;
+
+    virtual TConfig getType() = 0;
+
+    uint16_t getValueRevision(); 
+
+    void setRequiresReboot();
+    bool getRequiresReboot();
+
+    void revokeWritePermission();
+    bool getWritePermission();
+
+    void revokeReadPermission();
+    bool getReadPermission();
 
     void setValidator(std::function<bool(const char*)> validator);
     std::function<bool(const char*)> getValidator();
+};
+
+template<class K, class T>
+class ConfigConcrete : public Configuration {
+private:
+    K key;
+    T val;
+public:
+
+    ConfigConcrete();
+
+    ~ConfigConcrete() {
+        ConfigHelpers::deinitKey(key);
+    }
+
+    bool setKey(const char *key);
+
+    const char *getKey() override;
+
+    int getInt() override;
+
+    bool getBool() override;
+
+    const char *getString() override;
+
+    void setInt(int v) override;
+
+    void setBool(bool v) override;
+
+    bool setString(const char *v) override;
+
+    TConfig getType() override;
 };
 
 } //end namespace MicroOcpp
