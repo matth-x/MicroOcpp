@@ -7,88 +7,65 @@
 
 #include <ArduinoJson.h>
 #include <memory>
-#include <functional>
-#include <string>
+
+#define MOCPP_CONFIG_MAX_VALSTRSIZE 128
 
 namespace MicroOcpp {
 
+using revision_t = uint16_t;
+
 enum TConfig : uint8_t {
-    None,
     Int,
-    Float,
-    String,
-    Bool
+    Bool,
+    String
 };
 
+template<class T>
+TConfig convertType();
+
 class Configuration {
-private:
-    std::function<bool(const char*)> validator;
-
-    bool rebootRequired = false;
-    bool writePermission = true;
-    bool readPermission = true;
 protected:
-    uint16_t value_revision = 0;
+    revision_t value_revision = 0; //write access counter; used to check if this config has been changed
+private:
+    bool rebootRequired = false;
+    bool readOnly = false;
 public:
+    virtual ~Configuration();
 
+    virtual bool setKey(const char *key) = 0;
     virtual const char *getKey() = 0;
 
-    virtual void setInt(int) = 0;
-    virtual void setBool(bool) = 0;
-    virtual bool setString(const char*) = 0;
+    virtual void setInt(int);
+    virtual void setBool(bool);
+    virtual bool setString(const char*);
 
-    virtual int getInt() = 0;
-    virtual bool getBool() = 0;
-    virtual const char *getString() = 0;
+    virtual int getInt();
+    virtual bool getBool();
+    virtual const char *getString();
 
     virtual TConfig getType() = 0;
 
-    uint16_t getValueRevision(); 
+    revision_t getValueRevision(); 
 
     void setRequiresReboot();
     bool getRequiresReboot();
 
-    void revokeWritePermission();
-    bool getWritePermission();
-
-    void revokeReadPermission();
-    bool getReadPermission();
-
-    void setValidator(std::function<bool(const char*)> validator);
-    std::function<bool(const char*)> getValidator();
+    void setReadOnly();
+    bool getReadOnly();
 };
 
-template<class K, class T>
-class ConfigConcrete : public Configuration {
-private:
-    K key;
-    T val;
-public:
+/*
+ * Default implementations of the Configuration interface.
+ *
+ * How to use custom implementations: for each OCPP config, pass a config instance to the OCPP lib
+ * before its initialization stage. Then the library won't create new config objects but 
+ */
 
-    ConfigConcrete();
+template<class T>
+std::unique_ptr<Configuration> makeConfig(const char *key, T val);
 
-    ~ConfigConcrete() {
-        ConfigHelpers::deinitKey(key);
-    }
-
-    bool setKey(const char *key);
-
-    const char *getKey() override;
-
-    int getInt() override;
-
-    bool getBool() override;
-
-    const char *getString() override;
-
-    void setInt(int v) override;
-
-    void setBool(bool v) override;
-
-    bool setString(const char *v) override;
-
-    TConfig getType() override;
-};
+const char *serializeTConfig(TConfig type);
+bool deserializeTConfig(const char *serialized, TConfig& out);
 
 } //end namespace MicroOcpp
 

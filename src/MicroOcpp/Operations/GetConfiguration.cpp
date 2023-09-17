@@ -27,6 +27,7 @@ void GetConfiguration::processReq(JsonObject payload) {
 std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
 
     std::unique_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> configurationKeys;
+    std::vector<Configuration*> configurations;
     std::vector<std::string> unknownKeys;
 
     if (keys.size() == 0){ //return all existing keys

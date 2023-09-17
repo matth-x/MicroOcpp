@@ -14,40 +14,51 @@ namespace MicroOcpp {
 
 class ConfigurationContainer {
 private:
-    std::vector<uint16_t> configurations_revision;
     const char *filename;
-
-protected:
-    std::vector<std::shared_ptr<AbstractConfiguration>> configurations;
-
-    ConfigurationContainer(const char *filename) : filename(filename) { }
-
-    //Checks if configurations_revision is equal to (for all) configurations->getValueRevision(). If not, it refreshes the record
-    bool configurationsUpdated();
+    bool accessible;
 public:
-    virtual ~ConfigurationContainer() = default;
+    ConfigurationContainer(const char *filename, bool accessible) : filename(filename), accessible(accessible) { }
 
-    virtual bool load() = 0;
+    const char *getFilename() {return filename;}
+    bool isAccessible() {return accessible;}
 
+    virtual bool load() = 0; //called at the end of mocpp_intialize, to load the configurations with the stored value
     virtual bool save() = 0;
 
-    const char *getFilename() {return filename;};
-
-    std::shared_ptr<AbstractConfiguration> getConfiguration(const char *key);
-    std::vector<std::shared_ptr<AbstractConfiguration>>::iterator configurationsIteratorBegin() {return configurations.begin();}
-    std::vector<std::shared_ptr<AbstractConfiguration>>::iterator configurationsIteratorEnd() {return configurations.end();}
-    bool removeConfiguration(std::shared_ptr<AbstractConfiguration> configuration);
-    void addConfiguration(std::shared_ptr<AbstractConfiguration> configuration);
+    virtual std::shared_ptr<Configuration> declareConfigurationInt(const char *key, int factoryDef, bool readonly = false, bool rebootRequired = false) = 0;
+    virtual std::shared_ptr<Configuration> declareConfigurationBool(const char *key, bool factoryDef, bool readonly = false, bool rebootRequired = false) = 0;
+    virtual std::shared_ptr<Configuration> declareConfigurationString(const char *key, const char *factoryDef, bool readonly = false, bool rebootRequired = false) = 0;
+    
+    virtual size_t getConfigurationCount() = 0;
+    virtual Configuration *getConfiguration(size_t i) = 0;
+    virtual Configuration *getConfiguration(const char *key) = 0;
 };
 
-class ConfigurationContainerVolatile : public ConfigurationContainer {
+//Utils class only used for internal ConfigurationContainer implementations
+class ConfigurationPool {
+private:
+    std::vector<std::shared_ptr<Configuration>> configurations;
+
+    std::shared_ptr<Configuration> getConfiguration_typesafe(const char *key, TConfig type);
+
 public:
-    ConfigurationContainerVolatile(const char *filename) : ConfigurationContainer(filename) { }
+    template<class T>
+    std::shared_ptr<Configuration> declareConfiguration(const char *key, T factoryDef, bool readonly = false, bool rebootRequired = false);
+    
+    std::vector<std::shared_ptr<Configuration>>& getConfigurations();
+    
+    size_t getConfigurationCount() const;
 
-    bool load() {return true;}
+    Configuration *getConfiguration(size_t i) const;
 
-    bool save() {return true;}
+    Configuration *getConfiguration(const char *key) const;
 };
+
+template<> std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration<int>(const char *key, int factoryDef, bool readonly, bool rebootRequired);
+template<> std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration<bool>(const char *key, bool factoryDef, bool readonly, bool rebootRequired);
+template<> std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration<const char*>(const char *key, const char *factoryDef, bool readonly, bool rebootRequired);
+
+std::unique_ptr<ConfigurationContainer> makeConfigurationContainerVolatile(const char *filename, bool accessible);
 
 } //end namespace MicroOcpp
 
