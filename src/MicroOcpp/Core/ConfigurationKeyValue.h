@@ -47,11 +47,11 @@ public:
 
     revision_t getValueRevision(); 
 
-    void setRequiresReboot();
-    bool getRequiresReboot();
+    void setRebootRequired();
+    bool isRebootRequired();
 
     void setReadOnly();
-    bool getReadOnly();
+    bool isReadOnly();
 };
 
 /*

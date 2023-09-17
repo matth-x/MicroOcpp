@@ -28,6 +28,9 @@ namespace MicroOcpp {
 template <class T>
 std::shared_ptr<Configuration> declareConfiguration(const char *key, T defaultValue, const char *filename = CONFIGURATION_FN, bool readonly = false, bool rebootRequired = false, bool accessible = true);
 
+std::function<bool(const char*)> *getConfigurationValidator(const char *key);
+void registerConfigurationValidator(const char *key, std::function<bool(const char*)> validator);
+
 void addConfigurationContainer(std::shared_ptr<ConfigurationContainer> container);
 
 Configuration *getConfigurationPublic(const char *key);

@@ -15,6 +15,9 @@ namespace Ocpp16 {
 class GetConfiguration : public Operation {
 private:
     std::vector<std::string> keys;
+
+    const char *errorCode {nullptr};
+    const char *errorDescription = "";
 public:
     GetConfiguration();
 
@@ -23,6 +26,9 @@ public:
     void processReq(JsonObject payload) override;
 
     std::unique_ptr<DynamicJsonDocument> createConf() override;
+
+    const char *getErrorCode() override {return errorCode;}
+    const char *getErrorDescription() override {return errorDescription;}
 
 };
 

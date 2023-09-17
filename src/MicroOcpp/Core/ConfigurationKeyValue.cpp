@@ -78,11 +78,11 @@ revision_t Configuration::getValueRevision() {
     return value_revision;
 }
 
-void Configuration::setRequiresReboot() {
+void Configuration::setRebootRequired() {
     rebootRequired = true;
 }
 
-bool Configuration::getRequiresReboot() {
+bool Configuration::isRebootRequired() {
     return rebootRequired;
 }
 
@@ -90,7 +90,7 @@ void Configuration::setReadOnly() {
     readOnly = true;
 }
 
-bool Configuration::getReadOnly() {
+bool Configuration::isReadOnly() {
     return readOnly;
 }
 
@@ -320,7 +320,7 @@ bool serializeConfigOcpp(Configuration& config, DynamicJsonDocument& out) {
     out = DynamicJsonDocument(JSON_OBJECT_SIZE(3) + vcapacity);
 
     out["key"] = config.getKey();
-    out["readonly"] = config.getReadOnly();
+    out["readonly"] = config.isReadOnly();
     if (vcapacity > 0) {
         //value has capacity, copy string
         out["value"] = (char*) v;

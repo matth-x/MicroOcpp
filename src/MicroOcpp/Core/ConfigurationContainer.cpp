@@ -45,7 +45,7 @@ std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration(const cha
     }
 
     if (rebootRequired) {
-        res->setRequiresReboot();
+        res->setRebootRequired();
     }
 
     return res;

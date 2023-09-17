@@ -12,10 +12,16 @@
 
 namespace MicroOcpp {
 
+struct Validator {
+    const char *key = nullptr;
+    std::function<bool(const char*)> checkValue;
+};
+
 namespace ConfigurationLocal {
 
 std::shared_ptr<FilesystemAdapter> filesystem;
 std::vector<std::shared_ptr<ConfigurationContainer>> configurationContainers;
+std::vector<Validator> validators;
 
 }
 
@@ -95,6 +101,27 @@ std::shared_ptr<Configuration> declareConfiguration(const char *key, T factoryDe
     return configuration;
 }
 
+std::function<bool(const char*)> *getConfigurationValidator(const char *key) {
+    for (auto& v : validators) {
+        if (!strcmp(v.key, key)) {
+            return &v.checkValue;
+        }
+    }
+    return nullptr;
+}
+
+void registerConfigurationValidator(const char *key, std::function<bool(const char*)> validator) {
+    for (auto& v : validators) {
+        if (!strcmp(v.key, key)) {
+            v.checkValue = validator;
+            return;
+        }
+    }
+    validators.push_back(Validator{key, validator});
+}
+
+
+
 Configuration *getConfigurationPublic(const char *key) {
     for (auto& container : configurationContainers) {
         if (container->isAccessible()) {
@@ -125,6 +152,7 @@ bool configuration_init(std::shared_ptr<FilesystemAdapter> _filesystem) {
 
 void configuration_deinit() {
     configurationContainers.clear();
+    validators.clear();
     filesystem.reset();
 }
 
