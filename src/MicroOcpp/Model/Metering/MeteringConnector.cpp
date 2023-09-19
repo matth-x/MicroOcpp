@@ -20,27 +20,27 @@ using namespace MicroOcpp::Ocpp16;
 MeteringConnector::MeteringConnector(Model& model, int connectorId, MeterStore& meterStore)
         : model(model), connectorId{connectorId}, meterStore(meterStore) {
 
-    auto MeterValuesSampledData = declareConfiguration<const char*>("MeterValuesSampledData", "", CONFIGURATION_FN);
-    declareConfiguration<int>("MeterValuesSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, false, true, false, false);
-    MeterValueCacheSize = declareConfiguration(MOCPP_CONFIG_EXT_PREFIX "MeterValueCacheSize", 1, CONFIGURATION_FN, true, true, true, false);
-    MeterValueSampleInterval = declareConfiguration("MeterValueSampleInterval", 60);
+    auto meterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData", "");
+    declareConfiguration<int>("MeterValuesSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
+    meterValueCacheSizeInt = declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "MeterValueCacheSize", 1);
+    meterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval", 60);
     
-    auto StopTxnSampledData = declareConfiguration<const char*>("StopTxnSampledData", "", CONFIGURATION_FN);
-    declareConfiguration<int>("StopTxnSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, false, true, false, false);
+    auto stopTxnSampledDataString = declareConfiguration<const char*>("StopTxnSampledData", "");
+    declareConfiguration<int>("StopTxnSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
     
-    auto MeterValuesAlignedData = declareConfiguration<const char*>("MeterValuesAlignedData", "", CONFIGURATION_FN);
-    declareConfiguration<int>("MeterValuesAlignedDataMaxLength", 8, CONFIGURATION_VOLATILE, false, true, false, false);
-    ClockAlignedDataInterval  = declareConfiguration("ClockAlignedDataInterval", 0);
+    auto meterValuesAlignedDataString = declareConfiguration<const char*>("MeterValuesAlignedData", "");
+    declareConfiguration<int>("MeterValuesAlignedDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
+    clockAlignedDataIntervalInt  = declareConfiguration<int>("ClockAlignedDataInterval", 0);
     
-    auto StopTxnAlignedData = declareConfiguration<const char*>("StopTxnAlignedData", "", CONFIGURATION_FN);
+    auto stopTxnAlignedDataString = declareConfiguration<const char*>("StopTxnAlignedData", "");
 
-    MeterValuesInTxOnly = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "MeterValuesInTxOnly", true, CONFIGURATION_FN, true, true, true, false);
-    StopTxnDataCapturePeriodic = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "StopTxnDataCapturePeriodic", false, CONFIGURATION_FN, true, true, true, false);
+    meterValuesInTxOnlyBool = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "MeterValuesInTxOnly", true);
+    stopTxnDataCapturePeriodicBool = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "StopTxnDataCapturePeriodic", false);
 
-    sampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesSampledData));
-    alignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, MeterValuesAlignedData));
-    stopTxnSampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, StopTxnSampledData));
-    stopTxnAlignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, StopTxnAlignedData));
+    sampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, meterValuesSampledDataString));
+    alignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, meterValuesAlignedDataString));
+    stopTxnSampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, stopTxnSampledDataString));
+    stopTxnAlignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, stopTxnAlignedDataString));
 }
 
 std::unique_ptr<Operation> MeteringConnector::loop() {
@@ -56,7 +56,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
         lastSampleTime = mocpp_tick_ms();
     }
 
-    if ((txBreak || meterData.size() >= (size_t) *MeterValueCacheSize) && !meterData.empty()) {
+    if ((txBreak || meterData.size() >= (size_t) meterValueCacheSizeInt->getInt()) && !meterData.empty()) {
         auto meterValues = std::unique_ptr<MeterValues>(new MeterValues(std::move(meterData), connectorId, transaction));
         meterData.clear();
         return std::move(meterValues);
@@ -78,7 +78,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
         } else {
             //check outside of transaction
 
-            if (connectorId != 0 && (!MeterValuesInTxOnly || *MeterValuesInTxOnly)) {
+            if (connectorId != 0 && meterValuesInTxOnlyBool->getBool()) {
                 //don't take any MeterValues outside of transactions on connectorIds other than 0
                 meterData.clear();
                 return nullptr;
@@ -86,12 +86,12 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
         }
     }
 
-    if (*ClockAlignedDataInterval >= 1) {
+    if (clockAlignedDataIntervalInt->getInt() >= 1) {
 
         auto& timestampNow = model.getClock().now();
         auto dt = nextAlignedTime - timestampNow;
         if (dt <= 0 ||                              //normal case: interval elapsed
-                dt > *ClockAlignedDataInterval) {   //special case: clock has been adjusted or first run
+                dt > clockAlignedDataIntervalInt->getInt()) {   //special case: clock has been adjusted or first run
 
             MOCPP_DBG_DEBUG("Clock aligned measurement %" PRId32 "s: %s", dt,
                 abs(dt) <= 60 ?
@@ -115,28 +115,28 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
             auto intervall = timestampNow - midnightBase;
             intervall %= 3600 * 24;
             Timestamp midnight = timestampNow - intervall;
-            intervall += *ClockAlignedDataInterval;
+            intervall += clockAlignedDataIntervalInt->getInt();
             if (intervall >= 3600 * 24) {
                 //next measurement is tomorrow; set to precisely 00:00 
                 nextAlignedTime = midnight;
                 nextAlignedTime += 3600 * 24;
             } else {
-                intervall /= *ClockAlignedDataInterval;
-                nextAlignedTime = midnight + (intervall * *ClockAlignedDataInterval);
+                intervall /= clockAlignedDataIntervalInt->getInt();
+                nextAlignedTime = midnight + (intervall * clockAlignedDataIntervalInt->getInt());
             }
         }
     }
 
-    if (*MeterValueSampleInterval >= 1) {
+    if (meterValueSampleIntervalInt->getInt() >= 1) {
         //record periodic tx data
 
-        if (mocpp_tick_ms() - lastSampleTime >= (unsigned long) (*MeterValueSampleInterval * 1000)) {
+        if (mocpp_tick_ms() - lastSampleTime >= (unsigned long) (meterValueSampleIntervalInt->getInt() * 1000)) {
             auto sampleMeterValues = sampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::SamplePeriodic);
             if (sampleMeterValues) {
                 meterData.push_back(std::move(sampleMeterValues));
             }
 
-            if (stopTxnData && StopTxnDataCapturePeriodic && *StopTxnDataCapturePeriodic) {
+            if (stopTxnData && stopTxnDataCapturePeriodicBool->getBool()) {
                 auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::SamplePeriodic);
                 if (sampleStopTx) {
                     stopTxnData->addTxData(std::move(sampleStopTx));
@@ -146,7 +146,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
         }   
     }
 
-    if (*ClockAlignedDataInterval < 1 && *MeterValueSampleInterval < 1) {
+    if (clockAlignedDataIntervalInt->getInt() < 1 && meterValueSampleIntervalInt->getInt() < 1) {
         meterData.clear();
     }
 

@@ -19,6 +19,8 @@ private:
 public:
     ConfigurationContainer(const char *filename, bool accessible) : filename(filename), accessible(accessible) { }
 
+    virtual ~ConfigurationContainer();
+
     const char *getFilename() {return filename;}
     bool isAccessible() {return accessible;}
 
@@ -53,10 +55,6 @@ public:
 
     Configuration *getConfiguration(const char *key) const;
 };
-
-template<> std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration<int>(const char *key, int factoryDef, bool readonly, bool rebootRequired);
-template<> std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration<bool>(const char *key, bool factoryDef, bool readonly, bool rebootRequired);
-template<> std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration<const char*>(const char *key, const char *factoryDef, bool readonly, bool rebootRequired);
 
 std::unique_ptr<ConfigurationContainer> makeConfigurationContainerVolatile(const char *filename, bool accessible);
 

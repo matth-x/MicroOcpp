@@ -26,7 +26,7 @@ using namespace MicroOcpp;
 ResetService::ResetService(Context& context)
       : context(context) {
 
-    resetRetries = declareConfiguration<int>("ResetRetries", 2, CONFIGURATION_FN, true, true, false, false);
+    resetRetriesInt = declareConfiguration<int>("ResetRetries", 2);
 
     context.getOperationRegistry().registerOperation("Reset", [&context] () {
         return new Ocpp16::Reset(context.getModel());});
@@ -90,7 +90,7 @@ std::function<void(bool)> ResetService::getExecuteReset() {
 
 void ResetService::initiateReset(bool isHard) {
     isHardReset = isHard;
-    outstandingResetRetries = 1 + *resetRetries; //one initial try + no. of retries
+    outstandingResetRetries = 1 + resetRetriesInt->getInt(); //one initial try + no. of retries
     if (outstandingResetRetries > 5) {
         MOCPP_DBG_ERR("no. of reset trials exceeds 5");
         outstandingResetRetries = 5;

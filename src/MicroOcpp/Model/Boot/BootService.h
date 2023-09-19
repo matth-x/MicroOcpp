@@ -45,7 +45,7 @@ private:
     
     std::string cpCredentials;
 
-    std::shared_ptr<Configuration<bool>> preBootTransactions;
+    std::shared_ptr<Configuration> preBootTransactionsBool;
 
     bool activatedModel = false;
     bool activatedPostBootCommunication = false;

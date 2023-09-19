@@ -96,12 +96,13 @@ bool StoredOperationHandler::restore(unsigned int opNrToLoad) {
 }
 
 RequestStore::RequestStore(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem(filesystem) {
-    opBegin = declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "opBegin", 0, MOCPP_OPSTORE_FN, false, false, true, false);
+    opBeginInt = declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "opBegin", 0, MOCPP_OPSTORE_FN, false, false, false);
+    configuration_load(MOCPP_OPSTORE_FN);
 
-    if (!opBegin || *opBegin < 0) {
+    if (!opBeginInt || opBeginInt->getInt() < 0) {
         MOCPP_DBG_ERR("init failure");
     } else if (filesystem) {
-        opEnd = *opBegin;
+        opEnd = opBeginInt->getInt();
 
         unsigned int misses = 0;
         unsigned int i = opEnd;
@@ -144,13 +145,13 @@ unsigned int RequestStore::reserveOpNr() {
 }
 
 void RequestStore::advanceOpNr(unsigned int oldOpNr) {
-    if (!opBegin || *opBegin < 0) {
+    if (!opBeginInt || opBeginInt->getInt() < 0) {
         MOCPP_DBG_ERR("init failure");
         return;
     }
 
-    if (oldOpNr != (unsigned int) *opBegin) {
-        if ((oldOpNr + MOCPP_MAX_OPNR - (unsigned int) *opBegin) % MOCPP_MAX_OPNR < 100) {
+    if (oldOpNr != (unsigned int) opBeginInt->getInt()) {
+        if ((oldOpNr + MOCPP_MAX_OPNR - (unsigned int) opBeginInt->getInt()) % MOCPP_MAX_OPNR < 100) {
             MOCPP_DBG_ERR("synchronization failure - try to fix");
             (void)0;
         } else {
@@ -161,14 +162,14 @@ void RequestStore::advanceOpNr(unsigned int oldOpNr) {
 
     unsigned int opNr = (oldOpNr + 1) % MOCPP_MAX_OPNR;
 
-    //delete range [*opBegin ... opNr)
+    //delete range [opBeginInt->getInt() ... opNr)
 
-    unsigned int rangeSize = (opNr + MOCPP_MAX_OPNR - (unsigned int) *opBegin) % MOCPP_MAX_OPNR;
+    unsigned int rangeSize = (opNr + MOCPP_MAX_OPNR - (unsigned int) opBeginInt->getInt()) % MOCPP_MAX_OPNR;
 
     MOCPP_DBG_DEBUG("delete %u operations", rangeSize);
 
     for (unsigned int i = 0; i < rangeSize; i++) {
-        unsigned int op = ((unsigned int) *opBegin + i + MOCPP_MAX_OPNR - MOCPP_OPHISTORY_SIZE) % MOCPP_MAX_OPNR;
+        unsigned int op = ((unsigned int) opBeginInt->getInt() + i + MOCPP_MAX_OPNR - MOCPP_OPHISTORY_SIZE) % MOCPP_MAX_OPNR;
 
         char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
         auto ret = snprintf(fn, MOCPP_MAX_PATH_SIZE, MOCPP_FILENAME_PREFIX "op" "-%u.jsn", op);
@@ -191,14 +192,14 @@ void RequestStore::advanceOpNr(unsigned int oldOpNr) {
     }
 
     MOCPP_DBG_DEBUG("advance opBegin: %u", opNr);
-    *opBegin = opNr;
+    opBeginInt->setInt(opNr);
     configuration_save();
 }
 
 unsigned int RequestStore::getOpBegin() {
-    if (!opBegin || *opBegin < 0) {
+    if (!opBeginInt || opBeginInt->getInt() < 0) {
         MOCPP_DBG_ERR("invalid state");
         return 0;
     }
-    return (unsigned int) *opBegin;
+    return (unsigned int) opBeginInt->getInt();
 }

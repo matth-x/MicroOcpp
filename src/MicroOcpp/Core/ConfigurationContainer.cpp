@@ -8,6 +8,10 @@
 
 namespace MicroOcpp {
 
+ConfigurationContainer::~ConfigurationContainer() {
+
+}
+
 std::shared_ptr<Configuration> ConfigurationPool::getConfiguration_typesafe(const char *key, TConfig type) {
     for (auto entry = configurations.begin(); entry != configurations.end();entry++) {
         if ((*entry)->getKey() && !strcmp((*entry)->getKey(), key)) {
@@ -25,13 +29,13 @@ std::shared_ptr<Configuration> ConfigurationPool::getConfiguration_typesafe(cons
 }
 
 template<class T>
-std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration(const char *key, T factoryDef, bool readonly = false, bool rebootRequired = false) {
+std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration(const char *key, T factoryDef, bool readonly, bool rebootRequired) {
     
     std::shared_ptr<Configuration> res = getConfiguration_typesafe(key, convertType<T>());
 
     if (!res) {
         //config doesn't exist yet
-        res = makeConfigInt(key, factoryDef);
+        res = makeConfig<T>(key, factoryDef);
         if (!res) {
             //allocation failure - OOM
             MOCPP_DBG_ERR("OOM");
@@ -51,6 +55,14 @@ std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration(const cha
     return res;
 }
 
+template std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration<int>(const char *key, int factoryDef, bool readonly, bool rebootRequired);
+template std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration<bool>(const char *key, bool factoryDef, bool readonly, bool rebootRequired);
+template std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration<const char*>(const char *key, const char *factoryDef, bool readonly, bool rebootRequired);
+
+std::vector<std::shared_ptr<Configuration>>& ConfigurationPool::getConfigurations() {
+    return configurations;
+}
+
 size_t ConfigurationPool::getConfigurationCount() const {
         return configurations.size();
     }
@@ -61,10 +73,11 @@ Configuration *ConfigurationPool::getConfiguration(size_t i) const {
 
 Configuration *ConfigurationPool::getConfiguration(const char *key) const {
     for (auto& entry : configurations) {
-        if (!strcmp(entry->getKey(), key)) {
+        if (entry->getKey() && !strcmp(entry->getKey(), key)) {
             return entry.get();
         }
     }
+    return nullptr;
 }
 
 class ConfigurationContainerVolatile : public ConfigurationContainer {

@@ -20,26 +20,15 @@ using namespace MicroOcpp;
 
 AuthorizationService::AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
     
-    localAuthorizeOffline = declareConfiguration<bool>("LocalAuthorizeOffline", true, CONFIGURATION_FN, true, true, true, false);
-    localAuthListEnabled = declareConfiguration<bool>("LocalAuthListEnabled", true, CONFIGURATION_FN, true, true, true, false);
-    declareConfiguration<int>("LocalAuthListMaxLength", MOCPP_LocalAuthListMaxLength, CONFIGURATION_VOLATILE, false, true, false, false);
-    declareConfiguration<int>("SendLocalListMaxLength", MOCPP_SendLocalListMaxLength, CONFIGURATION_VOLATILE, false, true, false, false);
+    localAuthorizeOfflineBool = declareConfiguration<bool>("LocalAuthorizeOffline", true);
+    localAuthListEnabledBool = declareConfiguration<bool>("LocalAuthListEnabled", true);
+    declareConfiguration<int>("LocalAuthListMaxLength", MOCPP_LocalAuthListMaxLength, CONFIGURATION_VOLATILE, true);
+    declareConfiguration<int>("SendLocalListMaxLength", MOCPP_SendLocalListMaxLength, CONFIGURATION_VOLATILE, true);
 
-    if (!localAuthorizeOffline || !localAuthListEnabled) {
+    if (!localAuthorizeOfflineBool || !localAuthListEnabledBool) {
         MOCPP_DBG_ERR("initialization error");
     }
-
-    //append "LocalAuthListManagement" to FeatureProfiles list
-    const char *fpId = "LocalAuthListManagement";
-    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
-    if (!strstr(*fProfile, fpId)) {
-        auto fProfilePlus = std::string(*fProfile);
-        if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
-            fProfilePlus += ",";
-        fProfilePlus += fpId;
-        *fProfile = fProfilePlus.c_str();
-    }
-
+    
     context.getOperationRegistry().registerOperation("GetLocalListVersion", [&context] () {
         return new Ocpp16::GetLocalListVersion(context.getModel());});
     context.getOperationRegistry().registerOperation("SendLocalList", [&context] () {
@@ -81,11 +70,11 @@ bool AuthorizationService::loadLists() {
 }
 
 AuthorizationData *AuthorizationService::getLocalAuthorization(const char *idTag) {
-    if (!*localAuthorizeOffline) {
+    if (!localAuthorizeOfflineBool->getBool()) {
         return nullptr;
     }
 
-    if (!*localAuthListEnabled) {
+    if (!localAuthListEnabledBool->getBool()) {
         return nullptr; //auth cache will follow
     }
 
@@ -125,11 +114,11 @@ bool AuthorizationService::updateLocalList(JsonObject payload) {
 void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idTagInfo) {
     //check local list conflicts. In future: also update authorization cache
 
-    if (!*localAuthorizeOffline) {
+    if (!localAuthorizeOfflineBool->getBool()) {
         return;
     }
 
-    if (!*localAuthListEnabled) {
+    if (!localAuthListEnabledBool->getBool()) {
         return; //auth cache will follow
     }
 

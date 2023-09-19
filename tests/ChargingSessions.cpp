@@ -16,6 +16,7 @@ using namespace MicroOcpp;
 
 
 TEST_CASE( "Charging sessions" ) {
+    printf("\nRun %s\n",  "Charging sessions");
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;
@@ -26,10 +27,10 @@ TEST_CASE( "Charging sessions" ) {
 
     mocpp_set_timer(custom_timer_cb);
 
-    auto connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN);
-        *connectionTimeOut = 30;
-    auto minimumStatusDuration = declareConfiguration<int>("MinimumStatusDuration", 0, CONFIGURATION_FN);
-        *minimumStatusDuration = 0;
+    auto connectionTimeOutInt = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN);
+    connectionTimeOutInt->setInt(30);
+    auto minimumStatusDurationInt = declareConfiguration<int>("MinimumStatusDuration", 0, CONFIGURATION_FN);
+    minimumStatusDurationInt->setInt(0);
     
     std::array<const char*, 2> expectedSN {"Available", "Available"};
     std::array<bool, 2> checkedSN {false, false};
@@ -118,7 +119,7 @@ TEST_CASE( "Charging sessions" ) {
 
             checkedSN[1] = false;
             expectedSN[1] = "Available";
-            mtime += *connectionTimeOut * 1000;
+            mtime += connectionTimeOutInt->getInt() * 1000;
             loop();
             REQUIRE(checkedSN[1]);
         }
@@ -184,7 +185,7 @@ TEST_CASE( "Charging sessions" ) {
         loopback.setConnected(false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN) = true;
+        declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
         configuration_save();
 
         loop();
@@ -245,7 +246,7 @@ TEST_CASE( "Charging sessions" ) {
         loopback.setConnected(false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN) = true;
+        declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
         configuration_save();
 
         loop();
@@ -259,7 +260,7 @@ TEST_CASE( "Charging sessions" ) {
 
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN) = true;
+        declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
         configuration_save();
 
         bool checkProcessed = false;
@@ -296,7 +297,7 @@ TEST_CASE( "Charging sessions" ) {
         loopback.setConnected(false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN) = true;
+        declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
         configuration_save();
 
         loop();
@@ -313,7 +314,7 @@ TEST_CASE( "Charging sessions" ) {
 
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        *declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN) = true;
+        declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
         configuration_save();
 
         bool checkProcessed = false;

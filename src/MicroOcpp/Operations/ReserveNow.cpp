@@ -52,8 +52,8 @@ void ReserveNow::processReq(JsonObject payload) {
             return;
         }
 
-        auto reserveConnectorZeroSupported = declareConfiguration<bool>("ReserveConnectorZeroSupported", true, CONFIGURATION_VOLATILE);
-        if (connectorId == 0 && (!reserveConnectorZeroSupported || !*reserveConnectorZeroSupported)) {
+        auto reserveConnectorZeroSupportedBool = declareConfiguration<bool>("ReserveConnectorZeroSupported", true, CONFIGURATION_VOLATILE);
+        if (connectorId == 0 && (!reserveConnectorZeroSupportedBool || !reserveConnectorZeroSupportedBool->getBool())) {
             reservationStatus = "Rejected";
             return;
         }

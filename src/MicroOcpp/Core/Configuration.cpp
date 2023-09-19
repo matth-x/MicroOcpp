@@ -15,6 +15,9 @@ namespace MicroOcpp {
 struct Validator {
     const char *key = nullptr;
     std::function<bool(const char*)> checkValue;
+    Validator(const char *key, std::function<bool(const char*)> checkValue) : key(key), checkValue(checkValue) {
+
+    }
 };
 
 namespace ConfigurationLocal {
@@ -58,8 +61,7 @@ std::shared_ptr<ConfigurationContainer> getContainer(const char *filename) {
     }
 }
 
-template<class T>
-std::shared_ptr<Configuration> declareConfiguration(const char *key, T factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible) {
+ConfigurationContainer *declareContainer(const char *filename, bool accessible) {
 
     auto container = getContainer(filename);
     
@@ -72,33 +74,38 @@ std::shared_ptr<Configuration> declareConfiguration(const char *key, T factoryDe
             return nullptr;
         }
         configurationContainers.push_back(container);
-
-        if (!container->load()) {
-            MOCPP_DBG_WARN("Cannot load file contents. Path will be overwritten");
-            (void)0;
-        }
     }
 
     if (container->isAccessible() != accessible) {
-        MOCPP_DBG_ERR("key %s: declared %s but config file is %s", key, accessible ? "accessible" : "inaccessible", container->isAccessible() ? "accessible" : "inaccessible");
+        MOCPP_DBG_ERR("%s: conflicting accessibility declarations (expect %s)", filename, container->isAccessible() ? "accessible" : "inaccessible");
         (void)0;
     }
 
-    std::shared_ptr<Configuration> configuration;
+    return container.get();
+}
 
-    switch (convertType<T>()) {
-        case TConfig::Int:
-            configuration = container->declareConfigurationInt(key, factoryDef, readonly, rebootRequired);
-            break;
-        case TConfig::Bool:
-            configuration = container->declareConfigurationBool(key, factoryDef, readonly, rebootRequired);
-            break;
-        case TConfig::String:
-            configuration = container->declareConfigurationString(key, factoryDef, readonly, rebootRequired);
-            break;
+template<>
+std::shared_ptr<Configuration> declareConfiguration<int>(const char *key, int factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible) {
+    if (auto container = declareContainer(filename, accessible)) {
+        return container->declareConfigurationInt(key, factoryDef, readonly, rebootRequired);
     }
+    return nullptr;
+}
 
-    return configuration;
+template<>
+std::shared_ptr<Configuration> declareConfiguration<bool>(const char *key, bool factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible) {
+    if (auto container = declareContainer(filename, accessible)) {
+        return container->declareConfigurationBool(key, factoryDef, readonly, rebootRequired);
+    }
+    return nullptr;
+}
+
+template<>
+std::shared_ptr<Configuration> declareConfiguration<const char*>(const char *key, const char *factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible) {
+    if (auto container = declareContainer(filename, accessible)) {
+        return container->declareConfigurationString(key, factoryDef, readonly, rebootRequired);
+    }
+    return nullptr;
 }
 
 std::function<bool(const char*)> *getConfigurationValidator(const char *key) {
@@ -148,12 +155,37 @@ std::vector<ConfigurationContainer*> getConfigurationContainersPublic() {
 
 bool configuration_init(std::shared_ptr<FilesystemAdapter> _filesystem) {
     filesystem = _filesystem;
+    return true;
 }
 
 void configuration_deinit() {
     configurationContainers.clear();
     validators.clear();
     filesystem.reset();
+}
+
+bool configuration_load() {
+    bool success = true;
+
+    for (auto& container : configurationContainers) {
+        if (!container->load()) {
+            success = false;
+        }
+    }
+
+    return success;
+}
+
+bool configuration_load(const char *filename) {
+    bool success = true;
+
+    for (auto& container : configurationContainers) {
+        if (!strcmp(filename, container->getFilename()) && !container->load()) {
+            success = false;
+        }
+    }
+
+    return success;
 }
 
 bool configuration_save() {

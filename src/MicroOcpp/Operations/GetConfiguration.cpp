@@ -70,7 +70,7 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
         //need to store ints by copied string: measure necessary capacity
         if (config->getType() == TConfig::Int) {
             char vbuf [VALUE_BUFSIZE];
-            auto ret = snprintf(vbuf, VALUE_BUFSIZE, "%i", config.getInt());
+            auto ret = snprintf(vbuf, VALUE_BUFSIZE, "%i", config->getInt());
             if (ret < 0 || ret >= VALUE_BUFSIZE) {
                 continue;
             }
@@ -104,7 +104,7 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
         const char *v = "";
         switch (config->getType()) {
             case TConfig::Int: {
-                auto ret = snprintf(vbuf, VALUE_BUFSIZE, "%i", config.getInt());
+                auto ret = snprintf(vbuf, VALUE_BUFSIZE, "%i", config->getInt());
                 if (ret < 0 || ret >= VALUE_BUFSIZE) {
                     MOCPP_DBG_ERR("value error");
                     continue;
@@ -112,20 +112,16 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
                 v = vbuf;
             }
             case TConfig::Bool:
-                v = config.getBool() ? "true" : "false";
+                v = config->getBool() ? "true" : "false";
                 break;
             case TConfig::String:
-                v = config.getString();
-                if (!v) {
-                    MOCPP_DBG_ERR("invalid config");
-                    continue;
-                }
+                v = config->getString();
                 break;
         }
 
         JsonObject jconfig = jsonConfigurationKey.createNestedObject();
-        jconfig["key"] = config.getKey();
-        jconfig["readonly"] = config.isReadOnly();
+        jconfig["key"] = config->getKey();
+        jconfig["readonly"] = config->isReadOnly();
         if (v == vbuf) {
             //value points to buffer on stack, needs to be copied into JSON memory pool
             jconfig["value"] = (char*) v;

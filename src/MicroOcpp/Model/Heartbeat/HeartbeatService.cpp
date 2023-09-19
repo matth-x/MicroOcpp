@@ -12,7 +12,7 @@
 using namespace MicroOcpp;
 
 HeartbeatService::HeartbeatService(Context& context) : context(context) {
-    heartbeatInterval = declareConfiguration("HeartbeatInterval", 86400);
+    heartbeatIntervalInt = declareConfiguration<int>("HeartbeatInterval", 86400);
     lastHeartbeat = mocpp_tick_ms();
 
     //Register message handler for TriggerMessage operation
@@ -21,7 +21,7 @@ HeartbeatService::HeartbeatService(Context& context) : context(context) {
 }
 
 void HeartbeatService::loop() {
-    unsigned long hbInterval = *heartbeatInterval;
+    unsigned long hbInterval = heartbeatIntervalInt->getInt();
     hbInterval *= 1000UL; //conversion s -> ms
     unsigned long now = mocpp_tick_ms();
 

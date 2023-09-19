@@ -6,7 +6,6 @@
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
-#include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Debug.h>
 
 #include <MicroOcpp/Operations/GetDiagnostics.h>
@@ -16,15 +15,6 @@ using namespace MicroOcpp;
 using Ocpp16::DiagnosticsStatus;
 
 DiagnosticsService::DiagnosticsService(Context& context) : context(context) {
-    const char *fpId = "FirmwareManagement";
-    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
-    if (!strstr(*fProfile, fpId)) {
-        auto fProfilePlus = std::string(*fProfile);
-        if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
-            fProfilePlus += ",";
-        fProfilePlus += fpId;
-        *fProfile = fProfilePlus.c_str();
-    }
     
     context.getOperationRegistry().registerOperation("GetDiagnostics", [&context] () {
         return new Ocpp16::GetDiagnostics(context.getModel());});

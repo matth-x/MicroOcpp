@@ -26,15 +26,6 @@ using namespace MicroOcpp;
 using MicroOcpp::Ocpp16::FirmwareStatus;
 
 FirmwareService::FirmwareService(Context& context) : context(context) {
-    const char *fpId = "FirmwareManagement";
-    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
-    if (!strstr(*fProfile, fpId)) {
-        auto fProfilePlus = std::string(*fProfile);
-        if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
-            fProfilePlus += ",";
-        fProfilePlus += fpId;
-        *fProfile = fProfilePlus.c_str();
-    }
     
     context.getOperationRegistry().registerOperation("UpdateFirmware", [&context] () {
         return new Ocpp16::UpdateFirmware(context.getModel());});
@@ -48,7 +39,7 @@ void FirmwareService::setBuildNumber(const char *buildNumber) {
     if (buildNumber == nullptr)
         return;
     this->buildNumber = buildNumber;
-    previousBuildNumber = declareConfiguration<const char*>("BUILD_NUMBER", this->buildNumber.c_str(), MOCPP_KEYVALUE_FN, false, false, true, false);
+    previousBuildNumberString = declareConfiguration<const char*>("BUILD_NUMBER", this->buildNumber.c_str(), MOCPP_KEYVALUE_FN, false, false, false);
     checkedSuccessfulFwUpdate = false; //--> CS will be notified
 }
 
@@ -254,15 +245,14 @@ std::unique_ptr<Request> FirmwareService::getFirmwareStatusNotification() {
     /*
      * Check if FW has been updated previously, but only once
      */
-    if (!checkedSuccessfulFwUpdate && !buildNumber.empty() && previousBuildNumber != nullptr) {
+    if (!checkedSuccessfulFwUpdate && !buildNumber.empty() && previousBuildNumberString != nullptr) {
         checkedSuccessfulFwUpdate = true;
 
-        MOCPP_DBG_DEBUG("Previous build number: %s, new build number: %s", (const char*) *previousBuildNumber, buildNumber.c_str());
+        MOCPP_DBG_DEBUG("Previous build number: %s, new build number: %s", previousBuildNumberString->getString(), buildNumber.c_str());
         
-        size_t buildNoSize = previousBuildNumber->getBuffsize();
-        if (strncmp(buildNumber.c_str(), *previousBuildNumber, buildNoSize)) {
+        if (buildNumber.compare(previousBuildNumberString->getString())) {
             //new FW
-            *previousBuildNumber = buildNumber.c_str();
+            previousBuildNumberString->setString(buildNumber.c_str());
             configuration_save();
 
             buildNumber.clear();

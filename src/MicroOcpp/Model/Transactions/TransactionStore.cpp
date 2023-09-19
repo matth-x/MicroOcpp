@@ -22,18 +22,20 @@ ConnectorTransactionStore::ConnectorTransactionStore(TransactionStore& context, 
         connectorId(connectorId),
         filesystem(filesystem) {
 
-    char key [30] = {'\0'};
-    if (snprintf(key, 30, MOCPP_CONFIG_EXT_PREFIX "txEnd_%u", connectorId) < 0) {
-        MOCPP_DBG_ERR("Invalid key");
-        (void)0;
-    }
-    txEnd = declareConfiguration<int>(key, 0, MOCPP_TXSTORE_META_FN, false, false, true, false);
+    snprintf(txBeginKey, sizeof(txBeginKey), MOCPP_TXSTORE_TXBEGIN_KEY "%u", connectorId);
+    txBeginInt = declareConfiguration<int>(txBeginKey, 0, MOCPP_TXSTORE_META_FN, false, false, false);
 
-    if (snprintf(key, 30, MOCPP_CONFIG_EXT_PREFIX "txBegin_%u", connectorId) < 0) {
-        MOCPP_DBG_ERR("Invalid key");
-        (void)0;
+    snprintf(txEndKey, sizeof(txEndKey), MOCPP_TXSTORE_TXEND_KEY "%u", connectorId);
+    txEndInt = declareConfiguration<int>(txEndKey, 0, MOCPP_TXSTORE_META_FN, false, false, false);
+}
+
+ConnectorTransactionStore::~ConnectorTransactionStore() {
+    if (txBeginInt->getKey() == txBeginKey) {
+        txBeginInt->setKey(nullptr);
     }
-    txBegin = declareConfiguration<int>(key, 0, MOCPP_TXSTORE_META_FN, false, false, true, false);
+    if (txEndInt->getKey() == txEndKey) {
+        txEndInt->setKey(nullptr);
+    }
 }
 
 std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned int txNr) {
@@ -110,13 +112,13 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
 
 std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction(bool silent) {
     
-    if (!txBegin || *txBegin < 0 || !txEnd || *txEnd < 0) {
+    if (!txBeginInt || txBeginInt->getInt() < 0 || !txEndInt || txEndInt->getInt() < 0) {
         MOCPP_DBG_ERR("memory corruption");
         return nullptr;
     }
 
     //check if maximum number of queued tx already reached
-    if ((*txEnd + MAX_TX_CNT - *txBegin) % MAX_TX_CNT >= MOCPP_TXRECORD_SIZE) {
+    if ((txEndInt->getInt() + MAX_TX_CNT - txBeginInt->getInt()) % MAX_TX_CNT >= MOCPP_TXRECORD_SIZE) {
         //limit reached
 
         if (!silent) {
@@ -126,9 +128,9 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction(bool s
         //special case: silent tx -> create tx anyway, but should be deleted immediately after charging session
     }
 
-    auto transaction = std::make_shared<Transaction>(*this, connectorId, (unsigned int) *txEnd, silent);
+    auto transaction = std::make_shared<Transaction>(*this, connectorId, (unsigned int) txEndInt->getInt(), silent);
 
-    *txEnd = (*txEnd + 1) % MAX_TX_CNT;
+    txEndInt->setInt((txEndInt->getInt() + 1) % MAX_TX_CNT);
     configuration_save();
 
     if (!commit(transaction.get())) {
@@ -148,12 +150,12 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction(bool s
 }
 
 std::shared_ptr<Transaction> ConnectorTransactionStore::getLatestTransaction() {
-    if (!txEnd || *txEnd < 0) {
+    if (!txEndInt || txEndInt->getInt() < 0) {
         MOCPP_DBG_ERR("memory corruption");
         return nullptr;
     }
 
-    unsigned int latest = ((unsigned int) *txEnd + MAX_TX_CNT - 1) % MAX_TX_CNT;
+    unsigned int latest = ((unsigned int) txEndInt->getInt() + MAX_TX_CNT - 1) % MAX_TX_CNT;
 
     return getTransaction(latest);
 }
@@ -213,50 +215,50 @@ bool ConnectorTransactionStore::remove(unsigned int txNr) {
 }
 
 int ConnectorTransactionStore::getTxBegin() {
-    if (!txBegin || *txBegin < 0) {
+    if (!txBeginInt || txBeginInt->getInt() < 0) {
         MOCPP_DBG_ERR("memory corruption");
         return -1;
     }
 
-    return *txBegin;
+    return txBeginInt->getInt();
 }
 
 int ConnectorTransactionStore::getTxEnd() {
-    if (!txBegin || *txBegin < 0) {
+    if (!txEndInt || txEndInt->getInt() < 0) {
         MOCPP_DBG_ERR("memory corruption");
         return -1;
     }
 
-    return *txEnd;
+    return txEndInt->getInt();
 }
 
 void ConnectorTransactionStore::setTxBegin(unsigned int txNr) {
-    if (!txBegin || *txBegin < 0) {
+    if (!txBeginInt || txBeginInt->getInt() < 0) {
         MOCPP_DBG_ERR("memory corruption");
         return;
     }
 
-    *txBegin = txNr;
+    txBeginInt->setInt(txNr);
     configuration_save();
 }
 
 void ConnectorTransactionStore::setTxEnd(unsigned int txNr) {
-    if (!txBegin || *txBegin < 0 || !txEnd || *txEnd < 0) {
+    if (!txBeginInt || txBeginInt->getInt() < 0 || !txEndInt || txEndInt->getInt() < 0) {
         MOCPP_DBG_ERR("memory corruption");
         return;
     }
 
-    *txEnd = txNr;
+    txEndInt->setInt(txNr);
     configuration_save();
 }
 
 unsigned int ConnectorTransactionStore::size() {
-    if (!txBegin || *txBegin < 0 || !txEnd || *txEnd < 0) {
+    if (!txBeginInt || txBeginInt->getInt() < 0 || !txEndInt || txEndInt->getInt() < 0) {
         MOCPP_DBG_ERR("memory corruption");
         return 0;
     }
 
-    return (*txEnd + MAX_TX_CNT - *txBegin) % MAX_TX_CNT;
+    return (txEndInt->getInt() + MAX_TX_CNT - txBeginInt->getInt()) % MAX_TX_CNT;
 }
 
 TransactionStore::TransactionStore(unsigned int nConnectors, std::shared_ptr<FilesystemAdapter> filesystem) {
@@ -265,6 +267,8 @@ TransactionStore::TransactionStore(unsigned int nConnectors, std::shared_ptr<Fil
         connectors.push_back(std::unique_ptr<ConnectorTransactionStore>(
             new ConnectorTransactionStore(*this, i, filesystem)));
     }
+
+    configuration_load(MOCPP_TXSTORE_META_FN);
 }
 
 std::shared_ptr<Transaction> TransactionStore::getLatestTransaction(unsigned int connectorId) {

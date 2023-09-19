@@ -22,17 +22,8 @@ template<> TConfig convertType<int>() {return TConfig::Int;}
 template<> TConfig convertType<bool>() {return TConfig::Bool;}
 template<> TConfig convertType<const char*>() {return TConfig::String;}
 
-int toCStringValue(char *buf, size_t length, int value) {
-    return snprintf(buf, length, "%d", value);
-}
+Configuration::~Configuration() {
 
-int toCStringValue(char *buf, size_t length, float value) {
-    int ilength = (int) std::min((size_t) 100, length);
-    return snprintf(buf, length, "%.*g", ilength >= 7 ? ilength - 7 : 0, value);
-}
-
-int toCStringValue(char *buf, size_t length, bool value) {
-    return snprintf(buf, length, "%s", value ? "true" : "false");
 }
 
 void Configuration::setInt(int) {
@@ -51,6 +42,7 @@ bool Configuration::setString(const char*) {
 #if MOCPP_CONFIG_TYPECHECK
     MOCPP_DBG_ERR("type err");
 #endif
+    return false;
 }
 
 int Configuration::getInt() {
@@ -71,7 +63,7 @@ const char *Configuration::getString() {
 #if MOCPP_CONFIG_TYPECHECK
     MOCPP_DBG_ERR("type err");
 #endif
-    return nullptr;
+    return "";
 }
 
 revision_t Configuration::getValueRevision() {
@@ -124,6 +116,7 @@ public:
 
     void setInt(int val) override {
         this->val = val;
+        value_revision++;
     }
 
     int getInt() override {
@@ -154,6 +147,7 @@ public:
 
     void setBool(bool val) override {
         this->val = val;
+        value_revision++;
     }
 
     bool getBool() override {
@@ -168,6 +162,7 @@ private:
 public:
     ConfigString() = default;
     ConfigString(const ConfigString&) = delete;
+    ConfigString(ConfigString&&) = delete;
     ConfigString& operator=(const ConfigString&) = delete;
 
     ~ConfigString() {
@@ -188,7 +183,9 @@ public:
     }
 
     bool setString(const char *src) override {
-        if (!this->val && !src) {
+        bool src_empty = !src || !*src;
+
+        if (!val && src_empty) {
             return true;
         }
 
@@ -197,7 +194,7 @@ public:
         }
 
         size_t size = 0;
-        if (src) {
+        if (!src_empty) {
             size = strlen(src) + 1;
         }
 
@@ -212,7 +209,7 @@ public:
             this->val = nullptr;
         }
 
-        if (src) {
+        if (!src_empty) {
             this->val = (char*) malloc(size);
             if (!this->val) {
                 return false;
@@ -224,37 +221,42 @@ public:
     }
 
     const char *getString() override {
+        if (!val) {
+            return "";
+        }
         return val;
     }
 };
 
-template<class T>
-std::unique_ptr<Configuration> makeConfig(const char *key, T val) {
-    std::unique_ptr<ConfigInt> res;
-    switch (convertType<T>()) {
-        case TConfig::Int:
-            res = std::unique_ptr<ConfigInt>(new ConfigInt());
-            if (res) res->setInt(val);
-            break;
-        case TConfig::Bool:
-            res = std::unique_ptr<ConfigBool>(new ConfigBool());
-            if (res) res->setBool(val);
-            break;
-        case TConfig::String:
-            res = std::unique_ptr<ConfigString>(new ConfigString());
-            if (res) res->setString(val);
-            break;
+template<>
+std::unique_ptr<Configuration> makeConfig<int>(const char *key, int val) {
+    auto res = std::unique_ptr<Configuration>(new ConfigInt());
+    if (res) {
+        res->setKey(key);
+        res->setInt(val);
     }
-    if (!res) {
-        return nullptr;
-    }
-    res->setKey(key);
     return res;
-}
+};
 
-template<> std::unique_ptr<Configuration> makeConfig<int>(const char *key, int val);
-template<> std::unique_ptr<Configuration> makeConfig<bool>(const char *key, bool val);
-template<> std::unique_ptr<Configuration> makeConfig<const char*>(const char *key, const char *val);
+template<>
+std::unique_ptr<Configuration> makeConfig<bool>(const char *key, bool val) {
+    auto res = std::unique_ptr<Configuration>(new ConfigBool());
+    if (res) {
+        res->setKey(key);
+        res->setBool(val);
+    }
+    return res;
+};
+
+template<>
+std::unique_ptr<Configuration> makeConfig<const char*>(const char *key, const char *val) {
+    auto res = std::unique_ptr<Configuration>(new ConfigString());
+    if (res) {
+        res->setKey(key);
+        res->setString(val);
+    }
+    return res;
+};
 
 bool deserializeTConfig(const char *serialized, TConfig& out) {
     if (!strcmp(serialized, "int")) {
@@ -274,63 +276,14 @@ bool deserializeTConfig(const char *serialized, TConfig& out) {
 
 const char *serializeTConfig(TConfig type) {
     switch (type) {
-        case (TConfig::Int):
+        case TConfig::Int:
             return "int";
-        case (TConfig::Bool):
+        case TConfig::Bool:
             return "bool";
-        case (TConfig::String):
+        case TConfig::String:
             return "string";
     }
+    return "_Undefined";
 }
-
-bool serializeConfigOcpp(Configuration& config, DynamicJsonDocument& out) {
-
-    if (!config.getKey()) {
-        return false;
-    }
-    
-    const size_t PRIMITIVE_VALUESIZE = 30;
-    char vbuf [PRIMITIVE_VALUESIZE];
-    const char *v = vbuf;
-    size_t vcapacity = 0;
-    switch(config.getType()) {
-        case TConfig::Int: {
-            auto ret = snprintf(vbuf, PRIMITIVE_VALUESIZE, "%i", config.getInt());
-            if (ret < 0 || ret >= PRIMITIVE_VALUESIZE) {
-                return false;
-            }
-            v = vbuf;
-            vcapacity = ret + 1;
-            break;
-        }
-        case TConfig::Bool:
-            v = config.getBool() ? "true" : "false";
-            vcapacity = 0;
-            break;
-        case TConfig::String:
-            v = config.getString();
-            if (!v) {
-                MOCPP_DBG_ERR("invalid config");
-                return false;
-            }
-            vcapacity = 0;
-            break;
-    }
-
-    out = DynamicJsonDocument(JSON_OBJECT_SIZE(3) + vcapacity);
-
-    out["key"] = config.getKey();
-    out["readonly"] = config.isReadOnly();
-    if (vcapacity > 0) {
-        //value has capacity, copy string
-        out["value"] = (char*) v;
-    } else {
-        //value is static, no-copy mode
-        out["value"] = v;
-    }
-
-    return true;
-}
-
 
 } //end namespace MicroOcpp

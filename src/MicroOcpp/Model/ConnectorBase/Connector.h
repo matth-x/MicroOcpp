@@ -32,7 +32,8 @@ private:
 
     std::shared_ptr<Transaction> transaction;
 
-    std::shared_ptr<Configuration<bool>> availability;
+    std::shared_ptr<Configuration> availabilityBool;
+    char availabilityBoolKey [sizeof(MOCPP_CONFIG_EXT_PREFIX "AVAIL_CONN_xxxx") + 1];
     bool availabilityVolatile = true;
 
     std::function<bool()> connectorPluggedInput;
@@ -44,7 +45,7 @@ private:
     const char *getErrorCode();
 
     ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
-    std::shared_ptr<Configuration<int>> minimumStatusDuration; //in seconds
+    std::shared_ptr<Configuration> minimumStatusDurationInt; //in seconds
     ChargePointStatus reportedStatus = ChargePointStatus::NOT_SET;
     unsigned long t_statusTransition = 0;
 
@@ -56,23 +57,26 @@ private:
 
     std::function<void(Transaction*,TxNotification)> txNotificationOutput;
 
-    std::shared_ptr<Configuration<int>> connectionTimeOut; //in seconds
-    std::shared_ptr<Configuration<bool>> stopTransactionOnInvalidId;
-    std::shared_ptr<Configuration<bool>> stopTransactionOnEVSideDisconnect;
-    std::shared_ptr<Configuration<bool>> unlockConnectorOnEVSideDisconnect;
-    std::shared_ptr<Configuration<bool>> localPreAuthorize;
-    std::shared_ptr<Configuration<bool>> allowOfflineTxForUnknownId;
+    std::shared_ptr<Configuration> connectionTimeOutInt; //in seconds
+    std::shared_ptr<Configuration> stopTransactionOnInvalidIdBool;
+    std::shared_ptr<Configuration> stopTransactionOnEVSideDisconnectBool;
+    std::shared_ptr<Configuration> localPreAuthorizeBool;
+    std::shared_ptr<Configuration> allowOfflineTxForUnknownIdBool;
 
-    std::shared_ptr<Configuration<bool>> silentOfflineTransactions;
-    std::shared_ptr<Configuration<int>> authorizationTimeout; //in seconds
-    std::shared_ptr<Configuration<bool>> freeVendActive;
-    std::shared_ptr<Configuration<const char*>> freeVendIdTag;
+    std::shared_ptr<Configuration> silentOfflineTransactionsBool;
+    std::shared_ptr<Configuration> authorizationTimeoutInt; //in seconds
+    std::shared_ptr<Configuration> freeVendActiveBool;
+    std::shared_ptr<Configuration> freeVendIdTagString;
     bool freeVendTrackPlugged = false;
 
     bool trackLoopExecute = false; //if loop has been executed once
 public:
     Connector(Context& context, int connectorId);
-    Connector(Connector&& other) = default;
+    Connector(const Connector&) = delete;
+    Connector(Connector&&) = delete;
+    Connector& operator=(const Connector&) = delete;
+
+    ~Connector();
 
     /*
      * beginTransaction begins the transaction process which eventually leads to a StartTransaction

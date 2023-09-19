@@ -3,6 +3,9 @@
 // MIT License
 
 #include <MicroOcpp/Model/Model.h>
+
+#include <string>
+
 #include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <MicroOcpp/Model/ConnectorBase/ConnectorsCommon.h>
@@ -15,12 +18,14 @@
 #include <MicroOcpp/Model/Boot/BootService.h>
 #include <MicroOcpp/Model/Reset/ResetService.h>
 
+#include <MicroOcpp/Core/Configuration.h>
+
 #include <MicroOcpp/Debug.h>
 
 using namespace MicroOcpp;
 
 Model::Model(uint16_t bootNr) : bootNr(bootNr) {
-    
+
 }
 
 Model::~Model() = default;
@@ -31,12 +36,17 @@ void Model::loop() {
         bootService->loop();
     }
 
+    if (capabilitiesUpdated) {
+        updateSupportedStandardProfiles();
+        capabilitiesUpdated = false;
+    }
+
     if (!runTasks) {
         return;
     }
 
     for (auto& connector : connectors) {
-        connector.loop();
+        connector->loop();
     }
 
     if (chargeControlCommon)
@@ -66,6 +76,7 @@ void Model::loop() {
 
 void Model::setTransactionStore(std::unique_ptr<TransactionStore> ts) {
     transactionStore = std::move(ts);
+    capabilitiesUpdated = true;
 }
 
 TransactionStore *Model::getTransactionStore() {
@@ -74,6 +85,7 @@ TransactionStore *Model::getTransactionStore() {
 
 void Model::setSmartChargingService(std::unique_ptr<SmartChargingService> scs) {
     smartChargingService = std::move(scs);
+    capabilitiesUpdated = true;
 }
 
 SmartChargingService* Model::getSmartChargingService() const {
@@ -82,14 +94,16 @@ SmartChargingService* Model::getSmartChargingService() const {
 
 void Model::setConnectorsCommon(std::unique_ptr<ConnectorsCommon> ccs) {
     chargeControlCommon = std::move(ccs);
+    capabilitiesUpdated = true;
 }
 
 ConnectorsCommon *Model::getConnectorsCommon() {
     return chargeControlCommon.get();
 }
 
-void Model::setConnectors(std::vector<Connector>&& connectors) {
+void Model::setConnectors(std::vector<std::unique_ptr<Connector>>&& connectors) {
     this->connectors = std::move(connectors);
+    capabilitiesUpdated = true;
 }
 
 unsigned int Model::getNumConnectors() const {
@@ -102,11 +116,12 @@ Connector *Model::getConnector(unsigned int connectorId) {
         return nullptr;
     }
 
-    return &connectors[connectorId];
+    return connectors[connectorId].get();
 }
 
 void Model::setMeteringSerivce(std::unique_ptr<MeteringService> ms) {
     meteringService = std::move(ms);
+    capabilitiesUpdated = true;
 }
 
 MeteringService* Model::getMeteringService() const {
@@ -115,6 +130,7 @@ MeteringService* Model::getMeteringService() const {
 
 void Model::setFirmwareService(std::unique_ptr<FirmwareService> fws) {
     firmwareService = std::move(fws);
+    capabilitiesUpdated = true;
 }
 
 FirmwareService *Model::getFirmwareService() const {
@@ -123,6 +139,7 @@ FirmwareService *Model::getFirmwareService() const {
 
 void Model::setDiagnosticsService(std::unique_ptr<DiagnosticsService> ds) {
     diagnosticsService = std::move(ds);
+    capabilitiesUpdated = true;
 }
 
 DiagnosticsService *Model::getDiagnosticsService() const {
@@ -131,10 +148,12 @@ DiagnosticsService *Model::getDiagnosticsService() const {
 
 void Model::setHeartbeatService(std::unique_ptr<HeartbeatService> hs) {
     heartbeatService = std::move(hs);
+    capabilitiesUpdated = true;
 }
 
 void Model::setAuthorizationService(std::unique_ptr<AuthorizationService> as) {
     authorizationService = std::move(as);
+    capabilitiesUpdated = true;
 }
 
 AuthorizationService *Model::getAuthorizationService() {
@@ -143,6 +162,7 @@ AuthorizationService *Model::getAuthorizationService() {
 
 void Model::setReservationService(std::unique_ptr<ReservationService> rs) {
     reservationService = std::move(rs);
+    capabilitiesUpdated = true;
 }
 
 ReservationService *Model::getReservationService() {
@@ -151,6 +171,7 @@ ReservationService *Model::getReservationService() {
 
 void Model::setBootService(std::unique_ptr<BootService> bs){
     bootService = std::move(bs);
+    capabilitiesUpdated = true;
 }
 
 BootService *Model::getBootService() const {
@@ -159,6 +180,7 @@ BootService *Model::getBootService() const {
 
 void Model::setResetService(std::unique_ptr<ResetService> rs) {
     this->resetService = std::move(rs);
+    capabilitiesUpdated = true;
 }
 
 ResetService *Model::getResetService() const {
@@ -171,4 +193,64 @@ Clock& Model::getClock() {
 
 uint16_t Model::getBootNr() {
     return bootNr;
+}
+
+void Model::updateSupportedStandardProfiles() {
+
+    auto supportedFeatureProfilesString =
+        declareConfiguration<const char*>("SupportedFeatureProfiles", "", CONFIGURATION_VOLATILE, true);
+    
+    if (!supportedFeatureProfilesString) {
+        MOCPP_DBG_ERR("OOM");
+        return;
+    }
+
+    std::string buf = supportedFeatureProfilesString->getString();
+
+    if (chargeControlCommon &&
+            heartbeatService &&
+            bootService) {
+        if (!strstr(supportedFeatureProfilesString->getString(), "Core")) {
+            if (!buf.empty()) buf += ',';
+            buf += "Core";
+        }
+    }
+
+    if (firmwareService &&
+            diagnosticsService) {
+        if (!strstr(supportedFeatureProfilesString->getString(), "FirmwareManagement")) {
+            if (!buf.empty()) buf += ',';
+            buf += "FirmwareManagement";
+        }
+    }
+
+    if (authorizationService) {
+        if (!strstr(supportedFeatureProfilesString->getString(), "LocalAuthListManagement")) {
+            if (!buf.empty()) buf += ',';
+            buf += "LocalAuthListManagement";
+        }
+    }
+
+    if (reservationService) {
+        if (!strstr(supportedFeatureProfilesString->getString(), "Reservation")) {
+            if (!buf.empty()) buf += ',';
+            buf += "Reservation";
+        }
+    }
+
+    if (smartChargingService) {
+        if (!strstr(supportedFeatureProfilesString->getString(), "SmartCharging")) {
+            if (!buf.empty()) buf += ',';
+            buf += "SmartCharging";
+        }
+    }
+
+    if (!strstr(supportedFeatureProfilesString->getString(), "RemoteTrigger")) {
+        if (!buf.empty()) buf += ',';
+        buf += "RemoteTrigger";
+    }
+
+    supportedFeatureProfilesString->setString(buf.c_str());
+
+    MOCPP_DBG_DEBUG("supported feature profiles: %s", buf.c_str());
 }

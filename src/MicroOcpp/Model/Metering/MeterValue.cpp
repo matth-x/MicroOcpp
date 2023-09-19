@@ -57,12 +57,12 @@ ReadingContext MeterValue::getReadingContext() {
 }
 
 MeterValueBuilder::MeterValueBuilder(const std::vector<std::unique_ptr<SampledValueSampler>> &samplers,
-            std::shared_ptr<Configuration<const char*>> samplers_select) :
+            std::shared_ptr<Configuration> samplersSelectStr) :
             samplers(samplers),
-            select(samplers_select) {
+            selectString(samplersSelectStr) {
         
     updateObservedSamplers();
-    select_observe = select->getValueRevision();
+    select_observe = selectString->getValueRevision();
 }
 
 void MeterValueBuilder::updateObservedSamplers() {
@@ -76,11 +76,12 @@ void MeterValueBuilder::updateObservedSamplers() {
         select_mask[i] = false;
     }
     
-    auto selectStr = select->operator const char *();
+    auto sstring = selectString->getString();
+    auto ssize = strlen(sstring) + 1;
     size_t sl = 0, sr = 0;
-    while (selectStr && sl < select->getBuffsize()) {
-        while (sr < select->getBuffsize()) {
-            if (selectStr[sr] == ',') {
+    while (sstring && sl < ssize) {
+        while (sr < ssize) {
+            if (sstring[sr] == ',') {
                 break;
             }
             sr++;
@@ -88,7 +89,7 @@ void MeterValueBuilder::updateObservedSamplers() {
 
         if (sr != sl + 1) {
             for (size_t i = 0; i < samplers.size(); i++) {
-                if (!strncmp(samplers[i]->getProperties().getMeasurand().c_str(), selectStr + sl, sr - sl)) {
+                if (!strncmp(samplers[i]->getProperties().getMeasurand().c_str(), sstring + sl, sr - sl)) {
                     select_mask[i] = true;
                     select_n++;
                 }
@@ -101,11 +102,11 @@ void MeterValueBuilder::updateObservedSamplers() {
 }
 
 std::unique_ptr<MeterValue> MeterValueBuilder::takeSample(const Timestamp& timestamp, const ReadingContext& context) {
-    if (select_observe != select->getValueRevision() || //OCPP server has changed configuration about which measurands to take
+    if (select_observe != selectString->getValueRevision() || //OCPP server has changed configuration about which measurands to take
             samplers.size() != select_mask.size()) {    //Client has added another Measurand; synchronize lists
         MOCPP_DBG_DEBUG("Updating observed samplers due to config change or samplers added");
         updateObservedSamplers();
-        select_observe = select->getValueRevision();
+        select_observe = selectString->getValueRevision();
     }
 
     if (select_n == 0) {

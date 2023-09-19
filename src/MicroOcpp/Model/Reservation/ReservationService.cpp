@@ -18,22 +18,11 @@ ReservationService::ReservationService(Context& context, unsigned int numConnect
     if (maxReservations > 0) {
         reservations.reserve((size_t) maxReservations);
         for (int i = 0; i < maxReservations; i++) {
-            reservations.push_back(Reservation(context.getModel(), i));
+            reservations.push_back(std::unique_ptr<Reservation>(new Reservation(context.getModel(), i)));
         }
     }
 
-    reserveConnectorZeroSupported = declareConfiguration<bool>("ReserveConnectorZeroSupported", true, CONFIGURATION_VOLATILE, false, true, false, false);
-
-    //append "Reservation" to FeatureProfiles list
-    const char *fpId = "Reservation";
-    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
-    if (!strstr(*fProfile, fpId)) {
-        auto fProfilePlus = std::string(*fProfile);
-        if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
-            fProfilePlus += ",";
-        fProfilePlus += fpId;
-        *fProfile = fProfilePlus.c_str();
-    }
+    reserveConnectorZeroSupportedBool = declareConfiguration<bool>("ReserveConnectorZeroSupported", true, CONFIGURATION_VOLATILE, true);
     
     context.getOperationRegistry().registerOperation("CancelReservation", [&context] () {
         return new Ocpp16::CancelReservation(context.getModel());});
@@ -44,23 +33,23 @@ ReservationService::ReservationService(Context& context, unsigned int numConnect
 void ReservationService::loop() {
     //check if to end reservations
 
-    for (Reservation& reservation : reservations) {
-        if (!reservation.isActive()) {
+    for (auto& reservation : reservations) {
+        if (!reservation->isActive()) {
             continue;
         }
 
-        if (auto connector = context.getModel().getConnector(reservation.getConnectorId())) {
+        if (auto connector = context.getModel().getConnector(reservation->getConnectorId())) {
 
             //check if connector went inoperative
             auto cStatus = connector->getStatus();
             if (cStatus == ChargePointStatus::Faulted || cStatus == ChargePointStatus::Unavailable) {
-                reservation.clear();
+                reservation->clear();
                 continue;
             }
 
             //check if other tx started at this connector (e.g. due to RemoteStartTransaction)
             if (connector->getTransaction() && connector->getTransaction()->isActive()) {
-                reservation.clear();
+                reservation->clear();
                 continue;
             }
         }
@@ -70,10 +59,10 @@ void ReservationService::loop() {
             auto& transaction = context.getModel().getConnector(cId)->getTransaction();
             if (transaction) {
                 const char *cIdTag = transaction->getIdTag();
-                if (transaction->getReservationId() == reservation.getReservationId() || 
-                        (cIdTag && !strcmp(cIdTag, reservation.getIdTag()))) {
+                if (transaction->getReservationId() == reservation->getReservationId() || 
+                        (cIdTag && !strcmp(cIdTag, reservation->getIdTag()))) {
                     
-                    reservation.clear();
+                    reservation->clear();
                     break;
                 }
             }
@@ -87,9 +76,9 @@ Reservation *ReservationService::getReservation(unsigned int connectorId) {
         return nullptr; //cannot fetch for connectorId 0 because multiple reservations are possible at a time
     }
 
-    for (Reservation& reservation : reservations) {
-        if (reservation.isActive() && reservation.matches(connectorId)) {
-            return &reservation;
+    for (auto& reservation : reservations) {
+        if (reservation->isActive() && reservation->matches(connectorId)) {
+            return reservation.get();
         }
     }
     
@@ -104,18 +93,18 @@ Reservation *ReservationService::getReservation(const char *idTag, const char *p
 
     Reservation *connectorReservation = nullptr;
 
-    for (Reservation& reservation : reservations) {
-        if (!reservation.isActive()) {
+    for (auto& reservation : reservations) {
+        if (!reservation->isActive()) {
             continue;
         }
 
         //TODO check for parentIdTag
 
-        if (reservation.matches(idTag, parentIdTag)) {
-            if (reservation.getConnectorId() == 0) {
-                return &reservation; //reservation at connectorId 0 has higher priority
+        if (reservation->matches(idTag, parentIdTag)) {
+            if (reservation->getConnectorId() == 0) {
+                return reservation.get(); //reservation at connectorId 0 has higher priority
             } else {
-                connectorReservation = &reservation;
+                connectorReservation = reservation.get();
             }
         }
     }
@@ -139,7 +128,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
         }
     }
 
-    if (reserveConnectorZeroSupported && !*reserveConnectorZeroSupported) {
+    if (reserveConnectorZeroSupportedBool && !reserveConnectorZeroSupportedBool->getBool()) {
         //no connectorZero check - all done
         MOCPP_DBG_DEBUG("no reservation");
         return nullptr;
@@ -150,10 +139,10 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
 
     //Check if there are enough free connectors to satisfy all reservations at connectorId 0
     unsigned int unspecifiedReservations = 0;
-    for (Reservation& ires : reservations) {
-        if (ires.isActive() && ires.getConnectorId() == 0) {
+    for (auto& reservation : reservations) {
+        if (reservation->isActive() && reservation->getConnectorId() == 0) {
             unspecifiedReservations++;
-            blockingReservation = &ires;
+            blockingReservation = reservation.get();
         }
     }
 
@@ -180,9 +169,9 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
 }
 
 Reservation *ReservationService::getReservationById(int reservationId) {
-    for (Reservation& reservation : reservations) {
-        if (reservation.isActive() && reservation.getReservationId() == reservationId) {
-            return &reservation;
+    for (auto& reservation : reservations) {
+        if (reservation->isActive() && reservation->getReservationId() == reservationId) {
+            return reservation.get();
         }
     }
 
@@ -207,9 +196,9 @@ bool ReservationService::updateReservation(JsonObject payload) {
     }
 
     //update free reservation slot
-    for (Reservation& reservation : reservations) {
-        if (!reservation.isActive()) {
-            reservation.update(payload);
+    for (auto& reservation : reservations) {
+        if (!reservation->isActive()) {
+            reservation->update(payload);
             return true;
         }
     }

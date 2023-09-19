@@ -35,7 +35,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
 
     const char *value = payload["value"];
 
-    std::shared_ptr<Configuration> configuration = getConfigurationPublic(key);
+    auto configuration = getConfigurationPublic(key);
 
     if (!configuration) {
         //configuration not found or hidden configuration

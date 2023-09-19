@@ -11,6 +11,7 @@
 #define SCPROFILE "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":0,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"duration\":1000000,\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3}]}}}]"
 
 TEST_CASE( "C++ API test" ) {
+    printf("\nRun %s\n",  "C++ API test");
 
     //initialize Context with dummy socket
     MicroOcpp::LoopbackConnection loopback;
@@ -81,8 +82,8 @@ TEST_CASE( "C++ API test" ) {
 
         //set configuration which uses all Inputs and Outputs
 
-        auto MeterValuesSampledData = MicroOcpp::declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
-        *MeterValuesSampledData = "Energy.Active.Import.Register,Power.Active.Import,Current.Import,Current.Offered";
+        auto MeterValuesSampledDataString = MicroOcpp::declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
+        MeterValuesSampledDataString->setString("Energy.Active.Import.Register,Power.Active.Import,Current.Import,Current.Offered");
 
         loopback.sendTXT(SCPROFILE, strlen(SCPROFILE));
 
@@ -252,8 +253,8 @@ TEST_CASE( "C API test" ) {
 
         //set configuration which uses all Inputs and Outputs
 
-        auto MeterValuesSampledData = MicroOcpp::declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
-        *MeterValuesSampledData = "Energy.Active.Import.Register,Power.Active.Import,Current.Import,Current.Offered";
+        auto MeterValuesSampledDataString = MicroOcpp::declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
+        MeterValuesSampledDataString->setString("Energy.Active.Import.Register,Power.Active.Import,Current.Import,Current.Offered");
 
         loopback.sendTXT(SCPROFILE, strlen(SCPROFILE));
 

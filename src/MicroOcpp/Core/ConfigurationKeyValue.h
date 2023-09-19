@@ -10,6 +10,10 @@
 
 #define MOCPP_CONFIG_MAX_VALSTRSIZE 128
 
+#ifndef MOCPP_CONFIG_EXT_PREFIX
+#define MOCPP_CONFIG_EXT_PREFIX "Cst_"
+#endif
+
 namespace MicroOcpp {
 
 using revision_t = uint16_t;
@@ -41,7 +45,7 @@ public:
 
     virtual int getInt();
     virtual bool getBool();
-    virtual const char *getString();
+    virtual const char *getString(); //always returns c-string (empty if undefined)
 
     virtual TConfig getType() = 0;
 

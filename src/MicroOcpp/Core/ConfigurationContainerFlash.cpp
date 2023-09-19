@@ -3,6 +3,8 @@
 // MIT License
 
 #include <MicroOcpp/Core/ConfigurationContainerFlash.h>
+
+#include <algorithm>
 #include <MicroOcpp/Core/FilesystemUtils.h>
 #include <MicroOcpp/Debug.h>
 
@@ -16,13 +18,20 @@ private:
     std::shared_ptr<FilesystemAdapter> filesystem;
     uint16_t revisionSum = 0;
 
-    std::vector<std::string> keyPool;
+    bool loaded = false;
+
+    std::vector<std::unique_ptr<char[]>> keyPool;
     
     void clearKeyPool(const char *key) {
         keyPool.erase(std::remove_if(keyPool.begin(), keyPool.end(), 
-            [key] (std::string& k) {
-                return !k.compare(key);
-            }));
+            [key] (const std::unique_ptr<char[]>& k) {
+#if MOCPP_DBG_LEVEL >= MOCPP_DL_VERBOSE
+                if (!strcmp(k.get(), key)) {
+                    MOCPP_DBG_VERBOSE("clear key %s", key);
+                }
+#endif
+                return !strcmp(k.get(), key);
+            }), keyPool.end());
     }
 
     bool configurationsUpdated() {
@@ -30,19 +39,21 @@ private:
 
         revisionSum = 0;
         auto& configurations = container.getConfigurations();
-        for (size_t i = 0; i < configurations.size(); i++) {
-            revisionSum += configurations[i]->getValueRevision();
+        for (auto& config : configurations) {
+            revisionSum += config->getValueRevision();
         }
 
-        return revisionSum == revisionSum_old;
+        return revisionSum != revisionSum_old;
     }
 public:
     ConfigurationContainerFlash(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename, bool accessible) :
             ConfigurationContainer(filename, accessible), filesystem(filesystem) { }
 
-    ~ConfigurationContainerFlash() = default;
-
     bool load() override {
+
+        if (loaded) {
+            return true;
+        }
 
         if (!filesystem) {
             return false;
@@ -103,11 +114,12 @@ public:
                 continue;
             }
             
-            std::string key_pooled;
+            std::unique_ptr<char[]> key_pooled;
 
             Configuration *config = container.getConfiguration(key);
             if (!config || config->getType() != type) {
-                key_pooled = key;
+                key_pooled.reset(new char[strlen(key) + 1]);
+                strcpy(key_pooled.get(), key);
                 config = nullptr;
             }
 
@@ -123,11 +135,11 @@ public:
                         config->setInt(value);
                     } else {
                         //create new config
-                        config = container.declareConfiguration<int>(key_pooled.c_str(), value).get();
+                        config = container.declareConfiguration<int>(key_pooled.get(), value).get();
                     }
                     break;
                 }
-                case (TConfig::Bool):
+                case TConfig::Bool: {
                     if (!stored["value"].is<bool>()) {
                         MOCPP_DBG_ERR("corrupt config");
                         continue;
@@ -138,10 +150,11 @@ public:
                         config->setBool(value);
                     } else {
                         //create new config
-                        config = container.declareConfiguration<bool>(key_pooled.c_str(), value).get();
+                        config = container.declareConfiguration<bool>(key_pooled.get(), value).get();
                     }
                     break;
-                case (TConfig::String):
+                }
+                case TConfig::String: {
                     if (!stored["value"].is<const char*>()) {
                         MOCPP_DBG_ERR("corrupt config");
                         continue;
@@ -149,20 +162,21 @@ public:
                     const char *value = stored["value"] | "";
                     if (config) {
                         //config already exists
-                        config->setBool(value);
+                        config->setString(value);
                     } else {
                         //create new config
-                        config = container.declareConfiguration<bool>(key_pooled.c_str(), value).get();
+                        config = container.declareConfiguration<const char*>(key_pooled.get(), value).get();
                     }
                     break;
+                }
             }
 
             if (config) {
                 //success
 
-                if (!key_pooled.empty()) {
+                if (key_pooled) {
                     //allocated key, need to store
-                    keyPool.push_back(std::string(key));
+                    keyPool.push_back(std::move(key_pooled));
                 }
             } else {
                 MOCPP_DBG_ERR("OOM: %s", key);
@@ -173,6 +187,7 @@ public:
         configurationsUpdated();
 
         MOCPP_DBG_DEBUG("Initialization finished");
+        loaded = true;
         return true;
     }
 
@@ -187,6 +202,14 @@ public:
         }
 
         auto& configurations = container.getConfigurations();
+
+        //during mocpp_deinitialize(), key owners are destructed. Don't store if this container is affected
+        for (auto& config : configurations) {
+            if (!config->getKey()) {
+                MOCPP_DBG_DEBUG("don't write back container with destructed key(s)");
+                return false;
+            }
+        }
 
         size_t jsonCapacity = 2 * JSON_OBJECT_SIZE(2); //head + configurations + head payload
         jsonCapacity += JSON_ARRAY_SIZE(configurations.size()); //configurations array
@@ -208,10 +231,6 @@ public:
 
         for (size_t i = 0; i < configurations.size(); i++) {
             auto& config = *configurations[i];
-            if (!config.getKey()) {
-                MOCPP_DBG_ERR("corrupt config");
-                continue;
-            }
 
             size_t entryCapacity = JSON_OBJECT_SIZE(3) + (JSON_ARRAY_SIZE(2) - JSON_ARRAY_SIZE(1));
             if (trackCapacity + entryCapacity > MOCPP_MAX_JSON_CAPACITY) {
@@ -233,11 +252,6 @@ public:
                     stored["value"] = config.getBool();
                     break;
                 case TConfig::String:
-                    if (!config.getString()) {
-                        MOCPP_DBG_ERR("corrupt config");
-                        configurationsArray.remove(configurationsArray.size());
-                        break;
-                    }
                     stored["value"] = config.getString();
                     break;
             }

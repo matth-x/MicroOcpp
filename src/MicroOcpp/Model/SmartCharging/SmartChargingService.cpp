@@ -303,20 +303,10 @@ SmartChargingService::SmartChargingService(Context& context, std::shared_ptr<Fil
         connectors.push_back(std::move(SmartChargingConnector(context.getModel(), filesystem, cId, ChargePointMaxProfile, ChargePointTxDefaultProfile)));
     }
 
-    declareConfiguration<int>("ChargeProfileMaxStackLevel", CHARGEPROFILEMAXSTACKLEVEL, CONFIGURATION_VOLATILE, false, true, false, false);
-    declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE, false);
-    declareConfiguration<int>("ChargingScheduleMaxPeriods", CHARGINGSCHEDULEMAXPERIODS, CONFIGURATION_VOLATILE, false, true, false, false);
-    declareConfiguration<int>("MaxChargingProfilesInstalled", MAXCHARGINGPROFILESINSTALLED, CONFIGURATION_VOLATILE, false, true, false, false);
-
-    const char *fpId = "SmartCharging";
-    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
-    if (!strstr(*fProfile, fpId)) {
-        auto fProfilePlus = std::string(*fProfile);
-        if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
-            fProfilePlus += ",";
-        fProfilePlus += fpId;
-        *fProfile = fProfilePlus.c_str();
-    }
+    declareConfiguration<int>("ChargeProfileMaxStackLevel", CHARGEPROFILEMAXSTACKLEVEL, CONFIGURATION_VOLATILE, true);
+    declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE);
+    declareConfiguration<int>("ChargingScheduleMaxPeriods", CHARGINGSCHEDULEMAXPERIODS, CONFIGURATION_VOLATILE, true);
+    declareConfiguration<int>("MaxChargingProfilesInstalled", MAXCHARGINGPROFILESINSTALLED, CONFIGURATION_VOLATILE, true);
 
     context.getOperationRegistry().registerOperation("ClearChargingProfile", [this] () {
         return new Ocpp16::ClearChargingProfile(*this);});
@@ -556,14 +546,14 @@ void SmartChargingService::setSmartChargingOutput(unsigned int connectorId, std:
 void SmartChargingService::updateAllowedChargingRateUnit(bool powerSupported, bool currentSupported) {
     if ((powerSupported != this->powerSupported) || (currentSupported != this->currentSupported)) {
 
-        auto chargingScheduleAllowedChargingRateUnit = declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE, false);
-        if (chargingScheduleAllowedChargingRateUnit) {
+        auto chargingScheduleAllowedChargingRateUnitString = declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE);
+        if (chargingScheduleAllowedChargingRateUnitString) {
             if (powerSupported && currentSupported) {
-                *chargingScheduleAllowedChargingRateUnit = "Current,Power";
+                chargingScheduleAllowedChargingRateUnitString->setString("Current,Power");
             } else if (powerSupported) {
-                *chargingScheduleAllowedChargingRateUnit = "Power";
+                chargingScheduleAllowedChargingRateUnitString->setString("Power");
             } else if (currentSupported) {
-                *chargingScheduleAllowedChargingRateUnit = "Current";
+                chargingScheduleAllowedChargingRateUnitString->setString("Current");
             }
         }
 

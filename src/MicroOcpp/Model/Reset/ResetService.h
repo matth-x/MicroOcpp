@@ -5,6 +5,8 @@
 #ifndef RESETSERVICE_H
 #define RESETSERVICE_H
 
+#include <functional>
+
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
 
 namespace MicroOcpp {
@@ -21,7 +23,7 @@ private:
     bool isHardReset = false;
     unsigned long t_resetRetry;
 
-    std::shared_ptr<Configuration<int>> resetRetries;
+    std::shared_ptr<Configuration> resetRetriesInt;
 
 public:
     ResetService(Context& context);

@@ -35,15 +35,15 @@ public:
 class MeterValueBuilder {
 private:
     const std::vector<std::unique_ptr<SampledValueSampler>> &samplers;
-    std::shared_ptr<Configuration<const char*>> select;
+    std::shared_ptr<Configuration> selectString;
     std::vector<bool> select_mask;
     unsigned int select_n {0};
-    decltype(select->getValueRevision()) select_observe;
+    decltype(selectString->getValueRevision()) select_observe;
 
     void updateObservedSamplers();
 public:
     MeterValueBuilder(const std::vector<std::unique_ptr<SampledValueSampler>> &samplers,
-            std::shared_ptr<Configuration<const char*>> samplers_select);
+            std::shared_ptr<Configuration> samplersSelectStr);
     
     std::unique_ptr<MeterValue> takeSample(const Timestamp& timestamp, const ReadingContext& context);
 

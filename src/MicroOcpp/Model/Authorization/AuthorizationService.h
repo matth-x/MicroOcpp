@@ -19,8 +19,8 @@ private:
     std::shared_ptr<FilesystemAdapter> filesystem;
     AuthorizationList localAuthorizationList;
 
-    std::shared_ptr<Configuration<bool>> localAuthorizeOffline;
-    std::shared_ptr<Configuration<bool>> localAuthListEnabled;
+    std::shared_ptr<Configuration> localAuthorizeOfflineBool;
+    std::shared_ptr<Configuration> localAuthListEnabledBool;
 
 public:
     AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem);

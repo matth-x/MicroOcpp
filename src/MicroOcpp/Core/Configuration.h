@@ -16,10 +16,6 @@
 #define CONFIGURATION_VOLATILE "/volatile"
 #define MOCPP_KEYVALUE_FN (MOCPP_FILENAME_PREFIX "client-state.jsn")
 
-#ifndef MOCPP_CONFIG_EXT_PREFIX
-#define MOCPP_CONFIG_EXT_PREFIX "Cst_"
-#endif
-
 namespace MicroOcpp {
 
 /*
@@ -38,6 +34,9 @@ std::vector<ConfigurationContainer*> getConfigurationContainersPublic();
 
 bool configuration_init(std::shared_ptr<FilesystemAdapter> filesytem);
 void configuration_deinit();
+
+bool configuration_load();
+bool configuration_load(const char *filename);
 
 bool configuration_save();
 

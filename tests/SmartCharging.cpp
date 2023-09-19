@@ -38,6 +38,7 @@ using namespace MicroOcpp;
 
 
 TEST_CASE( "SmartCharging" ) {
+    printf("\nRun %s\n",  "SmartCharging");
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;

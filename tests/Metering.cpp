@@ -12,6 +12,7 @@
 using namespace MicroOcpp;
 
 TEST_CASE("Metering") {
+    printf("\nRun %s\n",  "Metering");
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;
@@ -36,8 +37,8 @@ TEST_CASE("Metering") {
             return 0;
         }, "Voltage");
 
-        auto MeterValuesSampledData = declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
-        *MeterValuesSampledData = "";
+        auto MeterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData","");
+        MeterValuesSampledDataString->setString("");
 
         bool checkProcessed = false;
 
@@ -58,7 +59,7 @@ TEST_CASE("Metering") {
         loop();
 
         REQUIRE(checkProcessed);
-        REQUIRE(!strcmp((const char*) *MeterValuesSampledData, ""));
+        REQUIRE(!strcmp(MeterValuesSampledDataString->getString(), ""));
 
         checkProcessed = false;
 
@@ -78,7 +79,7 @@ TEST_CASE("Metering") {
         loop();
 
         REQUIRE(checkProcessed);
-        REQUIRE(!strcmp((const char*) *MeterValuesSampledData, "Voltage,Energy.Active.Import.Register"));
+        REQUIRE(!strcmp(MeterValuesSampledDataString->getString(), "Voltage,Energy.Active.Import.Register"));
     }
 
     SECTION("Capture Periodic data") {
@@ -91,14 +92,14 @@ TEST_CASE("Metering") {
             return getOcppContext()->getModel().getClock().now() - base;
         }, "Energy.Active.Import.Register");
 
-        auto MeterValuesSampledData = declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
-        *MeterValuesSampledData = "Energy.Active.Import.Register";
+        auto MeterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
+        MeterValuesSampledDataString->setString("Energy.Active.Import.Register");
 
-        auto MeterValueSampleInterval = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
-        *MeterValueSampleInterval = 10;
+        auto MeterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
+        MeterValueSampleIntervalInt->setInt(10);
 
-        auto MeterValueCacheSize = declareConfiguration(MOCPP_CONFIG_EXT_PREFIX "MeterValueCacheSize", 0, CONFIGURATION_FN);
-        *MeterValueCacheSize = 2;
+        auto MeterValueCacheSizeInt = declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "MeterValueCacheSize", 0);
+        MeterValueCacheSizeInt->setInt(2);
 
         bool checkProcessed = false;
 
@@ -150,17 +151,17 @@ TEST_CASE("Metering") {
         }, "Energy.Active.Import.Register");
 
         //disablee sampled data
-        auto MeterValueSampleInterval = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
-        *MeterValueSampleInterval = 0;
+        auto MeterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
+        MeterValueSampleIntervalInt->setInt(0);
 
-        auto ClockAlignedDataInterval  = declareConfiguration("ClockAlignedDataInterval", 0, CONFIGURATION_FN);
-        *ClockAlignedDataInterval = 900;
+        auto ClockAlignedDataIntervalInt  = declareConfiguration<int>("ClockAlignedDataInterval", 0, CONFIGURATION_FN);
+        ClockAlignedDataIntervalInt->setInt(900);
 
-        auto MeterValuesAlignedData = declareConfiguration<const char*>("MeterValuesAlignedData", "", CONFIGURATION_FN);
-        *MeterValuesAlignedData = "Energy.Active.Import.Register";
+        auto MeterValuesAlignedDataString = declareConfiguration<const char*>("MeterValuesAlignedData", "", CONFIGURATION_FN);
+        MeterValuesAlignedDataString->setString("Energy.Active.Import.Register");
 
-        auto MeterValueCacheSize = declareConfiguration(MOCPP_CONFIG_EXT_PREFIX "MeterValueCacheSize", 0, CONFIGURATION_FN);
-        *MeterValueCacheSize = 2;
+        auto MeterValueCacheSizeInt = declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "MeterValueCacheSize", 0, CONFIGURATION_FN);
+        MeterValueCacheSizeInt->setInt(2);
 
         bool checkProcessed = false;
 
@@ -212,11 +213,11 @@ TEST_CASE("Metering") {
             return getOcppContext()->getModel().getClock().now() - base;
         }, "Energy.Active.Import.Register");
 
-        auto MeterValueSampleInterval = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
-        *MeterValueSampleInterval = 10;
+        auto MeterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
+        MeterValueSampleIntervalInt->setInt(10);
 
-        auto StopTxnSampledData = declareConfiguration<const char*>("StopTxnSampledData", "", CONFIGURATION_FN);
-        *StopTxnSampledData = "Energy.Active.Import.Register";
+        auto StopTxnSampledDataString = declareConfiguration<const char*>("StopTxnSampledData", "", CONFIGURATION_FN);
+        StopTxnSampledDataString->setString("Energy.Active.Import.Register");
 
         loop();
 
@@ -278,11 +279,11 @@ TEST_CASE("Metering") {
             nullptr,
             connectorId);
 
-        auto MeterValuesSampledData = declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
-        *MeterValuesSampledData = "Power.Active.Import";
+        auto MeterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
+        MeterValuesSampledDataString->setString("Power.Active.Import");
 
-        auto MeterValueSampleInterval = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
-        *MeterValueSampleInterval = 10;
+        auto MeterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
+        MeterValueSampleIntervalInt->setInt(10);
 
         bool checkProcessed = false;
 
@@ -315,14 +316,14 @@ TEST_CASE("Metering") {
             return 3600;
         }, "Power.Active.Import");
 
-        auto MeterValuesSampledData = declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
-        *MeterValuesSampledData = "Energy.Active.Import.Register";
+        auto MeterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
+        MeterValuesSampledDataString->setString("Energy.Active.Import.Register");
 
-        auto MeterValueSampleInterval = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
-        *MeterValueSampleInterval = 10;
+        auto MeterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
+        MeterValueSampleIntervalInt->setInt(10);
 
-        auto MeterValueCacheSize = declareConfiguration(MOCPP_CONFIG_EXT_PREFIX "MeterValueCacheSize", 0, CONFIGURATION_FN);
-        *MeterValueCacheSize = 10;
+        auto MeterValueCacheSizeInt = declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "MeterValueCacheSize", 0, CONFIGURATION_FN);
+        MeterValueCacheSizeInt->setInt(10);
 
         bool checkProcessed = false;
 
@@ -353,7 +354,7 @@ TEST_CASE("Metering") {
 
         loop();
 
-        *MeterValuesSampledData = "Power.Active.Import";
+        MeterValuesSampledDataString->setString("Power.Active.Import");
 
         mtime = trackMtime + 20 * 1000;
 

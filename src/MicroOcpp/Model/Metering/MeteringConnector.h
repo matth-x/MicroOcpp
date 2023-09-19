@@ -35,10 +35,10 @@ private:
     std::unique_ptr<MeterValueBuilder> stopTxnSampledDataBuilder;
     std::unique_ptr<MeterValueBuilder> stopTxnAlignedDataBuilder;
 
-    std::shared_ptr<Configuration<const char *>> sampledDataSelect;
-    std::shared_ptr<Configuration<const char *>> alignedDataSelect;
-    std::shared_ptr<Configuration<const char *>> stopTxnSampledDataSelect;
-    std::shared_ptr<Configuration<const char *>> stopTxnAlignedDataSelect;
+    std::shared_ptr<Configuration> sampledDataSelectString;
+    std::shared_ptr<Configuration> alignedDataSelectString;
+    std::shared_ptr<Configuration> stopTxnSampledDataSelectString;
+    std::shared_ptr<Configuration> stopTxnAlignedDataSelectString;
 
     unsigned long lastSampleTime = 0; //0 means not charging right now
     Timestamp nextAlignedTime;
@@ -48,13 +48,13 @@ private:
     std::vector<std::unique_ptr<SampledValueSampler>> samplers;
     int energySamplerIndex {-1};
 
-    std::shared_ptr<Configuration<int>> MeterValueSampleInterval;
-    std::shared_ptr<Configuration<int>> MeterValueCacheSize;
+    std::shared_ptr<Configuration> meterValueSampleIntervalInt;
+    std::shared_ptr<Configuration> meterValueCacheSizeInt;
 
-    std::shared_ptr<Configuration<int>> ClockAlignedDataInterval;
+    std::shared_ptr<Configuration> clockAlignedDataIntervalInt;
 
-    std::shared_ptr<Configuration<bool>> MeterValuesInTxOnly;
-    std::shared_ptr<Configuration<bool>> StopTxnDataCapturePeriodic;
+    std::shared_ptr<Configuration> meterValuesInTxOnlyBool;
+    std::shared_ptr<Configuration> stopTxnDataCapturePeriodicBool;
 public:
     MeteringConnector(Model& model, int connectorId, MeterStore& meterStore);
 
