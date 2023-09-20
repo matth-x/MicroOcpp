@@ -84,29 +84,83 @@ ConfigurationContainer *declareContainer(const char *filename, bool accessible) 
     return container.get();
 }
 
-template<>
-std::shared_ptr<Configuration> declareConfiguration<int>(const char *key, int factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible) {
-    if (auto container = declareContainer(filename, accessible)) {
-        return container->declareConfigurationInt(key, factoryDef, readonly, rebootRequired);
+std::shared_ptr<Configuration> loadConfiguration(TConfig type, const char *key, bool accessible) {
+    for (auto& container : configurationContainers) {
+        if (auto config = container->getConfiguration(key)) {
+            if (config->getType() != type) {
+                MOCPP_DBG_ERR("conflicting type for %s - remove old config", key);
+                container->removeConfiguration(config.get());
+                continue;
+            }
+            if (container->isAccessible() != accessible) {
+                MOCPP_DBG_ERR("conflicting accessibility for %s", key);
+                (void)0;
+            }
+            container->loadStaticKey(*config.get(), key);
+            return config;
+        }
     }
     return nullptr;
 }
 
+template<class T>
+bool loadFactoryDefault(Configuration& config, T loadFactoryDefault);
+
 template<>
-std::shared_ptr<Configuration> declareConfiguration<bool>(const char *key, bool factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible) {
-    if (auto container = declareContainer(filename, accessible)) {
-        return container->declareConfigurationBool(key, factoryDef, readonly, rebootRequired);
-    }
-    return nullptr;
+bool loadFactoryDefault<int>(Configuration& config, int factoryDef) {
+    config.setInt(factoryDef);
+    return true;
 }
 
 template<>
-std::shared_ptr<Configuration> declareConfiguration<const char*>(const char *key, const char *factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible) {
-    if (auto container = declareContainer(filename, accessible)) {
-        return container->declareConfigurationString(key, factoryDef, readonly, rebootRequired);
-    }
-    return nullptr;
+bool loadFactoryDefault<bool>(Configuration& config, bool factoryDef) {
+    config.setBool(factoryDef);
+    return true;
 }
+
+template<>
+bool loadFactoryDefault<const char*>(Configuration& config, const char *factoryDef) {
+    return config.setString(factoryDef);
+}
+
+void loadPermissions(Configuration& config, bool readonly, bool rebootRequired) {
+    if (readonly) {
+        config.setReadOnly();
+    }
+
+    if (rebootRequired) {
+        config.setRebootRequired();
+    }
+}
+
+template<class T>
+std::shared_ptr<Configuration> declareConfiguration(const char *key, T factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible) {
+
+    std::shared_ptr<Configuration> res = loadConfiguration(convertType<T>(), key, accessible);
+    if (!res) {
+        auto container = declareContainer(filename, accessible);
+        if (!container) {
+            return nullptr;
+        }
+
+        res = container->createConfiguration(convertType<T>(), key);
+        if (!res) {
+            return nullptr;
+        }
+
+        if (!loadFactoryDefault(*res.get(), factoryDef)) {
+            container->removeConfiguration(res.get());
+            return nullptr;
+        }
+    }
+
+    loadPermissions(*res.get(), readonly, rebootRequired);
+    return res;
+}
+
+template std::shared_ptr<Configuration> declareConfiguration<int>(const char *key, int factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible);
+template std::shared_ptr<Configuration> declareConfiguration<bool>(const char *key, bool factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible);
+template std::shared_ptr<Configuration> declareConfiguration<const char*>(const char *key, const char *factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible);
 
 std::function<bool(const char*)> *getConfigurationValidator(const char *key) {
     for (auto& v : validators) {
@@ -127,13 +181,11 @@ void registerConfigurationValidator(const char *key, std::function<bool(const ch
     validators.push_back(Validator{key, validator});
 }
 
-
-
 Configuration *getConfigurationPublic(const char *key) {
     for (auto& container : configurationContainers) {
         if (container->isAccessible()) {
             if (auto res = container->getConfiguration(key)) {
-                return res;
+                return res.get();
             }
         }
     }
@@ -164,23 +216,11 @@ void configuration_deinit() {
     filesystem.reset();
 }
 
-bool configuration_load() {
-    bool success = true;
-
-    for (auto& container : configurationContainers) {
-        if (!container->load()) {
-            success = false;
-        }
-    }
-
-    return success;
-}
-
 bool configuration_load(const char *filename) {
     bool success = true;
 
     for (auto& container : configurationContainers) {
-        if (!strcmp(filename, container->getFilename()) && !container->load()) {
+        if ((!filename || !strcmp(filename, container->getFilename())) && !container->load()) {
             success = false;
         }
     }
@@ -199,9 +239,5 @@ bool configuration_save() {
 
     return success;
 }
-
-template std::shared_ptr<Configuration> declareConfiguration<int>(const char *key, int factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible);
-template std::shared_ptr<Configuration> declareConfiguration<bool>(const char *key, bool factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible);
-template std::shared_ptr<Configuration> declareConfiguration<const char*>(const char *key, const char *factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible);
 
 } //end namespace MicroOcpp

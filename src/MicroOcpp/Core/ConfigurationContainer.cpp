@@ -12,77 +12,9 @@ ConfigurationContainer::~ConfigurationContainer() {
 
 }
 
-std::shared_ptr<Configuration> ConfigurationPool::getConfiguration_typesafe(const char *key, TConfig type) {
-    for (auto entry = configurations.begin(); entry != configurations.end();entry++) {
-        if ((*entry)->getKey() && !strcmp((*entry)->getKey(), key)) {
-            //found entry
-            if ((*entry)->getType() == type) {
-                return *entry;
-            } else {
-                MOCPP_DBG_ERR("conflicting types for %s - discard old config", key);
-                configurations.erase(entry);
-                break;
-            }
-        }
-    }
-    return nullptr;
-}
-
-template<class T>
-std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration(const char *key, T factoryDef, bool readonly, bool rebootRequired) {
-    
-    std::shared_ptr<Configuration> res = getConfiguration_typesafe(key, convertType<T>());
-
-    if (!res) {
-        //config doesn't exist yet
-        res = makeConfig<T>(key, factoryDef);
-        if (!res) {
-            //allocation failure - OOM
-            MOCPP_DBG_ERR("OOM");
-            return nullptr;
-        }
-        configurations.push_back(res);
-    }
-
-    if (readonly) {
-        res->setReadOnly();
-    }
-
-    if (rebootRequired) {
-        res->setRebootRequired();
-    }
-
-    return res;
-}
-
-template std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration<int>(const char *key, int factoryDef, bool readonly, bool rebootRequired);
-template std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration<bool>(const char *key, bool factoryDef, bool readonly, bool rebootRequired);
-template std::shared_ptr<Configuration> ConfigurationPool::declareConfiguration<const char*>(const char *key, const char *factoryDef, bool readonly, bool rebootRequired);
-
-std::vector<std::shared_ptr<Configuration>>& ConfigurationPool::getConfigurations() {
-    return configurations;
-}
-
-size_t ConfigurationPool::getConfigurationCount() const {
-        return configurations.size();
-    }
-
-Configuration *ConfigurationPool::getConfiguration(size_t i) const {
-    return configurations[i].get();
-}
-
-Configuration *ConfigurationPool::getConfiguration(const char *key) const {
-    for (auto& entry : configurations) {
-        if (entry->getKey() && !strcmp(entry->getKey(), key)) {
-            return entry.get();
-        }
-    }
-    return nullptr;
-}
-
 class ConfigurationContainerVolatile : public ConfigurationContainer {
 private:
-    ConfigurationPool container;
+    std::vector<std::shared_ptr<Configuration>> configurations;
 public:
     ConfigurationContainerVolatile(const char *filename, bool accessible) : ConfigurationContainer(filename, accessible) { }
 
@@ -90,28 +22,39 @@ public:
 
     bool save() override {return true;}
 
-    std::shared_ptr<Configuration> declareConfigurationInt(const char *key, int factoryDef, bool readonly = false, bool rebootRequired = false) override {
-        return container.declareConfiguration<int>(key, factoryDef, readonly, rebootRequired);
+    std::shared_ptr<Configuration> createConfiguration(TConfig type, const char *key) override {
+        std::shared_ptr<Configuration> res = makeConfiguration(type, key);
+        if (!res) {
+            //allocation failure - OOM
+            MOCPP_DBG_ERR("OOM");
+            return nullptr;
+        }
+        configurations.push_back(res);
+        return res;
     }
 
-    std::shared_ptr<Configuration> declareConfigurationBool(const char *key, bool factoryDef, bool readonly = false, bool rebootRequired = false) override {
-        return container.declareConfiguration<bool>(key, factoryDef, readonly, rebootRequired);
-    }
-
-    std::shared_ptr<Configuration> declareConfigurationString(const char *key, const char*factoryDef, bool readonly = false, bool rebootRequired = false) override {
-        return container.declareConfiguration<const char*>(key, factoryDef, readonly, rebootRequired);
+    void removeConfiguration(Configuration *config) override {
+        configurations.erase(std::remove_if(configurations.begin(), configurations.end(),
+            [config] (std::shared_ptr<Configuration>& entry) {
+                return entry.get() == config;
+            }), configurations.end());
     }
 
     size_t getConfigurationCount() override {
-        return container.getConfigurationCount();
+        return configurations.size();
     }
 
     Configuration *getConfiguration(size_t i) override {
-        return container.getConfiguration(i);
+        return configurations[i].get();
     }
 
-    Configuration *getConfiguration(const char *key) override {
-        return container.getConfiguration(key);
+    std::shared_ptr<Configuration> getConfiguration(const char *key) override {
+        for (auto& entry : configurations) {
+            if (entry->getKey() && !strcmp(entry->getKey(), key)) {
+                return entry;
+            }
+        }
+        return nullptr;
     }
 };
 

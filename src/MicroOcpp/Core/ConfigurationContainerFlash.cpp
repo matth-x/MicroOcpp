@@ -14,7 +14,7 @@ namespace MicroOcpp {
 
 class ConfigurationContainerFlash : public ConfigurationContainer {
 private:
-    ConfigurationPool container;
+    std::vector<std::shared_ptr<Configuration>> configurations;
     std::shared_ptr<FilesystemAdapter> filesystem;
     uint16_t revisionSum = 0;
 
@@ -25,11 +25,11 @@ private:
     void clearKeyPool(const char *key) {
         keyPool.erase(std::remove_if(keyPool.begin(), keyPool.end(), 
             [key] (const std::unique_ptr<char[]>& k) {
-#if MOCPP_DBG_LEVEL >= MOCPP_DL_VERBOSE
+                #if MOCPP_DBG_LEVEL >= MOCPP_DL_VERBOSE
                 if (!strcmp(k.get(), key)) {
                     MOCPP_DBG_VERBOSE("clear key %s", key);
                 }
-#endif
+                #endif
                 return !strcmp(k.get(), key);
             }), keyPool.end());
     }
@@ -38,7 +38,6 @@ private:
         auto revisionSum_old = revisionSum;
 
         revisionSum = 0;
-        auto& configurations = container.getConfigurations();
         for (auto& config : configurations) {
             revisionSum += config->getValueRevision();
         }
@@ -58,8 +57,6 @@ public:
         if (!filesystem) {
             return false;
         }
-
-        auto& configurations = container.getConfigurations();
 
         size_t file_size = 0;
         if (filesystem->stat(getFilename(), &file_size) != 0 // file does not exist
@@ -116,11 +113,15 @@ public:
             
             std::unique_ptr<char[]> key_pooled;
 
-            Configuration *config = container.getConfiguration(key);
-            if (!config || config->getType() != type) {
+            auto config = getConfiguration(key).get();
+            if (config && config->getType() != type) {
+                MOCPP_DBG_ERR("conflicting type for %s - remove old config", key);
+                removeConfiguration(config);
+                config = nullptr;
+            }
+            if (!config) {
                 key_pooled.reset(new char[strlen(key) + 1]);
                 strcpy(key_pooled.get(), key);
-                config = nullptr;
             }
 
             switch (type) {
@@ -130,12 +131,12 @@ public:
                         continue;
                     }
                     int value = stored["value"] | 0;
-                    if (config) {
-                        //config already exists
-                        config->setInt(value);
-                    } else {
+                    if (!config) {
                         //create new config
-                        config = container.declareConfiguration<int>(key_pooled.get(), value).get();
+                        config = createConfiguration(TConfig::Int, key_pooled.get()).get();
+                    }
+                    if (config) {
+                        config->setInt(value);
                     }
                     break;
                 }
@@ -145,12 +146,12 @@ public:
                         continue;
                     }
                     bool value = stored["value"] | false;
-                    if (config) {
-                        //config already exists
-                        config->setBool(value);
-                    } else {
+                    if (!config) {
                         //create new config
-                        config = container.declareConfiguration<bool>(key_pooled.get(), value).get();
+                        config = createConfiguration(TConfig::Bool, key_pooled.get()).get();
+                    }
+                    if (config) {
+                        config->setBool(value);
                     }
                     break;
                 }
@@ -160,12 +161,12 @@ public:
                         continue;
                     }
                     const char *value = stored["value"] | "";
-                    if (config) {
-                        //config already exists
-                        config->setString(value);
-                    } else {
+                    if (!config) {
                         //create new config
-                        config = container.declareConfiguration<const char*>(key_pooled.get(), value).get();
+                        config = createConfiguration(TConfig::String, key_pooled.get()).get();
+                    }
+                    if (config) {
+                        config->setString(value);
                     }
                     break;
                 }
@@ -200,8 +201,6 @@ public:
         if (!configurationsUpdated()) {
             return true; //nothing to be done
         }
-
-        auto& configurations = container.getConfigurations();
 
         //during mocpp_deinitialize(), key owners are destructed. Don't store if this container is affected
         for (auto& config : configurations) {
@@ -268,39 +267,50 @@ public:
         return success;
     }
 
-    std::shared_ptr<Configuration> declareConfigurationInt(const char *key, int factoryDef, bool readonly = false, bool rebootRequired = false) override {
-        auto res = container.declareConfiguration<int>(key, factoryDef, readonly, rebootRequired);
-        if (res) res->setKey(key);
-        clearKeyPool(key);
+    std::shared_ptr<Configuration> createConfiguration(TConfig type, const char *key) override {
+        std::shared_ptr<Configuration> res = makeConfiguration(type, key);
+        if (!res) {
+            //allocation failure - OOM
+            MOCPP_DBG_ERR("OOM");
+            return nullptr;
+        }
+        configurations.push_back(res);
         return res;
     }
 
-    std::shared_ptr<Configuration> declareConfigurationBool(const char *key, bool factoryDef, bool readonly = false, bool rebootRequired = false) override {
-        auto res = container.declareConfiguration<bool>(key, factoryDef, readonly, rebootRequired);
-        if (res) res->setKey(key);
-        clearKeyPool(key);
-        return res;
-    }
-
-    std::shared_ptr<Configuration> declareConfigurationString(const char *key, const char*factoryDef, bool readonly = false, bool rebootRequired = false) override {
-        auto res = container.declareConfiguration<const char*>(key, factoryDef, readonly, rebootRequired);
-        if (res) res->setKey(key);
-        clearKeyPool(key);
-        return res;
+    void removeConfiguration(Configuration *config) override {
+        configurations.erase(std::remove_if(configurations.begin(), configurations.end(),
+            [this, config] (std::shared_ptr<Configuration>& entry) {
+                bool match = entry.get() == config;
+                if (match && config->getKey()) {
+                    std::string key_cpy = config->getKey();
+                    this->clearKeyPool(key_cpy.c_str());
+                }
+                return match;
+            }), configurations.end());
     }
 
     size_t getConfigurationCount() override {
-        return container.getConfigurationCount();
+        return configurations.size();
     }
 
     Configuration *getConfiguration(size_t i) override {
-        return container.getConfiguration(i);
+        return configurations[i].get();
     }
 
-    Configuration *getConfiguration(const char *key) override {
-        return container.getConfiguration(key);
+    std::shared_ptr<Configuration> getConfiguration(const char *key) override {
+        for (auto& entry : configurations) {
+            if (entry->getKey() && !strcmp(entry->getKey(), key)) {
+                return entry;
+            }
+        }
+        return nullptr;
     }
 
+    void loadStaticKey(Configuration& config, const char *key) override {
+        config.setKey(key);
+        clearKeyPool(key);
+    }
 };
 
 std::unique_ptr<ConfigurationContainer> makeConfigurationContainerFlash(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename, bool accessible) {

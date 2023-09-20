@@ -228,33 +228,24 @@ public:
     }
 };
 
-template<>
-std::unique_ptr<Configuration> makeConfig<int>(const char *key, int val) {
-    auto res = std::unique_ptr<Configuration>(new ConfigInt());
-    if (res) {
-        res->setKey(key);
-        res->setInt(val);
+std::unique_ptr<Configuration> makeConfiguration(TConfig type, const char *key) {
+    std::unique_ptr<Configuration> res;
+    switch (type) {
+        case TConfig::Int:
+            res.reset(new ConfigInt());
+            break;
+        case TConfig::Bool:
+            res.reset(new ConfigBool());
+            break;
+        case TConfig::String:
+            res.reset(new ConfigString());
+            break;
     }
-    return res;
-};
-
-template<>
-std::unique_ptr<Configuration> makeConfig<bool>(const char *key, bool val) {
-    auto res = std::unique_ptr<Configuration>(new ConfigBool());
-    if (res) {
-        res->setKey(key);
-        res->setBool(val);
+    if (!res) {
+        MOCPP_DBG_ERR("OOM");
+        return nullptr;
     }
-    return res;
-};
-
-template<>
-std::unique_ptr<Configuration> makeConfig<const char*>(const char *key, const char *val) {
-    auto res = std::unique_ptr<Configuration>(new ConfigString());
-    if (res) {
-        res->setKey(key);
-        res->setString(val);
-    }
+    res->setKey(key);
     return res;
 };
 

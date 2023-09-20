@@ -64,9 +64,7 @@ public:
  * How to use custom implementations: for each OCPP config, pass a config instance to the OCPP lib
  * before its initialization stage. Then the library won't create new config objects but 
  */
-
-template<class T>
-std::unique_ptr<Configuration> makeConfig(const char *key, T val);
+std::unique_ptr<Configuration> makeConfiguration(TConfig type, const char *key);
 
 const char *serializeTConfig(TConfig type);
 bool deserializeTConfig(const char *serialized, TConfig& out);
