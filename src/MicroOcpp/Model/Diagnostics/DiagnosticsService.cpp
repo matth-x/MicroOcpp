@@ -94,7 +94,7 @@ void DiagnosticsService::loop() {
 //timestamps before year 2021 will be treated as "undefined"
 std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &location, int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime) {
     if (onUpload == nullptr) //maybe add further plausibility checks
-        return nullptr;
+        return std::string{};
     
     this->location = location;
     this->retries = retries;
@@ -134,9 +134,14 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &loca
     nextTry.toJsonString(dbuf, JSONDATE_LENGTH + 1);
     MOCPP_DBG_DEBUG("Initial try at %s", dbuf);
 
-    return "diagnostics.log";
+    std::string fileName;
+    if (createFilename) {
+        fileName = createFilename();
+    } else {
+        fileName = "diagnostics.log";
+    }
+    return fileName;
 }
-
 
 DiagnosticsStatus DiagnosticsService::getDiagnosticsStatus() {
     if (uploadIssued) {

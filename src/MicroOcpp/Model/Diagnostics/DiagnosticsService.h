@@ -26,16 +26,17 @@ class DiagnosticsService {
 private:
     Context& context;
     
-    std::string location {};
+    std::string location;
     int retries = 0;
     unsigned int retryInterval = 0;
-    Timestamp startTime = Timestamp();
-    Timestamp stopTime = Timestamp();
+    Timestamp startTime;
+    Timestamp stopTime;
 
-    Timestamp nextTry = Timestamp();
+    Timestamp nextTry;
 
-    std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload = nullptr;
-    std::function<UploadStatus()> uploadStatusInput = nullptr;
+    std::function<std::string()> createFilename;
+    std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload;
+    std::function<UploadStatus()> uploadStatusInput;
     bool uploadIssued = false;
 
     std::unique_ptr<Request> getDiagnosticsStatusNotification();
@@ -53,6 +54,8 @@ public:
     std::string requestDiagnosticsUpload(const std::string &location, int retries = 1, unsigned int retryInterval = 0, Timestamp startTime = Timestamp(), Timestamp stopTime = Timestamp());
 
     Ocpp16::DiagnosticsStatus getDiagnosticsStatus();
+
+    void setCreateFilename(std::function<std::string()> createFn); //create a new filename which will be used for the subsequent upload tries
 
     void setOnUpload(std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload);
 
