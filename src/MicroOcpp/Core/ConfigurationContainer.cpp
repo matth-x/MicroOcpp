@@ -35,7 +35,7 @@ public:
 
     void removeConfiguration(Configuration *config) override {
         for (auto entry = configurations.begin(); entry != configurations.end();) {
-            if (entry.get() == config) {
+            if (entry->get() == config) {
                 entry = configurations.erase(entry);
             } else {
                 entry++;
