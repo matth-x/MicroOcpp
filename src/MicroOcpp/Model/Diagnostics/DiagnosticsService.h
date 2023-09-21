@@ -34,7 +34,7 @@ private:
 
     Timestamp nextTry;
 
-    std::function<std::string()> createFilename;
+    std::function<std::string()> refreshFilename;
     std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload;
     std::function<UploadStatus()> uploadStatusInput;
     bool uploadIssued = false;
@@ -55,7 +55,7 @@ public:
 
     Ocpp16::DiagnosticsStatus getDiagnosticsStatus();
 
-    void setCreateFilename(std::function<std::string()> createFn); //create a new filename which will be used for the subsequent upload tries
+    void setRefreshFilename(std::function<std::string()> refreshFn); //refresh a new filename which will be used for the subsequent upload tries
 
     void setOnUpload(std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload);
 

@@ -135,8 +135,8 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &loca
     MOCPP_DBG_DEBUG("Initial try at %s", dbuf);
 
     std::string fileName;
-    if (createFilename) {
-        fileName = createFilename();
+    if (refreshFilename) {
+        fileName = refreshFilename();
     } else {
         fileName = "diagnostics.log";
     }
@@ -172,6 +172,10 @@ std::unique_ptr<Request> DiagnosticsService::getDiagnosticsStatusNotification() 
     }
 
     return nullptr;
+}
+
+void DiagnosticsService::setRefreshFilename(std::function<std::string()> refreshFn) {
+    this->refreshFilename = refreshFn;
 }
 
 void DiagnosticsService::setOnUpload(std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload) {
