@@ -34,10 +34,13 @@ public:
     }
 
     void removeConfiguration(Configuration *config) override {
-        configurations.erase(std::remove_if(configurations.begin(), configurations.end(),
-            [config] (std::shared_ptr<Configuration>& entry) {
-                return entry.get() == config;
-            }), configurations.end());
+        for (auto entry = configurations.begin(); entry != configurations.end();) {
+            if (entry.get() == config) {
+                entry = configurations.erase(entry);
+            } else {
+                entry++;
+            }
+        }
     }
 
     size_t getConfigurationCount() override {

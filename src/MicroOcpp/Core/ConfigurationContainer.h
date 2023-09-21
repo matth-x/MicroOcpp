@@ -34,7 +34,7 @@ public:
     virtual Configuration *getConfiguration(size_t i) = 0;
     virtual std::shared_ptr<Configuration> getConfiguration(const char *key) = 0;
 
-    virtual void loadStaticKey(Configuration& config, const char *key) { } //possible optimization: can replace internal key with passed key
+    virtual void loadStaticKey(Configuration& config, const char *key) { } //possible optimization: can replace internal key with passed static key
 };
 
 std::unique_ptr<ConfigurationContainer> makeConfigurationContainerVolatile(const char *filename, bool accessible);
