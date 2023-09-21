@@ -213,10 +213,10 @@ bool ChargingProfile::toJson(DynamicJsonDocument& doc) {
     }
 
     doc = DynamicJsonDocument(
-            JSON_OBJECT_SIZE(9) +
-            JSON_OBJECT_SIZE(1) +
-                chargingScheduleDoc.memoryUsage());
-    
+            JSON_OBJECT_SIZE(9) + //no. of fields in ChargingProfile
+            2 * (JSONDATE_LENGTH + 1) + //validFrom and validTo
+            chargingScheduleDoc.memoryUsage()); //nested JSON object
+
     doc["chargingProfileId"] = chargingProfileId;
     if (transactionId >= 0) {
         doc["transactionId"] = transactionId;
