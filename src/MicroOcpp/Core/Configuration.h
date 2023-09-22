@@ -6,7 +6,7 @@
 #define CONFIGURATION_H
 
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
-#include <MicroOcpp/Core/ConfigurationContainerFlash.h>
+#include <MicroOcpp/Core/ConfigurationContainer.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 
 #include <memory>

@@ -3,6 +3,7 @@
 // MIT License
 
 #include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/ConfigurationContainerFlash.h>
 #include <MicroOcpp/Debug.h>
 
 #include <string.h>

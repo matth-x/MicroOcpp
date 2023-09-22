@@ -124,7 +124,17 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     } else {
         convertibleBool = false;
     }
-    
+
+    //check against optional validator
+
+    auto validator = getConfigurationValidator(key);
+    if (validator && !(*validator)(value)) {
+        //validator exists and validation fails
+        reject = true;
+        MOCPP_DBG_WARN("validation failed for key=%s value=%s", key, value);
+        return;
+    }
+
     //Store (parsed) value to Config
 
     if (configuration->getType() == TConfig::Int && convertibleInt) {
@@ -132,14 +142,6 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     } else if (configuration->getType() == TConfig::Bool && convertibleBool) {
         configuration->setBool(numBool);
     } else if (configuration->getType() == TConfig::String) {
-        //string configurations can have a validator
-        auto validator = getConfigurationValidator(key);
-        if (validator && !(*validator)(value)) {
-            //validator exists and validation fails
-            reject = true;
-            MOCPP_DBG_WARN("validation failed for key=%s value=%s", key, value);
-            return;
-        }
         configuration->setString(value);
     } else {
         reject = true;

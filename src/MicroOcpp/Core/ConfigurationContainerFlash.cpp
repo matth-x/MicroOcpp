@@ -279,11 +279,14 @@ public:
     }
 
     void removeConfiguration(Configuration *config) override {
-        clearKeyPool(config->getKey());
+        const char *key = config->getKey();
         configurations.erase(std::remove_if(configurations.begin(), configurations.end(),
             [config] (std::shared_ptr<Configuration>& entry) {
                 return entry.get() == config;
             }), configurations.end());
+        if (key) {
+            clearKeyPool(key);
+        }
     }
 
     size_t getConfigurationCount() override {

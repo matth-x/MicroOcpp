@@ -74,7 +74,7 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
             if (ret < 0 || ret >= VALUE_BUFSIZE) {
                 continue;
             }
-            jcapacity = ret + 1;
+            jcapacity += ret + 1;
         }
     }
 
@@ -110,6 +110,7 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
                     continue;
                 }
                 v = vbuf;
+                break;
             }
             case TConfig::Bool:
                 v = config->getBool() ? "true" : "false";
