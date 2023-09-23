@@ -178,15 +178,15 @@ Reservation *ReservationService::getReservationById(int reservationId) {
     return nullptr;
 }
 
-bool ReservationService::updateReservation(JsonObject payload) {
-    if (auto reservation = getReservationById(payload["reservationId"])) {
-        reservation->update(payload);
+bool ReservationService::updateReservation(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag) {
+    if (auto reservation = getReservationById(reservationId)) {
+        reservation->update(reservationId, connectorId, expiryDate, idTag, parentIdTag);
         return true;
     }
 
 // Alternative condition: avoids that one idTag can make two reservations at a time. The specification doesn't
 // mention that double-reservations should be possible but it seems to mean it. 
-    if (auto reservation = getReservation(payload["connectorId"], nullptr, nullptr)) {
+    if (auto reservation = getReservation(connectorId, nullptr, nullptr)) {
 //                payload["idTag"],
 //                payload.containsKey("parentIdTag") ? payload["parentIdTag"] : nullptr)) {
 //    if (auto reservation = getReservation(payload["connectorId"].as<int>())) {
@@ -198,7 +198,7 @@ bool ReservationService::updateReservation(JsonObject payload) {
     //update free reservation slot
     for (auto& reservation : reservations) {
         if (!reservation->isActive()) {
-            reservation->update(payload);
+            reservation->update(reservationId, connectorId, expiryDate, idTag, parentIdTag);
             return true;
         }
     }

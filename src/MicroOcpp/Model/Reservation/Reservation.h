@@ -55,7 +55,7 @@ public:
     int getReservationId();
     const char *getParentIdTag();
 
-    void update(JsonObject payload);
+    void update(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag = nullptr);
     void clear();
 };
 

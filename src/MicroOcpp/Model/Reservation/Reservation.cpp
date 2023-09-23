@@ -109,13 +109,16 @@ const char *Reservation::getParentIdTag() {
     return parentIdTagString->getString();
 }
 
-void Reservation::update(JsonObject payload) {
-    connectorIdInt->setInt(payload["connectorId"] | -1);
-    expiryDate.setTime(payload["expiryDate"]);
-    expiryDateRawString->setString(payload["expiryDate"] | "");
-    idTagString->setString(payload["idTag"] | "");
-    reservationIdInt->setInt(payload["reservationId"] | -1);
-    parentIdTagString->setString(payload["parentIdTag"] | "");
+void Reservation::update(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag) {
+    reservationIdInt->setInt(reservationId);
+    connectorIdInt->setInt((int) connectorId);
+    this->expiryDate = expiryDate;
+    char expiryDate_cstr [JSONDATE_LENGTH + 1];
+    if (this->expiryDate.toJsonString(expiryDate_cstr, JSONDATE_LENGTH + 1)) {
+        expiryDateRawString->setString(expiryDate_cstr);
+    }
+    idTagString->setString(idTag);
+    parentIdTagString->setString(parentIdTag);
 
     configuration_save();
 }

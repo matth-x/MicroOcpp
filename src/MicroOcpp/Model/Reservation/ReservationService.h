@@ -39,7 +39,7 @@ public:
 
     Reservation *getReservationById(int reservationId);
 
-    bool updateReservation(JsonObject payload);
+    bool updateReservation(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag = nullptr);
 };
 
 }
