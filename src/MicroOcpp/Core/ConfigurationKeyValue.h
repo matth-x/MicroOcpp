@@ -18,7 +18,7 @@ namespace MicroOcpp {
 
 using revision_t = uint16_t;
 
-enum TConfig : uint8_t {
+enum class TConfig : uint8_t {
     Int,
     Bool,
     String
