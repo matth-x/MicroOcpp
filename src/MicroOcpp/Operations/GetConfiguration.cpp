@@ -47,7 +47,7 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
         for (auto& key : keys) {
             Configuration *res = nullptr;
             for (auto container : containers) {
-                if (res = container->getConfiguration(key.c_str()).get()) {
+                if ((res = container->getConfiguration(key.c_str()).get())) {
                     break;
                 }
             }
