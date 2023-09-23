@@ -125,6 +125,7 @@ set(MOCPP_SRC_UNIT
     tests/Api.cpp
     tests/Metering.cpp
     tests/Configuration.cpp
+    tests/Reservation.cpp
 )
 
 add_executable(mo_unit_tests

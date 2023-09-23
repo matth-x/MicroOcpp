@@ -48,7 +48,7 @@ void ReservationService::loop() {
             }
 
             //check if other tx started at this connector (e.g. due to RemoteStartTransaction)
-            if (connector->getTransaction() && connector->getTransaction()->isActive()) {
+            if (connector->getTransaction() && connector->getTransaction()->isAuthorized()) {
                 reservation->clear();
                 continue;
             }
