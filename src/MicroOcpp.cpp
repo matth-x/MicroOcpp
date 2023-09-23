@@ -136,6 +136,8 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         return;
     }
 
+    MOCPP_DBG_DEBUG("initialize OCPP");
+
     filesystem = fs;
     MOCPP_DBG_DEBUG("filesystem %s", filesystem ? "loaded" : "deactivated");
 
@@ -172,9 +174,9 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new BootService(*context, filesystem)));
     model.setConnectorsCommon(std::unique_ptr<ConnectorsCommon>(
         new ConnectorsCommon(*context, MOCPP_NUMCONNECTORS, filesystem)));
-    std::vector<Connector> connectors;
+    std::vector<std::unique_ptr<Connector>> connectors;
     for (unsigned int connectorId = 0; connectorId < MOCPP_NUMCONNECTORS; connectorId++) {
-        connectors.push_back(Connector(*context, connectorId));
+        connectors.emplace_back(new Connector(*context, connectorId));
     }
     model.setConnectors(std::move(connectors));
     model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
@@ -214,6 +216,8 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         model.getFirmwareService()->setBuildNumber((*credsJson)["firmwareVersion"]);
     }
     credsJson.reset();
+
+    configuration_load();
 }
 
 void mocpp_deinitialize() {
@@ -242,6 +246,8 @@ void mocpp_deinitialize() {
     filesystem.reset();
 
     configuration_deinit();
+
+    MOCPP_DBG_DEBUG("deinitialized OCPP\n");
 }
 
 void mocpp_loop() {

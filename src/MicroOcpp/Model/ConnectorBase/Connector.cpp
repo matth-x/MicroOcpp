@@ -30,30 +30,29 @@ using namespace MicroOcpp::Ocpp16;
 Connector::Connector(Context& context, int connectorId)
         : context(context), model(context.getModel()), connectorId{connectorId} {
 
-    char availabilityKey [CONF_KEYLEN_MAX + 1] = {'\0'};
-    snprintf(availabilityKey, CONF_KEYLEN_MAX + 1, MOCPP_CONFIG_EXT_PREFIX "AVAIL_CONN_%d", connectorId);
-    availability = declareConfiguration<bool>(availabilityKey, true, MOCPP_KEYVALUE_FN, false, false, true, false);
-
-    connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN, true, true, true, false);
-    minimumStatusDuration = declareConfiguration<int>("MinimumStatusDuration", 0, CONFIGURATION_FN, true, true, true, false);
-    stopTransactionOnInvalidId = declareConfiguration<bool>("StopTransactionOnInvalidId", true, CONFIGURATION_FN, true, true, true, false);
-    stopTransactionOnEVSideDisconnect = declareConfiguration<bool>("StopTransactionOnEVSideDisconnect", true, CONFIGURATION_FN, true, true, true, false);
-    unlockConnectorOnEVSideDisconnect = declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", true, CONFIGURATION_FN, true, true, true, false);
-    localPreAuthorize = declareConfiguration<bool>("LocalPreAuthorize", false, CONFIGURATION_FN, true, true, true, false);
-    allowOfflineTxForUnknownId = MicroOcpp::declareConfiguration<bool>("AllowOfflineTxForUnknownId", false, CONFIGURATION_FN);
+    snprintf(availabilityBoolKey, sizeof(availabilityBoolKey), MOCPP_CONFIG_EXT_PREFIX "AVAIL_CONN_%d", connectorId);
+    availabilityBool = declareConfiguration<bool>(availabilityBoolKey, true, MOCPP_KEYVALUE_FN, false, false, false);
+    
+    connectionTimeOutInt = declareConfiguration<int>("ConnectionTimeOut", 30);
+    minimumStatusDurationInt = declareConfiguration<int>("MinimumStatusDuration", 0);
+    stopTransactionOnInvalidIdBool = declareConfiguration<bool>("StopTransactionOnInvalidId", true);
+    stopTransactionOnEVSideDisconnectBool = declareConfiguration<bool>("StopTransactionOnEVSideDisconnect", true);
+    declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", true, CONFIGURATION_VOLATILE, true);
+    localPreAuthorizeBool = declareConfiguration<bool>("LocalPreAuthorize", false);
+    allowOfflineTxForUnknownIdBool = MicroOcpp::declareConfiguration<bool>("AllowOfflineTxForUnknownId", false);
 
     //if the EVSE goes offline, can it continue to charge without sending StartTx / StopTx to the server when going online again?
-    silentOfflineTransactions = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "SilentOfflineTransactions", false, CONFIGURATION_FN, true, true, true, false);
+    silentOfflineTransactionsBool = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "SilentOfflineTransactions", false);
 
     //how long the EVSE tries the Authorize request before it enters offline mode
-    authorizationTimeout = MicroOcpp::declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20, CONFIGURATION_FN);
+    authorizationTimeoutInt = MicroOcpp::declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20);
 
     //FreeVend mode
-    freeVendActive = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "FreeVendActive", false, CONFIGURATION_FN, true, true, true, false);
-    freeVendIdTag = declareConfiguration<const char*>(MOCPP_CONFIG_EXT_PREFIX "FreeVendIdTag", "", CONFIGURATION_FN, true, true, true, false);
+    freeVendActiveBool = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "FreeVendActive", false);
+    freeVendIdTagString = declareConfiguration<const char*>(MOCPP_CONFIG_EXT_PREFIX "FreeVendIdTag", "");
 
-    if (!availability) {
-        MOCPP_DBG_ERR("Cannot declare availability");
+    if (!availabilityBool) {
+        MOCPP_DBG_ERR("Cannot declare availabilityBool");
     }
 
     if (model.getTransactionStore()) {
@@ -61,6 +60,12 @@ Connector::Connector(Context& context, int connectorId)
     } else {
         MOCPP_DBG_ERR("must initialize TxStore before Connector");
         (void)0;
+    }
+}
+
+Connector::~Connector() {
+    if (availabilityBool->getKey() == availabilityBoolKey) {
+        availabilityBool->setKey(nullptr);
     }
 }
 
@@ -129,7 +134,7 @@ bool Connector::ocppPermitsCharge() {
     bool suspendDeAuthorizedIdTag = transaction && transaction->isIdTagDeauthorized(); //if idTag status is "DeAuthorized" and if charging should stop
     
     //check special case for DeAuthorized idTags: FreeVend mode
-    if (suspendDeAuthorizedIdTag && freeVendActive && *freeVendActive) {
+    if (suspendDeAuthorizedIdTag && freeVendActiveBool && freeVendActiveBool->getBool()) {
         suspendDeAuthorizedIdTag = false;
     }
 
@@ -175,7 +180,7 @@ void Connector::loop() {
             
         if (connectorPluggedInput) {
             if (transaction->isRunning() && transaction->isActive() && !connectorPluggedInput()) {
-                if (!stopTransactionOnEVSideDisconnect || *stopTransactionOnEVSideDisconnect) {
+                if (!stopTransactionOnEVSideDisconnectBool || stopTransactionOnEVSideDisconnectBool->getBool()) {
                     MOCPP_DBG_DEBUG("Stop Tx due to EV disconnect");
                     transaction->setStopReason("EVDisconnected");
                     transaction->setInactive();
@@ -187,8 +192,8 @@ void Connector::loop() {
         if (transaction->isActive() &&
                 !transaction->getStartSync().isRequested() &&
                 transaction->getBeginTimestamp() > MIN_TIME &&
-                connectionTimeOut && *connectionTimeOut > 0 &&
-                model.getClock().now() - transaction->getBeginTimestamp() >= *connectionTimeOut) {
+                connectionTimeOutInt && connectionTimeOutInt->getInt() > 0 &&
+                model.getClock().now() - transaction->getBeginTimestamp() >= connectionTimeOutInt->getInt()) {
                 
             MOCPP_DBG_INFO("Session mngt: timeout");
             transaction->setInactive();
@@ -200,7 +205,7 @@ void Connector::loop() {
         if (transaction->isActive() &&
                 transaction->isIdTagDeauthorized() && ( //transaction has been deAuthorized
                     !transaction->isRunning() ||        //if transaction hasn't started yet, always end
-                    !stopTransactionOnInvalidId || *stopTransactionOnInvalidId)) { //if transaction is running, behavior depends on StopTransactionOnInvalidId
+                    !stopTransactionOnInvalidIdBool || stopTransactionOnInvalidIdBool->getBool())) { //if transaction is running, behavior depends on StopTransactionOnInvalidId
             
             MOCPP_DBG_DEBUG("DeAuthorize session");
             transaction->setStopReason("DeAuthorized");
@@ -330,9 +335,9 @@ void Connector::loop() {
     } //end transaction-related operations
 
     //handle FreeVend mode
-    if (freeVendActive && *freeVendActive && connectorPluggedInput) {
+    if (freeVendActiveBool && freeVendActiveBool->getBool() && connectorPluggedInput) {
         if (!freeVendTrackPlugged && connectorPluggedInput() && !transaction) {
-            const char *idTag = freeVendIdTag && *freeVendIdTag ? *freeVendIdTag : "";
+            const char *idTag = freeVendIdTagString ? freeVendIdTagString->getString() : "";
             if (!idTag || *idTag == '\0') {
                 idTag = "A0000000";
             }
@@ -372,13 +377,13 @@ void Connector::loop() {
     if (status != currentStatus) {
         currentStatus = status;
         t_statusTransition = mocpp_tick_ms();
-        MOCPP_DBG_DEBUG("Status changed%s", *minimumStatusDuration ? ", will report delayed" : "");
+        MOCPP_DBG_DEBUG("Status changed%s", minimumStatusDurationInt->getInt() ? ", will report delayed" : "");
     }
 
     if (reportedStatus != currentStatus &&
             model.getClock().now() >= Timestamp(2010,0,0,0,0,0) &&
-            (*minimumStatusDuration <= 0 || //MinimumStatusDuration disabled
-            mocpp_tick_ms() - t_statusTransition >= ((unsigned long) *minimumStatusDuration) * 1000UL)) {
+            (minimumStatusDurationInt->getInt() <= 0 || //MinimumStatusDuration disabled
+            mocpp_tick_ms() - t_statusTransition >= ((unsigned long) minimumStatusDurationInt->getInt()) * 1000UL)) {
         reportedStatus = currentStatus;
         Timestamp reportedTimestamp = model.getClock().now();
         reportedTimestamp -= (mocpp_tick_ms() - t_statusTransition) / 1000UL;
@@ -498,7 +503,7 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
 
     if (!tx) {
         //couldn't create normal transaction -> check if to start charging without real transaction
-        if (silentOfflineTransactions && *silentOfflineTransactions) {
+        if (silentOfflineTransactionsBool && silentOfflineTransactionsBool->getBool()) {
             //try to handle charging session without sending StartTx or StopTx to the server
             tx = model.getTransactionStore()->createTransaction(connectorId, true);
 
@@ -579,7 +584,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
     MOCPP_DBG_DEBUG("Begin transaction process (%s), prepare", idTag != nullptr ? idTag : "");
 
     //check for local preauthorization
-    if (localPreAuthorize && *localPreAuthorize) {
+    if (localPreAuthorizeBool && localPreAuthorizeBool->getBool()) {
         if (localAuth && localAuth->getAuthorizationStatus() == AuthorizationStatus::Accepted) {
             MOCPP_DBG_DEBUG("Begin transaction process (%s), preauthorized locally", idTag != nullptr ? idTag : "");
 
@@ -592,7 +597,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
     transaction->commit();
 
     auto authorize = makeRequest(new Authorize(context.getModel(), idTag));
-    authorize->setTimeout(authorizationTimeout && *authorizationTimeout > 0 ? *authorizationTimeout * 1000UL : 20UL * 1000UL);
+    authorize->setTimeout(authorizationTimeoutInt && authorizationTimeoutInt->getInt() > 0 ? authorizationTimeoutInt->getInt() * 1000UL : 20UL * 1000UL);
     auto tx = transaction;
     authorize->setOnReceiveConfListener([this, tx] (JsonObject response) {
         JsonObject idTagInfo = response["idTagInfo"];
@@ -664,7 +669,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             }
         }
 
-        if (allowOfflineTxForUnknownId && (bool) *allowOfflineTxForUnknownId) {
+        if (allowOfflineTxForUnknownIdBool && allowOfflineTxForUnknownIdBool->getBool()) {
             MOCPP_DBG_DEBUG("Offline transaction process (%s), allow unknown ID", tx->getIdTag());
             tx->setAuthorized();
             tx->commit();
@@ -777,11 +782,11 @@ bool Connector::isOperative() {
         }
     }
 
-    return availabilityVolatile && *availability;
+    return availabilityVolatile && availabilityBool->getBool();
 }
 
 void Connector::setAvailability(bool available) {
-    *availability = available;
+    availabilityBool->setBool(available);
     configuration_save();
 }
 

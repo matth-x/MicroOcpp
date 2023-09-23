@@ -21,7 +21,7 @@ const char* ChangeConfiguration::getOperationType(){
 
 void ChangeConfiguration::processReq(JsonObject payload) {
     const char *key = payload["key"] | "";
-    if (strlen(key) < 1) {
+    if (!*key) {
         errorCode = "FormationViolation";
         MOCPP_DBG_WARN("Could not read key");
         return;
@@ -35,7 +35,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
 
     const char *value = payload["value"];
 
-    std::shared_ptr<AbstractConfiguration> configuration = getConfiguration(key);
+    auto configuration = getConfigurationPublic(key);
 
     if (!configuration) {
         //configuration not found or hidden configuration
@@ -43,15 +43,9 @@ void ChangeConfiguration::processReq(JsonObject payload) {
         return;
     }
 
-    if (!configuration->permissionRemotePeerCanWrite()) {
+    if (configuration->isReadOnly()) {
         MOCPP_DBG_WARN("Trying to override readonly value");
-
-        if (configuration->permissionRemotePeerCanRead()) {
-            readOnly = true;
-        } else {
-            //can neither read nor write -> hidden config
-            notSupported = true;
-        }
+        readOnly = true;
         return;
     }
 
@@ -130,38 +124,30 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     } else {
         convertibleBool = false;
     }
-    
+
+    //check against optional validator
+
+    auto validator = getConfigurationValidator(key);
+    if (validator && !(*validator)(value)) {
+        //validator exists and validation fails
+        reject = true;
+        MOCPP_DBG_WARN("validation failed for key=%s value=%s", key, value);
+        return;
+    }
+
     //Store (parsed) value to Config
 
-    if (!strcmp(configuration->getSerializedType(), SerializedType<int>::get()) && convertibleInt) {
-        std::shared_ptr<Configuration<int>> configurationConcrete = std::static_pointer_cast<Configuration<int>>(configuration);
-        *configurationConcrete = numInt;
-    } else if (!strcmp(configuration->getSerializedType(), SerializedType<float>::get()) && convertibleFloat) {
-        std::shared_ptr<Configuration<float>> configurationConcrete = std::static_pointer_cast<Configuration<float>>(configuration);
-        *configurationConcrete = numFloat;
-    } else if (!strcmp(configuration->getSerializedType(), SerializedType<bool>::get()) && convertibleBool) {
-        std::shared_ptr<Configuration<bool>> configurationConcrete = std::static_pointer_cast<Configuration<bool>>(configuration);
-        *configurationConcrete = numBool;
-    } else if (!strcmp(configuration->getSerializedType(), SerializedType<const char *>::get())) {
-        std::shared_ptr<Configuration<const char *>> configurationConcrete = std::static_pointer_cast<Configuration<const char *>>(configuration);
-        
-        //string configurations can have a validator
-        auto validator = configurationConcrete->getValidator();
-        if (validator && !validator(value)) {
-            //validator exists and validation fails
-            reject = true;
-            MOCPP_DBG_WARN("validation failed for key=%s value=%s", key, value);
-            return;
-        }
-
-        *configurationConcrete = value;
+    if (configuration->getType() == TConfig::Int && convertibleInt) {
+        configuration->setInt(numInt);
+    } else if (configuration->getType() == TConfig::Bool && convertibleBool) {
+        configuration->setBool(numBool);
+    } else if (configuration->getType() == TConfig::String) {
+        configuration->setString(value);
     } else {
         reject = true;
         MOCPP_DBG_WARN("Value has incompatible type");
         return;
     }
-
-    //success
 
     if (!configuration_save()) {
         MOCPP_DBG_ERR("could not write changes to flash");
@@ -169,11 +155,9 @@ void ChangeConfiguration::processReq(JsonObject payload) {
         return;
     }
 
-    if (configuration->requiresRebootWhenChanged()) {
+    if (configuration->isRebootRequired()) {
         rebootRequired = true;
     }
-
-    //success
 }
 
 std::unique_ptr<DynamicJsonDocument> ChangeConfiguration::createConf(){

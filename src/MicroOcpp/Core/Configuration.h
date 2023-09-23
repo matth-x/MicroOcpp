@@ -6,8 +6,7 @@
 #define CONFIGURATION_H
 
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
-#include <MicroOcpp/Core/ConfigurationOptions.h>
-#include <MicroOcpp/Core/ConfigurationContainerFlash.h>
+#include <MicroOcpp/Core/ConfigurationContainer.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 
 #include <memory>
@@ -17,28 +16,26 @@
 #define CONFIGURATION_VOLATILE "/volatile"
 #define MOCPP_KEYVALUE_FN (MOCPP_FILENAME_PREFIX "client-state.jsn")
 
-#ifndef MOCPP_CONFIG_EXT_PREFIX
-#define MOCPP_CONFIG_EXT_PREFIX "Cst_"
-#endif
-
 namespace MicroOcpp {
 
+/*
+ * 
+ */
 template <class T>
-std::shared_ptr<Configuration<T>> declareConfiguration(const char *key, T defaultValue, const char *filename = CONFIGURATION_FN, bool remotePeerCanWrite = true, bool remotePeerCanRead = true, bool localClientCanWrite = true, bool rebootRequiredWhenChanged = false);
+std::shared_ptr<Configuration> declareConfiguration(const char *key, T defaultValue, const char *filename = CONFIGURATION_FN, bool readonly = false, bool rebootRequired = false, bool accessible = true);
+
+std::function<bool(const char*)> *getConfigurationValidator(const char *key);
+void registerConfigurationValidator(const char *key, std::function<bool(const char*)> validator);
 
 void addConfigurationContainer(std::shared_ptr<ConfigurationContainer> container);
-std::vector<std::shared_ptr<ConfigurationContainer>>::iterator getConfigurationContainersBegin();
-std::vector<std::shared_ptr<ConfigurationContainer>>::iterator getConfigurationContainersEnd();
 
-
-namespace Ocpp16 {
-
-    std::shared_ptr<AbstractConfiguration> getConfiguration(const char *key);
-    std::unique_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> getAllConfigurations();
-}
+Configuration *getConfigurationPublic(const char *key);
+std::vector<ConfigurationContainer*> getConfigurationContainersPublic();
 
 bool configuration_init(std::shared_ptr<FilesystemAdapter> filesytem);
 void configuration_deinit();
+
+bool configuration_load(const char *filename = nullptr);
 
 bool configuration_save();
 

@@ -26,58 +26,117 @@ void GetConfiguration::processReq(JsonObject payload) {
 
 std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
 
-    std::unique_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> configurationKeys;
-    std::vector<std::string> unknownKeys;
+    std::vector<Configuration*> configurations;
+    std::vector<const char*> unknownKeys;
 
-    if (keys.size() == 0){ //return all existing keys
-        configurationKeys = getAllConfigurations();
-    } else { //only return keys that were searched using the "key" parameter
-        configurationKeys = std::unique_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>>(
-                                        new std::vector<std::shared_ptr<AbstractConfiguration>>()
-        );
-        for (size_t i = 0; i < keys.size(); i++) {
-            std::shared_ptr<AbstractConfiguration> entry = getConfiguration(keys.at(i).c_str());
-            if (entry)
-                configurationKeys->push_back(entry);
-            else
-                unknownKeys.push_back(keys.at(i).c_str());
+    auto containers = getConfigurationContainersPublic();
+
+    if (keys.empty()) {
+        //return all existing keys
+        for (auto container : containers) {
+            for (size_t i = 0; i < container->getConfigurationCount(); i++) {
+                if (!container->getConfiguration(i)->getKey()) {
+                    MOCPP_DBG_ERR("invalid config");
+                    continue;
+                }
+                configurations.push_back(container->getConfiguration(i));
+            }
+        }
+    } else {
+        //only return keys that were searched using the "key" parameter
+        for (auto& key : keys) {
+            Configuration *res = nullptr;
+            for (auto container : containers) {
+                if ((res = container->getConfiguration(key.c_str()).get())) {
+                    break;
+                }
+            }
+
+            if (res) {
+                configurations.push_back(res);
+            } else {
+                unknownKeys.push_back(key.c_str());
+            }
         }
     }
 
-    size_t capacity = JSON_OBJECT_SIZE(2); //configurationKey, unknownKey
-    std::vector<std::unique_ptr<DynamicJsonDocument>> configurationKeysJson;
+    #define VALUE_BUFSIZE 30
 
-    for (auto confKey = configurationKeys->begin(); confKey != configurationKeys->end(); confKey++) {
-        auto entry = (*confKey)->toJsonOcppMsgEntry();
-        if (entry) {
-            capacity += entry->memoryUsage();
-            configurationKeysJson.push_back(std::move(entry));
+    //capacity of the resulting document
+    size_t jcapacity = JSON_OBJECT_SIZE(2); //document root: configurationKey, unknownKey
+
+    jcapacity += JSON_ARRAY_SIZE(configurations.size()) + configurations.size() * JSON_OBJECT_SIZE(3); //configurationKey: [{"key":...},{"key":...}]
+    for (auto config : configurations) {
+        //need to store ints by copied string: measure necessary capacity
+        if (config->getType() == TConfig::Int) {
+            char vbuf [VALUE_BUFSIZE];
+            auto ret = snprintf(vbuf, VALUE_BUFSIZE, "%i", config->getInt());
+            if (ret < 0 || ret >= VALUE_BUFSIZE) {
+                continue;
+            }
+            jcapacity += ret + 1;
         }
     }
 
-    for (auto unknownKey = unknownKeys.begin(); unknownKey != unknownKeys.end(); unknownKey++) {
-        capacity += unknownKey->length() + 1;
+    jcapacity += JSON_ARRAY_SIZE(unknownKeys.size());
+    
+    MOCPP_DBG_DEBUG("GetConfiguration capacity: %zu", jcapacity);
+
+    std::unique_ptr<DynamicJsonDocument> doc;
+
+    if (jcapacity <= MOCPP_MAX_JSON_CAPACITY) {
+        doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(jcapacity));
     }
 
-    capacity += JSON_ARRAY_SIZE(configurationKeysJson.size())
-                + JSON_ARRAY_SIZE(unknownKeys.size());
-    
-    MOCPP_DBG_DEBUG("GetConfiguration capacity: %zu", capacity);
-    
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
+    if (!doc || doc->capacity() < jcapacity) {
+        if (doc) {MOCPP_DBG_ERR("OOM");(void)0;}
+
+        errorCode = "InternalError";
+        errorDescription = "Query too big. Try fewer keys";
+        return nullptr;
+    }
 
     JsonObject payload = doc->to<JsonObject>();
     
     JsonArray jsonConfigurationKey = payload.createNestedArray("configurationKey");
-    for (size_t i = 0; i < configurationKeys->size(); i++) {
-        jsonConfigurationKey.add(configurationKeysJson.at(i)->as<JsonObject>());
+    for (auto config : configurations) {
+        char vbuf [VALUE_BUFSIZE];
+        const char *v = "";
+        switch (config->getType()) {
+            case TConfig::Int: {
+                auto ret = snprintf(vbuf, VALUE_BUFSIZE, "%i", config->getInt());
+                if (ret < 0 || ret >= VALUE_BUFSIZE) {
+                    MOCPP_DBG_ERR("value error");
+                    continue;
+                }
+                v = vbuf;
+                break;
+            }
+            case TConfig::Bool:
+                v = config->getBool() ? "true" : "false";
+                break;
+            case TConfig::String:
+                v = config->getString();
+                break;
+        }
+
+        JsonObject jconfig = jsonConfigurationKey.createNestedObject();
+        jconfig["key"] = config->getKey();
+        jconfig["readonly"] = config->isReadOnly();
+        if (v == vbuf) {
+            //value points to buffer on stack, needs to be copied into JSON memory pool
+            jconfig["value"] = (char*) v;
+        } else {
+            //value is static, no-copy mode
+            jconfig["value"] = v;
+        }
     }
 
-    if (unknownKeys.size() > 0) {
+    if (!unknownKeys.empty()) {
         JsonArray jsonUnknownKey = payload.createNestedArray("unknownKey");
-        for (auto unknownKey = unknownKeys.begin(); unknownKey != unknownKeys.end(); unknownKey++) {
-            MOCPP_DBG_DEBUG("Unknown key: %s", unknownKey->c_str())
-            jsonUnknownKey.add(*unknownKey);
+        for (auto key : unknownKeys) {
+            MOCPP_DBG_DEBUG("Unknown key: %s", key)
+            jsonUnknownKey.add(key);
         }
     }
 

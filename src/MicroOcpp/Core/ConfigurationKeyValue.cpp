@@ -10,250 +10,271 @@
 #include <ArduinoJson.h>
 
 #define KEY_MAXLEN 60
-#define STRING_VAL_MAXLEN 2000 //allow TLS certificates in ...
+#define STRING_VAL_MAXLEN 512
+
+#ifndef MOCPP_CONFIG_TYPECHECK
+#define MOCPP_CONFIG_TYPECHECK 1 //enable this for debugging
+#endif
 
 namespace MicroOcpp {
 
-int toCStringValue(char *buf, size_t length, int value) {
-    return snprintf(buf, length, "%d", value);
-}
+template<> TConfig convertType<int>() {return TConfig::Int;}
+template<> TConfig convertType<bool>() {return TConfig::Bool;}
+template<> TConfig convertType<const char*>() {return TConfig::String;}
 
-int toCStringValue(char *buf, size_t length, float value) {
-    int ilength = (int) std::min((size_t) 100, length);
-    return snprintf(buf, length, "%.*g", ilength >= 7 ? ilength - 7 : 0, value);
-}
-
-int toCStringValue(char *buf, size_t length, bool value) {
-    return snprintf(buf, length, "%s", value ? "true" : "false");
-}
-
-AbstractConfiguration::AbstractConfiguration(const char *key) {
-    if (!key || !*key) {
-        MOCPP_DBG_ERR("invalid argument");
-        return;
-    }
-
-    this->key = key;
-}
-
-AbstractConfiguration::~AbstractConfiguration() {
+Configuration::~Configuration() {
 
 }
 
-const char *AbstractConfiguration::getKey() {
-    return key.c_str();
+void Configuration::setInt(int) {
+#if MOCPP_CONFIG_TYPECHECK
+    MOCPP_DBG_ERR("type err");
+#endif
 }
 
-size_t AbstractConfiguration::getStorageHeaderJsonCapacity() {
-    return key.length() + 1;
+void Configuration::setBool(bool) {
+#if MOCPP_CONFIG_TYPECHECK
+    MOCPP_DBG_ERR("type err");
+#endif
 }
 
-void AbstractConfiguration::storeStorageHeader(JsonObject &keyValuePair) {
-    keyValuePair["key"] = key;
+bool Configuration::setString(const char*) {
+#if MOCPP_CONFIG_TYPECHECK
+    MOCPP_DBG_ERR("type err");
+#endif
+    return false;
 }
 
-size_t AbstractConfiguration::getOcppMsgHeaderJsonCapacity() {
-    return key.size() + 1;
-}
-
-void AbstractConfiguration::storeOcppMsgHeader(JsonObject &keyValuePair) {
-    keyValuePair["key"] = key;
-    if (remotePeerCanWrite) {
-        keyValuePair["readonly"] = false;
-    } else {
-        keyValuePair["readonly"] = true;
-    }
-}
-
-bool AbstractConfiguration::isValid() {
-    return initializedValue && !key.empty();
-}
-
-void AbstractConfiguration::requireRebootWhenChanged() {
-    rebootRequiredWhenChanged = true;
-}
-
-bool AbstractConfiguration::requiresRebootWhenChanged() {
-    return rebootRequiredWhenChanged;
-}
-
-uint16_t AbstractConfiguration::getValueRevision() {
-    return value_revision;
-}
-
-template<class T>
-Configuration<T>::Configuration(const char *key, T value) : AbstractConfiguration(key) {
-    this->operator=(value);
-}
-
-template <class T>
-const T &Configuration<T>::operator=(const T & newVal) {
-
-    if (permissionLocalClientCanWrite() || !initializedValue) {
-        if (!initializedValue) {
-            const size_t VALUE_MAXSIZE = 50;
-            char value_str [VALUE_MAXSIZE] = {'\0'};
-            toCStringValue(value_str, VALUE_MAXSIZE, newVal);
-            MOCPP_DBG_DEBUG("add config: key = %s, value = %s", getKey(), value_str);
-        }
-        if (initializedValue == true && value != newVal) {
-            value_revision++;
-        }
-        value = newVal;
-        initializedValue = true;
-    } else {
-        MOCPP_DBG_ERR("Tried to override read-only configuration: %s", getKey());
-    }
-    return newVal;
-}
-
-template <class T>
-Configuration<T>::operator T() {
-    return value;
-}
-
-template<class T>
-bool Configuration<T>::isValid() {
-    return AbstractConfiguration::isValid();
-}
-
-template<class T>
-size_t Configuration<T>::getValueJsonCapacity() {
+int Configuration::getInt() {
+#if MOCPP_CONFIG_TYPECHECK
+    MOCPP_DBG_ERR("type err");
+#endif
     return 0;
 }
 
-size_t Configuration<const char *>::getValueJsonCapacity() {
-    return value.size() + 1;
+bool Configuration::getBool() {
+#if MOCPP_CONFIG_TYPECHECK
+    MOCPP_DBG_ERR("type err");
+#endif
+    return false;
 }
 
-template<class T>
-std::unique_ptr<DynamicJsonDocument> Configuration<T>::toJsonStorageEntry() {
-    if (!isValid()) {
-        return nullptr;
-    }
-    size_t capacity = getStorageHeaderJsonCapacity()
-                + getValueJsonCapacity()
-                + JSON_OBJECT_SIZE(3); //type, header, value
-    
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
-    JsonObject keyValuePair = doc->to<JsonObject>();
-    keyValuePair["type"] = SerializedType<T>::get();
-    storeStorageHeader(keyValuePair);
-    keyValuePair["value"] = value;
-    return doc;
+const char *Configuration::getString() {
+#if MOCPP_CONFIG_TYPECHECK
+    MOCPP_DBG_ERR("type err");
+#endif
+    return "";
 }
 
-template<class T>
-std::unique_ptr<DynamicJsonDocument> Configuration<T>::toJsonOcppMsgEntry() {
-    if (!isValid()) {
-        return nullptr;
-    }
-    size_t capacity = getOcppMsgHeaderJsonCapacity()
-                + JSON_OBJECT_SIZE(3); //header (key + readonly), value
-
-    const size_t VALUE_MAXSIZE = 50;
-    char value_str [VALUE_MAXSIZE] = {'\0'};
-    toCStringValue(value_str, VALUE_MAXSIZE, value);
-    capacity += strlen(value_str) + 1;
-    
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
-    JsonObject keyValuePair = doc->to<JsonObject>();
-    storeOcppMsgHeader(keyValuePair);
-    keyValuePair["value"] = value_str;
-    return doc;
+revision_t Configuration::getValueRevision() {
+    return value_revision;
 }
 
-std::unique_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonStorageEntry() {
-    if (!isValid()) {
-        return nullptr;
-    }
-    size_t capacity = getStorageHeaderJsonCapacity()
-                + getValueJsonCapacity()
-                + JSON_OBJECT_SIZE(3); //type, header, value
-    
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
-    JsonObject keyValuePair = doc->to<JsonObject>();
-    keyValuePair["type"] = SerializedType<const char *>::get();
-    storeStorageHeader(keyValuePair);
-    keyValuePair["value"] = value;
-    return doc;
+void Configuration::setRebootRequired() {
+    rebootRequired = true;
 }
 
-std::unique_ptr<DynamicJsonDocument> Configuration<const char *>::toJsonOcppMsgEntry() {
-    if (!isValid()) {
-        return nullptr;
-    }
-    size_t capacity = getOcppMsgHeaderJsonCapacity()
-                + getValueJsonCapacity()
-                + JSON_OBJECT_SIZE(3); //header (key + readonly), value
-    
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
-    JsonObject keyValuePair = doc->to<JsonObject>();
-    storeOcppMsgHeader(keyValuePair);
-    keyValuePair["value"] = value;
-    return doc;
+bool Configuration::isRebootRequired() {
+    return rebootRequired;
 }
 
-Configuration<const char *>::Configuration(const char *key, const char *value) : AbstractConfiguration(key) {
-    if (!value) {
-        MOCPP_DBG_ERR("invalid args");
-        return;
-    }
-
-    this->operator=(value);
+void Configuration::setReadOnly() {
+    readOnly = true;
 }
 
-Configuration<const char *>::~Configuration() {
-
+bool Configuration::isReadOnly() {
+    return readOnly;
 }
 
-const char *Configuration<const char *>::operator=(const char *new_value) {
-    if (!new_value) {
-        MOCPP_DBG_ERR("invalid args");
-        return new_value;
+/*
+ * Default implementations of the Configuration interface.
+ *
+ * How to use custom implementations: for each OCPP config, pass a config instance to the OCPP lib
+ * before its initialization stage. Then the library won't create new config objects but 
+ */
+
+class ConfigInt : public Configuration {
+private:
+    const char *key = nullptr;
+    int val = 0;
+public:
+
+    ~ConfigInt() = default;
+
+    bool setKey(const char *key) override {
+        this->key = key;
+        return true;
     }
 
-    if (!permissionLocalClientCanWrite() && initializedValue) {
-        MOCPP_DBG_ERR("Tried to override read-only configuration: %s", getKey());
-        return new_value;
+    const char *getKey() override {
+        return key;
     }
 
-    if (value.compare(new_value) || !initializedValue) {
-        value = new_value;
+    TConfig getType() override {
+        return TConfig::Int;
+    }
+
+    void setInt(int val) override {
+        this->val = val;
         value_revision++;
     }
-    
-    if (!initializedValue) {
-        MOCPP_DBG_DEBUG("add config: key = %s, value = %s", getKey(), value.c_str());
-        (void)0;
+
+    int getInt() override {
+        return val;
     }
-    initializedValue = true;
-    return new_value;
+};
+
+class ConfigBool : public Configuration {
+private:
+    const char *key = nullptr;
+    bool val = false;
+public:
+
+    ~ConfigBool() = default;
+
+    bool setKey(const char *key) override {
+        this->key = key;
+        return true;
+    }
+
+    const char *getKey() override {
+        return key;
+    }
+
+    TConfig getType() override {
+        return TConfig::Bool;
+    }
+
+    void setBool(bool val) override {
+        this->val = val;
+        value_revision++;
+    }
+
+    bool getBool() override {
+        return val;
+    }
+};
+
+class ConfigString : public Configuration {
+private:
+    const char *key = nullptr;
+    char *val = nullptr;
+public:
+    ConfigString() = default;
+    ConfigString(const ConfigString&) = delete;
+    ConfigString(ConfigString&&) = delete;
+    ConfigString& operator=(const ConfigString&) = delete;
+
+    ~ConfigString() {
+        free(val);
+    }
+
+    bool setKey(const char *key) override {
+        this->key = key;
+        return true;
+    }
+
+    const char *getKey() override {
+        return key;
+    }
+
+    TConfig getType() override {
+        return TConfig::String;
+    }
+
+    bool setString(const char *src) override {
+        bool src_empty = !src || !*src;
+
+        if (!val && src_empty) {
+            return true;
+        }
+
+        if (this->val && src && !strcmp(this->val, src)) {
+            return true;
+        }
+
+        size_t size = 0;
+        if (!src_empty) {
+            size = strlen(src) + 1;
+        }
+
+        if (size > MOCPP_CONFIG_MAX_VALSTRSIZE) {
+            return false;
+        }
+
+        value_revision++;
+
+        if (this->val) {
+            free(this->val);
+            this->val = nullptr;
+        }
+
+        if (!src_empty) {
+            this->val = (char*) malloc(size);
+            if (!this->val) {
+                return false;
+            }
+            strcpy(this->val, src);
+        }
+
+        return true;
+    }
+
+    const char *getString() override {
+        if (!val) {
+            return "";
+        }
+        return val;
+    }
+};
+
+std::unique_ptr<Configuration> makeConfiguration(TConfig type, const char *key) {
+    std::unique_ptr<Configuration> res;
+    switch (type) {
+        case TConfig::Int:
+            res.reset(new ConfigInt());
+            break;
+        case TConfig::Bool:
+            res.reset(new ConfigBool());
+            break;
+        case TConfig::String:
+            res.reset(new ConfigString());
+            break;
+    }
+    if (!res) {
+        MOCPP_DBG_ERR("OOM");
+        return nullptr;
+    }
+    res->setKey(key);
+    return res;
+};
+
+bool deserializeTConfig(const char *serialized, TConfig& out) {
+    if (!strcmp(serialized, "int")) {
+        out = TConfig::Int;
+        return true;
+    } else if (!strcmp(serialized, "bool")) {
+        out = TConfig::Bool;
+        return true;
+    } else if (!strcmp(serialized, "string")) {
+        out = TConfig::String;
+        return true;
+    } else {
+        MOCPP_DBG_WARN("config type error");
+        return false;
+    }
 }
 
-Configuration<const char *>::operator const char*() {
-    return value.c_str();
+const char *serializeTConfig(TConfig type) {
+    switch (type) {
+        case TConfig::Int:
+            return "int";
+        case TConfig::Bool:
+            return "bool";
+        case TConfig::String:
+            return "string";
+    }
+    return "_Undefined";
 }
-
-bool Configuration<const char *>::isValid() {
-    return AbstractConfiguration::isValid();
-}
-
-size_t Configuration<const char *>::getBuffsize() {
-    return value.size() + 1;
-}
-
-void Configuration<const char *>::setValidator(std::function<bool(const char*)> validator) {
-    this->validator = validator;
-}
-
-std::function<bool(const char*)> Configuration<const char *>::getValidator() {
-    return this->validator;
-}
-
-template class Configuration<int>;
-template class Configuration<float>;
-template class Configuration<bool>;
-//template class Configuration<const char *>; //no effect after explicit specialization
 
 } //end namespace MicroOcpp

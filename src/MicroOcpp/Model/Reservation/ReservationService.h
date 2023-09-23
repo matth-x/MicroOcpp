@@ -7,6 +7,8 @@
 
 #include <MicroOcpp/Model/Reservation/Reservation.h>
 
+#include <memory>
+
 namespace MicroOcpp {
 
 class Context;
@@ -16,9 +18,9 @@ private:
     Context& context;
 
     const int maxReservations; // = number of physical connectors
-    std::vector<Reservation> reservations;
+    std::vector<std::unique_ptr<Reservation>> reservations;
 
-    std::shared_ptr<Configuration<bool>> reserveConnectorZeroSupported;
+    std::shared_ptr<Configuration> reserveConnectorZeroSupportedBool;
 
 public:
     ReservationService(Context& context, unsigned int numConnectors);

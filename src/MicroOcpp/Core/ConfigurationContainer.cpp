@@ -4,71 +4,65 @@
 
 #include <MicroOcpp/Core/ConfigurationContainer.h>
 
+#include <MicroOcpp/Debug.h>
+
 namespace MicroOcpp {
 
-std::shared_ptr<AbstractConfiguration> ConfigurationContainer::getConfiguration(const char *key) {
-    for (std::vector<std::shared_ptr<AbstractConfiguration>>::iterator configuration = configurations.begin(); configuration != configurations.end(); configuration++) {
-        if (!strcmp(key, (*configuration)->getKey())) {
-            return *configuration;
-        }
-    }
-    return nullptr;
+ConfigurationContainer::~ConfigurationContainer() {
+
 }
 
-bool ConfigurationContainer::removeConfiguration(std::shared_ptr<AbstractConfiguration> configuration) {
-    
-    auto config = configurations.begin();
-    auto config_rev = configurations_revision.begin();
-    while (config != configurations.end()) {
-        if ((*config) == configuration) {
-            configurations.erase(config);
-            if (config_rev != configurations_revision.end())
-                configurations_revision.erase(config_rev);
-            return true;
+class ConfigurationContainerVolatile : public ConfigurationContainer {
+private:
+    std::vector<std::shared_ptr<Configuration>> configurations;
+public:
+    ConfigurationContainerVolatile(const char *filename, bool accessible) : ConfigurationContainer(filename, accessible) { }
+
+    bool load() override {return true;}
+
+    bool save() override {return true;}
+
+    std::shared_ptr<Configuration> createConfiguration(TConfig type, const char *key) override {
+        std::shared_ptr<Configuration> res = makeConfiguration(type, key);
+        if (!res) {
+            //allocation failure - OOM
+            MOCPP_DBG_ERR("OOM");
+            return nullptr;
         }
-        config++;
-        if (config_rev != configurations_revision.end())
-            config_rev++;
+        configurations.push_back(res);
+        return res;
     }
 
-    return false;
-}
-
-void ConfigurationContainer::addConfiguration(std::shared_ptr<AbstractConfiguration> configuration) {
-    configurations.push_back(configuration);
-}
-
-bool ConfigurationContainer::configurationsUpdated() {
-    bool updated = false;
-
-    auto config = configurations.begin();
-    auto config_rev = configurations_revision.begin();
-    while (config != configurations.end()) {
-        if (config_rev == configurations_revision.end()) {
-            //vectors are not the same length -> added configurations
-            updated = true;
-            break;
-        }
-
-        if ((*config)->getValueRevision() != *config_rev) {
-            updated = true;
-            break;
-        }
-
-        config++;
-        config_rev++;
-    }
-
-    if (updated) {
-        configurations_revision.erase(config_rev, configurations_revision.end());
-
-        while (config != configurations.end()) {
-            configurations_revision.push_back((*config)->getValueRevision());
-            config++;
+    void removeConfiguration(Configuration *config) override {
+        for (auto entry = configurations.begin(); entry != configurations.end();) {
+            if (entry->get() == config) {
+                entry = configurations.erase(entry);
+            } else {
+                entry++;
+            }
         }
     }
 
-    return updated;
+    size_t getConfigurationCount() override {
+        return configurations.size();
+    }
+
+    Configuration *getConfiguration(size_t i) override {
+        return configurations[i].get();
+    }
+
+    std::shared_ptr<Configuration> getConfiguration(const char *key) override {
+        for (auto& entry : configurations) {
+            if (entry->getKey() && !strcmp(entry->getKey(), key)) {
+                return entry;
+            }
+        }
+        return nullptr;
+    }
+};
+
+std::unique_ptr<ConfigurationContainer> makeConfigurationContainerVolatile(const char *filename, bool accessible) {
+    return std::unique_ptr<ConfigurationContainer>(new ConfigurationContainerVolatile(filename, accessible));
 }
 
 } //end namespace MicroOcpp

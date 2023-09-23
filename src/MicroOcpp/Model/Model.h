@@ -26,7 +26,7 @@ class ResetService;
 
 class Model {
 private:
-    std::vector<Connector> connectors;
+    std::vector<std::unique_ptr<Connector>> connectors;
     std::unique_ptr<TransactionStore> transactionStore;
     std::unique_ptr<SmartChargingService> smartChargingService;
     std::unique_ptr<ConnectorsCommon> chargeControlCommon;
@@ -39,6 +39,9 @@ private:
     std::unique_ptr<BootService> bootService;
     std::unique_ptr<ResetService> resetService;
     Clock clock;
+
+    bool capabilitiesUpdated = true;
+    void updateSupportedStandardProfiles();
 
     bool runTasks = false;
 
@@ -62,7 +65,7 @@ public:
     void setConnectorsCommon(std::unique_ptr<ConnectorsCommon> ccs);
     ConnectorsCommon *getConnectorsCommon();
 
-    void setConnectors(std::vector<Connector>&& connectors);
+    void setConnectors(std::vector<std::unique_ptr<Connector>>&& connectors);
     unsigned int getNumConnectors() const;
     Connector *getConnector(unsigned int connectorId);
 

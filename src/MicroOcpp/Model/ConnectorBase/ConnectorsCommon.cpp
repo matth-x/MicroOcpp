@@ -29,33 +29,13 @@ using namespace MicroOcpp;
 ConnectorsCommon::ConnectorsCommon(Context& context, unsigned int numConn, std::shared_ptr<FilesystemAdapter> filesystem) :
         context(context) {
     
-    std::shared_ptr<Configuration<int>> numberOfConnectors =
-            declareConfiguration<int>("NumberOfConnectors", numConn >= 1 ? numConn - 1 : 0, CONFIGURATION_VOLATILE, false, true, false, false);
-
-    const char *fpId = "Core,RemoteTrigger";
-    const char *fpIdCore = "Core";
-    const char *fpIdRTrigger = "RemoteTrigger";
-    auto fProfile = declareConfiguration<const char*>("SupportedFeatureProfiles",fpId, CONFIGURATION_VOLATILE, false, true, true, false);
-    if (!strstr(*fProfile, fpIdCore)) {
-        auto fProfilePlus = std::string(*fProfile);
-        if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
-            fProfilePlus += ",";
-        fProfilePlus += fpIdCore;
-        *fProfile = fProfilePlus.c_str();
-    }
-    if (!strstr(*fProfile, fpIdRTrigger)) {
-        auto fProfilePlus = std::string(*fProfile);
-        if (!fProfilePlus.empty() && fProfilePlus.back() != ',')
-            fProfilePlus += ",";
-        fProfilePlus += fpIdRTrigger;
-        *fProfile = fProfilePlus.c_str();
-    }
+    declareConfiguration<int>("NumberOfConnectors", numConn >= 1 ? numConn - 1 : 0, CONFIGURATION_VOLATILE, true);
     
     /*
      * Further configuration keys which correspond to the Core profile
      */
-    declareConfiguration<bool>("AuthorizeRemoteTxRequests",false,CONFIGURATION_VOLATILE,false,true,false,false);
-    declareConfiguration<int>("GetConfigurationMaxKeys",30,CONFIGURATION_VOLATILE,false,true,false,false);
+    declareConfiguration<bool>("AuthorizeRemoteTxRequests", false, CONFIGURATION_VOLATILE, true);
+    declareConfiguration<int>("GetConfigurationMaxKeys", 30, CONFIGURATION_VOLATILE, true);
     
     context.getOperationRegistry().registerOperation("ChangeAvailability", [&context] () {
         return new Ocpp16::ChangeAvailability(context.getModel());});

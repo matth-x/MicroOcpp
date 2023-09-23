@@ -61,9 +61,9 @@ void BootNotification::processConf(JsonObject payload) {
     if (status == RegistrationStatus::Accepted) {
         //only write if in valid range
         if (interval >= 1) {
-            std::shared_ptr<Configuration<int>> intervalConf = declareConfiguration<int>("HeartbeatInterval", 86400);
-            if (intervalConf && interval != *intervalConf) {
-                *intervalConf = interval;
+            auto heartbeatIntervalInt = declareConfiguration<int>("HeartbeatInterval", 86400);
+            if (heartbeatIntervalInt && interval != heartbeatIntervalInt->getInt()) {
+                heartbeatIntervalInt->setInt(interval);
                 configuration_save();
             }
         }

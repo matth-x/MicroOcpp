@@ -10,19 +10,7 @@
 
 namespace MicroOcpp {
 
-class ConfigurationContainerFlash : public ConfigurationContainer {
-    std::shared_ptr<FilesystemAdapter> filesystem;
-public:
-    ConfigurationContainerFlash(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename) :
-            ConfigurationContainer(filename), filesystem(filesystem) { }
-
-    ~ConfigurationContainerFlash() = default;
-
-    bool load();
-
-    bool save();
-
-};
+std::unique_ptr<ConfigurationContainer> makeConfigurationContainerFlash(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename, bool accessible);
 
 } //end namespace MicroOcpp
 

@@ -17,7 +17,7 @@ private:
     Context& context;
 
     unsigned long lastHeartbeat;
-    std::shared_ptr<MicroOcpp::Configuration<int>> heartbeatInterval;
+    std::shared_ptr<Configuration> heartbeatIntervalInt;
 
 public:
     HeartbeatService(Context& context);

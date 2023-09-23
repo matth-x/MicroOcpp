@@ -3,6 +3,7 @@
 // MIT License
 
 #include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/ConfigurationContainerFlash.h>
 #include <MicroOcpp/Debug.h>
 
 #include <string.h>
@@ -12,58 +13,40 @@
 
 namespace MicroOcpp {
 
+struct Validator {
+    const char *key = nullptr;
+    std::function<bool(const char*)> checkValue;
+    Validator(const char *key, std::function<bool(const char*)> checkValue) : key(key), checkValue(checkValue) {
+
+    }
+};
+
+namespace ConfigurationLocal {
+
 std::shared_ptr<FilesystemAdapter> filesystem;
+std::vector<std::shared_ptr<ConfigurationContainer>> configurationContainers;
+std::vector<Validator> validators;
 
-template<class T>
-std::shared_ptr<Configuration<T>> createConfiguration(const char *key, T value) {
-
-    if (!key || !*key) {
-        MOCPP_DBG_ERR("invalid args");
-        return nullptr;
-    }
-
-    std::shared_ptr<Configuration<T>> configuration = std::make_shared<Configuration<T>>(key, value);
-
-    return configuration;
 }
 
-std::shared_ptr<Configuration<const char *>> createConfiguration(const char *key, const char *value) {
+using namespace ConfigurationLocal;
 
-    if (!key || !*key || !value) {
-        MOCPP_DBG_ERR("invalid args");
-        return nullptr;
-    }
-
-    std::shared_ptr<Configuration<const char*>> configuration = std::make_shared<Configuration<const char*>>(key, value);
-
-    return configuration;
-}
-
-std::unique_ptr<ConfigurationContainer> createConfigurationContainer(const char *filename) {
+std::unique_ptr<ConfigurationContainer> createConfigurationContainer(const char *filename, bool accessible) {
     //create non-persistent Configuration store (i.e. lives only in RAM) if
     //     - Flash FS usage is switched off OR
     //     - Filename starts with "/volatile"
     if (!filesystem ||
                  !strncmp(filename, CONFIGURATION_VOLATILE, strlen(CONFIGURATION_VOLATILE))) {
-        return std::unique_ptr<ConfigurationContainer>(new ConfigurationContainerVolatile(filename));
+        return makeConfigurationContainerVolatile(filename, accessible);
     } else {
-        //create persistent Configuration store. This is the normal caseS
-        return std::unique_ptr<ConfigurationContainer>(new ConfigurationContainerFlash(filesystem, filename));
+        //create persistent Configuration store. This is the normal case
+        return makeConfigurationContainerFlash(filesystem, filename, accessible);
     }
 }
 
-std::vector<std::shared_ptr<ConfigurationContainer>> configurationContainers;
 
 void addConfigurationContainer(std::shared_ptr<ConfigurationContainer> container) {
     configurationContainers.push_back(container);
-}
-
-std::vector<std::shared_ptr<ConfigurationContainer>>::iterator getConfigurationContainersBegin() {
-    return configurationContainers.begin();
-}
-
-std::vector<std::shared_ptr<ConfigurationContainer>>::iterator getConfigurationContainersEnd() {
-    return configurationContainers.end();
 }
 
 std::shared_ptr<ConfigurationContainer> getContainer(const char *filename) {
@@ -79,155 +62,183 @@ std::shared_ptr<ConfigurationContainer> getContainer(const char *filename) {
     }
 }
 
-template<class T>
-std::shared_ptr<Configuration<T>> declareConfiguration(const char *key, T defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged) {
-    //already existent? --> stored in last session --> do set default content, but set writepermission flag
-    
-    std::shared_ptr<ConfigurationContainer> container = getContainer(filename);
+ConfigurationContainer *declareContainer(const char *filename, bool accessible) {
+
+    auto container = getContainer(filename);
     
     if (!container) {
         MOCPP_DBG_DEBUG("init new configurations container: %s", filename);
 
-        container = createConfigurationContainer(filename);
-        configurationContainers.push_back(container);
-
-        if (!container->load()) {
-            MOCPP_DBG_WARN("Cannot load file contents. Path will be overwritten");
-        }
-    }
-
-    std::shared_ptr<AbstractConfiguration> configuration = container->getConfiguration(key);
-
-    if (configuration && strcmp(configuration->getSerializedType(), SerializedType<T>::get())) {
-        MOCPP_DBG_ERR("conflicting declared types for %s. Discard old config", key);
-        container->removeConfiguration(configuration);
-        configuration = nullptr;
-    }
-
-    std::shared_ptr<Configuration<T>> configurationConcrete = std::static_pointer_cast<Configuration<T>>(configuration);
-
-    if (!configurationConcrete) {
-        configurationConcrete = createConfiguration<T>(key, defaultValue);
-        configuration = std::static_pointer_cast<AbstractConfiguration>(configurationConcrete);
-
-        if (!configuration) {
-            MOCPP_DBG_ERR("Cannot find configuration stored from previous session and cannot create new one! Abort");
+        container = createConfigurationContainer(filename, accessible);
+        if (!container) {
+            MOCPP_DBG_ERR("OOM");
             return nullptr;
         }
-        container->addConfiguration(configuration);
+        configurationContainers.push_back(container);
     }
 
-    if (!remotePeerCanWrite)
-        configuration->revokePermissionRemotePeerCanWrite();
-    if (!remotePeerCanRead)
-        configuration->revokePermissionRemotePeerCanRead();
-    if (!localClientCanWrite)
-        configuration->revokePermissionLocalClientCanWrite();
-    if (rebootRequiredWhenChanged)
-        configuration->requireRebootWhenChanged();
+    if (container->isAccessible() != accessible) {
+        MOCPP_DBG_ERR("%s: conflicting accessibility declarations (expect %s)", filename, container->isAccessible() ? "accessible" : "inaccessible");
+        (void)0;
+    }
 
-    return configurationConcrete;
+    return container.get();
 }
 
-namespace Ocpp16 {
-
-std::shared_ptr<AbstractConfiguration> getConfiguration(const char *key) {
-    std::shared_ptr<AbstractConfiguration> result = nullptr;
-
-    for (auto container = configurationContainers.begin(); container != configurationContainers.end(); container++) {
-        result = (*container)->getConfiguration(key);
-        if (result)
-            return result;
+std::shared_ptr<Configuration> loadConfiguration(TConfig type, const char *key, bool accessible) {
+    for (auto& container : configurationContainers) {
+        if (auto config = container->getConfiguration(key)) {
+            if (config->getType() != type) {
+                MOCPP_DBG_ERR("conflicting type for %s - remove old config", key);
+                container->removeConfiguration(config.get());
+                continue;
+            }
+            if (container->isAccessible() != accessible) {
+                MOCPP_DBG_ERR("conflicting accessibility for %s", key);
+                (void)0;
+            }
+            container->loadStaticKey(*config.get(), key);
+            return config;
+        }
     }
     return nullptr;
 }
 
-std::unique_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>> getAllConfigurations() { //TODO maybe change to iterator?
-    auto result = std::unique_ptr<std::vector<std::shared_ptr<AbstractConfiguration>>>(
-                              new std::vector<std::shared_ptr<AbstractConfiguration>>()
-    );
+template<class T>
+bool loadFactoryDefault(Configuration& config, T loadFactoryDefault);
 
-    for (auto container = configurationContainers.begin(); container != configurationContainers.end(); container++) {
-        for (auto config = (*container)->configurationsIteratorBegin(); config != (*container)->configurationsIteratorEnd(); config++) {
-            if ((*config)->permissionRemotePeerCanRead()) {
-                result->push_back(*config);
+template<>
+bool loadFactoryDefault<int>(Configuration& config, int factoryDef) {
+    config.setInt(factoryDef);
+    return true;
+}
+
+template<>
+bool loadFactoryDefault<bool>(Configuration& config, bool factoryDef) {
+    config.setBool(factoryDef);
+    return true;
+}
+
+template<>
+bool loadFactoryDefault<const char*>(Configuration& config, const char *factoryDef) {
+    return config.setString(factoryDef);
+}
+
+void loadPermissions(Configuration& config, bool readonly, bool rebootRequired) {
+    if (readonly) {
+        config.setReadOnly();
+    }
+
+    if (rebootRequired) {
+        config.setRebootRequired();
+    }
+}
+
+template<class T>
+std::shared_ptr<Configuration> declareConfiguration(const char *key, T factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible) {
+
+    std::shared_ptr<Configuration> res = loadConfiguration(convertType<T>(), key, accessible);
+    if (!res) {
+        auto container = declareContainer(filename, accessible);
+        if (!container) {
+            return nullptr;
+        }
+
+        res = container->createConfiguration(convertType<T>(), key);
+        if (!res) {
+            return nullptr;
+        }
+
+        if (!loadFactoryDefault(*res.get(), factoryDef)) {
+            container->removeConfiguration(res.get());
+            return nullptr;
+        }
+    }
+
+    loadPermissions(*res.get(), readonly, rebootRequired);
+    return res;
+}
+
+template std::shared_ptr<Configuration> declareConfiguration<int>(const char *key, int factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible);
+template std::shared_ptr<Configuration> declareConfiguration<bool>(const char *key, bool factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible);
+template std::shared_ptr<Configuration> declareConfiguration<const char*>(const char *key, const char *factoryDef, const char *filename, bool readonly, bool rebootRequired, bool accessible);
+
+std::function<bool(const char*)> *getConfigurationValidator(const char *key) {
+    for (auto& v : validators) {
+        if (!strcmp(v.key, key)) {
+            return &v.checkValue;
+        }
+    }
+    return nullptr;
+}
+
+void registerConfigurationValidator(const char *key, std::function<bool(const char*)> validator) {
+    for (auto& v : validators) {
+        if (!strcmp(v.key, key)) {
+            v.checkValue = validator;
+            return;
+        }
+    }
+    validators.push_back(Validator{key, validator});
+}
+
+Configuration *getConfigurationPublic(const char *key) {
+    for (auto& container : configurationContainers) {
+        if (container->isAccessible()) {
+            if (auto res = container->getConfiguration(key)) {
+                return res.get();
             }
         }
     }
 
-    return result;
+    return nullptr;
 }
 
-} //end namespace Ocpp16
+std::vector<ConfigurationContainer*> getConfigurationContainersPublic() {
+    std::vector<ConfigurationContainer*> res;
 
-bool configuration_inited = false;
+    for (auto& container : configurationContainers) {
+        if (container->isAccessible()) {
+            res.push_back(container.get());
+        }
+    }
+
+    return res;
+}
 
 bool configuration_init(std::shared_ptr<FilesystemAdapter> _filesystem) {
-    if (configuration_inited)
-        return true; //configuration_init() already called; tolerate multiple calls so user can use this store for
-                     //credentials outside MicroOcpp which need to be loaded before mocpp_initialize()
-    
     filesystem = _filesystem;
-
-    if (!filesystem) {
-        configuration_inited = true;
-        return true; //no filesystem, nothing can go wrong
-    }
-
-    std::shared_ptr<ConfigurationContainer> containerDefault = nullptr;
-    for (auto container = configurationContainers.begin(); container != configurationContainers.end(); container++) {
-        if (!strcmp((*container)->getFilename(), CONFIGURATION_FN)) {
-            containerDefault = (*container);
-            break;
-        }
-    }
-
-    bool success = true;
-
-    if (containerDefault) {
-        MOCPP_DBG_DEBUG("Found default container before calling configuration_init(). If you added");
-        MOCPP_DBG_DEBUG(" > the container manually, please ensure to call load(). If not, it is a hint");
-        MOCPP_DBG_DEBUG(" > that declareConfiguration() was called too early");
-        (void)0;
-    } else {
-        containerDefault = createConfigurationContainer(CONFIGURATION_FN);
-        if (!containerDefault->load()) {
-            MOCPP_DBG_ERR("Loading default configurations file failed");
-            success = false;
-        }
-        configurationContainers.push_back(containerDefault);
-    }
-
-    configuration_inited = success;
-    return success;
+    return true;
 }
 
 void configuration_deinit() {
     configurationContainers.clear();
+    validators.clear();
     filesystem.reset();
-    configuration_inited = false;
+}
+
+bool configuration_load(const char *filename) {
+    bool success = true;
+
+    for (auto& container : configurationContainers) {
+        if ((!filename || !strcmp(filename, container->getFilename())) && !container->load()) {
+            success = false;
+        }
+    }
+
+    return success;
 }
 
 bool configuration_save() {
     bool success = true;
 
-    for (auto container = configurationContainers.begin(); container != configurationContainers.end(); container++) {
-        if (!(*container)->save()) {
+    for (auto& container : configurationContainers) {
+        if (!container->save()) {
             success = false;
         }
     }
 
     return success;
 }
-
-template std::shared_ptr<Configuration<int>> createConfiguration(const char *key, int value);
-template std::shared_ptr<Configuration<float>> createConfiguration(const char *key, float value);
-template std::shared_ptr<Configuration<bool>> createConfiguration(const char *key, bool value);
-template std::shared_ptr<Configuration<const char *>> createConfiguration(const char *key, const char * value);
-
-template std::shared_ptr<Configuration<int>> declareConfiguration(const char *key, int defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
-template std::shared_ptr<Configuration<float>> declareConfiguration(const char *key, float defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
-template std::shared_ptr<Configuration<bool>> declareConfiguration(const char *key, bool defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
-template std::shared_ptr<Configuration<const char *>> declareConfiguration(const char *key, const char *defaultValue, const char *filename, bool remotePeerCanWrite, bool remotePeerCanRead, bool localClientCanWrite, bool rebootRequiredWhenChanged);
 
 } //end namespace MicroOcpp

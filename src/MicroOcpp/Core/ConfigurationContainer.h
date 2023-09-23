@@ -14,40 +14,30 @@ namespace MicroOcpp {
 
 class ConfigurationContainer {
 private:
-    std::vector<uint16_t> configurations_revision;
     const char *filename;
-
-protected:
-    std::vector<std::shared_ptr<AbstractConfiguration>> configurations;
-
-    ConfigurationContainer(const char *filename) : filename(filename) { }
-
-    //Checks if configurations_revision is equal to (for all) configurations->getValueRevision(). If not, it refreshes the record
-    bool configurationsUpdated();
+    bool accessible;
 public:
-    virtual ~ConfigurationContainer() = default;
+    ConfigurationContainer(const char *filename, bool accessible) : filename(filename), accessible(accessible) { }
 
-    virtual bool load() = 0;
+    virtual ~ConfigurationContainer();
 
+    const char *getFilename() {return filename;}
+    bool isAccessible() {return accessible;}
+
+    virtual bool load() = 0; //called at the end of mocpp_intialize, to load the configurations with the stored value
     virtual bool save() = 0;
 
-    const char *getFilename() {return filename;};
+    virtual std::shared_ptr<Configuration> createConfiguration(TConfig type, const char *key) = 0;
+    virtual void removeConfiguration(Configuration *config) = 0;
 
-    std::shared_ptr<AbstractConfiguration> getConfiguration(const char *key);
-    std::vector<std::shared_ptr<AbstractConfiguration>>::iterator configurationsIteratorBegin() {return configurations.begin();}
-    std::vector<std::shared_ptr<AbstractConfiguration>>::iterator configurationsIteratorEnd() {return configurations.end();}
-    bool removeConfiguration(std::shared_ptr<AbstractConfiguration> configuration);
-    void addConfiguration(std::shared_ptr<AbstractConfiguration> configuration);
+    virtual size_t getConfigurationCount() = 0;
+    virtual Configuration *getConfiguration(size_t i) = 0;
+    virtual std::shared_ptr<Configuration> getConfiguration(const char *key) = 0;
+
+    virtual void loadStaticKey(Configuration& config, const char *key) { } //possible optimization: can replace internal key with passed static key
 };
 
-class ConfigurationContainerVolatile : public ConfigurationContainer {
-public:
-    ConfigurationContainerVolatile(const char *filename) : ConfigurationContainer(filename) { }
-
-    bool load() {return true;}
-
-    bool save() {return true;}
-};
+std::unique_ptr<ConfigurationContainer> makeConfigurationContainerVolatile(const char *filename, bool accessible);
 
 } //end namespace MicroOcpp
 

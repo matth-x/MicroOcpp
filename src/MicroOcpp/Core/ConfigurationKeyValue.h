@@ -7,104 +7,67 @@
 
 #include <ArduinoJson.h>
 #include <memory>
-#include <functional>
-#include <string>
+
+#define MOCPP_CONFIG_MAX_VALSTRSIZE 128
+
+#ifndef MOCPP_CONFIG_EXT_PREFIX
+#define MOCPP_CONFIG_EXT_PREFIX "Cst_"
+#endif
 
 namespace MicroOcpp {
 
-class AbstractConfiguration {
-private:
-    std::string key;
+using revision_t = uint16_t;
 
-    bool rebootRequiredWhenChanged = false;
-
-    bool remotePeerCanWrite = true;
-    bool remotePeerCanRead = true;
-    bool localClientCanWrite = true;
-protected:
-    uint16_t value_revision = 0; //number of memory-relevant changes of subclass-member "value" (deleting counts too). This will be important for the client to detect if there was a change
-    bool initializedValue = false;
-
-    AbstractConfiguration(const char *key);
-    size_t getStorageHeaderJsonCapacity();
-    void storeStorageHeader(JsonObject &keyValuePair);
-    size_t getOcppMsgHeaderJsonCapacity();
-    void storeOcppMsgHeader(JsonObject &keyValuePair);
-    bool isValid();
-
-    bool permissionLocalClientCanWrite() {return localClientCanWrite;}
-public:
-    virtual ~AbstractConfiguration();
-    const char *getKey();
-
-    void requireRebootWhenChanged();
-    bool requiresRebootWhenChanged();
-
-    uint16_t getValueRevision();
-
-    virtual std::unique_ptr<DynamicJsonDocument> toJsonStorageEntry() = 0;
-    virtual std::unique_ptr<DynamicJsonDocument> toJsonOcppMsgEntry() = 0;
-
-    virtual const char *getSerializedType() = 0;
-
-    bool permissionRemotePeerCanWrite() {return remotePeerCanWrite;}
-    bool permissionRemotePeerCanRead() {return remotePeerCanRead;}
-    void revokePermissionRemotePeerCanWrite() {remotePeerCanWrite = false;}
-    void revokePermissionRemotePeerCanRead() {remotePeerCanRead = false;}
-    void revokePermissionLocalClientCanWrite() {localClientCanWrite = false;}
+enum class TConfig : uint8_t {
+    Int,
+    Bool,
+    String
 };
-
 
 template<class T>
-struct SerializedType {
-    static const char *get() {return "undefined";}
-};
+TConfig convertType();
 
-template<> struct SerializedType<int> {static const char *get() {return "int";}};
-template<> struct SerializedType<float> {static const char *get() {return "float";}};
-template<> struct SerializedType<bool> {static const char *get() {return "bool";}};
-template<> struct SerializedType<const char*> {static const char *get() {return "string";}};
-
-template <class T>
-class Configuration : public AbstractConfiguration {
+class Configuration {
+protected:
+    revision_t value_revision = 0; //write access counter; used to check if this config has been changed
 private:
-    T value;
-    size_t getValueJsonCapacity();
+    bool rebootRequired = false;
+    bool readOnly = false;
 public:
-    Configuration(const char *key, T value);
-    const T &operator=(const T & newVal);
-    operator T();
-    bool isValid();
+    virtual ~Configuration();
 
-    std::unique_ptr<DynamicJsonDocument> toJsonStorageEntry();
-    std::unique_ptr<DynamicJsonDocument> toJsonOcppMsgEntry();
+    virtual bool setKey(const char *key) = 0;
+    virtual const char *getKey() = 0;
 
-    const char *getSerializedType() {return SerializedType<T>::get();} //returns "int" or "float" as written to the configuration Json file
+    virtual void setInt(int);
+    virtual void setBool(bool);
+    virtual bool setString(const char*);
+
+    virtual int getInt();
+    virtual bool getBool();
+    virtual const char *getString(); //always returns c-string (empty if undefined)
+
+    virtual TConfig getType() = 0;
+
+    revision_t getValueRevision(); 
+
+    void setRebootRequired();
+    bool isRebootRequired();
+
+    void setReadOnly();
+    bool isReadOnly();
 };
 
-template <>
-class Configuration<const char *> : public AbstractConfiguration {
-private:
-    std::string value;
-    size_t getValueJsonCapacity();
+/*
+ * Default implementations of the Configuration interface.
+ *
+ * How to use custom implementations: for each OCPP config, pass a config instance to the OCPP lib
+ * before its initialization stage. Then the library won't create new config objects but 
+ */
+std::unique_ptr<Configuration> makeConfiguration(TConfig type, const char *key);
 
-    std::function<bool(const char*)> validator;
-public:
-    Configuration(const char *key, const char *value);
-    ~Configuration();
-    const char *operator=(const char *newVal);
-    operator const char*();
-    bool isValid();
-    size_t getBuffsize();
-
-    std::unique_ptr<DynamicJsonDocument> toJsonStorageEntry();
-    std::unique_ptr<DynamicJsonDocument> toJsonOcppMsgEntry();
-
-    const char *getSerializedType() {return SerializedType<const char *>::get();}
-
-    void setValidator(std::function<bool(const char*)> validator);
-    std::function<bool(const char*)> getValidator();
-};
+const char *serializeTConfig(TConfig type);
+bool deserializeTConfig(const char *serialized, TConfig& out);
 
 } //end namespace MicroOcpp
 

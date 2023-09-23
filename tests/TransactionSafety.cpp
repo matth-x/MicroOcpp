@@ -14,6 +14,7 @@ using namespace MicroOcpp;
 
 
 TEST_CASE( "Transaction safety" ) {
+    printf("\nRun %s\n",  "Transaction safety");
 
     //initialize Context with dummy socket
     LoopbackConnection loopback;
@@ -21,8 +22,7 @@ TEST_CASE( "Transaction safety" ) {
 
     mocpp_set_timer(custom_timer_cb);
 
-    auto connectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN);
-        *connectionTimeOut = 30;
+    declareConfiguration<int>("ConnectionTimeOut", 30)->setInt(30);
 
     SECTION("Basic transaction") {
         MOCPP_DBG_DEBUG("Basic transaction");

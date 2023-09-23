@@ -124,6 +124,7 @@ set(MOCPP_SRC_UNIT
     tests/SmartCharging.cpp
     tests/Api.cpp
     tests/Metering.cpp
+    tests/Configuration.cpp
 )
 
 add_executable(mo_unit_tests

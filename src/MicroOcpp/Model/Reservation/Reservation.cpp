@@ -13,33 +13,49 @@
 using namespace MicroOcpp;
 
 Reservation::Reservation(Model& model, unsigned int slot) : model(model), slot(slot) {
-    const size_t KEY_SIZE = 50;
-    char key [KEY_SIZE] = {'\0'};
-
-    snprintf(key, KEY_SIZE, "cid_%u", slot);
-    connectorId = declareConfiguration<int>(key, -1, RESERVATION_FN, false, false, true, false);
-
-    snprintf(key, KEY_SIZE, "expdt_%u", slot);
-    expiryDateRaw = declareConfiguration<const char*>(key, "", RESERVATION_FN, false, false, true, false);
-    expiryDate.setTime(*expiryDateRaw);
     
-    snprintf(key, KEY_SIZE, "idt_%u", slot);
-    idTag = declareConfiguration<const char*>(key, "", RESERVATION_FN, false, false, true, false);
+    snprintf(connectorIdKey, sizeof(connectorIdKey), MOCPP_RESERVATION_CID_KEY "%u", slot);
+    connectorIdInt = declareConfiguration<int>(connectorIdKey, -1, RESERVATION_FN, false, false, false);
 
-    snprintf(key, KEY_SIZE, "rsvid_%u", slot);
-    reservationId = declareConfiguration<int>(key, -1, RESERVATION_FN, false, false, true, false);
+    snprintf(expiryDateRawKey, sizeof(expiryDateRawKey), MOCPP_RESERVATION_EXPDATE_KEY "%u", slot);
+    expiryDateRawString = declareConfiguration<const char*>(expiryDateRawKey, "", RESERVATION_FN, false, false, false);
+    expiryDate.setTime(expiryDateRawString->getString());
+    
+    snprintf(idTagKey, sizeof(idTagKey), MOCPP_RESERVATION_IDTAG_KEY "%u", slot);
+    idTagString = declareConfiguration<const char*>(idTagKey, "", RESERVATION_FN, false, false, false);
 
-    snprintf(key, KEY_SIZE, "pidt_%u", slot);
-    parentIdTag = declareConfiguration<const char*>(key, "", RESERVATION_FN, false, false, true, false);
+    snprintf(reservationIdKey, sizeof(reservationIdKey), MOCPP_RESERVATION_RESID_KEY "%u", slot);
+    reservationIdInt = declareConfiguration<int>(reservationIdKey, -1, RESERVATION_FN, false, false, false);
 
-    if (!connectorId || !expiryDateRaw || !idTag || !reservationId || !parentIdTag) {
+    snprintf(parentIdTagKey, sizeof(parentIdTagKey), MOCPP_RESERVATION_PARENTID_KEY "%u", slot);
+    parentIdTagString = declareConfiguration<const char*>(parentIdTagKey, "", RESERVATION_FN, false, false, false);
+
+    if (!connectorIdInt || !expiryDateRawString || !idTagString || !reservationIdInt || !parentIdTagString) {
         MOCPP_DBG_ERR("initialization failure");
         (void)0;
     }
 }
 
+Reservation::~Reservation() {
+    if (connectorIdInt->getKey() == connectorIdKey) {
+        connectorIdInt->setKey(nullptr);
+    }
+    if (expiryDateRawString->getKey() == expiryDateRawKey) {
+        expiryDateRawString->setKey(nullptr);
+    }
+    if (idTagString->getKey() == idTagKey) {
+        idTagString->setKey(nullptr);
+    }
+    if (reservationIdInt->getKey() == reservationIdKey) {
+        reservationIdInt->setKey(nullptr);
+    }
+    if (parentIdTagString->getKey() == parentIdTagKey) {
+        parentIdTagString->setKey(nullptr);
+    }
+}
+
 bool Reservation::isActive() {
-    if (*connectorId < 0) {
+    if (connectorIdInt->getInt() < 0) {
         //reservation invalidated
         return false;
     }
@@ -54,7 +70,7 @@ bool Reservation::isActive() {
 }
 
 bool Reservation::matches(unsigned int connectorId) {
-    return (int) connectorId == *this->connectorId;
+    return (int) connectorId == connectorIdInt->getInt();
 }
 
 bool Reservation::matches(const char *idTag, const char *parentIdTag) {
@@ -62,11 +78,11 @@ bool Reservation::matches(const char *idTag, const char *parentIdTag) {
         return true;
     }
 
-    if (idTag && !strcmp(idTag, *this->idTag)) {
+    if (idTag && !strcmp(idTag, idTagString->getString())) {
         return true;
     }
 
-    if (parentIdTag && !strcmp(parentIdTag, *this->parentIdTag)) {
+    if (parentIdTag && !strcmp(parentIdTag, parentIdTagString->getString())) {
         return true;
     }
 
@@ -74,7 +90,7 @@ bool Reservation::matches(const char *idTag, const char *parentIdTag) {
 }
 
 int Reservation::getConnectorId() {
-    return *connectorId;
+    return connectorIdInt->getInt();
 }
 
 Timestamp& Reservation::getExpiryDate() {
@@ -82,35 +98,35 @@ Timestamp& Reservation::getExpiryDate() {
 }
 
 const char *Reservation::getIdTag() {
-    return *idTag;
+    return idTagString->getString();
 }
 
 int Reservation::getReservationId() {
-    return *reservationId;
+    return reservationIdInt->getInt();
 }
 
 const char *Reservation::getParentIdTag() {
-    return parentIdTag->getBuffsize() <= 1 ? (const char *) nullptr : *parentIdTag;
+    return parentIdTagString->getString();
 }
 
 void Reservation::update(JsonObject payload) {
-    *connectorId = payload["connectorId"] | -1;
+    connectorIdInt->setInt(payload["connectorId"] | -1);
     expiryDate.setTime(payload["expiryDate"]);
-    *expiryDateRaw = payload["expiryDate"].as<const char*>();
-    *idTag = payload["idTag"].as<const char*>();
-    *reservationId = payload["reservationId"] | -1;
-    *parentIdTag = payload["parentIdTag"] | "";
+    expiryDateRawString->setString(payload["expiryDate"] | "");
+    idTagString->setString(payload["idTag"] | "");
+    reservationIdInt->setInt(payload["reservationId"] | -1);
+    parentIdTagString->setString(payload["parentIdTag"] | "");
 
     configuration_save();
 }
 
 void Reservation::clear() {
-    *connectorId = -1;
+    connectorIdInt->setInt(-1);
     expiryDate = MIN_TIME;
-    *expiryDateRaw = "";
-    *idTag = "";
-    *reservationId = -1;
-    *parentIdTag = "";
+    expiryDateRawString->setString("");
+    idTagString->setString("");
+    reservationIdInt->setInt(-1);
+    parentIdTagString->setString("");
 
     configuration_save();
 }

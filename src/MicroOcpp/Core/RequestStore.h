@@ -15,7 +15,7 @@ namespace MicroOcpp {
 
 class RequestStore;
 class FilesystemAdapter;
-template<class T> class Configuration;
+class Configuration;
 
 class StoredOperationHandler {
 private:
@@ -48,7 +48,7 @@ public:
 class RequestStore {
 private:
     std::shared_ptr<FilesystemAdapter> filesystem;
-    std::shared_ptr<Configuration<int>> opBegin; //Tx-related operations are stored; index of the first pending operation
+    std::shared_ptr<Configuration> opBeginInt; //Tx-related operations are stored; index of the first pending operation
     unsigned int opEnd = 0; //one place after last number
 
 public:

@@ -46,9 +46,10 @@ public:
 };
 
 TEST_CASE( "Configuration Behavior" ) {
+    printf("\nRun %s\n",  "Configuration Behavior");
 
     //clean state
-    auto filesystem = makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail);
+    auto filesystem = makeDefaultFilesystemAdapter(FilesystemOpt::Use_Mount_FormatOnFail);
     MOCPP_DBG_DEBUG("remove all");
     FilesystemUtils::remove_if(filesystem, [] (const char*) {return true;});
 
@@ -70,10 +71,10 @@ TEST_CASE( "Configuration Behavior" ) {
         startTransaction("mIdTag");
         loop();
 
-        auto config = declareConfiguration<bool>("StopTransactionOnEVSideDisconnect", true);
+        auto configBool = declareConfiguration<bool>("StopTransactionOnEVSideDisconnect", true);
 
         SECTION("set true") {
-            *config = true;
+            configBool->setBool(true);
 
             setConnectorPluggedInput([] () {return false;});
             loop();
@@ -82,7 +83,7 @@ TEST_CASE( "Configuration Behavior" ) {
         }
 
         SECTION("set false") {
-            *config = false;
+            configBool->setBool(false);
 
             setConnectorPluggedInput([] () {return false;});
             loop();
@@ -97,13 +98,13 @@ TEST_CASE( "Configuration Behavior" ) {
     }
 
     SECTION("StopTransactionOnInvalidId") {
-        auto config = declareConfiguration<bool>("StopTransactionOnInvalidId", true);
+        auto configBool = declareConfiguration<bool>("StopTransactionOnInvalidId", true);
 
         checkMsg.registerOperation("Authorize", [] () {return new CustomAuthorize("Invalid");});
         checkMsg.registerOperation("StartTransaction", [] () {return new CustomStartTransaction("Invalid");});
 
         SECTION("set true") {
-            *config = true;
+            configBool->setBool(true);
 
             beginTransaction("mIdTag");
             loop();
@@ -117,7 +118,7 @@ TEST_CASE( "Configuration Behavior" ) {
         }
 
         SECTION("set false") {
-            *config = false;
+            configBool->setBool(false);
 
             beginTransaction("mIdTag");
             loop();
@@ -137,14 +138,14 @@ TEST_CASE( "Configuration Behavior" ) {
     }
 
     SECTION("AllowOfflineTxForUnknownId") {
-        auto config = declareConfiguration<bool>("AllowOfflineTxForUnknownId", true);
-        auto authorizationTimeout = MicroOcpp::declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "AuthorizationTimeout", 1);
-        *authorizationTimeout = 1; //try normal Authorize for 1s, then enter offline mode
+        auto configBool = declareConfiguration<bool>("AllowOfflineTxForUnknownId", true);
+        auto authorizationTimeoutInt = declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "AuthorizationTimeout", 1);
+        authorizationTimeoutInt->setInt(1); //try normal Authorize for 1s, then enter offline mode
 
         loopback.setConnected(false); //connection loss
 
         SECTION("set true") {
-            *config = true;
+            configBool->setBool(true);
 
             beginTransaction("mIdTag");
             loop();
@@ -158,7 +159,7 @@ TEST_CASE( "Configuration Behavior" ) {
         }
 
         SECTION("set false") {
-            *config = false;
+            configBool->setBool(false);
 
             beginTransaction("mIdTag");
             REQUIRE(connector->getStatus() == ChargePointStatus::Preparing);
@@ -173,24 +174,22 @@ TEST_CASE( "Configuration Behavior" ) {
     }
 
     SECTION("LocalPreAuthorize") {
-        auto config = declareConfiguration<bool>("LocalPreAuthorize", true);
-        auto authorizationTimeout = MicroOcpp::declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20);
-        *authorizationTimeout = 300; //try normal Authorize for 5 minutes
+        auto configBool = declareConfiguration<bool>("LocalPreAuthorize", true);
+        auto authorizationTimeoutInt = declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20);
+        authorizationTimeoutInt->setInt(300); //try normal Authorize for 5 minutes
 
-        auto localAuthorizeOffline = declareConfiguration<bool>("LocalAuthorizeOffline", true, CONFIGURATION_FN, true, true, true, false);
-        *localAuthorizeOffline = true;
-        auto localAuthListEnabled = declareConfiguration<bool>("LocalAuthListEnabled", true, CONFIGURATION_FN, true, true, true, false);
-        *localAuthListEnabled = true;
+        declareConfiguration<bool>("LocalAuthorizeOffline", true)->setBool(true);
+        declareConfiguration<bool>("LocalAuthListEnabled", true)->setBool(true);
 
         //define local auth list with entry local-idtag
-        std::string localListMsg = "[2,\"testmsg-01\",\"SendLocalList\",{\"listVersion\":1,\"localAuthorizationList\":[{\"idTag\":\"local-idtag\",\"idTagInfo\":{\"status\":\"Accepted\"}}],\"updateType\":\"Full\"}]";
-        loopback.sendTXT(localListMsg);
+        const char *localListMsg = "[2,\"testmsg-01\",\"SendLocalList\",{\"listVersion\":1,\"localAuthorizationList\":[{\"idTag\":\"local-idtag\",\"idTagInfo\":{\"status\":\"Accepted\"}}],\"updateType\":\"Full\"}]";
+        loopback.sendTXT(localListMsg, strlen(localListMsg));
         loop();
 
         loopback.setConnected(false); //connection loss
 
         SECTION("set true - accepted idtag") {
-            *config = true;
+            configBool->setBool(true);
 
             beginTransaction("local-idtag");
             loop();
@@ -199,7 +198,7 @@ TEST_CASE( "Configuration Behavior" ) {
         }
 
         SECTION("set false") {
-            *config = false;
+            configBool->setBool(false);
 
             beginTransaction("local-idtag");
             loop();

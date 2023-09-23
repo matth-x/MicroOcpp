@@ -16,6 +16,9 @@
 #define MOCPP_TXRECORD_SIZE 4 //no. of tx to hold on flash storage
 #endif
 
+#define MOCPP_TXSTORE_TXBEGIN_KEY "txBegin_"
+#define MOCPP_TXSTORE_TXEND_KEY "txEnd_"
+
 namespace MicroOcpp {
 
 class TransactionStore;
@@ -26,13 +29,21 @@ private:
     const unsigned int connectorId;
 
     std::shared_ptr<FilesystemAdapter> filesystem;
-    std::shared_ptr<Configuration<int>> txBegin; //if txNr < txBegin, tx has been safely deleted
-    std::shared_ptr<Configuration<int>> txEnd;
+    std::shared_ptr<Configuration> txBeginInt; //if txNr < txBegin, tx has been safely deleted
+    char txBeginKey [sizeof(MOCPP_TXSTORE_TXBEGIN_KEY "xxx") + 1]; //"xxx": placeholder for connectorId
+
+    std::shared_ptr<Configuration> txEndInt;
+    char txEndKey [sizeof(MOCPP_TXSTORE_TXEND_KEY "xxx") + 1];
     
     std::deque<std::weak_ptr<Transaction>> transactions;
 
 public:
     ConnectorTransactionStore(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem);
+    ConnectorTransactionStore(const ConnectorTransactionStore&) = delete;
+    ConnectorTransactionStore(ConnectorTransactionStore&&) = delete;
+    ConnectorTransactionStore& operator=(const ConnectorTransactionStore&) = delete;
+
+    ~ConnectorTransactionStore();
     
     std::shared_ptr<Transaction> getLatestTransaction();
     bool commit(Transaction *transaction);

@@ -16,36 +16,14 @@ using namespace MicroOcpp;
 MeteringService::MeteringService(Context& context, int numConn, std::shared_ptr<FilesystemAdapter> filesystem)
       : context(context), meterStore(filesystem) {
 
-    auto MeterValuesSampledData = declareConfiguration<const char*>(
-        "MeterValuesSampledData",
-        "Energy.Active.Import.Register,Power.Active.Import",
-        CONFIGURATION_FN,
-        true,true,true,false
-    );
-    
-    auto StopTxnSampledData = declareConfiguration<const char*>(
-        "StopTxnSampledData",
-        "",
-        CONFIGURATION_FN,
-        true,true,true,false
-    );
-    
-    auto MeterValuesAlignedData = declareConfiguration<const char*>(
-        "MeterValuesAlignedData",
-        "Energy.Active.Import.Register,Power.Active.Import",
-        CONFIGURATION_FN,
-        true,true,true,false
-    );
-    
-    auto StopTxnAlignedData = declareConfiguration<const char*>(
-        "StopTxnAlignedData",
-        "",
-        CONFIGURATION_FN,
-        true,true,true,false
-    );
+    //set factory defaults for Metering-related config keys
+    declareConfiguration<const char*>("MeterValuesSampledData", "Energy.Active.Import.Register,Power.Active.Import");
+    declareConfiguration<const char*>("StopTxnSampledData", "");
+    declareConfiguration<const char*>("MeterValuesAlignedData", "Energy.Active.Import.Register,Power.Active.Import");
+    declareConfiguration<const char*>("StopTxnAlignedData", "");
     
     for (int i = 0; i < numConn; i++) {
-        connectors.push_back(std::unique_ptr<MeteringConnector>(new MeteringConnector(context.getModel(), i, meterStore)));
+        connectors.emplace_back(new MeteringConnector(context.getModel(), i, meterStore));
     }
 
     std::function<bool(const char*)> validateSelectString = [this] (const char *csl) {
@@ -77,10 +55,10 @@ MeteringService::MeteringService(Context& context, int numConn, std::shared_ptr<
         }
         return isValid;
     };
-    MeterValuesSampledData->setValidator(validateSelectString);
-    StopTxnSampledData->setValidator(validateSelectString);
-    MeterValuesAlignedData->setValidator(validateSelectString);
-    StopTxnAlignedData->setValidator(validateSelectString);
+    registerConfigurationValidator("MeterValuesSampledData", validateSelectString);
+    registerConfigurationValidator("StopTxnSampledData", validateSelectString);
+    registerConfigurationValidator("MeterValuesAlignedData", validateSelectString);
+    registerConfigurationValidator("StopTxnAlignedData", validateSelectString);
 
     /*
      * Register further message handlers to support echo mode: when this library

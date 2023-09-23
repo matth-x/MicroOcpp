@@ -4,6 +4,7 @@
 #include "./helpers/testHelper.h"
 
 TEST_CASE( "Context lifecycle" ) {
+    printf("\nRun %s\n",  "Context lifecycle");
 
     //set console output to the cpp console to display outputs
     //mo_set_console_out(cpp_console_out);

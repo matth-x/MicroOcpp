@@ -34,6 +34,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository: matth-x/MicroOcppMongoose
+        ref: 642006f0629b715dce44a913a5c4b77f3f8953bb
         path: examples/ESP-IDF/components/MicroOcppMongoose
     - name: Checkout ArduinoJson
       uses: actions/checkout@v3

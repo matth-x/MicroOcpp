@@ -33,7 +33,7 @@ class FirmwareService {
 private:
     Context& context;
     
-    std::shared_ptr<Configuration<const char *>> previousBuildNumber;
+    std::shared_ptr<Configuration> previousBuildNumberString;
     std::string buildNumber;
 
     std::function<DownloadStatus()> downloadStatusInput;
