@@ -53,7 +53,7 @@ void WSClient::loop() {
 }
 
 bool WSClient::sendTXT(const char *msg, size_t length) {
-    return wsock->sendTXT(out.c_str(), out.length());
+    return wsock->sendTXT(msg, length);
 }
 
 void WSClient::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
