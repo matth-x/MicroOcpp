@@ -524,47 +524,62 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         return nullptr;
     }
 
-    auto rService = model.getReservationService();
+    MOCPP_DBG_DEBUG("Begin transaction process (%s), prepare", idTag != nullptr ? idTag : "");
+    
     AuthorizationData *localAuth = nullptr;
-    bool expiredLocalAuth = false;
+    bool offlineBlockedAuth = false; //if offline authorization will be blocked by local auth list entry
 
     //check local OCPP whitelist
-    if (auto authService = model.getAuthorizationService()) {
+    if (model.getAuthorizationService()) {
+        localAuth = model.getAuthorizationService()->getLocalAuthorization(idTag);
         
-        localAuth = authService->getLocalAuthorization(idTag);
-
-        //check if blocked by reservation
-        Reservation *reservation = nullptr;
-        if (localAuth && rService) {
-            reservation = rService->getReservation(
-                        connectorId,
-                        idTag,
-                        localAuth->getParentIdTag() ? localAuth->getParentIdTag() : nullptr);
-            if (reservation && !reservation->matches(
-                        idTag,
-                        localAuth->getParentIdTag() ? localAuth->getParentIdTag() : nullptr)) {
-                //reservation found for connector but does not match idTag or parentIdTag
-                MOCPP_DBG_DEBUG("reservation blocks local auth at connector %u", connectorId);
-                localAuth = nullptr;;
-            }
-        }
-
+        //check authorization status
         if (localAuth && localAuth->getAuthorizationStatus() != AuthorizationStatus::Accepted) {
             MOCPP_DBG_DEBUG("local auth denied (%s)", idTag);
+            offlineBlockedAuth = true;
             localAuth = nullptr;
         }
 
         //check expiry
-        if (localAuth && localAuth->getExpiryDate()) {
-            auto& tnow = model.getClock().now();
-            if (tnow >= *localAuth->getExpiryDate()) {
-                MOCPP_DBG_DEBUG("idTag %s local auth entry expired", idTag);
-                localAuth = nullptr;
-                expiredLocalAuth = true;
-            }
+        if (localAuth && localAuth->getExpiryDate() && *localAuth->getExpiryDate() < model.getClock().now()) {
+            MOCPP_DBG_DEBUG("idTag %s local auth entry expired", idTag);
+            offlineBlockedAuth = true;
+            localAuth = nullptr;
         }
     }
 
+    Reservation *reservation = nullptr;
+    bool offlineBlockedResv = false; //if offline authorization will be blocked by reservation
+
+    //check if blocked by reservation
+    if (model.getReservationService()) {
+        const char *parentIdTag = localAuth ? localAuth->getParentIdTag() : nullptr;
+
+        reservation = model.getReservationService()->getReservation(
+                connectorId,
+                idTag,
+                parentIdTag);
+
+        if (reservation && !reservation->matches(
+                    idTag,
+                    parentIdTag)) {
+            //reservation blocks connector
+            offlineBlockedResv = true; //when offline, tx is always blocked
+
+            //if parentIdTag is known, abort this tx immediately, otherwise wait for Authorize.conf to decide
+            if (parentIdTag) {
+                //parentIdTag known
+                MOCPP_DBG_INFO("connector %u reserved - abort transaction", connectorId);
+                updateTxNotification(TxNotification::ReservationConflict);
+                return nullptr;
+            } else {
+                //parentIdTag unkown but local authorization failed in any case
+                MOCPP_DBG_INFO("connector %u reserved - no local auth", connectorId);
+                localAuth = nullptr;
+            }
+        }
+    }
+    
     transaction = allocateTransaction();
 
     if (!transaction) {
@@ -581,17 +596,16 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
     transaction->setBeginTimestamp(model.getClock().now());
 
-    MOCPP_DBG_DEBUG("Begin transaction process (%s), prepare", idTag != nullptr ? idTag : "");
-
     //check for local preauthorization
-    if (localPreAuthorizeBool && localPreAuthorizeBool->getBool()) {
-        if (localAuth && localAuth->getAuthorizationStatus() == AuthorizationStatus::Accepted) {
-            MOCPP_DBG_DEBUG("Begin transaction process (%s), preauthorized locally", idTag != nullptr ? idTag : "");
+    if (localAuth && localPreAuthorizeBool && localPreAuthorizeBool->getBool()) {
+        MOCPP_DBG_DEBUG("Begin transaction process (%s), preauthorized locally", idTag != nullptr ? idTag : "");
 
-            transaction->setAuthorized();
-
-            updateTxNotification(TxNotification::Authorized);
+        if (reservation) {
+            transaction->setReservationId(reservation->getReservationId());
         }
+        transaction->setAuthorized();
+
+        updateTxNotification(TxNotification::Authorized);
     }
 
     transaction->commit();
@@ -616,15 +630,21 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
                         connectorId,
                         tx->getIdTag(),
                         idTagInfo["parentIdTag"] | (const char*) nullptr);
-            if (reservation && !reservation->matches(
-                        tx->getIdTag(),
-                        idTagInfo["parentIdTag"] | (const char*) nullptr)) {
-                //reservation found for connector but does not match idTag or parentIdTag
-                MOCPP_DBG_INFO("connector %u reserved - abort transaction", connectorId);
-                tx->setInactive();
-                tx->commit();
-                updateTxNotification(TxNotification::ReservationConflict);
-                return;
+            if (reservation) {
+                //reservation found for connector
+                if (reservation->matches(
+                            tx->getIdTag(),
+                            idTagInfo["parentIdTag"] | (const char*) nullptr)) {
+                    MOCPP_DBG_INFO("connector %u matches reservationId %i", connectorId, reservation->getReservationId());
+                    tx->setReservationId(reservation->getReservationId());
+                } else {
+                    //reservation found for connector but does not match idTag or parentIdTag
+                    MOCPP_DBG_INFO("connector %u reserved - abort transaction", connectorId);
+                    tx->setInactive();
+                    tx->commit();
+                    updateTxNotification(TxNotification::ReservationConflict);
+                    return;
+                }
             }
         }
 
@@ -634,9 +654,19 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
         updateTxNotification(TxNotification::Authorized);
     });
-    authorize->setOnTimeoutListener([this, tx, localAuth, expiredLocalAuth] () {
 
-        if (expiredLocalAuth) {
+    //capture local auth and reservation check in for timeout handler
+    bool localAuthFound = localAuth;
+    bool reservationFound = reservation;
+    int reservationId = reservation ? reservation->getReservationId() : -1;
+    authorize->setOnTimeoutListener([this, tx,
+                offlineBlockedAuth, 
+                offlineBlockedResv, 
+                localAuthFound,
+                reservationFound,
+                reservationId] () {
+
+        if (offlineBlockedAuth) {
             //local auth entry exists, but is expired -> avoid offline tx
             MOCPP_DBG_DEBUG("Abort transaction process (%s), timeout, expired local auth", tx->getIdTag());
             tx->setInactive();
@@ -644,39 +674,39 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             updateTxNotification(TxNotification::AuthorizationTimeout);
             return;
         }
-        
-        if (localAuth) {
+
+        if (offlineBlockedResv) {
+            //reservation found for connector but does not match idTag or parentIdTag
+            MOCPP_DBG_INFO("connector %u reserved (offline) - abort transaction", connectorId);
+            tx->setInactive();
+            tx->commit();
+            updateTxNotification(TxNotification::ReservationConflict);
+            return;
+        }
+
+        if (localAuthFound) {
             MOCPP_DBG_DEBUG("Offline transaction process (%s), locally authorized", tx->getIdTag());
+            if (reservationFound) {
+                tx->setReservationId(reservationId);
+            }
             tx->setAuthorized();
             tx->commit();
 
             updateTxNotification(TxNotification::Authorized);
             return;
-        }
-
-        if (model.getReservationService()) {
-            auto reservation = model.getReservationService()->getReservation(
-                        connectorId,
-                        tx->getIdTag());
-            if (reservation && !reservation->matches(
-                        tx->getIdTag())) {
-                //reservation found for connector but does not match idTag or parentIdTag
-                MOCPP_DBG_INFO("connector %u reserved (offline) - abort transaction", connectorId);
-                tx->setInactive();
-                tx->commit();
-                updateTxNotification(TxNotification::ReservationConflict);
-                return;
-            }
         }
 
         if (allowOfflineTxForUnknownIdBool && allowOfflineTxForUnknownIdBool->getBool()) {
             MOCPP_DBG_DEBUG("Offline transaction process (%s), allow unknown ID", tx->getIdTag());
+            if (reservationFound) {
+                tx->setReservationId(reservationId);
+            }
             tx->setAuthorized();
             tx->commit();
             updateTxNotification(TxNotification::Authorized);
             return;
         }
-        
+
         MOCPP_DBG_DEBUG("Abort transaction process (%s): timeout", tx->getIdTag());
         tx->setInactive();
         tx->commit();

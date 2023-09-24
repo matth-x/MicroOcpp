@@ -43,7 +43,7 @@ TEST_CASE( "Reservation" ) {
         REQUIRE( rService );
 
         //set reservation
-        int reservationId = 1;
+        int reservationId = 123;
         unsigned int connectorId = 1;
         Timestamp expiryDate = model.getClock().now() + 3600; //expires one hour in future
         const char *idTag = "mIdTag";
@@ -65,6 +65,17 @@ TEST_CASE( "Reservation" ) {
         loop();
         REQUIRE( connector->getStatus() == ChargePointStatus::Reserved );
         REQUIRE( checkTxRejected );
+
+        //idTag matches reservation
+        beginTransaction("mIdTag");
+        loop();
+        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getTransaction()->getReservationId() == reservationId );
+
+        //reservation is reset after tx
+        endTransaction();
+        loop();
+        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
 
         mocpp_deinitialize();
     }

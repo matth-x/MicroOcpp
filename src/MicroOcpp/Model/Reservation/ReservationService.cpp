@@ -57,11 +57,11 @@ void ReservationService::loop() {
         //check if tx with same idTag or reservationId has started
         for (unsigned int cId = 1; cId < context.getModel().getNumConnectors(); cId++) {
             auto& transaction = context.getModel().getConnector(cId)->getTransaction();
-            if (transaction) {
+            if (transaction && transaction->isAuthorized()) {
                 const char *cIdTag = transaction->getIdTag();
                 if (transaction->getReservationId() == reservation->getReservationId() || 
                         (cIdTag && !strcmp(cIdTag, reservation->getIdTag()))) {
-                    
+
                     reservation->clear();
                     break;
                 }
