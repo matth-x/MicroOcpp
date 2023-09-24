@@ -446,5 +446,61 @@ TEST_CASE( "Reservation" ) {
         REQUIRE( connector->getStatus() == ChargePointStatus::Available );
     }
 
+    SECTION("CancelReservation") {
+        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+
+        //set reservation
+        int reservationId = 123;
+        unsigned int connectorId = 1;
+        Timestamp expiryDate = model.getClock().now() + 3600; //expires one hour in future
+        const char *idTag = "mIdTag";
+        const char *parentIdTag = nullptr;
+
+        rService->updateReservation(reservationId, connectorId, expiryDate, idTag, parentIdTag);
+        REQUIRE( connector->getStatus() == ChargePointStatus::Reserved );
+
+        //CancelReservation successfully
+        bool checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                "CancelReservation",
+                [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
+                    //create req
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto payload = doc->to<JsonObject>();
+                    payload["reservationId"] = reservationId;
+                    return doc;},
+                [&checkProcessed] (JsonObject payload) {
+                    //receive conf
+                    checkProcessed = true;
+
+                    REQUIRE( !strcmp(payload["status"] | "_Undefined", "Accepted") );
+                }
+        )));
+        loop();
+        REQUIRE( checkProcessed );
+        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+
+        //CancelReservation while no reservation exists
+        checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                "CancelReservation",
+                [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
+                    //create req
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto payload = doc->to<JsonObject>();
+                    payload["reservationId"] = reservationId;
+                    return doc;},
+                [&checkProcessed] (JsonObject payload) {
+                    //receive conf
+                    checkProcessed = true;
+
+                    REQUIRE( !strcmp(payload["status"] | "_Undefined", "Rejected") );
+                }
+        )));
+        loop();
+        REQUIRE( checkProcessed );
+        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+    }
+
     mocpp_deinitialize();
 }
