@@ -18,7 +18,7 @@ ReservationService::ReservationService(Context& context, unsigned int numConnect
     if (maxReservations > 0) {
         reservations.reserve((size_t) maxReservations);
         for (int i = 0; i < maxReservations; i++) {
-            reservations.push_back(std::unique_ptr<Reservation>(new Reservation(context.getModel(), i)));
+            reservations.emplace_back(new Reservation(context.getModel(), i));
         }
     }
 
@@ -48,7 +48,7 @@ void ReservationService::loop() {
             }
 
             //check if other tx started at this connector (e.g. due to RemoteStartTransaction)
-            if (connector->getTransaction() && connector->getTransaction()->isActive()) {
+            if (connector->getTransaction() && connector->getTransaction()->isAuthorized()) {
                 reservation->clear();
                 continue;
             }
@@ -57,11 +57,11 @@ void ReservationService::loop() {
         //check if tx with same idTag or reservationId has started
         for (unsigned int cId = 1; cId < context.getModel().getNumConnectors(); cId++) {
             auto& transaction = context.getModel().getConnector(cId)->getTransaction();
-            if (transaction) {
+            if (transaction && transaction->isAuthorized()) {
                 const char *cIdTag = transaction->getIdTag();
                 if (transaction->getReservationId() == reservation->getReservationId() || 
                         (cIdTag && !strcmp(cIdTag, reservation->getIdTag()))) {
-                    
+
                     reservation->clear();
                     break;
                 }
@@ -178,15 +178,19 @@ Reservation *ReservationService::getReservationById(int reservationId) {
     return nullptr;
 }
 
-bool ReservationService::updateReservation(JsonObject payload) {
-    if (auto reservation = getReservationById(payload["reservationId"])) {
-        reservation->update(payload);
+bool ReservationService::updateReservation(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag) {
+    if (auto reservation = getReservationById(reservationId)) {
+        if (getReservation(connectorId) && getReservation(connectorId) != reservation && getReservation(connectorId)->isActive()) {
+            MOCPP_DBG_DEBUG("found blocking reservation at connectorId %u", connectorId);
+            return false; //cannot transfer reservation to other connector with existing reservation
+        }
+        reservation->update(reservationId, connectorId, expiryDate, idTag, parentIdTag);
         return true;
     }
 
 // Alternative condition: avoids that one idTag can make two reservations at a time. The specification doesn't
 // mention that double-reservations should be possible but it seems to mean it. 
-    if (auto reservation = getReservation(payload["connectorId"], nullptr, nullptr)) {
+    if (auto reservation = getReservation(connectorId, nullptr, nullptr)) {
 //                payload["idTag"],
 //                payload.containsKey("parentIdTag") ? payload["parentIdTag"] : nullptr)) {
 //    if (auto reservation = getReservation(payload["connectorId"].as<int>())) {
@@ -198,7 +202,7 @@ bool ReservationService::updateReservation(JsonObject payload) {
     //update free reservation slot
     for (auto& reservation : reservations) {
         if (!reservation->isActive()) {
-            reservation->update(payload);
+            reservation->update(reservationId, connectorId, expiryDate, idTag, parentIdTag);
             return true;
         }
     }

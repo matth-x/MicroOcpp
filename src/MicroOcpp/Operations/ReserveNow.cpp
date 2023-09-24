@@ -33,24 +33,36 @@ void ReserveNow::processReq(JsonObject payload) {
         return;
     }
 
-    Timestamp validateTimestamp;
-    if (!validateTimestamp.setTime(payload["expiryDate"])) {
+    int connectorId = payload["connectorId"] | -1;
+    if (connectorId < 0 || connectorId >= model.getNumConnectors()) {
+        errorCode = "PropertyConstraintViolation";
+        return;
+    }
+
+    Timestamp expiryDate;
+    if (!expiryDate.setTime(payload["expiryDate"])) {
         MOCPP_DBG_WARN("bad time format");
         errorCode = "PropertyConstraintViolation";
         return;
     }
 
-    unsigned int connectorId = payload["connectorId"];
+    const char *idTag = payload["idTag"] | "";
+    if (!*idTag) {
+        errorCode = "PropertyConstraintViolation";
+        return;
+    }
+
+    const char *parentIdTag = nullptr;
+    if (payload.containsKey("parentIdTag")) {
+        parentIdTag = payload["parentIdTag"];
+    }
+
+    int reservationId = payload["reservationId"] | -1;
 
     if (model.getReservationService() &&
                 model.getNumConnectors() > 0) {
         auto rService = model.getReservationService();
         auto chargePoint = model.getConnector(0);
-
-        if (connectorId >= model.getNumConnectors()) {
-            errorCode = "PropertyConstraintViolation";
-            return;
-        }
 
         auto reserveConnectorZeroSupportedBool = declareConfiguration<bool>("ReserveConnectorZeroSupported", true, CONFIGURATION_VOLATILE);
         if (connectorId == 0 && (!reserveConnectorZeroSupportedBool || !reserveConnectorZeroSupportedBool->getBool())) {
@@ -58,8 +70,8 @@ void ReserveNow::processReq(JsonObject payload) {
             return;
         }
 
-        if (auto reservation = rService->getReservationById(payload["reservationId"])) {
-            reservation->update(payload);
+        if (auto reservation = rService->getReservationById(reservationId)) {
+            reservation->update(reservationId, (unsigned int) connectorId, expiryDate, idTag, parentIdTag);
             reservationStatus = "Accepted";
             return;
         }
@@ -67,7 +79,7 @@ void ReserveNow::processReq(JsonObject payload) {
         Connector *connector = nullptr;
         
         if (connectorId > 0) {
-            connector = model.getConnector(connectorId);
+            connector = model.getConnector((unsigned int) connectorId);
         }
 
         if (chargePoint->getStatus() == ChargePointStatus::Faulted ||
@@ -87,7 +99,7 @@ void ReserveNow::processReq(JsonObject payload) {
             return;
         }
 
-        if (rService->updateReservation(payload)) {
+        if (rService->updateReservation(reservationId, (unsigned int) connectorId, expiryDate, idTag, parentIdTag)) {
             reservationStatus = "Accepted";
         } else {
             reservationStatus = "Occupied";
