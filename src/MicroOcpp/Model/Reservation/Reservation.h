@@ -8,6 +8,10 @@
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/Time.h>
 
+#ifndef RESERVATION_FN
+#define RESERVATION_FN (MOCPP_FILENAME_PREFIX "reservations.jsn")
+#endif
+
 #define MOCPP_RESERVATION_CID_KEY "cid_"
 #define MOCPP_RESERVATION_EXPDATE_KEY "expdt_"
 #define MOCPP_RESERVATION_IDTAG_KEY "idt_"
@@ -28,7 +32,7 @@ private:
     std::shared_ptr<Configuration> expiryDateRawString;
     char expiryDateRawKey [sizeof(MOCPP_RESERVATION_EXPDATE_KEY "xxx") + 1];
 
-    Timestamp expiryDate;
+    Timestamp expiryDate = MIN_TIME;
     std::shared_ptr<Configuration> idTagString;
     char idTagKey [sizeof(MOCPP_RESERVATION_IDTAG_KEY "xxx") + 1];
     std::shared_ptr<Configuration> reservationIdInt;

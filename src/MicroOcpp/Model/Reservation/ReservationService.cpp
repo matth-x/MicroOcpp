@@ -18,7 +18,7 @@ ReservationService::ReservationService(Context& context, unsigned int numConnect
     if (maxReservations > 0) {
         reservations.reserve((size_t) maxReservations);
         for (int i = 0; i < maxReservations; i++) {
-            reservations.push_back(std::unique_ptr<Reservation>(new Reservation(context.getModel(), i)));
+            reservations.emplace_back(new Reservation(context.getModel(), i));
         }
     }
 
@@ -180,6 +180,10 @@ Reservation *ReservationService::getReservationById(int reservationId) {
 
 bool ReservationService::updateReservation(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag) {
     if (auto reservation = getReservationById(reservationId)) {
+        if (getReservation(connectorId) && getReservation(connectorId) != reservation && getReservation(connectorId)->isActive()) {
+            MOCPP_DBG_DEBUG("found blocking reservation at connectorId %u", connectorId);
+            return false; //cannot transfer reservation to other connector with existing reservation
+        }
         reservation->update(reservationId, connectorId, expiryDate, idTag, parentIdTag);
         return true;
     }

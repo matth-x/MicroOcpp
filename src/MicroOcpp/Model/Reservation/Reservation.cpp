@@ -6,10 +6,6 @@
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Debug.h>
 
-#ifndef RESERVATION_FN
-#define RESERVATION_FN (MOCPP_FILENAME_PREFIX "reservations.jsn")
-#endif
-
 using namespace MicroOcpp;
 
 Reservation::Reservation(Model& model, unsigned int slot) : model(model), slot(slot) {
@@ -19,7 +15,6 @@ Reservation::Reservation(Model& model, unsigned int slot) : model(model), slot(s
 
     snprintf(expiryDateRawKey, sizeof(expiryDateRawKey), MOCPP_RESERVATION_EXPDATE_KEY "%u", slot);
     expiryDateRawString = declareConfiguration<const char*>(expiryDateRawKey, "", RESERVATION_FN, false, false, false);
-    expiryDate.setTime(expiryDateRawString->getString());
     
     snprintf(idTagKey, sizeof(idTagKey), MOCPP_RESERVATION_IDTAG_KEY "%u", slot);
     idTagString = declareConfiguration<const char*>(idTagKey, "", RESERVATION_FN, false, false, false);
@@ -60,8 +55,7 @@ bool Reservation::isActive() {
         return false;
     }
 
-    auto& t_now = model.getClock().now();
-    if (t_now > expiryDate) {
+    if (model.getClock().now() > getExpiryDate()) {
         //reservation expired
         return false;
     }
@@ -94,6 +88,9 @@ int Reservation::getConnectorId() {
 }
 
 Timestamp& Reservation::getExpiryDate() {
+    if (expiryDate == MIN_TIME && *expiryDateRawString->getString()) {
+        expiryDate.setTime(expiryDateRawString->getString());
+    }
     return expiryDate;
 }
 

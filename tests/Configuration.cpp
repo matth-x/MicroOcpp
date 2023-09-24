@@ -25,7 +25,6 @@ TEST_CASE( "Configuration" ) {
 
     //clean state
     auto filesystem = makeDefaultFilesystemAdapter(FilesystemOpt::Use_Mount_FormatOnFail);
-    MOCPP_DBG_DEBUG("remove all");
     FilesystemUtils::remove_if(filesystem, [] (const char*) {return true;});
 
     LoopbackConnection loopback; //initialize Context with dummy socket
@@ -164,7 +163,6 @@ TEST_CASE( "Configuration" ) {
         configuration_deinit();
         REQUIRE( !strcmp(cString4->getString(), "mValue3") );
 
-        MOCPP_DBG_DEBUG("remove all");
         FilesystemUtils::remove_if(filesystem, [] (const char*) {return true;});
 
         //config accessibility / permissions
