@@ -6,3 +6,4 @@ include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(mo_example)
 
 idf_build_set_property(COMPILE_OPTIONS -DMOCPP_TRAFFIC_OUT APPEND)
+idf_build_set_property(COMPILE_OPTIONS -DMOCPP_FILENAME_PREFIX="/mo_store/" APPEND)

@@ -13,20 +13,17 @@ Please clone the following repositories into the respective components-directori
 - [Mongoose adapter for MicroOcpp](https://github.com/matth-x/MicroOcppMongoose) into `components/MicroOcppMongoose`
 - [ArduinoJson](https://github.com/bblanchon/ArduinoJson) into `components/ArduinoJson`
 
-Alternatively, ArduinoJson can go into into an include folder as it is a header-only library:
-
-- [ArduinoJson header file](https://github.com/bblanchon/ArduinoJson/releases/download/v6.19.4/ArduinoJson-v6.19.4.h), renamed and moved to `include/ArduinoJson.h`. Any other location will work too as long as the header file `ArduinoJson.h` is on the include-path and can be found by the statement `#include <ArduinoJson.h>`
-
 For setup, the following commands could come handy (change to the root directory of the ESP-IDF project first):
 
 ```
 rm components/mongoose/.gitkeep
 rm components/MicroOcpp/.gitkeep
 rm components/MicroOcppMongoose/.gitkeep
+rm components/ArduinoJson/.gitkeep
 git clone https://github.com/matth-x/MicroOcpp components/MicroOcpp
 git clone --recurse-submodules https://github.com/cesanta/mongoose-esp-idf.git components/mongoose
 git clone https://github.com/matth-x/MicroOcppMongoose components/MicroOcppMongoose
-git clone https://github.com/bblanchon/ArduinoJson
+git clone https://github.com/bblanchon/ArduinoJson components/ArduinoJson
 ```
 
 The setup is done if the following include statements work:

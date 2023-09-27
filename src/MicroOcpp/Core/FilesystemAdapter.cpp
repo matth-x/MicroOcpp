@@ -6,6 +6,8 @@
 #include <MicroOcpp/Core/ConfigurationOptions.h> //FilesystemOpt
 #include <MicroOcpp/Debug.h>
 
+#include <cstring>
+
 /*
  * Platform specific implementations. Currently supported:
  *     - Arduino LittleFs
@@ -341,9 +343,19 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
     if (config.mustMount()) {
         mounted = false;
-        
+
+        char fn_prefix [MOCPP_MAX_PATH_SIZE];
+        auto fn_prefix_len = snprintf(fn_prefix, MOCPP_MAX_PATH_SIZE, "%.*s", ((int) strlen(MOCPP_FILENAME_PREFIX)) - 1, MOCPP_FILENAME_PREFIX);
+        if (fn_prefix_len < 0 || fn_prefix_len >= MOCPP_MAX_PATH_SIZE) {
+            MOCPP_DBG_ERR("MOCPP_FILENAME_PREFIX error %i", fn_prefix_len);
+            return nullptr;
+        } else if (fn_prefix_len == 0) {
+            MOCPP_DBG_ERR("MOCPP_FILENAME_PREFIX cannot be root on ESP-IDF");
+            return nullptr;
+        }
+
         esp_vfs_spiffs_conf_t conf = {
-            .base_path = MOCPP_FILENAME_PREFIX,
+            .base_path = fn_prefix,
             .partition_label = "mo", //also see deconstructor
             .max_files = 5,
             .format_if_mount_failed = config.formatOnFail()
