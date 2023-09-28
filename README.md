@@ -32,6 +32,23 @@ If you don't have an OCPP server at hand, leave the charge box ID blank and ente
 
 **RFID authentication**: Go to "Control Center" > "Connectors" > "Transaction" and update the idTag with the desired value.
 
+## Benchmarks
+
+*Full report: [MicroOcpp benchmark (esp-idf)](https://github.com/matth-x/MicroOcpp-benchmark)*
+
+The following measurements were taken on the ESP32 @ 160MHz and represent the optimistic best case scenario for a charger with two physical connectors (i.e. compiled with `-Os`, disabled debug output and logs).
+
+| Description | Value |
+| :--- | ---: |
+| Flash size (minimal) | 121,170 B |
+| Heap occupation (idle) | 12,308 B |
+| Heap occupation (peak) | 21,916 B |
+| Initailization | 21 ms |
+| `loop()` call (idle) | 0.05 ms |
+| Large message sent | 5 ms |
+
+In practical setups, the execution time is largely determined by IO delays and the heap occupation is significantly influenced by the configuration with reservation, local authorization and charging profile lists.
+
 ## Developers guide
 
 PlatformIO package: [ArduinoOcpp](https://platformio.org/lib/show/11975/ArduinoOcpp)
