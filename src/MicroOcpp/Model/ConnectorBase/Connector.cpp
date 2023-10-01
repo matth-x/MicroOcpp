@@ -24,6 +24,10 @@
 
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 
+#ifndef MOCPP_TX_CLEAN_ABORTED
+#define MOCPP_TX_CLEAN_ABORTED 1
+#endif
+
 using namespace MicroOcpp;
 using namespace MicroOcpp::Ocpp16;
 
@@ -151,7 +155,7 @@ void Connector::loop() {
         trackLoopExecute = true;
     }
 
-    if (transaction && transaction->isAborted()) {
+    if (transaction && transaction->isAborted() && MOCPP_TX_CLEAN_ABORTED) {
         //If the transaction is aborted (invalidated before started), delete all artifacts from flash
         //This is an optimization. The memory management will attempt to remove those files again later
         bool removed = true;
@@ -168,6 +172,11 @@ void Connector::loop() {
         }
 
         MOCPP_DBG_DEBUG("collect aborted transaction %u-%u %s", connectorId, transaction->getTxNr(), removed ? "" : "failure");
+        transaction = nullptr;
+    }
+
+    if (transaction && transaction->isAborted()) {
+        MOCPP_DBG_DEBUG("collect aborted transaction %u-%u", connectorId, transaction->getTxNr());
         transaction = nullptr;
     }
 
@@ -430,7 +439,7 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
         
         auto tx = model.getTransactionStore()->getTransaction(connectorId, txr);
         //check if dangling silent tx, aborted tx, or corrupted entry (tx == null)
-        if (!tx || tx->isSilent() || tx->isAborted()) {
+        if (!tx || tx->isSilent() || (tx->isAborted() && MOCPP_TX_CLEAN_ABORTED)) {
             //yes, remove
             bool removed = true;
             if (auto mService = model.getMeteringService()) {
@@ -472,7 +481,7 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
 
             auto txhist = model.getTransactionStore()->getTransaction(connectorId, txl);
             //oldest entry, now check if it's history and can be removed or corrupted entry
-            if (!txhist || txhist->isCompleted()) {
+            if (!txhist || txhist->isCompleted() || txhist->isAborted()) {
                 //yes, remove
                 bool removed = true;
                 if (auto mService = model.getMeteringService()) {
