@@ -129,7 +129,7 @@ void loop() {
                 //card matches -> user can stop Tx
                 Serial.println(F("[main] End transaction by RFID card"));
 
-                endTransaction();
+                endTransaction(idTag.c_str());
             } else {
                 Serial.println(F("[main] Cannot end transaction by RFID card (different card?)"));
             }

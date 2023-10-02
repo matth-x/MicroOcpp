@@ -33,7 +33,7 @@ void Reset::processReq(JsonObject payload) {
                 resetAccepted = true;
                 rService->initiateReset(isHard);
                 for (unsigned int cId = 0; cId < model.getNumConnectors(); cId++) {
-                    model.getConnector(cId)->endTransaction(isHard ? "HardReset" : "SoftReset");
+                    model.getConnector(cId)->endTransaction(nullptr, isHard ? "HardReset" : "SoftReset");
                 }
             }
         }
