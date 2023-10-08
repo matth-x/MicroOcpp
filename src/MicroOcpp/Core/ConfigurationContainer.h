@@ -37,7 +37,26 @@ public:
     virtual void loadStaticKey(Configuration& config, const char *key) { } //possible optimization: can replace internal key with passed static key
 };
 
-std::unique_ptr<ConfigurationContainer> makeConfigurationContainerVolatile(const char *filename, bool accessible);
+class ConfigurationContainerVolatile : public ConfigurationContainer {
+private:
+    std::vector<std::shared_ptr<Configuration>> configurations;
+public:
+    ConfigurationContainerVolatile(const char *filename, bool accessible);
+
+    //ConfigurationContainer definitions
+    bool load() override;
+    bool save() override;
+    std::shared_ptr<Configuration> createConfiguration(TConfig type, const char *key) override;
+    void removeConfiguration(Configuration *config) override;
+    size_t getConfigurationCount() override;
+    Configuration *getConfiguration(size_t i) override;
+    std::shared_ptr<Configuration> getConfiguration(const char *key) override;
+
+    //add custom Configuration object
+    void addConfiguration(std::shared_ptr<Configuration> c);
+};
+
+std::unique_ptr<ConfigurationContainerVolatile> makeConfigurationContainerVolatile(const char *filename, bool accessible);
 
 } //end namespace MicroOcpp
 
