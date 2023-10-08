@@ -27,7 +27,7 @@ bool Operation::restore(StoredOperationHandler *rpcData) {
 
 std::unique_ptr<DynamicJsonDocument> Operation::createReq() {
     MOCPP_DBG_ERR("Unsupported operation: createReq() is not implemented");
-    return nullptr;
+    return createEmptyDocument();
 }
 
 void Operation::processConf(JsonObject payload) {
@@ -40,7 +40,7 @@ void Operation::processReq(JsonObject payload) {
 
 std::unique_ptr<DynamicJsonDocument> Operation::createConf() {
     MOCPP_DBG_ERR("Unsupported operation: createConf() is not implemented");
-    return nullptr;
+    return createEmptyDocument();
 }
 
 std::unique_ptr<DynamicJsonDocument> MicroOcpp::createEmptyDocument() {
