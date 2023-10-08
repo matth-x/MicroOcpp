@@ -27,8 +27,8 @@ using MicroOcpp::Ocpp16::FirmwareStatus;
 
 FirmwareService::FirmwareService(Context& context) : context(context) {
     
-    context.getOperationRegistry().registerOperation("UpdateFirmware", [&context] () {
-        return new Ocpp16::UpdateFirmware(context.getModel());});
+    context.getOperationRegistry().registerOperation("UpdateFirmware", [this] () {
+        return new Ocpp16::UpdateFirmware(*this);});
 
     //Register message handler for TriggerMessage operation
     context.getOperationRegistry().registerOperation("FirmwareStatusNotification", [this] () {
@@ -78,7 +78,7 @@ void FirmwareService::loop() {
             MOCPP_DBG_INFO("Start download");
             stage = UpdateStage::Downloading;
             if (onDownload != nullptr) {
-                onDownload(location);
+                onDownload(location.c_str());
                 timestampTransition = mocpp_tick_ms();
                 delayTransition = downloadStatusInput ? 1000 : 30000; //give the download at least 30s
                 return;
@@ -138,7 +138,7 @@ void FirmwareService::loop() {
             stage = UpdateStage::Installing;
 
             if (onInstall) {
-                onInstall(location); //should restart the device on success
+                onInstall(location.c_str()); //should restart the device on success
             } else {
                 MOCPP_DBG_WARN("onInstall must be set! (see setOnInstall). Will abort");
             }
@@ -183,7 +183,7 @@ void FirmwareService::loop() {
     }
 }
 
-void FirmwareService::scheduleFirmwareUpdate(const std::string &location, Timestamp retreiveDate, int retries, unsigned int retryInterval) {
+void FirmwareService::scheduleFirmwareUpdate(const char *location, Timestamp retreiveDate, unsigned int retries, unsigned int retryInterval) {
     this->location = location;
     this->retreiveDate = retreiveDate;
     this->retries = retries;
@@ -197,15 +197,17 @@ void FirmwareService::scheduleFirmwareUpdate(const std::string &location, Timest
     char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
     this->retreiveDate.toJsonString(dbuf, JSONDATE_LENGTH + 1);
 
+#if MOCPP_DBG_LEVEL >= MOCPP_DL_INFO
     MOCPP_DBG_INFO("Scheduled FW update!\n" \
                     "                  location = %s\n" \
                     "                  retrieveDate = %s\n" \
-                    "                  retries = %i" \
+                    "                  retries = %u" \
                     ", retryInterval = %u",
             this->location.c_str(),
             dbuf,
             this->retries,
             this->retryInterval);
+#endif
 
     timestampTransition = mocpp_tick_ms();
     delayTransition = 1000;
@@ -276,7 +278,7 @@ std::unique_ptr<Request> FirmwareService::getFirmwareStatusNotification() {
     return nullptr;
 }
 
-void FirmwareService::setOnDownload(std::function<bool(const std::string &location)> onDownload) {
+void FirmwareService::setOnDownload(std::function<bool(const char *location)> onDownload) {
     this->onDownload = onDownload;
 }
 
@@ -284,7 +286,7 @@ void FirmwareService::setDownloadStatusInput(std::function<DownloadStatus()> dow
     this->downloadStatusInput = downloadStatusInput;
 }
 
-void FirmwareService::setOnInstall(std::function<bool(const std::string &location)> onInstall) {
+void FirmwareService::setOnInstall(std::function<bool(const char *location)> onInstall) {
     this->onInstall = onInstall;
 }
 
@@ -310,7 +312,7 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
      * example of how to integrate a separate download phase (optional)
      */
 #if 0 //separate download phase
-    fwService->setOnDownload([] (const std::string &location) {
+    fwService->setOnDownload([] (const char *location) {
         //download the new binary
         //...
         return true;
@@ -323,7 +325,7 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
     });
 #endif //separate download phase
 
-    fwService->setOnInstall([fwService] (const std::string &location) {
+    fwService->setOnInstall([fwService] (const char *location) {
 
         fwService->setInstallationStatusInput([](){return InstallationStatus::NotInstalled;});
 
@@ -333,7 +335,7 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
         client.setTimeout(60); //in seconds
         
         // httpUpdate.setLedPin(LED_BUILTIN, HIGH);
-        t_httpUpdate_return ret = httpUpdate.update(client, location.c_str());
+        t_httpUpdate_return ret = httpUpdate.update(client, location);
 
         switch (ret) {
             case HTTP_UPDATE_FAILED:
@@ -368,7 +370,7 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
 FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
     FirmwareService *fwService = new FirmwareService(context);
 
-    fwService->setOnInstall([fwService] (const std::string &location) {
+    fwService->setOnInstall([fwService] (const char *location) {
         
         WiFiClient client;
         //WiFiClientSecure client;
@@ -377,7 +379,7 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
 
         //ESPhttpUpdate.setLedPin(downloadStatusLedPin);
 
-        HTTPUpdateResult ret = ESPhttpUpdate.update(client, location.c_str());
+        HTTPUpdateResult ret = ESPhttpUpdate.update(client, location);
 
         switch (ret) {
             case HTTP_UPDATE_FAILED:

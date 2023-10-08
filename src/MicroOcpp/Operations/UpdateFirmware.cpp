@@ -9,43 +9,42 @@
 
 using MicroOcpp::Ocpp16::UpdateFirmware;
 
-UpdateFirmware::UpdateFirmware(Model& model) : model(model) {
+UpdateFirmware::UpdateFirmware(FirmwareService& fwService) : fwService(fwService) {
 
 }
 
 void UpdateFirmware::processReq(JsonObject payload) {
-    /*
-     * Process the application data here. Note: you have to implement the FW update procedure in your client code. You have to set
-     * a onSendConfListener in which you initiate a FW update (e.g. calling ESPhttpUpdate.update(...) )
-     */
 
-    const char *loc = payload["location"] | "";
-    location = loc;
+    const char *location = payload["location"] | "";
     //check location URL. Maybe introduce Same-Origin-Policy?
-    if (location.empty()) {
-        formatError = true;
-        MOCPP_DBG_WARN("Could not read location. Abort");
+    if (!*location) {
+        errorCode = "FormationViolation";
+        return;
+    }
+    
+    int retries = payload["retries"] | 1;
+    int retryInterval = payload["retryInterval"] | 180;
+    if (retries < 0 || retryInterval < 0) {
+        errorCode = "PropertyConstraintViolation";
         return;
     }
 
     //check the integrity of retrieveDate
-    const char *retrieveDateRaw = payload["retrieveDate"] | "Invalid";
-    if (!retreiveDate.setTime(retrieveDateRaw)) {
-        formatError = true;
-        MOCPP_DBG_WARN("Could not read retrieveDate. Abort");
+    if (!payload.containsKey("retrieveDate")) {
+        errorCode = "FormationViolation";
+        return;
+    }
+
+    Timestamp retrieveDate;
+    if (!retrieveDate.setTime(payload["retrieveDate"] | "Invalid")) {
+        errorCode = "PropertyConstraintViolation";
+        MOCPP_DBG_WARN("bad time format");
         return;
     }
     
-    retries = payload["retries"] | 1;
-    retryInterval = payload["retryInterval"] | 180;
+    fwService.scheduleFirmwareUpdate(location, retrieveDate, (unsigned int) retries, (unsigned int) retryInterval);
 }
 
 std::unique_ptr<DynamicJsonDocument> UpdateFirmware::createConf(){
-    if (auto fwService = model.getFirmwareService()) {
-        fwService->scheduleFirmwareUpdate(location, retreiveDate, retries, retryInterval);
-    } else {
-        MOCPP_DBG_ERR("FirmwareService has not been initialized before! Please have a look at MicroOcpp.cpp for an example. Abort");
-    }
-
     return createEmptyDocument();
 }
