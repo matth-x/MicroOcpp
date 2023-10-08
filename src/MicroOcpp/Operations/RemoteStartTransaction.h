@@ -18,10 +18,8 @@ namespace Ocpp16 {
 class RemoteStartTransaction : public Operation {
 private:
     Model& model;
-    int connectorId;
-    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
 
-    std::unique_ptr<ChargingProfile> chargingProfile;
+    bool accepted = false;
     
     const char *errorCode {nullptr};
     const char *errorDescription = "";

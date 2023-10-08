@@ -27,7 +27,7 @@ private:
     Context& context;
     
     std::string location;
-    int retries = 0;
+    unsigned int retries = 0;
     unsigned int retryInterval = 0;
     Timestamp startTime;
     Timestamp stopTime;
@@ -35,7 +35,7 @@ private:
     Timestamp nextTry;
 
     std::function<std::string()> refreshFilename;
-    std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload;
+    std::function<bool(const char *location, Timestamp &startTime, Timestamp &stopTime)> onUpload;
     std::function<UploadStatus()> uploadStatusInput;
     bool uploadIssued = false;
 
@@ -51,13 +51,13 @@ public:
     //timestamps before year 2021 will be treated as "undefined"
     //returns empty std::string if onUpload is missing or upload cannot be scheduled for another reason
     //returns fileName of diagnostics file to be uploaded if upload has been scheduled
-    std::string requestDiagnosticsUpload(const std::string &location, int retries = 1, unsigned int retryInterval = 0, Timestamp startTime = Timestamp(), Timestamp stopTime = Timestamp());
+    std::string requestDiagnosticsUpload(const char *location, unsigned int retries = 1, unsigned int retryInterval = 0, Timestamp startTime = Timestamp(), Timestamp stopTime = Timestamp());
 
     Ocpp16::DiagnosticsStatus getDiagnosticsStatus();
 
     void setRefreshFilename(std::function<std::string()> refreshFn); //refresh a new filename which will be used for the subsequent upload tries
 
-    void setOnUpload(std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload);
+    void setOnUpload(std::function<bool(const char *location, Timestamp &startTime, Timestamp &stopTime)> onUpload);
 
     void setOnUploadStatusInput(std::function<UploadStatus()> uploadStatusInput);
 };

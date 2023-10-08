@@ -10,24 +10,18 @@
 
 namespace MicroOcpp {
 
-class Model;
+class DiagnosticsService;
 
 namespace Ocpp16 {
 
 class GetDiagnostics : public Operation {
 private:
-    Model& model;
-    std::string location {};
-    int retries = 1;
-    unsigned long retryInterval = 180;
-    Timestamp startTime = Timestamp();
-    Timestamp stopTime = Timestamp();
+    DiagnosticsService& diagService;
+    std::string fileName;
 
-    std::string fileName {};
-    
-    bool formatError = false;
+    const char *errorCode = nullptr;
 public:
-    GetDiagnostics(Model& model);
+    GetDiagnostics(DiagnosticsService& diagService);
 
     const char* getOperationType() override {return "GetDiagnostics";}
 
@@ -35,7 +29,7 @@ public:
 
     std::unique_ptr<DynamicJsonDocument> createConf() override;
 
-    const char *getErrorCode() override {return formatError ? "FormationViolation" : nullptr;}
+    const char *getErrorCode() override {return errorCode;}
 };
 
 } //end namespace Ocpp16

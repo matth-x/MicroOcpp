@@ -10,20 +10,17 @@
 
 namespace MicroOcpp {
 
-class Model;
+class FirmwareService;
 
 namespace Ocpp16 {
 
 class UpdateFirmware : public Operation {
 private:
-  Model& model;
-  std::string location {};
-  Timestamp retreiveDate = Timestamp();
-  int retries = 1;
-  unsigned long retryInterval = 180;
-  bool formatError = false;
+  FirmwareService& fwService;
+
+  const char *errorCode = nullptr;
 public:
-  UpdateFirmware(Model& model);
+  UpdateFirmware(FirmwareService& fwService);
 
   const char* getOperationType() override {return "UpdateFirmware";}
 
@@ -31,7 +28,7 @@ public:
 
   std::unique_ptr<DynamicJsonDocument> createConf() override;
 
-  const char *getErrorCode() override {if (formatError) return "FormationViolation"; else return NULL;}
+  const char *getErrorCode() override {return errorCode;}
 };
 
 } //end namespace Ocpp16

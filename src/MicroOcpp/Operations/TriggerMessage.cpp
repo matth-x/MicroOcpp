@@ -35,10 +35,12 @@ void TriggerMessage::processReq(JsonObject payload) {
             if (connectorId < 0) {
                 auto nConnectors = mService->getNumConnectors();
                 for (decltype(nConnectors) cId = 0; cId < nConnectors; cId++) {
-                    triggeredOperations.push_back(mService->takeTriggeredMeterValues(cId));
+                    context.initiatePreBootOperation(mService->takeTriggeredMeterValues(cId));
+                    statusMessage = "Accepted";
                 }
             } else if (connectorId < mService->getNumConnectors()) {
-                triggeredOperations.push_back(mService->takeTriggeredMeterValues(connectorId));
+                context.initiatePreBootOperation(mService->takeTriggeredMeterValues(connectorId));
+                statusMessage = "Accepted";
             } else {
                 errorCode = "PropertyConstraintViolation";
             }
@@ -64,40 +66,23 @@ void TriggerMessage::processReq(JsonObject payload) {
 
             statusNotification->setTimeout(60000);
 
-            triggeredOperations.push_back(std::move(statusNotification));
+            context.initiatePreBootOperation(std::move(statusNotification));
+            statusMessage = "Accepted";
         }
     } else {
         auto msg = context.getOperationRegistry().deserializeOperation(requestedMessage);
         if (msg) {
-            triggeredOperations.push_back(std::move(msg));
+            context.initiatePreBootOperation(std::move(msg));
+            statusMessage = "Accepted";
         } else {
             statusMessage = "NotImplemented";
         }
     }
-
-    if (!triggeredOperations.empty()) {
-        statusMessage = "Accepted";
-    } else {
-        if (errorCode) {
-            MOCPP_DBG_ERR("errorCode: %s", errorCode);
-        } else {
-            MOCPP_DBG_WARN("TriggerMessage denied. statusMessage: %s", statusMessage);
-        }
-    }
-
 }
 
 std::unique_ptr<DynamicJsonDocument> TriggerMessage::createConf(){
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
-    
     payload["status"] = statusMessage;
-
-    auto op = triggeredOperations.begin();
-    while (op != triggeredOperations.end()) {
-        context.initiatePreBootOperation(std::move(triggeredOperations.front()));
-        op = triggeredOperations.erase(op);
-    }
-
     return doc;
 }
