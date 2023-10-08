@@ -16,8 +16,8 @@ using Ocpp16::DiagnosticsStatus;
 
 DiagnosticsService::DiagnosticsService(Context& context) : context(context) {
     
-    context.getOperationRegistry().registerOperation("GetDiagnostics", [&context] () {
-        return new Ocpp16::GetDiagnostics(context.getModel());});
+    context.getOperationRegistry().registerOperation("GetDiagnostics", [this] () {
+        return new Ocpp16::GetDiagnostics(*this);});
 
     //Register message handler for TriggerMessage operation
     context.getOperationRegistry().registerOperation("DiagnosticsStatusNotification", [this] () {
@@ -36,7 +36,7 @@ void DiagnosticsService::loop() {
         if (!uploadIssued) {
             if (onUpload != nullptr) {
                 MOCPP_DBG_DEBUG("Call onUpload");
-                onUpload(location, startTime, stopTime);
+                onUpload(location.c_str(), startTime, stopTime);
                 uploadIssued = true;
             } else {
                 MOCPP_DBG_ERR("onUpload must be set! (see setOnUpload). Will abort");
@@ -82,7 +82,7 @@ void DiagnosticsService::loop() {
 }
 
 //timestamps before year 2021 will be treated as "undefined"
-std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &location, int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime) {
+std::string DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime) {
     if (onUpload == nullptr) //maybe add further plausibility checks
         return std::string{};
     
@@ -100,6 +100,7 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &loca
         this->stopTime = newStop;
     }
     
+#if MOCPP_DBG_LEVEL >= MOCPP_DL_INFO
     char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
     char dbuf2 [JSONDATE_LENGTH + 1] = {'\0'};
     this->startTime.toJsonString(dbuf, JSONDATE_LENGTH + 1);
@@ -116,6 +117,7 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const std::string &loca
             this->retryInterval,
             dbuf,
             dbuf2);
+#endif
 
     nextTry = context.getModel().getClock().now();
     nextTry += 5; //wait for 5s before upload
@@ -168,7 +170,7 @@ void DiagnosticsService::setRefreshFilename(std::function<std::string()> refresh
     this->refreshFilename = refreshFn;
 }
 
-void DiagnosticsService::setOnUpload(std::function<bool(const std::string &location, Timestamp &startTime, Timestamp &stopTime)> onUpload) {
+void DiagnosticsService::setOnUpload(std::function<bool(const char *location, Timestamp &startTime, Timestamp &stopTime)> onUpload) {
     this->onUpload = onUpload;
 }
 

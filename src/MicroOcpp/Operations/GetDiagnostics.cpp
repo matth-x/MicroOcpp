@@ -9,57 +9,48 @@
 
 using MicroOcpp::Ocpp16::GetDiagnostics;
 
-GetDiagnostics::GetDiagnostics(Model& model) : model(model) {
+GetDiagnostics::GetDiagnostics(DiagnosticsService& diagService) : diagService(diagService) {
 
 }
 
 void GetDiagnostics::processReq(JsonObject payload) {
-    /*
-     * Process the application data here. Note: you have to implement the FW update procedure in your client code. You have to set
-     * a onSendConfListener in which you initiate a FW update (e.g. calling ESPhttpUpdate.update(...) )
-     */
 
-    const char *loc = payload["location"] | "";
-    location = loc;
+    const char *location = payload["location"] | "";
     //check location URL. Maybe introduce Same-Origin-Policy?
-    if (location.empty()) {
-        formatError = true;
-        MOCPP_DBG_WARN("Could not read location. Abort");
+    if (!*location) {
+        errorCode = "FormationViolation";
         return;
     }
     
-    retries = payload["retries"] | 1;
-    retryInterval = payload["retryInterval"] | 180;
+    int retries = payload["retries"] | 1;
+    int retryInterval = payload["retryInterval"] | 180;
+    if (retries < 0 || retryInterval < 0) {
+        errorCode = "PropertyConstraintViolation";
+        return;
+    }
 
-    //check the integrity of startTime
+    Timestamp startTime;
     if (payload.containsKey("startTime")) {
-        const char *startTimeRaw = payload["startTime"] | "Invalid";
-        if (!startTime.setTime(startTimeRaw)) {
-            formatError = true;
-            MOCPP_DBG_WARN("Could not read startTime. Abort");
+        if (!startTime.setTime(payload["startTime"] | "Invalid")) {
+            errorCode = "PropertyConstraintViolation";
+            MOCPP_DBG_WARN("bad time format");
             return;
         }
     }
 
-    //check the integrity of stopTime
+    Timestamp stopTime;
     if (payload.containsKey("startTime")) {
-        const char *stopTimeRaw = payload["stopTime"] | "Invalid";
-        if (!stopTime.setTime(stopTimeRaw)) {
-            formatError = true;
-            MOCPP_DBG_WARN("Could not read stopTime. Abort");
+        if (!stopTime.setTime(payload["stopTime"] | "Invalid")) {
+            errorCode = "PropertyConstraintViolation";
+            MOCPP_DBG_WARN("bad time format");
             return;
         }
     }
+
+    fileName = diagService.requestDiagnosticsUpload(location, (unsigned int) retries, (unsigned int) retryInterval, startTime, stopTime);
 }
 
 std::unique_ptr<DynamicJsonDocument> GetDiagnostics::createConf(){
-    if (auto diagService = model.getDiagnosticsService()) {
-        fileName = diagService->requestDiagnosticsUpload(location, retries, retryInterval, startTime, stopTime);
-    } else {
-        MOCPP_DBG_WARN("DiagnosticsService has not been initialized before! Please have a look at MicroOcpp.cpp for an example. Abort");
-        return createEmptyDocument();
-    }
-
     if (fileName.empty()) {
         return createEmptyDocument();
     } else {
