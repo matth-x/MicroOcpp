@@ -12,15 +12,13 @@
 namespace MicroOcpp {
 
 class Context;
-class Request;
 
 namespace Ocpp16 {
 
 class TriggerMessage : public Operation {
 private:
     Context& context;
-    std::vector<std::unique_ptr<Request>> triggeredOperations;
-    const char *statusMessage {nullptr};
+    const char *statusMessage = nullptr;
 
     const char *errorCode = nullptr;
 public:

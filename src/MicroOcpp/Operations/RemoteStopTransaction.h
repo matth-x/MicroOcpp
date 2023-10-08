@@ -16,7 +16,9 @@ namespace Ocpp16 {
 class RemoteStopTransaction : public Operation {
 private:
     Model& model;
-    int transactionId;
+    bool accepted = false;
+
+    const char *errorCode = nullptr;
 public:
     RemoteStopTransaction(Model& model);
 
@@ -25,6 +27,8 @@ public:
     void processReq(JsonObject payload) override;
 
     std::unique_ptr<DynamicJsonDocument> createConf() override;
+
+    const char *getErrorCode() override {return errorCode;}
 };
 
 } //end namespace Ocpp16

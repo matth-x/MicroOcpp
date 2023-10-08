@@ -21,22 +21,22 @@ const char* RemoteStartTransaction::getOperationType() {
 }
 
 void RemoteStartTransaction::processReq(JsonObject payload) {
-    connectorId = payload["connectorId"] | -1;
+    int connectorId = payload["connectorId"] | -1;
 
     if (!payload.containsKey("idTag")) {
         errorCode = "FormationViolation";
         return;
     }
 
-    const char *idTagIn = payload["idTag"] | "";
-    size_t len = strnlen(idTagIn, IDTAG_LEN_MAX + 1);
-    if (len > 0 && len <= IDTAG_LEN_MAX) {
-        snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
-    } else {
+    const char *idTag = payload["idTag"] | "";
+    size_t len = strnlen(idTag, IDTAG_LEN_MAX + 1);
+    if (len == 0 || len > IDTAG_LEN_MAX) {
         errorCode = "PropertyConstraintViolation";
         errorDescription = "idTag empty or too long";
         return;
     }
+
+    std::unique_ptr<ChargingProfile> chargingProfile;
 
     if (payload.containsKey("chargingProfile") && model.getSmartChargingService()) {
         MOCPP_DBG_INFO("Setting Charging profile via RemoteStartTransaction");
@@ -62,12 +62,7 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
             return;
         }
     }
-}
 
-std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
-    JsonObject payload = doc->to<JsonObject>();
-    
     Connector *selectConnector = nullptr;
     if (connectorId >= 1) {
         //connectorId specified for given connector, try to start Transaction here
@@ -113,16 +108,21 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
             }
         }
 
-        if (success) {
-            payload["status"] = "Accepted";
-        } else {
-            payload["status"] = "Rejected";
-        }
+        accepted = success;
     } else {
         MOCPP_DBG_INFO("No connector to start transaction");
+        accepted = false;
+    }
+}
+
+std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    JsonObject payload = doc->to<JsonObject>();
+    if (accepted) {
+        payload["status"] = "Accepted";
+    } else {
         payload["status"] = "Rejected";
     }
-    
     return doc;
 }
 
