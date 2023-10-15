@@ -41,6 +41,7 @@ void ChangeAvailability::processReq(JsonObject payload) {
         accepted = true;
         available = false;
     } else {
+        errorCode = "PropertyConstraintViolation";
         return;
     }
 

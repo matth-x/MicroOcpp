@@ -12,7 +12,9 @@
 #define MOCPP_LocalAuthListMaxLength 48
 #endif
 
+#ifndef MOCPP_SendLocalListMaxLength
 #define MOCPP_SendLocalListMaxLength MOCPP_LocalAuthListMaxLength
+#endif
 
 namespace MicroOcpp {
 
@@ -26,13 +28,14 @@ public:
 
     AuthorizationData *get(const char *idTag);
 
-    bool readJson(JsonObject payload, bool compact = false); //compact: if true, then use compact non-ocpp representation
+    bool readJson(JsonArray localAuthorizationList, int listVersion, bool differential = false, bool compact = false); //compact: if true, then use compact non-ocpp representation
     void clear();
 
-    size_t getJsonCapacity(bool compact = false);
-    void writeJson(JsonObject& entry, bool compact = false);
+    size_t getJsonCapacity();
+    void writeJson(JsonArray authListOut, bool compact = false);
 
     int getListVersion() {return listVersion;}
+    size_t size(); //used in unit tests
 
 };
 

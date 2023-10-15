@@ -41,52 +41,48 @@ MicroOcpp::AuthorizationData *AuthorizationList::get(const char *idTag) {
     return nullptr;
 }
 
-bool AuthorizationList::readJson(JsonObject payload, bool compact) {
-
-    bool differential = !strcmp("Differential", payload["updateType"] | "Invalid"); //if Json also contains delete commands
+bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool differential, bool compact) {
 
     if (compact) {
         //compact representations don't contain remove commands
         differential = false;
     }
 
-    JsonArray collection = payload["localAuthorizationList"];
-
-    for (size_t i = 0; i < collection.size(); i++) {
+    for (size_t i = 0; i < authlistJson.size(); i++) {
 
         //check if JSON object is valid
-        if (!collection[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAG(compact))) {
+        if (!authlistJson[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAG(compact))) {
             return false;
         }
     }
 
-    std::vector<int> collection_index;
+    std::vector<int> authlist_index;
     std::vector<int> remove_list;
 
     unsigned int resultingListLength = 0;
 
     if (!differential) {
         //every entry will insert an idTag
-        resultingListLength = collection.size();
+        resultingListLength = authlistJson.size();
     } else {
         //update type is differential; only unkown entries will insert an idTag
 
         resultingListLength = localAuthorizationList.size();
 
         //also, build index here
-        collection_index = std::vector<int>(collection.size(), -1);
+        authlist_index = std::vector<int>(authlistJson.size(), -1);
 
-        for (size_t i = 0; i < collection.size(); i++) {
+        for (size_t i = 0; i < authlistJson.size(); i++) {
 
             //check if locally stored auth info is present; if yes, apply it to the index
-            AuthorizationData *found = get(collection[i][AUTHDATA_KEY_IDTAG(compact)]);
+            AuthorizationData *found = get(authlistJson[i][AUTHDATA_KEY_IDTAG(compact)]);
 
             if (found) {
 
-                collection_index[i] = (int) (found - localAuthorizationList.data());
+                authlist_index[i] = (int) (found - localAuthorizationList.data());
 
                 //remove or update?
-                if (!collection[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
+                if (!authlistJson[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
                     //this entry should be removed
                     found->reset(); //mark for deletion
                     remove_list.push_back((int) (found - localAuthorizationList.data()));
@@ -94,7 +90,7 @@ bool AuthorizationList::readJson(JsonObject payload, bool compact) {
                 } //else: this entry should be updated
             } else {
                 //insert or ignore?
-                if (collection[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
+                if (authlistJson[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
                     //add
                     resultingListLength++;
                 } //else: ignore
@@ -112,46 +108,46 @@ bool AuthorizationList::readJson(JsonObject payload, bool compact) {
     if (compact) {
         localAuthorizationList.clear();
 
-        for (size_t i = 0; i < collection.size(); i++) {
+        for (size_t i = 0; i < authlistJson.size(); i++) {
             localAuthorizationList.push_back(AuthorizationData());
-            localAuthorizationList.back().readJson(collection[i], compact);
+            localAuthorizationList.back().readJson(authlistJson[i], compact);
         }
     } else if (differential) {
 
-        for (size_t i = 0; i < collection.size(); i++) {
+        for (size_t i = 0; i < authlistJson.size(); i++) {
 
             //is entry a remove command?
-            if (!collection[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
+            if (!authlistJson[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
                 continue; //yes, remove command, will be deleted afterwards
             }
 
             //update, or insert
 
-            if (collection_index[i] < 0) {
+            if (authlist_index[i] < 0) {
                 //auth list does not contain idTag yet -> insert new entry
 
                 //reuse removed AuthData object?
                 if (!remove_list.empty()) {
                     //yes, reuse
-                    collection_index[i] = remove_list.back();
+                    authlist_index[i] = remove_list.back();
                     remove_list.pop_back();
                 } else {
                     //no, create new
-                    collection_index[i] = localAuthorizationList.size();
+                    authlist_index[i] = localAuthorizationList.size();
                     localAuthorizationList.push_back(AuthorizationData());
                 }
             }
 
-            localAuthorizationList[collection_index[i]].readJson(collection[i], compact);
+            localAuthorizationList[authlist_index[i]].readJson(authlistJson[i], compact);
         }
 
     } else {
         localAuthorizationList.clear();
 
-        for (size_t i = 0; i < collection.size(); i++) {
-            if (collection[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
+        for (size_t i = 0; i < authlistJson.size(); i++) {
+            if (authlistJson[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
                 localAuthorizationList.push_back(AuthorizationData());
-                localAuthorizationList.back().readJson(collection[i], compact);
+                localAuthorizationList.back().readJson(authlistJson[i], compact);
             }
         }
     }
@@ -166,10 +162,10 @@ bool AuthorizationList::readJson(JsonObject payload, bool compact) {
                 return strcmp(lhs.getIdTag(), rhs.getIdTag()) < 0;
             });
     
-    listVersion = payload["listVersion"] | 0;
-    
+    this->listVersion = listVersion;
+
     if (localAuthorizationList.empty()) {
-        listVersion = 0;
+        this->listVersion = 0;
     }
 
     return true;
@@ -177,24 +173,24 @@ bool AuthorizationList::readJson(JsonObject payload, bool compact) {
 
 void AuthorizationList::clear() {
     localAuthorizationList.clear();
+    listVersion = 0;
 }
 
-size_t AuthorizationList::getJsonCapacity(bool compact) {
-    return JSON_OBJECT_SIZE(3) +
-           JSON_ARRAY_SIZE(localAuthorizationList.size()) +
-            std::accumulate(localAuthorizationList.begin(), localAuthorizationList.end(), 0,
-                    [] (const int& acc, const AuthorizationData& v) {
-                        return acc + (int) v.getJsonCapacity();
-                    } );
-}
-
-void AuthorizationList::writeJson(JsonObject& payload, bool compact) {
-    payload["listVersion"] = listVersion;
-
-    JsonArray collection = payload.createNestedArray("localAuthorizationList");
-
+size_t AuthorizationList::getJsonCapacity() {
+    size_t res = JSON_ARRAY_SIZE(localAuthorizationList.size());
     for (auto& entry : localAuthorizationList) {
-        JsonObject entryJson = collection.createNestedObject();
+        res += entry.getJsonCapacity();
+    }
+    return res;
+}
+
+void AuthorizationList::writeJson(JsonArray authListOut, bool compact) {
+    for (auto& entry : localAuthorizationList) {
+        JsonObject entryJson = authListOut.createNestedObject();
         entry.writeJson(entryJson, compact);
     }
+}
+
+size_t AuthorizationList::size() {
+    return localAuthorizationList.size();
 }

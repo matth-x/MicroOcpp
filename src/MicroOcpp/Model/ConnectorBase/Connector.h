@@ -61,6 +61,7 @@ private:
     std::shared_ptr<Configuration> stopTransactionOnInvalidIdBool;
     std::shared_ptr<Configuration> stopTransactionOnEVSideDisconnectBool;
     std::shared_ptr<Configuration> localPreAuthorizeBool;
+    std::shared_ptr<Configuration> localAuthorizeOfflineBool;
     std::shared_ptr<Configuration> allowOfflineTxForUnknownIdBool;
 
     std::shared_ptr<Configuration> silentOfflineTransactionsBool;

@@ -20,19 +20,18 @@ using namespace MicroOcpp;
 
 AuthorizationService::AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
     
-    localAuthorizeOfflineBool = declareConfiguration<bool>("LocalAuthorizeOffline", true);
     localAuthListEnabledBool = declareConfiguration<bool>("LocalAuthListEnabled", true);
     declareConfiguration<int>("LocalAuthListMaxLength", MOCPP_LocalAuthListMaxLength, CONFIGURATION_VOLATILE, true);
     declareConfiguration<int>("SendLocalListMaxLength", MOCPP_SendLocalListMaxLength, CONFIGURATION_VOLATILE, true);
 
-    if (!localAuthorizeOfflineBool || !localAuthListEnabledBool) {
+    if (!localAuthListEnabledBool) {
         MOCPP_DBG_ERR("initialization error");
     }
     
     context.getOperationRegistry().registerOperation("GetLocalListVersion", [&context] () {
         return new Ocpp16::GetLocalListVersion(context.getModel());});
-    context.getOperationRegistry().registerOperation("SendLocalList", [&context] () {
-        return new Ocpp16::SendLocalList(context.getModel());});
+    context.getOperationRegistry().registerOperation("SendLocalList", [this] () {
+        return new Ocpp16::SendLocalList(*this);});
 
     loadLists();
 }
@@ -61,7 +60,9 @@ bool AuthorizationService::loadLists() {
 
     JsonObject root = doc->as<JsonObject>();
 
-    if (!localAuthorizationList.readJson(root, true)) {
+    int listVersion = root["listVersion"] | 0;
+    
+    if (!localAuthorizationList.readJson(root["localAuthorizationList"].as<JsonArray>(), listVersion, false, true)) {
         MOCPP_DBG_ERR("list read failure");
         return false;
     }
@@ -70,10 +71,6 @@ bool AuthorizationService::loadLists() {
 }
 
 AuthorizationData *AuthorizationService::getLocalAuthorization(const char *idTag) {
-    if (!localAuthorizeOfflineBool->getBool()) {
-        return nullptr;
-    }
-
     if (!localAuthListEnabledBool->getBool()) {
         return nullptr; //auth cache will follow
     }
@@ -92,15 +89,27 @@ AuthorizationData *AuthorizationService::getLocalAuthorization(const char *idTag
     return authData;
 }
 
-bool AuthorizationService::updateLocalList(JsonObject payload) {
-    bool success = localAuthorizationList.readJson(payload);
+int AuthorizationService::getLocalListVersion() {
+    return localAuthorizationList.getListVersion();
+}
+
+size_t AuthorizationService::getLocalListSize() {
+    return localAuthorizationList.size();
+}
+
+bool AuthorizationService::updateLocalList(JsonArray localAuthorizationListJson, int listVersion, bool differential) {
+    bool success = localAuthorizationList.readJson(localAuthorizationListJson, listVersion, differential, false);
 
     if (success) {
         
-        DynamicJsonDocument doc (localAuthorizationList.getJsonCapacity());
+        DynamicJsonDocument doc (
+                JSON_OBJECT_SIZE(3) +
+                localAuthorizationList.getJsonCapacity());
 
         JsonObject root = doc.to<JsonObject>();
-        localAuthorizationList.writeJson(root, true);
+        root["listVersion"] = listVersion;
+        JsonArray authListCompact = root.createNestedArray("localAuthorizationList");
+        localAuthorizationList.writeJson(authListCompact, true);
         success = FilesystemUtils::storeJson(filesystem, MOCPP_LOCALAUTHORIZATIONLIST_FN, doc);
 
         if (!success) {
@@ -113,10 +122,6 @@ bool AuthorizationService::updateLocalList(JsonObject payload) {
 
 void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idTagInfo) {
     //check local list conflicts. In future: also update authorization cache
-
-    if (!localAuthorizeOfflineBool->getBool()) {
-        return;
-    }
 
     if (!localAuthListEnabledBool->getBool()) {
         return; //auth cache will follow

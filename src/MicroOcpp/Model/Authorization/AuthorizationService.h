@@ -19,7 +19,6 @@ private:
     std::shared_ptr<FilesystemAdapter> filesystem;
     AuthorizationList localAuthorizationList;
 
-    std::shared_ptr<Configuration> localAuthorizeOfflineBool;
     std::shared_ptr<Configuration> localAuthListEnabledBool;
 
 public:
@@ -30,9 +29,10 @@ public:
 
     AuthorizationData *getLocalAuthorization(const char *idTag);
 
-    int getLocalListVersion() {return localAuthorizationList.getListVersion();}
+    int getLocalListVersion();
+    size_t getLocalListSize(); //number of entries in current localAuthList; used in unit tests
 
-    bool updateLocalList(JsonObject payload);
+    bool updateLocalList(JsonArray localAuthorizationListJson, int listVersion, bool differential);
 
     void notifyAuthorization(const char *idTag, JsonObject idTagInfo);
 };
