@@ -8,7 +8,7 @@
 
 using MicroOcpp::Ocpp16::SendLocalList;
 
-SendLocalList::SendLocalList(Model& model) : model(model) {
+SendLocalList::SendLocalList(AuthorizationService& authService) : authService(authService) {
   
 }
 
@@ -26,25 +26,28 @@ void SendLocalList::processReq(JsonObject payload) {
         return;
     }
 
-    auto authService = model.getAuthorizationService();
-
-    if (!authService) {
-        errorCode = "InternalError";
+    if (!payload["localAuthorizationList"].is<JsonArray>()) {
+        errorCode = "FormationViolation";
         return;
     }
 
-    if (payload["localAuthorizationList"].as<JsonArray>().size() > MOCPP_SendLocalListMaxLength) {
+    JsonArray localAuthorizationList = payload["localAuthorizationList"];
+
+    if (localAuthorizationList.size() > MOCPP_SendLocalListMaxLength) {
         errorCode = "OccurenceConstraintViolation";
+        return;
     }
+
+    bool differential = !strcmp("Differential", payload["updateType"] | "Invalid"); //updateType Differential or Full
 
     int listVersion = payload["listVersion"];
 
-    if (authService->getLocalListVersion() >= listVersion) {
+    if (differential && authService.getLocalListVersion() >= listVersion) {
         versionMismatch = true;
         return;
     }
 
-    updateFailure = !authService->updateLocalList(payload);
+    updateFailure = !authService.updateLocalList(localAuthorizationList, listVersion, differential);
 }
 
 std::unique_ptr<DynamicJsonDocument> SendLocalList::createConf(){

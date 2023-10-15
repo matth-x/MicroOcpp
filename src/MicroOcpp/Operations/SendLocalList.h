@@ -9,18 +9,18 @@
 
 namespace MicroOcpp {
 
-class Model;
+class AuthorizationService;
 
 namespace Ocpp16 {
 
 class SendLocalList : public Operation {
 private:
-    Model& model;
+    AuthorizationService& authService;
     const char *errorCode = nullptr;
     bool updateFailure = true;
     bool versionMismatch = false;
 public:
-    SendLocalList(Model& model);
+    SendLocalList(AuthorizationService& authService);
 
     ~SendLocalList();
 
