@@ -196,19 +196,20 @@ void Connector::loop() {
                     transaction->commit();
                 }
             }
-        }
 
-        if (transaction->isActive() &&
-                !transaction->getStartSync().isRequested() &&
-                transaction->getBeginTimestamp() > MIN_TIME &&
-                connectionTimeOutInt && connectionTimeOutInt->getInt() > 0 &&
-                model.getClock().now() - transaction->getBeginTimestamp() >= connectionTimeOutInt->getInt()) {
-                
-            MOCPP_DBG_INFO("Session mngt: timeout");
-            transaction->setInactive();
-            transaction->commit();
+            if (transaction->isActive() &&
+                    !transaction->getStartSync().isRequested() &&
+                    transaction->getBeginTimestamp() > MIN_TIME &&
+                    connectionTimeOutInt && connectionTimeOutInt->getInt() > 0 &&
+                    !connectorPluggedInput() &&
+                    model.getClock().now() - transaction->getBeginTimestamp() >= connectionTimeOutInt->getInt()) {
 
-            updateTxNotification(TxNotification::ConnectionTimeout);
+                MOCPP_DBG_INFO("Session mngt: timeout");
+                transaction->setInactive();
+                transaction->commit();
+
+                updateTxNotification(TxNotification::ConnectionTimeout);
+            }
         }
 
         if (transaction->isActive() &&
