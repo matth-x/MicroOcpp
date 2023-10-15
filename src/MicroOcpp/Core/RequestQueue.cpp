@@ -66,7 +66,7 @@ void RequestQueue::loop(Connection& ocppSock) {
 
             if (success) {
                 MOCPP_DBG_TRAFFIC_OUT(out.c_str());
-                received = receivedRequests.erase(received);
+                receivedRequests.erase(received);
             }
 
             return;

@@ -56,6 +56,8 @@ public:
 
     void processConf(JsonObject payload) override;
 
+    bool processErr(const char *code, const char *description, JsonObject details) override;
+
     void processReq(JsonObject payload) override;
 
     std::unique_ptr<DynamicJsonDocument> createConf() override;

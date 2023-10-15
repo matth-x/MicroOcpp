@@ -62,7 +62,7 @@ ConnectorsCommon::ConnectorsCommon(Context& context, unsigned int numConn, std::
      * Mocking an OCPP Server on the same device makes running (unit) tests easier.
      */
     context.getOperationRegistry().registerOperation("Authorize", [&context] () {
-        return new Ocpp16::Authorize(context.getModel(), nullptr);});
+        return new Ocpp16::Authorize(context.getModel(), "");});
     context.getOperationRegistry().registerOperation("StartTransaction", [&context] () {
         return new Ocpp16::StartTransaction(context.getModel(), nullptr);});
     context.getOperationRegistry().registerOperation("StatusNotification", [&context] () {

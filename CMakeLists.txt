@@ -126,6 +126,7 @@ set(MOCPP_SRC_UNIT
     tests/Metering.cpp
     tests/Configuration.cpp
     tests/Reservation.cpp
+    tests/LocalAuthList.cpp
 )
 
 add_executable(mo_unit_tests
@@ -150,6 +151,8 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MOCPP_DBG_LEVEL=MOCPP_DL_DEBUG
     MOCPP_TRAFFIC_OUT
     MOCPP_FILENAME_PREFIX="./mo_store/"
+    MOCPP_LocalAuthListMaxLength=8
+    MOCPP_SendLocalListMaxLength=4
 )
 
 target_compile_options(mo_unit_tests PUBLIC

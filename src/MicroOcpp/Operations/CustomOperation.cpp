@@ -66,6 +66,13 @@ void CustomOperation::processConf(JsonObject payload) {
     return fn_processConf(payload);
 }
 
+bool CustomOperation::processErr(const char *code, const char *description, JsonObject details) {
+    if (fn_processErr) {
+        return fn_processErr(code, description, details);
+    }
+    return true;
+}
+
 void CustomOperation::processReq(JsonObject payload) {
     return fn_processReq(payload);
 }

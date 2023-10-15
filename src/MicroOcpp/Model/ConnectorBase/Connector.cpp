@@ -43,6 +43,7 @@ Connector::Connector(Context& context, int connectorId)
     stopTransactionOnEVSideDisconnectBool = declareConfiguration<bool>("StopTransactionOnEVSideDisconnect", true);
     declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", true, CONFIGURATION_VOLATILE, true);
     localPreAuthorizeBool = declareConfiguration<bool>("LocalPreAuthorize", false);
+    localAuthorizeOfflineBool = declareConfiguration<bool>("LocalAuthorizeOffline", true);
     allowOfflineTxForUnknownIdBool = MicroOcpp::declareConfiguration<bool>("AllowOfflineTxForUnknownId", false);
 
     //if the EVSE goes offline, can it continue to charge without sending StartTx / StopTx to the server when going online again?
@@ -542,7 +543,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
     //check local OCPP whitelist
     if (model.getAuthorizationService()) {
         localAuth = model.getAuthorizationService()->getLocalAuthorization(idTag);
-        
+
         //check authorization status
         if (localAuth && localAuth->getAuthorizationStatus() != AuthorizationStatus::Accepted) {
             MOCPP_DBG_DEBUG("local auth denied (%s)", idTag);
@@ -694,7 +695,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             return;
         }
 
-        if (localAuthFound) {
+        if (localAuthFound && localAuthorizeOfflineBool && localAuthorizeOfflineBool->getBool()) {
             MOCPP_DBG_DEBUG("Offline transaction process (%s), locally authorized", tx->getIdTag());
             if (reservationFound) {
                 tx->setReservationId(reservationId);
