@@ -338,7 +338,7 @@ void ocpp_setOnSendConf(const char *operationType, OnMessage onConfirmation) {
 }
 
 void ocpp_set_console_out_c(void (*console_out)(const char *msg)) {
-    mo_set_console_out(console_out);
+    mocpp_set_console_out(console_out);
 }
 
 void ocpp_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data) {

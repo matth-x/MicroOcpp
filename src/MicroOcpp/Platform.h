@@ -36,7 +36,7 @@
 #define MO_CUSTOM_CONSOLE_MAXMSGSIZE 192
 #endif
 
-void mo_set_console_out(void (*console_out)(const char *msg));
+void mocpp_set_console_out(void (*console_out)(const char *msg));
 
 namespace MicroOcpp {
 void mocpp_console_out(const char *msg);
@@ -51,9 +51,9 @@ void mocpp_console_out(const char *msg);
                 MicroOcpp::mocpp_console_out(msg); \
             } while (0)
 #else
-#define mo_set_console_out(X) \
+#define mocpp_set_console_out(X) \
             do { \
-                X("[OCPP] CONSOLE ERROR: mo_set_console_out ignored if MO_CUSTOM_CONSOLE " \
+                X("[OCPP] CONSOLE ERROR: mocpp_set_console_out ignored if MO_CUSTOM_CONSOLE " \
                   "not defined\n"); \
                 char msg [196]; \
                 snprintf(msg, 196, "     > see %s:%i",__FILE__,__LINE__); \

@@ -16,7 +16,7 @@ void MicroOcpp::mocpp_console_out(const char *msg) {
     }
 }
 
-void mo_set_console_out(void (*console_out)(const char *msg)) {
+void mocpp_set_console_out(void (*console_out)(const char *msg)) {
     MicroOcpp::mocpp_console_out_impl = console_out;
     console_out("[OCPP] console initialized\n");
 }
