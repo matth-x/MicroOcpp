@@ -48,7 +48,8 @@ void mocpp_initialize(
             MicroOcpp::FilesystemOpt fsOpt = MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail, //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
             const char *login = "", //login present in the websocket message header
             const char *password = "", //password present in the websocket message header
-            const char *CA_cert = NULL); //TLS certificate
+            const char *CA_cert = NULL, //TLS certificate
+            bool autoRecover = false); //automatically sanitize the local data store when the lib detects recurring crashes. Not recommended during development
 #endif
 
 /*
@@ -94,7 +95,8 @@ void mocpp_initialize(
             MicroOcpp::Connection& connection, //WebSocket adapter for MicroOcpp
             const char *bootNotificationCredentials = ChargerCredentials("Demo Charger", "My Company Ltd."), //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
             std::shared_ptr<MicroOcpp::FilesystemAdapter> filesystem =
-                MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail)); //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
+                MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail), //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
+            bool autoRecover = false); //automatically sanitize the local data store when the lib detects recurring crashes. Not recommended during development
 
 /*
  * Stop the OCPP library and release allocated resources.

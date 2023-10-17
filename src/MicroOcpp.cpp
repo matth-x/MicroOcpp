@@ -28,6 +28,7 @@
 #include <MicroOcpp/Operations/CustomOperation.h>
 
 #include <MicroOcpp/Debug.h>
+#include <MicroOcpp/Version.h>
 
 namespace MicroOcpp {
 namespace Facade {
@@ -55,7 +56,7 @@ using namespace MicroOcpp::Facade;
 using namespace MicroOcpp::Ocpp16;
 
 #ifndef MOCPP_CUSTOM_WS
-void mocpp_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *chargePointModel, const char *chargePointVendor, FilesystemOpt fsOpt, const char *login, const char *password, const char *CA_cert) {
+void mocpp_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *chargePointModel, const char *chargePointVendor, FilesystemOpt fsOpt, const char *login, const char *password, const char *CA_cert, bool autoRecover) {
     if (context) {
         MOCPP_DBG_WARN("Can't be called two times. Either restart ESP, or call mocpp_deinitialize() before");
         return;
@@ -92,7 +93,7 @@ void mocpp_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_
     delete connection;
     connection = new EspWiFi::WSClient(webSocket);
 
-    mocpp_initialize(*connection, ChargerCredentials(chargePointModel, chargePointVendor), makeDefaultFilesystemAdapter(fsOpt));
+    mocpp_initialize(*connection, ChargerCredentials(chargePointModel, chargePointVendor), makeDefaultFilesystemAdapter(fsOpt), autoRecover);
 }
 #endif
 
@@ -130,7 +131,7 @@ ChargerCredentials::ChargerCredentials(const char *cpModel, const char *cpVendor
     }
 }
 
-void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs) {
+void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover) {
     if (context) {
         MOCPP_DBG_WARN("Can't be called two times. To change the credentials, either restart ESP, or call mocpp_deinitialize() before");
         return;
@@ -144,7 +145,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
     BootStats bootstats;
     BootService::loadBootStats(filesystem, bootstats);
 
-    if (bootstats.getBootFailureCount() > 3) {
+    if (autoRecover && bootstats.getBootFailureCount() > 3) {
         MOCPP_DBG_ERR("multiple initialization failures detected");
         if (filesystem) {
             bool success = FilesystemUtils::remove_if(filesystem, [] (const char *fname) -> bool {
@@ -162,7 +163,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 
     bootstats.bootNr++; //assign new boot number to this run
     BootService::storeBootStats(filesystem, bootstats);
-    
+
     configuration_init(filesystem); //call before each other library call
 
     context = new Context(connection, filesystem, bootstats.bootNr);
