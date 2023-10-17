@@ -34,7 +34,7 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
     if (keys.empty()) {
         //return all existing keys
         for (auto container : containers) {
-            for (size_t i = 0; i < container->getConfigurationCount(); i++) {
+            for (size_t i = 0; i < container->size(); i++) {
                 if (!container->getConfiguration(i)->getKey()) {
                     MOCPP_DBG_ERR("invalid config");
                     continue;

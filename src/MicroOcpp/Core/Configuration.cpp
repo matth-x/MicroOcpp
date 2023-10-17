@@ -90,7 +90,7 @@ std::shared_ptr<Configuration> loadConfiguration(TConfig type, const char *key, 
         if (auto config = container->getConfiguration(key)) {
             if (config->getType() != type) {
                 MOCPP_DBG_ERR("conflicting type for %s - remove old config", key);
-                container->removeConfiguration(config.get());
+                container->remove(config.get());
                 continue;
             }
             if (container->isAccessible() != accessible) {
@@ -150,7 +150,7 @@ std::shared_ptr<Configuration> declareConfiguration(const char *key, T factoryDe
         }
 
         if (!loadFactoryDefault(*res.get(), factoryDef)) {
-            container->removeConfiguration(res.get());
+            container->remove(res.get());
             return nullptr;
         }
     }

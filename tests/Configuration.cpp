@@ -43,11 +43,11 @@ TEST_CASE( "Configuration" ) {
         }
 
         //check emptyness
-        REQUIRE( container->getConfigurationCount() == 0 );
+        REQUIRE( container->size() == 0 );
 
         //add first config, fetch by index
         auto configFirst = container->createConfiguration(TConfig::Int, "cFirst");
-        REQUIRE( container->getConfigurationCount() == 1 );
+        REQUIRE( container->size() == 1 );
         REQUIRE( container->getConfiguration((size_t) 0) == configFirst.get());
 
         //add one config of each type
@@ -55,21 +55,21 @@ TEST_CASE( "Configuration" ) {
         auto cBool = container->createConfiguration(TConfig::Bool, "cBool");
         auto cString = container->createConfiguration(TConfig::String, "cString");
         
-        REQUIRE( container->getConfigurationCount() == 4 );
+        REQUIRE( container->size() == 4 );
 
         //fetch config by key
         REQUIRE( container->getConfiguration(cBool->getKey()) == cBool);
 
         //remove config
-        container->removeConfiguration(cBool.get());
-        REQUIRE( container->getConfigurationCount() == 3 );
+        container->remove(cBool.get());
+        REQUIRE( container->size() == 3 );
         REQUIRE( container->getConfiguration(cBool->getKey()) == nullptr);
 
         //clean container
-        container->removeConfiguration(container->getConfiguration((size_t) 0));
-        container->removeConfiguration(container->getConfiguration((size_t) 0));
-        container->removeConfiguration(container->getConfiguration((size_t) 0));
-        REQUIRE( container->getConfigurationCount() == 0 );
+        container->remove(container->getConfiguration((size_t) 0));
+        container->remove(container->getConfiguration((size_t) 0));
+        container->remove(container->getConfiguration((size_t) 0));
+        REQUIRE( container->size() == 0 );
     }
 
     SECTION("Persistency on filesystem") {
@@ -78,7 +78,7 @@ TEST_CASE( "Configuration" ) {
 
         //trivial load call
         REQUIRE( container->load() );
-        REQUIRE( container->getConfigurationCount() == 0 );
+        REQUIRE( container->size() == 0 );
 
         //add config, store, load again
         auto cString = container->createConfiguration(TConfig::String, "cString");
@@ -90,9 +90,9 @@ TEST_CASE( "Configuration" ) {
 
         //...load again
         auto container2 = makeConfigurationContainerFlash(filesystem, MOCPP_FILENAME_PREFIX "persistent1.jsn", true);
-        REQUIRE( container2->getConfigurationCount() == 0 );
+        REQUIRE( container2->size() == 0 );
         REQUIRE( container2->load() );
-        REQUIRE( container2->getConfigurationCount() == 1 );
+        REQUIRE( container2->size() == 1 );
 
         auto cString2 = container2->getConfiguration("cString");
         REQUIRE( cString2 != nullptr );

@@ -116,7 +116,7 @@ public:
             auto config = getConfiguration(key).get();
             if (config && config->getType() != type) {
                 MOCPP_DBG_ERR("conflicting type for %s - remove old config", key);
-                removeConfiguration(config);
+                remove(config);
                 config = nullptr;
             }
             if (!config) {
@@ -278,7 +278,7 @@ public:
         return res;
     }
 
-    void removeConfiguration(Configuration *config) override {
+    void remove(Configuration *config) override {
         const char *key = config->getKey();
         configurations.erase(std::remove_if(configurations.begin(), configurations.end(),
             [config] (std::shared_ptr<Configuration>& entry) {
@@ -289,7 +289,7 @@ public:
         }
     }
 
-    size_t getConfigurationCount() override {
+    size_t size() override {
         return configurations.size();
     }
 

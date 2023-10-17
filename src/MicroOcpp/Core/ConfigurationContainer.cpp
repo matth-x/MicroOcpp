@@ -35,7 +35,7 @@ std::shared_ptr<Configuration> ConfigurationContainerVolatile::createConfigurati
     return res;
 }
 
-void ConfigurationContainerVolatile::removeConfiguration(Configuration *config) {
+void ConfigurationContainerVolatile::remove(Configuration *config) {
     for (auto entry = configurations.begin(); entry != configurations.end();) {
         if (entry->get() == config) {
             entry = configurations.erase(entry);
@@ -45,7 +45,7 @@ void ConfigurationContainerVolatile::removeConfiguration(Configuration *config) 
     }
 }
 
-size_t ConfigurationContainerVolatile::getConfigurationCount() {
+size_t ConfigurationContainerVolatile::size() {
     return configurations.size();
 }
 
@@ -62,7 +62,7 @@ std::shared_ptr<Configuration> ConfigurationContainerVolatile::getConfiguration(
     return nullptr;
 }
 
-void ConfigurationContainerVolatile::addConfiguration(std::shared_ptr<Configuration> c) {
+void ConfigurationContainerVolatile::add(std::shared_ptr<Configuration> c) {
     configurations.push_back(std::move(c));
 }
 

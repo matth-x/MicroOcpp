@@ -28,9 +28,9 @@ public:
     virtual bool save() = 0;
 
     virtual std::shared_ptr<Configuration> createConfiguration(TConfig type, const char *key) = 0;
-    virtual void removeConfiguration(Configuration *config) = 0;
+    virtual void remove(Configuration *config) = 0;
 
-    virtual size_t getConfigurationCount() = 0;
+    virtual size_t size() = 0;
     virtual Configuration *getConfiguration(size_t i) = 0;
     virtual std::shared_ptr<Configuration> getConfiguration(const char *key) = 0;
 
@@ -47,13 +47,13 @@ public:
     bool load() override;
     bool save() override;
     std::shared_ptr<Configuration> createConfiguration(TConfig type, const char *key) override;
-    void removeConfiguration(Configuration *config) override;
-    size_t getConfigurationCount() override;
+    void remove(Configuration *config) override;
+    size_t size() override;
     Configuration *getConfiguration(size_t i) override;
     std::shared_ptr<Configuration> getConfiguration(const char *key) override;
 
     //add custom Configuration object
-    void addConfiguration(std::shared_ptr<Configuration> c);
+    void add(std::shared_ptr<Configuration> c);
 };
 
 std::unique_ptr<ConfigurationContainerVolatile> makeConfigurationContainerVolatile(const char *filename, bool accessible);
