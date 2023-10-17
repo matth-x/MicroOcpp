@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_REQUESTCALLBACKS_H
-#define MOCPP_REQUESTCALLBACKS_H
+#ifndef MO_REQUESTCALLBACKS_H
+#define MO_REQUESTCALLBACKS_H
 
 #include <ArduinoJson.h>
 #include <functional>

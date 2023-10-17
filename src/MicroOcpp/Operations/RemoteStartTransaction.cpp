@@ -39,7 +39,7 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
     std::unique_ptr<ChargingProfile> chargingProfile;
 
     if (payload.containsKey("chargingProfile") && model.getSmartChargingService()) {
-        MOCPP_DBG_INFO("Setting Charging profile via RemoteStartTransaction");
+        MO_DBG_INFO("Setting Charging profile via RemoteStartTransaction");
 
         JsonObject chargingProfileJson = payload["chargingProfile"];
         chargingProfile = loadChargingProfile(chargingProfileJson);
@@ -110,7 +110,7 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
 
         accepted = success;
     } else {
-        MOCPP_DBG_INFO("No connector to start transaction");
+        MO_DBG_INFO("No connector to start transaction");
         accepted = false;
     }
 }

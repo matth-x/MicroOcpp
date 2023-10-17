@@ -104,7 +104,7 @@ void MeterValueBuilder::updateObservedSamplers() {
 std::unique_ptr<MeterValue> MeterValueBuilder::takeSample(const Timestamp& timestamp, const ReadingContext& context) {
     if (select_observe != selectString->getValueRevision() || //OCPP server has changed configuration about which measurands to take
             samplers.size() != select_mask.size()) {    //Client has added another Measurand; synchronize lists
-        MOCPP_DBG_DEBUG("Updating observed samplers due to config change or samplers added");
+        MO_DBG_DEBUG("Updating observed samplers due to config change or samplers added");
         updateObservedSamplers();
         select_observe = selectString->getValueRevision();
     }
@@ -129,7 +129,7 @@ std::unique_ptr<MeterValue> MeterValueBuilder::deserializeSample(const JsonObjec
     Timestamp timestamp;
     bool ret = timestamp.setTime(mvJson["timestamp"] | "Invalid");
     if (!ret) {
-        MOCPP_DBG_ERR("invalid timestamp");
+        MO_DBG_ERR("invalid timestamp");
         return nullptr;
     }
 
@@ -149,13 +149,13 @@ std::unique_ptr<MeterValue> MeterValueBuilder::deserializeSample(const JsonObjec
                 if (dVal) {
                     sample->addSampledValue(std::move(dVal));
                 } else {
-                    MOCPP_DBG_ERR("deserialization error");
+                    MO_DBG_ERR("deserialization error");
                 }
                 break;
             }
         }
     }
 
-    MOCPP_DBG_VERBOSE("deserialized MV");
+    MO_DBG_VERBOSE("deserialized MV");
     return sample;
 }

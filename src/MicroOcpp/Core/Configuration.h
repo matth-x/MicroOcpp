@@ -12,9 +12,9 @@
 #include <memory>
 #include <vector>
 
-#define CONFIGURATION_FN (MOCPP_FILENAME_PREFIX "ocpp-config.jsn")
+#define CONFIGURATION_FN (MO_FILENAME_PREFIX "ocpp-config.jsn")
 #define CONFIGURATION_VOLATILE "/volatile"
-#define MOCPP_KEYVALUE_FN (MOCPP_FILENAME_PREFIX "client-state.jsn")
+#define MO_KEYVALUE_FN (MO_FILENAME_PREFIX "client-state.jsn")
 
 namespace MicroOcpp {
 

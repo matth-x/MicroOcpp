@@ -36,7 +36,7 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
         for (auto container : containers) {
             for (size_t i = 0; i < container->size(); i++) {
                 if (!container->getConfiguration(i)->getKey()) {
-                    MOCPP_DBG_ERR("invalid config");
+                    MO_DBG_ERR("invalid config");
                     continue;
                 }
                 configurations.push_back(container->getConfiguration(i));
@@ -80,16 +80,16 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
 
     jcapacity += JSON_ARRAY_SIZE(unknownKeys.size());
     
-    MOCPP_DBG_DEBUG("GetConfiguration capacity: %zu", jcapacity);
+    MO_DBG_DEBUG("GetConfiguration capacity: %zu", jcapacity);
 
     std::unique_ptr<DynamicJsonDocument> doc;
 
-    if (jcapacity <= MOCPP_MAX_JSON_CAPACITY) {
+    if (jcapacity <= MO_MAX_JSON_CAPACITY) {
         doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(jcapacity));
     }
 
     if (!doc || doc->capacity() < jcapacity) {
-        if (doc) {MOCPP_DBG_ERR("OOM");(void)0;}
+        if (doc) {MO_DBG_ERR("OOM");(void)0;}
 
         errorCode = "InternalError";
         errorDescription = "Query too big. Try fewer keys";
@@ -106,7 +106,7 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
             case TConfig::Int: {
                 auto ret = snprintf(vbuf, VALUE_BUFSIZE, "%i", config->getInt());
                 if (ret < 0 || ret >= VALUE_BUFSIZE) {
-                    MOCPP_DBG_ERR("value error");
+                    MO_DBG_ERR("value error");
                     continue;
                 }
                 v = vbuf;
@@ -135,7 +135,7 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
     if (!unknownKeys.empty()) {
         JsonArray jsonUnknownKey = payload.createNestedArray("unknownKey");
         for (auto key : unknownKeys) {
-            MOCPP_DBG_DEBUG("Unknown key: %s", key)
+            MO_DBG_DEBUG("Unknown key: %s", key)
             jsonUnknownKey.add(key);
         }
     }

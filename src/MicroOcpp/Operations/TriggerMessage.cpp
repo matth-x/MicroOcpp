@@ -26,7 +26,7 @@ void TriggerMessage::processReq(JsonObject payload) {
     const char *requestedMessage = payload["requestedMessage"] | "Invalid";
     const int connectorId = payload["connectorId"] | -1;
 
-    MOCPP_DBG_INFO("Execute for message type %s, connectorId = %i", requestedMessage, connectorId);
+    MO_DBG_INFO("Execute for message type %s, connectorId = %i", requestedMessage, connectorId);
 
     statusMessage = "Rejected";
 

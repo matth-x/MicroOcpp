@@ -153,12 +153,12 @@ TEST_CASE( "C++ API test" ) {
 
         loop();
         
-        MOCPP_DBG_DEBUG("added %zu checkpoints", ncheck);
+        MO_DBG_DEBUG("added %zu checkpoints", ncheck);
 
         bool checkpointsPassed = true;
         for (unsigned int i = 0; i < ncheck; i++) {
             if (!checkpoints[i]) {
-                MOCPP_DBG_ERR("missed checkpoint %u", i);
+                MO_DBG_ERR("missed checkpoint %u", i);
                 checkpointsPassed = false;
             }
         }
@@ -340,12 +340,12 @@ TEST_CASE( "C API test" ) {
 
         loop();
         
-        MOCPP_DBG_DEBUG("added %zu checkpoints", ncheckc);
+        MO_DBG_DEBUG("added %zu checkpoints", ncheckc);
 
         bool checkpointsPassed = true;
         for (unsigned int i = 0; i < ncheckc; i++) {
             if (!checkpointsc[i]) {
-                MOCPP_DBG_ERR("missed checkpoint %u", i);
+                MO_DBG_ERR("missed checkpoint %u", i);
                 checkpointsPassed = false;
             }
         }

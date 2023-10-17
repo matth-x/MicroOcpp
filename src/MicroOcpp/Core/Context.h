@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_CONTEXT_H
-#define MOCPP_CONTEXT_H
+#ifndef MO_CONTEXT_H
+#define MO_CONTEXT_H
 
 #include <memory>
 

@@ -91,7 +91,7 @@ public:
 
 } //endif namespace MicroOcpp
 
-#if !defined(MOCPP_CUSTOM_UPDATER) && !defined(MOCPP_CUSTOM_WS)
+#if !defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
 #if defined(ESP32) || defined(ESP8266)
 
 namespace MicroOcpp {
@@ -103,6 +103,6 @@ FirmwareService *makeFirmwareService(Context& context);
 }
 
 #endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(MOCPP_CUSTOM_UPDATER) && !defined(MOCPP_CUSTOM_WS)
+#endif //!defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
 
 #endif

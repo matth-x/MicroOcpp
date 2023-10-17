@@ -62,7 +62,7 @@ public:
     void setOnUploadStatusInput(std::function<UploadStatus()> uploadStatusInput);
 };
 
-#if !defined(MOCPP_CUSTOM_DIAGNOSTICS) && !defined(MOCPP_CUSTOM_WS)
+#if !defined(MO_CUSTOM_DIAGNOSTICS) && !defined(MO_CUSTOM_WS)
 #if defined(ESP32) || defined(ESP8266)
 
 namespace EspWiFi {
@@ -72,7 +72,7 @@ DiagnosticsService *makeDiagnosticsService(Context& context);
 }
 
 #endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(MOCPP_CUSTOM_UPDATER) && !defined(MOCPP_CUSTOM_WS)
+#endif //!defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
 
 } //end namespace MicroOcpp
 

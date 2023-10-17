@@ -24,7 +24,7 @@ std::unique_ptr<DynamicJsonDocument> BootNotification::createReq() {
     if (credentials) {
         return std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(*credentials));
     } else {
-        MOCPP_DBG_ERR("payload undefined");
+        MO_DBG_ERR("payload undefined");
         return createEmptyDocument();
     }
 }
@@ -35,12 +35,12 @@ void BootNotification::processConf(JsonObject payload) {
         if (model.getClock().setTime(currentTime)) {
             //success
         } else {
-            MOCPP_DBG_ERR("Time string format violation. Expect format like 2022-02-01T20:53:32.486Z");
+            MO_DBG_ERR("Time string format violation. Expect format like 2022-02-01T20:53:32.486Z");
             errorCode = "PropertyConstraintViolation";
             return;
         }
     } else {
-        MOCPP_DBG_ERR("Missing attribute currentTime");
+        MO_DBG_ERR("Missing attribute currentTime");
         errorCode = "FormationViolation";
         return;
     }
@@ -78,7 +78,7 @@ void BootNotification::processConf(JsonObject payload) {
         bootService->notifyRegistrationStatus(status);
     }
 
-    MOCPP_DBG_INFO("request has been %s", status == RegistrationStatus::Accepted ? "Accepted" :
+    MO_DBG_INFO("request has been %s", status == RegistrationStatus::Accepted ? "Accepted" :
                                        status == RegistrationStatus::Pending ? "replied with Pending" :
                                        "Rejected");
 }

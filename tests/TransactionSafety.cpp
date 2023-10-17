@@ -25,7 +25,7 @@ TEST_CASE( "Transaction safety" ) {
     declareConfiguration<int>("ConnectionTimeOut", 30)->setInt(30);
 
     SECTION("Basic transaction") {
-        MOCPP_DBG_DEBUG("Basic transaction");
+        MO_DBG_DEBUG("Basic transaction");
         loop();
         startTransaction("mIdTag");
         loop();
@@ -38,7 +38,7 @@ TEST_CASE( "Transaction safety" ) {
     }
 
     SECTION("Managed transaction") {
-        MOCPP_DBG_DEBUG("Managed transaction");
+        MO_DBG_DEBUG("Managed transaction");
         loop();
         setConnectorPluggedInput([] () {return true;});
         beginTransaction("mIdTag");
@@ -52,7 +52,7 @@ TEST_CASE( "Transaction safety" ) {
     }
 
     SECTION("Reset during transaction 01 - interrupt initiation") {
-        MOCPP_DBG_DEBUG("Reset during transaction 01 - interrupt initiation");
+        MO_DBG_DEBUG("Reset during transaction 01 - interrupt initiation");
         setConnectorPluggedInput([] () {return false;});
         loop();
         beginTransaction("mIdTag");
@@ -61,7 +61,7 @@ TEST_CASE( "Transaction safety" ) {
     }
 
     SECTION("Reset during transaction 02 - interrupt initiation second time") {
-        MOCPP_DBG_DEBUG("Reset during transaction 02 - interrupt initiation second time");
+        MO_DBG_DEBUG("Reset during transaction 02 - interrupt initiation second time");
         setConnectorPluggedInput([] () {return false;});
         loop();
         REQUIRE(!ocppPermitsCharge());
@@ -69,7 +69,7 @@ TEST_CASE( "Transaction safety" ) {
     }
 
     SECTION("Reset during transaction 03 - interrupt running tx") {
-        MOCPP_DBG_DEBUG("Reset during transaction 03 - interrupt running tx");
+        MO_DBG_DEBUG("Reset during transaction 03 - interrupt running tx");
         setConnectorPluggedInput([] () {return true;});
         loop();
         REQUIRE(ocppPermitsCharge());
@@ -77,7 +77,7 @@ TEST_CASE( "Transaction safety" ) {
     }
 
     SECTION("Reset during transaction 04 - interrupt stopping tx") {
-        MOCPP_DBG_DEBUG("Reset during transaction 04 - interrupt stopping tx");
+        MO_DBG_DEBUG("Reset during transaction 04 - interrupt stopping tx");
         setConnectorPluggedInput([] () {return true;});
         loop();
         REQUIRE(ocppPermitsCharge());
@@ -86,7 +86,7 @@ TEST_CASE( "Transaction safety" ) {
     }
 
     SECTION("Reset during transaction 06 - check tx finished") {
-        MOCPP_DBG_DEBUG("Reset during transaction 06 - check tx finished");
+        MO_DBG_DEBUG("Reset during transaction 06 - check tx finished");
         setConnectorPluggedInput([] () {return true;});
         loop();
         REQUIRE(!ocppPermitsCharge());

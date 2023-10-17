@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_NOTIFICATION_H
-#define MOCPP_NOTIFICATION_H
+#ifndef MO_NOTIFICATION_H
+#define MO_NOTIFICATION_H
 
 #ifdef __cplusplus
 

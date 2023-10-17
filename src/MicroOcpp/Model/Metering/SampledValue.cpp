@@ -40,7 +40,7 @@ const char *serializeReadingContext(ReadingContext context) {
         case (ReadingContext::Trigger):
             return "Trigger";
         default:
-            MOCPP_DBG_ERR("ReadingContext not specified");
+            MO_DBG_ERR("ReadingContext not specified");
             /* fall through */
         case (ReadingContext::NOT_SET):
             return nullptr;
@@ -48,12 +48,12 @@ const char *serializeReadingContext(ReadingContext context) {
 }
 ReadingContext deserializeReadingContext(const char *context) {
     if (!context) {
-        MOCPP_DBG_ERR("Invalid argument");
+        MO_DBG_ERR("Invalid argument");
         return ReadingContext::NOT_SET;
     }
 
     if (!strcmp(context, "NOT_SET")) {
-        MOCPP_DBG_DEBUG("Deserialize Null-ReadingContext");
+        MO_DBG_DEBUG("Deserialize Null-ReadingContext");
         return ReadingContext::NOT_SET;
     } else if (!strcmp(context, "Sample.Periodic")) {
         return ReadingContext::SamplePeriodic;
@@ -73,7 +73,7 @@ ReadingContext deserializeReadingContext(const char *context) {
         return ReadingContext::Trigger;
     }
 
-    MOCPP_DBG_ERR("ReadingContext not specified %.10s", context);
+    MO_DBG_ERR("ReadingContext not specified %.10s", context);
     return ReadingContext::NOT_SET;
 }
 }} //end namespaces

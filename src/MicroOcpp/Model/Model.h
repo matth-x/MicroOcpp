@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_MODEL_H
-#define MOCPP_MODEL_H
+#ifndef MO_MODEL_H
+#define MO_MODEL_H
 
 #include <memory>
 

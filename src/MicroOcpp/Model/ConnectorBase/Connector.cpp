@@ -24,8 +24,8 @@
 
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 
-#ifndef MOCPP_TX_CLEAN_ABORTED
-#define MOCPP_TX_CLEAN_ABORTED 1
+#ifndef MO_TX_CLEAN_ABORTED
+#define MO_TX_CLEAN_ABORTED 1
 #endif
 
 using namespace MicroOcpp;
@@ -34,8 +34,8 @@ using namespace MicroOcpp::Ocpp16;
 Connector::Connector(Context& context, int connectorId)
         : context(context), model(context.getModel()), connectorId{connectorId} {
 
-    snprintf(availabilityBoolKey, sizeof(availabilityBoolKey), MOCPP_CONFIG_EXT_PREFIX "AVAIL_CONN_%d", connectorId);
-    availabilityBool = declareConfiguration<bool>(availabilityBoolKey, true, MOCPP_KEYVALUE_FN, false, false, false);
+    snprintf(availabilityBoolKey, sizeof(availabilityBoolKey), MO_CONFIG_EXT_PREFIX "AVAIL_CONN_%d", connectorId);
+    availabilityBool = declareConfiguration<bool>(availabilityBoolKey, true, MO_KEYVALUE_FN, false, false, false);
     
     connectionTimeOutInt = declareConfiguration<int>("ConnectionTimeOut", 30);
     minimumStatusDurationInt = declareConfiguration<int>("MinimumStatusDuration", 0);
@@ -47,23 +47,23 @@ Connector::Connector(Context& context, int connectorId)
     allowOfflineTxForUnknownIdBool = MicroOcpp::declareConfiguration<bool>("AllowOfflineTxForUnknownId", false);
 
     //if the EVSE goes offline, can it continue to charge without sending StartTx / StopTx to the server when going online again?
-    silentOfflineTransactionsBool = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "SilentOfflineTransactions", false);
+    silentOfflineTransactionsBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "SilentOfflineTransactions", false);
 
     //how long the EVSE tries the Authorize request before it enters offline mode
-    authorizationTimeoutInt = MicroOcpp::declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20);
+    authorizationTimeoutInt = MicroOcpp::declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20);
 
     //FreeVend mode
-    freeVendActiveBool = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "FreeVendActive", false);
-    freeVendIdTagString = declareConfiguration<const char*>(MOCPP_CONFIG_EXT_PREFIX "FreeVendIdTag", "");
+    freeVendActiveBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "FreeVendActive", false);
+    freeVendIdTagString = declareConfiguration<const char*>(MO_CONFIG_EXT_PREFIX "FreeVendIdTag", "");
 
     if (!availabilityBool) {
-        MOCPP_DBG_ERR("Cannot declare availabilityBool");
+        MO_DBG_ERR("Cannot declare availabilityBool");
     }
 
     if (model.getTransactionStore()) {
         transaction = model.getTransactionStore()->getLatestTransaction(connectorId);
     } else {
-        MOCPP_DBG_ERR("must initialize TxStore before Connector");
+        MO_DBG_ERR("must initialize TxStore before Connector");
         (void)0;
     }
 }
@@ -126,13 +126,13 @@ ChargePointStatus Connector::getStatus() {
         }
     }
 
-    MOCPP_DBG_DEBUG("status undefined");
+    MO_DBG_DEBUG("status undefined");
     return ChargePointStatus::Faulted; //internal error
 }
 
 bool Connector::ocppPermitsCharge() {
     if (connectorId == 0) {
-        MOCPP_DBG_WARN("not supported for connectorId == 0");
+        MO_DBG_WARN("not supported for connectorId == 0");
         return false;
     }
 
@@ -156,7 +156,7 @@ void Connector::loop() {
         trackLoopExecute = true;
     }
 
-    if (transaction && transaction->isAborted() && MOCPP_TX_CLEAN_ABORTED) {
+    if (transaction && transaction->isAborted() && MO_TX_CLEAN_ABORTED) {
         //If the transaction is aborted (invalidated before started), delete all artifacts from flash
         //This is an optimization. The memory management will attempt to remove those files again later
         bool removed = true;
@@ -172,17 +172,17 @@ void Connector::loop() {
             model.getTransactionStore()->setTxEnd(connectorId, transaction->getTxNr()); //roll back creation of last tx entry
         }
 
-        MOCPP_DBG_DEBUG("collect aborted transaction %u-%u %s", connectorId, transaction->getTxNr(), removed ? "" : "failure");
+        MO_DBG_DEBUG("collect aborted transaction %u-%u %s", connectorId, transaction->getTxNr(), removed ? "" : "failure");
         transaction = nullptr;
     }
 
     if (transaction && transaction->isAborted()) {
-        MOCPP_DBG_DEBUG("collect aborted transaction %u-%u", connectorId, transaction->getTxNr());
+        MO_DBG_DEBUG("collect aborted transaction %u-%u", connectorId, transaction->getTxNr());
         transaction = nullptr;
     }
 
     if (transaction && transaction->isCompleted()) {
-        MOCPP_DBG_DEBUG("collect obsolete transaction %u-%u", connectorId, transaction->getTxNr());
+        MO_DBG_DEBUG("collect obsolete transaction %u-%u", connectorId, transaction->getTxNr());
         transaction = nullptr;
     }
 
@@ -191,7 +191,7 @@ void Connector::loop() {
         if (connectorPluggedInput) {
             if (transaction->isRunning() && transaction->isActive() && !connectorPluggedInput()) {
                 if (!stopTransactionOnEVSideDisconnectBool || stopTransactionOnEVSideDisconnectBool->getBool()) {
-                    MOCPP_DBG_DEBUG("Stop Tx due to EV disconnect");
+                    MO_DBG_DEBUG("Stop Tx due to EV disconnect");
                     transaction->setStopReason("EVDisconnected");
                     transaction->setInactive();
                     transaction->commit();
@@ -205,7 +205,7 @@ void Connector::loop() {
                     !connectorPluggedInput() &&
                     model.getClock().now() - transaction->getBeginTimestamp() >= connectionTimeOutInt->getInt()) {
 
-                MOCPP_DBG_INFO("Session mngt: timeout");
+                MO_DBG_INFO("Session mngt: timeout");
                 transaction->setInactive();
                 transaction->commit();
 
@@ -218,7 +218,7 @@ void Connector::loop() {
                     !transaction->isRunning() ||        //if transaction hasn't started yet, always end
                     !stopTransactionOnInvalidIdBool || stopTransactionOnInvalidIdBool->getBool())) { //if transaction is running, behavior depends on StopTransactionOnInvalidId
             
-            MOCPP_DBG_DEBUG("DeAuthorize session");
+            MO_DBG_DEBUG("DeAuthorize session");
             transaction->setStopReason("DeAuthorized");
             transaction->setInactive();
             transaction->commit();
@@ -237,7 +237,7 @@ void Connector::loop() {
                     (!startTxReadyInput || startTxReadyInput())) { //if defined, user Input for allowing StartTx must be true
                 //start Transaction
 
-                MOCPP_DBG_INFO("Session mngt: trigger StartTransaction");
+                MO_DBG_INFO("Session mngt: trigger StartTransaction");
 
                 auto meteringService = model.getMeteringService();
                 if (transaction->getMeterStart() < 0 && meteringService) {
@@ -245,7 +245,7 @@ void Connector::loop() {
                     if (meterStart && *meterStart) {
                         transaction->setMeterStart(meterStart->toInteger());
                     } else {
-                        MOCPP_DBG_ERR("MeterStart undefined");
+                        MO_DBG_ERR("MeterStart undefined");
                     }
                 }
 
@@ -257,7 +257,7 @@ void Connector::loop() {
                 updateTxNotification(TxNotification::StartTx);
 
                 if (transaction->isSilent()) {
-                    MOCPP_DBG_INFO("silent Transaction: omit StartTx");
+                    MO_DBG_INFO("silent Transaction: omit StartTx");
                     transaction->getStartSync().setRequested();
                     transaction->getStartSync().confirm();
                     transaction->commit();
@@ -290,10 +290,10 @@ void Connector::loop() {
                     (!stopTxReadyInput || stopTxReadyInput())) {
                 //stop transaction
 
-                MOCPP_DBG_INFO("Session mngt: trigger StopTransaction");
+                MO_DBG_INFO("Session mngt: trigger StopTransaction");
 
                 if (transaction->isSilent()) {
-                    MOCPP_DBG_INFO("silent Transaction: omit StopTx");
+                    MO_DBG_INFO("silent Transaction: omit StopTx");
                     updateTxNotification(TxNotification::StopTx);
                     transaction->getStopSync().setRequested();
                     transaction->getStopSync().confirm();
@@ -312,7 +312,7 @@ void Connector::loop() {
                     if (meterStop && *meterStop) {
                         transaction->setMeterStop(meterStop->toInteger());
                     } else {
-                        MOCPP_DBG_ERR("MeterStop undefined");
+                        MO_DBG_ERR("MeterStop undefined");
                     }
                 }
 
@@ -352,11 +352,11 @@ void Connector::loop() {
             if (!idTag || *idTag == '\0') {
                 idTag = "A0000000";
             }
-            MOCPP_DBG_INFO("begin FreeVend Tx using idTag %s", idTag);
+            MO_DBG_INFO("begin FreeVend Tx using idTag %s", idTag);
             beginTransaction_authorized(idTag);
             
             if (!transaction) {
-                MOCPP_DBG_ERR("could not begin FreeVend Tx");
+                MO_DBG_ERR("could not begin FreeVend Tx");
                 (void)0;
             }
         }
@@ -388,7 +388,7 @@ void Connector::loop() {
     if (status != currentStatus) {
         currentStatus = status;
         t_statusTransition = mocpp_tick_ms();
-        MOCPP_DBG_DEBUG("Status changed%s", minimumStatusDurationInt->getInt() ? ", will report delayed" : "");
+        MO_DBG_DEBUG("Status changed%s", minimumStatusDurationInt->getInt() ? ", will report delayed" : "");
     }
 
     if (reportedStatus != currentStatus &&
@@ -441,7 +441,7 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
         
         auto tx = model.getTransactionStore()->getTransaction(connectorId, txr);
         //check if dangling silent tx, aborted tx, or corrupted entry (tx == null)
-        if (!tx || tx->isSilent() || (tx->isAborted() && MOCPP_TX_CLEAN_ABORTED)) {
+        if (!tx || tx->isSilent() || (tx->isAborted() && MO_TX_CLEAN_ABORTED)) {
             //yes, remove
             bool removed = true;
             if (auto mService = model.getMeteringService()) {
@@ -452,9 +452,9 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
             }
             if (removed) {
                 model.getTransactionStore()->setTxEnd(connectorId, txr);
-                MOCPP_DBG_WARN("deleted dangling silent or aborted tx for new transaction");
+                MO_DBG_WARN("deleted dangling silent or aborted tx for new transaction");
             } else {
-                MOCPP_DBG_ERR("memory corruption");
+                MO_DBG_ERR("memory corruption");
                 break;
             }
         } else {
@@ -494,16 +494,16 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
                 }
                 if (removed) {
                     model.getTransactionStore()->setTxBegin(connectorId, (txl + 1) % MAX_TX_CNT);
-                    MOCPP_DBG_DEBUG("deleted tx history entry for new transaction");
+                    MO_DBG_DEBUG("deleted tx history entry for new transaction");
 
                     tx = model.getTransactionStore()->createTransaction(connectorId);
                 } else {
-                    MOCPP_DBG_ERR("memory corruption");
+                    MO_DBG_ERR("memory corruption");
                     break;
                 }
             } else {
                 //no, end of history reached, don't delete further tx
-                MOCPP_DBG_DEBUG("cannot delete more tx");
+                MO_DBG_DEBUG("cannot delete more tx");
                 break;
             }
 
@@ -519,7 +519,7 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
             tx = model.getTransactionStore()->createTransaction(connectorId, true);
 
             if (tx) {
-                MOCPP_DBG_DEBUG("created silent transaction");
+                MO_DBG_DEBUG("created silent transaction");
                 (void)0;
             }
         }
@@ -531,11 +531,11 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
 std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
     if (transaction) {
-        MOCPP_DBG_WARN("tx process still running. Please call endTransaction(...) before");
+        MO_DBG_WARN("tx process still running. Please call endTransaction(...) before");
         return nullptr;
     }
 
-    MOCPP_DBG_DEBUG("Begin transaction process (%s), prepare", idTag != nullptr ? idTag : "");
+    MO_DBG_DEBUG("Begin transaction process (%s), prepare", idTag != nullptr ? idTag : "");
     
     AuthorizationData *localAuth = nullptr;
     bool offlineBlockedAuth = false; //if offline authorization will be blocked by local auth list entry
@@ -546,14 +546,14 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
         //check authorization status
         if (localAuth && localAuth->getAuthorizationStatus() != AuthorizationStatus::Accepted) {
-            MOCPP_DBG_DEBUG("local auth denied (%s)", idTag);
+            MO_DBG_DEBUG("local auth denied (%s)", idTag);
             offlineBlockedAuth = true;
             localAuth = nullptr;
         }
 
         //check expiry
         if (localAuth && localAuth->getExpiryDate() && *localAuth->getExpiryDate() < model.getClock().now()) {
-            MOCPP_DBG_DEBUG("idTag %s local auth entry expired", idTag);
+            MO_DBG_DEBUG("idTag %s local auth entry expired", idTag);
             offlineBlockedAuth = true;
             localAuth = nullptr;
         }
@@ -580,12 +580,12 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             //if parentIdTag is known, abort this tx immediately, otherwise wait for Authorize.conf to decide
             if (parentIdTag) {
                 //parentIdTag known
-                MOCPP_DBG_INFO("connector %u reserved - abort transaction", connectorId);
+                MO_DBG_INFO("connector %u reserved - abort transaction", connectorId);
                 updateTxNotification(TxNotification::ReservationConflict);
                 return nullptr;
             } else {
                 //parentIdTag unkown but local authorization failed in any case
-                MOCPP_DBG_INFO("connector %u reserved - no local auth", connectorId);
+                MO_DBG_INFO("connector %u reserved - no local auth", connectorId);
                 localAuth = nullptr;
             }
         }
@@ -594,7 +594,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
     transaction = allocateTransaction();
 
     if (!transaction) {
-        MOCPP_DBG_ERR("could not allocate Tx");
+        MO_DBG_ERR("could not allocate Tx");
         return nullptr;
     }
 
@@ -609,7 +609,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
     //check for local preauthorization
     if (localAuth && localPreAuthorizeBool && localPreAuthorizeBool->getBool()) {
-        MOCPP_DBG_DEBUG("Begin transaction process (%s), preauthorized locally", idTag != nullptr ? idTag : "");
+        MO_DBG_DEBUG("Begin transaction process (%s), preauthorized locally", idTag != nullptr ? idTag : "");
 
         if (reservation) {
             transaction->setReservationId(reservation->getReservationId());
@@ -629,7 +629,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
         if (strcmp("Accepted", idTagInfo["status"] | "UNDEFINED")) {
             //Authorization rejected, abort transaction
-            MOCPP_DBG_DEBUG("Authorize rejected (%s), abort tx process", tx->getIdTag());
+            MO_DBG_DEBUG("Authorize rejected (%s), abort tx process", tx->getIdTag());
             tx->setIdTagDeauthorized();
             tx->commit();
             updateTxNotification(TxNotification::AuthorizationRejected);
@@ -646,11 +646,11 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
                 if (reservation->matches(
                             tx->getIdTag(),
                             idTagInfo["parentIdTag"] | (const char*) nullptr)) {
-                    MOCPP_DBG_INFO("connector %u matches reservationId %i", connectorId, reservation->getReservationId());
+                    MO_DBG_INFO("connector %u matches reservationId %i", connectorId, reservation->getReservationId());
                     tx->setReservationId(reservation->getReservationId());
                 } else {
                     //reservation found for connector but does not match idTag or parentIdTag
-                    MOCPP_DBG_INFO("connector %u reserved - abort transaction", connectorId);
+                    MO_DBG_INFO("connector %u reserved - abort transaction", connectorId);
                     tx->setInactive();
                     tx->commit();
                     updateTxNotification(TxNotification::ReservationConflict);
@@ -659,7 +659,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             }
         }
 
-        MOCPP_DBG_DEBUG("Authorized transaction process (%s)", tx->getIdTag());
+        MO_DBG_DEBUG("Authorized transaction process (%s)", tx->getIdTag());
         tx->setAuthorized();
         tx->commit();
 
@@ -679,7 +679,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
         if (offlineBlockedAuth) {
             //local auth entry exists, but is expired -> avoid offline tx
-            MOCPP_DBG_DEBUG("Abort transaction process (%s), timeout, expired local auth", tx->getIdTag());
+            MO_DBG_DEBUG("Abort transaction process (%s), timeout, expired local auth", tx->getIdTag());
             tx->setInactive();
             tx->commit();
             updateTxNotification(TxNotification::AuthorizationTimeout);
@@ -688,7 +688,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
         if (offlineBlockedResv) {
             //reservation found for connector but does not match idTag or parentIdTag
-            MOCPP_DBG_INFO("connector %u reserved (offline) - abort transaction", connectorId);
+            MO_DBG_INFO("connector %u reserved (offline) - abort transaction", connectorId);
             tx->setInactive();
             tx->commit();
             updateTxNotification(TxNotification::ReservationConflict);
@@ -696,7 +696,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         }
 
         if (localAuthFound && localAuthorizeOfflineBool && localAuthorizeOfflineBool->getBool()) {
-            MOCPP_DBG_DEBUG("Offline transaction process (%s), locally authorized", tx->getIdTag());
+            MO_DBG_DEBUG("Offline transaction process (%s), locally authorized", tx->getIdTag());
             if (reservationFound) {
                 tx->setReservationId(reservationId);
             }
@@ -708,7 +708,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         }
 
         if (allowOfflineTxForUnknownIdBool && allowOfflineTxForUnknownIdBool->getBool()) {
-            MOCPP_DBG_DEBUG("Offline transaction process (%s), allow unknown ID", tx->getIdTag());
+            MO_DBG_DEBUG("Offline transaction process (%s), allow unknown ID", tx->getIdTag());
             if (reservationFound) {
                 tx->setReservationId(reservationId);
             }
@@ -718,7 +718,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             return;
         }
 
-        MOCPP_DBG_DEBUG("Abort transaction process (%s): timeout", tx->getIdTag());
+        MO_DBG_DEBUG("Abort transaction process (%s): timeout", tx->getIdTag());
         tx->setInactive();
         tx->commit();
         updateTxNotification(TxNotification::AuthorizationTimeout);
@@ -732,14 +732,14 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *idTag, const char *parentIdTag) {
     
     if (transaction) {
-        MOCPP_DBG_WARN("tx process still running. Please call endTransaction(...) before");
+        MO_DBG_WARN("tx process still running. Please call endTransaction(...) before");
         return nullptr;
     }
 
     transaction = allocateTransaction();
 
     if (!transaction) {
-        MOCPP_DBG_ERR("could not allocate Tx");
+        MO_DBG_ERR("could not allocate Tx");
         return nullptr;
     }
 
@@ -752,7 +752,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
 
     transaction->setBeginTimestamp(model.getClock().now());
     
-    MOCPP_DBG_DEBUG("Begin transaction process (%s), already authorized", idTag != nullptr ? idTag : "");
+    MO_DBG_DEBUG("Begin transaction process (%s), already authorized", idTag != nullptr ? idTag : "");
 
     transaction->setAuthorized();
     
@@ -779,11 +779,11 @@ void Connector::endTransaction(const char *idTag, const char *reason) {
     if (idTag && *idTag != '\0' && !strcmp(idTag, transaction->getIdTag())) {
         //given stop idTag differs from start idTag. Make Authorization check first
 
-        MOCPP_DBG_WARN("authorization status of stop idTag not checked automatically yet");
+        MO_DBG_WARN("authorization status of stop idTag not checked automatically yet");
         (void)0;
     }
 
-    MOCPP_DBG_DEBUG("End session started by idTag %s",
+    MO_DBG_DEBUG("End session started by idTag %s",
                             transaction->getIdTag());
     
     if (idTag && *idTag != '\0') {

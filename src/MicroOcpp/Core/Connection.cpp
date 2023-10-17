@@ -40,7 +40,7 @@ void LoopbackConnection::setConnected(bool connected) {
     this->connected = connected;
 }
 
-#ifndef MOCPP_CUSTOM_WS
+#ifndef MO_CUSTOM_WS
 
 using namespace MicroOcpp::EspWiFi;
 
@@ -62,10 +62,10 @@ void WSClient::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
     wsock->onEvent([callback, &captureLastRecv, &captureLastConnected](WStype_t type, uint8_t * payload, size_t length) {
         switch (type) {
             case WStype_DISCONNECTED:
-                MOCPP_DBG_INFO("Disconnected");
+                MO_DBG_INFO("Disconnected");
                 break;
             case WStype_CONNECTED:
-                MOCPP_DBG_INFO("Connected to url: %s", payload);
+                MO_DBG_INFO("Connected to url: %s", payload);
                 captureLastRecv = mocpp_tick_ms();
                 captureLastConnected = mocpp_tick_ms();
                 break;
@@ -73,25 +73,25 @@ void WSClient::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
                 if (callback((const char *) payload, length)) { //forward message to RequestQueue
                     captureLastRecv = mocpp_tick_ms();
                 } else {
-                    MOCPP_DBG_WARN("Processing WebSocket input event failed");
+                    MO_DBG_WARN("Processing WebSocket input event failed");
                 }
                 break;
             case WStype_BIN:
-                MOCPP_DBG_WARN("Binary data stream not supported");
+                MO_DBG_WARN("Binary data stream not supported");
                 break;
             case WStype_PING:
                 // pong will be send automatically
-                MOCPP_DBG_TRAFFIC_IN(8, "WS ping");
+                MO_DBG_TRAFFIC_IN(8, "WS ping");
                 captureLastRecv = mocpp_tick_ms();
                 break;
             case WStype_PONG:
                 // answer to a ping we send
-                MOCPP_DBG_TRAFFIC_IN(8, "WS pong");
+                MO_DBG_TRAFFIC_IN(8, "WS pong");
                 captureLastRecv = mocpp_tick_ms();
                 break;
             case WStype_FRAGMENT_TEXT_START: //fragments are not supported
             default:
-                MOCPP_DBG_WARN("Unsupported WebSocket event type");
+                MO_DBG_WARN("Unsupported WebSocket event type");
                 break;
         }
     });

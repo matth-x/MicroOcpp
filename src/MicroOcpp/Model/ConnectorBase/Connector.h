@@ -33,7 +33,7 @@ private:
     std::shared_ptr<Transaction> transaction;
 
     std::shared_ptr<Configuration> availabilityBool;
-    char availabilityBoolKey [sizeof(MOCPP_CONFIG_EXT_PREFIX "AVAIL_CONN_xxxx") + 1];
+    char availabilityBoolKey [sizeof(MO_CONFIG_EXT_PREFIX "AVAIL_CONN_xxxx") + 1];
     bool availabilityVolatile = true;
 
     std::function<bool()> connectorPluggedInput;

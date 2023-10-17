@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_FILESYSTEMADAPTER_H
-#define MOCPP_FILESYSTEMADAPTER_H
+#ifndef MO_FILESYSTEMADAPTER_H
+#define MO_FILESYSTEMADAPTER_H
 
 #include <memory>
 #include <functional>
@@ -11,8 +11,8 @@
 #include <MicroOcpp/Platform.h>
 #include <MicroOcpp/Core/ConfigurationOptions.h>
 
-#ifndef MOCPP_FILENAME_PREFIX
-#define MOCPP_FILENAME_PREFIX "/"
+#ifndef MO_FILENAME_PREFIX
+#define MO_FILENAME_PREFIX "/"
 #endif
 
 #define DISABLE_FS       0
@@ -22,28 +22,28 @@
 #define POSIX_FILEAPI    4
 
 // choose FileAPI if not given by build flag; assume usage with Arduino if no build flags are present
-#ifndef MOCPP_USE_FILEAPI
-#if MOCPP_PLATFORM == MOCPP_PLATFORM_ARDUINO
+#ifndef MO_USE_FILEAPI
+#if MO_PLATFORM == MO_PLATFORM_ARDUINO
 #if defined(ESP32)
-#define MOCPP_USE_FILEAPI ARDUINO_LITTLEFS
+#define MO_USE_FILEAPI ARDUINO_LITTLEFS
 #else
-#define MOCPP_USE_FILEAPI ARDUINO_SPIFFS
+#define MO_USE_FILEAPI ARDUINO_SPIFFS
 #endif
-#elif MOCPP_PLATFORM == MOCPP_PLATFORM_ESPIDF
-#define MOCPP_USE_FILEAPI ESPIDF_SPIFFS
-#elif MOCPP_PLATFORM == MOCPP_PLATFORM_UNIX
-#define MOCPP_USE_FILEAPI POSIX_FILEAPI
+#elif MO_PLATFORM == MO_PLATFORM_ESPIDF
+#define MO_USE_FILEAPI ESPIDF_SPIFFS
+#elif MO_PLATFORM == MO_PLATFORM_UNIX
+#define MO_USE_FILEAPI POSIX_FILEAPI
 #else
-#define MOCPP_USE_FILEAPI DISABLE_FS
-#endif //switch-case MOCPP_PLATFORM
-#endif //ndef MOCPP_USE_FILEAPI
+#define MO_USE_FILEAPI DISABLE_FS
+#endif //switch-case MO_PLATFORM
+#endif //ndef MO_USE_FILEAPI
 
 // set default max path size parameters
-#ifndef MOCPP_MAX_PATH_SIZE
-#if MOCPP_USE_FILEAPI == POSIX_FILEAPI
-#define MOCPP_MAX_PATH_SIZE 128
+#ifndef MO_MAX_PATH_SIZE
+#if MO_USE_FILEAPI == POSIX_FILEAPI
+#define MO_MAX_PATH_SIZE 128
 #else
-#define MOCPP_MAX_PATH_SIZE 30
+#define MO_MAX_PATH_SIZE 30
 #endif
 #endif
 

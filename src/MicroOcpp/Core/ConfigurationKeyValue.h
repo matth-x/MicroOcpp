@@ -8,10 +8,10 @@
 #include <ArduinoJson.h>
 #include <memory>
 
-#define MOCPP_CONFIG_MAX_VALSTRSIZE 128
+#define MO_CONFIG_MAX_VALSTRSIZE 128
 
-#ifndef MOCPP_CONFIG_EXT_PREFIX
-#define MOCPP_CONFIG_EXT_PREFIX "Cst_"
+#ifndef MO_CONFIG_EXT_PREFIX
+#define MO_CONFIG_EXT_PREFIX "Cst_"
 #endif
 
 namespace MicroOcpp {

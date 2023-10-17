@@ -61,7 +61,7 @@ TEST_CASE( "LocalAuth" ) {
 
     //set Authorize timeout after which the charger is considered offline
     const unsigned long AUTH_TIMEOUT_MS = 60000;
-    MicroOcpp::declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "AuthorizationTimeout", -1)->setInt(AUTH_TIMEOUT_MS / 1000);
+    MicroOcpp::declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", -1)->setInt(AUTH_TIMEOUT_MS / 1000);
 
     //fetch local auth configs
     auto localAuthorizeOffline = declareConfiguration<bool>("LocalAuthorizeOffline", false);

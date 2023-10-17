@@ -33,7 +33,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
     if (payload.containsKey("startTime")) {
         if (!startTime.setTime(payload["startTime"] | "Invalid")) {
             errorCode = "PropertyConstraintViolation";
-            MOCPP_DBG_WARN("bad time format");
+            MO_DBG_WARN("bad time format");
             return;
         }
     }
@@ -42,7 +42,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
     if (payload.containsKey("startTime")) {
         if (!stopTime.setTime(payload["stopTime"] | "Invalid")) {
             errorCode = "PropertyConstraintViolation";
-            MOCPP_DBG_WARN("bad time format");
+            MO_DBG_WARN("bad time format");
             return;
         }
     }

@@ -42,13 +42,13 @@ void ResetService::loop() {
         t_resetRetry = mocpp_tick_ms();
         outstandingResetRetries--;
         if (executeReset) {
-            MOCPP_DBG_INFO("Reset device");
+            MO_DBG_INFO("Reset device");
             executeReset(isHardReset);
         } else {
-            MOCPP_DBG_ERR("No Reset function set! Abort");
+            MO_DBG_ERR("No Reset function set! Abort");
             outstandingResetRetries = 0;
         }
-        MOCPP_DBG_ERR("Reset device failure. %s", outstandingResetRetries == 0 ? "Abort" : "Retry");
+        MO_DBG_ERR("Reset device failure. %s", outstandingResetRetries == 0 ? "Abort" : "Retry");
 
         if (outstandingResetRetries <= 0) {
             for (unsigned int cId = 0; cId < context.getModel().getNumConnectors(); cId++) {
@@ -92,7 +92,7 @@ void ResetService::initiateReset(bool isHard) {
     isHardReset = isHard;
     outstandingResetRetries = 1 + resetRetriesInt->getInt(); //one initial try + no. of retries
     if (outstandingResetRetries > 5) {
-        MOCPP_DBG_ERR("no. of reset trials exceeds 5");
+        MO_DBG_ERR("no. of reset trials exceeds 5");
         outstandingResetRetries = 5;
     }
     t_resetRetry = mocpp_tick_ms();
@@ -103,11 +103,11 @@ void ResetService::initiateReset(bool isHard) {
     }
 }
 
-#if MOCPP_PLATFORM == MOCPP_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
+#if MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
 std::function<void(bool isHard)> MicroOcpp::makeDefaultResetFn() {
     return [] (bool isHard) {
-        MOCPP_DBG_DEBUG("Perform ESP reset");
+        MO_DBG_DEBUG("Perform ESP reset");
         ESP.restart();
     };
 }
-#endif //MOCPP_PLATFORM == MOCPP_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
+#endif //MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))

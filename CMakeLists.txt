@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.15)
 
 
-set(MOCPP_SRC
+set(MO_SRC
     src/MicroOcpp/Core/Configuration.cpp
     src/MicroOcpp/Core/ConfigurationContainer.cpp
     src/MicroOcpp/Core/ConfigurationContainerFlash.cpp
@@ -82,15 +82,15 @@ set(MOCPP_SRC
 
 if(ESP_PLATFORM)
 
-    idf_component_register(SRCS ${MOCPP_SRC}
+    idf_component_register(SRCS ${MO_SRC}
                         INCLUDE_DIRS "./src" "../ArduinoJson/src"
                         PRIV_REQUIRES spiffs)
 
     target_compile_options(${COMPONENT_TARGET} PUBLIC
-        -DMOCPP_PLATFORM=MOCPP_PLATFORM_ESPIDF
-        -DMOCPP_CUSTOM_WS
-        -DMOCPP_CUSTOM_UPDATER
-        -DMOCPP_CUSTOM_RESET
+        -DMO_PLATFORM=MO_PLATFORM_ESPIDF
+        -DMO_CUSTOM_WS
+        -DMO_CUSTOM_UPDATER
+        -DMO_CUSTOM_RESET
         )
 
     return()
@@ -99,7 +99,7 @@ endif()
 project(MicroOcpp
         VERSION 0.2.0)
 
-add_library(MicroOcpp ${MOCPP_SRC})
+add_library(MicroOcpp ${MO_SRC})
 
 target_include_directories(MicroOcpp PUBLIC
     "./src"
@@ -107,15 +107,15 @@ target_include_directories(MicroOcpp PUBLIC
 )
 
 target_compile_definitions(MicroOcpp PUBLIC
-    MOCPP_PLATFORM=MOCPP_PLATFORM_UNIX
-    MOCPP_CUSTOM_WS
-    MOCPP_CUSTOM_UPDATER
-    MOCPP_CUSTOM_RESET
+    MO_PLATFORM=MO_PLATFORM_UNIX
+    MO_CUSTOM_WS
+    MO_CUSTOM_UPDATER
+    MO_CUSTOM_RESET
 )
 
 # Unit tests
 
-set(MOCPP_SRC_UNIT
+set(MO_SRC_UNIT
     tests/helpers/testHelper.cpp
     tests/ocppEngineLifecycle.cpp
     tests/TransactionSafety.cpp
@@ -130,8 +130,8 @@ set(MOCPP_SRC_UNIT
 )
 
 add_executable(mo_unit_tests
-    ${MOCPP_SRC}
-    ${MOCPP_SRC_UNIT}
+    ${MO_SRC}
+    ${MO_SRC_UNIT}
     ./tests/catch2/catchMain.cpp
 )
 
@@ -142,17 +142,17 @@ target_include_directories(mo_unit_tests PUBLIC
 )
 
 target_compile_definitions(mo_unit_tests PUBLIC
-    MOCPP_PLATFORM=MOCPP_PLATFORM_UNIX
-    MOCPP_NUMCONNECTORS=3
-    MOCPP_CUSTOM_TIMER
-    MOCPP_CUSTOM_WS
-    MOCPP_CUSTOM_UPDATER
-    MOCPP_CUSTOM_RESET
-    MOCPP_DBG_LEVEL=MOCPP_DL_DEBUG
-    MOCPP_TRAFFIC_OUT
-    MOCPP_FILENAME_PREFIX="./mo_store/"
-    MOCPP_LocalAuthListMaxLength=8
-    MOCPP_SendLocalListMaxLength=4
+    MO_PLATFORM=MO_PLATFORM_UNIX
+    MO_NUMCONNECTORS=3
+    MO_CUSTOM_TIMER
+    MO_CUSTOM_WS
+    MO_CUSTOM_UPDATER
+    MO_CUSTOM_RESET
+    MO_DBG_LEVEL=MO_DL_DEBUG
+    MO_TRAFFIC_OUT
+    MO_FILENAME_PREFIX="./mo_store/"
+    MO_LocalAuthListMaxLength=8
+    MO_SendLocalListMaxLength=4
 )
 
 target_compile_options(mo_unit_tests PUBLIC

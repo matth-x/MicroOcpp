@@ -13,8 +13,8 @@ If using the C-facade (skip if you don't use anything from *ArduinoOcpp_c.h*):
 Change this in any case:
 
 - `ArduinoOcpp` to `MicroOcpp`
-- `"AO_` to `"Cst_` (define build flag `MOCPP_CONFIG_EXT_PREFIX="AO_"` to keep old config keys)
-- `AO_` to `MOCPP_`
+- `"AO_` to `"Cst_` (define build flag `MO_CONFIG_EXT_PREFIX="AO_"` to keep old config keys)
+- `AO_` to `MO_`
 - `ocpp_` to `mocpp_`
 
 Change this if used anywhere:

@@ -4,7 +4,7 @@
 
 #include <MicroOcpp/Platform.h>
 
-#ifdef MOCPP_CUSTOM_CONSOLE
+#ifdef MO_CUSTOM_CONSOLE
 
 namespace MicroOcpp {
 void (*mocpp_console_out_impl)(const char *msg) = nullptr;
@@ -23,7 +23,7 @@ void mo_set_console_out(void (*console_out)(const char *msg)) {
 
 #endif
 
-#ifdef MOCPP_CUSTOM_TIMER
+#ifdef MO_CUSTOM_TIMER
 unsigned long (*mocpp_tick_ms_impl)() = nullptr;
 
 void mocpp_set_timer(unsigned long (*get_ms)()) {
@@ -39,7 +39,7 @@ unsigned long mocpp_tick_ms_custom() {
 }
 #endif
 
-#if MOCPP_PLATFORM == MOCPP_PLATFORM_UNIX
+#if MO_PLATFORM == MO_PLATFORM_UNIX
 #include <chrono>
 
 namespace MicroOcpp {
@@ -60,7 +60,7 @@ unsigned long mocpp_tick_ms_unix() {
 }
 #endif
 
-#if MOCPP_PLATFORM != MOCPP_PLATFORM_ARDUINO
+#if MO_PLATFORM != MO_PLATFORM_ARDUINO
 void dtostrf(float value, int min_width, int num_digits_after_decimal, char *target){
     char fmt[20];
     sprintf(fmt, "%%%d.%df", min_width, num_digits_after_decimal);

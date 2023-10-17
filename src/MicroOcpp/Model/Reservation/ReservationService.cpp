@@ -72,7 +72,7 @@ void ReservationService::loop() {
 
 Reservation *ReservationService::getReservation(unsigned int connectorId) {
     if (connectorId == 0) {
-        MOCPP_DBG_DEBUG("tried to fetch connectorId 0");
+        MO_DBG_DEBUG("tried to fetch connectorId 0");
         return nullptr; //cannot fetch for connectorId 0 because multiple reservations are possible at a time
     }
 
@@ -87,7 +87,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId) {
 
 Reservation *ReservationService::getReservation(const char *idTag, const char *parentIdTag) {
     if (idTag == nullptr) {
-        MOCPP_DBG_ERR("invalid input");
+        MO_DBG_ERR("invalid input");
         return nullptr;
     }
 
@@ -130,7 +130,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
 
     if (reserveConnectorZeroSupportedBool && !reserveConnectorZeroSupportedBool->getBool()) {
         //no connectorZero check - all done
-        MOCPP_DBG_DEBUG("no reservation");
+        MO_DBG_DEBUG("no reservation");
         return nullptr;
     }
 
@@ -181,7 +181,7 @@ Reservation *ReservationService::getReservationById(int reservationId) {
 bool ReservationService::updateReservation(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag) {
     if (auto reservation = getReservationById(reservationId)) {
         if (getReservation(connectorId) && getReservation(connectorId) != reservation && getReservation(connectorId)->isActive()) {
-            MOCPP_DBG_DEBUG("found blocking reservation at connectorId %u", connectorId);
+            MO_DBG_DEBUG("found blocking reservation at connectorId %u", connectorId);
             return false; //cannot transfer reservation to other connector with existing reservation
         }
         reservation->update(reservationId, connectorId, expiryDate, idTag, parentIdTag);
@@ -194,7 +194,7 @@ bool ReservationService::updateReservation(int reservationId, unsigned int conne
 //                payload["idTag"],
 //                payload.containsKey("parentIdTag") ? payload["parentIdTag"] : nullptr)) {
 //    if (auto reservation = getReservation(payload["connectorId"].as<int>())) {
-        MOCPP_DBG_DEBUG("found blocking reservation at connectorId %u", reservation->getConnectorId());
+        MO_DBG_DEBUG("found blocking reservation at connectorId %u", reservation->getConnectorId());
         (void)reservation;
         return false;
     }
@@ -207,6 +207,6 @@ bool ReservationService::updateReservation(int reservationId, unsigned int conne
         }
     }
 
-    MOCPP_DBG_ERR("error finding blocking reservation");
+    MO_DBG_ERR("error finding blocking reservation");
     return false;
 }

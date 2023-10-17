@@ -166,7 +166,7 @@ void ocpp_setOnReceiveRequest(const char *operationType, OnMessage onRequest);
 void ocpp_setOnSendConf(const char *operationType, OnMessage onConfirmation);
 
 /*
- * If build flag MOCPP_CUSTOM_CONSOLE is set, all console output will be forwarded to the print
+ * If build flag MO_CUSTOM_CONSOLE is set, all console output will be forwarded to the print
  * function given by this setter. The parameter msg will also by null-terminated c-strings.
  */
 void ocpp_set_console_out_c(void (*console_out)(const char *msg));

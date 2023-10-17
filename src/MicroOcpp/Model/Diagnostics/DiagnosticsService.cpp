@@ -35,11 +35,11 @@ void DiagnosticsService::loop() {
 
         if (!uploadIssued) {
             if (onUpload != nullptr) {
-                MOCPP_DBG_DEBUG("Call onUpload");
+                MO_DBG_DEBUG("Call onUpload");
                 onUpload(location.c_str(), startTime, stopTime);
                 uploadIssued = true;
             } else {
-                MOCPP_DBG_ERR("onUpload must be set! (see setOnUpload). Will abort");
+                MO_DBG_ERR("onUpload must be set! (see setOnUpload). Will abort");
                 retries = 0;
                 uploadIssued = false;
             }
@@ -48,7 +48,7 @@ void DiagnosticsService::loop() {
         if (uploadIssued) {
             if (uploadStatusInput != nullptr && uploadStatusInput() == UploadStatus::Uploaded) {
                 //success!
-                MOCPP_DBG_DEBUG("end upload routine (by status)")
+                MO_DBG_DEBUG("end upload routine (by status)")
                 uploadIssued = false;
                 retries = 0;
             }
@@ -61,12 +61,12 @@ void DiagnosticsService::loop() {
 
                 if (uploadStatusInput == nullptr) {
                     //No way to find out if failed. But maximum time has elapsed. Assume success
-                    MOCPP_DBG_DEBUG("end upload routine (by timer)");
+                    MO_DBG_DEBUG("end upload routine (by timer)");
                     uploadIssued = false;
                     retries = 0;
                 } else {
                     //either we have UploadFailed status or (NotDownloaded + timeout) here
-                    MOCPP_DBG_WARN("Upload timeout or failed");
+                    MO_DBG_WARN("Upload timeout or failed");
                     const int TRANSITION_DELAY = 10;
                     if (retryInterval <= UPLOAD_TIMEOUT + TRANSITION_DELAY) {
                         nextTry = timestampNow;
@@ -100,13 +100,13 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const char *location, u
         this->stopTime = newStop;
     }
     
-#if MOCPP_DBG_LEVEL >= MOCPP_DL_INFO
+#if MO_DBG_LEVEL >= MO_DL_INFO
     char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
     char dbuf2 [JSONDATE_LENGTH + 1] = {'\0'};
     this->startTime.toJsonString(dbuf, JSONDATE_LENGTH + 1);
     this->stopTime.toJsonString(dbuf2, JSONDATE_LENGTH + 1);
 
-    MOCPP_DBG_INFO("Scheduled Diagnostics upload!\n" \
+    MO_DBG_INFO("Scheduled Diagnostics upload!\n" \
                     "                  location = %s\n" \
                     "                  retries = %i" \
                     ", retryInterval = %u" \
@@ -124,7 +124,7 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const char *location, u
     uploadIssued = false;
 
     nextTry.toJsonString(dbuf, JSONDATE_LENGTH + 1);
-    MOCPP_DBG_DEBUG("Initial try at %s", dbuf);
+    MO_DBG_DEBUG("Initial try at %s", dbuf);
 
     std::string fileName;
     if (refreshFilename) {
@@ -178,7 +178,7 @@ void DiagnosticsService::setOnUploadStatusInput(std::function<UploadStatus()> up
     this->uploadStatusInput = uploadStatusInput;
 }
 
-#if !defined(MOCPP_CUSTOM_DIAGNOSTICS) && !defined(MOCPP_CUSTOM_WS)
+#if !defined(MO_CUSTOM_DIAGNOSTICS) && !defined(MO_CUSTOM_WS)
 #if defined(ESP32) || defined(ESP8266)
 
 DiagnosticsService *EspWiFi::makeDiagnosticsService(Context& context) {
@@ -192,4 +192,4 @@ DiagnosticsService *EspWiFi::makeDiagnosticsService(Context& context) {
 }
 
 #endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(MOCPP_CUSTOM_UPDATER) && !defined(MOCPP_CUSTOM_WS)
+#endif //!defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)

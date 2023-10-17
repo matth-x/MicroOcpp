@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_CHARGEPOINTERRORCODE_H
-#define MOCPP_CHARGEPOINTERRORCODE_H
+#ifndef MO_CHARGEPOINTERRORCODE_H
+#define MO_CHARGEPOINTERRORCODE_H
 
 namespace MicroOcpp {
 

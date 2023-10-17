@@ -98,8 +98,8 @@ bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool d
         }
     }
 
-    if (resultingListLength > MOCPP_LocalAuthListMaxLength) {
-        MOCPP_DBG_WARN("localAuthList capacity exceeded");
+    if (resultingListLength > MO_LocalAuthListMaxLength) {
+        MO_DBG_WARN("localAuthList capacity exceeded");
         return false;
     }
 

@@ -9,7 +9,7 @@
 
 #include <algorithm>
 
-#define MOCPP_MAX_STOPTXDATA_LEN 4
+#define MO_MAX_STOPTXDATA_LEN 4
 
 using namespace MicroOcpp;
 
@@ -17,28 +17,28 @@ TransactionMeterData::TransactionMeterData(unsigned int connectorId, unsigned in
         : connectorId(connectorId), txNr(txNr), filesystem{filesystem} {
     
     if (!filesystem) {
-        MOCPP_DBG_DEBUG("volatile mode");
+        MO_DBG_DEBUG("volatile mode");
         (void)0;
     }
 }
 
 bool TransactionMeterData::addTxData(std::unique_ptr<MeterValue> mv) {
     if (isFinalized()) {
-        MOCPP_DBG_ERR("immutable");
+        MO_DBG_ERR("immutable");
         return false;
     }
 
     if (!mv) {
-        MOCPP_DBG_ERR("null");
+        MO_DBG_ERR("null");
         return false;
     }
 
-    if (MOCPP_MAX_STOPTXDATA_LEN <= 0) {
+    if (MO_MAX_STOPTXDATA_LEN <= 0) {
         //txData off
         return true;
     }
 
-    bool replaceLast = mvCount >= MOCPP_MAX_STOPTXDATA_LEN; //txData size exceeded? overwrite last entry instead of appending
+    bool replaceLast = mvCount >= MO_MAX_STOPTXDATA_LEN; //txData size exceeded? overwrite last entry instead of appending
 
     if (filesystem) {
 
@@ -49,21 +49,21 @@ bool TransactionMeterData::addTxData(std::unique_ptr<MeterValue> mv) {
             mvIndex = mvCount ;
         }
 
-        char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
-        auto ret = snprintf(fn, MOCPP_MAX_PATH_SIZE, MOCPP_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, mvIndex);
-        if (ret < 0 || ret >= MOCPP_MAX_PATH_SIZE) {
-            MOCPP_DBG_ERR("fn error: %i", ret);
+        char fn [MO_MAX_PATH_SIZE] = {'\0'};
+        auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, mvIndex);
+        if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
+            MO_DBG_ERR("fn error: %i", ret);
             return false;
         }
 
         auto mvDoc = mv->toJson();
         if (!mvDoc) {
-            MOCPP_DBG_ERR("MV not ready yet");
+            MO_DBG_ERR("MV not ready yet");
             return false;
         }
 
         if (!FilesystemUtils::storeJson(filesystem, fn, *mvDoc)) {
-            MOCPP_DBG_ERR("FS error");
+            MO_DBG_ERR("FS error");
             return false;
         }
 
@@ -74,27 +74,27 @@ bool TransactionMeterData::addTxData(std::unique_ptr<MeterValue> mv) {
 
     if (replaceLast) {
         txData.back() = std::move(mv);
-        MOCPP_DBG_DEBUG("updated latest sd");
+        MO_DBG_DEBUG("updated latest sd");
     } else {
         txData.push_back(std::move(mv));
-        MOCPP_DBG_DEBUG("added sd");
+        MO_DBG_DEBUG("added sd");
     }
     return true;
 }
 
 std::vector<std::unique_ptr<MeterValue>> TransactionMeterData::retrieveStopTxData() {
     if (isFinalized()) {
-        MOCPP_DBG_ERR("Can only retrieve once");
+        MO_DBG_ERR("Can only retrieve once");
         return decltype(txData) {};
     }
     finalize();
-    MOCPP_DBG_DEBUG("creating sd");
+    MO_DBG_DEBUG("creating sd");
     return std::move(txData);
 }
 
 bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
     if (!filesystem) {
-        MOCPP_DBG_DEBUG("No FS - nothing to restore");
+        MO_DBG_DEBUG("No FS - nothing to restore");
         return true;
     }
 
@@ -104,10 +104,10 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
 
     while (misses < MISSES_LIMIT) { //search until region without mvs found
         
-        char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
-        auto ret = snprintf(fn, MOCPP_MAX_PATH_SIZE, MOCPP_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, i);
-        if (ret < 0 || ret >= MOCPP_MAX_PATH_SIZE) {
-            MOCPP_DBG_ERR("fn error: %i", ret);
+        char fn [MO_MAX_PATH_SIZE] = {'\0'};
+        auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, i);
+        if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
+            MO_DBG_ERR("fn error: %i", ret);
             return false; //all files have same length
         }
 
@@ -123,14 +123,14 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
         std::unique_ptr<MeterValue> mv = mvBuilder.deserializeSample(mvJson);
 
         if (!mv) {
-            MOCPP_DBG_ERR("Deserialization error");
+            MO_DBG_ERR("Deserialization error");
             misses++;
             i++;
             continue;
         }
 
-        if (txData.size() >= MOCPP_MAX_STOPTXDATA_LEN) {
-            MOCPP_DBG_ERR("corrupted memory");
+        if (txData.size() >= MO_MAX_STOPTXDATA_LEN) {
+            MO_DBG_ERR("corrupted memory");
             return false;
         }
 
@@ -141,14 +141,14 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
         misses = 0;
     }
 
-    MOCPP_DBG_DEBUG("Restored %zu meter values", txData.size());
+    MO_DBG_DEBUG("Restored %zu meter values", txData.size());
     return true;
 }
 
 MeterStore::MeterStore(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem {filesystem} {
 
     if (!filesystem) {
-        MOCPP_DBG_DEBUG("volatile mode");
+        MO_DBG_DEBUG("volatile mode");
         (void)0;
     }
 }
@@ -190,10 +190,10 @@ std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuild
     auto tx = std::make_shared<TransactionMeterData>(connectorId, txNr, filesystem);
     
     if (filesystem) {
-        char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
-        auto ret = snprintf(fn, MOCPP_MAX_PATH_SIZE, MOCPP_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, 0);
-        if (ret < 0 || ret >= MOCPP_MAX_PATH_SIZE) {
-            MOCPP_DBG_ERR("fn error: %i", ret);
+        char fn [MO_MAX_PATH_SIZE] = {'\0'};
+        auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, 0);
+        if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
+            MO_DBG_ERR("fn error: %i", ret);
             return nullptr; //cannot store
         }
 
@@ -203,14 +203,14 @@ std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuild
         if (exists) {
             if (!tx->restore(mvBuilder)) {
                 remove(connectorId, txNr);
-                MOCPP_DBG_ERR("removed corrupted tx entries");
+                MO_DBG_ERR("removed corrupted tx entries");
             }
         }
     }
 
     txMeterData.push_back(tx);
 
-    MOCPP_DBG_DEBUG("Added txNr %u, now holding %zu txs", txNr, txMeterData.size());
+    MO_DBG_DEBUG("Added txNr %u, now holding %zu txs", txNr, txMeterData.size());
 
     return tx;
 }
@@ -245,10 +245,10 @@ bool MeterStore::remove(unsigned int connectorId, unsigned int txNr) {
 
             while (misses < MISSES_LIMIT) { //search until region without mvs found
                 
-                char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
-                auto ret = snprintf(fn, MOCPP_MAX_PATH_SIZE, MOCPP_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, i);
-                if (ret < 0 || ret >= MOCPP_MAX_PATH_SIZE) {
-                    MOCPP_DBG_ERR("fn error: %i", ret);
+                char fn [MO_MAX_PATH_SIZE] = {'\0'};
+                auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, i);
+                if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
+                    MO_DBG_ERR("fn error: %i", ret);
                     return false; //all files have same length
                 }
 
@@ -265,15 +265,15 @@ bool MeterStore::remove(unsigned int connectorId, unsigned int txNr) {
             }
         }
 
-        MOCPP_DBG_DEBUG("remove %u mvs for txNr %u", mvCount, txNr);
+        MO_DBG_DEBUG("remove %u mvs for txNr %u", mvCount, txNr);
 
         for (unsigned int i = 0; i < mvCount; i++) {
             unsigned int sd = mvCount - 1U - i;
         
-            char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
-            auto ret = snprintf(fn, MOCPP_MAX_PATH_SIZE, MOCPP_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, sd);
-            if (ret < 0 || ret >= MOCPP_MAX_PATH_SIZE) {
-                MOCPP_DBG_ERR("fn error: %i", ret);
+            char fn [MO_MAX_PATH_SIZE] = {'\0'};
+            auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, sd);
+            if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
+                MO_DBG_ERR("fn error: %i", ret);
                 return false;
             }
 
@@ -290,10 +290,10 @@ bool MeterStore::remove(unsigned int connectorId, unsigned int txNr) {
             txMeterData.end());
 
     if (success) {
-        MOCPP_DBG_DEBUG("Removed meter values for cId %u, txNr %u", connectorId, txNr);
+        MO_DBG_DEBUG("Removed meter values for cId %u, txNr %u", connectorId, txNr);
         (void)0;
     } else {
-        MOCPP_DBG_DEBUG("corrupted fs");
+        MO_DBG_DEBUG("corrupted fs");
     }
 
     return success;

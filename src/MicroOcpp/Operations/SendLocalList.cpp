@@ -33,7 +33,7 @@ void SendLocalList::processReq(JsonObject payload) {
 
     JsonArray localAuthorizationList = payload["localAuthorizationList"];
 
-    if (localAuthorizationList.size() > MOCPP_SendLocalListMaxLength) {
+    if (localAuthorizationList.size() > MO_SendLocalListMaxLength) {
         errorCode = "OccurenceConstraintViolation";
         return;
     }

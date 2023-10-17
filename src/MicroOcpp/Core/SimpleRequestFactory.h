@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_SIMPLEREQUESTFACTORY_H
-#define MOCPP_SIMPLEREQUESTFACTORY_H
+#ifndef MO_SIMPLEREQUESTFACTORY_H
+#define MO_SIMPLEREQUESTFACTORY_H
 
 #include <ArduinoJson.h>
 #include <MicroOcpp/Core/Request.h>

@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_OPERATIONREGISTRY_H
-#define MOCPP_OPERATIONREGISTRY_H
+#ifndef MO_OPERATIONREGISTRY_H
+#define MO_OPERATIONREGISTRY_H
 
 #include <functional>
 #include <vector>

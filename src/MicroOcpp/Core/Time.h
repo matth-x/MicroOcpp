@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_TIME_H
-#define MOCPP_TIME_H
+#ifndef MO_TIME_H
+#define MO_TIME_H
 
 #include <functional>
 #include <stdint.h>

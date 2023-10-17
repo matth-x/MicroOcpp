@@ -23,13 +23,13 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     const char *key = payload["key"] | "";
     if (!*key) {
         errorCode = "FormationViolation";
-        MOCPP_DBG_WARN("Could not read key");
+        MO_DBG_WARN("Could not read key");
         return;
     }
 
     if (!payload["value"].is<const char *>()) {
         errorCode = "FormationViolation";
-        MOCPP_DBG_WARN("Message is lacking value");
+        MO_DBG_WARN("Message is lacking value");
         return;
     }
 
@@ -44,7 +44,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     }
 
     if (configuration->isReadOnly()) {
-        MOCPP_DBG_WARN("Trying to override readonly value");
+        MO_DBG_WARN("Trying to override readonly value");
         readOnly = true;
         return;
     }
@@ -107,7 +107,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     }
 
     if (nDigits > INT_MAXDIGITS) {
-        MOCPP_DBG_DEBUG("Possible integer overflow: key = %s, value = %s", key, value);
+        MO_DBG_DEBUG("Possible integer overflow: key = %s, value = %s", key, value);
         convertibleInt = false;
     }
 
@@ -131,7 +131,7 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     if (validator && !(*validator)(value)) {
         //validator exists and validation fails
         reject = true;
-        MOCPP_DBG_WARN("validation failed for key=%s value=%s", key, value);
+        MO_DBG_WARN("validation failed for key=%s value=%s", key, value);
         return;
     }
 
@@ -145,12 +145,12 @@ void ChangeConfiguration::processReq(JsonObject payload) {
         configuration->setString(value);
     } else {
         reject = true;
-        MOCPP_DBG_WARN("Value has incompatible type");
+        MO_DBG_WARN("Value has incompatible type");
         return;
     }
 
     if (!configuration_save()) {
-        MOCPP_DBG_ERR("could not write changes to flash");
+        MO_DBG_ERR("could not write changes to flash");
         errorCode = "InternalError";
         return;
     }

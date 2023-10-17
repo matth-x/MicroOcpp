@@ -26,7 +26,7 @@ using MicroOcpp::OnAbortListener;
 using MicroOcpp::OnTimeoutListener;
 using MicroOcpp::OnReceiveErrorListener;
 
-#ifndef MOCPP_CUSTOM_WS
+#ifndef MO_CUSTOM_WS
 //use links2004/WebSockets library
 
 /*
@@ -285,7 +285,7 @@ void setOnResetNotify(std::function<bool(bool)> onResetNotify); //call onResetNo
 
 void setOnResetExecute(std::function<void(bool)> onResetExecute); //reset handler. This function should reboot this controller immediately. Already defined for the ESP32 on Arduino
 
-#if defined(MOCPP_CUSTOM_UPDATER) || defined(MOCPP_CUSTOM_WS)
+#if defined(MO_CUSTOM_UPDATER) || defined(MO_CUSTOM_WS)
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
 
 /*
@@ -298,7 +298,7 @@ void setOnResetExecute(std::function<void(bool)> onResetExecute); //reset handle
 MicroOcpp::FirmwareService *getFirmwareService();
 #endif
 
-#if defined(MOCPP_CUSTOM_DIAGNOSTICS) || defined(MOCPP_CUSTOM_WS)
+#if defined(MO_CUSTOM_DIAGNOSTICS) || defined(MO_CUSTOM_WS)
 #include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
 /*
  * This library implements the OCPP messaging side of Diagnostics, but no logging or the

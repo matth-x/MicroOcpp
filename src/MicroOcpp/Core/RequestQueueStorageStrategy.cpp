@@ -12,7 +12,7 @@
 
 #include <algorithm>
 
-#define MOCPP_OPERATIONCACHE_MAXSIZE 10
+#define MO_OPERATIONCACHE_MAXSIZE 10
 
 using namespace MicroOcpp;
 
@@ -40,8 +40,8 @@ void VolatileRequestQueue::push_back(std::unique_ptr<Request> op) {
 
     op->initiate(nullptr);
 
-    if (queue.size() >= MOCPP_OPERATIONCACHE_MAXSIZE) {
-        MOCPP_DBG_WARN("unsafe number of cached operations");
+    if (queue.size() >= MO_OPERATIONCACHE_MAXSIZE) {
+        MO_DBG_WARN("unsafe number of cached operations");
         (void)0;
     }
 
@@ -61,7 +61,7 @@ PersistentRequestQueue::~PersistentRequestQueue() {
 
 Request *PersistentRequestQueue::front() {
     if (!head && !tailCache.empty()) {
-        MOCPP_DBG_ERR("invalid state");
+        MO_DBG_ERR("invalid state");
         pop_front();
     }
     return head.get();
@@ -71,7 +71,7 @@ void PersistentRequestQueue::pop_front() {
     
     if (head && head->getStorageHandler() && head->getStorageHandler()->getOpNr() >= 0) {
         opStore.advanceOpNr(head->getStorageHandler()->getOpNr());
-        MOCPP_DBG_DEBUG("advanced %i to %u", head->getStorageHandler()->getOpNr(), opStore.getOpBegin());
+        MO_DBG_DEBUG("advanced %i to %u", head->getStorageHandler()->getOpNr(), opStore.getOpBegin());
     }
 
     head.reset();
@@ -102,7 +102,7 @@ void PersistentRequestQueue::pop_front() {
         
         std::unique_ptr<Request> fetched;
 
-        unsigned int range = (opStore.getOpEnd() + MOCPP_MAX_OPNR - nextOpNr) % MOCPP_MAX_OPNR;
+        unsigned int range = (opStore.getOpEnd() + MO_MAX_OPNR - nextOpNr) % MO_MAX_OPNR;
         for (size_t i = 0; i < range; i++) {
             bool exists = storageHandler->restore(nextOpNr);
             if (exists) {
@@ -117,21 +117,21 @@ void PersistentRequestQueue::pop_front() {
                     break;
                 }
 
-                MOCPP_DBG_ERR("could not restore operation");
+                MO_DBG_ERR("could not restore operation");
                 fetched.reset();
                 opStore.advanceOpNr(nextOpNr);
                 nextOpNr = opStore.getOpBegin();
             } else {
                 //didn't find anything at this slot. Try next slot
                 nextOpNr++;
-                nextOpNr %= MOCPP_MAX_OPNR;
+                nextOpNr %= MO_MAX_OPNR;
             }
         }
 
         if (fetched) {
             //found operation in flash -> case B)
             head = std::move(fetched);
-            MOCPP_DBG_DEBUG("restored operation from flash");
+            MO_DBG_DEBUG("restored operation from flash");
         } else {
             //no operation anymore in flash -> case A) -> take next queued operation in tailCache
             if (tailCache.empty()) {
@@ -143,7 +143,7 @@ void PersistentRequestQueue::pop_front() {
         }
     }
 
-    MOCPP_DBG_VERBOSE("popped front");
+    MO_DBG_VERBOSE("popped front");
 }
 
 void PersistentRequestQueue::push_back(std::unique_ptr<Request> op) {
@@ -151,15 +151,15 @@ void PersistentRequestQueue::push_back(std::unique_ptr<Request> op) {
     op->initiate(opStore.makeOpHandler());
 
     if (!head && !tailCache.empty()) {
-        MOCPP_DBG_ERR("invalid state");
+        MO_DBG_ERR("invalid state");
         pop_front();
     }
 
     if (!head) {
         head = std::move(op);
     } else {
-        if (tailCache.size() >= MOCPP_OPERATIONCACHE_MAXSIZE) {
-            MOCPP_DBG_INFO("Replace cached operation (cache full): %s", tailCache.front()->getOperationType());
+        if (tailCache.size() >= MO_OPERATIONCACHE_MAXSIZE) {
+            MO_DBG_INFO("Replace cached operation (cache full): %s", tailCache.front()->getOperationType());
             tailCache.front()->executeTimeout();
             tailCache.pop_front();
         }

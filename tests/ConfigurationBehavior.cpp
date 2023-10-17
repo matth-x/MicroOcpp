@@ -50,7 +50,7 @@ TEST_CASE( "Configuration Behavior" ) {
 
     //clean state
     auto filesystem = makeDefaultFilesystemAdapter(FilesystemOpt::Use_Mount_FormatOnFail);
-    MOCPP_DBG_DEBUG("remove all");
+    MO_DBG_DEBUG("remove all");
     FilesystemUtils::remove_if(filesystem, [] (const char*) {return true;});
 
     //initialize Context with dummy socket
@@ -139,7 +139,7 @@ TEST_CASE( "Configuration Behavior" ) {
 
     SECTION("AllowOfflineTxForUnknownId") {
         auto configBool = declareConfiguration<bool>("AllowOfflineTxForUnknownId", true);
-        auto authorizationTimeoutInt = declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "AuthorizationTimeout", 1);
+        auto authorizationTimeoutInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", 1);
         authorizationTimeoutInt->setInt(1); //try normal Authorize for 1s, then enter offline mode
 
         loopback.setConnected(false); //connection loss
@@ -175,7 +175,7 @@ TEST_CASE( "Configuration Behavior" ) {
 
     SECTION("LocalPreAuthorize") {
         auto configBool = declareConfiguration<bool>("LocalPreAuthorize", true);
-        auto authorizationTimeoutInt = declareConfiguration<int>(MOCPP_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20);
+        auto authorizationTimeoutInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20);
         authorizationTimeoutInt->setInt(300); //try normal Authorize for 5 minutes
 
         declareConfiguration<bool>("LocalAuthorizeOffline", true)->setBool(true);

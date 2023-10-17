@@ -18,8 +18,8 @@
 #include <MicroOcpp/Debug.h>
 
 //debug option: update immediately and don't wait for the retreive date
-#ifndef MOCPP_IGNORE_FW_RETR_DATE
-#define MOCPP_IGNORE_FW_RETR_DATE 0
+#ifndef MO_IGNORE_FW_RETR_DATE
+#define MO_IGNORE_FW_RETR_DATE 0
 #endif
 
 using namespace MicroOcpp;
@@ -39,7 +39,7 @@ void FirmwareService::setBuildNumber(const char *buildNumber) {
     if (buildNumber == nullptr)
         return;
     this->buildNumber = buildNumber;
-    previousBuildNumberString = declareConfiguration<const char*>("BUILD_NUMBER", this->buildNumber.c_str(), MOCPP_KEYVALUE_FN, false, false, false);
+    previousBuildNumberString = declareConfiguration<const char*>("BUILD_NUMBER", this->buildNumber.c_str(), MO_KEYVALUE_FN, false, false, false);
     checkedSuccessfulFwUpdate = false; //--> CS will be notified
 }
 
@@ -57,7 +57,7 @@ void FirmwareService::loop() {
     if (retries > 0 && timestampNow >= retreiveDate) {
 
         if (stage == UpdateStage::Idle) {
-            MOCPP_DBG_INFO("Start update");
+            MO_DBG_INFO("Start update");
 
             if (context.getModel().getNumConnectors() > 0) {
                 auto cp = context.getModel().getConnector(0);
@@ -75,7 +75,7 @@ void FirmwareService::loop() {
         }
 
         if (stage == UpdateStage::AwaitDownload) {
-            MOCPP_DBG_INFO("Start download");
+            MO_DBG_INFO("Start download");
             stage = UpdateStage::Downloading;
             if (onDownload != nullptr) {
                 onDownload(location.c_str());
@@ -94,7 +94,7 @@ void FirmwareService::loop() {
                     //passed download stage
                     stage = UpdateStage::AfterDownload;
                 } else if (downloadStatusInput() == DownloadStatus::DownloadFailed) {
-                    MOCPP_DBG_INFO("Download timeout or failed! Retry");
+                    MO_DBG_INFO("Download timeout or failed! Retry");
                     retreiveDate = timestampNow;
                     retreiveDate += retryInterval;
                     retries--;
@@ -134,13 +134,13 @@ void FirmwareService::loop() {
         }
 
         if (stage == UpdateStage::AwaitInstallation) {
-            MOCPP_DBG_INFO("Installing");
+            MO_DBG_INFO("Installing");
             stage = UpdateStage::Installing;
 
             if (onInstall) {
                 onInstall(location.c_str()); //should restart the device on success
             } else {
-                MOCPP_DBG_WARN("onInstall must be set! (see setOnInstall). Will abort");
+                MO_DBG_WARN("onInstall must be set! (see setOnInstall). Will abort");
             }
 
             timestampTransition = mocpp_tick_ms();
@@ -152,12 +152,12 @@ void FirmwareService::loop() {
 
             if (installationStatusInput) {
                 if (installationStatusInput() == InstallationStatus::Installed) {
-                    MOCPP_DBG_INFO("FW update finished");
+                    MO_DBG_INFO("FW update finished");
                     //Client should reboot during onInstall. If not, client is responsible to reboot at a later point
                     resetStage();
                     retries = 0; //End of update routine. Client must reboot on its own
                 } else if (installationStatusInput() == InstallationStatus::InstallationFailed) {
-                    MOCPP_DBG_INFO("Installation timeout or failed! Retry");
+                    MO_DBG_INFO("Installation timeout or failed! Retry");
                     retreiveDate = timestampNow;
                     retreiveDate += retryInterval;
                     retries--;
@@ -168,7 +168,7 @@ void FirmwareService::loop() {
                 }
                 return;
             } else {
-                MOCPP_DBG_INFO("FW update finished");
+                MO_DBG_INFO("FW update finished");
                 //Client should reboot during onInstall. If not, client is responsible to reboot at a later point
                 resetStage();
                 retries = 0; //End of update routine. Client must reboot on its own
@@ -177,7 +177,7 @@ void FirmwareService::loop() {
         }
 
         //should never reach this code
-        MOCPP_DBG_ERR("Firmware update failed");
+        MO_DBG_ERR("Firmware update failed");
         retries = 0;
         resetStage();
     }
@@ -189,16 +189,16 @@ void FirmwareService::scheduleFirmwareUpdate(const char *location, Timestamp ret
     this->retries = retries;
     this->retryInterval = retryInterval;
 
-    if (MOCPP_IGNORE_FW_RETR_DATE) {
-        MOCPP_DBG_DEBUG("ignore FW update retreive date");
+    if (MO_IGNORE_FW_RETR_DATE) {
+        MO_DBG_DEBUG("ignore FW update retreive date");
         this->retreiveDate = context.getModel().getClock().now();
     }
 
     char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
     this->retreiveDate.toJsonString(dbuf, JSONDATE_LENGTH + 1);
 
-#if MOCPP_DBG_LEVEL >= MOCPP_DL_INFO
-    MOCPP_DBG_INFO("Scheduled FW update!\n" \
+#if MO_DBG_LEVEL >= MO_DL_INFO
+    MO_DBG_INFO("Scheduled FW update!\n" \
                     "                  location = %s\n" \
                     "                  retrieveDate = %s\n" \
                     "                  retries = %u" \
@@ -250,7 +250,7 @@ std::unique_ptr<Request> FirmwareService::getFirmwareStatusNotification() {
     if (!checkedSuccessfulFwUpdate && !buildNumber.empty() && previousBuildNumberString != nullptr) {
         checkedSuccessfulFwUpdate = true;
 
-        MOCPP_DBG_DEBUG("Previous build number: %s, new build number: %s", previousBuildNumberString->getString(), buildNumber.c_str());
+        MO_DBG_DEBUG("Previous build number: %s, new build number: %s", previousBuildNumberString->getString(), buildNumber.c_str());
         
         if (buildNumber.compare(previousBuildNumberString->getString())) {
             //new FW
@@ -300,7 +300,7 @@ void FirmwareService::resetStage() {
     installationIssued = false;
 }
 
-#if !defined(MOCPP_CUSTOM_UPDATER) && !defined(MOCPP_CUSTOM_WS)
+#if !defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
 #if defined(ESP32)
 
 #include <HTTPUpdate.h>
@@ -340,15 +340,15 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
         switch (ret) {
             case HTTP_UPDATE_FAILED:
                 fwService->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
-                MOCPP_DBG_WARN("HTTP_UPDATE_FAILED Error (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
+                MO_DBG_WARN("HTTP_UPDATE_FAILED Error (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
                 break;
             case HTTP_UPDATE_NO_UPDATES:
                 fwService->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
-                MOCPP_DBG_WARN("HTTP_UPDATE_NO_UPDATES");
+                MO_DBG_WARN("HTTP_UPDATE_NO_UPDATES");
                 break;
             case HTTP_UPDATE_OK:
                 fwService->setInstallationStatusInput([](){return InstallationStatus::Installed;});
-                MOCPP_DBG_INFO("HTTP_UPDATE_OK");
+                MO_DBG_INFO("HTTP_UPDATE_OK");
                 ESP.restart();
                 break;
         }
@@ -384,15 +384,15 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
         switch (ret) {
             case HTTP_UPDATE_FAILED:
                 fwService->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
-                MOCPP_DBG_WARN("HTTP_UPDATE_FAILED Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+                MO_DBG_WARN("HTTP_UPDATE_FAILED Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
                 break;
             case HTTP_UPDATE_NO_UPDATES:
                 fwService->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
-                MOCPP_DBG_WARN("HTTP_UPDATE_NO_UPDATES");
+                MO_DBG_WARN("HTTP_UPDATE_NO_UPDATES");
                 break;
             case HTTP_UPDATE_OK:
                 fwService->setInstallationStatusInput([](){return InstallationStatus::Installed;});
-                MOCPP_DBG_INFO("HTTP_UPDATE_OK");
+                MO_DBG_INFO("HTTP_UPDATE_OK");
                 ESP.restart();
                 break;
         }
@@ -408,4 +408,4 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
 }
 
 #endif //defined(ESP8266)
-#endif //!defined(MOCPP_CUSTOM_UPDATER) && !defined(MOCPP_CUSTOM_WS)
+#endif //!defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)

@@ -29,9 +29,9 @@
 #define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
 #define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
 #define EXAMPLE_ESP_MAXIMUM_RETRY  CONFIG_ESP_MAXIMUM_RETRY
-#define EXAMPLE_MOCPP_OCPP_BACKEND    CONFIG_MOCPP_OCPP_BACKEND
-#define EXAMPLE_MOCPP_CHARGEBOXID     CONFIG_MOCPP_CHARGEBOXID
-#define EXAMPLE_MOCPP_AUTHORIZATIONKEY CONFIG_MOCPP_AUTHORIZATIONKEY
+#define EXAMPLE_MO_OCPP_BACKEND    CONFIG_MO_OCPP_BACKEND
+#define EXAMPLE_MO_CHARGEBOXID     CONFIG_MO_CHARGEBOXID
+#define EXAMPLE_MO_AUTHORIZATIONKEY CONFIG_MO_AUTHORIZATIONKEY
 
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
@@ -157,9 +157,9 @@ void app_main(void)
     struct OCPP_FilesystemOpt fsopt = { .use = true, .mount = true, .formatFsOnFail = true};
 
     OCPP_Connection *osock = ocpp_makeConnection(&mgr,
-            EXAMPLE_MOCPP_OCPP_BACKEND, 
-            EXAMPLE_MOCPP_CHARGEBOXID, 
-            EXAMPLE_MOCPP_AUTHORIZATIONKEY, "", fsopt);
+            EXAMPLE_MO_OCPP_BACKEND, 
+            EXAMPLE_MO_CHARGEBOXID, 
+            EXAMPLE_MO_AUTHORIZATIONKEY, "", fsopt);
     ocpp_initialize(osock, "ESP-IDF charger", "Your brand name here", fsopt);
 
     /* Enter infinite loop */

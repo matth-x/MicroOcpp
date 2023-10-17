@@ -174,7 +174,7 @@ void SmartChargingConnector::loop(){
 
 void SmartChargingConnector::setSmartChargingOutput(std::function<void(float,float,int)> limitOutput) {
     if (this->limitOutput) {
-        MOCPP_DBG_WARN("replacing existing SmartChargingOutput");
+        MO_DBG_WARN("replacing existing SmartChargingOutput");
         (void)0;
     }
     this->limitOutput = limitOutput;
@@ -195,7 +195,7 @@ ChargingProfile *SmartChargingConnector::updateProfiles(std::unique_ptr<Charging
             return TxProfile[stackLevel].get();
     }
 
-    MOCPP_DBG_ERR("invalid args");
+    MO_DBG_ERR("invalid args");
     return nullptr;
 }
 
@@ -325,18 +325,18 @@ SmartChargingService::~SmartChargingService() {
 ChargingProfile *SmartChargingService::updateProfiles(unsigned int connectorId, std::unique_ptr<ChargingProfile> chargingProfile){
 
     if ((connectorId > 0 && !getScConnectorById(connectorId)) || !chargingProfile) {
-        MOCPP_DBG_ERR("invalid args");
+        MO_DBG_ERR("invalid args");
         return nullptr;
     }
 
-    if (MOCPP_DBG_LEVEL >= MOCPP_DL_VERBOSE) {
-        MOCPP_DBG_VERBOSE("Charging Profile internal model:");
+    if (MO_DBG_LEVEL >= MO_DL_VERBOSE) {
+        MO_DBG_VERBOSE("Charging Profile internal model:");
         chargingProfile->printProfile();
     }
 
     int stackLevel = chargingProfile->getStackLevel();
     if (stackLevel< 0 || stackLevel >= CHARGEPROFILEMAXSTACKLEVEL + 1) {
-        MOCPP_DBG_ERR("input validation failed");
+        MO_DBG_ERR("input validation failed");
         return nullptr;
     }
 
@@ -354,7 +354,7 @@ ChargingProfile *SmartChargingService::updateProfiles(unsigned int connectorId, 
     }
 
     if (chargingProfilesCount >= MAXCHARGINGPROFILESINSTALLED) {
-        MOCPP_DBG_WARN("number of maximum charging profiles exceeded");
+        MO_DBG_WARN("number of maximum charging profiles exceeded");
         return nullptr;
     }
 
@@ -363,7 +363,7 @@ ChargingProfile *SmartChargingService::updateProfiles(unsigned int connectorId, 
     switch (chargingProfile->getChargingProfilePurpose()) {
         case (ChargingProfilePurposeType::ChargePointMaxProfile):
             if (connectorId != 0) {
-                MOCPP_DBG_WARN("invalid charging profile");
+                MO_DBG_WARN("invalid charging profile");
                 return nullptr;
             }
             ChargePointMaxProfile[stackLevel] = std::move(chargingProfile);
@@ -375,7 +375,7 @@ ChargingProfile *SmartChargingService::updateProfiles(unsigned int connectorId, 
                 res = ChargePointTxDefaultProfile[stackLevel].get();
             } else {
                 if (!getScConnectorById(connectorId)) {
-                    MOCPP_DBG_WARN("invalid charging profile");
+                    MO_DBG_WARN("invalid charging profile");
                     return nullptr;
                 }
                 res = getScConnectorById(connectorId)->updateProfiles(std::move(chargingProfile));
@@ -383,7 +383,7 @@ ChargingProfile *SmartChargingService::updateProfiles(unsigned int connectorId, 
             break;
         case (ChargingProfilePurposeType::TxProfile):
             if (!getScConnectorById(connectorId)) {
-                MOCPP_DBG_WARN("invalid charging profile");
+                MO_DBG_WARN("invalid charging profile");
                 return nullptr;
             }
             res = getScConnectorById(connectorId)->updateProfiles(std::move(chargingProfile));
@@ -409,13 +409,13 @@ bool SmartChargingService::loadProfiles() {
     bool success = true;
 
     if (!filesystem) {
-        MOCPP_DBG_DEBUG("no filesystem");
+        MO_DBG_DEBUG("no filesystem");
         return true; //not an error
     }
 
     ChargingProfilePurposeType purposes[] = {ChargingProfilePurposeType::ChargePointMaxProfile, ChargingProfilePurposeType::TxDefaultProfile, ChargingProfilePurposeType::TxProfile};
 
-    char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
+    char fn [MO_MAX_PATH_SIZE] = {'\0'};
 
     for (auto purpose : purposes) {
         for (unsigned int cId = 0; cId < numConnectors; cId++) {
@@ -424,7 +424,7 @@ bool SmartChargingService::loadProfiles() {
             }
             for (unsigned int iLevel = 0; iLevel < CHARGEPROFILEMAXSTACKLEVEL; iLevel++) {
 
-                if (!SmartChargingServiceUtils::printProfileFileName(fn, MOCPP_MAX_PATH_SIZE, cId, purpose, iLevel)) {
+                if (!SmartChargingServiceUtils::printProfileFileName(fn, MO_MAX_PATH_SIZE, cId, purpose, iLevel)) {
                     return false;
                 }
 
@@ -436,7 +436,7 @@ bool SmartChargingService::loadProfiles() {
                 auto profileDoc = FilesystemUtils::loadJson(filesystem, fn);
                 if (!profileDoc) {
                     success = false;
-                    MOCPP_DBG_ERR("profile corrupt: %s, remove", fn);
+                    MO_DBG_ERR("profile corrupt: %s, remove", fn);
                     filesystem->remove(fn);
                     continue;
                 }
@@ -450,7 +450,7 @@ bool SmartChargingService::loadProfiles() {
                 }
                 if (!valid) {
                     success = false;
-                    MOCPP_DBG_ERR("profile corrupt: %s, remove", fn);
+                    MO_DBG_ERR("profile corrupt: %s, remove", fn);
                     filesystem->remove(fn);
                 }
             }
@@ -501,12 +501,12 @@ void SmartChargingService::loop(){
 
         calculateLimit(tnow, limit, nextChange);
 
-#if (MOCPP_DBG_LEVEL >= MOCPP_DL_INFO)
+#if (MO_DBG_LEVEL >= MO_DL_INFO)
         char timestamp1[JSONDATE_LENGTH + 1] = {'\0'};
         tnow.toJsonString(timestamp1, JSONDATE_LENGTH + 1);
         char timestamp2[JSONDATE_LENGTH + 1] = {'\0'};
         nextChange.toJsonString(timestamp2, JSONDATE_LENGTH + 1);
-        MOCPP_DBG_INFO("New limit for connector 1, scheduled at = %s, nextChange = %s, limit = {%f,%f,%i}",
+        MO_DBG_INFO("New limit for connector 1, scheduled at = %s, nextChange = %s, limit = {%f,%f,%i}",
                             timestamp1, timestamp2,
                             limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
                             limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
@@ -528,13 +528,13 @@ void SmartChargingService::loop(){
 
 void SmartChargingService::setSmartChargingOutput(unsigned int connectorId, std::function<void(float,float,int)> limitOutput) {
     if ((connectorId > 0 && !getScConnectorById(connectorId))) {
-        MOCPP_DBG_ERR("invalid args");
+        MO_DBG_ERR("invalid args");
         return;
     }
 
     if (connectorId == 0) {
         if (this->limitOutput) {
-            MOCPP_DBG_WARN("replacing existing SmartChargingOutput");
+            MO_DBG_WARN("replacing existing SmartChargingOutput");
             (void)0;
         }
         this->limitOutput = limitOutput;
@@ -565,7 +565,7 @@ void SmartChargingService::updateAllowedChargingRateUnit(bool powerSupported, bo
 bool SmartChargingService::setChargingProfile(unsigned int connectorId, std::unique_ptr<ChargingProfile> chargingProfile) {
 
     if ((connectorId > 0 && !getScConnectorById(connectorId)) || !chargingProfile) {
-        MOCPP_DBG_ERR("invalid args");
+        MO_DBG_ERR("invalid args");
         return false;
     }
 
@@ -627,7 +627,7 @@ bool SmartChargingService::clearChargingProfile(std::function<bool(int, int, Cha
 std::unique_ptr<ChargingSchedule> SmartChargingService::getCompositeSchedule(unsigned int connectorId, int duration, ChargingRateUnitType_Optional unit) {
 
     if (connectorId > 0 && !getScConnectorById(connectorId)) {
-        MOCPP_DBG_ERR("invalid args");
+        MO_DBG_ERR("invalid args");
         return nullptr;
     }
     
@@ -694,18 +694,18 @@ bool SmartChargingServiceUtils::printProfileFileName(char *out, size_t bufsize, 
 
     switch (purpose) {
         case (ChargingProfilePurposeType::ChargePointMaxProfile):
-            pret = snprintf(out, bufsize, MOCPP_FILENAME_PREFIX "sc-cm-%u.jsn", stackLevel);
+            pret = snprintf(out, bufsize, MO_FILENAME_PREFIX "sc-cm-%u.jsn", stackLevel);
             break;
         case (ChargingProfilePurposeType::TxDefaultProfile):
-            pret = snprintf(out, bufsize, MOCPP_FILENAME_PREFIX "sc-td-%u-%u.jsn", connectorId, stackLevel);
+            pret = snprintf(out, bufsize, MO_FILENAME_PREFIX "sc-td-%u-%u.jsn", connectorId, stackLevel);
             break;
         case (ChargingProfilePurposeType::TxProfile):
-            pret = snprintf(out, bufsize, MOCPP_FILENAME_PREFIX "sc-tx-%u-%u.jsn", connectorId, stackLevel);
+            pret = snprintf(out, bufsize, MO_FILENAME_PREFIX "sc-tx-%u-%u.jsn", connectorId, stackLevel);
             break;
     }
 
     if (pret < 0 || (size_t) pret >= bufsize) {
-        MOCPP_DBG_ERR("fn error: %i", pret);
+        MO_DBG_ERR("fn error: %i", pret);
         return false;
     }
 
@@ -723,9 +723,9 @@ bool SmartChargingServiceUtils::storeProfile(std::shared_ptr<FilesystemAdapter> 
         return false;
     }
 
-    char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
+    char fn [MO_MAX_PATH_SIZE] = {'\0'};
 
-    if (!printProfileFileName(fn, MOCPP_MAX_PATH_SIZE, connectorId, chargingProfile->getChargingProfilePurpose(), chargingProfile->getStackLevel())) {
+    if (!printProfileFileName(fn, MO_MAX_PATH_SIZE, connectorId, chargingProfile->getChargingProfilePurpose(), chargingProfile->getStackLevel())) {
         return false;
     }
 
@@ -738,9 +738,9 @@ bool SmartChargingServiceUtils::removeProfile(std::shared_ptr<FilesystemAdapter>
         return false;
     }
 
-    char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
+    char fn [MO_MAX_PATH_SIZE] = {'\0'};
 
-    if (!printProfileFileName(fn, MOCPP_MAX_PATH_SIZE, connectorId, purpose, stackLevel)) {
+    if (!printProfileFileName(fn, MO_MAX_PATH_SIZE, connectorId, purpose, stackLevel)) {
         return false;
     }
 

@@ -107,7 +107,7 @@ bool serializeTransaction(Transaction& tx, DynamicJsonDocument& out) {
     }
 
     if (out.overflowed()) {
-        MOCPP_DBG_ERR("JSON capacity exceeded");
+        MO_DBG_ERR("JSON capacity exceeded");
         return false;
     }
 
@@ -124,7 +124,7 @@ bool deserializeTransaction(Transaction& tx, JsonObject state) {
 
     if (sessionState.containsKey("idTag")) {
         if (!tx.setIdTag(sessionState["idTag"] | "")) {
-            MOCPP_DBG_ERR("read err");
+            MO_DBG_ERR("read err");
             return false;
         }
     }
@@ -140,7 +140,7 @@ bool deserializeTransaction(Transaction& tx, JsonObject state) {
     if (sessionState.containsKey("timestamp")) {
         Timestamp timestamp;
         if (!timestamp.setTime(sessionState["timestamp"] | "Invalid")) {
-            MOCPP_DBG_ERR("read err");
+            MO_DBG_ERR("read err");
             return false;
         }
         tx.setBeginTimestamp(timestamp);
@@ -167,7 +167,7 @@ bool deserializeTransaction(Transaction& tx, JsonObject state) {
     if (txStart.containsKey("timestamp")) {
         Timestamp timestamp;
         if (!timestamp.setTime(txStart["timestamp"] | "Invalid")) {
-            MOCPP_DBG_ERR("read err");
+            MO_DBG_ERR("read err");
             return false;
         }
         tx.setStartTimestamp(timestamp);
@@ -178,7 +178,7 @@ bool deserializeTransaction(Transaction& tx, JsonObject state) {
         if (bootNrIn >= 0 && bootNrIn <= std::numeric_limits<uint16_t>::max()) {
             tx.setStartBootNr((uint16_t) bootNrIn);
         } else {
-            MOCPP_DBG_ERR("read err");
+            MO_DBG_ERR("read err");
             return false;
         }
     }
@@ -195,7 +195,7 @@ bool deserializeTransaction(Transaction& tx, JsonObject state) {
 
     if (txStop.containsKey("idTag")) {
         if (!tx.setStopIdTag(txStop["idTag"] | "")) {
-            MOCPP_DBG_ERR("read err");
+            MO_DBG_ERR("read err");
             return false;
         }
     }
@@ -207,7 +207,7 @@ bool deserializeTransaction(Transaction& tx, JsonObject state) {
     if (txStop.containsKey("timestamp")) {
         Timestamp timestamp;
         if (!timestamp.setTime(txStop["timestamp"] | "Invalid")) {
-            MOCPP_DBG_ERR("read err");
+            MO_DBG_ERR("read err");
             return false;
         }
         tx.setStopTimestamp(timestamp);
@@ -218,14 +218,14 @@ bool deserializeTransaction(Transaction& tx, JsonObject state) {
         if (bootNrIn >= 0 && bootNrIn <= std::numeric_limits<uint16_t>::max()) {
             tx.setStopBootNr((uint16_t) bootNrIn);
         } else {
-            MOCPP_DBG_ERR("read err");
+            MO_DBG_ERR("read err");
             return false;
         }
     }
 
     if (txStop.containsKey("reason")) {
         if (!tx.setStopReason(txStop["reason"] | "")) {
-            MOCPP_DBG_ERR("read err");
+            MO_DBG_ERR("read err");
             return false;
         }
     }
@@ -234,12 +234,12 @@ bool deserializeTransaction(Transaction& tx, JsonObject state) {
         tx.setSilent();
     }
 
-    MOCPP_DBG_DEBUG("DUMP TX");
-    MOCPP_DBG_DEBUG("Session   | idTag %s, active: %i, authorized: %i, deauthorized: %i", tx.getIdTag(), tx.isActive(), tx.isAuthorized(), tx.isIdTagDeauthorized());
-    MOCPP_DBG_DEBUG("Start RPC | req: %i, conf: %i", tx.getStartSync().isRequested(), tx.getStartSync().isConfirmed());
-    MOCPP_DBG_DEBUG("Stop  RPC | req: %i, conf: %i",  tx.getStopSync().isRequested(), tx.getStopSync().isConfirmed());
+    MO_DBG_DEBUG("DUMP TX");
+    MO_DBG_DEBUG("Session   | idTag %s, active: %i, authorized: %i, deauthorized: %i", tx.getIdTag(), tx.isActive(), tx.isAuthorized(), tx.isIdTagDeauthorized());
+    MO_DBG_DEBUG("Start RPC | req: %i, conf: %i", tx.getStartSync().isRequested(), tx.getStartSync().isConfirmed());
+    MO_DBG_DEBUG("Stop  RPC | req: %i, conf: %i",  tx.getStopSync().isRequested(), tx.getStopSync().isConfirmed());
     if (tx.isSilent()) {
-        MOCPP_DBG_DEBUG("          | silent Tx");
+        MO_DBG_DEBUG("          | silent Tx");
         (void)0;
     }
 

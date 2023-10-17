@@ -13,7 +13,7 @@ Operation::Operation() {}
 Operation::~Operation() {}
   
 const char* Operation::getOperationType(){
-    MOCPP_DBG_ERR("Unsupported operation: getOperationType() is not implemented");
+    MO_DBG_ERR("Unsupported operation: getOperationType() is not implemented");
     return "CustomOperation";
 }
 
@@ -26,20 +26,20 @@ bool Operation::restore(StoredOperationHandler *rpcData) {
 }
 
 std::unique_ptr<DynamicJsonDocument> Operation::createReq() {
-    MOCPP_DBG_ERR("Unsupported operation: createReq() is not implemented");
+    MO_DBG_ERR("Unsupported operation: createReq() is not implemented");
     return createEmptyDocument();
 }
 
 void Operation::processConf(JsonObject payload) {
-    MOCPP_DBG_ERR("Unsupported operation: processConf() is not implemented");
+    MO_DBG_ERR("Unsupported operation: processConf() is not implemented");
 }
 
 void Operation::processReq(JsonObject payload) {
-    MOCPP_DBG_ERR("Unsupported operation: processReq() is not implemented");
+    MO_DBG_ERR("Unsupported operation: processReq() is not implemented");
 }
 
 std::unique_ptr<DynamicJsonDocument> Operation::createConf() {
-    MOCPP_DBG_ERR("Unsupported operation: createConf() is not implemented");
+    MO_DBG_ERR("Unsupported operation: createConf() is not implemented");
     return createEmptyDocument();
 }
 

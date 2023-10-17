@@ -34,7 +34,7 @@ const char *cstrFromOcppEveState(ChargePointStatus state) {
         case (ChargePointStatus::Faulted):
             return "Faulted";
         default:
-            MOCPP_DBG_ERR("ChargePointStatus not specified");
+            MO_DBG_ERR("ChargePointStatus not specified");
             (void)0;
             /* fall through */
         case (ChargePointStatus::NOT_SET):
@@ -46,7 +46,7 @@ const char *cstrFromOcppEveState(ChargePointStatus state) {
 StatusNotification::StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorData errorData)
         : connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
     
-    MOCPP_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
+    MO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
 }
 
 const char* StatusNotification::getOperationType(){
@@ -73,7 +73,7 @@ std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
             payload["vendorErrorCode"] = errorData.vendorErrorCode;
         }
     } else if (currentStatus == ChargePointStatus::NOT_SET) {
-        MOCPP_DBG_ERR("Reporting undefined status");
+        MO_DBG_ERR("Reporting undefined status");
         payload["errorCode"] = "InternalError";
     } else {
         payload["errorCode"] = "NoError";

@@ -185,7 +185,7 @@ TEST_CASE( "Charging sessions" ) {
         loopback.setConnected(false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
         configuration_save();
 
         loop();
@@ -246,7 +246,7 @@ TEST_CASE( "Charging sessions" ) {
         loopback.setConnected(false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
         configuration_save();
 
         loop();
@@ -260,7 +260,7 @@ TEST_CASE( "Charging sessions" ) {
 
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
         configuration_save();
 
         bool checkProcessed = false;
@@ -297,7 +297,7 @@ TEST_CASE( "Charging sessions" ) {
         loopback.setConnected(false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
         configuration_save();
 
         loop();
@@ -314,7 +314,7 @@ TEST_CASE( "Charging sessions" ) {
 
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
         configuration_save();
 
         bool checkProcessed = false;

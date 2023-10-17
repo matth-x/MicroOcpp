@@ -48,7 +48,7 @@ MeteringService::MeteringService(Context& context, int numConn, std::shared_ptr<
             }
             if (!found) {
                 isValid = false;
-                MOCPP_DBG_WARN("could not find metering device for %.*s", (int) (r - l), l);
+                MO_DBG_WARN("could not find metering device for %.*s", (int) (r - l), l);
                 break;
             }
             l = r;
@@ -83,7 +83,7 @@ void MeteringService::loop(){
 
 void MeteringService::addMeterValueSampler(int connectorId, std::unique_ptr<SampledValueSampler> meterValueSampler) {
     if (connectorId < 0 || connectorId >= (int) connectors.size()) {
-        MOCPP_DBG_ERR("connectorId is out of bounds");
+        MO_DBG_ERR("connectorId is out of bounds");
         return;
     }
     connectors[connectorId]->addMeterValueSampler(std::move(meterValueSampler));
@@ -91,7 +91,7 @@ void MeteringService::addMeterValueSampler(int connectorId, std::unique_ptr<Samp
 
 std::unique_ptr<SampledValue> MeteringService::readTxEnergyMeter(int connectorId, ReadingContext context) {
     if (connectorId < 0 || (size_t) connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("connectorId is out of bounds");
+        MO_DBG_ERR("connectorId is out of bounds");
         return nullptr;
     }
     return connectors[connectorId]->readTxEnergyMeter(context);
@@ -99,7 +99,7 @@ std::unique_ptr<SampledValue> MeteringService::readTxEnergyMeter(int connectorId
 
 std::unique_ptr<Request> MeteringService::takeTriggeredMeterValues(int connectorId) {
     if (connectorId < 0 || connectorId >= (int) connectors.size()) {
-        MOCPP_DBG_ERR("connectorId out of bounds. Ignore");
+        MO_DBG_ERR("connectorId out of bounds. Ignore");
         return nullptr;
     }
     auto& connector = connectors.at(connectorId);
@@ -110,21 +110,21 @@ std::unique_ptr<Request> MeteringService::takeTriggeredMeterValues(int connector
             meterValues->setTimeout(120000);
             return meterValues;
         }
-        MOCPP_DBG_DEBUG("Did not take any samples for connectorId %d", connectorId);
+        MO_DBG_DEBUG("Did not take any samples for connectorId %d", connectorId);
         return nullptr;
     }
-    MOCPP_DBG_ERR("Could not find connector");
+    MO_DBG_ERR("Could not find connector");
     return nullptr;
 }
 
 void MeteringService::beginTxMeterData(Transaction *transaction) {
     if (!transaction) {
-        MOCPP_DBG_ERR("invalid argument");
+        MO_DBG_ERR("invalid argument");
         return;
     }
     auto connectorId = transaction->getConnectorId();
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("connectorId is out of bounds");
+        MO_DBG_ERR("connectorId is out of bounds");
         return;
     }
     auto& connector = connectors[connectorId];
@@ -134,12 +134,12 @@ void MeteringService::beginTxMeterData(Transaction *transaction) {
 
 std::shared_ptr<TransactionMeterData> MeteringService::endTxMeterData(Transaction *transaction) {
     if (!transaction) {
-        MOCPP_DBG_ERR("invalid argument");
+        MO_DBG_ERR("invalid argument");
         return nullptr;
     }
     auto connectorId = transaction->getConnectorId();
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("connectorId is out of bounds");
+        MO_DBG_ERR("connectorId is out of bounds");
         return nullptr;
     }
     auto& connector = connectors[connectorId];
@@ -149,12 +149,12 @@ std::shared_ptr<TransactionMeterData> MeteringService::endTxMeterData(Transactio
 
 std::shared_ptr<TransactionMeterData> MeteringService::getStopTxMeterData(Transaction *transaction) {
     if (!transaction) {
-        MOCPP_DBG_ERR("invalid argument");
+        MO_DBG_ERR("invalid argument");
         return nullptr;
     }
     auto connectorId = transaction->getConnectorId();
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("connectorId is out of bounds");
+        MO_DBG_ERR("connectorId is out of bounds");
         return nullptr;
     }
     auto& connector = connectors[connectorId];

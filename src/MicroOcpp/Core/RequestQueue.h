@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_REQUESTQUEUE_H
-#define MOCPP_REQUESTQUEUE_H
+#ifndef MO_REQUESTQUEUE_H
+#define MO_REQUESTQUEUE_H
 
 #include <MicroOcpp/Core/RequestQueueStorageStrategy.h>
 

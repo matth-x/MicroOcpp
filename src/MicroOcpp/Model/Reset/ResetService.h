@@ -43,7 +43,7 @@ public:
 
 } //end namespace MicroOcpp
 
-#if MOCPP_PLATFORM == MOCPP_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
+#if MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
 
 namespace MicroOcpp {
 
@@ -51,6 +51,6 @@ std::function<void(bool isHard)> makeDefaultResetFn();
 
 }
 
-#endif //MOCPP_PLATFORM == MOCPP_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
+#endif //MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
 
 #endif

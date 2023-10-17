@@ -19,13 +19,13 @@
  */
 
 
-#if MOCPP_USE_FILEAPI == ARDUINO_LITTLEFS || MOCPP_USE_FILEAPI == ARDUINO_SPIFFS
+#if MO_USE_FILEAPI == ARDUINO_LITTLEFS || MO_USE_FILEAPI == ARDUINO_SPIFFS
 
-#if MOCPP_USE_FILEAPI == ARDUINO_LITTLEFS
+#if MO_USE_FILEAPI == ARDUINO_LITTLEFS
 #include <LittleFS.h>
 #include <vfs_api.h>
 #define USE_FS LittleFS
-#elif MOCPP_USE_FILEAPI == ARDUINO_SPIFFS
+#elif MO_USE_FILEAPI == ARDUINO_SPIFFS
 #include <FS.h>
 #define USE_FS SPIFFS
 #endif
@@ -66,21 +66,21 @@ public:
         valid = true;
 
         if (config.mustMount()) { 
-#if MOCPP_USE_FILEAPI == ARDUINO_LITTLEFS
+#if MO_USE_FILEAPI == ARDUINO_LITTLEFS
             if(!USE_FS.begin(config.formatOnFail())) {
-                MOCPP_DBG_ERR("Error while mounting LITTLEFS");
+                MO_DBG_ERR("Error while mounting LITTLEFS");
                 valid = false;
             } else {
-                MOCPP_DBG_DEBUG("LittleFS mount success");
+                MO_DBG_DEBUG("LittleFS mount success");
             }
-#elif MOCPP_USE_FILEAPI == ARDUINO_SPIFFS
+#elif MO_USE_FILEAPI == ARDUINO_SPIFFS
             //ESP8266
             SPIFFSConfig cfg;
             cfg.setAutoFormat(config.formatOnFail());
             SPIFFS.setConfig(cfg);
 
             if (!SPIFFS.begin()) {
-                MOCPP_DBG_ERR("Unable to initialize: unable to mount SPIFFS");
+                MO_DBG_ERR("Unable to initialize: unable to mount SPIFFS");
                 valid = false;
             }
 #else
@@ -99,11 +99,11 @@ public:
     operator bool() {return valid;}
 
     int stat(const char *path, size_t *size) override {
-#if MOCPP_USE_FILEAPI == ARDUINO_LITTLEFS
-        char partition_path [MOCPP_MAX_PATH_SIZE];
-        auto ret = snprintf(partition_path, MOCPP_MAX_PATH_SIZE, "/littlefs%s", path);
-        if (ret < 0 || ret >= MOCPP_MAX_PATH_SIZE) {
-            MOCPP_DBG_ERR("fn error: %i", ret);
+#if MO_USE_FILEAPI == ARDUINO_LITTLEFS
+        char partition_path [MO_MAX_PATH_SIZE];
+        auto ret = snprintf(partition_path, MO_MAX_PATH_SIZE, "/littlefs%s", path);
+        if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
+            MO_DBG_ERR("fn error: %i", ret);
             return -1;
         }
         struct ::stat st;
@@ -112,7 +112,7 @@ public:
             *size = st.st_size;
         }
         return status;
-#elif MOCPP_USE_FILEAPI == ARDUINO_SPIFFS
+#elif MO_USE_FILEAPI == ARDUINO_SPIFFS
         if (!USE_FS.exists(path)) {
             return -1;
         }
@@ -140,7 +140,7 @@ public:
     std::unique_ptr<FileAdapter> open(const char *fn, const char *mode) override {
         File file = USE_FS.open(fn, mode);
         if (file && !file.isDirectory()) {
-            MOCPP_DBG_DEBUG("File open successful: %s", fn);
+            MO_DBG_DEBUG("File open successful: %s", fn);
             return std::unique_ptr<FileAdapter>(new ArduinoFileAdapter(std::move(file)));
         } else {
             return nullptr;
@@ -150,22 +150,22 @@ public:
         return USE_FS.remove(fn);
     };
     int ftw_root(std::function<int(const char *fpath)> fn) override {
-#if MOCPP_USE_FILEAPI == ARDUINO_LITTLEFS
-        auto dir = USE_FS.open(MOCPP_FILENAME_PREFIX);
+#if MO_USE_FILEAPI == ARDUINO_LITTLEFS
+        auto dir = USE_FS.open(MO_FILENAME_PREFIX);
         if (!dir) {
-            MOCPP_DBG_ERR("cannot open root directory: " MOCPP_FILENAME_PREFIX);
+            MO_DBG_ERR("cannot open root directory: " MO_FILENAME_PREFIX);
             return -1;
         }
 
         int err = 0;
         while (auto entry = dir.openNextFile()) {
 
-            char fname [MOCPP_MAX_PATH_SIZE];
-            auto ret = snprintf(fname, MOCPP_MAX_PATH_SIZE, "%s", entry.name());
+            char fname [MO_MAX_PATH_SIZE];
+            auto ret = snprintf(fname, MO_MAX_PATH_SIZE, "%s", entry.name());
             entry.close();
 
-            if (ret < 0 || ret >= MOCPP_MAX_PATH_SIZE) {
-                MOCPP_DBG_ERR("fn error: %i", ret);
+            if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
+                MO_DBG_ERR("fn error: %i", ret);
                 return -1;
             }
 
@@ -175,15 +175,15 @@ public:
             }
         }
         return err;
-#elif MOCPP_USE_FILEAPI == ARDUINO_SPIFFS
-        auto dir = USE_FS.openDir(MOCPP_FILENAME_PREFIX);
+#elif MO_USE_FILEAPI == ARDUINO_SPIFFS
+        auto dir = USE_FS.openDir(MO_FILENAME_PREFIX);
         int err = 0;
         while (dir.next()) {
             auto fname = dir.fileName();
             if (fname.c_str()) {
-                err = fn(fname.c_str() + strlen(MOCPP_FILENAME_PREFIX));
+                err = fn(fname.c_str() + strlen(MO_FILENAME_PREFIX));
             } else {
-                MOCPP_DBG_ERR("fs error");
+                MO_DBG_ERR("fs error");
                 err = -1;
             }
             if (err) {
@@ -206,7 +206,7 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     }
 
     if (!config.accessAllowed()) {
-        MOCPP_DBG_DEBUG("Access to Arduino FS not allowed by config");
+        MO_DBG_DEBUG("Access to Arduino FS not allowed by config");
         return nullptr;
     }
 
@@ -223,7 +223,7 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 } //end namespace MicroOcpp
 
-#elif MOCPP_USE_FILEAPI == ESPIDF_SPIFFS
+#elif MO_USE_FILEAPI == ESPIDF_SPIFFS
 
 #include <sys/stat.h>
 #include <dirent.h>
@@ -266,7 +266,7 @@ public:
     ~EspIdfFilesystemAdapter() {
         if (config.mustMount()) {
             esp_vfs_spiffs_unregister("mo"); //partition label
-            MOCPP_DBG_DEBUG("SPIFFS unmounted");
+            MO_DBG_DEBUG("SPIFFS unmounted");
         }
     }
 
@@ -284,7 +284,7 @@ public:
         if (file) {
             return std::unique_ptr<FileAdapter>(new EspIdfFileAdapter(std::move(file)));
         } else {
-            MOCPP_DBG_DEBUG("Failed to open file path %s", fn);
+            MO_DBG_DEBUG("Failed to open file path %s", fn);
             return nullptr;
         }
     }
@@ -295,10 +295,10 @@ public:
 
     int ftw_root(std::function<int(const char *fpath)> fn) override {
         //open MO root directory
-        char dname [MOCPP_MAX_PATH_SIZE];
-        auto dlen = snprintf(dname, MOCPP_MAX_PATH_SIZE, "%s", MOCPP_FILENAME_PREFIX);
-        if (dlen < 0 || dlen >= MOCPP_MAX_PATH_SIZE) {
-            MOCPP_DBG_ERR("fn error: %i", dlen);
+        char dname [MO_MAX_PATH_SIZE];
+        auto dlen = snprintf(dname, MO_MAX_PATH_SIZE, "%s", MO_FILENAME_PREFIX);
+        if (dlen < 0 || dlen >= MO_MAX_PATH_SIZE) {
+            MO_DBG_ERR("fn error: %i", dlen);
             return -1;
         }
 
@@ -309,7 +309,7 @@ public:
 
         auto dir = opendir(dname);
         if (!dir) {
-            MOCPP_DBG_ERR("cannot open root directory: %s", dname);
+            MO_DBG_ERR("cannot open root directory: %s", dname);
             return -1;
         }
 
@@ -335,7 +335,7 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     }
 
     if (!config.accessAllowed()) {
-        MOCPP_DBG_DEBUG("Access to ESP-IDF SPIFFS not allowed by config");
+        MO_DBG_DEBUG("Access to ESP-IDF SPIFFS not allowed by config");
         return nullptr;
     }
 
@@ -344,13 +344,13 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     if (config.mustMount()) {
         mounted = false;
 
-        char fn_prefix [MOCPP_MAX_PATH_SIZE];
-        auto fn_prefix_len = snprintf(fn_prefix, MOCPP_MAX_PATH_SIZE, "%.*s", ((int) strlen(MOCPP_FILENAME_PREFIX)) - 1, MOCPP_FILENAME_PREFIX);
-        if (fn_prefix_len < 0 || fn_prefix_len >= MOCPP_MAX_PATH_SIZE) {
-            MOCPP_DBG_ERR("MOCPP_FILENAME_PREFIX error %i", fn_prefix_len);
+        char fn_prefix [MO_MAX_PATH_SIZE];
+        auto fn_prefix_len = snprintf(fn_prefix, MO_MAX_PATH_SIZE, "%.*s", ((int) strlen(MO_FILENAME_PREFIX)) - 1, MO_FILENAME_PREFIX);
+        if (fn_prefix_len < 0 || fn_prefix_len >= MO_MAX_PATH_SIZE) {
+            MO_DBG_ERR("MO_FILENAME_PREFIX error %i", fn_prefix_len);
             return nullptr;
         } else if (fn_prefix_len == 0) {
-            MOCPP_DBG_ERR("MOCPP_FILENAME_PREFIX cannot be root on ESP-IDF");
+            MO_DBG_ERR("MO_FILENAME_PREFIX cannot be root on ESP-IDF");
             return nullptr;
         }
 
@@ -365,14 +365,14 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
         if (ret == ESP_OK) {
             mounted = true;
-            MOCPP_DBG_DEBUG("SPIFFS mounted");
+            MO_DBG_DEBUG("SPIFFS mounted");
         } else {
             if (ret == ESP_FAIL) {
-                MOCPP_DBG_ERR("Failed to mount or format filesystem");
+                MO_DBG_ERR("Failed to mount or format filesystem");
             } else if (ret == ESP_ERR_NOT_FOUND) {
-                MOCPP_DBG_ERR("Failed to find SPIFFS partition");
+                MO_DBG_ERR("Failed to find SPIFFS partition");
             } else {
-                MOCPP_DBG_ERR("Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
+                MO_DBG_ERR("Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
             }
         }
     }
@@ -388,7 +388,7 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 } //end namespace MicroOcpp
 
-#elif MOCPP_USE_FILEAPI == POSIX_FILEAPI
+#elif MO_USE_FILEAPI == POSIX_FILEAPI
 
 #include <cstdio>
 #include <sys/stat.h>
@@ -444,7 +444,7 @@ public:
         if (file) {
             return std::unique_ptr<FileAdapter>(new PosixFileAdapter(std::move(file)));
         } else {
-            MOCPP_DBG_DEBUG("Failed to open file path %s", fn);
+            MO_DBG_DEBUG("Failed to open file path %s", fn);
             return nullptr;
         }
     }
@@ -454,9 +454,9 @@ public:
     }
 
     int ftw_root(std::function<int(const char *fpath)> fn) override {
-        auto dir = opendir(MOCPP_FILENAME_PREFIX); // use c_str() to convert the path string to a C-style string
+        auto dir = opendir(MO_FILENAME_PREFIX); // use c_str() to convert the path string to a C-style string
         if (!dir) {
-            MOCPP_DBG_ERR("cannot open root directory: " MOCPP_FILENAME_PREFIX);
+            MO_DBG_ERR("cannot open root directory: " MO_FILENAME_PREFIX);
             return -1;
         }
 
@@ -482,12 +482,12 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     }
 
     if (!config.accessAllowed()) {
-        MOCPP_DBG_DEBUG("Access to FS not allowed by config");
+        MO_DBG_DEBUG("Access to FS not allowed by config");
         return nullptr;
     }
 
     if (config.mustMount()) {
-        MOCPP_DBG_DEBUG("Skip mounting on UNIX host");
+        MO_DBG_DEBUG("Skip mounting on UNIX host");
     }
 
     auto fs = std::shared_ptr<FilesystemAdapter>(new PosixFilesystemAdapter(config));
@@ -507,4 +507,4 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 } //end namespace MicroOcpp
 
-#endif //switch-case MOCPP_USE_FILEAPI
+#endif //switch-case MO_USE_FILEAPI

@@ -67,18 +67,18 @@ ConfigurationContainer *declareContainer(const char *filename, bool accessible) 
     auto container = getContainer(filename);
     
     if (!container) {
-        MOCPP_DBG_DEBUG("init new configurations container: %s", filename);
+        MO_DBG_DEBUG("init new configurations container: %s", filename);
 
         container = createConfigurationContainer(filename, accessible);
         if (!container) {
-            MOCPP_DBG_ERR("OOM");
+            MO_DBG_ERR("OOM");
             return nullptr;
         }
         configurationContainers.push_back(container);
     }
 
     if (container->isAccessible() != accessible) {
-        MOCPP_DBG_ERR("%s: conflicting accessibility declarations (expect %s)", filename, container->isAccessible() ? "accessible" : "inaccessible");
+        MO_DBG_ERR("%s: conflicting accessibility declarations (expect %s)", filename, container->isAccessible() ? "accessible" : "inaccessible");
         (void)0;
     }
 
@@ -89,12 +89,12 @@ std::shared_ptr<Configuration> loadConfiguration(TConfig type, const char *key, 
     for (auto& container : configurationContainers) {
         if (auto config = container->getConfiguration(key)) {
             if (config->getType() != type) {
-                MOCPP_DBG_ERR("conflicting type for %s - remove old config", key);
+                MO_DBG_ERR("conflicting type for %s - remove old config", key);
                 container->remove(config.get());
                 continue;
             }
             if (container->isAccessible() != accessible) {
-                MOCPP_DBG_ERR("conflicting accessibility for %s", key);
+                MO_DBG_ERR("conflicting accessibility for %s", key);
                 (void)0;
             }
             container->loadStaticKey(*config.get(), key);

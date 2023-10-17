@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_REQUEST_H
-#define MOCPP_REQUEST_H
+#ifndef MO_REQUEST_H
+#define MO_REQUEST_H
 
 #define MESSAGE_TYPE_CALL 2
 #define MESSAGE_TYPE_CALLRESULT 3

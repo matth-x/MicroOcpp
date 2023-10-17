@@ -112,7 +112,7 @@ unsigned int Model::getNumConnectors() const {
 
 Connector *Model::getConnector(unsigned int connectorId) {
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("connector with connectorId %u does not exist", connectorId);
+        MO_DBG_ERR("connector with connectorId %u does not exist", connectorId);
         return nullptr;
     }
 
@@ -201,7 +201,7 @@ void Model::updateSupportedStandardProfiles() {
         declareConfiguration<const char*>("SupportedFeatureProfiles", "", CONFIGURATION_VOLATILE, true);
     
     if (!supportedFeatureProfilesString) {
-        MOCPP_DBG_ERR("OOM");
+        MO_DBG_ERR("OOM");
         return;
     }
 
@@ -252,5 +252,5 @@ void Model::updateSupportedStandardProfiles() {
 
     supportedFeatureProfilesString->setString(buf.c_str());
 
-    MOCPP_DBG_DEBUG("supported feature profiles: %s", buf.c_str());
+    MO_DBG_DEBUG("supported feature profiles: %s", buf.c_str());
 }

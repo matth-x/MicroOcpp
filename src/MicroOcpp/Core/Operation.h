@@ -15,8 +15,8 @@
  * OCPP operation.
  */
 
- #ifndef MOCPP_OPERATION_H
- #define MOCPP_OPERATION_H
+ #ifndef MO_OPERATION_H
+ #define MO_OPERATION_H
 
 #include <ArduinoJson.h>
 #include <memory>

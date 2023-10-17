@@ -25,9 +25,9 @@ private:
     void clearKeyPool(const char *key) {
         keyPool.erase(std::remove_if(keyPool.begin(), keyPool.end(), 
             [key] (const std::unique_ptr<char[]>& k) {
-                #if MOCPP_DBG_LEVEL >= MOCPP_DL_VERBOSE
+                #if MO_DBG_LEVEL >= MO_DL_VERBOSE
                 if (!strcmp(k.get(), key)) {
-                    MOCPP_DBG_VERBOSE("clear key %s", key);
+                    MO_DBG_VERBOSE("clear key %s", key);
                 }
                 #endif
                 return !strcmp(k.get(), key);
@@ -61,13 +61,13 @@ public:
         size_t file_size = 0;
         if (filesystem->stat(getFilename(), &file_size) != 0 // file does not exist
                 || file_size == 0) {                         // file exists, but empty
-            MOCPP_DBG_DEBUG("Populate FS: create configuration file");
+            MO_DBG_DEBUG("Populate FS: create configuration file");
             return save();
         }
 
         auto doc = FilesystemUtils::loadJson(filesystem, getFilename());
         if (!doc) {
-            MOCPP_DBG_ERR("failed to load %s", getFilename());
+            MO_DBG_ERR("failed to load %s", getFilename());
             return false;
         }
 
@@ -77,37 +77,37 @@ public:
 
         if (strcmp(configHeader["content-type"] | "Invalid", "ocpp_config_file") &&
                 strcmp(configHeader["content-type"] | "Invalid", "ao_configuration_file")) { //backwards-compatibility
-            MOCPP_DBG_ERR("Unable to initialize: unrecognized configuration file format");
+            MO_DBG_ERR("Unable to initialize: unrecognized configuration file format");
             return false;
         }
 
         if (strcmp(configHeader["version"] | "Invalid", "2.0") &&
                 strcmp(configHeader["version"] | "Invalid", "1.1")) { //backwards-compatibility
-            MOCPP_DBG_ERR("Unable to initialize: unsupported version");
+            MO_DBG_ERR("Unable to initialize: unsupported version");
             return false;
         }
         
         JsonArray configurationsArray = root["configurations"];
         if (configurationsArray.size() > MAX_CONFIGURATIONS) {
-            MOCPP_DBG_ERR("Unable to initialize: configurations_len is too big (=%zu)", configurationsArray.size());
+            MO_DBG_ERR("Unable to initialize: configurations_len is too big (=%zu)", configurationsArray.size());
             return false;
         }
 
         for (JsonObject stored : configurationsArray) {
             TConfig type;
             if (!deserializeTConfig(stored["type"] | "_Undefined", type)) {
-                MOCPP_DBG_ERR("corrupt config");
+                MO_DBG_ERR("corrupt config");
                 continue;
             }
 
             const char *key = stored["key"] | "";
             if (!*key) {
-                MOCPP_DBG_ERR("corrupt config");
+                MO_DBG_ERR("corrupt config");
                 continue;
             }
 
             if (!stored.containsKey("value")) {
-                MOCPP_DBG_ERR("corrupt config");
+                MO_DBG_ERR("corrupt config");
                 continue;
             }
             
@@ -115,7 +115,7 @@ public:
 
             auto config = getConfiguration(key).get();
             if (config && config->getType() != type) {
-                MOCPP_DBG_ERR("conflicting type for %s - remove old config", key);
+                MO_DBG_ERR("conflicting type for %s - remove old config", key);
                 remove(config);
                 config = nullptr;
             }
@@ -127,7 +127,7 @@ public:
             switch (type) {
                 case TConfig::Int: {
                     if (!stored["value"].is<int>()) {
-                        MOCPP_DBG_ERR("corrupt config");
+                        MO_DBG_ERR("corrupt config");
                         continue;
                     }
                     int value = stored["value"] | 0;
@@ -142,7 +142,7 @@ public:
                 }
                 case TConfig::Bool: {
                     if (!stored["value"].is<bool>()) {
-                        MOCPP_DBG_ERR("corrupt config");
+                        MO_DBG_ERR("corrupt config");
                         continue;
                     }
                     bool value = stored["value"] | false;
@@ -157,7 +157,7 @@ public:
                 }
                 case TConfig::String: {
                     if (!stored["value"].is<const char*>()) {
-                        MOCPP_DBG_ERR("corrupt config");
+                        MO_DBG_ERR("corrupt config");
                         continue;
                     }
                     const char *value = stored["value"] | "";
@@ -180,14 +180,14 @@ public:
                     keyPool.push_back(std::move(key_pooled));
                 }
             } else {
-                MOCPP_DBG_ERR("OOM: %s", key);
+                MO_DBG_ERR("OOM: %s", key);
                 (void)0;
             }
         }
 
         configurationsUpdated();
 
-        MOCPP_DBG_DEBUG("Initialization finished");
+        MO_DBG_DEBUG("Initialization finished");
         loaded = true;
         return true;
     }
@@ -205,7 +205,7 @@ public:
         //during mocpp_deinitialize(), key owners are destructed. Don't store if this container is affected
         for (auto& config : configurations) {
             if (!config->getKey()) {
-                MOCPP_DBG_DEBUG("don't write back container with destructed key(s)");
+                MO_DBG_DEBUG("don't write back container with destructed key(s)");
                 return false;
             }
         }
@@ -214,9 +214,9 @@ public:
         jsonCapacity += JSON_ARRAY_SIZE(configurations.size()); //configurations array
         jsonCapacity += configurations.size() * JSON_OBJECT_SIZE(3); //config entries in array
 
-        if (jsonCapacity > MOCPP_MAX_JSON_CAPACITY) {
-            MOCPP_DBG_ERR("configs JSON exceeds maximum capacity (%s, %zu entries). Crop configs file (by FCFS)", getFilename(), configurations.size());
-            jsonCapacity = MOCPP_MAX_JSON_CAPACITY;
+        if (jsonCapacity > MO_MAX_JSON_CAPACITY) {
+            MO_DBG_ERR("configs JSON exceeds maximum capacity (%s, %zu entries). Crop configs file (by FCFS)", getFilename(), configurations.size());
+            jsonCapacity = MO_MAX_JSON_CAPACITY;
         }
 
         DynamicJsonDocument doc {jsonCapacity};
@@ -232,7 +232,7 @@ public:
             auto& config = *configurations[i];
 
             size_t entryCapacity = JSON_OBJECT_SIZE(3) + (JSON_ARRAY_SIZE(2) - JSON_ARRAY_SIZE(1));
-            if (trackCapacity + entryCapacity > MOCPP_MAX_JSON_CAPACITY) {
+            if (trackCapacity + entryCapacity > MO_MAX_JSON_CAPACITY) {
                 break;
             }
 
@@ -259,9 +259,9 @@ public:
         bool success = FilesystemUtils::storeJson(filesystem, getFilename(), doc);
 
         if (success) {
-            MOCPP_DBG_DEBUG("Saving configurations finished");
+            MO_DBG_DEBUG("Saving configurations finished");
         } else {
-            MOCPP_DBG_ERR("could not save configs file: %s", getFilename());
+            MO_DBG_ERR("could not save configs file: %s", getFilename());
         }
 
         return success;
@@ -271,7 +271,7 @@ public:
         std::shared_ptr<Configuration> res = makeConfiguration(type, key);
         if (!res) {
             //allocation failure - OOM
-            MOCPP_DBG_ERR("OOM");
+            MO_DBG_ERR("OOM");
             return nullptr;
         }
         configurations.push_back(res);

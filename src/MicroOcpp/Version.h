@@ -1,1 +1,1 @@
-#define MOCPP_VERSION "0.4.0"
+#define MO_VERSION "0.4.0"

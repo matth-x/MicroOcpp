@@ -8,7 +8,7 @@
 
 using MicroOcpp::Ocpp16::UnlockConnector;
 
-#define MOCPP_UNLOCK_TIMEOUT 10000
+#define MO_UNLOCK_TIMEOUT 10000
 
 UnlockConnector::UnlockConnector(Model& model) : model(model) {
   
@@ -36,14 +36,14 @@ void UnlockConnector::processReq(JsonObject payload) {
     if (unlockConnector != nullptr) {
         cbUnlockResult = unlockConnector();
     } else {
-        MOCPP_DBG_WARN("Unlock CB undefined");
+        MO_DBG_WARN("Unlock CB undefined");
     }
 
     timerStart = mocpp_tick_ms();
 }
 
 std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf() {
-    if (!err && mocpp_tick_ms() - timerStart < MOCPP_UNLOCK_TIMEOUT) {
+    if (!err && mocpp_tick_ms() - timerStart < MO_UNLOCK_TIMEOUT) {
         //do poll and if more time is needed, delay creation of conf msg
 
         if (unlockConnector) {

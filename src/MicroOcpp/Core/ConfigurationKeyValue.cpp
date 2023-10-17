@@ -12,8 +12,8 @@
 #define KEY_MAXLEN 60
 #define STRING_VAL_MAXLEN 512
 
-#ifndef MOCPP_CONFIG_TYPECHECK
-#define MOCPP_CONFIG_TYPECHECK 1 //enable this for debugging
+#ifndef MO_CONFIG_TYPECHECK
+#define MO_CONFIG_TYPECHECK 1 //enable this for debugging
 #endif
 
 namespace MicroOcpp {
@@ -27,41 +27,41 @@ Configuration::~Configuration() {
 }
 
 void Configuration::setInt(int) {
-#if MOCPP_CONFIG_TYPECHECK
-    MOCPP_DBG_ERR("type err");
+#if MO_CONFIG_TYPECHECK
+    MO_DBG_ERR("type err");
 #endif
 }
 
 void Configuration::setBool(bool) {
-#if MOCPP_CONFIG_TYPECHECK
-    MOCPP_DBG_ERR("type err");
+#if MO_CONFIG_TYPECHECK
+    MO_DBG_ERR("type err");
 #endif
 }
 
 bool Configuration::setString(const char*) {
-#if MOCPP_CONFIG_TYPECHECK
-    MOCPP_DBG_ERR("type err");
+#if MO_CONFIG_TYPECHECK
+    MO_DBG_ERR("type err");
 #endif
     return false;
 }
 
 int Configuration::getInt() {
-#if MOCPP_CONFIG_TYPECHECK
-    MOCPP_DBG_ERR("type err");
+#if MO_CONFIG_TYPECHECK
+    MO_DBG_ERR("type err");
 #endif
     return 0;
 }
 
 bool Configuration::getBool() {
-#if MOCPP_CONFIG_TYPECHECK
-    MOCPP_DBG_ERR("type err");
+#if MO_CONFIG_TYPECHECK
+    MO_DBG_ERR("type err");
 #endif
     return false;
 }
 
 const char *Configuration::getString() {
-#if MOCPP_CONFIG_TYPECHECK
-    MOCPP_DBG_ERR("type err");
+#if MO_CONFIG_TYPECHECK
+    MO_DBG_ERR("type err");
 #endif
     return "";
 }
@@ -198,7 +198,7 @@ public:
             size = strlen(src) + 1;
         }
 
-        if (size > MOCPP_CONFIG_MAX_VALSTRSIZE) {
+        if (size > MO_CONFIG_MAX_VALSTRSIZE) {
             return false;
         }
 
@@ -242,7 +242,7 @@ std::unique_ptr<Configuration> makeConfiguration(TConfig type, const char *key) 
             break;
     }
     if (!res) {
-        MOCPP_DBG_ERR("OOM");
+        MO_DBG_ERR("OOM");
         return nullptr;
     }
     res->setKey(key);
@@ -260,7 +260,7 @@ bool deserializeTConfig(const char *serialized, TConfig& out) {
         out = TConfig::String;
         return true;
     } else {
-        MOCPP_DBG_WARN("config type error");
+        MO_DBG_WARN("config type error");
         return false;
     }
 }

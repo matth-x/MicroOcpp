@@ -41,7 +41,7 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
             capacity += entry->capacity();
             entries.push_back(std::move(entry));
         } else {
-            MOCPP_DBG_ERR("Energy meter reading not convertible to JSON");
+            MO_DBG_ERR("Energy meter reading not convertible to JSON");
             (void)0;
         }
     }
@@ -66,7 +66,7 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
 }
 
 void MeterValues::processConf(JsonObject payload) {
-    MOCPP_DBG_DEBUG("Request has been confirmed");
+    MO_DBG_DEBUG("Request has been confirmed");
 }
 
 

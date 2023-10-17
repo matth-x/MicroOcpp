@@ -41,7 +41,7 @@ void ReserveNow::processReq(JsonObject payload) {
 
     Timestamp expiryDate;
     if (!expiryDate.setTime(payload["expiryDate"])) {
-        MOCPP_DBG_WARN("bad time format");
+        MO_DBG_WARN("bad time format");
         errorCode = "PropertyConstraintViolation";
         return;
     }
@@ -116,7 +116,7 @@ std::unique_ptr<DynamicJsonDocument> ReserveNow::createConf(){
     if (reservationStatus) {
         payload["status"] = reservationStatus;
     } else {
-        MOCPP_DBG_ERR("didn't set reservationStatus");
+        MO_DBG_ERR("didn't set reservationStatus");
         payload["status"] = "Rejected";
     }
     

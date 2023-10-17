@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_CUSTOMOPERATION_H
-#define MOCPP_CUSTOMOPERATION_H
+#ifndef MO_CUSTOMOPERATION_H
+#define MO_CUSTOMOPERATION_H
 
 #include <MicroOcpp/Core/Operation.h>
 

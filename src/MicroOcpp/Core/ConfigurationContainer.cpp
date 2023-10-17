@@ -28,7 +28,7 @@ std::shared_ptr<Configuration> ConfigurationContainerVolatile::createConfigurati
     std::shared_ptr<Configuration> res = makeConfiguration(type, key);
     if (!res) {
         //allocation failure - OOM
-        MOCPP_DBG_ERR("OOM");
+        MO_DBG_ERR("OOM");
         return nullptr;
     }
     configurations.push_back(res);

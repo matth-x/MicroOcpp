@@ -38,7 +38,7 @@ void UpdateFirmware::processReq(JsonObject payload) {
     Timestamp retrieveDate;
     if (!retrieveDate.setTime(payload["retrieveDate"] | "Invalid")) {
         errorCode = "PropertyConstraintViolation";
-        MOCPP_DBG_WARN("bad time format");
+        MO_DBG_WARN("bad time format");
         return;
     }
     

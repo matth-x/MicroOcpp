@@ -39,7 +39,7 @@ TEST_CASE( "Configuration" ) {
         }
 
         SECTION("Persistent storage") {
-            container = makeConfigurationContainerFlash(filesystem, MOCPP_FILENAME_PREFIX "persistent1.jsn", true);
+            container = makeConfigurationContainerFlash(filesystem, MO_FILENAME_PREFIX "persistent1.jsn", true);
         }
 
         //check emptyness
@@ -74,7 +74,7 @@ TEST_CASE( "Configuration" ) {
 
     SECTION("Persistency on filesystem") {
 
-        auto container = makeConfigurationContainerFlash(filesystem, MOCPP_FILENAME_PREFIX "persistent1.jsn", true);
+        auto container = makeConfigurationContainerFlash(filesystem, MO_FILENAME_PREFIX "persistent1.jsn", true);
 
         //trivial load call
         REQUIRE( container->load() );
@@ -89,7 +89,7 @@ TEST_CASE( "Configuration" ) {
         container.reset(); //destroy
 
         //...load again
-        auto container2 = makeConfigurationContainerFlash(filesystem, MOCPP_FILENAME_PREFIX "persistent1.jsn", true);
+        auto container2 = makeConfigurationContainerFlash(filesystem, MO_FILENAME_PREFIX "persistent1.jsn", true);
         REQUIRE( container2->size() == 0 );
         REQUIRE( container2->load() );
         REQUIRE( container2->size() == 1 );
@@ -198,7 +198,7 @@ TEST_CASE( "Configuration" ) {
 
         //create config in hidden container
         isPublic = false;
-        auto cHidden = declareConfiguration<int>("cHidden", 42, MOCPP_FILENAME_PREFIX "hidden.jsn", false, false, isPublic);
+        auto cHidden = declareConfiguration<int>("cHidden", 42, MO_FILENAME_PREFIX "hidden.jsn", false, false, isPublic);
         REQUIRE( !getConfigurationPublic("cHidden") );
         
         //hidden container cannot be fetched
@@ -266,7 +266,7 @@ TEST_CASE( "Configuration" ) {
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
         loop();
 
-        declareConfiguration<int>(KNOWN_KEY, 1234, MOCPP_FILENAME_PREFIX "persistent1.jsn", false);
+        declareConfiguration<int>(KNOWN_KEY, 1234, MO_FILENAME_PREFIX "persistent1.jsn", false);
 
         bool checkProcessed = false;
 
@@ -286,7 +286,7 @@ TEST_CASE( "Configuration" ) {
                     bool foundCustomConfig = false;
                     bool foundStandardConfig = false;
                     for (JsonObject keyvalue : configurationKey) {
-                        MOCPP_DBG_DEBUG("key %s", keyvalue["key"] | "_Undefined");
+                        MO_DBG_DEBUG("key %s", keyvalue["key"] | "_Undefined");
                         if (!strcmp(keyvalue["key"] | "_Undefined", KNOWN_KEY)) {
                             foundCustomConfig = true;
                             REQUIRE( (keyvalue["readonly"] | true) == false );
@@ -357,7 +357,7 @@ TEST_CASE( "Configuration" ) {
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
         loop();
 
-        declareConfiguration<int>(KNOWN_KEY, 0, MOCPP_FILENAME_PREFIX "persistent1.jsn", false);
+        declareConfiguration<int>(KNOWN_KEY, 0, MO_FILENAME_PREFIX "persistent1.jsn", false);
 
         //update existing config
         bool checkProcessed = false;
@@ -480,7 +480,7 @@ TEST_CASE( "Configuration" ) {
 
         //set factory default for standard config ConnectionTimeOut
         configuration_init(filesystem);
-        auto factoryConnectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 1234, MOCPP_FILENAME_PREFIX "factory.jsn");
+        auto factoryConnectionTimeOut = declareConfiguration<int>("ConnectionTimeOut", 1234, MO_FILENAME_PREFIX "factory.jsn");
 
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
@@ -498,7 +498,7 @@ TEST_CASE( "Configuration" ) {
 
         //provide factory default again
         configuration_init(filesystem);
-        declareConfiguration<int>("ConnectionTimeOut", 4321, MOCPP_FILENAME_PREFIX "factory.jsn");
+        declareConfiguration<int>("ConnectionTimeOut", 4321, MO_FILENAME_PREFIX "factory.jsn");
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
         REQUIRE( getConfigurationPublic("ConnectionTimeOut")->getInt() == 1234 );
         mocpp_deinitialize();

@@ -42,7 +42,7 @@ void RequestQueue::loop(Connection& ocppSock) {
     initiatedRequests->drop_if([] (std::unique_ptr<Request>& op) -> bool {
         bool timed_out = op->isTimeoutExceeded();
         if (timed_out) {
-            MOCPP_DBG_INFO("operation timeout: %s", op->getOperationType());
+            MO_DBG_INFO("operation timeout: %s", op->getOperationType());
             op->executeTimeout();
         }
         return timed_out;
@@ -65,7 +65,7 @@ void RequestQueue::loop(Connection& ocppSock) {
             bool success = ocppSock.sendTXT(out.c_str(), out.length());
 
             if (success) {
-                MOCPP_DBG_TRAFFIC_OUT(out.c_str());
+                MO_DBG_TRAFFIC_OUT(out.c_str());
                 receivedRequests.erase(received);
             }
 
@@ -116,7 +116,7 @@ void RequestQueue::loop(Connection& ocppSock) {
     bool success = ocppSock.sendTXT(out.c_str(), out.length());
 
     if (success) {
-        MOCPP_DBG_TRAFFIC_OUT(out.c_str());
+        MO_DBG_TRAFFIC_OUT(out.c_str());
 
         //update backoff time
         sendBackoffTime = mocpp_tick_ms();
@@ -126,7 +126,7 @@ void RequestQueue::loop(Connection& ocppSock) {
 
 void RequestQueue::sendRequest(std::unique_ptr<Request> op){
     if (!op) {
-        MOCPP_DBG_ERR("Called with null. Ignore");
+        MO_DBG_ERR("Called with null. Ignore");
         return;
     }
     
@@ -135,24 +135,24 @@ void RequestQueue::sendRequest(std::unique_ptr<Request> op){
 
 bool RequestQueue::receiveMessage(const char* payload, size_t length) {
 
-    MOCPP_DBG_TRAFFIC_IN((int) length, payload);
+    MO_DBG_TRAFFIC_IN((int) length, payload);
 
     size_t capacity_init = (3 * length) / 2;
 
     //capacity = ceil capacity_init to the next power of two; should be at least 128
 
     size_t capacity = 128;
-    while (capacity < capacity_init && capacity < MOCPP_MAX_JSON_CAPACITY) {
+    while (capacity < capacity_init && capacity < MO_MAX_JSON_CAPACITY) {
         capacity *= 2;
     }
-    if (capacity > MOCPP_MAX_JSON_CAPACITY) {
-        capacity = MOCPP_MAX_JSON_CAPACITY;
+    if (capacity > MO_MAX_JSON_CAPACITY) {
+        capacity = MO_MAX_JSON_CAPACITY;
     }
     
     DynamicJsonDocument doc {0};
     DeserializationError err = DeserializationError::NoMemory;
 
-    while (err == DeserializationError::NoMemory && capacity <= MOCPP_MAX_JSON_CAPACITY) {
+    while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
 
         doc = DynamicJsonDocument(capacity);
         err = deserializeJson(doc, payload, length);
@@ -174,15 +174,15 @@ bool RequestQueue::receiveMessage(const char* payload, size_t length) {
                 receiveResponse(doc.as<JsonArray>());
                 success = true;
             } else {
-                MOCPP_DBG_WARN("Invalid OCPP message! (though JSON has successfully been deserialized)");
+                MO_DBG_WARN("Invalid OCPP message! (though JSON has successfully been deserialized)");
             }
             break; 
         }
         case DeserializationError::InvalidInput:
-            MOCPP_DBG_WARN("Invalid input! Not a JSON");
+            MO_DBG_WARN("Invalid input! Not a JSON");
             break;
         case DeserializationError::NoMemory: {
-            MOCPP_DBG_WARN("incoming operation exceeds buffer capacity. Input length = %zu, max capacity = %d", length, MOCPP_MAX_JSON_CAPACITY);
+            MO_DBG_WARN("incoming operation exceeds buffer capacity. Input length = %zu, max capacity = %d", length, MO_MAX_JSON_CAPACITY);
 
             /*
                 * If websocket input is of message type MESSAGE_TYPE_CALL, send back a message of type MESSAGE_TYPE_CALLERROR.
@@ -198,19 +198,19 @@ bool RequestQueue::receiveMessage(const char* payload, size_t length) {
                 int messageTypeId = doc[0] | -1;
                 if (messageTypeId == MESSAGE_TYPE_CALL) {
                     success = true;
-                    auto op = makeRequest(new MsgBufferExceeded(MOCPP_MAX_JSON_CAPACITY, length));
+                    auto op = makeRequest(new MsgBufferExceeded(MO_MAX_JSON_CAPACITY, length));
                     receiveRequest(doc.as<JsonArray>(), std::move(op));
                 } else if (messageTypeId == MESSAGE_TYPE_CALLRESULT ||
                             messageTypeId == MESSAGE_TYPE_CALLERROR) {
                     success = true;
-                    MOCPP_DBG_WARN("crop incoming response");
+                    MO_DBG_WARN("crop incoming response");
                     receiveResponse(doc.as<JsonArray>());
                 }
             }
             break;
         }
         default:
-            MOCPP_DBG_WARN("Deserialization failed: %s", err.c_str());
+            MO_DBG_WARN("Deserialization failed: %s", err.c_str());
             break;
     }
 
@@ -241,10 +241,10 @@ void RequestQueue::receiveResponse(JsonArray json) {
     if (!success) {
         //didn't find matching Request
         if (json[0] == MESSAGE_TYPE_CALLERROR) {
-            MOCPP_DBG_DEBUG("Received CALLERROR did not abort a pending operation");
+            MO_DBG_DEBUG("Received CALLERROR did not abort a pending operation");
             (void)0;
         } else {
-            MOCPP_DBG_WARN("Received response doesn't match any pending operation");
+            MO_DBG_WARN("Received response doesn't match any pending operation");
             (void)0;
         }
     }
@@ -253,7 +253,7 @@ void RequestQueue::receiveResponse(JsonArray json) {
 void RequestQueue::receiveRequest(JsonArray json) {
     auto op = operationRegistry.deserializeOperation(json[2] | "UNDEFINED");
     if (op == nullptr) {
-        MOCPP_DBG_WARN("OOM");
+        MO_DBG_WARN("OOM");
         return;
     }
     receiveRequest(json, std::move(op));

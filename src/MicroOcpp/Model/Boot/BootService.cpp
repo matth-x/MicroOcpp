@@ -14,8 +14,8 @@
 #include <MicroOcpp/Platform.h>
 #include <MicroOcpp/Debug.h>
 
-#ifndef MOCPP_BOOTSTATS_LONGTIME_MS
-#define MOCPP_BOOTSTATS_LONGTIME_MS 180 * 1000
+#ifndef MO_BOOTSTATS_LONGTIME_MS
+#define MO_BOOTSTATS_LONGTIME_MS 180 * 1000
 #endif
 
 using namespace MicroOcpp;
@@ -28,7 +28,7 @@ RegistrationStatus MicroOcpp::deserializeRegistrationStatus(const char *serializ
     } else if (!strcmp(serialized, "Rejected")) {
         return RegistrationStatus::Rejected;
     } else {
-        MOCPP_DBG_ERR("deserialization error");
+        MO_DBG_ERR("deserialization error");
         return RegistrationStatus::UNDEFINED;
     }
 }
@@ -36,10 +36,10 @@ RegistrationStatus MicroOcpp::deserializeRegistrationStatus(const char *serializ
 BootService::BootService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
     
     //if transactions can start before the BootNotification succeeds
-    preBootTransactionsBool = declareConfiguration<bool>(MOCPP_CONFIG_EXT_PREFIX "PreBootTransactions", false);
+    preBootTransactionsBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", false);
     
     if (!preBootTransactionsBool) {
-        MOCPP_DBG_ERR("initialization error");
+        MO_DBG_ERR("initialization error");
         (void)0;
     }
 
@@ -55,9 +55,9 @@ void BootService::loop() {
         firstExecutionTimestamp = mocpp_tick_ms();
     }
 
-    if (!executedLongTime && mocpp_tick_ms() - firstExecutionTimestamp >= MOCPP_BOOTSTATS_LONGTIME_MS) {
+    if (!executedLongTime && mocpp_tick_ms() - firstExecutionTimestamp >= MO_BOOTSTATS_LONGTIME_MS) {
         executedLongTime = true;
-        MOCPP_DBG_DEBUG("boot success timer reached");
+        MO_DBG_DEBUG("boot success timer reached");
         BootStats bootstats;
         loadBootStats(filesystem, bootstats);
         bootstats.lastBootSuccess = bootstats.bootNr;
@@ -96,7 +96,7 @@ void BootService::loop() {
 void BootService::setChargePointCredentials(JsonObject credentials) {
     auto written = serializeJson(credentials, cpCredentials);
     if (written < 2) {
-        MOCPP_DBG_ERR("serialization error");
+        MO_DBG_ERR("serialization error");
         cpCredentials = "{}";
     }
 }
@@ -116,7 +116,7 @@ std::unique_ptr<DynamicJsonDocument> BootService::getChargePointCredentials() {
     std::unique_ptr<DynamicJsonDocument> doc;
     size_t capacity = JSON_OBJECT_SIZE(9) + cpCredentials.size();
     DeserializationError err = DeserializationError::NoMemory;
-    while (err == DeserializationError::NoMemory && capacity <= MOCPP_MAX_JSON_CAPACITY) {
+    while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
         doc.reset(new DynamicJsonDocument(capacity));
         err = deserializeJson(*doc, cpCredentials);
 
@@ -126,7 +126,7 @@ std::unique_ptr<DynamicJsonDocument> BootService::getChargePointCredentials() {
     if (!err) {
         return doc;
     } else {
-        MOCPP_DBG_ERR("could not parse stored credentials: %s", err.c_str());
+        MO_DBG_ERR("could not parse stored credentials: %s", err.c_str());
         return nullptr;
     }
 }
@@ -138,7 +138,7 @@ void BootService::notifyRegistrationStatus(RegistrationStatus status) {
 
 void BootService::setRetryInterval(unsigned long interval_s) {
     if (interval_s == 0) {
-        this->interval_s = MOCPP_BOOT_INTERVAL_DEFAULT;
+        this->interval_s = MO_BOOT_INTERVAL_DEFAULT;
     } else {
         this->interval_s = interval_s;
     }
@@ -151,11 +151,11 @@ bool BootService::loadBootStats(std::shared_ptr<FilesystemAdapter> filesystem, B
     }
 
     size_t msize = 0;
-    if (filesystem->stat(MOCPP_FILENAME_PREFIX "bootstats.jsn", &msize) == 0) {
+    if (filesystem->stat(MO_FILENAME_PREFIX "bootstats.jsn", &msize) == 0) {
         
         bool success = true;
 
-        auto json = FilesystemUtils::loadJson(filesystem, MOCPP_FILENAME_PREFIX "bootstats.jsn");
+        auto json = FilesystemUtils::loadJson(filesystem, MO_FILENAME_PREFIX "bootstats.jsn");
         if (json) {
             int bootNrIn = (*json)["bootNr"] | -1;
             if (bootNrIn >= 0 && bootNrIn <= std::numeric_limits<uint16_t>::max()) {
@@ -175,8 +175,8 @@ bool BootService::loadBootStats(std::shared_ptr<FilesystemAdapter> filesystem, B
         }
 
         if (!success) {
-            MOCPP_DBG_ERR("bootstats corrupted");
-            filesystem->remove(MOCPP_FILENAME_PREFIX "bootstats.jsn");
+            MO_DBG_ERR("bootstats corrupted");
+            filesystem->remove(MO_FILENAME_PREFIX "bootstats.jsn");
             bstats = BootStats();
         }
 
@@ -196,5 +196,5 @@ bool BootService::storeBootStats(std::shared_ptr<FilesystemAdapter> filesystem, 
     json["bootNr"] = bstats.bootNr;
     json["lastSuccess"] = bstats.lastBootSuccess;
 
-    return FilesystemUtils::storeJson(filesystem, MOCPP_FILENAME_PREFIX "bootstats.jsn", json);
+    return FilesystemUtils::storeJson(filesystem, MO_FILENAME_PREFIX "bootstats.jsn", json);
 }

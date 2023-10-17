@@ -37,14 +37,14 @@ void OperationRegistry::registerOperation(const char *operationType, std::functi
 
     registry.push_back(entry);
 
-    MOCPP_DBG_DEBUG("registered operation %s", operationType);
+    MO_DBG_DEBUG("registered operation %s", operationType);
 }
 
 void OperationRegistry::setOnRequest(const char *operationType, OnReceiveReqListener onRequest) {
     if (auto entry = findCreator(operationType)) {
         entry->onRequest = onRequest;
     } else {
-        MOCPP_DBG_ERR("%s not registered", operationType);
+        MO_DBG_ERR("%s not registered", operationType);
     }
 }
 
@@ -52,7 +52,7 @@ void OperationRegistry::setOnResponse(const char *operationType, OnSendConfListe
     if (auto entry = findCreator(operationType)) {
         entry->onResponse = onResponse;
     } else {
-        MOCPP_DBG_ERR("%s not registered", operationType);
+        MO_DBG_ERR("%s not registered", operationType);
     }
 }
 
@@ -75,6 +75,6 @@ std::unique_ptr<Request> OperationRegistry::deserializeOperation(const char *ope
 
 void OperationRegistry::debugPrint() {
     for (auto& creator : registry) {
-        MOCPP_CONSOLE_PRINTF("[OCPP]     > %s\n", creator.operationType);
+        MO_CONSOLE_PRINTF("[OCPP]     > %s\n", creator.operationType);
     }
 }

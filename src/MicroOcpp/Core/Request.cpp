@@ -56,7 +56,7 @@ unsigned int Request::getTrialNo() {
 
 void Request::setMessageID(const std::string &id){
     if (!messageID.empty()){
-        MOCPP_DBG_WARN("MessageID is set twice or is set after first usage!");
+        MO_DBG_WARN("MessageID is set twice or is set after first usage!");
     }
     messageID = id;
 }
@@ -86,7 +86,7 @@ std::unique_ptr<DynamicJsonDocument> Request::createRequest(){
     requestJson->add(operation->getOperationType());  //Action
     requestJson->add(*requestPayload);                      //Payload
 
-    if (MOCPP_DBG_LEVEL >= MOCPP_DL_DEBUG && mocpp_tick_ms() - debugRequest_start >= 10000) { //print contents on the console
+    if (MO_DBG_LEVEL >= MO_DL_DEBUG && mocpp_tick_ms() - debugRequest_start >= 10000) { //print contents on the console
         debugRequest_start = mocpp_tick_ms();
 
         char *buf = new char[1024];
@@ -96,9 +96,9 @@ std::unique_ptr<DynamicJsonDocument> Request::createRequest(){
         }
 
         if (!buf || len < 1) {
-            MOCPP_DBG_DEBUG("Try to send request: %s", operation->getOperationType());
+            MO_DBG_DEBUG("Try to send request: %s", operation->getOperationType());
         } else {
-            MOCPP_DBG_DEBUG("Try to send request: %.*s (...)", 128, buf);
+            MO_DBG_DEBUG("Try to send request: %.*s (...)", 128, buf);
         }
 
         delete[] buf;
@@ -153,7 +153,7 @@ bool Request::receiveResponse(JsonArray response){
 
         return abortOperation;
     } else {
-        MOCPP_DBG_WARN("invalid response");
+        MO_DBG_WARN("invalid response");
         return false; //don't discard this message but retry sending it
     }
 
@@ -274,13 +274,13 @@ void Request::initiate(std::unique_ptr<StoredOperationHandler> opStorage) {
             opStore->clearBuffer();
         }
     } else {
-        MOCPP_DBG_ERR("Missing operation instance");
+        MO_DBG_ERR("Missing operation instance");
     }
 }
 
 bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *model) {
     if (!opStorage) {
-        MOCPP_DBG_ERR("invalid argument");
+        MO_DBG_ERR("invalid argument");
         return false;
     }
 
@@ -288,14 +288,14 @@ bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *
 
     auto rpcData = opStore->getRpcData();
     if (!rpcData) {
-        MOCPP_DBG_ERR("corrupted storage");
+        MO_DBG_ERR("corrupted storage");
         return false;
     }
 
     messageID = (*rpcData)[1] | std::string();
     std::string opType = (*rpcData)[2] | std::string();
     if (messageID.empty() || opType.empty()) {
-        MOCPP_DBG_ERR("corrupted storage");
+        MO_DBG_ERR("corrupted storage");
         messageID.clear();
         return false;
     }
@@ -303,11 +303,11 @@ bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *
     int parsedMessageID = -1;
     if (sscanf(messageID.c_str(), "%d", &parsedMessageID) == 1) {
         if (parsedMessageID > unique_id_counter) {
-            MOCPP_DBG_DEBUG("restore unique_id_counter with %d", parsedMessageID);
+            MO_DBG_DEBUG("restore unique_id_counter with %d", parsedMessageID);
             unique_id_counter = parsedMessageID + 1; //next unique value is parsedId + 1
         }
     } else {
-        MOCPP_DBG_ERR("cannot set unique msgID counter");
+        MO_DBG_ERR("cannot set unique msgID counter");
         (void)0;
         //skip this step but don't abort restore
     }
@@ -321,7 +321,7 @@ bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *
     }
 
     if (!operation) {
-        MOCPP_DBG_ERR("cannot create msg");
+        MO_DBG_ERR("cannot create msg");
         return false;
     }
 
@@ -329,10 +329,10 @@ bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *
     opStore->clearBuffer();
 
     if (success) {
-        MOCPP_DBG_DEBUG("restored opNr %i: %s", opStore->getOpNr(), operation->getOperationType());
+        MO_DBG_DEBUG("restored opNr %i: %s", opStore->getOpNr(), operation->getOperationType());
         (void)0;
     } else {
-        MOCPP_DBG_ERR("restore opNr %i error", opStore->getOpNr());
+        MO_DBG_ERR("restore opNr %i error", opStore->getOpNr());
         (void)0;
     }
 

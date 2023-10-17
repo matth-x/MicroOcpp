@@ -28,7 +28,7 @@ const char* StartTransaction::getOperationType() {
 
 void StartTransaction::initiate(StoredOperationHandler *opStore) {
     if (!transaction || transaction->getStartSync().isRequested()) {
-        MOCPP_DBG_ERR("initialization error");
+        MO_DBG_ERR("initialization error");
         return;
     }
     
@@ -45,38 +45,38 @@ void StartTransaction::initiate(StoredOperationHandler *opStore) {
 
     transaction->commit();
 
-    MOCPP_DBG_INFO("StartTransaction initiated");
+    MO_DBG_INFO("StartTransaction initiated");
 }
 
 bool StartTransaction::restore(StoredOperationHandler *opStore) {
     if (!opStore) {
-        MOCPP_DBG_ERR("invalid argument");
+        MO_DBG_ERR("invalid argument");
         return false;
     }
 
     auto payload = opStore->getPayload();
     if (!payload) {
-        MOCPP_DBG_ERR("memory corruption");
+        MO_DBG_ERR("memory corruption");
         return false;
     }
 
     int connectorId = (*payload)["connectorId"] | -1;
     int txNr = (*payload)["txNr"] | -1;
     if (connectorId < 0 || txNr < 0) {
-        MOCPP_DBG_ERR("record incomplete");
+        MO_DBG_ERR("record incomplete");
         return false;
     }
 
     auto txStore = model.getTransactionStore();
 
     if (!txStore) {
-        MOCPP_DBG_ERR("invalid state");
+        MO_DBG_ERR("invalid state");
         return false;
     }
 
     transaction = txStore->getTransaction(connectorId, txNr);
     if (!transaction) {
-        MOCPP_DBG_ERR("referential integrity violation");
+        MO_DBG_ERR("referential integrity violation");
 
         //clean up possible tx records
         if (auto mSerivce = model.getMeteringService()) {
@@ -88,7 +88,7 @@ bool StartTransaction::restore(StoredOperationHandler *opStore) {
     if (transaction->getStartTimestamp() < MIN_TIME &&
             transaction->getStartBootNr() != model.getBootNr()) {
         //time not set, cannot be restored anymore -> invalid tx
-        MOCPP_DBG_ERR("cannot recover tx from previus run");
+        MO_DBG_ERR("cannot recover tx from previus run");
 
         //clean up possible tx records
         if (auto mSerivce = model.getMeteringService()) {
@@ -123,7 +123,7 @@ std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
 
     if (transaction->getStartTimestamp() < MIN_TIME &&
             transaction->getStartBootNr() == model.getBootNr()) {
-        MOCPP_DBG_DEBUG("adjust preboot StartTx timestamp");
+        MO_DBG_DEBUG("adjust preboot StartTx timestamp");
         Timestamp adjusted = model.getClock().adjustPrebootTimestamp(transaction->getStartTimestamp());
         transaction->setStartTimestamp(adjusted);
     }
@@ -139,9 +139,9 @@ void StartTransaction::processConf(JsonObject payload) {
 
     const char* idTagInfoStatus = payload["idTagInfo"]["status"] | "not specified";
     if (!strcmp(idTagInfoStatus, "Accepted")) {
-        MOCPP_DBG_INFO("Request has been accepted");
+        MO_DBG_INFO("Request has been accepted");
     } else {
-        MOCPP_DBG_INFO("Request has been denied. Reason: %s", idTagInfoStatus);
+        MO_DBG_INFO("Request has been denied. Reason: %s", idTagInfoStatus);
         transaction->setIdTagDeauthorized();
     }
 

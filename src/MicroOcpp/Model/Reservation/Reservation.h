@@ -9,14 +9,14 @@
 #include <MicroOcpp/Core/Time.h>
 
 #ifndef RESERVATION_FN
-#define RESERVATION_FN (MOCPP_FILENAME_PREFIX "reservations.jsn")
+#define RESERVATION_FN (MO_FILENAME_PREFIX "reservations.jsn")
 #endif
 
-#define MOCPP_RESERVATION_CID_KEY "cid_"
-#define MOCPP_RESERVATION_EXPDATE_KEY "expdt_"
-#define MOCPP_RESERVATION_IDTAG_KEY "idt_"
-#define MOCPP_RESERVATION_RESID_KEY "rsvid_"
-#define MOCPP_RESERVATION_PARENTID_KEY "pidt_"
+#define MO_RESERVATION_CID_KEY "cid_"
+#define MO_RESERVATION_EXPDATE_KEY "expdt_"
+#define MO_RESERVATION_IDTAG_KEY "idt_"
+#define MO_RESERVATION_RESID_KEY "rsvid_"
+#define MO_RESERVATION_PARENTID_KEY "pidt_"
 
 namespace MicroOcpp {
 
@@ -28,17 +28,17 @@ private:
     const unsigned int slot;
 
     std::shared_ptr<Configuration> connectorIdInt;
-    char connectorIdKey [sizeof(MOCPP_RESERVATION_CID_KEY "xxx") + 1]; //"xxx" = placeholder for digits
+    char connectorIdKey [sizeof(MO_RESERVATION_CID_KEY "xxx") + 1]; //"xxx" = placeholder for digits
     std::shared_ptr<Configuration> expiryDateRawString;
-    char expiryDateRawKey [sizeof(MOCPP_RESERVATION_EXPDATE_KEY "xxx") + 1];
+    char expiryDateRawKey [sizeof(MO_RESERVATION_EXPDATE_KEY "xxx") + 1];
 
     Timestamp expiryDate = MIN_TIME;
     std::shared_ptr<Configuration> idTagString;
-    char idTagKey [sizeof(MOCPP_RESERVATION_IDTAG_KEY "xxx") + 1];
+    char idTagKey [sizeof(MO_RESERVATION_IDTAG_KEY "xxx") + 1];
     std::shared_ptr<Configuration> reservationIdInt;
-    char reservationIdKey [sizeof(MOCPP_RESERVATION_RESID_KEY "xxx") + 1];
+    char reservationIdKey [sizeof(MO_RESERVATION_RESID_KEY "xxx") + 1];
     std::shared_ptr<Configuration> parentIdTagString;
-    char parentIdTagKey [sizeof(MOCPP_RESERVATION_PARENTID_KEY "xxx") + 1];
+    char parentIdTagKey [sizeof(MO_RESERVATION_PARENTID_KEY "xxx") + 1];
 
 public:
     Reservation(Model& model, unsigned int slot);

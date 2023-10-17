@@ -2,14 +2,14 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_REQUESTSTORE_H
-#define MOCPP_REQUESTSTORE_H
+#ifndef MO_REQUESTSTORE_H
+#define MO_REQUESTSTORE_H
 
 #include <memory>
 #include <deque>
 #include <ArduinoJson.h>
 
-#define MOCPP_MAX_OPNR 10000
+#define MO_MAX_OPNR 10000
 
 namespace MicroOcpp {
 

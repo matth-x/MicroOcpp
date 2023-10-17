@@ -15,7 +15,7 @@ void ocpp_initialize(OCPP_Connection *conn, const char *chargePointModel, const 
 
 void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCredentials, struct OCPP_FilesystemOpt fsopt) {
     if (!conn) {
-        MOCPP_DBG_ERR("conn is null");
+        MO_DBG_ERR("conn is null");
     }
 
     ocppSocket = reinterpret_cast<MicroOcpp::Connection*>(conn);
@@ -45,7 +45,7 @@ MicroOcpp::PollResult<bool> adaptScl(enum OptionalBool v) {
     } else if (v == OptionalNone) {
         return MicroOcpp::PollResult<bool>::Await();
     } else {
-        MOCPP_DBG_ERR("illegal argument");
+        MO_DBG_ERR("illegal argument");
         return false;
     }
 }
@@ -102,18 +102,18 @@ std::function<void(void)> adaptFn(void (*fn)(void)) {
     return fn;
 }
 
-#ifndef MOCPP_RECEIVE_PAYLOAD_BUFSIZE
-#define MOCPP_RECEIVE_PAYLOAD_BUFSIZE 512
+#ifndef MO_RECEIVE_PAYLOAD_BUFSIZE
+#define MO_RECEIVE_PAYLOAD_BUFSIZE 512
 #endif
 
-char ocpp_recv_payload_buff [MOCPP_RECEIVE_PAYLOAD_BUFSIZE] = {'\0'};
+char ocpp_recv_payload_buff [MO_RECEIVE_PAYLOAD_BUFSIZE] = {'\0'};
 
 std::function<void(JsonObject)> adaptFn(OnMessage fn) {
     if (!fn) return nullptr;
     return [fn] (JsonObject payload) {
-        auto len = serializeJson(payload, ocpp_recv_payload_buff, MOCPP_RECEIVE_PAYLOAD_BUFSIZE);
+        auto len = serializeJson(payload, ocpp_recv_payload_buff, MO_RECEIVE_PAYLOAD_BUFSIZE);
         if (len <= 0) {
-            MOCPP_DBG_WARN("Received payload buffer exceeded. Continue without payload");
+            MO_DBG_WARN("Received payload buffer exceeded. Continue without payload");
         }
         fn(len > 0 ? ocpp_recv_payload_buff : "", len);
     };
@@ -122,9 +122,9 @@ std::function<void(JsonObject)> adaptFn(OnMessage fn) {
 MicroOcpp::OnReceiveErrorListener adaptFn(OnCallError fn) {
     if (!fn) return nullptr;
     return [fn] (const char *code, const char *description, JsonObject details) {
-        auto len = serializeJson(details, ocpp_recv_payload_buff, MOCPP_RECEIVE_PAYLOAD_BUFSIZE);
+        auto len = serializeJson(details, ocpp_recv_payload_buff, MO_RECEIVE_PAYLOAD_BUFSIZE);
         if (len <= 0) {
-            MOCPP_DBG_WARN("Received payload buffer exceeded. Continue without payload");
+            MO_DBG_WARN("Received payload buffer exceeded. Continue without payload");
         }
         fn(code, description, len > 0 ? ocpp_recv_payload_buff : "", len);
     };
@@ -347,8 +347,8 @@ void ocpp_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, Aut
 
     authorize(idTag,
             onConfirmation ? [onConfirmation, idTag_capture, user_data] (JsonObject payload) {
-                    auto len = serializeJson(payload, ocpp_recv_payload_buff, MOCPP_RECEIVE_PAYLOAD_BUFSIZE);
-                    if (len <= 0) {MOCPP_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
+                    auto len = serializeJson(payload, ocpp_recv_payload_buff, MO_RECEIVE_PAYLOAD_BUFSIZE);
+                    if (len <= 0) {MO_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
                     onConfirmation(idTag_capture.c_str(), len > 0 ? ocpp_recv_payload_buff : "", len, user_data);
                 } : OnReceiveConfListener(nullptr),
             onAbort ? [onAbort, idTag_capture, user_data] () -> void {
@@ -358,8 +358,8 @@ void ocpp_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, Aut
                     onTimeout(idTag_capture.c_str(), user_data);
                 } : OnTimeoutListener(nullptr),
             onError ? [onError, idTag_capture, user_data] (const char *code, const char *description, JsonObject details) {
-                    auto len = serializeJson(details, ocpp_recv_payload_buff, MOCPP_RECEIVE_PAYLOAD_BUFSIZE);
-                    if (len <= 0) {MOCPP_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
+                    auto len = serializeJson(details, ocpp_recv_payload_buff, MO_RECEIVE_PAYLOAD_BUFSIZE);
+                    if (len <= 0) {MO_DBG_WARN("Received payload buffer exceeded. Continue without payload");}
                     onError(idTag_capture.c_str(), code, description, len > 0 ? ocpp_recv_payload_buff : "", len, user_data);
                 } : OnReceiveErrorListener(nullptr));
 }

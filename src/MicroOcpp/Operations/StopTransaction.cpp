@@ -30,7 +30,7 @@ const char* StopTransaction::getOperationType() {
 
 void StopTransaction::initiate(StoredOperationHandler *opStore) {
     if (!transaction || transaction->getStopSync().isRequested()) {
-        MOCPP_DBG_ERR("initialization error");
+        MO_DBG_ERR("initialization error");
         return;
     }
     
@@ -47,38 +47,38 @@ void StopTransaction::initiate(StoredOperationHandler *opStore) {
 
     transaction->commit();
 
-    MOCPP_DBG_INFO("StopTransaction initiated");
+    MO_DBG_INFO("StopTransaction initiated");
 }
 
 bool StopTransaction::restore(StoredOperationHandler *opStore) {
     if (!opStore) {
-        MOCPP_DBG_ERR("invalid argument");
+        MO_DBG_ERR("invalid argument");
         return false;
     }
 
     auto payload = opStore->getPayload();
     if (!payload) {
-        MOCPP_DBG_ERR("memory corruption");
+        MO_DBG_ERR("memory corruption");
         return false;
     }
 
     int connectorId = (*payload)["connectorId"] | -1;
     int txNr = (*payload)["txNr"] | -1;
     if (connectorId < 0 || txNr < 0) {
-        MOCPP_DBG_ERR("record incomplete");
+        MO_DBG_ERR("record incomplete");
         return false;
     }
 
     auto txStore = model.getTransactionStore();
 
     if (!txStore) {
-        MOCPP_DBG_ERR("invalid state");
+        MO_DBG_ERR("invalid state");
         return false;
     }
 
     transaction = txStore->getTransaction(connectorId, txNr);
     if (!transaction) {
-        MOCPP_DBG_ERR("referential integrity violation");
+        MO_DBG_ERR("referential integrity violation");
 
         //clean up possible tx records
         if (auto mSerivce = model.getMeteringService()) {
@@ -89,7 +89,7 @@ bool StopTransaction::restore(StoredOperationHandler *opStore) {
 
     if (transaction->isSilent()) {
         //transaction has been set silent after initializing StopTx - discard operation record
-        MOCPP_DBG_WARN("tx has been set silent - discard StopTx");
+        MO_DBG_WARN("tx has been set silent - discard StopTx");
 
         //clean up possible tx records
         if (auto mSerivce = model.getMeteringService()) {
@@ -119,10 +119,10 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
             Timestamp adjusted = model.getClock().adjustPrebootTimestamp(transaction->getStopTimestamp());
             transaction->setStopTimestamp(adjusted);
         } else if (transaction->getStartTimestamp() >= MIN_TIME) {
-            MOCPP_DBG_WARN("set stopTime = startTime because correct time is not available");
+            MO_DBG_WARN("set stopTime = startTime because correct time is not available");
             transaction->setStopTimestamp(transaction->getStartTimestamp() + 1); //1s behind startTime to keep order in backend DB
         } else {
-            MOCPP_DBG_ERR("failed to determine StopTx timestamp");
+            MO_DBG_ERR("failed to determine StopTx timestamp");
             (void)0; //send invalid value
         }
     }
@@ -194,7 +194,7 @@ void StopTransaction::processConf(JsonObject payload) {
         transaction->commit();
     }
 
-    MOCPP_DBG_INFO("Request has been accepted!");
+    MO_DBG_INFO("Request has been accepted!");
 
     if (auto authService = model.getAuthorizationService()) {
         authService->notifyAuthorization(transaction->getIdTag(), payload["idTagInfo"]);
@@ -208,7 +208,7 @@ bool StopTransaction::processErr(const char *code, const char *description, Json
         transaction->commit();
     }
 
-    MOCPP_DBG_ERR("Server error, data loss!");
+    MO_DBG_ERR("Server error, data loss!");
 
     return false;
 }

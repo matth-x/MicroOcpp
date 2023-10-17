@@ -8,12 +8,12 @@
 #include <MicroOcpp/Model/Authorization/AuthorizationData.h>
 #include <vector>
 
-#ifndef MOCPP_LocalAuthListMaxLength
-#define MOCPP_LocalAuthListMaxLength 48
+#ifndef MO_LocalAuthListMaxLength
+#define MO_LocalAuthListMaxLength 48
 #endif
 
-#ifndef MOCPP_SendLocalListMaxLength
-#define MOCPP_SendLocalListMaxLength MOCPP_LocalAuthListMaxLength
+#ifndef MO_SendLocalListMaxLength
+#define MO_SendLocalListMaxLength MO_LocalAuthListMaxLength
 #endif
 
 namespace MicroOcpp {

@@ -9,7 +9,7 @@
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <memory>
 
-#define MOCPP_BOOT_INTERVAL_DEFAULT 60
+#define MO_BOOT_INTERVAL_DEFAULT 60
 
 namespace MicroOcpp {
 
@@ -38,7 +38,7 @@ private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
 
-    unsigned long interval_s = MOCPP_BOOT_INTERVAL_DEFAULT;
+    unsigned long interval_s = MO_BOOT_INTERVAL_DEFAULT;
     unsigned long lastBootNotification = -1UL / 2;
 
     RegistrationStatus status = RegistrationStatus::Pending;

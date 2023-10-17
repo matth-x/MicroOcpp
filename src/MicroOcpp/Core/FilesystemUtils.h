@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
-#ifndef MOCPP_FILESYSTEMUTILS_H
-#define MOCPP_FILESYSTEMUTILS_H
+#ifndef MO_FILESYSTEMUTILS_H
+#define MO_FILESYSTEMUTILS_H
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <ArduinoJson.h>

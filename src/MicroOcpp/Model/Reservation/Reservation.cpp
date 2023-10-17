@@ -10,23 +10,23 @@ using namespace MicroOcpp;
 
 Reservation::Reservation(Model& model, unsigned int slot) : model(model), slot(slot) {
     
-    snprintf(connectorIdKey, sizeof(connectorIdKey), MOCPP_RESERVATION_CID_KEY "%u", slot);
+    snprintf(connectorIdKey, sizeof(connectorIdKey), MO_RESERVATION_CID_KEY "%u", slot);
     connectorIdInt = declareConfiguration<int>(connectorIdKey, -1, RESERVATION_FN, false, false, false);
 
-    snprintf(expiryDateRawKey, sizeof(expiryDateRawKey), MOCPP_RESERVATION_EXPDATE_KEY "%u", slot);
+    snprintf(expiryDateRawKey, sizeof(expiryDateRawKey), MO_RESERVATION_EXPDATE_KEY "%u", slot);
     expiryDateRawString = declareConfiguration<const char*>(expiryDateRawKey, "", RESERVATION_FN, false, false, false);
     
-    snprintf(idTagKey, sizeof(idTagKey), MOCPP_RESERVATION_IDTAG_KEY "%u", slot);
+    snprintf(idTagKey, sizeof(idTagKey), MO_RESERVATION_IDTAG_KEY "%u", slot);
     idTagString = declareConfiguration<const char*>(idTagKey, "", RESERVATION_FN, false, false, false);
 
-    snprintf(reservationIdKey, sizeof(reservationIdKey), MOCPP_RESERVATION_RESID_KEY "%u", slot);
+    snprintf(reservationIdKey, sizeof(reservationIdKey), MO_RESERVATION_RESID_KEY "%u", slot);
     reservationIdInt = declareConfiguration<int>(reservationIdKey, -1, RESERVATION_FN, false, false, false);
 
-    snprintf(parentIdTagKey, sizeof(parentIdTagKey), MOCPP_RESERVATION_PARENTID_KEY "%u", slot);
+    snprintf(parentIdTagKey, sizeof(parentIdTagKey), MO_RESERVATION_PARENTID_KEY "%u", slot);
     parentIdTagString = declareConfiguration<const char*>(parentIdTagKey, "", RESERVATION_FN, false, false, false);
 
     if (!connectorIdInt || !expiryDateRawString || !idTagString || !reservationIdInt || !parentIdTagString) {
-        MOCPP_DBG_ERR("initialization failure");
+        MO_DBG_ERR("initialization failure");
         (void)0;
     }
 }

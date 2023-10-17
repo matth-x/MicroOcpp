@@ -17,7 +17,7 @@ const char* ClearCache::getOperationType(){
 }
 
 void ClearCache::processReq(JsonObject payload) {
-    MOCPP_DBG_WARN("Clear transaction log (Authorization Cache not supported)");
+    MO_DBG_WARN("Clear transaction log (Authorization Cache not supported)");
 
     if (!filesystem) {
         //no persistency - nothing to do

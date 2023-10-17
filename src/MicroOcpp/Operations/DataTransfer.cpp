@@ -27,8 +27,8 @@ void DataTransfer::processConf(JsonObject payload){
     std::string status = payload["status"] | "Invalid";
 
     if (status == "Accepted") {
-        MOCPP_DBG_DEBUG("Request has been accepted");
+        MO_DBG_DEBUG("Request has been accepted");
     } else {
-        MOCPP_DBG_INFO("Request has been denied");
+        MO_DBG_INFO("Request has been denied");
     }
 }

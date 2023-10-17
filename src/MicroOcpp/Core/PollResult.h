@@ -28,7 +28,7 @@ public:
     PollResult(PollResult<T>&& other) : ready(other.ready), value(std::move(other.value)) {}
     T&& toValue() {
         if (!ready) {
-            MOCPP_DBG_ERR("Not ready");
+            MO_DBG_ERR("Not ready");
             (void)0;
         }
         ready = false;
@@ -36,7 +36,7 @@ public:
     }
     T& getValue() const {
         if (!ready) {
-            MOCPP_DBG_ERR("Not ready");
+            MO_DBG_ERR("Not ready");
             (void)0;
         }
         return *value;

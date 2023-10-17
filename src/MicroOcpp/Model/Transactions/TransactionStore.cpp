@@ -15,18 +15,18 @@
 
 using namespace MicroOcpp;
 
-#define MOCPP_TXSTORE_META_FN MOCPP_FILENAME_PREFIX "txstore.jsn"
+#define MO_TXSTORE_META_FN MO_FILENAME_PREFIX "txstore.jsn"
 
 ConnectorTransactionStore::ConnectorTransactionStore(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem) :
         context(context),
         connectorId(connectorId),
         filesystem(filesystem) {
 
-    snprintf(txBeginKey, sizeof(txBeginKey), MOCPP_TXSTORE_TXBEGIN_KEY "%u", connectorId);
-    txBeginInt = declareConfiguration<int>(txBeginKey, 0, MOCPP_TXSTORE_META_FN, false, false, false);
+    snprintf(txBeginKey, sizeof(txBeginKey), MO_TXSTORE_TXBEGIN_KEY "%u", connectorId);
+    txBeginInt = declareConfiguration<int>(txBeginKey, 0, MO_TXSTORE_META_FN, false, false, false);
 
-    snprintf(txEndKey, sizeof(txEndKey), MOCPP_TXSTORE_TXEND_KEY "%u", connectorId);
-    txEndInt = declareConfiguration<int>(txEndKey, 0, MOCPP_TXSTORE_META_FN, false, false, false);
+    snprintf(txEndKey, sizeof(txEndKey), MO_TXSTORE_TXEND_KEY "%u", connectorId);
+    txEndInt = declareConfiguration<int>(txEndKey, 0, MO_TXSTORE_META_FN, false, false, false);
 }
 
 ConnectorTransactionStore::~ConnectorTransactionStore() {
@@ -68,34 +68,34 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
     //cache miss - load tx from flash if existent
     
     if (!filesystem) {
-        MOCPP_DBG_DEBUG("no FS adapter");
+        MO_DBG_DEBUG("no FS adapter");
         return nullptr;
     }
 
-    char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, MOCPP_MAX_PATH_SIZE, MOCPP_FILENAME_PREFIX "tx" "-%u-%u.jsn", connectorId, txNr);
-    if (ret < 0 || ret >= MOCPP_MAX_PATH_SIZE) {
-        MOCPP_DBG_ERR("fn error: %i", ret);
+    char fn [MO_MAX_PATH_SIZE] = {'\0'};
+    auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "tx" "-%u-%u.jsn", connectorId, txNr);
+    if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
+        MO_DBG_ERR("fn error: %i", ret);
         return nullptr;
     }
 
     size_t msize;
     if (filesystem->stat(fn, &msize) != 0) {
-        MOCPP_DBG_DEBUG("%u-%u does not exist", connectorId, txNr);
+        MO_DBG_DEBUG("%u-%u does not exist", connectorId, txNr);
         return nullptr;
     }
 
     auto doc = FilesystemUtils::loadJson(filesystem, fn);
 
     if (!doc) {
-        MOCPP_DBG_ERR("memory corruption");
+        MO_DBG_ERR("memory corruption");
         return nullptr;
     }
 
     auto transaction = std::make_shared<Transaction>(*this, connectorId, txNr);
     JsonObject txJson = doc->as<JsonObject>();
     if (!deserializeTransaction(*transaction, txJson)) {
-        MOCPP_DBG_ERR("deserialization error");
+        MO_DBG_ERR("deserialization error");
         return nullptr;
     }
 
@@ -113,12 +113,12 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
 std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction(bool silent) {
     
     if (!txBeginInt || txBeginInt->getInt() < 0 || !txEndInt || txEndInt->getInt() < 0) {
-        MOCPP_DBG_ERR("memory corruption");
+        MO_DBG_ERR("memory corruption");
         return nullptr;
     }
 
     //check if maximum number of queued tx already reached
-    if ((txEndInt->getInt() + MAX_TX_CNT - txBeginInt->getInt()) % MAX_TX_CNT >= MOCPP_TXRECORD_SIZE) {
+    if ((txEndInt->getInt() + MAX_TX_CNT - txBeginInt->getInt()) % MAX_TX_CNT >= MO_TXRECORD_SIZE) {
         //limit reached
 
         if (!silent) {
@@ -134,7 +134,7 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction(bool s
     configuration_save();
 
     if (!commit(transaction.get())) {
-        MOCPP_DBG_ERR("FS error");
+        MO_DBG_ERR("FS error");
         return nullptr;
     }
 
@@ -151,7 +151,7 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction(bool s
 
 std::shared_ptr<Transaction> ConnectorTransactionStore::getLatestTransaction() {
     if (!txEndInt || txEndInt->getInt() < 0) {
-        MOCPP_DBG_ERR("memory corruption");
+        MO_DBG_ERR("memory corruption");
         return nullptr;
     }
 
@@ -163,25 +163,25 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getLatestTransaction() {
 bool ConnectorTransactionStore::commit(Transaction *transaction) {
 
     if (!filesystem) {
-        MOCPP_DBG_DEBUG("no FS: nothing to commit");
+        MO_DBG_DEBUG("no FS: nothing to commit");
         return true;
     }
 
-    char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, MOCPP_MAX_PATH_SIZE, MOCPP_FILENAME_PREFIX "tx" "-%u-%u.jsn", connectorId, transaction->getTxNr());
-    if (ret < 0 || ret >= MOCPP_MAX_PATH_SIZE) {
-        MOCPP_DBG_ERR("fn error: %i", ret);
+    char fn [MO_MAX_PATH_SIZE] = {'\0'};
+    auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "tx" "-%u-%u.jsn", connectorId, transaction->getTxNr());
+    if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
+        MO_DBG_ERR("fn error: %i", ret);
         return false;
     }
     
     DynamicJsonDocument txDoc {0};
     if (!serializeTransaction(*transaction, txDoc)) {
-        MOCPP_DBG_ERR("Serialization error");
+        MO_DBG_ERR("Serialization error");
         return false;
     }
 
     if (!FilesystemUtils::storeJson(filesystem, fn, txDoc)) {
-        MOCPP_DBG_ERR("FS error");
+        MO_DBG_ERR("FS error");
         return false;
     }
 
@@ -192,31 +192,31 @@ bool ConnectorTransactionStore::commit(Transaction *transaction) {
 bool ConnectorTransactionStore::remove(unsigned int txNr) {
 
     if (!filesystem) {
-        MOCPP_DBG_DEBUG("no FS: nothing to remove");
+        MO_DBG_DEBUG("no FS: nothing to remove");
         return true;
     }
 
-    char fn [MOCPP_MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, MOCPP_MAX_PATH_SIZE, MOCPP_FILENAME_PREFIX "tx" "-%u-%u.jsn", connectorId, txNr);
-    if (ret < 0 || ret >= MOCPP_MAX_PATH_SIZE) {
-        MOCPP_DBG_ERR("fn error: %i", ret);
+    char fn [MO_MAX_PATH_SIZE] = {'\0'};
+    auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "tx" "-%u-%u.jsn", connectorId, txNr);
+    if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
+        MO_DBG_ERR("fn error: %i", ret);
         return false;
     }
 
     size_t msize;
     if (filesystem->stat(fn, &msize) != 0) {
-        MOCPP_DBG_DEBUG("%s already removed", fn);
+        MO_DBG_DEBUG("%s already removed", fn);
         return true;
     }
 
-    MOCPP_DBG_DEBUG("remove %s", fn);
+    MO_DBG_DEBUG("remove %s", fn);
     
     return filesystem->remove(fn);
 }
 
 int ConnectorTransactionStore::getTxBegin() {
     if (!txBeginInt || txBeginInt->getInt() < 0) {
-        MOCPP_DBG_ERR("memory corruption");
+        MO_DBG_ERR("memory corruption");
         return -1;
     }
 
@@ -225,7 +225,7 @@ int ConnectorTransactionStore::getTxBegin() {
 
 int ConnectorTransactionStore::getTxEnd() {
     if (!txEndInt || txEndInt->getInt() < 0) {
-        MOCPP_DBG_ERR("memory corruption");
+        MO_DBG_ERR("memory corruption");
         return -1;
     }
 
@@ -234,7 +234,7 @@ int ConnectorTransactionStore::getTxEnd() {
 
 void ConnectorTransactionStore::setTxBegin(unsigned int txNr) {
     if (!txBeginInt || txBeginInt->getInt() < 0) {
-        MOCPP_DBG_ERR("memory corruption");
+        MO_DBG_ERR("memory corruption");
         return;
     }
 
@@ -244,7 +244,7 @@ void ConnectorTransactionStore::setTxBegin(unsigned int txNr) {
 
 void ConnectorTransactionStore::setTxEnd(unsigned int txNr) {
     if (!txBeginInt || txBeginInt->getInt() < 0 || !txEndInt || txEndInt->getInt() < 0) {
-        MOCPP_DBG_ERR("memory corruption");
+        MO_DBG_ERR("memory corruption");
         return;
     }
 
@@ -254,7 +254,7 @@ void ConnectorTransactionStore::setTxEnd(unsigned int txNr) {
 
 unsigned int ConnectorTransactionStore::size() {
     if (!txBeginInt || txBeginInt->getInt() < 0 || !txEndInt || txEndInt->getInt() < 0) {
-        MOCPP_DBG_ERR("memory corruption");
+        MO_DBG_ERR("memory corruption");
         return 0;
     }
 
@@ -268,12 +268,12 @@ TransactionStore::TransactionStore(unsigned int nConnectors, std::shared_ptr<Fil
             new ConnectorTransactionStore(*this, i, filesystem)));
     }
 
-    configuration_load(MOCPP_TXSTORE_META_FN);
+    configuration_load(MO_TXSTORE_META_FN);
 }
 
 std::shared_ptr<Transaction> TransactionStore::getLatestTransaction(unsigned int connectorId) {
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("Invalid connectorId");
+        MO_DBG_ERR("Invalid connectorId");
         return nullptr;
     }
     return connectors[connectorId]->getLatestTransaction();
@@ -281,12 +281,12 @@ std::shared_ptr<Transaction> TransactionStore::getLatestTransaction(unsigned int
 
 bool TransactionStore::commit(Transaction *transaction) {
     if (!transaction) {
-        MOCPP_DBG_ERR("Invalid arg");
+        MO_DBG_ERR("Invalid arg");
         return false;
     }
     auto connectorId = transaction->getConnectorId();
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("Invalid tx");
+        MO_DBG_ERR("Invalid tx");
         return false;
     }
     return connectors[connectorId]->commit(transaction);
@@ -294,7 +294,7 @@ bool TransactionStore::commit(Transaction *transaction) {
 
 std::shared_ptr<Transaction> TransactionStore::getTransaction(unsigned int connectorId, unsigned int txNr) {
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("Invalid connectorId");
+        MO_DBG_ERR("Invalid connectorId");
         return nullptr;
     }
     return connectors[connectorId]->getTransaction(txNr);
@@ -302,7 +302,7 @@ std::shared_ptr<Transaction> TransactionStore::getTransaction(unsigned int conne
 
 std::shared_ptr<Transaction> TransactionStore::createTransaction(unsigned int connectorId, bool silent) {
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("Invalid connectorId");
+        MO_DBG_ERR("Invalid connectorId");
         return nullptr;
     }
     return connectors[connectorId]->createTransaction(silent);
@@ -310,7 +310,7 @@ std::shared_ptr<Transaction> TransactionStore::createTransaction(unsigned int co
 
 bool TransactionStore::remove(unsigned int connectorId, unsigned int txNr) {
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("Invalid connectorId");
+        MO_DBG_ERR("Invalid connectorId");
         return false;
     }
     return connectors[connectorId]->remove(txNr);
@@ -318,7 +318,7 @@ bool TransactionStore::remove(unsigned int connectorId, unsigned int txNr) {
 
 int TransactionStore::getTxBegin(unsigned int connectorId) {
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("Invalid connectorId");
+        MO_DBG_ERR("Invalid connectorId");
         return -1;
     }
     return connectors[connectorId]->getTxBegin();
@@ -326,7 +326,7 @@ int TransactionStore::getTxBegin(unsigned int connectorId) {
 
 int TransactionStore::getTxEnd(unsigned int connectorId) {
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("Invalid connectorId");
+        MO_DBG_ERR("Invalid connectorId");
         return -1;
     }
     return connectors[connectorId]->getTxEnd();
@@ -334,7 +334,7 @@ int TransactionStore::getTxEnd(unsigned int connectorId) {
 
 void TransactionStore::setTxBegin(unsigned int connectorId, unsigned int txNr) {
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("Invalid connectorId");
+        MO_DBG_ERR("Invalid connectorId");
         return;
     }
     return connectors[connectorId]->setTxBegin(txNr);
@@ -342,7 +342,7 @@ void TransactionStore::setTxBegin(unsigned int connectorId, unsigned int txNr) {
 
 void TransactionStore::setTxEnd(unsigned int connectorId, unsigned int txNr) {
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("Invalid connectorId");
+        MO_DBG_ERR("Invalid connectorId");
         return;
     }
     return connectors[connectorId]->setTxEnd(txNr);
@@ -350,7 +350,7 @@ void TransactionStore::setTxEnd(unsigned int connectorId, unsigned int txNr) {
 
 unsigned int TransactionStore::size(unsigned int connectorId) {
     if (connectorId >= connectors.size()) {
-        MOCPP_DBG_ERR("Invalid connectorId");
+        MO_DBG_ERR("Invalid connectorId");
         return 0;
     }
     return connectors[connectorId]->size();

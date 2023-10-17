@@ -27,12 +27,12 @@ void Heartbeat::processConf(JsonObject payload) {
     if (strcmp(currentTime, "Invalid")) {
         if (model.getClock().setTime(currentTime)) {
             //success
-            MOCPP_DBG_DEBUG("Request has been accepted");
+            MO_DBG_DEBUG("Request has been accepted");
         } else {
-            MOCPP_DBG_WARN("Could not read time string. Expect format like 2020-02-01T20:53:32.486Z");
+            MO_DBG_WARN("Could not read time string. Expect format like 2020-02-01T20:53:32.486Z");
         }
     } else {
-        MOCPP_DBG_WARN("Missing field currentTime. Expect format like 2020-02-01T20:53:32.486Z");
+        MO_DBG_WARN("Missing field currentTime. Expect format like 2020-02-01T20:53:32.486Z");
     }
 }
 

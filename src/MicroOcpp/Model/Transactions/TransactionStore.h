@@ -12,12 +12,12 @@
 
 #define MAX_TX_CNT 100000U
 
-#ifndef MOCPP_TXRECORD_SIZE
-#define MOCPP_TXRECORD_SIZE 4 //no. of tx to hold on flash storage
+#ifndef MO_TXRECORD_SIZE
+#define MO_TXRECORD_SIZE 4 //no. of tx to hold on flash storage
 #endif
 
-#define MOCPP_TXSTORE_TXBEGIN_KEY "txBegin_"
-#define MOCPP_TXSTORE_TXEND_KEY "txEnd_"
+#define MO_TXSTORE_TXBEGIN_KEY "txBegin_"
+#define MO_TXSTORE_TXEND_KEY "txEnd_"
 
 namespace MicroOcpp {
 
@@ -30,10 +30,10 @@ private:
 
     std::shared_ptr<FilesystemAdapter> filesystem;
     std::shared_ptr<Configuration> txBeginInt; //if txNr < txBegin, tx has been safely deleted
-    char txBeginKey [sizeof(MOCPP_TXSTORE_TXBEGIN_KEY "xxx") + 1]; //"xxx": placeholder for connectorId
+    char txBeginKey [sizeof(MO_TXSTORE_TXBEGIN_KEY "xxx") + 1]; //"xxx": placeholder for connectorId
 
     std::shared_ptr<Configuration> txEndInt;
-    char txEndKey [sizeof(MOCPP_TXSTORE_TXEND_KEY "xxx") + 1];
+    char txEndKey [sizeof(MO_TXSTORE_TXEND_KEY "xxx") + 1];
     
     std::deque<std::weak_ptr<Transaction>> transactions;
 

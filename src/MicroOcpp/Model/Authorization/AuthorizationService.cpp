@@ -14,18 +14,18 @@
 #include <MicroOcpp/Operations/StatusNotification.h>
 #include <MicroOcpp/Debug.h>
 
-#define MOCPP_LOCALAUTHORIZATIONLIST_FN (MOCPP_FILENAME_PREFIX "localauth.jsn")
+#define MO_LOCALAUTHORIZATIONLIST_FN (MO_FILENAME_PREFIX "localauth.jsn")
 
 using namespace MicroOcpp;
 
 AuthorizationService::AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
     
     localAuthListEnabledBool = declareConfiguration<bool>("LocalAuthListEnabled", true);
-    declareConfiguration<int>("LocalAuthListMaxLength", MOCPP_LocalAuthListMaxLength, CONFIGURATION_VOLATILE, true);
-    declareConfiguration<int>("SendLocalListMaxLength", MOCPP_SendLocalListMaxLength, CONFIGURATION_VOLATILE, true);
+    declareConfiguration<int>("LocalAuthListMaxLength", MO_LocalAuthListMaxLength, CONFIGURATION_VOLATILE, true);
+    declareConfiguration<int>("SendLocalListMaxLength", MO_SendLocalListMaxLength, CONFIGURATION_VOLATILE, true);
 
     if (!localAuthListEnabledBool) {
-        MOCPP_DBG_ERR("initialization error");
+        MO_DBG_ERR("initialization error");
     }
     
     context.getOperationRegistry().registerOperation("GetLocalListVersion", [&context] () {
@@ -42,19 +42,19 @@ AuthorizationService::~AuthorizationService() {
 
 bool AuthorizationService::loadLists() {
     if (!filesystem) {
-        MOCPP_DBG_WARN("no fs access");
+        MO_DBG_WARN("no fs access");
         return true;
     }
 
     size_t msize = 0;
-    if (filesystem->stat(MOCPP_LOCALAUTHORIZATIONLIST_FN, &msize) != 0) {
-        MOCPP_DBG_DEBUG("no local authorization list stored already");
+    if (filesystem->stat(MO_LOCALAUTHORIZATIONLIST_FN, &msize) != 0) {
+        MO_DBG_DEBUG("no local authorization list stored already");
         return true;
     }
     
-    auto doc = FilesystemUtils::loadJson(filesystem, MOCPP_LOCALAUTHORIZATIONLIST_FN);
+    auto doc = FilesystemUtils::loadJson(filesystem, MO_LOCALAUTHORIZATIONLIST_FN);
     if (!doc) {
-        MOCPP_DBG_ERR("failed to load %s", MOCPP_LOCALAUTHORIZATIONLIST_FN);
+        MO_DBG_ERR("failed to load %s", MO_LOCALAUTHORIZATIONLIST_FN);
         return false;
     }
 
@@ -63,7 +63,7 @@ bool AuthorizationService::loadLists() {
     int listVersion = root["listVersion"] | 0;
     
     if (!localAuthorizationList.readJson(root["localAuthorizationList"].as<JsonArray>(), listVersion, false, true)) {
-        MOCPP_DBG_ERR("list read failure");
+        MO_DBG_ERR("list read failure");
         return false;
     }
 
@@ -82,7 +82,7 @@ AuthorizationData *AuthorizationService::getLocalAuthorization(const char *idTag
 
     //check status
     if (authData->getAuthorizationStatus() != AuthorizationStatus::Accepted) {
-        MOCPP_DBG_DEBUG("idTag %s local auth status %s", idTag, serializeAuthorizationStatus(authData->getAuthorizationStatus()));
+        MO_DBG_DEBUG("idTag %s local auth status %s", idTag, serializeAuthorizationStatus(authData->getAuthorizationStatus()));
         return authData;
     }
 
@@ -110,7 +110,7 @@ bool AuthorizationService::updateLocalList(JsonArray localAuthorizationListJson,
         root["listVersion"] = listVersion;
         JsonArray authListCompact = root.createNestedArray("localAuthorizationList");
         localAuthorizationList.writeJson(authListCompact, true);
-        success = FilesystemUtils::storeJson(filesystem, MOCPP_LOCALAUTHORIZATIONLIST_FN, doc);
+        success = FilesystemUtils::storeJson(filesystem, MO_LOCALAUTHORIZATIONLIST_FN, doc);
 
         if (!success) {
             loadLists();
@@ -152,7 +152,7 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
     if (localStatus == AuthorizationStatus::Accepted && localInfo->getExpiryDate()) { //check for expiry
         auto& t_now = context.getModel().getClock().now();
         if (t_now > *localInfo->getExpiryDate()) {
-            MOCPP_DBG_DEBUG("local auth expired");
+            MO_DBG_DEBUG("local auth expired");
             localStatus = AuthorizationStatus::Expired;
         }
     }
@@ -160,18 +160,18 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
     bool equivalent = true;
 
     if (incomingStatus != localStatus) {
-        MOCPP_DBG_WARN("local auth list status conflict");
+        MO_DBG_WARN("local auth list status conflict");
         equivalent = false;
     }
 
     //check if parentIdTag definitions mismatch
     if (equivalent &&
             strcmp(localInfo->getParentIdTag() ? localInfo->getParentIdTag() : "", idTagInfo["parentIdTag"] | "")) {
-        MOCPP_DBG_WARN("local auth list parentIdTag conflict");
+        MO_DBG_WARN("local auth list parentIdTag conflict");
         equivalent = false;
     }
 
-    MOCPP_DBG_DEBUG("idTag %s fully evaluated: %s conflict", idTag, equivalent ? "no" : "contains");
+    MO_DBG_DEBUG("idTag %s fully evaluated: %s conflict", idTag, equivalent ? "no" : "contains");
 
     if (!equivalent) {
         //send error code "LocalListConflict" to server
