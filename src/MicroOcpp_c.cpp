@@ -9,11 +9,11 @@
 
 MicroOcpp::Connection *ocppSocket = nullptr;
 
-void ocpp_initialize(OCPP_Connection *conn, const char *chargePointModel, const char *chargePointVendor, struct OCPP_FilesystemOpt fsopt) {
-    ocpp_initialize_full(conn, ChargerCredentials(chargePointModel, chargePointVendor), fsopt);
+void ocpp_initialize(OCPP_Connection *conn, const char *chargePointModel, const char *chargePointVendor, struct OCPP_FilesystemOpt fsopt, bool autoRecover) {
+    ocpp_initialize_full(conn, ChargerCredentials(chargePointModel, chargePointVendor), fsopt, autoRecover);
 }
 
-void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCredentials, struct OCPP_FilesystemOpt fsopt) {
+void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCredentials, struct OCPP_FilesystemOpt fsopt, bool autoRecover) {
     if (!conn) {
         MO_DBG_ERR("conn is null");
     }
@@ -22,7 +22,7 @@ void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCre
 
     MicroOcpp::FilesystemOpt adaptFsopt = fsopt;
 
-    mocpp_initialize(*ocppSocket, bootNotificationCredentials, MicroOcpp::makeDefaultFilesystemAdapter(adaptFsopt));
+    mocpp_initialize(*ocppSocket, bootNotificationCredentials, MicroOcpp::makeDefaultFilesystemAdapter(adaptFsopt), autoRecover);
 }
 
 void ocpp_deinitialize() {
