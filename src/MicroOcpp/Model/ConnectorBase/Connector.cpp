@@ -776,13 +776,6 @@ void Connector::endTransaction(const char *idTag, const char *reason) {
         return;
     }
 
-    if (idTag && *idTag != '\0' && !strcmp(idTag, transaction->getIdTag())) {
-        //given stop idTag differs from start idTag. Make Authorization check first
-
-        MO_DBG_WARN("authorization status of stop idTag not checked automatically yet");
-        (void)0;
-    }
-
     MO_DBG_DEBUG("End session started by idTag %s",
                             transaction->getIdTag());
     

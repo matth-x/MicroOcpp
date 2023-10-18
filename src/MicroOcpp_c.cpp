@@ -159,6 +159,13 @@ bool ocpp_endTransaction_m(unsigned int connectorId, const char *idTag, const ch
     return endTransaction(idTag, reason, connectorId);
 }
 
+bool ocpp_endTransaction_authorized(const char *idTag, const char *reason) {
+    return endTransaction_authorized(idTag, reason);
+}
+bool ocpp_endTransaction_authorized_m(unsigned int connectorId, const char *idTag, const char *reason) {
+    return endTransaction_authorized(idTag, reason, connectorId);
+}
+
 bool ocpp_isTransactionActive() {
     return isTransactionActive();
 }

@@ -280,8 +280,8 @@ TEST_CASE( "C API test" ) {
         REQUIRE(ocpp_ocppPermitsCharge());
         REQUIRE(ocpp_ocppPermitsCharge_m(2));
 
-        ocpp_endTransaction(NULL, NULL);
-        ocpp_endTransaction_m(2, NULL, NULL);
+        ocpp_endTransaction("mIdTag", NULL);
+        ocpp_endTransaction_m(2, "mIdTag", NULL);
 
         loop();
 
@@ -294,8 +294,8 @@ TEST_CASE( "C API test" ) {
 
         loop();
 
-        ocpp_endTransaction(NULL, NULL);
-        ocpp_endTransaction_m(2, NULL, NULL);
+        ocpp_endTransaction_authorized(NULL, NULL);
+        ocpp_endTransaction_authorized_m(2, NULL, NULL);
 
         loop();
 

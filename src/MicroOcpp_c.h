@@ -83,6 +83,9 @@ void ocpp_beginTransaction_authorized_m(unsigned int connectorId, const char *id
 bool ocpp_endTransaction(const char *idTag, const char *reason); //idTag, reason can be NULL
 bool ocpp_endTransaction_m(unsigned int connectorId, const char *idTag, const char *reason); //idTag, reason can be NULL
 
+bool ocpp_endTransaction_authorized(const char *idTag, const char *reason); //idTag, reason can be NULL
+bool ocpp_endTransaction_authorized_m(unsigned int connectorId, const char *idTag, const char *reason); //idTag, reason can be NULL
+
 bool ocpp_isTransactionActive();
 bool ocpp_isTransactionActive_m(unsigned int connectorId);
 

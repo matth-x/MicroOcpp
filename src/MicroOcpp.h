@@ -136,22 +136,46 @@ std::shared_ptr<MicroOcpp::Transaction> beginTransaction(const char *idTag, unsi
 std::shared_ptr<MicroOcpp::Transaction> beginTransaction_authorized(const char *idTag, const char *parentIdTag = nullptr, unsigned int connectorId = 1);
 
 /*
- * End the transaction process by terminating the transaction and setting a reason for its termination.
+ * End the transaction process if idTag is authorized to stop the transaction. The OCPP lib sends
+ * a StopTransaction request if the following conditions are true:
+ * Conditions:
+ *     1) Currently, a transaction is running which hasn't been terminated yet AND
+ *     2) idTag is either
+ *         - nullptr OR
+ *         - matches the idTag of beginTransaction (or RemoteStartTransaction) OR
+ *         - [Planned, not released yet] is part of the current LocalList and the parentIdTag
+ *           matches with the parentIdTag of beginTransaction.
+ *         - [Planned, not released yet] If none of step 2) applies, then the OCPP lib will check
+ *           the authorization status via an Authorize request
+ * 
+ * See endTransaction_authorized for skipping the authorization check, i.e. step 2)
  * 
  * If the transaction is ended by swiping an RFID card, then idTag should contain its identifier. If
  * charging stops for a different reason than swiping the card, idTag should be null or empty.
  * 
- * Please refer to OCPP 1.6 Specification - Edition 2 p. 90 for a list of valid reasons. "reason"
+ * Please refer to OCPP 1.6 Specification - Edition 2 p. 90 for a list of valid reasons. `reason`
  * can also be nullptr.
  * 
  * It is safe to call this function at any time, i.e. when no transaction runs or when the transaction
  * has already been ended. For example you can place
- *     `endTransaction(nullptr, StopTransactionReason::Reboot);`
+ *     `endTransaction(nullptr, "Reboot");`
  * in the beginning of the program just to ensure that there is no transaction from a previous run.
+ * 
+ * If called with idTag=nullptr, this is functionally equivalent to
+ *     `endTransaction_authorized(nullptr, reason);`
  * 
  * Returns true if there is a transaction which could eventually be ended by this action
  */
 bool endTransaction(const char *idTag = nullptr, const char *reason = nullptr, unsigned int connectorId = 1);
+
+/*
+ * End the transaction process definitely without authorization check. See endTransaction(...) for a
+ * complete description.
+ * 
+ * Use this function if you manage authorization on your own and want to bypass the Authorization
+ * management of this lib.
+ */
+bool endTransaction_authorized(const char *idTag, const char *reason = nullptr, unsigned int connectorId = 1);
 
 /*
  * Get information about the current Transaction lifecycle. A transaction can enter the following
