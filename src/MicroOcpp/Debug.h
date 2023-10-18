@@ -10,7 +10,7 @@
 #define MO_DL_NONE 0x00     //suppress all output to the console
 #define MO_DL_ERROR 0x01    //report failures
 #define MO_DL_WARN 0x02     //report observed or assumed inconsistent state
-#define MO_DL_INFO 0x03     //make internal state apparent
+#define MO_DL_INFO 0x03     //inform about internal state changes
 #define MO_DL_DEBUG 0x04    //relevant info for debugging
 #define MO_DL_VERBOSE 0x05  //all output
 
@@ -56,7 +56,7 @@
         const char *_mo_file = __FILE__;         \
         size_t _mo_l = sizeof(__FILE__);         \
         for (; _mo_l > 0 && _mo_file[_mo_l-1] != '/' && _mo_file[_mo_l-1] != '\\'; _mo_l--);         \
-        MO_CONSOLE_PRINTF("[OCPP] %s (%s:%i): ",level, _mo_file + _mo_l,__LINE__);           \
+        MO_CONSOLE_PRINTF("[MO] %s (%s:%i): ",level, _mo_file + _mo_l,__LINE__);           \
         MO_CONSOLE_PRINTF X;  \
         MO_CONSOLE_PRINTF("\n");         \
     } while (0);
@@ -64,7 +64,7 @@
 #elif MO_DBG_FORMAT == MO_DF_FULL
 #define MO_DBG(level, X)   \
     do {                        \
-        MO_CONSOLE_PRINTF("[OCPP] %s (%s:%i): ",level, __FILE__,__LINE__);           \
+        MO_CONSOLE_PRINTF("[MO] %s (%s:%i): ",level, __FILE__,__LINE__);           \
         MO_CONSOLE_PRINTF X;  \
         MO_CONSOLE_PRINTF("\n");         \
     } while (0);
@@ -108,13 +108,13 @@
 
 #define MO_DBG_TRAFFIC_OUT(...)   \
     do {                        \
-        MO_CONSOLE_PRINTF("[OCPP] Send: %s",__VA_ARGS__);           \
+        MO_CONSOLE_PRINTF("[MO] Send: %s",__VA_ARGS__);           \
         MO_CONSOLE_PRINTF("\n");         \
     } while (0)
 
 #define MO_DBG_TRAFFIC_IN(...)   \
     do {                        \
-        MO_CONSOLE_PRINTF("[OCPP] Recv: %.*s",__VA_ARGS__);           \
+        MO_CONSOLE_PRINTF("[MO] Recv: %.*s",__VA_ARGS__);           \
         MO_CONSOLE_PRINTF("\n");         \
     } while (0)
 

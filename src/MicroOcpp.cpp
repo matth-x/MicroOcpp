@@ -58,7 +58,7 @@ using namespace MicroOcpp::Ocpp16;
 #ifndef MO_CUSTOM_WS
 void mocpp_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *chargePointModel, const char *chargePointVendor, FilesystemOpt fsOpt, const char *login, const char *password, const char *CA_cert, bool autoRecover) {
     if (context) {
-        MO_DBG_WARN("Can't be called two times. Either restart ESP, or call mocpp_deinitialize() before");
+        MO_DBG_WARN("already initialized. To reinit, call mocpp_deinitialize() before");
         return;
     }
 
@@ -133,7 +133,7 @@ ChargerCredentials::ChargerCredentials(const char *cpModel, const char *cpVendor
 
 void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover) {
     if (context) {
-        MO_DBG_WARN("Can't be called two times. To change the credentials, either restart ESP, or call mocpp_deinitialize() before");
+        MO_DBG_WARN("already initialized. To reinit, call mocpp_deinitialize() before");
         return;
     }
 
@@ -219,6 +219,8 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
     credsJson.reset();
 
     configuration_load();
+
+    MO_DBG_INFO("initialized MicroOcpp v" MO_VERSION);
 }
 
 void mocpp_deinitialize() {
@@ -253,7 +255,7 @@ void mocpp_deinitialize() {
 
 void mocpp_loop() {
     if (!context) {
-        MO_DBG_WARN("Please call mocpp_initialize before");
+        MO_DBG_WARN("need to call mocpp_initialize before");
         return;
     }
 
@@ -262,7 +264,7 @@ void mocpp_loop() {
 
 std::shared_ptr<Transaction> beginTransaction(const char *idTag, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return nullptr;
     }
     if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
@@ -271,7 +273,7 @@ std::shared_ptr<Transaction> beginTransaction(const char *idTag, unsigned int co
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return nullptr;
     }
 
@@ -280,7 +282,7 @@ std::shared_ptr<Transaction> beginTransaction(const char *idTag, unsigned int co
 
 std::shared_ptr<Transaction> beginTransaction_authorized(const char *idTag, const char *parentIdTag, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return nullptr;
     }
     if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX ||
@@ -290,7 +292,7 @@ std::shared_ptr<Transaction> beginTransaction_authorized(const char *idTag, cons
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return nullptr;
     }
     
@@ -299,12 +301,12 @@ std::shared_ptr<Transaction> beginTransaction_authorized(const char *idTag, cons
 
 bool endTransaction(const char *idTag, const char *reason, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return false;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return false;
     }
     auto res = isTransactionActive(connectorId);
@@ -314,12 +316,12 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
 
 bool isTransactionActive(unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return false;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return false;
     }
     auto& tx = connector->getTransaction();
@@ -328,12 +330,12 @@ bool isTransactionActive(unsigned int connectorId) {
 
 bool isTransactionRunning(unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return false;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return false;
     }
     auto& tx = connector->getTransaction();
@@ -342,12 +344,12 @@ bool isTransactionRunning(unsigned int connectorId) {
 
 const char *getTransactionIdTag(unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return nullptr;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return nullptr;
     }
     auto& tx = connector->getTransaction();
@@ -358,12 +360,12 @@ std::shared_ptr<Transaction> mocpp_undefinedTx;
 
 std::shared_ptr<Transaction>& getTransaction(unsigned int connectorId) {
     if (!context) {
-        MO_DBG_WARN("Please call mocpp_initialize before");
+        MO_DBG_WARN("OCPP uninitialized");
         return mocpp_undefinedTx;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return mocpp_undefinedTx;
     }
     return connector->getTransaction();
@@ -371,12 +373,12 @@ std::shared_ptr<Transaction>& getTransaction(unsigned int connectorId) {
 
 bool ocppPermitsCharge(unsigned int connectorId) {
     if (!context) {
-        MO_DBG_WARN("Please call mocpp_initialize before");
+        MO_DBG_WARN("OCPP uninitialized");
         return false;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return false;
     }
     return connector->ocppPermitsCharge();
@@ -384,26 +386,20 @@ bool ocppPermitsCharge(unsigned int connectorId) {
 
 void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return;
     }
     connector->setConnectorPluggedInput(pluggedInput);
-
-    if (pluggedInput) {
-        MO_DBG_INFO("Added ConnectorPluggedInput. Transaction-management is in auto mode now");
-    } else {
-        MO_DBG_INFO("Reset ConnectorPluggedInput. Transaction-management is in manual mode now");
-    }
 }
 
 void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     auto& model = context->getModel();
@@ -424,7 +420,7 @@ void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connec
 
 void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
 
@@ -446,11 +442,11 @@ void setPowerMeterInput(std::function<float()> powerInput, unsigned int connecto
 
 void setSmartChargingPowerOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     if (!context->getModel().getConnector(connectorId)) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return;
     }
 
@@ -473,11 +469,11 @@ void setSmartChargingPowerOutput(std::function<void(float)> chargingLimitOutput,
 
 void setSmartChargingCurrentOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     if (!context->getModel().getConnector(connectorId)) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return;
     }
 
@@ -500,11 +496,11 @@ void setSmartChargingCurrentOutput(std::function<void(float)> chargingLimitOutpu
 
 void setSmartChargingOutput(std::function<void(float,float,int)> chargingLimitOutput, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     if (!context->getModel().getConnector(connectorId)) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return;
     }
 
@@ -526,12 +522,12 @@ void setSmartChargingOutput(std::function<void(float,float,int)> chargingLimitOu
 
 void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return;
     }
     connector->setEvReadyInput(evReadyInput);
@@ -539,12 +535,12 @@ void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorI
 
 void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return;
     }
     connector->setEvseReadyInput(evseReadyInput);
@@ -552,12 +548,12 @@ void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connec
 
 void addErrorCodeInput(std::function<const char*()> errorCodeInput, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return;
     }
     connector->addErrorCodeInput(errorCodeInput);
@@ -565,12 +561,12 @@ void addErrorCodeInput(std::function<const char*()> errorCodeInput, unsigned int
 
 void addErrorDataInput(std::function<MicroOcpp::ErrorData()> errorDataInput, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return;
     }
     connector->addErrorDataInput(errorDataInput);
@@ -578,7 +574,7 @@ void addErrorDataInput(std::function<MicroOcpp::ErrorData()> errorDataInput, uns
 
 void addMeterValueInput(std::function<float ()> valueInput, const char *measurand, const char *unit, const char *location, const char *phase, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
 
@@ -589,7 +585,7 @@ void addMeterValueInput(std::function<float ()> valueInput, const char *measuran
 
     if (!measurand) {
         measurand = "Energy.Active.Import.Register";
-        MO_DBG_WARN("Measurand unspecified; assume %s", measurand);
+        MO_DBG_WARN("measurand unspecified; assume %s", measurand);
     }
 
     SampledValueProperties properties;
@@ -611,7 +607,7 @@ void addMeterValueInput(std::function<float ()> valueInput, const char *measuran
 
 void addMeterValueInput(std::unique_ptr<SampledValueSampler> valueInput, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     auto& model = context->getModel();
@@ -624,12 +620,12 @@ void addMeterValueInput(std::unique_ptr<SampledValueSampler> valueInput, unsigne
 
 void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return;
     }
     connector->setOccupiedInput(occupied);
@@ -637,12 +633,12 @@ void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId) 
 
 void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return;
     }
     connector->setStartTxReadyInput(startTxReady);
@@ -650,12 +646,12 @@ void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int conne
 
 void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return;
     }
     connector->setStopTxReadyInput(stopTxReady);
@@ -663,12 +659,12 @@ void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connect
 
 void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcpp::TxNotification)> notificationOutput, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return;
     }
     connector->setTxNotificationOutput(notificationOutput);
@@ -676,12 +672,12 @@ void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcp
 
 void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnectorInOut, unsigned int connectorId) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return;
     }
     connector->setOnUnlockConnector(onUnlockConnectorInOut);
@@ -689,14 +685,14 @@ void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnect
 
 bool isOperative(unsigned int connectorId) {
     if (!context) {
-        MO_DBG_WARN("Please call mocpp_initialize before");
+        MO_DBG_WARN("OCPP uninitialized");
         return true; //assume "true" as default state
     }
     auto& model = context->getModel();
     auto chargePoint = model.getConnector(OCPP_ID_OF_CP);
     auto connector = model.getConnector(connectorId);
     if (!chargePoint || !connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return true; //assume "true" as default state
     }
     return chargePoint->isOperative() && connector->isOperative();
@@ -704,7 +700,7 @@ bool isOperative(unsigned int connectorId) {
 
 void setOnResetNotify(std::function<bool(bool)> onResetNotify) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
 
@@ -715,7 +711,7 @@ void setOnResetNotify(std::function<bool(bool)> onResetNotify) {
 
 void setOnResetExecute(std::function<void(bool)> onResetExecute) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
 
@@ -744,7 +740,7 @@ Context *getOcppContext() {
 
 void setOnReceiveRequest(const char *operationType, OnReceiveReqListener onReceiveReq) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     if (!operationType) {
@@ -756,7 +752,7 @@ void setOnReceiveRequest(const char *operationType, OnReceiveReqListener onRecei
 
 void setOnSendConf(const char *operationType, OnSendConfListener onSendConf) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     if (!operationType) {
@@ -771,7 +767,7 @@ void sendRequest(const char *operationType,
             std::function<void (JsonObject)> fn_processConf) {
 
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     if (!operationType || !fn_createReq || !fn_processConf) {
@@ -788,7 +784,7 @@ void setRequestHandler(const char *operationType,
             std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createConf) {
 
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     if (!operationType || !fn_processReq || !fn_createConf) {
@@ -805,7 +801,7 @@ void setRequestHandler(const char *operationType,
 
 void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
     if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
@@ -831,7 +827,7 @@ void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener 
 
 bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return false;
     }
     if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
@@ -840,13 +836,13 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
     }
     auto connector = context->getModel().getConnector(OCPP_ID_OF_CONNECTOR);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return false;
     }
     auto transaction = connector->getTransaction();
     if (transaction) {
         if (transaction->getStartSync().isRequested()) {
-            MO_DBG_ERR("Transaction already in progress. Must call stopTransaction()");
+            MO_DBG_ERR("transaction already in progress. Must call stopTransaction()");
             return false;
         }
         transaction->setIdTag(idTag);
@@ -854,7 +850,7 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
         beginTransaction_authorized(idTag); //request new transaction object
         transaction = connector->getTransaction();
         if (!transaction) {
-            MO_DBG_WARN("Transaction queue full");
+            MO_DBG_WARN("transaction queue full");
             return false;
         }
     }
@@ -864,7 +860,7 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
         if (meterStart && *meterStart) {
             transaction->setMeterStart(meterStart->toInteger());
         } else {
-            MO_DBG_ERR("MeterStart undefined");
+            MO_DBG_ERR("meterStart undefined");
         }
     }
 
@@ -893,18 +889,18 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
 
 bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTimeoutListener onTimeout, OnReceiveErrorListener onError, unsigned int timeout) {
     if (!context) {
-        MO_DBG_ERR("OCPP uninitialized"); //please call mocpp_initialize before
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return false;
     }
     auto connector = context->getModel().getConnector(OCPP_ID_OF_CONNECTOR);
     if (!connector) {
-        MO_DBG_ERR("Could not find connector. Ignore");
+        MO_DBG_ERR("could not find connector");
         return false;
     }
 
     auto transaction = connector->getTransaction();
     if (!transaction || !transaction->isRunning()) {
-        MO_DBG_ERR("No running Tx to stop");
+        MO_DBG_ERR("no running Tx to stop");
         return false;
     }
 
@@ -920,7 +916,7 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
         if (meterStop && *meterStop) {
             transaction->setMeterStop(meterStop->toInteger());
         } else {
-            MO_DBG_ERR("MeterStop undefined");
+            MO_DBG_ERR("meterStop undefined");
         }
     }
 

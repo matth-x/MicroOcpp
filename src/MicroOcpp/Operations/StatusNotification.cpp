@@ -46,7 +46,10 @@ const char *cstrFromOcppEveState(ChargePointStatus state) {
 StatusNotification::StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorData errorData)
         : connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
     
-    MO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
+    if (currentStatus != ChargePointStatus::NOT_SET) {
+        MO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
+        (void)0;
+    }
 }
 
 const char* StatusNotification::getOperationType(){
