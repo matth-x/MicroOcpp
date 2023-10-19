@@ -219,6 +219,7 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 #include <sys/stat.h>
 #include <dirent.h>
+#include <string.h>
 #include "esp_spiffs.h"
 
 namespace MicroOcpp {
@@ -337,8 +338,8 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
         mounted = false;
         
         esp_vfs_spiffs_conf_t conf = {
-            .base_path = MOCPP_FILENAME_PREFIX,
-            .partition_label = "mo", //also see deconstructor
+            .base_path = MOCPP_FILENAME_PREFIX[strlen(MOCPP_FILENAME_PREFIX) - 1] == '/' ? strndup(MOCPP_FILENAME_PREFIX, strlen(MOCPP_FILENAME_PREFIX) - 1) : MOCPP_FILENAME_PREFIX,
+            .partition_label = MOCPP_PARTITION_LABEL, //also see deconstructor
             .max_files = 5,
             .format_if_mount_failed = config.formatOnFail()
         };

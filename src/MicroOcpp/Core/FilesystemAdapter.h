@@ -15,6 +15,10 @@
 #define MOCPP_FILENAME_PREFIX "/"
 #endif
 
+#ifndef MOCPP_PARTITION_LABEL
+#define MOCPP_PARTITION_LABEL "mo"
+#endif
+
 #define DISABLE_FS       0
 #define ARDUINO_LITTLEFS 1
 #define ARDUINO_SPIFFS   2
