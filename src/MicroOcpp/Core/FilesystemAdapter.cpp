@@ -258,7 +258,7 @@ public:
 
     ~EspIdfFilesystemAdapter() {
         if (config.mustMount()) {
-            esp_vfs_spiffs_unregister("mo"); //partition label
+            esp_vfs_spiffs_unregister(MOCPP_PARTITION_LABEL); //partition label
             MOCPP_DBG_DEBUG("SPIFFS unmounted");
         }
     }
