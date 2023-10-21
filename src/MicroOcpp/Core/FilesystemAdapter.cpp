@@ -227,7 +227,12 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 #include <sys/stat.h>
 #include <dirent.h>
+#include <string.h>
 #include "esp_spiffs.h"
+
+#ifndef MO_PARTITION_LABEL
+#define MO_PARTITION_LABEL "mo"
+#endif
 
 namespace MicroOcpp {
 
@@ -265,7 +270,7 @@ public:
 
     ~EspIdfFilesystemAdapter() {
         if (config.mustMount()) {
-            esp_vfs_spiffs_unregister("mo"); //partition label
+            esp_vfs_spiffs_unregister(MO_PARTITION_LABEL); //partition label
             MO_DBG_DEBUG("SPIFFS unmounted");
         }
     }
@@ -355,8 +360,8 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
         }
 
         esp_vfs_spiffs_conf_t conf = {
-            .base_path = fn_prefix,
-            .partition_label = "mo", //also see deconstructor
+            .base_path = (MO_FILENAME_PREFIX[0] == '/' && MO_FILENAME_PREFIX[1] == '\0') ? MO_FILENAME_PREFIX : (MO_FILENAME_PREFIX[strlen(MO_FILENAME_PREFIX) - 1] == '/' ? strndup(MO_FILENAME_PREFIX, strlen(MO_FILENAME_PREFIX) - 1) : MO_FILENAME_PREFIX),
+            .partition_label = MO_PARTITION_LABEL, //also see deconstructor
             .max_files = 5,
             .format_if_mount_failed = config.formatOnFail()
         };

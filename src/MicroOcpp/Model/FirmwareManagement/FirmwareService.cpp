@@ -102,8 +102,8 @@ void FirmwareService::loop() {
 
                     timestampTransition = mocpp_tick_ms();
                     delayTransition = 10000;
-                    return;
                 }
+                return;
             } else {
                 //if client doesn't report download state, assume download to be finished (at least 30s download time have passed until here)
                 if (downloadStatusInput == nullptr) {
