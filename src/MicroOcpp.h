@@ -36,19 +36,16 @@ using MicroOcpp::OnReceiveErrorListener;
  * https://github.com/matth-x/MicroOcpp/issues/36#issuecomment-989716573 for recommendations on
  * how to track down the issue with the connection.
  * 
- * This is a convenience function only available for Arduino. For a full initialization with TLS,
- * please refer to https://github.com/matth-x/MicroOcpp/tree/master/examples/ESP-TLS
+ * This is a convenience function only available for Arduino.
  */
 void mocpp_initialize(
-            const char *CS_hostname, //e.g. "example.com"
-            uint16_t CS_port,        //e.g. 80
-            const char *CS_url,      //e.g. "ws://example.com/steve/websocket/CentralSystemService/charger001"
+            const char *backendUrl,    //e.g. "wss://example.com:8443/steve/websocket/CentralSystemService"
+            const char *chargeBoxId,   //e.g. "charger001"
             const char *chargePointModel = "Demo Charger",     //model name of this charger
             const char *chargePointVendor = "My Company Ltd.", //brand name
             MicroOcpp::FilesystemOpt fsOpt = MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail, //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
-            const char *login = "", //login present in the websocket message header
-            const char *password = "", //password present in the websocket message header
-            const char *CA_cert = NULL, //TLS certificate
+            const char *password = nullptr, //password present in the websocket message header
+            const char *CA_cert = nullptr, //TLS certificate
             bool autoRecover = false); //automatically sanitize the local data store when the lib detects recurring crashes. Not recommended during development
 #endif
 

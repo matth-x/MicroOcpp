@@ -56,24 +56,90 @@ using namespace MicroOcpp::Facade;
 using namespace MicroOcpp::Ocpp16;
 
 #ifndef MO_CUSTOM_WS
-void mocpp_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_url, const char *chargePointModel, const char *chargePointVendor, FilesystemOpt fsOpt, const char *login, const char *password, const char *CA_cert, bool autoRecover) {
+void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const char *chargePointModel, const char *chargePointVendor, FilesystemOpt fsOpt, const char *password, const char *CA_cert, bool autoRecover) {
     if (context) {
         MO_DBG_WARN("already initialized. To reinit, call mocpp_deinitialize() before");
         return;
     }
 
+    if (!backendUrl || !chargePointModel || !chargePointVendor) {
+        MO_DBG_ERR("invalid args");
+        return;
+    }
+
+    if (!chargeBoxId) {
+        chargeBoxId = "";
+    }
+
+    /*
+     * parse backendUrl so that it suits the links2004/arduinoWebSockets interface
+     */
+    std::string url = backendUrl;
+
+    //tolower protocol specifier
+    for (auto c = url.begin(); *c != ':' && c != url.end(); c++) {
+        *c = tolower(*c);
+    }
+
+    bool isTLS = true;
+    if (!strncmp(url.c_str(),"wss://",strlen("wss://"))) {
+        isTLS = true;
+    } else if (!strncmp(url.c_str(),"ws://",strlen("ws://"))) {
+        isTLS = false;
+    } else {
+        MO_DBG_ERR("only ws:// and wss:// supported");
+        return;
+    }
+
+    //parse host, port
+    std::string host_port_path = url.substr(url.find_first_of("://") + strlen("://"));
+    std::string host_port = host_port_path.substr(0, host_port_path.find_first_of('/'));
+    std::string host = host_port.substr(0, host_port.find_first_of(':'));
+    if (host.empty()) {
+        MO_DBG_ERR("could not parse host: %s", url.c_str());
+        return;
+    }
+    uint16_t port = 0;
+    std::string port_str = host_port.substr(host.length());
+    if (port_str.empty()) {
+        port = isTLS ? 443U : 80U;
+    } else {
+        //skip leading ':'
+        port_str = port_str.substr(1);
+        for (auto c = port_str.begin(); c != port_str.end(); c++) {
+            if (*c < '0' || *c > '9') {
+                MO_DBG_ERR("could not parse port: %s", url.c_str());
+                return; 
+            }
+            auto p = port * 10U + (*c - '0');
+            if (p < port) {
+                MO_DBG_ERR("could not parse port (overflow): %s", url.c_str());
+                return;
+            }
+            port = p;
+        }
+    }
+
+    if (url.back() != '/') {
+        url += '/';
+    }
+
+    url += chargeBoxId;
+
+    MO_DBG_INFO("connecting to %s -- (host: %s, port: %u)", url.c_str(), host.c_str(), port);
+
     if (!webSocket)
         webSocket = new WebSocketsClient();
 
-    if (!strncmp(CS_url,"wss",3) || !strncmp(CS_url,"https",5))
+    if (isTLS)
     {
         // server address, port, URL and TLS certificate
-        webSocket->beginSslWithCA(CS_hostname, CS_port, CS_url, CA_cert, "ocpp1.6");
+        webSocket->beginSslWithCA(host.c_str(), port, url.c_str(), CA_cert, "ocpp1.6");
     }
     else
     {
         // server address, port, URL
-        webSocket->begin(CS_hostname, CS_port, CS_url, "ocpp1.6");
+        webSocket->begin(host.c_str(), port, url.c_str(), "ocpp1.6");
     }
 
     // try ever 5000 again if connection has failed
@@ -86,8 +152,8 @@ void mocpp_initialize(const char *CS_hostname, uint16_t CS_port, const char *CS_
     webSocket->enableHeartbeat(15000, 3000, 2); //comment this one out to for specific OCPP servers
 
     // add authentication data (optional)
-    if (login && password && strlen(login) + strlen(password) >= 2) {
-        webSocket->setAuthorization(login, password);
+    if (password && strlen(password) + strlen(chargeBoxId) >= 4) {
+        webSocket->setAuthorization(chargeBoxId, password);
     }
 
     delete connection;

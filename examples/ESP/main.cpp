@@ -18,16 +18,14 @@ ESP8266WiFiMulti WiFiMulti;
 #define STASSID "YOUR_WIFI_SSID"
 #define STAPSK  "YOUR_WIFI_PW"
 
-#define OCPP_HOST "echo.websocket.events"
-#define OCPP_PORT 80
-#define OCPP_URL "ws://echo.websocket.events/"
+#define OCPP_BACKEND_URL   "ws://echo.websocket.events"
+#define OCPP_CHARGE_BOX_ID ""
 
 //
 //  Settings which worked for my SteVe instance:
 //
-//#define OCPP_HOST "my.instance.com"
-//#define OCPP_PORT 80
-//#define OCPP_URL "ws://my.instance.com/steve/websocket/CentralSystemService/esp-charger"
+//#define OCPP_BACKEND_URL   "ws://192.168.178.100:8180/steve/websocket/CentralSystemService"
+//#define OCPP_CHARGE_BOX_ID "esp-charger"
 
 void setup() {
 
@@ -60,7 +58,7 @@ void setup() {
     /*
      * Initialize the OCPP library
      */
-    mocpp_initialize(OCPP_HOST, OCPP_PORT, OCPP_URL, "My Charging Station", "My company name");
+    mocpp_initialize(OCPP_BACKEND_URL, OCPP_CHARGE_BOX_ID, "My Charging Station", "My company name");
 
     /*
      * Integrate OCPP functionality. You can leave out the following part if your EVSE doesn't need it.
