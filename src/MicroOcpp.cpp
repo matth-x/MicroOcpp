@@ -232,6 +232,8 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 
     configuration_init(filesystem); //call before each other library call
 
+    declareConfiguration<const char*>("MicroOcppVersion", MO_VERSION, MO_KEYVALUE_FN, false, false, false);
+
     context = new Context(connection, filesystem, bootstats.bootNr);
     auto& model = context->getModel();
 
