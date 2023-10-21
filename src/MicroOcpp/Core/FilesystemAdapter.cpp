@@ -227,7 +227,6 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 #include <sys/stat.h>
 #include <dirent.h>
-#include <string.h>
 #include "esp_spiffs.h"
 
 #ifndef MO_PARTITION_LABEL
@@ -270,7 +269,7 @@ public:
 
     ~EspIdfFilesystemAdapter() {
         if (config.mustMount()) {
-            esp_vfs_spiffs_unregister(MO_PARTITION_LABEL); //partition label
+            esp_vfs_spiffs_unregister(MO_PARTITION_LABEL);
             MO_DBG_DEBUG("SPIFFS unmounted");
         }
     }
@@ -349,19 +348,24 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     if (config.mustMount()) {
         mounted = false;
 
-        char fn_prefix [MO_MAX_PATH_SIZE];
-        auto fn_prefix_len = snprintf(fn_prefix, MO_MAX_PATH_SIZE, "%.*s", ((int) strlen(MO_FILENAME_PREFIX)) - 1, MO_FILENAME_PREFIX);
-        if (fn_prefix_len < 0 || fn_prefix_len >= MO_MAX_PATH_SIZE) {
-            MO_DBG_ERR("MO_FILENAME_PREFIX error %i", fn_prefix_len);
+        char fnpref [MO_MAX_PATH_SIZE];
+        auto fnpref_len = snprintf(fnpref, MO_MAX_PATH_SIZE, "%s", MO_FILENAME_PREFIX);
+        if (fnpref_len < 0 || fnpref_len >= MO_MAX_PATH_SIZE) {
+            MO_DBG_ERR("MO_FILENAME_PREFIX error %i", fnpref_len);
             return nullptr;
-        } else if (fn_prefix_len == 0) {
-            MO_DBG_ERR("MO_FILENAME_PREFIX cannot be root on ESP-IDF");
+        } else if (fnpref_len <= 2) { //shortest possible prefix: "/p/", i.e. length = 3
+            MO_DBG_ERR("MO_FILENAME_PREFIX cannot be root on ESP-IDF (working example: \"/mo_store/\")");
             return nullptr;
         }
 
+        // trim trailing '/'
+        if (fnpref[fnpref_len - 1] == '/') {
+            fnpref[fnpref_len - 1] = '\0';
+        }
+
         esp_vfs_spiffs_conf_t conf = {
-            .base_path = (MO_FILENAME_PREFIX[0] == '/' && MO_FILENAME_PREFIX[1] == '\0') ? MO_FILENAME_PREFIX : (MO_FILENAME_PREFIX[strlen(MO_FILENAME_PREFIX) - 1] == '/' ? strndup(MO_FILENAME_PREFIX, strlen(MO_FILENAME_PREFIX) - 1) : MO_FILENAME_PREFIX),
-            .partition_label = MO_PARTITION_LABEL, //also see deconstructor
+            .base_path = fnpref,
+            .partition_label = MO_PARTITION_LABEL,
             .max_files = 5,
             .format_if_mount_failed = config.formatOnFail()
         };

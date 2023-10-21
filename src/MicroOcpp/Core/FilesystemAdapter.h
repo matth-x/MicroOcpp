@@ -11,14 +11,6 @@
 #include <MicroOcpp/Platform.h>
 #include <MicroOcpp/Core/ConfigurationOptions.h>
 
-#ifndef MO_FILENAME_PREFIX
-#define MO_FILENAME_PREFIX "/"
-#endif
-
-#ifndef MOCPP_PARTITION_LABEL
-#define MOCPP_PARTITION_LABEL "mo"
-#endif
-
 #define DISABLE_FS       0
 #define ARDUINO_LITTLEFS 1
 #define ARDUINO_SPIFFS   2
@@ -41,6 +33,14 @@
 #define MO_USE_FILEAPI DISABLE_FS
 #endif //switch-case MO_PLATFORM
 #endif //ndef MO_USE_FILEAPI
+
+#ifndef MO_FILENAME_PREFIX
+#if MO_USE_FILEAPI == ESPIDF_SPIFFS
+#define MO_FILENAME_PREFIX "/mo_store/"
+#else
+#define MO_FILENAME_PREFIX "/"
+#endif
+#endif
 
 // set default max path size parameters
 #ifndef MO_MAX_PATH_SIZE
