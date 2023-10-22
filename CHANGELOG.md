@@ -1,8 +1,8 @@
 # Changelog
 
-## [1.0.0] - 2023-10-21
+## [1.0.0] - 2023-10-22
 
-_First release._
+_First release_
 
 ### Changed
 
