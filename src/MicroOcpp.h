@@ -408,7 +408,7 @@ void setOnSendConf(const char *operationType, OnSendConfListener onSendConf);
  *     //will be called to create the request once this operation is being sent out
  *     size_t capacity = JSON_OBJECT_SIZE(4); //for calculating the required capacity, see https://arduinojson.org/v6/assistant/
  *     auto res = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity)); 
- *     JsonObject request = *res;
+ *     JsonObject request = res->to<JsonObject>();
  *     request["connectorId"] = 1;
  *     request["idTag"] = "A9C3CE1D7B71EA";
  *     request["meterStart"] = 1234;
@@ -447,7 +447,7 @@ void sendRequest(const char *operationType,
  *     size_t capacity = JSON_OBJECT_SIZE(2) +
  *                       JSON_OBJECT_SIZE(1); //for calculating the required capacity, see https://arduinojson.org/v6/assistant/
  *     auto res = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity)); 
- *     JsonObject response = *res;
+ *     JsonObject response = res->to<JsonObject>();
  *     response["status"] = "Accepted";
  *     response["data"]["max_energy"] = 59;
  *     return res;
