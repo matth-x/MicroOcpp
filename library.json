@@ -1,8 +1,8 @@
 {
     "name": "MicroOcpp",
     "version": "0.3.0",
-    "description": "OCPP 1.6 Client for the ESP8266 and ESP32",
-    "keywords": "OCPP, 1.6, OCPP 1.6, Smart Energy, Smart Charging, client, ESP8266, ESP32, Arduino, EVSE, Charge Point",
+    "description": "OCPP 1.6 Client for microcontrollers",
+    "keywords": "OCPP, 1.6, OCPP 1.6, Smart Energy, Smart Charging, client, ESP8266, ESP32, Arduino, esp-idf, EVSE, Charge Point",
     "repository":
     {
         "type": "git",
@@ -12,12 +12,12 @@
     [
       {
         "name": "Matthias Akstaller",
-        "url": "https://www.arduino-ocpp.com",
+        "url": "https://www.micro-ocpp.com",
         "maintainer": true
       }
     ],
     "license": "MIT",
-    "homepage": "https://www.arduino-ocpp.com",
+    "homepage": "https://www.micro-ocpp.com",
     "dependencies": [
         {
             "owner": "bblanchon",
@@ -30,7 +30,7 @@
             "version": "2.4.1"
         }
       ],
-    "frameworks": "arduino",
+    "frameworks": "arduino,espidf",
     "platforms": "espressif8266, espressif32",
 
     "export": {
@@ -44,7 +44,8 @@
             "README.md",
             "CMakeLists.txt",
             "docs/*",
-            "LICENSE"
+            "LICENSE",
+            "CHANGELOG.md"
         ]
     },
 

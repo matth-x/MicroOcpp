@@ -290,7 +290,9 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 
     configuration_load();
 
-    mocppVersion->setString(MO_VERSION);
+    if (mocppVersion) {
+        mocppVersion->setString(MO_VERSION);
+    }
     MO_DBG_INFO("initialized MicroOcpp v" MO_VERSION);
 }
 
