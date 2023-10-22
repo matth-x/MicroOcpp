@@ -6,7 +6,6 @@
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Debug.h>
 
-#include <cmath> //for isnan check
 #include <cctype> //for tolower
 
 using MicroOcpp::Ocpp16::ChangeConfiguration;
@@ -57,13 +56,10 @@ void ChangeConfiguration::processReq(JsonObject payload) {
 
     bool convertibleInt = true;
     int numInt = 0;
-    bool convertibleFloat = true;
-    float numFloat = 0.f;
     bool convertibleBool = true;
     bool numBool = false;
 
     int nDigits = 0, nNonDigits = 0, nDots = 0, nSign = 0; //"-1.234" has 4 digits, 0 nonDigits, 1 dot and 1 sign. Don't allow comma as seperator. Don't allow e-expressions (e.g. 1.23e-7)
-    float numFloatTranslate = 1.f;
     for (const char *c = value; *c; ++c) {
         if (*c >= '0' && *c <= '9') {
             //int interpretation
@@ -71,13 +67,6 @@ void ChangeConfiguration::processReq(JsonObject payload) {
                 nDigits++;
                 numInt *= 10;
                 numInt += *c - '0';
-            }
-
-            //float interpretation
-            numFloat *= 10.f;
-            numFloat += (float) (*c - '0');
-            if (nDots != 0) {
-                numFloatTranslate *= 10.f;
             }
         } else if (*c == '.') {
             nDots++;
@@ -88,11 +77,8 @@ void ChangeConfiguration::processReq(JsonObject payload) {
         }
     }
 
-    numFloat /= numFloatTranslate; // "1." <-- numFlTrans = 1.f; "-1.234" <-- numFlTrans = 1000.f
-
     if (nSign == 1) {
         numInt = -numInt;
-        numFloat *= -1.f;
     }
 
     int INT_MAXDIGITS; //plausibility check: this allows a numerical range of (-999,999,999 to 999,999,999), or (-9,999 to 9,999) respectively
@@ -103,16 +89,11 @@ void ChangeConfiguration::processReq(JsonObject payload) {
 
     if (nNonDigits > 0 || nDigits == 0 || nSign > 1 || nDots > 1) {
         convertibleInt = false;
-        convertibleFloat = false;
     }
 
     if (nDigits > INT_MAXDIGITS) {
         MO_DBG_DEBUG("Possible integer overflow: key = %s, value = %s", key, value);
         convertibleInt = false;
-    }
-
-    if (std::isnan(numFloat)) {
-        convertibleFloat = false;
     }
 
     if (tolower(value[0]) == 't' && tolower(value[1]) == 'r' && tolower(value[2]) == 'u' && tolower(value[3]) == 'e' && !value[4]) {

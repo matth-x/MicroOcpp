@@ -34,7 +34,7 @@ void ReserveNow::processReq(JsonObject payload) {
     }
 
     int connectorId = payload["connectorId"] | -1;
-    if (connectorId < 0 || connectorId >= model.getNumConnectors()) {
+    if (connectorId < 0 || (unsigned int) connectorId >= model.getNumConnectors()) {
         errorCode = "PropertyConstraintViolation";
         return;
     }

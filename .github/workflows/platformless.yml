@@ -26,4 +26,4 @@ jobs:
     - name: Get ArduinoJson
       run: wget -Uri https://github.com/bblanchon/ArduinoJson/releases/download/v6.19.4/ArduinoJson-v6.19.4.h -O ./src/ArduinoJson.h
     - name: Compile
-      run: g++ -c -std=c++14 -I ./src $(find ./src -type f -iregex ".*\.cpp") -DMO_PLATFORM=MO_PLATFORM_NONE -Wall
+      run: g++ -c -std=c++11 -I ./src $(find ./src -type f -iregex ".*\.cpp") -DMO_PLATFORM=MO_PLATFORM_NONE -Wall -Wextra -Wno-unused-parameter -Werror
