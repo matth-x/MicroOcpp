@@ -120,11 +120,13 @@ void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const cha
         }
     }
 
-    if (url.back() != '/') {
-        url += '/';
-    }
+    if ((!*chargeBoxId) == '\0') {
+        if (url.back() != '/') {
+            url += '/';
+        }
 
-    url += chargeBoxId;
+        url += chargeBoxId;
+    }
 
     MO_DBG_INFO("connecting to %s -- (host: %s, port: %u)", url.c_str(), host.c_str(), port);
 
