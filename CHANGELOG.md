@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Allow `nullptr` as parameter for `mocpp_set_console_out` ([#224](https://github.com/matth-x/MicroOcpp/issues/224))
+
 ## [1.0.0] - 2023-10-22
 
 _First release_
