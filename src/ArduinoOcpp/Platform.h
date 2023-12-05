@@ -75,9 +75,8 @@ unsigned long ao_tick_ms_custom();
 #include <Arduino.h>
 #define ao_tick_ms millis
 #elif AO_PLATFORM == AO_PLATFORM_ESPIDF
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#define ao_tick_ms(X) ((xTaskGetTickCount() * 1000UL) / configTICK_RATE_HZ)
+unsigned long ao_tick_ms_espidf();
+#define ao_tick_ms ao_tick_ms_espidf
 #elif AO_PLATFORM == AO_PLATFORM_UNIX
 unsigned long ao_tick_ms_unix();
 #define ao_tick_ms ao_tick_ms_unix

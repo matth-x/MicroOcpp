@@ -37,9 +37,27 @@ unsigned long ao_tick_ms_custom() {
         return 0;
     }
 }
-#endif
+#else
 
-#if AO_PLATFORM == AO_PLATFORM_UNIX
+#if AO_PLATFORM == AO_PLATFORM_ESPIDF
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+namespace ArduinoOcpp {
+
+decltype(xTaskGetTickCount()) ocpp_ticks_count = 0;
+unsigned long ocpp_millis_count = 0;
+
+}
+
+unsigned long ao_tick_ms_espidf() {
+    auto ticks_now = xTaskGetTickCount();
+    ArduinoOcpp::ocpp_millis_count += ((ticks_now - ArduinoOcpp::ocpp_ticks_count) * 1000UL) / configTICK_RATE_HZ;
+    ArduinoOcpp::ocpp_ticks_count = ticks_now;
+    return ArduinoOcpp::ocpp_millis_count;
+}
+
+#elif AO_PLATFORM == AO_PLATFORM_UNIX
 #include <chrono>
 
 namespace ArduinoOcpp {
@@ -58,6 +76,7 @@ unsigned long ao_tick_ms_unix() {
         std::chrono::steady_clock::now() - ArduinoOcpp::clock_reference);
     return (unsigned long) ms.count();
 }
+#endif
 #endif
 
 #if AO_PLATFORM != AO_PLATFORM_ARDUINO
