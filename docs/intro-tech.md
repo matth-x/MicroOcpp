@@ -80,4 +80,6 @@ Because of the high importance of C in the embedded world, MicroOcpp provides it
 
 While memory constraints are of concern, the execution time generally is not. OCPP is rather uncomplex on the algorithmic side for clients, since there is no need for elaborate planning algorithms or complex data transformations.
 
+Low resource requirements also allow new usage areas on top of EV charging. For example, MicroOcpp has been ported to ordinary IoT equipment such as Wi-Fi sockets to integrate further electric devices into OCPP networks.
+
 Although MicroOcpp is optimized for the usage on microcontrollers, it is also suitable for embedded Linux systems. With more memory available, the upper limits of the internal data structures can be increased, leading to a more versatile support of charging use cases. Also, the separation of the charger firmware into multiple processes can lead to more robustness. MicroOcpp can be extended by an inter-process communication (IPC) interface to run in a separate process.

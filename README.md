@@ -71,21 +71,9 @@ In case you use PlatformIO, you can copy all dependencies from `platformio.ini` 
 
 ## OCPP 2.0.1 and ISO 15118
 
-**The call for funding for the OCPP 2.0.1 upgrade is open.** The version 1.6 support has successfully been funded by private companies who share an interest in using this technology. OCPP is most often seen as a non-differentiating feature of chargers and is therefore perfectly suited for Open Source collaboration. If your company needs OCPP 2.0.1, please use the contact details at the end of this page to receive the more details about the funding plan and why it is beneficial to engage in the upgrade (for hardware manufacturers and CPOs).
+MicroOcpp will be upgraded to OCPP 2.0.1 soon. The API has already been prepared for transitioning between both versions, so an integration of the current library version will also be functional with the 2.0.1 upgrade.
 
-MicroOcpp is a good foundation for starting the OCPP 2.0.1 development:
-
-:tada: Tested by hundreds, including backend operators. The [Simulator](https://github.com/matth-x/MicroOcppSimulator) encourages quick compatibility tests
-
-:hammer: Comes with development tools and a CI/CD specialized for OCPP
-
-:man_teacher: Academic background: roots in a research project
-
-:closed_lock_with_key: Unit tests with valgrind, AddressSanitizer and UndefinedBehaviorSanitizer
-
-:heart: Contributions are highly welcome. Open to building a team
-
-A note on ISO 15118: this library facilitates the integration of ISO 15118 by handling its OCPP-side communication. A public demonstration will follow with the first collaboration on an open OCPP 2.0.1 + ISO 15118 integration.
+ISO 15118 defines some use cases which include a message exchange between the charger and server. This library facilitates the integration of ISO 15118 by handling its OCPP-side communication. A public demonstration will follow with the first collaboration on an open OCPP 2.0.1 + ISO 15118 integration.
 
 ## Contact details
 
