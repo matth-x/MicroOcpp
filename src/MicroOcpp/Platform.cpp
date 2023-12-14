@@ -39,9 +39,27 @@ unsigned long mocpp_tick_ms_custom() {
         return 0;
     }
 }
-#endif
+#else
 
-#if MO_PLATFORM == MO_PLATFORM_UNIX
+#if MO_PLATFORM == MO_PLATFORM_ESPIDF
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+namespace MicroOcpp {
+
+decltype(xTaskGetTickCount()) mocpp_ticks_count = 0;
+unsigned long mocpp_millis_count = 0;
+
+}
+
+unsigned long mocpp_tick_ms_espidf() {
+    auto ticks_now = xTaskGetTickCount();
+    MicroOcpp::mocpp_millis_count += ((ticks_now - MicroOcpp::mocpp_ticks_count) * 1000UL) / configTICK_RATE_HZ;
+    MicroOcpp::mocpp_ticks_count = ticks_now;
+    return MicroOcpp::mocpp_millis_count;
+}
+
+#elif MO_PLATFORM == MO_PLATFORM_UNIX
 #include <chrono>
 
 namespace MicroOcpp {
@@ -60,6 +78,7 @@ unsigned long mocpp_tick_ms_unix() {
         std::chrono::steady_clock::now() - MicroOcpp::clock_reference);
     return (unsigned long) ms.count();
 }
+#endif
 #endif
 
 #if MO_PLATFORM != MO_PLATFORM_ARDUINO

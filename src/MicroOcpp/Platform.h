@@ -86,9 +86,8 @@ unsigned long mocpp_tick_ms_custom();
 #include <Arduino.h>
 #define mocpp_tick_ms millis
 #elif MO_PLATFORM == MO_PLATFORM_ESPIDF
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#define mocpp_tick_ms(X) ((xTaskGetTickCount() * 1000UL) / configTICK_RATE_HZ)
+unsigned long mocpp_tick_ms_espidf();
+#define mocpp_tick_ms mocpp_tick_ms_espidf
 #elif MO_PLATFORM == MO_PLATFORM_UNIX
 unsigned long mocpp_tick_ms_unix();
 #define mocpp_tick_ms mocpp_tick_ms_unix
