@@ -5,6 +5,7 @@
 ### Fixed
 
 - Allow `nullptr` as parameter for `mocpp_set_console_out` ([#224](https://github.com/matth-x/MicroOcpp/issues/224))
+- Fix `mocpp_tick_ms()` on esp-idf roll-over after 12 hours
 
 ## [1.0.0] - 2023-10-22
 
