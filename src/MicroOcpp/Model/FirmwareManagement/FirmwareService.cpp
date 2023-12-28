@@ -327,6 +327,8 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
 
     fwService->setOnInstall([fwService] (const char *location) {
 
+        MO_DBG_WARN("Built-in updater for ESP32 is only intended for demonstration purposes. HTTP support only");
+
         fwService->setInstallationStatusInput([](){return InstallationStatus::NotInstalled;});
 
         WiFiClient client;
@@ -372,6 +374,8 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
 
     fwService->setOnInstall([fwService] (const char *location) {
         
+        MO_DBG_WARN("Built-in updater for ESP8266 is only intended for demonstration purposes. HTTP support only");
+
         WiFiClient client;
         //WiFiClientSecure client;
         //client.setCACert(rootCACertificate);
