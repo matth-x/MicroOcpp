@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef MO_MODEL_H
@@ -8,6 +8,7 @@
 #include <memory>
 
 #include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Version.h>
 #include <MicroOcpp/Model/ConnectorBase/Connector.h>
 
 namespace MicroOcpp {
@@ -40,6 +41,8 @@ private:
     std::unique_ptr<ResetService> resetService;
     Clock clock;
 
+    ProtocolVersion version;
+
     bool capabilitiesUpdated = true;
     void updateSupportedStandardProfiles();
 
@@ -48,7 +51,7 @@ private:
     const uint16_t bootNr = 0; //each boot of this lib has a unique number
 
 public:
-    Model(uint16_t bootNr = 0);
+    Model(uint16_t bootNr = 0, ProtocolVersion version = ProtocolVersion(1,6));
     Model(const Model& rhs) = delete;
     ~Model();
 
@@ -93,6 +96,8 @@ public:
     ResetService *getResetService() const;
 
     Clock &getClock();
+
+    const ProtocolVersion& getVersion() const;
 
     uint16_t getBootNr();
 };

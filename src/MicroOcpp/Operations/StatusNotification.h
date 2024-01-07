@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef STATUSNOTIFICATION_H
@@ -9,6 +9,7 @@
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
+#include <MicroOcpp/Version.h>
 
 namespace MicroOcpp {
 namespace Ocpp16 {
@@ -36,5 +37,32 @@ public:
 const char *cstrFromOcppEveState(ChargePointStatus state);
 
 } //end namespace Ocpp16
+
+#if MO_ENABLE_V201
+
+namespace Ocpp201 {
+
+class StatusNotification : public Operation {
+private:
+    Timestamp timestamp;
+    ConnectorStatus currentStatus = ConnectorStatus::NOT_SET;
+    int evseId;
+    int connectorId;
+public:
+    StatusNotification(int evseId, ConnectorStatus currentStatus, const Timestamp &timestamp, int connectorId);
+
+    const char* getOperationType() override;
+
+    std::unique_ptr<DynamicJsonDocument> createReq() override;
+
+    void processConf(JsonObject payload) override;
+};
+
+const char *cstrFromOcppEveState(ConnectorStatus state);
+
+} //end namespace Ocpp201
+
+#endif //MO_ENABLE_V201
+
 } //end namespace MicroOcpp
 #endif

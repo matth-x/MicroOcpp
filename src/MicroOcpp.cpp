@@ -28,7 +28,6 @@
 #include <MicroOcpp/Operations/CustomOperation.h>
 
 #include <MicroOcpp/Debug.h>
-#include <MicroOcpp/Version.h>
 
 namespace MicroOcpp {
 namespace Facade {
@@ -199,7 +198,39 @@ ChargerCredentials::ChargerCredentials(const char *cpModel, const char *cpVendor
     }
 }
 
-void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover) {
+ChargerCredentials ChargerCredentials::v201(const char *cpModel, const char *cpVendor, const char *fWv, const char *cpSNr, const char *meterSNr, const char *meterType, const char *cbSNr, const char *iccid, const char *imsi) {
+
+    ChargerCredentials res;
+
+    StaticJsonDocument<512> creds;
+    if (cpSNr)
+        creds["serialNumber"] = cpSNr;
+    if (cpModel)
+        creds["model"] = cpModel;
+    if (cpVendor)
+        creds["vendorName"] = cpVendor;
+    if (fWv)
+        creds["firmwareVersion"] = fWv;
+    if (iccid)
+        creds["modem"]["iccid"] = iccid;
+    if (imsi)
+        creds["modem"]["imsi"] = imsi;
+
+    if (creds.overflowed()) {
+        MO_DBG_ERR("Charger Credentials too long");
+    }
+
+    size_t written = serializeJson(creds, res.payload, 512);
+
+    if (written < 2) {
+        MO_DBG_ERR("Charger Credentials could not be written");
+        sprintf(res.payload, "{}");
+    }
+
+    return res;
+}
+
+void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover, ProtocolVersion version) {
     if (context) {
         MO_DBG_WARN("already initialized. To reinit, call mocpp_deinitialize() before");
         return;
@@ -234,7 +265,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 
     configuration_init(filesystem); //call before each other library call
 
-    context = new Context(connection, filesystem, bootstats.bootNr);
+    context = new Context(connection, filesystem, bootstats.bootNr, version);
     auto& model = context->getModel();
 
     model.setTransactionStore(std::unique_ptr<TransactionStore>(

@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Model/Model.h>
@@ -24,7 +24,7 @@
 
 using namespace MicroOcpp;
 
-Model::Model(uint16_t bootNr) : bootNr(bootNr) {
+Model::Model(uint16_t bootNr, ProtocolVersion version) : bootNr(bootNr), version(version) {
 
 }
 
@@ -189,6 +189,10 @@ ResetService *Model::getResetService() const {
 
 Clock& Model::getClock() {
     return clock;
+}
+
+const ProtocolVersion& Model::getVersion() const {
+    return version;
 }
 
 uint16_t Model::getBootNr() {

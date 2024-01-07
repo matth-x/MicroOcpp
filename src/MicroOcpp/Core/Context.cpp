@@ -11,8 +11,8 @@
 
 using namespace MicroOcpp;
 
-Context::Context(Connection& connection, std::shared_ptr<FilesystemAdapter> filesystem, uint16_t bootNr)
-        : connection(connection), model{bootNr}, reqQueue{operationRegistry, &model, filesystem} {
+Context::Context(Connection& connection, std::shared_ptr<FilesystemAdapter> filesystem, uint16_t bootNr, ProtocolVersion version)
+        : connection(connection), model{bootNr, version}, reqQueue{operationRegistry, &model, filesystem} {
 
     preBootQueue = std::unique_ptr<RequestQueue>(new RequestQueue(operationRegistry, &model, nullptr)); //pre boot queue doesn't need persistency
     preBootQueue->setConnection(connection);
@@ -63,4 +63,8 @@ Model& Context::getModel() {
 
 OperationRegistry& Context::getOperationRegistry() {
     return operationRegistry;
+}
+
+const ProtocolVersion& Context::getVersion() {
+    return model.getVersion();
 }

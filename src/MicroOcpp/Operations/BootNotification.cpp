@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/BootNotification.h>
@@ -22,7 +22,16 @@ const char* BootNotification::getOperationType(){
 
 std::unique_ptr<DynamicJsonDocument> BootNotification::createReq() {
     if (credentials) {
-        return std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(*credentials));
+        std::unique_ptr<DynamicJsonDocument> doc;
+        if (model.getVersion().major == 2) {
+            doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2) + credentials->memoryUsage()));
+            JsonObject payload = doc->to<JsonObject>();
+            payload["reason"] = "PowerUp";
+            payload["chargingStation"] = *credentials;
+        } else {
+            doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(*credentials));
+        }
+        return doc;
     } else {
         MO_DBG_ERR("payload undefined");
         return createEmptyDocument();

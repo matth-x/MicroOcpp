@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/StatusNotification.h>
@@ -8,11 +8,10 @@
 
 #include <string.h>
 
-using MicroOcpp::Ocpp16::StatusNotification;
-
-//helper function
 namespace MicroOcpp {
 namespace Ocpp16 {
+
+//helper function
 const char *cstrFromOcppEveState(ChargePointStatus state) {
     switch (state) {
         case (ChargePointStatus::Available):
@@ -41,7 +40,6 @@ const char *cstrFromOcppEveState(ChargePointStatus state) {
             return "NOT_SET";
     }
 }
-}} //end namespaces
 
 StatusNotification::StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorData errorData)
         : connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
@@ -56,11 +54,10 @@ const char* StatusNotification::getOperationType(){
     return "StatusNotification";
 }
 
-//TODO if the status has changed again when sendReq() is called, abort the operation completely (note: if req is already sent, stick with listening to conf). The ChargePointStatusService will enqueue a new operation itself
 std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(7) + (JSONDATE_LENGTH + 1)));
     JsonObject payload = doc->to<JsonObject>();
-    
+
     payload["connectorId"] = connectorId;
     if (errorData.isError) {
         if (errorData.errorCode) {
@@ -91,7 +88,6 @@ std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
     return doc;
 }
 
-
 void StatusNotification::processConf(JsonObject payload) {
     /*
     * Empty payload
@@ -111,3 +107,66 @@ void StatusNotification::processReq(JsonObject payload) {
 std::unique_ptr<DynamicJsonDocument> StatusNotification::createConf(){
     return createEmptyDocument();
 }
+
+} //end namespace Ocpp16
+
+#if MO_ENABLE_V201
+
+namespace Ocpp201 {
+
+const char *cstrFromOcppEveState(ConnectorStatus state) {
+    switch (state) {
+        case (ConnectorStatus::Available):
+            return "Available";
+        case (ConnectorStatus::Occupied):
+            return "Occupied";
+        case (ConnectorStatus::Reserved):
+            return "Reserved";
+        case (ConnectorStatus::Unavailable):
+            return "Unavailable";
+        case (ConnectorStatus::Faulted):
+            return "Faulted";
+        default:
+            MO_DBG_ERR("ConnectorStatus not specified");
+            (void)0;
+            /* fall through */
+        case (ConnectorStatus::NOT_SET):
+            return "NOT_SET";
+    }
+}
+
+StatusNotification::StatusNotification(int evseId, ConnectorStatus currentStatus, const Timestamp &timestamp, int connectorId)
+        : evseId(evseId), currentStatus(currentStatus), timestamp(timestamp), connectorId(connectorId) {
+
+}
+
+const char* StatusNotification::getOperationType(){
+    return "StatusNotification";
+}
+
+std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1)));
+    JsonObject payload = doc->to<JsonObject>();
+
+    char timestamp_cstr[JSONDATE_LENGTH + 1] = {'\0'};
+    timestamp.toJsonString(timestamp_cstr, JSONDATE_LENGTH + 1);
+    payload["timestamp"] = timestamp_cstr;
+    payload["connectorStatus"] = cstrFromOcppEveState(currentStatus);
+    payload["evseId"] = connectorId;
+    payload["connectorId"] = 1;
+
+    return doc;
+}
+
+
+void StatusNotification::processConf(JsonObject payload) {
+    /*
+    * Empty payload
+    */
+}
+
+} //end namespace Ocpp201
+
+#endif //MO_ENABLE_V201
+
+} //end namespace MicroOcpp

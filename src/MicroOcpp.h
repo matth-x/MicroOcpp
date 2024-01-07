@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef ARDUINOOCPP_H
-#define ARDUINOOCPP_H
+#ifndef MO_MICROOCPP_H
+#define MO_MICROOCPP_H
 
 #include <ArduinoJson.h>
 #include <memory>
@@ -18,6 +18,7 @@
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Model/ConnectorBase/Notification.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
+#include <MicroOcpp/Version.h>
 
 using MicroOcpp::OnReceiveConfListener;
 using MicroOcpp::OnReceiveReqListener;
@@ -69,6 +70,22 @@ struct ChargerCredentials {
             const char *chargeBoxSerialNumber = nullptr,
             const char *iccid = nullptr,
             const char *imsi = nullptr);
+    
+    /*
+    * OCPP 2.0.1 compatible charger credentials.
+    *
+    * DEPRECATED: This construction method is only temporary for testing v2.0.1. It will be removed again soon and the original constructor will suit both v1.6 and v2.0.1
+    */
+    static ChargerCredentials v201(
+            const char *chargePointModel = "Demo Charger",
+            const char *chargePointVendor = "My Company Ltd.",
+            const char *firmwareVersion = nullptr,
+            const char *chargePointSerialNumber = nullptr,
+            const char *meterSerialNumber = nullptr,
+            const char *meterType = nullptr,
+            const char *chargeBoxSerialNumber = nullptr,
+            const char *iccid = nullptr,
+            const char *imsi = nullptr);
 
     operator const char *() {return payload;}
 
@@ -93,7 +110,8 @@ void mocpp_initialize(
             const char *bootNotificationCredentials = ChargerCredentials("Demo Charger", "My Company Ltd."), //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
             std::shared_ptr<MicroOcpp::FilesystemAdapter> filesystem =
                 MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail), //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
-            bool autoRecover = false); //automatically sanitize the local data store when the lib detects recurring crashes. Not recommended during development
+            bool autoRecover = false, //automatically sanitize the local data store when the lib detects recurring crashes. Not recommended during development
+            MicroOcpp::ProtocolVersion version = MicroOcpp::ProtocolVersion(1,6));
 
 /*
  * Stop the OCPP library and release allocated resources.
