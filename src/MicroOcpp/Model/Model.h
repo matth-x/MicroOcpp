@@ -51,7 +51,7 @@ private:
     const uint16_t bootNr = 0; //each boot of this lib has a unique number
 
 public:
-    Model(uint16_t bootNr = 0, ProtocolVersion version = ProtocolVersion(1,6));
+    Model(ProtocolVersion version = ProtocolVersion(1,6), uint16_t bootNr = 0);
     Model(const Model& rhs) = delete;
     ~Model();
 

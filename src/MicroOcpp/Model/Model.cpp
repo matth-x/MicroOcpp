@@ -24,7 +24,7 @@
 
 using namespace MicroOcpp;
 
-Model::Model(uint16_t bootNr, ProtocolVersion version) : bootNr(bootNr), version(version) {
+Model::Model(ProtocolVersion version, uint16_t bootNr) : version(version), bootNr(bootNr) {
 
 }
 
