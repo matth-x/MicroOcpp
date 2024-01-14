@@ -61,7 +61,7 @@ Please take `examples/ESP/main.cpp` as the starting point for the first project.
 
 Mandatory:
 
-- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
+- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson) (version `6.21`)
 
 If compiled with the Arduino integration:
 

@@ -40,6 +40,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository: bblanchon/ArduinoJson
+        ref: 3e1be980d93e47b2a0073efeeb9a9396fd7a83be
         path: examples/ESP-IDF/components/ArduinoJson
     - name: esp-idf build
       uses: espressif/esp-idf-ci-action@v1
