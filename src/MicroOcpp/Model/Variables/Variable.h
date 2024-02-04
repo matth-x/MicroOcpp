@@ -2,6 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+/*
+ * Implementation of the UCs B05 - B07
+ */
+
 #ifndef MO_VARIABLE_H
 #define MO_VARIABLE_H
 
