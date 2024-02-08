@@ -722,7 +722,8 @@ bool SmartChargingServiceUtils::printProfileFileName(char *out, size_t bufsize, 
 bool SmartChargingServiceUtils::storeProfile(std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ChargingProfile *chargingProfile) {
 
     if (!filesystem) {
-        return false;
+        AO_DBG_DEBUG("no filesystem");
+        return true; //not an error
     }
 
     DynamicJsonDocument chargingProfileJson {0};
@@ -742,7 +743,8 @@ bool SmartChargingServiceUtils::storeProfile(std::shared_ptr<FilesystemAdapter> 
 bool SmartChargingServiceUtils::removeProfile(std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ChargingProfilePurposeType purpose, unsigned int stackLevel) {
 
     if (!filesystem) {
-        return false;
+        AO_DBG_DEBUG("no filesystem");
+        return true; //not an error
     }
 
     char fn [AO_MAX_PATH_SIZE] = {'\0'};
