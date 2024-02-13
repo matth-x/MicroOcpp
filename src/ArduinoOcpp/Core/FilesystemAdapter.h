@@ -81,6 +81,14 @@ public:
  */
 std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config);
 
+#define AO_ENABLE_FILE_INDEX 1 //always enable in hotfix
+
+#if AO_ENABLE_FILE_INDEX
+
+std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapterIndexed(FilesystemOpt config);
+
+#endif // AO_ENABLE_FILE_INDEX
+
 } //end namespace ArduinoOcpp
 
 #endif

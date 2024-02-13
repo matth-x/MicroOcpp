@@ -207,9 +207,6 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 #include <sys/stat.h>
 #include <dirent.h>
-#include <vector>
-#include <string>
-#include <algorithm>
 #include "esp_spiffs.h"
 
 namespace ArduinoOcpp {
@@ -243,7 +240,6 @@ public:
 class EspIdfFilesystemAdapter : public FilesystemAdapter {
 public:
     FilesystemOpt config;
-    std::vector<std::pair<std::string, size_t>> index;
 public:
     EspIdfFilesystemAdapter(FilesystemOpt config) : config(config) { }
 
@@ -255,25 +251,12 @@ public:
     }
 
     int stat(const char *path, size_t *size) override {
-
-        if (strlen(path) < sizeof(AO_FILENAME_PREFIX) - 1) {
-            AO_DBG_ERR("invalid fn");
-            return -1;
+        struct ::stat st;
+        auto ret = ::stat(path, &st);
+        if (ret == 0) {
+            *size = st.st_size;
         }
-
-        const char *fn = path + sizeof(AO_FILENAME_PREFIX) - 1;
-
-        auto entry = std::find_if(index.begin(), index.end(),
-            [fn] (const std::pair<std::string, size_t>& el) -> bool {
-                return el.first.compare(fn) == 0;
-            });
-
-        if (entry != index.end()) {
-            *size = entry->second;
-            return 0;
-        } else {
-            return -1;
-        }
+        return ret;
     }
 
     std::unique_ptr<FileAdapter> open(const char *fn, const char *mode) override {
@@ -321,30 +304,6 @@ public:
         closedir(dir);
         return err;
     }
-
-    bool create_index() {
-        return 0 == ftw_root([this] (const char *fn) -> int {
-            int ret;
-            char fpath [AO_MAX_PATH_SIZE];
-
-            ret = snprintf(fpath, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "%s", fn);
-            if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
-                AO_DBG_ERR("fn error: %i", ret);
-                return 0; //ignore this entry and continue ftw
-            }
-
-            struct ::stat st;
-            ret = ::stat(fpath, &st);
-            if (ret == 0) {
-                //add fn and size to index
-                index.push_back({fn, st.st_size});
-                return 0; //successfully added filename to index
-            } else {
-                AO_DBG_ERR("unexpected entry: %s", fn);
-                return 0; //ignore this entry and continue ftw
-            }
-        };
-    }
 };
 
 std::weak_ptr<FilesystemAdapter> filesystemCache;
@@ -389,12 +348,8 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     }
 
     if (mounted) {
-        auto fsEsp = new EspIdfFilesystemAdapter(config);
-        auto fs = std::shared_ptr<FilesystemAdapter>(fsEsp);
+        auto fs = std::shared_ptr<FilesystemAdapter>(new EspIdfFilesystemAdapter(config));
         filesystemCache = fs;
-
-        fsEsp->create_index();
-
         return fs;
     } else {
         return nullptr;
@@ -520,3 +475,229 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 #endif //switch-case AO_USE_FILEAPI
 
+#if AO_ENABLE_FILE_INDEX
+
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <cstring>
+
+namespace ArduinoOcpp {
+
+class FilesystemAdapterIndex;
+
+class IndexedFileAdapter : public FileAdapter {
+private:
+    FilesystemAdapterIndex& index;
+    char fn [AO_MAX_PATH_SIZE];
+    std::unique_ptr<FileAdapter> file;
+
+    size_t written = 0;
+public:
+    IndexedFileAdapter(FilesystemAdapterIndex& index, const char *fn, std::unique_ptr<FileAdapter> file);
+    ~IndexedFileAdapter();
+
+    size_t read(char *buf, size_t len) override;
+    size_t write(const char *buf, size_t len) override;
+    size_t seek(size_t offset) override;
+    int read() override;
+};
+
+class FilesystemAdapterIndex : public FilesystemAdapter {
+private:
+    std::shared_ptr<FilesystemAdapter> filesystem;
+
+    using IndexEntry = std::pair<std::string, size_t>; //fname x fsize;
+    std::vector<IndexEntry> index;
+
+    IndexEntry *getEntryByFname(const char *fn) {
+        auto entry = std::find_if(index.begin(), index.end(),
+            [fn] (const IndexEntry& el) -> bool {
+                return el.first.compare(fn) == 0;
+            });
+
+        if (entry != index.end()) {
+            return &(*entry);
+        } else {
+            return nullptr;
+        }
+    }
+
+    IndexEntry *getEntryByPath(const char *path) {
+        if (strlen(path) < sizeof(AO_FILENAME_PREFIX) - 1) {
+            AO_DBG_ERR("invalid fn");
+            return nullptr;
+        }
+
+        const char *fn = path + sizeof(AO_FILENAME_PREFIX) - 1;
+        return getEntryByFname(fn);
+    }
+public:
+    FilesystemAdapterIndex(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem(std::move(filesystem)) { }
+
+    ~FilesystemAdapterIndex() = default;
+
+    int stat(const char *path, size_t *size) override {
+        if (auto file = getEntryByPath(path)) {
+            *size = file->second;
+            AO_DBG_INFO("file index: %s, %zu", path, *size);
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+
+    std::unique_ptr<FileAdapter> open(const char *path, const char *mode) {
+        if (!strcmp(mode, "r")) {
+            return filesystem->open(path, "r");
+        } else if (!strcmp(mode, "w")) {
+
+            if (strlen(path) < sizeof(AO_FILENAME_PREFIX) - 1) {
+                AO_DBG_ERR("invalid fn");
+                return nullptr;
+            }
+
+            const char *fn = path + sizeof(AO_FILENAME_PREFIX) - 1;
+
+            auto file = filesystem->open(path, "w");
+            if (!file) {
+                return nullptr;
+            }
+
+            IndexEntry *entry = nullptr;
+            if (!(entry = getEntryByFname(fn))) {
+                index.push_back({fn, 0});
+                entry = &index.back();
+            }
+
+            if (!entry) {
+                AO_DBG_ERR("internal error");
+                return nullptr;
+            }
+
+            entry->second = 0; //write always empties the file
+
+            return std::unique_ptr<IndexedFileAdapter>(new IndexedFileAdapter(*this, entry->first.c_str(), std::move(file)));
+        } else {
+            AO_DBG_ERR("only support r or w");
+            return nullptr;
+        }
+    }
+
+    bool remove(const char *path) override {
+        if (strlen(path) >= sizeof(AO_FILENAME_PREFIX) - 1) {
+            //valid path
+            const char *fn = path + sizeof(AO_FILENAME_PREFIX) - 1;
+            index.erase(std::remove_if(index.begin(), index.end(),
+                [fn] (const IndexEntry& el) -> bool {
+                    return el.first.compare(fn) == 0;
+                }), index.end());
+        }
+
+        return filesystem->remove(path);
+    }
+
+    int ftw_root(std::function<int(const char *fpath)> fn) {
+        for (const auto& file : index) {
+            if (!fn(file.first.c_str())) {
+                return -1;
+            }
+        }
+        return 0;
+    }
+
+    bool createIndex() {
+        if (!index.empty()) {
+            return false;
+        }
+        auto ret = filesystem->ftw_root([this] (const char *fn) -> int {
+            int ret;
+            char path [AO_MAX_PATH_SIZE];
+
+            ret = snprintf(path, AO_MAX_PATH_SIZE, AO_FILENAME_PREFIX "%s", fn);
+            if (ret < 0 || ret >= AO_MAX_PATH_SIZE) {
+                AO_DBG_ERR("fn error: %i", ret);
+                return 0; //ignore this entry and continue ftw
+            }
+
+            size_t size;
+            ret = filesystem->stat(path, &size);
+            if (ret == 0) {
+                //add fn and size to index
+                AO_DBG_DEBUG("add file to index: %s (%zuB)", fn, size);
+                index.push_back({fn, size});
+                return 0; //successfully added filename to index
+            } else {
+                AO_DBG_ERR("unexpected entry: %s", fn);
+                return 0; //ignore this entry and continue ftw
+            }
+        });
+
+        return ret == 0;
+    }
+
+    void updateFilesize(const char *fn, size_t size) {
+        if (auto entry = getEntryByFname(fn)) {
+            entry->second = size;
+            AO_DBG_DEBUG("update index: %s (%zuB)", entry->first.c_str(), entry->second);
+        }
+    }
+};
+
+IndexedFileAdapter::IndexedFileAdapter(FilesystemAdapterIndex& index, const char *fn, std::unique_ptr<FileAdapter> file)
+        : index(index), file(std::move(file)) {
+    snprintf(this->fn, sizeof(this->fn), "%s", fn);
+}
+
+IndexedFileAdapter::~IndexedFileAdapter() {
+    index.updateFilesize(fn, written);
+}
+
+size_t IndexedFileAdapter::read(char *buf, size_t len) {
+    return file->read(buf, len);
+}
+
+size_t IndexedFileAdapter::write(const char *buf, size_t len) {
+    auto ret = file->write(buf, len);
+    written += ret;
+    return ret;
+}
+
+size_t IndexedFileAdapter::seek(size_t offset) {
+    auto ret = file->seek(offset);
+    written = ret;
+    return ret;
+}
+
+int IndexedFileAdapter::read() {
+    return file->read();
+}
+
+std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapterIndexed(FilesystemOpt config) {
+    if (auto cached = filesystemCache.lock()) {
+        return cached;
+    }
+
+    auto filesystem = makeDefaultFilesystemAdapter(config);
+    if (!filesystem) {
+        return nullptr;
+    }
+
+    auto fsIndex = std::make_shared<FilesystemAdapterIndex>(std::move(filesystem));
+    if (!fsIndex) {
+        AO_DBG_ERR("OOM");
+        return nullptr;
+    }
+
+    if (!fsIndex->createIndex()) {
+        AO_DBG_ERR("createIndex err");
+        return nullptr;
+    }
+
+    filesystemCache = fsIndex;
+    return fsIndex;
+}
+
+} //end namespace ArduinoOcpp
+
+#endif //AO_ENABLE_FILE_INDEX
