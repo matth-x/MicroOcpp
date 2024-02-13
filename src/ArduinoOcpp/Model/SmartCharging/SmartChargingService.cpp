@@ -274,10 +274,10 @@ std::unique_ptr<ChargingSchedule> SmartChargingConnector::getCompositeSchedule(i
 size_t SmartChargingConnector::getChargingProfilesCount() {
     size_t chargingProfilesCount = 0;
     for (size_t i = 0; i < CHARGEPROFILEMAXSTACKLEVEL + 1; i++) {
-        if (ChargePointTxDefaultProfile[i]) {
+        if (TxDefaultProfile[i]) {
             chargingProfilesCount++;
         }
-        if (ChargePointMaxProfile[i]) {
+        if (TxProfile[i]) {
             chargingProfilesCount++;
         }
     }
