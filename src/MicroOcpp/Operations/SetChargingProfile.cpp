@@ -57,8 +57,17 @@ void SetChargingProfile::processReq(JsonObject payload) {
             errorCode = "PropertyConstraintViolation";
             return;
         }
-        if (!connector->getTransaction() || !connector->getTransaction()->isRunning()) {
+
+        auto& transaction = connector->getTransaction();
+        if (!transaction || !connector->getTransaction()->isRunning()) {
             //no transaction running, reject profile
+            accepted = false;
+            return;
+        }
+
+        if (chargingProfile->getTransactionId() < 0 ||
+                chargingProfile->getTransactionId() != transaction->getTransactionId()) {
+            //transactionId undefined / mismatch
             accepted = false;
             return;
         }
