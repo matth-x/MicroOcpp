@@ -7,6 +7,7 @@
 - Allow `nullptr` as parameter for `mocpp_set_console_out` ([#224](https://github.com/matth-x/MicroOcpp/issues/224))
 - Fix `mocpp_tick_ms()` on esp-idf roll-over after 12 hours
 - Pin ArduinoJson to v6.21 ([#245](https://github.com/matth-x/MicroOcpp/issues/245))
+- Fix bounds checking in SmartCharging module ([#260](https://github.com/matth-x/MicroOcpp/pull/260))
 
 ## [1.0.0] - 2023-10-22
 
