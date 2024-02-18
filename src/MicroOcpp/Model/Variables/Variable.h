@@ -3,7 +3,7 @@
 // MIT License
 
 /*
- * Implementation of the UCs B05 - B07
+ * Implementation of the UCs B05 - B06
  */
 
 #ifndef MO_VARIABLE_H
@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <vector>
 #include <memory>
+#include <limits>
 
 #include <MicroOcpp/Version.h>
 
@@ -19,76 +20,27 @@
 
 namespace MicroOcpp {
 
-/*
- * MO-internal optimization: store data in more compact integer representation if applicable
- */
-enum class VariableAttributeType : uint8_t {
-    Int,
-    Bool,
-    String
-};
+//VariableCharacteristicsType (2.51)
+struct VariableCharacteristics {
 
-/*
- * Corresponds to VariableAttributeType (2.50)
- *
- * Template method pattern: this is a super-class which has hook-methods for storing and fetching
- * the value of the variable. To make it use the host system's key-value store, extend this class
- * with a custom implementation and pass its instances to MO.
- */
-class VariableAttribute {
-public:
-    //AttributeEnumType (3.2)
-    enum class Type : uint8_t {
-        Actual,
-        Target,
-        MinSet,
-        MaxSet
+    //DataEnumType (3.26)
+    enum class DataType : uint8_t {
+        string,
+        decimal,
+        integer,
+        dateTime,
+        boolean,
+        OptionList,
+        SequenceList,
+        MemberList
     };
 
-    //MutabilityEnumType (3.58)
-    enum class Mutability : uint8_t {
-        ReadOnly,
-        WriteOnly,
-        ReadWrite
-    };
-
-protected:
-    uint16_t writeCounter = 0; //write access counter; used to check if this config has been changed
-private:
-    Type type = Type::Actual;
-    Mutability mutability = Mutability::ReadWrite;
-    bool persistent = false;
-    bool constant = false;
-
-    bool rebootRequired = false;
-
-public:
-    virtual ~VariableAttribute();
-
-    virtual void setInt(int);
-    virtual void setBool(bool);
-    virtual bool setString(const char*);
-
-    virtual int getInt();
-    virtual bool getBool();
-    virtual const char *getString(); //always returns c-string (empty if undefined)
-    
-    uint16_t getWriteCounter(); //get write count (use this as a pre-check if the value changed)
-
-    void setType(Type t);
-    Type getType();
-
-    void setMutability(Mutability m);
-    Mutability getMutability();
-
-    void setPersistent();
-    bool isPersistent();
-
-    void setConstant();
-    bool isConstant();
-
-    void setRebootRequired();
-    bool isRebootRequired();
+    const char *unit = nullptr; //no copy
+    //DataType dataType; //stored in Variable
+    int minLimit = std::numeric_limits<int>::min();
+    int maxLimit = std::numeric_limits<int>::max();
+    const char *valuesList = nullptr; //no copy
+    //bool supportsMonitoring; //stored in Variable
 };
 
 /*
@@ -117,14 +69,54 @@ public:
 
 /*
  * Corresponds to VariableType (2.53)
+ *
+ * Template method pattern: this is a super-class which has hook-methods for storing and fetching
+ * the value of the variable. To make it use the host system's key-value store, extend this class
+ * with a custom implementation of the virtual methods and pass its instances to MO.
  */
 class Variable {
+public:
+    //AttributeEnumType (3.2)
+    enum class AttributeType : uint8_t {
+        Actual,
+        Target,
+        MinSet,
+        MaxSet
+    };
+
+    //MutabilityEnumType (3.58)
+    enum class Mutability : uint8_t {
+        ReadOnly,
+        WriteOnly,
+        ReadWrite
+    };
+
+    //MO-internal optimization: if value is only in int range, store it in more compact representation
+    enum class InternalDataType : uint8_t {
+        Int,
+        Bool,
+        String
+    };
 private:
-    const char *name = nullptr;
+    const char *variableName = nullptr;
     //const char *instance = nullptr; //<-- instance not supported in this implementation
-    const char *componentId = nullptr;
-    std::vector<std::unique_ptr<VariableAttribute>> attributes; //attr's are initialized in client code and ownership is transferred to Variable
-    std::vector<VariableMonitor> monitors;
+    const char *componentName = nullptr;
+
+    // VariableCharacteristicsType (2.51)
+    std::unique_ptr<VariableCharacteristics> characteristics; //optional VariableCharacteristics
+    VariableCharacteristics::DataType dataType; //mandatory
+    bool supportsMonitoring = false; //mandatory
+    bool rebootRequired = false; //MO-internal: if to respond status RebootRequired on SetVariables
+
+    // VariableAttributeType (2.50)
+    Mutability mutability = Mutability::ReadWrite;
+    bool persistent = false;
+    bool constant = false;
+
+    //VariableMonitoring
+    //std::vector<VariableMonitor> monitors;
+protected:
+    uint16_t writeCount = 0; //write access counter; used to check if this config has been changed
 public:
 
     void setName(const char *key); //zero-copy
@@ -133,12 +125,40 @@ public:
     void setComponentId(const char *componentId); //zero-copy
     const char *getComponentId() const;
 
-    bool addAttribute(std::unique_ptr<VariableAttribute> attr);
+    // set Value of Variable
+    virtual void setInt(int val, AttributeType attrType = AttributeType::Actual);
+    virtual void setBool(bool val, AttributeType attrType = AttributeType::Actual);
+    virtual bool setString(const char *val, AttributeType attrType = AttributeType::Actual);
 
-    bool addMonitor(int id, bool transaction, float value, VariableMonitor::Type type, int severity);
+    // get Value of Variable
+    virtual int getInt(AttributeType attrType = AttributeType::Actual);
+    virtual bool getBool(AttributeType attrType = AttributeType::Actual);
+    virtual const char *getString(AttributeType attrType = AttributeType::Actual); //always returns c-string (empty if undefined)
+
+    virtual InternalDataType getInternalDataType() = 0; //corresponds to MO internal value representation
+
+    void setVariableDataType(VariableCharacteristics::DataType dataType); //corresponds to OCPP DataEnumType (3.26)
+    VariableCharacteristics::DataType getVariableDataType(); //corresponds to OCPP DataEnumType (3.26)
+    bool getSupportsMonitoring();
+    void setSupportsMonitoring();
+    bool isRebootRequired();
+    void setRebootRequired();
+
+    void setMutability(Mutability m);
+    Mutability getMutability();
+
+    void setPersistent();
+    bool isPersistent();
+
+    void setConstant();
+    bool isConstant();
+
+    //bool addMonitor(int id, bool transaction, float value, VariableMonitor::Type type, int severity);
+    
+    uint16_t getWriteCount(); //get write count (use this as a pre-check if the value changed)
 };
 
-}
+} // namespace MicroOcpp
 
-#endif //MO_ENABLE_V201
+#endif // MO_ENABLE_V201
 #endif
