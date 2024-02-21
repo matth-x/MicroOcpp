@@ -117,14 +117,14 @@ target_compile_definitions(MicroOcpp PUBLIC
 
 set(MO_SRC_UNIT
     tests/helpers/testHelper.cpp
-    tests/ocppEngineLifecycle.cpp
+    #tests/ocppEngineLifecycle.cpp
     tests/TransactionSafety.cpp
     tests/ChargingSessions.cpp
-    tests/ConfigurationBehavior.cpp
-    tests/SmartCharging.cpp
-    tests/Api.cpp
+    #tests/ConfigurationBehavior.cpp
+    #tests/SmartCharging.cpp
+    #tests/Api.cpp
     tests/Metering.cpp
-    tests/Configuration.cpp
+    #tests/Configuration.cpp
     tests/Reservation.cpp
     tests/LocalAuthList.cpp
 )
@@ -153,6 +153,7 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_FILENAME_PREFIX="./mo_store/"
     MO_LocalAuthListMaxLength=8
     MO_SendLocalListMaxLength=4
+    MO_MSG_FORMAT=MO_MSG_FORMAT_MSGPACK
 )
 
 target_compile_options(mo_unit_tests PUBLIC

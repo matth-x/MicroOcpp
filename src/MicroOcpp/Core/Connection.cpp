@@ -7,6 +7,8 @@
 
 using namespace MicroOcpp;
 
+size_t MicroOcpp::g_loopback_traffic = 0;
+
 void LoopbackConnection::loop() { }
 
 bool LoopbackConnection::sendTXT(const char *msg, size_t length) {
@@ -15,6 +17,7 @@ bool LoopbackConnection::sendTXT(const char *msg, size_t length) {
     }
     if (receiveTXT) {
         lastRecv = mocpp_tick_ms();
+        g_loopback_traffic += length;
         return receiveTXT(msg, length);
     } else {
         return false;

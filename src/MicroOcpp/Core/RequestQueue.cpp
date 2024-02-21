@@ -16,6 +16,13 @@ size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_siz
 
 using namespace MicroOcpp;
 
+#define MO_MSG_FORMAT_JSON 1
+#define MO_MSG_FORMAT_MSGPACK 2
+
+#ifndef MO_MSG_FORMAT
+#define MO_MSG_FORMAT MO_MSG_FORMAT_JSON
+#endif
+
 RequestQueue::RequestQueue(OperationRegistry& operationRegistry, Model *baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
             : operationRegistry(operationRegistry) {
     
@@ -60,7 +67,12 @@ void RequestQueue::loop(Connection& ocppSock) {
 
         if (response) {
             std::string out;
+
+            #if MO_MSG_FORMAT == MO_MSG_FORMAT_JSON
             serializeJson(*response, out);
+            #elif MO_MSG_FORMAT == MO_MSG_FORMAT_MSGPACK
+            serializeMsgPack(*response, out);
+            #endif
     
             bool success = ocppSock.sendTXT(out.c_str(), out.length());
 
@@ -111,7 +123,11 @@ void RequestQueue::loop(Connection& ocppSock) {
 
     //send request
     std::string out;
+    #if MO_MSG_FORMAT == MO_MSG_FORMAT_JSON
     serializeJson(*request, out);
+    #elif MO_MSG_FORMAT == MO_MSG_FORMAT_MSGPACK
+    serializeMsgPack(*request, out);
+    #endif
 
     bool success = ocppSock.sendTXT(out.c_str(), out.length());
 
@@ -155,7 +171,11 @@ bool RequestQueue::receiveMessage(const char* payload, size_t length) {
     while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
 
         doc = DynamicJsonDocument(capacity);
+        #if MO_MSG_FORMAT == MO_MSG_FORMAT_JSON
         err = deserializeJson(doc, payload, length);
+        #elif MO_MSG_FORMAT == MO_MSG_FORMAT_MSGPACK
+        err = deserializeMsgPack(doc, payload, length);
+        #endif
 
         capacity *= 2;
     }

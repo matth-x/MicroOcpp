@@ -886,4 +886,7 @@ TEST_CASE( "LocalAuth" ) {
     }
 
     mocpp_deinitialize();
+
+    LoopbackConnection stats;
+    printf("\n\n === Totally written: %zu Bytes ===\n", g_loopback_traffic);
 }

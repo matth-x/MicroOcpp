@@ -55,6 +55,8 @@ public:
     virtual unsigned long getLastConnected() = 0;
 };
 
+extern size_t g_loopback_traffic;
+
 class LoopbackConnection : public Connection {
 private:
     ReceiveTXTcallback receiveTXT;

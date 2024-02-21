@@ -32,6 +32,19 @@ If you don't have an OCPP server at hand, leave the charge box ID blank and ente
 
 **RFID authentication**: Go to "Control Center" > "Connectors" > "Transaction" and update the idTag with the desired value.
 
+## Evaluation of MsgPack
+
+The JSON messaging format is easily readable by humans, but it comes at a size overhead. MsgPack is an encoding format which is very close to JSON, but uses a denser control character scheme.
+
+To measure the impact of using MsgPack instead of JSON for OCPP, this evaluation branch exchanges the encoding and decoding functions, runs the unit tests and measures the total traffic. Only 5 of the 10 test modules are compatible with this approach, however the remaining test cases are relatively represantive for normal OCPP traffic. The results are as follows:
+
+| Format | Total traffic | Relative |
+| :--- | ---: | ---: |
+| JSON | 71,665 B | 100% |
+| MsgPack | 59,229 B | 82.6% |
+
+MsgPack reduces the traffic payload by -17%. 
+
 ## Benchmarks
 
 *Full report: [MicroOcpp benchmark (esp-idf)](https://github.com/matth-x/MicroOcpp-benchmark)*
