@@ -36,14 +36,14 @@ If you don't have an OCPP server at hand, leave the charge box ID blank and ente
 
 The JSON messaging format is easily readable by humans, but it comes at a size overhead. MsgPack is an encoding format which is very close to JSON, but uses a denser control character scheme.
 
-To measure the impact of using MsgPack instead of JSON for OCPP, this evaluation branch exchanges the encoding and decoding functions, runs the unit tests and measures the total traffic. Only 5 of the 10 test modules are compatible with this approach, however the remaining test cases are relatively represantive for normal OCPP traffic. The results are as follows:
+To measure the impact of using MsgPack instead of JSON for OCPP, this evaluation branch exchanges the encoding and decoding functions, runs the unit tests and measures the total traffic. The unit tests emit and process OCPP messages whose size is counted and summed up. Out of 10 test modules, the 5 modules with the most "normal" use cases are selected to obtain a representative test base. The results are as follows:
 
 | Format | Total traffic | Relative |
 | :--- | ---: | ---: |
 | JSON | 71,665 B | 100% |
 | MsgPack | 59,229 B | 82.6% |
 
-MsgPack reduces the traffic payload by -17%. 
+Conclusion: MsgPack reduces the traffic payload by -17%.
 
 ## Benchmarks
 
