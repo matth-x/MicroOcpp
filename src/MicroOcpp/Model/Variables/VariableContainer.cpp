@@ -57,7 +57,6 @@ Variable *VariableContainerVolatile::getVariable(size_t i) const {
 }
 
 Variable *VariableContainerVolatile::getVariable(const ComponentId& component, const char *variableName) const {
-    auto it = variables.begin();
     for (auto it = variables.begin(); it != variables.end(); it++) {
         if (!strcmp((*it)->getName(), variableName) &&
                 (*it)->getComponentId().equals(component)) {

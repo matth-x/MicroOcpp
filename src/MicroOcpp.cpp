@@ -291,7 +291,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 
 #if MO_ENABLE_V201
     model.setVariableService(std::unique_ptr<VariableService>(
-        new VariableService(filesystem)));
+        new VariableService(*context, filesystem)));
 #endif
 
 #if !defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)

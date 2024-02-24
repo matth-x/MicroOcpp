@@ -130,7 +130,7 @@ std::unique_ptr<DynamicJsonDocument> GetVariables::createConf(){
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
 
     JsonObject payload = doc->to<JsonObject>();
-    JsonArray getVariableResult = payload["getVariableResult"];
+    JsonArray getVariableResult = payload.createNestedArray("getVariableResult");
 
     for (const auto& data : queries) {
         JsonObject getVariable = getVariableResult.createNestedObject();

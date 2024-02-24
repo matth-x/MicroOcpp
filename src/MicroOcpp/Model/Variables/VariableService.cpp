@@ -11,6 +11,9 @@
 #if MO_ENABLE_V201
 
 #include <MicroOcpp/Model/Variables/VariableService.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Operations/SetVariables.h>
+#include <MicroOcpp/Operations/GetVariables.h>
 
 #include <cstring>
 #include <cctype>
@@ -116,6 +119,13 @@ Variable *VariableService::getVariable(Variable::InternalDataType type, const Co
     return nullptr;
 }
 
+VariableService::VariableService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : filesystem(filesystem) {
+    context.getOperationRegistry().registerOperation("SetVariables", [this] () {
+        return new Ocpp201::SetVariables(*this);});
+    context.getOperationRegistry().registerOperation("GetVariables", [this] () {
+        return new Ocpp201::GetVariables(*this);});
+}
+
 template<class T>
 bool loadVariableFactoryDefault(Variable& variable, T factoryDef);
 
@@ -147,23 +157,23 @@ void loadVariableCharacteristics(Variable& variable, Variable::Mutability mutabi
 }
 
 template<class T>
-Variable::InternalDataType convertType();
+Variable::InternalDataType getInternalDataType();
 
-template<> Variable::InternalDataType convertType<int>() {return Variable::InternalDataType::Int;}
-template<> Variable::InternalDataType convertType<bool>() {return Variable::InternalDataType::Bool;}
-template<> Variable::InternalDataType convertType<const char*>() {return Variable::InternalDataType::String;}
+template<> Variable::InternalDataType getInternalDataType<int>() {return Variable::InternalDataType::Int;}
+template<> Variable::InternalDataType getInternalDataType<bool>() {return Variable::InternalDataType::Bool;}
+template<> Variable::InternalDataType getInternalDataType<const char*>() {return Variable::InternalDataType::String;}
 
 template<class T>
 Variable *VariableService::declareVariable(const char *name, T factoryDefault, const ComponentId& component, const char *containerPath, Variable::Mutability mutability, Variable::AttributeTypeSet attributes, bool rebootRequired, bool accessible) {
 
-    auto res = getVariable(convertType<T>(), component, name, accessible);
+    auto res = getVariable(getInternalDataType<T>(), component, name, accessible);
     if (!res) {
         auto container = declareContainer(containerPath, accessible);
         if (!container) {
             return nullptr;
         }
 
-        auto variable = container->createVariable(convertType<T>(), attributes);
+        auto variable = container->createVariable(getInternalDataType<T>(), attributes);
         if (!variable) {
             return nullptr;
         }

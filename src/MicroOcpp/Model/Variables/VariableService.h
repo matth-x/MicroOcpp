@@ -44,6 +44,8 @@ struct VariableValidator {
     VariableValidator(const char *key, std::function<bool(T)> validate) : key(key), validate(validate) { }
 };
 
+class Context;
+
 class VariableService {
 private:
     std::shared_ptr<FilesystemAdapter> filesystem;
@@ -64,7 +66,7 @@ private:
     Variable *getVariable(Variable::InternalDataType type, const ComponentId& component, const char *name, bool accessible);
 
 public:
-    VariableService(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem(filesystem) { }
+    VariableService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem);
 
     template <class T> 
     Variable *declareVariable(const char *name, T factoryDefault, const ComponentId& component, const char *containerPath = MO_VARIABLE_FN, Variable::Mutability mutability = Variable::Mutability::ReadWrite, Variable::AttributeTypeSet attributes = Variable::AttributeTypeSet(), bool rebootRequired = false, bool accessible = true);

@@ -107,10 +107,14 @@ TEST_CASE( "Variable" ) {
     }
 #endif
 
+    LoopbackConnection loopback; //initialize Context with dummy socket
+    mocpp_set_timer(custom_timer_cb);
+
     SECTION("Variable API") {
 
         //declare configs
-        auto vs = std::unique_ptr<VariableService>(new VariableService(filesystem));
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        auto vs = getOcppContext()->getModel().getVariableService();
         auto cInt = vs->declareVariable<int>("cInt", 42, "mComponent");
         REQUIRE( cInt != nullptr );
         vs->declareVariable<bool>("cBool", true, "mComponent");
@@ -179,11 +183,13 @@ TEST_CASE( "Variable" ) {
 
         FilesystemUtils::remove_if(filesystem, [] (const char*) {return true;});
 #else
-        vs.reset();
+        mocpp_deinitialize();
+
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 #endif
 
         //config accessibility / permissions
-        vs = std::unique_ptr<VariableService>(new VariableService(filesystem));
+        vs = getOcppContext()->getModel().getVariableService();
         Variable::Mutability mutability = Variable::Mutability::ReadWrite;
         Variable::AttributeTypeSet attrs = Variable::AttributeType::Actual;
         bool rebootRequired = false;
@@ -226,9 +232,6 @@ TEST_CASE( "Variable" ) {
         REQUIRE( vs->getVariable(Variable::AttributeType::Actual, "mComponent", "cHidden", &result) == GetVariableStatus::Accepted );
         REQUIRE( result != nullptr );
     }
-
-    LoopbackConnection loopback; //initialize Context with dummy socket
-    mocpp_set_timer(custom_timer_cb);
 
 #if 0
     SECTION("Main lib integration") {

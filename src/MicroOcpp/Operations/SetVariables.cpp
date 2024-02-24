@@ -77,7 +77,7 @@ void SetVariables::processReq(JsonObject payload) {
 
     MO_DBG_DEBUG("processing %zu setVariable queries", queries.size());
 
-    for (auto query : queries) {
+    for (auto& query : queries) {
         query.attributeStatus = variableService.setVariable(
                 query.attributeType,
                 query.attributeValue,
@@ -86,7 +86,11 @@ void SetVariables::processReq(JsonObject payload) {
                 query.variableName.c_str());
     }
 
-    variableService.commit();
+    if (!variableService.commit()) {
+        errorCode = "InternalError";
+        MO_DBG_ERR("Variables could not be stored. Rollback not possible");
+        return;
+    }
 }
 
 std::unique_ptr<DynamicJsonDocument> SetVariables::createConf(){
@@ -103,7 +107,7 @@ std::unique_ptr<DynamicJsonDocument> SetVariables::createConf(){
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
 
     JsonObject payload = doc->to<JsonObject>();
-    JsonArray setVariableResult = payload["setVariableResult"];
+    JsonArray setVariableResult = payload.createNestedArray("setVariableResult");
 
     for (const auto& data : queries) {
         JsonObject setVariable = setVariableResult.createNestedObject();
