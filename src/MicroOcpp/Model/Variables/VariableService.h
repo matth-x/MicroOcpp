@@ -61,21 +61,21 @@ private:
 
     VariableContainer *declareContainer(const char *filename, bool accessible);
 
-    std::shared_ptr<Variable> loadVariable(Variable::InternalDataType type, const ComponentId& component, const char *name, bool accessible);
+    Variable *getVariable(Variable::InternalDataType type, const ComponentId& component, const char *name, bool accessible);
 
 public:
     VariableService(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem(filesystem) { }
 
     template <class T> 
-    std::shared_ptr<Variable> declareVariable(const char *name, T factoryDefault, const ComponentId& component, const char *containerPath = MO_VARIABLE_FN, Variable::Mutability mutability = Variable::Mutability::ReadWrite, Variable::AttributeTypeSet attributes = Variable::AttributeTypeSet(), bool rebootRequired = false, bool accessible = true);
+    Variable *declareVariable(const char *name, T factoryDefault, const ComponentId& component, const char *containerPath = MO_VARIABLE_FN, Variable::Mutability mutability = Variable::Mutability::ReadWrite, Variable::AttributeTypeSet attributes = Variable::AttributeTypeSet(), bool rebootRequired = false, bool accessible = true);
+
+    bool commit();
 
     void addContainer(std::shared_ptr<VariableContainer> container);
 
     std::shared_ptr<VariableContainer> getContainer(const char *filename);
 
     SetVariableStatus setVariable(Variable::AttributeType attrType, const char *attrVal, const ComponentId& component, const char *variableName);
-
-    bool commit();
 
     GetVariableStatus getVariable(Variable::AttributeType attrType, const ComponentId& component, const char *variableName, Variable **result);
 };

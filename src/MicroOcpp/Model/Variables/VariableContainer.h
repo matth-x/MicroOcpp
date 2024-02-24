@@ -36,28 +36,26 @@ public:
     virtual bool save() = 0;
 
     /*
-     * Factory method to create Variable objects which are managed by VariableContainer.
+     * Factory method to create Variable objects. This doesn't add the returned Variable to the managed
+     * variable store. Instead, the caller must add the returned Variable via `add(...)`
      * The function signature consists of the requested low-level data type (Int, Bool, or String) and
      * a composite key to identify the Variable to create (componentName x variableName x attribute type)
      *
      * Variable::InternalDataType dtype: internal low-level data type. Defines which value getters / setters are valid.
      *         if dtype == InternalDataType::Int, then getInt() and setInt(...) are valid
      *         if dtype == InternalDataType::String, then getString() and setString(...) are valid. Etc.
-     * const ComponentId& component: name of the Component to which this Variable(attribute) belongs (key attribute)
-     * const char *variableName: name of the Variable to which this VariableAttribue belongs (key attribute)
-     * Variable::Type type: type of the Attribute to create (key attribute)
      */
-    virtual std::shared_ptr<Variable> createVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet attributes, const ComponentId& component, const char *variableName) = 0; // factory method
-    virtual void remove(Variable *variable) = 0;
+    virtual std::unique_ptr<Variable> createVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet attributes) = 0; // factory method
+    virtual bool add(std::unique_ptr<Variable> variable) = 0;
 
     virtual size_t size() const = 0;
     virtual Variable *getVariable(size_t i) const = 0;
-    virtual std::shared_ptr<Variable> getVariable(const ComponentId& component, const char *variableName) const = 0;
+    virtual Variable *getVariable(const ComponentId& component, const char *variableName) const = 0;
 };
 
 class VariableContainerVolatile : public VariableContainer {
 private:
-    std::vector<std::shared_ptr<Variable>> variables;
+    std::vector<std::unique_ptr<Variable>> variables;
 public:
     VariableContainerVolatile(const char *filename, bool accessible);
     ~VariableContainerVolatile();
@@ -65,14 +63,11 @@ public:
     //VariableContainer definitions
     bool load() override;
     bool save() override;
-    std::shared_ptr<Variable> createVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet attributes, const ComponentId& component, const char *variableName) override;
-    void remove(Variable *config) override;
+    std::unique_ptr<Variable> createVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet attributes) override;
+    bool add(std::unique_ptr<Variable> config) override;
     size_t size() const override;
     Variable *getVariable(size_t i) const override;
-    std::shared_ptr<Variable> getVariable(const ComponentId& component, const char *variableName) const override;
-
-    //add custom Variable object
-    void add(std::shared_ptr<Variable> variable);
+    Variable *getVariable(const ComponentId& component, const char *variableName) const override;
 };
 
 std::unique_ptr<VariableContainerVolatile> makeVariableContainerVolatile(const char *filename, bool accessible);

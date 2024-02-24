@@ -95,12 +95,15 @@ VariableContainer *VariableService::declareContainer(const char *filename, bool 
     return container.get();
 }
 
-std::shared_ptr<Variable> VariableService::loadVariable(Variable::InternalDataType type, const ComponentId& component, const char *name, bool accessible) {
+Variable *VariableService::getVariable(Variable::InternalDataType type, const ComponentId& component, const char *name, bool accessible) {
     for (auto& container : containers) {
         if (auto variable = container->getVariable(component, name)) {
+            if (variable->isDetached()) {
+                continue;
+            }
             if (variable->getInternalDataType() != type) {
                 MO_DBG_ERR("conflicting type for %s - remove old variable", name);
-                container->remove(variable.get());
+                variable->detach();
                 continue;
             }
             if (container->isAccessible() != accessible) {
@@ -151,33 +154,53 @@ template<> Variable::InternalDataType convertType<bool>() {return Variable::Inte
 template<> Variable::InternalDataType convertType<const char*>() {return Variable::InternalDataType::String;}
 
 template<class T>
-std::shared_ptr<Variable> VariableService::declareVariable(const char *name, T factoryDefault, const ComponentId& component, const char *containerPath, Variable::Mutability mutability, Variable::AttributeTypeSet attributes, bool rebootRequired, bool accessible) {
+Variable *VariableService::declareVariable(const char *name, T factoryDefault, const ComponentId& component, const char *containerPath, Variable::Mutability mutability, Variable::AttributeTypeSet attributes, bool rebootRequired, bool accessible) {
 
-    std::shared_ptr<Variable> res = loadVariable(convertType<T>(), component, name, accessible);
+    auto res = getVariable(convertType<T>(), component, name, accessible);
     if (!res) {
         auto container = declareContainer(containerPath, accessible);
         if (!container) {
             return nullptr;
         }
 
-        res = container->createVariable(convertType<T>(), attributes, component, name);
-        if (!res) {
+        auto variable = container->createVariable(convertType<T>(), attributes);
+        if (!variable) {
             return nullptr;
         }
 
-        if (!loadVariableFactoryDefault(*res.get(), factoryDefault)) {
-            container->remove(res.get());
+        variable->setName(name);
+        variable->setComponentId(component);
+
+        if (!loadVariableFactoryDefault<T>(*variable, factoryDefault)) {
+            return nullptr;
+        }
+
+        res = variable.get();
+
+        if (!container->add(std::move(variable))) {
             return nullptr;
         }
     }
 
-    loadVariableCharacteristics(*res.get(), mutability, rebootRequired);
+    loadVariableCharacteristics(*res, mutability, rebootRequired);
     return res;
 }
 
-template std::shared_ptr<Variable> VariableService::declareVariable<int>(const char*, int, const ComponentId&, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
-template std::shared_ptr<Variable> VariableService::declareVariable<bool>(const char*, bool, const ComponentId&, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
-template std::shared_ptr<Variable> VariableService::declareVariable<const char*>(const char*,const char*, const ComponentId&, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
+template Variable *VariableService::declareVariable<int>(const char*, int, const ComponentId&, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
+template Variable *VariableService::declareVariable<bool>(const char*, bool, const ComponentId&, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
+template Variable *VariableService::declareVariable<const char*>(const char*,const char*, const ComponentId&, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
+
+bool VariableService::commit() {
+    bool success = true;
+
+    for (auto& container : containers) {
+        if (!container->save()) {
+            success = false;
+        }
+    }
+
+    return success;
+}
 
 SetVariableStatus VariableService::setVariable(Variable::AttributeType attrType, const char *value, const ComponentId& component, const char *variableName) {
 

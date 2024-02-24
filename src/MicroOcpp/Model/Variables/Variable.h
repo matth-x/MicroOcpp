@@ -167,6 +167,8 @@ private:
 
     AttributeTypeSet attributes;
 
+    bool detached = false; // MO-internal: if a conflicting declaration comes in, discard the old Variable
+
     // VariableMonitoringType (2.52)
     //std::vector<VariableMonitor> monitors; // uncomment when testing Monitors
 public:
@@ -212,6 +214,9 @@ public:
     //bool addMonitor(int id, bool transaction, float value, VariableMonitor::Type type, int severity);
     
     virtual uint16_t getWriteCount() = 0; //get write count (use this as a pre-check if the value changed)
+
+    void detach();
+    bool isDetached();
 };
 
 std::unique_ptr<Variable> makeVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet supportAttributes);

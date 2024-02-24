@@ -166,6 +166,13 @@ bool Variable::isConstant() {
     return constant;
 }
 
+void Variable::detach() {
+    detached = true;
+}
+bool Variable::isDetached() {
+    return detached;
+}
+
 template <class T>
 struct VariableSingleData {
     T value = 0;
@@ -342,6 +349,7 @@ public:
                 MO_DBG_ERR("OOM");
                 return false;
             }
+            memcpy(valNew, val, len + 1);
         }
         delete[] value.get(attrType);
         value.get(attrType) = valNew;

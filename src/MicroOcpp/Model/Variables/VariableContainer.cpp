@@ -39,23 +39,13 @@ bool VariableContainerVolatile::save() {
     return true;
 }
 
-std::shared_ptr<Variable> VariableContainerVolatile::createVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet attributes, const ComponentId& component, const char *variableName) {
-    auto res = makeVariable(dtype, attributes);
-    if (res) {
-        res->setName(variableName);
-        res->setComponentId(component);
-    }
-    return res;
+std::unique_ptr<Variable> VariableContainerVolatile::createVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet attributes) {
+    return makeVariable(dtype, attributes);
 }
 
-void VariableContainerVolatile::remove(Variable *config) {
-    auto it = variables.begin();
-    while (it != variables.end()) {
-        if (it->get() == config) {
-            variables.erase(it);
-            return;
-        }
-    }
+bool VariableContainerVolatile::add(std::unique_ptr<Variable> variable) {
+    variables.push_back(std::move(variable));
+    return true;
 }
 
 size_t VariableContainerVolatile::size() const {
@@ -66,19 +56,15 @@ Variable *VariableContainerVolatile::getVariable(size_t i) const {
     return variables[i].get();
 }
 
-std::shared_ptr<Variable> VariableContainerVolatile::getVariable(const ComponentId& component, const char *variableName) const {
+Variable *VariableContainerVolatile::getVariable(const ComponentId& component, const char *variableName) const {
     auto it = variables.begin();
-    while (it != variables.end()) {
+    for (auto it = variables.begin(); it != variables.end(); it++) {
         if (!strcmp((*it)->getName(), variableName) &&
                 (*it)->getComponentId().equals(component)) {
-            return *it;
+            return it->get();
         }
     }
     return nullptr;
-}
-
-void VariableContainerVolatile::add(std::shared_ptr<Variable> variable) {
-    variables.push_back(std::move(variable));
 }
 
 std::unique_ptr<VariableContainerVolatile> MicroOcpp::makeVariableContainerVolatile(const char *filename, bool accessible) {
