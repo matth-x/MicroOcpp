@@ -36,6 +36,7 @@ set(MO_SRC
     src/MicroOcpp/Operations/GetConfiguration.cpp
     src/MicroOcpp/Operations/GetDiagnostics.cpp
     src/MicroOcpp/Operations/GetLocalListVersion.cpp
+    src/MicroOcpp/Operations/GetVariables.cpp
     src/MicroOcpp/Operations/Heartbeat.cpp
     src/MicroOcpp/Operations/MeterValues.cpp
     src/MicroOcpp/Operations/RemoteStartTransaction.cpp
@@ -44,6 +45,7 @@ set(MO_SRC
     src/MicroOcpp/Operations/Reset.cpp
     src/MicroOcpp/Operations/SendLocalList.cpp
     src/MicroOcpp/Operations/SetChargingProfile.cpp
+    src/MicroOcpp/Operations/SetVariables.cpp
     src/MicroOcpp/Operations/StartTransaction.cpp
     src/MicroOcpp/Operations/StatusNotification.cpp
     src/MicroOcpp/Operations/StopTransaction.cpp
@@ -130,6 +132,7 @@ set(MO_SRC_UNIT
     tests/Configuration.cpp
     tests/Reservation.cpp
     tests/LocalAuthList.cpp
+    tests/Variables.cpp
 )
 
 add_executable(mo_unit_tests

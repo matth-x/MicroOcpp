@@ -106,7 +106,7 @@ std::unique_ptr<DynamicJsonDocument> SetVariables::createConf(){
     JsonArray setVariableResult = payload["setVariableResult"];
 
     for (const auto& data : queries) {
-        JsonObject setVariable = setVariableResult.add();
+        JsonObject setVariable = setVariableResult.createNestedObject();
 
         const char *attributeTypeCstr = nullptr;
         switch (data.attributeType) {

@@ -94,7 +94,7 @@ std::unique_ptr<DynamicJsonDocument> GetVariables::createConf(){
         size_t valueCapacity = 0;
         if (data.variable) {
             switch (data.variable->getInternalDataType()) {
-                case Variable::InternalDataType::Int:
+                case Variable::InternalDataType::Int: {
                     // measure int size by printing to a dummy buf
                     char valbuf [VALUE_BUFSIZE];
                     auto ret = snprintf(valbuf, VALUE_BUFSIZE, "%i", data.variable->getInt());
@@ -103,6 +103,7 @@ std::unique_ptr<DynamicJsonDocument> GetVariables::createConf(){
                     }
                     valueCapacity = (size_t) ret + 1;
                     break;
+                }
                 case Variable::InternalDataType::Bool:
                     // bool will be stored in zero-copy mode (string literal "true" or "false")
                     valueCapacity = 0;
@@ -132,7 +133,7 @@ std::unique_ptr<DynamicJsonDocument> GetVariables::createConf(){
     JsonArray getVariableResult = payload["getVariableResult"];
 
     for (const auto& data : queries) {
-        JsonObject getVariable = getVariableResult.add();
+        JsonObject getVariable = getVariableResult.createNestedObject();
 
         const char *attributeStatusCstr = "Rejected";
         switch (data.attributeStatus) {
@@ -181,7 +182,7 @@ std::unique_ptr<DynamicJsonDocument> GetVariables::createConf(){
 
         if (data.variable) {
             switch (data.variable->getInternalDataType()) {
-                case Variable::InternalDataType::Int:
+                case Variable::InternalDataType::Int: {
                     char valbuf [VALUE_BUFSIZE];
                     auto ret = snprintf(valbuf, VALUE_BUFSIZE, "%i", data.variable->getInt());
                     if (ret < 0 || ret >= VALUE_BUFSIZE) {
@@ -189,6 +190,7 @@ std::unique_ptr<DynamicJsonDocument> GetVariables::createConf(){
                     }
                     getVariable["attributeValue"] = valbuf;
                     break;
+                }
                 case Variable::InternalDataType::Bool:
                     getVariable["attributeValue"] = data.variable->getBool() ? "true" : "false";
                     break;
