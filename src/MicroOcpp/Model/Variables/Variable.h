@@ -18,12 +18,16 @@
 
 #if MO_ENABLE_V201
 
+#ifndef MO_VARIABLE_TYPECHECK
+#define MO_VARIABLE_TYPECHECK 1
+#endif
+
 namespace MicroOcpp {
 
-//VariableCharacteristicsType (2.51)
+// VariableCharacteristicsType (2.51)
 struct VariableCharacteristics {
 
-    //DataEnumType (3.26)
+    // DataEnumType (3.26)
     enum class DataType : uint8_t {
         string,
         decimal,
@@ -43,9 +47,26 @@ struct VariableCharacteristics {
     //bool supportsMonitoring; //stored in Variable
 };
 
-/*
- * Corresponds to VariableMonitoringType (2.52)
- */
+// SetVariableStatusEnumType (3.79)
+enum class SetVariableStatus : uint8_t {
+    Accepted,
+    Rejected,
+    UnknownComponent,
+    UnknownVariable,
+    NotSupportedAttributeType,
+    RebootRequired
+};
+
+// GetVariableStatusEnumType (3.41)
+enum class GetVariableStatus : uint8_t {
+    Accepted,
+    Rejected,
+    UnknownComponent,
+    UnknownVariable,
+    NotSupportedAttributeType
+};
+
+// VariableMonitoringType (2.52)
 class VariableMonitor {
 public:
     //MonitorEnumType (3.55)
@@ -64,7 +85,29 @@ private:
     int severity;
 public:
     VariableMonitor() = delete;
-    VariableMonitor(int id, bool transaction, float value, Type type, int severity);
+    VariableMonitor(int id, bool transaction, float value, Type type, int severity) :
+            id(id), transaction(transaction), value(value), type(type), severity(severity) { }
+};
+
+// EVSEType (2.23)
+struct EvseId {
+    int id;
+    int connectorId = -1; //optional
+
+    EvseId(int id) : id(id) { }
+    EvseId(int id, int connectorId) : id(id), connectorId(connectorId) { }
+};
+
+// ComponentType (2.16)
+struct ComponentId {
+    const char *name; // zero copy
+    //const char *instance; // not supported in this implementation
+    EvseId evse {-1};
+
+    ComponentId(const char *name = nullptr);
+    ComponentId(const char *name, EvseId evse);
+
+    bool equals(const ComponentId& other) const;
 };
 
 /*
@@ -84,6 +127,16 @@ public:
         MaxSet
     };
 
+    struct AttributeTypeSet {
+        uint8_t flag = 0;
+
+        bool has(Variable::AttributeType type);
+        AttributeTypeSet& set(Variable::AttributeType type);
+        size_t count();
+
+        AttributeTypeSet(AttributeType attrType = AttributeType::Actual);
+    };
+
     //MutabilityEnumType (3.58)
     enum class Mutability : uint8_t {
         ReadOnly,
@@ -99,8 +152,7 @@ public:
     };
 private:
     const char *variableName = nullptr;
-    //const char *instance = nullptr; //<-- instance not supported in this implementation
-    const char *componentName = nullptr;
+    ComponentId component;
 
     // VariableCharacteristicsType (2.51)
     std::unique_ptr<VariableCharacteristics> characteristics; //optional VariableCharacteristics
@@ -113,17 +165,20 @@ private:
     bool persistent = false;
     bool constant = false;
 
-    //VariableMonitoring
-    //std::vector<VariableMonitor> monitors;
-protected:
-    uint16_t writeCount = 0; //write access counter; used to check if this config has been changed
-public:
+    AttributeTypeSet attributes;
 
-    void setName(const char *key); //zero-copy
+    // VariableMonitoringType (2.52)
+    //std::vector<VariableMonitor> monitors; // uncomment when testing Monitors
+public:
+    Variable(AttributeTypeSet attributes);
+
+    virtual ~Variable();
+
+    void setName(const char *name); //zero-copy
     const char *getName() const;
 
-    void setComponentId(const char *componentId); //zero-copy
-    const char *getComponentId() const;
+    void setComponentId(const ComponentId& componentId); //zero-copy
+    const ComponentId& getComponentId() const;
 
     // set Value of Variable
     virtual void setInt(int val, AttributeType attrType = AttributeType::Actual);
@@ -136,6 +191,7 @@ public:
     virtual const char *getString(AttributeType attrType = AttributeType::Actual); //always returns c-string (empty if undefined)
 
     virtual InternalDataType getInternalDataType() = 0; //corresponds to MO internal value representation
+    bool hasAttribute(AttributeType attrType);
 
     void setVariableDataType(VariableCharacteristics::DataType dataType); //corresponds to OCPP DataEnumType (3.26)
     VariableCharacteristics::DataType getVariableDataType(); //corresponds to OCPP DataEnumType (3.26)
@@ -155,8 +211,10 @@ public:
 
     //bool addMonitor(int id, bool transaction, float value, VariableMonitor::Type type, int severity);
     
-    uint16_t getWriteCount(); //get write count (use this as a pre-check if the value changed)
+    virtual uint16_t getWriteCount() = 0; //get write count (use this as a pre-check if the value changed)
 };
+
+std::unique_ptr<Variable> makeVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet supportAttributes);
 
 } // namespace MicroOcpp
 

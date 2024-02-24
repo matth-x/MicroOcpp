@@ -2,8 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef MO_SETVARIABLES_H
-#define MO_SETVARIABLES_H
+#ifndef MO_GETVARIABLES_H
+#define MO_GETVARIABLES_H
 
 #include <MicroOcpp/Version.h>
 
@@ -21,29 +21,29 @@ class VariableService;
 
 namespace Ocpp201 {
 
-// SetVariableDataType (2.44) and
-// SetVariableResultType (2.45)
-struct SetVariableData {
-    // SetVariableDataType
+// GetVariableDataType (2.25) and
+// GetVariableResultType (2.26)
+struct GetVariableData {
+    // GetVariableDataType
     Variable::AttributeType attributeType = Variable::AttributeType::Actual;
-    const char *attributeValue; // will become invalid after processReq
     std::string componentName;
     int componentEvseId = -1;
     int componentEvseConnectorId = -1;
     std::string variableName;
 
-    // SetVariableResultType
-    SetVariableStatus attributeStatus;
+    // GetVariableResultType
+    GetVariableStatus attributeStatus;
+    Variable *variable = nullptr;
 };
 
-class SetVariables : public Operation {
+class GetVariables : public Operation {
 private:
     VariableService& variableService;
-    std::vector<SetVariableData> queries;
+    std::vector<GetVariableData> queries;
 
     const char *errorCode = nullptr;
 public:
-    SetVariables(VariableService& variableService);
+    GetVariables(VariableService& variableService);
 
     const char* getOperationType() override;
 

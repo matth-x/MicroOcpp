@@ -25,6 +25,10 @@ class ReservationService;
 class BootService;
 class ResetService;
 
+#if MO_ENABLE_V201
+class VariableService;
+#endif
+
 class Model {
 private:
     std::vector<std::unique_ptr<Connector>> connectors;
@@ -39,6 +43,11 @@ private:
     std::unique_ptr<ReservationService> reservationService;
     std::unique_ptr<BootService> bootService;
     std::unique_ptr<ResetService> resetService;
+
+#if MO_ENABLE_V201
+    std::unique_ptr<VariableService> variableService;
+#endif
+
     Clock clock;
 
     ProtocolVersion version;
@@ -94,6 +103,11 @@ public:
 
     void setResetService(std::unique_ptr<ResetService> rs);
     ResetService *getResetService() const;
+
+#if MO_ENABLE_V201
+    void setVariableService(std::unique_ptr<VariableService> vs);
+    VariableService *getVariableService() const;
+#endif
 
     Clock &getClock();
 

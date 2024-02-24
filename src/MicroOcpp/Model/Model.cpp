@@ -17,6 +17,7 @@
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Model/Boot/BootService.h>
 #include <MicroOcpp/Model/Reset/ResetService.h>
+#include <MicroOcpp/Model/Variables/VariableService.h>
 
 #include <MicroOcpp/Core/Configuration.h>
 
@@ -186,6 +187,17 @@ void Model::setResetService(std::unique_ptr<ResetService> rs) {
 ResetService *Model::getResetService() const {
     return resetService.get();
 }
+
+#if MO_ENABLE_V201
+void Model::setVariableService(std::unique_ptr<VariableService> rs) {
+    this->variableService = std::move(rs);
+    capabilitiesUpdated = true;
+}
+
+VariableService *Model::getVariableService() const {
+    return variableService.get();
+}
+#endif
 
 Clock& Model::getClock() {
     return clock;

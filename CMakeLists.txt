@@ -76,6 +76,9 @@ set(MO_SRC
     src/MicroOcpp/Model/Transactions/Transaction.cpp
     src/MicroOcpp/Model/Transactions/TransactionDeserialize.cpp
     src/MicroOcpp/Model/Transactions/TransactionStore.cpp
+    src/MicroOcpp/Model/Variables/Variable.cpp
+    src/MicroOcpp/Model/Variables/VariableContainer.cpp
+    src/MicroOcpp/Model/Variables/VariableService.cpp
     src/MicroOcpp.cpp
     src/MicroOcpp_c.cpp
 )

@@ -30,7 +30,7 @@ public:
     virtual ~VariableContainer();
 
     const char *getFilename() {return filename;}
-    bool isAccessible() {return accessible;} //accessible by OCPP server or only used as internal persistent store
+    bool isAccessible() const {return accessible;} //accessible by OCPP server or only used as internal persistent store
 
     virtual bool load() = 0; //called at the end of mocpp_intialize, to load the Variables with the stored value
     virtual bool save() = 0;
@@ -43,18 +43,16 @@ public:
      * Variable::InternalDataType dtype: internal low-level data type. Defines which value getters / setters are valid.
      *         if dtype == InternalDataType::Int, then getInt() and setInt(...) are valid
      *         if dtype == InternalDataType::String, then getString() and setString(...) are valid. Etc.
-     * const char *componentName: name of the Component to which this Variable(attribute) belongs (key attribute)
+     * const ComponentId& component: name of the Component to which this Variable(attribute) belongs (key attribute)
      * const char *variableName: name of the Variable to which this VariableAttribue belongs (key attribute)
      * Variable::Type type: type of the Attribute to create (key attribute)
      */
-    virtual std::shared_ptr<Variable> createVariable(Variable::InternalDataType dtype, const char *componentName, const char *variableName) = 0; // factory method
+    virtual std::shared_ptr<Variable> createVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet attributes, const ComponentId& component, const char *variableName) = 0; // factory method
     virtual void remove(Variable *variable) = 0;
 
-    virtual size_t size() = 0;
-    virtual Variable *getVariable(size_t i) = 0;
-    virtual std::shared_ptr<Variable> getVariable(const char *componentName, const char *variableName) = 0;
-
-    virtual void loadStaticKey(Variable& variable, const char *variableName) { } //possible optimization: can replace internal key with passed static key
+    virtual size_t size() const = 0;
+    virtual Variable *getVariable(size_t i) const = 0;
+    virtual std::shared_ptr<Variable> getVariable(const ComponentId& component, const char *variableName) const = 0;
 };
 
 class VariableContainerVolatile : public VariableContainer {
@@ -62,15 +60,16 @@ private:
     std::vector<std::shared_ptr<Variable>> variables;
 public:
     VariableContainerVolatile(const char *filename, bool accessible);
+    ~VariableContainerVolatile();
 
     //VariableContainer definitions
     bool load() override;
     bool save() override;
-    std::shared_ptr<Variable> createVariable(Variable::InternalDataType dtype, const char *componentName, const char *variableName) override;
+    std::shared_ptr<Variable> createVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet attributes, const ComponentId& component, const char *variableName) override;
     void remove(Variable *config) override;
-    size_t size() override;
-    Variable *getVariable(size_t i) override;
-    std::shared_ptr<Variable> getVariable(const char *componentName, const char *variableName) override;
+    size_t size() const override;
+    Variable *getVariable(size_t i) const override;
+    std::shared_ptr<Variable> getVariable(const ComponentId& component, const char *variableName) const override;
 
     //add custom Variable object
     void add(std::shared_ptr<Variable> variable);

@@ -17,6 +17,7 @@
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Model/Boot/BootService.h>
 #include <MicroOcpp/Model/Reset/ResetService.h>
+#include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Core/OperationRegistry.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -287,6 +288,11 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new ReservationService(*context, MO_NUMCONNECTORS)));
     model.setResetService(std::unique_ptr<ResetService>(
         new ResetService(*context)));
+
+#if MO_ENABLE_V201
+    model.setVariableService(std::unique_ptr<VariableService>(
+        new VariableService(filesystem)));
+#endif
 
 #if !defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
     model.setFirmwareService(std::unique_ptr<FirmwareService>(
