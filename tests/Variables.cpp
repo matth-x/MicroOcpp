@@ -1,3 +1,7 @@
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V201
+
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include "./catch2/catch.hpp"
@@ -217,6 +221,7 @@ TEST_CASE( "Variable" ) {
         //create config in hidden container
         isAccessible = false;
         auto cHidden = vs->declareVariable<int>("cHidden", 42, "mComponent", MO_VARIABLE_VOLATILE "/hidden.json", mutability, attrs, rebootRequired, isAccessible);
+        (void)cHidden;
         result = nullptr;
         REQUIRE( vs->getVariable(Variable::AttributeType::Actual, "mComponent", "cHidden", &result) == GetVariableStatus::Accepted );
         REQUIRE( result != nullptr );
@@ -498,3 +503,5 @@ TEST_CASE( "Variable" ) {
     }
 #endif
 }
+
+#endif // MO_ENABLE_V201

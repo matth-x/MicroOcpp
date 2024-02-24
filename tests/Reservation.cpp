@@ -278,7 +278,7 @@ TEST_CASE( "Reservation" ) {
 
         auto reservation = getOcppContext()->getModel().getReservationService()->getReservationById(reservationId);
         REQUIRE( reservation->getReservationId() == reservationId );
-        REQUIRE( reservation->getConnectorId() == connectorId );
+        REQUIRE( reservation->getConnectorId() == (int)connectorId );
         REQUIRE( reservation->getExpiryDate() == expiryDate );
         REQUIRE( !strcmp(reservation->getIdTag(), idTag) );
         REQUIRE( !strcmp(reservation->getParentIdTag(), parentIdTag) );

@@ -136,7 +136,7 @@ const char *cstrFromOcppEveState(ConnectorStatus state) {
 }
 
 StatusNotification::StatusNotification(int evseId, ConnectorStatus currentStatus, const Timestamp &timestamp, int connectorId)
-        : evseId(evseId), currentStatus(currentStatus), timestamp(timestamp), connectorId(connectorId) {
+        : timestamp(timestamp), currentStatus(currentStatus), evseId(evseId), connectorId(connectorId) {
 
 }
 

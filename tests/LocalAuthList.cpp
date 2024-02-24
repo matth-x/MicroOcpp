@@ -818,7 +818,7 @@ TEST_CASE( "LocalAuth" ) {
                     })));
             
             loop();
-            REQUIRE( authService->getLocalListVersion() == i );
+            REQUIRE( authService->getLocalListVersion() == (int)i );
             REQUIRE( authService->getLocalListSize() == i + 1 );
             REQUIRE( checkAccepted );
         }
