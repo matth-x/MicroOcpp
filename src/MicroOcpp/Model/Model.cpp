@@ -74,9 +74,11 @@ void Model::loop() {
     
     if (resetService)
         resetService->loop();
-    
+
+#if MO_ENABLE_V201
     if (transactionService)
         transactionService->loop();
+#endif
 }
 
 void Model::setTransactionStore(std::unique_ptr<TransactionStore> ts) {

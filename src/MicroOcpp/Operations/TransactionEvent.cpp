@@ -2,6 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V201
+
 #include <MicroOcpp/Operations/TransactionEvent.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
@@ -253,3 +257,5 @@ void TransactionEvent::processConf(JsonObject payload) {
         }
     }
 }
+
+#endif // MO_ENABLE_V201
