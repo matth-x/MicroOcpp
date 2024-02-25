@@ -505,6 +505,8 @@ TEST_CASE( "Variable" ) {
 
     }
 #endif
+
+    mocpp_deinitialize();
 }
 
 #endif // MO_ENABLE_V201
