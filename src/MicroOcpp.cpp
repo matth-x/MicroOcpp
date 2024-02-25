@@ -18,6 +18,7 @@
 #include <MicroOcpp/Model/Boot/BootService.h>
 #include <MicroOcpp/Model/Reset/ResetService.h>
 #include <MicroOcpp/Model/Variables/VariableService.h>
+#include <MicroOcpp/Model/Transactions/TransactionService.h>
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Core/OperationRegistry.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -292,6 +293,8 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 #if MO_ENABLE_V201
     model.setVariableService(std::unique_ptr<VariableService>(
         new VariableService(*context, filesystem)));
+    model.setTransactionService(std::unique_ptr<TransactionService>(
+        new TransactionService(*context)));
 #endif
 
 #if !defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
@@ -517,6 +520,15 @@ void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int c
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (auto txService = context->getModel().getTransactionService()) {
+            if (auto evse = txService->getEvse(connectorId)) {
+                evse->setConnectorPluggedInput(pluggedInput);
+            }
+        }
+    }
+#endif
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -653,6 +665,15 @@ void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorI
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (auto txService = context->getModel().getTransactionService()) {
+            if (auto evse = txService->getEvse(connectorId)) {
+                evse->setEvReadyInput(evReadyInput);
+            }
+        }
+    }
+#endif
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -666,6 +687,15 @@ void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connec
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (auto txService = context->getModel().getTransactionService()) {
+            if (auto evse = txService->getEvse(connectorId)) {
+                evse->setEvseReadyInput(evseReadyInput);
+            }
+        }
+    }
+#endif
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");

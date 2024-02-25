@@ -27,6 +27,7 @@ class ResetService;
 
 #if MO_ENABLE_V201
 class VariableService;
+class TransactionService;
 #endif
 
 class Model {
@@ -46,6 +47,7 @@ private:
 
 #if MO_ENABLE_V201
     std::unique_ptr<VariableService> variableService;
+    std::unique_ptr<TransactionService> transactionService;
 #endif
 
     Clock clock;
@@ -107,6 +109,9 @@ public:
 #if MO_ENABLE_V201
     void setVariableService(std::unique_ptr<VariableService> vs);
     VariableService *getVariableService() const;
+
+    void setTransactionService(std::unique_ptr<TransactionService> ts);
+    TransactionService *getTransactionService() const;
 #endif
 
     Clock &getClock();

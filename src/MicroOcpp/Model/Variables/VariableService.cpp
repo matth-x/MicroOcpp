@@ -22,31 +22,32 @@
 
 namespace MicroOcpp {
 
-VariableValidator<int> *VariableService::getValidatorInt(const char *variableName) {
-    for (auto& validator : validatorInt) {
-        if (!strcmp(validator.key, variableName)) {
+template <class T>
+VariableValidator<T>::VariableValidator(const ComponentId& component, const char *name, std::function<bool(T)> validate) :
+        component(component), name(name), validate(validate) {
+
+}
+
+template <class T>
+VariableValidator<T> *getVariableValidator(std::vector<VariableValidator<T>>& collection, const ComponentId& component, const char *name) {
+    for (auto& validator : collection) {
+        if (!strcmp(name, validator.name) && component.equals(validator.component)) {
             return &validator;
         }
     }
     return nullptr;
 }
 
-VariableValidator<bool> *VariableService::getValidatorBool(const char *variableName) {
-    for (auto& validator : validatorBool) {
-        if (!strcmp(validator.key, variableName)) {
-            return &validator;
-        }
-    }
-    return nullptr;
+VariableValidator<int> *VariableService::getValidatorInt(const ComponentId& component, const char *name) {
+    return getVariableValidator<int>(validatorInt, component, name);
 }
 
-VariableValidator<const char*> *VariableService::getValidatorString(const char *variableName) {
-    for (auto& validator : validatorString) {
-        if (!strcmp(validator.key, variableName)) {
-            return &validator;
-        }
-    }
-    return nullptr;
+VariableValidator<bool> *VariableService::getValidatorBool(const ComponentId& component, const char *name) {
+    return getVariableValidator<bool>(validatorBool, component, name);
+}
+
+VariableValidator<const char*> *VariableService::getValidatorString(const ComponentId& component, const char *name) {
+    return getVariableValidator<const char*>(validatorString, component, name);
 }
 
 std::unique_ptr<VariableContainer> VariableService::createContainer(const char *filename, bool accessible) const {
@@ -73,6 +74,33 @@ std::shared_ptr<VariableContainer> VariableService::getContainer(const char *fil
         }
     }
     return nullptr;
+}
+
+template <class T>
+bool registerVariableValidator(std::vector<VariableValidator<T>>& collection, const ComponentId& component, const char *name, std::function<bool(T)> validate) {
+    for (auto it = collection.begin(); it != collection.end(); it++) {
+        if (!strcmp(name, it->name) && component.equals(it->component)) {
+            collection.erase(it);
+            break;
+        }
+    }
+    collection.emplace_back(component, name, validate);
+    return true;
+}
+
+template <>
+bool VariableService::registerValidator<int>(const ComponentId& component, const char *name, std::function<bool(int)> validate) {
+    return registerVariableValidator<int>(validatorInt, component, name, validate);
+}
+
+template <>
+bool VariableService::registerValidator<bool>(const ComponentId& component, const char *name, std::function<bool(bool)> validate) {
+    return registerVariableValidator<bool>(validatorBool, component, name, validate);
+}
+
+template <>
+bool VariableService::registerValidator<const char*>(const ComponentId& component, const char *name, std::function<bool(const char*)> validate) {
+    return registerVariableValidator<const char*>(validatorString, component, name, validate);
 }
 
 VariableContainer *VariableService::declareContainer(const char *filename, bool accessible) {
@@ -164,7 +192,7 @@ template<> Variable::InternalDataType getInternalDataType<bool>() {return Variab
 template<> Variable::InternalDataType getInternalDataType<const char*>() {return Variable::InternalDataType::String;}
 
 template<class T>
-Variable *VariableService::declareVariable(const char *name, T factoryDefault, const ComponentId& component, const char *containerPath, Variable::Mutability mutability, Variable::AttributeTypeSet attributes, bool rebootRequired, bool accessible) {
+Variable *VariableService::declareVariable(const ComponentId& component, const char *name, T factoryDefault, const char *containerPath, Variable::Mutability mutability, Variable::AttributeTypeSet attributes, bool rebootRequired, bool accessible) {
 
     auto res = getVariable(getInternalDataType<T>(), component, name, accessible);
     if (!res) {
@@ -196,9 +224,9 @@ Variable *VariableService::declareVariable(const char *name, T factoryDefault, c
     return res;
 }
 
-template Variable *VariableService::declareVariable<int>(const char*, int, const ComponentId&, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
-template Variable *VariableService::declareVariable<bool>(const char*, bool, const ComponentId&, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
-template Variable *VariableService::declareVariable<const char*>(const char*,const char*, const ComponentId&, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
+template Variable *VariableService::declareVariable<int>(const ComponentId&, const char*, int, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
+template Variable *VariableService::declareVariable<bool>(const ComponentId&, const char*, bool, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
+template Variable *VariableService::declareVariable<const char*>(const ComponentId&, const char*, const char*, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
 
 bool VariableService::commit() {
     bool success = true;
@@ -319,21 +347,21 @@ SetVariableStatus VariableService::setVariable(Variable::AttributeType attrType,
     // validate and store (parsed) value to Config
 
     if (variable->getInternalDataType() == Variable::InternalDataType::Int && convertibleInt) {
-        auto validator = getValidatorInt(variableName);
+        auto validator = getValidatorInt(component, variableName);
         if (validator && !validator->validate(numInt)) {
             MO_DBG_WARN("validation failed for variable=%s", variableName);
             return SetVariableStatus::Rejected;
         }
         variable->setInt(numInt);
     } else if (variable->getInternalDataType() == Variable::InternalDataType::Bool && convertibleBool) {
-        auto validator = getValidatorBool(variableName);
+        auto validator = getValidatorBool(component, variableName);
         if (validator && !validator->validate(numBool)) {
             MO_DBG_WARN("validation failed for variable=%s", variableName);
             return SetVariableStatus::Rejected;
         }
         variable->setBool(numBool);
     } else if (variable->getInternalDataType() == Variable::InternalDataType::String) {
-        auto validator = getValidatorString(variableName);
+        auto validator = getValidatorString(component, variableName);
         if (validator && !validator->validate(value)) {
             MO_DBG_WARN("validation failed for variable=%s", variableName);
             return SetVariableStatus::Rejected;

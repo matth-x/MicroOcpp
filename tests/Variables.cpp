@@ -115,13 +115,13 @@ TEST_CASE( "Variable" ) {
         //declare configs
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
         auto vs = getOcppContext()->getModel().getVariableService();
-        auto cInt = vs->declareVariable<int>("cInt", 42, "mComponent");
+        auto cInt = vs->declareVariable<int>("mComponent", "cInt", 42);
         REQUIRE( cInt != nullptr );
-        vs->declareVariable<bool>("cBool", true, "mComponent");
-        vs->declareVariable<const char*>("cString", "mValue", "mComponent");
+        vs->declareVariable<bool>("mComponent", "cBool", true);
+        vs->declareVariable<const char*>("mComponent", "cString", "mValue");
 
         //fetch config
-        REQUIRE( vs->declareVariable("cInt", -1, "mComponent")->getInt() == 42 );
+        REQUIRE( vs->declareVariable("mComponent", "cInt", -1)->getInt() == 42 );
 
 #if 0
         //store, destroy, reload
@@ -147,15 +147,15 @@ TEST_CASE( "Variable" ) {
 #endif
 
         //declare config twice
-        auto cInt3 = vs->declareVariable<int>("cInt", -1, "mComponent");
+        auto cInt3 = vs->declareVariable<int>("mComponent", "cInt", -1);
         REQUIRE( cInt3 == cInt2 );
 
         //declare config twice but in different container
-        auto cInt4 = vs->declareVariable<int>("cInt", -1, "mComponent", MO_VARIABLE_VOLATILE "/volatile2");
+        auto cInt4 = vs->declareVariable<int>("mComponent", "cInt", -1, MO_VARIABLE_VOLATILE "/volatile2");
         REQUIRE( cInt4 == cInt2 );
 
         //declare config twice but with conflicting type (will supersede old type because to simplify FW upgrades)
-        auto cNewType = vs->declareVariable<const char*>("cInt", "mValue2", "mComponent");
+        auto cNewType = vs->declareVariable<const char*>("mComponent", "cInt", "mValue2");
         REQUIRE( cNewType != cInt2 );
         REQUIRE( cInt2->isDetached() ); // Container should not store this
         REQUIRE( !strcmp(cNewType->getString(), "mValue2") );
@@ -194,29 +194,29 @@ TEST_CASE( "Variable" ) {
         Variable::AttributeTypeSet attrs = Variable::AttributeType::Actual;
         bool rebootRequired = false;
         bool isAccessible = true;
-        auto cInt6 = vs->declareVariable<int>("cInt", 42, "mComponent", MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
+        auto cInt6 = vs->declareVariable<int>("mComponent", "cInt", 42, MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
         REQUIRE( cInt6->getMutability() == Variable::Mutability::ReadWrite );
         REQUIRE( !cInt6->isRebootRequired() );
-        REQUIRE( vs->declareVariable<int>("cInt", 42, "mComponent") );
+        REQUIRE( vs->declareVariable<int>("mComponent", "cInt", 42) );
 
         //revoke permissions
         mutability = Variable::Mutability::ReadOnly;
         rebootRequired = true;
-        vs->declareVariable<int>("cInt", 42, "mComponent", MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
+        vs->declareVariable<int>("mComponent", "cInt", 42, MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
         REQUIRE( cInt6->getMutability() == mutability );
         REQUIRE( cInt6->isRebootRequired() );
 
         //revoked permissions cannot be reverted
         mutability = Variable::Mutability::ReadWrite;
         rebootRequired = false;
-        auto cInt7 = vs->declareVariable<int>("cInt", 42, "mComponent", MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
+        auto cInt7 = vs->declareVariable<int>("mComponent", "cInt", 42, MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
         REQUIRE( cInt7->getMutability() == Variable::Mutability::ReadOnly );
         REQUIRE( cInt7->isRebootRequired() );
 
         //accessibility cannot be changed after first initialization
         isAccessible = false;
-        vs->declareVariable<int>("cInt", 42, "mComponent", MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
-        vs->declareVariable<int>("cInt2", 42, "mComponent", MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
+        vs->declareVariable<int>("mComponent", "cInt", 42, MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
+        vs->declareVariable<int>("mComponent", "cInt2", 42, MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
         Variable *result = nullptr;
         REQUIRE( vs->getVariable(Variable::AttributeType::Actual, "mComponent", "cInt", &result) == GetVariableStatus::Accepted );
         REQUIRE( result != nullptr );
@@ -226,7 +226,7 @@ TEST_CASE( "Variable" ) {
 
         //create config in hidden container
         isAccessible = false;
-        auto cHidden = vs->declareVariable<int>("cHidden", 42, "mComponent", MO_VARIABLE_VOLATILE "/hidden.json", mutability, attrs, rebootRequired, isAccessible);
+        auto cHidden = vs->declareVariable<int>("mComponent", "cHidden", 42, MO_VARIABLE_VOLATILE "/hidden.json", mutability, attrs, rebootRequired, isAccessible);
         (void)cHidden;
         result = nullptr;
         REQUIRE( vs->getVariable(Variable::AttributeType::Actual, "mComponent", "cHidden", &result) == GetVariableStatus::Accepted );

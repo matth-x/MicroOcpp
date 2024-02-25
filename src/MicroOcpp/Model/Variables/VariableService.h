@@ -39,9 +39,10 @@ namespace MicroOcpp {
 
 template <class T>
 struct VariableValidator {
-    const char *key = nullptr;
+    ComponentId component;
+    const char *name;
     std::function<bool(T)> validate;
-    VariableValidator(const char *key, std::function<bool(T)> validate) : key(key), validate(validate) { }
+    VariableValidator(const ComponentId& component, const char *name, std::function<bool(T)> validate);
 };
 
 class Context;
@@ -55,9 +56,9 @@ private:
     std::vector<VariableValidator<bool>> validatorBool;
     std::vector<VariableValidator<const char*>> validatorString;
 
-    VariableValidator<int> *getValidatorInt(const char *variableName);
-    VariableValidator<bool> *getValidatorBool(const char *variableName);
-    VariableValidator<const char*> *getValidatorString(const char *variableName);
+    VariableValidator<int> *getValidatorInt(const ComponentId& component, const char *name);
+    VariableValidator<bool> *getValidatorBool(const ComponentId& component, const char *name);
+    VariableValidator<const char*> *getValidatorString(const ComponentId& component, const char *name);
 
     std::unique_ptr<VariableContainer> createContainer(const char *filename, bool accessible) const;
 
@@ -69,13 +70,16 @@ public:
     VariableService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem);
 
     template <class T> 
-    Variable *declareVariable(const char *name, T factoryDefault, const ComponentId& component, const char *containerPath = MO_VARIABLE_FN, Variable::Mutability mutability = Variable::Mutability::ReadWrite, Variable::AttributeTypeSet attributes = Variable::AttributeTypeSet(), bool rebootRequired = false, bool accessible = true);
+    Variable *declareVariable(const ComponentId& component, const char *name, T factoryDefault, const char *containerPath = MO_VARIABLE_FN, Variable::Mutability mutability = Variable::Mutability::ReadWrite, Variable::AttributeTypeSet attributes = Variable::AttributeTypeSet(), bool rebootRequired = false, bool accessible = true);
 
     bool commit();
 
     void addContainer(std::shared_ptr<VariableContainer> container);
 
     std::shared_ptr<VariableContainer> getContainer(const char *filename);
+
+    template <class T>
+    bool registerValidator(const ComponentId& component, const char *name, std::function<bool(T)> validate);
 
     SetVariableStatus setVariable(Variable::AttributeType attrType, const char *attrVal, const ComponentId& component, const char *variableName);
 

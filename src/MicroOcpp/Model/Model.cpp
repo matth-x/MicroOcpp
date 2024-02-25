@@ -18,6 +18,7 @@
 #include <MicroOcpp/Model/Boot/BootService.h>
 #include <MicroOcpp/Model/Reset/ResetService.h>
 #include <MicroOcpp/Model/Variables/VariableService.h>
+#include <MicroOcpp/Model/Transactions/TransactionService.h>
 
 #include <MicroOcpp/Core/Configuration.h>
 
@@ -73,6 +74,9 @@ void Model::loop() {
     
     if (resetService)
         resetService->loop();
+    
+    if (transactionService)
+        transactionService->loop();
 }
 
 void Model::setTransactionStore(std::unique_ptr<TransactionStore> ts) {
@@ -189,13 +193,22 @@ ResetService *Model::getResetService() const {
 }
 
 #if MO_ENABLE_V201
-void Model::setVariableService(std::unique_ptr<VariableService> rs) {
-    this->variableService = std::move(rs);
+void Model::setVariableService(std::unique_ptr<VariableService> vs) {
+    this->variableService = std::move(vs);
     capabilitiesUpdated = true;
 }
 
 VariableService *Model::getVariableService() const {
     return variableService.get();
+}
+
+void Model::setTransactionService(std::unique_ptr<TransactionService> ts) {
+    this->transactionService = std::move(ts);
+    capabilitiesUpdated = true;
+}
+
+TransactionService *Model::getTransactionService() const {
+    return transactionService.get();
 }
 #endif
 

@@ -9,14 +9,16 @@
 #ifndef MO_VARIABLE_H
 #define MO_VARIABLE_H
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V201
+
 #include <stdint.h>
 #include <vector>
 #include <memory>
 #include <limits>
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
+#include <MicroOcpp/Model/ConnectorBase/EvseId.h>
 
 #ifndef MO_VARIABLE_TYPECHECK
 #define MO_VARIABLE_TYPECHECK 1
@@ -87,15 +89,6 @@ public:
     VariableMonitor() = delete;
     VariableMonitor(int id, bool transaction, float value, Type type, int severity) :
             id(id), transaction(transaction), value(value), type(type), severity(severity) { }
-};
-
-// EVSEType (2.23)
-struct EvseId {
-    int id;
-    int connectorId = -1; //optional
-
-    EvseId(int id) : id(id) { }
-    EvseId(int id, int connectorId) : id(id), connectorId(connectorId) { }
 };
 
 // ComponentType (2.16)

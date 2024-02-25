@@ -49,6 +49,7 @@ set(MO_SRC
     src/MicroOcpp/Operations/StartTransaction.cpp
     src/MicroOcpp/Operations/StatusNotification.cpp
     src/MicroOcpp/Operations/StopTransaction.cpp
+    src/MicroOcpp/Operations/TransactionEvent.cpp
     src/MicroOcpp/Operations/TriggerMessage.cpp
     src/MicroOcpp/Operations/UnlockConnector.cpp
     src/MicroOcpp/Operations/UpdateFirmware.cpp
@@ -58,6 +59,7 @@ set(MO_SRC
     src/MicroOcpp/Model/Authorization/AuthorizationData.cpp
     src/MicroOcpp/Model/Authorization/AuthorizationList.cpp
     src/MicroOcpp/Model/Authorization/AuthorizationService.cpp
+    src/MicroOcpp/Model/Authorization/IdToken.cpp
     src/MicroOcpp/Model/Boot/BootService.cpp
     src/MicroOcpp/Model/ConnectorBase/ConnectorsCommon.cpp
     src/MicroOcpp/Model/ConnectorBase/Connector.cpp
@@ -77,6 +79,7 @@ set(MO_SRC
     src/MicroOcpp/Model/SmartCharging/SmartChargingService.cpp
     src/MicroOcpp/Model/Transactions/Transaction.cpp
     src/MicroOcpp/Model/Transactions/TransactionDeserialize.cpp
+    src/MicroOcpp/Model/Transactions/TransactionService.cpp
     src/MicroOcpp/Model/Transactions/TransactionStore.cpp
     src/MicroOcpp/Model/Variables/Variable.cpp
     src/MicroOcpp/Model/Variables/VariableContainer.cpp
@@ -133,6 +136,7 @@ set(MO_SRC_UNIT
     tests/Reservation.cpp
     tests/LocalAuthList.cpp
     tests/Variables.cpp
+    tests/Transactions.cpp
 )
 
 add_executable(mo_unit_tests
