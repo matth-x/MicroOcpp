@@ -37,19 +37,43 @@ TEST_CASE( "Transactions" ) {
 
     SECTION("Basic transaction") {
 
+        MO_DBG_DEBUG("plug EV");
         setConnectorPluggedInput([] () {return true;});
-        setEvReadyInput([] () {return true;});
-        setEvseReadyInput([] () {return true;});
 
+        loop();
+
+        MO_DBG_DEBUG("authorize");
         context->getModel().getTransactionService()->getEvse(1)->beginAuthorization("mIdToken");
 
         loop();
 
-        setConnectorPluggedInput([] () {return false;});
+        MO_DBG_DEBUG("EV requests charge");
+        setEvReadyInput([] () {return true;});
+
+        loop();
+
+        MO_DBG_DEBUG("power circuit closed");
+        setEvseReadyInput([] () {return true;});
+
+        loop();
+
+        MO_DBG_DEBUG("EV idle");
         setEvReadyInput([] () {return false;});
+
+        loop();
+
+        MO_DBG_DEBUG("power circuit opened");
         setEvseReadyInput([] () {return false;});
 
-        context->getModel().getTransactionService()->getEvse(1)->endAuthorization();
+        loop();
+
+        MO_DBG_DEBUG("deauthorize");
+        context->getModel().getTransactionService()->getEvse(1)->endAuthorization("mIdToken");
+
+        loop();
+        
+        MO_DBG_DEBUG("unplug EV");
+        setConnectorPluggedInput([] () {return false;});
 
         loop();
     }

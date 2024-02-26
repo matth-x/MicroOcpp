@@ -53,88 +53,98 @@ void TransactionService::Evse::loop() {
     bool txStopped = false;
 
     bool txUpdated = false;
-    bool txUpdatedIdToken = false;
 
     TransactionEventData::TriggerReason triggerReason; // only valid if txStarted || txStopped || txUpdated
     TransactionEventData::StopReason stoppedReason; // only valid if txStopped
 
-    if (connectorPluggedInput && connectorPluggedInput()) {
-        if (!transaction && txService.isTxStartPoint(TxStartStopPoint::EVConnected)) {
-            transaction = allocateTransaction();
-            txStarted = true;
-        }
-
-        if (transaction && !transaction->evConnected.triggered) {
-            transaction->evConnected.triggered = true;
-            txUpdated = true;
-            triggerReason = TransactionEventData::TriggerReason::CablePluggedIn;
-        }
-    } else if (connectorPluggedInput && !connectorPluggedInput()) {
-        if (transaction && transaction->evConnected.triggered) {
-            if (!transaction->evConnected.untriggered) {
-                transaction->evConnected.untriggered = true;
-                txUpdated = true;
-                triggerReason = TransactionEventData::TriggerReason::EVCommunicationLost;
+    if (!txStarted && !txStopped && !txUpdated) {
+        if (connectorPluggedInput && connectorPluggedInput()) {
+            if (!transaction && txService.isTxStartPoint(TxStartStopPoint::EVConnected)) {
+                transaction = allocateTransaction();
+                txStarted = true;
             }
 
-            if (txService.isTxStopPoint(TxStartStopPoint::EVConnected)) {
-                txStopped = true;
-                stoppedReason = TransactionEventData::StopReason::EVDisconnected;
+            if (transaction && !transaction->evConnected.triggered) {
+                transaction->evConnected.triggered = true;
+                txUpdated = true;
+                triggerReason = TransactionEventData::TriggerReason::CablePluggedIn;
+            }
+        } else if (connectorPluggedInput && !connectorPluggedInput()) {
+            if (transaction && transaction->evConnected.triggered) {
+                if (!transaction->evConnected.untriggered) {
+                    transaction->evConnected.untriggered = true;
+                    txUpdated = true;
+                    triggerReason = TransactionEventData::TriggerReason::EVCommunicationLost;
+                }
+
+                if (txService.isTxStopPoint(TxStartStopPoint::EVConnected)) {
+                    txStopped = true;
+                    stoppedReason = TransactionEventData::StopReason::EVDisconnected;
+                }
             }
         }
     }
 
-    if (evseReadyInput && evseReadyInput()) {
-        if (!transaction && txService.isTxStartPoint(TxStartStopPoint::PowerPathClosed)) {
-            transaction = allocateTransaction();
-            txStarted = true;
-        }
+    if (!txStarted && !txStopped && !txUpdated) {
+        if (evseReadyInput && evseReadyInput()) {
+            if (!transaction && txService.isTxStartPoint(TxStartStopPoint::PowerPathClosed)) {
+                transaction = allocateTransaction();
+                txStarted = true;
+            }
 
-        if (transaction && !transaction->powerPathClosed.triggered) {
-            transaction->powerPathClosed.triggered = true;
-            txUpdated = true;
-            triggerReason = TransactionEventData::TriggerReason::ChargingStateChanged;
-        }
-    } else if (evseReadyInput && !evseReadyInput()) {
-        if (transaction && transaction->powerPathClosed.triggered) {
-            if (!transaction->powerPathClosed.untriggered) {
-                transaction->powerPathClosed.untriggered = true;
+            if (transaction && !transaction->powerPathClosed.triggered) {
+                transaction->powerPathClosed.triggered = true;
                 txUpdated = true;
                 triggerReason = TransactionEventData::TriggerReason::ChargingStateChanged;
             }
+        } else if (evseReadyInput && !evseReadyInput()) {
+            if (transaction && transaction->powerPathClosed.triggered) {
+                if (!transaction->powerPathClosed.untriggered) {
+                    transaction->powerPathClosed.untriggered = true;
+                    txUpdated = true;
+                    triggerReason = TransactionEventData::TriggerReason::ChargingStateChanged;
+                }
 
-            if (txService.isTxStopPoint(TxStartStopPoint::PowerPathClosed)) {
-                txStopped = true;
-                stoppedReason = TransactionEventData::StopReason::StoppedByEV;
+                if (txService.isTxStopPoint(TxStartStopPoint::PowerPathClosed)) {
+                    txStopped = true;
+                    stoppedReason = TransactionEventData::StopReason::StoppedByEV;
+                }
             }
         }
     }
 
-    if (authorization.get()) {
-        if (!transaction && txService.isTxStartPoint(TxStartStopPoint::Authorized)) {
-            transaction = allocateTransaction();
-            txStarted = true;
-        }
+    if (!txStarted && !txStopped && !txUpdated) {
+        if (authorization.get()) {
+            if (!transaction && txService.isTxStartPoint(TxStartStopPoint::Authorized)) {
+                transaction = allocateTransaction();
+                txStarted = true;
+            }
 
-        if (transaction && !transaction->authorized.triggered) {
-            transaction->authorized.triggered = true;
-            txUpdated = true;
-            txUpdatedIdToken = true;
-            triggerReason = TransactionEventData::TriggerReason::Authorized;
-        }
-    } else {
-        if (transaction && transaction->authorized.triggered) {
-            if (!transaction->authorized.untriggered) {
-                transaction->authorized.untriggered = true;
+            if (transaction && !transaction->authorized.triggered) {
+                transaction->authorized.triggered = true;
                 txUpdated = true;
-                triggerReason = TransactionEventData::TriggerReason::StopAuthorized;
+                triggerReason = TransactionEventData::TriggerReason::Authorized;
             }
+        } else {
+            if (transaction && transaction->authorized.triggered) {
+                if (!transaction->authorized.untriggered) {
+                    transaction->authorized.untriggered = true;
+                    txUpdated = true;
+                    triggerReason = TransactionEventData::TriggerReason::StopAuthorized;
+                }
 
-            if (txService.isTxStopPoint(TxStartStopPoint::EVConnected)) {
-                txStopped = true;
-                stoppedReason = TransactionEventData::StopReason::Local;
+                if (txService.isTxStopPoint(TxStartStopPoint::EVConnected)) {
+                    txStopped = true;
+                    stoppedReason = TransactionEventData::StopReason::Local;
+                }
             }
         }
+    }
+
+    if (txStarted) {
+       transaction->evConnected.triggered |= connectorPluggedInput && connectorPluggedInput();
+       transaction->powerPathClosed.triggered |= evseReadyInput && evseReadyInput();
+       transaction->authorized.triggered |= authorization.get() != nullptr;
     }
 
     TransactionEventData::ChargingState chargingState = TransactionEventData::ChargingState::Idle;
@@ -182,9 +192,10 @@ void TransactionService::Evse::loop() {
             txEvent->stoppedReason = stoppedReason;
         }
 
-        if (txUpdatedIdToken) {
+        if (authorization.get() && !transaction->idTokenTransmitted) {
             txEvent->transaction->idToken = authorization;
             txEvent->idTokenTransmit = true;
+            transaction->idTokenTransmitted = true;
         }
 
         txEvent->evse = evseId;
@@ -216,10 +227,16 @@ void TransactionService::Evse::setEvseReadyInput(std::function<bool()> connector
 
 bool TransactionService::Evse::beginAuthorization(IdToken idToken) {
     authorization = idToken;
+    if (transaction) {
+        transaction->idTokenTransmitted = false;
+    }
     return true;
 }
 bool TransactionService::Evse::endAuthorization(IdToken idToken) {
     authorization = IdToken();
+    if (transaction) {
+        transaction->idTokenTransmitted = false;
+    }
     return true;
 }
 const char *TransactionService::Evse::getAuthorization() {

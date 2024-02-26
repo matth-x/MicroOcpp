@@ -208,6 +208,8 @@ public:
     Timestamp startTime = MIN_TIME;
     char transactionId [MO_TXID_LEN_MAX + 1] = {'\0'};
     int remoteStartId = -1;
+
+    bool idTokenTransmitted = false;
 };
 
 // TransactionEventRequest (1.60.1)
