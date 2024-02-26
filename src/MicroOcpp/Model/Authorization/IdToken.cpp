@@ -27,11 +27,11 @@ IdToken::IdToken(const char *token, Type type) : type(type) {
     }
 }
 
-const char *IdToken::get() {
+const char *IdToken::get() const {
     return *idToken ? idToken : nullptr;;
 }
 
-const char *IdToken::getTypeCstr() {
+const char *IdToken::getTypeCstr() const {
     const char *res = nullptr;
     switch (type) {
         case Type::Central:

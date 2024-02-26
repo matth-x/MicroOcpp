@@ -39,8 +39,8 @@ public:
     IdToken();
     IdToken(const char *token, Type type = Type::ISO14443);
 
-    const char *get();
-    const char *getTypeCstr();
+    const char *get() const;
+    const char *getTypeCstr() const;
 };
 
 } // namespace MicroOcpp

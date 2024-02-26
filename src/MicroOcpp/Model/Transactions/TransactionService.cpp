@@ -15,6 +15,7 @@
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Operations/TransactionEvent.h>
+#include <MicroOcpp/Operations/CustomOperation.h>
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Debug.h>
 
@@ -226,13 +227,33 @@ void TransactionService::Evse::setEvseReadyInput(std::function<bool()> connector
 }
 
 bool TransactionService::Evse::beginAuthorization(IdToken idToken) {
-    authorization = idToken;
-    if (transaction) {
-        transaction->idTokenTransmitted = false;
-    }
+    MO_DBG_DEBUG("begin auth: %s", idToken.get());
+    IdToken idTokenCpy = idToken;
+    auto authorize = makeRequest(new Ocpp16::CustomOperation(
+            "Authorize",
+            [idTokenCpy] () {
+                auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+                        JSON_OBJECT_SIZE(3) +
+                        JSON_OBJECT_SIZE(2) +
+                        MO_IDTOKEN_LEN_MAX + 1));
+                auto payload = doc->to<JsonObject>();
+                payload["idToken"]["idToken"] = idTokenCpy.get();
+                payload["idToken"]["type"] = idTokenCpy.getTypeCstr();
+                return doc;
+            }, [this, idTokenCpy] (JsonObject response) {
+                if (!strcmp(response["idTokenInfo"]["status"], "Accepted")) {
+                    authorization = idTokenCpy;
+                    if (transaction) {
+                        transaction->idTokenTransmitted = false;
+                    }
+                    MO_DBG_DEBUG("confirmed auth: %s", idTokenCpy.get());
+                }
+            }));
+    context.initiateRequest(std::move(authorize));
     return true;
 }
 bool TransactionService::Evse::endAuthorization(IdToken idToken) {
+    MO_DBG_DEBUG("end auth: %s", idToken.get()? idToken.get() : "(empty)");
     authorization = IdToken();
     if (transaction) {
         transaction->idTokenTransmitted = false;
