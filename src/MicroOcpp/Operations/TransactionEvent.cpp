@@ -139,7 +139,7 @@ std::unique_ptr<DynamicJsonDocument> TransactionEvent::createReq() {
     }
 
     JsonObject transactionInfo = payload.createNestedObject("transactionInfo");
-    transactionInfo["transactionId"] = txEvent->transaction.transactionId;
+    transactionInfo["transactionId"] = txEvent->transaction->transactionId;
 
     const char *chargingState = nullptr;
     switch (txEvent->chargingState) {
@@ -224,14 +224,14 @@ std::unique_ptr<DynamicJsonDocument> TransactionEvent::createReq() {
         transactionInfo["stoppedReason"] = stoppedReason;
     }
 
-    if (txEvent->transaction.remoteStartId >= 0) {
-        payload["remoteStartId"] = txEvent->transaction.remoteStartId;
+    if (txEvent->transaction->remoteStartId >= 0) {
+        payload["remoteStartId"] = txEvent->transaction->remoteStartId;
     }
 
     if (txEvent->idTokenTransmit) {
         JsonObject idToken = payload.createNestedObject("idToken");
-        idToken["idToken"] = txEvent->transaction.idToken.get();
-        idToken["type"] = txEvent->transaction.idToken.getTypeCstr();
+        idToken["idToken"] = txEvent->transaction->idToken.get();
+        idToken["type"] = txEvent->transaction->idToken.getTypeCstr();
     }
 
     if (txEvent->evse.id >= 0) {
@@ -252,8 +252,8 @@ void TransactionEvent::processConf(JsonObject payload) {
     if (payload.containsKey("idTokenInfo")) {
         if (strcmp(payload["idTokenInfo"]["status"], "Accepted")) {
             MO_DBG_INFO("transaction deAuthorized");
-            txEvent->transaction.active = false;
-            txEvent->transaction.isDeauthorized = true;
+            txEvent->transaction->active = false;
+            txEvent->transaction->isDeauthorized = true;
         }
     }
 }

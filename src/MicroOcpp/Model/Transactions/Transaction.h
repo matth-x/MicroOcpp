@@ -171,6 +171,8 @@ public:
 
 #if MO_ENABLE_V201
 
+#include <memory>
+
 #include <MicroOcpp/Model/Authorization/IdToken.h>
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
 
@@ -279,7 +281,7 @@ public:
     };
 
 //private:
-    Transaction& transaction;
+    std::shared_ptr<Transaction> transaction;
     Type eventType;
     Timestamp timestamp;
     TriggerReason triggerReason;
@@ -298,7 +300,7 @@ public:
     EvseId evse = -1;
     //meterValue not supported
 
-    TransactionEventData(Transaction& transaction, unsigned int seqNo) : transaction(transaction), seqNo(seqNo) { }
+    TransactionEventData(std::shared_ptr<Transaction> transaction, unsigned int seqNo) : transaction(transaction), seqNo(seqNo) { }
 };
 
 } // namespace Ocpp201

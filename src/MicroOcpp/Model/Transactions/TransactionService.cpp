@@ -27,7 +27,24 @@ TransactionService::Evse::Evse(Context& context, TransactionService& txService, 
 }
 
 std::unique_ptr<Ocpp201::Transaction> TransactionService::Evse::allocateTransaction() {
-    return std::unique_ptr<Ocpp201::Transaction>(new Ocpp201::Transaction());
+    auto tx =  std::unique_ptr<Ocpp201::Transaction>(new Ocpp201::Transaction());
+    if (!tx) {
+        // OOM
+        return nullptr;
+    }
+
+    //simple clock-based hash
+    int v = context.getModel().getClock().now() - Timestamp(2020,0,0,0,0,0);
+    unsigned int h = v;
+    h *= 749572633U;
+    h %= 24593209U;
+    for (size_t i = 0; i < sizeof(tx->transactionId) - 3; i += 2) {
+        sprintf(tx->transactionId + i, "%02X", (uint8_t)h);
+        h *= 749572633U;
+        h %= 24593209U;
+    }
+
+    return tx;
 }
 
 void TransactionService::Evse::loop() {
@@ -142,7 +159,7 @@ void TransactionService::Evse::loop() {
         transaction.reset();
         return;
     } else if (txStarted || txStopped || txUpdated) {
-        auto txEvent = std::make_shared<TransactionEventData>(*transaction.get(), transaction->seqNoCounter++);
+        auto txEvent = std::make_shared<TransactionEventData>(transaction, transaction->seqNoCounter++);
         if (!txEvent) {
             // OOM
             transaction->active = false;
@@ -166,6 +183,7 @@ void TransactionService::Evse::loop() {
         }
 
         if (txUpdatedIdToken) {
+            txEvent->transaction->idToken = authorization;
             txEvent->idTokenTransmit = true;
         }
 
@@ -314,6 +332,5 @@ TransactionService::Evse *TransactionService::getEvse(unsigned int evseId) {
         return nullptr;
     }
 }
-
 
 #endif // MO_ENABLE_V201
