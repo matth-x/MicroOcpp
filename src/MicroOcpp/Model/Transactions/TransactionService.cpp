@@ -228,25 +228,24 @@ void TransactionService::Evse::setEvseReadyInput(std::function<bool()> connector
 
 bool TransactionService::Evse::beginAuthorization(IdToken idToken) {
     MO_DBG_DEBUG("begin auth: %s", idToken.get());
-    IdToken idTokenCpy = idToken;
     auto authorize = makeRequest(new Ocpp16::CustomOperation(
             "Authorize",
-            [idTokenCpy] () {
+            [idToken] () {
                 auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
                         JSON_OBJECT_SIZE(3) +
                         JSON_OBJECT_SIZE(2) +
                         MO_IDTOKEN_LEN_MAX + 1));
                 auto payload = doc->to<JsonObject>();
-                payload["idToken"]["idToken"] = idTokenCpy.get();
-                payload["idToken"]["type"] = idTokenCpy.getTypeCstr();
+                payload["idToken"]["idToken"] = idToken.get();
+                payload["idToken"]["type"] = idToken.getTypeCstr();
                 return doc;
-            }, [this, idTokenCpy] (JsonObject response) {
-                if (!strcmp(response["idTokenInfo"]["status"], "Accepted")) {
-                    authorization = idTokenCpy;
+            }, [this, idToken] (JsonObject response) {
+                if (!strcmp(response["idTokenInfo"]["status"] | "_Undefined", "Accepted")) {
+                    authorization = idToken;
                     if (transaction) {
                         transaction->idTokenTransmitted = false;
                     }
-                    MO_DBG_DEBUG("confirmed auth: %s", idTokenCpy.get());
+                    MO_DBG_DEBUG("confirmed auth: %s", idToken.get());
                 }
             }));
     context.initiateRequest(std::move(authorize));

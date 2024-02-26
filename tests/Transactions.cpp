@@ -33,6 +33,17 @@ TEST_CASE( "Transactions" ) {
 
     mocpp_set_timer(custom_timer_cb);
 
+    getOcppContext()->getOperationRegistry().registerOperation("Authorize", [] () {
+        return new Ocpp16::CustomOperation("Authorize",
+            [] (JsonObject) {}, //ignore req
+            [] () {
+                //create conf
+                auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1)));
+                auto payload = doc->to<JsonObject>();
+                payload["idTokenInfo"]["status"] = "Accepted";
+                return doc;
+            });});
+
     loop();
 
     SECTION("Basic transaction") {
