@@ -61,11 +61,15 @@ Please take `examples/ESP/main.cpp` as the starting point for the first project.
 
 Mandatory:
 
-- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
+- [bblanchon/ArduinoJSON](https://github.com/bblanchon/ArduinoJson) (version `6.21`)
 
 If compiled with the Arduino integration:
 
 - [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets) (version `2.4.1`)
+
+If using the built-in certificate store (to enable, set build flag `MO_ENABLE_MBEDTLS=1`):
+
+- [Mbed-TLS/mbedtls](https://github.com/Mbed-TLS/mbedtls) (version `2.28.1`)
 
 In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/MicroOcpp@1.0.0` in the PIO library manager.
 

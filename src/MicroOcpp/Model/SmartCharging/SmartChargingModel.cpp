@@ -480,6 +480,11 @@ bool MicroOcpp::loadChargingSchedule(JsonObject& json, ChargingSchedule& out) {
         return false;
     }
 
+    if (periodJsonArray.size() > CHARGINGSCHEDULEMAXPERIODS) {
+        MO_DBG_WARN("exceed ChargingScheduleMaxPeriods");
+        return false;
+    }
+
     for (JsonObject periodJson : periodJsonArray) {
         out.chargingSchedulePeriod.push_back(ChargingSchedulePeriod());
         if (!loadChargingSchedulePeriod(periodJson, out.chargingSchedulePeriod.back())) {

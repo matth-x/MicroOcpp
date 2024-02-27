@@ -4,6 +4,7 @@
 
 cmake_minimum_required(VERSION 3.15)
 
+set(CMAKE_CXX_STANDARD 11)
 
 set(MO_SRC
     src/MicroOcpp/Core/Configuration.cpp
@@ -30,11 +31,13 @@ set(MO_SRC
     src/MicroOcpp/Operations/ClearChargingProfile.cpp
     src/MicroOcpp/Operations/CustomOperation.cpp
     src/MicroOcpp/Operations/DataTransfer.cpp
+    src/MicroOcpp/Operations/DeleteCertificate.cpp
     src/MicroOcpp/Operations/DiagnosticsStatusNotification.cpp
     src/MicroOcpp/Operations/FirmwareStatusNotification.cpp
     src/MicroOcpp/Operations/GetCompositeSchedule.cpp
     src/MicroOcpp/Operations/GetConfiguration.cpp
     src/MicroOcpp/Operations/GetDiagnostics.cpp
+    src/MicroOcpp/Operations/GetInstalledCertificateIds.cpp
     src/MicroOcpp/Operations/GetLocalListVersion.cpp
     src/MicroOcpp/Operations/GetVariables.cpp
     src/MicroOcpp/Operations/Heartbeat.cpp
@@ -51,6 +54,7 @@ set(MO_SRC
     src/MicroOcpp/Operations/StopTransaction.cpp
     src/MicroOcpp/Operations/TransactionEvent.cpp
     src/MicroOcpp/Operations/TriggerMessage.cpp
+    src/MicroOcpp/Operations/InstallCertificate.cpp
     src/MicroOcpp/Operations/UnlockConnector.cpp
     src/MicroOcpp/Operations/UpdateFirmware.cpp
     src/MicroOcpp/Platform.cpp
@@ -61,6 +65,10 @@ set(MO_SRC
     src/MicroOcpp/Model/Authorization/AuthorizationService.cpp
     src/MicroOcpp/Model/Authorization/IdToken.cpp
     src/MicroOcpp/Model/Boot/BootService.cpp
+    src/MicroOcpp/Model/Certificates/Certificate.cpp
+    src/MicroOcpp/Model/Certificates/Certificate_c.cpp
+    src/MicroOcpp/Model/Certificates/CertificateMbedTLS.cpp
+    src/MicroOcpp/Model/Certificates/CertificateService.cpp
     src/MicroOcpp/Model/ConnectorBase/ConnectorsCommon.cpp
     src/MicroOcpp/Model/ConnectorBase/Connector.cpp
     src/MicroOcpp/Model/ConnectorBase/Notification.cpp
@@ -137,6 +145,7 @@ set(MO_SRC_UNIT
     tests/LocalAuthList.cpp
     tests/Variables.cpp
     tests/Transactions.cpp
+    #tests/Certificates.cpp # add if MbedTLS is available
 )
 
 add_executable(mo_unit_tests
@@ -144,6 +153,14 @@ add_executable(mo_unit_tests
     ${MO_SRC_UNIT}
     ./tests/catch2/catchMain.cpp
 )
+
+# add MbedTLS for testing (TODO integrate properly into build system)
+#add_subdirectory(lib/mbedtls)
+#target_link_libraries(mo_unit_tests PUBLIC 
+#    mbedtls
+#    mbedcrypto
+#    mbedx509
+#)
 
 target_include_directories(mo_unit_tests PUBLIC
     "./tests/catch2"
@@ -164,6 +181,7 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_LocalAuthListMaxLength=8
     MO_SendLocalListMaxLength=4
     MO_ENABLE_V201=1
+    #MO_ENABLE_MBEDTLS=1
 )
 
 target_compile_options(mo_unit_tests PUBLIC

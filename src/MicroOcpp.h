@@ -19,6 +19,7 @@
 #include <MicroOcpp/Model/ConnectorBase/Notification.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
 #include <MicroOcpp/Version.h>
+#include <MicroOcpp/Model/Certificates/Certificate.h>
 
 using MicroOcpp::OnReceiveConfListener;
 using MicroOcpp::OnReceiveReqListener;
@@ -109,7 +110,8 @@ void mocpp_initialize(
             std::shared_ptr<MicroOcpp::FilesystemAdapter> filesystem =
                 MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail), //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
             bool autoRecover = false, //automatically sanitize the local data store when the lib detects recurring crashes. Not recommended during development
-            MicroOcpp::ProtocolVersion version = MicroOcpp::ProtocolVersion(1,6));
+            MicroOcpp::ProtocolVersion version = MicroOcpp::ProtocolVersion(1,6),
+            std::unique_ptr<MicroOcpp::CertificateStore> certStore = nullptr); //optionally use custom Cert Store (default depends on MbedTLS)
 
 /*
  * Stop the OCPP library and release allocated resources.

@@ -19,6 +19,7 @@
 #include <MicroOcpp/Model/Reset/ResetService.h>
 #include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
+#include <MicroOcpp/Model/Certificates/CertificateService.h>
 
 #include <MicroOcpp/Core/Configuration.h>
 
@@ -192,6 +193,15 @@ void Model::setResetService(std::unique_ptr<ResetService> rs) {
 
 ResetService *Model::getResetService() const {
     return resetService.get();
+}
+
+void Model::setCertificateService(std::unique_ptr<CertificateService> cs) {
+    this->certService = std::move(cs);
+    capabilitiesUpdated = true;
+}
+
+CertificateService *Model::getCertificateService() const {
+    return certService.get();
 }
 
 #if MO_ENABLE_V201

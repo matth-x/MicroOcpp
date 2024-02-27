@@ -5,15 +5,18 @@
 #include "MicroOcpp_c.h"
 #include "MicroOcpp.h"
 
+#include <MicroOcpp/Model/Certificates/Certificate_c.h>
+
+#include <MicroOcpp/Platform.h>
 #include <MicroOcpp/Debug.h>
 
 MicroOcpp::Connection *ocppSocket = nullptr;
 
 void ocpp_initialize(OCPP_Connection *conn, const char *chargePointModel, const char *chargePointVendor, struct OCPP_FilesystemOpt fsopt, bool autoRecover) {
-    ocpp_initialize_full(conn, ChargerCredentials(chargePointModel, chargePointVendor), fsopt, autoRecover);
+    ocpp_initialize_full(conn, ChargerCredentials(chargePointModel, chargePointVendor), fsopt, autoRecover, NULL);
 }
 
-void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCredentials, struct OCPP_FilesystemOpt fsopt, bool autoRecover) {
+void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCredentials, struct OCPP_FilesystemOpt fsopt, bool autoRecover, ocpp_certificate_store *certs) {
     if (!conn) {
         MO_DBG_ERR("conn is null");
     }
@@ -22,7 +25,12 @@ void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCre
 
     MicroOcpp::FilesystemOpt adaptFsopt = fsopt;
 
-    mocpp_initialize(*ocppSocket, bootNotificationCredentials, MicroOcpp::makeDefaultFilesystemAdapter(adaptFsopt), autoRecover);
+    std::unique_ptr<MicroOcpp::CertificateStore> certsCwrapper;
+    if (certs) {
+        certsCwrapper = MicroOcpp::makeCertificateStoreCwrapper(certs);
+    }
+
+    mocpp_initialize(*ocppSocket, bootNotificationCredentials, MicroOcpp::makeDefaultFilesystemAdapter(adaptFsopt), autoRecover, std::move(certsCwrapper));
 }
 
 void ocpp_deinitialize() {

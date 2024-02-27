@@ -24,6 +24,7 @@ class AuthorizationService;
 class ReservationService;
 class BootService;
 class ResetService;
+class CertificateService;
 
 #if MO_ENABLE_V201
 class VariableService;
@@ -44,6 +45,7 @@ private:
     std::unique_ptr<ReservationService> reservationService;
     std::unique_ptr<BootService> bootService;
     std::unique_ptr<ResetService> resetService;
+    std::unique_ptr<CertificateService> certService;
 
 #if MO_ENABLE_V201
     std::unique_ptr<VariableService> variableService;
@@ -105,6 +107,9 @@ public:
 
     void setResetService(std::unique_ptr<ResetService> rs);
     ResetService *getResetService() const;
+
+    void setCertificateService(std::unique_ptr<CertificateService> cs);
+    CertificateService *getCertificateService() const;
 
 #if MO_ENABLE_V201
     void setVariableService(std::unique_ptr<VariableService> vs);

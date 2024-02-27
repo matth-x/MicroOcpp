@@ -8,7 +8,7 @@
 /*
  * Version specification of MicroOcpp library (unrelated with the OCPP version)
  */
-#define MO_VERSION "1.0.0"
+#define MO_VERSION "1.1.0"
 
 /*
  * Enable OCPP 2.0.1 support. If enabled, library can be initialized with both v1.6 and v2.0.1. The choice
