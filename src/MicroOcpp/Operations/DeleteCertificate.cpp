@@ -49,9 +49,9 @@ void DeleteCertificate::processReq(JsonObject payload) {
         errorCode = "InternalError";
         return;
     }
-    if (retIN >= sizeof(cert.issuerNameHash) ||
-            retIK >= sizeof(cert.issuerKeyHash) ||
-            retSN >= sizeof(cert.serialNumber)) {
+    if ((size_t)retIN >= sizeof(cert.issuerNameHash) ||
+            (size_t)retIK >= sizeof(cert.issuerKeyHash) ||
+            (size_t)retSN >= sizeof(cert.serialNumber)) {
         errorCode = "FormationViolation";
         return;
     }

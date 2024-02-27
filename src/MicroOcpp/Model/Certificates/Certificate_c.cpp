@@ -92,11 +92,11 @@ public:
             bool success = true;
             int ret;
             ret = snprintf(chd_el.certificateHashData.issuerNameHash, sizeof(chd_el.certificateHashData.issuerNameHash), "%s", it->certificateHashData.issuerNameHash);
-            success &= ret >= 0 && ret < sizeof(chd_el.certificateHashData.issuerNameHash);
+            success &= ret >= 0 && (size_t)ret < sizeof(chd_el.certificateHashData.issuerNameHash);
             ret = snprintf(chd_el.certificateHashData.issuerKeyHash, sizeof(chd_el.certificateHashData.issuerKeyHash), "%s", it->certificateHashData.issuerKeyHash);
-            success &= ret >= 0 && ret < sizeof(chd_el.certificateHashData.issuerKeyHash);
+            success &= ret >= 0 && (size_t)ret < sizeof(chd_el.certificateHashData.issuerKeyHash);
             ret = snprintf(chd_el.certificateHashData.serialNumber, sizeof(chd_el.certificateHashData.serialNumber), "%s", it->certificateHashData.serialNumber);
-            success &= ret >= 0 && ret < sizeof(chd_el.certificateHashData.serialNumber);
+            success &= ret >= 0 && (size_t)ret < sizeof(chd_el.certificateHashData.serialNumber);
 
             if (!success) {
                 MO_DBG_ERR("error copying C-style struct");
@@ -144,11 +144,11 @@ public:
         bool success = true;
         int ret;
         ret = snprintf(ch.issuerNameHash, sizeof(ch.issuerNameHash), "%s", hash.issuerNameHash);
-        success &= ret >= 0 && ret < sizeof(ch.issuerNameHash);
+        success &= ret >= 0 && (size_t)ret < sizeof(ch.issuerNameHash);
         ret = snprintf(ch.issuerKeyHash, sizeof(ch.issuerKeyHash), "%s", hash.issuerKeyHash);
-        success &= ret >= 0 && ret < sizeof(ch.issuerKeyHash);
+        success &= ret >= 0 && (size_t)ret < sizeof(ch.issuerKeyHash);
         ret = snprintf(ch.serialNumber, sizeof(ch.serialNumber), "%s", hash.serialNumber);
-        success &= ret >= 0 && ret < sizeof(ch.serialNumber);
+        success &= ret >= 0 && (size_t)ret < sizeof(ch.serialNumber);
         if (!success) {
             MO_DBG_ERR("error copying C-style struct");
             return DeleteCertificateStatus::Failed;
@@ -161,10 +161,13 @@ public:
         switch (status) {
             case ENUM_DCS_Accepted:
                 dcs = DeleteCertificateStatus::Accepted;
+                break;
             case ENUM_DCS_Failed:
                 dcs = DeleteCertificateStatus::Failed;
+                break;
             case ENUM_DCS_NotFound:
                 dcs = DeleteCertificateStatus::NotFound;
+                break;
             default:
                 MO_DBG_ERR("could not convert status type");
                 return DeleteCertificateStatus::Failed; 
