@@ -180,7 +180,6 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_FILENAME_PREFIX="./mo_store/"
     MO_LocalAuthListMaxLength=8
     MO_SendLocalListMaxLength=4
-    MO_ENABLE_V201=1
     #MO_ENABLE_MBEDTLS=1
 )
 
@@ -188,7 +187,6 @@ target_compile_options(mo_unit_tests PUBLIC
     -O0
     -g
     --coverage
-    -Wall
 )
 
 target_link_options(mo_unit_tests PUBLIC

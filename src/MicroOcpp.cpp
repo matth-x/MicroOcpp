@@ -234,7 +234,7 @@ ChargerCredentials ChargerCredentials::v201(const char *cpModel, const char *cpV
     return res;
 }
 
-void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover, std::unique_ptr<CertificateStore> certStore) {
+void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover, MicroOcpp::ProtocolVersion version, std::unique_ptr<CertificateStore> certStore) {
     if (context) {
         MO_DBG_WARN("already initialized. To reinit, call mocpp_deinitialize() before");
         return;
