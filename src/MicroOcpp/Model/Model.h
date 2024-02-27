@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef MO_MODEL_H
@@ -8,6 +8,7 @@
 #include <memory>
 
 #include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Version.h>
 #include <MicroOcpp/Model/ConnectorBase/Connector.h>
 
 namespace MicroOcpp {
@@ -25,6 +26,11 @@ class BootService;
 class ResetService;
 class CertificateService;
 
+#if MO_ENABLE_V201
+class VariableService;
+class TransactionService;
+#endif
+
 class Model {
 private:
     std::vector<std::unique_ptr<Connector>> connectors;
@@ -40,7 +46,15 @@ private:
     std::unique_ptr<BootService> bootService;
     std::unique_ptr<ResetService> resetService;
     std::unique_ptr<CertificateService> certService;
+
+#if MO_ENABLE_V201
+    std::unique_ptr<VariableService> variableService;
+    std::unique_ptr<TransactionService> transactionService;
+#endif
+
     Clock clock;
+
+    ProtocolVersion version;
 
     bool capabilitiesUpdated = true;
     void updateSupportedStandardProfiles();
@@ -50,7 +64,7 @@ private:
     const uint16_t bootNr = 0; //each boot of this lib has a unique number
 
 public:
-    Model(uint16_t bootNr = 0);
+    Model(ProtocolVersion version = ProtocolVersion(1,6), uint16_t bootNr = 0);
     Model(const Model& rhs) = delete;
     ~Model();
 
@@ -97,7 +111,17 @@ public:
     void setCertificateService(std::unique_ptr<CertificateService> cs);
     CertificateService *getCertificateService() const;
 
+#if MO_ENABLE_V201
+    void setVariableService(std::unique_ptr<VariableService> vs);
+    VariableService *getVariableService() const;
+
+    void setTransactionService(std::unique_ptr<TransactionService> ts);
+    TransactionService *getTransactionService() const;
+#endif
+
     Clock &getClock();
+
+    const ProtocolVersion& getVersion() const;
 
     uint16_t getBootNr();
 };

@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Model/ConnectorBase/Connector.h>
@@ -21,6 +21,7 @@
 #include <MicroOcpp/Model/Metering/MeteringService.h>
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
+#include <MicroOcpp/Model/ConnectorBase/EvseId.h>
 
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 
@@ -29,7 +30,6 @@
 #endif
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
 
 Connector::Connector(Context& context, int connectorId)
         : context(context), model(context.getModel()), connectorId{connectorId} {
@@ -270,7 +270,7 @@ void Connector::loop() {
                     model.getMeteringService()->beginTxMeterData(transaction.get());
                 }
 
-                auto startTx = makeRequest(new StartTransaction(model, transaction));
+                auto startTx = makeRequest(new Ocpp16::StartTransaction(model, transaction));
                 startTx->setTimeout(0);
                 startTx->setOnReceiveConfListener([this] (JsonObject response) {
                     //fetch authorization status from StartTransaction.conf() for user notification
@@ -334,9 +334,9 @@ void Connector::loop() {
                 std::unique_ptr<Request> stopTx;
 
                 if (stopTxData) {
-                    stopTx = makeRequest(new StopTransaction(model, std::move(transaction), stopTxData->retrieveStopTxData()));
+                    stopTx = makeRequest(new Ocpp16::StopTransaction(model, std::move(transaction), stopTxData->retrieveStopTxData()));
                 } else {
-                    stopTx = makeRequest(new StopTransaction(model, std::move(transaction)));
+                    stopTx = makeRequest(new Ocpp16::StopTransaction(model, std::move(transaction)));
                 }
                 stopTx->setTimeout(0);
                 context.initiateRequest(std::move(stopTx));
@@ -366,25 +366,41 @@ void Connector::loop() {
 
     auto status = getStatus();
 
-    for (auto i = std::min(errorDataInputs.size(), trackErrorDataInputs.size()); i >= 1; i--) {
-        auto index = i - 1;
-        auto error = errorDataInputs[index].operator()();
-        if (error.isError && !trackErrorDataInputs[index]) {
-            //new error
-            auto statusNotification = makeRequest(
-                    new StatusNotification(connectorId, status, model.getClock().now(), error));
-            statusNotification->setTimeout(0);
-            context.initiateRequest(std::move(statusNotification));
+    if (model.getVersion().major == 1) {
+        //OCPP 1.6: use StatusNotification to send error codes
+        for (auto i = std::min(errorDataInputs.size(), trackErrorDataInputs.size()); i >= 1; i--) {
+            auto index = i - 1;
+            auto error = errorDataInputs[index].operator()();
+            if (error.isError && !trackErrorDataInputs[index]) {
+                //new error
+                auto statusNotification = makeRequest(
+                        new Ocpp16::StatusNotification(connectorId, status, model.getClock().now(), error));
+                statusNotification->setTimeout(0);
+                context.initiateRequest(std::move(statusNotification));
 
-            currentStatus = status;
-            reportedStatus = status;
-            trackErrorDataInputs[index] = true;
-        } else if (!error.isError && trackErrorDataInputs[index]) {
-            //reset error
-            trackErrorDataInputs[index] = false;
+                currentStatus = status;
+                reportedStatus = status;
+                trackErrorDataInputs[index] = true;
+            } else if (!error.isError && trackErrorDataInputs[index]) {
+                //reset error
+                trackErrorDataInputs[index] = false;
+            }
         }
     }
-    
+
+#if MO_ENABLE_V201
+    if (model.getVersion().major == 2) {
+        //OCPP 2.0.1: map v1.6 status onto v2.0.1
+        if (status == ChargePointStatus::Preparing ||
+                status == ChargePointStatus::Charging ||
+                status == ChargePointStatus::SuspendedEV ||
+                status == ChargePointStatus::SuspendedEVSE ||
+                status == ChargePointStatus::Finishing) {
+            status = ChargePointStatus::Occupied;
+        }
+    }
+#endif
+
     if (status != currentStatus) {
         currentStatus = status;
         t_statusTransition = mocpp_tick_ms();
@@ -399,8 +415,15 @@ void Connector::loop() {
         Timestamp reportedTimestamp = model.getClock().now();
         reportedTimestamp -= (mocpp_tick_ms() - t_statusTransition) / 1000UL;
 
-        auto statusNotification = makeRequest(
-                new StatusNotification(connectorId, reportedStatus, reportedTimestamp, getErrorCode()));
+        auto statusNotification =
+            #if MO_ENABLE_V201
+            model.getVersion().major == 2 ?
+                makeRequest(
+                    new Ocpp201::StatusNotification(connectorId, reportedStatus, reportedTimestamp)) :
+            #endif //MO_ENABLE_V201
+                makeRequest(
+                    new Ocpp16::StatusNotification(connectorId, reportedStatus, reportedTimestamp, getErrorCode()));
+
         statusNotification->setTimeout(0);
         context.initiateRequest(std::move(statusNotification));
         return;
@@ -621,7 +644,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
     transaction->commit();
 
-    auto authorize = makeRequest(new Authorize(context.getModel(), idTag));
+    auto authorize = makeRequest(new Ocpp16::Authorize(context.getModel(), idTag));
     authorize->setTimeout(authorizationTimeoutInt && authorizationTimeoutInt->getInt() > 0 ? authorizationTimeoutInt->getInt() * 1000UL : 20UL * 1000UL);
     auto tx = transaction;
     authorize->setOnReceiveConfListener([this, tx] (JsonObject response) {

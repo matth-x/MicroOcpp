@@ -30,7 +30,7 @@ void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCre
         certsCwrapper = MicroOcpp::makeCertificateStoreCwrapper(certs);
     }
 
-    mocpp_initialize(*ocppSocket, bootNotificationCredentials, MicroOcpp::makeDefaultFilesystemAdapter(adaptFsopt), autoRecover, std::move(certsCwrapper));
+    mocpp_initialize(*ocppSocket, bootNotificationCredentials, MicroOcpp::makeDefaultFilesystemAdapter(adaptFsopt), autoRecover, MicroOcpp::ProtocolVersion(1,6),std::move(certsCwrapper));
 }
 
 void ocpp_deinitialize() {

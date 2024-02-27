@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef STATUSNOTIFICATION_H
@@ -9,8 +9,12 @@
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
+#include <MicroOcpp/Version.h>
 
 namespace MicroOcpp {
+    
+const char *cstrFromOcppEveState(ChargePointStatus state);
+
 namespace Ocpp16 {
 
 class StatusNotification : public Operation {
@@ -33,8 +37,34 @@ public:
     std::unique_ptr<DynamicJsonDocument> createConf() override;
 };
 
-const char *cstrFromOcppEveState(ChargePointStatus state);
+} // namespace Ocpp16
+} // namespace MicroOcpp
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+#if MO_ENABLE_V201
+
+#include <MicroOcpp/Model/ConnectorBase/EvseId.h>
+
+namespace MicroOcpp {
+namespace Ocpp201 {
+
+class StatusNotification : public Operation {
+private:
+    EvseId evseId;
+    Timestamp timestamp;
+    ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
+public:
+    StatusNotification(EvseId evseId, ChargePointStatus currentStatus, const Timestamp &timestamp);
+
+    const char* getOperationType() override;
+
+    std::unique_ptr<DynamicJsonDocument> createReq() override;
+
+    void processConf(JsonObject payload) override;
+};
+
+} // namespace Ocpp201
+} // namespace MicroOcpp
+
+#endif //MO_ENABLE_V201
+
 #endif

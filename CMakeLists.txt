@@ -39,6 +39,7 @@ set(MO_SRC
     src/MicroOcpp/Operations/GetDiagnostics.cpp
     src/MicroOcpp/Operations/GetInstalledCertificateIds.cpp
     src/MicroOcpp/Operations/GetLocalListVersion.cpp
+    src/MicroOcpp/Operations/GetVariables.cpp
     src/MicroOcpp/Operations/Heartbeat.cpp
     src/MicroOcpp/Operations/MeterValues.cpp
     src/MicroOcpp/Operations/RemoteStartTransaction.cpp
@@ -47,9 +48,11 @@ set(MO_SRC
     src/MicroOcpp/Operations/Reset.cpp
     src/MicroOcpp/Operations/SendLocalList.cpp
     src/MicroOcpp/Operations/SetChargingProfile.cpp
+    src/MicroOcpp/Operations/SetVariables.cpp
     src/MicroOcpp/Operations/StartTransaction.cpp
     src/MicroOcpp/Operations/StatusNotification.cpp
     src/MicroOcpp/Operations/StopTransaction.cpp
+    src/MicroOcpp/Operations/TransactionEvent.cpp
     src/MicroOcpp/Operations/TriggerMessage.cpp
     src/MicroOcpp/Operations/InstallCertificate.cpp
     src/MicroOcpp/Operations/UnlockConnector.cpp
@@ -60,6 +63,7 @@ set(MO_SRC
     src/MicroOcpp/Model/Authorization/AuthorizationData.cpp
     src/MicroOcpp/Model/Authorization/AuthorizationList.cpp
     src/MicroOcpp/Model/Authorization/AuthorizationService.cpp
+    src/MicroOcpp/Model/Authorization/IdToken.cpp
     src/MicroOcpp/Model/Boot/BootService.cpp
     src/MicroOcpp/Model/Certificates/Certificate.cpp
     src/MicroOcpp/Model/Certificates/Certificate_c.cpp
@@ -83,7 +87,11 @@ set(MO_SRC
     src/MicroOcpp/Model/SmartCharging/SmartChargingService.cpp
     src/MicroOcpp/Model/Transactions/Transaction.cpp
     src/MicroOcpp/Model/Transactions/TransactionDeserialize.cpp
+    src/MicroOcpp/Model/Transactions/TransactionService.cpp
     src/MicroOcpp/Model/Transactions/TransactionStore.cpp
+    src/MicroOcpp/Model/Variables/Variable.cpp
+    src/MicroOcpp/Model/Variables/VariableContainer.cpp
+    src/MicroOcpp/Model/Variables/VariableService.cpp
     src/MicroOcpp.cpp
     src/MicroOcpp_c.cpp
 )
@@ -135,6 +143,8 @@ set(MO_SRC_UNIT
     tests/Configuration.cpp
     tests/Reservation.cpp
     tests/LocalAuthList.cpp
+    tests/Variables.cpp
+    tests/Transactions.cpp
     #tests/Certificates.cpp # add if MbedTLS is available
 )
 
