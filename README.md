@@ -67,7 +67,7 @@ If compiled with the Arduino integration:
 
 - [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets) (version `2.4.1`)
 
-If using the built-in certificate store (experimental; to enable set build flag `MO_ENABLE_MBEDTLS=1`):
+If using the built-in certificate store (to enable, set build flag `MO_ENABLE_MBEDTLS=1`):
 
 - [Mbed-TLS/mbedtls](https://github.com/Mbed-TLS/mbedtls) (version `2.28.1`)
 
