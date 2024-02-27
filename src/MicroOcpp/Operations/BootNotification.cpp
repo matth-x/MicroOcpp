@@ -6,6 +6,7 @@
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Boot/BootService.h>
 #include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Version.h>
 #include <MicroOcpp/Debug.h>
 
 #include <string.h>
@@ -22,16 +23,16 @@ const char* BootNotification::getOperationType(){
 
 std::unique_ptr<DynamicJsonDocument> BootNotification::createReq() {
     if (credentials) {
-        std::unique_ptr<DynamicJsonDocument> doc;
+#if MO_ENABLE_V201
         if (model.getVersion().major == 2) {
-            doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2) + credentials->memoryUsage()));
+            std::unique_ptr<DynamicJsonDocument> doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2) + credentials->memoryUsage()));
             JsonObject payload = doc->to<JsonObject>();
             payload["reason"] = "PowerUp";
             payload["chargingStation"] = *credentials;
-        } else {
-            doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(*credentials));
+            return doc;
         }
-        return doc;
+#endif
+        return std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(*credentials));
     } else {
         MO_DBG_ERR("payload undefined");
         return createEmptyDocument();

@@ -26,9 +26,6 @@ namespace MicroOcpp {
 struct ProtocolVersion {
     const int major, minor, patch;
     ProtocolVersion(int major = 1, int minor = 6, int patch = 0) : major(major), minor(minor), patch(patch) { }
-
-    inline bool v16() const {return major == 1 && minor == 6;}
-    inline bool v2() const {return major == 2;}
 };
 
 }

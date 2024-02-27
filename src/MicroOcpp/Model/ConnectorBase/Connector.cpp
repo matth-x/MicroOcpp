@@ -21,6 +21,7 @@
 #include <MicroOcpp/Model/Metering/MeteringService.h>
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
+#include <MicroOcpp/Model/ConnectorBase/EvseId.h>
 
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 
@@ -365,7 +366,7 @@ void Connector::loop() {
 
     auto status = getStatus();
 
-    if (model.getVersion().v16()) {
+    if (model.getVersion().major == 1) {
         //OCPP 1.6: use StatusNotification to send error codes
         for (auto i = std::min(errorDataInputs.size(), trackErrorDataInputs.size()); i >= 1; i--) {
             auto index = i - 1;
@@ -387,16 +388,18 @@ void Connector::loop() {
         }
     }
 
-    if (model.getVersion().v2()) {
-        //OCPP 2.0.1: use Preparing as alias for the Occupied state
+#if MO_ENABLE_V201
+    if (model.getVersion().major == 2) {
+        //OCPP 2.0.1: map v1.6 status onto v2.0.1
         if (status == ChargePointStatus::Preparing ||
                 status == ChargePointStatus::Charging ||
                 status == ChargePointStatus::SuspendedEV ||
                 status == ChargePointStatus::SuspendedEVSE ||
                 status == ChargePointStatus::Finishing) {
-            status = ChargePointStatus::Preparing;
+            status = ChargePointStatus::Occupied;
         }
     }
+#endif
 
     if (status != currentStatus) {
         currentStatus = status;
@@ -414,16 +417,9 @@ void Connector::loop() {
 
         auto statusNotification =
             #if MO_ENABLE_V201
-            model.getVersion().v2() ?
+            model.getVersion().major == 2 ?
                 makeRequest(
-                    new Ocpp201::StatusNotification(connectorId,
-                            reportedStatus == ChargePointStatus::Available ? Ocpp201::ConnectorStatus::Available :
-                                reportedStatus == ChargePointStatus::Preparing ? Ocpp201::ConnectorStatus::Occupied : 
-                                reportedStatus == ChargePointStatus::Reserved ? Ocpp201::ConnectorStatus::Reserved : 
-                                reportedStatus == ChargePointStatus::Unavailable ? Ocpp201::ConnectorStatus::Unavailable : 
-                                reportedStatus == ChargePointStatus::Faulted ? Ocpp201::ConnectorStatus::Faulted : 
-                                Ocpp201::ConnectorStatus::NOT_SET,
-                            reportedTimestamp, 1)) :
+                    new Ocpp201::StatusNotification(connectorId, reportedStatus, reportedTimestamp)) :
             #endif //MO_ENABLE_V201
                 makeRequest(
                     new Ocpp16::StatusNotification(connectorId, reportedStatus, reportedTimestamp, getErrorCode()));

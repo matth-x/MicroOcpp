@@ -12,6 +12,9 @@
 #include <MicroOcpp/Version.h>
 
 namespace MicroOcpp {
+    
+const char *cstrFromOcppEveState(ChargePointStatus state);
+
 namespace Ocpp16 {
 
 class StatusNotification : public Operation {
@@ -34,22 +37,23 @@ public:
     std::unique_ptr<DynamicJsonDocument> createConf() override;
 };
 
-const char *cstrFromOcppEveState(ChargePointStatus state);
-
-} //end namespace Ocpp16
+} // namespace Ocpp16
+} // namespace MicroOcpp
 
 #if MO_ENABLE_V201
 
+#include <MicroOcpp/Model/ConnectorBase/EvseId.h>
+
+namespace MicroOcpp {
 namespace Ocpp201 {
 
 class StatusNotification : public Operation {
 private:
+    EvseId evseId;
     Timestamp timestamp;
-    ConnectorStatus currentStatus = ConnectorStatus::NOT_SET;
-    int evseId;
-    int connectorId;
+    ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
 public:
-    StatusNotification(int evseId, ConnectorStatus currentStatus, const Timestamp &timestamp, int connectorId);
+    StatusNotification(EvseId evseId, ChargePointStatus currentStatus, const Timestamp &timestamp);
 
     const char* getOperationType() override;
 
@@ -58,11 +62,9 @@ public:
     void processConf(JsonObject payload) override;
 };
 
-const char *cstrFromOcppEveState(ConnectorStatus state);
-
-} //end namespace Ocpp201
+} // namespace Ocpp201
+} // namespace MicroOcpp
 
 #endif //MO_ENABLE_V201
 
-} //end namespace MicroOcpp
 #endif

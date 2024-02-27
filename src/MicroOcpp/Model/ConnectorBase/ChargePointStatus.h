@@ -5,6 +5,8 @@
 #ifndef OCPP_EVSE_STATE
 #define OCPP_EVSE_STATE
 
+#include <MicroOcpp/Version.h>
+
 namespace MicroOcpp {
 
 enum class ChargePointStatus {
@@ -17,21 +19,13 @@ enum class ChargePointStatus {
     Reserved,
     Unavailable,
     Faulted,
-    NOT_SET //internal value for "undefined"
-};
 
-namespace Ocpp201 {
-
-enum class ConnectorStatus {
-    Available,
+#if MO_ENABLE_V201
     Occupied,
-    Reserved,
-    Unavailable,
-    Faulted,
+#endif
+
     NOT_SET //internal value for "undefined"
 };
-
-} //end namespace Ocpp201
 
 } //end namespace MicroOcpp
 
