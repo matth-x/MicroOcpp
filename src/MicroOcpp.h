@@ -72,10 +72,8 @@ struct ChargerCredentials {
             const char *imsi = nullptr);
     
     /*
-    * OCPP 2.0.1 compatible charger credentials.
-    *
-    * DEPRECATED: This construction method is only temporary for testing v2.0.1. It will be removed again soon and the original constructor will suit both v1.6 and v2.0.1
-    */
+     * OCPP 2.0.1 compatible charger credentials. Use this if initializing the library with ProtocolVersion(2,0,1)
+     */
     static ChargerCredentials v201(
             const char *chargePointModel = "Demo Charger",
             const char *chargePointVendor = "My Company Ltd.",
