@@ -1,3 +1,7 @@
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
 #ifndef MO_GETINSTALLEDCERTIFICATEIDS_H
 #define MO_GETINSTALLEDCERTIFICATEIDS_H
 
