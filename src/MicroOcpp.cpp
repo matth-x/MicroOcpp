@@ -17,6 +17,8 @@
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Model/Boot/BootService.h>
 #include <MicroOcpp/Model/Reset/ResetService.h>
+#include <MicroOcpp/Model/Certificates/CertificateService.h>
+#include <MicroOcpp/Model/Certificates/CertificateMbedTLS.h> //default CertStore implementation depends on MbedTLS
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Core/OperationRegistry.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -199,7 +201,7 @@ ChargerCredentials::ChargerCredentials(const char *cpModel, const char *cpVendor
     }
 }
 
-void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover) {
+void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover, std::unique_ptr<CertificateStore> certStore) {
     if (context) {
         MO_DBG_WARN("already initialized. To reinit, call mocpp_deinitialize() before");
         return;
@@ -256,6 +258,21 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new ReservationService(*context, MO_NUMCONNECTORS)));
     model.setResetService(std::unique_ptr<ResetService>(
         new ResetService(*context)));
+
+    std::unique_ptr<CertificateStore> certStoreUse;
+    if (certStore) {
+        certStoreUse = std::move(certStore);
+    }
+#if MO_ENABLE_MBEDTLS
+    else {
+        certStoreUse = makeCertificateStoreMbedTLS(filesystem);
+    }
+#endif
+
+    if (certStoreUse) {
+        model.setCertificateService(std::unique_ptr<CertificateService>(
+            new CertificateService(*context, std::move(certStoreUse))));
+    }
 
 #if !defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
     model.setFirmwareService(std::unique_ptr<FirmwareService>(

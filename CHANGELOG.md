@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- Operation GetInstalledCertificateIds (UC M03)
+- Operation DeleteCertificate (UC M04)
+- Operation InstallCertificate (UC M05)
+
 ### Fixed
 
 - Allow `nullptr` as parameter for `mocpp_set_console_out` ([#224](https://github.com/matth-x/MicroOcpp/issues/224))

@@ -23,6 +23,7 @@ class AuthorizationService;
 class ReservationService;
 class BootService;
 class ResetService;
+class CertificateService;
 
 class Model {
 private:
@@ -38,6 +39,7 @@ private:
     std::unique_ptr<ReservationService> reservationService;
     std::unique_ptr<BootService> bootService;
     std::unique_ptr<ResetService> resetService;
+    std::unique_ptr<CertificateService> certService;
     Clock clock;
 
     bool capabilitiesUpdated = true;
@@ -91,6 +93,9 @@ public:
 
     void setResetService(std::unique_ptr<ResetService> rs);
     ResetService *getResetService() const;
+
+    void setCertificateService(std::unique_ptr<CertificateService> cs);
+    CertificateService *getCertificateService() const;
 
     Clock &getClock();
 

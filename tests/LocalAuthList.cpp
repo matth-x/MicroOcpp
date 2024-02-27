@@ -152,7 +152,7 @@ TEST_CASE( "LocalAuth" ) {
 
         REQUIRE( connector->getStatus() == ChargePointStatus::Available );
 
-        ulong t_before = mocpp_tick_ms();
+        unsigned long t_before = mocpp_tick_ms();
 
         beginTransaction("mIdTag");
         loop();
@@ -219,7 +219,7 @@ TEST_CASE( "LocalAuth" ) {
 
         REQUIRE( connector->getStatus() == ChargePointStatus::Available );
 
-        ulong t_before = mocpp_tick_ms();
+        unsigned long t_before = mocpp_tick_ms();
 
         beginTransaction("unknownIdTag");
         loop();
@@ -327,7 +327,7 @@ TEST_CASE( "LocalAuth" ) {
 
         REQUIRE( connector->getStatus() == ChargePointStatus::Available );
 
-        ulong t_before = mocpp_tick_ms();
+        unsigned long t_before = mocpp_tick_ms();
 
         beginTransaction("mIdTagExpired");
         loop();
