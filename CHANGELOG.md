@@ -13,6 +13,10 @@
     - Transactions (preview only), UCs E01 - E12 ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
     - StatusNotification compatibility ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
 
+### Fixed
+
+- Make field localAuthorizationList in SendLocalList optional
+
 ## [1.1.0] - 2024-02-27
 
 ### Fixed
