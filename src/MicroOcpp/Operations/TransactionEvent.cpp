@@ -237,8 +237,8 @@ std::unique_ptr<DynamicJsonDocument> TransactionEvent::createReq() {
     if (txEvent->evse.id >= 0) {
         JsonObject evse = payload.createNestedObject("evse");
         evse["id"] = txEvent->evse.id;
+        evse["connectorId"] = 1;
         if (txEvent->evse.connectorId >= 0) {
-            evse["connectorId"] = txEvent->evse.connectorId;
         }
     }
 
@@ -256,6 +256,16 @@ void TransactionEvent::processConf(JsonObject payload) {
             txEvent->transaction->isDeauthorized = true;
         }
     }
+}
+
+void TransactionEvent::processReq(JsonObject payload) {
+    /**
+     * Ignore Contents of this Req-message, because this is for debug purposes only
+     */
+}
+
+std::unique_ptr<DynamicJsonDocument> TransactionEvent::createConf() {
+    return createEmptyDocument();
 }
 
 #endif // MO_ENABLE_V201
