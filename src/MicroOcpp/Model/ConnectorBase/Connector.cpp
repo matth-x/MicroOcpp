@@ -75,42 +75,45 @@ Connector::~Connector() {
 }
 
 ChargePointStatus Connector::getStatus() {
+
+    ChargePointStatus res = ChargePointStatus::NOT_SET;
+
     /*
     * Handle special case: This is the Connector for the whole CP (i.e. connectorId=0) --> only states Available, Unavailable, Faulted are possible
     */
     if (connectorId == 0) {
         if (isFaulted()) {
-            return ChargePointStatus::Faulted;
+            res = ChargePointStatus::Faulted;
         } else if (!isOperative()) {
-            return ChargePointStatus::Unavailable;
+            res = ChargePointStatus::Unavailable;
         } else {
-            return ChargePointStatus::Available;
+            res = ChargePointStatus::Available;
         }
+        return res;
     }
 
     if (isFaulted()) {
-        return ChargePointStatus::Faulted;
+        res = ChargePointStatus::Faulted;
     } else if (!isOperative()) {
-        return ChargePointStatus::Unavailable;
+        res = ChargePointStatus::Unavailable;
     } else if (transaction && transaction->isRunning()) {
         //Transaction is currently running
         if (connectorPluggedInput && !connectorPluggedInput()) { //special case when StopTransactionOnEVSideDisconnect is false
-            return ChargePointStatus::SuspendedEV;
-        }
-        if (!ocppPermitsCharge() ||
+            res = ChargePointStatus::SuspendedEV;
+        } else if (!ocppPermitsCharge() ||
                 (evseReadyInput && !evseReadyInput())) { 
-            return ChargePointStatus::SuspendedEVSE;
+            res = ChargePointStatus::SuspendedEVSE;
+        } else if (evReadyInput && !evReadyInput()) {
+            res = ChargePointStatus::SuspendedEV;
+        } else {
+            res = ChargePointStatus::Charging;
         }
-        if (evReadyInput && !evReadyInput()) {
-            return ChargePointStatus::SuspendedEV;
-        }
-        return ChargePointStatus::Charging;
     } else if (model.getReservationService() && model.getReservationService()->getReservation(connectorId)) {
-        return ChargePointStatus::Reserved;
+        res = ChargePointStatus::Reserved;
     } else if ((!transaction || !transaction->isActive()) &&                 //no transaction preparation
                (!connectorPluggedInput || !connectorPluggedInput()) &&   //no vehicle plugged
                (!occupiedInput || !occupiedInput())) {                       //occupied override clear
-        return ChargePointStatus::Available;
+        res = ChargePointStatus::Available;
     } else {
         /*
          * Either in Preparing or Finishing state. Only way to know is from previous state
@@ -120,14 +123,31 @@ ChargePointStatus Connector::getStatus() {
                 previous == ChargePointStatus::Charging ||
                 previous == ChargePointStatus::SuspendedEV ||
                 previous == ChargePointStatus::SuspendedEVSE) {
-            return ChargePointStatus::Finishing;
+            res = ChargePointStatus::Finishing;
         } else {
-            return ChargePointStatus::Preparing;
+            res = ChargePointStatus::Preparing;
         }
     }
 
-    MO_DBG_DEBUG("status undefined");
-    return ChargePointStatus::Faulted; //internal error
+#if MO_ENABLE_V201
+    if (model.getVersion().major == 2) {
+        //OCPP 2.0.1: map v1.6 status onto v2.0.1
+        if (res == ChargePointStatus::Preparing ||
+                res == ChargePointStatus::Charging ||
+                res == ChargePointStatus::SuspendedEV ||
+                res == ChargePointStatus::SuspendedEVSE ||
+                res == ChargePointStatus::Finishing) {
+            res = ChargePointStatus::Occupied;
+        }
+    }
+#endif
+
+    if (res == ChargePointStatus::NOT_SET) {
+        MO_DBG_DEBUG("status undefined");
+        return ChargePointStatus::Faulted; //internal error
+    }
+
+    return res;
 }
 
 bool Connector::ocppPermitsCharge() {
@@ -387,19 +407,6 @@ void Connector::loop() {
             }
         }
     }
-
-#if MO_ENABLE_V201
-    if (model.getVersion().major == 2) {
-        //OCPP 2.0.1: map v1.6 status onto v2.0.1
-        if (status == ChargePointStatus::Preparing ||
-                status == ChargePointStatus::Charging ||
-                status == ChargePointStatus::SuspendedEV ||
-                status == ChargePointStatus::SuspendedEVSE ||
-                status == ChargePointStatus::Finishing) {
-            status = ChargePointStatus::Occupied;
-        }
-    }
-#endif
 
     if (status != currentStatus) {
         currentStatus = status;
