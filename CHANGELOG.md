@@ -17,7 +17,7 @@
 
 - Make field localAuthorizationList in SendLocalList optional
 
-## [1.1.0] - 2024-02-27
+## [1.0.1] - 2024-02-27
 
 ### Fixed
 
