@@ -24,7 +24,7 @@ private:
     Model& model;
     std::shared_ptr<TransactionEventData> txEvent;
 
-    const char *errorCode;
+    const char *errorCode = nullptr;
 public:
 
     TransactionEvent(Model& model, std::shared_ptr<TransactionEventData> txEvent);
@@ -36,6 +36,10 @@ public:
     void processConf(JsonObject payload) override;
 
     const char *getErrorCode() override {return errorCode;}
+
+    void processReq(JsonObject payload) override;
+
+    std::unique_ptr<DynamicJsonDocument> createConf() override;
 };
 
 } //end namespace Ocpp201

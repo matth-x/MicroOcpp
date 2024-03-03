@@ -52,6 +52,8 @@ TEST_CASE( "Transactions" ) {
 
     SECTION("Basic transaction") {
 
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
+
         MO_DBG_DEBUG("plug EV");
         setConnectorPluggedInput([] () {return true;});
 
@@ -72,6 +74,9 @@ TEST_CASE( "Transactions" ) {
 
         loop();
 
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction()->started );
+        REQUIRE( !context->getModel().getTransactionService()->getEvse(1)->getTransaction()->stopped );
+
         MO_DBG_DEBUG("EV idle");
         setEvReadyInput([] () {return false;});
 
@@ -91,6 +96,9 @@ TEST_CASE( "Transactions" ) {
         setConnectorPluggedInput([] () {return false;});
 
         loop();
+
+        REQUIRE( (context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr || 
+                  context->getModel().getTransactionService()->getEvse(1)->getTransaction()->stopped));
     }
 
     mocpp_deinitialize();

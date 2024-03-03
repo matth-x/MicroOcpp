@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <string>
@@ -21,8 +21,10 @@
 #include <MicroOcpp/Operations/StartTransaction.h>
 #include <MicroOcpp/Operations/StatusNotification.h>
 #include <MicroOcpp/Operations/StopTransaction.h>
+#include <MicroOcpp/Operations/TransactionEvent.h>
 
 #include <MicroOcpp/Debug.h>
+#include <MicroOcpp/Version.h>
 
 using namespace MicroOcpp;
 
@@ -61,14 +63,27 @@ ConnectorsCommon::ConnectorsCommon(Context& context, unsigned int numConn, std::
      * is connected with a WebSocket echo server, let it reply to its own requests.
      * Mocking an OCPP Server on the same device makes running (unit) tests easier.
      */
-    context.getOperationRegistry().registerOperation("Authorize", [&context] () {
-        return new Ocpp16::Authorize(context.getModel(), "");});
-    context.getOperationRegistry().registerOperation("StartTransaction", [&context] () {
-        return new Ocpp16::StartTransaction(context.getModel(), nullptr);});
+#if MO_ENABLE_V201
+    if (context.getVersion().major == 2) {
+        // OCPP 2.0.1 compliant echo messages
+        context.getOperationRegistry().registerOperation("Authorize", [&context] () {
+            return new Ocpp201::Authorize(context.getModel(), "");});
+        context.getOperationRegistry().registerOperation("TransactionEvent", [&context] () {
+            return new Ocpp201::TransactionEvent(context.getModel(), nullptr);});
+    } else
+#endif //MO_ENABLE_V201
+    {
+        // OCPP 1.6 compliant echo messages
+        context.getOperationRegistry().registerOperation("Authorize", [&context] () {
+            return new Ocpp16::Authorize(context.getModel(), "");});
+        context.getOperationRegistry().registerOperation("StartTransaction", [&context] () {
+            return new Ocpp16::StartTransaction(context.getModel(), nullptr);});
+        context.getOperationRegistry().registerOperation("StopTransaction", [&context] () {
+            return new Ocpp16::StopTransaction(context.getModel(), nullptr);});
+    }
+    // OCPP 1.6 + 2.0.1 compliant echo messages
     context.getOperationRegistry().registerOperation("StatusNotification", [&context] () {
         return new Ocpp16::StatusNotification(-1, ChargePointStatus::NOT_SET, Timestamp());});
-    context.getOperationRegistry().registerOperation("StopTransaction", [&context] () {
-        return new Ocpp16::StopTransaction(context.getModel(), nullptr);});
 }
 
 void ConnectorsCommon::loop() {
