@@ -10,7 +10,8 @@
 
 using namespace MicroOcpp;
 
-namespace MicroOcpp::Ocpp16 {
+namespace MicroOcpp {
+namespace Ocpp16 {
 
 Authorize::Authorize(Model& model, const char *idTagIn) : model(model) {
     if (idTagIn && strnlen(idTagIn, IDTAG_LEN_MAX + 2) <= IDTAG_LEN_MAX) {
@@ -60,11 +61,13 @@ std::unique_ptr<DynamicJsonDocument> Authorize::createConf(){
     return doc;
 }
 
-} //namespace MicroOcpp::Ocpp16
+} // namespace Ocpp16
+} // namespace MicroOcpp
 
 #if MO_ENABLE_V201
 
-namespace MicroOcpp::Ocpp201 {
+namespace MicroOcpp {
+namespace Ocpp201 {
 
 Authorize::Authorize(Model& model, const IdToken& idToken) : model(model) {
     this->idToken = idToken;
@@ -112,6 +115,7 @@ std::unique_ptr<DynamicJsonDocument> Authorize::createConf(){
     return doc;
 }
 
-} //namespace MicroOcpp::Ocpp201
+} // namespace Ocpp201
+} // namespace MicroOcpp
 
 #endif //MO_ENABLE_V201
