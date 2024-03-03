@@ -53,67 +53,67 @@ std::unique_ptr<DynamicJsonDocument> TransactionEvent::createReq() {
 
     const char *triggerReason = "";
     switch(txEvent->triggerReason) {
-        case TransactionEventData::TriggerReason::Authorized:
+        case TransactionEventTriggerReason::Authorized:
             triggerReason = "Authorized";
             break;
-        case TransactionEventData::TriggerReason::CablePluggedIn:
+        case TransactionEventTriggerReason::CablePluggedIn:
             triggerReason = "CablePluggedIn";
             break;
-        case TransactionEventData::TriggerReason::ChargingRateChanged:
+        case TransactionEventTriggerReason::ChargingRateChanged:
             triggerReason = "ChargingRateChanged";
             break;
-        case TransactionEventData::TriggerReason::ChargingStateChanged:
+        case TransactionEventTriggerReason::ChargingStateChanged:
             triggerReason = "ChargingStateChanged";
             break;
-        case TransactionEventData::TriggerReason::Deauthorized:
+        case TransactionEventTriggerReason::Deauthorized:
             triggerReason = "Deauthorized";
             break;
-        case TransactionEventData::TriggerReason::EnergyLimitReached:
+        case TransactionEventTriggerReason::EnergyLimitReached:
             triggerReason = "EnergyLimitReached";
             break;
-        case TransactionEventData::TriggerReason::EVCommunicationLost:
+        case TransactionEventTriggerReason::EVCommunicationLost:
             triggerReason = "EVCommunicationLost";
             break;
-        case TransactionEventData::TriggerReason::EVConnectTimeout:
+        case TransactionEventTriggerReason::EVConnectTimeout:
             triggerReason = "EVConnectTimeout";
             break;
-        case TransactionEventData::TriggerReason::MeterValueClock:
+        case TransactionEventTriggerReason::MeterValueClock:
             triggerReason = "MeterValueClock";
             break;
-        case TransactionEventData::TriggerReason::MeterValuePeriodic:
+        case TransactionEventTriggerReason::MeterValuePeriodic:
             triggerReason = "MeterValuePeriodic";
             break;
-        case TransactionEventData::TriggerReason::TimeLimitReached:
+        case TransactionEventTriggerReason::TimeLimitReached:
             triggerReason = "TimeLimitReached";
             break;
-        case TransactionEventData::TriggerReason::Trigger:
+        case TransactionEventTriggerReason::Trigger:
             triggerReason = "Trigger";
             break;
-        case TransactionEventData::TriggerReason::UnlockCommand:
+        case TransactionEventTriggerReason::UnlockCommand:
             triggerReason = "UnlockCommand";
             break;
-        case TransactionEventData::TriggerReason::StopAuthorized:
+        case TransactionEventTriggerReason::StopAuthorized:
             triggerReason = "StopAuthorized";
             break;
-        case TransactionEventData::TriggerReason::EVDeparted:
+        case TransactionEventTriggerReason::EVDeparted:
             triggerReason = "EVDeparted";
             break;
-        case TransactionEventData::TriggerReason::EVDetected:
+        case TransactionEventTriggerReason::EVDetected:
             triggerReason = "EVDetected";
             break;
-        case TransactionEventData::TriggerReason::RemoteStop:
+        case TransactionEventTriggerReason::RemoteStop:
             triggerReason = "RemoteStop";
             break;
-        case TransactionEventData::TriggerReason::RemoteStart:
+        case TransactionEventTriggerReason::RemoteStart:
             triggerReason = "RemoteStart";
             break;
-        case TransactionEventData::TriggerReason::AbnormalCondition:
+        case TransactionEventTriggerReason::AbnormalCondition:
             triggerReason = "AbnormalCondition";
             break;
-        case TransactionEventData::TriggerReason::SignedDataReceived:
+        case TransactionEventTriggerReason::SignedDataReceived:
             triggerReason = "SignedDataReceived";
             break;
-        case TransactionEventData::TriggerReason::ResetCommand:
+        case TransactionEventTriggerReason::ResetCommand:
             triggerReason = "ResetCommand";
             break;
     }
@@ -164,59 +164,59 @@ std::unique_ptr<DynamicJsonDocument> TransactionEvent::createReq() {
     }
 
     const char *stoppedReason = nullptr;
-    switch (txEvent->stoppedReason) {
-        case TransactionEventData::StopReason::DeAuthorized: 
+    switch (txEvent->transaction->stopReason) {
+        case Transaction::StopReason::DeAuthorized: 
             stoppedReason = "DeAuthorized"; 
             break;
-        case TransactionEventData::StopReason::EmergencyStop: 
+        case Transaction::StopReason::EmergencyStop: 
             stoppedReason = "EmergencyStop"; 
             break;
-        case TransactionEventData::StopReason::EnergyLimitReached: 
+        case Transaction::StopReason::EnergyLimitReached: 
             stoppedReason = "EnergyLimitReached";
             break;
-        case TransactionEventData::StopReason::EVDisconnected: 
+        case Transaction::StopReason::EVDisconnected: 
             stoppedReason = "EVDisconnected";
             break;
-        case TransactionEventData::StopReason::GroundFault: 
+        case Transaction::StopReason::GroundFault: 
             stoppedReason = "GroundFault";
             break;
-        case TransactionEventData::StopReason::ImmediateReset:
+        case Transaction::StopReason::ImmediateReset:
             stoppedReason = "ImmediateReset";
             break;
-        case TransactionEventData::StopReason::LocalOutOfCredit:
+        case Transaction::StopReason::LocalOutOfCredit:
             stoppedReason = "LocalOutOfCredit";
             break;
-        case TransactionEventData::StopReason::MasterPass:
+        case Transaction::StopReason::MasterPass:
             stoppedReason = "MasterPass";
             break;
-        case TransactionEventData::StopReason::Other:
+        case Transaction::StopReason::Other:
             stoppedReason = "Other";
             break;
-        case TransactionEventData::StopReason::OvercurrentFault:
+        case Transaction::StopReason::OvercurrentFault:
             stoppedReason = "OvercurrentFault";
             break;
-        case TransactionEventData::StopReason::PowerLoss:
+        case Transaction::StopReason::PowerLoss:
             stoppedReason = "PowerLoss";
             break;
-        case TransactionEventData::StopReason::PowerQuality:
+        case Transaction::StopReason::PowerQuality:
             stoppedReason = "PowerQuality";
             break;
-        case TransactionEventData::StopReason::Reboot:
+        case Transaction::StopReason::Reboot:
             stoppedReason = "Reboot";
             break;
-        case TransactionEventData::StopReason::Remote:
+        case Transaction::StopReason::Remote:
             stoppedReason = "Remote";
             break;
-        case TransactionEventData::StopReason::SOCLimitReached:
+        case Transaction::StopReason::SOCLimitReached:
             stoppedReason = "SOCLimitReached";
             break;
-        case TransactionEventData::StopReason::StoppedByEV:
+        case Transaction::StopReason::StoppedByEV:
             stoppedReason = "StoppedByEV";
             break;
-        case TransactionEventData::StopReason::TimeLimitReached:
+        case Transaction::StopReason::TimeLimitReached:
             stoppedReason = "TimeLimitReached";
             break;
-        case TransactionEventData::StopReason::Timeout:
+        case Transaction::StopReason::Timeout:
             stoppedReason = "Timeout";
             break;
     }
@@ -228,17 +228,17 @@ std::unique_ptr<DynamicJsonDocument> TransactionEvent::createReq() {
         payload["remoteStartId"] = txEvent->transaction->remoteStartId;
     }
 
-    if (txEvent->idTokenTransmit) {
+    if (txEvent->idToken) {
         JsonObject idToken = payload.createNestedObject("idToken");
-        idToken["idToken"] = txEvent->transaction->idToken.get();
-        idToken["type"] = txEvent->transaction->idToken.getTypeCstr();
+        idToken["idToken"] = txEvent->idToken->get();
+        idToken["type"] = txEvent->idToken->getTypeCstr();
     }
 
     if (txEvent->evse.id >= 0) {
         JsonObject evse = payload.createNestedObject("evse");
         evse["id"] = txEvent->evse.id;
-        evse["connectorId"] = 1;
         if (txEvent->evse.connectorId >= 0) {
+            evse["connectorId"] = txEvent->evse.connectorId;
         }
     }
 

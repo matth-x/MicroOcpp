@@ -39,8 +39,6 @@ public:
         std::function<bool()> evReadyInput;
         std::function<bool()> evseReadyInput;
 
-        IdToken authorization;
-
         std::unique_ptr<Ocpp201::Transaction> allocateTransaction();
     public:
         Evse(Context& context, TransactionService& txService, unsigned int evseId);
@@ -51,9 +49,13 @@ public:
         void setEvReadyInput(std::function<bool()> evRequestsEnergy);
         void setEvseReadyInput(std::function<bool()> connectorEnergized);
 
-        bool beginAuthorization(IdToken idToken);
-        bool endAuthorization(IdToken idToken = IdToken());
-        const char *getAuthorization();
+        bool beginAuthorization(IdToken idToken); // authorize by swipe RFID
+        bool endAuthorization(IdToken idToken = IdToken()); // stop authorization by swipe RFID
+
+        // stop transaction, but neither upon user request nor OCPP server request (e.g. after PowerLoss)
+        bool abortTransaction(Ocpp201::Transaction::StopReason stopReason = Ocpp201::Transaction::StopReason::Other, Ocpp201::TransactionEventTriggerReason stopTrigger = Ocpp201::TransactionEventTriggerReason::AbnormalCondition);
+
+        const std::shared_ptr<Ocpp201::Transaction>& getTransaction();
     };
 
     friend Evse;
@@ -73,8 +75,11 @@ private:
     Context& context;
     std::vector<Evse> evses;
 
-    Variable *TxStartPointString = nullptr;
-    Variable *TxStopPointString = nullptr;
+    Variable *txStartPointString = nullptr;
+    Variable *txStopPointString = nullptr;
+    Variable *stopTxOnInvalidIdBool = nullptr;
+    Variable *stopTxOnEVSideDisconnectBool = nullptr;
+    Variable *evConnectionTimeOutInt = nullptr;
     uint16_t trackTxStartPoint = -1;
     uint16_t trackTxStopPoint = -1;
     std::vector<TxStartStopPoint> txStartPointParsed;

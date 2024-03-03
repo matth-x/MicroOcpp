@@ -66,4 +66,8 @@ const char *IdToken::getTypeCstr() const {
     return res ? res : "";
 }
 
+bool IdToken::equals(const IdToken& other) {
+    return type == other.type && !strcmp(idToken, other.idToken);
+}
+
 #endif // MO_ENABLE_V201

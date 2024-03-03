@@ -41,6 +41,8 @@ public:
 
     const char *get() const;
     const char *getTypeCstr() const;
+
+    bool equals(const IdToken& other);
 };
 
 } // namespace MicroOcpp

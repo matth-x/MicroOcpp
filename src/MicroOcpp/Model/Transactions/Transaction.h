@@ -181,82 +181,34 @@ public:
 namespace MicroOcpp {
 namespace Ocpp201 {
 
-class Transaction {
-public:
-    struct SubStatus {
-        bool triggered = false;
-        bool untriggered = false;
-        SendStatus remote;
-    };
-
-//private:
-    //SubStatus parkingBayOccupancy; // not supported
-    SubStatus evConnected;
-    SubStatus authorized;
-    SubStatus dataSigned;
-    SubStatus powerPathClosed;
-    SubStatus energyTransfer;
-
-    /*
-     * Global transaction data
-     */
-    bool active = true;         //once active is false, the tx must stop (or cannot start at all)
-    bool isAuthorized = false;    //if the given idToken was authorized
-    bool isDeauthorized = false;  //if the server revoked a local authorization
-    unsigned int seqNoCounter = 0; // increment by 1 for each event
-    IdToken idToken;
-    Timestamp startTime = MIN_TIME;
-    char transactionId [MO_TXID_LEN_MAX + 1] = {'\0'};
-    int remoteStartId = -1;
-
-    bool idTokenTransmitted = false;
+// TriggerReasonEnumType (3.82)
+enum class TransactionEventTriggerReason : uint8_t {
+    UNDEFINED, // not part of OCPP
+    Authorized,
+    CablePluggedIn,
+    ChargingRateChanged,
+    ChargingStateChanged,
+    Deauthorized,
+    EnergyLimitReached,
+    EVCommunicationLost,
+    EVConnectTimeout,
+    MeterValueClock,
+    MeterValuePeriodic,
+    TimeLimitReached,
+    Trigger,
+    UnlockCommand,
+    StopAuthorized,
+    EVDeparted,
+    EVDetected,
+    RemoteStop,
+    RemoteStart,
+    AbnormalCondition,
+    SignedDataReceived,
+    ResetCommand
 };
 
-// TransactionEventRequest (1.60.1)
-class TransactionEventData {
+class Transaction {
 public:
-
-    // TransactionEventEnumType (3.80)
-    enum class Type : uint8_t {
-        Ended,
-        Started,
-        Updated
-    };
-
-    // TriggerReasonEnumType (3.82)
-    enum class TriggerReason : uint8_t {
-        Authorized,
-        CablePluggedIn,
-        ChargingRateChanged,
-        ChargingStateChanged,
-        Deauthorized,
-        EnergyLimitReached,
-        EVCommunicationLost,
-        EVConnectTimeout,
-        MeterValueClock,
-        MeterValuePeriodic,
-        TimeLimitReached,
-        Trigger,
-        UnlockCommand,
-        StopAuthorized,
-        EVDeparted,
-        EVDetected,
-        RemoteStop,
-        RemoteStart,
-        AbnormalCondition,
-        SignedDataReceived,
-        ResetCommand
-    };
-
-    // ChargingStateEnumType (3.16)
-    enum class ChargingState : uint8_t {
-        UNDEFINED, // not part of OCPP
-        Charging,
-        EVConnected,
-        SuspendedEV,
-        SuspendedEVSE,
-        Idle
-    };
 
     // ReasonEnumType (3.67)
     enum class StopReason : uint8_t {
@@ -282,11 +234,69 @@ public:
         Timeout
     };
 
+    struct SubStatus {
+        bool triggered = false;
+        SendStatus remote;
+    };
+
+//private:
+    //SubStatus parkingBayOccupancy; // not supported
+    SubStatus evConnected;
+    SubStatus authorized;
+    SubStatus dataSigned;
+    SubStatus powerPathClosed;
+    SubStatus energyTransfer;
+
+    /*
+     * Global transaction data
+     */
+    bool active = true;         //once active is false, the tx must stop (or cannot start at all)
+    bool isAuthorized = false;    //if the given idToken was authorized
+    bool isDeauthorized = false;  //if the server revoked a local authorization
+    unsigned int seqNoCounter = 0; // increment by 1 for each event
+    IdToken idToken;
+    Timestamp beginTimestamp = MIN_TIME;
+    char transactionId [MO_TXID_LEN_MAX + 1] = {'\0'};
+    int remoteStartId = -1;
+
+    bool idTokenTransmitted = true;
+
+    bool evConnectionTimeoutListen = true;
+
+    bool started = false, stopped = false;
+
+    StopReason stopReason = StopReason::UNDEFINED;
+    TransactionEventTriggerReason stopTrigger = TransactionEventTriggerReason::UNDEFINED;
+    std::unique_ptr<IdToken> stopIdToken; // if null, then stopIdToken equals idToken
+    bool stopIdTokenTransmitted = true;
+};
+
+// TransactionEventRequest (1.60.1)
+class TransactionEventData {
+public:
+
+    // TransactionEventEnumType (3.80)
+    enum class Type : uint8_t {
+        Ended,
+        Started,
+        Updated
+    };
+
+    // ChargingStateEnumType (3.16)
+    enum class ChargingState : uint8_t {
+        UNDEFINED, // not part of OCPP
+        Charging,
+        EVConnected,
+        SuspendedEV,
+        SuspendedEVSE,
+        Idle
+    };
+
 //private:
     std::shared_ptr<Transaction> transaction;
     Type eventType;
     Timestamp timestamp;
-    TriggerReason triggerReason;
+    TransactionEventTriggerReason triggerReason;
     const unsigned int seqNo;
     bool offline = false;
     int numberOfPhasesUsed = -1;
@@ -296,9 +306,7 @@ public:
     // TransactionType (2.48)
     ChargingState chargingState = ChargingState::UNDEFINED;
     //int timeSpentCharging = 0; // not supported
-    StopReason stoppedReason = StopReason::UNDEFINED;
-
-    bool idTokenTransmit = false; // if the idToken has been updated should be transmitted with this Event
+    std::unique_ptr<IdToken> idToken;
     EvseId evse = -1;
     //meterValue not supported
 
