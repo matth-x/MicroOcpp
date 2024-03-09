@@ -69,13 +69,19 @@ class FilesystemAdapterIndex : public FilesystemAdapter {
 private:
     std::shared_ptr<FilesystemAdapter> filesystem;
 
-    using IndexEntry = std::pair<std::string, size_t>; //fname x fsize;
+    struct IndexEntry {
+        std::string fname;
+        size_t size;
+
+        IndexEntry(const char *fname, size_t size) : fname(fname), size(size) { }
+    };
+
     std::vector<IndexEntry> index;
 
     IndexEntry *getEntryByFname(const char *fn) {
         auto entry = std::find_if(index.begin(), index.end(),
             [fn] (const IndexEntry& el) -> bool {
-                return el.first.compare(fn) == 0;
+                return el.fname.compare(fn) == 0;
             });
 
         if (entry != index.end()) {
@@ -101,7 +107,7 @@ public:
 
     int stat(const char *path, size_t *size) override {
         if (auto file = getEntryByPath(path)) {
-            *size = file->second;
+            *size = file->size;
             return 0;
         } else {
             return -1;
@@ -127,7 +133,7 @@ public:
 
             IndexEntry *entry = nullptr;
             if (!(entry = getEntryByFname(fn))) {
-                index.push_back({fn, 0});
+                index.emplace_back(fn, 0);
                 entry = &index.back();
             }
 
@@ -136,9 +142,9 @@ public:
                 return nullptr;
             }
 
-            entry->second = 0; //write always empties the file
+            entry->size = 0; //write always empties the file
 
-            return std::unique_ptr<IndexedFileAdapter>(new IndexedFileAdapter(*this, entry->first.c_str(), std::move(file)));
+            return std::unique_ptr<IndexedFileAdapter>(new IndexedFileAdapter(*this, entry->fname.c_str(), std::move(file)));
         } else {
             MO_DBG_ERR("only support r or w");
             return nullptr;
@@ -151,7 +157,7 @@ public:
             const char *fn = path + sizeof(MO_FILENAME_PREFIX) - 1;
             index.erase(std::remove_if(index.begin(), index.end(),
                 [fn] (const IndexEntry& el) -> bool {
-                    return el.first.compare(fn) == 0;
+                    return el.fname.compare(fn) == 0;
                 }), index.end());
         }
 
@@ -162,7 +168,7 @@ public:
         // allow fn to remove elements
         for (size_t it = 0; it < index.size();) {
             auto size_before = index.size();
-            auto err = fn(index[it].first.c_str());
+            auto err = fn(index[it].fname.c_str());
             if (err) {
                 return err;
             }
@@ -196,7 +202,7 @@ public:
             if (ret == 0) {
                 //add fn and size to index
                 MO_DBG_DEBUG("add file to index: %s (%zuB)", fn, size);
-                index.push_back({fn, size});
+                index.emplace_back(fn, size);
                 return 0; //successfully added filename to index
             } else {
                 MO_DBG_ERR("unexpected entry: %s", fn);
@@ -211,8 +217,8 @@ public:
 
     void updateFilesize(const char *fn, size_t size) {
         if (auto entry = getEntryByFname(fn)) {
-            entry->second = size;
-            MO_DBG_DEBUG("update index: %s (%zuB)", entry->first.c_str(), entry->second);
+            entry->size = size;
+            MO_DBG_DEBUG("update index: %s (%zuB)", entry->fname.c_str(), entry->size);
         }
     }
 };
