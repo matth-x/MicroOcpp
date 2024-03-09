@@ -116,7 +116,7 @@ bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, c
 }
 
 bool FilesystemUtils::remove_if(std::shared_ptr<FilesystemAdapter> filesystem, std::function<bool(const char*)> pred) {
-    return filesystem->ftw_root([filesystem, pred] (const char *fpath) {
+    auto ret = filesystem->ftw_root([filesystem, pred] (const char *fpath) {
         if (pred(fpath) && fpath[0] != '.') {
 
             char fn [MO_MAX_PATH_SIZE] = {'\0'};
@@ -130,5 +130,12 @@ bool FilesystemUtils::remove_if(std::shared_ptr<FilesystemAdapter> filesystem, s
             //no error handling - just skip failed file
         }
         return 0;
-    }) == 0;
+    });
+
+    if (ret != 0) {
+        MO_DBG_ERR("ftw_root: %i", ret);
+        (void)0;
+    }
+
+    return ret == 0;
 }

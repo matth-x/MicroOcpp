@@ -51,6 +51,10 @@
 #endif
 #endif
 
+#ifndef MO_ENABLE_FILE_INDEX
+#define MO_ENABLE_FILE_INDEX 0
+#endif
+
 namespace MicroOcpp {
 
 class FileAdapter {

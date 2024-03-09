@@ -180,6 +180,7 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_FILENAME_PREFIX="./mo_store/"
     MO_LocalAuthListMaxLength=8
     MO_SendLocalListMaxLength=4
+    MO_ENABLE_FILE_INDEX=1
     #MO_ENABLE_MBEDTLS=1
 )
 
