@@ -51,6 +51,10 @@
 #endif
 #endif
 
+#ifndef MO_ENABLE_FILE_INDEX
+#define MO_ENABLE_FILE_INDEX 0
+#endif
+
 namespace MicroOcpp {
 
 class FileAdapter {
@@ -84,16 +88,6 @@ public:
  * Returns null if platform is not supported or Filesystem is disabled
  */
 std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config);
-
-#ifndef MO_ENABLE_FILE_INDEX
-#define MO_ENABLE_FILE_INDEX 0
-#endif
-
-#if MO_ENABLE_FILE_INDEX
-
-std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapterIndexed(FilesystemOpt config);
-
-#endif // MO_ENABLE_FILE_INDEX
 
 } //end namespace MicroOcpp
 
