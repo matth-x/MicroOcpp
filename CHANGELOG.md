@@ -4,6 +4,7 @@
 
 ### Added
 
+- File index ([#270](https://github.com/matth-x/MicroOcpp/pull/270))
 - Operation GetInstalledCertificateIds, UC M03 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
 - Operation DeleteCertificate, UC M04 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
 - Operation InstallCertificate, UC M05 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
@@ -15,7 +16,10 @@
 
 ### Fixed
 
+- Fix defect idTag check in `endTransaction`
 - Make field localAuthorizationList in SendLocalList optional
+- Update charging profiles when flash disabled (relates to [#260](https://github.com/matth-x/MicroOcpp/pull/260))
+- Ignore UnlockConnector when handler not set
 
 ## [1.0.1] - 2024-02-27
 
