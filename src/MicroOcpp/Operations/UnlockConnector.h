@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef UNLOCKCONNECTOR_H
@@ -18,10 +18,11 @@ namespace Ocpp16 {
 class UnlockConnector : public Operation {
 private:
     Model& model;
-    bool err = false;
     std::function<PollResult<bool> ()> unlockConnector;
     PollResult<bool> cbUnlockResult;
     unsigned long timerStart = 0; //for timeout
+
+    const char *errorCode = nullptr;
 public:
     UnlockConnector(Model& model);
 
@@ -30,6 +31,8 @@ public:
     void processReq(JsonObject payload) override;
 
     std::unique_ptr<DynamicJsonDocument> createConf() override;
+
+    const char *getErrorCode() override {return errorCode;}
 };
 
 } //end namespace Ocpp16
