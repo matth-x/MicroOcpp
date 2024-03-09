@@ -715,7 +715,8 @@ bool SmartChargingServiceUtils::printProfileFileName(char *out, size_t bufsize, 
 bool SmartChargingServiceUtils::storeProfile(std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ChargingProfile *chargingProfile) {
 
     if (!filesystem) {
-        return false;
+        MO_DBG_DEBUG("no filesystem");
+        return true; //not an error
     }
 
     DynamicJsonDocument chargingProfileJson {0};
