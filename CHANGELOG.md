@@ -2,11 +2,29 @@
 
 ## [Unreleased]
 
+### Added
+
+- Operation GetInstalledCertificateIds, UC M03 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
+- Operation DeleteCertificate, UC M04 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
+- Operation InstallCertificate, UC M05 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
+- `ProtocolVersion` selects v1.6 or v2.0.1 ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
+- Build flag `MO_ENABLE_V201` set to 1 enables OCPP 2.0.1 features ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
+    - Variables (non-persistent), UCs B05 - B06 ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
+    - Transactions (preview only), UCs E01 - E12 ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
+    - StatusNotification compatibility ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
+
+### Fixed
+
+- Make field localAuthorizationList in SendLocalList optional
+
+## [1.0.1] - 2024-02-27
+
 ### Fixed
 
 - Allow `nullptr` as parameter for `mocpp_set_console_out` ([#224](https://github.com/matth-x/MicroOcpp/issues/224))
 - Fix `mocpp_tick_ms()` on esp-idf roll-over after 12 hours
 - Pin ArduinoJson to v6.21 ([#245](https://github.com/matth-x/MicroOcpp/issues/245))
+- Fix bounds checking in SmartCharging module ([#260](https://github.com/matth-x/MicroOcpp/pull/260))
 
 ## [1.0.0] - 2023-10-22
 

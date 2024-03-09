@@ -17,6 +17,10 @@
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Model/Boot/BootService.h>
 #include <MicroOcpp/Model/Reset/ResetService.h>
+#include <MicroOcpp/Model/Variables/VariableService.h>
+#include <MicroOcpp/Model/Transactions/TransactionService.h>
+#include <MicroOcpp/Model/Certificates/CertificateService.h>
+#include <MicroOcpp/Model/Certificates/CertificateMbedTLS.h> //default CertStore implementation depends on MbedTLS
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Core/OperationRegistry.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -28,7 +32,6 @@
 #include <MicroOcpp/Operations/CustomOperation.h>
 
 #include <MicroOcpp/Debug.h>
-#include <MicroOcpp/Version.h>
 
 namespace MicroOcpp {
 namespace Facade {
@@ -199,7 +202,39 @@ ChargerCredentials::ChargerCredentials(const char *cpModel, const char *cpVendor
     }
 }
 
-void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover) {
+ChargerCredentials ChargerCredentials::v201(const char *cpModel, const char *cpVendor, const char *fWv, const char *cpSNr, const char *meterSNr, const char *meterType, const char *cbSNr, const char *iccid, const char *imsi) {
+
+    ChargerCredentials res;
+
+    StaticJsonDocument<512> creds;
+    if (cpSNr)
+        creds["serialNumber"] = cpSNr;
+    if (cpModel)
+        creds["model"] = cpModel;
+    if (cpVendor)
+        creds["vendorName"] = cpVendor;
+    if (fWv)
+        creds["firmwareVersion"] = fWv;
+    if (iccid)
+        creds["modem"]["iccid"] = iccid;
+    if (imsi)
+        creds["modem"]["imsi"] = imsi;
+
+    if (creds.overflowed()) {
+        MO_DBG_ERR("Charger Credentials too long");
+    }
+
+    size_t written = serializeJson(creds, res.payload, 512);
+
+    if (written < 2) {
+        MO_DBG_ERR("Charger Credentials could not be written");
+        sprintf(res.payload, "{}");
+    }
+
+    return res;
+}
+
+void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover, MicroOcpp::ProtocolVersion version, std::unique_ptr<CertificateStore> certStore) {
     if (context) {
         MO_DBG_WARN("already initialized. To reinit, call mocpp_deinitialize() before");
         return;
@@ -234,7 +269,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 
     configuration_init(filesystem); //call before each other library call
 
-    context = new Context(connection, filesystem, bootstats.bootNr);
+    context = new Context(connection, filesystem, bootstats.bootNr, version);
     auto& model = context->getModel();
 
     model.setTransactionStore(std::unique_ptr<TransactionStore>(
@@ -256,6 +291,28 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new ReservationService(*context, MO_NUMCONNECTORS)));
     model.setResetService(std::unique_ptr<ResetService>(
         new ResetService(*context)));
+
+#if MO_ENABLE_V201
+    model.setVariableService(std::unique_ptr<VariableService>(
+        new VariableService(*context, filesystem)));
+    model.setTransactionService(std::unique_ptr<TransactionService>(
+        new TransactionService(*context)));
+#endif
+
+    std::unique_ptr<CertificateStore> certStoreUse;
+    if (certStore) {
+        certStoreUse = std::move(certStore);
+    }
+#if MO_ENABLE_MBEDTLS
+    else {
+        certStoreUse = makeCertificateStoreMbedTLS(filesystem);
+    }
+#endif
+
+    if (certStoreUse) {
+        model.setCertificateService(std::unique_ptr<CertificateService>(
+            new CertificateService(*context, std::move(certStoreUse))));
+    }
 
 #if !defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
     model.setFirmwareService(std::unique_ptr<FirmwareService>(
@@ -480,6 +537,15 @@ void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int c
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (auto txService = context->getModel().getTransactionService()) {
+            if (auto evse = txService->getEvse(connectorId)) {
+                evse->setConnectorPluggedInput(pluggedInput);
+            }
+        }
+    }
+#endif
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -616,6 +682,15 @@ void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorI
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (auto txService = context->getModel().getTransactionService()) {
+            if (auto evse = txService->getEvse(connectorId)) {
+                evse->setEvReadyInput(evReadyInput);
+            }
+        }
+    }
+#endif
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -629,6 +704,15 @@ void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connec
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (auto txService = context->getModel().getTransactionService()) {
+            if (auto evse = txService->getEvse(connectorId)) {
+                evse->setEvseReadyInput(evseReadyInput);
+            }
+        }
+    }
+#endif
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");

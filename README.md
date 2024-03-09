@@ -6,21 +6,19 @@
 
 OCPP 1.6 client for microcontrollers. Portable C/C++. Compatible with Espressif, Arduino, NXP, STM, Linux and more.
 
-**Formerly ArduinoOcpp ([migration guide](https://matth-x.github.io/MicroOcpp/migration/))**: *the initial version of this library used the Arduino API but this dependency was dropped some time ago and the old name has become outdated. Despite the new name, nothing changes for existing users and the Arduino integration will continue to be fully functional.*
-
-Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp) | Technical introduction: [Docs](https://matth-x.github.io/MicroOcpp/intro-tech) | Website: [www.micro-ocpp.com](https://www.micro-ocpp.com)
-
-:heavy_check_mark: Works with [SteVe](https://github.com/RWTH-i5-IDSG/steve) and [15+ commercial Central Systems](https://www.micro-ocpp.com/#h.314525e8447cc93c_81)
+:heavy_check_mark: Works with [15+ commercial Central Systems](https://www.micro-ocpp.com/#h.314525e8447cc93c_81)
 
 :heavy_check_mark: Eligible for public chargers (Eichrecht-compliant)
 
-:heavy_check_mark: Supports all OCPP 1.6 feature profiles
+:heavy_check_mark: Supports all OCPP 1.6 feature profiles and OCPP 2.0.1 preview
+
+Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp) | Technical introduction: [Docs](https://matth-x.github.io/MicroOcpp/intro-tech) | Website: [www.micro-ocpp.com](https://www.micro-ocpp.com)
 
 ## Tester / Demo App
 
 *Main repository: [MicroOcppSimulator](https://github.com/matth-x/MicroOcppSimulator)*
 
-(Beta) The Simulator is a demo & development tool for MicroOcpp which allows to quickly assess the compatibility with different OCPP backends. It simulates a full charging station, adds a GUI and a mocked hardware binding to MicroOcpp and runs in the browser (using WebAssembly): [Try it](https://demo.micro-ocpp.com/)
+The Simulator is a demo & development tool for MicroOcpp which allows to quickly assess the compatibility with different OCPP backends. It simulates a full charging station, adds a GUI and a mocked hardware binding to MicroOcpp and runs in the browser (using WebAssembly): [Try it](https://demo.micro-ocpp.com/)
 
 <div align="center"><img src="https://github.com/matth-x/MicroOcpp/assets/63792403/27f2819b-41fd-41a7-88a8-9e673b8a88b8" alt="Screenshot" width="800em" href="https://demo.micro-ocpp.com/"></div>
 
@@ -66,6 +64,10 @@ Mandatory:
 If compiled with the Arduino integration:
 
 - [Links2004/arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets) (version `2.4.1`)
+
+If using the built-in certificate store (to enable, set build flag `MO_ENABLE_MBEDTLS=1`):
+
+- [Mbed-TLS/mbedtls](https://github.com/Mbed-TLS/mbedtls) (version `2.28.1`)
 
 In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/MicroOcpp@1.0.0` in the PIO library manager.
 

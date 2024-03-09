@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Model/Model.h>
@@ -17,6 +17,9 @@
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Model/Boot/BootService.h>
 #include <MicroOcpp/Model/Reset/ResetService.h>
+#include <MicroOcpp/Model/Variables/VariableService.h>
+#include <MicroOcpp/Model/Transactions/TransactionService.h>
+#include <MicroOcpp/Model/Certificates/CertificateService.h>
 
 #include <MicroOcpp/Core/Configuration.h>
 
@@ -24,7 +27,7 @@
 
 using namespace MicroOcpp;
 
-Model::Model(uint16_t bootNr) : bootNr(bootNr) {
+Model::Model(ProtocolVersion version, uint16_t bootNr) : version(version), bootNr(bootNr) {
 
 }
 
@@ -72,6 +75,11 @@ void Model::loop() {
     
     if (resetService)
         resetService->loop();
+
+#if MO_ENABLE_V201
+    if (transactionService)
+        transactionService->loop();
+#endif
 }
 
 void Model::setTransactionStore(std::unique_ptr<TransactionStore> ts) {
@@ -187,8 +195,41 @@ ResetService *Model::getResetService() const {
     return resetService.get();
 }
 
+void Model::setCertificateService(std::unique_ptr<CertificateService> cs) {
+    this->certService = std::move(cs);
+    capabilitiesUpdated = true;
+}
+
+CertificateService *Model::getCertificateService() const {
+    return certService.get();
+}
+
+#if MO_ENABLE_V201
+void Model::setVariableService(std::unique_ptr<VariableService> vs) {
+    this->variableService = std::move(vs);
+    capabilitiesUpdated = true;
+}
+
+VariableService *Model::getVariableService() const {
+    return variableService.get();
+}
+
+void Model::setTransactionService(std::unique_ptr<TransactionService> ts) {
+    this->transactionService = std::move(ts);
+    capabilitiesUpdated = true;
+}
+
+TransactionService *Model::getTransactionService() const {
+    return transactionService.get();
+}
+#endif
+
 Clock& Model::getClock() {
     return clock;
+}
+
+const ProtocolVersion& Model::getVersion() const {
+    return version;
 }
 
 uint16_t Model::getBootNr() {

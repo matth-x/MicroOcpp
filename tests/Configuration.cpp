@@ -275,7 +275,7 @@ TEST_CASE( "Configuration" ) {
                 [] () {
                     //create req
                     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
-                    auto payload = doc->to<JsonObject>();
+                    doc->to<JsonObject>();
                     return doc;},
                 [&checkProcessed] (JsonObject payload) {
                     //receive conf
