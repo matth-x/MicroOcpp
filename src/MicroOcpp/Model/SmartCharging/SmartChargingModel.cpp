@@ -369,7 +369,7 @@ std::unique_ptr<ChargingProfile> MicroOcpp::loadChargingProfile(JsonObject& json
     }
 
     int stackLevel = json["stackLevel"] | -1;
-    if (stackLevel >= 0 && stackLevel <= CHARGEPROFILEMAXSTACKLEVEL) {
+    if (stackLevel >= 0 && stackLevel <= MO_ChargeProfileMaxStackLevel) {
         res->stackLevel = stackLevel;
     } else {
         MO_DBG_WARN("format violation");
@@ -480,7 +480,7 @@ bool MicroOcpp::loadChargingSchedule(JsonObject& json, ChargingSchedule& out) {
         return false;
     }
 
-    if (periodJsonArray.size() > CHARGINGSCHEDULEMAXPERIODS) {
+    if (periodJsonArray.size() > MO_ChargingScheduleMaxPeriods) {
         MO_DBG_WARN("exceed ChargingScheduleMaxPeriods");
         return false;
     }

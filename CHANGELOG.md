@@ -9,6 +9,7 @@
 ### Added
 
 - File index ([#270](https://github.com/matth-x/MicroOcpp/pull/270))
+- Build flags for customizing memory limits of SmartCharging
 - Operation GetInstalledCertificateIds, UC M03 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
 - Operation DeleteCertificate, UC M04 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
 - Operation InstallCertificate, UC M05 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
