@@ -6,7 +6,7 @@
 #define UNLOCKCONNECTOR_H
 
 #include <MicroOcpp/Core/Operation.h>
-#include <MicroOcpp/Core/PollResult.h>
+#include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
 #include <functional>
 
 namespace MicroOcpp {
@@ -18,8 +18,8 @@ namespace Ocpp16 {
 class UnlockConnector : public Operation {
 private:
     Model& model;
-    std::function<PollResult<bool> ()> unlockConnector;
-    PollResult<bool> cbUnlockResult;
+    std::function<UnlockConnectorResult ()> unlockConnector;
+    UnlockConnectorResult cbUnlockResult;
     unsigned long timerStart = 0; //for timeout
 
     const char *errorCode = nullptr;

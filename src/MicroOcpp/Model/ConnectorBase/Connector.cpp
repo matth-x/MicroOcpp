@@ -881,11 +881,11 @@ void Connector::addErrorDataInput(std::function<ErrorData ()> errorDataInput) {
     this->trackErrorDataInputs.push_back(false);
 }
 
-void Connector::setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector) {
+void Connector::setOnUnlockConnector(std::function<UnlockConnectorResult()> unlockConnector) {
     this->onUnlockConnector = unlockConnector;
 }
 
-std::function<PollResult<bool>()> Connector::getOnUnlockConnector() {
+std::function<UnlockConnectorResult()> Connector::getOnUnlockConnector() {
     return this->onUnlockConnector;
 }
 

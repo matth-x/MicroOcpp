@@ -13,11 +13,11 @@
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/RequestCallbacks.h>
 #include <MicroOcpp/Core/Connection.h>
-#include <MicroOcpp/Core/PollResult.h>
 #include <MicroOcpp/Model/Metering/SampledValue.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Model/ConnectorBase/Notification.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
+#include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
 #include <MicroOcpp/Version.h>
 #include <MicroOcpp/Model/Certificates/Certificate.h>
 
@@ -305,10 +305,12 @@ void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcp
 /*
  * Set an InputOutput (reads and sets information at the same time) for forcing to unlock the
  * connector. Called as part of the OCPP operation "UnlockConnector"
- * Return values: true on success, false on failure, PollResult::Await if not known yet
- * Continues to call the Cb as long as it returns PollResult::Await
+ * Return values:
+ *     - UnlockConnectorResult::Pending if action needs more time to complete (MO will call this cb again later or eventually timeout)
+ *     - UnlockConnectorResult::Unlocked if successful
+ *     - UnlockConnectorResult::UnlockFailed if not successful (e.g. lock stuck)
  */
-void setOnUnlockConnectorInOut(std::function<MicroOcpp::PollResult<bool>()> onUnlockConnectorInOut, unsigned int connectorId = 1);
+void setOnUnlockConnectorInOut(std::function<UnlockConnectorResult()> onUnlockConnectorInOut, unsigned int connectorId = 1);
 
 /*
  * Access further information about the internal state of the library

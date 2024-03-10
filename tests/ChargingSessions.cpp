@@ -397,6 +397,85 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE(isOperative());
     }
 
-    mocpp_deinitialize();
+    SECTION("UnlockConnector") {
+        // UnlockConnector handler
 
+        beginTransaction_authorized("mIdTag");
+
+        loop();
+        REQUIRE( isTransactionRunning() );
+
+        bool checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(
+            new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
+                [] () {
+                    //create req
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto payload = doc->to<JsonObject>();
+                    payload["connectorId"] = 1;
+                    return doc;
+                },
+                [&checkProcessed] (JsonObject payload) {
+                    //process conf
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(payload["status"] | "_Undefined", "NotSupported") );
+                })));
+        
+        loop();
+        REQUIRE( checkProcessed );
+        REQUIRE( isTransactionRunning() ); // NotSupported doesn't lead to transaction stop
+
+        setOnUnlockConnectorInOut([] () -> UnlockConnectorResult {
+            // connector lock fails
+            return UnlockConnectorResult::UnlockFailed;
+        });
+
+        checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(
+            new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
+                [] () {
+                    //create req
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto payload = doc->to<JsonObject>();
+                    payload["connectorId"] = 1;
+                    return doc;
+                },
+                [&checkProcessed] (JsonObject payload) {
+                    //process conf
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(payload["status"] | "_Undefined", "UnlockFailed") );
+                })));
+        
+        loop();
+        REQUIRE( checkProcessed );
+        REQUIRE( !isTransactionRunning() ); // Stop tx when UnlockConnector generally supported
+
+        setOnUnlockConnectorInOut([] () -> UnlockConnectorResult {
+            // connector lock times out
+            return UnlockConnectorResult::Pending;
+        });
+
+        checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(
+            new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
+                [] () {
+                    //create req
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto payload = doc->to<JsonObject>();
+                    payload["connectorId"] = 1;
+                    return doc;
+                },
+                [&checkProcessed] (JsonObject payload) {
+                    //process conf
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(payload["status"] | "_Undefined", "UnlockFailed") );
+                })));
+        
+        loop();
+        mtime += MO_UNLOCK_TIMEOUT; // increment clock so that MO_UNLOCK_TIMEOUT expires
+        loop();
+        REQUIRE( checkProcessed );
+    }
+
+    mocpp_deinitialize();
 }

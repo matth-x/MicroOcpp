@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include "MicroOcpp.h"
@@ -845,7 +845,7 @@ void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcp
     connector->setTxNotificationOutput(notificationOutput);
 }
 
-void setOnUnlockConnectorInOut(std::function<PollResult<bool>()> onUnlockConnectorInOut, unsigned int connectorId) {
+void setOnUnlockConnectorInOut(std::function<UnlockConnectorResult()> onUnlockConnectorInOut, unsigned int connectorId) {
     if (!context) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;

@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/UnlockConnector.h>
@@ -7,8 +7,6 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::UnlockConnector;
-
-#define MO_UNLOCK_TIMEOUT 10000
 
 UnlockConnector::UnlockConnector(Model& model) : model(model) {
   
@@ -48,9 +46,9 @@ std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf() {
     if (unlockConnector && mocpp_tick_ms() - timerStart < MO_UNLOCK_TIMEOUT) {
         //do poll and if more time is needed, delay creation of conf msg
 
-        if (!cbUnlockResult) {
+        if (cbUnlockResult == UnlockConnectorResult::Pending) {
             cbUnlockResult = unlockConnector();
-            if (!cbUnlockResult) {
+            if (cbUnlockResult == UnlockConnectorResult::Pending) {
                 return nullptr; //no result yet - delay confirmation response
             }
         }
@@ -60,7 +58,7 @@ std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf() {
     JsonObject payload = doc->to<JsonObject>();
     if (!unlockConnector) {
         payload["status"] = "NotSupported";
-    } else if (cbUnlockResult && cbUnlockResult.toValue()) {
+    } else if (cbUnlockResult == UnlockConnectorResult::Unlocked) {
         payload["status"] = "Unlocked";
     } else {
         payload["status"] = "UnlockFailed";

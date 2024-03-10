@@ -1,15 +1,15 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CONNECTOR_H
-#define CONNECTOR_H
+#ifndef MO_CONNECTOR_H
+#define MO_CONNECTOR_H
 
 #include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
 #include <MicroOcpp/Model/ConnectorBase/Notification.h>
+#include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
-#include <MicroOcpp/Core/PollResult.h>
 #include <MicroOcpp/Operations/CiStrings.h>
 
 #include <vector>
@@ -49,7 +49,7 @@ private:
     ChargePointStatus reportedStatus = ChargePointStatus::NOT_SET;
     unsigned long t_statusTransition = 0;
 
-    std::function<PollResult<bool>()> onUnlockConnector;
+    std::function<UnlockConnectorResult()> onUnlockConnector;
 
     std::function<bool()> startTxReadyInput; //the StartTx request will be delayed while this Input is false
     std::function<bool()> stopTxReadyInput; //the StopTx request will be delayed while this Input is false
@@ -116,8 +116,8 @@ public:
 
     bool ocppPermitsCharge();
 
-    void setOnUnlockConnector(std::function<PollResult<bool>()> unlockConnector);
-    std::function<PollResult<bool>()> getOnUnlockConnector();
+    void setOnUnlockConnector(std::function<UnlockConnectorResult()> unlockConnector);
+    std::function<UnlockConnectorResult()> getOnUnlockConnector();
 
     void setStartTxReadyInput(std::function<bool()> startTxReady);
     void setStopTxReadyInput(std::function<bool()> stopTxReady);

@@ -5,6 +5,7 @@
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
+#include <MicroOcpp/Debug.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 
@@ -57,7 +58,7 @@ TEST_CASE( "C++ API test" ) {
         setStartTxReadyInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return true;});
         setStopTxReadyInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return true;});
         setTxNotificationOutput([c = &checkpoints[ncheck++]] (MicroOcpp::Transaction*, MicroOcpp::TxNotification) {*c = true;});
-        setOnUnlockConnectorInOut([c = &checkpoints[ncheck++]] () -> MicroOcpp::PollResult<bool> {*c = true; return true;});
+        setOnUnlockConnectorInOut([c = &checkpoints[ncheck++]] () -> UnlockConnectorResult {*c = true; return UnlockConnectorResult::Unlocked;});
 
         setOnResetNotify([c = &checkpoints[ncheck++]] (bool) -> bool {*c = true; return true;});
         setOnResetExecute([c = &checkpoints[ncheck++]] (bool) {*c = true;});
@@ -165,85 +166,6 @@ TEST_CASE( "C++ API test" ) {
         }
 
         REQUIRE(checkpointsPassed);
-
-        // UnlockConnector handler
-        setOnUnlockConnectorInOut(nullptr);
-        setConnectorPluggedInput(nullptr);
-
-        beginTransaction_authorized("abc");
-
-        loop();
-
-        bool checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(
-            new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
-                [] () {
-                    //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
-                    auto payload = doc->to<JsonObject>();
-                    payload["connectorId"] = 1;
-                    return doc;
-                },
-                [&checkProcessed] (JsonObject payload) {
-                    //process conf
-                    checkProcessed = true;
-                    REQUIRE( !strcmp(payload["status"] | "_Undefined", "NotSupported") );
-                })));
-        
-        loop();
-        REQUIRE( checkProcessed );
-        REQUIRE( isTransactionRunning() ); // NotSupported doesn't lead to transaction stop
-
-        setOnUnlockConnectorInOut([] () -> MicroOcpp::PollResult<bool> {
-            // connector lock fails
-            return false;
-        });
-
-        checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(
-            new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
-                [] () {
-                    //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
-                    auto payload = doc->to<JsonObject>();
-                    payload["connectorId"] = 1;
-                    return doc;
-                },
-                [&checkProcessed] (JsonObject payload) {
-                    //process conf
-                    checkProcessed = true;
-                    REQUIRE( !strcmp(payload["status"] | "_Undefined", "UnlockFailed") );
-                })));
-        
-        loop();
-        REQUIRE( checkProcessed );
-        REQUIRE( !isTransactionRunning() ); // Stop tx when UnlockConnector generally supported
-
-        setOnUnlockConnectorInOut([] () -> MicroOcpp::PollResult<bool> {
-            // connector lock times out
-            return MicroOcpp::PollResult<bool>::Await;
-        });
-
-        checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(
-            new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
-                [] () {
-                    //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
-                    auto payload = doc->to<JsonObject>();
-                    payload["connectorId"] = 1;
-                    return doc;
-                },
-                [&checkProcessed] (JsonObject payload) {
-                    //process conf
-                    checkProcessed = true;
-                    REQUIRE( !strcmp(payload["status"] | "_Undefined", "UnlockFailed") );
-                })));
-        
-        loop();
-        mtime += 60000;
-        loop();
-        REQUIRE( checkProcessed );
     }
 
     mocpp_deinitialize();
@@ -322,8 +244,8 @@ TEST_CASE( "C API test" ) {
         ocpp_setStopTxReadyInput_m(2, [] (unsigned int) -> bool {checkpointsc[23] = true; return true;}); ncheckc++;
         ocpp_setTxNotificationOutput([] (OCPP_Transaction*, OCPP_TxNotification) {checkpointsc[24] = true;}); ncheckc++;
         ocpp_setTxNotificationOutput_m(2, [] (unsigned int, OCPP_Transaction*, OCPP_TxNotification) {checkpointsc[25] = true;}); ncheckc++;
-        ocpp_setOnUnlockConnectorInOut([] () -> OptionalBool {checkpointsc[26] = true; return OptionalBool::OptionalTrue;}); ncheckc++;
-        ocpp_setOnUnlockConnectorInOut_m(2, [] (unsigned int) -> OptionalBool {checkpointsc[27] = true; return OptionalBool::OptionalTrue;}); ncheckc++;
+        ocpp_setOnUnlockConnectorInOut([] () -> UnlockConnectorResult {checkpointsc[26] = true; return UnlockConnectorResult::Unlocked;}); ncheckc++;
+        ocpp_setOnUnlockConnectorInOut_m(2, [] (unsigned int) -> UnlockConnectorResult {checkpointsc[27] = true; return UnlockConnectorResult::Unlocked;}); ncheckc++;
 
         ocpp_setOnResetNotify([] (bool) -> bool {checkpointsc[28] = true; return true;}); ncheckc++;
         ocpp_setOnResetExecute([] (bool) {checkpointsc[29] = true;}); ncheckc++;

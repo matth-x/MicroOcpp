@@ -5,6 +5,7 @@
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Debug.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 

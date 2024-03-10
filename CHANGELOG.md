@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Replace `PollResult<bool>` with enum `UnlockConnectorResult`
+
 ### Added
 
 - File index ([#270](https://github.com/matth-x/MicroOcpp/pull/270))
