@@ -539,6 +539,214 @@ TEST_CASE( "SmartCharging" ) {
         REQUIRE(schedule->chargingSchedulePeriod[3].startPeriod == 86400);
     }
 
+    SECTION("SmartCharging memory limits - MaxChargingProfilesInstalled") {
+
+        loop();
+
+        bool checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                "SetChargingProfile",
+                [] () {
+                    //create req
+                    StaticJsonDocument<2048> raw;
+                    deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    *doc = raw[3];
+                    return doc;},
+                [&checkProcessed] (JsonObject response) {
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(response["status"] | "_Undefined", "Accepted") );
+                }
+        )));
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                "SetChargingProfile",
+                [] () {
+                    //create req
+                    StaticJsonDocument<2048> raw;
+                    deserializeJson(raw, SCPROFILE_0_ALT_SAME_ID);
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    *doc = raw[3];
+                    (*doc)["connectorId"] = 2;
+                    return doc;},
+                [&checkProcessed] (JsonObject response) {
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(response["status"] | "_Undefined", "Accepted") );
+                }
+        )));
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                "SetChargingProfile",
+                [] () {
+                    //create req
+                    StaticJsonDocument<2048> raw;
+                    deserializeJson(raw, SCPROFILE_1_ABSOLUTE_LIMIT_16A);
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    *doc = raw[3];
+                    return doc;},
+                [&checkProcessed] (JsonObject response) {
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(response["status"] | "_Undefined", "Accepted") );
+                }
+        )));
+        loop();
+        REQUIRE( checkProcessed );
+
+        // 3 distinct ChargingProfiles installed. Check if further Profiles are rejected correctly
+
+        for (size_t i = 0; i < 2; i++) {
+            // replace existing profile - OK
+
+            checkProcessed = false;
+            getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                    "SetChargingProfile",
+                    [] () {
+                        //create req
+                        StaticJsonDocument<2048> raw;
+                        deserializeJson(raw, SCPROFILE_1_ABSOLUTE_LIMIT_16A);
+                        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                        *doc = raw[3];
+                        return doc;},
+                    [&checkProcessed] (JsonObject response) {
+                        checkProcessed = true;
+                        REQUIRE( !strcmp(response["status"] | "_Undefined", "Accepted") );
+                    }
+            )));
+            loop();
+            REQUIRE( checkProcessed );
+        }
+
+        for (size_t i = 0; i < 2; i++) {
+            // try to install additional profile - not okay
+
+            checkProcessed = false;
+            getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                    "SetChargingProfile",
+                    [] () {
+                        //create req
+                        StaticJsonDocument<2048> raw;
+                        deserializeJson(raw, SCPROFILE_5_VALID_UNTIL_2022_16A);
+                        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                        *doc = raw[3];
+                        return doc;},
+                    [&checkProcessed] (JsonObject response) {
+                        checkProcessed = true;
+                        REQUIRE( !strcmp(response["status"] | "_Undefined", "Rejected") );
+                    }
+            )));
+            loop();
+            REQUIRE( checkProcessed );
+        }
+    }
+
+    SECTION("SmartCharging memory limits - ChargeProfileMaxStackLevel") {
+
+        loop();
+
+        bool checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                "SetChargingProfile",
+                [] () {
+                    //create req
+                    StaticJsonDocument<2048> raw;
+                    deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    *doc = raw[3];
+                    (*doc)["csChargingProfiles"]["stackLevel"] = MO_ChargeProfileMaxStackLevel;
+                    return doc;},
+                [&checkProcessed] (JsonObject response) {
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(response["status"] | "_Undefined", "Accepted") );
+                }
+        )));
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                "SetChargingProfile",
+                [] () {
+                    //create req
+                    StaticJsonDocument<2048> raw;
+                    deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    *doc = raw[3];
+                    (*doc)["csChargingProfiles"]["stackLevel"] = MO_ChargeProfileMaxStackLevel + 1;
+                    return doc;},
+                [] (JsonObject) { }, //ignore conf
+                [&checkProcessed] (const char*, const char*, JsonObject) {
+                    // process error
+                    checkProcessed = true;
+                    return true;
+                }
+        )));
+        loop();
+        REQUIRE( checkProcessed );
+    }
+
+    SECTION("SmartCharging memory limits - ChargingScheduleMaxPeriods") {
+
+        loop();
+
+        bool checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                "SetChargingProfile",
+                [] () {
+                    //create req
+                    StaticJsonDocument<2048> raw;
+                    deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    *doc = raw[3];
+                    JsonArray chargingSchedulePeriod = (*doc)["csChargingProfiles"]["chargingSchedule"]["chargingSchedulePeriod"];
+                    chargingSchedulePeriod.clear();
+                    for (size_t i = 0; i < MO_ChargingScheduleMaxPeriods; i++) {
+                        auto period = chargingSchedulePeriod.createNestedObject();
+                        period["startPeriod"] = i;
+                        period["limit"] = 16;
+                    }
+                    return doc;},
+                [&checkProcessed] (JsonObject response) {
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(response["status"] | "_Undefined", "Accepted") );
+                }
+        )));
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                "SetChargingProfile",
+                [] () {
+                    //create req
+                    StaticJsonDocument<2048> raw;
+                    deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    *doc = raw[3];
+                    JsonArray chargingSchedulePeriod = (*doc)["csChargingProfiles"]["chargingSchedule"]["chargingSchedulePeriod"];
+                    chargingSchedulePeriod.clear();
+                    for (size_t i = 0; i < MO_ChargingScheduleMaxPeriods + 1; i++) {
+                        auto period = chargingSchedulePeriod.createNestedObject();
+                        period["startPeriod"] = i;
+                        period["limit"] = 16;
+                    }
+                    return doc;},
+                [] (JsonObject) { }, //ignore conf
+                [&checkProcessed] (const char*, const char*, JsonObject) {
+                    // process error
+                    checkProcessed = true;
+                    return true;
+                }
+        )));
+        loop();
+        REQUIRE( checkProcessed );
+    }
+
     scService->clearChargingProfile([] (int, int, ChargingProfilePurposeType, int) {
         return true;
     });
