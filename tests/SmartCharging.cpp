@@ -747,6 +747,91 @@ TEST_CASE( "SmartCharging" ) {
         REQUIRE( checkProcessed );
     }
 
+    SECTION("ChargingScheduleAllowedChargingRateUnit") {
+        
+        setSmartChargingOutput(nullptr);
+        loop();
+
+        // accept power, reject current
+        setSmartChargingPowerOutput([] (float) { });
+
+        bool checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                "SetChargingProfile",
+                [] () {
+                    //create req
+                    StaticJsonDocument<2048> raw;
+                    deserializeJson(raw, SCPROFILE_0);
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    *doc = raw[3];
+                    return doc;},
+                [&checkProcessed] (JsonObject response) {
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(response["status"] | "_Undefined", "Accepted") );
+                }
+        )));
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                "SetChargingProfile",
+                [] () {
+                    //create req
+                    StaticJsonDocument<2048> raw;
+                    deserializeJson(raw, SCPROFILE_1_ABSOLUTE_LIMIT_16A);
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    *doc = raw[3];
+                    return doc;},
+                [&checkProcessed] (JsonObject response) {
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(response["status"] | "_Undefined", "Rejected") );
+                }
+        )));
+        loop();
+        REQUIRE( checkProcessed );
+
+        //  reject power, accept current
+        setSmartChargingPowerOutput(nullptr);
+        setSmartChargingCurrentOutput([] (float) { });
+
+        checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                "SetChargingProfile",
+                [] () {
+                    //create req
+                    StaticJsonDocument<2048> raw;
+                    deserializeJson(raw, SCPROFILE_0);
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    *doc = raw[3];
+                    return doc;},
+                [&checkProcessed] (JsonObject response) {
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(response["status"] | "_Undefined", "Rejected") );
+                }
+        )));
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                "SetChargingProfile",
+                [] () {
+                    //create req
+                    StaticJsonDocument<2048> raw;
+                    deserializeJson(raw, SCPROFILE_1_ABSOLUTE_LIMIT_16A);
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    *doc = raw[3];
+                    return doc;},
+                [&checkProcessed] (JsonObject response) {
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(response["status"] | "_Undefined", "Accepted") );
+                }
+        )));
+        loop();
+        REQUIRE( checkProcessed );
+    }
+
     scService->clearChargingProfile([] (int, int, ChargingProfilePurposeType, int) {
         return true;
     });

@@ -25,6 +25,7 @@
 - Make field localAuthorizationList in SendLocalList optional
 - Update charging profiles when flash disabled (relates to [#260](https://github.com/matth-x/MicroOcpp/pull/260))
 - Ignore UnlockConnector when handler not set
+- Reject ChargingProfile if unit not supported
 
 ## [1.0.1] - 2024-02-27
 

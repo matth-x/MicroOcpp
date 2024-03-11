@@ -566,6 +566,12 @@ bool SmartChargingService::setChargingProfile(unsigned int connectorId, std::uni
         return false;
     }
 
+    if ((!currentSupported && chargingProfile->chargingSchedule.chargingRateUnit == ChargingRateUnitType::Amp) ||
+            (!powerSupported && chargingProfile->chargingSchedule.chargingRateUnit == ChargingRateUnitType::Watt)) {
+        MO_DBG_WARN("unsupported charge rate unit");
+        return false;
+    }
+
     int chargingProfileId = chargingProfile->getChargingProfileId();
     clearChargingProfile([chargingProfileId] (int id, int, ChargingProfilePurposeType, int) {
         return id == chargingProfileId;

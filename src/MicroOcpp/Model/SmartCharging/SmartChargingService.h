@@ -11,7 +11,6 @@
 #include <ArduinoJson.h>
 
 #include <MicroOcpp/Model/SmartCharging/SmartChargingModel.h>
-#include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 
