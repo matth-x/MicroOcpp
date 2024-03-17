@@ -79,6 +79,6 @@ ISO 15118 defines some use cases which include a message exchange between the ch
 
 ## Contact details
 
-I hope the given documentation and guidance can help you to successfully integrate an OCPP controller into your EVSE. I will be happy if you reach out!
+If you have further questions, feel free to reach out!
 
-:envelope: : matthias [A⊤] arduino-ocpp [DО⊤] com
+:envelope: : matthias [A⊤] micro-ocpp [DО⊤] com
