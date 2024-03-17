@@ -70,6 +70,8 @@ private:
     std::shared_ptr<Configuration> freeVendIdTagString;
     bool freeVendTrackPlugged = false;
 
+    std::shared_ptr<Configuration> txStartOnPowerPathClosedBool; // this postpones the tx start point to when evReadyInput becomes true
+
     bool trackLoopExecute = false; //if loop has been executed once
 public:
     Connector(Context& context, int connectorId);

@@ -56,6 +56,8 @@ Connector::Connector(Context& context, int connectorId)
     freeVendActiveBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "FreeVendActive", false);
     freeVendIdTagString = declareConfiguration<const char*>(MO_CONFIG_EXT_PREFIX "FreeVendIdTag", "");
 
+    txStartOnPowerPathClosedBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "TxStartOnPowerPathClosed", false);
+
     if (!availabilityBool) {
         MO_DBG_ERR("Cannot declare availabilityBool");
     }
@@ -163,11 +165,21 @@ bool Connector::ocppPermitsCharge() {
         suspendDeAuthorizedIdTag = false;
     }
 
-    return transaction &&
-            transaction->isRunning() &&
-            transaction->isActive() &&
-            !isFaulted() &&
-            !suspendDeAuthorizedIdTag;
+    // check charge permission depending on TxStartPoint
+    if (txStartOnPowerPathClosedBool && txStartOnPowerPathClosedBool->getBool()) {
+        // tx starts when the power path is closed. Advertise charging before transaction
+        return transaction &&
+                transaction->isActive() &&
+                transaction->isAuthorized() &&
+                !suspendDeAuthorizedIdTag;
+    } else {
+        // tx must be started before the power path can be closed
+        return transaction &&
+               transaction->isRunning() &&
+               transaction->isActive() &&
+               !isFaulted() &&
+               !suspendDeAuthorizedIdTag;
+    }
 }
 
 void Connector::loop() {
@@ -254,6 +266,7 @@ void Connector::loop() {
             if (transaction->isActive() && transaction->isAuthorized() &&  //tx must be authorized
                     (!connectorPluggedInput || connectorPluggedInput()) && //if applicable, connector must be plugged
                     isOperative() && //only start tx if charger is free of error conditions
+                    (!txStartOnPowerPathClosedBool || !txStartOnPowerPathClosedBool->getBool() || !evReadyInput || evReadyInput()) && //if applicable, postpone tx start point to PowerPathClosed
                     (!startTxReadyInput || startTxReadyInput())) { //if defined, user Input for allowing StartTx must be true
                 //start Transaction
 

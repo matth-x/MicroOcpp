@@ -9,6 +9,7 @@
 ### Added
 
 - File index ([#270](https://github.com/matth-x/MicroOcpp/pull/270))
+- Config `Cst_TxStartOnPowerPathClosed` to put back TxStartPoint
 - Build flags for customizing memory limits of SmartCharging
 - Operation GetInstalledCertificateIds, UC M03 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
 - Operation DeleteCertificate, UC M04 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))

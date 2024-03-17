@@ -477,5 +477,44 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE( checkProcessed );
     }
 
+    SECTION("TxStartPoint - PowerPathClosed") {
+
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "TxStartOnPowerPathClosed", true)->setBool(true);
+
+        // precondition: charge not allowed
+        REQUIRE( !ocppPermitsCharge() );
+        REQUIRE( !isTransactionRunning() );
+
+        setConnectorPluggedInput([] () {return false;}); // TxStartOnPowerPathClosed removes ConnectorPlugged as a prerequisite of transactions
+        setEvReadyInput([] () {return false;}); // TxStartOnPowerPathClosed puts EvReady in the role of ConnectorPlugged in conventional transactions
+
+        beginTransaction("mIdTag");
+
+        loop();
+
+        // in contrast to conventional tx mode, charge permission is granted before transaction. PowerPathClosed is a prerequisite of transactions
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( !isTransactionRunning() );
+
+        setConnectorPluggedInput([] () {return true;}); // ConnectorPlugged not sufficient to start tx
+
+        loop();
+
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( !isTransactionRunning() );
+
+        setEvReadyInput([] () {return true;}); // now, close PowerPath. Transaction will start now
+
+        loop();
+
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( isTransactionRunning() );
+
+        endTransaction();
+
+        loop();
+
+    }
+
     mocpp_deinitialize();
 }
