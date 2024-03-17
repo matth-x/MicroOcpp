@@ -427,7 +427,7 @@ TEST_CASE( "Charging sessions" ) {
 
         setOnUnlockConnectorInOut([] () -> UnlockConnectorResult {
             // connector lock fails
-            return UnlockConnectorResult::UnlockFailed;
+            return UnlockConnectorResult_UnlockFailed;
         });
 
         checkProcessed = false;
@@ -452,7 +452,7 @@ TEST_CASE( "Charging sessions" ) {
 
         setOnUnlockConnectorInOut([] () -> UnlockConnectorResult {
             // connector lock times out
-            return UnlockConnectorResult::Pending;
+            return UnlockConnectorResult_Pending;
         });
 
         checkProcessed = false;

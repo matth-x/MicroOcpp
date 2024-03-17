@@ -306,9 +306,9 @@ void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcp
  * Set an InputOutput (reads and sets information at the same time) for forcing to unlock the
  * connector. Called as part of the OCPP operation "UnlockConnector"
  * Return values:
- *     - UnlockConnectorResult::Pending if action needs more time to complete (MO will call this cb again later or eventually timeout)
- *     - UnlockConnectorResult::Unlocked if successful
- *     - UnlockConnectorResult::UnlockFailed if not successful (e.g. lock stuck)
+ *     - UnlockConnectorResult_Pending if action needs more time to complete (MO will call this cb again later or eventually timeout)
+ *     - UnlockConnectorResult_Unlocked if successful
+ *     - UnlockConnectorResult_UnlockFailed if not successful (e.g. lock stuck)
  */
 void setOnUnlockConnectorInOut(std::function<UnlockConnectorResult()> onUnlockConnectorInOut, unsigned int connectorId = 1);
 

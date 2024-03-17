@@ -46,9 +46,9 @@ std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf() {
     if (unlockConnector && mocpp_tick_ms() - timerStart < MO_UNLOCK_TIMEOUT) {
         //do poll and if more time is needed, delay creation of conf msg
 
-        if (cbUnlockResult == UnlockConnectorResult::Pending) {
+        if (cbUnlockResult == UnlockConnectorResult_Pending) {
             cbUnlockResult = unlockConnector();
-            if (cbUnlockResult == UnlockConnectorResult::Pending) {
+            if (cbUnlockResult == UnlockConnectorResult_Pending) {
                 return nullptr; //no result yet - delay confirmation response
             }
         }
@@ -58,7 +58,7 @@ std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf() {
     JsonObject payload = doc->to<JsonObject>();
     if (!unlockConnector) {
         payload["status"] = "NotSupported";
-    } else if (cbUnlockResult == UnlockConnectorResult::Unlocked) {
+    } else if (cbUnlockResult == UnlockConnectorResult_Unlocked) {
         payload["status"] = "Unlocked";
     } else {
         payload["status"] = "UnlockFailed";

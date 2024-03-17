@@ -16,9 +16,9 @@ extern "C" {
 #endif
 
 typedef enum {
-    UnlockFailed,
-    Unlocked,
-    Pending // unlock action not finished yet, result still unknown (MO will check again later)
+    UnlockConnectorResult_UnlockFailed,
+    UnlockConnectorResult_Unlocked,
+    UnlockConnectorResult_Pending // unlock action not finished yet, result still unknown (MO will check again later)
 } UnlockConnectorResult;
 
 #ifdef __cplusplus
