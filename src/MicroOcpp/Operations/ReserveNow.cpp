@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/ReserveNow.h>
@@ -7,6 +7,7 @@
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Model/ConnectorBase/Connector.h>
 #include <MicroOcpp/Platform.h>
+#include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::ReserveNow;
 

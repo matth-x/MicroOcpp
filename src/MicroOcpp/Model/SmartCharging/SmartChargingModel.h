@@ -1,13 +1,21 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef SMARTCHARGINGMODEL_H
 #define SMARTCHARGINGMODEL_H
 
-#define CHARGEPROFILEMAXSTACKLEVEL 8
-#define CHARGINGSCHEDULEMAXPERIODS 24
-#define MAXCHARGINGPROFILESINSTALLED 10
+#ifndef MO_ChargeProfileMaxStackLevel
+#define MO_ChargeProfileMaxStackLevel 8
+#endif
+
+#ifndef MO_ChargingScheduleMaxPeriods
+#define MO_ChargingScheduleMaxPeriods 24
+#endif
+
+#ifndef MO_MaxChargingProfilesInstalled
+#define MO_MaxChargingProfilesInstalled 10
+#endif
 
 #include <memory>
 #include <vector>

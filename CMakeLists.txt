@@ -182,9 +182,13 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_SendLocalListMaxLength=4
     MO_ENABLE_FILE_INDEX=1
     #MO_ENABLE_MBEDTLS=1
+    MO_ChargeProfileMaxStackLevel=2
+    MO_ChargingScheduleMaxPeriods=4
+    MO_MaxChargingProfilesInstalled=3
 )
 
 target_compile_options(mo_unit_tests PUBLIC
+    -Wall
     -O0
     -g
     --coverage

@@ -1,10 +1,11 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/Reset.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Reset/ResetService.h>
+#include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::Reset;
 
