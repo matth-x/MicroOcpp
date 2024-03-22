@@ -27,6 +27,7 @@
 - Update charging profiles when flash disabled (relates to [#260](https://github.com/matth-x/MicroOcpp/pull/260))
 - Ignore UnlockConnector when handler not set
 - Reject ChargingProfile if unit not supported
+- Fix building with debug level warn and error
 
 ## [1.0.1] - 2024-02-27
 
