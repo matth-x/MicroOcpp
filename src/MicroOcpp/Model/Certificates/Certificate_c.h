@@ -92,7 +92,7 @@ typedef struct ocpp_certificate_chain_hash {
 typedef struct ocpp_certificate_store {
     void *user_data; //set this at your choice. MO passes it back to the functions below
 
-    enum GetInstalledCertificateStatus_c (*getCertificateIds)(void *user_data, enum GetCertificateIdType_c certificateType, ocpp_certificate_chain_hash **out);
+    enum GetInstalledCertificateStatus_c (*getCertificateIds)(void *user_data, enum GetCertificateIdType_c certificateType [], size_t certificateTypeLen, ocpp_certificate_chain_hash **out);
     enum DeleteCertificateStatus_c (*deleteCertificate)(void *user_data, const ocpp_certificate_hash *hash);
     enum InstallCertificateStatus_c (*installCertificate)(void *user_data, enum InstallCertificateType_c certificateType, const char *certificate);
 } ocpp_certificate_store;

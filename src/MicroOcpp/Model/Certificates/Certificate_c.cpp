@@ -20,32 +20,39 @@ public:
 
     ~CertificateStoreC() = default;
 
-    GetInstalledCertificateStatus getCertificateIds(GetCertificateIdType certificateType, std::vector<CertificateChainHash>& out) override {
-        GetCertificateIdType_c ct_c;
-        switch (certificateType) {
-            case GetCertificateIdType::V2GRootCertificate:
-                ct_c = ENUM_GCI_V2GRootCertificate;
-                break;
-            case GetCertificateIdType::MORootCertificate:
-                ct_c = ENUM_GCI_MORootCertificate;
-                break;
-            case GetCertificateIdType::CSMSRootCertificate:
-                ct_c = ENUM_GCI_CSMSRootCertificate;
-                break;
-            case GetCertificateIdType::V2GCertificateChain:
-                ct_c = ENUM_GCI_V2GCertificateChain;
-                break;
-            case GetCertificateIdType::ManufacturerRootCertificate:
-                ct_c = ENUM_GCI_ManufacturerRootCertificate;
-                break;
-            default:
-                MO_DBG_ERR("internal error");
-                return GetInstalledCertificateStatus::NotFound;
+    GetInstalledCertificateStatus getCertificateIds(const std::vector<GetCertificateIdType>& certificateType, std::vector<CertificateChainHash>& out) override {
+        out.clear();
+
+        std::vector<GetCertificateIdType_c> certificateType_c;
+
+        for (auto certType : certificateType) {
+
+            GetCertificateIdType_c ct_c;
+            switch (certType) {
+                case GetCertificateIdType::V2GRootCertificate:
+                    certificateType_c.push_back(ENUM_GCI_V2GRootCertificate);
+                    break;
+                case GetCertificateIdType::MORootCertificate:
+                    certificateType_c.push_back(ENUM_GCI_MORootCertificate);
+                    break;
+                case GetCertificateIdType::CSMSRootCertificate:
+                    certificateType_c.push_back(ENUM_GCI_CSMSRootCertificate);
+                    break;
+                case GetCertificateIdType::V2GCertificateChain:
+                    certificateType_c.push_back(ENUM_GCI_V2GCertificateChain);
+                    break;
+                case GetCertificateIdType::ManufacturerRootCertificate:
+                    certificateType_c.push_back(ENUM_GCI_ManufacturerRootCertificate);
+                    break;
+                default:
+                    MO_DBG_ERR("internal error");
+                    return GetInstalledCertificateStatus::NotFound;
+            }
         }
 
         ocpp_certificate_chain_hash *cch;
 
-        auto ret = certstore->getCertificateIds(certstore->user_data, ct_c, &cch);
+        auto ret = certstore->getCertificateIds(certstore->user_data, &certificateType_c[0], certificateType_c.size(), &cch);
         if (ret == ENUM_GICS_NotFound || !cch) {
             return GetInstalledCertificateStatus::NotFound;
         }

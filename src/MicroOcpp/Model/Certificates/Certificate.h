@@ -99,7 +99,7 @@ struct CertificateChainHash {
  */
 class CertificateStore {
 public:
-    virtual GetInstalledCertificateStatus getCertificateIds(GetCertificateIdType certificateType, std::vector<CertificateChainHash>& out) = 0;
+    virtual GetInstalledCertificateStatus getCertificateIds(const std::vector<GetCertificateIdType>& certificateType, std::vector<CertificateChainHash>& out) = 0;
     virtual DeleteCertificateStatus deleteCertificate(const CertificateHash& hash) = 0;
     virtual InstallCertificateStatus installCertificate(InstallCertificateType certificateType, const char *certificate) = 0;
 };

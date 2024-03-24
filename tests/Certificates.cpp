@@ -111,7 +111,7 @@ TEST_CASE( "M - Certificates" ) {
         REQUIRE(ret1 == InstallCertificateStatus::Accepted);
 
         std::vector<CertificateChainHash> chain;
-        auto ret2 = certs->getCertificateIds(GetCertificateIdType::CSMSRootCertificate, chain);
+        auto ret2 = certs->getCertificateIds({GetCertificateIdType::CSMSRootCertificate}, chain);
 
         REQUIRE(ret2 == GetInstalledCertificateStatus::Accepted);
         REQUIRE(chain.size() == 1);
@@ -133,7 +133,7 @@ TEST_CASE( "M - Certificates" ) {
         REQUIRE(ret1 == InstallCertificateStatus::Accepted);
 
         std::vector<CertificateChainHash> chain;
-        auto ret2 = certs->getCertificateIds(GetCertificateIdType::CSMSRootCertificate, chain);
+        auto ret2 = certs->getCertificateIds({GetCertificateIdType::CSMSRootCertificate}, chain);
         REQUIRE(ret2 == GetInstalledCertificateStatus::Accepted);
 
         REQUIRE(chain.size() == 1);
@@ -141,7 +141,7 @@ TEST_CASE( "M - Certificates" ) {
         auto ret3 = certs->deleteCertificate(chain.front().certificateHashData);
         REQUIRE(ret3 == DeleteCertificateStatus::Accepted);
 
-        ret2 = certs->getCertificateIds(GetCertificateIdType::CSMSRootCertificate, chain);
+        ret2 = certs->getCertificateIds({GetCertificateIdType::CSMSRootCertificate}, chain);
         REQUIRE(ret2 == GetInstalledCertificateStatus::NotFound);
 
         REQUIRE(chain.size() == 0);
@@ -220,9 +220,9 @@ TEST_CASE( "M - Certificates" ) {
                 [] () {
                     //create req
                     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
-                            JSON_OBJECT_SIZE(1)));
+                            JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(1)));
                     auto payload = doc->to<JsonObject>();
-                    payload["certificateType"] = "CSMSRootCertificate"; //of GetCertificateIdTypeEnumType
+                    payload["certificateType"][0] = "CSMSRootCertificate"; //of GetCertificateIdTypeEnumType
                     return doc;},
                 [&checkProcessed] (JsonObject payload) {
                     //receive conf

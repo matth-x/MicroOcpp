@@ -246,47 +246,50 @@ public:
 
     }
 
-    GetInstalledCertificateStatus getCertificateIds(GetCertificateIdType certificateType, std::vector<CertificateChainHash>& out) override {
-        const char *certTypeFnStr = nullptr;
-        switch (certificateType) {
-            case GetCertificateIdType::CSMSRootCertificate:
-                certTypeFnStr = MO_CERT_FN_CSMS_ROOT;
-                break;
-            case GetCertificateIdType::ManufacturerRootCertificate:
-                certTypeFnStr = MO_CERT_FN_MANUFACTURER_ROOT;
-                break;
-            default:
-                MO_DBG_ERR("only CSMS / Manufacturer root supported");
-                break;
-        }
-
-        if (!certTypeFnStr) {
-            return GetInstalledCertificateStatus::NotFound;
-        }
-
+    GetInstalledCertificateStatus getCertificateIds(const std::vector<GetCertificateIdType>& certificateType, std::vector<CertificateChainHash>& out) override {
         out.clear();
 
-        for (size_t i = 0; i < MO_CERT_STORE_SIZE; i++) {
-            char fn [MO_MAX_PATH_SIZE];
-            if (!printCertFn(certTypeFnStr, i, fn, MO_MAX_PATH_SIZE)) {
-                MO_DBG_ERR("internal error");
-                return GetInstalledCertificateStatus::NotFound;
+        for (auto certType : certificateType) {
+            const char *certTypeFnStr = nullptr;
+            switch (certType) {
+                case GetCertificateIdType::CSMSRootCertificate:
+                    certTypeFnStr = MO_CERT_FN_CSMS_ROOT;
+                    break;
+                case GetCertificateIdType::ManufacturerRootCertificate:
+                    certTypeFnStr = MO_CERT_FN_MANUFACTURER_ROOT;
+                    break;
+                default:
+                    MO_DBG_ERR("only CSMS / Manufacturer root supported");
+                    break;
             }
 
-            size_t msize;
-            if (filesystem->stat(fn, &msize) != 0) {
-                continue; //no cert installed at this slot
-            }
-
-            out.emplace_back();
-            CertificateChainHash& rootCert = out.back();
-
-            rootCert.certificateType = certificateType;
-
-            if (!getCertHash(fn, HashAlgorithmEnumType::SHA256, rootCert.certificateHashData)) {
-                MO_DBG_ERR("could not create hash: %s", fn);
-                out.pop_back();
+            if (!certTypeFnStr) {
                 continue;
+            }
+
+            for (size_t i = 0; i < MO_CERT_STORE_SIZE; i++) {
+                char fn [MO_MAX_PATH_SIZE];
+                if (!printCertFn(certTypeFnStr, i, fn, MO_MAX_PATH_SIZE)) {
+                    MO_DBG_ERR("internal error");
+                    out.clear();
+                    break;
+                }
+
+                size_t msize;
+                if (filesystem->stat(fn, &msize) != 0) {
+                    continue; //no cert installed at this slot
+                }
+
+                out.emplace_back();
+                CertificateChainHash& rootCert = out.back();
+
+                rootCert.certificateType = certType;
+
+                if (!getCertHash(fn, HashAlgorithmEnumType::SHA256, rootCert.certificateHashData)) {
+                    MO_DBG_ERR("could not create hash: %s", fn);
+                    out.pop_back();
+                    continue;
+                }
             }
         }
 

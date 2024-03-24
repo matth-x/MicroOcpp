@@ -20,21 +20,22 @@ void GetInstalledCertificateIds::processReq(JsonObject payload) {
         return;
     }
 
-    const char *certificateTypeCstr = payload["certificateType"] | "_Invalid";
-    GetCertificateIdType certificateType;
-    if (!strcmp(certificateTypeCstr, "V2GRootCertificate")) {
-        certificateType = GetCertificateIdType::V2GRootCertificate;
-    } else if (!strcmp(certificateTypeCstr, "MORootCertificate")) {
-        certificateType = GetCertificateIdType::MORootCertificate;
-    } else if (!strcmp(certificateTypeCstr, "CSMSRootCertificate")) {
-        certificateType = GetCertificateIdType::CSMSRootCertificate;
-    } else if (!strcmp(certificateTypeCstr, "V2GCertificateChain")) {
-        certificateType = GetCertificateIdType::V2GCertificateChain;
-    } else if (!strcmp(certificateTypeCstr, "ManufacturerRootCertificate")) {
-        certificateType = GetCertificateIdType::ManufacturerRootCertificate;
-    } else {
-        errorCode = "FormationViolation";
-        return;
+    std::vector<GetCertificateIdType> certificateType;
+    for (const char *certificateTypeCstr : payload["certificateType"].as<JsonArray>()) {
+        if (!strcmp(certificateTypeCstr, "V2GRootCertificate")) {
+            certificateType.push_back(GetCertificateIdType::V2GRootCertificate);
+        } else if (!strcmp(certificateTypeCstr, "MORootCertificate")) {
+            certificateType.push_back(GetCertificateIdType::MORootCertificate);
+        } else if (!strcmp(certificateTypeCstr, "CSMSRootCertificate")) {
+            certificateType.push_back(GetCertificateIdType::CSMSRootCertificate);
+        } else if (!strcmp(certificateTypeCstr, "V2GCertificateChain")) {
+            certificateType.push_back(GetCertificateIdType::V2GCertificateChain);
+        } else if (!strcmp(certificateTypeCstr, "ManufacturerRootCertificate")) {
+            certificateType.push_back(GetCertificateIdType::ManufacturerRootCertificate);
+        } else {
+            errorCode = "FormationViolation";
+            return;
+        }
     }
 
     auto certStore = certService.getCertificateStore();
