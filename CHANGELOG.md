@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Rename master branch into main
+
 ### Added
 
 - Operation GetInstalledCertificateIds, UC M03 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
@@ -16,6 +20,12 @@
 ### Fixed
 
 - Make field localAuthorizationList in SendLocalList optional
+
+## [1.0.2] - 2024-03-24
+
+### Fixed
+
+- Correct MO version numbers in code (they were still `1.0.0`)
 
 ## [1.0.1] - 2024-02-27
 
