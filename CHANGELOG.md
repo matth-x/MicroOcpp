@@ -1,6 +1,12 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.2] - 2024-03-24
+
+### Fixed
+
+- Fix version numbers (they were `1.0.0` in the `1.0.1` release)
+
+## [1.0.1] - 2024-02-27
 
 ### Fixed
 
