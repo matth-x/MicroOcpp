@@ -11,12 +11,9 @@
 #include <mbedtls/version.h>
 #include <mbedtls/x509_crt.h>
 #include <mbedtls/md.h>
-#include <mbedtls/oid.h>
 #include <mbedtls/error.h>
 
 #include <MicroOcpp/Debug.h>
-
-#define MO_X509_OID_COMMON_NAME "2.5.4.3" //object-identifier of x509 common-name
 
 bool ocpp_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmEnumType_c hashAlg, char *issuerNameHash, char *issuerKeyHash, char *serialNumber) {
 
@@ -37,53 +34,6 @@ bool ocpp_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmEnumT
         return false;
     }
 
-    const unsigned char *subject_cn_p = nullptr;
-    size_t subject_cn_len = 0;
-    for (mbedtls_x509_name *it = &cacert.subject; it; it = it->next) {
-        char oid_cstr [50];
-        if ((ret = mbedtls_oid_get_numeric_string(oid_cstr, 50, &it->oid)) < 0) {
-            MO_DBG_ERR("internal error: %i", ret);
-            continue; //there is an oid which exceeds the bufsize, but the target oid does fit so continue
-        }
-
-        if (!strcmp(oid_cstr, MO_X509_OID_COMMON_NAME)) {
-            subject_cn_p = it->val.p;
-            subject_cn_len = it->val.len;
-            break;
-        }
-    }
-
-    if (!subject_cn_p || !subject_cn_len) {
-        MO_DBG_ERR("could not find subject common name");
-        return false;
-    }
-
-    const unsigned char *issuer_cn_p = nullptr;
-    size_t issuer_cn_len = 0;
-    for (mbedtls_x509_name *it = &cacert.issuer; it; it = it->next) {
-        char oid_cstr [50];
-        if ((ret = mbedtls_oid_get_numeric_string(oid_cstr, 50, &it->oid)) < 0) {
-            MO_DBG_ERR("internal error: %i", ret);
-            continue; //there is an oid which exceeds the bufsize, but the target oid does fit so continue
-        }
-
-        if (!strcmp(oid_cstr, MO_X509_OID_COMMON_NAME)) {
-            issuer_cn_p = it->val.p;
-            issuer_cn_len = it->val.len;
-            break;
-        }
-    }
-
-    if (!issuer_cn_p || !issuer_cn_len) {
-        MO_DBG_ERR("could not find issuer common name");
-        return false;
-    }
-
-    if (subject_cn_len != issuer_cn_len || strncmp((const char*) subject_cn_p, (const char*) issuer_cn_p, subject_cn_len)) {
-        MO_DBG_ERR("only support self-signed root certs");
-        return false;
-    }
-    
     mbedtls_md_type_t hash_alg_mbed;
 
     switch (hashAlg) {
@@ -117,7 +67,12 @@ bool ocpp_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmEnumT
         return false;
     }
 
-    if ((ret = mbedtls_md(md_info, issuer_cn_p, issuer_cn_len, hash_buf))) {
+    if (!cacert.issuer_raw.p) {
+        MO_DBG_ERR("missing issuer name");
+        return false;
+    }
+
+    if ((ret = mbedtls_md(md_info, cacert.issuer_raw.p, cacert.issuer_raw.len, hash_buf))) {
         MO_DBG_ERR("mbedtls_md: %i", ret);
         return false;
     }
@@ -126,29 +81,43 @@ bool ocpp_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmEnumT
         sprintf(issuerNameHash + 2 * i, "%02X", hash_buf[i]);
     }
 
-    unsigned char *pk_p;
-    size_t pk_len;
-
-#if MBEDTLS_VERSION_MAJOR == 2 && MBEDTLS_VERSION_MINOR <= 16
-    unsigned char pk_buf [256];
-    if ((ret = mbedtls_pk_write_pubkey_pem(&cacert.pk, pk_buf, 256)) < 0) {
-        MO_DBG_ERR("mbedtls_md: %i", ret);
+    // copy public key into pk_buf to create issuerKeyHash
+    size_t pk_size = cacert.pk_raw.len;
+    unsigned char *pk_buf = (unsigned char*) malloc(pk_size);
+    if (!pk_buf) {
+        MO_DBG_ERR("OOM (alloc size %zu)", pk_size);
         return false;
     }
-    pk_p = pk_buf;
-    pk_len = strnlen((const char*)pk_buf, 256);
-#else //tested on MbedTLS 2.28.1
-    pk_p = cacert.pk_raw.p;
-    pk_len = cacert.pk_raw.len;
-#endif // MbedTLS version
+    int pk_len = 0;
+    unsigned char *pk_p = pk_buf + pk_size;
 
-    if ((ret = mbedtls_md(md_info, pk_p, pk_len, hash_buf))) {
-        MO_DBG_ERR("mbedtls_md: %i", ret);
-        return false;
+    bool pk_err = false;
+
+    if ((pk_len = mbedtls_pk_write_pubkey(&pk_p, pk_buf, &cacert.pk)) <= 0) {
+        pk_err = true;
+        char err [100];
+        mbedtls_strerror(ret, err, 100);
+        MO_DBG_ERR("mbedtls_pk_write_pubkey_pem: %i -- %s", pk_len, err);
+        // return after pk_buf has been freed
     }
 
-    for (size_t i = 0; i < hash_size; i ++) {
-        sprintf(issuerKeyHash + 2*i, "%02X", hash_buf[i]);
+    if (!pk_err) {
+
+        if ((ret = mbedtls_md(md_info, pk_p, pk_len, hash_buf))) {
+            pk_err = true;
+            MO_DBG_ERR("mbedtls_md: %i", ret);
+        }
+    }
+
+    if (!pk_err) {
+        for (size_t i = 0; i < hash_size; i ++) {
+            sprintf(issuerKeyHash + 2*i, "%02X", hash_buf[i]);
+        }
+    }
+
+    free(pk_buf);
+    if (pk_err) {
+        return false;
     }
 
     size_t serial_begin = 0; //trunicate leftmost 0x00 bytes
@@ -159,7 +128,7 @@ bool ocpp_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmEnumT
     }
 
     for (size_t i = 0; i < std::min(cacert.serial.len - serial_begin, (size_t) ((MO_CERT_HASH_SERIAL_NUMBER_SIZE - 1)/2)); i++) {
-        sprintf(serialNumber + 2*i, "%02X", cacert.serial.p[i + serial_begin]);
+        sprintf(serialNumber + 2*i, i == 0 ? "%X" : "%02X", cacert.serial.p[i + serial_begin]);
     }
 
     return true;

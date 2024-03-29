@@ -61,8 +61,8 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 
 //precomputed identifiers of root cert above, based on Open Certificate Status Protocol (OCSP)
 const char *root_cert_hash_algorithm = "SHA256"; //algorithm used for the following hashes
-const char *root_cert_hash_issuer_name = "998AC9E24B24D4008398DFA1375FD5D3DA7F2827E547ABFE5DB367B9E2CD5B20";
-const char *root_cert_hash_issuer_key = "0B9FA5A59EED715C26C1020C711B4F6EC42D58B0015E14337A39DAD301C5AFC3";
+const char *root_cert_hash_issuer_name = "F6DB2FBD9DD85D9259DDB3C6DE7D7B2FEC3F3E0CEF1761BCBF3320571E2D30F8";
+const char *root_cert_hash_issuer_key = "F4593A1E07CC9CCEFFBED9C11DC5218356F7814D9B22949DE745E629990C6C60";
 const char *root_cert_hash_serial_number = "8210CFB0D240E3594463E0BB63828B00";
 
 using namespace MicroOcpp;
