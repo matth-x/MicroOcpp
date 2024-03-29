@@ -15,19 +15,21 @@ DeleteCertificate::DeleteCertificate(CertificateService& certService) : certServ
 
 void DeleteCertificate::processReq(JsonObject payload) {
 
-    if (!payload.containsKey("hashAlgorithm") ||
-            !payload.containsKey("issuerNameHash") ||
-            !payload.containsKey("issuerKeyHash") ||
-            !payload.containsKey("serialNumber")) {
+    JsonObject certIdJson = payload["certificateHashData"];
+
+    if (!certIdJson.containsKey("hashAlgorithm") ||
+            !certIdJson.containsKey("issuerNameHash") ||
+            !certIdJson.containsKey("issuerKeyHash") ||
+            !certIdJson.containsKey("serialNumber")) {
         errorCode = "FormationViolation";
         return;
     }
 
-    const char *hashAlgorithm = payload["hashAlgorithm"] | "_Invalid";
+    const char *hashAlgorithm = certIdJson["hashAlgorithm"] | "_Invalid";
 
-    if (!payload["issuerNameHash"].is<const char*>() ||
-            !payload["issuerKeyHash"].is<const char*>() ||
-            !payload["serialNumber"].is<const char*>()) {
+    if (!certIdJson["issuerNameHash"].is<const char*>() ||
+            !certIdJson["issuerKeyHash"].is<const char*>() ||
+            !certIdJson["serialNumber"].is<const char*>()) {
         errorCode = "FormationViolation";
         return;
     }
@@ -45,9 +47,9 @@ void DeleteCertificate::processReq(JsonObject payload) {
         return;
     }
 
-    auto retIN = snprintf(cert.issuerNameHash, sizeof(cert.issuerNameHash), "%s", payload["issuerNameHash"] | "_Invalid");
-    auto retIK = snprintf(cert.issuerKeyHash, sizeof(cert.issuerKeyHash), "%s", payload["issuerKeyHash"] | "_Invalid");
-    auto retSN = snprintf(cert.serialNumber, sizeof(cert.serialNumber), "%s", payload["serialNumber"] | "_Invalid");
+    auto retIN = snprintf(cert.issuerNameHash, sizeof(cert.issuerNameHash), "%s", certIdJson["issuerNameHash"] | "_Invalid");
+    auto retIK = snprintf(cert.issuerKeyHash, sizeof(cert.issuerKeyHash), "%s", certIdJson["issuerKeyHash"] | "_Invalid");
+    auto retSN = snprintf(cert.serialNumber, sizeof(cert.serialNumber), "%s", certIdJson["serialNumber"] | "_Invalid");
     if (retIN < 0 || retIK < 0 || retSN < 0) {
         MO_DBG_ERR("could not parse CertId: %i %i %i", retIN, retIK, retSN);
         errorCode = "InternalError";
