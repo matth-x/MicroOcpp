@@ -341,35 +341,50 @@ public:
     }
 
     InstallCertificateStatus installCertificate(InstallCertificateType certificateType, const char *certificate) override {
-        const char *certTypeFnStr = nullptr;
+        const char *certTypeFnStr;
+        GetCertificateIdType certTypeGetType;
         switch (certificateType) {
             case InstallCertificateType::CSMSRootCertificate:
                 certTypeFnStr = MO_CERT_FN_CSMS_ROOT;
+                certTypeGetType = GetCertificateIdType::CSMSRootCertificate;
                 break;
             case InstallCertificateType::ManufacturerRootCertificate:
                 certTypeFnStr = MO_CERT_FN_MANUFACTURER_ROOT;
+                certTypeGetType = GetCertificateIdType::ManufacturerRootCertificate;
                 break;
             default:
                 MO_DBG_ERR("only CSMS / Manufacturer root supported");
-                break;
-        }
-
-        if (!certTypeFnStr) {
-            return InstallCertificateStatus::Failed;
+                return InstallCertificateStatus::Failed;
         }
 
         //check if this implementation is able to parse incoming cert
-        {
-            CertificateHash certId;
-            if (!getCertHash((const unsigned char*)certificate, strlen(certificate), HashAlgorithmEnumType::SHA256, certId)) {
-                MO_DBG_ERR("unable to parse cert");
-                return InstallCertificateStatus::Rejected;
+        CertificateHash certId;
+        if (!getCertHash((const unsigned char*)certificate, strlen(certificate), HashAlgorithmEnumType::SHA256, certId)) {
+            MO_DBG_ERR("unable to parse cert");
+            return InstallCertificateStatus::Rejected;
+        }
+        MO_DBG_DEBUG("Cert ID:");
+        MO_DBG_DEBUG("hashAlgorithm: %s", certId.getHashAlgorithmCStr());
+        MO_DBG_DEBUG("issuerNameHash: %s", certId.issuerNameHash);
+        MO_DBG_DEBUG("issuerKeyHash: %s", certId.issuerKeyHash);
+        MO_DBG_DEBUG("serialNumber: %s", certId.serialNumber);
+
+        //check if cert is already stored on flash
+        std::vector<CertificateChainHash> installedCerts;
+        auto ret = getCertificateIds({certTypeGetType}, installedCerts);
+        if (ret == GetInstalledCertificateStatus::Accepted) {
+            for (auto &installedCert : installedCerts) {
+                if (installedCert.certificateHashData.equals(certId)) {
+                    MO_DBG_INFO("certificate already installed");
+                    return InstallCertificateStatus::Accepted;
+                }
+                for (auto& installedChild : installedCert.childCertificateHashData) {
+                    if (installedChild.equals(certId)) {
+                        MO_DBG_INFO("certificate already installed");
+                        return InstallCertificateStatus::Accepted;
+                    }
+                }
             }
-            MO_DBG_DEBUG("Cert ID:");
-            MO_DBG_DEBUG("hashAlgorithm: %s", certId.getHashAlgorithmCStr());
-            MO_DBG_DEBUG("issuerNameHash: %s", certId.issuerNameHash);
-            MO_DBG_DEBUG("issuerKeyHash: %s", certId.issuerKeyHash);
-            MO_DBG_DEBUG("serialNumber: %s", certId.serialNumber);
         }
 
         char fn [MO_MAX_PATH_SIZE] = {'\0'}; //cert fn on flash storage
