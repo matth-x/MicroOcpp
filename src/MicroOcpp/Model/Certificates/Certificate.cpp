@@ -55,7 +55,7 @@ int ocpp_cert_print_serialNumber(const ocpp_cert_hash *src, char *buf, size_t si
         return 0;
     }
 
-    int hexLen = snprintf(buf, size, "%2X", src->serialNumber[0]);
+    int hexLen = snprintf(buf, size, "%X", src->serialNumber[0]);
     if (hexLen < 0 || (size_t)hexLen >= size) {
         return -1;
     }
