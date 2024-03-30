@@ -37,27 +37,20 @@ void DeleteCertificate::processReq(JsonObject payload) {
     CertificateHash cert;
 
     if (!strcmp(hashAlgorithm, "SHA256")) {
-        cert.hashAlgorithm = HashAlgorithmEnumType::SHA256;
+        cert.hashAlgorithm = HashAlgorithmType_SHA256;
     } else if (!strcmp(hashAlgorithm, "SHA384")) {
-        cert.hashAlgorithm = HashAlgorithmEnumType::SHA384;
+        cert.hashAlgorithm = HashAlgorithmType_SHA384;
     } else if (!strcmp(hashAlgorithm, "SHA512")) {
-        cert.hashAlgorithm = HashAlgorithmEnumType::SHA512;
+        cert.hashAlgorithm = HashAlgorithmType_SHA512;
     } else {
         errorCode = "FormationViolation";
         return;
     }
 
-    auto retIN = snprintf(cert.issuerNameHash, sizeof(cert.issuerNameHash), "%s", certIdJson["issuerNameHash"] | "_Invalid");
-    auto retIK = snprintf(cert.issuerKeyHash, sizeof(cert.issuerKeyHash), "%s", certIdJson["issuerKeyHash"] | "_Invalid");
-    auto retSN = snprintf(cert.serialNumber, sizeof(cert.serialNumber), "%s", certIdJson["serialNumber"] | "_Invalid");
+    auto retIN = ocpp_cert_set_issuerNameHash(&cert, certIdJson["issuerNameHash"] | "_Invalid", cert.hashAlgorithm);
+    auto retIK = ocpp_cert_set_issuerKeyHash(&cert, certIdJson["issuerKeyHash"] | "_Invalid", cert.hashAlgorithm);
+    auto retSN = ocpp_cert_set_serialNumber(&cert, certIdJson["serialNumber"] | "_Invalid");
     if (retIN < 0 || retIK < 0 || retSN < 0) {
-        MO_DBG_ERR("could not parse CertId: %i %i %i", retIN, retIK, retSN);
-        errorCode = "InternalError";
-        return;
-    }
-    if ((size_t)retIN >= sizeof(cert.issuerNameHash) ||
-            (size_t)retIK >= sizeof(cert.issuerKeyHash) ||
-            (size_t)retSN >= sizeof(cert.serialNumber)) {
         errorCode = "FormationViolation";
         return;
     }
@@ -71,13 +64,13 @@ void DeleteCertificate::processReq(JsonObject payload) {
     auto status = certStore->deleteCertificate(cert);
 
     switch (status) {
-        case DeleteCertificateStatus::Accepted:
+        case DeleteCertificateStatus_Accepted:
             this->status = "Accepted";
             break;
-        case DeleteCertificateStatus::Failed:
+        case DeleteCertificateStatus_Failed:
             this->status = "Failed";
             break;
-        case DeleteCertificateStatus::NotFound:
+        case DeleteCertificateStatus_NotFound:
             this->status = "NotFound";
             break;
         default:

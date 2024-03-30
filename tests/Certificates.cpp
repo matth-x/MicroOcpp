@@ -96,8 +96,8 @@ TEST_CASE( "M - Certificates" ) {
     loop();
 
     SECTION("M05 Install CA cert -- sent cert is valid") {
-        auto ret = certs->installCertificate(InstallCertificateType::CSMSRootCertificate, root_cert);
-        REQUIRE(ret == InstallCertificateStatus::Accepted);
+        auto ret = certs->installCertificate(InstallCertificateType_CSMSRootCertificate, root_cert);
+        REQUIRE(ret == InstallCertificateStatus_Accepted);
 
         size_t msize;
         char fn [MO_MAX_PATH_SIZE];
@@ -107,42 +107,51 @@ TEST_CASE( "M - Certificates" ) {
     }
 
     SECTION("M03 Retrieve list of available certs -- one cert available") {
-        auto ret1 = certs->installCertificate(InstallCertificateType::CSMSRootCertificate, root_cert);
-        REQUIRE(ret1 == InstallCertificateStatus::Accepted);
+        auto ret1 = certs->installCertificate(InstallCertificateType_CSMSRootCertificate, root_cert);
+        REQUIRE(ret1 == InstallCertificateStatus_Accepted);
 
         std::vector<CertificateChainHash> chain;
-        auto ret2 = certs->getCertificateIds({GetCertificateIdType::CSMSRootCertificate}, chain);
+        auto ret2 = certs->getCertificateIds({GetCertificateIdType_CSMSRootCertificate}, chain);
 
-        REQUIRE(ret2 == GetInstalledCertificateStatus::Accepted);
+        REQUIRE(ret2 == GetInstalledCertificateStatus_Accepted);
         REQUIRE(chain.size() == 1);
 
         auto& chainElem = chain.front();
 
-        REQUIRE(chainElem.certificateType == GetCertificateIdType::CSMSRootCertificate);
+        REQUIRE(chainElem.certificateType == GetCertificateIdType_CSMSRootCertificate);
         auto& certHash = chainElem.certificateHashData;
 
-        REQUIRE(!strcmp(certHash.getHashAlgorithmCStr(), root_cert_hash_algorithm)); //if this fails, please update the precomputed test hashes
-        REQUIRE(!strcmp(certHash.getIssuerNameHash(), root_cert_hash_issuer_name));
-        REQUIRE(!strcmp(certHash.getIssuerKeyHash(), root_cert_hash_issuer_key));
-        REQUIRE(!strcmp(certHash.getSerialNumber(), root_cert_hash_serial_number));
+        REQUIRE(!strcmp(HashAlgorithmLabel(certHash.hashAlgorithm), root_cert_hash_algorithm)); //if this fails, please update the precomputed test hashes
+
+        char buf [MO_CERT_HASH_ISSUER_NAME_KEY_SIZE];
+
+        ocpp_cert_print_issuerNameHash(&certHash, buf, sizeof(buf));
+        REQUIRE(!strcmp(buf, root_cert_hash_issuer_name));
+
+        ocpp_cert_print_issuerKeyHash(&certHash, buf, sizeof(buf));
+        REQUIRE(!strcmp(buf, root_cert_hash_issuer_key));
+
+        ocpp_cert_print_serialNumber(&certHash, buf, sizeof(buf));
+        REQUIRE(!strcmp(buf, root_cert_hash_serial_number));
+
         REQUIRE(chainElem.childCertificateHashData.empty()); //no sub certs sent
     }
 
     SECTION("M04 Delete a specific cert -- specified cert exists") {
-        auto ret1 = certs->installCertificate(InstallCertificateType::CSMSRootCertificate, root_cert);
-        REQUIRE(ret1 == InstallCertificateStatus::Accepted);
+        auto ret1 = certs->installCertificate(InstallCertificateType_CSMSRootCertificate, root_cert);
+        REQUIRE(ret1 == InstallCertificateStatus_Accepted);
 
         std::vector<CertificateChainHash> chain;
-        auto ret2 = certs->getCertificateIds({GetCertificateIdType::CSMSRootCertificate}, chain);
-        REQUIRE(ret2 == GetInstalledCertificateStatus::Accepted);
+        auto ret2 = certs->getCertificateIds({GetCertificateIdType_CSMSRootCertificate}, chain);
+        REQUIRE(ret2 == GetInstalledCertificateStatus_Accepted);
 
         REQUIRE(chain.size() == 1);
 
         auto ret3 = certs->deleteCertificate(chain.front().certificateHashData);
-        REQUIRE(ret3 == DeleteCertificateStatus::Accepted);
+        REQUIRE(ret3 == DeleteCertificateStatus_Accepted);
 
-        ret2 = certs->getCertificateIds({GetCertificateIdType::CSMSRootCertificate}, chain);
-        REQUIRE(ret2 == GetInstalledCertificateStatus::NotFound);
+        ret2 = certs->getCertificateIds({GetCertificateIdType_CSMSRootCertificate}, chain);
+        REQUIRE(ret2 == GetInstalledCertificateStatus_NotFound);
 
         REQUIRE(chain.size() == 0);
 
@@ -183,8 +192,8 @@ TEST_CASE( "M - Certificates" ) {
     }
 
     SECTION("M04 DeleteCertificate operation") {
-        auto ret = certs->installCertificate(InstallCertificateType::CSMSRootCertificate, root_cert);
-        REQUIRE(ret == InstallCertificateStatus::Accepted);
+        auto ret = certs->installCertificate(InstallCertificateType_CSMSRootCertificate, root_cert);
+        REQUIRE(ret == InstallCertificateStatus_Accepted);
 
         bool checkProcessed = false;
         getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
@@ -192,12 +201,12 @@ TEST_CASE( "M - Certificates" ) {
                 [] () {
                     //create req
                     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
-                            JSON_OBJECT_SIZE(4)));
+                            JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(4)));
                     auto payload = doc->to<JsonObject>();
-                    payload["hashAlgorithm"] = root_cert_hash_algorithm; //of HashAlgorithmEnumType
-                    payload["issuerNameHash"] = root_cert_hash_issuer_name;
-                    payload["issuerKeyHash"] = root_cert_hash_issuer_key;
-                    payload["serialNumber"] = root_cert_hash_serial_number;
+                    payload["certificateHashData"]["hashAlgorithm"] = root_cert_hash_algorithm; //of HashAlgorithmType
+                    payload["certificateHashData"]["issuerNameHash"] = root_cert_hash_issuer_name;
+                    payload["certificateHashData"]["issuerKeyHash"] = root_cert_hash_issuer_key;
+                    payload["certificateHashData"]["serialNumber"] = root_cert_hash_serial_number;
                     return doc;},
                 [&checkProcessed] (JsonObject payload) {
                     //receive conf
@@ -211,8 +220,8 @@ TEST_CASE( "M - Certificates" ) {
     }
 
     SECTION("M03 GetInstalledCertificateIds operation") {
-        auto ret = certs->installCertificate(InstallCertificateType::CSMSRootCertificate, root_cert);
-        REQUIRE(ret == InstallCertificateStatus::Accepted);
+        auto ret = certs->installCertificate(InstallCertificateType_CSMSRootCertificate, root_cert);
+        REQUIRE(ret == InstallCertificateStatus_Accepted);
 
         bool checkProcessed = false;
         getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(

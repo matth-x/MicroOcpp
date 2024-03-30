@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef ARDUINOOCPP_C_H
@@ -65,7 +65,7 @@ void ocpp_initialize_full(
             const char *bootNotificationCredentials, //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
             struct OCPP_FilesystemOpt fsopt, //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
             bool autoRecover, //automatically sanitize the local data store when the lib detects recurring crashes. During development, `false` is recommended
-            ocpp_certificate_store *certs); //optional. If provided, use given Cert Store, if NULL, use default (default depends on MbedTLS)
+            ocpp_cert_store *certs); //optional. If provided, use given Cert Store, if NULL, use default (default depends on MbedTLS)
 
 
 void ocpp_deinitialize();
