@@ -16,58 +16,58 @@ extern "C" {
 /*
  * See OCPP 2.0.1 part 2 Data Type 3.36
  */
-enum GetCertificateIdType {
-     GetCertificateIdType_V2GRootCertificate,
-     GetCertificateIdType_MORootCertificate,
-     GetCertificateIdType_CSMSRootCertificate,
-     GetCertificateIdType_V2GCertificateChain,
-     GetCertificateIdType_ManufacturerRootCertificate
-};
+typedef enum GetCertificateIdType {
+    GetCertificateIdType_V2GRootCertificate,
+    GetCertificateIdType_MORootCertificate,
+    GetCertificateIdType_CSMSRootCertificate,
+    GetCertificateIdType_V2GCertificateChain,
+    GetCertificateIdType_ManufacturerRootCertificate
+}   GetCertificateIdType;
 
 /*
  * See OCPP 2.0.1 part 2 Data Type 3.40
  */
-enum GetInstalledCertificateStatus {
-     GetInstalledCertificateStatus_Accepted,
-     GetInstalledCertificateStatus_NotFound
-};
+typedef enum GetInstalledCertificateStatus {
+    GetInstalledCertificateStatus_Accepted,
+    GetInstalledCertificateStatus_NotFound
+}   GetInstalledCertificateStatus;
 
 /*
  * See OCPP 2.0.1 part 2 Data Type 3.45
  */
-enum InstallCertificateType {
-     InstallCertificateType_V2GRootCertificate,
-     InstallCertificateType_MORootCertificate,
-     InstallCertificateType_CSMSRootCertificate,
-     InstallCertificateType_ManufacturerRootCertificate
-};
+typedef enum InstallCertificateType {
+    InstallCertificateType_V2GRootCertificate,
+    InstallCertificateType_MORootCertificate,
+    InstallCertificateType_CSMSRootCertificate,
+    InstallCertificateType_ManufacturerRootCertificate
+}   InstallCertificateType;
 
 /*
  * See OCPP 2.0.1 part 2 Data Type 3.28
  */
-enum InstallCertificateStatus {
-     InstallCertificateStatus_Accepted,
-     InstallCertificateStatus_Rejected,
-     InstallCertificateStatus_Failed
-};
+typedef enum InstallCertificateStatus {
+    InstallCertificateStatus_Accepted,
+    InstallCertificateStatus_Rejected,
+    InstallCertificateStatus_Failed
+}   InstallCertificateStatus;
 
 /*
  * See OCPP 2.0.1 part 2 Data Type 3.28
  */
-enum DeleteCertificateStatus {
-     DeleteCertificateStatus_Accepted,
-     DeleteCertificateStatus_Failed,
-     DeleteCertificateStatus_NotFound
-};
+typedef enum DeleteCertificateStatus {
+    DeleteCertificateStatus_Accepted,
+    DeleteCertificateStatus_Failed,
+    DeleteCertificateStatus_NotFound
+}   DeleteCertificateStatus;
 
 /*
  * See OCPP 2.0.1 part 2 Data Type 3.42
  */
-enum HashAlgorithmType {
-     HashAlgorithmType_SHA256,
-     HashAlgorithmType_SHA384,
-     HashAlgorithmType_SHA512
-};
+typedef enum HashAlgorithmType {
+    HashAlgorithmType_SHA256,
+    HashAlgorithmType_SHA384,
+    HashAlgorithmType_SHA512
+}   HashAlgorithmType;
 
 // Convert HashAlgorithmType into string
 #define HashAlgorithmLabel(alg) (alg == HashAlgorithmType_SHA256 ? "SHA256" : \
