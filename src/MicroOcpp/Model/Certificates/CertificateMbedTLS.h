@@ -18,20 +18,19 @@
 /*
  * Provide certificate interpreter to facilitate cert store in C. A full implementation is only available for C++
  */
-#include <MicroOcpp/Model/Certificates/Certificate_c.h>
+#include <MicroOcpp/Model/Certificates/Certificate.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-bool ocpp_get_cert_hash(const unsigned char *cert, size_t len, enum HashAlgorithmEnumType_c hashAlg, ocpp_certificate_hash *out);
+bool ocpp_get_cert_hash(const unsigned char *cert, size_t len, enum HashAlgorithmType hashAlg, ocpp_cert_hash *out);
 
 #ifdef __cplusplus
 } //extern "C"
 
 #include <memory>
 
-#include <MicroOcpp/Model/Certificates/Certificate.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 
 #ifndef MO_CERT_FN_PREFIX
