@@ -3,8 +3,7 @@ name: ESP-IDF CI
 on:
   push:
     branches:
-      - master
-      - develop
+      - 1.0.x
 
   pull_request:
 
