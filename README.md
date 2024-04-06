@@ -14,7 +14,7 @@ OCPP 1.6 client for microcontrollers. Portable C/C++. Compatible with Espressif,
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp) | Technical introduction: [Docs](https://matth-x.github.io/MicroOcpp/intro-tech) | Website: [www.micro-ocpp.com](https://www.micro-ocpp.com)
 
-**Updated branches (2024-03-24):** the default branch was renamed from master into main. The develop branch hasn't been used anymore, so it is deleted. This better represents how branches are used in MicroOcpp: active development takes place on main (plus the feature and fixing branches) and the releases are stable versions of this library. To get a release version, checkout a tag, e.g. *v1.0.2*, or download it from GitHub / PlatformIO.
+**Updated branches (2024-03-24):** the default branch was renamed from master into main. The develop branch hasn't been used anymore, so it is deleted. This better represents how branches are used in MicroOcpp: active development takes place on main (plus the feature and fixing branches) and the releases are stable versions of this library. To get a release version, checkout a tag, e.g. *v1.0.3*, or download it from GitHub / PlatformIO.
 
 ## Tester / Demo App
 
@@ -71,7 +71,7 @@ If using the built-in certificate store (to enable, set build flag `MO_ENABLE_MB
 
 - [Mbed-TLS/mbedtls](https://github.com/Mbed-TLS/mbedtls) (version `2.28.1`)
 
-In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/MicroOcpp@1.0.0` in the PIO library manager.
+In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/MicroOcpp@1.0.3` in the PIO library manager.
 
 ## OCPP 2.0.1 and ISO 15118
 

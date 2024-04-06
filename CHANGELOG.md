@@ -21,6 +21,13 @@
 
 - Make field localAuthorizationList in SendLocalList optional
 
+## [1.0.3] - 2024-04-06
+
+### Fixed
+
+- Fix nullptr access in endTransaction ([#275](https://github.com/matth-x/MicroOcpp/pull/275))
+- Backport: Fix building with debug level warn and error
+
 ## [1.0.2] - 2024-03-24
 
 ### Fixed
