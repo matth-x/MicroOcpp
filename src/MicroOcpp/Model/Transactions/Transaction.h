@@ -234,23 +234,28 @@ public:
         Timeout
     };
 
-    struct SubStatus {
-        bool triggered = false;
-        SendStatus remote;
-    };
-
 //private:
-    //SubStatus parkingBayOccupancy; // not supported
-    SubStatus evConnected;
-    SubStatus authorized;
-    SubStatus dataSigned;
-    SubStatus powerPathClosed;
-    SubStatus energyTransfer;
+    /*
+     * Transaction substates. Notify server about any change when transaction is running
+     */
+    //bool trackParkingBayOccupancy; // not supported
+    bool trackEvConnected;
+    bool trackAuthorized;
+    bool trackDataSigned;
+    bool trackPowerPathClosed;
+    bool trackEnergyTransfer;
+
+    /*
+     * Transaction lifecycle
+     */
+    bool active = true; //once active is false, the tx must stop (or cannot start at all)
+    bool started = false; //if a TxEvent with event type TxStarted has been initiated
+    bool stopped = false; //if a TxEvent with event type TxEnded has been initiated
+    bool stoppedConfirmed = false; //if all TxEvents have been sent to the server (acknowledged or aborted)
 
     /*
      * Global transaction data
      */
-    bool active = true;         //once active is false, the tx must stop (or cannot start at all)
     bool isAuthorized = false;    //if the given idToken was authorized
     bool isDeauthorized = false;  //if the server revoked a local authorization
     unsigned int seqNoCounter = 0; // increment by 1 for each event
@@ -262,8 +267,6 @@ public:
     bool idTokenTransmitted = true;
 
     bool evConnectionTimeoutListen = true;
-
-    bool started = false, stopped = false;
 
     StopReason stopReason = StopReason::UNDEFINED;
     TransactionEventTriggerReason stopTrigger = TransactionEventTriggerReason::UNDEFINED;
