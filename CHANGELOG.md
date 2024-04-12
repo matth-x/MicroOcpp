@@ -20,6 +20,8 @@
 ### Fixed
 
 - Make field localAuthorizationList in SendLocalList optional
+- Fix transaction freeze in offline mode ([#279](https://github.com/matth-x/MicroOcpp/pull/279))
+- Fix compilation error caused by `PRId32` ([#279](https://github.com/matth-x/MicroOcpp/pull/279))
 
 ## [1.0.3] - 2024-04-06
 
