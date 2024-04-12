@@ -127,6 +127,12 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
         }
     }
 
+    // if StopTx timestamp is before StartTx timestamp, something probably went wrong. Restore reasonable temporal order
+    if (transaction->getStopTimestamp() < transaction->getStartTimestamp()) {
+        MO_DBG_WARN("set stopTime = startTime because stopTime was before startTime");
+        transaction->setStopTimestamp(transaction->getStartTimestamp() + 1); //1s behind startTime to keep order in backend DB
+    }
+
     for (auto mv = transactionData.begin(); mv != transactionData.end(); mv++) {
         if ((*mv)->getTimestamp() < MIN_TIME) {
             //time off. Try to adjust, otherwise send invalid value
