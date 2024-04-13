@@ -12,6 +12,7 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp201::TransactionEvent;
+using namespace MicroOcpp::Ocpp201;
 
 TransactionEvent::TransactionEvent(Model& model, std::shared_ptr<TransactionEventData> txEvent)
         : model(model), txEvent(txEvent) {
@@ -20,6 +21,37 @@ TransactionEvent::TransactionEvent(Model& model, std::shared_ptr<TransactionEven
 
 const char* TransactionEvent::getOperationType() {
     return "TransactionEvent";
+}
+
+void TransactionEvent::initiate(StoredOperationHandler *opStore) {
+    if (!txEvent || !txEvent->transaction || !txEvent->transaction) {
+        MO_DBG_ERR("initialization error");
+        return;
+    }
+
+    auto transaction = txEvent->transaction;
+
+    if (txEvent->eventType == TransactionEventData::Type::Started) {
+        if (transaction->started) {
+            MO_DBG_ERR("initialization error");
+            return;
+        }
+
+        transaction->started = true;
+    }
+
+    if (txEvent->eventType == TransactionEventData::Type::Ended) {
+        if (transaction->stopped) {
+            MO_DBG_ERR("initialization error");
+            return;
+        }
+
+        transaction->stopped = true;
+    }
+
+    //commit operation and tx
+
+    MO_DBG_INFO("TransactionEvent initiated");
 }
 
 std::unique_ptr<DynamicJsonDocument> TransactionEvent::createReq() {

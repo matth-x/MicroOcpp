@@ -41,7 +41,7 @@ std::unique_ptr<Ocpp201::Transaction> TransactionService::Evse::allocateTransact
     h *= 749572633U;
     h %= 24593209U;
     for (size_t i = 0; i < sizeof(tx->transactionId) - 3; i += 2) {
-        sprintf(tx->transactionId + i, "%02X", (uint8_t)h);
+        snprintf(tx->transactionId + i, 3, "%02X", (uint8_t)h);
         h *= 749572633U;
         h %= 24593209U;
     }
@@ -53,6 +53,16 @@ std::unique_ptr<Ocpp201::Transaction> TransactionService::Evse::allocateTransact
 
 void TransactionService::Evse::loop() {
 
+    if (transaction && !transaction->active && !transaction->started) {
+        MO_DBG_DEBUG("collect aborted transaction %u-%s", evseId, transaction->transactionId);
+        transaction = nullptr;
+    }
+
+    if (transaction && transaction->stopped) {
+        MO_DBG_DEBUG("collect obsolete transaction %u-%s", evseId, transaction->transactionId);
+        transaction = nullptr;
+    }
+
     // tx-related behavior
     if (transaction) {
         if (connectorPluggedInput) {
@@ -60,6 +70,7 @@ void TransactionService::Evse::loop() {
                 // if cable has been plugged at least once, EVConnectionTimeout will never get triggered
                 transaction->evConnectionTimeoutListen = false;
             }
+
             if (transaction->active &&
                     transaction->evConnectionTimeoutListen &&
                     transaction->beginTimestamp > MIN_TIME &&
@@ -75,83 +86,60 @@ void TransactionService::Evse::loop() {
         }
     }
 
-    // TxEvent types
-    bool txStarted = false;
-    bool txStopped = false;
-    bool txUpdated = false;
-
-    TransactionEventTriggerReason triggerReason = TransactionEventTriggerReason::UNDEFINED;
-    Ocpp201::Transaction::StopReason stoppedReason = Ocpp201::Transaction::StopReason::UNDEFINED;
-
-    // tx should be updated?
-    TransactionEventData::ChargingState chargingState = TransactionEventData::ChargingState::Idle;
-    if (transaction) {
-        chargingState = TransactionEventData::ChargingState::Charging;
-
-        if (connectorPluggedInput && !connectorPluggedInput()) {
-            chargingState = TransactionEventData::ChargingState::Idle;
-        } else if (!transaction || !transaction->isAuthorized) {
-            chargingState = TransactionEventData::ChargingState::EVConnected;
-        } else if (evseReadyInput && !evseReadyInput()) { 
-            chargingState = TransactionEventData::ChargingState::SuspendedEVSE;
-        } else if (evReadyInput && !evReadyInput()) {
-            chargingState = TransactionEventData::ChargingState::SuspendedEV;
-        } else {
-            chargingState = TransactionEventData::ChargingState::Charging;
-        }
-    }
-
-    // tx should be started?
-    if (txService.isTxStartPoint(TxStartStopPoint::EVConnected) &&
-                connectorPluggedInput && connectorPluggedInput()) {
-        txStarted = true;
-        triggerReason = TransactionEventTriggerReason::CablePluggedIn;
-    } else if (txService.isTxStartPoint(TxStartStopPoint::PowerPathClosed) &&
-                evReadyInput && evReadyInput()) {
-        txStarted = true;
-        triggerReason = TransactionEventTriggerReason::ChargingStateChanged;
-    } else if (txService.isTxStartPoint(TxStartStopPoint::Authorized) &&
-                transaction && transaction->isAuthorized) {
-        txStarted = true;
-        triggerReason = TransactionEventTriggerReason::Authorized;
-    }
-
-    // tx should be stopped?
-    if (transaction && !transaction->active) {
-        // tx ended via endTransaction
-        txStopped = true;
-        triggerReason = transaction->stopTrigger;
-        stoppedReason = transaction->stopReason;
-    } else if (txService.isTxStopPoint(TxStartStopPoint::EVConnected) &&
-                connectorPluggedInput && !connectorPluggedInput() &&
-                (txService.stopTxOnEVSideDisconnectBool->getBool() || !transaction || !transaction->started)) {
-        txStopped = true;
-        triggerReason = TransactionEventTriggerReason::EVCommunicationLost;
-        stoppedReason = Ocpp201::Transaction::StopReason::EVDisconnected;
-    } else if (txService.isTxStopPoint(TxStartStopPoint::PowerPathClosed) &&
-                evReadyInput && !evReadyInput()) {
-        txStopped = true;
-        triggerReason = TransactionEventTriggerReason::ChargingStateChanged;
-        stoppedReason = Ocpp201::Transaction::StopReason::StoppedByEV;
-    } else if (txService.isTxStopPoint(TxStartStopPoint::Authorized) &&
-                (!transaction || !transaction->isAuthorized)) {
-        // user revoked authorization (or EV or any "local" entity)
-        txStopped = true;
-        triggerReason = TransactionEventTriggerReason::StopAuthorized;
-        stoppedReason = Ocpp201::Transaction::StopReason::Local;
-    } else if (txService.isTxStopPoint(TxStartStopPoint::Authorized) &&
-                transaction && transaction->isDeauthorized &&
-                txService.stopTxOnInvalidIdBool->getBool()) {
-        // OCPP server rejected authorization
-        txStopped = true;
-        triggerReason = TransactionEventTriggerReason::Deauthorized;
-        stoppedReason = Ocpp201::Transaction::StopReason::DeAuthorized;
-    }
 
     std::shared_ptr<TransactionEventData> txEvent;
 
-    if (txStopped) { // stop tx?
-        if (transaction && transaction->started && !transaction->stopped) {
+    bool txStopCondition = false;
+
+    {
+        // stop tx?
+
+        TransactionEventTriggerReason triggerReason = TransactionEventTriggerReason::UNDEFINED;
+        Ocpp201::Transaction::StopReason stopReason = Ocpp201::Transaction::StopReason::UNDEFINED;
+
+        if (transaction && !transaction->active) {
+            // tx ended via endTransaction
+            txStopCondition = true;
+            triggerReason = transaction->stopTrigger;
+            stopReason = transaction->stopReason;
+        } else if (txService.isTxStopPoint(TxStartStopPoint::EVConnected) &&
+                    connectorPluggedInput && !connectorPluggedInput() &&
+                    (txService.stopTxOnEVSideDisconnectBool->getBool() || !transaction || !transaction->started)) {
+            txStopCondition = true;
+            triggerReason = TransactionEventTriggerReason::EVCommunicationLost;
+            stopReason = Ocpp201::Transaction::StopReason::EVDisconnected;
+        } else if (txService.isTxStopPoint(TxStartStopPoint::PowerPathClosed) &&
+                    evReadyInput && !evReadyInput()) {
+            txStopCondition = true;
+            triggerReason = TransactionEventTriggerReason::ChargingStateChanged;
+            stopReason = Ocpp201::Transaction::StopReason::StoppedByEV;
+        } else if (txService.isTxStopPoint(TxStartStopPoint::Authorized) &&
+                    (!transaction || !transaction->isAuthorized)) {
+            // user revoked authorization (or EV or any "local" entity)
+            txStopCondition = true;
+            triggerReason = TransactionEventTriggerReason::StopAuthorized;
+            stopReason = Ocpp201::Transaction::StopReason::Local;
+        } else if (txService.isTxStopPoint(TxStartStopPoint::Authorized) &&
+                    transaction && transaction->isDeauthorized &&
+                    txService.stopTxOnInvalidIdBool->getBool()) {
+            // OCPP server rejected authorization
+            txStopCondition = true;
+            triggerReason = TransactionEventTriggerReason::Deauthorized;
+            stopReason = Ocpp201::Transaction::StopReason::DeAuthorized;
+        }
+
+        if (txStopCondition &&
+                transaction && transaction->started && transaction->active) {
+
+            MO_DBG_INFO("Session mngt: TxStopPoint reached");
+            transaction->active = false;
+            transaction->stopTrigger = triggerReason;
+            transaction->stopReason = stopReason;
+        }
+
+        if (transaction &&
+                transaction->started && !transaction->stopped && !transaction->active &&
+                (!stopTxReadyInput || stopTxReadyInput())) {
             // yes, stop running tx
 
             txEvent = std::make_shared<TransactionEventData>(transaction, transaction->seqNoCounter++);
@@ -160,12 +148,40 @@ void TransactionService::Evse::loop() {
                 return;
             }
 
+            transaction->stopTrigger = triggerReason;
+            transaction->stopReason = stopReason;
+
             txEvent->eventType = TransactionEventData::Type::Ended;
-            transaction->stopReason = stoppedReason;
+            txEvent->triggerReason = triggerReason;
         }
-    } else {
-        if (txStarted && (!transaction || !transaction->started)) { // start tx?
-            // yes, start tx
+    } 
+    
+    if (!txStopCondition) {
+        // start tx?
+
+        bool txStartCondition = false;
+
+        TransactionEventTriggerReason triggerReason = TransactionEventTriggerReason::UNDEFINED;
+
+        // tx should be started?
+        if (txService.isTxStartPoint(TxStartStopPoint::EVConnected) &&
+                    connectorPluggedInput && connectorPluggedInput()) {
+            txStartCondition = true;
+            triggerReason = TransactionEventTriggerReason::CablePluggedIn;
+        } else if (txService.isTxStartPoint(TxStartStopPoint::PowerPathClosed) &&
+                    evReadyInput && evReadyInput()) {
+            txStartCondition = true;
+            triggerReason = TransactionEventTriggerReason::ChargingStateChanged;
+        } else if (txService.isTxStartPoint(TxStartStopPoint::Authorized) &&
+                    transaction && transaction->isAuthorized) {
+            txStartCondition = true;
+            triggerReason = TransactionEventTriggerReason::Authorized;
+        }
+
+        if (txStartCondition &&
+                (!transaction || (transaction->active && !transaction->started)) &&
+                (!startTxReadyInput || startTxReadyInput())) {
+            // start tx
 
             if (!transaction) {
                 transaction = allocateTransaction();
@@ -182,64 +198,84 @@ void TransactionService::Evse::loop() {
             }
 
             txEvent->eventType = TransactionEventData::Type::Started;
-            
-        } else if (transaction && transaction->started) {
-            // update tx?
-            if (chargingState != trackChargingState) {
-                txUpdated = true;
-                triggerReason = TransactionEventTriggerReason::ChargingStateChanged;
+            txEvent->triggerReason = triggerReason;
+        }
+    }
+
+    TransactionEventData::ChargingState chargingState = TransactionEventData::ChargingState::Idle;
+    if (connectorPluggedInput && !connectorPluggedInput()) {
+        chargingState = TransactionEventData::ChargingState::Idle;
+    } else if (!transaction || !transaction->isAuthorized) {
+        chargingState = TransactionEventData::ChargingState::EVConnected;
+    } else if (evseReadyInput && !evseReadyInput()) { 
+        chargingState = TransactionEventData::ChargingState::SuspendedEVSE;
+    } else if (evReadyInput && !evReadyInput()) {
+        chargingState = TransactionEventData::ChargingState::SuspendedEV;
+    } else if (transaction && transaction->started && transaction->active) {
+        chargingState = TransactionEventData::ChargingState::Charging;
+    }
+
+    if (transaction) {
+        // update tx?
+
+        bool txUpdateCondition = false;
+
+        TransactionEventTriggerReason triggerReason = TransactionEventTriggerReason::UNDEFINED;
+
+        if (chargingState != trackChargingState) {
+            txUpdateCondition = true;
+            triggerReason = TransactionEventTriggerReason::ChargingStateChanged;
+        }
+        trackChargingState = chargingState;
+
+        if (connectorPluggedInput && connectorPluggedInput() && !transaction->trackEvConnected) {
+            transaction->trackEvConnected = true;
+            txUpdateCondition = true;
+            triggerReason = TransactionEventTriggerReason::CablePluggedIn;
+        } else if (connectorPluggedInput && !connectorPluggedInput() && transaction->trackEvConnected) {
+            transaction->trackEvConnected = false;
+            txUpdateCondition = true;
+            triggerReason = TransactionEventTriggerReason::EVCommunicationLost;
+        } else if (transaction->isAuthorized && !transaction->trackAuthorized) {
+            transaction->trackAuthorized = true;
+            txUpdateCondition = true;
+            triggerReason = TransactionEventTriggerReason::Authorized;
+        } else if (!transaction->isAuthorized && transaction->trackAuthorized) {
+            transaction->trackAuthorized = false;
+            txUpdateCondition = true;
+            triggerReason = TransactionEventTriggerReason::StopAuthorized;
+        } else if (evReadyInput && evReadyInput() && !transaction->trackPowerPathClosed) {
+            transaction->trackPowerPathClosed = true;
+        } else if (evReadyInput && !evReadyInput() && transaction->trackPowerPathClosed) {
+            transaction->trackPowerPathClosed = false;
+        }
+
+        if (txUpdateCondition && !txEvent && transaction->started && !transaction->stopped) {
+            // yes, updated
+
+            txEvent = std::make_shared<TransactionEventData>(transaction, transaction->seqNoCounter++);
+            if (!txEvent) {
+                // OOM
+                return;
             }
-            trackChargingState = chargingState;
 
-            if (transaction) {
-                if (connectorPluggedInput && connectorPluggedInput() && !transaction->evConnected.triggered) {
-                    transaction->evConnected.triggered = true;
-                    txUpdated = true;
-                    triggerReason = TransactionEventTriggerReason::CablePluggedIn;
-                } else if (connectorPluggedInput && !connectorPluggedInput() && transaction->evConnected.triggered) {
-                    transaction->evConnected.triggered = false;
-                    txUpdated = true;
-                    triggerReason = TransactionEventTriggerReason::EVCommunicationLost;
-                } else if (transaction->isAuthorized && !transaction->authorized.triggered) {
-                    transaction->authorized.triggered = true;
-                    txUpdated = true;
-                    triggerReason = TransactionEventTriggerReason::Authorized;
-                } else if (!transaction->isAuthorized && transaction->authorized.triggered) {
-                    transaction->authorized.triggered = false;
-                    txUpdated = true;
-                    triggerReason = TransactionEventTriggerReason::StopAuthorized;
-                } else if (evReadyInput && evReadyInput() && !transaction->powerPathClosed.triggered) {
-                    transaction->powerPathClosed.triggered = true;
-                } else if (evReadyInput && !evReadyInput() && transaction->powerPathClosed.triggered) {
-                    transaction->powerPathClosed.triggered = false;
-                }
-            }
-
-            if (txUpdated) {
-                // yes, updated
-
-                txEvent = std::make_shared<TransactionEventData>(transaction, transaction->seqNoCounter++);
-                if (!txEvent) {
-                    // OOM
-                    return;
-                }
-
-                txEvent->eventType = TransactionEventData::Type::Updated;
-            }
+            txEvent->eventType = TransactionEventData::Type::Updated;
+            txEvent->triggerReason = triggerReason;
         }
     }
 
     if (txEvent) {
         txEvent->timestamp = context.getModel().getClock().now();
-        txEvent->triggerReason = triggerReason;
         txEvent->chargingState = chargingState;
         txEvent->evse = evseId;
         // meterValue not supported
 
         if (!transaction->stopIdTokenTransmitted && transaction->stopIdToken) {
             txEvent->idToken = std::unique_ptr<IdToken>(new IdToken(*transaction->stopIdToken.get()));
+            transaction->stopIdTokenTransmitted = true;
         }  else if (!transaction->idTokenTransmitted) {
             txEvent->idToken = std::unique_ptr<IdToken>(new IdToken(transaction->idToken));
+            transaction->idTokenTransmitted = true;
         }
     }
 
@@ -247,24 +283,6 @@ void TransactionService::Evse::loop() {
         auto txEventRequest = makeRequest(new Ocpp201::TransactionEvent(context.getModel(), txEvent));
         txEventRequest->setTimeout(0);
         context.initiateRequest(std::move(txEventRequest));
-
-        if (!transaction->stopIdTokenTransmitted && transaction->stopIdToken) {
-            transaction->stopIdTokenTransmitted = true;
-        }  else if (!transaction->idTokenTransmitted) {
-            transaction->idTokenTransmitted = true;
-        }
-
-        if (txEvent->eventType == TransactionEventData::Type::Ended) {
-            transaction->stopped = true;
-            transaction->active = false;
-            MO_DBG_DEBUG("drop completed transaction");
-            transaction.reset();
-        } else if (txEvent->eventType == TransactionEventData::Type::Started) {
-            transaction->started = true;
-            transaction->evConnected.triggered = connectorPluggedInput && connectorPluggedInput();
-            transaction->powerPathClosed.triggered = evReadyInput && evReadyInput();
-            transaction->authorized.triggered = (transaction && transaction->isAuthorized);
-        }
     }
 }
 
