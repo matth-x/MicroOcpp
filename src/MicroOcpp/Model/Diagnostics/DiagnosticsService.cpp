@@ -184,19 +184,3 @@ void DiagnosticsService::setOnUpload(std::function<bool(const char *location, Ti
 void DiagnosticsService::setOnUploadStatusInput(std::function<UploadStatus()> uploadStatusInput) {
     this->uploadStatusInput = uploadStatusInput;
 }
-
-#if !defined(MO_CUSTOM_DIAGNOSTICS) && !defined(MO_CUSTOM_WS)
-#if defined(ESP32) || defined(ESP8266)
-
-DiagnosticsService *EspWiFi::makeDiagnosticsService(Context& context) {
-    auto diagService = new DiagnosticsService(context);
-
-    /*
-     * add onUpload and uploadStatusInput when logging was implemented
-     */
-
-    return diagService;
-}
-
-#endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)

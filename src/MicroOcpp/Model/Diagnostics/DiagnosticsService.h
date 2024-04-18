@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef DIAGNOSTICSSERVICE_H
@@ -61,18 +61,6 @@ public:
 
     void setOnUploadStatusInput(std::function<UploadStatus()> uploadStatusInput);
 };
-
-#if !defined(MO_CUSTOM_DIAGNOSTICS) && !defined(MO_CUSTOM_WS)
-#if defined(ESP32) || defined(ESP8266)
-
-namespace EspWiFi {
-
-DiagnosticsService *makeDiagnosticsService(Context& context);
-
-}
-
-#endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
 
 } //end namespace MicroOcpp
 

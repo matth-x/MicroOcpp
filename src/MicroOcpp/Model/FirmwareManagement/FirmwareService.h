@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef FIRMWARESERVICE_H
@@ -91,18 +91,16 @@ public:
 
 } //endif namespace MicroOcpp
 
-#if !defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
+#if MO_PLATFORM == MO_PLATFORM_ARDUINO && !defined(MO_CUSTOM_UPDATER)
 #if defined(ESP32) || defined(ESP8266)
 
 namespace MicroOcpp {
-namespace EspWiFi {
 
-FirmwareService *makeFirmwareService(Context& context);
+FirmwareService *makeDefaultFirmwareService(Context& context);
 
-}
 }
 
 #endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
+#endif //MO_PLATFORM == MO_PLATFORM_ARDUINO && !defined(MO_CUSTOM_UPDATER)
 
 #endif

@@ -314,21 +314,12 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
             new CertificateService(*context, std::move(certStoreUse))));
     }
 
-#if !defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
+#if MO_PLATFORM == MO_PLATFORM_ARDUINO && !defined(MO_CUSTOM_UPDATER)
+#if defined(ESP32) || defined(ESP8266)
     model.setFirmwareService(std::unique_ptr<FirmwareService>(
-        EspWiFi::makeFirmwareService(*context))); //instantiate FW service + ESP installation routine
-#else
-    model.setFirmwareService(std::unique_ptr<FirmwareService>(
-        new FirmwareService(*context))); //only instantiate FW service
-#endif
-
-#if !defined(MO_CUSTOM_DIAGNOSTICS) && !defined(MO_CUSTOM_WS)
-    model.setDiagnosticsService(std::unique_ptr<DiagnosticsService>(
-        EspWiFi::makeDiagnosticsService(*context))); //will only return "Rejected" because client needs to implement logging
-#else
-    model.setDiagnosticsService(std::unique_ptr<DiagnosticsService>(
-        new DiagnosticsService(*context)));
-#endif
+        makeDefaultFirmwareService(*context))); //instantiate FW service + ESP installation routine
+#endif //defined(ESP32) || defined(ESP8266)
+#endif //MO_PLATFORM == MO_PLATFORM_ARDUINO && !defined(MO_CUSTOM_UPDATER)
 
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
     if (!model.getResetService()->getExecuteReset())
@@ -895,19 +886,35 @@ void setOnResetExecute(std::function<void(bool)> onResetExecute) {
     }
 }
 
-#if defined(MO_CUSTOM_UPDATER) || defined(MO_CUSTOM_WS)
 FirmwareService *getFirmwareService() {
+    if (!context) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return nullptr;
+    }
+
     auto& model = context->getModel();
+    if (!model.getFirmwareService()) {
+        model.setFirmwareService(std::unique_ptr<FirmwareService>(
+            new FirmwareService(*context)));
+    }
+
     return model.getFirmwareService();
 }
-#endif
 
-#if defined(MO_CUSTOM_DIAGNOSTICS) || defined(MO_CUSTOM_WS)
 DiagnosticsService *getDiagnosticsService() {
+    if (!context) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return nullptr;
+    }
+
     auto& model = context->getModel();
+    if (!model.getDiagnosticsService()) {
+        model.setDiagnosticsService(std::unique_ptr<DiagnosticsService>(
+            new DiagnosticsService(*context)));
+    }
+
     return model.getDiagnosticsService();
 }
-#endif
 
 Context *getOcppContext() {
     return context;

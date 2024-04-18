@@ -1,5 +1,5 @@
 # matth-x/MicroOcpp
-# Copyright Matthias Akstaller 2019 - 2023
+# Copyright Matthias Akstaller 2019 - 2024
 # MIT License
 
 cmake_minimum_required(VERSION 3.15)
@@ -104,8 +104,6 @@ if(ESP_PLATFORM)
 
     target_compile_options(${COMPONENT_TARGET} PUBLIC
         -DMO_PLATFORM=MO_PLATFORM_ESPIDF
-        -DMO_CUSTOM_WS
-        -DMO_CUSTOM_UPDATER
         -DMO_CUSTOM_RESET
         )
 
@@ -124,8 +122,6 @@ target_include_directories(MicroOcpp PUBLIC
 
 target_compile_definitions(MicroOcpp PUBLIC
     MO_PLATFORM=MO_PLATFORM_UNIX
-    MO_CUSTOM_WS
-    MO_CUSTOM_UPDATER
     MO_CUSTOM_RESET
 )
 
@@ -172,8 +168,6 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_PLATFORM=MO_PLATFORM_UNIX
     MO_NUMCONNECTORS=3
     MO_CUSTOM_TIMER
-    MO_CUSTOM_WS
-    MO_CUSTOM_UPDATER
     MO_CUSTOM_RESET
     MO_DBG_LEVEL=MO_DL_DEBUG
     MO_TRAFFIC_OUT

@@ -326,28 +326,35 @@ void setOnResetNotify(std::function<bool(bool)> onResetNotify); //call onResetNo
 
 void setOnResetExecute(std::function<void(bool)> onResetExecute); //reset handler. This function should reboot this controller immediately. Already defined for the ESP32 on Arduino
 
-#if defined(MO_CUSTOM_UPDATER) || defined(MO_CUSTOM_WS)
-#include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
+
+namespace MicroOcpp {
+class FirmwareService;
+class DiagnosticsService;
+}
 
 /*
  * You need to configure this object if FW updates are relevant for you. This project already
  * brings a simple configuration for the ESP32 and ESP8266 for prototyping purposes, however
  * for the productive system you will have to develop a configuration targeting the specific
  * OCPP backend.
- * See MicroOcpp/Model/FirmwareManagement/FirmwareService.h 
+ * See MicroOcpp/Model/FirmwareManagement/FirmwareService.h
+ * 
+ * Lazy initialization: The FW Service will be created at the first call to this function
+ * 
+ * To use, add `#include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>`
  */
 MicroOcpp::FirmwareService *getFirmwareService();
-#endif
 
-#if defined(MO_CUSTOM_DIAGNOSTICS) || defined(MO_CUSTOM_WS)
-#include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
 /*
  * This library implements the OCPP messaging side of Diagnostics, but no logging or the
  * log upload to your backend.
  * To integrate Diagnostics, see MicroOcpp/Model/Diagnostics/DiagnosticsService.h
+ * 
+ * Lazy initialization: The Diag Service will be created at the first call to this function
+ * 
+ * To use, add `#include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>`
  */
 MicroOcpp::DiagnosticsService *getDiagnosticsService();
-#endif
 
 /*
  * Add features and customize the behavior of the OCPP client
@@ -359,6 +366,7 @@ class Context;
 
 //Get access to internal functions and data structures. The returned Context object allows
 //you to bypass the facade functions of this header and implement custom functionality.
+//To use, add `#include <MicroOcpp/Core/Context.h>`
 MicroOcpp::Context *getOcppContext();
 
 /*
