@@ -96,7 +96,7 @@ private:
  * Initialize the library with a WebSocket connection which is configured with protocol=ocpp1.6
  * (=Connection), EVSE voltage and filesystem configuration. This library requires that you handle
  * establishing the connection and keeping it alive. Please refer to
- * https://github.com/matth-x/MicroOcpp/tree/master/examples/ESP-TLS for an example how to use it.
+ * https://github.com/matth-x/MicroOcpp/tree/main/examples/ESP-TLS for an example how to use it.
  * 
  * This GitHub project also delivers an Connection implementation based on links2004/WebSockets. If
  * you need another WebSockets implementation, you can subclass the Connection class and pass it to

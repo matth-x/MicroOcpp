@@ -93,7 +93,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
         if (dt <= 0 ||                              //normal case: interval elapsed
                 dt > clockAlignedDataIntervalInt->getInt()) {   //special case: clock has been adjusted or first run
 
-            MO_DBG_DEBUG("Clock aligned measurement %" PRId32 "s: %s", dt,
+            MO_DBG_DEBUG("Clock aligned measurement %ds: %s", dt,
                 abs(dt) <= 60 ?
                 "in time (tolerance <= 60s)" : "off, e.g. because of first run. Ignore");
             if (abs(dt) <= 60) { //is measurement still "clock-aligned"?

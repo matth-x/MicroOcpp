@@ -5,6 +5,7 @@
 ### Changed
 
 - Replace `PollResult<bool>` with enum `UnlockConnectorResult`
+- Rename master branch into main
 
 ### Added
 
@@ -28,6 +29,21 @@
 - Ignore UnlockConnector when handler not set
 - Reject ChargingProfile if unit not supported
 - Fix building with debug level warn and error
+- Fix transaction freeze in offline mode ([#279](https://github.com/matth-x/MicroOcpp/pull/279))
+- Fix compilation error caused by `PRId32` ([#279](https://github.com/matth-x/MicroOcpp/pull/279))
+
+## [1.0.3] - 2024-04-06
+
+### Fixed
+
+- Fix nullptr access in endTransaction ([#275](https://github.com/matth-x/MicroOcpp/pull/275))
+- Backport: Fix building with debug level warn and error
+
+## [1.0.2] - 2024-03-24
+
+### Fixed
+
+- Correct MO version numbers in code (they were still `1.0.0`)
 
 ## [1.0.1] - 2024-02-27
 

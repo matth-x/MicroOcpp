@@ -16,7 +16,7 @@ void ocpp_initialize(OCPP_Connection *conn, const char *chargePointModel, const 
     ocpp_initialize_full(conn, ChargerCredentials(chargePointModel, chargePointVendor), fsopt, autoRecover, NULL);
 }
 
-void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCredentials, struct OCPP_FilesystemOpt fsopt, bool autoRecover, ocpp_certificate_store *certs) {
+void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCredentials, struct OCPP_FilesystemOpt fsopt, bool autoRecover, ocpp_cert_store *certs) {
     if (!conn) {
         MO_DBG_ERR("conn is null");
     }

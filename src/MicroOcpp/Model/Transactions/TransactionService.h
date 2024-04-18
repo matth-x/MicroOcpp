@@ -39,6 +39,9 @@ public:
         std::function<bool()> evReadyInput;
         std::function<bool()> evseReadyInput;
 
+        std::function<bool()> startTxReadyInput;
+        std::function<bool()> stopTxReadyInput;
+
         std::unique_ptr<Ocpp201::Transaction> allocateTransaction();
     public:
         Evse(Context& context, TransactionService& txService, unsigned int evseId);

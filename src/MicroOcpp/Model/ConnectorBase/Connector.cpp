@@ -177,7 +177,6 @@ bool Connector::ocppPermitsCharge() {
         return transaction &&
                transaction->isRunning() &&
                transaction->isActive() &&
-               !isFaulted() &&
                !suspendDeAuthorizedIdTag;
     }
 }
@@ -186,6 +185,9 @@ void Connector::loop() {
 
     if (!trackLoopExecute) {
         trackLoopExecute = true;
+        if (connectorPluggedInput) {
+            freeVendTrackPlugged = connectorPluggedInput();
+        }
     }
 
     if (transaction && transaction->isAborted() && MO_TX_CLEAN_ABORTED) {
@@ -213,7 +215,7 @@ void Connector::loop() {
         transaction = nullptr;
     }
 
-    if (transaction && transaction->isCompleted()) {
+    if (transaction && transaction->getStopSync().isRequested()) {
         MO_DBG_DEBUG("collect obsolete transaction %u-%u", connectorId, transaction->getTxNr());
         transaction = nullptr;
     }
@@ -422,9 +424,12 @@ void Connector::loop() {
     }
 
     if (status != currentStatus) {
+        MO_DBG_DEBUG("Status changed %s -> %s %s",
+                currentStatus == ChargePointStatus::NOT_SET ? "" : cstrFromOcppEveState(currentStatus),
+                cstrFromOcppEveState(status),
+                minimumStatusDurationInt->getInt() ? " (will report delayed)" : "");
         currentStatus = status;
         t_statusTransition = mocpp_tick_ms();
-        MO_DBG_DEBUG("Status changed%s", minimumStatusDurationInt->getInt() ? ", will report delayed" : "");
     }
 
     if (reportedStatus != currentStatus &&
