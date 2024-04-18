@@ -305,7 +305,7 @@ void FirmwareService::resetStage() {
 
 #include <HTTPUpdate.h>
 
-FirmwareService *makeDefaultFirmwareService(Context& context) {
+FirmwareService *MicroOcpp::makeDefaultFirmwareService(Context& context) {
     FirmwareService *fwService = new FirmwareService(context);
 
     /*
@@ -369,7 +369,7 @@ FirmwareService *makeDefaultFirmwareService(Context& context) {
 
 #include <ESP8266httpUpdate.h>
 
-FirmwareService *makeDefaultFirmwareService(Context& context) {
+FirmwareService *MicroOcpp::makeDefaultFirmwareService(Context& context) {
     FirmwareService *fwService = new FirmwareService(context);
 
     fwService->setOnInstall([fwService] (const char *location) {
