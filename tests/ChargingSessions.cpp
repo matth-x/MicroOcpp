@@ -1,3 +1,7 @@
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Context.h>
@@ -182,7 +186,7 @@ TEST_CASE( "Charging sessions" ) {
     SECTION("Preboot transactions - tx before BootNotification") {
         mocpp_deinitialize();
 
-        loopback.setConnected(false);
+        loopback.setOnline(false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
@@ -232,7 +236,7 @@ TEST_CASE( "Charging sessions" ) {
                 REQUIRE((adjustmentDelay > 3600 - 10 && adjustmentDelay < 3600 + 10));
             });
         
-        loopback.setConnected(true);
+        loopback.setOnline(true);
         loop();
 
         REQUIRE(checkStartProcessed);
@@ -243,7 +247,7 @@ TEST_CASE( "Charging sessions" ) {
 
         mocpp_deinitialize();
 
-        loopback.setConnected(false);
+        loopback.setOnline(false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
@@ -273,7 +277,7 @@ TEST_CASE( "Charging sessions" ) {
             checkProcessed = true;
         });
 
-        loopback.setConnected(true);
+        loopback.setOnline(true);
 
         loop();
 
@@ -294,7 +298,7 @@ TEST_CASE( "Charging sessions" ) {
 
         mocpp_deinitialize();
 
-        loopback.setConnected(false);
+        loopback.setOnline(false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
@@ -332,7 +336,7 @@ TEST_CASE( "Charging sessions" ) {
                 REQUIRE(adjustmentDelay == 1);
             });
 
-        loopback.setConnected(true);
+        loopback.setOnline(true);
 
         loop();
 

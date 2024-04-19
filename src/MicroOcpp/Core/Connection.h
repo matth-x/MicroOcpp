@@ -75,7 +75,9 @@ class LoopbackConnection : public Connection {
 private:
     ReceiveTXTcallback receiveTXT;
 
-    bool connected = true; //for simulating connection losses
+    //for simulating connection losses
+    bool online = true;
+    bool connected = true;
     unsigned long lastRecv = 0;
     unsigned long lastConn = 0;
 public:
@@ -85,7 +87,9 @@ public:
     unsigned long getLastRecv() override;
     unsigned long getLastConnected() override;
 
-    void setConnected(bool connected);
+    void setOnline(bool online); //"online": sent messages are going through
+    bool isOnline() {return online;}
+    void setConnected(bool connected); //"connected": connection has been established, but messages may not go through (e.g. weak connection)
     bool isConnected() override {return connected;}
 };
 
