@@ -24,6 +24,7 @@
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
 
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Connection.h>
 
 #ifndef MO_TX_CLEAN_ABORTED
 #define MO_TX_CLEAN_ABORTED 1
@@ -671,6 +672,12 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
     auto authorize = makeRequest(new Ocpp16::Authorize(context.getModel(), idTag));
     authorize->setTimeout(authorizationTimeoutInt && authorizationTimeoutInt->getInt() > 0 ? authorizationTimeoutInt->getInt() * 1000UL : 20UL * 1000UL);
+
+    if (!context.getConnection().isConnected()) {
+        //WebSockt unconnected. Enter offline mode immediately
+        authorize->setTimeout(1);
+    }
+
     auto tx = transaction;
     authorize->setOnReceiveConfListener([this, tx] (JsonObject response) {
         JsonObject idTagInfo = response["idTagInfo"];

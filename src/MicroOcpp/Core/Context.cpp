@@ -68,3 +68,7 @@ OperationRegistry& Context::getOperationRegistry() {
 const ProtocolVersion& Context::getVersion() {
     return model.getVersion();
 }
+
+Connection& Context::getConnection() {
+    return connection;
+}

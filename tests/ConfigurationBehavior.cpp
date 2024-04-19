@@ -1,3 +1,7 @@
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Context.h>
@@ -143,7 +147,7 @@ TEST_CASE( "Configuration Behavior" ) {
         auto authorizationTimeoutInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", 1);
         authorizationTimeoutInt->setInt(1); //try normal Authorize for 1s, then enter offline mode
 
-        loopback.setConnected(false); //connection loss
+        loopback.setOnline(false); //connection loss
 
         SECTION("set true") {
             configBool->setBool(true);
@@ -171,7 +175,7 @@ TEST_CASE( "Configuration Behavior" ) {
         }
 
         endTransaction();
-        loopback.setConnected(true);
+        loopback.setOnline(true);
     }
 
     SECTION("LocalPreAuthorize") {
@@ -187,7 +191,7 @@ TEST_CASE( "Configuration Behavior" ) {
         loopback.sendTXT(localListMsg, strlen(localListMsg));
         loop();
 
-        loopback.setConnected(false); //connection loss
+        loopback.setOnline(false); //connection loss
 
         SECTION("set true - accepted idtag") {
             configBool->setBool(true);
@@ -206,7 +210,7 @@ TEST_CASE( "Configuration Behavior" ) {
 
             REQUIRE(connector->getStatus() == ChargePointStatus::Preparing);
 
-            loopback.setConnected(true);
+            loopback.setOnline(true);
             mtime += 20000; //Authorize will be retried after a few seconds
             loop();
 
@@ -214,7 +218,7 @@ TEST_CASE( "Configuration Behavior" ) {
         }
 
         endTransaction();
-        loopback.setConnected(true);
+        loopback.setOnline(true);
     }
 
     mocpp_deinitialize();
