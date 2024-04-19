@@ -4,6 +4,8 @@
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Operations/CustomOperation.h>
+#include <MicroOcpp/Debug.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 
@@ -56,7 +58,7 @@ TEST_CASE( "C++ API test" ) {
         setStartTxReadyInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return true;});
         setStopTxReadyInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return true;});
         setTxNotificationOutput([c = &checkpoints[ncheck++]] (MicroOcpp::Transaction*, MicroOcpp::TxNotification) {*c = true;});
-        setOnUnlockConnectorInOut([c = &checkpoints[ncheck++]] () -> MicroOcpp::PollResult<bool> {*c = true; return true;});
+        setOnUnlockConnectorInOut([c = &checkpoints[ncheck++]] () -> UnlockConnectorResult {*c = true; return UnlockConnectorResult_Unlocked;});
 
         setOnResetNotify([c = &checkpoints[ncheck++]] (bool) -> bool {*c = true; return true;});
         setOnResetExecute([c = &checkpoints[ncheck++]] (bool) {*c = true;});
@@ -242,8 +244,8 @@ TEST_CASE( "C API test" ) {
         ocpp_setStopTxReadyInput_m(2, [] (unsigned int) -> bool {checkpointsc[23] = true; return true;}); ncheckc++;
         ocpp_setTxNotificationOutput([] (OCPP_Transaction*, OCPP_TxNotification) {checkpointsc[24] = true;}); ncheckc++;
         ocpp_setTxNotificationOutput_m(2, [] (unsigned int, OCPP_Transaction*, OCPP_TxNotification) {checkpointsc[25] = true;}); ncheckc++;
-        ocpp_setOnUnlockConnectorInOut([] () -> OptionalBool {checkpointsc[26] = true; return OptionalBool::OptionalTrue;}); ncheckc++;
-        ocpp_setOnUnlockConnectorInOut_m(2, [] (unsigned int) -> OptionalBool {checkpointsc[27] = true; return OptionalBool::OptionalTrue;}); ncheckc++;
+        ocpp_setOnUnlockConnectorInOut([] () -> UnlockConnectorResult {checkpointsc[26] = true; return UnlockConnectorResult_Unlocked;}); ncheckc++;
+        ocpp_setOnUnlockConnectorInOut_m(2, [] (unsigned int) -> UnlockConnectorResult {checkpointsc[27] = true; return UnlockConnectorResult_Unlocked;}); ncheckc++;
 
         ocpp_setOnResetNotify([] (bool) -> bool {checkpointsc[28] = true; return true;}); ncheckc++;
         ocpp_setOnResetExecute([] (bool) {checkpointsc[29] = true;}); ncheckc++;

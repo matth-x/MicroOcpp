@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
@@ -300,12 +300,12 @@ void FirmwareService::resetStage() {
     installationIssued = false;
 }
 
-#if !defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
+#if MO_PLATFORM == MO_PLATFORM_ARDUINO && !defined(MO_CUSTOM_UPDATER)
 #if defined(ESP32)
 
 #include <HTTPUpdate.h>
 
-FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
+FirmwareService *MicroOcpp::makeDefaultFirmwareService(Context& context) {
     FirmwareService *fwService = new FirmwareService(context);
 
     /*
@@ -369,7 +369,7 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
 
 #include <ESP8266httpUpdate.h>
 
-FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
+FirmwareService *MicroOcpp::makeDefaultFirmwareService(Context& context) {
     FirmwareService *fwService = new FirmwareService(context);
 
     fwService->setOnInstall([fwService] (const char *location) {
@@ -412,4 +412,4 @@ FirmwareService *EspWiFi::makeFirmwareService(Context& context) {
 }
 
 #endif //defined(ESP8266)
-#endif //!defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)
+#endif //MO_PLATFORM == MO_PLATFORM_ARDUINO && !defined(MO_CUSTOM_UPDATER)

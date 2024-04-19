@@ -4,10 +4,14 @@
 
 ### Changed
 
+- Replace `PollResult<bool>` with enum `UnlockConnectorResult`
 - Rename master branch into main
 
 ### Added
 
+- File index ([#270](https://github.com/matth-x/MicroOcpp/pull/270))
+- Config `Cst_TxStartOnPowerPathClosed` to put back TxStartPoint
+- Build flags for customizing memory limits of SmartCharging
 - Operation GetInstalledCertificateIds, UC M03 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
 - Operation DeleteCertificate, UC M04 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
 - Operation InstallCertificate, UC M05 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
@@ -19,9 +23,15 @@
 
 ### Fixed
 
+- Fix defect idTag check in `endTransaction`
 - Make field localAuthorizationList in SendLocalList optional
+- Update charging profiles when flash disabled (relates to [#260](https://github.com/matth-x/MicroOcpp/pull/260))
+- Ignore UnlockConnector when handler not set
+- Reject ChargingProfile if unit not supported
+- Fix building with debug level warn and error
 - Fix transaction freeze in offline mode ([#279](https://github.com/matth-x/MicroOcpp/pull/279))
 - Fix compilation error caused by `PRId32` ([#279](https://github.com/matth-x/MicroOcpp/pull/279))
+- Don't load FW-mngt. module when no handlers set
 
 ## [1.0.3] - 2024-04-06
 

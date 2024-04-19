@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
@@ -101,30 +101,37 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const char *location, u
     }
     
 #if MO_DBG_LEVEL >= MO_DL_INFO
-    char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
-    char dbuf2 [JSONDATE_LENGTH + 1] = {'\0'};
-    this->startTime.toJsonString(dbuf, JSONDATE_LENGTH + 1);
-    this->stopTime.toJsonString(dbuf2, JSONDATE_LENGTH + 1);
+    {
+        char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
+        char dbuf2 [JSONDATE_LENGTH + 1] = {'\0'};
+        this->startTime.toJsonString(dbuf, JSONDATE_LENGTH + 1);
+        this->stopTime.toJsonString(dbuf2, JSONDATE_LENGTH + 1);
 
-    MO_DBG_INFO("Scheduled Diagnostics upload!\n" \
-                    "                  location = %s\n" \
-                    "                  retries = %i" \
-                    ", retryInterval = %u" \
-                    "                  startTime = %s\n" \
-                    "                  stopTime = %s",
-            this->location.c_str(),
-            this->retries,
-            this->retryInterval,
-            dbuf,
-            dbuf2);
+        MO_DBG_INFO("Scheduled Diagnostics upload!\n" \
+                        "                  location = %s\n" \
+                        "                  retries = %i" \
+                        ", retryInterval = %u" \
+                        "                  startTime = %s\n" \
+                        "                  stopTime = %s",
+                this->location.c_str(),
+                this->retries,
+                this->retryInterval,
+                dbuf,
+                dbuf2);
+    }
 #endif
 
     nextTry = context.getModel().getClock().now();
     nextTry += 5; //wait for 5s before upload
     uploadIssued = false;
 
-    nextTry.toJsonString(dbuf, JSONDATE_LENGTH + 1);
-    MO_DBG_DEBUG("Initial try at %s", dbuf);
+#if MO_DBG_LEVEL >= MO_DL_DEBUG
+    {
+        char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
+        nextTry.toJsonString(dbuf, JSONDATE_LENGTH + 1);
+        MO_DBG_DEBUG("Initial try at %s", dbuf);
+    }
+#endif
 
     std::string fileName;
     if (refreshFilename) {
@@ -177,19 +184,3 @@ void DiagnosticsService::setOnUpload(std::function<bool(const char *location, Ti
 void DiagnosticsService::setOnUploadStatusInput(std::function<UploadStatus()> uploadStatusInput) {
     this->uploadStatusInput = uploadStatusInput;
 }
-
-#if !defined(MO_CUSTOM_DIAGNOSTICS) && !defined(MO_CUSTOM_WS)
-#if defined(ESP32) || defined(ESP8266)
-
-DiagnosticsService *EspWiFi::makeDiagnosticsService(Context& context) {
-    auto diagService = new DiagnosticsService(context);
-
-    /*
-     * add onUpload and uploadStatusInput when logging was implemented
-     */
-
-    return diagService;
-}
-
-#endif //defined(ESP32) || defined(ESP8266)
-#endif //!defined(MO_CUSTOM_UPDATER) && !defined(MO_CUSTOM_WS)

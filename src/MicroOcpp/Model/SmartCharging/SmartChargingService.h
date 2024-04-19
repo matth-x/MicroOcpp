@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef SMARTCHARGINGSERVICE_H
@@ -11,7 +11,6 @@
 #include <ArduinoJson.h>
 
 #include <MicroOcpp/Model/SmartCharging/SmartChargingModel.h>
-#include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 
@@ -26,7 +25,7 @@ enum class ChargingRateUnitType_Optional {
 class Context;
 class Model;
 
-using ProfileStack = std::array<std::unique_ptr<ChargingProfile>, CHARGEPROFILEMAXSTACKLEVEL + 1>;
+using ProfileStack = std::array<std::unique_ptr<ChargingProfile>, MO_ChargeProfileMaxStackLevel + 1>;
 
 class SmartChargingConnector {
 private:

@@ -257,7 +257,7 @@ void Model::updateSupportedStandardProfiles() {
         }
     }
 
-    if (firmwareService &&
+    if (firmwareService ||
             diagnosticsService) {
         if (!strstr(supportedFeatureProfilesString->getString(), "FirmwareManagement")) {
             if (!buf.empty()) buf += ',';

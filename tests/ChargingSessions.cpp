@@ -397,6 +397,124 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE(isOperative());
     }
 
-    mocpp_deinitialize();
+    SECTION("UnlockConnector") {
+        // UnlockConnector handler
 
+        beginTransaction_authorized("mIdTag");
+
+        loop();
+        REQUIRE( isTransactionRunning() );
+
+        bool checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(
+            new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
+                [] () {
+                    //create req
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto payload = doc->to<JsonObject>();
+                    payload["connectorId"] = 1;
+                    return doc;
+                },
+                [&checkProcessed] (JsonObject payload) {
+                    //process conf
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(payload["status"] | "_Undefined", "NotSupported") );
+                })));
+        
+        loop();
+        REQUIRE( checkProcessed );
+        REQUIRE( isTransactionRunning() ); // NotSupported doesn't lead to transaction stop
+
+        setOnUnlockConnectorInOut([] () -> UnlockConnectorResult {
+            // connector lock fails
+            return UnlockConnectorResult_UnlockFailed;
+        });
+
+        checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(
+            new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
+                [] () {
+                    //create req
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto payload = doc->to<JsonObject>();
+                    payload["connectorId"] = 1;
+                    return doc;
+                },
+                [&checkProcessed] (JsonObject payload) {
+                    //process conf
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(payload["status"] | "_Undefined", "UnlockFailed") );
+                })));
+        
+        loop();
+        REQUIRE( checkProcessed );
+        REQUIRE( !isTransactionRunning() ); // Stop tx when UnlockConnector generally supported
+
+        setOnUnlockConnectorInOut([] () -> UnlockConnectorResult {
+            // connector lock times out
+            return UnlockConnectorResult_Pending;
+        });
+
+        checkProcessed = false;
+        getOcppContext()->initiateRequest(makeRequest(
+            new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
+                [] () {
+                    //create req
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto payload = doc->to<JsonObject>();
+                    payload["connectorId"] = 1;
+                    return doc;
+                },
+                [&checkProcessed] (JsonObject payload) {
+                    //process conf
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(payload["status"] | "_Undefined", "UnlockFailed") );
+                })));
+        
+        loop();
+        mtime += MO_UNLOCK_TIMEOUT; // increment clock so that MO_UNLOCK_TIMEOUT expires
+        loop();
+        REQUIRE( checkProcessed );
+    }
+
+    SECTION("TxStartPoint - PowerPathClosed") {
+
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "TxStartOnPowerPathClosed", true)->setBool(true);
+
+        // precondition: charge not allowed
+        REQUIRE( !ocppPermitsCharge() );
+        REQUIRE( !isTransactionRunning() );
+
+        setConnectorPluggedInput([] () {return false;}); // TxStartOnPowerPathClosed removes ConnectorPlugged as a prerequisite of transactions
+        setEvReadyInput([] () {return false;}); // TxStartOnPowerPathClosed puts EvReady in the role of ConnectorPlugged in conventional transactions
+
+        beginTransaction("mIdTag");
+
+        loop();
+
+        // in contrast to conventional tx mode, charge permission is granted before transaction. PowerPathClosed is a prerequisite of transactions
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( !isTransactionRunning() );
+
+        setConnectorPluggedInput([] () {return true;}); // ConnectorPlugged not sufficient to start tx
+
+        loop();
+
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( !isTransactionRunning() );
+
+        setEvReadyInput([] () {return true;}); // now, close PowerPath. Transaction will start now
+
+        loop();
+
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( isTransactionRunning() );
+
+        endTransaction();
+
+        loop();
+
+    }
+
+    mocpp_deinitialize();
 }
