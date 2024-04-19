@@ -44,6 +44,8 @@ public:
     OperationRegistry& getOperationRegistry();
 
     const ProtocolVersion& getVersion();
+
+    Connection& getConnection();
 };
 
 } //end namespace MicroOcpp
