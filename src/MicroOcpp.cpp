@@ -428,7 +428,7 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
     bool res = false;
     if (isTransactionActive(connectorId) && getTransactionIdTag(connectorId)) {
         //end transaction now if either idTag is nullptr (i.e. force stop) or the idTag matches beginTransaction
-        if (!idTag || !strcmp(idTag, getTransactionIdTag(connectorId))) {
+        if (!idTag || !strcmp(idTag, getTransactionIdTag())) {
             res = endTransaction_authorized(idTag, reason, connectorId);
         } else {
             MO_DBG_INFO("endTransaction: idTag doesn't match");
