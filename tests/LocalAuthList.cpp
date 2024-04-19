@@ -242,6 +242,38 @@ TEST_CASE( "LocalAuth" ) {
         loop();
     }
 
+    SECTION("Local auth - check WS online status") {
+
+        localAuthorizeOffline->setBool(false);
+        localPreAuthorize->setBool(false);
+        MicroOcpp::declareConfiguration<bool>("AllowOfflineTxForUnknownId", true)->setBool(true);
+
+        //check TX notification
+        bool checkTxAuthorized = false;
+        setTxNotificationOutput([&checkTxAuthorized] (Transaction*, TxNotification txNotification) {
+            if (txNotification == TxNotification::Authorized) {
+                checkTxAuthorized = true;
+            }
+        });
+
+        //disconnect WS and begin tx - charger should enter offline mode immediately
+        loopback.setConnected(false);
+
+        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+
+        unsigned long t_before = mocpp_tick_ms();
+
+        beginTransaction("unknownIdTag");
+        loop();
+
+        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( checkTxAuthorized );
+
+        loopback.setConnected(true);
+        endTransaction();
+        loop();
+    }
+
     SECTION("Local auth list entry expired / unauthorized") {
 
         localPreAuthorize->setBool(true);
