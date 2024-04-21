@@ -118,6 +118,8 @@ public:
     unsigned long getLastRecv() override; //get time of last successful receive in millis
 
     unsigned long getLastConnected() override; //get last connection creation in millis
+
+    bool isConnected() override;
 };
 
 } //end namespace EspWiFi
