@@ -97,6 +97,7 @@ void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const cha
     //parse host, port
     std::string host_port_path = url.substr(url.find_first_of("://") + strlen("://"));
     std::string host_port = host_port_path.substr(0, host_port_path.find_first_of('/'));
+    std::string path = host_port_path.substr(host_port.length());
     std::string host = host_port.substr(0, host_port.find_first_of(':'));
     if (host.empty()) {
         MO_DBG_ERR("could not parse host: %s", url.c_str());
@@ -123,28 +124,29 @@ void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const cha
         }
     }
 
-    if ((!*chargeBoxId) == '\0') {
-        if (url.back() != '/') {
-            url += '/';
-        }
-
-        url += chargeBoxId;
+    if (path.empty()) {
+        path = "/";
     }
 
-    MO_DBG_INFO("connecting to %s -- (host: %s, port: %u)", url.c_str(), host.c_str(), port);
+    if ((!*chargeBoxId) == '\0') {
+        if (path.back() != '/') {
+            path += '/';
+        }
+
+        path += chargeBoxId;
+    }
+
+    MO_DBG_INFO("connecting to %s -- (host: %s, port: %u, path: %s)", url.c_str(), host.c_str(), port, path.c_str());
 
     if (!webSocket)
         webSocket = new WebSocketsClient();
 
-    if (isTLS)
-    {
-        // server address, port, URL and TLS certificate
-        webSocket->beginSslWithCA(host.c_str(), port, url.c_str(), CA_cert, "ocpp1.6");
-    }
-    else
-    {
-        // server address, port, URL
-        webSocket->begin(host.c_str(), port, url.c_str(), "ocpp1.6");
+    if (isTLS) {
+        // server address, port, path and TLS certificate
+        webSocket->beginSslWithCA(host.c_str(), port, path.c_str(), CA_cert, "ocpp1.6");
+    } else {
+        // server address, port, path
+        webSocket->begin(host.c_str(), port, path.c_str(), "ocpp1.6");
     }
 
     // try ever 5000 again if connection has failed
