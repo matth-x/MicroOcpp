@@ -22,6 +22,7 @@
     - Variables (non-persistent), UCs B05 - B07 ([#247](https://github.com/matth-x/MicroOcpp/pull/247), [#284](https://github.com/matth-x/MicroOcpp/pull/284))
     - Transactions (preview only), UCs E01 - E12 ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
     - StatusNotification compatibility ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
+    - ChangeAvailability compatibility ([#285](https://github.com/matth-x/MicroOcpp/pull/285))
 
 ### Fixed
 
