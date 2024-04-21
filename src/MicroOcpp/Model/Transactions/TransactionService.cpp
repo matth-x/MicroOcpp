@@ -417,6 +417,12 @@ const std::shared_ptr<MicroOcpp::Ocpp201::Transaction>& TransactionService::Evse
     return transaction;
 }
 
+bool TransactionService::Evse::ocppPermitsCharge() {
+    return transaction &&
+           transaction->active &&
+           transaction->isAuthorized;
+}
+
 bool TransactionService::isTxStartPoint(TxStartStopPoint check) {
     for (auto& v : txStartPointParsed) {
         if (v == check) {
