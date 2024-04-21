@@ -1,5 +1,5 @@
 # matth-x/MicroOcpp
-# Copyright Matthias Akstaller 2019 - 2023
+# Copyright Matthias Akstaller 2019 - 2024
 # MIT License
 
 cmake_minimum_required(VERSION 3.15)
@@ -34,6 +34,7 @@ set(MO_SRC
     src/MicroOcpp/Operations/DeleteCertificate.cpp
     src/MicroOcpp/Operations/DiagnosticsStatusNotification.cpp
     src/MicroOcpp/Operations/FirmwareStatusNotification.cpp
+    src/MicroOcpp/Operations/GetBaseReport.cpp
     src/MicroOcpp/Operations/GetCompositeSchedule.cpp
     src/MicroOcpp/Operations/GetConfiguration.cpp
     src/MicroOcpp/Operations/GetDiagnostics.cpp
@@ -42,6 +43,7 @@ set(MO_SRC
     src/MicroOcpp/Operations/GetVariables.cpp
     src/MicroOcpp/Operations/Heartbeat.cpp
     src/MicroOcpp/Operations/MeterValues.cpp
+    src/MicroOcpp/Operations/NotifyReport.cpp
     src/MicroOcpp/Operations/RemoteStartTransaction.cpp
     src/MicroOcpp/Operations/RemoteStopTransaction.cpp
     src/MicroOcpp/Operations/ReserveNow.cpp
