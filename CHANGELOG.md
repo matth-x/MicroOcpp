@@ -19,7 +19,7 @@
 - Operation InstallCertificate, UC M05 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
 - `ProtocolVersion` selects v1.6 or v2.0.1 ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
 - Build flag `MO_ENABLE_V201` set to 1 enables OCPP 2.0.1 features ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
-    - Variables (non-persistent), UCs B05 - B06 ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
+    - Variables (non-persistent), UCs B05 - B07 ([#247](https://github.com/matth-x/MicroOcpp/pull/247), [#284](https://github.com/matth-x/MicroOcpp/pull/284))
     - Transactions (preview only), UCs E01 - E12 ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
     - StatusNotification compatibility ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
 

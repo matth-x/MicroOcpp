@@ -49,6 +49,7 @@ class Context;
 
 class VariableService {
 private:
+    Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
     std::vector<std::shared_ptr<VariableContainer>> containers;
 
@@ -84,6 +85,8 @@ public:
     SetVariableStatus setVariable(Variable::AttributeType attrType, const char *attrVal, const ComponentId& component, const char *variableName);
 
     GetVariableStatus getVariable(Variable::AttributeType attrType, const ComponentId& component, const char *variableName, Variable **result);
+
+    GenericDeviceModelStatus getBaseReport(int requestId, ReportBase reportBase);
 };
 
 } // namespace MicroOcpp

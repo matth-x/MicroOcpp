@@ -68,6 +68,21 @@ enum class GetVariableStatus : uint8_t {
     NotSupportedAttributeType
 };
 
+// ReportBaseEnumType (3.70)
+typedef enum ReportBase {
+    ReportBase_ConfigurationInventory,
+    ReportBase_FullInventory,
+    ReportBase_SummaryInventory
+}   ReportBase;
+
+// GenericDeviceModelStatus (3.34)
+typedef enum GenericDeviceModelStatus {
+    GenericDeviceModelStatus_Accepted,
+    GenericDeviceModelStatus_Rejected,
+    GenericDeviceModelStatus_NotSupported,
+    GenericDeviceModelStatus_EmptyResultSet
+}   GenericDeviceModelStatus;
+
 // VariableMonitoringType (2.52)
 class VariableMonitor {
 public:
