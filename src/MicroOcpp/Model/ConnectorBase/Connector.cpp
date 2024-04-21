@@ -22,6 +22,7 @@
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
+#include <MicroOcpp/Model/Transactions/TransactionService.h>
 
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Core/Connection.h>
@@ -870,6 +871,28 @@ bool Connector::isOperative() {
             return true;
         }
     }
+
+    #if MO_ENABLE_V201
+    if (model.getVersion().major == 2 && model.getTransactionService()) {
+        auto txService = model.getTransactionService();
+
+        if (connectorId == 0) {
+            for (unsigned int cId = 1; cId < model.getNumConnectors(); cId++) {
+                if (txService->getEvse(cId)->getTransaction() &&
+                        txService->getEvse(cId)->getTransaction()->started &&
+                        !txService->getEvse(cId)->getTransaction()->stopped) {
+                    return true;
+                }
+            }
+        } else {
+            if (txService->getEvse(connectorId)->getTransaction() &&
+                    txService->getEvse(connectorId)->getTransaction()->started &&
+                    !txService->getEvse(connectorId)->getTransaction()->stopped) {
+                return true;
+            }
+        }
+    }
+    #endif //MO_ENABLE_V201
 
     return availabilityVolatile && availabilityBool->getBool();
 }
