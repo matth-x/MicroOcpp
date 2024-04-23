@@ -329,7 +329,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
     model.getBootService()->setChargePointCredentials(bootNotificationCredentials);
 
     auto credsJson = model.getBootService()->getChargePointCredentials();
-    if (credsJson && credsJson->containsKey("firmwareVersion")) {
+    if (model.getFirmwareService() && credsJson && credsJson->containsKey("firmwareVersion")) {
         model.getFirmwareService()->setBuildNumber((*credsJson)["firmwareVersion"]);
     }
     credsJson.reset();
