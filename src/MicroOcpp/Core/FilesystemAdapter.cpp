@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -20,6 +20,16 @@
  */
 
 #if MO_ENABLE_FILE_INDEX
+
+#ifndef MO_ENABLE_FS_PROFILER
+#define MO_ENABLE_FS_PROFILER 0
+#endif
+
+#if MO_ENABLE_FS_PROFILER
+#ifndef MO_ENABLE_FS_PROFILER_PAGE_SIZE
+#define MO_ENABLE_FS_PROFILER_PAGE_SIZE 256
+#endif
+#endif
 
 #include <vector>
 #include <algorithm>
@@ -77,6 +87,9 @@ private:
     };
 
     std::vector<IndexEntry> index;
+
+    size_t total_bytes_written = 0;
+    size_t total_blocks_written = 0;
 
     IndexEntry *getEntryByFname(const char *fn) {
         auto entry = std::find_if(index.begin(), index.end(),
@@ -144,6 +157,10 @@ public:
 
             entry->size = 0; //write always empties the file
 
+            #if MO_ENABLE_FS_PROFILER
+            total_blocks_written += 1; //assume writing 1 file tree block at least
+            #endif
+
             return std::unique_ptr<IndexedFileAdapter>(new IndexedFileAdapter(*this, entry->fname.c_str(), std::move(file)));
         } else {
             MO_DBG_ERR("only support r or w");
@@ -154,6 +171,11 @@ public:
     bool remove(const char *path) override {
         if (strlen(path) >= sizeof(MO_FILENAME_PREFIX) - 1) {
             //valid path
+            #if MO_ENABLE_FS_PROFILER
+            if (getEntryByPath(path)) {
+                total_blocks_written += 1; //assume writing 1 file tree block
+            }
+            #endif
             const char *fn = path + sizeof(MO_FILENAME_PREFIX) - 1;
             index.erase(std::remove_if(index.begin(), index.end(),
                 [fn] (const IndexEntry& el) -> bool {
@@ -217,8 +239,18 @@ public:
 
     void updateFilesize(const char *fn, size_t size) {
         if (auto entry = getEntryByFname(fn)) {
+            #if MO_ENABLE_FS_PROFILER
+            total_bytes_written += size - entry->size;
+            total_blocks_written += (size - entry->size + MO_ENABLE_FS_PROFILER_PAGE_SIZE - 1) / MO_ENABLE_FS_PROFILER_PAGE_SIZE; 
+            #endif
+
             entry->size = size;
+
+            #if MO_ENABLE_FS_PROFILER
+            MO_DBG_DEBUG("update index: %s (%zuB) -- (%zuB totally written in %zu blocks)", entry->fname.c_str(), entry->size, total_bytes_written, total_blocks_written);
+            #else
             MO_DBG_DEBUG("update index: %s (%zuB)", entry->fname.c_str(), entry->size);
+            #endif
         }
     }
 };
