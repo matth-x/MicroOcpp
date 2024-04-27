@@ -289,8 +289,6 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new AuthorizationService(*context, filesystem)));
     model.setReservationService(std::unique_ptr<ReservationService>(
         new ReservationService(*context, MO_NUMCONNECTORS)));
-    model.setResetService(std::unique_ptr<ResetService>(
-        new ResetService(*context)));
 
 #if MO_ENABLE_V201
     model.setVariableService(std::unique_ptr<VariableService>(
@@ -298,6 +296,18 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
     model.setTransactionService(std::unique_ptr<TransactionService>(
         new TransactionService(*context)));
 #endif
+
+#if MO_ENABLE_V201
+    if (version.major == 2) {
+        //depends on VariableService
+        model.setResetServiceV201(std::unique_ptr<Ocpp201::ResetService>(
+            new Ocpp201::ResetService(*context)));
+    } else
+#endif
+    {
+        model.setResetService(std::unique_ptr<ResetService>(
+            new ResetService(*context)));
+    }
 
     std::unique_ptr<CertificateStore> certStoreUse;
     if (certStore) {
@@ -322,8 +332,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 #endif //MO_PLATFORM == MO_PLATFORM_ARDUINO && !defined(MO_CUSTOM_UPDATER)
 
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
-    if (!model.getResetService()->getExecuteReset())
-        model.getResetService()->setExecuteReset(makeDefaultResetFn());
+    setOnResetExecute(makeDefaultResetFn());
 #endif
 
     model.getBootService()->setChargePointCredentials(bootNotificationCredentials);
@@ -883,6 +892,15 @@ void setOnResetNotify(std::function<bool(bool)> onResetNotify) {
         return;
     }
 
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (auto rService = context->getModel().getResetServiceV201()) {
+            rService->setNotifyReset([onResetNotify] (ResetType) {return onResetNotify(true);});
+        }
+        return;
+    }
+#endif
+
     if (auto rService = context->getModel().getResetService()) {
         rService->setPreReset(onResetNotify);
     }
@@ -893,6 +911,15 @@ void setOnResetExecute(std::function<void(bool)> onResetExecute) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
+
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (auto rService = context->getModel().getResetServiceV201()) {
+            rService->setExecuteReset([onResetExecute] () {onResetExecute(true); return true;});
+        }
+        return;
+    }
+#endif
 
     if (auto rService = context->getModel().getResetService()) {
         rService->setExecuteReset(onResetExecute);
