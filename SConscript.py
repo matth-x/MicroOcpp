@@ -1,3 +1,12 @@
+# matth-x/MicroOcpp
+# Copyright Matthias Akstaller 2019 - 2024
+# MIT License
+
+# NOTE: This SConscript is still WIP. It has thankfully been contributed from a project using SCons,
+#       not necessarily considering full reusability in other projects though.
+#       Use this file as a starting point for writing your own SCons integration. And as always, any
+#       contributions are highly welcome!
+
 Import("env", "ARDUINOJSON_DIR")
 
 import os, pathlib

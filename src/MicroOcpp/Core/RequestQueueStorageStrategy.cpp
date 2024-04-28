@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/RequestQueueStorageStrategy.h>
@@ -104,12 +104,12 @@ Request *PersistentRequestQueue::front() {
         tailCache.pop_front();
     } else {
         //cache miss -> case B) or A) -> try to fetch operation from flash (check for case B)) or take first cached element as front
-        auto storageHandler = opStore.makeOpHandler();
         
         std::unique_ptr<Request> fetched;
 
         unsigned int range = (opStore.getOpEnd() + MO_MAX_OPNR - nextOpNr) % MO_MAX_OPNR;
         for (size_t i = 0; i < range; i++) {
+            auto storageHandler = opStore.makeOpHandler();
             bool exists = storageHandler->restore(nextOpNr);
             if (exists) {
                 //case B) -> load operation from flash and take it as front element

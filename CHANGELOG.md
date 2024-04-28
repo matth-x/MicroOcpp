@@ -14,6 +14,7 @@
 - Config `Cst_TxStartOnPowerPathClosed` to put back TxStartPoint
 - Function `bool isConnected()` in `Connection` interface ([#282](https://github.com/matth-x/MicroOcpp/pull/282))
 - Build flags for customizing memory limits of SmartCharging
+- SConscript ([#287](https://github.com/matth-x/MicroOcpp/pull/287))
 - Operation GetInstalledCertificateIds, UC M03 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
 - Operation DeleteCertificate, UC M04 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
 - Operation InstallCertificate, UC M05 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
@@ -33,7 +34,7 @@
 - Ignore UnlockConnector when handler not set
 - Reject ChargingProfile if unit not supported
 - Fix building with debug level warn and error
-- Fix transaction freeze in offline mode ([#279](https://github.com/matth-x/MicroOcpp/pull/279))
+- Fix transaction freeze in offline mode ([#279](https://github.com/matth-x/MicroOcpp/pull/279), [#287](https://github.com/matth-x/MicroOcpp/pull/287))
 - Fix compilation error caused by `PRId32` ([#279](https://github.com/matth-x/MicroOcpp/pull/279))
 - Don't load FW-mngt. module when no handlers set
 
