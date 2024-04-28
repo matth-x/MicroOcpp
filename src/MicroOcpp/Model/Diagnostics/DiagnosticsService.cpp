@@ -48,7 +48,7 @@ void DiagnosticsService::loop() {
         if (uploadIssued) {
             if (uploadStatusInput != nullptr && uploadStatusInput() == UploadStatus::Uploaded) {
                 //success!
-                MO_DBG_DEBUG("end upload routine (by status)")
+                MO_DBG_DEBUG("end upload routine (by status)");
                 uploadIssued = false;
                 retries = 0;
             }

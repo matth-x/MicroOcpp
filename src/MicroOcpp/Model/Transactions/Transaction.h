@@ -347,6 +347,7 @@ bool ocpp_tx_getStartTimestamp(OCPP_Transaction *tx, char *buf, size_t len);
 const char *ocpp_tx_getStopIdTag(OCPP_Transaction *tx);
 
 int32_t ocpp_tx_getMeterStop(OCPP_Transaction *tx);
+void ocpp_tx_setMeterStop(OCPP_Transaction* tx, int32_t meter);
 
 bool ocpp_tx_getStopTimestamp(OCPP_Transaction *tx, char *buf, size_t len);
 

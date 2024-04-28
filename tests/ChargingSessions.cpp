@@ -11,6 +11,8 @@
 #include <MicroOcpp/Operations/BootNotification.h>
 #include <MicroOcpp/Operations/StatusNotification.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
+#include <MicroOcpp/Model/Transactions/TransactionStore.h>
+#include <MicroOcpp/Debug.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 
@@ -341,6 +343,279 @@ TEST_CASE( "Charging sessions" ) {
         loop();
 
         REQUIRE(checkProcessed);
+    }
+
+    SECTION("Preboot transactions - reject tx if limit exceeded") {
+        mocpp_deinitialize();
+
+        loopback.setConnected(false);
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "SilentOfflineTransactions", false, CONFIGURATION_FN)->setBool(false); // do not start more txs if tx journal is full
+        configuration_save();
+
+        loop();
+
+        for (size_t i = 0; i < MO_TXRECORD_SIZE; i++) {
+            beginTransaction_authorized("mIdTag");
+
+            loop();
+
+            REQUIRE(isTransactionRunning());
+
+            endTransaction();
+
+            loop();
+
+            REQUIRE(!isTransactionRunning());
+        }
+
+        // now, tx journal is full. Block any further charging session
+
+        auto tx = beginTransaction_authorized("mIdTag");
+        REQUIRE( !tx );
+
+        loop();
+
+        REQUIRE(!isTransactionRunning());
+        REQUIRE(!ocppPermitsCharge());
+
+        // Check if all 4 cached transctions are transmitted after going online
+
+        const int txId_base = 10000;
+        int txId_generate = txId_base;
+        int txId_confirm = txId_base;
+
+        getOcppContext()->getOperationRegistry().registerOperation("StartTransaction", [&txId_generate] () {
+            return new Ocpp16::CustomOperation("StartTransaction",
+                [] (JsonObject payload) {}, //ignore req
+                [&txId_generate] () {
+                    //create conf
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2)));
+                    JsonObject payload = doc->to<JsonObject>();
+
+                    JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
+                    idTagInfo["status"] = "Accepted";
+                    txId_generate++;
+                    payload["transactionId"] = txId_generate;
+                    return doc;
+                });});
+
+        getOcppContext()->getOperationRegistry().registerOperation("StopTransaction", [&txId_generate, &txId_confirm] () {
+            return new Ocpp16::CustomOperation("StopTransaction",
+                [&txId_generate, &txId_confirm] (JsonObject payload) {
+                    //receive req
+                    REQUIRE( payload["transactionId"].as<int>() == txId_generate );
+                    REQUIRE( payload["transactionId"].as<int>() == txId_confirm + 1 );
+                    txId_confirm = payload["transactionId"].as<int>();
+                }, 
+                [] () {
+                    //create conf
+                    return createEmptyDocument();
+                });});
+
+        loopback.setConnected(true);
+        loop();
+
+        REQUIRE( txId_confirm == txId_base + MO_TXRECORD_SIZE );
+    }
+
+    SECTION("Preboot transactions - charge without tx if limit exceeded") {
+        mocpp_deinitialize();
+
+        loopback.setConnected(false);
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "SilentOfflineTransactions", false, CONFIGURATION_FN)->setBool(true); // don't report further transactions to server but charge anyway
+        configuration_save();
+
+        loop();
+
+        for (size_t i = 0; i < MO_TXRECORD_SIZE; i++) {
+            beginTransaction_authorized("mIdTag");
+
+            loop();
+
+            REQUIRE(isTransactionRunning());
+
+            endTransaction();
+
+            loop();
+
+            REQUIRE(!isTransactionRunning());
+        }
+
+        // now, tx journal is full. Block any further charging session
+
+        auto tx = beginTransaction_authorized("mIdTag");
+        REQUIRE( tx );
+
+        loop();
+
+        REQUIRE(isTransactionRunning());
+        REQUIRE(ocppPermitsCharge());
+
+        endTransaction();
+
+        loop();
+
+        // Check if all 4 cached transctions are transmitted after going online
+
+        const int txId_base = 10000;
+        int txId_generate = txId_base;
+        int txId_confirm = txId_base;
+
+        getOcppContext()->getOperationRegistry().registerOperation("StartTransaction", [&txId_generate] () {
+            return new Ocpp16::CustomOperation("StartTransaction",
+                [] (JsonObject payload) {}, //ignore req
+                [&txId_generate] () {
+                    //create conf
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2)));
+                    JsonObject payload = doc->to<JsonObject>();
+
+                    JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
+                    idTagInfo["status"] = "Accepted";
+                    txId_generate++;
+                    payload["transactionId"] = txId_generate;
+                    return doc;
+                });});
+
+        getOcppContext()->getOperationRegistry().registerOperation("StopTransaction", [&txId_generate, &txId_confirm] () {
+            return new Ocpp16::CustomOperation("StopTransaction",
+                [&txId_generate, &txId_confirm] (JsonObject payload) {
+                    //receive req
+                    REQUIRE( payload["transactionId"].as<int>() == txId_generate );
+                    REQUIRE( payload["transactionId"].as<int>() == txId_confirm + 1 );
+                    txId_confirm = payload["transactionId"].as<int>();
+                }, 
+                [] () {
+                    //create conf
+                    return createEmptyDocument();
+                });});
+
+        loopback.setConnected(true);
+        loop();
+
+        REQUIRE( txId_confirm == txId_base + MO_TXRECORD_SIZE );
+    }
+
+    SECTION("Preboot transactions - mix PreBoot with Offline tx") {
+        
+        /*
+         * The charger boots and connects to the OCPP server normally. It looses connection and then starts
+         * transaction #1 which is persisted on flash. Then a power loss occurs, but the charger doesn't reconnect.
+         * Start transaction #2 in PreBoot mode. Trigger another power loss, start transaction #3 while still
+         * being offline and then, after reconnection to the server, transaction #4.
+         * 
+         * Tx #1 can be fully restored. The timestamp information for Tx #2 is missing, so it is discarded. Tx #3 is
+         * missing absolute timestamps at first, but after reconnection with the server, the timestamps get updated
+         * with absolute values from the server. Tx #4 is the standard case for transactions and should start normally.
+         */
+
+        // use idTags to identify the transactions
+        const char *tx1_idTag = "Tx#1";
+        const char *tx2_idTag = "Tx#2";
+        const char *tx3_idTag = "Tx#3";
+        const char *tx4_idTag = "Tx#4";
+
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
+        configuration_save();
+        loop();
+
+        // start Tx #1 (offline tx)
+        loopback.setConnected(false);
+
+        MO_DBG_DEBUG("begin tx (%s)", tx1_idTag);
+        beginTransaction_authorized(tx1_idTag);
+        loop();
+        REQUIRE(isTransactionRunning());
+        endTransaction();
+        loop();
+        REQUIRE(!isTransactionRunning());
+
+        // first power cycle
+        mocpp_deinitialize();
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        loop();
+
+        // start Tx #2 (PreBoot tx, won't get timestamp)
+
+        MO_DBG_DEBUG("begin tx (%s)", tx2_idTag);
+        beginTransaction_authorized(tx2_idTag);
+        loop();
+        REQUIRE(isTransactionRunning());
+        endTransaction();
+        loop();
+        REQUIRE(!isTransactionRunning());
+
+        // second power cycle
+        mocpp_deinitialize();
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        loop();
+
+        // start Tx #3 (PreBoot tx, will eventually get timestamp)
+
+        MO_DBG_DEBUG("begin tx (%s)", tx3_idTag);
+        beginTransaction_authorized(tx3_idTag);
+        loop();
+        REQUIRE(isTransactionRunning());
+        endTransaction();
+        loop();
+        REQUIRE(!isTransactionRunning());
+
+        // set up checks before getting online and starting Tx #4
+        bool check_1 = false, check_2 = false, check_3 = false, check_4 = false;
+
+        getOcppContext()->getOperationRegistry().registerOperation("StartTransaction", 
+                [&check_1, &check_2, &check_3, &check_4,
+                        tx1_idTag, tx2_idTag, tx3_idTag, tx4_idTag] () {
+            return new Ocpp16::CustomOperation("StartTransaction",
+                [&check_1, &check_2, &check_3, &check_4,
+                        tx1_idTag, tx2_idTag, tx3_idTag, tx4_idTag] (JsonObject payload) {
+                    //process req
+                    const char *idTag = payload["idTag"] | "_Undefined";
+                    if (!strcmp(idTag, tx1_idTag )) {
+                        check_1 = true;
+                    } else if (!strcmp(idTag, tx2_idTag )) {
+                        check_2 = true;
+                    } else if (!strcmp(idTag, tx3_idTag )) {
+                        check_3 = true;
+                    } else if (!strcmp(idTag, tx4_idTag )) {
+                        check_4 = true;
+                    }
+                },
+                [] () {
+                    //create conf
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2)));
+                    JsonObject payload = doc->to<JsonObject>();
+
+                    JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
+                    idTagInfo["status"] = "Accepted";
+                    static int uniqueTxId = 1000;
+                    payload["transactionId"] = uniqueTxId++; //sample data for debug purpose
+                    return doc;
+                });});
+        
+        // get online
+        loopback.setConnected(true);
+        loop();
+
+        // start Tx #4
+        MO_DBG_DEBUG("begin tx (%s)", tx4_idTag);
+        beginTransaction_authorized(tx4_idTag);
+        loop();
+        REQUIRE(isTransactionRunning());
+        endTransaction();
+        loop();
+        REQUIRE(!isTransactionRunning());
+
+        // evaluate results
+        REQUIRE( check_1 );
+        REQUIRE( !check_2 ); // critical data for Tx #2 got lost so it must be discarded
+        REQUIRE( check_3 );
+        REQUIRE( check_4 );
     }
 
     SECTION("Set Unavaible"){
