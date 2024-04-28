@@ -29,6 +29,10 @@ class CertificateService;
 #if MO_ENABLE_V201
 class VariableService;
 class TransactionService;
+
+namespace Ocpp201 {
+class ResetService;
+}
 #endif
 
 class Model {
@@ -50,6 +54,7 @@ private:
 #if MO_ENABLE_V201
     std::unique_ptr<VariableService> variableService;
     std::unique_ptr<TransactionService> transactionService;
+    std::unique_ptr<Ocpp201::ResetService> resetServiceV201;
 #endif
 
     Clock clock;
@@ -117,6 +122,9 @@ public:
 
     void setTransactionService(std::unique_ptr<TransactionService> ts);
     TransactionService *getTransactionService() const;
+
+    void setResetServiceV201(std::unique_ptr<Ocpp201::ResetService> rs);
+    Ocpp201::ResetService *getResetServiceV201() const;
 #endif
 
     Clock &getClock();

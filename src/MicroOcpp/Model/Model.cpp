@@ -79,6 +79,9 @@ void Model::loop() {
 #if MO_ENABLE_V201
     if (transactionService)
         transactionService->loop();
+    
+    if (resetServiceV201)
+        resetServiceV201->loop();
 #endif
 }
 
@@ -221,6 +224,15 @@ void Model::setTransactionService(std::unique_ptr<TransactionService> ts) {
 
 TransactionService *Model::getTransactionService() const {
     return transactionService.get();
+}
+
+void Model::setResetServiceV201(std::unique_ptr<Ocpp201::ResetService> rs) {
+    this->resetServiceV201 = std::move(rs);
+    capabilitiesUpdated = true;
+}
+
+Ocpp201::ResetService *Model::getResetServiceV201() const {
+    return resetServiceV201.get();
 }
 #endif
 

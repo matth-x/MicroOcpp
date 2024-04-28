@@ -80,7 +80,8 @@ The following OCPP 2.0.1 use cases are implemented:
 | UC | Description | Note |
 | :--- | :--- | :--- |
 | M03 - M05 | Certificate management | Enable Mbed-TLS to use the built-in certificate store |
-| B05 - B06 | Variables | No persistency yet |
+| B05 - B07 | Variables | No persistency yet |
+| B01 - B04<br>B11 - B12 | Provisioning | Ported from OCPP 1.6 |
 | E01 - E12 | Transactions | |
 | - | Protocol negotiation | The charger can select the OCPP version at runtime |
 
