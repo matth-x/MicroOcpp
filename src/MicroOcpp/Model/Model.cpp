@@ -79,6 +79,9 @@ void Model::loop() {
 #if MO_ENABLE_V201
     if (transactionService)
         transactionService->loop();
+    
+    if (resetServiceV201)
+        resetServiceV201->loop();
 #endif
 }
 

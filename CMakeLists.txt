@@ -140,6 +140,7 @@ set(MO_SRC_UNIT
     tests/Metering.cpp
     tests/Configuration.cpp
     tests/Reservation.cpp
+    tests/Reset.cpp
     tests/LocalAuthList.cpp
     tests/Variables.cpp
     tests/Transactions.cpp

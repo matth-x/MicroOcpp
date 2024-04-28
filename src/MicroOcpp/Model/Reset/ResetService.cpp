@@ -122,7 +122,7 @@ ResetService::ResetService(Context& context)
       : context(context) {
 
     auto varService = context.getModel().getVariableService();
-    resetRetriesInt = varService->declareVariable<int>("OCPPCommCtrlr", "ResetRetries", 1);
+    resetRetriesInt = varService->declareVariable<int>("OCPPCommCtrlr", "ResetRetries", 0);
 
     context.getOperationRegistry().registerOperation("Reset", [this] () {
         return new Ocpp201::Reset(*this);});
@@ -171,6 +171,13 @@ void ResetService::Evse::loop() {
 
         if (success) {
             outstandingResetRetries = 0;
+
+            if (evseId != 0) {
+                //Set this EVSE Available again
+                if (auto connector = context.getModel().getConnector(evseId)) {
+                    connector->setAvailabilityVolatile(true);
+                }
+            }
         } else if (!outstandingResetRetries) {
             MO_DBG_ERR("Reset device failure");
 
@@ -211,6 +218,12 @@ ResetService::Evse *ResetService::getOrCreateEvse(unsigned int evseId) {
 
     evses.emplace_back(context, *this, evseId);
     return &evses.back();
+}
+
+void ResetService::loop() {
+    for (Evse& evse : evses) {
+        evse.loop();
+    }
 }
 
 void ResetService::setNotifyReset(std::function<bool(ResetType)> notifyReset, unsigned int evseId) {
