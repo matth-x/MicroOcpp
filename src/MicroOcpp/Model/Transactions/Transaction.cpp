@@ -73,6 +73,11 @@ int32_t ocpp_tx_getMeterStop(OCPP_Transaction *tx) {
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getMeterStop();
 }
 
+void ocpp_tx_setMeterStop(OCPP_Transaction* tx, int32_t meter)
+{
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->setMeterStop(meter);
+}
+
 bool ocpp_tx_getStopTimestamp(OCPP_Transaction *tx, char *buf, size_t len) {
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getStopTimestamp().toJsonString(buf, len);
 }
