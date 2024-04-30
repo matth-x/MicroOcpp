@@ -205,6 +205,9 @@ void TransactionService::Evse::loop() {
                     // OOM
                     return;
                 }
+                if (evseId > 0) {
+                    transaction->notifyEvseId = true;
+                }
             }
 
             txEvent = std::make_shared<TransactionEventData>(transaction, transaction->seqNoCounter++);
@@ -241,6 +244,7 @@ void TransactionService::Evse::loop() {
         if (chargingState != trackChargingState) {
             txUpdateCondition = true;
             triggerReason = TransactionEventTriggerReason::ChargingStateChanged;
+            transaction->notifyChargingState = true;
         }
         trackChargingState = chargingState;
 
@@ -282,16 +286,20 @@ void TransactionService::Evse::loop() {
 
     if (txEvent) {
         txEvent->timestamp = context.getModel().getClock().now();
-        txEvent->chargingState = chargingState;
-        txEvent->evse = EvseId(evseId, 1);
+        if (transaction->notifyChargingState) {
+            txEvent->chargingState = chargingState;
+        }
+        if (transaction->notifyEvseId) {
+            txEvent->evse = EvseId(evseId, 1);
+        }
         // meterValue not supported
 
-        if (!transaction->stopIdTokenTransmitted && transaction->stopIdToken) {
+        if (transaction->notifyStopIdToken && transaction->stopIdToken) {
             txEvent->idToken = std::unique_ptr<IdToken>(new IdToken(*transaction->stopIdToken.get()));
-            transaction->stopIdTokenTransmitted = true;
-        }  else if (!transaction->idTokenTransmitted) {
+            transaction->notifyStopIdToken = false;
+        }  else if (transaction->notifyIdToken) {
             txEvent->idToken = std::unique_ptr<IdToken>(new IdToken(transaction->idToken));
-            transaction->idTokenTransmitted = true;
+            transaction->notifyIdToken = false;
         }
     }
 
@@ -328,6 +336,9 @@ bool TransactionService::Evse::beginAuthorization(IdToken idToken) {
             MO_DBG_ERR("could not allocate Tx");
             return false;
         }
+        if (evseId > 0) {
+            transaction->notifyEvseId = true;
+        }
     }
 
     transaction->idToken = idToken;
@@ -350,7 +361,7 @@ bool TransactionService::Evse::beginAuthorization(IdToken idToken) {
 
         MO_DBG_DEBUG("Authorized transaction process (%s)", tx->idToken.get());
         tx->isAuthorized = true;
-        tx->idTokenTransmitted = false;
+        tx->notifyIdToken = true;
     });
     authorize->setTimeout(20 * 1000);
     context.initiateRequest(std::move(authorize));
@@ -369,7 +380,7 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken) {
     if (transaction->idToken.equals(idToken)) {
         // use same idToken like tx start
         transaction->isAuthorized = false;
-        transaction->idTokenTransmitted = false;
+        transaction->notifyIdToken = true;
     } else {
         // use a different idToken for stopping the tx
 
@@ -402,7 +413,7 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken) {
             }
 
             tx->isAuthorized = false;
-            tx->stopIdTokenTransmitted = false;
+            tx->notifyStopIdToken = true;
         });
         authorize->setTimeout(20 * 1000);
         context.initiateRequest(std::move(authorize));
@@ -426,7 +437,7 @@ bool TransactionService::Evse::abortTransaction(Ocpp201::Transaction::StopReason
 
     return true;
 }
-const std::shared_ptr<MicroOcpp::Ocpp201::Transaction>& TransactionService::Evse::getTransaction() {
+std::shared_ptr<MicroOcpp::Ocpp201::Transaction>& TransactionService::Evse::getTransaction() {
     return transaction;
 }
 
@@ -519,9 +530,16 @@ TransactionService::TransactionService(Context& context) : context(context) {
         return this->parseTxStartStopPoint(value, validated);
     });
 
-    for (unsigned int evseId = 1; evseId < MO_NUM_EVSE; evseId++) {
+    evses.reserve(MO_NUM_EVSE);
+
+    for (unsigned int evseId = 0; evseId < MO_NUM_EVSE; evseId++) {
         evses.emplace_back(context, *this, evseId);
     }
+
+    //make sure EVSE 0 will only trigger transactions if TxStartPoint is Authorized
+    evses[0].connectorPluggedInput = [] () {return false;};
+    evses[0].evReadyInput = [] () {return false;};
+    evses[0].evseReadyInput = [] () {return false;};
 }
 
 void TransactionService::loop() {
@@ -536,11 +554,26 @@ void TransactionService::loop() {
     if (txStopPointString->getWriteCount() != trackTxStopPoint) {
         parseTxStartStopPoint(txStopPointString->getString(), txStopPointParsed);
     }
+
+    // assign tx on evseId 0 to an EVSE
+    if (auto& tx0 = evses[0].getTransaction()) {
+        //pending tx on evseId 0
+        if (tx0->active) {
+            for (unsigned int evseId = 1; evseId < MO_NUM_EVSE; evseId++) {
+                if (!evses[evseId].getTransaction() && 
+                        (!evses[evseId].connectorPluggedInput || evses[evseId].connectorPluggedInput())) {
+                    MO_DBG_INFO("assign tx to evse %u", evseId);
+                    tx0->notifyEvseId = true;
+                    evses[evseId].transaction = std::move(tx0);
+                }
+            }
+        }
+    }
 }
 
 TransactionService::Evse *TransactionService::getEvse(unsigned int evseId) {
-    if (evseId >= 1 && evseId - 1 < evses.size()) {
-        return &evses[evseId - 1];
+    if (evseId < evses.size()) {
+        return &evses[evseId];
     } else {
         MO_DBG_ERR("invalid arg");
         return nullptr;

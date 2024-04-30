@@ -264,14 +264,19 @@ public:
     char transactionId [MO_TXID_LEN_MAX + 1] = {'\0'};
     int remoteStartId = -1;
 
-    bool idTokenTransmitted = true;
+    //if to fill next TxEvent with optional fields
+    bool notifyEvseId = false;
+    bool notifyIdToken = false;
+    bool notifyStopIdToken = false;
+    bool notifyReservationId = false;
+    bool notifyChargingState = false;
+    bool notifyRemoteStartId = false;
 
     bool evConnectionTimeoutListen = true;
 
     StopReason stopReason = StopReason::UNDEFINED;
     TransactionEventTriggerReason stopTrigger = TransactionEventTriggerReason::UNDEFINED;
     std::unique_ptr<IdToken> stopIdToken; // if null, then stopIdToken equals idToken
-    bool stopIdTokenTransmitted = true;
 };
 
 // TransactionEventRequest (1.60.1)
