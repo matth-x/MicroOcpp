@@ -2,33 +2,32 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef MO_GETBASEREPORT_H
-#define MO_GETBASEREPORT_H
+#ifndef MO_REQUESTSTOPTRANSACTION_H
+#define MO_REQUESTSTOPTRANSACTION_H
 
 #include <MicroOcpp/Version.h>
 
 #if MO_ENABLE_V201
 
 #include <string>
-
 #include <MicroOcpp/Core/Operation.h>
-#include <MicroOcpp/Model/Variables/Variable.h>
+#include <MicroOcpp/Model/Transactions/TransactionDefs.h>
 
 namespace MicroOcpp {
 
-class VariableService;
+class TransactionService;
 
 namespace Ocpp201 {
 
-class GetBaseReport : public Operation {
+class RequestStopTransaction : public Operation {
 private:
-    VariableService& variableService;
+    TransactionService& txService;
 
-    GenericDeviceModelStatus status;
+    RequestStartStopStatus status;
 
     const char *errorCode = nullptr;
 public:
-    GetBaseReport(VariableService& variableService);
+    RequestStopTransaction(TransactionService& txService);
 
     const char* getOperationType() override;
 

@@ -27,6 +27,42 @@ IdToken::IdToken(const char *token, Type type) : type(type) {
     }
 }
 
+bool IdToken::parseCstr(const char *token, const char *typeCstr) {
+    if (!token || !typeCstr) {
+        MO_DBG_DEBUG("TRACE");
+        return false;
+    }
+
+    if (!strcmp(typeCstr, "Central")) {
+        type = Type::Central;
+    } else if (!strcmp(typeCstr, "eMAID")) {
+        type = Type::eMAID;
+    } else if (!strcmp(typeCstr, "ISO14443")) {
+        type = Type::ISO14443;
+    } else if (!strcmp(typeCstr, "ISO15693")) {
+        type = Type::ISO15693;
+    } else if (!strcmp(typeCstr, "KeyCode")) {
+        MO_DBG_DEBUG("TRACE");
+        type = Type::KeyCode;
+    } else if (!strcmp(typeCstr, "Local")) {
+        type = Type::Local;
+    } else if (!strcmp(typeCstr, "MacAddress")) {
+        type = Type::MacAddress;
+    } else if (!strcmp(typeCstr, "NoAuthorization")) {
+        type = Type::NoAuthorization;
+    } else {
+        MO_DBG_DEBUG("TRACE");
+        return false;
+    }
+
+    auto ret = snprintf(idToken, sizeof(idToken), "%s", token);
+    if (ret < 0 || (size_t)ret >= sizeof(idToken)) {
+        return false;
+    }
+
+    return true;
+}
+
 const char *IdToken::get() const {
     return *idToken ? idToken : nullptr;;
 }

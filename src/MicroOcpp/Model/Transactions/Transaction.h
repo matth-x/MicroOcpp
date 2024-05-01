@@ -173,10 +173,9 @@ public:
 
 #include <memory>
 
+#include <MicroOcpp/Model/Transactions/TransactionDefs.h>
 #include <MicroOcpp/Model/Authorization/IdToken.h>
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
-
-#define MO_TXID_LEN_MAX 36
 
 namespace MicroOcpp {
 namespace Ocpp201 {
@@ -310,6 +309,7 @@ public:
     int numberOfPhasesUsed = -1;
     int cableMaxCurrent = -1;
     int reservationId = -1;
+    int remoteStartId = -1;
 
     // TransactionType (2.48)
     ChargingState chargingState = ChargingState::UNDEFINED;
