@@ -25,6 +25,7 @@
     - StatusNotification compatibility ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
     - ChangeAvailability compatibility ([#285](https://github.com/matth-x/MicroOcpp/pull/285))
     - Reset compatibility, UCs B11 - B12 ([#286](https://github.com/matth-x/MicroOcpp/pull/286))
+    - RequestStart-/StopTransaction, UCs F01 - F02 ([#289](https://github.com/matth-x/MicroOcpp/pull/289))
 
 ### Fixed
 

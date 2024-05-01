@@ -14,6 +14,7 @@
 #if MO_ENABLE_V201
 
 #include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Model/Transactions/TransactionDefs.h>
 
 #include <memory>
 #include <functional>
@@ -52,18 +53,18 @@ public:
         void setEvReadyInput(std::function<bool()> evRequestsEnergy);
         void setEvseReadyInput(std::function<bool()> connectorEnergized);
 
-        bool beginAuthorization(IdToken idToken); // authorize by swipe RFID
-        bool endAuthorization(IdToken idToken = IdToken()); // stop authorization by swipe RFID
+        bool beginAuthorization(IdToken idToken, bool validateIdToken = true); // authorize by swipe RFID
+        bool endAuthorization(IdToken idToken = IdToken(), bool validateIdToken = true); // stop authorization by swipe RFID
 
         // stop transaction, but neither upon user request nor OCPP server request (e.g. after PowerLoss)
         bool abortTransaction(Ocpp201::Transaction::StopReason stopReason = Ocpp201::Transaction::StopReason::Other, Ocpp201::TransactionEventTriggerReason stopTrigger = Ocpp201::TransactionEventTriggerReason::AbnormalCondition);
 
-        const std::shared_ptr<Ocpp201::Transaction>& getTransaction();
+        std::shared_ptr<Ocpp201::Transaction>& getTransaction();
 
         bool ocppPermitsCharge();
-    };
 
-    friend Evse;
+        friend TransactionService;
+    };
 
 private:
 
@@ -100,6 +101,10 @@ public:
     void loop();
 
     Evse *getEvse(unsigned int evseId);
+
+    RequestStartStopStatus requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, IdToken idToken, char *transactionIdOut); //ChargingProfile, GroupIdToken not supported yet
+
+    RequestStartStopStatus requestStopTransaction(const char *transactionId);
 };
 
 } // namespace MicroOcpp

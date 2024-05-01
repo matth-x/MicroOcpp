@@ -80,12 +80,13 @@ The following OCPP 2.0.1 use cases are implemented:
 | UC | Description | Note |
 | :--- | :--- | :--- |
 | M03 - M05 | Certificate management | Enable Mbed-TLS to use the built-in certificate store |
-| B05 - B07 | Variables | No persistency yet |
+| B05 - B07 | Variables | |
 | B01 - B04<br>B11 - B12 | Provisioning | Ported from OCPP 1.6 |
 | E01 - E12 | Transactions | |
+| F01 - F02 | Remote Start/Stop Tx | |
 | - | Protocol negotiation | The charger can select the OCPP version at runtime |
 
-The OCPP 2.0.1 features are in an early development stage. By default, they are disabled and excluded from the build, so they have no impact on the firmware size. To enable, set the build flag `MO_ENABLE_V201=1` and initialize the library with the ProtocolVersion parameter `2.0.1`  (see [this example](https://github.com/matth-x/MicroOcppSimulator/blob/657e606c3b178d3add242935d413c72624130ff3/src/main.cpp#L43-L47) in the Simulator).
+The OCPP 2.0.1 features are in an alpha development stage (no persistency yet). By default, they are disabled and excluded from the build, so they have no impact on the firmware size. To enable, set the build flag `MO_ENABLE_V201=1` and initialize the library with the ProtocolVersion parameter `2.0.1`  (see [this example](https://github.com/matth-x/MicroOcppSimulator/blob/657e606c3b178d3add242935d413c72624130ff3/src/main.cpp#L43-L47) in the Simulator).
 
 An integration of the library for OCPP 1.6 will also be functional with the 2.0.1 upgrade. It works with the same API in MicroOcpp.h.
 

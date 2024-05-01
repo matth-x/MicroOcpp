@@ -256,8 +256,8 @@ std::unique_ptr<DynamicJsonDocument> TransactionEvent::createReq() {
         transactionInfo["stoppedReason"] = stoppedReason;
     }
 
-    if (txEvent->transaction->remoteStartId >= 0) {
-        payload["remoteStartId"] = txEvent->transaction->remoteStartId;
+    if (txEvent->remoteStartId >= 0) {
+        transactionInfo["remoteStartId"] = txEvent->transaction->remoteStartId;
     }
 
     if (txEvent->idToken) {

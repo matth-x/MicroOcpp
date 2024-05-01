@@ -46,6 +46,8 @@ set(MO_SRC
     src/MicroOcpp/Operations/NotifyReport.cpp
     src/MicroOcpp/Operations/RemoteStartTransaction.cpp
     src/MicroOcpp/Operations/RemoteStopTransaction.cpp
+    src/MicroOcpp/Operations/RequestStartTransaction.cpp
+    src/MicroOcpp/Operations/RequestStopTransaction.cpp
     src/MicroOcpp/Operations/ReserveNow.cpp
     src/MicroOcpp/Operations/Reset.cpp
     src/MicroOcpp/Operations/SendLocalList.cpp
