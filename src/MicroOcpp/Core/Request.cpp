@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/Request.h>
@@ -184,16 +184,16 @@ std::unique_ptr<DynamicJsonDocument> Request::createResponse(){
      * Create the OCPP message
      */
     std::unique_ptr<DynamicJsonDocument> response = nullptr;
-    std::unique_ptr<DynamicJsonDocument> payload = operation->createConf();
-    std::unique_ptr<DynamicJsonDocument> errorDetails = nullptr;
-    
+
     bool operationFailure = operation->getErrorCode() != nullptr;
 
-    if (!operationFailure && !payload) {
-        return nullptr; //confirmation message still pending
-    }
-
     if (!operationFailure) {
+
+        std::unique_ptr<DynamicJsonDocument> payload = operation->createConf();
+
+        if (!payload) {
+            return nullptr; //confirmation message still pending
+        }
 
         /*
          * Create OCPP-J Remote Procedure Call header
@@ -213,7 +213,7 @@ std::unique_ptr<DynamicJsonDocument> Request::createResponse(){
 
         const char *errorCode = operation->getErrorCode();
         const char *errorDescription = operation->getErrorDescription();
-        errorDetails = std::unique_ptr<DynamicJsonDocument>(operation->getErrorDetails());
+        std::unique_ptr<DynamicJsonDocument> errorDetails = std::unique_ptr<DynamicJsonDocument>(operation->getErrorDetails());
         if (!errorCode) { //catch corner case when payload is null but errorCode is not set too!
             errorCode = "GenericError";
             errorDescription = "Could not create payload (createConf() returns Null)";

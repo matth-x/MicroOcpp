@@ -38,6 +38,7 @@
 - Fix transaction freeze in offline mode ([#279](https://github.com/matth-x/MicroOcpp/pull/279), [#287](https://github.com/matth-x/MicroOcpp/pull/287))
 - Fix compilation error caused by `PRId32` ([#279](https://github.com/matth-x/MicroOcpp/pull/279))
 - Don't load FW-mngt. module when no handlers set
+- Avoid creating conf when operation fails ([#290](https://github.com/matth-x/MicroOcpp/pull/290))
 
 ## [1.0.3] - 2024-04-06
 
