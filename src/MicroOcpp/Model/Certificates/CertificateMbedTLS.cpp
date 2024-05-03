@@ -4,7 +4,7 @@
 
 #include <MicroOcpp/Model/Certificates/CertificateMbedTLS.h>
 
-#if MO_ENABLE_MBEDTLS
+#if MO_ENABLE_MBEDTLS && MO_ENABLE_CERT_STORE_MBEDTLS
 
 #include <string.h>
 
@@ -402,4 +402,4 @@ bool printCertFn(const char *certType, size_t index, char *buf, size_t bufsize) 
 
 } //namespace MicroOcpp
 
-#endif //MO_ENABLE_MBEDTLS
+#endif //MO_ENABLE_MBEDTLS && MO_ENABLE_CERT_STORE_MBEDTLS

@@ -13,6 +13,7 @@ set(MO_SRC
     src/MicroOcpp/Core/ConfigurationKeyValue.cpp
     src/MicroOcpp/Core/FilesystemAdapter.cpp
     src/MicroOcpp/Core/FilesystemUtils.cpp
+    src/MicroOcpp/Core/FtpMbedTLS.cpp
     src/MicroOcpp/Core/RequestQueue.cpp
     src/MicroOcpp/Core/Context.cpp
     src/MicroOcpp/Core/Operation.cpp

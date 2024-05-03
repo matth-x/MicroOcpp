@@ -9,11 +9,13 @@
  * Built-in implementation of the Certificate interface for MbedTLS
  */
 
-#ifndef MO_ENABLE_MBEDTLS
-#define MO_ENABLE_MBEDTLS 0
+#include <MicroOcpp/Platform.h>
+
+#ifndef MO_ENABLE_CERT_STORE_MBEDTLS
+#define MO_ENABLE_CERT_STORE_MBEDTLS 1
 #endif
 
-#if MO_ENABLE_MBEDTLS
+#if MO_ENABLE_MBEDTLS && MO_ENABLE_CERT_STORE_MBEDTLS
 
 /*
  * Provide certificate interpreter to facilitate cert store in C. A full implementation is only available for C++
@@ -62,6 +64,6 @@ bool printCertFn(const char *certType, size_t index, char *buf, size_t bufsize);
 } //namespace MicroOcpp
 
 #endif //def __cplusplus
-#endif //MO_ENABLE_MBEDTLS
+#endif //MO_ENABLE_MBEDTLS && MO_ENABLE_CERT_STORE_MBEDTLS
 
 #endif

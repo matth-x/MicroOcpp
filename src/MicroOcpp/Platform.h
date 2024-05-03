@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef MO_PLATFORM_H
@@ -104,6 +104,10 @@ unsigned long mocpp_tick_ms_unix();
 
 #if MO_PLATFORM != MO_PLATFORM_ARDUINO
 void dtostrf(float value, int min_width, int num_digits_after_decimal, char *target);
+#endif
+
+#ifndef MO_ENABLE_MBEDTLS
+#define MO_ENABLE_MBEDTLS 0
 #endif
 
 #endif
