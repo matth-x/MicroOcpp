@@ -313,7 +313,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
     if (certStore) {
         certStoreUse = std::move(certStore);
     }
-#if MO_ENABLE_MBEDTLS
+#if MO_ENABLE_MBEDTLS && MO_ENABLE_CERT_STORE_MBEDTLS
     else {
         certStoreUse = makeCertificateStoreMbedTLS(filesystem);
     }
