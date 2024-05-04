@@ -15,9 +15,8 @@
 - Function `bool isConnected()` in `Connection` interface ([#282](https://github.com/matth-x/MicroOcpp/pull/282))
 - Build flags for customizing memory limits of SmartCharging
 - SConscript ([#287](https://github.com/matth-x/MicroOcpp/pull/287))
-- Operation GetInstalledCertificateIds, UC M03 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
-- Operation DeleteCertificate, UC M04 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
-- Operation InstallCertificate, UC M05 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
+- Certificate Management, UCs M03 - M05 ([#262](https://github.com/matth-x/MicroOcpp/pull/262), [#274](https://github.com/matth-x/MicroOcpp/pull/274), [#292](https://github.com/matth-x/MicroOcpp/pull/292))
+- FTP Client ([#291](https://github.com/matth-x/MicroOcpp/pull/291))
 - `ProtocolVersion` selects v1.6 or v2.0.1 ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
 - Build flag `MO_ENABLE_V201` set to 1 enables OCPP 2.0.1 features ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
     - Variables (non-persistent), UCs B05 - B07 ([#247](https://github.com/matth-x/MicroOcpp/pull/247), [#284](https://github.com/matth-x/MicroOcpp/pull/284))
