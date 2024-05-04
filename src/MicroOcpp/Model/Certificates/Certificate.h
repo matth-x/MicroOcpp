@@ -144,6 +144,8 @@ struct CertificateChainHash {
  */
 class CertificateStore {
 public:
+    virtual ~CertificateStore() = default;
+
     virtual GetInstalledCertificateStatus getCertificateIds(const std::vector<GetCertificateIdType>& certificateType, std::vector<CertificateChainHash>& out) = 0;
     virtual DeleteCertificateStatus deleteCertificate(const CertificateHash& hash) = 0;
     virtual InstallCertificateStatus installCertificate(InstallCertificateType certificateType, const char *certificate) = 0;
