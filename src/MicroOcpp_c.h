@@ -64,9 +64,7 @@ void ocpp_initialize_full(
             OCPP_Connection *conn,  //WebSocket adapter for MicroOcpp
             const char *bootNotificationCredentials, //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
             struct OCPP_FilesystemOpt fsopt, //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
-            bool autoRecover, //automatically sanitize the local data store when the lib detects recurring crashes. During development, `false` is recommended
-            ocpp_cert_store *certs); //optional. If provided, use given Cert Store, if NULL, use default (default depends on MbedTLS)
-
+            bool autoRecover); //automatically sanitize the local data store when the lib detects recurring crashes. During development, `false` is recommended
 
 void ocpp_deinitialize();
 
@@ -167,6 +165,10 @@ bool ocpp_isOperative_m(unsigned int connectorId);
 void ocpp_setOnResetNotify(bool (*onResetNotify)(bool));
 
 void ocpp_setOnResetExecute(void (*onResetExecute)(bool));
+
+#if MO_ENABLE_CERT_MGMT
+void ocpp_setCertificateStore(ocpp_cert_store *certs);
+#endif //MO_ENABLE_CERT_MGMT
 
 void ocpp_setOnReceiveRequest(const char *operationType, OnMessage onRequest);
 

@@ -5,6 +5,10 @@
 #ifndef MO_CERTIFICATE_H
 #define MO_CERTIFICATE_H
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_CERT_MGMT
+
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -154,5 +158,5 @@ public:
 } //namespace MicroOcpp
 
 #endif //__cplusplus
-
+#endif //MO_ENABLE_CERT_MGMT
 #endif

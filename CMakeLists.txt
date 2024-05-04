@@ -169,14 +169,6 @@ if (MO_BUILD_UNIT_MBEDTLS)
     )
 endif()
 
-# add MbedTLS for testing (TODO integrate properly into build system)
-#add_subdirectory(lib/mbedtls)
-#target_link_libraries(mo_unit_tests PUBLIC 
-#    mbedtls
-#    mbedcrypto
-#    mbedx509
-#)
-
 target_include_directories(mo_unit_tests PUBLIC
     "./tests/catch2"
     "./tests/helpers"
@@ -197,6 +189,7 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_ChargeProfileMaxStackLevel=2
     MO_ChargingScheduleMaxPeriods=4
     MO_MaxChargingProfilesInstalled=3
+    MO_ENABLE_CERT_MGMT=1
 )
 
 target_compile_options(mo_unit_tests PUBLIC

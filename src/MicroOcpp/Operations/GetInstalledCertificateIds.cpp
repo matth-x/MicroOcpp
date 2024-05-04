@@ -3,6 +3,9 @@
 // MIT License
 
 #include <MicroOcpp/Operations/GetInstalledCertificateIds.h>
+
+#if MO_ENABLE_CERT_MGMT
+
 #include <MicroOcpp/Model/Certificates/Certificate.h>
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
 #include <MicroOcpp/Debug.h>
@@ -123,3 +126,5 @@ std::unique_ptr<DynamicJsonDocument> GetInstalledCertificateIds::createConf() {
 
     return doc;
 }
+
+#endif //MO_ENABLE_CERT_MGMT

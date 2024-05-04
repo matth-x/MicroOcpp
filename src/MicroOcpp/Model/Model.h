@@ -24,7 +24,10 @@ class AuthorizationService;
 class ReservationService;
 class BootService;
 class ResetService;
+
+#if MO_ENABLE_CERT_MGMT
 class CertificateService;
+#endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_V201
 class VariableService;
@@ -33,7 +36,7 @@ class TransactionService;
 namespace Ocpp201 {
 class ResetService;
 }
-#endif
+#endif //MO_ENABLE_V201
 
 class Model {
 private:
@@ -49,7 +52,10 @@ private:
     std::unique_ptr<ReservationService> reservationService;
     std::unique_ptr<BootService> bootService;
     std::unique_ptr<ResetService> resetService;
+
+#if MO_ENABLE_CERT_MGMT
     std::unique_ptr<CertificateService> certService;
+#endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_V201
     std::unique_ptr<VariableService> variableService;
@@ -113,8 +119,10 @@ public:
     void setResetService(std::unique_ptr<ResetService> rs);
     ResetService *getResetService() const;
 
+#if MO_ENABLE_CERT_MGMT
     void setCertificateService(std::unique_ptr<CertificateService> cs);
     CertificateService *getCertificateService() const;
+#endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_V201
     void setVariableService(std::unique_ptr<VariableService> vs);

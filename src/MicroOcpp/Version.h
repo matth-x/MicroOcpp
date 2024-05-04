@@ -18,6 +18,8 @@
 #define MO_ENABLE_V201 0
 #endif
 
+#ifdef __cplusplus
+
 namespace MicroOcpp {
 
 /*
@@ -29,5 +31,12 @@ struct ProtocolVersion {
 };
 
 }
+
+#endif //__cplusplus
+
+// Certificate Management (UCs M03 - M05)
+#ifndef MO_ENABLE_CERT_MGMT
+#define MO_ENABLE_CERT_MGMT 0
+#endif
 
 #endif

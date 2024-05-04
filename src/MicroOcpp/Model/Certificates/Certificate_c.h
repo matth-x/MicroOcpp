@@ -5,6 +5,10 @@
 #ifndef MO_CERTIFICATE_C_H
 #define MO_CERTIFICATE_C_H
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_CERT_MGMT
+
 #include <stddef.h>
 
 #include <MicroOcpp/Model/Certificates/Certificate.h>
@@ -44,6 +48,7 @@ std::unique_ptr<CertificateStore> makeCertificateStoreCwrapper(ocpp_cert_store *
 
 } //namespace MicroOcpp
 
-#endif //defined __cplusplus
+#endif //__cplusplus
 
+#endif //MO_ENABLE_CERT_MGMT
 #endif

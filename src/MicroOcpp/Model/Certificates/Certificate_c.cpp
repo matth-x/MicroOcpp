@@ -3,6 +3,9 @@
 // MIT License
 
 #include <MicroOcpp/Model/Certificates/Certificate_c.h>
+
+#if MO_ENABLE_CERT_MGMT
+
 #include <MicroOcpp/Debug.h>
 
 #include <string.h>
@@ -70,3 +73,4 @@ std::unique_ptr<CertificateStore> makeCertificateStoreCwrapper(ocpp_cert_store *
 }
 
 } //namespace MicroOcpp
+#endif //MO_ENABLE_CERT_MGMT

@@ -3,6 +3,9 @@
 // MIT License
 
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
+
+#if MO_ENABLE_CERT_MGMT
+
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Operations/DeleteCertificate.h>
 #include <MicroOcpp/Operations/GetInstalledCertificateIds.h>
@@ -10,8 +13,8 @@
 
 using namespace MicroOcpp;
 
-CertificateService::CertificateService(Context& context, std::unique_ptr<CertificateStore> certStore)
-        : context(context), certStore(std::move(certStore)) {
+CertificateService::CertificateService(Context& context)
+        : context(context) {
 
     context.getOperationRegistry().registerOperation("DeleteCertificate", [this] () {
         return new Ocpp201::DeleteCertificate(*this);});
@@ -21,6 +24,12 @@ CertificateService::CertificateService(Context& context, std::unique_ptr<Certifi
         return new Ocpp201::InstallCertificate(*this);});
 }
 
+void CertificateService::setCertificateStore(std::unique_ptr<CertificateStore> certStore) {
+    this->certStore = std::move(certStore);
+}
+
 CertificateStore *CertificateService::getCertificateStore() {
     return certStore.get();
 }
+
+#endif //MO_ENABLE_CERT_MGMT

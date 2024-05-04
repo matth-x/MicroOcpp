@@ -3,6 +3,9 @@
 // MIT License
 
 #include <MicroOcpp/Operations/DeleteCertificate.h>
+
+#if MO_ENABLE_CERT_MGMT
+
 #include <MicroOcpp/Model/Certificates/Certificate.h>
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
 #include <MicroOcpp/Debug.h>
@@ -88,3 +91,5 @@ std::unique_ptr<DynamicJsonDocument> DeleteCertificate::createConf(){
     payload["status"] = status;
     return doc;
 }
+
+#endif //MO_ENABLE_CERT_MGMT
