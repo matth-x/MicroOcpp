@@ -15,6 +15,12 @@ jobs:
     steps:
     - name: Check out repository code
       uses: actions/checkout@v3
+    - name: Check out MbedTLS
+      uses: actions/checkout@v3
+      with:
+        repository: Mbed-TLS/mbedtls
+        ref: v2.28.1
+        path: lib/mbedtls
     - name: Get build tools
       run: |
         sudo apt update
@@ -25,23 +31,21 @@ jobs:
     - name: Get ArduinoJson
       run: wget -Uri https://github.com/bblanchon/ArduinoJson/releases/download/v6.21.3/ArduinoJson-v6.21.3.h -O ./src/ArduinoJson.h
     - name: Generate CMake build files
-      run: cmake -S . -B ./build
+      run: cmake -S . -B ./build -DMO_BUILD_UNIT_MBEDTLS=True
     - name: Compile
-      run: cmake --build ./build -j 16 --target mo_unit_tests
+      run: cmake --build ./build -j 32 --target mo_unit_tests
     - name: Configure FS
       run: mkdir mo_store
-    - name: Run tests
-      run: ./build/mo_unit_tests
     - name: Run tests (valgrind)
-      run: valgrind --error-exitcode=1 --leak-check=full ./build/mo_unit_tests
+      run: valgrind --error-exitcode=1 --leak-check=full ./build/mo_unit_tests --abort
     - name: Generate CMake build files (AddressSanitizer, UndefinedBehaviorSanitizer)
       run: |
         rm -r ./build
-        cmake -S . -B ./build -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -fsanitize=undefined"
+        cmake -S . -B ./build -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -fsanitize=undefined" -DMO_BUILD_UNIT_MBEDTLS=True
     - name: Compile (ASan, UBSan)
-      run: cmake --build ./build -j 16 --target mo_unit_tests
+      run: cmake --build ./build -j 32 --target mo_unit_tests
     - name: Run tests (ASan, UBSan)
-      run: ./build/mo_unit_tests
+      run: ./build/mo_unit_tests --abort
     - name: Create coverage report
       run: |
         lcov --directory . --capture --output-file coverage.info
