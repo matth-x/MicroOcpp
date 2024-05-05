@@ -1,0 +1,7 @@
+.pio
+build
+lib
+mo_store
+src/ArduinoJson*
+src/main.cpp
+coverage.info

@@ -147,7 +147,7 @@ set(MO_SRC_UNIT
     tests/LocalAuthList.cpp
     tests/Variables.cpp
     tests/Transactions.cpp
-    #tests/Certificates.cpp # add if MbedTLS is available
+    tests/Certificates.cpp
 )
 
 add_executable(mo_unit_tests
@@ -156,13 +156,18 @@ add_executable(mo_unit_tests
     ./tests/catch2/catchMain.cpp
 )
 
-# add MbedTLS for testing (TODO integrate properly into build system)
-#add_subdirectory(lib/mbedtls)
-#target_link_libraries(mo_unit_tests PUBLIC 
-#    mbedtls
-#    mbedcrypto
-#    mbedx509
-#)
+if (MO_BUILD_UNIT_MBEDTLS)
+    add_subdirectory(lib/mbedtls)
+    target_link_libraries(mo_unit_tests PUBLIC 
+        mbedtls
+        mbedcrypto
+        mbedx509
+    )
+
+    target_compile_definitions(mo_unit_tests PUBLIC
+        MO_ENABLE_MBEDTLS=1
+    )
+endif()
 
 target_include_directories(mo_unit_tests PUBLIC
     "./tests/catch2"
@@ -181,10 +186,10 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_LocalAuthListMaxLength=8
     MO_SendLocalListMaxLength=4
     MO_ENABLE_FILE_INDEX=1
-    #MO_ENABLE_MBEDTLS=1
     MO_ChargeProfileMaxStackLevel=2
     MO_ChargingScheduleMaxPeriods=4
     MO_MaxChargingProfilesInstalled=3
+    MO_ENABLE_CERT_MGMT=1
 )
 
 target_compile_options(mo_unit_tests PUBLIC

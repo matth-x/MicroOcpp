@@ -4,7 +4,7 @@
 
 #include <MicroOcpp/Model/Certificates/CertificateMbedTLS.h>
 
-#if MO_ENABLE_MBEDTLS && MO_ENABLE_CERT_STORE_MBEDTLS
+#if MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
 
 #include <string.h>
 
@@ -15,19 +15,7 @@
 
 #include <MicroOcpp/Debug.h>
 
-bool ocpp_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmType hashAlg, ocpp_cert_hash *out) {
-
-    mbedtls_x509_crt cacert;
-    mbedtls_x509_crt_init(&cacert);
-
-    int ret;
-
-    if((ret = mbedtls_x509_crt_parse(&cacert, buf, len + 1)) < 0) {
-        char err [100];
-        mbedtls_strerror(ret, err, 100);
-        MO_DBG_ERR("mbedtls_x509_crt_parse: %i -- %s", ret, err);
-        return false;
-    }
+bool ocpp_get_cert_hash(mbedtls_x509_crt& cacert, HashAlgorithmType hashAlg, ocpp_cert_hash *out) {
 
     if (cacert.next) {
         MO_DBG_ERR("only sole root certs supported");
@@ -71,6 +59,8 @@ bool ocpp_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmType 
         MO_DBG_ERR("missing issuer name");
         return false;
     }
+
+    int ret;
 
     if ((ret = mbedtls_md(md_info, cacert.issuer_raw.p, cacert.issuer_raw.len, out->issuerNameHash))) {
         MO_DBG_ERR("mbedtls_md: %i", ret);
@@ -120,6 +110,26 @@ bool ocpp_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmType 
     memcpy(out->serialNumber, cacert.serial.p + serial_begin, out->serialNumberLen);
 
     return true;
+}
+
+bool ocpp_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmType hashAlg, ocpp_cert_hash *out) {
+
+    mbedtls_x509_crt cacert;
+    mbedtls_x509_crt_init(&cacert);
+
+    bool success = false;
+    int ret;
+
+    if((ret = mbedtls_x509_crt_parse(&cacert, buf, len + 1)) >= 0) {
+        success = ocpp_get_cert_hash(cacert, hashAlg, out);
+    } else {
+        char err [100];
+        mbedtls_strerror(ret, err, 100);
+        MO_DBG_ERR("mbedtls_x509_crt_parse: %i -- %s", ret, err);
+    }
+
+    mbedtls_x509_crt_free(&cacert);
+    return success;
 }
 
 namespace MicroOcpp {
@@ -402,4 +412,4 @@ bool printCertFn(const char *certType, size_t index, char *buf, size_t bufsize) 
 
 } //namespace MicroOcpp
 
-#endif //MO_ENABLE_MBEDTLS && MO_ENABLE_CERT_STORE_MBEDTLS
+#endif //MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS

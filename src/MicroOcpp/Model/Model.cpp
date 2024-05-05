@@ -198,6 +198,7 @@ ResetService *Model::getResetService() const {
     return resetService.get();
 }
 
+#if MO_ENABLE_CERT_MGMT
 void Model::setCertificateService(std::unique_ptr<CertificateService> cs) {
     this->certService = std::move(cs);
     capabilitiesUpdated = true;
@@ -206,6 +207,7 @@ void Model::setCertificateService(std::unique_ptr<CertificateService> cs) {
 CertificateService *Model::getCertificateService() const {
     return certService.get();
 }
+#endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_V201
 void Model::setVariableService(std::unique_ptr<VariableService> vs) {

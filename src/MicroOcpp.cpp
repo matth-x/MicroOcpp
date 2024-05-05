@@ -20,7 +20,7 @@
 #include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
-#include <MicroOcpp/Model/Certificates/CertificateMbedTLS.h> //default CertStore implementation depends on MbedTLS
+#include <MicroOcpp/Model/Certificates/CertificateMbedTLS.h>
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Core/OperationRegistry.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -234,7 +234,7 @@ ChargerCredentials ChargerCredentials::v201(const char *cpModel, const char *cpV
     return res;
 }
 
-void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover, MicroOcpp::ProtocolVersion version, std::unique_ptr<CertificateStore> certStore) {
+void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover, MicroOcpp::ProtocolVersion version) {
     if (context) {
         MO_DBG_WARN("already initialized. To reinit, call mocpp_deinitialize() before");
         return;
@@ -297,6 +297,17 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new TransactionService(*context)));
 #endif
 
+#if MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
+    std::unique_ptr<CertificateStore> certStore = makeCertificateStoreMbedTLS(filesystem);
+    if (certStore) {
+        model.setCertificateService(std::unique_ptr<CertificateService>(
+            new CertificateService(*context)));
+    }
+    if (certStore && model.getCertificateService()) {
+        model.getCertificateService()->setCertificateStore(std::move(certStore));
+    }
+#endif
+
 #if MO_ENABLE_V201
     if (version.major == 2) {
         //depends on VariableService
@@ -307,21 +318,6 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
     {
         model.setResetService(std::unique_ptr<ResetService>(
             new ResetService(*context)));
-    }
-
-    std::unique_ptr<CertificateStore> certStoreUse;
-    if (certStore) {
-        certStoreUse = std::move(certStore);
-    }
-#if MO_ENABLE_MBEDTLS && MO_ENABLE_CERT_STORE_MBEDTLS
-    else {
-        certStoreUse = makeCertificateStoreMbedTLS(filesystem);
-    }
-#endif
-
-    if (certStoreUse) {
-        model.setCertificateService(std::unique_ptr<CertificateService>(
-            new CertificateService(*context, std::move(certStoreUse))));
     }
 
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO && !defined(MO_CUSTOM_UPDATER)
@@ -955,6 +951,28 @@ DiagnosticsService *getDiagnosticsService() {
 
     return model.getDiagnosticsService();
 }
+
+#if MO_ENABLE_CERT_MGMT
+
+void setCertificateStore(std::unique_ptr<MicroOcpp::CertificateStore> certStore) {
+    if (!context) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return;
+    }
+
+    auto& model = context->getModel();
+    if (!model.getCertificateService()) {
+        model.setCertificateService(std::unique_ptr<CertificateService>(
+            new CertificateService(*context)));
+    }
+    if (auto certService = model.getCertificateService()) {
+        certService->setCertificateStore(std::move(certStore));
+    } else {
+        MO_DBG_ERR("OOM");
+        (void)0;
+    }
+}
+#endif //MO_ENABLE_CERT_MGMT
 
 Context *getOcppContext() {
     return context;
