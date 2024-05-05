@@ -6,7 +6,7 @@
 #define MO_VERSION_H
 
 /*
- * Version specification of MicroOcpp library (unrelated with the OCPP version)
+ * Version specification of MicroOcpp library (not related with the OCPP version)
  */
 #define MO_VERSION "1.1.0"
 
@@ -34,9 +34,9 @@ struct ProtocolVersion {
 
 #endif //__cplusplus
 
-// Certificate Management (UCs M03 - M05)
+// Certificate Management (UCs M03 - M05). Works with OCPP 1.6 and 2.0.1
 #ifndef MO_ENABLE_CERT_MGMT
-#define MO_ENABLE_CERT_MGMT 0
+#define MO_ENABLE_CERT_MGMT MO_ENABLE_V201
 #endif
 
 #endif
