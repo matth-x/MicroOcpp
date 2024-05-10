@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef CONFIGURATIONKEYVALUE_H
@@ -12,6 +12,10 @@
 
 #ifndef MO_CONFIG_EXT_PREFIX
 #define MO_CONFIG_EXT_PREFIX "Cst_"
+#endif
+
+#ifndef MO_CONFIG_TYPECHECK
+#define MO_CONFIG_TYPECHECK 1 //enable this for debugging
 #endif
 
 namespace MicroOcpp {
@@ -49,7 +53,7 @@ public:
 
     virtual TConfig getType() = 0;
 
-    revision_t getValueRevision(); 
+    virtual revision_t getValueRevision();
 
     void setRebootRequired();
     bool isRebootRequired();
