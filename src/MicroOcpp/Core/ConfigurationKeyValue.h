@@ -14,6 +14,10 @@
 #define MO_CONFIG_EXT_PREFIX "Cst_"
 #endif
 
+#ifndef MO_CONFIG_TYPECHECK
+#define MO_CONFIG_TYPECHECK 1 //enable this for debugging
+#endif
+
 namespace MicroOcpp {
 
 using revision_t = uint16_t;
@@ -49,7 +53,7 @@ public:
 
     virtual TConfig getType() = 0;
 
-    revision_t getValueRevision(); 
+    virtual revision_t getValueRevision();
 
     void setRebootRequired();
     bool isRebootRequired();

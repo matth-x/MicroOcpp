@@ -12,10 +12,6 @@
 #define KEY_MAXLEN 60
 #define STRING_VAL_MAXLEN 512
 
-#ifndef MO_CONFIG_TYPECHECK
-#define MO_CONFIG_TYPECHECK 1 //enable this for debugging
-#endif
-
 namespace MicroOcpp {
 
 template<> TConfig convertType<int>() {return TConfig::Int;}
