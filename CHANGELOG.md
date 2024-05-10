@@ -16,6 +16,7 @@
 - Function `bool isConnected()` in `Connection` interface ([#282](https://github.com/matth-x/MicroOcpp/pull/282))
 - Build flags for customizing memory limits of SmartCharging ([#260](https://github.com/matth-x/MicroOcpp/pull/260))
 - SConscript ([#287](https://github.com/matth-x/MicroOcpp/pull/287))
+- C-API for custom Configs store ([297](https://github.com/matth-x/MicroOcpp/pull/297))
 - Certificate Management, UCs M03 - M05 ([#262](https://github.com/matth-x/MicroOcpp/pull/262), [#274](https://github.com/matth-x/MicroOcpp/pull/274), [#292](https://github.com/matth-x/MicroOcpp/pull/292))
 - FTP Client ([#291](https://github.com/matth-x/MicroOcpp/pull/291))
 - `ProtocolVersion` selects v1.6 or v2.0.1 ([#247](https://github.com/matth-x/MicroOcpp/pull/247))

@@ -1,9 +1,10 @@
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
 #include <MicroOcpp/Core/Configuration_c.h>
 #include <MicroOcpp/Core/Configuration.h>
-
 #include <MicroOcpp/Debug.h>
-
-void (*ocpp_configuration_shared_give_back) (ocpp_configuration* config);
 
 using namespace MicroOcpp;
 

@@ -1,3 +1,7 @@
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
 #include <string.h>
 
 #include <MicroOcpp.h>
@@ -598,6 +602,8 @@ TEST_CASE( "Configuration" ) {
         REQUIRE( test_created->getInt() == 123 );
         ocpp_configuration *config_created = &g_configs[1];
         REQUIRE( config_created->get_int(config_created->user_data) == 123 );
+
+        mocpp_deinitialize();
     }
 
 }
