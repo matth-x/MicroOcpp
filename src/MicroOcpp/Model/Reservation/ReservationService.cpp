@@ -28,8 +28,8 @@ ReservationService::ReservationService(Context& context, unsigned int numConnect
 
     reserveConnectorZeroSupportedBool = declareConfiguration<bool>("ReserveConnectorZeroSupported", true, CONFIGURATION_VOLATILE, true);
     
-    context.getOperationRegistry().registerOperation("CancelReservation", [&context] () {
-        return new Ocpp16::CancelReservation(context.getModel());});
+    context.getOperationRegistry().registerOperation("CancelReservation", [this] () {
+        return new Ocpp16::CancelReservation(*this);});
     context.getOperationRegistry().registerOperation("ReserveNow", [&context] () {
         return new Ocpp16::ReserveNow(context.getModel());});
 }
