@@ -39,4 +39,9 @@ struct ProtocolVersion {
 #define MO_ENABLE_CERT_MGMT MO_ENABLE_V201
 #endif
 
+// Reservations, OCPP 1.6 implementation
+#ifndef MO_ENABLE_V16_RESERVATION
+#define MO_ENABLE_V16_RESERVATION 1
+#endif
+
 #endif

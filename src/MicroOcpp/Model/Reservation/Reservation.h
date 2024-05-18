@@ -1,9 +1,13 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef RESERVATION_H
-#define RESERVATION_H
+#ifndef MO_RESERVATION_H
+#define MO_RESERVATION_H
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16_RESERVATION
 
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/Time.h>
@@ -65,4 +69,5 @@ public:
 
 }
 
+#endif //MO_ENABLE_V16_RESERVATION
 #endif

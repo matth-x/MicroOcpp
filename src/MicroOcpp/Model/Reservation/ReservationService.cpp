@@ -1,6 +1,10 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16_RESERVATION
 
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Core/Context.h>
@@ -24,8 +28,8 @@ ReservationService::ReservationService(Context& context, unsigned int numConnect
 
     reserveConnectorZeroSupportedBool = declareConfiguration<bool>("ReserveConnectorZeroSupported", true, CONFIGURATION_VOLATILE, true);
     
-    context.getOperationRegistry().registerOperation("CancelReservation", [&context] () {
-        return new Ocpp16::CancelReservation(context.getModel());});
+    context.getOperationRegistry().registerOperation("CancelReservation", [this] () {
+        return new Ocpp16::CancelReservation(*this);});
     context.getOperationRegistry().registerOperation("ReserveNow", [&context] () {
         return new Ocpp16::ReserveNow(context.getModel());});
 }
@@ -210,3 +214,5 @@ bool ReservationService::updateReservation(int reservationId, unsigned int conne
     MO_DBG_ERR("error finding blocking reservation");
     return false;
 }
+
+#endif //MO_ENABLE_V16_RESERVATION

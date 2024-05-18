@@ -21,9 +21,12 @@ class FirmwareService;
 class DiagnosticsService;
 class HeartbeatService;
 class AuthorizationService;
-class ReservationService;
 class BootService;
 class ResetService;
+
+#if MO_ENABLE_V16_RESERVATION
+class ReservationService;
+#endif //MO_ENABLE_V16_RESERVATION
 
 #if MO_ENABLE_CERT_MGMT
 class CertificateService;
@@ -49,9 +52,12 @@ private:
     std::unique_ptr<DiagnosticsService> diagnosticsService;
     std::unique_ptr<HeartbeatService> heartbeatService;
     std::unique_ptr<AuthorizationService> authorizationService;
-    std::unique_ptr<ReservationService> reservationService;
     std::unique_ptr<BootService> bootService;
     std::unique_ptr<ResetService> resetService;
+
+#if MO_ENABLE_V16_RESERVATION
+    std::unique_ptr<ReservationService> reservationService;
+#endif //MO_ENABLE_V16_RESERVATION
 
 #if MO_ENABLE_CERT_MGMT
     std::unique_ptr<CertificateService> certService;
@@ -110,8 +116,10 @@ public:
     void setAuthorizationService(std::unique_ptr<AuthorizationService> authorizationService);
     AuthorizationService *getAuthorizationService();
 
+#if MO_ENABLE_V16_RESERVATION
     void setReservationService(std::unique_ptr<ReservationService> reservationService);
     ReservationService *getReservationService();
+#endif //MO_ENABLE_V16_RESERVATION
 
     void setBootService(std::unique_ptr<BootService> bs);
     BootService *getBootService() const;

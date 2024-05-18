@@ -1,25 +1,29 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CANCELRESERVATION_H
-#define CANCELRESERVATION_H
+#ifndef MO_CANCELRESERVATION_H
+#define MO_CANCELRESERVATION_H
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16_RESERVATION
 
 #include <MicroOcpp/Core/Operation.h>
 
 namespace MicroOcpp {
 
-class Model;
+class ReservationService;
 
 namespace Ocpp16 {
 
 class CancelReservation : public Operation {
 private:
-    Model& model;
+    ReservationService& reservationService;
     bool found = false;
     const char *errorCode = nullptr;
 public:
-    CancelReservation(Model& model);
+    CancelReservation(ReservationService& reservationService);
 
     const char* getOperationType() override;
 
@@ -33,4 +37,5 @@ public:
 } //end namespace Ocpp16
 } //end namespace MicroOcpp
 
+#endif //MO_ENABLE_V16_RESERVATION
 #endif
