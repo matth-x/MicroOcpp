@@ -563,7 +563,7 @@ void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int c
     connector->setConnectorPluggedInput(pluggedInput);
 }
 
-void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connectorId) {
+void setEnergyMeterInput(std::function<int()> energyInput, unsigned int connectorId) {
     if (!context) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
@@ -576,8 +576,8 @@ void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connec
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Energy.Active.Import.Register");
     meterProperties.setUnit("Wh");
-    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<float, SampledValueDeSerializer<float>>>(
-                           new SampledValueSamplerConcrete<float, SampledValueDeSerializer<float>>(
+    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<int, SampledValueDeSerializer<int>>>(
+                           new SampledValueSamplerConcrete<int, SampledValueDeSerializer<int>>(
             meterProperties,
             [energyInput] (ReadingContext) {return energyInput();}
     ));

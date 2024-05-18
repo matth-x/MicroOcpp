@@ -102,10 +102,6 @@ unsigned long mocpp_tick_ms_unix();
 #endif
 #endif
 
-#if MO_PLATFORM != MO_PLATFORM_ARDUINO
-void dtostrf(float value, int min_width, int num_digits_after_decimal, char *target);
-#endif
-
 #ifndef MO_ENABLE_MBEDTLS
 #define MO_ENABLE_MBEDTLS 0
 #endif

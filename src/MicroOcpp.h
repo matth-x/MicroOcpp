@@ -266,9 +266,9 @@ bool ocppPermitsCharge(unsigned int connectorId = 1);
 
 void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int connectorId = 1); //Input about if an EV is plugged to this EVSE
 
-void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connectorId = 1); //Input of the electricity meter register
+void setEnergyMeterInput(std::function<int()> energyInput, unsigned int connectorId = 1); //Input of the electricity meter register in Wh
 
-void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId = 1); //Input of the power meter reading
+void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId = 1); //Input of the power meter reading in W
 
 //Smart Charging Output, alternative for Watts only, Current only, or Watts x Current x numberPhases. Only one
 //of them can be set at a time
