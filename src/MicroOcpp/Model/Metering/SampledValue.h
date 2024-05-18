@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef SAMPLEDVALUE_H
@@ -36,11 +36,7 @@ class SampledValueDeSerializer<float> { // Used in meterValues
 public:
     static float deserialize(const char *str) {return atof(str);}
     static bool ready(float& val) {return true;} //float is always valid
-    static std::string serialize(float& val) {
-        char str[20];
-        dtostrf(val,4,1,str);
-        return std::string(str);
-    }
+    static std::string serialize(float& val);
     static int32_t toInteger(float& val) {return (int32_t) val;}
 };
 
