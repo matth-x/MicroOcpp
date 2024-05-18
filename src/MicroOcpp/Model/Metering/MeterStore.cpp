@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Model/Metering/MeterStore.h>
@@ -9,7 +9,9 @@
 
 #include <algorithm>
 
+#ifndef MO_MAX_STOPTXDATA_LEN
 #define MO_MAX_STOPTXDATA_LEN 4
+#endif
 
 using namespace MicroOcpp;
 
