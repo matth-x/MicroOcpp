@@ -5,6 +5,10 @@
 #ifndef MO_DELETECERTIFICATE_H
 #define MO_DELETECERTIFICATE_H
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_CERT_MGMT
+
 #include <MicroOcpp/Core/Operation.h>
 
 namespace MicroOcpp {
@@ -33,4 +37,5 @@ public:
 } //end namespace Ocpp201
 } //end namespace MicroOcpp
 
+#endif //MO_ENABLE_CERT_MGMT
 #endif

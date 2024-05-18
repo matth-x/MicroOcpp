@@ -173,10 +173,9 @@ public:
 
 #include <memory>
 
+#include <MicroOcpp/Model/Transactions/TransactionDefs.h>
 #include <MicroOcpp/Model/Authorization/IdToken.h>
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
-
-#define MO_TXID_LEN_MAX 36
 
 namespace MicroOcpp {
 namespace Ocpp201 {
@@ -264,14 +263,19 @@ public:
     char transactionId [MO_TXID_LEN_MAX + 1] = {'\0'};
     int remoteStartId = -1;
 
-    bool idTokenTransmitted = true;
+    //if to fill next TxEvent with optional fields
+    bool notifyEvseId = false;
+    bool notifyIdToken = false;
+    bool notifyStopIdToken = false;
+    bool notifyReservationId = false;
+    bool notifyChargingState = false;
+    bool notifyRemoteStartId = false;
 
     bool evConnectionTimeoutListen = true;
 
     StopReason stopReason = StopReason::UNDEFINED;
     TransactionEventTriggerReason stopTrigger = TransactionEventTriggerReason::UNDEFINED;
     std::unique_ptr<IdToken> stopIdToken; // if null, then stopIdToken equals idToken
-    bool stopIdTokenTransmitted = true;
 };
 
 // TransactionEventRequest (1.60.1)
@@ -305,6 +309,7 @@ public:
     int numberOfPhasesUsed = -1;
     int cableMaxCurrent = -1;
     int reservationId = -1;
+    int remoteStartId = -1;
 
     // TransactionType (2.48)
     ChargingState chargingState = ChargingState::UNDEFINED;
@@ -347,6 +352,7 @@ bool ocpp_tx_getStartTimestamp(OCPP_Transaction *tx, char *buf, size_t len);
 const char *ocpp_tx_getStopIdTag(OCPP_Transaction *tx);
 
 int32_t ocpp_tx_getMeterStop(OCPP_Transaction *tx);
+void ocpp_tx_setMeterStop(OCPP_Transaction* tx, int32_t meter);
 
 bool ocpp_tx_getStopTimestamp(OCPP_Transaction *tx, char *buf, size_t len);
 

@@ -4,6 +4,8 @@
 
 #include <MicroOcpp/Model/Certificates/Certificate.h>
 
+#if MO_ENABLE_CERT_MGMT
+
 #include <string.h>
 #include <stdio.h>
 
@@ -161,3 +163,5 @@ int ocpp_cert_set_serialNumber(ocpp_cert_hash *dst, const char *hex_src) {
 
     return ret;
 }
+
+#endif //MO_ENABLE_CERT_MGMT

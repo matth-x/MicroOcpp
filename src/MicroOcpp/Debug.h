@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef MO_DEBUG_H
@@ -16,6 +16,11 @@
 
 #ifndef MO_DBG_LEVEL
 #define MO_DBG_LEVEL MO_DL_INFO  //default
+#endif
+
+//MbedTLS debug level documented in mbedtls/debug.h:
+#ifndef MO_DBG_LEVEL_MBEDTLS
+#define MO_DBG_LEVEL_MBEDTLS 1
 #endif
 
 #define MO_DF_MINIMAL 0x00   //don't reveal origin of a debug message

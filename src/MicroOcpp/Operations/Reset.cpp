@@ -49,3 +49,71 @@ std::unique_ptr<DynamicJsonDocument> Reset::createConf() {
     payload["status"] = resetAccepted ? "Accepted" : "Rejected";
     return doc;
 }
+
+#if MO_ENABLE_V201
+
+#include <MicroOcpp/Model/ConnectorBase/EvseId.h>
+
+namespace MicroOcpp {
+namespace Ocpp201 {
+
+Reset::Reset(ResetService& resetService) : resetService(resetService) {
+  
+}
+
+const char* Reset::getOperationType(){
+    return "Reset";
+}
+
+void Reset::processReq(JsonObject payload) {
+
+    ResetType type;
+    const char *typeCstr = payload["type"] | "_Undefined";
+    
+    if (!strcmp(typeCstr, "Immediate")) {
+        type = ResetType_Immediate;
+    } else if (!strcmp(typeCstr, "OnIdle")) {
+        type = ResetType_OnIdle;
+    } else {
+        errorCode = "FormationViolation";
+        return;
+    }
+
+    int evseIdRaw = payload["evseId"] | 0;
+
+    if (evseIdRaw < 0 || evseIdRaw >= MO_NUM_EVSE) {
+        errorCode = "PropertyConstraintViolation";
+        return;
+    }
+
+    unsigned int evseId = (unsigned int) evseIdRaw;
+
+    status = resetService.initiateReset(type, evseId);
+}
+
+std::unique_ptr<DynamicJsonDocument> Reset::createConf() {
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    JsonObject payload = doc->to<JsonObject>();
+
+    const char *statusCstr = "";
+    switch (status) {
+        case ResetStatus_Accepted:
+            statusCstr = "Accepted";
+            break;
+        case ResetStatus_Rejected:
+            statusCstr = "Rejected";
+            break;
+        case ResetStatus_Scheduled:
+            statusCstr = "Scheduled";
+            break;
+        default:
+            MO_DBG_ERR("internal error");
+            break;
+    }
+    payload["status"] = statusCstr;
+    return doc;
+}
+
+} //end namespace Ocpp201
+} //end namespace MicroOcpp
+#endif //MO_ENABLE_V201

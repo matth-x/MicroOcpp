@@ -5,6 +5,10 @@
 #ifndef MO_CERTIFICATE_H
 #define MO_CERTIFICATE_H
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_CERT_MGMT
+
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -144,6 +148,8 @@ struct CertificateChainHash {
  */
 class CertificateStore {
 public:
+    virtual ~CertificateStore() = default;
+
     virtual GetInstalledCertificateStatus getCertificateIds(const std::vector<GetCertificateIdType>& certificateType, std::vector<CertificateChainHash>& out) = 0;
     virtual DeleteCertificateStatus deleteCertificate(const CertificateHash& hash) = 0;
     virtual InstallCertificateStatus installCertificate(InstallCertificateType certificateType, const char *certificate) = 0;
@@ -152,5 +158,5 @@ public:
 } //namespace MicroOcpp
 
 #endif //__cplusplus
-
+#endif //MO_ENABLE_CERT_MGMT
 #endif

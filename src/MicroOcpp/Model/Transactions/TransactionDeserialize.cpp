@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <limits>
@@ -234,7 +234,7 @@ bool deserializeTransaction(Transaction& tx, JsonObject state) {
         tx.setSilent();
     }
 
-    MO_DBG_DEBUG("DUMP TX");
+    MO_DBG_DEBUG("DUMP TX (%s)", tx.getIdTag() ? tx.getIdTag() : "idTag missing");
     MO_DBG_DEBUG("Session   | idTag %s, active: %i, authorized: %i, deauthorized: %i", tx.getIdTag(), tx.isActive(), tx.isAuthorized(), tx.isIdTagDeauthorized());
     MO_DBG_DEBUG("Start RPC | req: %i, conf: %i", tx.getStartSync().isRequested(), tx.getStartSync().isConfirmed());
     MO_DBG_DEBUG("Stop  RPC | req: %i, conf: %i",  tx.getStopSync().isRequested(), tx.getStopSync().isConfirmed());

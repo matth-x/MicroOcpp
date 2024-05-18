@@ -2,6 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#include <MicroOcpp/Platform.h>
+
+#if MO_ENABLE_MBEDTLS
+
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include "./catch2/catch.hpp"
@@ -17,11 +21,6 @@
 
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
 #include <MicroOcpp/Model/Certificates/CertificateMbedTLS.h>
-
-#if !MO_ENABLE_MBEDTLS
-#error Certificates unit tests depend on MbedTLS
-#endif
-
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"
 
@@ -255,3 +254,7 @@ TEST_CASE( "M - Certificates" ) {
 
     mocpp_deinitialize();
 }
+
+#else
+#warning Certificates unit tests depend on MbedTLS
+#endif //MO_ENABLE_MBEDTLS

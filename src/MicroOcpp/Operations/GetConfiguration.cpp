@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/GetConfiguration.h>
@@ -135,7 +135,7 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
     if (!unknownKeys.empty()) {
         JsonArray jsonUnknownKey = payload.createNestedArray("unknownKey");
         for (auto key : unknownKeys) {
-            MO_DBG_DEBUG("Unknown key: %s", key)
+            MO_DBG_DEBUG("Unknown key: %s", key);
             jsonUnknownKey.add(key);
         }
     }

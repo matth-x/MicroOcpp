@@ -139,7 +139,7 @@ std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
     payload["timestamp"] = timestamp_cstr;
     payload["connectorStatus"] = cstrFromOcppEveState(currentStatus);
     payload["evseId"] = evseId.id;
-    payload["connectorId"] = evseId.connectorId >= 0 ? evseId.connectorId : 1;
+    payload["connectorId"] = evseId.id == 0 ? 0 : evseId.connectorId >= 0 ? evseId.connectorId : 1;
 
     return doc;
 }

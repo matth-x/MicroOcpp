@@ -1,10 +1,14 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Model/Metering/SampledValue.h>
 #include <MicroOcpp/Debug.h>
 #include <cinttypes>
+
+#ifndef MO_SAMPLEDVALUE_FLOAT_FORMAT
+#define MO_SAMPLEDVALUE_FLOAT_FORMAT "%.2f"
+#endif
 
 using namespace MicroOcpp;
 
@@ -15,6 +19,13 @@ int32_t SampledValueDeSerializer<int32_t>::deserialize(const char *str) {
 std::string SampledValueDeSerializer<int32_t>::serialize(int32_t& val) {
     char str [12] = {'\0'};
     snprintf(str, 12, "%" PRId32, val);
+    return std::string(str);
+}
+
+std::string SampledValueDeSerializer<float>::serialize(float& val) {
+    char str [20];
+    str[0] = '\0';
+    snprintf(str, 20, MO_SAMPLEDVALUE_FLOAT_FORMAT, val);
     return std::string(str);
 }
 

@@ -5,6 +5,10 @@
 #ifndef MO_GETINSTALLEDCERTIFICATEIDS_H
 #define MO_GETINSTALLEDCERTIFICATEIDS_H
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_CERT_MGMT
+
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Model/Certificates/Certificate.h>
 
@@ -35,4 +39,5 @@ public:
 } //end namespace Ocpp201
 } //end namespace MicroOcpp
 
+#endif //MO_ENABLE_CERT_MGMT
 #endif

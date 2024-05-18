@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Platform.h>
@@ -79,12 +79,4 @@ unsigned long mocpp_tick_ms_unix() {
     return (unsigned long) ms.count();
 }
 #endif
-#endif
-
-#if MO_PLATFORM != MO_PLATFORM_ARDUINO
-void dtostrf(float value, int min_width, int num_digits_after_decimal, char *target){
-    char fmt[20];
-    sprintf(fmt, "%%%d.%df", min_width, num_digits_after_decimal);
-    sprintf(target, fmt, value);
-}
 #endif

@@ -20,7 +20,7 @@
 #include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
-#include <MicroOcpp/Model/Certificates/CertificateMbedTLS.h> //default CertStore implementation depends on MbedTLS
+#include <MicroOcpp/Model/Certificates/CertificateMbedTLS.h>
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Core/OperationRegistry.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -236,7 +236,7 @@ ChargerCredentials ChargerCredentials::v201(const char *cpModel, const char *cpV
     return res;
 }
 
-void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover, MicroOcpp::ProtocolVersion version, std::unique_ptr<CertificateStore> certStore) {
+void mocpp_initialize(Connection& connection, const char *bootNotificationCredentials, std::shared_ptr<FilesystemAdapter> fs, bool autoRecover, MicroOcpp::ProtocolVersion version) {
     if (context) {
         MO_DBG_WARN("already initialized. To reinit, call mocpp_deinitialize() before");
         return;
@@ -291,8 +291,6 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new AuthorizationService(*context, filesystem)));
     model.setReservationService(std::unique_ptr<ReservationService>(
         new ReservationService(*context, MO_NUMCONNECTORS)));
-    model.setResetService(std::unique_ptr<ResetService>(
-        new ResetService(*context)));
 
 #if MO_ENABLE_V201
     model.setVariableService(std::unique_ptr<VariableService>(
@@ -301,19 +299,27 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new TransactionService(*context)));
 #endif
 
-    std::unique_ptr<CertificateStore> certStoreUse;
+#if MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
+    std::unique_ptr<CertificateStore> certStore = makeCertificateStoreMbedTLS(filesystem);
     if (certStore) {
-        certStoreUse = std::move(certStore);
+        model.setCertificateService(std::unique_ptr<CertificateService>(
+            new CertificateService(*context)));
     }
-#if MO_ENABLE_MBEDTLS
-    else {
-        certStoreUse = makeCertificateStoreMbedTLS(filesystem);
+    if (certStore && model.getCertificateService()) {
+        model.getCertificateService()->setCertificateStore(std::move(certStore));
     }
 #endif
 
-    if (certStoreUse) {
-        model.setCertificateService(std::unique_ptr<CertificateService>(
-            new CertificateService(*context, std::move(certStoreUse))));
+#if MO_ENABLE_V201
+    if (version.major == 2) {
+        //depends on VariableService
+        model.setResetServiceV201(std::unique_ptr<Ocpp201::ResetService>(
+            new Ocpp201::ResetService(*context)));
+    } else
+#endif
+    {
+        model.setResetService(std::unique_ptr<ResetService>(
+            new ResetService(*context)));
     }
 
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO && !defined(MO_CUSTOM_UPDATER)
@@ -324,14 +330,13 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 #endif //MO_PLATFORM == MO_PLATFORM_ARDUINO && !defined(MO_CUSTOM_UPDATER)
 
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
-    if (!model.getResetService()->getExecuteReset())
-        model.getResetService()->setExecuteReset(makeDefaultResetFn());
+    setOnResetExecute(makeDefaultResetFn());
 #endif
 
     model.getBootService()->setChargePointCredentials(bootNotificationCredentials);
 
     auto credsJson = model.getBootService()->getChargePointCredentials();
-    if (credsJson && credsJson->containsKey("firmwareVersion")) {
+    if (model.getFirmwareService() && credsJson && credsJson->containsKey("firmwareVersion")) {
         model.getFirmwareService()->setBuildNumber((*credsJson)["firmwareVersion"]);
     }
     credsJson.reset();
@@ -517,6 +522,19 @@ bool ocppPermitsCharge(unsigned int connectorId) {
         MO_DBG_WARN("OCPP uninitialized");
         return false;
     }
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        TransactionService::Evse *evse = nullptr;
+        if (auto txService = context->getModel().getTransactionService()) {
+            evse = txService->getEvse(connectorId);
+        }
+        if (!evse) {
+            MO_DBG_ERR("could not find EVSE");
+            return false;
+        }
+        return evse->ocppPermitsCharge();
+    }
+#endif
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -547,7 +565,7 @@ void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int c
     connector->setConnectorPluggedInput(pluggedInput);
 }
 
-void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connectorId) {
+void setEnergyMeterInput(std::function<int()> energyInput, unsigned int connectorId) {
     if (!context) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
@@ -560,8 +578,8 @@ void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connec
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Energy.Active.Import.Register");
     meterProperties.setUnit("Wh");
-    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<float, SampledValueDeSerializer<float>>>(
-                           new SampledValueSamplerConcrete<float, SampledValueDeSerializer<float>>(
+    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<int, SampledValueDeSerializer<int>>>(
+                           new SampledValueSamplerConcrete<int, SampledValueDeSerializer<int>>(
             meterProperties,
             [energyInput] (ReadingContext) {return energyInput();}
     ));
@@ -872,6 +890,15 @@ void setOnResetNotify(std::function<bool(bool)> onResetNotify) {
         return;
     }
 
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (auto rService = context->getModel().getResetServiceV201()) {
+            rService->setNotifyReset([onResetNotify] (ResetType) {return onResetNotify(true);});
+        }
+        return;
+    }
+#endif
+
     if (auto rService = context->getModel().getResetService()) {
         rService->setPreReset(onResetNotify);
     }
@@ -882,6 +909,15 @@ void setOnResetExecute(std::function<void(bool)> onResetExecute) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
+
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (auto rService = context->getModel().getResetServiceV201()) {
+            rService->setExecuteReset([onResetExecute] () {onResetExecute(true); return true;});
+        }
+        return;
+    }
+#endif
 
     if (auto rService = context->getModel().getResetService()) {
         rService->setExecuteReset(onResetExecute);
@@ -917,6 +953,28 @@ DiagnosticsService *getDiagnosticsService() {
 
     return model.getDiagnosticsService();
 }
+
+#if MO_ENABLE_CERT_MGMT
+
+void setCertificateStore(std::unique_ptr<MicroOcpp::CertificateStore> certStore) {
+    if (!context) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return;
+    }
+
+    auto& model = context->getModel();
+    if (!model.getCertificateService()) {
+        model.setCertificateService(std::unique_ptr<CertificateService>(
+            new CertificateService(*context)));
+    }
+    if (auto certService = model.getCertificateService()) {
+        certService->setCertificateStore(std::move(certStore));
+    } else {
+        MO_DBG_ERR("OOM");
+        (void)0;
+    }
+}
+#endif //MO_ENABLE_CERT_MGMT
 
 Context *getOcppContext() {
     return context;

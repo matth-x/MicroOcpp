@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
@@ -11,10 +11,6 @@
 
 #define KEY_MAXLEN 60
 #define STRING_VAL_MAXLEN 512
-
-#ifndef MO_CONFIG_TYPECHECK
-#define MO_CONFIG_TYPECHECK 1 //enable this for debugging
-#endif
 
 namespace MicroOcpp {
 

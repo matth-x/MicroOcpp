@@ -14,6 +14,9 @@
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Operations/SetVariables.h>
 #include <MicroOcpp/Operations/GetVariables.h>
+#include <MicroOcpp/Operations/GetBaseReport.h>
+#include <MicroOcpp/Operations/NotifyReport.h>
+#include <MicroOcpp/Core/SimpleRequestFactory.h>
 
 #include <cstring>
 #include <cctype>
@@ -147,11 +150,13 @@ Variable *VariableService::getVariable(Variable::InternalDataType type, const Co
     return nullptr;
 }
 
-VariableService::VariableService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : filesystem(filesystem) {
+VariableService::VariableService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
     context.getOperationRegistry().registerOperation("SetVariables", [this] () {
         return new Ocpp201::SetVariables(*this);});
     context.getOperationRegistry().registerOperation("GetVariables", [this] () {
         return new Ocpp201::GetVariables(*this);});
+    context.getOperationRegistry().registerOperation("GetBaseReport", [this] () {
+        return new Ocpp201::GetBaseReport(*this);});
 }
 
 template<class T>
@@ -174,13 +179,28 @@ bool loadVariableFactoryDefault<const char*>(Variable& variable, const char *fac
     return variable.setString(factoryDef);
 }
 
-void loadVariableCharacteristics(Variable& variable, Variable::Mutability mutability, bool rebootRequired) {
+void loadVariableCharacteristics(Variable& variable, Variable::Mutability mutability, bool rebootRequired, Variable::InternalDataType defaultDataType) {
     if (variable.getMutability() == Variable::Mutability::ReadWrite) {
         variable.setMutability(mutability);
     }
 
     if (rebootRequired) {
         variable.setRebootRequired();
+    }
+
+    switch (defaultDataType) {
+        case Variable::InternalDataType::Int:
+            variable.setVariableDataType(MicroOcpp::VariableCharacteristics::DataType::integer);
+            break;
+        case Variable::InternalDataType::Bool:
+            variable.setVariableDataType(MicroOcpp::VariableCharacteristics::DataType::boolean);
+            break;
+        case Variable::InternalDataType::String:
+            variable.setVariableDataType(MicroOcpp::VariableCharacteristics::DataType::string);
+            break;
+        default:
+            MO_DBG_ERR("internal error");
+            break;
     }
 }
 
@@ -220,7 +240,7 @@ Variable *VariableService::declareVariable(const ComponentId& component, const c
         }
     }
 
-    loadVariableCharacteristics(*res, mutability, rebootRequired);
+    loadVariableCharacteristics(*res, mutability, rebootRequired, getInternalDataType<T>());
     return res;
 }
 
@@ -412,6 +432,47 @@ GetVariableStatus VariableService::getVariable(Variable::AttributeType attrType,
     } else {
         return GetVariableStatus::UnknownComponent; 
     }
+}
+
+GenericDeviceModelStatus VariableService::getBaseReport(int requestId, ReportBase reportBase) {
+
+    if (reportBase == ReportBase_SummaryInventory) {
+        return GenericDeviceModelStatus_NotSupported;
+    }
+
+    std::vector<Variable*> variables;
+
+    for (const auto& container : containers) {
+        if (!container->isAccessible()) {
+            // container intended for internal use only
+            continue;
+        }
+        for (size_t i = 0; i < container->size(); i++) {
+            auto variable = container->getVariable(i);
+
+            if (reportBase == ReportBase_ConfigurationInventory && variable->getMutability() == Variable::Mutability::ReadOnly) {
+                continue;
+            }
+
+            variables.push_back(variable);
+        }
+    }
+
+    if (variables.empty()) {
+        return GenericDeviceModelStatus_EmptyResultSet;
+    }
+
+    auto notifyReport = makeRequest(new Ocpp201::NotifyReport(
+            context.getModel(), 
+            requestId,
+            context.getModel().getClock().now(),
+            false,
+            0,
+            variables));
+
+    context.initiateRequest(std::move(notifyReport));
+
+    return GenericDeviceModelStatus_Accepted;
 }
 
 } // namespace MicroOcpp
