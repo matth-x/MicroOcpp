@@ -2,6 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16_RESERVATION
+
 #include <MicroOcpp/Operations/ReserveNow.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
@@ -123,3 +127,5 @@ std::unique_ptr<DynamicJsonDocument> ReserveNow::createConf(){
     
     return doc;
 }
+
+#endif //MO_ENABLE_V16_RESERVATION

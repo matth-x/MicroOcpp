@@ -289,8 +289,11 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new HeartbeatService(*context)));
     model.setAuthorizationService(std::unique_ptr<AuthorizationService>(
         new AuthorizationService(*context, filesystem)));
+
+#if MO_ENABLE_V16_RESERVATION
     model.setReservationService(std::unique_ptr<ReservationService>(
         new ReservationService(*context, MO_NUMCONNECTORS)));
+#endif
 
 #if MO_ENABLE_V201
     model.setVariableService(std::unique_ptr<VariableService>(
