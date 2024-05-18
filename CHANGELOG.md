@@ -40,6 +40,7 @@
 - Fix transaction freeze in offline mode ([#279](https://github.com/matth-x/MicroOcpp/pull/279), [#287](https://github.com/matth-x/MicroOcpp/pull/287))
 - Fix compilation error caused by `PRId32` ([#279](https://github.com/matth-x/MicroOcpp/pull/279))
 - Don't load FW-mngt. module when no handlers set ([#271](https://github.com/matth-x/MicroOcpp/pull/271))
+- Change arduinoWebSockets URL param to path ([#278](https://github.com/matth-x/MicroOcpp/issues/278))
 - Avoid creating conf when operation fails ([#290](https://github.com/matth-x/MicroOcpp/pull/290))
 - Fix whitespaces in MeterValues ([#301](https://github.com/matth-x/MicroOcpp/pull/301))
 

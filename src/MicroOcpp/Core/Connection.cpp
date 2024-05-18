@@ -72,7 +72,7 @@ void WSClient::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
                 MO_DBG_INFO("Disconnected");
                 break;
             case WStype_CONNECTED:
-                MO_DBG_INFO("Connected to url: %s", payload);
+                MO_DBG_INFO("Connected (path: %s)", payload);
                 captureLastRecv = mocpp_tick_ms();
                 captureLastConnected = mocpp_tick_ms();
                 break;
@@ -110,6 +110,10 @@ unsigned long WSClient::getLastRecv() {
 
 unsigned long WSClient::getLastConnected() {
     return lastConnected;
+}
+
+bool WSClient::isConnected() {
+    return wsock->isConnected();
 }
 
 #endif
