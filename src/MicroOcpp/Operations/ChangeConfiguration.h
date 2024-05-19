@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CHANGECONFIGURATION_H
-#define CHANGECONFIGURATION_H
+#ifndef MO_CHANGECONFIGURATION_H
+#define MO_CHANGECONFIGURATION_H
 
 #include <MicroOcpp/Core/Operation.h>
 

@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef REMOTESTOPTRANSACTION_H
-#define REMOTESTOPTRANSACTION_H
+#ifndef MO_REMOTESTOPTRANSACTION_H
+#define MO_REMOTESTOPTRANSACTION_H
 
 #include <MicroOcpp/Core/Operation.h>
 

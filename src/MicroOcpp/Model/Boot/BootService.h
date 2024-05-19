@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef BOOTSERVICE_H
-#define BOOTSERVICE_H
+#ifndef MO_BOOTSERVICE_H
+#define MO_BOOTSERVICE_H
 
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>

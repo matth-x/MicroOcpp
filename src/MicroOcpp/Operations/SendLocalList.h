@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef SENDLOCALLIST_H
-#define SENDLOCALLIST_H
+#ifndef MO_SENDLOCALLIST_H
+#define MO_SENDLOCALLIST_H
 
 #include <MicroOcpp/Core/Operation.h>
 

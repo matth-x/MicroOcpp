@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef TRIGGERMESSAGE_H
-#define TRIGGERMESSAGE_H
+#ifndef MO_TRIGGERMESSAGE_H
+#define MO_TRIGGERMESSAGE_H
 
 #include <MicroOcpp/Core/Operation.h>
 

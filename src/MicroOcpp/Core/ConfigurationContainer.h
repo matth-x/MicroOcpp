@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CONFIGURATIONCONTAINER_H
-#define CONFIGURATIONCONTAINER_H
+#ifndef MO_CONFIGURATIONCONTAINER_H
+#define MO_CONFIGURATIONCONTAINER_H
 
 #include <vector>
 #include <memory>

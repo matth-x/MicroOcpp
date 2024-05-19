@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CONFIGURATIONCONTAINERFLASH_H
-#define CONFIGURATIONCONTAINERFLASH_H
+#ifndef MO_CONFIGURATIONCONTAINERFLASH_H
+#define MO_CONFIGURATIONCONTAINERFLASH_H
 
 #include <MicroOcpp/Core/ConfigurationContainer.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>

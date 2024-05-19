@@ -1,12 +1,12 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Model/Diagnostics/DiagnosticsStatus.h>
 
-#ifndef DIAGNOSTICSSTATUSNOTIFICATION_H
-#define DIAGNOSTICSSTATUSNOTIFICATION_H
+#ifndef MO_DIAGNOSTICSSTATUSNOTIFICATION_H
+#define MO_DIAGNOSTICSSTATUSNOTIFICATION_H
 
 namespace MicroOcpp {
 namespace Ocpp16 {

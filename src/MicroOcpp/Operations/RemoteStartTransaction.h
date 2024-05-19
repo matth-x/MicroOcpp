@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef REMOTESTARTTRANSACTION_H
-#define REMOTESTARTTRANSACTION_H
+#ifndef MO_REMOTESTARTTRANSACTION_H
+#define MO_REMOTESTARTTRANSACTION_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Operations/CiStrings.h>

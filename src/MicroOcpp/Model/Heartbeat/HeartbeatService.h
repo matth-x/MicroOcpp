@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef HEARTBEATSERVICE_H
-#define HEARTBEATSERVICE_H
+#ifndef MO_HEARTBEATSERVICE_H
+#define MO_HEARTBEATSERVICE_H
 
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <memory>

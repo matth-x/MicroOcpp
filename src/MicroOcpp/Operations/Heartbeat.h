@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef HEARTBEAT_H
-#define HEARTBEAT_H
+#ifndef MO_HEARTBEAT_H
+#define MO_HEARTBEAT_H
 
 #include <MicroOcpp/Core/Operation.h>
 

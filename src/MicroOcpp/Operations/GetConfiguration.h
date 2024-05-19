@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef GETCONFIGURATION_H
-#define GETCONFIGURATION_H
+#ifndef MO_GETCONFIGURATION_H
+#define MO_GETCONFIGURATION_H
 
 #include <MicroOcpp/Core/Operation.h>
 

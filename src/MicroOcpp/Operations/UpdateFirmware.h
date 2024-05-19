@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef UPDATEFIRMWARE_H
-#define UPDATEFIRMWARE_H
+#ifndef MO_UPDATEFIRMWARE_H
+#define MO_UPDATEFIRMWARE_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Time.h>

@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef METERVALUE_H
-#define METERVALUE_H
+#ifndef MO_METERVALUE_H
+#define MO_METERVALUE_H
 
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Model/Metering/SampledValue.h>

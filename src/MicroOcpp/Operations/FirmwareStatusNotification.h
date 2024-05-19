@@ -1,13 +1,13 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/Operation.h>
 
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareStatus.h>
 
-#ifndef FIRMWARESTATUSNOTIFICATION_H
-#define FIRMWARESTATUSNOTIFICATION_H
+#ifndef MO_FIRMWARESTATUSNOTIFICATION_H
+#define MO_FIRMWARESTATUSNOTIFICATION_H
 
 namespace MicroOcpp {
 namespace Ocpp16 {

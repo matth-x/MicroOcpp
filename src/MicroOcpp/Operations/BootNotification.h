@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef BOOTNOTIFICATION_H
-#define BOOTNOTIFICATION_H
+#ifndef MO_BOOTNOTIFICATION_H
+#define MO_BOOTNOTIFICATION_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Operations/CiStrings.h>

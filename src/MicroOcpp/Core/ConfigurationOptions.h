@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CONFIGURATIONOPTIONS_H
-#define CONFIGURATIONOPTIONS_H
+#ifndef MO_CONFIGURATIONOPTIONS_H
+#define MO_CONFIGURATIONOPTIONS_H
 
 #include <stdint.h>
 

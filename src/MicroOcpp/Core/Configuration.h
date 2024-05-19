@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CONFIGURATION_H
-#define CONFIGURATION_H
+#ifndef MO_CONFIGURATION_H
+#define MO_CONFIGURATION_H
 
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <MicroOcpp/Core/ConfigurationContainer.h>

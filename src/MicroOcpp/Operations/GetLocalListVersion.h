@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef GETLOCALLISTVERSION_H
-#define GETLOCALLISTVERSION_H
+#ifndef MO_GETLOCALLISTVERSION_H
+#define MO_GETLOCALLISTVERSION_H
 
 #include <MicroOcpp/Core/Operation.h>
 
