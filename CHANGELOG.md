@@ -39,6 +39,7 @@
 - Ignore UnlockConnector when handler not set ([#271](https://github.com/matth-x/MicroOcpp/pull/271))
 - Reject ChargingProfile if unit not supported ([#271](https://github.com/matth-x/MicroOcpp/pull/271))
 - Fix building with debug level warn and error
+- Reduce debug output FW size overhead ([#304](https://github.com/matth-x/MicroOcpp/pull/304))
 - Fix transaction freeze in offline mode ([#279](https://github.com/matth-x/MicroOcpp/pull/279), [#287](https://github.com/matth-x/MicroOcpp/pull/287))
 - Fix compilation error caused by `PRId32` ([#279](https://github.com/matth-x/MicroOcpp/pull/279))
 - Don't load FW-mngt. module when no handlers set ([#271](https://github.com/matth-x/MicroOcpp/pull/271))

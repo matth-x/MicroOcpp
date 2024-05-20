@@ -31,7 +31,6 @@ Reservation::Reservation(Model& model, unsigned int slot) : model(model), slot(s
 
     if (!connectorIdInt || !expiryDateRawString || !idTagString || !reservationIdInt || !parentIdTagString) {
         MO_DBG_ERR("initialization failure");
-        (void)0;
     }
 }
 

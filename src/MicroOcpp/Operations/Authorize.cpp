@@ -18,7 +18,6 @@ Authorize::Authorize(Model& model, const char *idTagIn) : model(model) {
         snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
     } else {
         MO_DBG_WARN("Format violation of idTag. Discard idTag");
-        (void)0;
     }
 }
 

@@ -42,7 +42,6 @@ void VolatileRequestQueue::push_back(std::unique_ptr<Request> op) {
 
     if (queue.size() >= MO_OPERATIONCACHE_MAXSIZE) {
         MO_DBG_WARN("unsafe number of cached operations");
-        (void)0;
     }
 
     queue.push_back(std::move(op));

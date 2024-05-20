@@ -89,7 +89,9 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
     }
 
     if (!doc || doc->capacity() < jcapacity) {
-        if (doc) {MO_DBG_ERR("OOM");(void)0;}
+        if (doc) {
+            MO_DBG_ERR("OOM");
+        }
 
         errorCode = "InternalError";
         errorDescription = "Query too big. Try fewer keys";

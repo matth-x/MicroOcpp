@@ -123,7 +123,6 @@ VariableContainer *VariableService::declareContainer(const char *filename, bool 
 
     if (container->isAccessible() != accessible) {
         MO_DBG_ERR("%s: conflicting accessibility declarations (expect %s)", filename, container->isAccessible() ? "accessible" : "inaccessible");
-        (void)0;
     }
 
     return container.get();
@@ -142,7 +141,6 @@ Variable *VariableService::getVariable(Variable::InternalDataType type, const Co
             }
             if (container->isAccessible() != accessible) {
                 MO_DBG_ERR("conflicting accessibility for %s", name);
-                (void)0;
             }
             return variable;
         }

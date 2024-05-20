@@ -445,7 +445,6 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
             res = endTransaction_authorized(idTag, reason, connectorId);
         } else {
             MO_DBG_INFO("endTransaction: idTag doesn't match");
-            (void)0;
         }
     }
     return res;
@@ -977,7 +976,6 @@ void setCertificateStore(std::unique_ptr<MicroOcpp::CertificateStore> certStore)
         certService->setCertificateStore(std::move(certStore));
     } else {
         MO_DBG_ERR("OOM");
-        (void)0;
     }
 }
 #endif //MO_ENABLE_CERT_MGMT

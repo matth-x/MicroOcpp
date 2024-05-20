@@ -96,11 +96,9 @@ const ComponentId& Variable::getComponentId() const {
 
 void Variable::setInt(int val, AttributeType) {
     MO_DBG_ERR("type err");
-    (void)0;
 }
 void Variable::setBool(bool val, AttributeType) {
     MO_DBG_ERR("type err");
-    (void)0;
 }
 bool Variable::setString(const char *val, AttributeType) {
     MO_DBG_ERR("type err");

@@ -242,10 +242,8 @@ void RequestQueue::receiveResponse(JsonArray json) {
         //didn't find matching Request
         if (json[0] == MESSAGE_TYPE_CALLERROR) {
             MO_DBG_DEBUG("Received CALLERROR did not abort a pending operation");
-            (void)0;
         } else {
             MO_DBG_WARN("Received response doesn't match any pending operation");
-            (void)0;
         }
     }
 }

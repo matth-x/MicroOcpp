@@ -79,7 +79,6 @@ ConfigurationContainer *declareContainer(const char *filename, bool accessible) 
 
     if (container->isAccessible() != accessible) {
         MO_DBG_ERR("%s: conflicting accessibility declarations (expect %s)", filename, container->isAccessible() ? "accessible" : "inaccessible");
-        (void)0;
     }
 
     return container.get();
@@ -95,7 +94,6 @@ std::shared_ptr<Configuration> loadConfiguration(TConfig type, const char *key, 
             }
             if (container->isAccessible() != accessible) {
                 MO_DBG_ERR("conflicting accessibility for %s", key);
-                (void)0;
             }
             container->loadStaticKey(*config.get(), key);
             return config;

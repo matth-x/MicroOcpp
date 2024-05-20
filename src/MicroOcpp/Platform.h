@@ -5,12 +5,6 @@
 #ifndef MO_PLATFORM_H
 #define MO_PLATFORM_H
 
-#ifdef __cplusplus
-#define EXT_C extern "C"
-#else
-#define EXT_C
-#endif
-
 #define MO_PLATFORM_NONE    0
 #define MO_PLATFORM_ARDUINO 1
 #define MO_PLATFORM_ESPIDF  2
@@ -30,25 +24,32 @@
 #endif
 
 #ifdef MO_CUSTOM_CONSOLE
-#include <cstdio>
+#include <stdio.h>
 
 #ifndef MO_CUSTOM_CONSOLE_MAXMSGSIZE
 #define MO_CUSTOM_CONSOLE_MAXMSGSIZE 192
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern char _mo_console_msg_buf [MO_CUSTOM_CONSOLE_MAXMSGSIZE]; //define msg_buf in data section to save memory (see https://github.com/matth-x/MicroOcpp/pull/304)
+void _mo_console_out(const char *msg);
+
 void mocpp_set_console_out(void (*console_out)(const char *msg));
 
-namespace MicroOcpp {
-void mocpp_console_out(const char *msg);
+#ifdef __cplusplus
 }
+#endif
+
 #define MO_CONSOLE_PRINTF(X, ...) \
             do { \
-                char msg [MO_CUSTOM_CONSOLE_MAXMSGSIZE]; \
-                auto _mo_ret = snprintf(msg, MO_CUSTOM_CONSOLE_MAXMSGSIZE, X, ##__VA_ARGS__); \
+                auto _mo_ret = snprintf(_mo_console_msg_buf, MO_CUSTOM_CONSOLE_MAXMSGSIZE, X, ##__VA_ARGS__); \
                 if (_mo_ret < 0 || _mo_ret >= MO_CUSTOM_CONSOLE_MAXMSGSIZE) { \
-                    sprintf(msg + MO_CUSTOM_CONSOLE_MAXMSGSIZE - 7, " [...]"); \
+                    sprintf(_mo_console_msg_buf + MO_CUSTOM_CONSOLE_MAXMSGSIZE - 7, " [...]"); \
                 } \
-                MicroOcpp::mocpp_console_out(msg); \
+                _mo_console_out(_mo_console_msg_buf); \
             } while (0)
 #else
 #define mocpp_set_console_out(X) \
@@ -76,9 +77,9 @@ void mocpp_console_out(const char *msg);
 #endif
 
 #ifdef MO_CUSTOM_TIMER
-void mocpp_set_timer(unsigned long (*get_ms)());
+extern "C" void mocpp_set_timer(unsigned long (*get_ms)());
 
-unsigned long mocpp_tick_ms_custom();
+extern "C" unsigned long mocpp_tick_ms_custom();
 #define mocpp_tick_ms mocpp_tick_ms_custom
 #else
 
@@ -86,10 +87,10 @@ unsigned long mocpp_tick_ms_custom();
 #include <Arduino.h>
 #define mocpp_tick_ms millis
 #elif MO_PLATFORM == MO_PLATFORM_ESPIDF
-unsigned long mocpp_tick_ms_espidf();
+extern "C" unsigned long mocpp_tick_ms_espidf();
 #define mocpp_tick_ms mocpp_tick_ms_espidf
 #elif MO_PLATFORM == MO_PLATFORM_UNIX
-unsigned long mocpp_tick_ms_unix();
+extern "C" unsigned long mocpp_tick_ms_unix();
 #define mocpp_tick_ms mocpp_tick_ms_unix
 #endif
 #endif

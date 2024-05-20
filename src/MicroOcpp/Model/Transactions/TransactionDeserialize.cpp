@@ -240,7 +240,6 @@ bool deserializeTransaction(Transaction& tx, JsonObject state) {
     MO_DBG_DEBUG("Stop  RPC | req: %i, conf: %i",  tx.getStopSync().isRequested(), tx.getStopSync().isConfirmed());
     if (tx.isSilent()) {
         MO_DBG_DEBUG("          | silent Tx");
-        (void)0;
     }
 
     return true;
