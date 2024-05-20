@@ -42,9 +42,11 @@ void Authorize::processConf(JsonObject payload){
         MO_DBG_INFO("Request has been denied. Reason: %s", idTagInfo);
     }
 
-    if (model.getAuthorizationService()) {
-        model.getAuthorizationService()->notifyAuthorization(idTag, payload["idTagInfo"]);
+#if MO_ENABLE_LOCAL_AUTH
+    if (auto authService = model.getAuthorizationService()) {
+        authService->notifyAuthorization(idTag, payload["idTagInfo"]);
     }
+#endif //MO_ENABLE_LOCAL_AUTH
 }
 
 void Authorize::processReq(JsonObject payload){

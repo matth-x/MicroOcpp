@@ -591,12 +591,14 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
     MO_DBG_DEBUG("Begin transaction process (%s), prepare", idTag != nullptr ? idTag : "");
     
-    AuthorizationData *localAuth = nullptr;
+    bool localAuthFound = false;
+    const char *parentIdTag = nullptr; //locally stored parentIdTag
     bool offlineBlockedAuth = false; //if offline authorization will be blocked by local auth list entry
 
     //check local OCPP whitelist
-    if (model.getAuthorizationService()) {
-        localAuth = model.getAuthorizationService()->getLocalAuthorization(idTag);
+    #if MO_ENABLE_LOCAL_AUTH
+    if (auto authService = model.getAuthorizationService()) {
+        auto localAuth = authService->getLocalAuthorization(idTag);
 
         //check authorization status
         if (localAuth && localAuth->getAuthorizationStatus() != AuthorizationStatus::Accepted) {
@@ -611,21 +613,26 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             offlineBlockedAuth = true;
             localAuth = nullptr;
         }
+
+        if (localAuth) {
+            localAuthFound = true;
+            parentIdTag = localAuth->getParentIdTag();
+        }
     }
+    #endif //MO_ENABLE_LOCAL_AUTH
 
     int reservationId = -1;
     bool offlineBlockedResv = false; //if offline authorization will be blocked by reservation
 
-    #if MO_ENABLE_V16_RESERVATION
     //check if blocked by reservation
+    #if MO_ENABLE_V16_RESERVATION
     if (model.getReservationService()) {
-        const char *parentIdTag = localAuth ? localAuth->getParentIdTag() : nullptr;
 
         auto reservation = model.getReservationService()->getReservation(
                 connectorId,
                 idTag,
                 parentIdTag);
-        
+
         if (reservation) {
             reservationId = reservation->getReservationId();
         }
@@ -645,12 +652,14 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             } else {
                 //parentIdTag unkown but local authorization failed in any case
                 MO_DBG_INFO("connector %u reserved - no local auth", connectorId);
-                localAuth = nullptr;
+                localAuthFound = false;
             }
         }
     }
+    #else
+    (void)parentIdTag;
     #endif //MO_ENABLE_V16_RESERVATION
-    
+
     transaction = allocateTransaction();
 
     if (!transaction) {
@@ -668,7 +677,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
     transaction->setBeginTimestamp(model.getClock().now());
 
     //check for local preauthorization
-    if (localAuth && localPreAuthorizeBool && localPreAuthorizeBool->getBool()) {
+    if (localAuthFound && localPreAuthorizeBool && localPreAuthorizeBool->getBool()) {
         MO_DBG_DEBUG("Begin transaction process (%s), preauthorized locally", idTag != nullptr ? idTag : "");
 
         if (reservationId >= 0) {
@@ -735,7 +744,6 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
     });
 
     //capture local auth and reservation check in for timeout handler
-    bool localAuthFound = localAuth;
     authorize->setOnTimeoutListener([this, tx,
                 offlineBlockedAuth, 
                 offlineBlockedResv, 

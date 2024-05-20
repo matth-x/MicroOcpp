@@ -164,6 +164,7 @@ void Model::setHeartbeatService(std::unique_ptr<HeartbeatService> hs) {
     capabilitiesUpdated = true;
 }
 
+#if MO_ENABLE_LOCAL_AUTH
 void Model::setAuthorizationService(std::unique_ptr<AuthorizationService> as) {
     authorizationService = std::move(as);
     capabilitiesUpdated = true;
@@ -172,6 +173,7 @@ void Model::setAuthorizationService(std::unique_ptr<AuthorizationService> as) {
 AuthorizationService *Model::getAuthorizationService() {
     return authorizationService.get();
 }
+#endif //MO_ENABLE_LOCAL_AUTH
 
 #if MO_ENABLE_V16_RESERVATION
 void Model::setReservationService(std::unique_ptr<ReservationService> rs) {
@@ -283,12 +285,14 @@ void Model::updateSupportedStandardProfiles() {
         }
     }
 
+#if MO_ENABLE_LOCAL_AUTH
     if (authorizationService) {
         if (!strstr(supportedFeatureProfilesString->getString(), "LocalAuthListManagement")) {
             if (!buf.empty()) buf += ',';
             buf += "LocalAuthListManagement";
         }
     }
+#endif //MO_ENABLE_LOCAL_AUTH
 
 #if MO_ENABLE_V16_RESERVATION
     if (reservationService) {
