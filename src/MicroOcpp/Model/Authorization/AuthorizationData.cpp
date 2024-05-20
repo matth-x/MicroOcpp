@@ -2,6 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
+
 #include <MicroOcpp/Model/Authorization/AuthorizationData.h>
 
 using namespace MicroOcpp;
@@ -152,3 +156,5 @@ MicroOcpp::AuthorizationStatus MicroOcpp::deserializeAuthorizationStatus(const c
         return AuthorizationStatus::UNDEFINED;
     }
 }
+
+#endif //MO_ENABLE_LOCAL_AUTH

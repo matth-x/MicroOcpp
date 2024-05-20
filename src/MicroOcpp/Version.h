@@ -44,4 +44,9 @@ struct ProtocolVersion {
 #define MO_ENABLE_V16_RESERVATION 1
 #endif
 
+// Local Authorization, i.e. feature profile LocalAuthListManagement
+#ifndef MO_ENABLE_LOCAL_AUTH
+#define MO_ENABLE_LOCAL_AUTH 1
+#endif
+
 #endif

@@ -10,6 +10,7 @@
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
 #include <MicroOcpp/Debug.h>
+#include <MicroOcpp/Version.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 
@@ -178,6 +179,7 @@ TEST_CASE( "Configuration Behavior" ) {
         loopback.setOnline(true);
     }
 
+#if MO_ENABLE_LOCAL_AUTH
     SECTION("LocalPreAuthorize") {
         auto configBool = declareConfiguration<bool>("LocalPreAuthorize", true);
         auto authorizationTimeoutInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20);
@@ -220,6 +222,7 @@ TEST_CASE( "Configuration Behavior" ) {
         endTransaction();
         loopback.setOnline(true);
     }
+#endif //MO_ENABLE_LOCAL_AUTH
 
     mocpp_deinitialize();
 }

@@ -20,9 +20,12 @@ class MeteringService;
 class FirmwareService;
 class DiagnosticsService;
 class HeartbeatService;
-class AuthorizationService;
 class BootService;
 class ResetService;
+
+#if MO_ENABLE_LOCAL_AUTH
+class AuthorizationService;
+#endif //MO_ENABLE_LOCAL_AUTH
 
 #if MO_ENABLE_V16_RESERVATION
 class ReservationService;
@@ -51,9 +54,12 @@ private:
     std::unique_ptr<FirmwareService> firmwareService;
     std::unique_ptr<DiagnosticsService> diagnosticsService;
     std::unique_ptr<HeartbeatService> heartbeatService;
-    std::unique_ptr<AuthorizationService> authorizationService;
     std::unique_ptr<BootService> bootService;
     std::unique_ptr<ResetService> resetService;
+
+#if MO_ENABLE_LOCAL_AUTH
+    std::unique_ptr<AuthorizationService> authorizationService;
+#endif //MO_ENABLE_LOCAL_AUTH
 
 #if MO_ENABLE_V16_RESERVATION
     std::unique_ptr<ReservationService> reservationService;
@@ -113,8 +119,10 @@ public:
 
     void setHeartbeatService(std::unique_ptr<HeartbeatService> heartbeatService);
 
+#if MO_ENABLE_LOCAL_AUTH
     void setAuthorizationService(std::unique_ptr<AuthorizationService> authorizationService);
     AuthorizationService *getAuthorizationService();
+#endif //MO_ENABLE_LOCAL_AUTH
 
 #if MO_ENABLE_V16_RESERVATION
     void setReservationService(std::unique_ptr<ReservationService> reservationService);

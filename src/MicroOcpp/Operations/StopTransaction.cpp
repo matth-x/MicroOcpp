@@ -11,6 +11,7 @@
 #include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Debug.h>
+#include <MicroOcpp/Version.h>
 
 using MicroOcpp::Ocpp16::StopTransaction;
 
@@ -202,9 +203,11 @@ void StopTransaction::processConf(JsonObject payload) {
 
     MO_DBG_INFO("Request has been accepted!");
 
+#if MO_ENABLE_LOCAL_AUTH
     if (auto authService = model.getAuthorizationService()) {
         authService->notifyAuthorization(transaction->getIdTag(), payload["idTagInfo"]);
     }
+#endif //MO_ENABLE_LOCAL_AUTH
 }
 
 bool StopTransaction::processErr(const char *code, const char *description, JsonObject details) {

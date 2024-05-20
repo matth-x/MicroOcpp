@@ -2,6 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
+
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
 #include <MicroOcpp/Model/ConnectorBase/Connector.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
@@ -192,3 +196,5 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
         context.initiateRequest(std::move(statusNotification));
     }
 }
+
+#endif //MO_ENABLE_LOCAL_AUTH

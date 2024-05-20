@@ -2,6 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
+
 #include <MicroOcpp/Model/Authorization/AuthorizationList.h>
 #include <MicroOcpp/Debug.h>
 
@@ -194,3 +198,5 @@ void AuthorizationList::writeJson(JsonArray authListOut, bool compact) {
 size_t AuthorizationList::size() {
     return localAuthorizationList.size();
 }
+
+#endif //MO_ENABLE_LOCAL_AUTH

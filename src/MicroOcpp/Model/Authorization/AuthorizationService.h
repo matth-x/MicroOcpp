@@ -5,6 +5,10 @@
 #ifndef MO_AUTHORIZATIONSERVICE_H
 #define MO_AUTHORIZATIONSERVICE_H
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
+
 #include <MicroOcpp/Model/Authorization/AuthorizationList.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/Configuration.h>
@@ -39,4 +43,5 @@ public:
 
 }
 
+#endif //MO_ENABLE_LOCAL_AUTH
 #endif

@@ -5,6 +5,10 @@
 #ifndef MO_AUTHORIZATIONLIST_H
 #define MO_AUTHORIZATIONLIST_H
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
+
 #include <MicroOcpp/Model/Authorization/AuthorizationData.h>
 #include <vector>
 
@@ -41,4 +45,5 @@ public:
 
 }
 
+#endif //MO_ENABLE_LOCAL_AUTH
 #endif

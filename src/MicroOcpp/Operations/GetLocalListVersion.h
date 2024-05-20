@@ -5,6 +5,10 @@
 #ifndef MO_GETLOCALLISTVERSION_H
 #define MO_GETLOCALLISTVERSION_H
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
+
 #include <MicroOcpp/Core/Operation.h>
 
 namespace MicroOcpp {
@@ -28,4 +32,6 @@ public:
 
 } //end namespace Ocpp16
 } //end namespace MicroOcpp
+
+#endif //MO_ENABLE_LOCAL_AUTH
 #endif
