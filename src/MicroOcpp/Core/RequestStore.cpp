@@ -153,7 +153,6 @@ void RequestStore::advanceOpNr(unsigned int oldOpNr) {
     if (oldOpNr != (unsigned int) opBeginInt->getInt()) {
         if ((oldOpNr + MO_MAX_OPNR - (unsigned int) opBeginInt->getInt()) % MO_MAX_OPNR < 100) {
             MO_DBG_ERR("synchronization failure - try to fix");
-            (void)0;
         } else {
             MO_DBG_ERR("synchronization failure");
             return;
@@ -187,7 +186,6 @@ void RequestStore::advanceOpNr(unsigned int oldOpNr) {
         bool success = filesystem->remove(fn);
         if (!success) {
             MO_DBG_ERR("error deleting %s", fn);
-            (void)0;
         }
     }
 

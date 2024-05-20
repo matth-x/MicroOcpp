@@ -411,7 +411,6 @@ void FtpTransferMbedTLS::send_cmd(const char *cmd, const char *arg, bool disable
         MO_DBG_DEBUG("SEND: %s %s", 
                 cmd,
                 !strncmp((char*) cmd, "PASS", strlen("PASS")) ? "***" : arg ? (char*) arg : "");
-        (void)0;
     }
 
     int ret = -1;
@@ -647,7 +646,6 @@ void FtpTransferMbedTLS::process_ctrl() {
             return;
         } else if (!strncmp("200", line, 3)) { //PBSZ -> 0 and PROT -> P accepted
             MO_DBG_INFO("PBSZ/PROT success: %s", line);
-            (void)0;
         } else if (!strncmp("221", line, 3)) { // Server Goodbye
             MO_DBG_DEBUG("closing ctrl connection");
             close_ctrl();

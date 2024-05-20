@@ -68,7 +68,6 @@ Connector::Connector(Context& context, int connectorId)
         transaction = model.getTransactionStore()->getLatestTransaction(connectorId);
     } else {
         MO_DBG_ERR("must initialize TxStore before Connector");
-        (void)0;
     }
 }
 
@@ -398,7 +397,6 @@ void Connector::loop() {
             
             if (!transaction) {
                 MO_DBG_ERR("could not begin FreeVend Tx");
-                (void)0;
             }
         }
 
@@ -574,7 +572,6 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
 
             if (tx) {
                 MO_DBG_DEBUG("created silent transaction");
-                (void)0;
             }
         }
     }

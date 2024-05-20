@@ -308,7 +308,6 @@ bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *
         }
     } else {
         MO_DBG_ERR("cannot set unique msgID counter");
-        (void)0;
         //skip this step but don't abort restore
     }
 
@@ -330,10 +329,8 @@ bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *
 
     if (success) {
         MO_DBG_DEBUG("restored opNr %i: %s", opStore->getOpNr(), operation->getOperationType());
-        (void)0;
     } else {
         MO_DBG_ERR("restore opNr %i error", opStore->getOpNr());
-        (void)0;
     }
 
     return success;

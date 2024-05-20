@@ -175,7 +175,6 @@ void SmartChargingConnector::loop(){
 void SmartChargingConnector::setSmartChargingOutput(std::function<void(float,float,int)> limitOutput) {
     if (this->limitOutput) {
         MO_DBG_WARN("replacing existing SmartChargingOutput");
-        (void)0;
     }
     this->limitOutput = limitOutput;
 }
@@ -532,7 +531,6 @@ void SmartChargingService::setSmartChargingOutput(unsigned int connectorId, std:
     if (connectorId == 0) {
         if (this->limitOutput) {
             MO_DBG_WARN("replacing existing SmartChargingOutput");
-            (void)0;
         }
         this->limitOutput = limitOutput;
     } else {

@@ -40,7 +40,6 @@ BootService::BootService(Context& context, std::shared_ptr<FilesystemAdapter> fi
     
     if (!preBootTransactionsBool) {
         MO_DBG_ERR("initialization error");
-        (void)0;
     }
 
     //Register message handler for TriggerMessage operation

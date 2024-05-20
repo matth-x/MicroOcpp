@@ -124,7 +124,7 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
             transaction->setStopTimestamp(transaction->getStartTimestamp() + 1); //1s behind startTime to keep order in backend DB
         } else {
             MO_DBG_ERR("failed to determine StopTx timestamp");
-            (void)0; //send invalid value
+            //send invalid value
         }
     }
 

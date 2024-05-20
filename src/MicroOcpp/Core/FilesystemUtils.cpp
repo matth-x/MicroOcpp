@@ -134,7 +134,6 @@ bool FilesystemUtils::remove_if(std::shared_ptr<FilesystemAdapter> filesystem, s
 
     if (ret != 0) {
         MO_DBG_ERR("ftw_root: %i", ret);
-        (void)0;
     }
 
     return ret == 0;

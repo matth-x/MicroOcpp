@@ -37,7 +37,6 @@ const char *cstrFromOcppEveState(ChargePointStatus state) {
 #endif
         default:
             MO_DBG_ERR("ChargePointStatus not specified");
-            (void)0;
             /* fall through */
         case (ChargePointStatus::NOT_SET):
             return "NOT_SET";
@@ -51,7 +50,6 @@ StatusNotification::StatusNotification(int connectorId, ChargePointStatus curren
     
     if (currentStatus != ChargePointStatus::NOT_SET) {
         MO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
-        (void)0;
     }
 }
 

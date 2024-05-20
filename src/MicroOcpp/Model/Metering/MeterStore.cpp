@@ -20,7 +20,6 @@ TransactionMeterData::TransactionMeterData(unsigned int connectorId, unsigned in
     
     if (!filesystem) {
         MO_DBG_DEBUG("volatile mode");
-        (void)0;
     }
 }
 
@@ -151,7 +150,6 @@ MeterStore::MeterStore(std::shared_ptr<FilesystemAdapter> filesystem) : filesyst
 
     if (!filesystem) {
         MO_DBG_DEBUG("volatile mode");
-        (void)0;
     }
 }
 
@@ -293,7 +291,6 @@ bool MeterStore::remove(unsigned int connectorId, unsigned int txNr) {
 
     if (success) {
         MO_DBG_DEBUG("Removed meter values for cId %u, txNr %u", connectorId, txNr);
-        (void)0;
     } else {
         MO_DBG_DEBUG("corrupted fs");
     }

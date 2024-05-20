@@ -42,7 +42,6 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
             entries.push_back(std::move(entry));
         } else {
             MO_DBG_ERR("Energy meter reading not convertible to JSON");
-            (void)0;
         }
     }
 

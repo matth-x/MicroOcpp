@@ -181,7 +181,6 @@ public:
                 }
             } else {
                 MO_DBG_ERR("OOM: %s", key);
-                (void)0;
             }
         }
 

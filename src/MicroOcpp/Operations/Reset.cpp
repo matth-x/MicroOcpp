@@ -27,7 +27,6 @@ void Reset::processReq(JsonObject payload) {
     if (auto rService = model.getResetService()) {
         if (!rService->getExecuteReset()) {
             MO_DBG_ERR("No reset handler set. Abort operation");
-            (void)0;
             //resetAccepted remains false
         } else {
             if (!rService->getPreReset() || rService->getPreReset()(isHard) || isHard) {
