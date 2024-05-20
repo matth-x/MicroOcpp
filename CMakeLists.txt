@@ -63,6 +63,7 @@ set(MO_SRC
     src/MicroOcpp/Operations/InstallCertificate.cpp
     src/MicroOcpp/Operations/UnlockConnector.cpp
     src/MicroOcpp/Operations/UpdateFirmware.cpp
+    src/MicroOcpp/Debug.cpp
     src/MicroOcpp/Platform.cpp
     src/MicroOcpp/Core/SimpleRequestFactory.cpp
     src/MicroOcpp/Core/OperationRegistry.cpp

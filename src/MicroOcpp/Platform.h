@@ -5,12 +5,6 @@
 #ifndef MO_PLATFORM_H
 #define MO_PLATFORM_H
 
-#ifdef __cplusplus
-#define EXT_C extern "C"
-#else
-#define EXT_C
-#endif
-
 #define MO_PLATFORM_NONE    0
 #define MO_PLATFORM_ARDUINO 1
 #define MO_PLATFORM_ESPIDF  2
