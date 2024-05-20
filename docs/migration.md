@@ -15,11 +15,11 @@ If upgrading MicroOcppMongoose at the same time, then the following changes are 
 
 If accessing the MicroOcpp modules directly (i.e. not over `MicroOcpp.h` or `MicroOcpp_c.h`) then there are likely some more modifications to be done. See the history of pull requests where each change to the code is documented. However, if the existing integration compiles under the new MO version, then there shouldn't be too many unexpected incompatibilities.
 
-# Migrating to v1.0
+## Migrating to v1.0
 
 The API has been continously improved to best suit the common use cases for MicroOcpp. Moreover, the project has been given a new name to prevent confusion with the relation to the Arduino platform and to reflect the project goals properly. With the new project name, the API has been frozen for the v1.0 release.
 
-## Adopting the new project name in existing projects
+### Adopting the new project name in existing projects
 
 Find and replace the keywords in the following.
 
@@ -47,7 +47,7 @@ If using the C-facade, change this as the final step:
 
 - `ao_` to `ocpp_`
 
-## Further API changes to consider
+### Further API changes to consider
 
 In addition to the new project name, the API has also been reworked for more consistency. After renaming the existing project as described above, also take a look at the [changelogs](https://github.com/matth-x/MicroOcpp/blob/1.0.x/CHANGELOG.md) (see Section Changed for v1.0.0).
 
