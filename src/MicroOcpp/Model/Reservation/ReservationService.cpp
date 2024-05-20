@@ -4,7 +4,7 @@
 
 #include <MicroOcpp/Version.h>
 
-#if MO_ENABLE_V16_RESERVATION
+#if MO_ENABLE_RESERVATION
 
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Core/Context.h>
@@ -215,4 +215,4 @@ bool ReservationService::updateReservation(int reservationId, unsigned int conne
     return false;
 }
 
-#endif //MO_ENABLE_V16_RESERVATION
+#endif //MO_ENABLE_RESERVATION

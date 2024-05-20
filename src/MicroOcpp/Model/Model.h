@@ -27,9 +27,9 @@ class ResetService;
 class AuthorizationService;
 #endif //MO_ENABLE_LOCAL_AUTH
 
-#if MO_ENABLE_V16_RESERVATION
+#if MO_ENABLE_RESERVATION
 class ReservationService;
-#endif //MO_ENABLE_V16_RESERVATION
+#endif //MO_ENABLE_RESERVATION
 
 #if MO_ENABLE_CERT_MGMT
 class CertificateService;
@@ -61,9 +61,9 @@ private:
     std::unique_ptr<AuthorizationService> authorizationService;
 #endif //MO_ENABLE_LOCAL_AUTH
 
-#if MO_ENABLE_V16_RESERVATION
+#if MO_ENABLE_RESERVATION
     std::unique_ptr<ReservationService> reservationService;
-#endif //MO_ENABLE_V16_RESERVATION
+#endif //MO_ENABLE_RESERVATION
 
 #if MO_ENABLE_CERT_MGMT
     std::unique_ptr<CertificateService> certService;
@@ -124,10 +124,10 @@ public:
     AuthorizationService *getAuthorizationService();
 #endif //MO_ENABLE_LOCAL_AUTH
 
-#if MO_ENABLE_V16_RESERVATION
+#if MO_ENABLE_RESERVATION
     void setReservationService(std::unique_ptr<ReservationService> reservationService);
     ReservationService *getReservationService();
-#endif //MO_ENABLE_V16_RESERVATION
+#endif //MO_ENABLE_RESERVATION
 
     void setBootService(std::unique_ptr<BootService> bs);
     BootService *getBootService() const;

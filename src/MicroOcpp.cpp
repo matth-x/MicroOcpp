@@ -293,7 +293,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new AuthorizationService(*context, filesystem)));
 #endif //MO_ENABLE_LOCAL_AUTH
 
-#if MO_ENABLE_V16_RESERVATION
+#if MO_ENABLE_RESERVATION
     model.setReservationService(std::unique_ptr<ReservationService>(
         new ReservationService(*context, MO_NUMCONNECTORS)));
 #endif

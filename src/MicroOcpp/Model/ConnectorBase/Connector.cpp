@@ -112,7 +112,7 @@ ChargePointStatus Connector::getStatus() {
             res = ChargePointStatus::Charging;
         }
     }
-    #if MO_ENABLE_V16_RESERVATION
+    #if MO_ENABLE_RESERVATION
     else if (model.getReservationService() && model.getReservationService()->getReservation(connectorId)) {
         res = ChargePointStatus::Reserved;
     }
@@ -622,7 +622,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
     bool offlineBlockedResv = false; //if offline authorization will be blocked by reservation
 
     //check if blocked by reservation
-    #if MO_ENABLE_V16_RESERVATION
+    #if MO_ENABLE_RESERVATION
     if (model.getReservationService()) {
 
         auto reservation = model.getReservationService()->getReservation(
@@ -655,7 +655,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
     }
     #else
     (void)parentIdTag;
-    #endif //MO_ENABLE_V16_RESERVATION
+    #endif //MO_ENABLE_RESERVATION
 
     transaction = allocateTransaction();
 
@@ -708,7 +708,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             return;
         }
 
-        #if MO_ENABLE_V16_RESERVATION
+        #if MO_ENABLE_RESERVATION
         if (model.getReservationService()) {
             auto reservation = model.getReservationService()->getReservation(
                         connectorId,
@@ -731,7 +731,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
                 }
             }
         }
-        #endif //MO_ENABLE_V16_RESERVATION
+        #endif //MO_ENABLE_RESERVATION
 
         MO_DBG_DEBUG("Authorized transaction process (%s)", tx->getIdTag());
         tx->setAuthorized();
@@ -826,7 +826,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
 
     transaction->setAuthorized();
 
-    #if MO_ENABLE_V16_RESERVATION
+    #if MO_ENABLE_RESERVATION
     if (model.getReservationService()) {
         if (auto reservation = model.getReservationService()->getReservation(connectorId, idTag, parentIdTag)) {
             if (reservation->matches(idTag, parentIdTag)) {
@@ -834,7 +834,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
             }
         }
     }
-    #endif //MO_ENABLE_V16_RESERVATION
+    #endif //MO_ENABLE_RESERVATION
 
     transaction->commit();
 

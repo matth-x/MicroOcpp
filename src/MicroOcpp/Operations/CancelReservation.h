@@ -7,7 +7,7 @@
 
 #include <MicroOcpp/Version.h>
 
-#if MO_ENABLE_V16_RESERVATION
+#if MO_ENABLE_RESERVATION
 
 #include <MicroOcpp/Core/Operation.h>
 
@@ -37,5 +37,5 @@ public:
 } //end namespace Ocpp16
 } //end namespace MicroOcpp
 
-#endif //MO_ENABLE_V16_RESERVATION
+#endif //MO_ENABLE_RESERVATION
 #endif
