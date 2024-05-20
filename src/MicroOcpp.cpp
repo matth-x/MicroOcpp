@@ -583,8 +583,8 @@ void setEnergyMeterInput(std::function<int()> energyInput, unsigned int connecto
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Energy.Active.Import.Register");
     meterProperties.setUnit("Wh");
-    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<int, SampledValueDeSerializer<int>>>(
-                           new SampledValueSamplerConcrete<int, SampledValueDeSerializer<int>>(
+    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>>(
+                           new SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>(
             meterProperties,
             [energyInput] (ReadingContext) {return energyInput();}
     ));

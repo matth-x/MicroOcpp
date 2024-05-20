@@ -27,7 +27,7 @@
 #include <stdio.h>
 
 #ifndef MO_CUSTOM_CONSOLE_MAXMSGSIZE
-#define MO_CUSTOM_CONSOLE_MAXMSGSIZE 192
+#define MO_CUSTOM_CONSOLE_MAXMSGSIZE 256
 #endif
 
 #ifdef __cplusplus
