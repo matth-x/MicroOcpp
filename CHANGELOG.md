@@ -15,7 +15,7 @@
 - File index ([#270](https://github.com/matth-x/MicroOcpp/pull/270))
 - Config `Cst_TxStartOnPowerPathClosed` to put back TxStartPoint ([#271](https://github.com/matth-x/MicroOcpp/pull/271))
 - Build flag `MO_ENABLE_V16_RESERVATION=0` disables Reservation module ([#302](https://github.com/matth-x/MicroOcpp/pull/302))
-- Build flag `MO_ENABLE_LOCAL_AUTH=0` disables LocalAuthList module
+- Build flag `MO_ENABLE_LOCAL_AUTH=0` disables LocalAuthList module ([#303](https://github.com/matth-x/MicroOcpp/pull/303))
 - Function `bool isConnected()` in `Connection` interface ([#282](https://github.com/matth-x/MicroOcpp/pull/282))
 - Build flags for customizing memory limits of SmartCharging ([#260](https://github.com/matth-x/MicroOcpp/pull/260))
 - SConscript ([#287](https://github.com/matth-x/MicroOcpp/pull/287))
