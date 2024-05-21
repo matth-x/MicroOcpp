@@ -85,6 +85,9 @@ std::unique_ptr<DynamicJsonDocument> TransactionEvent::createReq() {
 
     const char *triggerReason = "";
     switch(txEvent->triggerReason) {
+        case TransactionEventTriggerReason::UNDEFINED:
+            MO_DBG_ERR("internal error");
+            break;
         case TransactionEventTriggerReason::Authorized:
             triggerReason = "Authorized";
             break;
@@ -175,6 +178,9 @@ std::unique_ptr<DynamicJsonDocument> TransactionEvent::createReq() {
 
     const char *chargingState = nullptr;
     switch (txEvent->chargingState) {
+        case TransactionEventData::ChargingState::UNDEFINED:
+            // optional, okay
+            break;
         case TransactionEventData::ChargingState::Charging:
             chargingState = "Charging";
             break;
@@ -197,6 +203,12 @@ std::unique_ptr<DynamicJsonDocument> TransactionEvent::createReq() {
 
     const char *stoppedReason = nullptr;
     switch (txEvent->transaction->stopReason) {
+        case Transaction::StopReason::UNDEFINED:
+            // optional, okay
+            break;
+        case Transaction::StopReason::Local: 
+            // omit reason Local
+            break;
         case Transaction::StopReason::DeAuthorized: 
             stoppedReason = "DeAuthorized"; 
             break;

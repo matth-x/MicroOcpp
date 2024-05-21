@@ -162,7 +162,7 @@ void mo_mbedtls_log(void *user, int level, const char *file, int line, const cha
  */
 
 FtpTransferMbedTLS::FtpTransferMbedTLS(bool tls_only, const char *client_cert, const char *client_key) 
-        : isSecure(tls_only), client_cert(client_cert), client_key(client_key) {
+        : client_cert(client_cert), client_key(client_key), isSecure(tls_only) {
     mbedtls_net_init(&ctrl_fd);
     mbedtls_ssl_init(&ctrl_ssl);
     mbedtls_net_init(&data_fd);
@@ -369,7 +369,8 @@ void FtpTransferMbedTLS::close_data() {
 
 int FtpTransferMbedTLS::handshake_tls() {
 
-    while (auto ret = mbedtls_ssl_handshake(&ctrl_ssl) != 0) {
+    int ret;
+    while ((ret = mbedtls_ssl_handshake(&ctrl_ssl)) != 0) {
         if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE && ret != 1) {
             char buf [1024];
             mbedtls_strerror(ret, (char *) buf, 1024);
@@ -381,7 +382,7 @@ int FtpTransferMbedTLS::handshake_tls() {
     if (ca_cert) {
         //certificate validation enabled
 
-        if (auto ret = mbedtls_ssl_get_verify_result(&ctrl_ssl) != 0) {
+        if ((ret = mbedtls_ssl_get_verify_result(&ctrl_ssl)) != 0) {
             char vrfy_buf[512];
             mbedtls_x509_crt_verify_info(vrfy_buf, sizeof(vrfy_buf), "   > ", ret);
             MO_DBG_ERR("mbedtls_ssl_get_verify_result: %i, %s", ret, vrfy_buf);
@@ -403,7 +404,7 @@ void FtpTransferMbedTLS::send_cmd(const char *cmd, const char *arg, bool disable
             cmd,               //cmd mandatory (e.g. "USER")
             arg ? " " : "",    //line spacing if arg is provided
             arg ? arg : "");   //arg optional (e.g. "anonymous")
-    if (len < 0 || len >= MSG_SIZE) {
+    if (len < 0 || (size_t)len >= MSG_SIZE) {
         MO_DBG_ERR("could not write cmd, send QUIT instead");
         len = sprintf((char*) msg, "QUIT\r\n");
     } else {
@@ -883,7 +884,7 @@ bool FtpTransferMbedTLS::read_url_data(const char *data_url_raw) {
 }
 
 FtpClientMbedTLS::FtpClientMbedTLS(bool tls_only, const char *client_cert, const char *client_key)
-        : tls_only(tls_only), client_cert(client_cert), client_key(client_key) {
+        : client_cert(client_cert), client_key(client_key), tls_only(tls_only) {
 
 }
 

@@ -70,6 +70,9 @@ const char *IdToken::get() const {
 const char *IdToken::getTypeCstr() const {
     const char *res = nullptr;
     switch (type) {
+        case Type::UNDEFINED:
+            MO_DBG_ERR("internal error");
+            break;
         case Type::Central:
             res = "Central";
             break;
@@ -96,9 +99,6 @@ const char *IdToken::getTypeCstr() const {
             break;
     }
 
-    if (!res) {
-        MO_DBG_ERR("internal error");
-    }
     return res ? res : "";
 }
 
