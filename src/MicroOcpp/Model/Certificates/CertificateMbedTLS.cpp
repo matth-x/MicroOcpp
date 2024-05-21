@@ -178,7 +178,6 @@ private:
 
         if (!success) {
             MO_DBG_ERR("could not read cert: %s", fn);
-            (void)0;
         }
 
         delete[] buf;

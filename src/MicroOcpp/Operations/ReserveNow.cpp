@@ -4,7 +4,7 @@
 
 #include <MicroOcpp/Version.h>
 
-#if MO_ENABLE_V16_RESERVATION
+#if MO_ENABLE_RESERVATION
 
 #include <MicroOcpp/Operations/ReserveNow.h>
 #include <MicroOcpp/Model/Model.h>
@@ -128,4 +128,4 @@ std::unique_ptr<DynamicJsonDocument> ReserveNow::createConf(){
     return doc;
 }
 
-#endif //MO_ENABLE_V16_RESERVATION
+#endif //MO_ENABLE_RESERVATION

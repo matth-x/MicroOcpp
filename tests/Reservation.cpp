@@ -2,6 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_RESERVATION
+
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include "./catch2/catch.hpp"
@@ -15,8 +19,6 @@
 #include <MicroOcpp/Core/FilesystemUtils.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
-
-#if MO_ENABLE_V16_RESERVATION
 
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"
@@ -511,4 +513,4 @@ TEST_CASE( "Reservation" ) {
     mocpp_deinitialize();
 }
 
-#endif //MO_ENABLE_V16_RESERVATION
+#endif //MO_ENABLE_RESERVATION

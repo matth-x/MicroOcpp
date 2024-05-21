@@ -190,7 +190,7 @@ Timestamp &Timestamp::operator+=(int secs) {
     }
 
     return *this;
-};
+}
 
 Timestamp &Timestamp::addMilliseconds(int val) {
 

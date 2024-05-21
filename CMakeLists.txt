@@ -106,19 +106,18 @@ set(MO_SRC
 if(ESP_PLATFORM)
 
     idf_component_register(SRCS ${MO_SRC}
-                        INCLUDE_DIRS "./src" "../ArduinoJson/src"
-                        PRIV_REQUIRES spiffs)
+        INCLUDE_DIRS "./src" "../ArduinoJson/src"
+        PRIV_REQUIRES spiffs
+    )
 
     target_compile_options(${COMPONENT_TARGET} PUBLIC
         -DMO_PLATFORM=MO_PLATFORM_ESPIDF
-        -DMO_CUSTOM_RESET
-        )
+    )
 
     return()
 endif()
 
-project(MicroOcpp
-        VERSION 0.2.0)
+project(MicroOcpp VERSION 1.1.0)
 
 add_library(MicroOcpp ${MO_SRC})
 
@@ -129,7 +128,6 @@ target_include_directories(MicroOcpp PUBLIC
 
 target_compile_definitions(MicroOcpp PUBLIC
     MO_PLATFORM=MO_PLATFORM_UNIX
-    MO_CUSTOM_RESET
 )
 
 # Unit tests
@@ -181,7 +179,6 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_PLATFORM=MO_PLATFORM_UNIX
     MO_NUMCONNECTORS=3
     MO_CUSTOM_TIMER
-    MO_CUSTOM_RESET
     MO_DBG_LEVEL=MO_DL_DEBUG
     MO_TRAFFIC_OUT
     MO_FILENAME_PREFIX="./mo_store/"

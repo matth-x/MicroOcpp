@@ -293,7 +293,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new AuthorizationService(*context, filesystem)));
 #endif //MO_ENABLE_LOCAL_AUTH
 
-#if MO_ENABLE_V16_RESERVATION
+#if MO_ENABLE_RESERVATION
     model.setReservationService(std::unique_ptr<ReservationService>(
         new ReservationService(*context, MO_NUMCONNECTORS)));
 #endif
@@ -583,8 +583,8 @@ void setEnergyMeterInput(std::function<int()> energyInput, unsigned int connecto
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Energy.Active.Import.Register");
     meterProperties.setUnit("Wh");
-    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<int, SampledValueDeSerializer<int>>>(
-                           new SampledValueSamplerConcrete<int, SampledValueDeSerializer<int>>(
+    auto mvs = std::unique_ptr<SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>>(
+                           new SampledValueSamplerConcrete<int32_t, SampledValueDeSerializer<int32_t>>(
             meterProperties,
             [energyInput] (ReadingContext) {return energyInput();}
     ));

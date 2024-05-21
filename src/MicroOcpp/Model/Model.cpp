@@ -70,10 +70,10 @@ void Model::loop() {
     if (firmwareService)
         firmwareService->loop();
 
-#if MO_ENABLE_V16_RESERVATION
+#if MO_ENABLE_RESERVATION
     if (reservationService)
         reservationService->loop();
-#endif //MO_ENABLE_V16_RESERVATION
+#endif //MO_ENABLE_RESERVATION
 
     if (resetService)
         resetService->loop();
@@ -175,7 +175,7 @@ AuthorizationService *Model::getAuthorizationService() {
 }
 #endif //MO_ENABLE_LOCAL_AUTH
 
-#if MO_ENABLE_V16_RESERVATION
+#if MO_ENABLE_RESERVATION
 void Model::setReservationService(std::unique_ptr<ReservationService> rs) {
     reservationService = std::move(rs);
     capabilitiesUpdated = true;
@@ -184,7 +184,7 @@ void Model::setReservationService(std::unique_ptr<ReservationService> rs) {
 ReservationService *Model::getReservationService() {
     return reservationService.get();
 }
-#endif //MO_ENABLE_V16_RESERVATION
+#endif //MO_ENABLE_RESERVATION
 
 void Model::setBootService(std::unique_ptr<BootService> bs){
     bootService = std::move(bs);
@@ -294,14 +294,14 @@ void Model::updateSupportedStandardProfiles() {
     }
 #endif //MO_ENABLE_LOCAL_AUTH
 
-#if MO_ENABLE_V16_RESERVATION
+#if MO_ENABLE_RESERVATION
     if (reservationService) {
         if (!strstr(supportedFeatureProfilesString->getString(), "Reservation")) {
             if (!buf.empty()) buf += ',';
             buf += "Reservation";
         }
     }
-#endif //MO_ENABLE_V16_RESERVATION
+#endif //MO_ENABLE_RESERVATION
 
     if (smartChargingService) {
         if (!strstr(supportedFeatureProfilesString->getString(), "SmartCharging")) {

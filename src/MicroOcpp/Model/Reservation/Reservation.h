@@ -7,7 +7,7 @@
 
 #include <MicroOcpp/Version.h>
 
-#if MO_ENABLE_V16_RESERVATION
+#if MO_ENABLE_RESERVATION
 
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/Time.h>
@@ -69,5 +69,5 @@ public:
 
 }
 
-#endif //MO_ENABLE_V16_RESERVATION
+#endif //MO_ENABLE_RESERVATION
 #endif

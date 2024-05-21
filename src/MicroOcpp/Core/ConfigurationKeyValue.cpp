@@ -243,7 +243,7 @@ std::unique_ptr<Configuration> makeConfiguration(TConfig type, const char *key) 
     }
     res->setKey(key);
     return res;
-};
+}
 
 bool deserializeTConfig(const char *serialized, TConfig& out) {
     if (!strcmp(serialized, "int")) {

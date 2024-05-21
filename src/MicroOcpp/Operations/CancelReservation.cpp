@@ -4,7 +4,7 @@
 
 #include <MicroOcpp/Version.h>
 
-#if MO_ENABLE_V16_RESERVATION
+#if MO_ENABLE_RESERVATION
 
 #include <MicroOcpp/Operations/CancelReservation.h>
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
@@ -43,4 +43,4 @@ std::unique_ptr<DynamicJsonDocument> CancelReservation::createConf(){
     return doc;
 }
 
-#endif //MO_ENABLE_V16_RESERVATION
+#endif //MO_ENABLE_RESERVATION
