@@ -36,17 +36,18 @@
     "export": {
         "include":
         [
-            "src/*",
+            "docs/*",
             "examples/*",
-            "platformio.ini",
+            "src/*",
+            "CHANGELOG.md",
+            "CMakeLists.txt",
             "library.json",
             "library.properties",
-            "README.md",
-            "CMakeLists.txt",
-            "docs/*",
             "LICENSE",
             "mkdocs.yml",
-            "CHANGELOG.md"
+            "platformio.ini",
+            "README.md",
+            "SConscript.py"
         ]
     },
 
