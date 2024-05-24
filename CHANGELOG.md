@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Provide ChargePointStatus in API
+
 ## [1.1.0] - 2024-05-21
 
 ### Changed
