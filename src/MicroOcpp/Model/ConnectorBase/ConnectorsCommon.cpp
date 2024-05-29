@@ -83,7 +83,7 @@ ConnectorsCommon::ConnectorsCommon(Context& context, unsigned int numConn, std::
     }
     // OCPP 1.6 + 2.0.1 compliant echo messages
     context.getOperationRegistry().registerOperation("StatusNotification", [&context] () {
-        return new Ocpp16::StatusNotification(-1, ChargePointStatus::NOT_SET, Timestamp());});
+        return new Ocpp16::StatusNotification(-1, ChargePointStatus_UNDEFINED, Timestamp());});
 }
 
 void ConnectorsCommon::loop() {

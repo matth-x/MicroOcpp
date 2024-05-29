@@ -117,7 +117,7 @@ if(ESP_PLATFORM)
     return()
 endif()
 
-project(MicroOcpp VERSION 1.1.0)
+project(MicroOcpp VERSION 1.2.0)
 
 add_library(MicroOcpp ${MO_SRC})
 

@@ -102,12 +102,12 @@ TEST_CASE( "LocalAuth" ) {
         //begin transaction and delay Authorize request - tx should start immediately
         loopback.setOnline(false); //Authorize delayed by short offline period
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         beginTransaction("mIdTag");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
         REQUIRE( checkTxAuthorized );
 
         loopback.setOnline(true);
@@ -118,18 +118,18 @@ TEST_CASE( "LocalAuth" ) {
         checkTxAuthorized = false;
         loopback.setOnline(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         beginTransaction("wrong idTag");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Preparing );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
         REQUIRE( !checkTxAuthorized );
 
         loopback.setOnline(true);
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
         REQUIRE( checkTxAuthorized );
 
         endTransaction();
@@ -158,7 +158,7 @@ TEST_CASE( "LocalAuth" ) {
         //make charger offline and begin tx - tx should begin after Authorize timeout
         loopback.setOnline(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         unsigned long t_before = mocpp_tick_ms();
 
@@ -166,13 +166,13 @@ TEST_CASE( "LocalAuth" ) {
         loop();
 
         REQUIRE( mocpp_tick_ms() - t_before < AUTH_TIMEOUT_MS ); //if this fails, increase AUTH_TIMEOUT_MS
-        REQUIRE( connector->getStatus() == ChargePointStatus::Preparing );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
         REQUIRE( !checkTxAuthorized );
 
         mtime += AUTH_TIMEOUT_MS - (mocpp_tick_ms() - t_before); //increment clock so that auth timeout is exceeded
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
         REQUIRE( checkTxAuthorized );
 
         loopback.setOnline(true);
@@ -188,20 +188,20 @@ TEST_CASE( "LocalAuth" ) {
         });
         loopback.setOnline(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         t_before = mocpp_tick_ms();
 
         beginTransaction("wrong idTag");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Preparing );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
         REQUIRE( !checkTxTimeout );
 
         mtime += AUTH_TIMEOUT_MS - (mocpp_tick_ms() - t_before); //increment clock so that auth timeout is exceeded
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
         REQUIRE( checkTxTimeout );
 
         loopback.setOnline(true);
@@ -225,20 +225,20 @@ TEST_CASE( "LocalAuth" ) {
         //make charger offline and begin tx - tx should begin after Authorize timeout
         loopback.setOnline(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         unsigned long t_before = mocpp_tick_ms();
 
         beginTransaction("unknownIdTag");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Preparing );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
         REQUIRE( !checkTxAuthorized );
 
         mtime += AUTH_TIMEOUT_MS - (mocpp_tick_ms() - t_before); //increment clock so that auth timeout is exceeded
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
         REQUIRE( checkTxAuthorized );
 
         loopback.setOnline(true);
@@ -263,14 +263,14 @@ TEST_CASE( "LocalAuth" ) {
         //disconnect WS and begin tx - charger should enter offline mode immediately
         loopback.setConnected(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         unsigned long t_before = mocpp_tick_ms();
 
         beginTransaction("unknownIdTag");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
         REQUIRE( checkTxAuthorized );
 
         loopback.setConnected(true);
@@ -298,17 +298,17 @@ TEST_CASE( "LocalAuth" ) {
         //begin transaction and delay Authorize request - cannot PreAuthorize because entry is expired
         loopback.setOnline(false); //Authorize delayed by short offline period
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         beginTransaction("mIdTagExpired");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Preparing );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
 
         loopback.setOnline(true);
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
 
         endTransaction();
         loop();
@@ -316,17 +316,17 @@ TEST_CASE( "LocalAuth" ) {
         //begin transaction and delay Authorize request - cannot PreAuthorize because entry is unauthorized
         loopback.setOnline(false); //Authorize delayed by short offline period
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         beginTransaction("mIdTagUnauthorized");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Preparing );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
 
         loopback.setOnline(true);
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
         endTransaction();
         loop();
     }
@@ -351,12 +351,12 @@ TEST_CASE( "LocalAuth" ) {
         //begin transaction and delay Authorize request - tx should start immediately
         loopback.setOnline(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         beginTransaction("mIdTagAccepted");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
 
         loopback.setOnline(true);
         endTransaction();
@@ -365,7 +365,7 @@ TEST_CASE( "LocalAuth" ) {
         //begin transaction, but idTag is expired - AllowOfflineTxForUnknownId must not apply
         loopback.setOnline(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         unsigned long t_before = mocpp_tick_ms();
 
@@ -373,12 +373,12 @@ TEST_CASE( "LocalAuth" ) {
         loop();
 
         REQUIRE( mocpp_tick_ms() - t_before < AUTH_TIMEOUT_MS ); //if this fails, increase AUTH_TIMEOUT_MS
-        REQUIRE( connector->getStatus() == ChargePointStatus::Preparing );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
 
         mtime += AUTH_TIMEOUT_MS - (mocpp_tick_ms() - t_before); //increment clock so that auth timeout is exceeded
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         loopback.setOnline(true);
         loop();
@@ -418,12 +418,12 @@ TEST_CASE( "LocalAuth" ) {
         //begin transaction and delay Authorize request - tx should start immediately
         loopback.setOnline(false); //Authorize delayed by short offline period
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         beginTransaction("mIdTag");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
         REQUIRE( checkTxAuthorized );
 
         //check TX notification
@@ -437,7 +437,7 @@ TEST_CASE( "LocalAuth" ) {
         loopback.setOnline(true);
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
         REQUIRE( checkTxRejected );
 
         loop();

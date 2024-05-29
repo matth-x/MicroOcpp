@@ -2,12 +2,13 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef ARDUINOOCPP_C_H
-#define ARDUINOOCPP_C_H
+#ifndef MO_MICROOCPP_C_H
+#define MO_MICROOCPP_C_H
 
 #include <stddef.h>
 
 #include <MicroOcpp/Core/ConfigurationOptions.h>
+#include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
 #include <MicroOcpp/Model/ConnectorBase/Notification.h>
 #include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
@@ -100,6 +101,9 @@ OCPP_Transaction *ocpp_getTransaction_m(unsigned int connectorId);
 
 bool ocpp_ocppPermitsCharge();
 bool ocpp_ocppPermitsCharge_m(unsigned int connectorId);
+
+ChargePointStatus ocpp_getChargePointStatus();
+ChargePointStatus ocpp_getChargePointStatus_m(unsigned int connectorId);
 
 /*
  * Define the Inputs and Outputs of this library.

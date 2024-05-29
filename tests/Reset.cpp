@@ -133,7 +133,7 @@ TEST_CASE( "Reset" ) {
         REQUIRE( !ocppPermitsCharge(1) );
         REQUIRE( ocppPermitsCharge(2) );
 
-        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus::Unavailable );
+        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus_Unavailable );
 
         context->getModel().getTransactionService()->getEvse(2)->endAuthorization("mIdToken");
         setConnectorPluggedInput([] () {return false;}, 2);
@@ -151,8 +151,8 @@ TEST_CASE( "Reset" ) {
         REQUIRE( checkExecuted[0] );
 
         // Technically, Reset failed at this point, because the program is still running. Check if connectors are Available agin
-        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus::Available );
-        REQUIRE( context->getModel().getConnector(2)->getStatus() == ChargePointStatus::Available );
+        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus_Available );
+        REQUIRE( context->getModel().getConnector(2)->getStatus() == ChargePointStatus_Available );
     }
 
     SECTION("Immediate full charger Reset") {
@@ -228,8 +228,8 @@ TEST_CASE( "Reset" ) {
         loop();
 
         // Technically, Reset failed at this point, because the program is still running. Check if connectors are Available agin
-        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus::Available );
-        REQUIRE( context->getModel().getConnector(2)->getStatus() == ChargePointStatus::Available );
+        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus_Available );
+        REQUIRE( context->getModel().getConnector(2)->getStatus() == ChargePointStatus_Available );
     }
 
     SECTION("Reject Reset") {
@@ -265,9 +265,9 @@ TEST_CASE( "Reset" ) {
         REQUIRE(checkProcessed);
         REQUIRE(checkNotified[2]);
 
-        REQUIRE( context->getModel().getConnector(0)->getStatus() == ChargePointStatus::Available );
-        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus::Available );
-        REQUIRE( context->getModel().getConnector(2)->getStatus() == ChargePointStatus::Available );
+        REQUIRE( context->getModel().getConnector(0)->getStatus() == ChargePointStatus_Available );
+        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus_Available );
+        REQUIRE( context->getModel().getConnector(2)->getStatus() == ChargePointStatus_Available );
     }
 
     SECTION("Reset single EVSE") {
@@ -298,14 +298,14 @@ TEST_CASE( "Reset" ) {
         REQUIRE(checkProcessed);
         REQUIRE(checkNotified[1]);
 
-        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus::Unavailable );
-        REQUIRE( context->getModel().getConnector(2)->getStatus() == ChargePointStatus::Available );
+        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus_Unavailable );
+        REQUIRE( context->getModel().getConnector(2)->getStatus() == ChargePointStatus_Available );
 
         mtime += 30000; // Reset has some delays to ensure that the WS is not cut off immediately
         loop();
 
         REQUIRE(checkExecuted[1]);
-        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus::Available );
+        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus_Available );
     }
 
     mocpp_deinitialize();

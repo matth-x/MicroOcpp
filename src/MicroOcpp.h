@@ -17,6 +17,7 @@
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Model/ConnectorBase/Notification.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
+#include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
 #include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
 #include <MicroOcpp/Version.h>
 #include <MicroOcpp/Model/Certificates/Certificate.h>
@@ -243,6 +244,11 @@ std::shared_ptr<MicroOcpp::Transaction>& getTransaction(unsigned int connectorId
  * and false means that the Control Pilot must be at a DC voltage.
  */
 bool ocppPermitsCharge(unsigned int connectorId = 1);
+
+/*
+ * Returns the latest ChargePointStatus as reported via StatusNotification (standard OCPP data type)
+ */
+ChargePointStatus getChargePointStatus(unsigned int connectorId = 1);
 
 /*
  * Define the Inputs and Outputs of this library.

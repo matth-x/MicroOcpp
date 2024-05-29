@@ -548,6 +548,19 @@ bool ocppPermitsCharge(unsigned int connectorId) {
     return connector->ocppPermitsCharge();
 }
 
+ChargePointStatus getChargePointStatus(unsigned int connectorId) {
+    if (!context) {
+        MO_DBG_WARN("OCPP uninitialized");
+        return ChargePointStatus_UNDEFINED;
+    }
+    auto connector = context->getModel().getConnector(connectorId);
+    if (!connector) {
+        MO_DBG_ERR("could not find connector");
+        return ChargePointStatus_UNDEFINED;
+    }
+    return connector->getStatus();
+}
+
 void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int connectorId) {
     if (!context) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before

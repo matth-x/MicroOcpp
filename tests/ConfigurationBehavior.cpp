@@ -85,7 +85,7 @@ TEST_CASE( "Configuration Behavior" ) {
             setConnectorPluggedInput([] () {return false;});
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
 
         SECTION("set false") {
@@ -94,12 +94,12 @@ TEST_CASE( "Configuration Behavior" ) {
             setConnectorPluggedInput([] () {return false;});
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::SuspendedEV);
+            REQUIRE(connector->getStatus() == ChargePointStatus_SuspendedEV);
 
             endTransaction();
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
     }
 
@@ -115,12 +115,12 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("mIdTag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
 
             beginTransaction_authorized("mIdTag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
 
         SECTION("set false") {
@@ -129,17 +129,17 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("mIdTag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
 
             beginTransaction_authorized("mIdTag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::SuspendedEVSE);
+            REQUIRE(connector->getStatus() == ChargePointStatus_SuspendedEVSE);
 
             endTransaction();
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
     }
 
@@ -156,23 +156,23 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("mIdTag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
 
             endTransaction();
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
 
         SECTION("set false") {
             configBool->setBool(false);
 
             beginTransaction("mIdTag");
-            REQUIRE(connector->getStatus() == ChargePointStatus::Preparing);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Preparing);
 
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
 
         endTransaction();
@@ -201,7 +201,7 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("local-idtag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
         }
 
         SECTION("set false") {
@@ -210,13 +210,13 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("local-idtag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Preparing);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Preparing);
 
             loopback.setOnline(true);
             mtime += 20000; //Authorize will be retried after a few seconds
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
         }
 
         endTransaction();

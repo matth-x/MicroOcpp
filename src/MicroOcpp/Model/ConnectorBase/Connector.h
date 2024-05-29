@@ -44,9 +44,9 @@ private:
     bool isFaulted();
     const char *getErrorCode();
 
-    ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
+    ChargePointStatus currentStatus = ChargePointStatus_UNDEFINED;
     std::shared_ptr<Configuration> minimumStatusDurationInt; //in seconds
-    ChargePointStatus reportedStatus = ChargePointStatus::NOT_SET;
+    ChargePointStatus reportedStatus = ChargePointStatus_UNDEFINED;
     unsigned long t_statusTransition = 0;
 
     std::function<UnlockConnectorResult()> onUnlockConnector;
