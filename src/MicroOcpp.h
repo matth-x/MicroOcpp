@@ -245,7 +245,10 @@ std::shared_ptr<MicroOcpp::Transaction>& getTransaction(unsigned int connectorId
  */
 bool ocppPermitsCharge(unsigned int connectorId = 1);
 
-MicroOcpp::ChargePointStatus getChargePointStatus(unsigned int connectorId = 1);
+/*
+ * Returns the latest ChargePointStatus as reported via StatusNotification (standard OCPP data type)
+ */
+ChargePointStatus getChargePointStatus(unsigned int connectorId = 1);
 
 /*
  * Define the Inputs and Outputs of this library.

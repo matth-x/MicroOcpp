@@ -2,9 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- Change `MicroOcpp::ChargePointStatus` into C-style enum ([#309](https://github.com/matth-x/MicroOcpp/pull/309))
+
 ### Added
 
-- Provide ChargePointStatus in API
+- Provide ChargePointStatus in API ([#309](https://github.com/matth-x/MicroOcpp/pull/309))
 
 ## [1.1.0] - 2024-05-21
 

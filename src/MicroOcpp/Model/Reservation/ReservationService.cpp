@@ -46,7 +46,7 @@ void ReservationService::loop() {
 
             //check if connector went inoperative
             auto cStatus = connector->getStatus();
-            if (cStatus == ChargePointStatus::Faulted || cStatus == ChargePointStatus::Unavailable) {
+            if (cStatus == ChargePointStatus_Faulted || cStatus == ChargePointStatus_Unavailable) {
                 reservation->clear();
                 continue;
             }
@@ -157,7 +157,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
             continue;
         }
         if (auto connector = context.getModel().getConnector(cId)) {
-            if (connector->getStatus() == ChargePointStatus::Available) {
+            if (connector->getStatus() == ChargePointStatus_Available) {
                 availableCount++;
             }
         }

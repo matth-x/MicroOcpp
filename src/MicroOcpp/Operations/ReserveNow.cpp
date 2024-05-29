@@ -87,19 +87,19 @@ void ReserveNow::processReq(JsonObject payload) {
             connector = model.getConnector((unsigned int) connectorId);
         }
 
-        if (chargePoint->getStatus() == ChargePointStatus::Faulted ||
-                (connector && connector->getStatus() == ChargePointStatus::Faulted)) {
+        if (chargePoint->getStatus() == ChargePointStatus_Faulted ||
+                (connector && connector->getStatus() == ChargePointStatus_Faulted)) {
             reservationStatus = "Faulted";
             return;
         }
 
-        if (chargePoint->getStatus() == ChargePointStatus::Unavailable ||
-                (connector && connector->getStatus() == ChargePointStatus::Unavailable)) {
+        if (chargePoint->getStatus() == ChargePointStatus_Unavailable ||
+                (connector && connector->getStatus() == ChargePointStatus_Unavailable)) {
             reservationStatus = "Unavailable";
             return;
         }
 
-        if (connector && connector->getStatus() != ChargePointStatus::Available) {
+        if (connector && connector->getStatus() != ChargePointStatus_Available) {
             reservationStatus = "Occupied";
             return;
         }

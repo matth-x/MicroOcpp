@@ -180,7 +180,7 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
     if (!equivalent) {
         //send error code "LocalListConflict" to server
 
-        ChargePointStatus cpStatus = ChargePointStatus::NOT_SET;
+        ChargePointStatus cpStatus = ChargePointStatus_UNDEFINED;
         if (context.getModel().getNumConnectors() > 0) {
             cpStatus = context.getModel().getConnector(0)->getStatus();
         }

@@ -13,33 +13,33 @@ namespace MicroOcpp {
 //helper function
 const char *cstrFromOcppEveState(ChargePointStatus state) {
     switch (state) {
-        case (ChargePointStatus::Available):
+        case (ChargePointStatus_Available):
             return "Available";
-        case (ChargePointStatus::Preparing):
+        case (ChargePointStatus_Preparing):
             return "Preparing";
-        case (ChargePointStatus::Charging):
+        case (ChargePointStatus_Charging):
             return "Charging";
-        case (ChargePointStatus::SuspendedEVSE):
+        case (ChargePointStatus_SuspendedEVSE):
             return "SuspendedEVSE";
-        case (ChargePointStatus::SuspendedEV):
+        case (ChargePointStatus_SuspendedEV):
             return "SuspendedEV";
-        case (ChargePointStatus::Finishing):
+        case (ChargePointStatus_Finishing):
             return "Finishing";
-        case (ChargePointStatus::Reserved):
+        case (ChargePointStatus_Reserved):
             return "Reserved";
-        case (ChargePointStatus::Unavailable):
+        case (ChargePointStatus_Unavailable):
             return "Unavailable";
-        case (ChargePointStatus::Faulted):
+        case (ChargePointStatus_Faulted):
             return "Faulted";
 #if MO_ENABLE_V201
-        case (ChargePointStatus::Occupied):
+        case (ChargePointStatus_Occupied):
             return "Occupied";
 #endif
         default:
             MO_DBG_ERR("ChargePointStatus not specified");
             /* fall through */
-        case (ChargePointStatus::NOT_SET):
-            return "NOT_SET";
+        case (ChargePointStatus_UNDEFINED):
+            return "UNDEFINED";
     }
 }
 
@@ -48,7 +48,7 @@ namespace Ocpp16 {
 StatusNotification::StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorData errorData)
         : connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
     
-    if (currentStatus != ChargePointStatus::NOT_SET) {
+    if (currentStatus != ChargePointStatus_UNDEFINED) {
         MO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
     }
 }
@@ -75,7 +75,7 @@ std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
         if (errorData.vendorErrorCode) {
             payload["vendorErrorCode"] = errorData.vendorErrorCode;
         }
-    } else if (currentStatus == ChargePointStatus::NOT_SET) {
+    } else if (currentStatus == ChargePointStatus_UNDEFINED) {
         MO_DBG_ERR("Reporting undefined status");
         payload["errorCode"] = "InternalError";
     } else {

@@ -40,7 +40,7 @@ TEST_CASE( "Charging sessions" ) {
     
     std::array<const char*, 2> expectedSN {"Available", "Available"};
     std::array<bool, 2> checkedSN {false, false};
-    checkMsg.registerOperation("StatusNotification", [] () -> Operation* {return new Ocpp16::StatusNotification(0, ChargePointStatus::NOT_SET, MIN_TIME);});
+    checkMsg.registerOperation("StatusNotification", [] () -> Operation* {return new Ocpp16::StatusNotification(0, ChargePointStatus_UNDEFINED, MIN_TIME);});
     checkMsg.setOnRequest("StatusNotification",
         [&checkedSN, &expectedSN] (JsonObject request) {
             int connectorId = request["connectorId"] | -1;
@@ -625,7 +625,7 @@ TEST_CASE( "Charging sessions" ) {
         loop();
 
         auto connector = getOcppContext()->getModel().getConnector(1);
-        REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+        REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
         REQUIRE(isOperative());
 
         bool checkProcessed = false;
@@ -650,7 +650,7 @@ TEST_CASE( "Charging sessions" ) {
         loop();
 
         REQUIRE(checkProcessed);
-        REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+        REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
         REQUIRE(isOperative());
 
         mocpp_deinitialize();
@@ -660,19 +660,19 @@ TEST_CASE( "Charging sessions" ) {
 
         loop();
 
-        REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+        REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
         REQUIRE(isOperative());
 
         endTransaction();
 
         loop();
 
-        REQUIRE(connector->getStatus() == ChargePointStatus::Unavailable);
+        REQUIRE(connector->getStatus() == ChargePointStatus_Unavailable);
         REQUIRE(!isOperative());
 
         connector->setAvailability(true);
 
-        REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+        REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         REQUIRE(isOperative());
     }
 

@@ -58,7 +58,7 @@ void ResetService::loop() {
                 connector->setAvailabilityVolatile(true);
             }
 
-            ChargePointStatus cpStatus = ChargePointStatus::NOT_SET;
+            ChargePointStatus cpStatus = ChargePointStatus_UNDEFINED;
             if (context.getModel().getNumConnectors() > 0) {
                 cpStatus = context.getModel().getConnector(0)->getStatus();
             }

@@ -548,15 +548,15 @@ bool ocppPermitsCharge(unsigned int connectorId) {
     return connector->ocppPermitsCharge();
 }
 
-MicroOcpp::ChargePointStatus getChargePointStatus(unsigned int connectorId) {
+ChargePointStatus getChargePointStatus(unsigned int connectorId) {
     if (!context) {
         MO_DBG_WARN("OCPP uninitialized");
-        return MicroOcpp::ChargePointStatus::NOT_SET;
+        return ChargePointStatus_UNDEFINED;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
-        return MicroOcpp::ChargePointStatus::NOT_SET;
+        return ChargePointStatus_UNDEFINED;
     }
     return connector->getStatus();
 }
