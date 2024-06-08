@@ -38,12 +38,17 @@ Connector::Connector(Context& context, int connectorId)
 
     snprintf(availabilityBoolKey, sizeof(availabilityBoolKey), MO_CONFIG_EXT_PREFIX "AVAIL_CONN_%d", connectorId);
     availabilityBool = declareConfiguration<bool>(availabilityBoolKey, true, MO_KEYVALUE_FN, false, false, false);
-    
+
+#if MO_ENABLE_CONNECTOR_LOCK
+    declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", true); //read-write
+#else
+    declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", false, CONFIGURATION_VOLATILE, true); //read-only because there is no connector lock
+#endif //MO_ENABLE_CONNECTOR_LOCK
+
     connectionTimeOutInt = declareConfiguration<int>("ConnectionTimeOut", 30);
     minimumStatusDurationInt = declareConfiguration<int>("MinimumStatusDuration", 0);
     stopTransactionOnInvalidIdBool = declareConfiguration<bool>("StopTransactionOnInvalidId", true);
     stopTransactionOnEVSideDisconnectBool = declareConfiguration<bool>("StopTransactionOnEVSideDisconnect", true);
-    declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", true, CONFIGURATION_VOLATILE, true);
     localPreAuthorizeBool = declareConfiguration<bool>("LocalPreAuthorize", false);
     localAuthorizeOfflineBool = declareConfiguration<bool>("LocalAuthorizeOffline", true);
     allowOfflineTxForUnknownIdBool = MicroOcpp::declareConfiguration<bool>("AllowOfflineTxForUnknownId", false);
@@ -945,6 +950,7 @@ void Connector::addErrorDataInput(std::function<ErrorData ()> errorDataInput) {
     this->trackErrorDataInputs.push_back(false);
 }
 
+#if MO_ENABLE_CONNECTOR_LOCK
 void Connector::setOnUnlockConnector(std::function<UnlockConnectorResult()> unlockConnector) {
     this->onUnlockConnector = unlockConnector;
 }
@@ -952,6 +958,7 @@ void Connector::setOnUnlockConnector(std::function<UnlockConnectorResult()> unlo
 std::function<UnlockConnectorResult()> Connector::getOnUnlockConnector() {
     return this->onUnlockConnector;
 }
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
 void Connector::setStartTxReadyInput(std::function<bool()> startTxReady) {
     this->startTxReadyInput = startTxReady;

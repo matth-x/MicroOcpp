@@ -7,6 +7,13 @@
 
 #include <stdint.h>
 
+// Connector-lock related behavior (i.e. if UnlockConnectorOnEVSideDisconnect is RW; enable HW binding for UnlockConnector)
+#ifndef MO_ENABLE_CONNECTOR_LOCK
+#define MO_ENABLE_CONNECTOR_LOCK 1
+#endif
+
+#if MO_ENABLE_CONNECTOR_LOCK
+
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -25,4 +32,5 @@ typedef enum {
 }
 #endif // __cplusplus
 
+#endif // MO_ENABLE_CONNECTOR_LOCK
 #endif // MO_UNLOCKCONNECTORRESULT_H

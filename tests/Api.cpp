@@ -62,7 +62,10 @@ TEST_CASE( "C++ API test" ) {
         setStartTxReadyInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return true;});
         setStopTxReadyInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return true;});
         setTxNotificationOutput([c = &checkpoints[ncheck++]] (MicroOcpp::Transaction*, MicroOcpp::TxNotification) {*c = true;});
+
+#if MO_ENABLE_CONNECTOR_LOCK
         setOnUnlockConnectorInOut([c = &checkpoints[ncheck++]] () -> UnlockConnectorResult {*c = true; return UnlockConnectorResult_Unlocked;});
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
         setOnResetNotify([c = &checkpoints[ncheck++]] (bool) -> bool {*c = true; return true;});
         setOnResetExecute([c = &checkpoints[ncheck++]] (bool) {*c = true;});
@@ -248,8 +251,14 @@ TEST_CASE( "C API test" ) {
         ocpp_setStopTxReadyInput_m(2, [] (unsigned int) -> bool {checkpointsc[23] = true; return true;}); ncheckc++;
         ocpp_setTxNotificationOutput([] (OCPP_Transaction*, OCPP_TxNotification) {checkpointsc[24] = true;}); ncheckc++;
         ocpp_setTxNotificationOutput_m(2, [] (unsigned int, OCPP_Transaction*, OCPP_TxNotification) {checkpointsc[25] = true;}); ncheckc++;
+
+#if MO_ENABLE_CONNECTOR_LOCK
         ocpp_setOnUnlockConnectorInOut([] () -> UnlockConnectorResult {checkpointsc[26] = true; return UnlockConnectorResult_Unlocked;}); ncheckc++;
         ocpp_setOnUnlockConnectorInOut_m(2, [] (unsigned int) -> UnlockConnectorResult {checkpointsc[27] = true; return UnlockConnectorResult_Unlocked;}); ncheckc++;
+#else
+        checkpointsc[26] = true;
+        checkpointsc[27] = true;
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
         ocpp_setOnResetNotify([] (bool) -> bool {checkpointsc[28] = true; return true;}); ncheckc++;
         ocpp_setOnResetExecute([] (bool) {checkpointsc[29] = true;}); ncheckc++;

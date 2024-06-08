@@ -27,41 +27,53 @@ void UnlockConnector::processReq(JsonObject payload) {
         return;
     }
 
-    unlockConnector = connector->getOnUnlockConnector();
+#if MO_ENABLE_CONNECTOR_LOCK
+    {
+        unlockConnector = connector->getOnUnlockConnector();
 
-    if (!unlockConnector) {
-        // NotSupported
-        return;
+        if (!unlockConnector) {
+            // NotSupported
+            return;
+        }
+
+        connector->endTransaction(nullptr, "UnlockCommand");
+        connector->updateTxNotification(TxNotification::RemoteStop);
+
+        cbUnlockResult = unlockConnector();
+
+        timerStart = mocpp_tick_ms();
     }
-
-    connector->endTransaction(nullptr, "UnlockCommand");
-    connector->updateTxNotification(TxNotification::RemoteStop);
-
-    cbUnlockResult = unlockConnector();
-
-    timerStart = mocpp_tick_ms();
+#endif //MO_ENABLE_CONNECTOR_LOCK
 }
 
 std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf() {
-    if (unlockConnector && mocpp_tick_ms() - timerStart < MO_UNLOCK_TIMEOUT) {
-        //do poll and if more time is needed, delay creation of conf msg
 
-        if (cbUnlockResult == UnlockConnectorResult_Pending) {
-            cbUnlockResult = unlockConnector();
+    const char *status = "NotSupported";
+
+#if MO_ENABLE_CONNECTOR_LOCK
+    if (unlockConnector) {
+
+        if (mocpp_tick_ms() - timerStart < MO_UNLOCK_TIMEOUT) {
+            //do poll and if more time is needed, delay creation of conf msg
+
             if (cbUnlockResult == UnlockConnectorResult_Pending) {
-                return nullptr; //no result yet - delay confirmation response
+                cbUnlockResult = unlockConnector();
+                if (cbUnlockResult == UnlockConnectorResult_Pending) {
+                    return nullptr; //no result yet - delay confirmation response
+                }
             }
         }
+
+        if (cbUnlockResult == UnlockConnectorResult_Unlocked) {
+            status = "Unlocked";
+        } else {
+            status = "UnlockFailed";
+        }
     }
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
-    if (!unlockConnector) {
-        payload["status"] = "NotSupported";
-    } else if (cbUnlockResult == UnlockConnectorResult_Unlocked) {
-        payload["status"] = "Unlocked";
-    } else {
-        payload["status"] = "UnlockFailed";
-    }
+    payload["status"] = status;
     return doc;
 }

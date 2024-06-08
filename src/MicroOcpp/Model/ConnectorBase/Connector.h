@@ -49,7 +49,9 @@ private:
     ChargePointStatus reportedStatus = ChargePointStatus_UNDEFINED;
     unsigned long t_statusTransition = 0;
 
+#if MO_ENABLE_CONNECTOR_LOCK
     std::function<UnlockConnectorResult()> onUnlockConnector;
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
     std::function<bool()> startTxReadyInput; //the StartTx request will be delayed while this Input is false
     std::function<bool()> stopTxReadyInput; //the StopTx request will be delayed while this Input is false
@@ -118,8 +120,10 @@ public:
 
     bool ocppPermitsCharge();
 
+#if MO_ENABLE_CONNECTOR_LOCK
     void setOnUnlockConnector(std::function<UnlockConnectorResult()> unlockConnector);
     std::function<UnlockConnectorResult()> getOnUnlockConnector();
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
     void setStartTxReadyInput(std::function<bool()> startTxReady);
     void setStopTxReadyInput(std::function<bool()> stopTxReady);

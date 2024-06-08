@@ -120,6 +120,7 @@ MicroOcpp::OnReceiveErrorListener adaptFn(OnCallError fn) {
     };
 }
 
+#if MO_ENABLE_CONNECTOR_LOCK
 std::function<UnlockConnectorResult()> adaptFn(PollUnlockResult fn) {
     return [fn] () {return fn();};
 }
@@ -127,6 +128,7 @@ std::function<UnlockConnectorResult()> adaptFn(PollUnlockResult fn) {
 std::function<UnlockConnectorResult()> adaptFn(unsigned int connectorId, PollUnlockResult_m fn) {
     return [fn, connectorId] () {return fn(connectorId);};
 }
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
 void ocpp_beginTransaction(const char *idTag) {
     beginTransaction(idTag);
@@ -281,12 +283,15 @@ void ocpp_addMeterValueInput_m(unsigned int connectorId, MeterValueInput *meterV
     addMeterValueInput(std::move(svs), connectorId);
 }
 
+
+#if MO_ENABLE_CONNECTOR_LOCK
 void ocpp_setOnUnlockConnectorInOut(PollUnlockResult onUnlockConnectorInOut) {
     setOnUnlockConnectorInOut(adaptFn(onUnlockConnectorInOut));
 }
 void ocpp_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollUnlockResult_m onUnlockConnectorInOut) {
     setOnUnlockConnectorInOut(adaptFn(connectorId, onUnlockConnectorInOut), connectorId);
 }
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
 void ocpp_setStartTxReadyInput(InputBool startTxReady) {
     setStartTxReadyInput(adaptFn(startTxReady));

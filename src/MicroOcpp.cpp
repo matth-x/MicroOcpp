@@ -874,6 +874,7 @@ void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcp
     connector->setTxNotificationOutput(notificationOutput);
 }
 
+#if MO_ENABLE_CONNECTOR_LOCK
 void setOnUnlockConnectorInOut(std::function<UnlockConnectorResult()> onUnlockConnectorInOut, unsigned int connectorId) {
     if (!context) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
@@ -886,6 +887,7 @@ void setOnUnlockConnectorInOut(std::function<UnlockConnectorResult()> onUnlockCo
     }
     connector->setOnUnlockConnector(onUnlockConnectorInOut);
 }
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
 bool isOperative(unsigned int connectorId) {
     if (!context) {
