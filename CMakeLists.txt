@@ -148,6 +148,7 @@ set(MO_SRC_UNIT
     tests/Variables.cpp
     tests/Transactions.cpp
     tests/Certificates.cpp
+    tests/FirmwareManagement.cpp
 )
 
 add_executable(mo_unit_tests
