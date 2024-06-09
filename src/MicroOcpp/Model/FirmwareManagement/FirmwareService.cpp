@@ -438,8 +438,9 @@ std::unique_ptr<FirmwareService> MicroOcpp::makeDefaultFirmwareService(Context& 
 
 std::unique_ptr<FirmwareService> MicroOcpp::makeDefaultFirmwareService(Context& context) {
     std::unique_ptr<FirmwareService> fwService = std::unique_ptr<FirmwareService>(new FirmwareService(context));
+    auto fwServicePtr = fwService.get();
 
-    fwService->setOnInstall([fwService] (const char *location) {
+    fwService->setOnInstall([fwServicePtr] (const char *location) {
         
         MO_DBG_WARN("Built-in updater for ESP8266 is only intended for demonstration purposes. HTTP support only");
 
@@ -454,15 +455,15 @@ std::unique_ptr<FirmwareService> MicroOcpp::makeDefaultFirmwareService(Context& 
 
         switch (ret) {
             case HTTP_UPDATE_FAILED:
-                fwService->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
+                fwServicePtr->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
                 MO_DBG_WARN("HTTP_UPDATE_FAILED Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
                 break;
             case HTTP_UPDATE_NO_UPDATES:
-                fwService->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
+                fwServicePtr->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
                 MO_DBG_WARN("HTTP_UPDATE_NO_UPDATES");
                 break;
             case HTTP_UPDATE_OK:
-                fwService->setInstallationStatusInput([](){return InstallationStatus::Installed;});
+                fwServicePtr->setInstallationStatusInput([](){return InstallationStatus::Installed;});
                 MO_DBG_INFO("HTTP_UPDATE_OK");
                 ESP.restart();
                 break;
