@@ -309,15 +309,17 @@ void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connect
 
 void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcpp::TxNotification)> notificationOutput, unsigned int connectorId = 1); //called when transaction state changes (see TxNotification for possible events). Transaction can be null
 
+#if MO_ENABLE_CONNECTOR_LOCK
 /*
  * Set an InputOutput (reads and sets information at the same time) for forcing to unlock the
  * connector. Called as part of the OCPP operation "UnlockConnector"
  * Return values:
- *     - UnlockConnectorResult_Pending if action needs more time to complete (MO will call this cb again later or eventually timeout)
+ *     - UnlockConnectorResult_Pending if action needs more time to complete (MO will call this cb again later or eventually time out)
  *     - UnlockConnectorResult_Unlocked if successful
  *     - UnlockConnectorResult_UnlockFailed if not successful (e.g. lock stuck)
  */
 void setOnUnlockConnectorInOut(std::function<UnlockConnectorResult()> onUnlockConnectorInOut, unsigned int connectorId = 1);
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
 /*
  * Access further information about the internal state of the library

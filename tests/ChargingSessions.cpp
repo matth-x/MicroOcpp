@@ -704,6 +704,8 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE( checkProcessed );
         REQUIRE( isTransactionRunning() ); // NotSupported doesn't lead to transaction stop
 
+#if MO_ENABLE_CONNECTOR_LOCK
+
         setOnUnlockConnectorInOut([] () -> UnlockConnectorResult {
             // connector lock fails
             return UnlockConnectorResult_UnlockFailed;
@@ -754,6 +756,12 @@ TEST_CASE( "Charging sessions" ) {
         mtime += MO_UNLOCK_TIMEOUT; // increment clock so that MO_UNLOCK_TIMEOUT expires
         loop();
         REQUIRE( checkProcessed );
+
+#else
+        endTransaction();
+        loop();
+#endif //MO_ENABLE_CONNECTOR_LOCK
+
     }
 
     SECTION("TxStartPoint - PowerPathClosed") {
