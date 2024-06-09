@@ -9,7 +9,7 @@
 
 // Connector-lock related behavior (i.e. if UnlockConnectorOnEVSideDisconnect is RW; enable HW binding for UnlockConnector)
 #ifndef MO_ENABLE_CONNECTOR_LOCK
-#define MO_ENABLE_CONNECTOR_LOCK 1
+#define MO_ENABLE_CONNECTOR_LOCK 0
 #endif
 
 #if MO_ENABLE_CONNECTOR_LOCK
