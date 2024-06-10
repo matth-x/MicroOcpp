@@ -108,7 +108,7 @@ void FirmwareService::loop() {
                     //passed download stage
                     stage = UpdateStage::AfterDownload;
                 } else if (downloadStatusInput() == DownloadStatus::DownloadFailed) {
-                    MO_DBG_INFO("Download timeout or failed! Retry");
+                    MO_DBG_INFO("Download timeout or failed");
                     retreiveDate = timestampNow;
                     retreiveDate += retryInterval;
                     retries--;
@@ -390,21 +390,43 @@ std::unique_ptr<FirmwareService> MicroOcpp::makeDefaultFirmwareService(Context& 
                 MO_DBG_DEBUG("start writing FW");
                 MO_DBG_WARN("Built-in updater for ESP32 is only intended for demonstration purposes");
                 ftServicePtr->setInstallationStatusInput([](){return InstallationStatus::NotInstalled;});
+
                 auto ret = Update.begin();
                 if (!ret) {
-                    MO_DBG_DEBUG("cannot start update");
+                    MO_DBG_ERR("cannot start update: %i", ret);
                     return 0;
                 }
             }
 
             size_t written = Update.write((uint8_t*) data, size);
-            MO_DBG_DEBUG("update progress: %zu kB", Update.progress() / 1000);
+
+            #if MO_DBG_LEVEL >= MO_DL_INFO
+            {
+                size_t progress = Update.progress();
+
+                bool printProgress = false;
+
+                if (progress <= 10000) {
+                    size_t p1k = progress / 1000;
+                    printProgress = progress < p1k * 1000 + written && progress >= p1k * 1000;
+                } else if (progress <= 100000) {
+                    size_t p10k = progress / 10000;
+                    printProgress = progress < p10k * 10000 + written && progress >= p10k * 10000;
+                } else {
+                    size_t p100k = progress / 100000;
+                    printProgress = progress < p100k * 100000 + written && progress >= p100k * 100000;
+                }
+
+                if (printProgress) {
+                    MO_DBG_INFO("update progress: %zu kB", progress / 1000);
+                }
+            }
+            #endif //MO_DBG_LEVEL >= MO_DL_DEBUG
+
             return written;
         }, [] (MO_FtpCloseReason reason) {
             if (reason != MO_FtpCloseReason_Success) {
                 Update.abort();
-            } else {
-                MO_DBG_ERR("update failed: FTP connection closed unexpectedly");
             }
         });
 

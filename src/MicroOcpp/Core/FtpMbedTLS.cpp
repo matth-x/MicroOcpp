@@ -77,7 +77,7 @@ private:
     int connect(mbedtls_net_context& fd, mbedtls_ssl_context& ssl, const char *server_name, const char *server_port);
     int connect_ctrl();
     int connect_data();
-    void close_ctrl(MO_FtpCloseReason reason);
+    void close_ctrl();
     void close_data(MO_FtpCloseReason reason);
 
     int handshake_tls();
@@ -179,7 +179,7 @@ FtpTransferMbedTLS::FtpTransferMbedTLS(bool tls_only, const char *client_cert, c
 
 FtpTransferMbedTLS::~FtpTransferMbedTLS() {
     if (onClose) {
-        onClose(MO_FtpCloseReason_Undefined);
+        onClose(MO_FtpCloseReason_Failure); //data connection not closed properly
         onClose = nullptr;
     }
     delete[] data_buf;
@@ -329,7 +329,7 @@ int FtpTransferMbedTLS::connect_data() {
     return 0; //success
 }
 
-void FtpTransferMbedTLS::close_ctrl(MO_FtpCloseReason reason) {
+void FtpTransferMbedTLS::close_ctrl() {
     if (!ctrl_opened) {
         return;
     }
@@ -342,7 +342,7 @@ void FtpTransferMbedTLS::close_ctrl(MO_FtpCloseReason reason) {
     ctrl_opened = false;
 
     if (onClose && !data_opened) {
-        onClose(reason);
+        onClose(MO_FtpCloseReason_Failure); //data connection has never been opened --> failure
         onClose = nullptr;
     }
 }
@@ -363,7 +363,7 @@ void FtpTransferMbedTLS::close_data(MO_FtpCloseReason reason) {
     data_opened = false;
     data_conn_accepted = false;
 
-    if (onClose && !ctrl_opened) {
+    if (onClose) {
         onClose(reason);
         onClose = nullptr;
     }
@@ -434,7 +434,7 @@ void FtpTransferMbedTLS::send_cmd(const char *cmd, const char *arg, bool disable
         char buf [1024];
         mbedtls_strerror(ret, (char *) buf, 1024);
         MO_DBG_ERR("fatal - message on ctrl channel lost: %i, %s", ret, buf);
-        close_ctrl(MO_FtpCloseReason_Failure);
+        close_ctrl();
         return;
     }
 }
@@ -533,12 +533,12 @@ void FtpTransferMbedTLS::process_ctrl() {
         return;
     } else if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || ret == 0) {
         MO_DBG_ERR("FTP transfer aborted");
-        close_ctrl(MO_FtpCloseReason_Failure);
+        close_ctrl();
         return;
     } else if (ret < 0) {
         MO_DBG_ERR("mbedtls_net_recv: %i", ret);
         send_cmd("QUIT");
-        close_ctrl(MO_FtpCloseReason_Failure);
+        close_ctrl();
         return;
     }
 
@@ -651,7 +651,7 @@ void FtpTransferMbedTLS::process_ctrl() {
             MO_DBG_INFO("PBSZ/PROT success: %s", line);
         } else if (!strncmp("221", line, 3)) { // Server Goodbye
             MO_DBG_DEBUG("closing ctrl connection");
-            close_ctrl(MO_FtpCloseReason_Success);
+            close_ctrl();
             return;
         } else {
             MO_DBG_WARN("unkown commad (close connection): %s", line);
@@ -669,6 +669,7 @@ void FtpTransferMbedTLS::process_data() {
     if (isSecure && !data_ssl_established) {
         //failure to establish security policy
         MO_DBG_ERR("internal error");
+        close_data(MO_FtpCloseReason_Failure);
         send_cmd("QUIT", nullptr, true);
         return;
     }
@@ -697,6 +698,7 @@ void FtpTransferMbedTLS::process_data() {
             } else if (ret < 0) {
                 MO_DBG_ERR("mbedtls_net_recv: %i", ret);
                 close_data(MO_FtpCloseReason_Failure);
+                send_cmd("QUIT");
                 return;
             }
 
@@ -705,11 +707,17 @@ void FtpTransferMbedTLS::process_data() {
 
         auto ret = fileWriter(data_buf + data_buf_offs, data_buf_avail);
 
-        if (ret <= data_buf_avail) {
+        if (ret == 0) {
+            MO_DBG_ERR("fileWriter aborted download");
+            close_data(MO_FtpCloseReason_Failure);
+            send_cmd("QUIT");
+            return;
+        } else if (ret <= data_buf_avail) {
             data_buf_avail -= ret;
             data_buf_offs += ret;
         } else {
             MO_DBG_ERR("write error");
+            close_data(MO_FtpCloseReason_Failure);
             send_cmd("QUIT");
             return;
         }
@@ -739,6 +747,7 @@ void FtpTransferMbedTLS::process_data() {
                 return;
             } else if (ret <= 0) {
                 MO_DBG_ERR("mbedtls_ssl_write: %i", ret);
+                close_data(MO_FtpCloseReason_Failure);
                 send_cmd("QUIT");
                 return;
             }
