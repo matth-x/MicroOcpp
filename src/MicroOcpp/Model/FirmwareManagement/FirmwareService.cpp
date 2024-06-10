@@ -380,18 +380,16 @@ void FirmwareService::setFtpServerCert(const char *cert) {
 
 std::unique_ptr<FirmwareService> MicroOcpp::makeDefaultFirmwareService(Context& context, std::shared_ptr<FtpClient> ftpClient) {
     std::unique_ptr<FirmwareService> fwService = std::unique_ptr<FirmwareService>(new FirmwareService(context));
+    auto ftServicePtr = fwService.get();
 
     fwService->setFtpClient(ftpClient);
 
     fwService->setDownloadFileWriter(
-
-        MO_DBG_WARN("Built-in updater for ESP32 is only intended for demonstration purposes");
-
-        fwService->setInstallationStatusInput([](){return InstallationStatus::NotInstalled;});
-
-        [this] (const unsigned char *data, size_t size) -> size_t {
+        [ftServicePtr] (const unsigned char *data, size_t size) -> size_t {
             if (!Update.isRunning()) {
                 MO_DBG_DEBUG("start writing FW");
+                MO_DBG_WARN("Built-in updater for ESP32 is only intended for demonstration purposes");
+                ftServicePtr->setInstallationStatusInput([](){return InstallationStatus::NotInstalled;});
                 auto ret = Update.begin();
                 if (!ret) {
                     MO_DBG_DEBUG("cannot start update");
@@ -402,7 +400,7 @@ std::unique_ptr<FirmwareService> MicroOcpp::makeDefaultFirmwareService(Context& 
             size_t written = Update.write((uint8_t*) data, size);
             MO_DBG_DEBUG("update progress: %zu kB", Update.progress() / 1000);
             return written;
-        }, [this] (MO_FtpCloseReason reason) {
+        }, [] (MO_FtpCloseReason reason) {
             if (reason != MO_FtpCloseReason_Success) {
                 Update.abort();
             } else {
@@ -410,16 +408,16 @@ std::unique_ptr<FirmwareService> MicroOcpp::makeDefaultFirmwareService(Context& 
             }
         });
 
-    fwService->setOnInstall([fwService] (const char *location) {
+    fwService->setOnInstall([ftServicePtr] (const char *location) {
 
         if (Update.isRunning() && Update.end(true)) {
             MO_DBG_DEBUG("update success");
-            fwService->setInstallationStatusInput([](){return InstallationStatus::Installed;});
+            ftServicePtr->setInstallationStatusInput([](){return InstallationStatus::Installed;});
 
             ESP.restart();
         } else {
             MO_DBG_ERR("update failed");
-            fwService->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
+            ftServicePtr->setInstallationStatusInput([](){return InstallationStatus::InstallationFailed;});
         }
 
         return true;
