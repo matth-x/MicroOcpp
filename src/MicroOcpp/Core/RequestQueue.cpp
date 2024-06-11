@@ -9,6 +9,7 @@
 #include <MicroOcpp/Core/OcppError.h>
 #include <MicroOcpp/Core/RequestStore.h>
 #include <MicroOcpp/Core/OperationRegistry.h>
+#include <MicroOcpp/Operations/StatusNotification.h>
 
 #include <MicroOcpp/Debug.h>
 
@@ -129,7 +130,21 @@ void RequestQueue::sendRequest(std::unique_ptr<Request> op){
         MO_DBG_ERR("Called with null. Ignore");
         return;
     }
-    
+
+    // Don't queue up multiple StatusNotification messages for the same connectorId
+    if (strcmp(op->getOperationType(), "StatusNotification") == 0)
+    {
+        auto new_status_notification = static_cast<Ocpp16::StatusNotification*>(op->getOperation().get());
+        initiatedRequests->drop_if([&new_status_notification] (const std::unique_ptr<Request>& operation) {
+            if (strcmp(operation->getOperationType(), "StatusNotification")!= 0)
+            {
+                return false;
+            }
+            auto old_status_notification = static_cast<Ocpp16::StatusNotification*>(operation->getOperation().get());
+            return old_status_notification->getConnectorId() == new_status_notification->getConnectorId();
+        });
+    }
+
     initiatedRequests->push_back(std::move(op));
 }
 
