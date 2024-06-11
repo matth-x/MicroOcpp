@@ -11,7 +11,7 @@
 
 #include <MicroOcpp/Platform.h>
 
-#define JSONDATE_LENGTH 24
+#define JSONDATE_LENGTH 24   //max. ISO 8601 date length, excluding the terminating zero
 
 namespace MicroOcpp {
 

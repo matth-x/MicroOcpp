@@ -64,7 +64,7 @@ private:
     
     std::function<size_t(unsigned char *data, size_t len)> fileWriter;
     std::function<size_t(unsigned char *out, size_t bufsize)> fileReader;
-    std::function<void()> onClose;
+    std::function<void(MO_FtpCloseReason)> onClose;
 
     enum class Method {
         Retrieve,  //download file
@@ -78,7 +78,7 @@ private:
     int connect_ctrl();
     int connect_data();
     void close_ctrl();
-    void close_data();
+    void close_data(MO_FtpCloseReason reason);
 
     int handshake_tls();
 
@@ -97,15 +97,17 @@ public:
     ~FtpTransferMbedTLS();
 
     void loop() override;
+    
+    bool isActive() override;
 
     bool getFile(const char *ftp_url, // ftp[s]://[user[:pass]@]host[:port][/directory]/filename
             std::function<size_t(unsigned char *data, size_t len)> fileWriter,
-            std::function<void()> onClose,
+            std::function<void(MO_FtpCloseReason)> onClose,
             const char *ca_cert = nullptr); // nullptr to disable cert check; will be ignored for non-TLS connections
 
     bool postFile(const char *ftp_url, // ftp[s]://[user[:pass]@]host[:port][/directory]/filename
             std::function<size_t(unsigned char *out, size_t buffsize)> fileReader, //write at most buffsize bytes into out-buffer. Return number of bytes written
-            std::function<void()> onClose,
+            std::function<void(MO_FtpCloseReason)> onClose,
             const char *ca_cert = nullptr); // nullptr to disable cert check; will be ignored for non-TLS connections
 };
 
@@ -120,12 +122,12 @@ public:
 
     std::unique_ptr<FtpDownload> getFile(const char *ftp_url, // ftp[s]://[user[:pass]@]host[:port][/directory]/filename
             std::function<size_t(unsigned char *data, size_t len)> fileWriter,
-            std::function<void()> onClose,
+            std::function<void(MO_FtpCloseReason)> onClose,
             const char *ca_cert = nullptr) override; // nullptr to disable cert check; will be ignored for non-TLS connections
 
     std::unique_ptr<FtpUpload> postFile(const char *ftp_url, // ftp[s]://[user[:pass]@]host[:port][/directory]/filename
             std::function<size_t(unsigned char *out, size_t buffsize)> fileReader, //write at most buffsize bytes into out-buffer. Return number of bytes written
-            std::function<void()> onClose,
+            std::function<void(MO_FtpCloseReason)> onClose,
             const char *ca_cert = nullptr) override; // nullptr to disable cert check; will be ignored for non-TLS connections
 };
 
@@ -177,7 +179,7 @@ FtpTransferMbedTLS::FtpTransferMbedTLS(bool tls_only, const char *client_cert, c
 
 FtpTransferMbedTLS::~FtpTransferMbedTLS() {
     if (onClose) {
-        onClose();
+        onClose(MO_FtpCloseReason_Failure); //data connection not closed properly
         onClose = nullptr;
     }
     delete[] data_buf;
@@ -340,12 +342,12 @@ void FtpTransferMbedTLS::close_ctrl() {
     ctrl_opened = false;
 
     if (onClose && !data_opened) {
-        onClose();
+        onClose(MO_FtpCloseReason_Failure); //data connection has never been opened --> failure
         onClose = nullptr;
     }
 }
 
-void FtpTransferMbedTLS::close_data() {
+void FtpTransferMbedTLS::close_data(MO_FtpCloseReason reason) {
     if (!data_opened) {
         return;
     }
@@ -361,8 +363,8 @@ void FtpTransferMbedTLS::close_data() {
     data_opened = false;
     data_conn_accepted = false;
 
-    if (onClose && !ctrl_opened) {
-        onClose();
+    if (onClose) {
+        onClose(reason);
         onClose = nullptr;
     }
 }
@@ -437,7 +439,7 @@ void FtpTransferMbedTLS::send_cmd(const char *cmd, const char *arg, bool disable
     }
 }
 
-bool FtpTransferMbedTLS::getFile(const char *ftp_url_raw, std::function<size_t(unsigned char *data, size_t len)> fileWriter, std::function<void()> onClose, const char *ca_cert) {
+bool FtpTransferMbedTLS::getFile(const char *ftp_url_raw, std::function<size_t(unsigned char *data, size_t len)> fileWriter, std::function<void(MO_FtpCloseReason)> onClose, const char *ca_cert) {
 
     if (method != Method::UNDEFINED) {
         MO_DBG_ERR("FTP Client reuse not supported");
@@ -474,7 +476,7 @@ bool FtpTransferMbedTLS::getFile(const char *ftp_url_raw, std::function<size_t(u
     return true;
 }
 
-bool FtpTransferMbedTLS::postFile(const char *ftp_url_raw, std::function<size_t(unsigned char *out, size_t buffsize)> fileReader, std::function<void()> onClose, const char *ca_cert) {
+bool FtpTransferMbedTLS::postFile(const char *ftp_url_raw, std::function<size_t(unsigned char *out, size_t buffsize)> fileReader, std::function<void(MO_FtpCloseReason)> onClose, const char *ca_cert) {
     
     if (method != Method::UNDEFINED) {
         MO_DBG_ERR("FTP Client reuse not supported");
@@ -667,6 +669,7 @@ void FtpTransferMbedTLS::process_data() {
     if (isSecure && !data_ssl_established) {
         //failure to establish security policy
         MO_DBG_ERR("internal error");
+        close_data(MO_FtpCloseReason_Failure);
         send_cmd("QUIT", nullptr, true);
         return;
     }
@@ -690,11 +693,12 @@ void FtpTransferMbedTLS::process_data() {
                 return;
             } else if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || ret == 0) {
                 //download finished
-                close_data();
+                close_data(MO_FtpCloseReason_Success);
                 return;
             } else if (ret < 0) {
                 MO_DBG_ERR("mbedtls_net_recv: %i", ret);
-                close_data();
+                close_data(MO_FtpCloseReason_Failure);
+                send_cmd("QUIT");
                 return;
             }
 
@@ -703,11 +707,17 @@ void FtpTransferMbedTLS::process_data() {
 
         auto ret = fileWriter(data_buf + data_buf_offs, data_buf_avail);
 
-        if (ret <= data_buf_avail) {
+        if (ret == 0) {
+            MO_DBG_ERR("fileWriter aborted download");
+            close_data(MO_FtpCloseReason_Failure);
+            send_cmd("QUIT");
+            return;
+        } else if (ret <= data_buf_avail) {
             data_buf_avail -= ret;
             data_buf_offs += ret;
         } else {
             MO_DBG_ERR("write error");
+            close_data(MO_FtpCloseReason_Failure);
             send_cmd("QUIT");
             return;
         }
@@ -737,6 +747,7 @@ void FtpTransferMbedTLS::process_data() {
                 return;
             } else if (ret <= 0) {
                 MO_DBG_ERR("mbedtls_ssl_write: %i", ret);
+                close_data(MO_FtpCloseReason_Failure);
                 send_cmd("QUIT");
                 return;
             }
@@ -747,7 +758,7 @@ void FtpTransferMbedTLS::process_data() {
         } else {
             //no data in fileReader anymore
             MO_DBG_DEBUG("finished file reading");
-            close_data();
+            close_data(MO_FtpCloseReason_Success);
         }
     }
 }
@@ -761,6 +772,10 @@ void FtpTransferMbedTLS::loop() {
     if (data_opened) {
         process_data();
     }
+}
+
+bool FtpTransferMbedTLS::isActive() {
+    return ctrl_opened || data_opened;
 }
 
 bool FtpTransferMbedTLS::read_url_ctrl(const char *ftp_url_raw) {
@@ -888,7 +903,7 @@ FtpClientMbedTLS::FtpClientMbedTLS(bool tls_only, const char *client_cert, const
 
 }
 
-std::unique_ptr<FtpDownload> FtpClientMbedTLS::getFile(const char *ftp_url_raw, std::function<size_t(unsigned char *data, size_t len)> fileWriter, std::function<void()> onClose, const char *ca_cert) {
+std::unique_ptr<FtpDownload> FtpClientMbedTLS::getFile(const char *ftp_url_raw, std::function<size_t(unsigned char *data, size_t len)> fileWriter, std::function<void(MO_FtpCloseReason)> onClose, const char *ca_cert) {
 
     auto ftp_handle = std::unique_ptr<FtpTransferMbedTLS>(new FtpTransferMbedTLS(tls_only, client_cert, client_key));
     if (!ftp_handle) {
@@ -905,7 +920,7 @@ std::unique_ptr<FtpDownload> FtpClientMbedTLS::getFile(const char *ftp_url_raw, 
     }
 }
 
-std::unique_ptr<FtpUpload> FtpClientMbedTLS::postFile(const char *ftp_url_raw, std::function<size_t(unsigned char *out, size_t buffsize)> fileReader, std::function<void()> onClose, const char *ca_cert) {
+std::unique_ptr<FtpUpload> FtpClientMbedTLS::postFile(const char *ftp_url_raw, std::function<size_t(unsigned char *out, size_t buffsize)> fileReader, std::function<void(MO_FtpCloseReason)> onClose, const char *ca_cert) {
     
     auto ftp_handle = std::unique_ptr<FtpTransferMbedTLS>(new FtpTransferMbedTLS(tls_only, client_cert, client_key));
     if (!ftp_handle) {

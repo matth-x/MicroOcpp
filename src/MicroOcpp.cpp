@@ -25,6 +25,8 @@
 #include <MicroOcpp/Core/OperationRegistry.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Core/Ftp.h>
+#include <MicroOcpp/Core/FtpMbedTLS.h>
 
 #include <MicroOcpp/Operations/Authorize.h>
 #include <MicroOcpp/Operations/StartTransaction.h>
@@ -272,6 +274,11 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
     configuration_init(filesystem); //call before each other library call
 
     context = new Context(connection, filesystem, bootstats.bootNr, version);
+
+#if MO_ENABLE_MBEDTLS
+    context->setFtpClient(makeFtpClientMbedTLS());
+#endif //MO_ENABLE_MBEDTLS
+
     auto& model = context->getModel();
 
     model.setTransactionStore(std::unique_ptr<TransactionStore>(
@@ -328,12 +335,25 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
             new ResetService(*context)));
     }
 
-#if MO_PLATFORM == MO_PLATFORM_ARDUINO && !defined(MO_CUSTOM_UPDATER)
-#if defined(ESP32) || defined(ESP8266)
-    model.setFirmwareService(std::unique_ptr<FirmwareService>(
-        makeDefaultFirmwareService(*context))); //instantiate FW service + ESP installation routine
-#endif //defined(ESP32) || defined(ESP8266)
-#endif //MO_PLATFORM == MO_PLATFORM_ARDUINO && !defined(MO_CUSTOM_UPDATER)
+#if !defined(MO_CUSTOM_UPDATER)
+#if MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP32) && MO_ENABLE_MBEDTLS
+    model.setFirmwareService(
+        makeDefaultFirmwareService(*context)); //instantiate FW service + ESP installation routine
+#elif MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP8266)
+    model.setFirmwareService(
+        makeDefaultFirmwareService(*context)); //instantiate FW service + ESP installation routine
+#endif //MO_PLATFORM
+#endif //!defined(MO_CUSTOM_UPDATER)
+
+#if !defined(MO_CUSTOM_DIAGNOSTICS)
+#if MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP32) && MO_ENABLE_MBEDTLS
+    model.setDiagnosticsService(
+        makeDefaultDiagnosticsService(*context, filesystem)); //instantiate Diag service + ESP hardware diagnostics
+#elif MO_ENABLE_MBEDTLS
+    model.setDiagnosticsService(
+        makeDefaultDiagnosticsService(*context, filesystem)); //instantiate Diag service 
+#endif //MO_PLATFORM
+#endif //!defined(MO_CUSTOM_DIAGNOSTICS)
 
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
     setOnResetExecute(makeDefaultResetFn());

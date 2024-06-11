@@ -709,6 +709,9 @@ public:
 
         int err = 0;
         while (auto entry = readdir(dir)) {
+            if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) {
+                continue; //files . and .. are specific to desktop systems and rarely appear on microcontroller filesystems. Filter them
+            }
             err = fn(entry->d_name);
             if (err) {
                 break;
