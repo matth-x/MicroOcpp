@@ -41,11 +41,11 @@ private:
     std::function<bool(const char *location, Timestamp &startTime, Timestamp &stopTime)> onUpload;
     std::function<UploadStatus()> uploadStatusInput;
     bool uploadIssued = false;
+    bool uploadFailure = false;
 
     std::unique_ptr<FtpUpload> ftpUpload;
     UploadStatus ftpUploadStatus = UploadStatus::NotUploaded;
     const char *ftpServerCert = nullptr;
-    std::shared_ptr<FilesystemAdapter> filesystem;
     char *diagPreamble = nullptr;
     size_t diagPreambleLen = 0;
     size_t diagPreambleTransferred = 0;
@@ -109,7 +109,13 @@ public:
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP32) && MO_ENABLE_MBEDTLS
 
 namespace MicroOcpp {
-std::unique_ptr<DiagnosticsService> makeDefaultDiagnosticsService(Context& Context);
+std::unique_ptr<DiagnosticsService> makeDefaultDiagnosticsService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem);
+}
+
+#elif MO_ENABLE_MBEDTLS
+
+namespace MicroOcpp {
+std::unique_ptr<DiagnosticsService> makeDefaultDiagnosticsService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem);
 }
 
 #endif //MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP32) && MO_ENABLE_MBEDTLS

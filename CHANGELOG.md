@@ -11,6 +11,7 @@
 
 - Provide ChargePointStatus in API ([#309](https://github.com/matth-x/MicroOcpp/pull/309))
 - Built-in OTA over FTP ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
+- Built-in Diagnostics over FTP ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
 
 ### Removed
 

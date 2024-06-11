@@ -345,6 +345,16 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 #endif //MO_PLATFORM
 #endif //!defined(MO_CUSTOM_UPDATER)
 
+#if !defined(MO_CUSTOM_DIAGNOSTICS)
+#if MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP32) && MO_ENABLE_MBEDTLS
+    model.setDiagnosticsService(
+        makeDefaultDiagnosticsService(*context, filesystem)); //instantiate Diag service + ESP hardware diagnostics
+#elif MO_ENABLE_MBEDTLS
+    model.setDiagnosticsService(
+        makeDefaultDiagnosticsService(*context, filesystem)); //instantiate Diag service 
+#endif //MO_PLATFORM
+#endif //!defined(MO_CUSTOM_DIAGNOSTICS)
+
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
     setOnResetExecute(makeDefaultResetFn());
 #endif

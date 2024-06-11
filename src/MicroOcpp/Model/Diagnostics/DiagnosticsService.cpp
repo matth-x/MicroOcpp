@@ -38,6 +38,20 @@ DiagnosticsService::~DiagnosticsService() {
 }
 
 void DiagnosticsService::loop() {
+
+    if (ftpUpload && ftpUpload->isActive()) {
+        ftpUpload->loop();
+    }
+
+    if (ftpUpload) {
+        if (ftpUpload->isActive()) {
+            ftpUpload->loop();
+        } else {
+            MO_DBG_DEBUG("Deinit FTP upload");
+            ftpUpload.reset();
+        }
+    }
+
     auto notification = getDiagnosticsStatusNotification();
     if (notification) {
         context.initiateRequest(std::move(notification));
@@ -51,10 +65,12 @@ void DiagnosticsService::loop() {
                 MO_DBG_DEBUG("Call onUpload");
                 onUpload(location.c_str(), startTime, stopTime);
                 uploadIssued = true;
+                uploadFailure = false;
             } else {
                 MO_DBG_ERR("onUpload must be set! (see setOnUpload). Will abort");
                 retries = 0;
                 uploadIssued = false;
+                uploadFailure = true;
             }
         }
 
@@ -88,6 +104,11 @@ void DiagnosticsService::loop() {
                         nextTry += retryInterval;
                     }
                     retries--;
+
+                    if (retries == 0) {
+                        MO_DBG_DEBUG("end upload routine (no more retry)");
+                        uploadFailure = true;
+                    }
                 }
             }
         } //end if (uploadIssued)
@@ -96,10 +117,26 @@ void DiagnosticsService::loop() {
 
 //timestamps before year 2021 will be treated as "undefined"
 std::string DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime) {
-    if (onUpload == nullptr) //maybe add further plausibility checks
+    if (onUpload == nullptr) {
         return std::string{};
-    
+    }
+
+    std::string fileName;
+    if (refreshFilename) {
+        fileName = refreshFilename();
+    } else {
+        fileName = "diagnostics.log";
+    }
+
+    this->location.reserve(strlen(location) + 1 + fileName.size());
+
     this->location = location;
+
+    if (!this->location.empty() && this->location.back() != '/') {
+        this->location.append("/");
+    }
+    this->location.append(fileName.c_str());
+
     this->retries = retries;
     this->retryInterval = retryInterval;
     this->startTime = startTime;
@@ -146,16 +183,14 @@ std::string DiagnosticsService::requestDiagnosticsUpload(const char *location, u
     }
 #endif
 
-    std::string fileName;
-    if (refreshFilename) {
-        fileName = refreshFilename();
-    } else {
-        fileName = "diagnostics.log";
-    }
     return fileName;
 }
 
 DiagnosticsStatus DiagnosticsService::getDiagnosticsStatus() {
+    if (uploadFailure) {
+        return DiagnosticsStatus::UploadFailed;
+    }
+
     if (uploadIssued) {
         if (uploadStatusInput != nullptr) {
             switch (uploadStatusInput()) {
@@ -255,7 +290,7 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                 fwVersion.empty() ? "" : " - v. ", fwVersion.c_str(),
                 jsonDate);
 
-        if (ret < 0 || ret >= diagPreambleSize) {
+        if (ret < 0 || (size_t)ret >= diagPreambleSize) {
             MO_DBG_ERR("snprintf: %i", ret);
             this->ftpUploadStatus = UploadStatus::UploadFailed;
             free(diagPreamble);
@@ -306,13 +341,13 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                 context.getConnection().getLastConnected() / 1000UL,
                 context.getConnection().getLastRecv() / 1000UL,
                 connector1 ? "\ncId1_hasTx=" : "", connector1 ? (connector1Tx ? "1" : "0") : "",
-                connector1 ? "\ncId1_txActive=" : "", connector1Tx ? (connector1Tx->isActive() ? "1" : "0") : "",
-                connector1 ? "\ncId1_hasStarted=" : "", connector1Tx ? (connector1Tx->getStartSync().isRequested() ? "1" : "0") : "",
-                connector1 ? "\ncId1_hasStopped=" : "", connector1Tx ? (connector1Tx->getStopSync().isRequested() ? "1" : "0") : "",
-                connector2 ? "\ncId1_hasTx=" : "", connector2 ? (connector2Tx ? "1" : "0") : "",
-                connector2 ? "\ncId1_txActive=" : "", connector2Tx ? (connector2Tx->isActive() ? "1" : "0") : "",
-                connector2 ? "\ncId1_hasStarted=" : "", connector2Tx ? (connector2Tx->getStartSync().isRequested() ? "1" : "0") : "",
-                connector2 ? "\ncId1_hasStopped=" : "", connector2Tx ? (connector2Tx->getStopSync().isRequested() ? "1" : "0") : "",
+                connector1Tx ? "\ncId1_txActive=" : "", connector1Tx ? (connector1Tx->isActive() ? "1" : "0") : "",
+                connector1Tx ? "\ncId1_txHasStarted=" : "", connector1Tx ? (connector1Tx->getStartSync().isRequested() ? "1" : "0") : "",
+                connector1Tx ? "\ncId1_txHasStopped=" : "", connector1Tx ? (connector1Tx->getStopSync().isRequested() ? "1" : "0") : "",
+                connector2 ? "\ncId2_hasTx=" : "", connector2 ? (connector2Tx ? "1" : "0") : "",
+                connector2Tx ? "\ncId2_txActive=" : "", connector2Tx ? (connector2Tx->isActive() ? "1" : "0") : "",
+                connector2Tx ? "\ncId2_txHasStarted=" : "", connector2Tx ? (connector2Tx->getStartSync().isRequested() ? "1" : "0") : "",
+                connector2Tx ? "\ncId2_txHasStopped=" : "", connector2Tx ? (connector2Tx->getStopSync().isRequested() ? "1" : "0") : "",
                 MO_ENABLE_CONNECTOR_LOCK,
                 MO_ENABLE_FILE_INDEX,
                 MO_ENABLE_V201
@@ -334,6 +369,8 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                 diagFileList.emplace_back(fname);
                 return 0;
             });
+
+            MO_DBG_DEBUG("discovered %zu files", diagFileList.size());
         }
 
         if (ret >= 0 && (size_t)ret + diagPostambleLen < diagPostambleSize) {
@@ -356,7 +393,7 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                     written += writeLen;
                 }
 
-                if (written < size && diagReaderHasData) {
+                if (written < size && diagReaderHasData && diagnosticsReader) {
                     size_t writeLen = diagnosticsReader((char*)buf, size);
                     if (writeLen == 0) {
                         diagReaderHasData = false;
@@ -391,8 +428,10 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                                 diagFileList.pop_front();
                                 continue;
                             }
-                            if (ret2 + written > size) {
-                                //heading doesn't fit anymore, return with a bit unused buffer space and print heading the next time
+                            if (ret2 + written > size || //heading doesn't fit anymore, return with a bit unused buffer space and print heading the next time
+                                    ret2 + written == size) { //filling the buffer up exactly would mean that no file payload is written and this head gets printed again
+                                
+                                MO_DBG_DEBUG("upload diag chunk (%zuB)", written);
                                 return written;
                             }
 
@@ -401,7 +440,7 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                         }
 
                         file->seek(diagFilesFrontTransferred);
-                        size_t writeLen = file->read((char*)buf, size - written);
+                        size_t writeLen = file->read((char*)buf + written, size - written);
 
                         if (writeLen < size - written) {
                             diagFileList.pop_front();
@@ -413,6 +452,7 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                     }
                 }
 
+                MO_DBG_DEBUG("upload diag chunk (%zuB)", written);
                 return written;
             },
             [this, onClose] (MO_FtpCloseReason reason) -> void {
@@ -428,7 +468,9 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                 free(diagPostamble);
                 diagFileList.clear();
 
-                onClose();
+                if (onClose) {
+                    onClose();
+                }
             });
 
         if (this->ftpUpload) {
@@ -448,3 +490,24 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
 void DiagnosticsService::setFtpServerCert(const char *cert) {
     this->ftpServerCert = cert;
 }
+
+#if !defined(MO_CUSTOM_DIAGNOSTICS)
+
+#if MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP32) && MO_ENABLE_MBEDTLS
+
+std::unique_ptr<DiagnosticsService> MicroOcpp::makeDefaultDiagnosticsService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) {
+
+}
+
+#elif MO_ENABLE_MBEDTLS
+
+std::unique_ptr<DiagnosticsService> MicroOcpp::makeDefaultDiagnosticsService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) {
+    std::unique_ptr<DiagnosticsService> diagService = std::unique_ptr<DiagnosticsService>(new DiagnosticsService(context));
+
+    diagService->setDiagnosticsReader(nullptr, nullptr, filesystem); //report the built-in MO defaults
+
+    return diagService;
+}
+
+#endif //MO_PLATFORM
+#endif //!defined(MO_CUSTOM_DIAGNOSTICS)
