@@ -96,11 +96,6 @@ void ResetService::initiateReset(bool isHard) {
         outstandingResetRetries = 5;
     }
     t_resetRetry = mocpp_tick_ms();
-
-    for (unsigned int cId = 0; cId < context.getModel().getNumConnectors(); cId++) {
-        auto connector = context.getModel().getConnector(cId);
-        connector->setAvailabilityVolatile(false);
-    }
 }
 
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
