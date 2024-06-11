@@ -332,12 +332,16 @@ void FirmwareService::resetStage() {
 }
 
 void FirmwareService::setDownloadFileWriter(std::function<size_t(const unsigned char *buf, size_t size)> firmwareWriter, std::function<void(MO_FtpCloseReason)> onClose) {
-    if (!ftpClient) {
-        MO_DBG_ERR("FTP client not set. Abort");
-        return;
-    }
 
     this->onDownload = [this, firmwareWriter, onClose] (const char *location) -> bool {
+
+        auto ftpClient = context.getFtpClient();
+        if (!ftpClient) {
+            MO_DBG_ERR("FTP client not set");
+            this->ftpDownloadStatus = DownloadStatus::DownloadFailed;
+            return false;
+        }
+
         this->ftpDownload = ftpClient->getFile(location, firmwareWriter,
             [this, onClose] (MO_FtpCloseReason reason) -> void {
                 if (reason == MO_FtpCloseReason_Success) {
@@ -365,10 +369,6 @@ void FirmwareService::setDownloadFileWriter(std::function<size_t(const unsigned 
     };
 }
 
-void FirmwareService::setFtpClient(std::shared_ptr<FtpClient> ftpClient) {
-    this->ftpClient = std::move(ftpClient);
-}
-
 void FirmwareService::setFtpServerCert(const char *cert) {
     this->ftpServerCert = cert;
 }
@@ -378,11 +378,9 @@ void FirmwareService::setFtpServerCert(const char *cert) {
 
 #include <Update.h>
 
-std::unique_ptr<FirmwareService> MicroOcpp::makeDefaultFirmwareService(Context& context, std::shared_ptr<FtpClient> ftpClient) {
+std::unique_ptr<FirmwareService> MicroOcpp::makeDefaultFirmwareService(Context& context) {
     std::unique_ptr<FirmwareService> fwService = std::unique_ptr<FirmwareService>(new FirmwareService(context));
     auto ftServicePtr = fwService.get();
-
-    fwService->setFtpClient(ftpClient);
 
     fwService->setDownloadFileWriter(
         [ftServicePtr] (const unsigned char *data, size_t size) -> size_t {

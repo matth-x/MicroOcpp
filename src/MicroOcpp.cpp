@@ -274,6 +274,11 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
     configuration_init(filesystem); //call before each other library call
 
     context = new Context(connection, filesystem, bootstats.bootNr, version);
+
+#if MO_ENABLE_MBEDTLS
+    context->setFtpClient(makeFtpClientMbedTLS());
+#endif //MO_ENABLE_MBEDTLS
+
     auto& model = context->getModel();
 
     model.setTransactionStore(std::unique_ptr<TransactionStore>(
@@ -332,9 +337,8 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 
 #if !defined(MO_CUSTOM_UPDATER)
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP32) && MO_ENABLE_MBEDTLS
-    std::shared_ptr<FtpClient> ftpClient = makeFtpClientMbedTLS(); //will use it for other services too in future
     model.setFirmwareService(
-        makeDefaultFirmwareService(*context, ftpClient)); //instantiate FW service + ESP installation routine
+        makeDefaultFirmwareService(*context)); //instantiate FW service + ESP installation routine
 #elif MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP8266)
     model.setFirmwareService(
         makeDefaultFirmwareService(*context)); //instantiate FW service + ESP installation routine

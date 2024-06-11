@@ -40,7 +40,6 @@ private:
     std::function<DownloadStatus()> downloadStatusInput;
     bool downloadIssued = false;
 
-    std::shared_ptr<FtpClient> ftpClient;
     std::unique_ptr<FtpDownload> ftpDownload;
     DownloadStatus ftpDownloadStatus = DownloadStatus::NotDownloaded;
     const char *ftpServerCert = nullptr;
@@ -99,11 +98,6 @@ public:
      */
     void setDownloadFileWriter(std::function<size_t(const unsigned char *buf, size_t size)> firmwareWriter, std::function<void(MO_FtpCloseReason)> onClose);
 
-    /*
-     * Set an FTP client manually or replace the default FTP client, if built with `MO_ENABLE_MBEDTLS=1`
-     */
-    void setFtpClient(std::shared_ptr<FtpClient> ftpClient);
-
     void setFtpServerCert(const char *cert); //zero-copy mode, i.e. cert must outlive MO
 
     /*
@@ -125,7 +119,7 @@ public:
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP32) && MO_ENABLE_MBEDTLS
 
 namespace MicroOcpp {
-std::unique_ptr<FirmwareService> makeDefaultFirmwareService(Context& context, std::shared_ptr<FtpClient> ftpClient);
+std::unique_ptr<FirmwareService> makeDefaultFirmwareService(Context& context);
 }
 
 #elif MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP8266)

@@ -72,3 +72,11 @@ const ProtocolVersion& Context::getVersion() {
 Connection& Context::getConnection() {
     return connection;
 }
+
+void Context::setFtpClient(std::unique_ptr<FtpClient> ftpClient) {
+    this->ftpClient = std::move(ftpClient);
+}
+
+FtpClient *Context::getFtpClient() {
+    return ftpClient.get();
+}
