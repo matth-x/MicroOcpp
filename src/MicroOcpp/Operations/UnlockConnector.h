@@ -6,6 +6,7 @@
 #define UNLOCKCONNECTOR_H
 
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Model/ConnectorBase/Connector.h>
 #include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
 #include <functional>
 
@@ -19,6 +20,7 @@ class UnlockConnector : public Operation {
 private:
     Model& model;
     std::function<UnlockConnectorResult ()> unlockConnector;
+    Connector *connector = nullptr;
     UnlockConnectorResult cbUnlockResult;
     unsigned long timerStart = 0; //for timeout
 

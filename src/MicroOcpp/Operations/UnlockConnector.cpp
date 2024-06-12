@@ -20,10 +20,10 @@ void UnlockConnector::processReq(JsonObject payload) {
     
     auto connectorId = payload["connectorId"] | -1;
 
-    auto connector = model.getConnector(connectorId);
+    connector = model.getConnector(connectorId);
 
     if (!connector) {
-        errorCode = "PropertyConstraintViolation";
+        // NotSupported
         return;
     }
 
@@ -43,6 +43,15 @@ void UnlockConnector::processReq(JsonObject payload) {
 }
 
 std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf() {
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    JsonObject payload = doc->to<JsonObject>();
+
+    if (connector == nullptr) {
+        // NotSupported
+        payload["status"] = "NotSupported";
+        return doc;
+    }
+
     if (unlockConnector && mocpp_tick_ms() - timerStart < MO_UNLOCK_TIMEOUT) {
         //do poll and if more time is needed, delay creation of conf msg
 
@@ -54,8 +63,6 @@ std::unique_ptr<DynamicJsonDocument> UnlockConnector::createConf() {
         }
     }
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
-    JsonObject payload = doc->to<JsonObject>();
     if (!unlockConnector) {
         payload["status"] = "NotSupported";
     } else if (cbUnlockResult == UnlockConnectorResult_Unlocked) {
