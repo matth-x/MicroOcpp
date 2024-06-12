@@ -55,10 +55,23 @@ MeteringService::MeteringService(Context& context, int numConn, std::shared_ptr<
         }
         return isValid;
     };
+
+    std::function<bool(const char*)> validateUnsignedIntString = [] (const char *value) {
+        for(size_t i = 0; value[i] != '\0'; i++)
+        {
+            if (value[i] < '0' || value[i] > '9') {
+                return false;
+            }
+        }
+        return true;
+    };
+
     registerConfigurationValidator("MeterValuesSampledData", validateSelectString);
     registerConfigurationValidator("StopTxnSampledData", validateSelectString);
     registerConfigurationValidator("MeterValuesAlignedData", validateSelectString);
     registerConfigurationValidator("StopTxnAlignedData", validateSelectString);
+    registerConfigurationValidator("MeterValueSampleInterval", validateUnsignedIntString);
+    registerConfigurationValidator("ClockAlignedDataInterval", validateUnsignedIntString);
 
     /*
      * Register further message handlers to support echo mode: when this library
