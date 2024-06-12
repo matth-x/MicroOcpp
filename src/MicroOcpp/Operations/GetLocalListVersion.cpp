@@ -2,6 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2023
 // MIT License
 
+#include "Configuration.h"
 #include <MicroOcpp/Operations/GetLocalListVersion.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
@@ -24,7 +25,11 @@ void GetLocalListVersion::processReq(JsonObject payload) {
 std::unique_ptr<DynamicJsonDocument> GetLocalListVersion::createConf(){
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
-    if (auto authService = model.getAuthorizationService()) {
+    auto supported_feature_profiles = declareConfiguration<const char*>("SupportedFeatureProfiles", "");
+
+    if (strstr(supported_feature_profiles->getString(), "LocalAuthListManagement") == NULL) {
+        payload["listVersion"] = -1;
+    } else if (auto authService = model.getAuthorizationService()) {
         payload["listVersion"] = authService->getLocalListVersion();
     } else {
         payload["listVersion"] = -1;
