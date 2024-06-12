@@ -57,6 +57,7 @@ private:
     Timestamp start_timestamp = MIN_TIME;      //timestamp of StartTx; can be set before actually initiating
     uint16_t start_bootNr = 0;
     int transactionId = -1; //only valid if confirmed = true
+    char parentIdTag [IDTAG_LEN_MAX + 1] = {'\0'};
 
     /*
      * Attributes of StopTransaction
@@ -136,6 +137,9 @@ public:
     uint16_t getStartBootNr() {return start_bootNr;}
 
     void setTransactionId(int transactionId) {this->transactionId = transactionId;}
+
+    bool setParentIdTag(const char *idTag);
+    const char *getParentIdTag() {return parentIdTag;}
 
     SendStatus& getStopSync() {return stop_sync;}
 

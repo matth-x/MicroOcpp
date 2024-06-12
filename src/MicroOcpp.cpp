@@ -431,8 +431,31 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
         if (!idTag || !strcmp(idTag, getTransactionIdTag(connectorId))) {
             res = endTransaction_authorized(idTag, reason, connectorId);
         } else {
-            MO_DBG_INFO("endTransaction: idTag doesn't match");
-            (void)0;
+            auto& tx = getTransaction(connectorId);
+            const char *parentIdTag = tx->getParentIdTag();
+            if (strlen(parentIdTag) > 0)
+            {
+                // We have a parent ID tag, so we need to check if this new card also has one
+                auto authorize = makeRequest(new Ocpp16::Authorize(context->getModel(), idTag));
+                // authorize->setTimeout(authorizationTimeoutInt && authorizationTimeoutInt->getInt() > 0 ? authorizationTimeoutInt->getInt() * 1000UL : 20UL * 1000UL);
+                authorize->setOnReceiveConfListener([idTag, parentIdTag, connectorId, reason] (JsonObject response) {
+                    JsonObject idTagInfo = response["idTagInfo"];
+
+                    if (strcmp("Accepted", idTagInfo["status"] | "UNDEFINED")) {
+                        //Authorization rejected, do nothing
+                        return;
+                    }
+                    if (idTagInfo.containsKey("parentIdTag") && strcmp(idTagInfo["parenIdTag"], parentIdTag))
+                    {
+                        endTransaction_authorized(idTag, reason, connectorId);
+                    }
+                });
+                context->initiateRequest(std::move(authorize));
+                res = true;
+            } else {
+                MO_DBG_INFO("endTransaction: idTag doesn't match");
+                (void)0;
+            }
         }
     }
     return res;
