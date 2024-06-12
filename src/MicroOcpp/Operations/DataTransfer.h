@@ -14,6 +14,7 @@ class DataTransfer : public Operation {
 private:
     std::string msg {};
 public:
+    DataTransfer() {};
     DataTransfer(const std::string &msg);
 
     const char* getOperationType() override;
@@ -21,6 +22,10 @@ public:
     std::unique_ptr<DynamicJsonDocument> createReq() override;
 
     void processConf(JsonObject payload) override;
+
+    void processReq(JsonObject payload) override;
+
+    std::unique_ptr<DynamicJsonDocument> createConf() override;
     
 };
 

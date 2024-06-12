@@ -32,3 +32,14 @@ void DataTransfer::processConf(JsonObject payload){
         MO_DBG_INFO("Request has been denied");
     }
 }
+
+void DataTransfer::processReq(JsonObject payload) {
+    // Do nothing - we're just required to reject these DataTransfer requests
+}
+
+std::unique_ptr<DynamicJsonDocument> DataTransfer::createConf(){
+    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    JsonObject payload = doc->to<JsonObject>();
+    payload["status"] = "Rejected";
+    return doc;
+}

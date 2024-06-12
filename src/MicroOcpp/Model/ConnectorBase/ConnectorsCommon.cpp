@@ -2,6 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#include "DataTransfer.h"
 #include <string>
 
 #include <MicroOcpp/Model/ConnectorBase/ConnectorsCommon.h>
@@ -45,6 +46,8 @@ ConnectorsCommon::ConnectorsCommon(Context& context, unsigned int numConn, std::
         return new Ocpp16::ChangeConfiguration();});
     context.getOperationRegistry().registerOperation("ClearCache", [filesystem] () {
         return new Ocpp16::ClearCache(filesystem);});
+    context.getOperationRegistry().registerOperation("DataTransfer", [] () {
+        return new Ocpp16::DataTransfer();});
     context.getOperationRegistry().registerOperation("GetConfiguration", [] () {
         return new Ocpp16::GetConfiguration();});
     context.getOperationRegistry().registerOperation("RemoteStartTransaction", [&context] () {
