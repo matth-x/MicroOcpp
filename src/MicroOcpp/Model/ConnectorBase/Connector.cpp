@@ -412,6 +412,8 @@ void Connector::loop() {
 
     if (model.getVersion().major == 1) {
         //OCPP 1.6: use StatusNotification to send error codes
+        bool hasResolvedError = false; //at least one error resolved again
+
         for (auto i = std::min(errorDataInputs.size(), trackErrorDataInputs.size()); i >= 1; i--) {
             auto index = i - 1;
             auto error = errorDataInputs[index].operator()();
@@ -428,9 +430,29 @@ void Connector::loop() {
             } else if (!error.isError && trackErrorDataInputs[index]) {
                 //reset error
                 trackErrorDataInputs[index] = false;
+
+                hasResolvedError = true;
             }
         }
-    }
+
+        #if MO_REPORT_NOERROR
+        if (hasResolvedError) {
+            bool hasErrors = false;
+            for (size_t i = 0; i < trackErrorDataInputs.size(); i++) {
+                if (trackErrorDataInputs[i]) {
+                    hasErrors = true;
+                    break;
+                }
+            }
+
+            if (!hasErrors) {
+                reportedStatus = ChargePointStatus_UNDEFINED; //trigger sending currentStatus again
+            }
+        }
+        #else
+        (void)hasResolvedError;
+        #endif //MO_REPORT_NOERROR
+    } //if (model.getVersion().major == 1)
 
     if (status != currentStatus) {
         MO_DBG_DEBUG("Status changed %s -> %s %s",
