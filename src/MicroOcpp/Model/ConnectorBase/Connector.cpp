@@ -31,6 +31,10 @@
 #define MO_TX_CLEAN_ABORTED 1
 #endif
 
+#ifndef MO_REPORT_NOERROR
+#define MO_REPORT_NOERROR 0
+#endif
+
 using namespace MicroOcpp;
 
 Connector::Connector(Context& context, int connectorId)
