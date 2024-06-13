@@ -31,10 +31,6 @@
 #define MO_TX_CLEAN_ABORTED 1
 #endif
 
-#ifndef MO_REPORT_NOERROR
-#define MO_REPORT_NOERROR 0
-#endif
-
 using namespace MicroOcpp;
 
 Connector::Connector(Context& context, int connectorId)
@@ -417,11 +413,12 @@ void Connector::loop() {
     if (model.getVersion().major == 1) {
         //OCPP 1.6: use StatusNotification to send error codes
         bool hasResolvedError = false; //at least one error resolved again
+        uint8_t maxSeverity = 0;
 
         for (auto i = std::min(errorDataInputs.size(), trackErrorDataInputs.size()); i >= 1; i--) {
             auto index = i - 1;
             auto error = errorDataInputs[index].operator()();
-            if (error.isError && !trackErrorDataInputs[index]) {
+            if (error.isError && !trackErrorDataInputs[index] && error.severity >= currentErrorSeverity) {
                 //new error
                 auto statusNotification = makeRequest(
                         new Ocpp16::StatusNotification(connectorId, status, model.getClock().now(), error));
@@ -431,13 +428,20 @@ void Connector::loop() {
                 currentStatus = status;
                 reportedStatus = status;
                 trackErrorDataInputs[index] = true;
+                currentErrorSeverity = error.severity;
             } else if (!error.isError && trackErrorDataInputs[index]) {
                 //reset error
                 trackErrorDataInputs[index] = false;
 
                 hasResolvedError = true;
             }
+
+            if (error.isError) {
+                maxSeverity = std::max(maxSeverity, error.severity);
+            }
         }
+
+        currentErrorSeverity = maxSeverity;
 
         #if MO_REPORT_NOERROR
         if (hasResolvedError) {

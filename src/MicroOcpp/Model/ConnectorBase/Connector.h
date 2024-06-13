@@ -16,6 +16,10 @@
 #include <functional>
 #include <memory>
 
+#ifndef MO_REPORT_NOERROR
+#define MO_REPORT_NOERROR 0
+#endif
+
 namespace MicroOcpp {
 
 class Context;
@@ -41,6 +45,7 @@ private:
     std::function<bool()> evseReadyInput;
     std::vector<std::function<ErrorData ()>> errorDataInputs;
     std::vector<bool> trackErrorDataInputs;
+    uint8_t currentErrorSeverity = 0;
     bool isFaulted();
     const char *getErrorCode();
 
