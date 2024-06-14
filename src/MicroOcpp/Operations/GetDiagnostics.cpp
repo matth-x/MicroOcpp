@@ -39,7 +39,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
     }
 
     Timestamp stopTime;
-    if (payload.containsKey("startTime")) {
+    if (payload.containsKey("stopTime")) {
         if (!stopTime.setTime(payload["stopTime"] | "Invalid")) {
             errorCode = "PropertyConstraintViolation";
             MO_DBG_WARN("bad time format");
