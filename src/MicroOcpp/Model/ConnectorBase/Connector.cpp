@@ -410,7 +410,7 @@ void Connector::loop() {
 
     auto status = getStatus();
 
-    if (model.getVersion().major == 1) {
+    if (model.getVersion().major == 1 && model.getClock().now() >= MIN_TIME) {
         //OCPP 1.6: use StatusNotification to send error codes
         for (auto i = std::min(errorDataInputs.size(), trackErrorDataInputs.size()); i >= 1; i--) {
             auto index = i - 1;
@@ -442,7 +442,7 @@ void Connector::loop() {
     }
 
     if (reportedStatus != currentStatus &&
-            model.getClock().now() >= Timestamp(2010,0,0,0,0,0) &&
+            model.getClock().now() >= MIN_TIME &&
             (minimumStatusDurationInt->getInt() <= 0 || //MinimumStatusDuration disabled
             mocpp_tick_ms() - t_statusTransition >= ((unsigned long) minimumStatusDurationInt->getInt()) * 1000UL)) {
         reportedStatus = currentStatus;
