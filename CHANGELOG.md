@@ -20,6 +20,7 @@
 ### Fixed
 
 - Skip Unix files . and .. in ftw_root ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
+- Skip clock-aligned measurements when time not set
 
 ## [1.1.0] - 2024-05-21
 

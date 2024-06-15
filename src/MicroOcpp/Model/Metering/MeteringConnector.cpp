@@ -86,7 +86,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
         }
     }
 
-    if (clockAlignedDataIntervalInt->getInt() >= 1) {
+    if (clockAlignedDataIntervalInt->getInt() >= 1 && model.getClock().now() >= MIN_TIME) {
 
         auto& timestampNow = model.getClock().now();
         auto dt = nextAlignedTime - timestampNow;
