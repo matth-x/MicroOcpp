@@ -22,6 +22,7 @@
 - Skip Unix files . and .. in ftw_root ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
 - Skip clock-aligned measurements when time not set
 - Hold back error StatusNotifs when time not set ([#311](https://github.com/matth-x/MicroOcpp/issues/311))
+- Don't send Available when tx occupies connector ([#315](https://github.com/matth-x/MicroOcpp/issues/315))
 
 ## [1.1.0] - 2024-05-21
 

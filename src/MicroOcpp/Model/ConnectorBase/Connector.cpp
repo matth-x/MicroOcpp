@@ -122,7 +122,7 @@ ChargePointStatus Connector::getStatus() {
         res = ChargePointStatus_Reserved;
     }
     #endif 
-    else if ((!transaction || !transaction->isActive()) &&                 //no transaction preparation
+    else if ((!transaction) &&                                           //no transaction process occupying the connector
                (!connectorPluggedInput || !connectorPluggedInput()) &&   //no vehicle plugged
                (!occupiedInput || !occupiedInput())) {                       //occupied override clear
         res = ChargePointStatus_Available;
@@ -134,7 +134,8 @@ ChargePointStatus Connector::getStatus() {
         if (previous == ChargePointStatus_Finishing ||
                 previous == ChargePointStatus_Charging ||
                 previous == ChargePointStatus_SuspendedEV ||
-                previous == ChargePointStatus_SuspendedEVSE) {
+                previous == ChargePointStatus_SuspendedEVSE ||
+                (transaction && transaction->getStartSync().isRequested())) { //transaction process still occupying the connector
             res = ChargePointStatus_Finishing;
         } else {
             res = ChargePointStatus_Preparing;
