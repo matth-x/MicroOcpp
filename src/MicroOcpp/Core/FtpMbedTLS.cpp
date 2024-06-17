@@ -199,14 +199,15 @@ int FtpTransferMbedTLS::setup_tls() {
 
     if (auto ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy,
                                      (const unsigned char*) __FILE__,
-                                     strlen(__FILE__)) != 0) {
+                                     strlen(__FILE__))) {
         MO_DBG_ERR("mbedtls_ctr_drbg_seed: %i", ret);
         return ret;
     }
 
     if (ca_cert) {
-        if (auto ret = mbedtls_x509_crt_parse(&cacert, (const unsigned char *) ca_cert,
-                                    strlen(ca_cert)) < 0) {
+        int ret;
+        if ((ret = mbedtls_x509_crt_parse(&cacert, (const unsigned char *) ca_cert,
+                                    strlen(ca_cert))) < 0) {
             MO_DBG_ERR("mbedtls_x509_crt_parse(ca_cert): %i", ret);
             return ret;
         }
@@ -234,7 +235,7 @@ int FtpTransferMbedTLS::setup_tls() {
     if (auto ret = mbedtls_ssl_config_defaults(&conf,
                                            MBEDTLS_SSL_IS_CLIENT,
                                            MBEDTLS_SSL_TRANSPORT_STREAM,
-                                           MBEDTLS_SSL_PRESET_DEFAULT) != 0) {
+                                           MBEDTLS_SSL_PRESET_DEFAULT)) {
         MO_DBG_ERR("mbedtls_ssl_config_defaults: %i", ret);
         return ret;
     }
@@ -249,7 +250,7 @@ int FtpTransferMbedTLS::setup_tls() {
     }
 
     if (client_cert || client_key) {
-        if (auto ret = mbedtls_ssl_conf_own_cert(&conf, &clicert, &pkey) != 0) {
+        if (auto ret = mbedtls_ssl_conf_own_cert(&conf, &clicert, &pkey)) {
             MO_DBG_ERR("mbedtls_ssl_conf_own_cert: %i", ret);
             return ret;
         }
@@ -260,7 +261,7 @@ int FtpTransferMbedTLS::setup_tls() {
 
 int FtpTransferMbedTLS::connect(mbedtls_net_context& fd, mbedtls_ssl_context& ssl, const char *server_name, const char *server_port) {
 
-    if (auto ret = mbedtls_net_connect(&fd, server_name, server_port, MBEDTLS_NET_PROTO_TCP) != 0) {
+    if (auto ret = mbedtls_net_connect(&fd, server_name, server_port, MBEDTLS_NET_PROTO_TCP)) {
         MO_DBG_ERR("mbedtls_net_connect: %i", ret);
         return ret;
     }
@@ -270,12 +271,12 @@ int FtpTransferMbedTLS::connect(mbedtls_net_context& fd, mbedtls_ssl_context& ss
         return ret;
     }
 
-    if (auto ret = mbedtls_ssl_setup(&ssl, &conf) != 0) {
+    if (auto ret = mbedtls_ssl_setup(&ssl, &conf)) {
         MO_DBG_ERR("mbedtls_ssl_setup: %i", ret);
         return ret;
     }
 
-    if (auto ret = mbedtls_ssl_set_hostname(&ssl, server_name) != 0) {
+    if (auto ret = mbedtls_ssl_set_hostname(&ssl, server_name)) {
         MO_DBG_ERR("mbedtls_ssl_set_hostname: %i", ret);
         return ret;
     }
