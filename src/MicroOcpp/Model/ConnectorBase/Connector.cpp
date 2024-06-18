@@ -446,8 +446,8 @@ void Connector::loop() {
         #if MO_REPORT_NOERROR
         if (hasResolvedError) {
             bool hasErrors = false;
-            for (size_t i = 0; i < trackErrorDataInputs.size(); i++) {
-                if (trackErrorDataInputs[i]) {
+            for (size_t i = 0; i < std::min(errorDataInputs.size(), trackErrorDataInputs.size()); i++) {
+                if (errorDataInputs[i].operator()().isError || trackErrorDataInputs[i]) {
                     hasErrors = true;
                     break;
                 }
