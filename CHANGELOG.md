@@ -23,6 +23,7 @@
 - Skip clock-aligned measurements when time not set
 - Hold back error StatusNotifs when time not set ([#311](https://github.com/matth-x/MicroOcpp/issues/311))
 - Don't send Available when tx occupies connector ([#315](https://github.com/matth-x/MicroOcpp/issues/315))
+- Make ChargingScheduleAllowedChargingRateUnit read-only ([#328](https://github.com/matth-x/MicroOcpp/issues/328))
 
 ## [1.1.0] - 2024-05-21
 

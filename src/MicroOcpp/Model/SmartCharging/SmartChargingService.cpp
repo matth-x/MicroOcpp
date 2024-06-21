@@ -318,7 +318,7 @@ SmartChargingService::SmartChargingService(Context& context, std::shared_ptr<Fil
     }
 
     declareConfiguration<int>("ChargeProfileMaxStackLevel", MO_ChargeProfileMaxStackLevel, CONFIGURATION_VOLATILE, true);
-    declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE);
+    declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE, true);
     declareConfiguration<int>("ChargingScheduleMaxPeriods", MO_ChargingScheduleMaxPeriods, CONFIGURATION_VOLATILE, true);
     declareConfiguration<int>("MaxChargingProfilesInstalled", MO_MaxChargingProfilesInstalled, CONFIGURATION_VOLATILE, true);
 
