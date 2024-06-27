@@ -10,6 +10,7 @@
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Debug.h>
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
@@ -203,17 +204,25 @@ TEST_CASE( "ChargePointError" ) {
             return nullptr;
         });
 
-        bool checkProcessed = false;
-        const char *errorLabel = "";
+        const char *errorCode = "*";
+        bool checkErrorCode = false;
+        const char *errorInfo = "*";
+        bool checkErrorInfo = false;
 
         getOcppContext()->getOperationRegistry().registerOperation("StatusNotification",
-            [&checkProcessed, &errorLabel] () {
+            [&checkErrorCode, &checkErrorInfo, &errorInfo, &errorCode] () {
                 return new Ocpp16::CustomOperation("StatusNotification",
-                    [&checkProcessed, &errorLabel] (JsonObject payload) {
+                    [&checkErrorCode, &checkErrorInfo, &errorInfo, &errorCode] (JsonObject payload) {
                         //process req
-                        if (payload.containsKey("info")) {
-                            checkProcessed = true;
-                            REQUIRE( !strcmp(payload["info"] | "_Undefined", errorLabel) );
+                        if (strcmp(errorInfo, "*")) {
+                            MO_DBG_DEBUG("expect \"%s\", got \"%s\"", errorInfo, payload["info"] | "_Undefined");
+                            REQUIRE( !strcmp(payload["info"] | "_Undefined", errorInfo) );
+                            checkErrorInfo = true;
+                        }
+                        if (strcmp(errorCode, "*")) {
+                            MO_DBG_DEBUG("expect \"%s\", got \"%s\"", errorCode, payload["errorCode"] | "_Undefined");
+                            REQUIRE( !strcmp(payload["errorCode"] | "_Undefined", errorCode) );
+                            checkErrorCode = true;
                         }
                     },
                     [] () {
@@ -223,53 +232,106 @@ TEST_CASE( "ChargePointError" ) {
             });
         
         //sequence: low-level error 1, low-level error 2, then severe error  -- all errors should go through
+        MO_DBG_INFO("test sequence: low-level error 1, low-level error 2, then severe error");
 
         errorConditionLow1 = true;
-        errorLabel = ERROR_INFO_LOW_1;
+        errorInfo = ERROR_INFO_LOW_1;
+        checkErrorInfo = false;
         loop();
-        REQUIRE( checkProcessed );
-        checkProcessed = false;
+        REQUIRE( checkErrorInfo );
         
         errorConditionLow2 = true;
-        errorLabel = ERROR_INFO_LOW_2;
+        errorInfo = ERROR_INFO_LOW_2;
+        checkErrorInfo = false;
         loop();
-        REQUIRE( checkProcessed );
-        checkProcessed = false;
+        REQUIRE( checkErrorInfo );
         
         errorConditionHigh = true;
-        errorLabel = ERROR_INFO_HIGH;
+        errorInfo = ERROR_INFO_HIGH;
+        checkErrorInfo = false;
         loop();
-        REQUIRE( checkProcessed );
-        checkProcessed = false;
+        REQUIRE( checkErrorInfo );
 
         errorConditionLow1 = false;
         errorConditionLow2 = false;
         errorConditionHigh = false;
+        errorInfo = "*";
         loop();
         
         //sequence: low-level error 1, severe error, then low-level error 2 -- last error gets muted until severe error is resolved
+        MO_DBG_INFO("test sequence: low-level error 1, severe error, then low-level error 2");
 
         errorConditionLow1 = true;
-        errorLabel = ERROR_INFO_LOW_1;
+        errorInfo = ERROR_INFO_LOW_1;
+        checkErrorInfo = false;
         loop();
-        REQUIRE( checkProcessed );
-        checkProcessed = false;
+        REQUIRE( checkErrorInfo );
         
         errorConditionHigh = true;
-        errorLabel = ERROR_INFO_HIGH;
+        errorInfo = ERROR_INFO_HIGH;
+        checkErrorInfo = false;
         loop();
-        REQUIRE( checkProcessed );
-        checkProcessed = false;
+        REQUIRE( checkErrorInfo );
         
         errorConditionLow2 = true;
-        errorLabel = ERROR_INFO_LOW_2;
+        checkErrorInfo = false;
         loop();
-        REQUIRE( !checkProcessed );
+        REQUIRE( !checkErrorInfo );
 
         errorConditionHigh = false;
+        errorInfo = ERROR_INFO_LOW_2;
+        checkErrorInfo = false;
         loop();
-        REQUIRE( checkProcessed );
-        checkProcessed = false;
+        REQUIRE( checkErrorInfo );
+
+        errorConditionLow1 = false;
+        errorConditionLow2 = false;
+        errorConditionHigh = false;
+        errorInfo = "*";
+        loop();
+        
+        //sequence: low-level error 1, severe error, then severe error gets resolved -- low-level error is reported again
+        MO_DBG_INFO("test sequence: low-level error 1, severe error, then severe error gets resolved");
+
+        errorConditionLow1 = true;
+        errorInfo = ERROR_INFO_LOW_1;
+        checkErrorInfo = false;
+        loop();
+        REQUIRE( checkErrorInfo );
+        
+        errorConditionHigh = true;
+        errorInfo = ERROR_INFO_HIGH;
+        checkErrorInfo = false;
+        loop();
+        REQUIRE( checkErrorInfo );
+        
+        errorConditionHigh = false;
+        errorInfo = ERROR_INFO_LOW_1;
+        checkErrorInfo = false;
+        loop();
+        REQUIRE( checkErrorInfo );
+
+        errorConditionLow1 = false;
+        errorConditionLow2 = false;
+        errorConditionHigh = false;
+        errorInfo = "*";
+        loop();
+
+        //sequence: error, then error gets resolved -- report NoError
+        MO_DBG_INFO("test sequence: error, then error gets resolved");
+
+        errorConditionLow1 = true;
+        errorInfo = ERROR_INFO_LOW_1;
+        checkErrorInfo = false;
+        loop();
+        REQUIRE( checkErrorInfo );
+
+        errorConditionLow1 = false;
+        errorInfo = "*";
+        errorCode = "NoError";
+        checkErrorCode = false;
+        loop();
+        REQUIRE( checkErrorCode );
     }
 
     endTransaction();

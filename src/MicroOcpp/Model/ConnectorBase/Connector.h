@@ -45,7 +45,7 @@ private:
     std::function<bool()> evseReadyInput;
     std::vector<std::function<ErrorData ()>> errorDataInputs;
     std::vector<bool> trackErrorDataInputs;
-    uint8_t currentErrorSeverity = 0;
+    int reportedErrorIndex = -1; //last reported error
     bool isFaulted();
     const char *getErrorCode();
 
