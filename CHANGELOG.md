@@ -12,6 +12,8 @@
 - Provide ChargePointStatus in API ([#309](https://github.com/matth-x/MicroOcpp/pull/309))
 - Built-in OTA over FTP ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
 - Built-in Diagnostics over FTP ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
+- Error `severity` mechanism ([#331](https://github.com/matth-x/MicroOcpp/pull/331))
+- Build flag `MO_REPORT_NOERROR` to report error recovery ([#331](https://github.com/matth-x/MicroOcpp/pull/331))
 
 ### Removed
 

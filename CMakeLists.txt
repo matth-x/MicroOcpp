@@ -149,6 +149,7 @@ set(MO_SRC_UNIT
     tests/Transactions.cpp
     tests/Certificates.cpp
     tests/FirmwareManagement.cpp
+    tests/ChargePointError.cpp
 )
 
 add_executable(mo_unit_tests
@@ -191,6 +192,7 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_MaxChargingProfilesInstalled=3
     MO_ENABLE_CERT_MGMT=1
     MO_ENABLE_CONNECTOR_LOCK=1
+    MO_REPORT_NOERROR=1
 )
 
 target_compile_options(mo_unit_tests PUBLIC
