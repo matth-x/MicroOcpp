@@ -2,7 +2,6 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include "DataTransfer.h"
 #include <string>
 
 #include <MicroOcpp/Model/ConnectorBase/ConnectorsCommon.h>
@@ -11,6 +10,7 @@
 #include <MicroOcpp/Operations/ChangeAvailability.h>
 #include <MicroOcpp/Operations/ChangeConfiguration.h>
 #include <MicroOcpp/Operations/ClearCache.h>
+#include <MicroOcpp/Operations/DataTransfer.h>
 #include <MicroOcpp/Operations/GetConfiguration.h>
 #include <MicroOcpp/Operations/RemoteStartTransaction.h>
 #include <MicroOcpp/Operations/RemoteStopTransaction.h>

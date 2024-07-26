@@ -34,8 +34,8 @@ void Request::setOperation(std::unique_ptr<Operation> msg){
     operation = std::move(msg);
 }
 
-std::unique_ptr<Operation>& Request::getOperation(){
-    return operation;
+Operation *Request::getOperation(){
+    return operation.get();
 }
 
 void Request::setTimeout(unsigned long timeout) {

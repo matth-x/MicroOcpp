@@ -134,13 +134,13 @@ void RequestQueue::sendRequest(std::unique_ptr<Request> op){
     // Don't queue up multiple StatusNotification messages for the same connectorId
     if (strcmp(op->getOperationType(), "StatusNotification") == 0)
     {
-        auto new_status_notification = static_cast<Ocpp16::StatusNotification*>(op->getOperation().get());
+        auto new_status_notification = static_cast<Ocpp16::StatusNotification*>(op->getOperation());
         initiatedRequests->drop_if([&new_status_notification] (const std::unique_ptr<Request>& operation) {
             if (strcmp(operation->getOperationType(), "StatusNotification")!= 0)
             {
                 return false;
             }
-            auto old_status_notification = static_cast<Ocpp16::StatusNotification*>(operation->getOperation().get());
+            auto old_status_notification = static_cast<Ocpp16::StatusNotification*>(operation->getOperation());
             return old_status_notification->getConnectorId() == new_status_notification->getConnectorId();
         });
     }

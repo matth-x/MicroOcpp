@@ -2,7 +2,6 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include "Configuration.h"
 #include <MicroOcpp/Version.h>
 
 #if MO_ENABLE_LOCAL_AUTH
@@ -26,10 +25,6 @@ const char* SendLocalList::getOperationType(){
 }
 
 void SendLocalList::processReq(JsonObject payload) {
-    auto supported_feature_profiles = declareConfiguration<const char*>("SupportedFeatureProfiles", "");
-    if (strstr(supported_feature_profiles->getString(), "LocalAuthListManagement") == NULL) {
-        return;
-    }
 
     if (!payload.containsKey("listVersion") || !payload.containsKey("updateType")) {
         errorCode = "FormationViolation";
@@ -65,9 +60,7 @@ std::unique_ptr<DynamicJsonDocument> SendLocalList::createConf(){
     JsonObject payload = doc->to<JsonObject>();
     auto supported_feature_profiles = declareConfiguration<const char*>("SupportedFeatureProfiles", "");
 
-    if (strstr(supported_feature_profiles->getString(), "LocalAuthListManagement") == NULL) {
-        payload["status"] = "NotSupported";
-    } else if (versionMismatch) {
+    if (versionMismatch) {
         payload["status"] = "VersionMismatch";
     } else if (updateFailure) {
         payload["status"] = "Failed";

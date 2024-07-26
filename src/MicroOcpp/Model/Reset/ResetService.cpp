@@ -53,10 +53,6 @@ void ResetService::loop() {
         MO_DBG_ERR("Reset device failure. %s", outstandingResetRetries == 0 ? "Abort" : "Retry");
 
         if (outstandingResetRetries <= 0) {
-            for (unsigned int cId = 0; cId < context.getModel().getNumConnectors(); cId++) {
-                auto connector = context.getModel().getConnector(cId);
-                connector->setAvailabilityVolatile(true);
-            }
 
             ChargePointStatus cpStatus = ChargePointStatus_UNDEFINED;
             if (context.getModel().getNumConnectors() > 0) {
