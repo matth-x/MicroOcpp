@@ -28,7 +28,6 @@ void GetLocalListVersion::processReq(JsonObject payload) {
 std::unique_ptr<DynamicJsonDocument> GetLocalListVersion::createConf(){
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
     JsonObject payload = doc->to<JsonObject>();
-    auto supported_feature_profiles = declareConfiguration<const char*>("SupportedFeatureProfiles", "");
 
     if (auto authService = model.getAuthorizationService()) {
         payload["listVersion"] = authService->getLocalListVersion();
