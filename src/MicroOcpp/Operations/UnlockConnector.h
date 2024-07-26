@@ -19,10 +19,12 @@ namespace Ocpp16 {
 class UnlockConnector : public Operation {
 private:
     Model& model;
+
+#if MO_ENABLE_CONNECTOR_LOCK
     std::function<UnlockConnectorResult ()> unlockConnector;
-    Connector *connector = nullptr;
     UnlockConnectorResult cbUnlockResult;
     unsigned long timerStart = 0; //for timeout
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
     const char *errorCode = nullptr;
 public:

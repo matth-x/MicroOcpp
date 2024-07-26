@@ -22,8 +22,10 @@
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
+#include <MicroOcpp/Model/Transactions/TransactionService.h>
 
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Connection.h>
 
 #ifndef MO_TX_CLEAN_ABORTED
 #define MO_TX_CLEAN_ABORTED 1
@@ -36,12 +38,17 @@ Connector::Connector(Context& context, int connectorId)
 
     snprintf(availabilityBoolKey, sizeof(availabilityBoolKey), MO_CONFIG_EXT_PREFIX "AVAIL_CONN_%d", connectorId);
     availabilityBool = declareConfiguration<bool>(availabilityBoolKey, true, MO_KEYVALUE_FN, false, false, false);
-    
+
+#if MO_ENABLE_CONNECTOR_LOCK
+    declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", true); //read-write
+#else
+    declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", false, CONFIGURATION_VOLATILE, true); //read-only because there is no connector lock
+#endif //MO_ENABLE_CONNECTOR_LOCK
+
     connectionTimeOutInt = declareConfiguration<int>("ConnectionTimeOut", 30);
     minimumStatusDurationInt = declareConfiguration<int>("MinimumStatusDuration", 0);
     stopTransactionOnInvalidIdBool = declareConfiguration<bool>("StopTransactionOnInvalidId", true);
     stopTransactionOnEVSideDisconnectBool = declareConfiguration<bool>("StopTransactionOnEVSideDisconnect", true);
-    declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", true, CONFIGURATION_VOLATILE, true);
     localPreAuthorizeBool = declareConfiguration<bool>("LocalPreAuthorize", false);
     localAuthorizeOfflineBool = declareConfiguration<bool>("LocalAuthorizeOffline", true);
     allowOfflineTxForUnknownIdBool = MicroOcpp::declareConfiguration<bool>("AllowOfflineTxForUnknownId", false);
@@ -66,7 +73,6 @@ Connector::Connector(Context& context, int connectorId)
         transaction = model.getTransactionStore()->getLatestTransaction(connectorId);
     } else {
         MO_DBG_ERR("must initialize TxStore before Connector");
-        (void)0;
     }
 }
 
@@ -78,75 +84,80 @@ Connector::~Connector() {
 
 ChargePointStatus Connector::getStatus() {
 
-    ChargePointStatus res = ChargePointStatus::NOT_SET;
+    ChargePointStatus res = ChargePointStatus_UNDEFINED;
 
     /*
     * Handle special case: This is the Connector for the whole CP (i.e. connectorId=0) --> only states Available, Unavailable, Faulted are possible
     */
     if (connectorId == 0) {
         if (isFaulted()) {
-            res = ChargePointStatus::Faulted;
+            res = ChargePointStatus_Faulted;
         } else if (!isOperative()) {
-            res = ChargePointStatus::Unavailable;
+            res = ChargePointStatus_Unavailable;
         } else {
-            res = ChargePointStatus::Available;
+            res = ChargePointStatus_Available;
         }
         return res;
     }
 
     if (isFaulted()) {
-        res = ChargePointStatus::Faulted;
+        res = ChargePointStatus_Faulted;
     } else if (!isOperative()) {
-        res = ChargePointStatus::Unavailable;
+        res = ChargePointStatus_Unavailable;
     } else if (transaction && transaction->isRunning()) {
         //Transaction is currently running
         if (connectorPluggedInput && !connectorPluggedInput()) { //special case when StopTransactionOnEVSideDisconnect is false
-            res = ChargePointStatus::SuspendedEV;
+            res = ChargePointStatus_SuspendedEV;
         } else if (!ocppPermitsCharge() ||
                 (evseReadyInput && !evseReadyInput())) { 
-            res = ChargePointStatus::SuspendedEVSE;
+            res = ChargePointStatus_SuspendedEVSE;
         } else if (evReadyInput && !evReadyInput()) {
-            res = ChargePointStatus::SuspendedEV;
+            res = ChargePointStatus_SuspendedEV;
         } else {
-            res = ChargePointStatus::Charging;
+            res = ChargePointStatus_Charging;
         }
-    } else if (model.getReservationService() && model.getReservationService()->getReservation(connectorId)) {
-        res = ChargePointStatus::Reserved;
-    } else if ((!transaction || !transaction->isActive()) &&                 //no transaction preparation
+    }
+    #if MO_ENABLE_RESERVATION
+    else if (model.getReservationService() && model.getReservationService()->getReservation(connectorId)) {
+        res = ChargePointStatus_Reserved;
+    }
+    #endif 
+    else if ((!transaction) &&                                           //no transaction process occupying the connector
                (!connectorPluggedInput || !connectorPluggedInput()) &&   //no vehicle plugged
                (!occupiedInput || !occupiedInput())) {                       //occupied override clear
-        res = ChargePointStatus::Available;
+        res = ChargePointStatus_Available;
     } else {
         /*
          * Either in Preparing or Finishing state. Only way to know is from previous state
          */
         const auto previous = currentStatus;
-        if (previous == ChargePointStatus::Finishing ||
-                previous == ChargePointStatus::Charging ||
-                previous == ChargePointStatus::SuspendedEV ||
-                previous == ChargePointStatus::SuspendedEVSE) {
-            res = ChargePointStatus::Finishing;
+        if (previous == ChargePointStatus_Finishing ||
+                previous == ChargePointStatus_Charging ||
+                previous == ChargePointStatus_SuspendedEV ||
+                previous == ChargePointStatus_SuspendedEVSE ||
+                (transaction && transaction->getStartSync().isRequested())) { //transaction process still occupying the connector
+            res = ChargePointStatus_Finishing;
         } else {
-            res = ChargePointStatus::Preparing;
+            res = ChargePointStatus_Preparing;
         }
     }
 
 #if MO_ENABLE_V201
     if (model.getVersion().major == 2) {
         //OCPP 2.0.1: map v1.6 status onto v2.0.1
-        if (res == ChargePointStatus::Preparing ||
-                res == ChargePointStatus::Charging ||
-                res == ChargePointStatus::SuspendedEV ||
-                res == ChargePointStatus::SuspendedEVSE ||
-                res == ChargePointStatus::Finishing) {
-            res = ChargePointStatus::Occupied;
+        if (res == ChargePointStatus_Preparing ||
+                res == ChargePointStatus_Charging ||
+                res == ChargePointStatus_SuspendedEV ||
+                res == ChargePointStatus_SuspendedEVSE ||
+                res == ChargePointStatus_Finishing) {
+            res = ChargePointStatus_Occupied;
         }
     }
 #endif
 
-    if (res == ChargePointStatus::NOT_SET) {
+    if (res == ChargePointStatus_UNDEFINED) {
         MO_DBG_DEBUG("status undefined");
-        return ChargePointStatus::Faulted; //internal error
+        return ChargePointStatus_Faulted; //internal error
     }
 
     return res;
@@ -177,7 +188,6 @@ bool Connector::ocppPermitsCharge() {
         return transaction &&
                transaction->isRunning() &&
                transaction->isActive() &&
-               !isFaulted() &&
                !suspendDeAuthorizedIdTag;
     }
 }
@@ -186,6 +196,9 @@ void Connector::loop() {
 
     if (!trackLoopExecute) {
         trackLoopExecute = true;
+        if (connectorPluggedInput) {
+            freeVendTrackPlugged = connectorPluggedInput();
+        }
     }
 
     if (transaction && transaction->isAborted() && MO_TX_CLEAN_ABORTED) {
@@ -213,7 +226,7 @@ void Connector::loop() {
         transaction = nullptr;
     }
 
-    if (transaction && transaction->isCompleted()) {
+    if (transaction && transaction->getStopSync().isRequested()) {
         MO_DBG_DEBUG("collect obsolete transaction %u-%u", connectorId, transaction->getTxNr());
         transaction = nullptr;
     }
@@ -390,48 +403,77 @@ void Connector::loop() {
             
             if (!transaction) {
                 MO_DBG_ERR("could not begin FreeVend Tx");
-                (void)0;
             }
         }
 
         freeVendTrackPlugged = connectorPluggedInput();
     }
 
-    auto status = getStatus();
+    ErrorData errorData {nullptr};
+    errorData.severity = 0;
+    int errorDataIndex = -1;
 
-    if (model.getVersion().major == 1) {
+    if (model.getVersion().major == 1 && model.getClock().now() >= MIN_TIME) {
         //OCPP 1.6: use StatusNotification to send error codes
+
+        if (reportedErrorIndex >= 0) {
+            auto error = errorDataInputs[reportedErrorIndex].operator()();
+            if (error.isError) {
+                errorData = error;
+                errorDataIndex = reportedErrorIndex;
+            }
+        }
+
         for (auto i = std::min(errorDataInputs.size(), trackErrorDataInputs.size()); i >= 1; i--) {
             auto index = i - 1;
-            auto error = errorDataInputs[index].operator()();
-            if (error.isError && !trackErrorDataInputs[index]) {
+            ErrorData error {nullptr};
+            if ((int)index != errorDataIndex) {
+                error = errorDataInputs[index].operator()();
+            } else {
+                error = errorData;
+            }
+            if (error.isError && !trackErrorDataInputs[index] && error.severity >= errorData.severity) {
                 //new error
-                auto statusNotification = makeRequest(
-                        new Ocpp16::StatusNotification(connectorId, status, model.getClock().now(), error));
-                statusNotification->setTimeout(0);
-                context.initiateRequest(std::move(statusNotification));
-
-                currentStatus = status;
-                reportedStatus = status;
-                trackErrorDataInputs[index] = true;
+                errorData = error;
+                errorDataIndex = index;
+            } else if (error.isError && error.severity > errorData.severity) {
+                errorData = error;
+                errorDataIndex = index;
             } else if (!error.isError && trackErrorDataInputs[index]) {
                 //reset error
                 trackErrorDataInputs[index] = false;
             }
         }
-    }
+
+        if (errorDataIndex != reportedErrorIndex) {
+            if (errorDataIndex >= 0 || MO_REPORT_NOERROR) {
+                reportedStatus = ChargePointStatus_UNDEFINED; //trigger sending currentStatus again with code NoError
+            } else {
+                reportedErrorIndex = -1;
+            }
+        }
+    } //if (model.getVersion().major == 1)
+
+    auto status = getStatus();
 
     if (status != currentStatus) {
+        MO_DBG_DEBUG("Status changed %s -> %s %s",
+                currentStatus == ChargePointStatus_UNDEFINED ? "" : cstrFromOcppEveState(currentStatus),
+                cstrFromOcppEveState(status),
+                minimumStatusDurationInt->getInt() ? " (will report delayed)" : "");
         currentStatus = status;
         t_statusTransition = mocpp_tick_ms();
-        MO_DBG_DEBUG("Status changed%s", minimumStatusDurationInt->getInt() ? ", will report delayed" : "");
     }
 
     if (reportedStatus != currentStatus &&
-            model.getClock().now() >= Timestamp(2010,0,0,0,0,0) &&
+            model.getClock().now() >= MIN_TIME &&
             (minimumStatusDurationInt->getInt() <= 0 || //MinimumStatusDuration disabled
             mocpp_tick_ms() - t_statusTransition >= ((unsigned long) minimumStatusDurationInt->getInt()) * 1000UL)) {
         reportedStatus = currentStatus;
+        reportedErrorIndex = errorDataIndex;
+        if (errorDataIndex >= 0) {
+            trackErrorDataInputs[errorDataIndex] = true;
+        }
         Timestamp reportedTimestamp = model.getClock().now();
         reportedTimestamp -= (mocpp_tick_ms() - t_statusTransition) / 1000UL;
 
@@ -442,7 +484,7 @@ void Connector::loop() {
                     new Ocpp201::StatusNotification(connectorId, reportedStatus, reportedTimestamp)) :
             #endif //MO_ENABLE_V201
                 makeRequest(
-                    new Ocpp16::StatusNotification(connectorId, reportedStatus, reportedTimestamp, getErrorCode()));
+                    new Ocpp16::StatusNotification(connectorId, reportedStatus, reportedTimestamp, errorData));
 
         statusNotification->setTimeout(0);
         context.initiateRequest(std::move(statusNotification));
@@ -463,8 +505,8 @@ bool Connector::isFaulted() {
 }
 
 const char *Connector::getErrorCode() {
-    for (auto i = errorDataInputs.size(); i >= 1; i--) {
-        auto error = errorDataInputs[i-1].operator()();
+    if (reportedErrorIndex >= 0) {
+        auto error = errorDataInputs[reportedErrorIndex].operator()();
         if (error.isError && error.errorCode) {
             return error.errorCode;
         }
@@ -563,7 +605,6 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
 
             if (tx) {
                 MO_DBG_DEBUG("created silent transaction");
-                (void)0;
             }
         }
     }
@@ -580,12 +621,14 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
     MO_DBG_DEBUG("Begin transaction process (%s), prepare", idTag != nullptr ? idTag : "");
     
-    AuthorizationData *localAuth = nullptr;
+    bool localAuthFound = false;
+    const char *parentIdTag = nullptr; //locally stored parentIdTag
     bool offlineBlockedAuth = false; //if offline authorization will be blocked by local auth list entry
 
     //check local OCPP whitelist
-    if (model.getAuthorizationService()) {
-        localAuth = model.getAuthorizationService()->getLocalAuthorization(idTag);
+    #if MO_ENABLE_LOCAL_AUTH
+    if (auto authService = model.getAuthorizationService()) {
+        auto localAuth = authService->getLocalAuthorization(idTag);
 
         //check authorization status
         if (localAuth && localAuth->getAuthorizationStatus() != AuthorizationStatus::Accepted) {
@@ -600,19 +643,29 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             offlineBlockedAuth = true;
             localAuth = nullptr;
         }
-    }
 
-    Reservation *reservation = nullptr;
+        if (localAuth) {
+            localAuthFound = true;
+            parentIdTag = localAuth->getParentIdTag();
+        }
+    }
+    #endif //MO_ENABLE_LOCAL_AUTH
+
+    int reservationId = -1;
     bool offlineBlockedResv = false; //if offline authorization will be blocked by reservation
 
     //check if blocked by reservation
+    #if MO_ENABLE_RESERVATION
     if (model.getReservationService()) {
-        const char *parentIdTag = localAuth ? localAuth->getParentIdTag() : nullptr;
 
-        reservation = model.getReservationService()->getReservation(
+        auto reservation = model.getReservationService()->getReservation(
                 connectorId,
                 idTag,
                 parentIdTag);
+
+        if (reservation) {
+            reservationId = reservation->getReservationId();
+        }
 
         if (reservation && !reservation->matches(
                     idTag,
@@ -629,11 +682,14 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             } else {
                 //parentIdTag unkown but local authorization failed in any case
                 MO_DBG_INFO("connector %u reserved - no local auth", connectorId);
-                localAuth = nullptr;
+                localAuthFound = false;
             }
         }
     }
-    
+    #else
+    (void)parentIdTag;
+    #endif //MO_ENABLE_RESERVATION
+
     transaction = allocateTransaction();
 
     if (!transaction) {
@@ -651,11 +707,11 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
     transaction->setBeginTimestamp(model.getClock().now());
 
     //check for local preauthorization
-    if (localAuth && localPreAuthorizeBool && localPreAuthorizeBool->getBool()) {
+    if (localAuthFound && localPreAuthorizeBool && localPreAuthorizeBool->getBool()) {
         MO_DBG_DEBUG("Begin transaction process (%s), preauthorized locally", idTag != nullptr ? idTag : "");
 
-        if (reservation) {
-            transaction->setReservationId(reservation->getReservationId());
+        if (reservationId >= 0) {
+            transaction->setReservationId(reservationId);
         }
         transaction->setAuthorized();
 
@@ -666,6 +722,12 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
     auto authorize = makeRequest(new Ocpp16::Authorize(context.getModel(), idTag));
     authorize->setTimeout(authorizationTimeoutInt && authorizationTimeoutInt->getInt() > 0 ? authorizationTimeoutInt->getInt() * 1000UL : 20UL * 1000UL);
+
+    if (!context.getConnection().isConnected()) {
+        //WebSockt unconnected. Enter offline mode immediately
+        authorize->setTimeout(1);
+    }
+
     auto tx = transaction;
     authorize->setOnReceiveConfListener([this, tx] (JsonObject response) {
         JsonObject idTagInfo = response["idTagInfo"];
@@ -679,6 +741,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             return;
         }
 
+        #if MO_ENABLE_RESERVATION
         if (model.getReservationService()) {
             auto reservation = model.getReservationService()->getReservation(
                         connectorId,
@@ -701,6 +764,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
                 }
             }
         }
+        #endif //MO_ENABLE_RESERVATION
 
         MO_DBG_DEBUG("Authorized transaction process (%s)", tx->getIdTag());
         tx->setAuthorized();
@@ -710,14 +774,10 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
     });
 
     //capture local auth and reservation check in for timeout handler
-    bool localAuthFound = localAuth;
-    bool reservationFound = reservation;
-    int reservationId = reservation ? reservation->getReservationId() : -1;
     authorize->setOnTimeoutListener([this, tx,
                 offlineBlockedAuth, 
                 offlineBlockedResv, 
                 localAuthFound,
-                reservationFound,
                 reservationId] () {
 
         if (offlineBlockedAuth) {
@@ -740,7 +800,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
         if (localAuthFound && localAuthorizeOfflineBool && localAuthorizeOfflineBool->getBool()) {
             MO_DBG_DEBUG("Offline transaction process (%s), locally authorized", tx->getIdTag());
-            if (reservationFound) {
+            if (reservationId >= 0) {
                 tx->setReservationId(reservationId);
             }
             tx->setAuthorized();
@@ -752,7 +812,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
         if (allowOfflineTxForUnknownIdBool && allowOfflineTxForUnknownIdBool->getBool()) {
             MO_DBG_DEBUG("Offline transaction process (%s), allow unknown ID", tx->getIdTag());
-            if (reservationFound) {
+            if (reservationId >= 0) {
                 tx->setReservationId(reservationId);
             }
             tx->setAuthorized();
@@ -798,7 +858,8 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
     MO_DBG_DEBUG("Begin transaction process (%s), already authorized", idTag != nullptr ? idTag : "");
 
     transaction->setAuthorized();
-    
+
+    #if MO_ENABLE_RESERVATION
     if (model.getReservationService()) {
         if (auto reservation = model.getReservationService()->getReservation(connectorId, idTag, parentIdTag)) {
             if (reservation->matches(idTag, parentIdTag)) {
@@ -806,6 +867,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
             }
         }
     }
+    #endif //MO_ENABLE_RESERVATION
 
     transaction->commit();
 
@@ -859,6 +921,28 @@ bool Connector::isOperative() {
         }
     }
 
+    #if MO_ENABLE_V201
+    if (model.getVersion().major == 2 && model.getTransactionService()) {
+        auto txService = model.getTransactionService();
+
+        if (connectorId == 0) {
+            for (unsigned int cId = 1; cId < model.getNumConnectors(); cId++) {
+                if (txService->getEvse(cId)->getTransaction() &&
+                        txService->getEvse(cId)->getTransaction()->started &&
+                        !txService->getEvse(cId)->getTransaction()->stopped) {
+                    return true;
+                }
+            }
+        } else {
+            if (txService->getEvse(connectorId)->getTransaction() &&
+                    txService->getEvse(connectorId)->getTransaction()->started &&
+                    !txService->getEvse(connectorId)->getTransaction()->stopped) {
+                return true;
+            }
+        }
+    }
+    #endif //MO_ENABLE_V201
+
     return availabilityVolatile && availabilityBool->getBool();
 }
 
@@ -894,6 +978,7 @@ void Connector::addErrorDataInput(std::function<ErrorData ()> errorDataInput) {
     this->trackErrorDataInputs.push_back(false);
 }
 
+#if MO_ENABLE_CONNECTOR_LOCK
 void Connector::setOnUnlockConnector(std::function<UnlockConnectorResult()> unlockConnector) {
     this->onUnlockConnector = unlockConnector;
 }
@@ -901,6 +986,7 @@ void Connector::setOnUnlockConnector(std::function<UnlockConnectorResult()> unlo
 std::function<UnlockConnectorResult()> Connector::getOnUnlockConnector() {
     return this->onUnlockConnector;
 }
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
 void Connector::setStartTxReadyInput(std::function<bool()> startTxReady) {
     this->startTxReadyInput = startTxReady;

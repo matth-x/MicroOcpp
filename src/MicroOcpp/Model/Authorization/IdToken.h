@@ -39,6 +39,8 @@ public:
     IdToken();
     IdToken(const char *token, Type type = Type::ISO14443);
 
+    bool parseCstr(const char *token, const char *typeCstr);
+
     const char *get() const;
     const char *getTypeCstr() const;
 

@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -117,7 +117,7 @@ bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, c
 
 bool FilesystemUtils::remove_if(std::shared_ptr<FilesystemAdapter> filesystem, std::function<bool(const char*)> pred) {
     auto ret = filesystem->ftw_root([filesystem, pred] (const char *fpath) {
-        if (pred(fpath) && fpath[0] != '.') {
+        if (pred(fpath)) {
 
             char fn [MO_MAX_PATH_SIZE] = {'\0'};
             auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "%s", fpath);
@@ -134,7 +134,6 @@ bool FilesystemUtils::remove_if(std::shared_ptr<FilesystemAdapter> filesystem, s
 
     if (ret != 0) {
         MO_DBG_ERR("ftw_root: %i", ret);
-        (void)0;
     }
 
     return ret == 0;

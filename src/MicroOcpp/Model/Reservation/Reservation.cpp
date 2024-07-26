@@ -1,6 +1,10 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_RESERVATION
 
 #include <MicroOcpp/Model/Reservation/Reservation.h>
 #include <MicroOcpp/Model/Model.h>
@@ -27,7 +31,6 @@ Reservation::Reservation(Model& model, unsigned int slot) : model(model), slot(s
 
     if (!connectorIdInt || !expiryDateRawString || !idTagString || !reservationIdInt || !parentIdTagString) {
         MO_DBG_ERR("initialization failure");
-        (void)0;
     }
 }
 
@@ -130,3 +133,5 @@ void Reservation::clear() {
 
     configuration_save();
 }
+
+#endif //MO_ENABLE_RESERVATION

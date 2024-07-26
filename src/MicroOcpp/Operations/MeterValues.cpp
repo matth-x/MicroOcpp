@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/MeterValues.h>
@@ -42,7 +42,6 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
             entries.push_back(std::move(entry));
         } else {
             MO_DBG_ERR("Energy meter reading not convertible to JSON");
-            (void)0;
         }
     }
 

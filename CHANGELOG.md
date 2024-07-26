@@ -1,33 +1,91 @@
 # Changelog
 
-## [Unreleased]
+## Unreleased
 
 ### Changed
 
-- Replace `PollResult<bool>` with enum `UnlockConnectorResult`
+- Change `MicroOcpp::ChargePointStatus` into C-style enum ([#309](https://github.com/matth-x/MicroOcpp/pull/309))
+- Connector lock disabled by default per `MO_ENABLE_CONNECTOR_LOCK` ([#312](https://github.com/matth-x/MicroOcpp/pull/312))
+
+### Added
+
+- Provide ChargePointStatus in API ([#309](https://github.com/matth-x/MicroOcpp/pull/309))
+- Built-in OTA over FTP ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
+- Built-in Diagnostics over FTP ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
+- Error `severity` mechanism ([#331](https://github.com/matth-x/MicroOcpp/pull/331))
+- Build flag `MO_REPORT_NOERROR` to report error recovery ([#331](https://github.com/matth-x/MicroOcpp/pull/331))
+
+### Removed
+
+- ESP32 built-in HTTP OTA ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
+
+### Fixed
+
+- Skip Unix files . and .. in ftw_root ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
+- Skip clock-aligned measurements when time not set
+- Hold back error StatusNotifs when time not set ([#311](https://github.com/matth-x/MicroOcpp/issues/311))
+- Don't send Available when tx occupies connector ([#315](https://github.com/matth-x/MicroOcpp/issues/315))
+- Make ChargingScheduleAllowedChargingRateUnit read-only ([#328](https://github.com/matth-x/MicroOcpp/issues/328))
+
+## [1.1.0] - 2024-05-21
+
+### Changed
+
+- Replace `PollResult<bool>` with enum `UnlockConnectorResult` ([#271](https://github.com/matth-x/MicroOcpp/pull/271))
+- Rename master branch into main
+- Tx logic directly checks if WebSocket is offline ([#282](https://github.com/matth-x/MicroOcpp/pull/282))
+- `ocppPermitsCharge` ignores Faulted state ([#279](https://github.com/matth-x/MicroOcpp/pull/279))
+- `setEnergyMeterInput` expects `int` input ([#301](https://github.com/matth-x/MicroOcpp/pull/301))
 
 ### Added
 
 - File index ([#270](https://github.com/matth-x/MicroOcpp/pull/270))
-- Config `Cst_TxStartOnPowerPathClosed` to put back TxStartPoint
-- Build flags for customizing memory limits of SmartCharging
-- Operation GetInstalledCertificateIds, UC M03 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
-- Operation DeleteCertificate, UC M04 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
-- Operation InstallCertificate, UC M05 ([#262](https://github.com/matth-x/MicroOcpp/pull/262))
+- Config `Cst_TxStartOnPowerPathClosed` to put back TxStartPoint ([#271](https://github.com/matth-x/MicroOcpp/pull/271))
+- Build flag `MO_ENABLE_RESERVATION=0` disables Reservation module ([#302](https://github.com/matth-x/MicroOcpp/pull/302))
+- Build flag `MO_ENABLE_LOCAL_AUTH=0` disables LocalAuthList module ([#303](https://github.com/matth-x/MicroOcpp/pull/303))
+- Function `bool isConnected()` in `Connection` interface ([#282](https://github.com/matth-x/MicroOcpp/pull/282))
+- Build flags for customizing memory limits of SmartCharging ([#260](https://github.com/matth-x/MicroOcpp/pull/260))
+- SConscript ([#287](https://github.com/matth-x/MicroOcpp/pull/287))
+- C-API for custom Configs store ([297](https://github.com/matth-x/MicroOcpp/pull/297))
+- Certificate Management, UCs M03 - M05 ([#262](https://github.com/matth-x/MicroOcpp/pull/262), [#274](https://github.com/matth-x/MicroOcpp/pull/274), [#292](https://github.com/matth-x/MicroOcpp/pull/292))
+- FTP Client ([#291](https://github.com/matth-x/MicroOcpp/pull/291))
 - `ProtocolVersion` selects v1.6 or v2.0.1 ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
-- Build flag `MO_ENABLE_V201` set to 1 enables OCPP 2.0.1 features ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
-    - Variables (non-persistent), UCs B05 - B06 ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
+- Build flag `MO_ENABLE_V201=1` enables OCPP 2.0.1 features ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
+    - Variables (non-persistent), UCs B05 - B07 ([#247](https://github.com/matth-x/MicroOcpp/pull/247), [#284](https://github.com/matth-x/MicroOcpp/pull/284))
     - Transactions (preview only), UCs E01 - E12 ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
     - StatusNotification compatibility ([#247](https://github.com/matth-x/MicroOcpp/pull/247))
+    - ChangeAvailability compatibility ([#285](https://github.com/matth-x/MicroOcpp/pull/285))
+    - Reset compatibility, UCs B11 - B12 ([#286](https://github.com/matth-x/MicroOcpp/pull/286))
+    - RequestStart-/StopTransaction, UCs F01 - F02 ([#289](https://github.com/matth-x/MicroOcpp/pull/289))
 
 ### Fixed
 
-- Fix defect idTag check in `endTransaction`
+- Fix defect idTag check in `endTransaction` ([#275](https://github.com/matth-x/MicroOcpp/pull/275))
 - Make field localAuthorizationList in SendLocalList optional
 - Update charging profiles when flash disabled (relates to [#260](https://github.com/matth-x/MicroOcpp/pull/260))
-- Ignore UnlockConnector when handler not set
-- Reject ChargingProfile if unit not supported
+- Ignore UnlockConnector when handler not set ([#271](https://github.com/matth-x/MicroOcpp/pull/271))
+- Reject ChargingProfile if unit not supported ([#271](https://github.com/matth-x/MicroOcpp/pull/271))
 - Fix building with debug level warn and error
+- Reduce debug output FW size overhead ([#304](https://github.com/matth-x/MicroOcpp/pull/304))
+- Fix transaction freeze in offline mode ([#279](https://github.com/matth-x/MicroOcpp/pull/279), [#287](https://github.com/matth-x/MicroOcpp/pull/287))
+- Fix compilation error caused by `PRId32` ([#279](https://github.com/matth-x/MicroOcpp/pull/279))
+- Don't load FW-mngt. module when no handlers set ([#271](https://github.com/matth-x/MicroOcpp/pull/271))
+- Change arduinoWebSockets URL param to path ([#278](https://github.com/matth-x/MicroOcpp/issues/278))
+- Avoid creating conf when operation fails ([#290](https://github.com/matth-x/MicroOcpp/pull/290))
+- Fix whitespaces in MeterValues ([#301](https://github.com/matth-x/MicroOcpp/pull/301))
+
+## [1.0.3] - 2024-04-06
+
+### Fixed
+
+- Fix nullptr access in endTransaction ([#275](https://github.com/matth-x/MicroOcpp/pull/275))
+- Backport: Fix building with debug level warn and error
+
+## [1.0.2] - 2024-03-24
+
+### Fixed
+
+- Correct MO version numbers in code (they were still `1.0.0`)
 
 ## [1.0.1] - 2024-02-27
 

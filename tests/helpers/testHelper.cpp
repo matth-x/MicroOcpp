@@ -1,11 +1,10 @@
-#include <iostream>
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
 #include <MicroOcpp.h>
 
 using namespace MicroOcpp;
-
-void cpp_console_out(const char *msg) {
-    std::cout << msg;
-}
 
 unsigned long mtime = 10000;
 unsigned long custom_timer_cb() {

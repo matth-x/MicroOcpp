@@ -177,10 +177,9 @@ public:
 
 #include <memory>
 
+#include <MicroOcpp/Model/Transactions/TransactionDefs.h>
 #include <MicroOcpp/Model/Authorization/IdToken.h>
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
-
-#define MO_TXID_LEN_MAX 36
 
 namespace MicroOcpp {
 namespace Ocpp201 {
@@ -238,23 +237,28 @@ public:
         Timeout
     };
 
-    struct SubStatus {
-        bool triggered = false;
-        SendStatus remote;
-    };
-
 //private:
-    //SubStatus parkingBayOccupancy; // not supported
-    SubStatus evConnected;
-    SubStatus authorized;
-    SubStatus dataSigned;
-    SubStatus powerPathClosed;
-    SubStatus energyTransfer;
+    /*
+     * Transaction substates. Notify server about any change when transaction is running
+     */
+    //bool trackParkingBayOccupancy; // not supported
+    bool trackEvConnected;
+    bool trackAuthorized;
+    bool trackDataSigned;
+    bool trackPowerPathClosed;
+    bool trackEnergyTransfer;
+
+    /*
+     * Transaction lifecycle
+     */
+    bool active = true; //once active is false, the tx must stop (or cannot start at all)
+    bool started = false; //if a TxEvent with event type TxStarted has been initiated
+    bool stopped = false; //if a TxEvent with event type TxEnded has been initiated
+    bool stoppedConfirmed = false; //if all TxEvents have been sent to the server (acknowledged or aborted)
 
     /*
      * Global transaction data
      */
-    bool active = true;         //once active is false, the tx must stop (or cannot start at all)
     bool isAuthorized = false;    //if the given idToken was authorized
     bool isDeauthorized = false;  //if the server revoked a local authorization
     unsigned int seqNoCounter = 0; // increment by 1 for each event
@@ -263,16 +267,19 @@ public:
     char transactionId [MO_TXID_LEN_MAX + 1] = {'\0'};
     int remoteStartId = -1;
 
-    bool idTokenTransmitted = true;
+    //if to fill next TxEvent with optional fields
+    bool notifyEvseId = false;
+    bool notifyIdToken = false;
+    bool notifyStopIdToken = false;
+    bool notifyReservationId = false;
+    bool notifyChargingState = false;
+    bool notifyRemoteStartId = false;
 
     bool evConnectionTimeoutListen = true;
-
-    bool started = false, stopped = false;
 
     StopReason stopReason = StopReason::UNDEFINED;
     TransactionEventTriggerReason stopTrigger = TransactionEventTriggerReason::UNDEFINED;
     std::unique_ptr<IdToken> stopIdToken; // if null, then stopIdToken equals idToken
-    bool stopIdTokenTransmitted = true;
 };
 
 // TransactionEventRequest (1.60.1)
@@ -306,6 +313,7 @@ public:
     int numberOfPhasesUsed = -1;
     int cableMaxCurrent = -1;
     int reservationId = -1;
+    int remoteStartId = -1;
 
     // TransactionType (2.48)
     ChargingState chargingState = ChargingState::UNDEFINED;
@@ -348,6 +356,7 @@ bool ocpp_tx_getStartTimestamp(OCPP_Transaction *tx, char *buf, size_t len);
 const char *ocpp_tx_getStopIdTag(OCPP_Transaction *tx);
 
 int32_t ocpp_tx_getMeterStop(OCPP_Transaction *tx);
+void ocpp_tx_setMeterStop(OCPP_Transaction* tx, int32_t meter);
 
 bool ocpp_tx_getStopTimestamp(OCPP_Transaction *tx, char *buf, size_t len);
 

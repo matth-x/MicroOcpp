@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef STARTTRANSACTION_H
-#define STARTTRANSACTION_H
+#ifndef MO_STARTTRANSACTION_H
+#define MO_STARTTRANSACTION_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Time.h>

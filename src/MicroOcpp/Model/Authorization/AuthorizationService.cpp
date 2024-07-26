@@ -1,6 +1,10 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
 
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
 #include <MicroOcpp/Model/ConnectorBase/Connector.h>
@@ -176,7 +180,7 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
     if (!equivalent) {
         //send error code "LocalListConflict" to server
 
-        ChargePointStatus cpStatus = ChargePointStatus::NOT_SET;
+        ChargePointStatus cpStatus = ChargePointStatus_UNDEFINED;
         if (context.getModel().getNumConnectors() > 0) {
             cpStatus = context.getModel().getConnector(0)->getStatus();
         }
@@ -192,3 +196,5 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
         context.initiateRequest(std::move(statusNotification));
     }
 }
+
+#endif //MO_ENABLE_LOCAL_AUTH

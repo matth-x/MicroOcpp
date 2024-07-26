@@ -1,8 +1,12 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include "Configuration.h"
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
+
 #include <MicroOcpp/Operations/SendLocalList.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
@@ -73,3 +77,5 @@ std::unique_ptr<DynamicJsonDocument> SendLocalList::createConf(){
     
     return doc;
 }
+
+#endif //MO_ENABLE_LOCAL_AUTH

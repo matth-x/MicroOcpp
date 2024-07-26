@@ -9,29 +9,31 @@
  * Built-in implementation of the Certificate interface for MbedTLS
  */
 
-#ifndef MO_ENABLE_MBEDTLS
-#define MO_ENABLE_MBEDTLS 0
+#include <MicroOcpp/Version.h>
+#include <MicroOcpp/Platform.h>
+
+#ifndef MO_ENABLE_CERT_STORE_MBEDTLS
+#define MO_ENABLE_CERT_STORE_MBEDTLS MO_ENABLE_MBEDTLS
 #endif
 
-#if MO_ENABLE_MBEDTLS
+#if MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
 
 /*
  * Provide certificate interpreter to facilitate cert store in C. A full implementation is only available for C++
  */
-#include <MicroOcpp/Model/Certificates/Certificate_c.h>
+#include <MicroOcpp/Model/Certificates/Certificate.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-bool ocpp_get_cert_hash(const unsigned char *cert, size_t len, enum HashAlgorithmEnumType_c hashAlg, ocpp_certificate_hash *out);
+bool ocpp_get_cert_hash(const unsigned char *cert, size_t len, enum HashAlgorithmType hashAlg, ocpp_cert_hash *out);
 
 #ifdef __cplusplus
 } //extern "C"
 
 #include <memory>
 
-#include <MicroOcpp/Model/Certificates/Certificate.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 
 #ifndef MO_CERT_FN_PREFIX
@@ -63,6 +65,6 @@ bool printCertFn(const char *certType, size_t index, char *buf, size_t bufsize);
 } //namespace MicroOcpp
 
 #endif //def __cplusplus
-#endif //MO_ENABLE_MBEDTLS
+#endif //MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
 
 #endif

@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef MO_TIME_H
@@ -11,7 +11,7 @@
 
 #include <MicroOcpp/Platform.h>
 
-#define JSONDATE_LENGTH 24
+#define JSONDATE_LENGTH 24   //max. ISO 8601 date length, excluding the terminating zero
 
 namespace MicroOcpp {
 

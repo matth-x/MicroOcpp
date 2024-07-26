@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <limits>
@@ -40,7 +40,6 @@ BootService::BootService(Context& context, std::shared_ptr<FilesystemAdapter> fi
     
     if (!preBootTransactionsBool) {
         MO_DBG_ERR("initialization error");
-        (void)0;
     }
 
     //Register message handler for TriggerMessage operation

@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef METERSTORE_H
-#define METERSTORE_H
+#ifndef MO_METERSTORE_H
+#define MO_METERSTORE_H
 
 #include <MicroOcpp/Model/Metering/MeterValue.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>

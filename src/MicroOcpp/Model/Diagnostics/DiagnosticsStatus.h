@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef DIAGNOSTICS_STATUS
-#define DIAGNOSTICS_STATUS
+#ifndef MO_DIAGNOSTICS_STATUS
+#define MO_DIAGNOSTICS_STATUS
 
 namespace MicroOcpp {
 namespace Ocpp16 {

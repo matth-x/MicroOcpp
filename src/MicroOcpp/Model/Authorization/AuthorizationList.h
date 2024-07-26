@@ -1,9 +1,13 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef AUTHORIZATIONLIST_H
-#define AUTHORIZATIONLIST_H
+#ifndef MO_AUTHORIZATIONLIST_H
+#define MO_AUTHORIZATIONLIST_H
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
 
 #include <MicroOcpp/Model/Authorization/AuthorizationData.h>
 #include <vector>
@@ -41,4 +45,5 @@ public:
 
 }
 
+#endif //MO_ENABLE_LOCAL_AUTH
 #endif

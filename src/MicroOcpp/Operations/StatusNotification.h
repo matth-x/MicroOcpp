@@ -20,7 +20,7 @@ namespace Ocpp16 {
 class StatusNotification : public Operation {
 private:
     int connectorId = 1;
-    ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
+    ChargePointStatus currentStatus = ChargePointStatus_UNDEFINED;
     Timestamp timestamp;
     ErrorData errorData;
 public:
@@ -55,7 +55,7 @@ class StatusNotification : public Operation {
 private:
     EvseId evseId;
     Timestamp timestamp;
-    ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
+    ChargePointStatus currentStatus = ChargePointStatus_UNDEFINED;
 public:
     StatusNotification(EvseId evseId, ChargePointStatus currentStatus, const Timestamp &timestamp);
 

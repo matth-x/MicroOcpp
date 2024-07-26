@@ -53,7 +53,7 @@ PlatformIO package: [MicroOcpp](https://registry.platformio.org/libraries/matth-
 
 MicroOcpp is an implementation of the OCPP communication behavior. It automatically initiates the corresponding OCPP operations once the hardware status changes or the RFID input is updated with a new value. Conversely it processes new data from the server, stores it locally and updates the hardware controls when applicable.
 
-Please take `examples/ESP/main.cpp` as the starting point for the first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. The API documentation can be found in [`MicroOcpp.h`](https://github.com/matth-x/MicroOcpp/blob/master/src/MicroOcpp.h). Also check out the [Docs](https://matth-x.github.io/MicroOcpp).
+Please take `examples/ESP/main.cpp` as the starting point for the first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. The API documentation can be found in [`MicroOcpp.h`](https://github.com/matth-x/MicroOcpp/blob/main/src/MicroOcpp.h). Also check out the [Docs](https://matth-x.github.io/MicroOcpp).
 
 ### Dependencies
 
@@ -69,16 +69,29 @@ If using the built-in certificate store (to enable, set build flag `MO_ENABLE_MB
 
 - [Mbed-TLS/mbedtls](https://github.com/Mbed-TLS/mbedtls) (version `2.28.1`)
 
-In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/MicroOcpp@1.0.0` in the PIO library manager.
+In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/MicroOcpp@1.1.0` in the PIO library manager.
 
 ## OCPP 2.0.1 and ISO 15118
 
-MicroOcpp will be upgraded to OCPP 2.0.1 soon. The API has already been prepared for transitioning between both versions, so an integration of the current library version will also be functional with the 2.0.1 upgrade.
+The following OCPP 2.0.1 use cases are implemented:
 
-ISO 15118 defines some use cases which include a message exchange between the charger and server. This library facilitates the integration of ISO 15118 by handling its OCPP-side communication. A public demonstration will follow with the first collaboration on an open OCPP 2.0.1 + ISO 15118 integration.
+| UC | Description | Note |
+| :--- | :--- | :--- |
+| M03 - M05 | Certificate management | Enable Mbed-TLS to use the built-in certificate store |
+| B05 - B07 | Variables | |
+| B01 - B04<br>B11 - B12 | Provisioning | Ported from OCPP 1.6 |
+| E01 - E12 | Transactions | |
+| F01 - F02 | Remote Start/Stop Tx | |
+| - | Protocol negotiation | The charger can select the OCPP version at runtime |
 
-## Contact details
+The OCPP 2.0.1 features are in an alpha development stage (no persistency yet). By default, they are disabled and excluded from the build, so they have no impact on the firmware size. To enable, set the build flag `MO_ENABLE_V201=1` and initialize the library with the ProtocolVersion parameter `2.0.1`  (see [this example](https://github.com/matth-x/MicroOcppSimulator/blob/657e606c3b178d3add242935d413c72624130ff3/src/main.cpp#L43-L47) in the Simulator).
 
-I hope the given documentation and guidance can help you to successfully integrate an OCPP controller into your EVSE. I will be happy if you reach out!
+An integration of the library for OCPP 1.6 will also be functional with the 2.0.1 upgrade. It works with the same API in MicroOcpp.h.
 
-:envelope: : matthias [A⊤] arduino-ocpp [DО⊤] com
+ISO 15118 defines some use cases which include a message exchange between the charger and server. This library facilitates the integration of ISO 15118 by handling its OCPP-side communication.
+
+## Contact
+
+If you have further questions, feel free to reach out!
+
+:envelope: : matthias [A⊤] micro-ocpp [DО⊤] com

@@ -16,6 +16,10 @@
 #include <functional>
 #include <memory>
 
+#ifndef MO_REPORT_NOERROR
+#define MO_REPORT_NOERROR 0
+#endif
+
 namespace MicroOcpp {
 
 class Context;
@@ -41,15 +45,18 @@ private:
     std::function<bool()> evseReadyInput;
     std::vector<std::function<ErrorData ()>> errorDataInputs;
     std::vector<bool> trackErrorDataInputs;
+    int reportedErrorIndex = -1; //last reported error
     bool isFaulted();
     const char *getErrorCode();
 
-    ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
+    ChargePointStatus currentStatus = ChargePointStatus_UNDEFINED;
     std::shared_ptr<Configuration> minimumStatusDurationInt; //in seconds
-    ChargePointStatus reportedStatus = ChargePointStatus::NOT_SET;
+    ChargePointStatus reportedStatus = ChargePointStatus_UNDEFINED;
     unsigned long t_statusTransition = 0;
 
+#if MO_ENABLE_CONNECTOR_LOCK
     std::function<UnlockConnectorResult()> onUnlockConnector;
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
     std::function<bool()> startTxReadyInput; //the StartTx request will be delayed while this Input is false
     std::function<bool()> stopTxReadyInput; //the StopTx request will be delayed while this Input is false
@@ -118,8 +125,10 @@ public:
 
     bool ocppPermitsCharge();
 
+#if MO_ENABLE_CONNECTOR_LOCK
     void setOnUnlockConnector(std::function<UnlockConnectorResult()> unlockConnector);
     std::function<UnlockConnectorResult()> getOnUnlockConnector();
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
     void setStartTxReadyInput(std::function<bool()> startTxReady);
     void setStopTxReadyInput(std::function<bool()> stopTxReady);

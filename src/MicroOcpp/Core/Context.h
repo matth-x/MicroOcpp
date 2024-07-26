@@ -9,6 +9,7 @@
 
 #include <MicroOcpp/Core/OperationRegistry.h>
 #include <MicroOcpp/Core/RequestQueue.h>
+#include <MicroOcpp/Core/Ftp.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Version.h>
 
@@ -25,6 +26,8 @@ private:
     RequestQueue reqQueue;
 
     std::unique_ptr<RequestQueue> preBootQueue;
+
+    std::unique_ptr<FtpClient> ftpClient;
 
 public:
     Context(Connection& connection, std::shared_ptr<FilesystemAdapter> filesystem, uint16_t bootNr, ProtocolVersion version);
@@ -44,6 +47,11 @@ public:
     OperationRegistry& getOperationRegistry();
 
     const ProtocolVersion& getVersion();
+
+    Connection& getConnection();
+
+    void setFtpClient(std::unique_ptr<FtpClient> ftpClient);
+    FtpClient *getFtpClient();
 };
 
 } //end namespace MicroOcpp

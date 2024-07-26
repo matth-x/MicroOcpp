@@ -159,6 +159,21 @@ void SmartChargingConnector::loop(){
 
         calculateLimit(tnow, limit, nextChange);
 
+#if MO_DBG_LEVEL >= MO_DL_INFO
+        {
+            char timestamp1[JSONDATE_LENGTH + 1] = {'\0'};
+            tnow.toJsonString(timestamp1, JSONDATE_LENGTH + 1);
+            char timestamp2[JSONDATE_LENGTH + 1] = {'\0'};
+            nextChange.toJsonString(timestamp2, JSONDATE_LENGTH + 1);
+            MO_DBG_INFO("New limit for connector %u, scheduled at = %s, nextChange = %s, limit = {%.1f, %.1f, %i}",
+                                connectorId,
+                                timestamp1, timestamp2,
+                                limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
+                                limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
+                                limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
+        }
+#endif
+
         if (trackLimitOutput != limit) {
             if (limitOutput) {
 
@@ -175,7 +190,6 @@ void SmartChargingConnector::loop(){
 void SmartChargingConnector::setSmartChargingOutput(std::function<void(float,float,int)> limitOutput) {
     if (this->limitOutput) {
         MO_DBG_WARN("replacing existing SmartChargingOutput");
-        (void)0;
     }
     this->limitOutput = limitOutput;
 }
@@ -304,7 +318,7 @@ SmartChargingService::SmartChargingService(Context& context, std::shared_ptr<Fil
     }
 
     declareConfiguration<int>("ChargeProfileMaxStackLevel", MO_ChargeProfileMaxStackLevel, CONFIGURATION_VOLATILE, true);
-    declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE);
+    declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE, true);
     declareConfiguration<int>("ChargingScheduleMaxPeriods", MO_ChargingScheduleMaxPeriods, CONFIGURATION_VOLATILE, true);
     declareConfiguration<int>("MaxChargingProfilesInstalled", MO_MaxChargingProfilesInstalled, CONFIGURATION_VOLATILE, true);
 
@@ -498,16 +512,19 @@ void SmartChargingService::loop(){
 
         calculateLimit(tnow, limit, nextChange);
 
-#if (MO_DBG_LEVEL >= MO_DL_INFO)
-        char timestamp1[JSONDATE_LENGTH + 1] = {'\0'};
-        tnow.toJsonString(timestamp1, JSONDATE_LENGTH + 1);
-        char timestamp2[JSONDATE_LENGTH + 1] = {'\0'};
-        nextChange.toJsonString(timestamp2, JSONDATE_LENGTH + 1);
-        MO_DBG_INFO("New limit for connector 1, scheduled at = %s, nextChange = %s, limit = {%f,%f,%i}",
-                            timestamp1, timestamp2,
-                            limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
-                            limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
-                            limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
+#if MO_DBG_LEVEL >= MO_DL_INFO
+        {
+            char timestamp1[JSONDATE_LENGTH + 1] = {'\0'};
+            tnow.toJsonString(timestamp1, JSONDATE_LENGTH + 1);
+            char timestamp2[JSONDATE_LENGTH + 1] = {'\0'};
+            nextChange.toJsonString(timestamp2, JSONDATE_LENGTH + 1);
+            MO_DBG_INFO("New limit for connector %u, scheduled at = %s, nextChange = %s, limit = {%.1f, %.1f, %i}",
+                                0,
+                                timestamp1, timestamp2,
+                                limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
+                                limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
+                                limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
+        }
 #endif
 
         if (trackLimitOutput != limit) {
@@ -532,7 +549,6 @@ void SmartChargingService::setSmartChargingOutput(unsigned int connectorId, std:
     if (connectorId == 0) {
         if (this->limitOutput) {
             MO_DBG_WARN("replacing existing SmartChargingOutput");
-            (void)0;
         }
         this->limitOutput = limitOutput;
     } else {

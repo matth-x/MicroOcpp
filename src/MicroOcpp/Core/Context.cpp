@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/Context.h>
@@ -67,4 +67,16 @@ OperationRegistry& Context::getOperationRegistry() {
 
 const ProtocolVersion& Context::getVersion() {
     return model.getVersion();
+}
+
+Connection& Context::getConnection() {
+    return connection;
+}
+
+void Context::setFtpClient(std::unique_ptr<FtpClient> ftpClient) {
+    this->ftpClient = std::move(ftpClient);
+}
+
+FtpClient *Context::getFtpClient() {
+    return ftpClient.get();
 }

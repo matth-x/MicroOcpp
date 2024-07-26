@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/RequestQueue.h>
@@ -257,10 +257,8 @@ void RequestQueue::receiveResponse(JsonArray json) {
         //didn't find matching Request
         if (json[0] == MESSAGE_TYPE_CALLERROR) {
             MO_DBG_DEBUG("Received CALLERROR did not abort a pending operation");
-            (void)0;
         } else {
             MO_DBG_WARN("Received response doesn't match any pending operation");
-            (void)0;
         }
     }
 }

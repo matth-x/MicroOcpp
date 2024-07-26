@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/ConfigurationContainerFlash.h>
@@ -181,7 +181,6 @@ public:
                 }
             } else {
                 MO_DBG_ERR("OOM: %s", key);
-                (void)0;
             }
         }
 

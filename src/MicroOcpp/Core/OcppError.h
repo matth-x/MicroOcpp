@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef OCPPERROR_H
-#define OCPPERROR_H
+#ifndef MO_OCPPERROR_H
+#define MO_OCPPERROR_H
 
 #include <ArduinoJson.h>
 

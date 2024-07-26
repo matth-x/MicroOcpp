@@ -1,6 +1,6 @@
 {
     "name": "MicroOcpp",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "description": "OCPP 1.6 Client for microcontrollers",
     "keywords": "OCPP, 1.6, OCPP 1.6, Smart Energy, Smart Charging, client, ESP8266, ESP32, Arduino, esp-idf, EVSE, Charge Point",
     "repository":
@@ -36,17 +36,18 @@
     "export": {
         "include":
         [
-            "src/*",
+            "docs/*",
             "examples/*",
-            "platformio.ini",
+            "src/*",
+            "CHANGELOG.md",
+            "CMakeLists.txt",
             "library.json",
             "library.properties",
-            "README.md",
-            "CMakeLists.txt",
-            "docs/*",
             "LICENSE",
             "mkdocs.yml",
-            "CHANGELOG.md"
+            "platformio.ini",
+            "README.md",
+            "SConscript.py"
         ]
     },
 

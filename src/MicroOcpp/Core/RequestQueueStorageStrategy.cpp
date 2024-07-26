@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/RequestQueueStorageStrategy.h>
@@ -42,7 +42,6 @@ void VolatileRequestQueue::push_back(std::unique_ptr<Request> op) {
 
     if (queue.size() >= MO_OPERATIONCACHE_MAXSIZE) {
         MO_DBG_WARN("unsafe number of cached operations");
-        (void)0;
     }
 
     queue.push_back(std::move(op));
@@ -59,14 +58,6 @@ PersistentRequestQueue::~PersistentRequestQueue() {
 
 }
 
-Request *PersistentRequestQueue::front() {
-    if (!head && !tailCache.empty()) {
-        MO_DBG_ERR("invalid state");
-        pop_front();
-    }
-    return head.get();
-}
-
 void PersistentRequestQueue::pop_front() {
     
     if (head && head->getStorageHandler() && head->getStorageHandler()->getOpNr() >= 0) {
@@ -75,6 +66,20 @@ void PersistentRequestQueue::pop_front() {
     }
 
     head.reset();
+}
+
+Request *PersistentRequestQueue::front() {
+
+    if (head) {
+        // head still loaded
+        return head.get();
+    }
+
+    // check if there are any more operations
+    if (tailCache.empty() && opStore.getOpBegin() == opStore.getOpEnd()) {
+        // no more operations
+        return nullptr;
+    }
 
     unsigned int nextOpNr = opStore.getOpBegin();
 
@@ -98,12 +103,12 @@ void PersistentRequestQueue::pop_front() {
         tailCache.pop_front();
     } else {
         //cache miss -> case B) or A) -> try to fetch operation from flash (check for case B)) or take first cached element as front
-        auto storageHandler = opStore.makeOpHandler();
         
         std::unique_ptr<Request> fetched;
 
         unsigned int range = (opStore.getOpEnd() + MO_MAX_OPNR - nextOpNr) % MO_MAX_OPNR;
         for (size_t i = 0; i < range; i++) {
+            auto storageHandler = opStore.makeOpHandler();
             bool exists = storageHandler->restore(nextOpNr);
             if (exists) {
                 //case B) -> load operation from flash and take it as front element
@@ -143,29 +148,26 @@ void PersistentRequestQueue::pop_front() {
         }
     }
 
-    MO_DBG_VERBOSE("popped front");
+    MO_DBG_VERBOSE("reloaded head");
+
+    if (!head) {
+        MO_DBG_VERBOSE("illegal state");
+    }
+
+    return head.get();
 }
 
 void PersistentRequestQueue::push_back(std::unique_ptr<Request> op) {
 
     op->initiate(opStore.makeOpHandler());
 
-    if (!head && !tailCache.empty()) {
-        MO_DBG_ERR("invalid state");
-        pop_front();
+    if (tailCache.size() >= MO_OPERATIONCACHE_MAXSIZE) {
+        MO_DBG_INFO("Replace cached operation (cache full): %s", tailCache.front()->getOperationType());
+        tailCache.front()->executeTimeout();
+        tailCache.pop_front();
     }
 
-    if (!head) {
-        head = std::move(op);
-    } else {
-        if (tailCache.size() >= MO_OPERATIONCACHE_MAXSIZE) {
-            MO_DBG_INFO("Replace cached operation (cache full): %s", tailCache.front()->getOperationType());
-            tailCache.front()->executeTimeout();
-            tailCache.pop_front();
-        }
-
-        tailCache.push_back(std::move(op));
-    }
+    tailCache.push_back(std::move(op));
 }
 
 void PersistentRequestQueue::drop_if(std::function<bool(std::unique_ptr<Request>&)> pred) {

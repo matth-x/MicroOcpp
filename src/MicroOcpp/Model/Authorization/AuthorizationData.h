@@ -1,9 +1,13 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef AUTHORIZATIONDATA_H
-#define AUTHORIZATIONDATA_H
+#ifndef MO_AUTHORIZATIONDATA_H
+#define MO_AUTHORIZATIONDATA_H
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
 
 #include <MicroOcpp/Operations/CiStrings.h>
 #include <MicroOcpp/Core/Time.h>
@@ -64,4 +68,5 @@ public:
 
 }
 
+#endif //MO_ENABLE_LOCAL_AUTH
 #endif

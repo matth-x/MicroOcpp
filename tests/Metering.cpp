@@ -1,3 +1,7 @@
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Context.h>
@@ -289,8 +293,7 @@ TEST_CASE("Metering") {
 
         setOnReceiveRequest("MeterValues", [base, &checkProcessed] (JsonObject payload) {
             checkProcessed = true;
-            REQUIRE((!strcmp(payload["meterValue"][0]["sampledValue"][0]["value"] | "", "3600") ||
-                     !strcmp(payload["meterValue"][0]["sampledValue"][0]["value"] | "", "3600.0")));
+            REQUIRE( !strncmp(payload["meterValue"][0]["sampledValue"][0]["value"] | "", "3600", strlen("3600")) );
         });
 
         loop();

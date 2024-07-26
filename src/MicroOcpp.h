@@ -17,6 +17,7 @@
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Model/ConnectorBase/Notification.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
+#include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
 #include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
 #include <MicroOcpp/Version.h>
 #include <MicroOcpp/Model/Certificates/Certificate.h>
@@ -96,7 +97,7 @@ private:
  * Initialize the library with a WebSocket connection which is configured with protocol=ocpp1.6
  * (=Connection), EVSE voltage and filesystem configuration. This library requires that you handle
  * establishing the connection and keeping it alive. Please refer to
- * https://github.com/matth-x/MicroOcpp/tree/master/examples/ESP-TLS for an example how to use it.
+ * https://github.com/matth-x/MicroOcpp/tree/main/examples/ESP-TLS for an example how to use it.
  * 
  * This GitHub project also delivers an Connection implementation based on links2004/WebSockets. If
  * you need another WebSockets implementation, you can subclass the Connection class and pass it to
@@ -110,8 +111,7 @@ void mocpp_initialize(
             std::shared_ptr<MicroOcpp::FilesystemAdapter> filesystem =
                 MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail), //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
             bool autoRecover = false, //automatically sanitize the local data store when the lib detects recurring crashes. Not recommended during development
-            MicroOcpp::ProtocolVersion version = MicroOcpp::ProtocolVersion(1,6),
-            std::unique_ptr<MicroOcpp::CertificateStore> certStore = nullptr); //optionally use custom Cert Store (default depends on MbedTLS)
+            MicroOcpp::ProtocolVersion version = MicroOcpp::ProtocolVersion(1,6));
 
 /*
  * Stop the OCPP library and release allocated resources.
@@ -246,6 +246,11 @@ std::shared_ptr<MicroOcpp::Transaction>& getTransaction(unsigned int connectorId
 bool ocppPermitsCharge(unsigned int connectorId = 1);
 
 /*
+ * Returns the latest ChargePointStatus as reported via StatusNotification (standard OCPP data type)
+ */
+ChargePointStatus getChargePointStatus(unsigned int connectorId = 1);
+
+/*
  * Define the Inputs and Outputs of this library.
  * 
  * This library interacts with the hardware of your charger by Inputs and Outputs. Inputs and Outputs
@@ -267,12 +272,14 @@ bool ocppPermitsCharge(unsigned int connectorId = 1);
 
 void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int connectorId = 1); //Input about if an EV is plugged to this EVSE
 
-void setEnergyMeterInput(std::function<float()> energyInput, unsigned int connectorId = 1); //Input of the electricity meter register
+void setEnergyMeterInput(std::function<int()> energyInput, unsigned int connectorId = 1); //Input of the electricity meter register in Wh
 
-void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId = 1); //Input of the power meter reading
+void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId = 1); //Input of the power meter reading in W
 
-//Smart Charging Output, alternative for Watts only, Current only, or Watts x Current x numberPhases. Only one
-//of them can be set at a time
+//Smart Charging Output, alternative for Watts only, Current only, or Watts x Current x numberPhases.
+//Only one of the Smart Charging Outputs can be set at a time.
+//MO will execute the callback whenever the OCPP charging limit changes and will pass the limit for now
+//to the callback. If OCPP does not define a limit, then MO passes the value -1 for "undefined".
 void setSmartChargingPowerOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId = 1); //Output (in Watts) for the Smart Charging limit
 void setSmartChargingCurrentOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId = 1); //Output (in Amps) for the Smart Charging limit
 void setSmartChargingOutput(std::function<void(float,float,int)> chargingLimitOutput, unsigned int connectorId = 1); //Output (in Watts, Amps, numberPhases) for the Smart Charging limit
@@ -302,15 +309,17 @@ void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connect
 
 void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcpp::TxNotification)> notificationOutput, unsigned int connectorId = 1); //called when transaction state changes (see TxNotification for possible events). Transaction can be null
 
+#if MO_ENABLE_CONNECTOR_LOCK
 /*
  * Set an InputOutput (reads and sets information at the same time) for forcing to unlock the
  * connector. Called as part of the OCPP operation "UnlockConnector"
  * Return values:
- *     - UnlockConnectorResult_Pending if action needs more time to complete (MO will call this cb again later or eventually timeout)
+ *     - UnlockConnectorResult_Pending if action needs more time to complete (MO will call this cb again later or eventually time out)
  *     - UnlockConnectorResult_Unlocked if successful
  *     - UnlockConnectorResult_UnlockFailed if not successful (e.g. lock stuck)
  */
 void setOnUnlockConnectorInOut(std::function<UnlockConnectorResult()> onUnlockConnectorInOut, unsigned int connectorId = 1);
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
 /*
  * Access further information about the internal state of the library
@@ -355,6 +364,22 @@ MicroOcpp::FirmwareService *getFirmwareService();
  * To use, add `#include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>`
  */
 MicroOcpp::DiagnosticsService *getDiagnosticsService();
+
+#if MO_ENABLE_CERT_MGMT
+/*
+ * Set a custom Certificate Store which implements certificate updates on the host system. 
+ * MicroOcpp will forward OCPP-side update requests to the certificate store, as well as
+ * query the certificate store upon server request.
+ *
+ * To enable OCPP-side certificate updates (UCs M03 - M05), set the build flag
+ * MO_ENABLE_CERT_MGMT=1 so that this function becomes accessible.
+ * 
+ * To use the built-in certificate store (depends on MbedTLS), set the build flag
+ * MO_ENABLE_MBEDTLS=1. To not use the built-in implementation, but still enable MbedTLS,
+ * additionally set MO_ENABLE_CERT_STORE_MBEDTLS=0.
+ */
+void setCertificateStore(std::unique_ptr<MicroOcpp::CertificateStore> certStore);
+#endif //MO_ENABLE_CERT_MGMT
 
 /*
  * Add features and customize the behavior of the OCPP client

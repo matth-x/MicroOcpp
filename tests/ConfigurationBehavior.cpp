@@ -1,3 +1,7 @@
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Context.h>
@@ -6,6 +10,7 @@
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
 #include <MicroOcpp/Debug.h>
+#include <MicroOcpp/Version.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 
@@ -80,7 +85,7 @@ TEST_CASE( "Configuration Behavior" ) {
             setConnectorPluggedInput([] () {return false;});
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
 
         SECTION("set false") {
@@ -89,12 +94,12 @@ TEST_CASE( "Configuration Behavior" ) {
             setConnectorPluggedInput([] () {return false;});
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::SuspendedEV);
+            REQUIRE(connector->getStatus() == ChargePointStatus_SuspendedEV);
 
             endTransaction();
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
     }
 
@@ -110,12 +115,12 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("mIdTag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
 
             beginTransaction_authorized("mIdTag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
 
         SECTION("set false") {
@@ -124,17 +129,17 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("mIdTag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
 
             beginTransaction_authorized("mIdTag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::SuspendedEVSE);
+            REQUIRE(connector->getStatus() == ChargePointStatus_SuspendedEVSE);
 
             endTransaction();
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
     }
 
@@ -143,7 +148,7 @@ TEST_CASE( "Configuration Behavior" ) {
         auto authorizationTimeoutInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", 1);
         authorizationTimeoutInt->setInt(1); //try normal Authorize for 1s, then enter offline mode
 
-        loopback.setConnected(false); //connection loss
+        loopback.setOnline(false); //connection loss
 
         SECTION("set true") {
             configBool->setBool(true);
@@ -151,29 +156,30 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("mIdTag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
 
             endTransaction();
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
 
         SECTION("set false") {
             configBool->setBool(false);
 
             beginTransaction("mIdTag");
-            REQUIRE(connector->getStatus() == ChargePointStatus::Preparing);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Preparing);
 
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
 
         endTransaction();
-        loopback.setConnected(true);
+        loopback.setOnline(true);
     }
 
+#if MO_ENABLE_LOCAL_AUTH
     SECTION("LocalPreAuthorize") {
         auto configBool = declareConfiguration<bool>("LocalPreAuthorize", true);
         auto authorizationTimeoutInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20);
@@ -187,7 +193,7 @@ TEST_CASE( "Configuration Behavior" ) {
         loopback.sendTXT(localListMsg, strlen(localListMsg));
         loop();
 
-        loopback.setConnected(false); //connection loss
+        loopback.setOnline(false); //connection loss
 
         SECTION("set true - accepted idtag") {
             configBool->setBool(true);
@@ -195,7 +201,7 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("local-idtag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
         }
 
         SECTION("set false") {
@@ -204,18 +210,19 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("local-idtag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Preparing);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Preparing);
 
-            loopback.setConnected(true);
+            loopback.setOnline(true);
             mtime += 20000; //Authorize will be retried after a few seconds
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
         }
 
         endTransaction();
-        loopback.setConnected(true);
+        loopback.setOnline(true);
     }
+#endif //MO_ENABLE_LOCAL_AUTH
 
     mocpp_deinitialize();
 }

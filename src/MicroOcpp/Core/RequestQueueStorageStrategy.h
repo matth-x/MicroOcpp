@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef REQUESTQUEUESTORAGESTRATEGY_H
-#define REQUESTQUEUESTORAGESTRATEGY_H
+#ifndef MO_REQUESTQUEUESTORAGESTRATEGY_H
+#define MO_REQUESTQUEUESTORAGESTRATEGY_H
 
 #include <MicroOcpp/Core/RequestStore.h>
 

@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef GETCOMPOSITESCHEDULE_H
-#define GETCOMPOSITESCHEDULE_H
+#ifndef MO_GETCOMPOSITESCHEDULE_H
+#define MO_GETCOMPOSITESCHEDULE_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Time.h>

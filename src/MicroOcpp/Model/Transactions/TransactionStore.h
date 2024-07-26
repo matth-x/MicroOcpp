@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef TRANSACTIONSTORE_H
-#define TRANSACTIONSTORE_H
+#ifndef MO_TRANSACTIONSTORE_H
+#define MO_TRANSACTIONSTORE_H
 
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Core/Configuration.h>

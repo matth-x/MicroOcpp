@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef METERING_CONNECTOR_H
-#define METERING_CONNECTOR_H
+#ifndef MO_METERING_CONNECTOR_H
+#define MO_METERING_CONNECTOR_H
 
 #include <functional>
 #include <memory>

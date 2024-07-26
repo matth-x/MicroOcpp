@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef TRANSACTIONDESERIALIZE_H
-#define TRANSACTIONDESERIALIZE_H
+#ifndef MO_TRANSACTIONDESERIALIZE_H
+#define MO_TRANSACTIONDESERIALIZE_H
 
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 

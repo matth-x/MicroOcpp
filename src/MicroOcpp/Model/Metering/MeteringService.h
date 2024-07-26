@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef METERINGSERVICE_H
-#define METERINGSERVICE_H
+#ifndef MO_METERINGSERVICE_H
+#define MO_METERINGSERVICE_H
 
 #include <functional>
 #include <vector>

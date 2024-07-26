@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef FIRMWARE_STATUS
-#define FIRMWARE_STATUS
+#ifndef MO_FIRMWARE_STATUS
+#define MO_FIRMWARE_STATUS
 
 namespace MicroOcpp {
 namespace Ocpp16 {

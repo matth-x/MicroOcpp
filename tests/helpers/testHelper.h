@@ -1,12 +1,9 @@
-#ifndef CPP_CONSOLE_OUT
-#define CPP_CONSOLE_OUT
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
 
-/**
-* Prints a string to the c standart console
-*
-* @param msg pointer to the string
-*/
-void cpp_console_out(const char *msg);   
+#ifndef MO_TESTHELPER_H
+#define MO_TESTHELPER_H
 
 extern unsigned long mtime;
 unsigned long custom_timer_cb();

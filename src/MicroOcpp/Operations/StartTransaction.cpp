@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/StartTransaction.h>
@@ -10,6 +10,7 @@
 #include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Debug.h>
+#include <MicroOcpp/Version.h>
 
 using MicroOcpp::Ocpp16::StartTransaction;
 
@@ -156,9 +157,11 @@ void StartTransaction::processConf(JsonObject payload) {
     transaction->getStartSync().confirm();
     transaction->commit();
 
+#if MO_ENABLE_LOCAL_AUTH
     if (auto authService = model.getAuthorizationService()) {
         authService->notifyAuthorization(transaction->getIdTag(), payload["idTagInfo"]);
     }
+#endif //MO_ENABLE_LOCAL_AUTH
 }
 
 void StartTransaction::processReq(JsonObject payload) {

@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef MO_TRANSACTIONEVENT_H
@@ -30,6 +30,8 @@ public:
     TransactionEvent(Model& model, std::shared_ptr<TransactionEventData> txEvent);
 
     const char* getOperationType() override;
+
+    void initiate(StoredOperationHandler *opStore) override;
 
     std::unique_ptr<DynamicJsonDocument> createReq() override;
 

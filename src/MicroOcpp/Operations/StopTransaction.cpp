@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/StopTransaction.h>
@@ -11,6 +11,7 @@
 #include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Debug.h>
+#include <MicroOcpp/Version.h>
 
 using MicroOcpp::Ocpp16::StopTransaction;
 
@@ -123,8 +124,14 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
             transaction->setStopTimestamp(transaction->getStartTimestamp() + 1); //1s behind startTime to keep order in backend DB
         } else {
             MO_DBG_ERR("failed to determine StopTx timestamp");
-            (void)0; //send invalid value
+            //send invalid value
         }
+    }
+
+    // if StopTx timestamp is before StartTx timestamp, something probably went wrong. Restore reasonable temporal order
+    if (transaction->getStopTimestamp() < transaction->getStartTimestamp()) {
+        MO_DBG_WARN("set stopTime = startTime because stopTime was before startTime");
+        transaction->setStopTimestamp(transaction->getStartTimestamp() + 1); //1s behind startTime to keep order in backend DB
     }
 
     for (auto mv = transactionData.begin(); mv != transactionData.end(); mv++) {
@@ -196,9 +203,11 @@ void StopTransaction::processConf(JsonObject payload) {
 
     MO_DBG_INFO("Request has been accepted!");
 
+#if MO_ENABLE_LOCAL_AUTH
     if (auto authService = model.getAuthorizationService()) {
         authService->notifyAuthorization(transaction->getIdTag(), payload["idTagInfo"]);
     }
+#endif //MO_ENABLE_LOCAL_AUTH
 }
 
 bool StopTransaction::processErr(const char *code, const char *description, JsonObject details) {

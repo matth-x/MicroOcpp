@@ -1,18 +1,20 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Platform.h>
 
 #ifdef MO_CUSTOM_CONSOLE
 
+char _mo_console_msg_buf [MO_CUSTOM_CONSOLE_MAXMSGSIZE];
+
 namespace MicroOcpp {
 void (*mocpp_console_out_impl)(const char *msg) = nullptr;
 }
 
-void MicroOcpp::mocpp_console_out(const char *msg) {
-    if (mocpp_console_out_impl) {
-        mocpp_console_out_impl(msg);
+void _mo_console_out(const char *msg) {
+    if (MicroOcpp::mocpp_console_out_impl) {
+        MicroOcpp::mocpp_console_out_impl(msg);
     }
 }
 
@@ -79,12 +81,4 @@ unsigned long mocpp_tick_ms_unix() {
     return (unsigned long) ms.count();
 }
 #endif
-#endif
-
-#if MO_PLATFORM != MO_PLATFORM_ARDUINO
-void dtostrf(float value, int min_width, int num_digits_after_decimal, char *target){
-    char fmt[20];
-    sprintf(fmt, "%%%d.%df", min_width, num_digits_after_decimal);
-    sprintf(target, fmt, value);
-}
 #endif

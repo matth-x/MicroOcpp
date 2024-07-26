@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/Time.h>
@@ -190,7 +190,7 @@ Timestamp &Timestamp::operator+=(int secs) {
     }
 
     return *this;
-};
+}
 
 Timestamp &Timestamp::addMilliseconds(int val) {
 

@@ -1,8 +1,12 @@
+# matth-x/MicroOcpp
+# Copyright Matthias Akstaller 2019 - 2024
+# MIT License
+
 name: documentation 
 on:
   push:
     branches:
-      - master
+      - main
 permissions:
   contents: write
 jobs:

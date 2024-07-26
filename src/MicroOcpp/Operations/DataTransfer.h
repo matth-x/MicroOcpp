@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef DATATRANSFER_H
-#define DATATRANSFER_H
+#ifndef MO_DATATRANSFER_H
+#define MO_DATATRANSFER_H
 
 #include <MicroOcpp/Core/Operation.h>
 

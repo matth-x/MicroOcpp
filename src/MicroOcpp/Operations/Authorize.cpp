@@ -18,7 +18,6 @@ Authorize::Authorize(Model& model, const char *idTagIn) : model(model) {
         snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
     } else {
         MO_DBG_WARN("Format violation of idTag. Discard idTag");
-        (void)0;
     }
 }
 
@@ -42,9 +41,11 @@ void Authorize::processConf(JsonObject payload){
         MO_DBG_INFO("Request has been denied. Reason: %s", idTagInfo);
     }
 
-    if (model.getAuthorizationService()) {
-        model.getAuthorizationService()->notifyAuthorization(idTag, payload["idTagInfo"]);
+#if MO_ENABLE_LOCAL_AUTH
+    if (auto authService = model.getAuthorizationService()) {
+        authService->notifyAuthorization(idTag, payload["idTagInfo"]);
     }
+#endif //MO_ENABLE_LOCAL_AUTH
 }
 
 void Authorize::processReq(JsonObject payload){
