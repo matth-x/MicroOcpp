@@ -49,6 +49,7 @@ public:
     ~Request();
 
     void setOperation(std::unique_ptr<Operation> msg);
+    Operation *getOperation();
 
     void setTimeout(unsigned long timeout); //0 = disable timeout
     bool isTimeoutExceeded();

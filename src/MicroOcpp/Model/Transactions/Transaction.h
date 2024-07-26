@@ -43,6 +43,7 @@ private:
      * Attributes existing before StartTransaction
      */
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
+    char parentIdTag [IDTAG_LEN_MAX + 1] = {'\0'};
     bool authorized = false;    //if the given idTag was authorized
     bool deauthorized = false;  //if the server revoked a local authorization
     Timestamp begin_timestamp = MIN_TIME;
@@ -110,6 +111,9 @@ public:
 
     bool setIdTag(const char *idTag);
     const char *getIdTag() {return idTag;}
+
+    bool setParentIdTag(const char *idTag);
+    const char *getParentIdTag() {return parentIdTag;}
 
     void setAuthorized() {authorized = true;}
     void setIdTagDeauthorized() {deauthorized = true;}

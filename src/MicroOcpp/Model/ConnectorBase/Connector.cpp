@@ -686,8 +686,6 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             }
         }
     }
-    #else
-    (void)parentIdTag;
     #endif //MO_ENABLE_RESERVATION
 
     transaction = allocateTransaction();
@@ -702,6 +700,10 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         transaction->setIdTag("");
     } else {
         transaction->setIdTag(idTag);
+    }
+
+    if (parentIdTag) {
+        transaction->setParentIdTag(parentIdTag);
     }
 
     transaction->setBeginTimestamp(model.getClock().now());
@@ -765,6 +767,10 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             }
         }
         #endif //MO_ENABLE_RESERVATION
+
+        if (idTagInfo.containsKey("parentIdTag")) {
+            tx->setParentIdTag(idTagInfo["parentIdTag"] | "");
+        }
 
         MO_DBG_DEBUG("Authorized transaction process (%s)", tx->getIdTag());
         tx->setAuthorized();
@@ -851,6 +857,10 @@ std::shared_ptr<Transaction> Connector::beginTransaction_authorized(const char *
         transaction->setIdTag("");
     } else {
         transaction->setIdTag(idTag);
+    }
+
+    if (parentIdTag) {
+        transaction->setParentIdTag(parentIdTag);
     }
 
     transaction->setBeginTimestamp(model.getClock().now());

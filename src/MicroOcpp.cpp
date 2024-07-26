@@ -464,7 +464,50 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
         if (!idTag || !strcmp(idTag, getTransactionIdTag(connectorId))) {
             res = endTransaction_authorized(idTag, reason, connectorId);
         } else {
-            MO_DBG_INFO("endTransaction: idTag doesn't match");
+            auto tx = getTransaction(connectorId);
+            const char *parentIdTag = tx->getParentIdTag();
+            if (strlen(parentIdTag) > 0)
+            {
+                // We have a parent ID tag, so we need to check if this new card also has one
+                auto authorize = makeRequest(new Ocpp16::Authorize(context->getModel(), idTag));
+                std::string idTag_capture = idTag;
+                std::string reason_capture = reason ? reason : "";
+                authorize->setOnReceiveConfListener([idTag_capture, reason_capture, connectorId, tx] (JsonObject response) {
+                    JsonObject idTagInfo = response["idTagInfo"];
+
+                    if (strcmp("Accepted", idTagInfo["status"] | "UNDEFINED")) {
+                        //Authorization rejected, do nothing
+                        MO_DBG_DEBUG("Authorize rejected (%s), continue transaction", idTag_capture.c_str());
+                        auto connector = context->getModel().getConnector(connectorId);
+                        if (connector) {
+                            connector->updateTxNotification(TxNotification::AuthorizationRejected);
+                        }
+                        return;
+                    }
+                    if (idTagInfo.containsKey("parentIdTag") && !strcmp(idTagInfo["parenIdTag"], tx->getParentIdTag()))
+                    {
+                        endTransaction_authorized(idTag_capture.c_str(), reason_capture.empty() ? (const char*)nullptr : reason_capture.c_str(), connectorId);
+                    }
+                });
+
+                authorize->setOnTimeoutListener([idTag_capture, connectorId] () {
+                    //Authorization timed out, do nothing
+                    MO_DBG_DEBUG("Authorization timeout (%s), continue transaction", idTag_capture.c_str());
+                    auto connector = context->getModel().getConnector(connectorId);
+                    if (connector) {
+                        connector->updateTxNotification(TxNotification::AuthorizationTimeout);
+                    }
+                });
+
+                auto authorizationTimeoutInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20);
+                authorize->setTimeout(authorizationTimeoutInt && authorizationTimeoutInt->getInt() > 0 ? authorizationTimeoutInt->getInt() * 1000UL : 20UL * 1000UL);
+
+                context->initiateRequest(std::move(authorize));
+                res = true;
+            } else {
+                MO_DBG_INFO("endTransaction: idTag doesn't match");
+                (void)0;
+            }
         }
     }
     return res;

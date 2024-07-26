@@ -12,6 +12,11 @@ bool Transaction::setIdTag(const char *idTag) {
     return ret >= 0 && ret < IDTAG_LEN_MAX + 1;
 }
 
+bool Transaction::setParentIdTag(const char *idTag) {
+    auto ret = snprintf(this->parentIdTag, IDTAG_LEN_MAX + 1, "%s", idTag);
+    return ret >= 0 && ret < IDTAG_LEN_MAX + 1;
+}
+
 bool Transaction::setStopIdTag(const char *idTag) {
     auto ret = snprintf(stop_idTag, IDTAG_LEN_MAX + 1, "%s", idTag);
     return ret >= 0 && ret < IDTAG_LEN_MAX + 1;

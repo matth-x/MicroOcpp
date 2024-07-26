@@ -35,6 +35,10 @@ public:
     void processReq(JsonObject payload) override;
 
     std::unique_ptr<DynamicJsonDocument> createConf() override;
+
+    int getConnectorId() {
+        return connectorId;
+    }
 };
 
 } // namespace Ocpp16

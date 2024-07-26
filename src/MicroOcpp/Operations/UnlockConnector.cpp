@@ -17,18 +17,18 @@ const char* UnlockConnector::getOperationType(){
 }
 
 void UnlockConnector::processReq(JsonObject payload) {
-    
-    auto connectorId = payload["connectorId"] | -1;
-
-    auto connector = model.getConnector(connectorId);
-
-    if (!connector) {
-        errorCode = "PropertyConstraintViolation";
-        return;
-    }
 
 #if MO_ENABLE_CONNECTOR_LOCK
     {
+        auto connectorId = payload["connectorId"] | -1;
+
+        auto connector = model.getConnector(connectorId);
+
+        if (!connector) {
+            // NotSupported
+            return;
+        }
+
         unlockConnector = connector->getOnUnlockConnector();
 
         if (!unlockConnector) {

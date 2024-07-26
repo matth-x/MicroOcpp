@@ -25,6 +25,7 @@ const char* SendLocalList::getOperationType(){
 }
 
 void SendLocalList::processReq(JsonObject payload) {
+
     if (!payload.containsKey("listVersion") || !payload.containsKey("updateType")) {
         errorCode = "FormationViolation";
         return;

@@ -53,10 +53,6 @@ void ResetService::loop() {
         MO_DBG_ERR("Reset device failure. %s", outstandingResetRetries == 0 ? "Abort" : "Retry");
 
         if (outstandingResetRetries <= 0) {
-            for (unsigned int cId = 0; cId < context.getModel().getNumConnectors(); cId++) {
-                auto connector = context.getModel().getConnector(cId);
-                connector->setAvailabilityVolatile(true);
-            }
 
             ChargePointStatus cpStatus = ChargePointStatus_UNDEFINED;
             if (context.getModel().getNumConnectors() > 0) {
@@ -98,11 +94,6 @@ void ResetService::initiateReset(bool isHard) {
         outstandingResetRetries = 5;
     }
     t_resetRetry = mocpp_tick_ms();
-
-    for (unsigned int cId = 0; cId < context.getModel().getNumConnectors(); cId++) {
-        auto connector = context.getModel().getConnector(cId);
-        connector->setAvailabilityVolatile(false);
-    }
 }
 
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
