@@ -26,11 +26,22 @@ class SendStatus {
 private:
     bool requested = false;
     bool confirmed = false;
+    
+    unsigned int opNr = 0;
+    unsigned int attemptNr = 0;
+    Timestamp attemptTime = MIN_TIME;
 public:
     void setRequested() {this->requested = true;}
     bool isRequested() {return requested;}
     void confirm() {confirmed = true;}
     bool isConfirmed() {return confirmed;}
+    void setOpNr(unsigned int opNr) {this->opNr = opNr;}
+    unsigned int getOpNr() {return opNr;}
+    void advanceAttemptNr() {attemptNr++;}
+    void setAttemptNr(unsigned int attemptNr) {this->attemptNr = attemptNr;}
+    unsigned int getAttemptNr() {return attemptNr;}
+    const Timestamp& getAttemptTime() {return attemptTime;}
+    void setAttemptTime(const Timestamp& timestamp) {attemptTime = timestamp;}
 };
 
 class Transaction {

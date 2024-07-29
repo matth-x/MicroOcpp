@@ -216,6 +216,10 @@ std::shared_ptr<TransactionMeterData> MeteringConnector::endTxMeterData(Transact
     return std::move(stopTxnData);
 }
 
+void MeteringConnector::abortTxMeterData() {
+    stopTxnData.reset();
+}
+
 std::shared_ptr<TransactionMeterData> MeteringConnector::getStopTxMeterData(Transaction *transaction) {
     auto txData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
 

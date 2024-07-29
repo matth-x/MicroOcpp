@@ -289,7 +289,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new ConnectorsCommon(*context, MO_NUMCONNECTORS, filesystem)));
     std::vector<std::unique_ptr<Connector>> connectors;
     for (unsigned int connectorId = 0; connectorId < MO_NUMCONNECTORS; connectorId++) {
-        connectors.emplace_back(new Connector(*context, connectorId));
+        connectors.emplace_back(new Connector(*context, filesystem, connectorId));
     }
     model.setConnectors(std::move(connectors));
     model.setHeartbeatService(std::unique_ptr<HeartbeatService>(

@@ -6,7 +6,6 @@
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
-#include <MicroOcpp/Core/RequestStore.h>
 
 #include <MicroOcpp/Operations/StartTransaction.h>
 #include <MicroOcpp/Operations/StopTransaction.h>
@@ -14,24 +13,29 @@
 #include <MicroOcpp/Platform.h>
 #include <MicroOcpp/Debug.h>
 
-int unique_id_counter = 1000000;
+namespace MicroOcpp {
+    unsigned int g_randSeed = 1394827383;
+
+    void writeRandomNonsecure(unsigned char *buf, size_t len) {
+        g_randSeed += mocpp_tick_ms();
+        const unsigned int a = 16807;
+        const unsigned int m = 2147483647;
+        for (size_t i = 0; i < len; i++) {
+            g_randSeed = (a * g_randSeed) % m;
+            buf[i] = g_randSeed;
+        }
+    }
+}
 
 using namespace MicroOcpp;
 
 Request::Request(std::unique_ptr<Operation> msg) : operation(std::move(msg)) {
-
-}
-
-Request::Request() {
-
+    timeout_start = mocpp_tick_ms();
+    debugRequest_start = mocpp_tick_ms();
 }
 
 Request::~Request(){
 
-}
-
-void Request::setOperation(std::unique_ptr<Operation> msg){
-    operation = std::move(msg);
 }
 
 Operation *Request::getOperation(){
@@ -54,41 +58,46 @@ void Request::executeTimeout() {
     timed_out = true;
 }
 
-unsigned int Request::getTrialNo() {
-    return trialNo;
-}
-
-void Request::setMessageID(const std::string &id){
+void Request::setMessageID(const char *id){
     if (!messageID.empty()){
-        MO_DBG_WARN("MessageID is set twice or is set after first usage!");
+        MO_DBG_ERR("messageID already defined");
     }
     messageID = id;
 }
 
-const char *Request::getMessageID() {
-    return messageID.c_str();
-}
+Request::CreateRequestResult Request::createRequest(DynamicJsonDocument& requestJson) {
 
-std::unique_ptr<DynamicJsonDocument> Request::createRequest(){
+    if (messageID.empty()) {
+        unsigned char random [18];
+        char guuid [sizeof(random) * 2 + 1];
+
+        writeRandomNonsecure(random, sizeof(random));
+
+        for (size_t i = 0; i < sizeof(random); i++) {
+            snprintf(guuid + i * 2, 3, "%02x", random[i]);
+        }
+        guuid[8] = guuid[13] = guuid[18] = guuid[23] = '-';
+        messageID = guuid;
+    }
 
     /*
      * Create the OCPP message
      */
     auto requestPayload = operation->createReq();
     if (!requestPayload) {
-        return nullptr;
+        return CreateRequestResult::Failure;
     }
 
     /*
      * Create OCPP-J Remote Procedure Call header
      */
     size_t json_buffsize = JSON_ARRAY_SIZE(4) + (messageID.length() + 1) + requestPayload->capacity();
-    auto requestJson = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(json_buffsize));
+    requestJson = DynamicJsonDocument(json_buffsize);
 
-    requestJson->add(MESSAGE_TYPE_CALL);                    //MessageType
-    requestJson->add(messageID);                      //Unique message ID
-    requestJson->add(operation->getOperationType());  //Action
-    requestJson->add(*requestPayload);                      //Payload
+    requestJson.add(MESSAGE_TYPE_CALL);                    //MessageType
+    requestJson.add(messageID);                      //Unique message ID
+    requestJson.add(operation->getOperationType());  //Action
+    requestJson.add(*requestPayload);                      //Payload
 
     if (MO_DBG_LEVEL >= MO_DL_DEBUG && mocpp_tick_ms() - debugRequest_start >= 10000) { //print contents on the console
         debugRequest_start = mocpp_tick_ms();
@@ -96,7 +105,7 @@ std::unique_ptr<DynamicJsonDocument> Request::createRequest(){
         char *buf = new char[1024];
         size_t len = 0;
         if (buf) {
-            len = serializeJson(*requestJson, buf, 1024);
+            len = serializeJson(requestJson, buf, 1024);
         }
 
         if (!buf || len < 1) {
@@ -108,9 +117,7 @@ std::unique_ptr<DynamicJsonDocument> Request::createRequest(){
         delete[] buf;
     }
 
-    trialNo++;
-
-    return requestJson;
+    return CreateRequestResult::Success;
 }
 
 bool Request::receiveResponse(JsonArray response){
@@ -163,10 +170,14 @@ bool Request::receiveResponse(JsonArray response){
 
 }
 
-bool Request::receiveRequest(JsonArray request){
+bool Request::receiveRequest(JsonArray request) {
+
+    if (!request[1].is<const char*>()) {
+        MO_DBG_ERR("malformatted msgId");
+        return false;
+    }
   
-    std::string msgId = request[1];
-    setMessageID(msgId);
+    setMessageID(request[1].as<const char*>());
     
     /*
      * Hand the payload over to the Request object
@@ -182,12 +193,7 @@ bool Request::receiveRequest(JsonArray request){
     return true; //success
 }
 
-std::unique_ptr<DynamicJsonDocument> Request::createResponse(){
-
-    /*
-     * Create the OCPP message
-     */
-    std::unique_ptr<DynamicJsonDocument> response = nullptr;
+Request::CreateResponseResult Request::createResponse(DynamicJsonDocument& response) {
 
     bool operationFailure = operation->getErrorCode() != nullptr;
 
@@ -196,18 +202,18 @@ std::unique_ptr<DynamicJsonDocument> Request::createResponse(){
         std::unique_ptr<DynamicJsonDocument> payload = operation->createConf();
 
         if (!payload) {
-            return nullptr; //confirmation message still pending
+            return CreateResponseResult::Pending; //confirmation message still pending
         }
 
         /*
          * Create OCPP-J Remote Procedure Call header
          */
-        size_t json_buffsize = JSON_ARRAY_SIZE(3) + (messageID.length() + 1) + payload->capacity();
-        response = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(json_buffsize));
+        size_t json_buffsize = JSON_ARRAY_SIZE(3) + payload->capacity();
+        response = DynamicJsonDocument(json_buffsize);
 
-        response->add(MESSAGE_TYPE_CALLRESULT);   //MessageType
-        response->add(messageID);            //Unique message ID
-        response->add(*payload);              //Payload
+        response.add(MESSAGE_TYPE_CALLRESULT);   //MessageType
+        response.add(messageID.c_str());            //Unique message ID
+        response.add(*payload);              //Payload
 
         if (onSendConfListener) {
             onSendConfListener(payload->as<JsonObject>());
@@ -217,127 +223,23 @@ std::unique_ptr<DynamicJsonDocument> Request::createResponse(){
 
         const char *errorCode = operation->getErrorCode();
         const char *errorDescription = operation->getErrorDescription();
-        std::unique_ptr<DynamicJsonDocument> errorDetails = std::unique_ptr<DynamicJsonDocument>(operation->getErrorDetails());
-        if (!errorCode) { //catch corner case when payload is null but errorCode is not set too!
-            errorCode = "GenericError";
-            errorDescription = "Could not create payload (createConf() returns Null)";
-            errorDetails = std::unique_ptr<DynamicJsonDocument>(createEmptyDocument());
-        }
+        std::unique_ptr<DynamicJsonDocument> errorDetails = operation->getErrorDetails();
 
         /*
          * Create OCPP-J Remote Procedure Call header
          */
         size_t json_buffsize = JSON_ARRAY_SIZE(5)
-                    + (messageID.length() + 1)
-                    + strlen(errorCode) + 1
-                    + strlen(errorDescription) + 1
                     + errorDetails->capacity();
-        response = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(json_buffsize));
+        response = DynamicJsonDocument(json_buffsize);
 
-        response->add(MESSAGE_TYPE_CALLERROR);   //MessageType
-        response->add(messageID);            //Unique message ID
-        response->add(errorCode);
-        response->add(errorDescription);
-        response->add(*errorDetails);              //Error description
+        response.add(MESSAGE_TYPE_CALLERROR);   //MessageType
+        response.add(messageID.c_str());            //Unique message ID
+        response.add(errorCode);
+        response.add(errorDescription);
+        response.add(*errorDetails);              //Error description
     }
 
-    return response;
-}
-
-void Request::initiate(std::unique_ptr<StoredOperationHandler> opStorage) {
-
-    timeout_start = mocpp_tick_ms();
-    debugRequest_start = mocpp_tick_ms();
-
-    //assign messageID
-    char id_str [16] = {'\0'};
-    sprintf(id_str, "%d", unique_id_counter++);
-    messageID = std::string {id_str};
-
-    if (operation) {
-
-        /*
-         * Create OCPP-J Remote Procedure Call header storage entry
-         */
-        opStore = std::move(opStorage);
-
-        if (opStore) {
-            size_t json_buffsize = JSON_ARRAY_SIZE(3) + (messageID.length() + 1);
-            auto rpcData = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(json_buffsize));
-
-            rpcData->add(MESSAGE_TYPE_CALL);                    //MessageType
-            rpcData->add(messageID);                      //Unique message ID
-            rpcData->add(operation->getOperationType());  //Action
-
-            opStore->setRpcData(std::move(rpcData));
-        }
-        
-        operation->initiate(opStore.get());
-
-        if (opStore) {
-            opStore->clearBuffer();
-        }
-    } else {
-        MO_DBG_ERR("Missing operation instance");
-    }
-}
-
-bool Request::restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *model) {
-    if (!opStorage) {
-        MO_DBG_ERR("invalid argument");
-        return false;
-    }
-
-    opStore = std::move(opStorage);
-
-    auto rpcData = opStore->getRpcData();
-    if (!rpcData) {
-        MO_DBG_ERR("corrupted storage");
-        return false;
-    }
-
-    messageID = (*rpcData)[1] | std::string();
-    std::string opType = (*rpcData)[2] | std::string();
-    if (messageID.empty() || opType.empty()) {
-        MO_DBG_ERR("corrupted storage");
-        messageID.clear();
-        return false;
-    }
-
-    int parsedMessageID = -1;
-    if (sscanf(messageID.c_str(), "%d", &parsedMessageID) == 1) {
-        if (parsedMessageID > unique_id_counter) {
-            MO_DBG_DEBUG("restore unique_id_counter with %d", parsedMessageID);
-            unique_id_counter = parsedMessageID + 1; //next unique value is parsedId + 1
-        }
-    } else {
-        MO_DBG_ERR("cannot set unique msgID counter");
-        //skip this step but don't abort restore
-    }
-
-    timeout_period = 0; //disable timeout by default for restored msgs
-
-    if (!strcmp(opType.c_str(), "StartTransaction") && model) { //TODO this will get a nicer solution
-        operation = std::unique_ptr<Operation>(new Ocpp16::StartTransaction(*model, nullptr));
-    } else if (!strcmp(opType.c_str(), "StopTransaction") && model) {
-        operation = std::unique_ptr<Operation>(new Ocpp16::StopTransaction(*model, nullptr));
-    }
-
-    if (!operation) {
-        MO_DBG_ERR("cannot create msg");
-        return false;
-    }
-
-    bool success = operation->restore(opStore.get());
-    opStore->clearBuffer();
-
-    if (success) {
-        MO_DBG_DEBUG("restored opNr %i: %s", opStore->getOpNr(), operation->getOperationType());
-    } else {
-        MO_DBG_ERR("restore opNr %i error", opStore->getOpNr());
-    }
-
-    return success;
+    return CreateResponseResult::Success;
 }
 
 void Request::setOnReceiveConfListener(OnReceiveConfListener onReceiveConf){
@@ -375,4 +277,12 @@ void Request::setOnAbortListener(OnAbortListener onAbort) {
 
 const char *Request::getOperationType() {
     return operation ? operation->getOperationType() : "UNDEFINED";
+}
+
+void Request::setRequestSent() {
+    requestSent = true;
+}
+
+bool Request::isRequestSent() {
+    return requestSent;
 }

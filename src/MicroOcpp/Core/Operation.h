@@ -18,10 +18,8 @@
  #ifndef MO_OPERATION_H
  #define MO_OPERATION_H
 
-#include <ArduinoJson.h>
 #include <memory>
-
-#include <MicroOcpp/Core/RequestStore.h>
+#include <ArduinoJson.h>
 
 namespace MicroOcpp {
 
@@ -34,10 +32,6 @@ public:
     virtual ~Operation();
     
     virtual const char* getOperationType();
-
-    virtual void initiate(StoredOperationHandler *rpcData);
-
-    virtual bool restore(StoredOperationHandler *rpcData);
 
     /**
      * Create the payload for the respective OCPP message

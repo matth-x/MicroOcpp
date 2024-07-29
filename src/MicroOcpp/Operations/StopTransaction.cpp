@@ -4,7 +4,6 @@
 
 #include <MicroOcpp/Operations/StopTransaction.h>
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Core/RequestStore.h>
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
 #include <MicroOcpp/Model/Metering/MeteringService.h>
 #include <MicroOcpp/Model/Metering/MeterValue.h>
@@ -27,85 +26,6 @@ StopTransaction::StopTransaction(Model& model, std::shared_ptr<Transaction> tran
 
 const char* StopTransaction::getOperationType() {
     return "StopTransaction";
-}
-
-void StopTransaction::initiate(StoredOperationHandler *opStore) {
-    if (!transaction || transaction->getStopSync().isRequested()) {
-        MO_DBG_ERR("initialization error");
-        return;
-    }
-    
-    auto payload = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
-    (*payload)["connectorId"] = transaction->getConnectorId();
-    (*payload)["txNr"] = transaction->getTxNr();
-
-    if (opStore) {
-        opStore->setPayload(std::move(payload));
-        opStore->commit();
-    }
-
-    transaction->getStopSync().setRequested();
-
-    transaction->commit();
-
-    MO_DBG_INFO("StopTransaction initiated");
-}
-
-bool StopTransaction::restore(StoredOperationHandler *opStore) {
-    if (!opStore) {
-        MO_DBG_ERR("invalid argument");
-        return false;
-    }
-
-    auto payload = opStore->getPayload();
-    if (!payload) {
-        MO_DBG_ERR("memory corruption");
-        return false;
-    }
-
-    int connectorId = (*payload)["connectorId"] | -1;
-    int txNr = (*payload)["txNr"] | -1;
-    if (connectorId < 0 || txNr < 0) {
-        MO_DBG_ERR("record incomplete");
-        return false;
-    }
-
-    auto txStore = model.getTransactionStore();
-
-    if (!txStore) {
-        MO_DBG_ERR("invalid state");
-        return false;
-    }
-
-    transaction = txStore->getTransaction(connectorId, txNr);
-    if (!transaction) {
-        MO_DBG_ERR("referential integrity violation");
-
-        //clean up possible tx records
-        if (auto mSerivce = model.getMeteringService()) {
-            mSerivce->removeTxMeterData(connectorId, txNr);
-        }
-        return false;
-    }
-
-    if (transaction->isSilent()) {
-        //transaction has been set silent after initializing StopTx - discard operation record
-        MO_DBG_WARN("tx has been set silent - discard StopTx");
-
-        //clean up possible tx records
-        if (auto mSerivce = model.getMeteringService()) {
-            mSerivce->removeTxMeterData(connectorId, txNr);
-        }
-        return false;
-    }
-
-    if (auto mSerivce = model.getMeteringService()) {
-        if (auto txData = mSerivce->getStopTxMeterData(transaction.get())) {
-            transactionData = txData->retrieveStopTxData();
-        }
-    }
-
-    return true;
 }
 
 std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {

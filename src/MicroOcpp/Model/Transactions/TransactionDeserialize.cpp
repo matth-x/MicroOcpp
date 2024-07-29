@@ -16,6 +16,15 @@ bool serializeSendStatus(SendStatus& status, JsonObject out) {
     if (status.isConfirmed()) {
         out["confirmed"] = true;
     }
+    out["opNr"] = status.getOpNr();
+    if (status.getAttemptNr() != 0) {
+        out["attemptNr"] = status.getAttemptNr();
+    }
+    if (status.getAttemptTime() > MIN_TIME) {
+        char attemptTime [JSONDATE_LENGTH + 1];
+        status.getAttemptTime().toJsonString(attemptTime, sizeof(attemptTime));
+        out["attemptTime"] = attemptTime;
+    }
     return true;
 }
 
@@ -25,6 +34,19 @@ bool deserializeSendStatus(SendStatus& status, JsonObject in) {
     }
     if (in["confirmed"] | false) {
         status.confirm();
+    }
+    unsigned int opNr = in["opNr"] | (unsigned int)0;
+    if (opNr >= 10) { //10 is first valid tx-related opNr
+        status.setOpNr(opNr);
+    }
+    status.setAttemptNr(in["attemptNr"] | (unsigned int)0);
+    if (in.containsKey("attemptTime")) {
+        Timestamp attemptTime;
+        if (!attemptTime.setTime(in["attemptTime"] | "_Invalid")) {
+            MO_DBG_ERR("deserialization error");
+            return false;
+        }
+        status.setAttemptTime(attemptTime);
     }
     return true;
 }
