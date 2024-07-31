@@ -119,7 +119,7 @@ bool VolatileRequestQueue::pushRequestBack(std::unique_ptr<Request> request) {
 }
 
 RequestQueue::RequestQueue(Connection& connection, OperationRegistry& operationRegistry)
-            : connection{connection}, operationRegistry{operationRegistry} {
+            : connection(connection), operationRegistry(operationRegistry) {
 
     ReceiveTXTcallback callback = [this] (const char *payload, size_t length) {
         return this->receiveMessage(payload, length);
