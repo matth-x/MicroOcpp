@@ -87,6 +87,7 @@ bool VolatileRequestQueue::pushRequestBack(std::unique_ptr<Request> request) {
 
             if (strcmp(requests[index]->getOperationType(), "StatusNotification")!= 0)
             {
+                i++;
                 continue;
             }
             auto old_status_notification = static_cast<Ocpp16::StatusNotification*>(requests[index]->getOperation());

@@ -803,5 +803,283 @@ TEST_CASE( "Charging sessions" ) {
 
     }
 
+    SECTION("TransactionMessageAttempts-/RetryInterval") {
+
+        /*
+         * Scenarios:
+         * - final failure to send txMsg after tx terminated
+         * - normal communication restored after a final failure
+         * - StartTx fails finally during tx
+         * - StartTx works but StopTx fails finally after tx terminated
+         * - sends attempts fail until final attempt succeeds
+         * - after reboot, continue attempting
+         */
+
+        declareConfiguration<int>("TransactionMessageAttempts", 1)->setInt(1);
+
+        bool checkProcessedStartTx = false;
+        bool checkProcessedStopTx = false;
+        unsigned int txId = 1000;
+
+         /*
+         * - final failure to send txMsg after tx terminated
+         */
+
+        getOcppContext()->getOperationRegistry().registerOperation("StartTransaction", [&checkProcessedStartTx, &txId] () {
+            return new Ocpp16::CustomOperation("StartTransaction",
+                [&checkProcessedStartTx] (JsonObject payload) {
+                    //receive req
+                    checkProcessedStartTx = true;
+                },
+                [&txId] () {
+                    //create conf
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2)));
+                    JsonObject payload = doc->to<JsonObject>();
+
+                    JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
+                    idTagInfo["status"] = "Accepted";
+                    payload["transactionId"] = txId++;
+                    return doc;
+                });});
+
+        getOcppContext()->getOperationRegistry().registerOperation("StopTransaction", [&checkProcessedStopTx] () {
+            return new Ocpp16::CustomOperation("StopTransaction",
+                [&checkProcessedStopTx] (JsonObject payload) {
+                    //receive req
+                    checkProcessedStopTx = true;
+                }, 
+                [] () {
+                    //create conf
+                    return createEmptyDocument();
+                });});
+
+        loopback.setOnline(false);
+
+        REQUIRE( !ocppPermitsCharge() );
+
+        beginTransaction_authorized("mIdTag");
+        loop();
+        REQUIRE( ocppPermitsCharge() );
+
+        endTransaction();
+        loop();
+        REQUIRE( !ocppPermitsCharge() );
+
+        mtime += 10 * 60 * 1000; //jump 10 minutes into future
+
+        loopback.setOnline(true);
+        loop();
+
+        REQUIRE( !checkProcessedStartTx );
+        REQUIRE( !checkProcessedStopTx );
+
+         /*
+         * - normal communication restored after a final failure
+         */
+        checkProcessedStartTx = false;
+        checkProcessedStopTx = false;
+        
+        beginTransaction_authorized("mIdTag");
+        loop();
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( checkProcessedStartTx );
+
+        endTransaction();
+        loop();
+        REQUIRE( !ocppPermitsCharge() );
+
+        REQUIRE( checkProcessedStopTx );
+
+        /*
+         * - StartTx fails finally during tx
+         */
+
+        checkProcessedStartTx = false;
+        checkProcessedStopTx = false;
+        
+        loopback.setOnline(false);
+
+        REQUIRE( !ocppPermitsCharge() );
+
+        beginTransaction_authorized("mIdTag");
+        loop();
+        REQUIRE( ocppPermitsCharge() );
+
+        mtime += 10 * 60 * 1000; //jump 10 minutes into future
+        loop();
+        REQUIRE( !ocppPermitsCharge() );
+
+        loopback.setOnline(true);
+        loop();
+
+        REQUIRE( !checkProcessedStartTx );
+        REQUIRE( !checkProcessedStopTx );
+
+        /*
+         * - StartTx works but StopTx fails finally after tx terminated
+         */
+
+        checkProcessedStartTx = false;
+        checkProcessedStopTx = false;
+        
+        beginTransaction_authorized("mIdTag");
+        loop();
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( checkProcessedStartTx );
+
+        loopback.setOnline(false);
+
+        endTransaction();
+        loop();
+        mtime += 10 * 60 * 1000; //jump 10 minutes into future
+
+        loopback.setOnline(true);
+        loop();
+        REQUIRE( !checkProcessedStopTx );
+
+        /*
+         * - sends attempts fail until final attempt succeeds
+         */
+
+        const size_t NUM_ATTEMPTS = 3;
+        const int RETRY_INTERVAL_SECS = 3600;
+
+        declareConfiguration<int>("TransactionMessageAttempts", 0)->setInt(NUM_ATTEMPTS);
+        declareConfiguration<int>("TransactionMessageRetryInterval", 0)->setInt(RETRY_INTERVAL_SECS);
+
+        configuration_save();
+
+        checkProcessedStartTx = false;
+        checkProcessedStopTx = false;
+
+        unsigned int attemptNr = 0;
+
+        getOcppContext()->getOperationRegistry().registerOperation("StartTransaction", [&checkProcessedStartTx, &txId, &attemptNr] () {
+            return new Ocpp16::CustomOperation("StartTransaction",
+                [&attemptNr] (JsonObject payload) {
+                    //receive req
+                    attemptNr++;
+                },
+                [&txId] () {
+                    //create conf
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2)));
+                    JsonObject payload = doc->to<JsonObject>();
+
+                    JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
+                    idTagInfo["status"] = "Accepted";
+                    payload["transactionId"] = txId++;
+                    return doc;
+                },
+                [&attemptNr] () {
+                    //ErrorCode for CALLERROR
+                    return attemptNr < NUM_ATTEMPTS ? "InternalError" : (const char*)nullptr;
+                });});
+        
+        beginTransaction_authorized("mIdTag");
+        loop();
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( attemptNr == 1 );
+
+        mtime += (unsigned long)RETRY_INTERVAL_SECS * 1000;
+        loop();
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( attemptNr == 2 );
+
+        mtime += 2 * (unsigned long)RETRY_INTERVAL_SECS * 1000;
+        loop();
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( attemptNr == 3 );
+
+        mtime += 100 * (unsigned long)RETRY_INTERVAL_SECS * 1000;
+        loop();
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( attemptNr == 3 ); //no further retry after third and successful attempt
+
+        endTransaction();
+        loop();
+        REQUIRE( !ocppPermitsCharge() );
+        REQUIRE( attemptNr == 3 );
+        REQUIRE( checkProcessedStopTx );
+
+        /*
+         * - after reboot, continue attempting
+         */
+
+        getOcppContext()->getModel().getClock().setTime(BASE_TIME); //reset system time to have roughly the same time after reboot
+
+        checkProcessedStartTx = false;
+        checkProcessedStopTx = false;
+        attemptNr = 0;
+
+        beginTransaction_authorized("mIdTag");
+        loop();
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( attemptNr == 1 );
+
+        mocpp_deinitialize();
+
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+
+        getOcppContext()->getModel().getClock().setTime(BASE_TIME);
+
+        getOcppContext()->getOperationRegistry().registerOperation("StartTransaction", [&checkProcessedStartTx, &txId, &attemptNr] () {
+            return new Ocpp16::CustomOperation("StartTransaction",
+                [&attemptNr] (JsonObject payload) {
+                    //receive req
+                    attemptNr++;
+                },
+                [&txId] () {
+                    //create conf
+                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2)));
+                    JsonObject payload = doc->to<JsonObject>();
+
+                    JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
+                    idTagInfo["status"] = "Accepted";
+                    payload["transactionId"] = txId++;
+                    return doc;
+                },
+                [&attemptNr] () {
+                    //ErrorCode for CALLERROR
+                    return attemptNr < NUM_ATTEMPTS ? "InternalError" : (const char*)nullptr;
+                });});
+
+        getOcppContext()->getOperationRegistry().registerOperation("StopTransaction", [&checkProcessedStopTx] () {
+            return new Ocpp16::CustomOperation("StopTransaction",
+                [&checkProcessedStopTx] (JsonObject payload) {
+                    //receive req
+                    checkProcessedStopTx = true;
+                }, 
+                [] () {
+                    //create conf
+                    return createEmptyDocument();
+                });});
+
+        loop();
+
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( attemptNr == 1 );
+
+        mtime += (unsigned long)RETRY_INTERVAL_SECS * 1000;
+        loop();
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( attemptNr == 2 );
+
+        mtime += 2 * (unsigned long)RETRY_INTERVAL_SECS * 1000;
+        loop();
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( attemptNr == 3 );
+
+        mtime += 100 * (unsigned long)RETRY_INTERVAL_SECS * 1000;
+        loop();
+        REQUIRE( ocppPermitsCharge() );
+        REQUIRE( attemptNr == 3 ); //no further retry after third and successful attempt
+
+        endTransaction();
+        loop();
+        REQUIRE( !ocppPermitsCharge() );
+        REQUIRE( attemptNr == 3 );
+        REQUIRE( checkProcessedStopTx );
+    }
+
     mocpp_deinitialize();
 }
