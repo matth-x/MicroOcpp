@@ -137,12 +137,12 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
 
         txData.push_back(std::move(mv));
 
-        mvCount = i;
         i++;
+        mvCount = i;
         misses = 0;
     }
 
-    MO_DBG_DEBUG("Restored %zu meter values", txData.size());
+    MO_DBG_DEBUG("Restored %zu meter values from sd-%u-%u-0 to %u (exclusive)", txData.size(), connectorId, txNr, mvCount);
     return true;
 }
 
@@ -210,7 +210,7 @@ std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuild
 
     txMeterData.push_back(tx);
 
-    MO_DBG_DEBUG("Added txNr %u, now holding %zu txs", txNr, txMeterData.size());
+    MO_DBG_DEBUG("Added txNr %u, now holding %zu sds", txNr, txMeterData.size());
 
     return tx;
 }
