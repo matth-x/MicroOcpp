@@ -82,7 +82,6 @@ bool VolatileRequestQueue::pushRequestBack(std::unique_ptr<Request> request) {
     // Don't queue up multiple StatusNotification messages for the same connectorId
     if (strcmp(request->getOperationType(), "StatusNotification") == 0)
     {
-        auto new_status_notification = static_cast<Ocpp16::StatusNotification*>(request->getOperation());
         size_t i = 0;
         while (i < len) {
             size_t index = (front + i) % MO_REQUEST_CACHE_MAXSIZE;
@@ -92,6 +91,7 @@ bool VolatileRequestQueue::pushRequestBack(std::unique_ptr<Request> request) {
                 i++;
                 continue;
             }
+            auto new_status_notification = static_cast<Ocpp16::StatusNotification*>(request->getOperation());
             auto old_status_notification = static_cast<Ocpp16::StatusNotification*>(requests[index]->getOperation());
             if (old_status_notification->getConnectorId() == new_status_notification->getConnectorId()) {
                 requests[index].reset();
