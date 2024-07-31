@@ -41,6 +41,7 @@ private:
     const unsigned int priority;
 public:
     VolatileRequestQueue(unsigned int priority = 1);
+    ~VolatileRequestQueue();
     void loop();
 
     unsigned int getFrontRequestOpNr() override;

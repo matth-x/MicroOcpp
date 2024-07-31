@@ -22,6 +22,8 @@ VolatileRequestQueue::VolatileRequestQueue(unsigned int priority) : priority{pri
 
 }
 
+VolatileRequestQueue::~VolatileRequestQueue() = default;
+
 void VolatileRequestQueue::loop() {
 
     /*
