@@ -12,10 +12,8 @@
 using namespace MicroOcpp;
 
 Context::Context(Connection& connection, std::shared_ptr<FilesystemAdapter> filesystem, uint16_t bootNr, ProtocolVersion version)
-        : connection(connection), model{version, bootNr}, reqQueue{operationRegistry, &model, filesystem} {
+        : connection(connection), model{version, bootNr}, reqQueue{connection, operationRegistry} {
 
-    preBootQueue = std::unique_ptr<RequestQueue>(new RequestQueue(operationRegistry, &model, nullptr)); //pre boot queue doesn't need persistency
-    preBootQueue->setConnection(connection);
 }
 
 Context::~Context() {
@@ -24,37 +22,16 @@ Context::~Context() {
 
 void Context::loop() {
     connection.loop();
-
-    if (preBootQueue) {
-        preBootQueue->loop(connection);
-    } else {
-        reqQueue.loop(connection);
-    }
-
+    reqQueue.loop();
     model.loop();
 }
 
-void Context::activatePostBootCommunication() {
-    //switch from pre boot connection to normal connetion
-    reqQueue.setConnection(connection);
-    preBootQueue.reset();
-}
-
 void Context::initiateRequest(std::unique_ptr<Request> op) {
-    if (op) {
-        reqQueue.sendRequest(std::move(op));
+    if (!op) {
+        MO_DBG_ERR("invalid arg");
+        return;
     }
-}
-
-void Context::initiatePreBootOperation(std::unique_ptr<Request> op) {
-    if (op) {
-        if (preBootQueue) {
-            preBootQueue->sendRequest(std::move(op));
-        } else {
-            //not in pre boot mode anymore - initiate normally
-            initiateRequest(std::move(op));
-        }
-    }
+    reqQueue.sendRequest(std::move(op));
 }
 
 Model& Context::getModel() {
@@ -71,6 +48,10 @@ const ProtocolVersion& Context::getVersion() {
 
 Connection& Context::getConnection() {
     return connection;
+}
+
+RequestQueue& Context::getRequestQueue() {
+    return reqQueue;
 }
 
 void Context::setFtpClient(std::unique_ptr<FtpClient> ftpClient) {

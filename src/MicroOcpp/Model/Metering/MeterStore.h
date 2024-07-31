@@ -19,7 +19,7 @@ private:
     const unsigned int connectorId; //assignment to Transaction object
     const unsigned int txNr; //assignment to Transaction object
 
-    unsigned int mvCount = 0; //nr of saved meter values
+    unsigned int mvCount = 0; //nr of saved meter values, including gaps
     bool finalized = false; //if true, this is read-only
 
     std::shared_ptr<FilesystemAdapter> filesystem;

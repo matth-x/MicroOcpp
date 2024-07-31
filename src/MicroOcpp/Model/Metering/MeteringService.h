@@ -40,6 +40,8 @@ public:
 
     std::shared_ptr<TransactionMeterData> endTxMeterData(Transaction *transaction); //use return value to keep data in cache
 
+    void abortTxMeterData(unsigned int connectorId); //call this to free resources if txMeterData record is not ended normally. Does not remove files
+
     std::shared_ptr<TransactionMeterData> getStopTxMeterData(Transaction *transaction); //prefer endTxMeterData when possible
 
     bool removeTxMeterData(unsigned int connectorId, unsigned int txNr);

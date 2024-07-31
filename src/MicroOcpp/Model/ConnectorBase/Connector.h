@@ -9,12 +9,20 @@
 #include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
 #include <MicroOcpp/Model/ConnectorBase/Notification.h>
 #include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
+#include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Operations/CiStrings.h>
 
 #include <vector>
 #include <functional>
 #include <memory>
+
+#ifndef MO_TXRECORD_SIZE
+#define MO_TXRECORD_SIZE 4 //no. of tx to hold on flash storage
+#endif
+
+#define MAX_TX_CNT 100000U //upper limit of txNr (internal usage). Must be at least 2*MO_TXRECORD_SIZE+1
 
 #ifndef MO_REPORT_NOERROR
 #define MO_REPORT_NOERROR 0
@@ -27,12 +35,13 @@ class Model;
 class Operation;
 class Transaction;
 
-class Connector {
+class Connector : public RequestEmitter {
 private:
     Context& context;
     Model& model;
+    std::shared_ptr<FilesystemAdapter> filesystem;
     
-    const int connectorId;
+    const unsigned int connectorId;
 
     std::shared_ptr<Transaction> transaction;
 
@@ -79,9 +88,18 @@ private:
 
     std::shared_ptr<Configuration> txStartOnPowerPathClosedBool; // this postpones the tx start point to when evReadyInput becomes true
 
+    std::shared_ptr<Configuration> transactionMessageAttemptsInt;
+    std::shared_ptr<Configuration> transactionMessageRetryIntervalInt;
+
     bool trackLoopExecute = false; //if loop has been executed once
+
+    unsigned int txNrBegin = 0; //oldest (historical) transaction on flash. Has no function, but is useful for error diagnosis
+    unsigned int txNrFront = 0; //oldest transaction which is still queued to be sent to the server
+    unsigned int txNrBack = 0; //one position behind newest transaction
+
+    std::shared_ptr<Transaction> transactionFront;
 public:
-    Connector(Context& context, int connectorId);
+    Connector(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId);
     Connector(const Connector&) = delete;
     Connector(Connector&&) = delete;
     Connector& operator=(const Connector&) = delete;
@@ -136,6 +154,9 @@ public:
 
     void setTxNotificationOutput(std::function<void(Transaction*,TxNotification)> txNotificationOutput);
     void updateTxNotification(TxNotification event);
+
+    unsigned int getFrontRequestOpNr() override;
+    std::unique_ptr<Request> fetchFrontRequest() override;
 };
 
 } //end namespace MicroOcpp

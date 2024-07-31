@@ -16,8 +16,6 @@ namespace Ocpp16 {
 class CustomOperation : public Operation {
 private:
     std::string operationType;
-    std::function<void (StoredOperationHandler*)> fn_initiate; //optional
-    std::function<bool (StoredOperationHandler*)> fn_restore;  //optional
     std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createReq;
     std::function<void (JsonObject)> fn_processConf;
     std::function<bool (const char*, const char*, JsonObject)> fn_processErr;  //optional
@@ -32,9 +30,7 @@ public:
     CustomOperation(const char *operationType,
             std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createReq,
             std::function<void (JsonObject)> fn_processConf,
-            std::function<bool (const char*, const char*, JsonObject)> fn_processErr = nullptr,
-            std::function<void (StoredOperationHandler*)> fn_initiate = nullptr,
-            std::function<bool (StoredOperationHandler*)> fn_restore = nullptr);
+            std::function<bool (const char*, const char*, JsonObject)> fn_processErr = nullptr);
     
     //for operations receied from remote
     CustomOperation(const char *operationType,
@@ -47,10 +43,6 @@ public:
     ~CustomOperation();
 
     const char* getOperationType() override;
-
-    void initiate(StoredOperationHandler *opStore) override;
-
-    bool restore(StoredOperationHandler *opStore) override;
 
     std::unique_ptr<DynamicJsonDocument> createReq() override;
 

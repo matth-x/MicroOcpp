@@ -48,7 +48,6 @@ private:
     std::shared_ptr<Configuration> preBootTransactionsBool;
 
     bool activatedModel = false;
-    bool activatedPostBootCommunication = false;
 
     unsigned long firstExecutionTimestamp = 0;
     bool executedFirstTime = false;

@@ -223,6 +223,8 @@ TEST_CASE("Metering") {
         auto StopTxnSampledDataString = declareConfiguration<const char*>("StopTxnSampledData", "", CONFIGURATION_FN);
         StopTxnSampledDataString->setString("Energy.Active.Import.Register");
 
+        configuration_save();
+
         loop();
 
         model.getClock().setTime(BASE_TIME);
@@ -244,6 +246,9 @@ TEST_CASE("Metering") {
 
         setOnReceiveRequest("StopTransaction", [base, &checkProcessed] (JsonObject payload) {
             checkProcessed = true;
+
+            REQUIRE(payload["transactionData"].size() >= 2);
+
             Timestamp t0, t1;
             t0.setTime(payload["transactionData"][0]["timestamp"] | "");
             t1.setTime(payload["transactionData"][1]["timestamp"] | "");

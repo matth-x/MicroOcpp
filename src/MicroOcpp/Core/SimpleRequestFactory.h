@@ -5,16 +5,13 @@
 #ifndef MO_SIMPLEREQUESTFACTORY_H
 #define MO_SIMPLEREQUESTFACTORY_H
 
-#include <ArduinoJson.h>
-#include <MicroOcpp/Core/Request.h>
 #include <memory>
-#include <functional>
+
+#include <MicroOcpp/Core/Request.h>
 
 namespace MicroOcpp {
 
 class Operation;
-
-std::unique_ptr<Request> makeRequest();
 
 std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> op);
 std::unique_ptr<Request> makeRequest(Operation *op); //takes ownership of op

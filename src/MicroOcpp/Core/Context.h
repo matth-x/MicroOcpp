@@ -25,8 +25,6 @@ private:
     Model model;
     RequestQueue reqQueue;
 
-    std::unique_ptr<RequestQueue> preBootQueue;
-
     std::unique_ptr<FtpClient> ftpClient;
 
 public:
@@ -35,12 +33,7 @@ public:
 
     void loop();
 
-    void activatePostBootCommunication();
-
     void initiateRequest(std::unique_ptr<Request> op);
-    
-    //for BootNotification and TriggerMessage: initiate operations before the first BootNotification was accepted (pre-boot mode)
-    void initiatePreBootOperation(std::unique_ptr<Request> op);
 
     Model& getModel();
 
@@ -49,6 +42,8 @@ public:
     const ProtocolVersion& getVersion();
 
     Connection& getConnection();
+
+    RequestQueue& getRequestQueue();
 
     void setFtpClient(std::unique_ptr<FtpClient> ftpClient);
     FtpClient *getFtpClient();

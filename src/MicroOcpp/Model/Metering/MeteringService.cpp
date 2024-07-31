@@ -160,6 +160,16 @@ std::shared_ptr<TransactionMeterData> MeteringService::endTxMeterData(Transactio
     return connector->endTxMeterData(transaction);
 }
 
+void MeteringService::abortTxMeterData(unsigned int connectorId) {
+    if (connectorId >= connectors.size()) {
+        MO_DBG_ERR("connectorId is out of bounds");
+        return;
+    }
+    auto& connector = connectors[connectorId];
+
+    connector->abortTxMeterData();
+}
+
 std::shared_ptr<TransactionMeterData> MeteringService::getStopTxMeterData(Transaction *transaction) {
     if (!transaction) {
         MO_DBG_ERR("invalid argument");

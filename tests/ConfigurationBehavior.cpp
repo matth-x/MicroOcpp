@@ -112,12 +112,12 @@ TEST_CASE( "Configuration Behavior" ) {
         SECTION("set true") {
             configBool->setBool(true);
 
-            beginTransaction("mIdTag");
+            beginTransaction("mIdTag_invalid");
             loop();
 
             REQUIRE(connector->getStatus() == ChargePointStatus_Available);
 
-            beginTransaction_authorized("mIdTag");
+            beginTransaction_authorized("mIdTag_invalid2");
             loop();
 
             REQUIRE(connector->getStatus() == ChargePointStatus_Available);

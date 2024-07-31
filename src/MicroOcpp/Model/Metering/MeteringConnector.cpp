@@ -24,14 +24,14 @@ MeteringConnector::MeteringConnector(Model& model, int connectorId, MeterStore& 
     declareConfiguration<int>("MeterValuesSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
     meterValueCacheSizeInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "MeterValueCacheSize", 1);
     meterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval", 60);
-    
+
     auto stopTxnSampledDataString = declareConfiguration<const char*>("StopTxnSampledData", "");
     declareConfiguration<int>("StopTxnSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
-    
+
     auto meterValuesAlignedDataString = declareConfiguration<const char*>("MeterValuesAlignedData", "");
     declareConfiguration<int>("MeterValuesAlignedDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
     clockAlignedDataIntervalInt  = declareConfiguration<int>("ClockAlignedDataInterval", 0);
-    
+
     auto stopTxnAlignedDataString = declareConfiguration<const char*>("StopTxnAlignedData", "");
 
     meterValuesInTxOnlyBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "MeterValuesInTxOnly", true);
@@ -66,12 +66,12 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
         if (transaction != model.getConnector(connectorId)->getTransaction()) {
             transaction = model.getConnector(connectorId)->getTransaction();
         }
-        
+
         if (transaction && transaction->isRunning() && !transaction->isSilent()) {
             //check during transaction
 
             if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
-                MO_DBG_WARN("reload stopTxnData");
+                MO_DBG_WARN("reload stopTxnData, %s, for tx-%u-%u", stopTxnData ? "replace" : "first time", connectorId, transaction->getTxNr());
                 //reload (e.g. after power cut during transaction)
                 stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction.get());
             }
@@ -108,9 +108,8 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
                         stopTxnData->addTxData(std::move(alignedStopTx));
                     }
                 }
-
             }
-            
+
             Timestamp midnightBase = Timestamp(2010,0,0,0,0,0);
             auto intervall = timestampNow - midnightBase;
             intervall %= 3600 * 24;
@@ -143,7 +142,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
                 }
             }
             lastSampleTime = mocpp_tick_ms();
-        }   
+        }
     }
 
     if (clockAlignedDataIntervalInt->getInt() < 1 && meterValueSampleIntervalInt->getInt() < 1) {
@@ -214,6 +213,10 @@ std::shared_ptr<TransactionMeterData> MeteringConnector::endTxMeterData(Transact
     }
 
     return std::move(stopTxnData);
+}
+
+void MeteringConnector::abortTxMeterData() {
+    stopTxnData.reset();
 }
 
 std::shared_ptr<TransactionMeterData> MeteringConnector::getStopTxMeterData(Transaction *transaction) {

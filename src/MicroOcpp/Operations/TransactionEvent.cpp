@@ -23,37 +23,6 @@ const char* TransactionEvent::getOperationType() {
     return "TransactionEvent";
 }
 
-void TransactionEvent::initiate(StoredOperationHandler *opStore) {
-    if (!txEvent || !txEvent->transaction || !txEvent->transaction) {
-        MO_DBG_ERR("initialization error");
-        return;
-    }
-
-    auto transaction = txEvent->transaction;
-
-    if (txEvent->eventType == TransactionEventData::Type::Started) {
-        if (transaction->started) {
-            MO_DBG_ERR("initialization error");
-            return;
-        }
-
-        transaction->started = true;
-    }
-
-    if (txEvent->eventType == TransactionEventData::Type::Ended) {
-        if (transaction->stopped) {
-            MO_DBG_ERR("initialization error");
-            return;
-        }
-
-        transaction->stopped = true;
-    }
-
-    //commit operation and tx
-
-    MO_DBG_INFO("TransactionEvent initiated");
-}
-
 std::unique_ptr<DynamicJsonDocument> TransactionEvent::createReq() {
     auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
                 JSON_OBJECT_SIZE(12) + //total of 12 fields

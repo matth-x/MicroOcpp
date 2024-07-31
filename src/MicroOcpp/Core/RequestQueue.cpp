@@ -2,12 +2,13 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#include <limits>
+
 #include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Core/OcppError.h>
-#include <MicroOcpp/Core/RequestStore.h>
 #include <MicroOcpp/Core/OperationRegistry.h>
 #include <MicroOcpp/Operations/StatusNotification.h>
 
@@ -17,135 +18,238 @@ size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_siz
 
 using namespace MicroOcpp;
 
-RequestQueue::RequestQueue(OperationRegistry& operationRegistry, Model *baseModel, std::shared_ptr<FilesystemAdapter> filesystem)
-            : operationRegistry(operationRegistry) {
-    
-    if (filesystem) {
-        initiatedRequests.reset(new PersistentRequestQueue(baseModel, filesystem));
-    } else {
-        initiatedRequests.reset(new VolatileRequestQueue());
+VolatileRequestQueue::VolatileRequestQueue(unsigned int priority) : priority{priority} {
+
+}
+
+VolatileRequestQueue::~VolatileRequestQueue() = default;
+
+void VolatileRequestQueue::loop() {
+
+    /*
+     * Drop timed out operations
+     */
+    size_t i = 0;
+    while (i < len) {
+        size_t index = (front + i) % MO_REQUEST_CACHE_MAXSIZE;
+        auto& request = requests[index];
+
+        if (request->isTimeoutExceeded()) {
+            MO_DBG_INFO("operation timeout: %s", request->getOperationType());
+            request->executeTimeout();
+
+            if (index == front) {
+                requests[front].reset();
+                front = (front + 1) % MO_REQUEST_CACHE_MAXSIZE;
+                len--;
+            } else {
+                requests[index].reset();
+                for (size_t i = (index + MO_REQUEST_CACHE_MAXSIZE - front) % MO_REQUEST_CACHE_MAXSIZE; i < len - 1; i++) {
+                    requests[(front + i) % MO_REQUEST_CACHE_MAXSIZE] = std::move(requests[(front + i + 1) % MO_REQUEST_CACHE_MAXSIZE]);
+                }
+                len--;
+            }
+        } else {
+            i++;
+        }
     }
 }
 
-void RequestQueue::setConnection(Connection& sock) {
+unsigned int VolatileRequestQueue::getFrontRequestOpNr() {
+    if (len == 0) {
+        return NoOperation;
+    }
+
+    return priority;
+}
+
+std::unique_ptr<Request> VolatileRequestQueue::fetchFrontRequest() {
+    if (len == 0) {
+        return nullptr;
+    }
+
+    std::unique_ptr<Request> result = std::move(requests[front]);
+    front = (front + 1) % MO_REQUEST_CACHE_MAXSIZE;
+    len--;
+
+    MO_DBG_VERBOSE("front %zu len %zu", front, len);
+
+    return result;
+}
+
+bool VolatileRequestQueue::pushRequestBack(std::unique_ptr<Request> request) {
+
+    // Don't queue up multiple StatusNotification messages for the same connectorId
+    if (strcmp(request->getOperationType(), "StatusNotification") == 0)
+    {
+        size_t i = 0;
+        while (i < len) {
+            size_t index = (front + i) % MO_REQUEST_CACHE_MAXSIZE;
+
+            if (strcmp(requests[index]->getOperationType(), "StatusNotification")!= 0)
+            {
+                i++;
+                continue;
+            }
+            auto new_status_notification = static_cast<Ocpp16::StatusNotification*>(request->getOperation());
+            auto old_status_notification = static_cast<Ocpp16::StatusNotification*>(requests[index]->getOperation());
+            if (old_status_notification->getConnectorId() == new_status_notification->getConnectorId()) {
+                requests[index].reset();
+                for (size_t i = (index + MO_REQUEST_CACHE_MAXSIZE - front) % MO_REQUEST_CACHE_MAXSIZE; i < len - 1; i++) {
+                    requests[(front + i) % MO_REQUEST_CACHE_MAXSIZE] = std::move(requests[(front + i + 1) % MO_REQUEST_CACHE_MAXSIZE]);
+                }
+                len--;
+            } else {
+                i++;
+            }
+        }
+    }
+
+    if (len >= MO_REQUEST_CACHE_MAXSIZE) {
+        MO_DBG_INFO("Drop cached operation (cache full): %s", requests[front]->getOperationType());
+        requests[front]->executeTimeout();
+        requests[front].reset();
+        front = (front + 1) % MO_REQUEST_CACHE_MAXSIZE;
+        len--;
+    }
+
+    requests[(front + len) % MO_REQUEST_CACHE_MAXSIZE] = std::move(request);
+    len++;
+    return true;
+}
+
+RequestQueue::RequestQueue(Connection& connection, OperationRegistry& operationRegistry)
+            : connection(connection), operationRegistry(operationRegistry) {
+
     ReceiveTXTcallback callback = [this] (const char *payload, size_t length) {
         return this->receiveMessage(payload, length);
     };
     
-    sock.setReceiveTXTcallback(callback);
+    connection.setReceiveTXTcallback(callback);
+
+    memset(sendQueues, 0, sizeof(sendQueues));
+    addSendQueue(&defaultSendQueue);
+    addSendQueue(&preBootSendQueue);
 }
 
-void RequestQueue::loop(Connection& ocppSock) {
+void RequestQueue::loop() {
 
     /*
-     * Sort out timed out operations
+     * Check if front request timed out
      */
-    initiatedRequests->drop_if([] (std::unique_ptr<Request>& op) -> bool {
-        bool timed_out = op->isTimeoutExceeded();
-        if (timed_out) {
-            MO_DBG_INFO("operation timeout: %s", op->getOperationType());
-            op->executeTimeout();
-        }
-        return timed_out;
-    });
+    if (sendReqFront && sendReqFront->isTimeoutExceeded()) {
+        MO_DBG_INFO("operation timeout: %s", sendReqFront->getOperationType());
+        sendReqFront->executeTimeout();
+        sendReqFront.reset();
+    }
+
+    if (recvReqFront && recvReqFront->isTimeoutExceeded()) {
+        MO_DBG_INFO("operation timeout: %s", recvReqFront->getOperationType());
+        recvReqFront->executeTimeout();
+        recvReqFront.reset();
+    }
+
+    defaultSendQueue.loop();
+    preBootSendQueue.loop();
+
+    if (!connection.isConnected()) {
+        return;
+    }
 
     /**
-     * Send and dequeue a pending confirmation message, if existing. If the first operation is awaiting,
-     * try with the subsequent operations.
+     * Send and dequeue a pending confirmation message, if existing
      * 
      * If a message has been sent, terminate this loop() function.
      */
-    for (auto received = receivedRequests.begin(); received != receivedRequests.end(); ++received) {
-    
-        auto response = (*received)->createResponse();
 
-        if (response) {
+    if (!recvReqFront) {
+        recvReqFront = recvQueue.fetchFrontRequest();
+    }
+
+    if (recvReqFront) {
+
+        DynamicJsonDocument response {0};
+        auto ret = recvReqFront->createResponse(response);
+
+        if (ret == Request::CreateResponseResult::Success) {
             std::string out;
-            serializeJson(*response, out);
+            serializeJson(response, out);
     
-            bool success = ocppSock.sendTXT(out.c_str(), out.length());
+            bool success = connection.sendTXT(out.c_str(), out.length());
 
             if (success) {
                 MO_DBG_TRAFFIC_OUT(out.c_str());
-                receivedRequests.erase(received);
+                recvReqFront.reset();
             }
 
             return;
-        } //else: There will be another attempt to send this conf message in a future loop call.
-          //      Go on with the next element in the queue.
+        } //else: There will be another attempt to send this conf message in a future loop call
     }
 
     /**
      * Send pending req message
      */
-    auto initedOp = initiatedRequests->front();
 
-    if (!initedOp) {
-        //queue empty
-        return;
+    if (!sendReqFront) {
+
+        unsigned int minOpNr = RequestEmitter::NoOperation;
+        size_t index = MO_NUM_REQUEST_QUEUES;
+        for (size_t i = 0; i < MO_NUM_REQUEST_QUEUES && sendQueues[i]; i++) {
+            auto opNr = sendQueues[i]->getFrontRequestOpNr();
+            if (opNr < minOpNr) {
+                minOpNr = opNr;
+                index = i;
+            }
+        }
+
+        if (index < MO_NUM_REQUEST_QUEUES) {
+            sendReqFront = sendQueues[index]->fetchFrontRequest();
+        }
     }
 
-    //check backoff time
+    if (sendReqFront && !sendReqFront->isRequestSent()) {
 
-    if (initedOp->getTrialNo() == 0) {
-        //first trial -> send immediately
-        sendBackoffPeriod = 0;
-    }
+        DynamicJsonDocument request {0};
+        auto ret = sendReqFront->createRequest(request);
 
-    if (sockTrackLastConnected != ocppSock.getLastConnected()) {
-        //connection active (again) -> send immediately
-        sendBackoffPeriod = std::min(sendBackoffPeriod, 1000UL);
-    }
-    sockTrackLastConnected = ocppSock.getLastConnected();
+        if (ret == Request::CreateRequestResult::Success) {
 
-    if (mocpp_tick_ms() - sendBackoffTime < sendBackoffPeriod) {
-        //still in backoff period
-        return;
-    }
+            //send request
+            std::string out;
+            serializeJson(request, out);
 
-    auto request = initedOp->createRequest();
+            bool success = connection.sendTXT(out.c_str(), out.length());
 
-    if (!request) {
-        //request not ready yet or OOM
-        return;
-    }
+            if (success) {
+                MO_DBG_TRAFFIC_OUT(out.c_str());
+                sendReqFront->setRequestSent(); //mask as sent and wait for response / timeout
+            }
 
-    //send request
-    std::string out;
-    serializeJson(*request, out);
-
-    bool success = ocppSock.sendTXT(out.c_str(), out.length());
-
-    if (success) {
-        MO_DBG_TRAFFIC_OUT(out.c_str());
-
-        //update backoff time
-        sendBackoffTime = mocpp_tick_ms();
-        sendBackoffPeriod = std::min(sendBackoffPeriod + BACKOFF_PERIOD_INCREMENT, BACKOFF_PERIOD_MAX);
+            return;
+        }
     }
 }
 
 void RequestQueue::sendRequest(std::unique_ptr<Request> op){
-    if (!op) {
-        MO_DBG_ERR("Called with null. Ignore");
-        return;
-    }
+    defaultSendQueue.pushRequestBack(std::move(op));
+}
 
-    // Don't queue up multiple StatusNotification messages for the same connectorId
-    if (strcmp(op->getOperationType(), "StatusNotification") == 0)
-    {
-        auto new_status_notification = static_cast<Ocpp16::StatusNotification*>(op->getOperation());
-        initiatedRequests->drop_if([&new_status_notification] (const std::unique_ptr<Request>& operation) {
-            if (strcmp(operation->getOperationType(), "StatusNotification")!= 0)
-            {
-                return false;
-            }
-            auto old_status_notification = static_cast<Ocpp16::StatusNotification*>(operation->getOperation());
-            return old_status_notification->getConnectorId() == new_status_notification->getConnectorId();
-        });
-    }
+void RequestQueue::sendRequestPreBoot(std::unique_ptr<Request> op){
+    preBootSendQueue.pushRequestBack(std::move(op));
+}
 
-    initiatedRequests->push_back(std::move(op));
+void RequestQueue::addSendQueue(RequestEmitter* sendQueue) {
+    for (size_t i = 0; i < MO_NUM_REQUEST_QUEUES; i++) {
+        if (!sendQueues[i]) {
+            sendQueues[i] = sendQueue;
+            return;
+        }
+    }
+    MO_DBG_ERR("exceeded sendQueue capacity");
+}
+
+unsigned int RequestQueue::getNextOpNr() {
+    return nextOpNr++;
 }
 
 bool RequestQueue::receiveMessage(const char* payload, size_t length) {
@@ -241,26 +345,11 @@ bool RequestQueue::receiveMessage(const char* payload, size_t length) {
  */
 void RequestQueue::receiveResponse(JsonArray json) {
 
-    bool success = false;
-
-    initiatedRequests->drop_if(
-        [&json, &success] (std::unique_ptr<Request>& operation) {
-            bool match = operation->receiveResponse(json);
-            if (match) {
-                success = true;
-                //operation will be deleted by the surrounding drop_if
-            }
-            return match;
-        }); //executes in order and drops every operation where predicate(op) == true
-
-    if (!success) {
-        //didn't find matching Request
-        if (json[0] == MESSAGE_TYPE_CALLERROR) {
-            MO_DBG_DEBUG("Received CALLERROR did not abort a pending operation");
-        } else {
-            MO_DBG_WARN("Received response doesn't match any pending operation");
-        }
+    if (!sendReqFront || !sendReqFront->receiveResponse(json)) {
+        MO_DBG_WARN("Received response doesn't match pending operation");
     }
+
+    sendReqFront.reset();
 }
 
 void RequestQueue::receiveRequest(JsonArray json) {
@@ -274,7 +363,7 @@ void RequestQueue::receiveRequest(JsonArray json) {
 
 void RequestQueue::receiveRequest(JsonArray json, std::unique_ptr<Request> op) {
     op->receiveRequest(json); //execute the operation
-    receivedRequests.push_back(std::move(op)); //enqueue so loop() plans conf sending
+    recvQueue.pushRequestBack(std::move(op)); //enqueue so loop() plans conf sending
 }
 
 /*

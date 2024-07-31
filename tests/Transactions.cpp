@@ -13,6 +13,7 @@
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
 #include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
+#include <MicroOcpp/Debug.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 

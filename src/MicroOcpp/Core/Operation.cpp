@@ -17,14 +17,6 @@ const char* Operation::getOperationType(){
     return "CustomOperation";
 }
 
-void Operation::initiate(StoredOperationHandler *rpcData) {
-    //called after initiateRequest(anyMsg)
-}
-
-bool Operation::restore(StoredOperationHandler *rpcData) {
-    return false;
-}
-
 std::unique_ptr<DynamicJsonDocument> Operation::createReq() {
     MO_DBG_ERR("Unsupported operation: createReq() is not implemented");
     return createEmptyDocument();

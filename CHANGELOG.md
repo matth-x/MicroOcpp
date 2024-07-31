@@ -6,6 +6,8 @@
 
 - Change `MicroOcpp::ChargePointStatus` into C-style enum ([#309](https://github.com/matth-x/MicroOcpp/pull/309))
 - Connector lock disabled by default per `MO_ENABLE_CONNECTOR_LOCK` ([#312](https://github.com/matth-x/MicroOcpp/pull/312))
+- Relaxed temporal order of non-tx-related operations ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
+- Use pseudo-GUIDs as messageId ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
 
 ### Added
 
@@ -16,10 +18,13 @@
 - Build flag `MO_REPORT_NOERROR` to report error recovery ([#331](https://github.com/matth-x/MicroOcpp/pull/331))
 - Support for `parentIdTag` ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
 - Input validation for unsigned int Configs ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
+- Support for TransactionMessageAttempts/-RetryInterval ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
 
 ### Removed
 
 - ESP32 built-in HTTP OTA ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
+- Operation store (files op-*.jsn and opstore.jsn) ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
+- Explicit tracking of txNr (file txstore.jsn) ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
 
 ### Fixed
 

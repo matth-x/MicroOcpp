@@ -11,18 +11,11 @@ std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> operation){
     if (operation == nullptr) {
         return nullptr;
     }
-    auto request = makeRequest();
-    request->setOperation(std::move(operation));
-    return request;
+    return std::unique_ptr<Request>(new Request(std::move(operation)));
 }
 
 std::unique_ptr<Request> makeRequest(Operation *operation) {
     return makeRequest(std::unique_ptr<Operation>(operation));
-}
-
-std::unique_ptr<Request> makeRequest(){
-    auto result = std::unique_ptr<Request>(new Request());
-    return result;
 }
 
 } //end namespace MicroOcpp

@@ -9,12 +9,8 @@ using MicroOcpp::Ocpp16::CustomOperation;
 CustomOperation::CustomOperation(const char *operationType,
             std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createReq,
             std::function<void (JsonObject)> fn_processConf,
-            std::function<bool (const char*, const char*, JsonObject)> fn_processErr,
-            std::function<void (StoredOperationHandler*)> fn_initiate,
-            std::function<bool (StoredOperationHandler*)> fn_restore) :
+            std::function<bool (const char*, const char*, JsonObject)> fn_processErr) :
         operationType{operationType},
-        fn_initiate{fn_initiate},
-        fn_restore{fn_restore},
         fn_createReq{fn_createReq},
         fn_processConf{fn_processConf},
         fn_processErr{fn_processErr} {
@@ -42,20 +38,6 @@ CustomOperation::~CustomOperation() {
 
 const char* CustomOperation::getOperationType() {
     return operationType.c_str();
-}
-
-void CustomOperation::initiate(StoredOperationHandler *opStore) {
-    if (fn_initiate) {
-        fn_initiate(opStore);
-    }
-}
-
-bool CustomOperation::restore(StoredOperationHandler *opStore) {
-    if (fn_restore) {
-        return fn_restore(opStore);
-    } else {
-        return false;
-    }
 }
 
 std::unique_ptr<DynamicJsonDocument> CustomOperation::createReq() {

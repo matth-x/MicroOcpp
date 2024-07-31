@@ -63,11 +63,6 @@ void BootService::loop() {
         storeBootStats(filesystem, bootstats);
     }
 
-    if (!activatedPostBootCommunication && status == RegistrationStatus::Accepted) {
-        context.activatePostBootCommunication();
-        activatedPostBootCommunication = true;
-    }
-
     if (!activatedModel && (status == RegistrationStatus::Accepted || preBootTransactionsBool->getBool())) {
         context.getModel().activateTasks();
         activatedModel = true;
@@ -87,7 +82,7 @@ void BootService::loop() {
      */
     auto bootNotification = makeRequest(new Ocpp16::BootNotification(context.getModel(), getChargePointCredentials()));
     bootNotification->setTimeout(interval_s * 1000UL);
-    context.initiatePreBootOperation(std::move(bootNotification));
+    context.getRequestQueue().sendRequestPreBoot(std::move(bootNotification));
 
     lastBootNotification = mocpp_tick_ms();
 }
