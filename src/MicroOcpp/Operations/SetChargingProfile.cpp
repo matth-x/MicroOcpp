@@ -65,7 +65,7 @@ void SetChargingProfile::processReq(JsonObject payload) {
             return;
         }
 
-        if (chargingProfile->getTransactionId() >= 0 ||
+        if (chargingProfile->getTransactionId() >= 0 &&
                 chargingProfile->getTransactionId() != transaction->getTransactionId()) {
             //transactionId undefined / mismatch
             accepted = false;
