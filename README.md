@@ -1,4 +1,4 @@
-# <img src="https://github.com/matth-x/MicroOcpp/assets/63792403/1c49d1ad-7afc-48d3-a54e-9aef2d4886db" alt="Icon" height="24"> &nbsp; MicroOcpp
+# <img src="https://github.com/matth-x/MicroOcpp/assets/63792403/1c49d1ad-7afc-48d3-a54e-9aef2d4886db" alt="Icon" height="24"> &nbsp; MicroOCPP
 
 [![Build Status]( https://github.com/matth-x/MicroOcpp/workflows/PlatformIO%20CI/badge.svg)](https://github.com/matth-x/MicroOcpp/actions)
 [![Unit tests]( https://github.com/matth-x/MicroOcpp/workflows/Unit%20tests/badge.svg)](https://github.com/matth-x/MicroOcpp/actions)
@@ -18,7 +18,7 @@ Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/mas
 
 *Main repository: [MicroOcppSimulator](https://github.com/matth-x/MicroOcppSimulator)*
 
-The Simulator is a demo & development tool for MicroOcpp which allows to quickly assess the compatibility with different OCPP backends. It simulates a full charging station, adds a GUI and a mocked hardware binding to MicroOcpp and runs in the browser (using WebAssembly): [Try it](https://demo.micro-ocpp.com/)
+The Simulator is a demo & development tool for MicroOCPP which allows to quickly assess the compatibility with different OCPP backends. It simulates a full charging station, adds a GUI and a mocked hardware binding to MicroOCPP and runs in the browser (using WebAssembly): [Try it](https://demo.micro-ocpp.com/)
 
 <div align="center"><img src="https://github.com/matth-x/MicroOcpp/assets/63792403/27f2819b-41fd-41a7-88a8-9e673b8a88b8" alt="Screenshot" width="800em" href="https://demo.micro-ocpp.com/"></div>
 
@@ -32,7 +32,7 @@ If you don't have an OCPP server at hand, leave the charge box ID blank and ente
 
 ## Benchmarks
 
-*Full report: [MicroOcpp benchmark (esp-idf)](https://github.com/matth-x/MicroOcpp-benchmark)*
+*Full report: [MicroOCPP benchmark (esp-idf)](https://github.com/matth-x/MicroOcpp-benchmark)*
 
 The following measurements were taken on the ESP32 @ 160MHz and represent the optimistic best case scenario for a charger with two physical connectors (i.e. compiled with `-Os`, disabled debug output and logs).
 
@@ -51,7 +51,7 @@ In practical setups, the execution time is largely determined by IO delays and t
 
 PlatformIO package: [MicroOcpp](https://registry.platformio.org/libraries/matth-x/MicroOcpp)
 
-MicroOcpp is an implementation of the OCPP communication behavior. It automatically initiates the corresponding OCPP operations once the hardware status changes or the RFID input is updated with a new value. Conversely it processes new data from the server, stores it locally and updates the hardware controls when applicable.
+MicroOCPP is an implementation of the OCPP communication behavior. It automatically initiates the corresponding OCPP operations once the hardware status changes or the RFID input is updated with a new value. Conversely it processes new data from the server, stores it locally and updates the hardware controls when applicable.
 
 Please take `examples/ESP/main.cpp` as the starting point for the first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. The API documentation can be found in [`MicroOcpp.h`](https://github.com/matth-x/MicroOcpp/blob/main/src/MicroOcpp.h). Also check out the [Docs](https://matth-x.github.io/MicroOcpp).
 
