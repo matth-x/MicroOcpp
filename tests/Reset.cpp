@@ -13,7 +13,6 @@
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
 #include <MicroOcpp/Model/Reset/ResetService.h>
 #include <MicroOcpp/Model/Variables/VariableService.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
 #include <MicroOcpp/Debug.h>
 #include "./catch2/catch.hpp"

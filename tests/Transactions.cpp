@@ -11,7 +11,6 @@
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
 #include <MicroOcpp/Debug.h>
 #include "./catch2/catch.hpp"

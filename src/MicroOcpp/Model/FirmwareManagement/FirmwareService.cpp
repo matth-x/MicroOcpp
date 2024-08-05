@@ -9,7 +9,7 @@
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/OperationRegistry.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 
 #include <MicroOcpp/Operations/UpdateFirmware.h>
 #include <MicroOcpp/Operations/FirmwareStatusNotification.h>

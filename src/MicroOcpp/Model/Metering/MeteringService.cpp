@@ -7,7 +7,7 @@
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Operations/MeterValues.h>
 #include <MicroOcpp/Debug.h>
 

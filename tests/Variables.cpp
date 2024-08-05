@@ -17,7 +17,6 @@
 
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
 
 using namespace MicroOcpp;
 

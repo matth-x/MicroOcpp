@@ -24,7 +24,7 @@
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
 
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Core/Connection.h>
 
 #ifndef MO_TX_CLEAN_ABORTED
