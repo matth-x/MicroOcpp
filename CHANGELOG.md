@@ -25,6 +25,7 @@
 - ESP32 built-in HTTP OTA ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
 - Operation store (files op-*.jsn and opstore.jsn) ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
 - Explicit tracking of txNr (file txstore.jsn) ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
+- SimpleRequestFactory ([#351](https://github.com/matth-x/MicroOcpp/pull/351))
 
 ### Fixed
 
