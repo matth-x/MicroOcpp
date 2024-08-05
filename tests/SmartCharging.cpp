@@ -7,6 +7,7 @@
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
 #include "./catch2/catch.hpp"

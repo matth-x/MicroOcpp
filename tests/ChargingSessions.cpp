@@ -7,6 +7,7 @@
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Operations/BootNotification.h>
 #include <MicroOcpp/Operations/StatusNotification.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
