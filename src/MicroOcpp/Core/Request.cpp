@@ -29,7 +29,7 @@ namespace MicroOcpp {
 
 using namespace MicroOcpp;
 
-Request::Request(std::unique_ptr<Operation> msg) : operation(std::move(msg)) {
+Request::Request(std::unique_ptr<Operation> msg, const char *memory_tag) : AllocOverrider(memory_tag), messageID(makeMemString(memory_tag)), operation(std::move(msg)) {
     timeout_start = mocpp_tick_ms();
     debugRequest_start = mocpp_tick_ms();
 }
@@ -124,7 +124,7 @@ bool Request::receiveResponse(JsonArray response){
     /*
      * check if messageIDs match. If yes, continue with this function. If not, return false for message not consumed
      */
-    if (messageID != response[1].as<std::string>()){
+    if (messageID.compare(response[1].as<const char*>())){
         return false;
     }
 

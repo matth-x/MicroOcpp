@@ -13,14 +13,16 @@
 
 #include <MicroOcpp/Core/RequestCallbacks.h>
 
+#include <MicroOcpp/Core/Memory.h>
+
 namespace MicroOcpp {
 
 class Operation;
 class Model;
 
-class Request {
+class Request : public AllocOverrider {
 private:
-    std::string messageID {};
+    MemString messageID {};
     std::unique_ptr<Operation> operation;
     void setMessageID(const char *id);
     OnReceiveConfListener onReceiveConfListener = [] (JsonObject payload) {};
@@ -39,7 +41,7 @@ private:
     bool requestSent = false;
 public:
 
-    Request(std::unique_ptr<Operation> msg);
+    Request(std::unique_ptr<Operation> msg, const char *memory_tag = "Request");
 
     ~Request();
 

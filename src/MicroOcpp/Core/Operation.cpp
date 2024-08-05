@@ -8,7 +8,7 @@
 
 using MicroOcpp::Operation;
 
-Operation::Operation() {}
+Operation::Operation(const char *memory_tag) : AllocOverrider(memory_tag) {}
 
 Operation::~Operation() {}
   
