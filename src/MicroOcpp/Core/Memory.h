@@ -127,13 +127,7 @@ public:
 };
 
 template<class T>
-class Allocator {
-private:
-    #if MO_ENABLE_HEAP_PROFILER
-    const char *tag;
-    #endif
-public:
-    typedef T value_type;
+struct Allocator {
 
     Allocator(const char *tag = nullptr) {
         #if MO_ENABLE_HEAP_PROFILER
@@ -142,9 +136,9 @@ public:
     }
 
     template<class U>
-    Allocator(Allocator<U>& other) {
+    Allocator(const Allocator<U>& other) {
         #if MO_ENABLE_HEAP_PROFILER
-        other.tag = tag;
+        tag = other.tag;
         #endif
     }
 
@@ -181,6 +175,12 @@ public:
     bool operator!=(const Allocator<T>& other) {
         return !operator==(other);
     }
+
+    typedef T value_type;
+
+    #if MO_ENABLE_HEAP_PROFILER
+    const char *tag = nullptr;
+    #endif
 };
 
 template<class T>
