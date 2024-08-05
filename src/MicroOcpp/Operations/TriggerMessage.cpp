@@ -8,7 +8,7 @@
 #include <MicroOcpp/Operations/StatusNotification.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Context.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::TriggerMessage;

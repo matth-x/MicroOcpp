@@ -7,7 +7,6 @@
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Configuration.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include "./catch2/catch.hpp"
 #include "./helpers/testHelper.h"
 

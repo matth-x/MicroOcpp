@@ -64,7 +64,6 @@ set(MO_SRC
     src/MicroOcpp/Operations/UpdateFirmware.cpp
     src/MicroOcpp/Debug.cpp
     src/MicroOcpp/Platform.cpp
-    src/MicroOcpp/Core/SimpleRequestFactory.cpp
     src/MicroOcpp/Core/OperationRegistry.cpp
     src/MicroOcpp/Model/Authorization/AuthorizationData.cpp
     src/MicroOcpp/Model/Authorization/AuthorizationList.cpp

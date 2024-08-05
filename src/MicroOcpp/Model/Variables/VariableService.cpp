@@ -16,7 +16,7 @@
 #include <MicroOcpp/Operations/GetVariables.h>
 #include <MicroOcpp/Operations/GetBaseReport.h>
 #include <MicroOcpp/Operations/NotifyReport.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 
 #include <cstring>
 #include <cctype>

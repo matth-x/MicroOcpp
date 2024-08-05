@@ -8,7 +8,7 @@
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Configuration.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
 #include <MicroOcpp/Operations/BootNotification.h>
 #include <MicroOcpp/Platform.h>
