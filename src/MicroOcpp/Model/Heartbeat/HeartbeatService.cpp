@@ -4,7 +4,7 @@
 
 #include <MicroOcpp/Model/Heartbeat/HeartbeatService.h>
 #include <MicroOcpp/Core/Context.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Operations/Heartbeat.h>
 #include <MicroOcpp/Platform.h>

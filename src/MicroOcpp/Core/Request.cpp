@@ -286,3 +286,18 @@ void Request::setRequestSent() {
 bool Request::isRequestSent() {
     return requestSent;
 }
+
+namespace MicroOcpp {
+
+std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> operation){
+    if (operation == nullptr) {
+        return nullptr;
+    }
+    return std::unique_ptr<Request>(new Request(std::move(operation)));
+}
+
+std::unique_ptr<Request> makeRequest(Operation *operation) {
+    return makeRequest(std::unique_ptr<Operation>(operation));
+}
+
+} //end namespace MicroOcpp

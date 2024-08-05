@@ -18,7 +18,6 @@
 #include <MicroOcpp/Operations/TransactionEvent.h>
 #include <MicroOcpp/Operations/RequestStartTransaction.h>
 #include <MicroOcpp/Operations/RequestStopTransaction.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Debug.h>
 
 using namespace MicroOcpp;

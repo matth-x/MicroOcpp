@@ -12,7 +12,7 @@
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/OperationRegistry.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Operations/GetLocalListVersion.h>
 #include <MicroOcpp/Operations/SendLocalList.h>
 #include <MicroOcpp/Operations/StatusNotification.h>
