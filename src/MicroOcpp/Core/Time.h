@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Platform.h>
 
 #ifndef MO_ENABLE_TIMESTAMP_MILLISECONDS
@@ -23,7 +24,7 @@
 
 namespace MicroOcpp {
 
-class Timestamp {
+class Timestamp : public AllocOverrider {
 private:
     /*
      * Internal representation of the current time. The initial values correspond to UNIX-time 0. January

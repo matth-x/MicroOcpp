@@ -27,7 +27,7 @@
 
 using namespace MicroOcpp;
 
-Model::Model(ProtocolVersion version, uint16_t bootNr) : version(version), bootNr(bootNr) {
+Model::Model(ProtocolVersion version, uint16_t bootNr) : AllocOverrider("Model"), connectors(makeMemVector<std::unique_ptr<Connector>>("Model")), version(version), bootNr(bootNr) {
 
 }
 
@@ -114,7 +114,7 @@ ConnectorsCommon *Model::getConnectorsCommon() {
     return chargeControlCommon.get();
 }
 
-void Model::setConnectors(std::vector<std::unique_ptr<Connector>>&& connectors) {
+void Model::setConnectors(MemVector<std::unique_ptr<Connector>>&& connectors) {
     this->connectors = std::move(connectors);
     capabilitiesUpdated = true;
 }
