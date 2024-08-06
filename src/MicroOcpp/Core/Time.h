@@ -11,7 +11,15 @@
 
 #include <MicroOcpp/Platform.h>
 
+#ifndef MO_ENABLE_TIMESTAMP_MILLISECONDS
+#define MO_ENABLE_TIMESTAMP_MILLISECONDS 0
+#endif
+
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
 #define JSONDATE_LENGTH 24   //max. ISO 8601 date length, excluding the terminating zero
+#else
+#define JSONDATE_LENGTH 20   //ISO 8601 date length, excluding the terminating zero
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
 namespace MicroOcpp {
 
@@ -27,7 +35,9 @@ private:
     int32_t hour = 0;
     int32_t minute = 0;
     int32_t second = 0;
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
     int32_t ms = 0;
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
 public:
 
@@ -35,8 +45,11 @@ public:
 
     Timestamp(const Timestamp& other);
 
-    Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second, int32_t ms = 0) :
-                year(year), month(month), day(day), hour(hour), minute(minute), second(second), ms(ms) { };
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
+    Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second, int32_t ms = 0);
+#else 
+    Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second);
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
     /**
      * Expects a date string like
@@ -57,7 +70,9 @@ public:
 
     Timestamp &operator=(const Timestamp &rhs);
 
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
     Timestamp &addMilliseconds(int ms);
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
     /*
      * Time periods are given in seconds for all of the following arithmetic operations
