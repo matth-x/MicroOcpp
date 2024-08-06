@@ -21,15 +21,13 @@
 #include <memory>
 #include <ArduinoJson.h>
 
-#include <MicroOcpp/Core/Memory.h>
-
 namespace MicroOcpp {
 
 std::unique_ptr<DynamicJsonDocument> createEmptyDocument();
 
-class Operation : public AllocOverrider {
+class Operation {
 public:
-    Operation(const char *memory_tag = nullptr);
+    Operation();
 
     virtual ~Operation();
     
