@@ -87,10 +87,12 @@ void mo_mem_free_ext(void* ptr);
 #define MO_OVERRIDE_NEW 1
 #endif
 
-#if MO_OVERRIDE_ALLOCATION
-
 #include <memory>
 #include <string>
+#include <vector>
+
+#if MO_OVERRIDE_ALLOCATION
+
 #include <string.h>
 
 namespace MicroOcpp {
@@ -184,6 +186,23 @@ struct Allocator {
         #endif
     }
 
+#if 0
+    Allocator& operator=(const Allocator& other) {
+        #if MO_ENABLE_HEAP_PROFILER
+        MO_FREE(tag);
+        tag = nullptr;
+        updateMemTag(other.tag);
+        #endif
+    }
+
+    Allocator& operator=(Allocator&& other) {
+        #if MO_ENABLE_HEAP_PROFILER
+        tag = other.tag;
+        other.tag = nullptr;
+        #endif
+    }
+#endif
+
 
     ~Allocator() {
         if (tag) {
@@ -259,6 +278,14 @@ Allocator<T> makeAllocator(const char *tag = nullptr) {
 
 using MemString = std::basic_string<char, std::char_traits<char>, MicroOcpp::Allocator<char>>;
 
+template<class T>
+using MemVector = std::vector<T, Allocator<T>>;
+
+template<class T>
+MemVector<T> makeMemVector(const char *tag) {
+    return MemVector<T>(Allocator<T>(tag));
+}
+
 template<class T, typename ...Args>
 T *mo_mem_new(const char *tag, Args&& ...args)  {
     MO_DBG_DEBUG("mo_mem_new %zu B (%s)", sizeof(T), tag ? tag : "unspecified");
@@ -301,6 +328,14 @@ Allocator<T> makeAllocator(const char *tag = nullptr) {
 }
 
 using MemString = std::string;
+
+template<class T>
+using MemVector = std::vector<T>;
+
+template<class T>
+MemVector<T> makeMemVector(const char *tag) {
+    return MemVector<T>();
+}
 
 template <class T, typename ...Args>
 T *mo_mem_new(Args&& ...args)  {
