@@ -22,7 +22,7 @@ class Model;
 
 class Request : public AllocOverrider {
 private:
-    MemString messageID {};
+    MemString messageID;
     std::unique_ptr<Operation> operation;
     void setMessageID(const char *id);
     OnReceiveConfListener onReceiveConfListener = [] (JsonObject payload) {};
@@ -121,8 +121,9 @@ public:
 /*
  * Simple factory functions
  */
-std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> op);
+std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> op, const char *memoryTag = "Request");
 std::unique_ptr<Request> makeRequest(Operation *op); //takes ownership of op
+std::unique_ptr<Request> makeRequest(const char *memoryTag, Operation *op); //takes ownership of op
 
 } //end namespace MicroOcpp
 

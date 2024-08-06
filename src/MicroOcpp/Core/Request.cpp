@@ -289,15 +289,19 @@ bool Request::isRequestSent() {
 
 namespace MicroOcpp {
 
-std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> operation){
+std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> operation, const char *memoryTag){
     if (operation == nullptr) {
         return nullptr;
     }
-    return std::unique_ptr<Request>(new Request(std::move(operation)));
+    return std::unique_ptr<Request>(new Request(std::move(operation), memoryTag));
 }
 
 std::unique_ptr<Request> makeRequest(Operation *operation) {
     return makeRequest(std::unique_ptr<Operation>(operation));
+}
+
+std::unique_ptr<Request> makeRequest(const char *memoryTag, Operation *operation) {
+    return makeRequest(std::unique_ptr<Operation>(operation), memoryTag);
 }
 
 } //end namespace MicroOcpp
