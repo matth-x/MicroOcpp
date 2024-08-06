@@ -9,6 +9,7 @@
 #include <memory>
 
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
@@ -37,9 +38,9 @@ public:
     virtual void loadStaticKey(Configuration& config, const char *key) { } //possible optimization: can replace internal key with passed static key
 };
 
-class ConfigurationContainerVolatile : public ConfigurationContainer {
+class ConfigurationContainerVolatile : public ConfigurationContainer, public AllocOverrider {
 private:
-    std::vector<std::shared_ptr<Configuration>> configurations;
+    std::vector<std::shared_ptr<Configuration>, Allocator<std::shared_ptr<Configuration>>> configurations;
 public:
     ConfigurationContainerVolatile(const char *filename, bool accessible);
 

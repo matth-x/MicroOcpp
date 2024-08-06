@@ -24,8 +24,8 @@ struct Validator {
 namespace ConfigurationLocal {
 
 std::shared_ptr<FilesystemAdapter> filesystem;
-std::vector<std::shared_ptr<ConfigurationContainer>> configurationContainers;
-std::vector<Validator> validators;
+std::vector<std::shared_ptr<ConfigurationContainer>, Allocator<std::shared_ptr<ConfigurationContainer>>> configurationContainers;
+std::vector<Validator, Allocator<Validator>> validators;
 
 }
 
@@ -50,8 +50,8 @@ void addConfigurationContainer(std::shared_ptr<ConfigurationContainer> container
 }
 
 std::shared_ptr<ConfigurationContainer> getContainer(const char *filename) {
-    std::vector<std::shared_ptr<ConfigurationContainer>>::iterator container = std::find_if(configurationContainers.begin(), configurationContainers.end(),
-        [filename](std::shared_ptr<ConfigurationContainer> &elem) {
+    auto container = std::find_if(configurationContainers.begin(), configurationContainers.end(),
+        [filename](decltype(configurationContainers)::value_type &elem) {
             return !strcmp(elem->getFilename(), filename);
         });
 
@@ -192,8 +192,8 @@ Configuration *getConfigurationPublic(const char *key) {
     return nullptr;
 }
 
-std::vector<ConfigurationContainer*> getConfigurationContainersPublic() {
-    std::vector<ConfigurationContainer*> res;
+std::vector<ConfigurationContainer*, Allocator<ConfigurationContainer*>> getConfigurationContainersPublic() {
+    std::vector<ConfigurationContainer*, Allocator<ConfigurationContainer*>> res;
 
     for (auto& container : configurationContainers) {
         if (container->isAccessible()) {

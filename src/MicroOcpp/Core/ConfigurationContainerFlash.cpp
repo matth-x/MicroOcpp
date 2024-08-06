@@ -6,32 +6,34 @@
 
 #include <algorithm>
 #include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Debug.h>
 
 #define MAX_CONFIGURATIONS 50
 
 namespace MicroOcpp {
 
-class ConfigurationContainerFlash : public ConfigurationContainer {
+class ConfigurationContainerFlash : public ConfigurationContainer, public AllocOverrider {
 private:
-    std::vector<std::shared_ptr<Configuration>> configurations;
+    std::vector<std::shared_ptr<Configuration>, Allocator<std::shared_ptr<Configuration>>> configurations;
     std::shared_ptr<FilesystemAdapter> filesystem;
     uint16_t revisionSum = 0;
 
     bool loaded = false;
 
-    std::vector<std::unique_ptr<char[]>> keyPool;
+    std::vector<char*, Allocator<char*>> keyPool;
     
     void clearKeyPool(const char *key) {
-        keyPool.erase(std::remove_if(keyPool.begin(), keyPool.end(), 
-            [key] (const std::unique_ptr<char[]>& k) {
-                #if MO_DBG_LEVEL >= MO_DL_VERBOSE
-                if (!strcmp(k.get(), key)) {
-                    MO_DBG_VERBOSE("clear key %s", key);
-                }
-                #endif
-                return !strcmp(k.get(), key);
-            }), keyPool.end());
+        auto it = keyPool.begin();
+        while (it != keyPool.end()) {
+            if (!strcmp(*it, key)) {
+                MO_DBG_VERBOSE("clear key %s", key);
+                MO_FREE(*it);
+                it = keyPool.erase(it);
+            } else {
+                ++it;
+            }
+        }
     }
 
     bool configurationsUpdated() {
@@ -46,8 +48,15 @@ private:
     }
 public:
     ConfigurationContainerFlash(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename, bool accessible) :
-            ConfigurationContainer(filename, accessible), filesystem(filesystem) { }
+            ConfigurationContainer(filename, accessible), AllocOverrider(filename), configurations(Allocator<std::shared_ptr<Configuration>>(filename)), filesystem(filesystem), keyPool(Allocator<char*>(filename)) { }
 
+    ~ConfigurationContainerFlash() {
+        auto it = keyPool.begin();
+        while (it != keyPool.end()) {
+            MO_FREE(*it);
+        }
+    }
+    
     bool load() override {
 
         if (loaded) {
@@ -110,18 +119,12 @@ public:
                 MO_DBG_ERR("corrupt config");
                 continue;
             }
-            
-            std::unique_ptr<char[]> key_pooled;
 
             auto config = getConfiguration(key).get();
             if (config && config->getType() != type) {
                 MO_DBG_ERR("conflicting type for %s - remove old config", key);
                 remove(config);
                 config = nullptr;
-            }
-            if (!config) {
-                key_pooled.reset(new char[strlen(key) + 1]);
-                strcpy(key_pooled.get(), key);
             }
 
             switch (type) {
@@ -133,7 +136,7 @@ public:
                     int value = stored["value"] | 0;
                     if (!config) {
                         //create new config
-                        config = createConfiguration(TConfig::Int, key_pooled.get()).get();
+                        config = createConfiguration(TConfig::Int, "").get();
                     }
                     if (config) {
                         config->setInt(value);
@@ -148,7 +151,7 @@ public:
                     bool value = stored["value"] | false;
                     if (!config) {
                         //create new config
-                        config = createConfiguration(TConfig::Bool, key_pooled.get()).get();
+                        config = createConfiguration(TConfig::Bool, "").get();
                     }
                     if (config) {
                         config->setBool(value);
@@ -163,7 +166,7 @@ public:
                     const char *value = stored["value"] | "";
                     if (!config) {
                         //create new config
-                        config = createConfiguration(TConfig::String, key_pooled.get()).get();
+                        config = createConfiguration(TConfig::String, "").get();
                     }
                     if (config) {
                         config->setString(value);
@@ -175,9 +178,17 @@ public:
             if (config) {
                 //success
 
-                if (key_pooled) {
-                    //allocated key, need to store
-                    keyPool.push_back(std::move(key_pooled));
+                if (!config->getKey() || !*config->getKey()) {
+                    //created new config, allocate and keep key for config object
+                    size_t size = strlen(key) + 1;
+                    char *key_pooled = static_cast<char*>(MO_MALLOC(key, size));
+                    if (!key_pooled) {
+                        MO_DBG_ERR("OOM: %s", key);
+                        remove(config);
+                        return false;
+                    }
+                    snprintf(key_pooled, size, "%s", key);
+                    keyPool.push_back(key_pooled);
                 }
             } else {
                 MO_DBG_ERR("OOM: %s", key);
@@ -267,7 +278,7 @@ public:
     }
 
     std::shared_ptr<Configuration> createConfiguration(TConfig type, const char *key) override {
-        std::shared_ptr<Configuration> res = makeConfiguration(type, key);
+        auto res = std::shared_ptr<Configuration>(makeConfiguration(type, key).release(), std::default_delete<Configuration>(), Allocator<Configuration>(key));
         if (!res) {
             //allocation failure - OOM
             MO_DBG_ERR("OOM");
