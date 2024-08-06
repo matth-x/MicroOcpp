@@ -4,6 +4,7 @@
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/ConfigurationOptions.h> //FilesystemOpt
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Debug.h>
 
 #include <cstring>
@@ -29,7 +30,7 @@ namespace MicroOcpp {
 
 class FilesystemAdapterIndex;
 
-class IndexedFileAdapter : public FileAdapter {
+class IndexedFileAdapter : public FileAdapter, public AllocOverrider {
 private:
     FilesystemAdapterIndex& index;
     char fn [MO_MAX_PATH_SIZE];
@@ -38,7 +39,7 @@ private:
     size_t written = 0;
 public:
     IndexedFileAdapter(FilesystemAdapterIndex& index, const char *fn, std::unique_ptr<FileAdapter> file)
-            : index(index), file(std::move(file)) {
+            : AllocOverrider("FilesystemIndex"), index(index), file(std::move(file)) {
         snprintf(this->fn, sizeof(this->fn), "%s", fn);
     }
 
@@ -65,7 +66,7 @@ public:
     }
 };
 
-class FilesystemAdapterIndex : public FilesystemAdapter {
+class FilesystemAdapterIndex : public FilesystemAdapter, public AllocOverrider {
 private:
     std::shared_ptr<FilesystemAdapter> filesystem;
 
@@ -76,7 +77,7 @@ private:
         IndexEntry(const char *fname, size_t size) : fname(fname), size(size) { }
     };
 
-    std::vector<IndexEntry> index;
+    std::vector<IndexEntry, Allocator<IndexEntry>> index;
 
     IndexEntry *getEntryByFname(const char *fn) {
         auto entry = std::find_if(index.begin(), index.end(),
@@ -101,7 +102,7 @@ private:
         return getEntryByFname(fn);
     }
 public:
-    FilesystemAdapterIndex(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem(std::move(filesystem)) { }
+    FilesystemAdapterIndex(std::shared_ptr<FilesystemAdapter> filesystem) : AllocOverrider("FilesystemIndex"), filesystem(std::move(filesystem)), index(Allocator<IndexEntry>(getMemoryTag())) { }
 
     ~FilesystemAdapterIndex() = default;
 
@@ -229,7 +230,7 @@ IndexedFileAdapter::~IndexedFileAdapter() {
 
 std::shared_ptr<FilesystemAdapter> decorateIndex(std::shared_ptr<FilesystemAdapter> filesystem) {
 
-    auto fsIndex = std::make_shared<FilesystemAdapterIndex>(std::move(filesystem));
+    auto fsIndex = std::allocate_shared<FilesystemAdapterIndex>(Allocator<FilesystemAdapterIndex>("FilesystemIndex"), std::move(filesystem));
     if (!fsIndex) {
         MO_DBG_ERR("OOM");
         return nullptr;
@@ -260,10 +261,10 @@ std::shared_ptr<FilesystemAdapter> decorateIndex(std::shared_ptr<FilesystemAdapt
 
 namespace MicroOcpp {
 
-class ArduinoFileAdapter : public FileAdapter {
+class ArduinoFileAdapter : public FileAdapter, public AllocOverrider {
     File file;
 public:
-    ArduinoFileAdapter(File&& file) : file(file) {}
+    ArduinoFileAdapter(File&& file) : AllocOverrider("Filesystem"), file(file) {}
 
     ~ArduinoFileAdapter() {
         if (file) {
@@ -285,12 +286,12 @@ public:
     }
 };
 
-class ArduinoFilesystemAdapter : public FilesystemAdapter {
+class ArduinoFilesystemAdapter : public FilesystemAdapter, public AllocOverrider {
 private:
     bool valid = false;
     FilesystemOpt config;
 public:
-    ArduinoFilesystemAdapter(FilesystemOpt config) : config(config) {
+    ArduinoFilesystemAdapter(FilesystemOpt config) : AllocOverrider("Filesystem"), config(config) {
         valid = true;
 
         if (config.mustMount()) { 
@@ -439,7 +440,7 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     }
 
     auto fs_concrete = new ArduinoFilesystemAdapter(config);
-    auto fs = std::shared_ptr<FilesystemAdapter>(fs_concrete);
+    auto fs = std::shared_ptr<FilesystemAdapter>(fs_concrete, std::default_delete<FilesystemAdapter>(), Allocator<FilesystemAdapter>("Filesystem"));
 
 #if MO_ENABLE_FILE_INDEX
     fs = decorateIndex(fs);
@@ -468,10 +469,10 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 namespace MicroOcpp {
 
-class EspIdfFileAdapter : public FileAdapter {
+class EspIdfFileAdapter : public FileAdapter, public AllocOverrider {
     FILE *file {nullptr};
 public:
-    EspIdfFileAdapter(FILE *file) : file(file) {}
+    EspIdfFileAdapter(FILE *file) : AllocOverrider("Filesystem"), file(file) {}
 
     ~EspIdfFileAdapter() {
         fclose(file);
@@ -494,11 +495,11 @@ public:
     }
 };
 
-class EspIdfFilesystemAdapter : public FilesystemAdapter {
+class EspIdfFilesystemAdapter : public FilesystemAdapter, public AllocOverrider {
 public:
     FilesystemOpt config;
 public:
-    EspIdfFilesystemAdapter(FilesystemOpt config) : config(config) { }
+    EspIdfFilesystemAdapter(FilesystemOpt config) : AllocOverrider("Filesystem"), config(config) { }
 
     ~EspIdfFilesystemAdapter() {
         if (config.mustMount()) {
@@ -620,7 +621,7 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     }
 
     if (mounted) {
-        auto fs = std::shared_ptr<FilesystemAdapter>(new EspIdfFilesystemAdapter(config));
+        auto fs = std::shared_ptr<FilesystemAdapter>(new EspIdfFilesystemAdapter(config), std::default_delete<FilesystemAdapter>(), Allocator<FilesystemAdapter>("Filesystem"));
 
 #if MO_ENABLE_FILE_INDEX
         fs = decorateIndex(fs);
@@ -643,10 +644,10 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 namespace MicroOcpp {
 
-class PosixFileAdapter : public FileAdapter {
+class PosixFileAdapter : public FileAdapter, public AllocOverrider {
     FILE *file {nullptr};
 public:
-    PosixFileAdapter(FILE *file) : file(file) {}
+    PosixFileAdapter(FILE *file) : AllocOverrider("Filesystem"), file(file) {}
 
     ~PosixFileAdapter() {
         fclose(file);
@@ -669,11 +670,11 @@ public:
     }
 };
 
-class PosixFilesystemAdapter : public FilesystemAdapter {
+class PosixFilesystemAdapter : public FilesystemAdapter, public AllocOverrider {
 public:
     FilesystemOpt config;
 public:
-    PosixFilesystemAdapter(FilesystemOpt config) : config(config) { }
+    PosixFilesystemAdapter(FilesystemOpt config) : AllocOverrider("Filesystem"), config(config) { }
 
     ~PosixFilesystemAdapter() = default;
 
@@ -740,7 +741,7 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
         MO_DBG_DEBUG("Skip mounting on UNIX host");
     }
 
-    auto fs = std::shared_ptr<FilesystemAdapter>(new PosixFilesystemAdapter(config));
+    auto fs = std::shared_ptr<FilesystemAdapter>(new PosixFilesystemAdapter(config), std::default_delete<FilesystemAdapter>(), Allocator<FilesystemAdapter>("Filesystem"));
 
 #if MO_ENABLE_FILE_INDEX
     fs = decorateIndex(fs);

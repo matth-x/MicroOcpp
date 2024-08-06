@@ -9,6 +9,7 @@
 
 #include <MicroOcpp/Core/OperationRegistry.h>
 #include <MicroOcpp/Core/RequestQueue.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Core/Ftp.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Version.h>
@@ -18,7 +19,7 @@ namespace MicroOcpp {
 class Connection;
 class FilesystemAdapter;
 
-class Context {
+class Context : public AllocOverrider {
 private:
     Connection& connection;
     OperationRegistry operationRegistry;

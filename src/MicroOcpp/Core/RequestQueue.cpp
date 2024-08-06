@@ -17,7 +17,7 @@ size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_siz
 
 using namespace MicroOcpp;
 
-VolatileRequestQueue::VolatileRequestQueue(unsigned int priority) : priority{priority} {
+VolatileRequestQueue::VolatileRequestQueue(unsigned int priority) : AllocOverrider("VolatileRequestQueue"), priority{priority} {
 
 }
 
@@ -118,7 +118,7 @@ bool VolatileRequestQueue::pushRequestBack(std::unique_ptr<Request> request) {
 }
 
 RequestQueue::RequestQueue(Connection& connection, OperationRegistry& operationRegistry)
-            : connection(connection), operationRegistry(operationRegistry) {
+            : AllocOverrider("RequestQueue"), connection(connection), operationRegistry(operationRegistry) {
 
     ReceiveTXTcallback callback = [this] (const char *payload, size_t length) {
         return this->receiveMessage(payload, length);

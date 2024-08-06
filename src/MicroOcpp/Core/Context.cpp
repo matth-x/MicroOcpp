@@ -12,7 +12,7 @@
 using namespace MicroOcpp;
 
 Context::Context(Connection& connection, std::shared_ptr<FilesystemAdapter> filesystem, uint16_t bootNr, ProtocolVersion version)
-        : connection(connection), model{version, bootNr}, reqQueue{connection, operationRegistry} {
+        : AllocOverrider("Context"), connection(connection), model{version, bootNr}, reqQueue{connection, operationRegistry} {
 
 }
 

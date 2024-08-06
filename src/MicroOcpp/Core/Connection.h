@@ -98,11 +98,12 @@ public:
 #ifndef MO_CUSTOM_WS
 
 #include <WebSocketsClient.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 namespace EspWiFi {
 
-class WSClient : public Connection {
+class WSClient : public Connection, public AllocOverrider {
 private:
     WebSocketsClient *wsock;
     unsigned long lastRecv = 0, lastConnected = 0;

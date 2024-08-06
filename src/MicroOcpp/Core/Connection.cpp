@@ -51,7 +51,7 @@ void LoopbackConnection::setConnected(bool connected) {
 
 using namespace MicroOcpp::EspWiFi;
 
-WSClient::WSClient(WebSocketsClient *wsock) : wsock(wsock) {
+WSClient::WSClient(WebSocketsClient *wsock) : AllocOverrider("WebSocketsClient"), wsock(wsock) {
 
 }
 
