@@ -8,6 +8,7 @@
 - Connector lock disabled by default per `MO_ENABLE_CONNECTOR_LOCK` ([#312](https://github.com/matth-x/MicroOcpp/pull/312))
 - Relaxed temporal order of non-tx-related operations ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
 - Use pseudo-GUIDs as messageId ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
+- ISO 8601 milliseconds omitted by default ([352](https://github.com/matth-x/MicroOcpp/pull/352))
 
 ### Added
 
