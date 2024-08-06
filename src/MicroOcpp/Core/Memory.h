@@ -98,9 +98,31 @@ namespace MicroOcpp {
 class AllocOverrider {
 private:
     #if MO_ENABLE_HEAP_PROFILER
-    const char *tag;
+    char *tag = nullptr;
     #endif
 protected:
+    void updateMemTag(const char *src) {
+        #if MO_ENABLE_HEAP_PROFILER
+        if (!src) {
+            //empty source does not update tag
+            return;
+        }
+        if (tag) {
+            if (!strcmp(src, tag)) {
+                //nothing to do
+                return;
+            }
+            MO_FREE(tag);
+            tag = nullptr;
+        }
+        size_t size = strlen(src) + 1;
+        tag = static_cast<char*>(MO_MALLOC("HeapProfilerInternal", size));
+        memset(tag, 0, size);
+        snprintf(tag, size, "%s", src);
+        #else
+        (void)tag;
+        #endif
+    }
     const char *getMemoryTag() {
         #if MO_ENABLE_HEAP_PROFILER
         return tag;
@@ -120,9 +142,14 @@ public:
 
     AllocOverrider(const char *tag = "Unspecified") {
         #if MO_ENABLE_HEAP_PROFILER
-        this->tag = tag;
+        updateMemTag(tag);
         mo_mem_set_tag(this, this->tag);
         #endif
+    }
+
+    ~AllocOverrider() {
+        MO_FREE(tag);
+        tag = nullptr;
     }
 };
 
@@ -131,15 +158,38 @@ struct Allocator {
 
     Allocator(const char *tag = nullptr) {
         #if MO_ENABLE_HEAP_PROFILER
-        this->tag = tag;
+        updateMemTag(tag);
         #endif
     }
 
     template<class U>
     Allocator(const Allocator<U>& other) {
         #if MO_ENABLE_HEAP_PROFILER
-        tag = other.tag;
+        updateMemTag(other.tag);
         #endif
+    }
+
+    Allocator(const Allocator& other) {
+        #if MO_ENABLE_HEAP_PROFILER
+        updateMemTag(other.tag);
+        #endif
+    }
+
+    //template<class U>
+    //Allocator(Allocator<U>&& other) {
+    Allocator(Allocator&& other) {
+        #if MO_ENABLE_HEAP_PROFILER
+        tag = other.tag;
+        other.tag = nullptr;
+        #endif
+    }
+
+
+    ~Allocator() {
+        if (tag) {
+            MO_FREE(tag);
+            tag = nullptr;
+        }
     }
 
     T *allocate(size_t count) {
@@ -179,7 +229,26 @@ struct Allocator {
     typedef T value_type;
 
     #if MO_ENABLE_HEAP_PROFILER
-    const char *tag = nullptr;
+    char *tag = nullptr;
+
+    void updateMemTag(const char *src) {
+        if (!src) {
+            //empty source does not update tag
+            return;
+        }
+        if (tag) {
+            if (!strcmp(src, tag)) {
+                //nothing to do
+                return;
+            }
+            MO_FREE(tag);
+            tag = nullptr;
+        }
+        size_t size = strlen(src) + 1;
+        tag = static_cast<char*>(MO_MALLOC("HeapProfilerInternal", size));
+        memset(tag, 0, size);
+        snprintf(tag, size, "%s", src);
+    }
     #endif
 };
 
