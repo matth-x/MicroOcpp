@@ -14,7 +14,7 @@
 using MicroOcpp::Ocpp201::NotifyReport;
 using namespace MicroOcpp::Ocpp201;
 
-NotifyReport::NotifyReport(Model& model, int requestId, const Timestamp& generatedAt, bool tbc, int seqNo, const std::vector<Variable*>& reportData)
+NotifyReport::NotifyReport(Model& model, int requestId, const Timestamp& generatedAt, bool tbc, int seqNo, const MemVector<Variable*>& reportData)
         : model(model), requestId(requestId), generatedAt(generatedAt), tbc(tbc), seqNo(seqNo), reportData(reportData) {
 
 }

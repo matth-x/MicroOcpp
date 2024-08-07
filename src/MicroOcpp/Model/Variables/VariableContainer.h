@@ -9,14 +9,15 @@
 #ifndef MO_VARIABLECONTAINER_H
 #define MO_VARIABLECONTAINER_H
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V201
+
 #include <vector>
 #include <memory>
 
 #include <MicroOcpp/Model/Variables/Variable.h>
-
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
@@ -53,9 +54,9 @@ public:
     virtual Variable *getVariable(const ComponentId& component, const char *variableName) const = 0;
 };
 
-class VariableContainerVolatile : public VariableContainer {
+class VariableContainerVolatile : public VariableContainer, public AllocOverrider {
 private:
-    std::vector<std::unique_ptr<Variable>> variables;
+    MemVector<std::unique_ptr<Variable>> variables;
 public:
     VariableContainerVolatile(const char *filename, bool accessible);
     ~VariableContainerVolatile();

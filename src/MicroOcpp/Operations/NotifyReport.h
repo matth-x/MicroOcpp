@@ -11,6 +11,7 @@
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #include <vector>
 
@@ -29,10 +30,10 @@ private:
     Timestamp generatedAt;
     bool tbc;
     int seqNo;
-    std::vector<Variable*> reportData;
+    MemVector<Variable*> reportData;
 public:
 
-    NotifyReport(Model& model, int requestId, const Timestamp& generatedAt, bool tbc, int seqNo, const std::vector<Variable*>& reportData);
+    NotifyReport(Model& model, int requestId, const Timestamp& generatedAt, bool tbc, int seqNo, const MemVector<Variable*>& reportData);
 
     const char* getOperationType() override;
 
