@@ -91,6 +91,8 @@ void mo_mem_free_ext(void* ptr);
 #include <string>
 #include <vector>
 
+#include <ArduinoJson.h>
+
 #if MO_OVERRIDE_ALLOCATION
 
 #include <string.h>
@@ -276,6 +278,80 @@ MemVector<T> makeMemVector(const char *tag) {
     return MemVector<T>(Allocator<T>(tag));
 }
 
+class ArduinoJsonAllocator {
+private:
+    #if MO_ENABLE_HEAP_PROFILER
+    char *tag = nullptr;
+
+    void updateMemTag(const char *src1, const char *src2 = nullptr) {
+        if (!src1 && !src2) {
+            //empty source does not update tag
+            return;
+        }
+        char src [64];
+        snprintf(src, sizeof(src), "%s%s", src1 ? src1 : "", src2 ? src2 : "");
+        if (tag) {
+            if (!strcmp(src, tag)) {
+                //nothing to do
+                return;
+            }
+            MO_FREE(tag);
+            tag = nullptr;
+        }
+        size_t size = strlen(src) + 1;
+        tag = static_cast<char*>(MO_MALLOC("HeapProfilerInternal", size));
+        memset(tag, 0, size);
+        snprintf(tag, size, "%s", src);
+    }
+    #endif
+public:
+
+    ArduinoJsonAllocator(const char *tag = nullptr, const char *tag_suffix = nullptr) {
+        #if MO_ENABLE_HEAP_PROFILER
+        updateMemTag(tag, tag_suffix);
+        #endif
+    }
+
+    ArduinoJsonAllocator(const ArduinoJsonAllocator& other) {
+        #if MO_ENABLE_HEAP_PROFILER
+        updateMemTag(other.tag);
+        #endif
+    }
+
+    ArduinoJsonAllocator(ArduinoJsonAllocator&& other) {
+        #if MO_ENABLE_HEAP_PROFILER
+        tag = other.tag;
+        other.tag = nullptr;
+        #endif
+    }
+
+    ~ArduinoJsonAllocator() {
+        #if MO_ENABLE_HEAP_PROFILER
+        if (tag) {
+            MO_FREE(tag);
+            tag = nullptr;
+        }
+        #endif
+    }
+
+    void *allocate(size_t size) {
+        MO_DBG_DEBUG("ArduinoJsonAllocator allocate %zu B (%s)", size, tag ? tag : "unspecified");
+        return MO_MALLOC(
+                    #if MO_ENABLE_HEAP_PROFILER
+                        tag,
+                    #else
+                        nullptr,
+                    #endif
+                    size);
+    }
+    void deallocate(void *ptr) {
+        MO_DBG_DEBUG("ArduinoJsonAllocator deallocate");
+        MO_FREE(ptr);
+    }
+};
+
+using MemJsonDoc = BasicJsonDocument<ArduinoJsonAllocator>;
+
 template<class T, typename ...Args>
 T *mo_mem_new(const char *tag, Args&& ...args)  {
     MO_DBG_DEBUG("mo_mem_new %zu B (%s)", sizeof(T), tag ? tag : "unspecified");
@@ -327,6 +403,8 @@ MemVector<T> makeMemVector(const char *tag) {
     return MemVector<T>();
 }
 
+using MemJsonDoc = MemJsonDoc;
+
 template <class T, typename ...Args>
 T *mo_mem_new(Args&& ...args)  {
     return new T(std::forward<Args>(args)...);
@@ -345,34 +423,8 @@ namespace MicroOcpp {
 
 MemString makeMemString(const char *tag = nullptr);
 
-class ArduinoJsonAllocator {
-private:
-    #if MO_ENABLE_HEAP_PROFILER
-    const char *tag;
-    #endif
-public:
-
-    ArduinoJsonAllocator(const char *tag = nullptr) {
-        #if MO_ENABLE_HEAP_PROFILER
-        this->tag = tag;
-        #endif
-    }
-
-    void *allocate(size_t size) {
-        MO_DBG_DEBUG("ArduinoJsonAllocator allocate %zu B (%s)", size, tag ? tag : "unspecified");
-        return MO_MALLOC(
-                    #if MO_ENABLE_HEAP_PROFILER
-                        tag,
-                    #else
-                        nullptr,
-                    #endif
-                    size);
-    }
-    void deallocate(void *ptr) {
-        MO_DBG_DEBUG("ArduinoJsonAllocator deallocate");
-        MO_FREE(ptr);
-    }
-};
+MemJsonDoc initMemJsonDoc(size_t capacity, const char *tag = nullptr);
+std::unique_ptr<MemJsonDoc> makeMemJsonDoc(size_t capacity, const char *tag = nullptr, const char *tag_suffix = nullptr);
 
 }
 

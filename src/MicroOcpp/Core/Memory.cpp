@@ -100,4 +100,20 @@ MemString makeMemString(const char *tag) {
 #endif
 }
 
+MemJsonDoc initMemJsonDoc(size_t capacity, const char *tag) {
+#if !MO_OVERRIDE_ALLOCATION || !MO_ENABLE_HEAP_PROFILER
+    return MemJsonDoc(capacity);
+#else
+    return MemJsonDoc(capacity, ArduinoJsonAllocator(tag));
+#endif
+}
+
+std::unique_ptr<MemJsonDoc> makeMemJsonDoc(size_t capacity, const char *tag, const char *tag_suffix) {
+#if !MO_OVERRIDE_ALLOCATION || !MO_ENABLE_HEAP_PROFILER
+    return std::unique_ptr<MemJsonDoc>(new MemJsonDoc(capacity));
+#else
+    return std::unique_ptr<MemJsonDoc>(new MemJsonDoc(capacity, ArduinoJsonAllocator(tag, tag_suffix)));
+#endif
+}
+
 }
