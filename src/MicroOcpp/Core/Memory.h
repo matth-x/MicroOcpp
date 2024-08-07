@@ -10,11 +10,11 @@
 #include <MicroOcpp/Debug.h> //only for evaluation. Remove before merging on main
 
 #ifndef MO_OVERRIDE_ALLOCATION
-#define MO_OVERRIDE_ALLOCATION 0
+#define MO_OVERRIDE_ALLOCATION 1
 #endif
 
 #ifndef MO_ENABLE_EXTERNAL_RAM
-#define MO_ENABLE_EXTERNAL_RAM 0
+#define MO_ENABLE_EXTERNAL_RAM 1
 #endif
 
 #ifndef MO_ENABLE_HEAP_PROFILER
@@ -103,12 +103,14 @@ private:
     char *tag = nullptr;
     #endif
 protected:
-    void updateMemTag(const char *src) {
+    void updateMemTag(const char *src1, const char *src2 = nullptr) {
         #if MO_ENABLE_HEAP_PROFILER
-        if (!src) {
+        if (!src1 && !src2) {
             //empty source does not update tag
             return;
         }
+        char src [64];
+        snprintf(src, sizeof(src), "%s%s", src1 ? src1 : "", src2 ? src2 : "");
         if (tag) {
             if (!strcmp(src, tag)) {
                 //nothing to do
@@ -142,25 +144,27 @@ public:
         MO_FREE(ptr);
     }
 
-    AllocOverrider(const char *tag = "Unspecified") {
+    AllocOverrider(const char *tag = "Unspecified", const char *tag_suffix = nullptr) {
         #if MO_ENABLE_HEAP_PROFILER
-        updateMemTag(tag);
+        updateMemTag(tag, tag_suffix);
         mo_mem_set_tag(this, this->tag);
         #endif
     }
 
     ~AllocOverrider() {
+        #if MO_ENABLE_HEAP_PROFILER
         MO_FREE(tag);
         tag = nullptr;
+        #endif
     }
 };
 
 template<class T>
 struct Allocator {
 
-    Allocator(const char *tag = nullptr) {
+    Allocator(const char *tag = nullptr, const char *tag_suffix = nullptr) {
         #if MO_ENABLE_HEAP_PROFILER
-        updateMemTag(tag);
+        updateMemTag(tag, tag_suffix);
         #endif
     }
 
@@ -186,29 +190,13 @@ struct Allocator {
         #endif
     }
 
-#if 0
-    Allocator& operator=(const Allocator& other) {
-        #if MO_ENABLE_HEAP_PROFILER
-        MO_FREE(tag);
-        tag = nullptr;
-        updateMemTag(other.tag);
-        #endif
-    }
-
-    Allocator& operator=(Allocator&& other) {
-        #if MO_ENABLE_HEAP_PROFILER
-        tag = other.tag;
-        other.tag = nullptr;
-        #endif
-    }
-#endif
-
-
     ~Allocator() {
+        #if MO_ENABLE_HEAP_PROFILER
         if (tag) {
             MO_FREE(tag);
             tag = nullptr;
         }
+        #endif
     }
 
     T *allocate(size_t count) {
@@ -250,11 +238,13 @@ struct Allocator {
     #if MO_ENABLE_HEAP_PROFILER
     char *tag = nullptr;
 
-    void updateMemTag(const char *src) {
-        if (!src) {
+    void updateMemTag(const char *src1, const char *src2 = nullptr) {
+        if (!src1 && !src2) {
             //empty source does not update tag
             return;
         }
+        char src [64];
+        snprintf(src, sizeof(src), "%s%s", src1 ? src1 : "", src2 ? src2 : "");
         if (tag) {
             if (!strcmp(src, tag)) {
                 //nothing to do
