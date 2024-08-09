@@ -71,13 +71,13 @@ private:
     std::shared_ptr<FilesystemAdapter> filesystem;
 
     struct IndexEntry {
-        std::string fname;
+        MemString fname;
         size_t size;
 
-        IndexEntry(const char *fname, size_t size) : fname(fname), size(size) { }
+        IndexEntry(const char *fname, size_t size) : fname(makeMemString(fname, "FilesystemIndex")), size(size) { }
     };
 
-    std::vector<IndexEntry, Allocator<IndexEntry>> index;
+    MemVector<IndexEntry> index;
 
     IndexEntry *getEntryByFname(const char *fn) {
         auto entry = std::find_if(index.begin(), index.end(),
@@ -102,7 +102,7 @@ private:
         return getEntryByFname(fn);
     }
 public:
-    FilesystemAdapterIndex(std::shared_ptr<FilesystemAdapter> filesystem) : AllocOverrider("FilesystemIndex"), filesystem(std::move(filesystem)), index(Allocator<IndexEntry>(getMemoryTag())) { }
+    FilesystemAdapterIndex(std::shared_ptr<FilesystemAdapter> filesystem) : AllocOverrider("FilesystemIndex"), filesystem(std::move(filesystem)), index(makeMemVector<IndexEntry>(getMemoryTag())) { }
 
     ~FilesystemAdapterIndex() = default;
 

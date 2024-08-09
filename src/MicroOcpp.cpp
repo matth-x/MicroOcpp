@@ -404,6 +404,8 @@ void mocpp_deinitialize() {
 
     configuration_deinit();
 
+    mo_mem_deinit();
+
     MO_DBG_DEBUG("deinitialized OCPP\n");
 }
 
@@ -1087,7 +1089,7 @@ void setOnSendConf(const char *operationType, OnSendConfListener onSendConf) {
 }
 
 void sendRequest(const char *operationType,
-            std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createReq,
+            std::function<std::unique_ptr<MemJsonDoc> ()> fn_createReq,
             std::function<void (JsonObject)> fn_processConf) {
 
     if (!context) {
@@ -1105,7 +1107,7 @@ void sendRequest(const char *operationType,
 
 void setRequestHandler(const char *operationType,
             std::function<void (JsonObject)> fn_processReq,
-            std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createConf) {
+            std::function<std::unique_ptr<MemJsonDoc> ()> fn_createConf) {
 
     if (!context) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before

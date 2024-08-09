@@ -128,7 +128,7 @@ int ocpp_cert_set_serialNumber(ocpp_cert_hash *dst, const char *hex_src);
 #ifdef __cplusplus
 } //extern "C"
 
-#include <vector>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
@@ -137,10 +137,12 @@ using CertificateHash = ocpp_cert_hash;
 /*
  * See OCPP 2.0.1 part 2 Data Type 2.5
  */
-struct CertificateChainHash {
+struct CertificateChainHash : public AllocOverrider {
     GetCertificateIdType certificateType;
     CertificateHash certificateHashData;
-    std::vector<CertificateHash> childCertificateHashData;
+    MemVector<CertificateHash> childCertificateHashData;
+
+    CertificateChainHash() : AllocOverrider("v2.0.1.Certificates.CertificateChainHash"), childCertificateHashData(makeMemVector<CertificateHash>(getMemoryTag())) { }
 };
 
 /*
@@ -150,7 +152,7 @@ class CertificateStore {
 public:
     virtual ~CertificateStore() = default;
 
-    virtual GetInstalledCertificateStatus getCertificateIds(const std::vector<GetCertificateIdType>& certificateType, std::vector<CertificateChainHash>& out) = 0;
+    virtual GetInstalledCertificateStatus getCertificateIds(const MemVector<GetCertificateIdType>& certificateType, MemVector<CertificateChainHash>& out) = 0;
     virtual DeleteCertificateStatus deleteCertificate(const CertificateHash& hash) = 0;
     virtual InstallCertificateStatus installCertificate(InstallCertificateType certificateType, const char *certificate) = 0;
 };

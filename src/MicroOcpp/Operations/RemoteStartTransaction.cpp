@@ -11,8 +11,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::RemoteStartTransaction;
+using MicroOcpp::MemJsonDoc;
 
-RemoteStartTransaction::RemoteStartTransaction(Model& model) : model(model) {
+RemoteStartTransaction::RemoteStartTransaction(Model& model) : AllocOverrider("v16.Operation.", getOperationType()), model(model) {
   
 }
 
@@ -115,8 +116,8 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<MemJsonDoc> RemoteStartTransaction::createConf(){
+    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
     if (accepted) {
         payload["status"] = "Accepted";
@@ -126,8 +127,8 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
     return doc;
 }
 
-std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<MemJsonDoc> RemoteStartTransaction::createReq() {
+    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
 
     payload["idTag"] = "A0000000";

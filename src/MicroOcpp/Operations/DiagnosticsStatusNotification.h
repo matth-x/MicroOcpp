@@ -11,7 +11,7 @@
 namespace MicroOcpp {
 namespace Ocpp16 {
 
-class DiagnosticsStatusNotification : public Operation {
+class DiagnosticsStatusNotification : public Operation, public AllocOverrider {
 private:
     DiagnosticsStatus status = DiagnosticsStatus::Idle;
     static const char *cstrFromStatus(DiagnosticsStatus status);
@@ -20,7 +20,7 @@ public:
 
     const char* getOperationType() override {return "DiagnosticsStatusNotification"; }
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<MemJsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 

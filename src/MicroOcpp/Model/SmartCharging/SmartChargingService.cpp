@@ -738,7 +738,7 @@ bool SmartChargingServiceUtils::storeProfile(std::shared_ptr<FilesystemAdapter> 
         return true; //not an error
     }
 
-    DynamicJsonDocument chargingProfileJson {0};
+    auto chargingProfileJson = initMemJsonDoc(0, "v16.SmartCharging.ChargingProfile");
     if (!chargingProfile->toJson(chargingProfileJson)) {
         return false;
     }

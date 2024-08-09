@@ -12,8 +12,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::TriggerMessage;
+using MicroOcpp::MemJsonDoc;
 
-TriggerMessage::TriggerMessage(Context& context) : context(context) {
+TriggerMessage::TriggerMessage(Context& context) : AllocOverrider("v16.Operation.", getOperationType()), context(context) {
 
 }
 
@@ -80,8 +81,8 @@ void TriggerMessage::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> TriggerMessage::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<MemJsonDoc> TriggerMessage::createConf(){
+    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = statusMessage;
     return doc;

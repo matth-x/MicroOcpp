@@ -167,7 +167,7 @@ void RequestQueue::loop() {
 
     if (recvReqFront) {
 
-        DynamicJsonDocument response {0};
+        auto response = initMemJsonDoc(0, getMemoryTag());
         auto ret = recvReqFront->createResponse(response);
 
         if (ret == Request::CreateResponseResult::Success) {
@@ -208,7 +208,7 @@ void RequestQueue::loop() {
 
     if (sendReqFront && !sendReqFront->isRequestSent()) {
 
-        DynamicJsonDocument request {0};
+        auto request = initMemJsonDoc(0, getMemoryTag());
         auto ret = sendReqFront->createRequest(request);
 
         if (ret == Request::CreateRequestResult::Success) {
@@ -267,12 +267,12 @@ bool RequestQueue::receiveMessage(const char* payload, size_t length) {
         capacity = MO_MAX_JSON_CAPACITY;
     }
     
-    DynamicJsonDocument doc {0};
+    auto doc = initMemJsonDoc(0, getMemoryTag());
     DeserializationError err = DeserializationError::NoMemory;
 
     while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
 
-        doc = DynamicJsonDocument(capacity);
+        doc = initMemJsonDoc(capacity, getMemoryTag());
         err = deserializeJson(doc, payload, length);
 
         capacity *= 2;
@@ -308,7 +308,7 @@ bool RequestQueue::receiveMessage(const char* payload, size_t length) {
                 * If the input type is MESSAGE_TYPE_CALLRESULT, then abort the operation to avoid getting stalled.
                 */
 
-            doc = DynamicJsonDocument(200);
+            doc = initMemJsonDoc(200, getMemoryTag());
             char onlyRpcHeader[200];
             size_t onlyRpcHeader_len = removePayload(payload, length, onlyRpcHeader, sizeof(onlyRpcHeader));
             DeserializationError err2 = deserializeJson(doc, onlyRpcHeader, onlyRpcHeader_len);

@@ -15,7 +15,7 @@ class Model;
 
 namespace Ocpp16 {
 
-class Reset : public Operation {
+class Reset : public Operation, public AllocOverrider {
 private:
     Model& model;
     bool resetAccepted {false};
@@ -26,7 +26,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<MemJsonDoc> createConf() override;
 };
 
 } //end namespace Ocpp16
@@ -39,7 +39,7 @@ namespace Ocpp201 {
 
 class ResetService;
 
-class Reset : public Operation {
+class Reset : public Operation, public AllocOverrider {
 private:
     ResetService& resetService;
     ResetStatus status;
@@ -51,7 +51,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<MemJsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

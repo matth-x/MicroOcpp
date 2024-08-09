@@ -19,25 +19,25 @@ class Model;
 
 namespace Ocpp16 {
 
-class BootNotification : public Operation {
+class BootNotification : public Operation, public AllocOverrider {
 private:
     Model& model;
-    std::unique_ptr<DynamicJsonDocument> credentials;
+    std::unique_ptr<MemJsonDoc> credentials;
     const char *errorCode = nullptr;
 public:
-    BootNotification(Model& model, std::unique_ptr<DynamicJsonDocument> payload);
+    BootNotification(Model& model, std::unique_ptr<MemJsonDoc> payload);
 
     ~BootNotification() = default;
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<MemJsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<MemJsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

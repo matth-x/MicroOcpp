@@ -8,8 +8,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::UpdateFirmware;
+using MicroOcpp::MemJsonDoc;
 
-UpdateFirmware::UpdateFirmware(FirmwareService& fwService) : fwService(fwService) {
+UpdateFirmware::UpdateFirmware(FirmwareService& fwService) : AllocOverrider("v16.Operation.", getOperationType()), fwService(fwService) {
 
 }
 
@@ -45,6 +46,6 @@ void UpdateFirmware::processReq(JsonObject payload) {
     fwService.scheduleFirmwareUpdate(location, retrieveDate, (unsigned int) retries, (unsigned int) retryInterval);
 }
 
-std::unique_ptr<DynamicJsonDocument> UpdateFirmware::createConf(){
+std::unique_ptr<MemJsonDoc> UpdateFirmware::createConf(){
     return createEmptyDocument();
 }

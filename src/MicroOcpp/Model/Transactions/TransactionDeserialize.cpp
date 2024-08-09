@@ -51,8 +51,8 @@ bool deserializeSendStatus(SendStatus& status, JsonObject in) {
     return true;
 }
 
-bool serializeTransaction(Transaction& tx, DynamicJsonDocument& out) {
-    out = DynamicJsonDocument(1024);
+bool serializeTransaction(Transaction& tx, MemJsonDoc& out) {
+    out = initMemJsonDoc(1024, "v16.Transactions.TransactionDeserialize");
     JsonObject state = out.to<JsonObject>();
 
     JsonObject sessionState = state.createNestedObject("session");

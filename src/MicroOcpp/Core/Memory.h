@@ -28,8 +28,8 @@ extern "C" {
 
 #if MO_OVERRIDE_ALLOCATION
 
-void mo_mem_init(void (*malloc_override)(size_t)); //pass custom malloc function to be used with the OCPP lib. If NULL, defaults to standard malloc
-void mo_mem_deinit(void (*free_override)(void*)); //pass custom free function to be used with the OCPP lib. If NULL, defaults to standard free
+void mo_mem_init(void (*malloc_override)(size_t), void (*free_override)(void*)); //pass custom malloc and free function to be used with the OCPP lib. If NULL, defaults to standard malloc
+void mo_mem_deinit(); //reset internal data structures
 
 void *mo_mem_malloc(const char *tag, size_t size);
 
@@ -421,7 +421,7 @@ void mo_mem_delete(T *ptr)  {
 
 namespace MicroOcpp {
 
-MemString makeMemString(const char *tag = nullptr);
+MemString makeMemString(const char *val = nullptr, const char *tag = nullptr, const char *tag_suffix = nullptr);
 
 MemJsonDoc initMemJsonDoc(size_t capacity, const char *tag = nullptr);
 std::unique_ptr<MemJsonDoc> makeMemJsonDoc(size_t capacity, const char *tag = nullptr, const char *tag_suffix = nullptr);

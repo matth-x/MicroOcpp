@@ -8,8 +8,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::GetCompositeSchedule;
+using MicroOcpp::MemJsonDoc;
 
-GetCompositeSchedule::GetCompositeSchedule(Model& model, SmartChargingService& scService) : model(model), scService(scService) {
+GetCompositeSchedule::GetCompositeSchedule(Model& model, SmartChargingService& scService) : AllocOverrider("v16.Operation.", getOperationType()), model(model), scService(scService) {
 
 }
 
@@ -40,12 +41,12 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
+std::unique_ptr<MemJsonDoc> GetCompositeSchedule::createConf(){
 
     bool success = false;
 
     auto chargingSchedule = scService.getCompositeSchedule((unsigned int) connectorId, duration, chargingRateUnit);
-    DynamicJsonDocument chargingScheduleDoc {0};
+    MemJsonDoc chargingScheduleDoc {0};
 
     if (chargingSchedule) {
         success = chargingSchedule->toJson(chargingScheduleDoc);
@@ -58,9 +59,10 @@ std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
     }
 
     if (success && chargingSchedule) {
-        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+        auto doc = makeMemJsonDoc(
                         JSON_OBJECT_SIZE(4) +
-                        chargingScheduleDoc.memoryUsage()));
+                        chargingScheduleDoc.memoryUsage(),
+                        getMemoryTag());
         JsonObject payload = doc->to<JsonObject>();
         payload["status"] = "Accepted";
         payload["connectorId"] = connectorId;
@@ -68,7 +70,7 @@ std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
         payload["chargingSchedule"] = chargingScheduleDoc;
         return doc;
     } else {
-        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+        auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
         JsonObject payload = doc->to<JsonObject>();
         payload["status"] = "Rejected";
         return doc;

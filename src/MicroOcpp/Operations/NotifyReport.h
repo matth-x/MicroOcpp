@@ -22,7 +22,7 @@ class Variable;
 
 namespace Ocpp201 {
 
-class NotifyReport : public Operation {
+class NotifyReport : public Operation, public AllocOverrider {
 private:
     Model& model;
 
@@ -37,7 +37,7 @@ public:
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<MemJsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 };

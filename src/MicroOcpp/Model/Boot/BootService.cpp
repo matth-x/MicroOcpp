@@ -33,7 +33,7 @@ RegistrationStatus MicroOcpp::deserializeRegistrationStatus(const char *serializ
     }
 }
 
-BootService::BootService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
+BootService::BootService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : AllocOverrider("v16.Boot.BootService"), context(context), filesystem(filesystem), cpCredentials{makeMemString(nullptr, getMemoryTag())} {
     
     //if transactions can start before the BootNotification succeeds
     preBootTransactionsBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", false);
@@ -102,16 +102,16 @@ void BootService::setChargePointCredentials(const char *credentials) {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> BootService::getChargePointCredentials() {
+std::unique_ptr<MemJsonDoc> BootService::getChargePointCredentials() {
     if (cpCredentials.size() <= 2) {
         return createEmptyDocument();
     }
 
-    std::unique_ptr<DynamicJsonDocument> doc;
+    std::unique_ptr<MemJsonDoc> doc;
     size_t capacity = JSON_OBJECT_SIZE(9) + cpCredentials.size();
     DeserializationError err = DeserializationError::NoMemory;
     while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
-        doc.reset(new DynamicJsonDocument(capacity));
+        doc = makeMemJsonDoc(capacity, getMemoryTag());
         err = deserializeJson(*doc, cpCredentials);
 
         capacity *= 2;
@@ -185,7 +185,7 @@ bool BootService::storeBootStats(std::shared_ptr<FilesystemAdapter> filesystem, 
         return false;
     }
 
-    DynamicJsonDocument json {JSON_OBJECT_SIZE(2)};
+    auto json = initMemJsonDoc(JSON_OBJECT_SIZE(2), "v16.Boot.BootService");
 
     json["bootNr"] = bstats.bootNr;
     json["lastSuccess"] = bstats.lastBootSuccess;

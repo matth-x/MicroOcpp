@@ -13,6 +13,12 @@ std::map<void*,std::tuple<std::string, size_t>> memBlocks; //key: memory address
 
 #endif //MO_ENABLE_HEAP_PROFILER
 
+void mo_mem_deinit() {
+    #if MO_ENABLE_HEAP_PROFILER
+    memBlocks.clear();
+    #endif
+}
+
 void *mo_mem_malloc(const char *tag, size_t size) {
     MO_DBG_DEBUG("malloc %zu B (%s)", size, tag ? tag : "unspecified");
 
@@ -92,11 +98,19 @@ void mo_mem_print_stats() {
 
 namespace MicroOcpp {
 
-MemString makeMemString(const char *tag) {
+MemString makeMemString(const char *val, const char *tag, const char *tag_suffix) {
 #if !MO_OVERRIDE_ALLOCATION || !MO_ENABLE_HEAP_PROFILER
-    return MemString();
+    if (val) {
+        return MemString(val);
+    } else {
+        return MemString();
+    }
 #else
-    return MemString(Allocator<char>(tag));
+    if (val) {
+        return MemString(val, Allocator<char>(tag, tag_suffix));
+    } else {
+        return MemString(Allocator<char>(tag, tag_suffix));
+    }
 #endif
 }
 

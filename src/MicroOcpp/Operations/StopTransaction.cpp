@@ -13,14 +13,15 @@
 #include <MicroOcpp/Version.h>
 
 using MicroOcpp::Ocpp16::StopTransaction;
+using MicroOcpp::MemJsonDoc;
 
 StopTransaction::StopTransaction(Model& model, std::shared_ptr<Transaction> transaction)
-        : model(model), transaction(transaction) {
+        : AllocOverrider("v16.Operation.", getOperationType()), model(model), transaction(transaction) {
 
 }
 
-StopTransaction::StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<MicroOcpp::MeterValue>> transactionData)
-        : model(model), transaction(transaction), transactionData(std::move(transactionData)) {
+StopTransaction::StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, MemVector<std::unique_ptr<MicroOcpp::MeterValue>> transactionData)
+        : AllocOverrider("v16.Operation.", getOperationType()), model(model), transaction(transaction), transactionData(std::move(transactionData)) {
 
 }
 
@@ -28,7 +29,7 @@ const char* StopTransaction::getOperationType() {
     return "StopTransaction";
 }
 
-std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
+std::unique_ptr<MemJsonDoc> StopTransaction::createReq() {
 
     /*
      * Adjust timestamps in case they were taken before initial Clock setting
@@ -67,7 +68,7 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
         }
     }
 
-    std::vector<std::unique_ptr<DynamicJsonDocument>> txDataJson;
+    auto txDataJson = makeMemVector<std::unique_ptr<MemJsonDoc>>(getMemoryTag());
     size_t txDataJson_size = 0;
     for (auto mv = transactionData.begin(); mv != transactionData.end(); mv++) {
         auto mvJson = (*mv)->toJson();
@@ -78,17 +79,18 @@ std::unique_ptr<DynamicJsonDocument> StopTransaction::createReq() {
         txDataJson.emplace_back(std::move(mvJson));
     }
 
-    DynamicJsonDocument txDataDoc = DynamicJsonDocument(JSON_ARRAY_SIZE(txDataJson.size()) + txDataJson_size);
+    MemJsonDoc txDataDoc = MemJsonDoc(JSON_ARRAY_SIZE(txDataJson.size()) + txDataJson_size);
     for (auto mvJson = txDataJson.begin(); mvJson != txDataJson.end(); mvJson++) {
         txDataDoc.add(**mvJson);
     }
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+    auto doc = makeMemJsonDoc(
                 JSON_OBJECT_SIZE(6) + //total of 6 fields
                 (IDTAG_LEN_MAX + 1) + //stop idTag
                 (JSONDATE_LENGTH + 1) + //timestamp string
                 (REASON_LEN_MAX + 1) + //reason string
-                txDataDoc.capacity()));
+                txDataDoc.capacity(),
+                getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
 
     if (transaction->getStopIdTag() && *transaction->getStopIdTag()) {
@@ -148,8 +150,8 @@ void StopTransaction::processReq(JsonObject payload) {
      */
 }
 
-std::unique_ptr<DynamicJsonDocument> StopTransaction::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1)));
+std::unique_ptr<MemJsonDoc> StopTransaction::createConf(){
+    auto doc = makeMemJsonDoc(2 * JSON_OBJECT_SIZE(1), getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
 
     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");

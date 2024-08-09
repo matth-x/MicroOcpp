@@ -17,7 +17,7 @@ class Model;
 
 namespace Ocpp16 {
 
-class GetLocalListVersion : public Operation {
+class GetLocalListVersion : public Operation, public AllocOverrider {
 private:
     Model& model;
 public:
@@ -27,7 +27,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<MemJsonDoc> createConf() override;
 };
 
 } //end namespace Ocpp16

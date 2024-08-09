@@ -15,7 +15,7 @@ class ChargingProfile;
 
 namespace Ocpp16 {
 
-class RemoteStartTransaction : public Operation {
+class RemoteStartTransaction : public Operation, public AllocOverrider {
 private:
     Model& model;
 
@@ -28,13 +28,13 @@ public:
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<MemJsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<MemJsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
     const char *getErrorDescription() override {return errorDescription;}

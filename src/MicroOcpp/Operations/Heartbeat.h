@@ -13,7 +13,7 @@ class Model;
 
 namespace Ocpp16 {
 
-class Heartbeat : public Operation {
+class Heartbeat : public Operation, public AllocOverrider {
 private:
     Model& model;
 public:
@@ -21,13 +21,13 @@ public:
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<MemJsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<MemJsonDoc> createConf() override;
 };
 
 } //end namespace Ocpp16

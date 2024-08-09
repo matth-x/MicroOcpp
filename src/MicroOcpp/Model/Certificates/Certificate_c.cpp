@@ -25,7 +25,7 @@ public:
 
     ~CertificateStoreC() = default;
 
-    GetInstalledCertificateStatus getCertificateIds(const std::vector<GetCertificateIdType>& certificateType, std::vector<CertificateChainHash>& out) override {
+    GetInstalledCertificateStatus getCertificateIds(const MemVector<GetCertificateIdType>& certificateType, MemVector<CertificateChainHash>& out) override {
         out.clear();
 
         ocpp_cert_chain_hash *cch;

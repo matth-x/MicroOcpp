@@ -11,8 +11,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp201::RequestStopTransaction;
+using MicroOcpp::MemJsonDoc;
 
-RequestStopTransaction::RequestStopTransaction(TransactionService& txService) : txService(txService) {
+RequestStopTransaction::RequestStopTransaction(TransactionService& txService) : AllocOverrider("v201.Operation.", getOperationType()), txService(txService) {
   
 }
 
@@ -32,9 +33,9 @@ void RequestStopTransaction::processReq(JsonObject payload) {
     status = txService.requestStopTransaction(payload["transactionId"].as<const char*>());
 }
 
-std::unique_ptr<DynamicJsonDocument> RequestStopTransaction::createConf(){
+std::unique_ptr<MemJsonDoc> RequestStopTransaction::createConf(){
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
 
     const char *statusCstr = "";

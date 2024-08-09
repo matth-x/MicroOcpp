@@ -13,6 +13,7 @@
 #include <MicroOcpp/Model/Metering/MeterStore.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
@@ -21,13 +22,13 @@ class Operation;
 class Transaction;
 class MeterStore;
 
-class MeteringConnector {
+class MeteringConnector : public AllocOverrider {
 private:
     Model& model;
     const int connectorId;
     MeterStore& meterStore;
     
-    std::vector<std::unique_ptr<MeterValue>> meterData;
+    MemVector<std::unique_ptr<MeterValue>> meterData;
     std::shared_ptr<TransactionMeterData> stopTxnData;
 
     std::unique_ptr<MeterValueBuilder> sampledDataBuilder;
@@ -45,7 +46,7 @@ private:
     std::shared_ptr<Transaction> transaction;
     bool trackTxRunning = false;
  
-    std::vector<std::unique_ptr<SampledValueSampler>> samplers;
+    MemVector<std::unique_ptr<SampledValueSampler>> samplers;
     int energySamplerIndex {-1};
 
     std::shared_ptr<Configuration> meterValueSampleIntervalInt;

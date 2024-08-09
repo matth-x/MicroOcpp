@@ -17,7 +17,7 @@ class AuthorizationService;
 
 namespace Ocpp16 {
 
-class SendLocalList : public Operation {
+class SendLocalList : public Operation, public AllocOverrider {
 private:
     AuthorizationService& authService;
     const char *errorCode = nullptr;
@@ -32,7 +32,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<MemJsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

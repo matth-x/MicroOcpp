@@ -22,8 +22,8 @@
 using namespace MicroOcpp;
 using Ocpp16::DiagnosticsStatus;
 
-DiagnosticsService::DiagnosticsService(Context& context) : context(context) {
-    
+DiagnosticsService::DiagnosticsService(Context& context) : AllocOverrider("v16.Diagnostics.DiagnosticsService"), context(context), location(makeMemString(nullptr, getMemoryTag())), diagFileList(makeMemVector<MemString>(getMemoryTag())) {
+
     context.getOperationRegistry().registerOperation("GetDiagnostics", [this] () {
         return new Ocpp16::GetDiagnostics(*this);});
 
@@ -118,14 +118,14 @@ void DiagnosticsService::loop() {
 }
 
 //timestamps before year 2021 will be treated as "undefined"
-std::string DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime) {
+MemString DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime) {
     if (onUpload == nullptr) {
-        return std::string{};
+        return makeMemString(nullptr, getMemoryTag());
     }
 
-    std::string fileName;
+    MemString fileName;
     if (refreshFilename) {
-        fileName = refreshFilename();
+        fileName = refreshFilename().c_str();
     } else {
         fileName = "diagnostics.log";
     }
@@ -271,8 +271,8 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
 
         auto& model = context.getModel();
 
-        std::string cpModel;
-        std::string fwVersion;
+        auto cpModel = makeMemString(nullptr, getMemoryTag());
+        auto fwVersion = makeMemString(nullptr, getMemoryTag());
 
         if (auto bootService = model.getBootService()) {
             if (auto cpCreds = bootService->getChargePointCredentials()) {
@@ -413,21 +413,21 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                 while (written < size && !diagFileList.empty() && filesystem) {
 
                     char fpath [MO_MAX_PATH_SIZE];
-                    auto ret = snprintf(fpath, sizeof(fpath), "%s%s", MO_FILENAME_PREFIX, diagFileList.front().c_str());
+                    auto ret = snprintf(fpath, sizeof(fpath), "%s%s", MO_FILENAME_PREFIX, diagFileList.back().c_str());
                     if (ret < 0 || (size_t)ret >= sizeof(fpath)) {
                         MO_DBG_ERR("fn error: %i", ret);
-                        diagFileList.pop_front();
+                        diagFileList.pop_back();
                         continue;
                     }
 
                     if (auto file = filesystem->open(fpath, "r")) {
 
-                        if (diagFilesFrontTransferred == 0) {
+                        if (diagFilesBackTransferred == 0) {
                             char fileHeading [30 + MO_MAX_PATH_SIZE];
-                            auto writeLen = snprintf(fileHeading, sizeof(fileHeading), "\n\n# File %s:\n", diagFileList.front().c_str());
+                            auto writeLen = snprintf(fileHeading, sizeof(fileHeading), "\n\n# File %s:\n", diagFileList.back().c_str());
                             if (writeLen < 0 || (size_t)writeLen >= sizeof(fileHeading)) {
                                 MO_DBG_ERR("fn error: %i", ret);
-                                diagFileList.pop_front();
+                                diagFileList.pop_back();
                                 continue;
                             }
                             if (writeLen + written > size || //heading doesn't fit anymore, return with a bit unused buffer space and print heading the next time
@@ -441,16 +441,16 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                             written += (size_t)writeLen;
                         }
 
-                        file->seek(diagFilesFrontTransferred);
+                        file->seek(diagFilesBackTransferred);
                         size_t writeLen = file->read((char*)buf + written, size - written);
 
                         if (writeLen < size - written) {
-                            diagFileList.pop_front();
+                            diagFileList.pop_back();
                         }
                         written += writeLen;
                     } else {
                         MO_DBG_ERR("could not open file: %s", fpath);
-                        diagFileList.pop_front();
+                        diagFileList.pop_back();
                     }
                 }
 

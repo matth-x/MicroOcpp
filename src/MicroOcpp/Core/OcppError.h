@@ -5,8 +5,6 @@
 #ifndef MO_OCPPERROR_H
 #define MO_OCPPERROR_H
 
-#include <ArduinoJson.h>
-
 #include <MicroOcpp/Core/Operation.h>
 
 namespace MicroOcpp {
@@ -30,8 +28,8 @@ public:
     const char *getErrorDescription() override {
         return "JSON too long or too many fields. Cannot deserialize";
     }
-    std::unique_ptr<DynamicJsonDocument> getErrorDetails() override {
-        auto errDoc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+    std::unique_ptr<MemJsonDoc> getErrorDetails() override {
+        auto errDoc = makeMemJsonDoc(JSON_OBJECT_SIZE(2), "CallError");
         JsonObject err = errDoc->to<JsonObject>();
         err["max_capacity"] = maxCapacity;
         err["msg_length"] = msgLen;

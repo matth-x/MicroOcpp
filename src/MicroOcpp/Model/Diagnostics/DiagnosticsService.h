@@ -11,6 +11,7 @@
 #include <deque>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Ftp.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Model/Diagnostics/DiagnosticsStatus.h>
 
 namespace MicroOcpp {
@@ -25,11 +26,11 @@ class Context;
 class Request;
 class FilesystemAdapter;
 
-class DiagnosticsService {
+class DiagnosticsService : public AllocOverrider {
 private:
     Context& context;
     
-    std::string location;
+    MemString location;
     unsigned int retries = 0;
     unsigned int retryInterval = 0;
     Timestamp startTime;
@@ -53,8 +54,8 @@ private:
     char *diagPostamble = nullptr;
     size_t diagPostambleLen = 0;
     size_t diagPostambleTransferred = 0;
-    std::deque<std::string> diagFileList;
-    size_t diagFilesFrontTransferred = 0;
+    MemVector<MemString> diagFileList;
+    size_t diagFilesBackTransferred = 0;
 
     std::unique_ptr<Request> getDiagnosticsStatusNotification();
 
@@ -69,7 +70,7 @@ public:
     //timestamps before year 2021 will be treated as "undefined"
     //returns empty std::string if onUpload is missing or upload cannot be scheduled for another reason
     //returns fileName of diagnostics file to be uploaded if upload has been scheduled
-    std::string requestDiagnosticsUpload(const char *location, unsigned int retries = 1, unsigned int retryInterval = 0, Timestamp startTime = Timestamp(), Timestamp stopTime = Timestamp());
+    MemString requestDiagnosticsUpload(const char *location, unsigned int retries = 1, unsigned int retryInterval = 0, Timestamp startTime = Timestamp(), Timestamp stopTime = Timestamp());
 
     Ocpp16::DiagnosticsStatus getDiagnosticsStatus();
 

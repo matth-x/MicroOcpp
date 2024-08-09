@@ -69,7 +69,7 @@ bool ocpp_get_cert_hash(mbedtls_x509_crt& cacert, HashAlgorithmType hashAlg, ocp
 
     // copy public key into pk_buf to create issuerKeyHash
     size_t pk_size = cacert.pk_raw.len;
-    unsigned char *pk_buf = new unsigned char[pk_size];
+    unsigned char *pk_buf = static_cast<unsigned char*>(MO_MALLOC("v201.Certificates.CertificateStoreMbedTLS", pk_size));
     if (!pk_buf) {
         MO_DBG_ERR("OOM (alloc size %zu)", pk_size);
         return false;
@@ -94,7 +94,7 @@ bool ocpp_get_cert_hash(mbedtls_x509_crt& cacert, HashAlgorithmType hashAlg, ocp
         }
     }
 
-    delete[] pk_buf;
+    MO_FREE(pk_buf);
     if (pk_err) {
         return false;
     }
@@ -134,7 +134,7 @@ bool ocpp_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmType 
 
 namespace MicroOcpp {
 
-class CertificateStoreMbedTLS : public CertificateStore {
+class CertificateStoreMbedTLS : public CertificateStore, public AllocOverrider {
 private:
     std::shared_ptr<FilesystemAdapter> filesystem;
 
@@ -156,7 +156,7 @@ private:
             return false;
         }
 
-        unsigned char *buf = new unsigned char[fsize + 1];
+        unsigned char *buf = static_cast<unsigned char*>(MO_MALLOC(getMemoryTag(), fsize + 1));
         if (!buf) {
             MO_DBG_ERR("OOM");
             return false;
@@ -180,16 +180,16 @@ private:
             MO_DBG_ERR("could not read cert: %s", fn);
         }
 
-        delete[] buf;
+        MO_FREE(buf);
         return success;
     }
 public:
     CertificateStoreMbedTLS(std::shared_ptr<FilesystemAdapter> filesystem)
-            : filesystem(filesystem) {
+            : AllocOverrider("v201.Certificates.CertificateStoreMbedTLS"), filesystem(filesystem) {
 
     }
 
-    GetInstalledCertificateStatus getCertificateIds(const std::vector<GetCertificateIdType>& certificateType, std::vector<CertificateChainHash>& out) override {
+    GetInstalledCertificateStatus getCertificateIds(const MemVector<GetCertificateIdType>& certificateType, MemVector<CertificateChainHash>& out) override {
         out.clear();
 
         for (auto certType : certificateType) {
@@ -325,7 +325,7 @@ public:
 #endif // MO_DBG_LEVEL >= MO_DL_DEBUG
 
         //check if cert is already stored on flash
-        std::vector<CertificateChainHash> installedCerts;
+        auto installedCerts = makeMemVector<CertificateChainHash>(getMemoryTag());
         auto ret = getCertificateIds({certTypeGetType}, installedCerts);
         if (ret == GetInstalledCertificateStatus_Accepted) {
             for (auto &installedCert : installedCerts) {

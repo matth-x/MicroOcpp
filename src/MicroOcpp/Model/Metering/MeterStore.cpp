@@ -16,7 +16,7 @@
 using namespace MicroOcpp;
 
 TransactionMeterData::TransactionMeterData(unsigned int connectorId, unsigned int txNr, std::shared_ptr<FilesystemAdapter> filesystem)
-        : connectorId(connectorId), txNr(txNr), filesystem{filesystem} {
+        : AllocOverrider("v16.Metering.TransactionMeterData"), connectorId(connectorId), txNr(txNr), filesystem{filesystem}, txData{makeMemVector<std::unique_ptr<MeterValue>>(getMemoryTag())} {
     
     if (!filesystem) {
         MO_DBG_DEBUG("volatile mode");
@@ -83,10 +83,10 @@ bool TransactionMeterData::addTxData(std::unique_ptr<MeterValue> mv) {
     return true;
 }
 
-std::vector<std::unique_ptr<MeterValue>> TransactionMeterData::retrieveStopTxData() {
+MemVector<std::unique_ptr<MeterValue>> TransactionMeterData::retrieveStopTxData() {
     if (isFinalized()) {
         MO_DBG_ERR("Can only retrieve once");
-        return decltype(txData) {};
+        return makeMemVector<std::unique_ptr<MeterValue>>(getMemoryTag());
     }
     finalize();
     MO_DBG_DEBUG("creating sd");
@@ -146,7 +146,7 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
     return true;
 }
 
-MeterStore::MeterStore(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem {filesystem} {
+MeterStore::MeterStore(std::shared_ptr<FilesystemAdapter> filesystem) : AllocOverrider("v16.Metering.MeterStore"), filesystem {filesystem}, txMeterData{makeMemVector<std::weak_ptr<TransactionMeterData>>(getMemoryTag())} {
 
     if (!filesystem) {
         MO_DBG_DEBUG("volatile mode");

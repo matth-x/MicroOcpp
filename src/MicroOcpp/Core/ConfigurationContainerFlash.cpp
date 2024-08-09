@@ -54,6 +54,7 @@ public:
         auto it = keyPool.begin();
         while (it != keyPool.end()) {
             MO_FREE(*it);
+            it = keyPool.erase(it);
         }
     }
     
@@ -120,23 +121,34 @@ public:
                 continue;
             }
 
+            char *key_pooled = nullptr;
+
             auto config = getConfiguration(key).get();
             if (config && config->getType() != type) {
                 MO_DBG_ERR("conflicting type for %s - remove old config", key);
                 remove(config);
                 config = nullptr;
             }
+            if (!config) {
+                key_pooled = static_cast<char*>(MO_MALLOC(key, strlen(key) + 1));
+                if (!key_pooled) {
+                    MO_DBG_ERR("OOM: %s", key);
+                    return false;
+                }
+                strcpy(key_pooled, key);
+            }
 
             switch (type) {
                 case TConfig::Int: {
                     if (!stored["value"].is<int>()) {
                         MO_DBG_ERR("corrupt config");
+                        MO_FREE(key_pooled);
                         continue;
                     }
                     int value = stored["value"] | 0;
                     if (!config) {
                         //create new config
-                        config = createConfiguration(TConfig::Int, "").get();
+                        config = createConfiguration(TConfig::Int, key_pooled).get();
                     }
                     if (config) {
                         config->setInt(value);
@@ -146,12 +158,13 @@ public:
                 case TConfig::Bool: {
                     if (!stored["value"].is<bool>()) {
                         MO_DBG_ERR("corrupt config");
+                        MO_FREE(key_pooled);
                         continue;
                     }
                     bool value = stored["value"] | false;
                     if (!config) {
                         //create new config
-                        config = createConfiguration(TConfig::Bool, "").get();
+                        config = createConfiguration(TConfig::Bool, key_pooled).get();
                     }
                     if (config) {
                         config->setBool(value);
@@ -161,12 +174,13 @@ public:
                 case TConfig::String: {
                     if (!stored["value"].is<const char*>()) {
                         MO_DBG_ERR("corrupt config");
+                        MO_FREE(key_pooled);
                         continue;
                     }
                     const char *value = stored["value"] | "";
                     if (!config) {
                         //create new config
-                        config = createConfiguration(TConfig::String, "").get();
+                        config = createConfiguration(TConfig::String, key_pooled).get();
                     }
                     if (config) {
                         config->setString(value);
@@ -178,20 +192,13 @@ public:
             if (config) {
                 //success
 
-                if (!config->getKey() || !*config->getKey()) {
-                    //created new config, allocate and keep key for config object
-                    size_t size = strlen(key) + 1;
-                    char *key_pooled = static_cast<char*>(MO_MALLOC(key, size));
-                    if (!key_pooled) {
-                        MO_DBG_ERR("OOM: %s", key);
-                        remove(config);
-                        return false;
-                    }
-                    snprintf(key_pooled, size, "%s", key);
-                    keyPool.push_back(key_pooled);
+                if (key_pooled) {
+                    //allocated key, need to store
+                    keyPool.push_back(std::move(key_pooled));
                 }
             } else {
                 MO_DBG_ERR("OOM: %s", key);
+                MO_FREE(key_pooled);
             }
         }
 
@@ -229,7 +236,7 @@ public:
             jsonCapacity = MO_MAX_JSON_CAPACITY;
         }
 
-        DynamicJsonDocument doc {jsonCapacity};
+        auto doc = initMemJsonDoc(jsonCapacity, getMemoryTag());
         JsonObject head = doc.createNestedObject("head");
         head["content-type"] = "ocpp_config_file";
         head["version"] = "2.0";

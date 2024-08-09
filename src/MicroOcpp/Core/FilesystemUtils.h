@@ -6,6 +6,7 @@
 #define MO_FILESYSTEMUTILS_H
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <ArduinoJson.h>
 #include <memory>
 
@@ -36,8 +37,8 @@ public:
 
 namespace FilesystemUtils {
 
-std::unique_ptr<DynamicJsonDocument> loadJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn);
-bool storeJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn, const DynamicJsonDocument& doc);
+std::unique_ptr<MemJsonDoc> loadJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn);
+bool storeJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn, const MemJsonDoc& doc);
 
 bool remove_if(std::shared_ptr<FilesystemAdapter> filesystem, std::function<bool(const char*)> pred);
 

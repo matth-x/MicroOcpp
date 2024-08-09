@@ -13,7 +13,7 @@ using namespace MicroOcpp;
 namespace MicroOcpp {
 namespace Ocpp16 {
 
-Authorize::Authorize(Model& model, const char *idTagIn) : model(model) {
+Authorize::Authorize(Model& model, const char *idTagIn) : AllocOverrider("v16.Operation.", getOperationType()), model(model) {
     if (idTagIn && strnlen(idTagIn, IDTAG_LEN_MAX + 2) <= IDTAG_LEN_MAX) {
         snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
     } else {
@@ -25,8 +25,8 @@ const char* Authorize::getOperationType(){
     return "Authorize";
 }
 
-std::unique_ptr<DynamicJsonDocument> Authorize::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + (IDTAG_LEN_MAX + 1)));
+std::unique_ptr<MemJsonDoc> Authorize::createReq() {
+    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1) + (IDTAG_LEN_MAX + 1), getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
     payload["idTag"] = idTag;
     return doc;
@@ -54,8 +54,8 @@ void Authorize::processReq(JsonObject payload){
      */
 }
 
-std::unique_ptr<DynamicJsonDocument> Authorize::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1)));
+std::unique_ptr<MemJsonDoc> Authorize::createConf(){
+    auto doc = makeMemJsonDoc(2 * JSON_OBJECT_SIZE(1), getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
     idTagInfo["status"] = "Accepted";
@@ -70,7 +70,7 @@ std::unique_ptr<DynamicJsonDocument> Authorize::createConf(){
 namespace MicroOcpp {
 namespace Ocpp201 {
 
-Authorize::Authorize(Model& model, const IdToken& idToken) : model(model) {
+Authorize::Authorize(Model& model, const IdToken& idToken) : AllocOverrider("v201.Operation.Authorize"), model(model) {
     this->idToken = idToken;
 }
 
@@ -78,10 +78,11 @@ const char* Authorize::getOperationType(){
     return "Authorize";
 }
 
-std::unique_ptr<DynamicJsonDocument> Authorize::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+std::unique_ptr<MemJsonDoc> Authorize::createReq() {
+    auto doc = makeMemJsonDoc(
             JSON_OBJECT_SIZE(1) +
-            JSON_OBJECT_SIZE(2)));
+            JSON_OBJECT_SIZE(2),
+            getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
     payload["idToken"]["idToken"] = idToken.get();
     payload["idToken"]["type"] = idToken.getTypeCstr();
@@ -108,8 +109,8 @@ void Authorize::processReq(JsonObject payload){
      */
 }
 
-std::unique_ptr<DynamicJsonDocument> Authorize::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1)));
+std::unique_ptr<MemJsonDoc> Authorize::createConf(){
+    auto doc = makeMemJsonDoc(2 * JSON_OBJECT_SIZE(1), getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
     JsonObject idTagInfo = payload.createNestedObject("idTokenInfo");
     idTagInfo["status"] = "Accepted";

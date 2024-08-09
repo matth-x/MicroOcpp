@@ -64,7 +64,7 @@ public:
         Success,
         Failure
     };
-    CreateRequestResult createRequest(DynamicJsonDocument& out);
+    CreateRequestResult createRequest(MemJsonDoc& out);
 
    /**
     * Decides if message belongs to this operation instance and if yes, proccesses it. Receives both Confirmations and Errors
@@ -91,7 +91,7 @@ public:
         Failure
     };
 
-    CreateResponseResult createResponse(DynamicJsonDocument& out);
+    CreateResponseResult createResponse(MemJsonDoc& out);
 
     void setOnReceiveConfListener(OnReceiveConfListener onReceiveConf); //listener executed when we received the .conf() to a .req() we sent
     void setOnReceiveReqListener(OnReceiveReqListener onReceiveReq); //listener executed when we receive a .req()
