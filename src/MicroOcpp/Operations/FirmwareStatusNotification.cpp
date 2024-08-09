@@ -8,8 +8,9 @@
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
 
 using MicroOcpp::Ocpp16::FirmwareStatusNotification;
+using MicroOcpp::MemJsonDoc;
 
-FirmwareStatusNotification::FirmwareStatusNotification(FirmwareStatus status) : status{status} {
+FirmwareStatusNotification::FirmwareStatusNotification(FirmwareStatus status) : AllocOverrider("v16.Operation.", getOperationType()), status{status} {
 
 }
 
@@ -40,8 +41,8 @@ const char *FirmwareStatusNotification::cstrFromFwStatus(FirmwareStatus status) 
     return NULL; //cannot be reached
 }
 
-std::unique_ptr<DynamicJsonDocument> FirmwareStatusNotification::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<MemJsonDoc> FirmwareStatusNotification::createReq() {
+    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = cstrFromFwStatus(status);
     return doc;

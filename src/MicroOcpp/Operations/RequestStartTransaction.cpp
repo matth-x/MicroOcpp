@@ -11,8 +11,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp201::RequestStartTransaction;
+using MicroOcpp::MemJsonDoc;
 
-RequestStartTransaction::RequestStartTransaction(TransactionService& txService) : txService(txService) {
+RequestStartTransaction::RequestStartTransaction(TransactionService& txService) : AllocOverrider("v201.Operation.", getOperationType()), txService(txService) {
   
 }
 
@@ -45,9 +46,9 @@ void RequestStartTransaction::processReq(JsonObject payload) {
     status = txService.requestStartTransaction(evseId, remoteStartId, idToken, transactionId);
 }
 
-std::unique_ptr<DynamicJsonDocument> RequestStartTransaction::createConf(){
+std::unique_ptr<MemJsonDoc> RequestStartTransaction::createConf(){
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(2), getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
 
     const char *statusCstr = "";

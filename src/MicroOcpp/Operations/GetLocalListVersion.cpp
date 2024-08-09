@@ -12,8 +12,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::GetLocalListVersion;
+using MicroOcpp::MemJsonDoc;
 
-GetLocalListVersion::GetLocalListVersion(Model& model) : model(model) {
+GetLocalListVersion::GetLocalListVersion(Model& model) : AllocOverrider("v16.Operation.", getOperationType()), model(model) {
   
 }
 
@@ -25,8 +26,8 @@ void GetLocalListVersion::processReq(JsonObject payload) {
     //empty payload
 }
 
-std::unique_ptr<DynamicJsonDocument> GetLocalListVersion::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<MemJsonDoc> GetLocalListVersion::createConf(){
+    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
 
     if (auto authService = model.getAuthorizationService()) {

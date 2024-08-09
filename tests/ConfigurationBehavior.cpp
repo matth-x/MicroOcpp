@@ -25,8 +25,8 @@ public:
     void processReq(JsonObject payload) override {
         //ignore payload - result is determined at construction time
     }
-    std::unique_ptr<DynamicJsonDocument> createConf() override {
-        auto res = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1)));
+    std::unique_ptr<MemJsonDoc> createConf() override {
+        auto res = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(2 * JSON_OBJECT_SIZE(1)));
         auto payload = res->to<JsonObject>();
         payload["idTagInfo"]["status"] = status;
         return res;
@@ -42,8 +42,8 @@ public:
     void processReq(JsonObject payload) override {
         //ignore payload - result is determined at construction time
     }
-    std::unique_ptr<DynamicJsonDocument> createConf() override {
-        auto res = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(1)));
+    std::unique_ptr<MemJsonDoc> createConf() override {
+        auto res = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(1)));
         auto payload = res->to<JsonObject>();
         payload["idTagInfo"]["status"] = status;
         payload["transactionId"] = 1000;

@@ -7,8 +7,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::GetConfiguration;
+using MicroOcpp::MemJsonDoc;
 
-GetConfiguration::GetConfiguration() {
+GetConfiguration::GetConfiguration() : AllocOverrider("v16.Operation.", getOperationType()), keys{makeMemVector<MemString>(getMemoryTag())} {
 
 }
 
@@ -20,14 +21,14 @@ void GetConfiguration::processReq(JsonObject payload) {
 
     JsonArray requestedKeys = payload["key"];
     for (size_t i = 0; i < requestedKeys.size(); i++) {
-        keys.push_back(requestedKeys[i].as<std::string>());
+        keys.emplace_back(makeMemString(requestedKeys[i].as<const char*>(), getMemoryTag()));
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
+std::unique_ptr<MemJsonDoc> GetConfiguration::createConf(){
 
-    std::vector<Configuration*> configurations;
-    std::vector<const char*> unknownKeys;
+    MemVector<Configuration*> configurations = makeMemVector<Configuration*>(getMemoryTag());
+    MemVector<const char*> unknownKeys = makeMemVector<const char*>(getMemoryTag());
 
     auto containers = getConfigurationContainersPublic();
 
@@ -82,10 +83,10 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
     
     MO_DBG_DEBUG("GetConfiguration capacity: %zu", jcapacity);
 
-    std::unique_ptr<DynamicJsonDocument> doc;
+    std::unique_ptr<MemJsonDoc> doc;
 
     if (jcapacity <= MO_MAX_JSON_CAPACITY) {
-        doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(jcapacity));
+        doc = makeMemJsonDoc(jcapacity, getMemoryTag());
     }
 
     if (!doc || doc->capacity() < jcapacity) {

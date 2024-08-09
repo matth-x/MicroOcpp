@@ -11,8 +11,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp201::GetBaseReport;
+using MicroOcpp::MemJsonDoc;
 
-GetBaseReport::GetBaseReport(VariableService& variableService) : variableService(variableService) {
+GetBaseReport::GetBaseReport(VariableService& variableService) : AllocOverrider("v201.Operation.", getOperationType()), variableService(variableService) {
   
 }
 
@@ -47,9 +48,9 @@ void GetBaseReport::processReq(JsonObject payload) {
     status = variableService.getBaseReport(requestId, reportBase);
 }
 
-std::unique_ptr<DynamicJsonDocument> GetBaseReport::createConf(){
+std::unique_ptr<MemJsonDoc> GetBaseReport::createConf(){
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
 
     const char *statusCstr = "";

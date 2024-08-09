@@ -9,6 +9,7 @@
 #include <memory>
 #include <functional>
 
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Platform.h>
 
 namespace MicroOcpp {
@@ -97,7 +98,7 @@ public:
     SampledValue(const SampledValue& other) : properties(other.properties), context(other.context) { }
     virtual ~SampledValue() = default;
 
-    std::unique_ptr<DynamicJsonDocument> toJson();
+    std::unique_ptr<MemJsonDoc> toJson();
 
     virtual operator bool() = 0;
     virtual int32_t toInteger() = 0;

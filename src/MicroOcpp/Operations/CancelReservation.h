@@ -17,7 +17,7 @@ class ReservationService;
 
 namespace Ocpp16 {
 
-class CancelReservation : public Operation {
+class CancelReservation : public Operation, public AllocOverrider {
 private:
     ReservationService& reservationService;
     bool found = false;
@@ -29,7 +29,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<MemJsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

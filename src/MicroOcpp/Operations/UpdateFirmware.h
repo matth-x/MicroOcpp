@@ -14,7 +14,7 @@ class FirmwareService;
 
 namespace Ocpp16 {
 
-class UpdateFirmware : public Operation {
+class UpdateFirmware : public Operation, public AllocOverrider {
 private:
   FirmwareService& fwService;
 
@@ -26,7 +26,7 @@ public:
 
   void processReq(JsonObject payload) override;
 
-  std::unique_ptr<DynamicJsonDocument> createConf() override;
+  std::unique_ptr<MemJsonDoc> createConf() override;
 
   const char *getErrorCode() override {return errorCode;}
 };

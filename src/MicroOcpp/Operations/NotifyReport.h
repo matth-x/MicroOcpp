@@ -11,6 +11,7 @@
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #include <vector>
 
@@ -21,7 +22,7 @@ class Variable;
 
 namespace Ocpp201 {
 
-class NotifyReport : public Operation {
+class NotifyReport : public Operation, public AllocOverrider {
 private:
     Model& model;
 
@@ -29,14 +30,14 @@ private:
     Timestamp generatedAt;
     bool tbc;
     int seqNo;
-    std::vector<Variable*> reportData;
+    MemVector<Variable*> reportData;
 public:
 
-    NotifyReport(Model& model, int requestId, const Timestamp& generatedAt, bool tbc, int seqNo, const std::vector<Variable*>& reportData);
+    NotifyReport(Model& model, int requestId, const Timestamp& generatedAt, bool tbc, int seqNo, const MemVector<Variable*>& reportData);
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<MemJsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 };

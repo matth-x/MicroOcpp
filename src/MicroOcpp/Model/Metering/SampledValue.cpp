@@ -89,7 +89,7 @@ ReadingContext deserializeReadingContext(const char *context) {
 }
 }} //end namespaces
 
-std::unique_ptr<DynamicJsonDocument> SampledValue::toJson() {
+std::unique_ptr<MemJsonDoc> SampledValue::toJson() {
     auto value = serializeValue();
     if (value.empty()) {
         return nullptr;
@@ -102,7 +102,7 @@ std::unique_ptr<DynamicJsonDocument> SampledValue::toJson() {
                 + properties.getPhase().length() + 1
                 + properties.getLocation().length() + 1
                 + properties.getUnit().length() + 1;
-    auto result = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity + 100)); //TODO remove safety space
+    auto result = makeMemJsonDoc(capacity + 100, "v16.Metering.MeterValue"); //TODO remove safety space
     auto payload = result->to<JsonObject>();
     payload["value"] = value;
     auto context_cstr = Ocpp16::serializeReadingContext(context);

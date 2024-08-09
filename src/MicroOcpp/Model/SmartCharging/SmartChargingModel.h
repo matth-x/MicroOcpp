@@ -24,6 +24,7 @@
 #include <ArduinoJson.h>
 
 #include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
@@ -96,7 +97,7 @@ public:
      */
     bool calculateLimit(const Timestamp &t, const Timestamp &startOfCharging, ChargeRate& limit, Timestamp& nextChange);
 
-    bool toJson(DynamicJsonDocument& out);
+    bool toJson(MemJsonDoc& out);
 
     /*
     * print on console
@@ -137,7 +138,7 @@ public:
     
     ChargingProfilePurposeType getChargingProfilePurpose();
 
-    bool toJson(DynamicJsonDocument& out);
+    bool toJson(MemJsonDoc& out);
 
     /*
     * print on console

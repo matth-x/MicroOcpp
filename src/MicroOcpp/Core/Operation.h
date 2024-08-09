@@ -20,10 +20,11 @@
 
 #include <memory>
 #include <ArduinoJson.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
-std::unique_ptr<DynamicJsonDocument> createEmptyDocument();
+std::unique_ptr<MemJsonDoc> createEmptyDocument();
 
 class Operation {
 public:
@@ -41,7 +42,7 @@ public:
      * This function is usually called multiple times by the Arduino loop(). On first call, the request is initially sent. In the
      * succeeding calls, the implementers decide to either recreate the request, or do nothing as the operation is still pending.
      */
-    virtual std::unique_ptr<DynamicJsonDocument> createReq();
+    virtual std::unique_ptr<MemJsonDoc> createReq();
 
 
     virtual void processConf(JsonObject payload);
@@ -60,11 +61,11 @@ public:
      * After successfully processing a request sent by the communication counterpart, this function creates the payload for a confirmation
      * message.
      */
-    virtual std::unique_ptr<DynamicJsonDocument> createConf();
+    virtual std::unique_ptr<MemJsonDoc> createConf();
 
     virtual const char *getErrorCode() {return nullptr;} //nullptr means no error
     virtual const char *getErrorDescription() {return "";}
-    virtual std::unique_ptr<DynamicJsonDocument> getErrorDetails() {return createEmptyDocument();}
+    virtual std::unique_ptr<MemJsonDoc> getErrorDetails() {return createEmptyDocument();}
 };
 
 } //end namespace MicroOcpp

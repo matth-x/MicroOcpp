@@ -8,9 +8,20 @@
 
 using namespace MicroOcpp;
 
-std::unique_ptr<DynamicJsonDocument> MeterValue::toJson() {
+MeterValue::MeterValue(const Timestamp& timestamp) :
+        AllocOverrider("v16.Metering.MeterValue"), 
+        timestamp(timestamp), 
+        sampledValue(makeMemVector<std::unique_ptr<SampledValue>>(getMemoryTag())) {
+
+}
+
+void MeterValue::addSampledValue(std::unique_ptr<SampledValue> sample) {
+    sampledValue.push_back(std::move(sample));
+}
+
+std::unique_ptr<MemJsonDoc> MeterValue::toJson() {
     size_t capacity = 0;
-    std::vector<std::unique_ptr<DynamicJsonDocument>> entries;
+    auto entries = makeMemVector<std::unique_ptr<MemJsonDoc>>(getMemoryTag());
     for (auto sample = sampledValue.begin(); sample != sampledValue.end(); sample++) {
         auto json = (*sample)->toJson();
         if (!json) {
@@ -24,7 +35,7 @@ std::unique_ptr<DynamicJsonDocument> MeterValue::toJson() {
     capacity += JSONDATE_LENGTH + 1;
     capacity += JSON_OBJECT_SIZE(2);
     
-    auto result = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity + 100)); //TODO remove safety space
+    auto result = makeMemJsonDoc(capacity + 100, "v16.Metering.MeterValue"); //TODO remove safety space
     auto jsonPayload = result->to<JsonObject>();
 
     char timestampStr [JSONDATE_LENGTH + 1] = {'\0'};
@@ -56,10 +67,12 @@ ReadingContext MeterValue::getReadingContext() {
     return ReadingContext::NOT_SET;
 }
 
-MeterValueBuilder::MeterValueBuilder(const std::vector<std::unique_ptr<SampledValueSampler>> &samplers,
+MeterValueBuilder::MeterValueBuilder(const MemVector<std::unique_ptr<SampledValueSampler>> &samplers,
             std::shared_ptr<Configuration> samplersSelectStr) :
+            AllocOverrider("v16.Metering.MeterValueBuilder"),
             samplers(samplers),
-            selectString(samplersSelectStr) {
+            selectString(samplersSelectStr),
+            select_mask(makeMemVector<bool>(getMemoryTag())) {
         
     updateObservedSamplers();
     select_observe = selectString->getValueRevision();

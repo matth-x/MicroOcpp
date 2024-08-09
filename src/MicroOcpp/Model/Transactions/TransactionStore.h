@@ -5,24 +5,22 @@
 #ifndef MO_TRANSACTIONSTORE_H
 #define MO_TRANSACTIONSTORE_H
 
-#include <vector>
-#include <deque>
-
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
 class TransactionStore;
 
-class ConnectorTransactionStore {
+class ConnectorTransactionStore : public AllocOverrider {
 private:
     TransactionStore& context;
     const unsigned int connectorId;
 
     std::shared_ptr<FilesystemAdapter> filesystem;
     
-    std::deque<std::weak_ptr<Transaction>> transactions;
+    MemVector<std::weak_ptr<Transaction>> transactions;
 
 public:
     ConnectorTransactionStore(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem);
@@ -40,9 +38,9 @@ public:
     bool remove(unsigned int txNr);
 };
 
-class TransactionStore {
+class TransactionStore : public AllocOverrider {
 private:
-    std::vector<std::unique_ptr<ConnectorTransactionStore>> connectors;
+    MemVector<std::unique_ptr<ConnectorTransactionStore>> connectors;
 public:
     TransactionStore(unsigned int nConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 

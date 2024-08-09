@@ -116,13 +116,13 @@ bool ChargingSchedule::calculateLimit(const Timestamp &t, const Timestamp &start
     }
 }
 
-bool ChargingSchedule::toJson(DynamicJsonDocument& doc) {
+bool ChargingSchedule::toJson(MemJsonDoc& doc) {
     size_t capacity = 0;
     capacity += JSON_OBJECT_SIZE(5); //no of fields of ChargingSchedule
     capacity += JSONDATE_LENGTH + 1; //startSchedule
     capacity += JSON_ARRAY_SIZE(chargingSchedulePeriod.size()) + chargingSchedulePeriod.size() * JSON_OBJECT_SIZE(3);
 
-    doc = DynamicJsonDocument(capacity);
+    doc = initMemJsonDoc(capacity, "v16.SmartCharging.ChargingSchedule");
     if (duration >= 0) {
         doc["duration"] = duration;
     }
@@ -205,17 +205,18 @@ ChargingProfilePurposeType ChargingProfile::getChargingProfilePurpose(){
     return chargingProfilePurpose;
 }
 
-bool ChargingProfile::toJson(DynamicJsonDocument& doc) {
+bool ChargingProfile::toJson(MemJsonDoc& doc) {
     
-    DynamicJsonDocument chargingScheduleDoc {0};
+    auto chargingScheduleDoc = initMemJsonDoc(0, "v16.SmartCharging.ChargingSchedule");
     if (!chargingSchedule.toJson(chargingScheduleDoc)) {
         return false;
     }
 
-    doc = DynamicJsonDocument(
+    doc = initMemJsonDoc(
             JSON_OBJECT_SIZE(9) + //no. of fields in ChargingProfile
             2 * (JSONDATE_LENGTH + 1) + //validFrom and validTo
-            chargingScheduleDoc.memoryUsage()); //nested JSON object
+            chargingScheduleDoc.memoryUsage(), //nested JSON object
+            "v16.SmartCharging.ChargingProfile");
 
     doc["chargingProfileId"] = chargingProfileId;
     if (transactionId >= 0) {

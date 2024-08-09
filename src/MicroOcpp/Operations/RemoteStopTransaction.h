@@ -13,7 +13,7 @@ class Model;
 
 namespace Ocpp16 {
 
-class RemoteStopTransaction : public Operation {
+class RemoteStopTransaction : public Operation, public AllocOverrider {
 private:
     Model& model;
     bool accepted = false;
@@ -26,7 +26,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<MemJsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

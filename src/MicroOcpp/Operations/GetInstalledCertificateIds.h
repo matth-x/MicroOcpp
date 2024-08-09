@@ -18,10 +18,10 @@ class CertificateService;
 
 namespace Ocpp201 {
 
-class GetInstalledCertificateIds : public Operation {
+class GetInstalledCertificateIds : public Operation, public AllocOverrider {
 private:
     CertificateService& certService;
-    std::vector<CertificateChainHash> certificateHashDataChain;
+    MemVector<CertificateChainHash> certificateHashDataChain;
     const char *status = nullptr;
     const char *errorCode = nullptr;
 public:
@@ -31,7 +31,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<MemJsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

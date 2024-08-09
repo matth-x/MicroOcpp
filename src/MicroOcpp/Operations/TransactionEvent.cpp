@@ -11,11 +11,11 @@
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp201::TransactionEvent;
 using namespace MicroOcpp::Ocpp201;
+using MicroOcpp::MemJsonDoc;
 
 TransactionEvent::TransactionEvent(Model& model, std::shared_ptr<TransactionEventData> txEvent)
-        : model(model), txEvent(txEvent) {
+        : AllocOverrider("v201.Operation.", getOperationType()), model(model), txEvent(txEvent) {
 
 }
 
@@ -23,13 +23,14 @@ const char* TransactionEvent::getOperationType() {
     return "TransactionEvent";
 }
 
-std::unique_ptr<DynamicJsonDocument> TransactionEvent::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+std::unique_ptr<MemJsonDoc> TransactionEvent::createReq() {
+    auto doc = makeMemJsonDoc(
                 JSON_OBJECT_SIZE(12) + //total of 12 fields
                 JSONDATE_LENGTH + 1 + //timestamp string
                 JSON_OBJECT_SIZE(5) + //transactionInfo
                     MO_TXID_LEN_MAX + 1 + //transactionId
-                MO_IDTOKEN_LEN_MAX + 1)); //idToken
+                MO_IDTOKEN_LEN_MAX + 1, //idToken
+                getMemoryTag());
                 //meterValue not supported
     JsonObject payload = doc->to<JsonObject>();
 
@@ -277,7 +278,7 @@ void TransactionEvent::processReq(JsonObject payload) {
      */
 }
 
-std::unique_ptr<DynamicJsonDocument> TransactionEvent::createConf() {
+std::unique_ptr<MemJsonDoc> TransactionEvent::createConf() {
     return createEmptyDocument();
 }
 

@@ -7,8 +7,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::ClearCache;
+using MicroOcpp::MemJsonDoc;
 
-ClearCache::ClearCache(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem(filesystem) {
+ClearCache::ClearCache(std::shared_ptr<FilesystemAdapter> filesystem) : AllocOverrider("v16.Operation.", getOperationType()), filesystem(filesystem) {
   
 }
 
@@ -31,8 +32,8 @@ void ClearCache::processReq(JsonObject payload) {
     });
 }
 
-std::unique_ptr<DynamicJsonDocument> ClearCache::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<MemJsonDoc> ClearCache::createConf(){
+    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
     if (success) {
         payload["status"] = "Accepted"; //"Accepted", because the intended postcondition is true

@@ -11,8 +11,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp201::GetInstalledCertificateIds;
+using MicroOcpp::MemJsonDoc;
 
-GetInstalledCertificateIds::GetInstalledCertificateIds(CertificateService& certService) : certService(certService) {
+GetInstalledCertificateIds::GetInstalledCertificateIds(CertificateService& certService) : AllocOverrider("v201.Operation.", getOperationType()), certService(certService), certificateHashDataChain(makeMemVector<CertificateChainHash>(getMemoryTag())) {
 
 }
 
@@ -23,7 +24,7 @@ void GetInstalledCertificateIds::processReq(JsonObject payload) {
         return;
     }
 
-    std::vector<GetCertificateIdType> certificateType;
+    MemVector<GetCertificateIdType> certificateType = makeMemVector<GetCertificateIdType>(getMemoryTag());
     for (const char *certificateTypeCstr : payload["certificateType"].as<JsonArray>()) {
         if (!strcmp(certificateTypeCstr, "V2GRootCertificate")) {
             certificateType.push_back(GetCertificateIdType_V2GRootCertificate);
@@ -65,7 +66,7 @@ void GetInstalledCertificateIds::processReq(JsonObject payload) {
     //operation executed successfully
 }
 
-std::unique_ptr<DynamicJsonDocument> GetInstalledCertificateIds::createConf() {
+std::unique_ptr<MemJsonDoc> GetInstalledCertificateIds::createConf() {
 
     size_t capacity =
             JSON_OBJECT_SIZE(2) + //payload root
@@ -79,7 +80,7 @@ std::unique_ptr<DynamicJsonDocument> GetInstalledCertificateIds::createConf() {
                     * 2 + 3; //issuerNameHash, issuerKeyHash and serialNumber as hex-endoded cstring
     }
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
+    auto doc = makeMemJsonDoc(capacity, getMemoryTag());
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = status;
 

@@ -8,7 +8,6 @@
 #include <functional>
 #include <vector>
 #include <memory>
-#include <ArduinoJson.h>
 #include <MicroOcpp/Core/RequestCallbacks.h>
 
 namespace MicroOcpp {

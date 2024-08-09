@@ -17,16 +17,16 @@ class Transaction;
 
 namespace Ocpp16 {
 
-class MeterValues : public Operation {
+class MeterValues : public Operation, public AllocOverrider {
 private:
-    std::vector<std::unique_ptr<MeterValue>> meterValue;
+    MemVector<std::unique_ptr<MeterValue>> meterValue;
 
     unsigned int connectorId = 0;
 
     std::shared_ptr<Transaction> transaction;
 
 public:
-    MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction = nullptr);
+    MeterValues(MemVector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction = nullptr);
 
     MeterValues(); //for debugging only. Make this for the server pendant
 
@@ -34,13 +34,13 @@ public:
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<MemJsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<MemJsonDoc> createConf() override;
 };
 
 } //end namespace Ocpp16
