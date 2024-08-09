@@ -75,7 +75,7 @@ public:
             return save();
         }
 
-        auto doc = FilesystemUtils::loadJson(filesystem, getFilename());
+        auto doc = FilesystemUtils::loadJson(filesystem, getFilename(), getMemoryTag());
         if (!doc) {
             MO_DBG_ERR("failed to load %s", getFilename());
             return false;
@@ -130,7 +130,14 @@ public:
                 config = nullptr;
             }
             if (!config) {
-                key_pooled = static_cast<char*>(MO_MALLOC(key, strlen(key) + 1));
+                #if MO_ENABLE_HEAP_PROFILER
+                char memoryTag [64];
+                snprintf(memoryTag, sizeof(memoryTag), "%s%s", "v16.Configuration.", key);
+                #else
+                const char *memoryTag = nullptr;
+                (void)memoryTag;
+                #endif
+                key_pooled = static_cast<char*>(MO_MALLOC(memoryTag, strlen(key) + 1));
                 if (!key_pooled) {
                     MO_DBG_ERR("OOM: %s", key);
                     return false;

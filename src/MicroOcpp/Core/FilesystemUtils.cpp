@@ -9,7 +9,7 @@
 
 using namespace MicroOcpp;
 
-std::unique_ptr<MemJsonDoc> FilesystemUtils::loadJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn) {
+std::unique_ptr<MemJsonDoc> FilesystemUtils::loadJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn, const char *memoryTag) {
     if (!filesystem || !fn || *fn == '\0') {
         MO_DBG_ERR("Format error");
         return nullptr;
@@ -56,7 +56,7 @@ std::unique_ptr<MemJsonDoc> FilesystemUtils::loadJson(std::shared_ptr<Filesystem
 
     while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
 
-        doc = makeMemJsonDoc(capacity, fn);
+        doc = makeMemJsonDoc(capacity, memoryTag);
         err = deserializeJson(*doc, fileReader);
 
         capacity *= 2;

@@ -140,11 +140,11 @@ protected:
     }
 public:
     void *operator new(size_t size) {
-        MO_DBG_DEBUG("AllocOverrider new %zu B", size);
+        MO_DBG_VERBOSE("AllocOverrider new %zu B", size);
         return MO_MALLOC(nullptr, size);
     }
     void operator delete(void * ptr) {
-        MO_DBG_DEBUG("AllocOverrider delete");
+        MO_DBG_VERBOSE("AllocOverrider delete");
         MO_FREE(ptr);
     }
 
@@ -206,7 +206,7 @@ struct Allocator {
     }
 
     T *allocate(size_t count) {
-        MO_DBG_DEBUG("Allocator allocate %zu B (%s)", sizeof(T) * count, tag ? tag : "unspecified");
+        MO_DBG_VERBOSE("Allocator allocate %zu B (%s)", sizeof(T) * count, tag ? tag : "unspecified");
         return static_cast<T*>(
             MO_MALLOC(
                 #if MO_ENABLE_HEAP_PROFILER
@@ -217,7 +217,7 @@ struct Allocator {
                 sizeof(T) * count));
     }
     void deallocate(T *ptr, size_t count) {
-        MO_DBG_DEBUG("Allocator deallocate %zu B (%s)", sizeof(T) * count, tag ? tag : "unspecified");
+        MO_DBG_VERBOSE("Allocator deallocate %zu B (%s)", sizeof(T) * count, tag ? tag : "unspecified");
         MO_FREE(ptr);
     }
 
@@ -342,7 +342,7 @@ public:
     }
 
     void *allocate(size_t size) {
-        MO_DBG_DEBUG("ArduinoJsonAllocator allocate %zu B (%s)", size, tag ? tag : "unspecified");
+        MO_DBG_VERBOSE("ArduinoJsonAllocator allocate %zu B (%s)", size, tag ? tag : "unspecified");
         return MO_MALLOC(
                     #if MO_ENABLE_HEAP_PROFILER
                         tag,
@@ -352,7 +352,7 @@ public:
                     size);
     }
     void deallocate(void *ptr) {
-        MO_DBG_DEBUG("ArduinoJsonAllocator deallocate");
+        MO_DBG_VERBOSE("ArduinoJsonAllocator deallocate");
         MO_FREE(ptr);
     }
 };
@@ -361,7 +361,7 @@ using MemJsonDoc = BasicJsonDocument<ArduinoJsonAllocator>;
 
 template<class T, typename ...Args>
 T *mo_mem_new(const char *tag, Args&& ...args)  {
-    MO_DBG_DEBUG("mo_mem_new %zu B (%s)", sizeof(T), tag ? tag : "unspecified");
+    MO_DBG_VERBOSE("mo_mem_new %zu B (%s)", sizeof(T), tag ? tag : "unspecified");
     if (auto ptr = MO_MALLOC(tag, sizeof(T))) {
         return new(ptr) T(std::forward<Args>(args)...);
     }
@@ -370,7 +370,7 @@ T *mo_mem_new(const char *tag, Args&& ...args)  {
 
 template<class T>
 void mo_mem_delete(T *ptr)  {
-    MO_DBG_DEBUG("mo_mem_delete");
+    MO_DBG_VERBOSE("mo_mem_delete");
     if (ptr) {
         ptr->~T();
         MO_FREE(ptr);

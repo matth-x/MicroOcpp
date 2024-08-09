@@ -37,7 +37,7 @@ public:
 
 namespace FilesystemUtils {
 
-std::unique_ptr<MemJsonDoc> loadJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn);
+std::unique_ptr<MemJsonDoc> loadJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn, const char *memoryTag = nullptr);
 bool storeJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn, const MemJsonDoc& doc);
 
 bool remove_if(std::shared_ptr<FilesystemAdapter> filesystem, std::function<bool(const char*)> pred);
