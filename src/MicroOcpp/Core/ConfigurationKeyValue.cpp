@@ -99,7 +99,7 @@ public:
 
     bool setKey(const char *key) override {
         this->key = key;
-        updateMemTag(key);
+        updateMemTag("v16.Configuration.", key);
         return true;
     }
 
@@ -131,7 +131,7 @@ public:
 
     bool setKey(const char *key) override {
         this->key = key;
-        updateMemTag(key);
+        updateMemTag("v16.Configuration.", key);
         return true;
     }
 
@@ -169,7 +169,7 @@ public:
 
     bool setKey(const char *key) override {
         this->key = key;
-        updateMemTag(key);
+        updateMemTag("v16.Configuration.", key);
         return true;
     }
 
@@ -209,7 +209,7 @@ public:
         }
 
         if (!src_empty) {
-            this->val = (char*) MO_MALLOC(key, size);
+            this->val = (char*) MO_MALLOC(getMemoryTag(), size);
             if (!this->val) {
                 return false;
             }

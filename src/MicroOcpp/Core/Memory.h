@@ -122,9 +122,11 @@ protected:
             tag = nullptr;
         }
         size_t size = strlen(src) + 1;
-        tag = static_cast<char*>(MO_MALLOC("HeapProfilerInternal", size));
+        //tag = static_cast<char*>(MO_MALLOC("HeapProfilerInternal", size));
+        tag = static_cast<char*>(malloc(size));
         memset(tag, 0, size);
         snprintf(tag, size, "%s", src);
+        mo_mem_set_tag(this, tag);
         #else
         (void)tag;
         #endif
@@ -146,10 +148,11 @@ public:
         MO_FREE(ptr);
     }
 
-    AllocOverrider(const char *tag = "Unspecified", const char *tag_suffix = nullptr) {
+    AllocOverrider(const char *tag = nullptr, const char *tag_suffix = nullptr) {
         #if MO_ENABLE_HEAP_PROFILER
-        updateMemTag(tag, tag_suffix);
-        mo_mem_set_tag(this, this->tag);
+        if (tag || tag_suffix) {
+            updateMemTag(tag, tag_suffix);
+        }
         #endif
     }
 
@@ -195,7 +198,8 @@ struct Allocator {
     ~Allocator() {
         #if MO_ENABLE_HEAP_PROFILER
         if (tag) {
-            MO_FREE(tag);
+            //MO_FREE(tag);
+            free(tag);
             tag = nullptr;
         }
         #endif
@@ -252,11 +256,13 @@ struct Allocator {
                 //nothing to do
                 return;
             }
-            MO_FREE(tag);
+            //MO_FREE(tag);
+            free(tag);
             tag = nullptr;
         }
         size_t size = strlen(src) + 1;
-        tag = static_cast<char*>(MO_MALLOC("HeapProfilerInternal", size));
+        //tag = static_cast<char*>(MO_MALLOC("HeapProfilerInternal", size));
+        tag = static_cast<char*>(malloc(size));
         memset(tag, 0, size);
         snprintf(tag, size, "%s", src);
     }
@@ -264,7 +270,7 @@ struct Allocator {
 };
 
 template<class T>
-Allocator<T> makeAllocator(const char *tag = nullptr) {
+Allocator<T> makeAllocator(const char *tag) {
     return Allocator<T>(tag);
 }
 
@@ -299,7 +305,8 @@ private:
             tag = nullptr;
         }
         size_t size = strlen(src) + 1;
-        tag = static_cast<char*>(MO_MALLOC("HeapProfilerInternal", size));
+        //tag = static_cast<char*>(MO_MALLOC("HeapProfilerInternal", size));
+        tag = static_cast<char*>(malloc(size));
         memset(tag, 0, size);
         snprintf(tag, size, "%s", src);
     }

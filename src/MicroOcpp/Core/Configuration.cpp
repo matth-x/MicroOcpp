@@ -25,8 +25,8 @@ struct Validator {
 namespace ConfigurationLocal {
 
 std::shared_ptr<FilesystemAdapter> filesystem;
-std::vector<std::shared_ptr<ConfigurationContainer>, Allocator<std::shared_ptr<ConfigurationContainer>>> configurationContainers;
-std::vector<Validator, Allocator<Validator>> validators;
+auto configurationContainers = makeMemVector<std::shared_ptr<ConfigurationContainer>>("v16.Configuration.Containers");
+auto validators = makeMemVector<Validator>("v16.Configuration.Validators");
 
 }
 

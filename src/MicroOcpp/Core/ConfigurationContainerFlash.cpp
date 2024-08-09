@@ -15,13 +15,13 @@ namespace MicroOcpp {
 
 class ConfigurationContainerFlash : public ConfigurationContainer, public AllocOverrider {
 private:
-    std::vector<std::shared_ptr<Configuration>, Allocator<std::shared_ptr<Configuration>>> configurations;
+    MemVector<std::shared_ptr<Configuration>> configurations;
     std::shared_ptr<FilesystemAdapter> filesystem;
     uint16_t revisionSum = 0;
 
     bool loaded = false;
 
-    std::vector<char*, Allocator<char*>> keyPool;
+    MemVector<char*> keyPool;
     
     void clearKeyPool(const char *key) {
         auto it = keyPool.begin();
@@ -48,7 +48,7 @@ private:
     }
 public:
     ConfigurationContainerFlash(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename, bool accessible) :
-            ConfigurationContainer(filename, accessible), AllocOverrider(filename), configurations(Allocator<std::shared_ptr<Configuration>>(filename)), filesystem(filesystem), keyPool(Allocator<char*>(filename)) { }
+            ConfigurationContainer(filename, accessible), AllocOverrider("v16.Configuration.ContainerFlash.", filename), configurations(makeMemVector<std::shared_ptr<Configuration>>(getMemoryTag())), filesystem(filesystem), keyPool(makeMemVector<char*>(getMemoryTag())) { }
 
     ~ConfigurationContainerFlash() {
         auto it = keyPool.begin();
@@ -285,7 +285,7 @@ public:
     }
 
     std::shared_ptr<Configuration> createConfiguration(TConfig type, const char *key) override {
-        auto res = std::shared_ptr<Configuration>(makeConfiguration(type, key).release(), std::default_delete<Configuration>(), Allocator<Configuration>(key));
+        auto res = std::shared_ptr<Configuration>(makeConfiguration(type, key).release(), std::default_delete<Configuration>(), Allocator<Configuration>("v16.Configuration.", key));
         if (!res) {
             //allocation failure - OOM
             MO_DBG_ERR("OOM");
