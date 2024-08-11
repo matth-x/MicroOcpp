@@ -26,7 +26,7 @@ bool ConfigurationContainerVolatile::save() {
 }
 
 std::shared_ptr<Configuration> ConfigurationContainerVolatile::createConfiguration(TConfig type, const char *key) {
-    auto res = std::shared_ptr<Configuration>(makeConfiguration(type, key).release(), std::default_delete<Configuration>(), Allocator<Configuration>("v16.Configuration.", key));
+    auto res = std::shared_ptr<Configuration>(makeConfiguration(type, key).release(), std::default_delete<Configuration>(), makeAllocator<Configuration>("v16.Configuration.", key));
     if (!res) {
         //allocation failure - OOM
         MO_DBG_ERR("OOM");

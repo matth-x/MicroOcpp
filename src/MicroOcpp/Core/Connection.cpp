@@ -7,6 +7,8 @@
 
 using namespace MicroOcpp;
 
+LoopbackConnection::LoopbackConnection() : AllocOverrider("WebSocketLoopback") { }
+
 void LoopbackConnection::loop() { }
 
 bool LoopbackConnection::sendTXT(const char *msg, size_t length) {

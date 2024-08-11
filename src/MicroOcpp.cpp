@@ -56,6 +56,12 @@ std::shared_ptr<FilesystemAdapter> filesystem;
 } //end namespace MicroOcpp::Facade
 } //end namespace MicroOcpp
 
+#if MO_ENABLE_HEAP_PROFILER
+#ifndef MO_HEAP_PROFILER_EXTERNAL_CONTROL
+#define MO_HEAP_PROFILER_EXTERNAL_CONTROL 0 //enable if you want to manually reset the heap profiler (e.g. for keeping stats over multiple MO lifecycles)
+#endif
+#endif
+
 using namespace MicroOcpp;
 using namespace MicroOcpp::Facade;
 using namespace MicroOcpp::Ocpp16;
@@ -79,7 +85,7 @@ void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const cha
     /*
      * parse backendUrl so that it suits the links2004/arduinoWebSockets interface
      */
-    std::string url = backendUrl;
+    MemString url = makeMemString("MicroOcpp.cpp", url);
 
     //tolower protocol specifier
     for (auto c = url.begin(); *c != ':' && c != url.end(); c++) {
@@ -97,16 +103,16 @@ void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const cha
     }
 
     //parse host, port
-    std::string host_port_path = url.substr(url.find_first_of("://") + strlen("://"));
-    std::string host_port = host_port_path.substr(0, host_port_path.find_first_of('/'));
-    std::string path = host_port_path.substr(host_port.length());
-    std::string host = host_port.substr(0, host_port.find_first_of(':'));
+    MemString host_port_path = url.substr(url.find_first_of("://") + strlen("://"));
+    MemString host_port = host_port_path.substr(0, host_port_path.find_first_of('/'));
+    MemString path = host_port_path.substr(host_port.length());
+    MemString host = host_port.substr(0, host_port.find_first_of(':'));
     if (host.empty()) {
         MO_DBG_ERR("could not parse host: %s", url.c_str());
         return;
     }
     uint16_t port = 0;
-    std::string port_str = host_port.substr(host.length());
+    MemString port_str = host_port.substr(host.length());
     if (port_str.empty()) {
         port = isTLS ? 443U : 80U;
     } else {
@@ -287,7 +293,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new BootService(*context, filesystem)));
     model.setConnectorsCommon(std::unique_ptr<ConnectorsCommon>(
         new ConnectorsCommon(*context, MO_NUMCONNECTORS, filesystem)));
-    auto connectors = makeMemVector<std::unique_ptr<Connector>>("Connectors");
+    auto connectors = makeMemVector<std::unique_ptr<Connector>>("v16.ConnectorBase.Connector");
     for (unsigned int connectorId = 0; connectorId < MO_NUMCONNECTORS; connectorId++) {
         connectors.emplace_back(new Connector(*context, filesystem, connectorId));
     }
@@ -404,7 +410,9 @@ void mocpp_deinitialize() {
 
     configuration_deinit();
 
-    mo_mem_deinit();
+#if !MO_HEAP_PROFILER_EXTERNAL_CONTROL
+    MO_MEM_RESET();
+#endif
 
     MO_DBG_DEBUG("deinitialized OCPP\n");
 }
@@ -472,8 +480,8 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
             {
                 // We have a parent ID tag, so we need to check if this new card also has one
                 auto authorize = makeRequest(new Ocpp16::Authorize(context->getModel(), idTag));
-                std::string idTag_capture = idTag;
-                std::string reason_capture = reason ? reason : "";
+                MemString idTag_capture = makeMemString("MicroOcpp.cpp", idTag);
+                MemString reason_capture = makeMemString("MicroOcpp.cpp", reason ? reason : "");
                 authorize->setOnReceiveConfListener([idTag_capture, reason_capture, connectorId, tx] (JsonObject response) {
                     JsonObject idTagInfo = response["idTagInfo"];
 
@@ -1118,7 +1126,7 @@ void setRequestHandler(const char *operationType,
         return;
     }
 
-    std::string captureOpType = operationType;
+    MemString captureOpType = makeMemString("MicroOcpp.cpp", operationType);
 
     context->getOperationRegistry().registerOperation(operationType, [captureOpType, fn_processReq, fn_createConf] () {
         return new CustomOperation(captureOpType.c_str(), fn_processReq, fn_createConf);

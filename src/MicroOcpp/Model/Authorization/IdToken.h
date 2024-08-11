@@ -11,12 +11,14 @@
 
 #include <stdint.h>
 
+#include <MicroOcpp/Core/Memory.h>
+
 #define MO_IDTOKEN_LEN_MAX 36
 
 namespace MicroOcpp {
 
 // IdTokenType (2.28)
-class IdToken {
+class IdToken : public AllocOverrider {
 public:
 
     // IdTokenEnumType (3.43)
@@ -36,8 +38,9 @@ private:
     char idToken [MO_IDTOKEN_LEN_MAX + 1];
     Type type = Type::UNDEFINED;
 public:
-    IdToken();
-    IdToken(const char *token, Type type = Type::ISO14443);
+    IdToken(const char *token = nullptr, Type type = Type::ISO14443, const char *memoryTag = nullptr);
+
+    IdToken(const IdToken& other, const char *memoryTag = nullptr);
 
     bool parseCstr(const char *token, const char *typeCstr);
 

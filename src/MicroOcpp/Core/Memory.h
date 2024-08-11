@@ -10,15 +10,15 @@
 #include <MicroOcpp/Debug.h> //only for evaluation. Remove before merging on main
 
 #ifndef MO_OVERRIDE_ALLOCATION
-#define MO_OVERRIDE_ALLOCATION 1
+#define MO_OVERRIDE_ALLOCATION 0
 #endif
 
 #ifndef MO_ENABLE_EXTERNAL_RAM
-#define MO_ENABLE_EXTERNAL_RAM 1
+#define MO_ENABLE_EXTERNAL_RAM 0
 #endif
 
 #ifndef MO_ENABLE_HEAP_PROFILER
-#define MO_ENABLE_HEAP_PROFILER 1
+#define MO_ENABLE_HEAP_PROFILER 0
 #endif
 
 
@@ -28,8 +28,7 @@ extern "C" {
 
 #if MO_OVERRIDE_ALLOCATION
 
-void mo_mem_init(void (*malloc_override)(size_t), void (*free_override)(void*)); //pass custom malloc and free function to be used with the OCPP lib. If NULL, defaults to standard malloc
-void mo_mem_deinit(); //reset internal data structures
+void mo_mem_set_malloc_free(void* (*malloc_override)(size_t), void (*free_override)(void*)); //pass custom malloc and free function to be used with the OCPP lib. If not set or NULL, defaults to standard malloc
 
 void *mo_mem_malloc(const char *tag, size_t size);
 
@@ -44,28 +43,35 @@ void mo_mem_free(void* ptr);
 #endif //MO_OVERRIDE_ALLOCATION
 
 
-#if MO_ENABLE_HEAP_PROFILER
+#if MO_OVERRIDE_ALLOCATION && MO_ENABLE_HEAP_PROFILER
+
+void mo_mem_reset(); //reset heap stats
 
 void mo_mem_set_tag(void *ptr, const char *tag);
 
+void mo_mem_get_current_heap(const char *tag);
+void mo_mem_get_maximum_heap(const char *tag);
+void mo_mem_get_current_heap_by_tag(const char *tag);
+void mo_mem_get_maximum_heap_by_tag(const char *tag);
+
+void mo_mem_reset_maximm_heap();
+
+int mo_mem_write_stats_json(char *buf, size_t size);
+
 void mo_mem_print_stats();
 
-#define MO_MEM_SET_TAG(PTR, TAG) mo_mem_set_tag(PTR, TAG)
+#define MO_MEM_RESET mo_mem_reset
 #define MO_MEM_PRINT_STATS mo_mem_print_stats
 
-#define MO_MEMORY_TAG_OPT(X) X //usage: Allocator<MyClass> alloc = Allocator<MyClass>(MO_MEMORY_TAG("Example module"));
-
 #else
-#define MO_MEM_SET_TAG(...) (void)0
+#define MO_MEM_RESET(...) (void)0
 #define MO_MEM_PRINT_STATS(...) (void)0
-#define MO_MEMORY_TAG_OPT(X) //usage: Allocator<MyClass> alloc = Allocator<MyClass>(MO_MEMORY_TAG("Example module"));
-#endif //MO_ENABLE_HEAP_PROFILER
+#endif //MO_OVERRIDE_ALLOCATION && MO_ENABLE_HEAP_PROFILER
 
 
 #if MO_ENABLE_EXTERNAL_RAM
 
-void mo_mem_init_ext(void (*malloc_override)(size_t));
-void mo_mem_deinit_ext(void (*free_override)(void*));
+void mo_mem_set_malloc_free_ext(void* (*malloc_override)(size_t), void (*free_override)(void*)); //pass malloc and free function to external RAM to be used with the OCPP lib. If not set or NULL, defaults to standard malloc
 
 void *mo_mem_malloc_ext(const char *tag, size_t size);
 
@@ -83,9 +89,6 @@ void mo_mem_free_ext(void* ptr);
 #ifdef __cplusplus
 }
 
-#ifndef MO_OVERRIDE_NEW
-#define MO_OVERRIDE_NEW 1
-#endif
 
 #include <memory>
 #include <string>
@@ -122,16 +125,16 @@ protected:
             tag = nullptr;
         }
         size_t size = strlen(src) + 1;
-        //tag = static_cast<char*>(MO_MALLOC("HeapProfilerInternal", size));
-        tag = static_cast<char*>(malloc(size));
+        tag = static_cast<char*>(malloc(size)); //heap profiler bypasses custom malloc to not count into the statistics
         memset(tag, 0, size);
         snprintf(tag, size, "%s", src);
         mo_mem_set_tag(this, tag);
         #else
-        (void)tag;
+        (void)src1;
+        (void)src2;
         #endif
     }
-    const char *getMemoryTag() {
+    const char *getMemoryTag() const {
         #if MO_ENABLE_HEAP_PROFILER
         return tag;
         #else
@@ -150,9 +153,14 @@ public:
 
     AllocOverrider(const char *tag = nullptr, const char *tag_suffix = nullptr) {
         #if MO_ENABLE_HEAP_PROFILER
-        if (tag || tag_suffix) {
-            updateMemTag(tag, tag_suffix);
-        }
+        updateMemTag(tag, tag_suffix);
+        #endif
+    }
+
+    AllocOverrider(AllocOverrider&& other) {
+        #if MO_ENABLE_HEAP_PROFILER
+        tag = other.tag;
+        other.tag = nullptr;
         #endif
     }
 
@@ -160,6 +168,12 @@ public:
         #if MO_ENABLE_HEAP_PROFILER
         MO_FREE(tag);
         tag = nullptr;
+        #endif
+    }
+
+    void operator=(const AllocOverrider& other) {
+        #if MO_ENABLE_HEAP_PROFILER
+        updateMemTag(other.tag);
         #endif
     }
 };
@@ -190,8 +204,7 @@ struct Allocator {
     //Allocator(Allocator<U>&& other) {
     Allocator(Allocator&& other) {
         #if MO_ENABLE_HEAP_PROFILER
-        tag = other.tag;
-        other.tag = nullptr;
+        updateMemTag(other.tag); //ignore move semantics for allocators as it simplifies moving std::vector<T, Allocator<T>>. This is okay because the Allocator's state is only the memory tag which is not exclusively owned
         #endif
     }
 
@@ -216,6 +229,7 @@ struct Allocator {
                 #endif
                 sizeof(T) * count));
     }
+
     void deallocate(T *ptr, size_t count) {
         MO_DBG_VERBOSE("Allocator deallocate %zu B (%s)", sizeof(T) * count, tag ? tag : "unspecified");
         MO_FREE(ptr);
@@ -261,7 +275,6 @@ struct Allocator {
             tag = nullptr;
         }
         size_t size = strlen(src) + 1;
-        //tag = static_cast<char*>(MO_MALLOC("HeapProfilerInternal", size));
         tag = static_cast<char*>(malloc(size));
         memset(tag, 0, size);
         snprintf(tag, size, "%s", src);
@@ -270,8 +283,8 @@ struct Allocator {
 };
 
 template<class T>
-Allocator<T> makeAllocator(const char *tag) {
-    return Allocator<T>(tag);
+Allocator<T> makeAllocator(const char *tag, const char *tag_suffix = nullptr) {
+    return Allocator<T>(tag, tag_suffix);
 }
 
 using MemString = std::basic_string<char, std::char_traits<char>, MicroOcpp::Allocator<char>>;
@@ -386,17 +399,21 @@ void mo_mem_delete(T *ptr)  {
 namespace MicroOcpp {
 
 class AllocOverrider {
+protected:
+    const char *getMemoryTag() {return nullptr;}
+    void updateMemTag(const char*,const char*) { } 
 public:
-    AllocOverrider(const char *unused = nullptr) {
-        (void)unused;
-    }
+    AllocOverrider() { }
+    AllocOverrider(const char*) { }
+    AllocOverrider(const char*,const char*) { }
 };
 
 template<class T>
 using Allocator = ::std::allocator<T>;
 
 template<class T>
-Allocator<T> makeAllocator(const char *tag = nullptr) {
+Allocator<T> makeAllocator(const char *, const char *unused = nullptr) {
+    (void)unused;
     return Allocator<T>();
 }
 
@@ -410,7 +427,7 @@ MemVector<T> makeMemVector(const char *tag) {
     return MemVector<T>();
 }
 
-using MemJsonDoc = MemJsonDoc;
+using MemJsonDoc = DynamicJsonDocument;
 
 template <class T, typename ...Args>
 T *mo_mem_new(Args&& ...args)  {
@@ -428,10 +445,10 @@ void mo_mem_delete(T *ptr)  {
 
 namespace MicroOcpp {
 
-MemString makeMemString(const char *val = nullptr, const char *tag = nullptr, const char *tag_suffix = nullptr);
+MemString makeMemString(const char *tag, const char *val = nullptr);
 
-MemJsonDoc initMemJsonDoc(size_t capacity, const char *tag = nullptr);
-std::unique_ptr<MemJsonDoc> makeMemJsonDoc(size_t capacity, const char *tag = nullptr, const char *tag_suffix = nullptr);
+MemJsonDoc initMemJsonDoc(const char *tag, size_t capacity = 0);
+std::unique_ptr<MemJsonDoc> makeMemJsonDoc(const char *tag, size_t capacity = 0);
 
 }
 

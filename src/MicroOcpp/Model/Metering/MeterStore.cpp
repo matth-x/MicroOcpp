@@ -112,7 +112,7 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
             return false; //all files have same length
         }
 
-        auto doc = FilesystemUtils::loadJson(filesystem, fn);
+        auto doc = FilesystemUtils::loadJson(filesystem, fn, getMemoryTag());
 
         if (!doc) {
             misses++;

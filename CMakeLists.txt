@@ -170,7 +170,7 @@ if (MO_BUILD_UNIT_MBEDTLS)
 endif()
 
 target_include_directories(mo_unit_tests PUBLIC
-    "./tests/catch2"
+    "./tests"
     "./tests/helpers"
     "./src"
 )
@@ -191,6 +191,10 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_ENABLE_CERT_MGMT=1
     MO_ENABLE_CONNECTOR_LOCK=1
     MO_REPORT_NOERROR=1
+    MO_OVERRIDE_ALLOCATION=1
+    MO_ENABLE_HEAP_PROFILER=1
+    MO_HEAP_PROFILER_EXTERNAL_CONTROL=1
+    CATCH_CONFIG_EXTERNAL_INTERFACES
 )
 
 target_compile_options(mo_unit_tests PUBLIC

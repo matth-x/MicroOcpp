@@ -6,22 +6,25 @@
 #define MO_OCPPERROR_H
 
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
-class NotImplemented : public Operation {
+class NotImplemented : public Operation, public AllocOverrider {
 public:
+    NotImplemented() : AllocOverrider("v16.CallError.NotImplemented") { }
+
     const char *getErrorCode() override {
         return "NotImplemented";
     }
 };
 
-class MsgBufferExceeded : public Operation {
+class MsgBufferExceeded : public Operation, public AllocOverrider {
 private:
     size_t maxCapacity;
     size_t msgLen;
 public:
-    MsgBufferExceeded(size_t maxCapacity, size_t msgLen) : maxCapacity(maxCapacity), msgLen(msgLen) { }
+    MsgBufferExceeded(size_t maxCapacity, size_t msgLen) : AllocOverrider("v16.CallError.MsgBufferExceeded"), maxCapacity(maxCapacity), msgLen(msgLen) { }
     const char *getErrorCode() override {
         return "GenericError";
     }
@@ -29,7 +32,7 @@ public:
         return "JSON too long or too many fields. Cannot deserialize";
     }
     std::unique_ptr<MemJsonDoc> getErrorDetails() override {
-        auto errDoc = makeMemJsonDoc(JSON_OBJECT_SIZE(2), "CallError");
+        auto errDoc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2));
         JsonObject err = errDoc->to<JsonObject>();
         err["max_capacity"] = maxCapacity;
         err["msg_length"] = msgLen;

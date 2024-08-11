@@ -10,7 +10,7 @@
 using MicroOcpp::Ocpp16::GetDiagnostics;
 using MicroOcpp::MemJsonDoc;
 
-GetDiagnostics::GetDiagnostics(DiagnosticsService& diagService) : AllocOverrider("v16.Operation.", getOperationType()), diagService(diagService), fileName(makeMemString(nullptr, getMemoryTag())) {
+GetDiagnostics::GetDiagnostics(DiagnosticsService& diagService) : AllocOverrider("v16.Operation.", getOperationType()), diagService(diagService), fileName(makeMemString(getMemoryTag())) {
 
 }
 
@@ -55,7 +55,7 @@ std::unique_ptr<MemJsonDoc> GetDiagnostics::createConf(){
     if (fileName.empty()) {
         return createEmptyDocument();
     } else {
-        auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
+        auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
         JsonObject payload = doc->to<JsonObject>();
         payload["fileName"] = fileName.c_str();
         return doc;

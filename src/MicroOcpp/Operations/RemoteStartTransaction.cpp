@@ -117,7 +117,7 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
 }
 
 std::unique_ptr<MemJsonDoc> RemoteStartTransaction::createConf(){
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     if (accepted) {
         payload["status"] = "Accepted";
@@ -128,7 +128,7 @@ std::unique_ptr<MemJsonDoc> RemoteStartTransaction::createConf(){
 }
 
 std::unique_ptr<MemJsonDoc> RemoteStartTransaction::createReq() {
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
     payload["idTag"] = "A0000000";

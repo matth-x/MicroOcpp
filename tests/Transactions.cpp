@@ -13,7 +13,7 @@
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
 #include <MicroOcpp/Debug.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"

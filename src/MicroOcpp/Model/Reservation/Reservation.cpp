@@ -12,7 +12,7 @@
 
 using namespace MicroOcpp;
 
-Reservation::Reservation(Model& model, unsigned int slot) : model(model), slot(slot) {
+Reservation::Reservation(Model& model, unsigned int slot) : AllocOverrider("v16.Reservation.Reservation"), model(model), slot(slot) {
     
     snprintf(connectorIdKey, sizeof(connectorIdKey), MO_RESERVATION_CID_KEY "%u", slot);
     connectorIdInt = declareConfiguration<int>(connectorIdKey, -1, RESERVATION_FN, false, false, false);

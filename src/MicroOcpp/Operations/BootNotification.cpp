@@ -26,7 +26,7 @@ std::unique_ptr<MemJsonDoc> BootNotification::createReq() {
     if (credentials) {
 #if MO_ENABLE_V201
         if (model.getVersion().major == 2) {
-            auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(2) + credentials->memoryUsage(), getMemoryTag());
+            auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2) + credentials->memoryUsage());
             JsonObject payload = doc->to<JsonObject>();
             payload["reason"] = "PowerUp";
             payload["chargingStation"] = *credentials;
@@ -101,7 +101,7 @@ void BootNotification::processReq(JsonObject payload){
 }
 
 std::unique_ptr<MemJsonDoc> BootNotification::createConf(){
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(3) + (JSONDATE_LENGTH + 1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(3) + (JSONDATE_LENGTH + 1));
     JsonObject payload = doc->to<JsonObject>();
 
     //safety mechanism; in some test setups the library has to answer BootNotifications without valid system time

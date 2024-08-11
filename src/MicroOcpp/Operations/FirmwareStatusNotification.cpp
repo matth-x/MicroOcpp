@@ -42,7 +42,7 @@ const char *FirmwareStatusNotification::cstrFromFwStatus(FirmwareStatus status) 
 }
 
 std::unique_ptr<MemJsonDoc> FirmwareStatusNotification::createReq() {
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = cstrFromFwStatus(status);
     return doc;

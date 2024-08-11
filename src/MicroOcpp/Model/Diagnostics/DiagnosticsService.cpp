@@ -22,7 +22,7 @@
 using namespace MicroOcpp;
 using Ocpp16::DiagnosticsStatus;
 
-DiagnosticsService::DiagnosticsService(Context& context) : AllocOverrider("v16.Diagnostics.DiagnosticsService"), context(context), location(makeMemString(nullptr, getMemoryTag())), diagFileList(makeMemVector<MemString>(getMemoryTag())) {
+DiagnosticsService::DiagnosticsService(Context& context) : AllocOverrider("v16.Diagnostics.DiagnosticsService"), context(context), location(makeMemString(getMemoryTag())), diagFileList(makeMemVector<MemString>(getMemoryTag())) {
 
     context.getOperationRegistry().registerOperation("GetDiagnostics", [this] () {
         return new Ocpp16::GetDiagnostics(*this);});
@@ -33,8 +33,8 @@ DiagnosticsService::DiagnosticsService(Context& context) : AllocOverrider("v16.D
 }
 
 DiagnosticsService::~DiagnosticsService() {
-    free(diagPreamble);
-    free(diagPostamble);
+    MO_FREE(diagPreamble);
+    MO_FREE(diagPostamble);
 }
 
 void DiagnosticsService::loop() {
@@ -120,7 +120,7 @@ void DiagnosticsService::loop() {
 //timestamps before year 2021 will be treated as "undefined"
 MemString DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime) {
     if (onUpload == nullptr) {
-        return makeMemString(nullptr, getMemoryTag());
+        return makeMemString(getMemoryTag());
     }
 
     MemString fileName;
@@ -247,7 +247,7 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
         }
 
         const size_t diagPreambleSize = 128;
-        diagPreamble = (char*) malloc(diagPreambleSize);
+        diagPreamble = static_cast<char*>(MO_MALLOC(getMemoryTag(), diagPreambleSize));
         if (!diagPreamble) {
             MO_DBG_ERR("OOM");
             this->ftpUploadStatus = UploadStatus::UploadFailed;
@@ -259,11 +259,11 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
         diagReaderHasData = diagnosticsReader ? true : false;
 
         const size_t diagPostambleSize = 1024;
-        diagPostamble = (char*) malloc(diagPostambleSize);
+        diagPostamble = static_cast<char*>(MO_MALLOC(getMemoryTag(), diagPostambleSize));
         if (!diagPostamble) {
             MO_DBG_ERR("OOM");
             this->ftpUploadStatus = UploadStatus::UploadFailed;
-            free(diagPreamble);
+            MO_FREE(diagPreamble);
             return false;
         }
         diagPostambleLen = 0;
@@ -271,8 +271,8 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
 
         auto& model = context.getModel();
 
-        auto cpModel = makeMemString(nullptr, getMemoryTag());
-        auto fwVersion = makeMemString(nullptr, getMemoryTag());
+        auto cpModel = makeMemString(getMemoryTag());
+        auto fwVersion = makeMemString(getMemoryTag());
 
         if (auto bootService = model.getBootService()) {
             if (auto cpCreds = bootService->getChargePointCredentials()) {
@@ -295,8 +295,8 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
         if (ret < 0 || (size_t)ret >= diagPreambleSize) {
             MO_DBG_ERR("snprintf: %i", ret);
             this->ftpUploadStatus = UploadStatus::UploadFailed;
-            free(diagPreamble);
-            free(diagPostamble);
+            MO_FREE(diagPreamble);
+            MO_FREE(diagPostamble);
             return false;
         }
 
@@ -466,8 +466,8 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                     this->ftpUploadStatus = UploadStatus::UploadFailed;
                 }
 
-                free(diagPreamble);
-                free(diagPostamble);
+                MO_FREE(diagPreamble);
+                MO_FREE(diagPostamble);
                 diagFileList.clear();
 
                 if (onClose) {

@@ -34,7 +34,8 @@
 using namespace MicroOcpp;
 
 Connector::Connector(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId)
-        : context(context), model(context.getModel()), filesystem(filesystem), connectorId(connectorId) {
+        : AllocOverrider("v16.ConnectorBase.Connector"), context(context), model(context.getModel()), filesystem(filesystem), connectorId(connectorId),
+          errorDataInputs(makeMemVector<std::function<ErrorData ()>>(getMemoryTag())), trackErrorDataInputs(makeMemVector<bool>(getMemoryTag())) {
 
     context.getRequestQueue().addSendQueue(this); //register at RequestQueue as Request emitter
 

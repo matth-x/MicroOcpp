@@ -24,7 +24,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::Ocpp201;
 
 TransactionService::Evse::Evse(Context& context, TransactionService& txService, unsigned int evseId) :
-        context(context), txService(txService), evseId(evseId) {
+        AllocOverrider("v201.Transactions.TransactionServiceEvse"), context(context), txService(txService), evseId(evseId) {
 
 }
 
@@ -314,10 +314,10 @@ void TransactionService::Evse::loop() {
         // meterValue not supported
 
         if (transaction->notifyStopIdToken && transaction->stopIdToken) {
-            txEvent->idToken = std::unique_ptr<IdToken>(new IdToken(*transaction->stopIdToken.get()));
+            txEvent->idToken = std::unique_ptr<IdToken>(new IdToken(*transaction->stopIdToken.get(), getMemoryTag()));
             transaction->notifyStopIdToken = false;
         }  else if (transaction->notifyIdToken) {
-            txEvent->idToken = std::unique_ptr<IdToken>(new IdToken(transaction->idToken));
+            txEvent->idToken = std::unique_ptr<IdToken>(new IdToken(transaction->idToken, getMemoryTag()));
             transaction->notifyIdToken = false;
         }
     }
@@ -414,7 +414,7 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken, bool validateId
         transaction->isAuthorized = false;
         transaction->notifyIdToken = true;
     } else if (!validateIdToken) {
-        transaction->stopIdToken = std::unique_ptr<IdToken>(new IdToken(idToken));
+        transaction->stopIdToken = std::unique_ptr<IdToken>(new IdToken(idToken, getMemoryTag()));
         transaction->isAuthorized = false;
         transaction->notifyStopIdToken = true;
     } else {
@@ -429,7 +429,7 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken, bool validateId
             return false;
         }
 
-        authorize->setOnReceiveConfListener([tx, idToken] (JsonObject response) {
+        authorize->setOnReceiveConfListener([tx, idToken, this] (JsonObject response) {
             if (strcmp(response["idTokenInfo"]["status"] | "_Undefined", "Accepted")) {
                 MO_DBG_DEBUG("Authorize rejected (%s), don't stop tx", idToken.get());
                 return;
@@ -437,7 +437,7 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken, bool validateId
 
             MO_DBG_DEBUG("Authorized transaction stop (%s)", idToken.get());
 
-            tx->stopIdToken = std::unique_ptr<IdToken>(new IdToken(idToken));
+            tx->stopIdToken = std::unique_ptr<IdToken>(new IdToken(idToken, getMemoryTag()));
             if (!tx->stopIdToken) {
                 // OOM
                 if (tx->active) {
@@ -501,7 +501,7 @@ bool TransactionService::isTxStopPoint(TxStartStopPoint check) {
     return false;
 }
 
-bool TransactionService::parseTxStartStopPoint(const char *csl, std::vector<TxStartStopPoint>& dst) {
+bool TransactionService::parseTxStartStopPoint(const char *csl, MemVector<TxStartStopPoint>& dst) {
     dst.clear();
 
     while (*csl == ',') {
@@ -547,7 +547,7 @@ bool TransactionService::parseTxStartStopPoint(const char *csl, std::vector<TxSt
     return true;
 }
 
-TransactionService::TransactionService(Context& context) : context(context) {
+TransactionService::TransactionService(Context& context) : AllocOverrider("v201.Transactions.TransactionService"), context(context), evses(makeMemVector<Evse>(getMemoryTag())), txStartPointParsed(makeMemVector<TxStartStopPoint>(getMemoryTag())),  txStopPointParsed(makeMemVector<TxStartStopPoint>(getMemoryTag())) {
     auto variableService = context.getModel().getVariableService();
 
     txStartPointString = variableService->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "PowerPathClosed");
@@ -559,12 +559,12 @@ TransactionService::TransactionService(Context& context) : context(context) {
     variableService->declareVariable<bool>("AuthCtrlr", "AuthorizeRemoteStart", false, MO_VARIABLE_VOLATILE, Variable::Mutability::ReadOnly);
 
     variableService->registerValidator<const char*>("TxCtrlr", "TxStartPoint", [this] (const char *value) -> bool {
-        std::vector<TxStartStopPoint> validated;
+        auto validated = makeMemVector<TxStartStopPoint>(getMemoryTag());
         return this->parseTxStartStopPoint(value, validated);
     });
 
     variableService->registerValidator<const char*>("TxCtrlr", "TxStopPoint", [this] (const char *value) -> bool {
-        std::vector<TxStartStopPoint> validated;
+        auto validated = makeMemVector<TxStartStopPoint>(getMemoryTag());
         return this->parseTxStartStopPoint(value, validated);
     });
 

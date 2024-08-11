@@ -15,20 +15,20 @@
 
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Model/Transactions/TransactionDefs.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #include <memory>
 #include <functional>
-#include <vector>
 
 namespace MicroOcpp {
 
 class Context;
 class Variable;
 
-class TransactionService {
+class TransactionService : public AllocOverrider {
 public:
 
-    class Evse {
+    class Evse : public AllocOverrider {
     private:
         Context& context;
         TransactionService& txService;
@@ -79,7 +79,7 @@ private:
     };
 
     Context& context;
-    std::vector<Evse> evses;
+    MemVector<Evse> evses;
 
     Variable *txStartPointString = nullptr;
     Variable *txStopPointString = nullptr;
@@ -88,12 +88,12 @@ private:
     Variable *evConnectionTimeOutInt = nullptr;
     uint16_t trackTxStartPoint = -1;
     uint16_t trackTxStopPoint = -1;
-    std::vector<TxStartStopPoint> txStartPointParsed;
-    std::vector<TxStartStopPoint> txStopPointParsed;
+    MemVector<TxStartStopPoint> txStartPointParsed;
+    MemVector<TxStartStopPoint> txStopPointParsed;
     bool isTxStartPoint(TxStartStopPoint check);
     bool isTxStopPoint(TxStartStopPoint check);
 
-    bool parseTxStartStopPoint(const char *src, std::vector<TxStartStopPoint>& dst);
+    bool parseTxStartStopPoint(const char *src, MemVector<TxStartStopPoint>& dst);
 
 public:
     TransactionService(Context& context);

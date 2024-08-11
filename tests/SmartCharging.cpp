@@ -10,7 +10,7 @@
 #include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"

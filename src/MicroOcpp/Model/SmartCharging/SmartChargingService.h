@@ -13,6 +13,7 @@
 #include <MicroOcpp/Model/SmartCharging/SmartChargingModel.h>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
@@ -27,7 +28,7 @@ class Model;
 
 using ProfileStack = std::array<std::unique_ptr<ChargingProfile>, MO_ChargeProfileMaxStackLevel + 1>;
 
-class SmartChargingConnector {
+class SmartChargingConnector : public AllocOverrider {
 private:
     Model& model;
     std::shared_ptr<FilesystemAdapter> filesystem;
@@ -54,7 +55,7 @@ private:
 
 public:
     SmartChargingConnector(Model& model, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ProfileStack& ChargePointMaxProfile, ProfileStack& ChargePointTxDefaultProfile);
-    SmartChargingConnector(SmartChargingConnector&&) = default;
+    SmartChargingConnector(SmartChargingConnector&& other) = default;
     ~SmartChargingConnector();
 
     void loop();
@@ -72,11 +73,11 @@ public:
     size_t getChargingProfilesCount();
 };
 
-class SmartChargingService {
+class SmartChargingService : public AllocOverrider {
 private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
-    std::vector<SmartChargingConnector> connectors; //connectorId 0 excluded
+    MemVector<SmartChargingConnector> connectors; //connectorId 0 excluded
     SmartChargingConnector *getScConnectorById(unsigned int connectorId);
     unsigned int numConnectors; //connectorId 0 included
     

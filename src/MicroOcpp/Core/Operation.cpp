@@ -36,7 +36,7 @@ std::unique_ptr<MemJsonDoc> Operation::createConf() {
 }
 
 std::unique_ptr<MemJsonDoc> MicroOcpp::createEmptyDocument() {
-    auto emptyDoc = makeMemJsonDoc(0, "EmptyJsonDoc");
+    auto emptyDoc = makeMemJsonDoc("EmptyJsonDoc", 0);
     emptyDoc->to<JsonObject>();
     return emptyDoc;
 }

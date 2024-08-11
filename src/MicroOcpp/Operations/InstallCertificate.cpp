@@ -76,7 +76,7 @@ void InstallCertificate::processReq(JsonObject payload) {
 }
 
 std::unique_ptr<MemJsonDoc> InstallCertificate::createConf(){
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = status;
     return doc;

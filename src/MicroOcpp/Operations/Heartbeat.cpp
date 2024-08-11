@@ -46,7 +46,7 @@ void Heartbeat::processReq(JsonObject payload) {
 }
 
 std::unique_ptr<MemJsonDoc> Heartbeat::createConf(){
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1) + (JSONDATE_LENGTH + 1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + (JSONDATE_LENGTH + 1));
     JsonObject payload = doc->to<JsonObject>();
 
     //safety mechanism; in some test setups the library could have to answer Heartbeats without valid system time

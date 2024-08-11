@@ -18,7 +18,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::Ocpp16;
 
 MeteringConnector::MeteringConnector(Model& model, int connectorId, MeterStore& meterStore)
-        : AllocOverrider("v16.Metering.MeteringService"), model(model), connectorId{connectorId}, meterStore(meterStore), meterData(makeMemVector<std::unique_ptr<MeterValue>>(getMemoryTag())), samplers(makeMemVector<std::unique_ptr<SampledValueSampler>>(getMemoryTag())) {
+        : AllocOverrider("v16.Metering.MeteringConnector"), model(model), connectorId{connectorId}, meterStore(meterStore), meterData(makeMemVector<std::unique_ptr<MeterValue>>(getMemoryTag())), samplers(makeMemVector<std::unique_ptr<SampledValueSampler>>(getMemoryTag())) {
 
     auto meterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData", "");
     declareConfiguration<int>("MeterValuesSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
@@ -172,7 +172,7 @@ std::unique_ptr<Operation> MeteringConnector::takeTriggeredMeterValues() {
 }
 
 void MeteringConnector::addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler) {
-    if (!meterValueSampler->getProperties().getMeasurand().compare("Energy.Active.Import.Register")) {
+    if (!strcmp(meterValueSampler->getProperties().getMeasurand(), "Energy.Active.Import.Register")) {
         energySamplerIndex = samplers.size();
     }
     samplers.push_back(std::move(meterValueSampler));
@@ -232,8 +232,8 @@ std::shared_ptr<TransactionMeterData> MeteringConnector::getStopTxMeterData(Tran
 
 bool MeteringConnector::existsSampler(const char *measurand, size_t len) {
     for (size_t i = 0; i < samplers.size(); i++) {
-        if (samplers[i]->getProperties().getMeasurand().length() == len &&
-                !strncmp(measurand, samplers[i]->getProperties().getMeasurand().c_str(), len)) {
+        if (strlen(samplers[i]->getProperties().getMeasurand()) == len &&
+                !strncmp(measurand, samplers[i]->getProperties().getMeasurand(), len)) {
             return true;
         }
     }

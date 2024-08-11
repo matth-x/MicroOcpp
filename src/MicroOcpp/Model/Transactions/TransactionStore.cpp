@@ -69,7 +69,7 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
         return nullptr;
     }
 
-    auto doc = FilesystemUtils::loadJson(filesystem, fn);
+    auto doc = FilesystemUtils::loadJson(filesystem, fn, getMemoryTag());
 
     if (!doc) {
         MO_DBG_ERR("memory corruption");
@@ -136,7 +136,7 @@ bool ConnectorTransactionStore::commit(Transaction *transaction) {
         return false;
     }
     
-    auto txDoc = initMemJsonDoc(0, getMemoryTag());
+    auto txDoc = initMemJsonDoc(getMemoryTag());
     if (!serializeTransaction(*transaction, txDoc)) {
         MO_DBG_ERR("Serialization error");
         return false;

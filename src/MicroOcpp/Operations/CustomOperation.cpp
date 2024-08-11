@@ -12,7 +12,7 @@ CustomOperation::CustomOperation(const char *operationType,
             std::function<void (JsonObject)> fn_processConf,
             std::function<bool (const char*, const char*, JsonObject)> fn_processErr) :
         AllocOverrider("v16.Operation.", operationType),
-        operationType{MemString(operationType, Allocator<char>(getMemoryTag()))},
+        operationType{makeMemString(getMemoryTag(), operationType)},
         fn_createReq{fn_createReq},
         fn_processConf{fn_processConf},
         fn_processErr{fn_processErr} {
@@ -26,7 +26,7 @@ CustomOperation::CustomOperation(const char *operationType,
             std::function<const char* ()> fn_getErrorDescription,
             std::function<std::unique_ptr<MemJsonDoc> ()> fn_getErrorDetails) :
         AllocOverrider("v16.Operation.", operationType),
-        operationType{MemString(operationType, Allocator<char>(getMemoryTag()))},
+        operationType{makeMemString(getMemoryTag(), operationType)},
         fn_processReq{fn_processReq},
         fn_createConf{fn_createConf},
         fn_getErrorCode{fn_getErrorCode},

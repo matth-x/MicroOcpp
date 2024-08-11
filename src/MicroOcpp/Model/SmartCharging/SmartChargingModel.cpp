@@ -18,6 +18,10 @@ ChargeRate MicroOcpp::chargeRate_min(const ChargeRate& a, const ChargeRate& b) {
     return res;
 }
 
+ChargingSchedule::ChargingSchedule() : AllocOverrider("v16.SmartCharging.SmartChargingModel"), chargingSchedulePeriod{makeMemVector<ChargingSchedulePeriod>(getMemoryTag())} {
+
+}
+
 bool ChargingSchedule::calculateLimit(const Timestamp &t, const Timestamp &startOfCharging, ChargeRate& limit, Timestamp& nextChange) {
     Timestamp basis = Timestamp(); //point in time to which schedule-related times are relative
     switch (chargingProfileKind) {
@@ -122,7 +126,7 @@ bool ChargingSchedule::toJson(MemJsonDoc& doc) {
     capacity += JSONDATE_LENGTH + 1; //startSchedule
     capacity += JSON_ARRAY_SIZE(chargingSchedulePeriod.size()) + chargingSchedulePeriod.size() * JSON_OBJECT_SIZE(3);
 
-    doc = initMemJsonDoc(capacity, "v16.SmartCharging.ChargingSchedule");
+    doc = initMemJsonDoc("v16.SmartCharging.ChargingSchedule", capacity);
     if (duration >= 0) {
         doc["duration"] = duration;
     }
@@ -173,6 +177,10 @@ void ChargingSchedule::printSchedule(){
     }
 }
 
+ChargingProfile::ChargingProfile() : AllocOverrider("v16.SmartCharging.ChargingProfile") {
+
+}
+
 bool ChargingProfile::calculateLimit(const Timestamp &t, const Timestamp &startOfCharging, ChargeRate& limit, Timestamp& nextChange){
     if (t > validTo && validTo > MIN_TIME) {
         return false; //no limit defined
@@ -207,16 +215,15 @@ ChargingProfilePurposeType ChargingProfile::getChargingProfilePurpose(){
 
 bool ChargingProfile::toJson(MemJsonDoc& doc) {
     
-    auto chargingScheduleDoc = initMemJsonDoc(0, "v16.SmartCharging.ChargingSchedule");
+    auto chargingScheduleDoc = initMemJsonDoc("v16.SmartCharging.ChargingSchedule");
     if (!chargingSchedule.toJson(chargingScheduleDoc)) {
         return false;
     }
 
-    doc = initMemJsonDoc(
+    doc = initMemJsonDoc("v16.SmartCharging.ChargingProfile",
             JSON_OBJECT_SIZE(9) + //no. of fields in ChargingProfile
             2 * (JSONDATE_LENGTH + 1) + //validFrom and validTo
-            chargingScheduleDoc.memoryUsage(), //nested JSON object
-            "v16.SmartCharging.ChargingProfile");
+            chargingScheduleDoc.memoryUsage()); //nested JSON object
 
     doc["chargingProfileId"] = chargingProfileId;
     if (transactionId >= 0) {
@@ -487,7 +494,7 @@ bool MicroOcpp::loadChargingSchedule(JsonObject& json, ChargingSchedule& out) {
     }
 
     for (JsonObject periodJson : periodJsonArray) {
-        out.chargingSchedulePeriod.push_back(ChargingSchedulePeriod());
+        out.chargingSchedulePeriod.emplace_back();
         if (!loadChargingSchedulePeriod(periodJson, out.chargingSchedulePeriod.back())) {
             return false;
         }

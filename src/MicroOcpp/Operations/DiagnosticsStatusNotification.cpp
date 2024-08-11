@@ -33,7 +33,7 @@ const char *DiagnosticsStatusNotification::cstrFromStatus(DiagnosticsStatus stat
 }
 
 std::unique_ptr<MemJsonDoc> DiagnosticsStatusNotification::createReq() {
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = cstrFromStatus(status);
     return doc;

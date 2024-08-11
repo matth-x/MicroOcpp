@@ -16,7 +16,7 @@ using MicroOcpp::Ocpp201::GetVariableData;
 using MicroOcpp::Ocpp201::GetVariables;
 using MicroOcpp::MemJsonDoc;
 
-GetVariableData::GetVariableData(const char *memory_tag) : componentName{makeMemString(nullptr, memory_tag)}, variableName{makeMemString(nullptr, memory_tag)} {
+GetVariableData::GetVariableData(const char *memory_tag) : componentName{makeMemString(memory_tag)}, variableName{makeMemString(memory_tag)} {
 
 }
 
@@ -133,7 +133,7 @@ std::unique_ptr<MemJsonDoc> GetVariables::createConf(){
                     data.variableName.length() + 1;
     }
 
-    auto doc = makeMemJsonDoc(capacity, getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), capacity);
 
     JsonObject payload = doc->to<JsonObject>();
     JsonArray getVariableResult = payload.createNestedArray("getVariableResult");

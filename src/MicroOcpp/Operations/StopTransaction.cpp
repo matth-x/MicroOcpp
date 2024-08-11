@@ -84,13 +84,12 @@ std::unique_ptr<MemJsonDoc> StopTransaction::createReq() {
         txDataDoc.add(**mvJson);
     }
 
-    auto doc = makeMemJsonDoc(
+    auto doc = makeMemJsonDoc(getMemoryTag(),
                 JSON_OBJECT_SIZE(6) + //total of 6 fields
                 (IDTAG_LEN_MAX + 1) + //stop idTag
                 (JSONDATE_LENGTH + 1) + //timestamp string
                 (REASON_LEN_MAX + 1) + //reason string
-                txDataDoc.capacity(),
-                getMemoryTag());
+                txDataDoc.capacity());
     JsonObject payload = doc->to<JsonObject>();
 
     if (transaction->getStopIdTag() && *transaction->getStopIdTag()) {
@@ -151,7 +150,7 @@ void StopTransaction::processReq(JsonObject payload) {
 }
 
 std::unique_ptr<MemJsonDoc> StopTransaction::createConf(){
-    auto doc = makeMemJsonDoc(2 * JSON_OBJECT_SIZE(1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), 2 * JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");

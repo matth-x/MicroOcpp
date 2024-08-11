@@ -10,6 +10,7 @@
 #if MO_ENABLE_LOCAL_AUTH
 
 #include <MicroOcpp/Model/Authorization/AuthorizationData.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <vector>
 
 #ifndef MO_LocalAuthListMaxLength
@@ -22,10 +23,10 @@
 
 namespace MicroOcpp {
 
-class AuthorizationList {
+class AuthorizationList : public AllocOverrider {
 private:
     int listVersion = 0;
-    std::vector<AuthorizationData> localAuthorizationList; //sorted list
+    MemVector<AuthorizationData> localAuthorizationList; //sorted list
 public:
     AuthorizationList();
     ~AuthorizationList();

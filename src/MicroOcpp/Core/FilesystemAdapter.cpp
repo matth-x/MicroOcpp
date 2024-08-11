@@ -74,7 +74,7 @@ private:
         MemString fname;
         size_t size;
 
-        IndexEntry(const char *fname, size_t size) : fname(makeMemString(fname, "FilesystemIndex")), size(size) { }
+        IndexEntry(const char *fname, size_t size) : fname(makeMemString("FilesystemIndex", fname)), size(size) { }
     };
 
     MemVector<IndexEntry> index;
@@ -101,10 +101,16 @@ private:
         const char *fn = path + sizeof(MO_FILENAME_PREFIX) - 1;
         return getEntryByFname(fn);
     }
+    
+    void (*onDestruct)(void*) = nullptr;
 public:
-    FilesystemAdapterIndex(std::shared_ptr<FilesystemAdapter> filesystem) : AllocOverrider("FilesystemIndex"), filesystem(std::move(filesystem)), index(makeMemVector<IndexEntry>(getMemoryTag())) { }
+    FilesystemAdapterIndex(std::shared_ptr<FilesystemAdapter> filesystem, void (*onDestruct)(void*) = nullptr) : AllocOverrider("FilesystemIndex"), filesystem(std::move(filesystem)), index(makeMemVector<IndexEntry>("FilesystemIndex")), onDestruct(onDestruct) { }
 
-    ~FilesystemAdapterIndex() = default;
+    ~FilesystemAdapterIndex() {
+        if (onDestruct) {
+            onDestruct(this);
+        }
+    }
 
     int stat(const char *path, size_t *size) override {
         if (auto file = getEntryByPath(path)) {
@@ -228,9 +234,9 @@ IndexedFileAdapter::~IndexedFileAdapter() {
     index.updateFilesize(fn, written);
 }
 
-std::shared_ptr<FilesystemAdapter> decorateIndex(std::shared_ptr<FilesystemAdapter> filesystem) {
+std::shared_ptr<FilesystemAdapter> decorateIndex(std::shared_ptr<FilesystemAdapter> filesystem, void (*onDestruct)(void*) = nullptr) {
 
-    auto fsIndex = std::allocate_shared<FilesystemAdapterIndex>(Allocator<FilesystemAdapterIndex>("FilesystemIndex"), std::move(filesystem));
+    auto fsIndex = std::allocate_shared<FilesystemAdapterIndex>(makeAllocator<FilesystemAdapterIndex>("FilesystemIndex"), std::move(filesystem), onDestruct);
     if (!fsIndex) {
         MO_DBG_ERR("OOM");
         return nullptr;
@@ -290,8 +296,10 @@ class ArduinoFilesystemAdapter : public FilesystemAdapter, public AllocOverrider
 private:
     bool valid = false;
     FilesystemOpt config;
+
+    void (* onDestruct)(void*) = nullptr;
 public:
-    ArduinoFilesystemAdapter(FilesystemOpt config) : AllocOverrider("Filesystem"), config(config) {
+    ArduinoFilesystemAdapter(FilesystemOpt config, void (*onDestruct)(void*) = nullptr) : AllocOverrider("Filesystem"), config(config), onDestruct(onDestruct) {
         valid = true;
 
         if (config.mustMount()) { 
@@ -322,6 +330,10 @@ public:
     ~ArduinoFilesystemAdapter() {
         if (config.mustMount()) {
             USE_FS.end();
+        }
+
+        if (onDestruct) {
+            onDestruct(this);
         }
     }
 
@@ -428,6 +440,10 @@ public:
 
 std::weak_ptr<FilesystemAdapter> filesystemCache;
 
+void resetFilesystemCache(void*) {
+    filesystemCache.reset();
+}
+
 std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config) {
 
     if (auto cached = filesystemCache.lock()) {
@@ -439,11 +455,11 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
         return nullptr;
     }
 
-    auto fs_concrete = new ArduinoFilesystemAdapter(config);
-    auto fs = std::shared_ptr<FilesystemAdapter>(fs_concrete, std::default_delete<FilesystemAdapter>(), Allocator<FilesystemAdapter>("Filesystem"));
+    auto fs_concrete = new ArduinoFilesystemAdapter(config, resetFilesystemCache);
+    auto fs = std::shared_ptr<FilesystemAdapter>(fs_concrete, std::default_delete<FilesystemAdapter>(), makeAllocator<FilesystemAdapter>("Filesystem"));
 
 #if MO_ENABLE_FILE_INDEX
-    fs = decorateIndex(fs);
+    fs = decorateIndex(fs, resetFilesystemCache);
 #endif // MO_ENABLE_FILE_INDEX
 
     filesystemCache = fs;
@@ -498,13 +514,19 @@ public:
 class EspIdfFilesystemAdapter : public FilesystemAdapter, public AllocOverrider {
 public:
     FilesystemOpt config;
+
+    void (* onDestruct)(void*) = nullptr;
 public:
-    EspIdfFilesystemAdapter(FilesystemOpt config) : AllocOverrider("Filesystem"), config(config) { }
+    EspIdfFilesystemAdapter(FilesystemOpt config, void (* onDestruct)(void*) = nullptr) : AllocOverrider("Filesystem"), config(config), onDestruct(onDestruct) { }
 
     ~EspIdfFilesystemAdapter() {
         if (config.mustMount()) {
             esp_vfs_spiffs_unregister(MO_PARTITION_LABEL);
             MO_DBG_DEBUG("SPIFFS unmounted");
+        }
+
+        if (onDestruct) {
+            onDestruct(this);
         }
     }
 
@@ -566,6 +588,10 @@ public:
 
 std::weak_ptr<FilesystemAdapter> filesystemCache;
 
+void resetFilesystemCache(void*) {
+    filesystemCache.reset();
+}
+
 std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config) {
 
     if (auto cached = filesystemCache.lock()) {
@@ -621,10 +647,10 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     }
 
     if (mounted) {
-        auto fs = std::shared_ptr<FilesystemAdapter>(new EspIdfFilesystemAdapter(config), std::default_delete<FilesystemAdapter>(), Allocator<FilesystemAdapter>("Filesystem"));
+        auto fs = std::shared_ptr<FilesystemAdapter>(new EspIdfFilesystemAdapter(config, resetFilesystemCache), std::default_delete<FilesystemAdapter>(), makeAllocator<FilesystemAdapter>("Filesystem"));
 
 #if MO_ENABLE_FILE_INDEX
-        fs = decorateIndex(fs);
+        fs = decorateIndex(fs, resetFilesystemCache);
 #endif // MO_ENABLE_FILE_INDEX
 
         filesystemCache = fs;
@@ -673,10 +699,16 @@ public:
 class PosixFilesystemAdapter : public FilesystemAdapter, public AllocOverrider {
 public:
     FilesystemOpt config;
-public:
-    PosixFilesystemAdapter(FilesystemOpt config) : AllocOverrider("Filesystem"), config(config) { }
 
-    ~PosixFilesystemAdapter() = default;
+    void (* onDestruct)(void*) = nullptr;
+public:
+    PosixFilesystemAdapter(FilesystemOpt config, void (* onDestruct)(void*) = nullptr) : AllocOverrider("Filesystem"), config(config), onDestruct(onDestruct) { }
+
+    ~PosixFilesystemAdapter() {
+        if (onDestruct) {
+            onDestruct(this);
+        }
+    }
 
     int stat(const char *path, size_t *size) override {
         struct ::stat st;
@@ -726,6 +758,10 @@ public:
 
 std::weak_ptr<FilesystemAdapter> filesystemCache;
 
+void resetFilesystemCache(void*) {
+    filesystemCache.reset();
+}
+
 std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config) {
 
     if (auto cached = filesystemCache.lock()) {
@@ -741,10 +777,10 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
         MO_DBG_DEBUG("Skip mounting on UNIX host");
     }
 
-    auto fs = std::shared_ptr<FilesystemAdapter>(new PosixFilesystemAdapter(config), std::default_delete<FilesystemAdapter>(), Allocator<FilesystemAdapter>("Filesystem"));
+    auto fs = std::shared_ptr<FilesystemAdapter>(new PosixFilesystemAdapter(config, resetFilesystemCache), std::default_delete<FilesystemAdapter>(), makeAllocator<FilesystemAdapter>("Filesystem"));
 
 #if MO_ENABLE_FILE_INDEX
-    fs = decorateIndex(fs);
+    fs = decorateIndex(fs, resetFilesystemCache);
 #endif // MO_ENABLE_FILE_INDEX
 
     filesystemCache = fs;

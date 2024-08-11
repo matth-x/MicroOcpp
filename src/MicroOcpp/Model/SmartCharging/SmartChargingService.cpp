@@ -16,7 +16,7 @@
 using namespace::MicroOcpp;
 
 SmartChargingConnector::SmartChargingConnector(Model& model, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ProfileStack& ChargePointMaxProfile, ProfileStack& ChargePointTxDefaultProfile) :
-        model(model), filesystem{filesystem}, connectorId{connectorId}, ChargePointMaxProfile(ChargePointMaxProfile), ChargePointTxDefaultProfile(ChargePointTxDefaultProfile) {
+        AllocOverrider("v16.SmartCharging.SmartChargingConnector"), model(model), filesystem{filesystem}, connectorId{connectorId}, ChargePointMaxProfile(ChargePointMaxProfile), ChargePointTxDefaultProfile(ChargePointTxDefaultProfile) {
     
 }
 
@@ -267,7 +267,7 @@ std::unique_ptr<ChargingSchedule> SmartChargingConnector::getCompositeSchedule(i
             }
         }
 
-        periods.push_back(ChargingSchedulePeriod());
+        periods.emplace_back();
         float limit_opt = unit == ChargingRateUnitType_Optional::Watt ? limit.power : limit.current;
         periods.back().limit = limit_opt != std::numeric_limits<float>::max() ? limit_opt : -1.f,
         periods.back().numberPhases = limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1;
@@ -311,10 +311,10 @@ SmartChargingConnector *SmartChargingService::getScConnectorById(unsigned int co
 }
 
 SmartChargingService::SmartChargingService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int numConnectors)
-      : context(context), filesystem{filesystem}, numConnectors(numConnectors) {
+      : AllocOverrider("v16.SmartCharging.SmartChargingService"), context(context), filesystem{filesystem}, connectors{makeMemVector<SmartChargingConnector>(getMemoryTag())}, numConnectors(numConnectors) {
     
     for (unsigned int cId = 1; cId < numConnectors; cId++) {
-        connectors.push_back(std::move(SmartChargingConnector(context.getModel(), filesystem, cId, ChargePointMaxProfile, ChargePointTxDefaultProfile)));
+        connectors.emplace_back(context.getModel(), filesystem, cId, ChargePointMaxProfile, ChargePointTxDefaultProfile);
     }
 
     declareConfiguration<int>("ChargeProfileMaxStackLevel", MO_ChargeProfileMaxStackLevel, CONFIGURATION_VOLATILE, true);
@@ -444,7 +444,7 @@ bool SmartChargingService::loadProfiles() {
                     continue; //There is not a profile on the stack iStack with stacklevel iLevel. Normal case, just continue.
                 }
 
-                auto profileDoc = FilesystemUtils::loadJson(filesystem, fn);
+                auto profileDoc = FilesystemUtils::loadJson(filesystem, fn, getMemoryTag());
                 if (!profileDoc) {
                     success = false;
                     MO_DBG_ERR("profile corrupt: %s, remove", fn);
@@ -738,7 +738,7 @@ bool SmartChargingServiceUtils::storeProfile(std::shared_ptr<FilesystemAdapter> 
         return true; //not an error
     }
 
-    auto chargingProfileJson = initMemJsonDoc(0, "v16.SmartCharging.ChargingProfile");
+    auto chargingProfileJson = initMemJsonDoc("v16.SmartCharging.ChargingProfile");
     if (!chargingProfile->toJson(chargingProfileJson)) {
         return false;
     }

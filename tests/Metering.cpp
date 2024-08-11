@@ -7,7 +7,7 @@
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Configuration.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"

@@ -80,7 +80,7 @@ std::unique_ptr<MemJsonDoc> GetInstalledCertificateIds::createConf() {
                     * 2 + 3; //issuerNameHash, issuerKeyHash and serialNumber as hex-endoded cstring
     }
 
-    auto doc = makeMemJsonDoc(capacity, getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), capacity);
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = status;
 

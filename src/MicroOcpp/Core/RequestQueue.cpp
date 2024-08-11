@@ -167,11 +167,11 @@ void RequestQueue::loop() {
 
     if (recvReqFront) {
 
-        auto response = initMemJsonDoc(0, getMemoryTag());
+        auto response = initMemJsonDoc(getMemoryTag());
         auto ret = recvReqFront->createResponse(response);
 
         if (ret == Request::CreateResponseResult::Success) {
-            std::string out;
+            auto out = makeMemString(getMemoryTag());
             serializeJson(response, out);
     
             bool success = connection.sendTXT(out.c_str(), out.length());
@@ -208,13 +208,13 @@ void RequestQueue::loop() {
 
     if (sendReqFront && !sendReqFront->isRequestSent()) {
 
-        auto request = initMemJsonDoc(0, getMemoryTag());
+        auto request = initMemJsonDoc(getMemoryTag());
         auto ret = sendReqFront->createRequest(request);
 
         if (ret == Request::CreateRequestResult::Success) {
 
             //send request
-            std::string out;
+            auto out = makeMemString(getMemoryTag());
             serializeJson(request, out);
 
             bool success = connection.sendTXT(out.c_str(), out.length());
@@ -267,12 +267,12 @@ bool RequestQueue::receiveMessage(const char* payload, size_t length) {
         capacity = MO_MAX_JSON_CAPACITY;
     }
     
-    auto doc = initMemJsonDoc(0, getMemoryTag());
+    auto doc = initMemJsonDoc(getMemoryTag());
     DeserializationError err = DeserializationError::NoMemory;
 
     while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
 
-        doc = initMemJsonDoc(capacity, getMemoryTag());
+        doc = initMemJsonDoc(getMemoryTag(), capacity);
         err = deserializeJson(doc, payload, length);
 
         capacity *= 2;
@@ -308,7 +308,7 @@ bool RequestQueue::receiveMessage(const char* payload, size_t length) {
                 * If the input type is MESSAGE_TYPE_CALLRESULT, then abort the operation to avoid getting stalled.
                 */
 
-            doc = initMemJsonDoc(200, getMemoryTag());
+            doc = initMemJsonDoc(getMemoryTag(), 200);
             char onlyRpcHeader[200];
             size_t onlyRpcHeader_len = removePayload(payload, length, onlyRpcHeader, sizeof(onlyRpcHeader));
             DeserializationError err2 = deserializeJson(doc, onlyRpcHeader, onlyRpcHeader_len);

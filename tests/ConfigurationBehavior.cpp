@@ -11,7 +11,7 @@
 #include <MicroOcpp/Core/FilesystemUtils.h>
 #include <MicroOcpp/Debug.h>
 #include <MicroOcpp/Version.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 using namespace MicroOcpp;

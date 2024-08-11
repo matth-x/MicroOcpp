@@ -56,7 +56,7 @@ bool AuthorizationService::loadLists() {
         return true;
     }
     
-    auto doc = FilesystemUtils::loadJson(filesystem, MO_LOCALAUTHORIZATIONLIST_FN);
+    auto doc = FilesystemUtils::loadJson(filesystem, MO_LOCALAUTHORIZATIONLIST_FN, getMemoryTag());
     if (!doc) {
         MO_DBG_ERR("failed to load %s", MO_LOCALAUTHORIZATIONLIST_FN);
         return false;
@@ -106,10 +106,9 @@ bool AuthorizationService::updateLocalList(JsonArray localAuthorizationListJson,
 
     if (success) {
         
-        auto doc = initMemJsonDoc(
+        auto doc = initMemJsonDoc(getMemoryTag(),
                 JSON_OBJECT_SIZE(3) +
-                localAuthorizationList.getJsonCapacity(),
-                getMemoryTag());
+                localAuthorizationList.getJsonCapacity());
 
         JsonObject root = doc.to<JsonObject>();
         root["listVersion"] = listVersion;

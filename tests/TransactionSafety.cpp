@@ -10,7 +10,7 @@
 #include <MicroOcpp/Operations/BootNotification.h>
 #include <MicroOcpp/Operations/StatusNotification.h>
 #include <MicroOcpp/Debug.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 using namespace MicroOcpp;

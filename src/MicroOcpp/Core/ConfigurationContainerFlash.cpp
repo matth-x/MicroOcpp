@@ -243,7 +243,7 @@ public:
             jsonCapacity = MO_MAX_JSON_CAPACITY;
         }
 
-        auto doc = initMemJsonDoc(jsonCapacity, getMemoryTag());
+        auto doc = initMemJsonDoc(getMemoryTag(), jsonCapacity);
         JsonObject head = doc.createNestedObject("head");
         head["content-type"] = "ocpp_config_file";
         head["version"] = "2.0";
@@ -292,7 +292,7 @@ public:
     }
 
     std::shared_ptr<Configuration> createConfiguration(TConfig type, const char *key) override {
-        auto res = std::shared_ptr<Configuration>(makeConfiguration(type, key).release(), std::default_delete<Configuration>(), Allocator<Configuration>("v16.Configuration.", key));
+        auto res = std::shared_ptr<Configuration>(makeConfiguration(type, key).release(), std::default_delete<Configuration>(), makeAllocator<Configuration>("v16.Configuration.", key));
         if (!res) {
             //allocation failure - OOM
             MO_DBG_ERR("OOM");

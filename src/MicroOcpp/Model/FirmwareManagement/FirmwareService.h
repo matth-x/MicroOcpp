@@ -12,6 +12,7 @@
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareStatus.h>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Ftp.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
@@ -30,12 +31,12 @@ enum class InstallationStatus {
 class Context;
 class Request;
 
-class FirmwareService {
+class FirmwareService : public AllocOverrider {
 private:
     Context& context;
     
     std::shared_ptr<Configuration> previousBuildNumberString;
-    std::string buildNumber;
+    MemString buildNumber;
 
     std::function<DownloadStatus()> downloadStatusInput;
     bool downloadIssued = false;
@@ -50,7 +51,7 @@ private:
     Ocpp16::FirmwareStatus lastReportedStatus = Ocpp16::FirmwareStatus::Idle;
     bool checkedSuccessfulFwUpdate = false;
 
-    std::string location;
+    MemString location;
     Timestamp retreiveDate;
     unsigned int retries = 0;
     unsigned int retryInterval = 0;

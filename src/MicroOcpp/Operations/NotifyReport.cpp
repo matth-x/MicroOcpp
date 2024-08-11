@@ -81,7 +81,7 @@ std::unique_ptr<MemJsonDoc> NotifyReport::createReq() {
         capacity += JSON_OBJECT_SIZE(2); //variableCharacteristics composite: only send two data fields
     }
 
-    auto doc = makeMemJsonDoc(capacity, getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), capacity);
 
     JsonObject payload = doc->to<JsonObject>();
     payload["requestId"] = requestId;

@@ -35,7 +35,7 @@ std::unique_ptr<MemJsonDoc> MeterValue::toJson() {
     capacity += JSONDATE_LENGTH + 1;
     capacity += JSON_OBJECT_SIZE(2);
     
-    auto result = makeMemJsonDoc(capacity + 100, "v16.Metering.MeterValue"); //TODO remove safety space
+    auto result = makeMemJsonDoc(getMemoryTag(), capacity);
     auto jsonPayload = result->to<JsonObject>();
 
     char timestampStr [JSONDATE_LENGTH + 1] = {'\0'};
@@ -73,7 +73,7 @@ MeterValueBuilder::MeterValueBuilder(const MemVector<std::unique_ptr<SampledValu
             samplers(samplers),
             selectString(samplersSelectStr),
             select_mask(makeMemVector<bool>(getMemoryTag())) {
-        
+
     updateObservedSamplers();
     select_observe = selectString->getValueRevision();
 }
@@ -102,7 +102,7 @@ void MeterValueBuilder::updateObservedSamplers() {
 
         if (sr != sl + 1) {
             for (size_t i = 0; i < samplers.size(); i++) {
-                if (!strncmp(samplers[i]->getProperties().getMeasurand().c_str(), sstring + sl, sr - sl)) {
+                if (!strncmp(samplers[i]->getProperties().getMeasurand(), sstring + sl, sr - sl)) {
                     select_mask[i] = true;
                     select_n++;
                 }
@@ -152,11 +152,11 @@ std::unique_ptr<MeterValue> MeterValueBuilder::deserializeSample(const JsonObjec
     for (JsonObject svJson : sampledValue) {  //for each sampled value, search sampler with matching measurand type
         for (auto& sampler : samplers) {
             auto& properties = sampler->getProperties();
-            if (!properties.getMeasurand().compare(svJson["measurand"] | "") &&
-                    !properties.getFormat().compare(svJson["format"] | "") &&
-                    !properties.getPhase().compare(svJson["phase"] | "") &&
-                    !properties.getLocation().compare(svJson["location"] | "") &&
-                    !properties.getUnit().compare(svJson["unit"] | "")) {
+            if (!strcmp(properties.getMeasurand(), svJson["measurand"] | "") &&
+                    !strcmp(properties.getFormat(), svJson["format"] | "") &&
+                    !strcmp(properties.getPhase(), svJson["phase"] | "") &&
+                    !strcmp(properties.getLocation(), svJson["location"] | "") &&
+                    !strcmp(properties.getUnit(), svJson["unit"] | "")) {
                 //found correct sampler
                 auto dVal = sampler->deserializeValue(svJson);
                 if (dVal) {

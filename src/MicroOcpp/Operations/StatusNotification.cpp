@@ -58,7 +58,7 @@ const char* StatusNotification::getOperationType(){
 }
 
 std::unique_ptr<MemJsonDoc> StatusNotification::createReq() {
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(7) + (JSONDATE_LENGTH + 1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(7) + (JSONDATE_LENGTH + 1));
     JsonObject payload = doc->to<JsonObject>();
 
     payload["connectorId"] = connectorId;
@@ -129,7 +129,7 @@ const char* StatusNotification::getOperationType(){
 }
 
 std::unique_ptr<MemJsonDoc> StatusNotification::createReq() {
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1));
     JsonObject payload = doc->to<JsonObject>();
 
     char timestamp_cstr[JSONDATE_LENGTH + 1] = {'\0'};

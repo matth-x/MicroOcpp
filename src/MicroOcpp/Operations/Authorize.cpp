@@ -26,7 +26,7 @@ const char* Authorize::getOperationType(){
 }
 
 std::unique_ptr<MemJsonDoc> Authorize::createReq() {
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1) + (IDTAG_LEN_MAX + 1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + (IDTAG_LEN_MAX + 1));
     JsonObject payload = doc->to<JsonObject>();
     payload["idTag"] = idTag;
     return doc;
@@ -55,7 +55,7 @@ void Authorize::processReq(JsonObject payload){
 }
 
 std::unique_ptr<MemJsonDoc> Authorize::createConf(){
-    auto doc = makeMemJsonDoc(2 * JSON_OBJECT_SIZE(1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), 2 * JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
     idTagInfo["status"] = "Accepted";
@@ -79,10 +79,9 @@ const char* Authorize::getOperationType(){
 }
 
 std::unique_ptr<MemJsonDoc> Authorize::createReq() {
-    auto doc = makeMemJsonDoc(
+    auto doc = makeMemJsonDoc(getMemoryTag(),
             JSON_OBJECT_SIZE(1) +
-            JSON_OBJECT_SIZE(2),
-            getMemoryTag());
+            JSON_OBJECT_SIZE(2));
     JsonObject payload = doc->to<JsonObject>();
     payload["idToken"]["idToken"] = idToken.get();
     payload["idToken"]["type"] = idToken.getTypeCstr();
@@ -110,7 +109,7 @@ void Authorize::processReq(JsonObject payload){
 }
 
 std::unique_ptr<MemJsonDoc> Authorize::createConf(){
-    auto doc = makeMemJsonDoc(2 * JSON_OBJECT_SIZE(1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), 2 * JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     JsonObject idTagInfo = payload.createNestedObject("idTokenInfo");
     idTagInfo["status"] = "Accepted";

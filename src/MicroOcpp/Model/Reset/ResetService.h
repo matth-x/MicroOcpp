@@ -10,13 +10,14 @@
 
 #include <MicroOcpp/Version.h>
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Model/Reset/ResetDefs.h>
 
 namespace MicroOcpp {
 
 class Context;
 
-class ResetService {
+class ResetService : public AllocOverrider {
 private:
     Context& context;
 
@@ -64,7 +65,7 @@ class Variable;
 
 namespace Ocpp201 {
 
-class ResetService {
+class ResetService : public AllocOverrider {
 private:
     Context& context;
 
@@ -86,7 +87,7 @@ private:
         void loop();
     };
 
-    std::vector<Evse> evses;
+    MemVector<Evse> evses;
     Evse *getEvse(unsigned int connectorId);
     Evse *getOrCreateEvse(unsigned int connectorId);
 

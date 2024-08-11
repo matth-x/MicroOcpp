@@ -48,7 +48,7 @@ void RequestStartTransaction::processReq(JsonObject payload) {
 
 std::unique_ptr<MemJsonDoc> RequestStartTransaction::createConf(){
 
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(2), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2));
     JsonObject payload = doc->to<JsonObject>();
 
     const char *statusCstr = "";

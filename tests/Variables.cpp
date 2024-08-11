@@ -8,7 +8,7 @@
 
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>

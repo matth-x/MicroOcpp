@@ -30,7 +30,7 @@
 using namespace MicroOcpp;
 
 ConnectorsCommon::ConnectorsCommon(Context& context, unsigned int numConn, std::shared_ptr<FilesystemAdapter> filesystem) :
-        context(context) {
+        AllocOverrider("v16.ConnectorBase.ConnectorsCommon"), context(context) {
     
     declareConfiguration<int>("NumberOfConnectors", numConn >= 1 ? numConn - 1 : 0, CONFIGURATION_VOLATILE, true);
     

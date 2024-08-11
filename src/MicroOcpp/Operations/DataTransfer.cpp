@@ -12,7 +12,7 @@ DataTransfer::DataTransfer() : AllocOverrider("v16.Operation.", getOperationType
 
 }
 
-DataTransfer::DataTransfer(const MemString &msg) : AllocOverrider("v16.Operation.", getOperationType()), msg{makeMemString(msg.c_str(), getMemoryTag())} {
+DataTransfer::DataTransfer(const MemString &msg) : AllocOverrider("v16.Operation.", getOperationType()), msg{makeMemString(getMemoryTag(), msg.c_str())} {
 
 }
 
@@ -21,7 +21,7 @@ const char* DataTransfer::getOperationType(){
 }
 
 std::unique_ptr<MemJsonDoc> DataTransfer::createReq() {
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(2) + (msg.length() + 1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2) + (msg.length() + 1));
     JsonObject payload = doc->to<JsonObject>();
     payload["vendorId"] = "CustomVendor";
     payload["data"] = msg;
@@ -43,7 +43,7 @@ void DataTransfer::processReq(JsonObject payload) {
 }
 
 std::unique_ptr<MemJsonDoc> DataTransfer::createConf(){
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = "Rejected";
     return doc;

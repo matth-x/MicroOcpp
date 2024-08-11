@@ -29,7 +29,7 @@ namespace MicroOcpp {
 
 using namespace MicroOcpp;
 
-Request::Request(std::unique_ptr<Operation> msg, const char *memory_tag) : AllocOverrider(memory_tag), messageID(makeMemString(nullptr, getMemoryTag())), operation(std::move(msg)) {
+Request::Request(std::unique_ptr<Operation> msg, const char *memory_tag) : AllocOverrider(memory_tag), messageID(makeMemString(getMemoryTag())), operation(std::move(msg)) {
     timeout_start = mocpp_tick_ms();
     debugRequest_start = mocpp_tick_ms();
 }
@@ -92,7 +92,7 @@ Request::CreateRequestResult Request::createRequest(MemJsonDoc& requestJson) {
      * Create OCPP-J Remote Procedure Call header
      */
     size_t json_buffsize = JSON_ARRAY_SIZE(4) + (messageID.length() + 1) + requestPayload->capacity();
-    requestJson = MemJsonDoc(json_buffsize, getMemoryTag());
+    requestJson = initMemJsonDoc(getMemoryTag(), json_buffsize);
 
     requestJson.add(MESSAGE_TYPE_CALL);                    //MessageType
     requestJson.add(messageID);                      //Unique message ID
@@ -209,7 +209,7 @@ Request::CreateResponseResult Request::createResponse(MemJsonDoc& response) {
          * Create OCPP-J Remote Procedure Call header
          */
         size_t json_buffsize = JSON_ARRAY_SIZE(3) + payload->capacity();
-        response = initMemJsonDoc(json_buffsize, getMemoryTag());
+        response = initMemJsonDoc(getMemoryTag(), json_buffsize);
 
         response.add(MESSAGE_TYPE_CALLRESULT);   //MessageType
         response.add(messageID.c_str());            //Unique message ID
@@ -230,7 +230,7 @@ Request::CreateResponseResult Request::createResponse(MemJsonDoc& response) {
          */
         size_t json_buffsize = JSON_ARRAY_SIZE(5)
                     + errorDetails->capacity();
-        response = initMemJsonDoc(json_buffsize, getMemoryTag());
+        response = initMemJsonDoc(getMemoryTag(), json_buffsize);
 
         response.add(MESSAGE_TYPE_CALLERROR);   //MessageType
         response.add(messageID.c_str());            //Unique message ID

@@ -5,14 +5,16 @@
 #ifndef MO_HEARTBEATSERVICE_H
 #define MO_HEARTBEATSERVICE_H
 
-#include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <memory>
+
+#include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
 class Context;
 
-class HeartbeatService {
+class HeartbeatService : public AllocOverrider {
 private:
     Context& context;
 

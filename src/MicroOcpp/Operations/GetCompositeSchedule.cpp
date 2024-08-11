@@ -59,10 +59,9 @@ std::unique_ptr<MemJsonDoc> GetCompositeSchedule::createConf(){
     }
 
     if (success && chargingSchedule) {
-        auto doc = makeMemJsonDoc(
+        auto doc = makeMemJsonDoc(getMemoryTag(),
                         JSON_OBJECT_SIZE(4) +
-                        chargingScheduleDoc.memoryUsage(),
-                        getMemoryTag());
+                        chargingScheduleDoc.memoryUsage());
         JsonObject payload = doc->to<JsonObject>();
         payload["status"] = "Accepted";
         payload["connectorId"] = connectorId;
@@ -70,7 +69,7 @@ std::unique_ptr<MemJsonDoc> GetCompositeSchedule::createConf(){
         payload["chargingSchedule"] = chargingScheduleDoc;
         return doc;
     } else {
-        auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
+        auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
         JsonObject payload = doc->to<JsonObject>();
         payload["status"] = "Rejected";
         return doc;

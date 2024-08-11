@@ -211,8 +211,8 @@ bool configuration_init(std::shared_ptr<FilesystemAdapter> _filesystem) {
 }
 
 void configuration_deinit() {
-    configurationContainers.clear();
-    validators.clear();
+    makeMemVector<decltype(configurationContainers)::value_type>("v16.Configuration.Containers").swap(configurationContainers); //release allocated memory (see https://cplusplus.com/reference/vector/vector/clear/)
+    makeMemVector<decltype(validators)::value_type>("v16.Configuration.Validators").swap(validators);
     filesystem.reset();
 }
 

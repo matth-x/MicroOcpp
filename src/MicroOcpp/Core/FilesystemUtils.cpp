@@ -56,7 +56,7 @@ std::unique_ptr<MemJsonDoc> FilesystemUtils::loadJson(std::shared_ptr<Filesystem
 
     while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
 
-        doc = makeMemJsonDoc(capacity, memoryTag);
+        doc = makeMemJsonDoc(memoryTag, capacity);
         err = deserializeJson(*doc, fileReader);
 
         capacity *= 2;

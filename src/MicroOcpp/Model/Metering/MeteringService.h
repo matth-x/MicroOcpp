@@ -12,6 +12,7 @@
 #include <MicroOcpp/Model/Metering/MeteringConnector.h>
 #include <MicroOcpp/Model/Metering/SampledValue.h>
 #include <MicroOcpp/Model/Metering/MeterStore.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
@@ -19,12 +20,12 @@ class Context;
 class Request;
 class FilesystemAdapter;
 
-class MeteringService {
+class MeteringService : public AllocOverrider {
 private:
     Context& context;
     MeterStore meterStore;
 
-    std::vector<std::unique_ptr<MeteringConnector>> connectors;
+    MemVector<std::unique_ptr<MeteringConnector>> connectors;
 public:
     MeteringService(Context& context, int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 

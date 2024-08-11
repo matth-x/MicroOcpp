@@ -52,7 +52,7 @@ bool deserializeSendStatus(SendStatus& status, JsonObject in) {
 }
 
 bool serializeTransaction(Transaction& tx, MemJsonDoc& out) {
-    out = initMemJsonDoc(1024, "v16.Transactions.TransactionDeserialize");
+    out = initMemJsonDoc("v16.Transactions.TransactionDeserialize", 1024);
     JsonObject state = out.to<JsonObject>();
 
     JsonObject sessionState = state.createNestedObject("session");

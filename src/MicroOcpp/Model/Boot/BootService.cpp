@@ -33,7 +33,7 @@ RegistrationStatus MicroOcpp::deserializeRegistrationStatus(const char *serializ
     }
 }
 
-BootService::BootService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : AllocOverrider("v16.Boot.BootService"), context(context), filesystem(filesystem), cpCredentials{makeMemString(nullptr, getMemoryTag())} {
+BootService::BootService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : AllocOverrider("v16.Boot.BootService"), context(context), filesystem(filesystem), cpCredentials{makeMemString(getMemoryTag())} {
     
     //if transactions can start before the BootNotification succeeds
     preBootTransactionsBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", false);
@@ -111,7 +111,7 @@ std::unique_ptr<MemJsonDoc> BootService::getChargePointCredentials() {
     size_t capacity = JSON_OBJECT_SIZE(9) + cpCredentials.size();
     DeserializationError err = DeserializationError::NoMemory;
     while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
-        doc = makeMemJsonDoc(capacity, getMemoryTag());
+        doc = makeMemJsonDoc(getMemoryTag(), capacity);
         err = deserializeJson(*doc, cpCredentials);
 
         capacity *= 2;
@@ -149,7 +149,7 @@ bool BootService::loadBootStats(std::shared_ptr<FilesystemAdapter> filesystem, B
         
         bool success = true;
 
-        auto json = FilesystemUtils::loadJson(filesystem, MO_FILENAME_PREFIX "bootstats.jsn");
+        auto json = FilesystemUtils::loadJson(filesystem, MO_FILENAME_PREFIX "bootstats.jsn", "v16.Boot.BootService");
         if (json) {
             int bootNrIn = (*json)["bootNr"] | -1;
             if (bootNrIn >= 0 && bootNrIn <= std::numeric_limits<uint16_t>::max()) {
@@ -185,7 +185,7 @@ bool BootService::storeBootStats(std::shared_ptr<FilesystemAdapter> filesystem, 
         return false;
     }
 
-    auto json = initMemJsonDoc(JSON_OBJECT_SIZE(2), "v16.Boot.BootService");
+    auto json = initMemJsonDoc("v16.Boot.BootService", JSON_OBJECT_SIZE(2));
 
     json["bootNr"] = bstats.bootNr;
     json["lastSuccess"] = bstats.lastBootSuccess;

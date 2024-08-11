@@ -24,13 +24,12 @@ const char* TransactionEvent::getOperationType() {
 }
 
 std::unique_ptr<MemJsonDoc> TransactionEvent::createReq() {
-    auto doc = makeMemJsonDoc(
+    auto doc = makeMemJsonDoc(getMemoryTag(),
                 JSON_OBJECT_SIZE(12) + //total of 12 fields
                 JSONDATE_LENGTH + 1 + //timestamp string
                 JSON_OBJECT_SIZE(5) + //transactionInfo
                     MO_TXID_LEN_MAX + 1 + //transactionId
-                MO_IDTOKEN_LEN_MAX + 1, //idToken
-                getMemoryTag());
+                MO_IDTOKEN_LEN_MAX + 1); //idToken
                 //meterValue not supported
     JsonObject payload = doc->to<JsonObject>();
 

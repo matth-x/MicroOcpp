@@ -5,9 +5,12 @@
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Debug.h>
 
-#if MO_ENABLE_HEAP_PROFILER
+#if MO_OVERRIDE_ALLOCATION && MO_ENABLE_HEAP_PROFILER
 
 #include <map>
+
+namespace MicroOcpp {
+namespace Memory {
 
 struct MemBlockInfo {
     void* tagger_ptr = nullptr;
@@ -73,19 +76,38 @@ void MemBlockInfo::updateTag(void* ptr, const char *tag) {
     }
 }
 
-#endif //MO_ENABLE_HEAP_PROFILER
+} //namespace Memory
+} //namespace MicroOcpp
 
-void mo_mem_deinit() {
-    #if MO_ENABLE_HEAP_PROFILER
-    memBlocks.clear();
-    memTags.clear();
-    #endif
+#endif //MO_OVERRIDE_ALLOCATION && MO_ENABLE_HEAP_PROFILER
+
+#if MO_OVERRIDE_ALLOCATION
+
+namespace MicroOcpp {
+namespace Memory {
+
+void* (*malloc_override)(size_t);
+void (*free_override)(void*);
+
+}
+}
+
+using namespace MicroOcpp::Memory;
+
+void mo_mem_set_malloc_free(void* (*malloc_override)(size_t), void (*free_override)(void*)) {
+    MicroOcpp::Memory::malloc_override = malloc_override;
+    MicroOcpp::Memory::free_override = free_override;
 }
 
 void *mo_mem_malloc(const char *tag, size_t size) {
     MO_DBG_VERBOSE("malloc %zu B (%s)", size, tag ? tag : "unspecified");
 
-    auto ptr = malloc(size);
+    void *ptr;
+    if (malloc_override) {
+        ptr = malloc_override(size);
+    } else {
+        ptr = malloc(size);
+    }
 
     #if MO_ENABLE_HEAP_PROFILER
     if (ptr) {
@@ -118,10 +140,22 @@ void mo_mem_free(void* ptr) {
         }
     }
     #endif
-    free(ptr);
+
+    if (free_override) {
+        free_override(ptr);
+    } else {
+        free(ptr);
+    }
 }
 
-#if MO_ENABLE_HEAP_PROFILER
+#endif //MO_OVERRIDE_ALLOCATION
+
+#if MO_OVERRIDE_ALLOCATION && MO_ENABLE_HEAP_PROFILER
+
+void mo_mem_reset() {
+    memBlocks.clear();
+    memTags.clear();
+}
 
 void mo_mem_set_tag(void *ptr, const char *tag) {
     MO_DBG_VERBOSE("set tag (%s)", tag ? tag : "unspecified");
@@ -151,7 +185,7 @@ void mo_mem_set_tag(void *ptr, const char *tag) {
 
 void mo_mem_print_stats() {
 
-    printf("\n *** Heap usage statistics ***\n");
+    MO_CONSOLE_PRINTF("\n *** Heap usage statistics ***\n");
 
     size_t size = 0;
 
@@ -159,7 +193,11 @@ void mo_mem_print_stats() {
 
     for (const auto& heapEntry : memBlocks) {
         size += heapEntry.second.size;
-        printf("@%p - %zu B (%s)\n", heapEntry.first, heapEntry.second.size, heapEntry.second.tag.c_str());
+        #if MO_DBG_LEVEL >= MO_DL_DEBUG
+        {
+            MO_CONSOLE_PRINTF("@%p - %zu B (%s)\n", heapEntry.first, heapEntry.second.size, heapEntry.second.tag.c_str());
+        }
+        #endif
 
         if (heapEntry.second.tag.empty()) {
             untagged ++;
@@ -181,51 +219,60 @@ void mo_mem_print_stats() {
 
     for (const auto& tag : tags) {
         size_control += tag.second;
-        printf("%s - %zu B\n", tag.first.c_str(), tag.second);
+        #if MO_DBG_LEVEL >= MO_DL_VERBOSE
+        {
+            MO_CONSOLE_PRINTF("%s - %zu B\n", tag.first.c_str(), tag.second);
+        }
+        #endif
     }
 
     size_t size_control2 = 0;
     for (const auto& tag : memTags) {
         size_control2 += tag.second.current_size;
-        printf("%s - %zu B (max. %zu B)\n", tag.first.c_str(), tag.second.current_size, tag.second.max_size);
+        MO_CONSOLE_PRINTF("%s - %zu B (max. %zu B)\n", tag.first.c_str(), tag.second.current_size, tag.second.max_size);
     }
 
-    printf("Blocks: %zu\nTotal usage: %zu B\nTags: %zu\nTotal tagged: %zu B\nTags2: %zu\nTotal tagged2: %zu B\nUntagged: %zu\nTotal untagged: %zu B\nCurrent usage: %zu B\nMaximum usage: %zu B\n", memBlocks.size(), size, tags.size(), size_control, memTags.size(), size_control2, untagged, untagged_size, memTotal, memTotalMax);
+    MO_CONSOLE_PRINTF("Blocks: %zu\nTags: %zu\nCurrent usage: %zu B\nMaximum usage: %zu B\n", memBlocks.size(), memTags.size(), memTotal, memTotalMax);
+    #if MO_DBG_LEVEL >= MO_DL_DEBUG
+    {
+        MO_CONSOLE_PRINTF("Total blocks (control value 1): %zu B\nTags (control value): %zu\nTotal tagged (control value 2): %zu B\nTotal tagged (control value 3): %zu B\nUntagged: %zu\nTotal untagged: %zu B\n", size, tags.size(), size_control, size_control2, untagged, untagged_size);
+    }
+    #endif
 }
 
-#endif //MO_ENABLE_HEAP_PROFILER
+#endif //MO_OVERRIDE_ALLOCATION && MO_ENABLE_HEAP_PROFILER
 
 namespace MicroOcpp {
 
-MemString makeMemString(const char *val, const char *tag, const char *tag_suffix) {
-#if !MO_OVERRIDE_ALLOCATION || !MO_ENABLE_HEAP_PROFILER
+MemString makeMemString(const char *tag, const char *val) {
+#if MO_OVERRIDE_ALLOCATION
+    if (val) {
+        return MemString(val, Allocator<char>(tag));
+    } else {
+        return MemString(Allocator<char>(tag));
+    }
+#else
     if (val) {
         return MemString(val);
     } else {
         return MemString();
     }
-#else
-    if (val) {
-        return MemString(val, Allocator<char>(tag, tag_suffix));
-    } else {
-        return MemString(Allocator<char>(tag, tag_suffix));
-    }
 #endif
 }
 
-MemJsonDoc initMemJsonDoc(size_t capacity, const char *tag) {
-#if !MO_OVERRIDE_ALLOCATION || !MO_ENABLE_HEAP_PROFILER
-    return MemJsonDoc(capacity);
-#else
+MemJsonDoc initMemJsonDoc(const char *tag, size_t capacity) {
+#if MO_OVERRIDE_ALLOCATION
     return MemJsonDoc(capacity, ArduinoJsonAllocator(tag));
+#else
+    return MemJsonDoc(capacity);
 #endif
 }
 
-std::unique_ptr<MemJsonDoc> makeMemJsonDoc(size_t capacity, const char *tag, const char *tag_suffix) {
-#if !MO_OVERRIDE_ALLOCATION || !MO_ENABLE_HEAP_PROFILER
-    return std::unique_ptr<MemJsonDoc>(new MemJsonDoc(capacity));
+std::unique_ptr<MemJsonDoc> makeMemJsonDoc(const char *tag, size_t capacity) {
+#if MO_OVERRIDE_ALLOCATION
+    return std::unique_ptr<MemJsonDoc>(new MemJsonDoc(capacity, ArduinoJsonAllocator(tag)));
 #else
-    return std::unique_ptr<MemJsonDoc>(new MemJsonDoc(capacity, ArduinoJsonAllocator(tag, tag_suffix)));
+    return std::unique_ptr<MemJsonDoc>(new MemJsonDoc(capacity));
 #endif
 }
 

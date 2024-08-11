@@ -29,11 +29,10 @@ const char* StartTransaction::getOperationType() {
 
 std::unique_ptr<MemJsonDoc> StartTransaction::createReq() {
 
-    auto doc = makeMemJsonDoc(
+    auto doc = makeMemJsonDoc(getMemoryTag(),
                 JSON_OBJECT_SIZE(6) + 
                 (IDTAG_LEN_MAX + 1) +
-                (JSONDATE_LENGTH + 1),
-                getMemoryTag());
+                (JSONDATE_LENGTH + 1));
                 
     JsonObject payload = doc->to<JsonObject>();
 
@@ -96,7 +95,7 @@ void StartTransaction::processReq(JsonObject payload) {
 }
 
 std::unique_ptr<MemJsonDoc> StartTransaction::createConf() {
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
     JsonObject payload = doc->to<JsonObject>();
 
     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");

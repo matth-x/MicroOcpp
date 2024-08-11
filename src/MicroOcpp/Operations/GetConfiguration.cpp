@@ -21,7 +21,7 @@ void GetConfiguration::processReq(JsonObject payload) {
 
     JsonArray requestedKeys = payload["key"];
     for (size_t i = 0; i < requestedKeys.size(); i++) {
-        keys.emplace_back(makeMemString(requestedKeys[i].as<const char*>(), getMemoryTag()));
+        keys.emplace_back(makeMemString(getMemoryTag(), requestedKeys[i].as<const char*>()));
     }
 }
 
@@ -86,7 +86,7 @@ std::unique_ptr<MemJsonDoc> GetConfiguration::createConf(){
     std::unique_ptr<MemJsonDoc> doc;
 
     if (jcapacity <= MO_MAX_JSON_CAPACITY) {
-        doc = makeMemJsonDoc(jcapacity, getMemoryTag());
+        doc = makeMemJsonDoc(getMemoryTag(), jcapacity);
     }
 
     if (!doc || doc->capacity() < jcapacity) {

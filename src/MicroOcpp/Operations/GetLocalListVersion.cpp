@@ -27,7 +27,7 @@ void GetLocalListVersion::processReq(JsonObject payload) {
 }
 
 std::unique_ptr<MemJsonDoc> GetLocalListVersion::createConf(){
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
     if (auto authService = model.getAuthorizationService()) {

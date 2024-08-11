@@ -73,7 +73,7 @@ std::unique_ptr<MemJsonDoc> UnlockConnector::createConf() {
     }
 #endif //MO_ENABLE_CONNECTOR_LOCK
 
-    auto doc = makeMemJsonDoc(JSON_OBJECT_SIZE(1), getMemoryTag());
+    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = status;
     return doc;

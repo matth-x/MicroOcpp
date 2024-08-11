@@ -76,16 +76,18 @@ public:
     int numberPhases = 3;
 };
 
-class ChargingSchedule {
+class ChargingSchedule : public AllocOverrider {
 public:
     int duration = -1;
     Timestamp startSchedule;
     ChargingRateUnitType chargingRateUnit;
-    std::vector<ChargingSchedulePeriod> chargingSchedulePeriod;
+    MemVector<ChargingSchedulePeriod> chargingSchedulePeriod;
     float minChargingRate = -1.0f;
 
     ChargingProfileKindType chargingProfileKind; //copied from ChargingProfile to increase cohesion of limit algorithms
     RecurrencyKindType recurrencyKind = RecurrencyKindType::NOT_SET; //copied from ChargingProfile to increase cohesion of limit algorithms
+
+    ChargingSchedule();
 
     /**
      * limit: output parameter
@@ -105,7 +107,7 @@ public:
     void printSchedule();
 };
 
-class ChargingProfile {
+class ChargingProfile : public AllocOverrider {
 public:
     int chargingProfileId = -1;
     int transactionId = -1;
@@ -116,6 +118,8 @@ public:
     Timestamp validFrom;
     Timestamp validTo;
     ChargingSchedule chargingSchedule;
+
+    ChargingProfile();
 
     /**
      * limit: output parameter

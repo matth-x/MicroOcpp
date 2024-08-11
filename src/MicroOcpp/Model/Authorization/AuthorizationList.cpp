@@ -14,7 +14,7 @@
 
 using namespace MicroOcpp;
 
-AuthorizationList::AuthorizationList() {
+AuthorizationList::AuthorizationList() : AllocOverrider("v16.Authorization.AuthorizationList"), localAuthorizationList(makeMemVector<AuthorizationData>(getMemoryTag())) {
 
 }
 
@@ -113,7 +113,7 @@ bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool d
         localAuthorizationList.clear();
 
         for (size_t i = 0; i < authlistJson.size(); i++) {
-            localAuthorizationList.push_back(AuthorizationData());
+            localAuthorizationList.emplace_back();
             localAuthorizationList.back().readJson(authlistJson[i], compact);
         }
     } else if (differential) {
@@ -138,7 +138,7 @@ bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool d
                 } else {
                     //no, create new
                     authlist_index[i] = localAuthorizationList.size();
-                    localAuthorizationList.push_back(AuthorizationData());
+                    localAuthorizationList.emplace_back();
                 }
             }
 
@@ -150,7 +150,7 @@ bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool d
 
         for (size_t i = 0; i < authlistJson.size(); i++) {
             if (authlistJson[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
-                localAuthorizationList.push_back(AuthorizationData());
+                localAuthorizationList.emplace_back();
                 localAuthorizationList.back().readJson(authlistJson[i], compact);
             }
         }

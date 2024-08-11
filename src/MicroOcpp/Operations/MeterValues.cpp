@@ -49,7 +49,7 @@ std::unique_ptr<MemJsonDoc> MeterValues::createReq() {
     capacity += JSON_OBJECT_SIZE(3);
     capacity += JSON_ARRAY_SIZE(entries.size());
 
-    auto doc = makeMemJsonDoc(capacity + 100, getMemoryTag()); //TODO remove safety space
+    auto doc = makeMemJsonDoc(getMemoryTag(), capacity);
     auto payload = doc->to<JsonObject>();
     payload["connectorId"] = connectorId;
 

@@ -6,6 +6,7 @@
 
 #if MO_ENABLE_CERT_MGMT
 
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Debug.h>
 
 #include <string.h>
@@ -15,11 +16,11 @@ namespace MicroOcpp {
 /*
  * C++ wrapper for the C-style certificate interface
  */
-class CertificateStoreC : public CertificateStore {
+class CertificateStoreC : public CertificateStore, public AllocOverrider {
 private:
     ocpp_cert_store *certstore = nullptr;
 public:
-    CertificateStoreC(ocpp_cert_store *certstore) : certstore(certstore) {
+    CertificateStoreC(ocpp_cert_store *certstore) : AllocOverrider("v201.Certificates.CertificateStoreC"), certstore(certstore) {
 
     }
 
