@@ -288,7 +288,7 @@ TEST_CASE( "Configuration" ) {
                 "GetConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(1)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     doc->to<JsonObject>();
                     return doc;},
                 [&checkProcessed] (JsonObject payload) {
@@ -325,7 +325,7 @@ TEST_CASE( "Configuration" ) {
                 "GetConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(2)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     auto key = payload.createNestedArray("key");
                     key.add(KNOWN_KEY);
@@ -379,7 +379,7 @@ TEST_CASE( "Configuration" ) {
                 "ChangeConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = KNOWN_KEY;
                     payload["value"] = "1234";
@@ -401,7 +401,7 @@ TEST_CASE( "Configuration" ) {
                 "ChangeConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = UNKOWN_KEY;
                     payload["value"] = "no effect";
@@ -422,7 +422,7 @@ TEST_CASE( "Configuration" ) {
                 "ChangeConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = KNOWN_KEY;
                     payload["value"] = "not convertible to int";
@@ -449,7 +449,7 @@ TEST_CASE( "Configuration" ) {
                 "ChangeConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = KNOWN_KEY;
                     payload["value"] = "100234";
@@ -471,7 +471,7 @@ TEST_CASE( "Configuration" ) {
                 "ChangeConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = KNOWN_KEY;
                     payload["value"] = "4321";

@@ -27,7 +27,7 @@ void registerConfigurationValidator(const char *key, std::function<bool(const ch
 void addConfigurationContainer(std::shared_ptr<ConfigurationContainer> container);
 
 Configuration *getConfigurationPublic(const char *key);
-std::vector<ConfigurationContainer*, Allocator<ConfigurationContainer*>> getConfigurationContainersPublic();
+MemVector<ConfigurationContainer*> getConfigurationContainersPublic();
 
 bool configuration_init(std::shared_ptr<FilesystemAdapter> filesytem);
 void configuration_deinit();

@@ -60,8 +60,8 @@ bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool d
         }
     }
 
-    std::vector<int> authlist_index;
-    std::vector<int> remove_list;
+    auto authlist_index = makeMemVector<int>(getMemoryTag());
+    auto remove_list = makeMemVector<int>(getMemoryTag());
 
     unsigned int resultingListLength = 0;
 
@@ -74,7 +74,7 @@ bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool d
         resultingListLength = localAuthorizationList.size();
 
         //also, build index here
-        authlist_index = std::vector<int>(authlistJson.size(), -1);
+        authlist_index.resize(authlistJson.size(), -1);
 
         for (size_t i = 0; i < authlistJson.size(); i++) {
 

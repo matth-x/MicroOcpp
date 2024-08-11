@@ -40,7 +40,7 @@ public:
 
 class ConfigurationContainerVolatile : public ConfigurationContainer, public AllocOverrider {
 private:
-    std::vector<std::shared_ptr<Configuration>, Allocator<std::shared_ptr<Configuration>>> configurations;
+    MemVector<std::shared_ptr<Configuration>> configurations;
 public:
     ConfigurationContainerVolatile(const char *filename, bool accessible);
 

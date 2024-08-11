@@ -193,8 +193,8 @@ Configuration *getConfigurationPublic(const char *key) {
     return nullptr;
 }
 
-std::vector<ConfigurationContainer*, Allocator<ConfigurationContainer*>> getConfigurationContainersPublic() {
-    std::vector<ConfigurationContainer*, Allocator<ConfigurationContainer*>> res;
+MemVector<ConfigurationContainer*> getConfigurationContainersPublic() {
+    auto res = makeMemVector<ConfigurationContainer*>("v16.Configuration.Containers");
 
     for (auto& container : configurationContainers) {
         if (container->isAccessible()) {

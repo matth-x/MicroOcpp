@@ -71,7 +71,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 1;
@@ -135,7 +135,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 1;
@@ -202,7 +202,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 1;
@@ -289,7 +289,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 1;
@@ -373,7 +373,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 2;
@@ -452,7 +452,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 2;
@@ -541,7 +541,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 1;

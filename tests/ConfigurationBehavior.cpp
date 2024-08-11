@@ -26,7 +26,7 @@ public:
         //ignore payload - result is determined at construction time
     }
     std::unique_ptr<MemJsonDoc> createConf() override {
-        auto res = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(2 * JSON_OBJECT_SIZE(1)));
+        auto res = makeMemJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
         auto payload = res->to<JsonObject>();
         payload["idTagInfo"]["status"] = status;
         return res;
@@ -43,7 +43,7 @@ public:
         //ignore payload - result is determined at construction time
     }
     std::unique_ptr<MemJsonDoc> createConf() override {
-        auto res = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(1)));
+        auto res = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(1));
         auto payload = res->to<JsonObject>();
         payload["idTagInfo"]["status"] = status;
         payload["transactionId"] = 1000;

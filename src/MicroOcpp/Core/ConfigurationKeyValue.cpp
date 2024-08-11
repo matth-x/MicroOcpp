@@ -170,6 +170,9 @@ public:
     bool setKey(const char *key) override {
         this->key = key;
         updateMemTag("v16.Configuration.", key);
+        if (val) {
+            MO_MEM_SET_TAG(val, getMemoryTag());
+        }
         return true;
     }
 

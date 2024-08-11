@@ -163,15 +163,6 @@ void mo_mbedtls_log(void *user, int level, const char *file, int line, const cha
 /*
  * FTP implementation
  */
-MemString user;
-    MemString pass;
-    MemString ctrl_host;
-    MemString ctrl_port;
-    MemString dir;
-    MemString fname;
-
-    MemString data_host;
-    MemString data_port;
 
 FtpTransferMbedTLS::FtpTransferMbedTLS(bool tls_only, const char *client_cert, const char *client_key) : 
         AllocOverrider("FTP.TransferMbedTLS"),

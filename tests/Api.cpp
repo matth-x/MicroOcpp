@@ -78,13 +78,13 @@ TEST_CASE( "C++ API test" ) {
         setOnSendConf("StatusNotification", [c = &checkpoints[ncheck++]] (JsonObject) {*c = true;});
         sendRequest("DataTransfer", [c = &checkpoints[ncheck++]] () {
             *c = true;
-            auto doc = std::unique_ptr<MicroOcpp::MemJsonDoc>(new MicroOcpp::MemJsonDoc(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
             doc->to<JsonObject>();
             return doc;
         }, [c = &checkpoints[ncheck++]] (JsonObject) {*c = true;});
         setRequestHandler("DataTransfer", [c = &checkpoints[ncheck++]] (JsonObject) {*c = true;}, [c = &checkpoints[ncheck++]] () {
             *c = true;
-            auto doc = std::unique_ptr<MicroOcpp::MemJsonDoc>(new MicroOcpp::MemJsonDoc(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
             doc->to<JsonObject>();
             return doc;
         });
@@ -145,13 +145,13 @@ TEST_CASE( "C++ API test" ) {
         REQUIRE(isOperative());
 
         sendRequest("UnlockConnector", [] () {
-            auto doc = std::unique_ptr<MicroOcpp::MemJsonDoc>(new MicroOcpp::MemJsonDoc(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
             (*doc)["connectorId"] = 1;
             return doc;
         }, [] (JsonObject) {});
 
         sendRequest("Reset", [] () {
-            auto doc = std::unique_ptr<MicroOcpp::MemJsonDoc>(new MicroOcpp::MemJsonDoc(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
             (*doc)["type"] = "Hard";
             return doc;
         }, [] (JsonObject) {});
@@ -333,18 +333,18 @@ TEST_CASE( "C API test" ) {
         REQUIRE(ocpp_isOperative_m(2));
 
         sendRequest("UnlockConnector", [] () {
-            auto doc = std::unique_ptr<MicroOcpp::MemJsonDoc>(new MicroOcpp::MemJsonDoc(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
             (*doc)["connectorId"] = 1;
             return doc;
         }, [] (JsonObject) {});
         sendRequest("UnlockConnector", [] () {
-            auto doc = std::unique_ptr<MicroOcpp::MemJsonDoc>(new MicroOcpp::MemJsonDoc(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
             (*doc)["connectorId"] = 2;
             return doc;
         }, [] (JsonObject) {});
 
         sendRequest("Reset", [] () {
-            auto doc = std::unique_ptr<MicroOcpp::MemJsonDoc>(new MicroOcpp::MemJsonDoc(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
             (*doc)["type"] = "Hard";
             return doc;
         }, [] (JsonObject) {});

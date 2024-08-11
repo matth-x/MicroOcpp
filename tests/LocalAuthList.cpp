@@ -409,7 +409,7 @@ TEST_CASE( "LocalAuth" ) {
                 [] (JsonObject) {}, //ignore req
                 [] () {
                     //create conf
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(2 * JSON_OBJECT_SIZE(1)));
+                    auto doc = makeMemJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["idTagInfo"]["status"] = "Blocked";
                     return doc;
@@ -454,7 +454,7 @@ TEST_CASE( "LocalAuth" ) {
                 },
                 [] () {
                     //create conf
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(2 * JSON_OBJECT_SIZE(1)));
+                    auto doc = makeMemJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["idTagInfo"]["status"] = "Blocked";
                     return doc;
@@ -469,8 +469,8 @@ TEST_CASE( "LocalAuth" ) {
                 },
                 [] () {
                     //create conf
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(
-                            JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(1)));
+                    auto doc = makeMemJsonDoc("UnitTests", 
+                            JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["idTagInfo"]["status"] = "Blocked";
                     payload["transactionId"] = 1000;
@@ -642,7 +642,7 @@ TEST_CASE( "LocalAuth" ) {
 
         int listVersion = 42;
         size_t listSize = 2;
-        std::string populatedEntryIdTag; //local auth list entry to be fully populated
+        auto populatedEntryIdTag = makeMemString("UnitTests"); //local auth list entry to be fully populated
         
         //Full update - happy path
         bool checkAccepted = false;
@@ -650,8 +650,8 @@ TEST_CASE( "LocalAuth" ) {
             new Ocpp16::CustomOperation("SendLocalList",
                 [&listVersion, &listSize, &populatedEntryIdTag] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(
-                            4096));
+                    auto doc = makeMemJsonDoc("UnitTests", 
+                            4096);
                     auto payload = doc->to<JsonObject>();
                     payload["listVersion"] = listVersion;
                     generateAuthList(payload["localAuthorizationList"].to<JsonArray>(), listSize, false);
@@ -693,8 +693,8 @@ TEST_CASE( "LocalAuth" ) {
             new Ocpp16::CustomOperation("SendLocalList",
                 [&listVersion, &listSize] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(
-                            1024));
+                    auto doc = makeMemJsonDoc("UnitTests", 
+                            1024);
                     auto payload = doc->to<JsonObject>();
                     payload["listVersion"] = listVersion;
                     generateAuthList(payload["localAuthorizationList"].to<JsonArray>(), listSize, false);
@@ -719,8 +719,8 @@ TEST_CASE( "LocalAuth" ) {
             new Ocpp16::CustomOperation("SendLocalList",
                 [&listVersion, &listSizeInvalid] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(
-                            1024));
+                    auto doc = makeMemJsonDoc("UnitTests", 
+                            1024);
                     auto payload = doc->to<JsonObject>();
                     payload["listVersion"] = listVersion;
                     generateAuthList(payload["localAuthorizationList"].to<JsonArray>(), listSizeInvalid, false);
@@ -746,8 +746,8 @@ TEST_CASE( "LocalAuth" ) {
             new Ocpp16::CustomOperation("SendLocalList",
                 [&listVersion, &listSize] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(
-                            4096));
+                    auto doc = makeMemJsonDoc("UnitTests", 
+                            4096);
                     auto payload = doc->to<JsonObject>();
                     payload["listVersion"] = listVersion;
                     generateAuthList(payload["localAuthorizationList"].to<JsonArray>(), listSize, false);
@@ -772,8 +772,8 @@ TEST_CASE( "LocalAuth" ) {
             new Ocpp16::CustomOperation("SendLocalList",
                 [&listVersion, &listSize] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(
-                            4096));
+                    auto doc = makeMemJsonDoc("UnitTests", 
+                            4096);
                     auto payload = doc->to<JsonObject>();
                     payload["listVersion"] = listVersion;
                     generateAuthList(payload["localAuthorizationList"].to<JsonArray>(), listSize, false);
@@ -799,8 +799,8 @@ TEST_CASE( "LocalAuth" ) {
             new Ocpp16::CustomOperation("SendLocalList",
                 [&listVersionInvalid, &listSizeInvalid] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(
-                            4096));
+                    auto doc = makeMemJsonDoc("UnitTests", 
+                            4096);
                     auto payload = doc->to<JsonObject>();
                     payload["listVersion"] = listVersionInvalid;
                     generateAuthList(payload["localAuthorizationList"].to<JsonArray>(), listSizeInvalid, false);
@@ -835,8 +835,8 @@ TEST_CASE( "LocalAuth" ) {
                 new Ocpp16::CustomOperation("SendLocalList",
                     [&i] () {
                         //create req
-                        auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(
-                                1024));
+                        auto doc = makeMemJsonDoc("UnitTests", 
+                                1024);
                         auto payload = doc->to<JsonObject>();
                         payload["listVersion"] = (int) i;
 
@@ -873,8 +873,8 @@ TEST_CASE( "LocalAuth" ) {
             new Ocpp16::CustomOperation("SendLocalList",
                 [&listVersionInvalid] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(
-                            1024));
+                    auto doc = makeMemJsonDoc("UnitTests", 
+                            1024);
                     auto payload = doc->to<JsonObject>();
                     payload["listVersion"] = listVersionInvalid;
 

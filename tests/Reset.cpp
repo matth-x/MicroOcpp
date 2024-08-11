@@ -94,7 +94,7 @@ TEST_CASE( "Reset" ) {
                 "Reset",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(1)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["type"] = "OnIdle";
                     return doc;},
@@ -193,7 +193,7 @@ TEST_CASE( "Reset" ) {
                 "Reset",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(1)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["type"] = "Immediate";
                     return doc;},
@@ -245,7 +245,7 @@ TEST_CASE( "Reset" ) {
                 "Reset",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(1)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["type"] = "Immediate";
                     return doc;},
@@ -277,7 +277,7 @@ TEST_CASE( "Reset" ) {
                 "Reset",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<MemJsonDoc>(new MemJsonDoc(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["type"] = "OnIdle";
                     payload["evseId"] = 1;

@@ -61,10 +61,12 @@ int mo_mem_write_stats_json(char *buf, size_t size);
 void mo_mem_print_stats();
 
 #define MO_MEM_RESET mo_mem_reset
+#define MO_MEM_SET_TAG mo_mem_set_tag
 #define MO_MEM_PRINT_STATS mo_mem_print_stats
 
 #else
 #define MO_MEM_RESET(...) (void)0
+#define MO_MEM_SET_TAG(...) (void)0
 #define MO_MEM_PRINT_STATS(...) (void)0
 #endif //MO_OVERRIDE_ALLOCATION && MO_ENABLE_HEAP_PROFILER
 
