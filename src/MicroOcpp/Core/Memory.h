@@ -217,14 +217,11 @@ struct Allocator {
     }
 
     T *allocate(size_t count) {
-        return static_cast<T*>(
-            MO_MALLOC(
-                #if MO_ENABLE_HEAP_PROFILER
-                    tag,
-                #else
-                    nullptr,
-                #endif
-                sizeof(T) * count));
+        #if MO_ENABLE_HEAP_PROFILER
+            return static_cast<T*>(MO_MALLOC(tag, sizeof(T) * count));
+        #else
+            return static_cast<T*>(MO_MALLOC(nullptr, sizeof(T) * count));
+        #endif
     }
 
     void deallocate(T *ptr, size_t count) {
@@ -351,13 +348,11 @@ public:
     }
 
     void *allocate(size_t size) {
-        return MO_MALLOC(
-                    #if MO_ENABLE_HEAP_PROFILER
-                        tag,
-                    #else
-                        nullptr,
-                    #endif
-                    size);
+        #if MO_ENABLE_HEAP_PROFILER
+            return MO_MALLOC(tag, size);
+        #else
+            return MO_MALLOC(nullptr, size);
+        #endif
     }
     void deallocate(void *ptr) {
         MO_FREE(ptr);
