@@ -85,7 +85,7 @@ void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const cha
     /*
      * parse backendUrl so that it suits the links2004/arduinoWebSockets interface
      */
-    MemString url = makeMemString("MicroOcpp.cpp", url);
+    MemString url = makeMemString("MicroOcpp.cpp", url.c_str());
 
     //tolower protocol specifier
     for (auto c = url.begin(); *c != ':' && c != url.end(); c++) {
