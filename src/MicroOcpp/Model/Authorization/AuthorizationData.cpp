@@ -7,6 +7,7 @@
 #if MO_ENABLE_LOCAL_AUTH
 
 #include <MicroOcpp/Model/Authorization/AuthorizationData.h>
+#include <MicroOcpp/Debug.h>
 
 using namespace MicroOcpp;
 
