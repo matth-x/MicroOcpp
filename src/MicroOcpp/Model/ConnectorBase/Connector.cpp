@@ -720,61 +720,9 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
 
     transaction->commit();
 
-    auto authorize = makeRequest(new Ocpp16::Authorize(context.getModel(), idTag));
-    authorize->setTimeout(authorizationTimeoutInt && authorizationTimeoutInt->getInt() > 0 ? authorizationTimeoutInt->getInt() * 1000UL : 20UL * 1000UL);
-
-    if (!context.getConnection().isConnected()) {
-        //WebSockt unconnected. Enter offline mode immediately
-        authorize->setTimeout(1);
-    }
-
     auto tx = transaction;
-    authorize->setOnReceiveConfListener([this, tx] (JsonObject response) {
-        JsonObject idTagInfo = response["idTagInfo"];
 
-        if (strcmp("Accepted", idTagInfo["status"] | "UNDEFINED")) {
-            //Authorization rejected, abort transaction
-            MO_DBG_DEBUG("Authorize rejected (%s), abort tx process", tx->getIdTag());
-            tx->setIdTagDeauthorized();
-            tx->commit();
-            updateTxNotification(TxNotification::AuthorizationRejected);
-            return;
-        }
-
-        #if MO_ENABLE_RESERVATION
-        if (model.getReservationService()) {
-            auto reservation = model.getReservationService()->getReservation(
-                        connectorId,
-                        tx->getIdTag(),
-                        idTagInfo["parentIdTag"] | (const char*) nullptr);
-            if (reservation) {
-                //reservation found for connector
-                if (reservation->matches(
-                            tx->getIdTag(),
-                            idTagInfo["parentIdTag"] | (const char*) nullptr)) {
-                    MO_DBG_INFO("connector %u matches reservationId %i", connectorId, reservation->getReservationId());
-                    tx->setReservationId(reservation->getReservationId());
-                } else {
-                    //reservation found for connector but does not match idTag or parentIdTag
-                    MO_DBG_INFO("connector %u reserved - abort transaction", connectorId);
-                    tx->setInactive();
-                    tx->commit();
-                    updateTxNotification(TxNotification::ReservationConflict);
-                    return;
-                }
-            }
-        }
-        #endif //MO_ENABLE_RESERVATION
-
-        MO_DBG_DEBUG("Authorized transaction process (%s)", tx->getIdTag());
-        tx->setAuthorized();
-        tx->commit();
-
-        updateTxNotification(TxNotification::Authorized);
-    });
-
-    //capture local auth and reservation check in for timeout handler
-    authorize->setOnTimeoutListener([this, tx,
+    auto offlineBehavior = [this, tx,
                 offlineBlockedAuth, 
                 offlineBlockedResv, 
                 localAuthFound,
@@ -826,8 +774,65 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         tx->commit();
         updateTxNotification(TxNotification::AuthorizationTimeout);
         return; //offline tx disabled
-    });
-    context.initiateRequest(std::move(authorize));
+    };
+
+    if (context.getConnection().isConnected()) {
+        //WebSocket connected. Online mode
+
+        auto authorize = makeRequest(new Ocpp16::Authorize(context.getModel(), idTag));
+        authorize->setTimeout(authorizationTimeoutInt && authorizationTimeoutInt->getInt() > 0 ? authorizationTimeoutInt->getInt() * 1000UL : 20UL * 1000UL);
+
+        authorize->setOnReceiveConfListener([this, tx] (JsonObject response) {
+            JsonObject idTagInfo = response["idTagInfo"];
+
+            if (strcmp("Accepted", idTagInfo["status"] | "UNDEFINED")) {
+                //Authorization rejected, abort transaction
+                MO_DBG_DEBUG("Authorize rejected (%s), abort tx process", tx->getIdTag());
+                tx->setIdTagDeauthorized();
+                tx->commit();
+                updateTxNotification(TxNotification::AuthorizationRejected);
+                return;
+            }
+
+            #if MO_ENABLE_RESERVATION
+            if (model.getReservationService()) {
+                auto reservation = model.getReservationService()->getReservation(
+                            connectorId,
+                            tx->getIdTag(),
+                            idTagInfo["parentIdTag"] | (const char*) nullptr);
+                if (reservation) {
+                    //reservation found for connector
+                    if (reservation->matches(
+                                tx->getIdTag(),
+                                idTagInfo["parentIdTag"] | (const char*) nullptr)) {
+                        MO_DBG_INFO("connector %u matches reservationId %i", connectorId, reservation->getReservationId());
+                        tx->setReservationId(reservation->getReservationId());
+                    } else {
+                        //reservation found for connector but does not match idTag or parentIdTag
+                        MO_DBG_INFO("connector %u reserved - abort transaction", connectorId);
+                        tx->setInactive();
+                        tx->commit();
+                        updateTxNotification(TxNotification::ReservationConflict);
+                        return;
+                    }
+                }
+            }
+            #endif //MO_ENABLE_RESERVATION
+
+            MO_DBG_DEBUG("Authorized transaction process (%s)", tx->getIdTag());
+            tx->setAuthorized();
+            tx->commit();
+
+            updateTxNotification(TxNotification::Authorized);
+        });
+
+        //capture local auth and reservation check in for timeout handler
+        authorize->setOnTimeoutListener(offlineBehavior);
+        context.initiateRequest(std::move(authorize));
+    } else {
+        //WebSockt unconnected. Enter offline mode immediately
+        offlineBehavior();
+    }
 
     return transaction;
 }
