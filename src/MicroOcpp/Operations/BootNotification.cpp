@@ -14,7 +14,7 @@
 using MicroOcpp::Ocpp16::BootNotification;
 using MicroOcpp::MemJsonDoc;
 
-BootNotification::BootNotification(Model& model, std::unique_ptr<MemJsonDoc> payload) : AllocOverrider("v16.Operation.", getOperationType()), model(model), credentials(std::move(payload)) {
+BootNotification::BootNotification(Model& model, std::unique_ptr<MemJsonDoc> payload) : AllocOverrider("v16.Operation.", "BootNotification"), model(model), credentials(std::move(payload)) {
     
 }
 

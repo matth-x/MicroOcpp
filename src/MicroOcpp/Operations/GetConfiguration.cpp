@@ -9,7 +9,7 @@
 using MicroOcpp::Ocpp16::GetConfiguration;
 using MicroOcpp::MemJsonDoc;
 
-GetConfiguration::GetConfiguration() : AllocOverrider("v16.Operation.", getOperationType()), keys{makeMemVector<MemString>(getMemoryTag())} {
+GetConfiguration::GetConfiguration() : AllocOverrider("v16.Operation.", "GetConfiguration"), keys{makeMemVector<MemString>(getMemoryTag())} {
 
 }
 

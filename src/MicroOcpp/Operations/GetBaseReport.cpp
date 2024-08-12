@@ -13,7 +13,7 @@
 using MicroOcpp::Ocpp201::GetBaseReport;
 using MicroOcpp::MemJsonDoc;
 
-GetBaseReport::GetBaseReport(VariableService& variableService) : AllocOverrider("v201.Operation.", getOperationType()), variableService(variableService) {
+GetBaseReport::GetBaseReport(VariableService& variableService) : AllocOverrider("v201.Operation.", "GetBaseReport"), variableService(variableService) {
   
 }
 

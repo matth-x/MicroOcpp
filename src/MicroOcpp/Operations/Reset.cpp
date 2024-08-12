@@ -10,7 +10,7 @@
 using MicroOcpp::Ocpp16::Reset;
 using MicroOcpp::MemJsonDoc;
 
-Reset::Reset(Model& model) : AllocOverrider("v16.Operation.", getOperationType()), model(model) {
+Reset::Reset(Model& model) : AllocOverrider("v16.Operation.", "Reset"), model(model) {
   
 }
 
@@ -57,7 +57,7 @@ std::unique_ptr<MemJsonDoc> Reset::createConf() {
 namespace MicroOcpp {
 namespace Ocpp201 {
 
-Reset::Reset(ResetService& resetService) : AllocOverrider("v201.Operation.", getOperationType()), resetService(resetService) {
+Reset::Reset(ResetService& resetService) : AllocOverrider("v201.Operation.", "Reset"), resetService(resetService) {
   
 }
 

@@ -16,12 +16,12 @@ using MicroOcpp::Ocpp16::StopTransaction;
 using MicroOcpp::MemJsonDoc;
 
 StopTransaction::StopTransaction(Model& model, std::shared_ptr<Transaction> transaction)
-        : AllocOverrider("v16.Operation.", getOperationType()), model(model), transaction(transaction) {
+        : AllocOverrider("v16.Operation.", "StopTransaction"), model(model), transaction(transaction) {
 
 }
 
 StopTransaction::StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, MemVector<std::unique_ptr<MicroOcpp::MeterValue>> transactionData)
-        : AllocOverrider("v16.Operation.", getOperationType()), model(model), transaction(transaction), transactionData(std::move(transactionData)) {
+        : AllocOverrider("v16.Operation.", "StopTransaction"), model(model), transaction(transaction), transactionData(std::move(transactionData)) {
 
 }
 

@@ -12,7 +12,7 @@
 using MicroOcpp::Ocpp201::InstallCertificate;
 using MicroOcpp::MemJsonDoc;
 
-InstallCertificate::InstallCertificate(CertificateService& certService) : AllocOverrider("v201.Operation.", getOperationType()), certService(certService) {
+InstallCertificate::InstallCertificate(CertificateService& certService) : AllocOverrider("v201.Operation.", "InstallCertificate"), certService(certService) {
 
 }
 

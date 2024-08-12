@@ -10,7 +10,7 @@
 using MicroOcpp::Ocpp16::Heartbeat;
 using MicroOcpp::MemJsonDoc;
 
-Heartbeat::Heartbeat(Model& model) : AllocOverrider("v16.Operation.", getOperationType()), model(model) {
+Heartbeat::Heartbeat(Model& model) : AllocOverrider("v16.Operation.", "Heartbeat"), model(model) {
   
 }
 

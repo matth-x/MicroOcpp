@@ -10,7 +10,7 @@
 using MicroOcpp::Ocpp16::GetDiagnostics;
 using MicroOcpp::MemJsonDoc;
 
-GetDiagnostics::GetDiagnostics(DiagnosticsService& diagService) : AllocOverrider("v16.Operation.", getOperationType()), diagService(diagService), fileName(makeMemString(getMemoryTag())) {
+GetDiagnostics::GetDiagnostics(DiagnosticsService& diagService) : AllocOverrider("v16.Operation.", "GetDiagnostics"), diagService(diagService), fileName(makeMemString(getMemoryTag())) {
 
 }
 

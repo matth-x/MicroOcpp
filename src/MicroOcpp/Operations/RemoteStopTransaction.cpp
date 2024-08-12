@@ -10,7 +10,7 @@
 using MicroOcpp::Ocpp16::RemoteStopTransaction;
 using MicroOcpp::MemJsonDoc;
 
-RemoteStopTransaction::RemoteStopTransaction(Model& model) : AllocOverrider("v16.Operation.", getOperationType()), model(model) {
+RemoteStopTransaction::RemoteStopTransaction(Model& model) : AllocOverrider("v16.Operation.", "RemoteStopTransaction"), model(model) {
   
 }
 

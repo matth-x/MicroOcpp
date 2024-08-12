@@ -13,7 +13,7 @@
 using MicroOcpp::Ocpp201::GetInstalledCertificateIds;
 using MicroOcpp::MemJsonDoc;
 
-GetInstalledCertificateIds::GetInstalledCertificateIds(CertificateService& certService) : AllocOverrider("v201.Operation.", getOperationType()), certService(certService), certificateHashDataChain(makeMemVector<CertificateChainHash>(getMemoryTag())) {
+GetInstalledCertificateIds::GetInstalledCertificateIds(CertificateService& certService) : AllocOverrider("v201.Operation.", "GetInstalledCertificateIds"), certService(certService), certificateHashDataChain(makeMemVector<CertificateChainHash>(getMemoryTag())) {
 
 }
 

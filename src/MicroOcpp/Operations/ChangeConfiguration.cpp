@@ -11,7 +11,7 @@
 using MicroOcpp::Ocpp16::ChangeConfiguration;
 using MicroOcpp::MemJsonDoc;
 
-ChangeConfiguration::ChangeConfiguration() : AllocOverrider("v16.Operation.", getOperationType()) {
+ChangeConfiguration::ChangeConfiguration() : AllocOverrider("v16.Operation.", "ChangeConfiguration") {
   
 }
 

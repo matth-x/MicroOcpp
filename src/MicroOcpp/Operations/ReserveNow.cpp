@@ -16,7 +16,7 @@
 using MicroOcpp::Ocpp16::ReserveNow;
 using MicroOcpp::MemJsonDoc;
 
-ReserveNow::ReserveNow(Model& model) : AllocOverrider("v16.Operation.", getOperationType()), model(model) {
+ReserveNow::ReserveNow(Model& model) : AllocOverrider("v16.Operation.", "ReserveNow"), model(model) {
   
 }
 

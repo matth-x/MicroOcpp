@@ -10,7 +10,7 @@
 using MicroOcpp::Ocpp16::UpdateFirmware;
 using MicroOcpp::MemJsonDoc;
 
-UpdateFirmware::UpdateFirmware(FirmwareService& fwService) : AllocOverrider("v16.Operation.", getOperationType()), fwService(fwService) {
+UpdateFirmware::UpdateFirmware(FirmwareService& fwService) : AllocOverrider("v16.Operation.", "UpdateFirmware"), fwService(fwService) {
 
 }
 

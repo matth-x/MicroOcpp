@@ -10,7 +10,7 @@
 using MicroOcpp::Ocpp16::GetCompositeSchedule;
 using MicroOcpp::MemJsonDoc;
 
-GetCompositeSchedule::GetCompositeSchedule(Model& model, SmartChargingService& scService) : AllocOverrider("v16.Operation.", getOperationType()), model(model), scService(scService) {
+GetCompositeSchedule::GetCompositeSchedule(Model& model, SmartChargingService& scService) : AllocOverrider("v16.Operation.", "GetCompositeSchedule"), model(model), scService(scService) {
 
 }
 

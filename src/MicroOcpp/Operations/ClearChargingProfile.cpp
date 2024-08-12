@@ -11,7 +11,7 @@
 using MicroOcpp::Ocpp16::ClearChargingProfile;
 using MicroOcpp::MemJsonDoc;
 
-ClearChargingProfile::ClearChargingProfile(SmartChargingService& scService) : AllocOverrider("v16.Operation.", getOperationType()), scService(scService) {
+ClearChargingProfile::ClearChargingProfile(SmartChargingService& scService) : AllocOverrider("v16.Operation.", "ClearChargingProfile"), scService(scService) {
 
 }
 

@@ -14,7 +14,7 @@
 using MicroOcpp::Ocpp16::TriggerMessage;
 using MicroOcpp::MemJsonDoc;
 
-TriggerMessage::TriggerMessage(Context& context) : AllocOverrider("v16.Operation.", getOperationType()), context(context) {
+TriggerMessage::TriggerMessage(Context& context) : AllocOverrider("v16.Operation.", "TriggerMessage"), context(context) {
 
 }
 

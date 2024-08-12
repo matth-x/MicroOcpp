@@ -18,7 +18,7 @@ SetVariableData::SetVariableData(const char *memory_tag) : componentName{makeMem
 
 }
 
-SetVariables::SetVariables(VariableService& variableService) : AllocOverrider("v201.Operation.", getOperationType()), variableService(variableService), queries(makeMemVector<SetVariableData>(getMemoryTag())) {
+SetVariables::SetVariables(VariableService& variableService) : AllocOverrider("v201.Operation.", "SetVariables"), variableService(variableService), queries(makeMemVector<SetVariableData>(getMemoryTag())) {
   
 }
 

@@ -14,7 +14,7 @@
 using MicroOcpp::Ocpp16::GetLocalListVersion;
 using MicroOcpp::MemJsonDoc;
 
-GetLocalListVersion::GetLocalListVersion(Model& model) : AllocOverrider("v16.Operation.", getOperationType()), model(model) {
+GetLocalListVersion::GetLocalListVersion(Model& model) : AllocOverrider("v16.Operation.", "GetLocalListVersion"), model(model) {
   
 }
 

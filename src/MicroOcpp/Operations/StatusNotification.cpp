@@ -46,7 +46,7 @@ const char *cstrFromOcppEveState(ChargePointStatus state) {
 namespace Ocpp16 {
 
 StatusNotification::StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorData errorData)
-        : AllocOverrider("v16.Operation.", getOperationType()), connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
+        : AllocOverrider("v16.Operation.", "StatusNotification"), connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
     
     if (currentStatus != ChargePointStatus_UNDEFINED) {
         MO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
@@ -120,7 +120,7 @@ namespace MicroOcpp {
 namespace Ocpp201 {
 
 StatusNotification::StatusNotification(EvseId evseId, ChargePointStatus currentStatus, const Timestamp &timestamp)
-        : AllocOverrider("v201.Operation.", getOperationType()), evseId(evseId), timestamp(timestamp), currentStatus(currentStatus) {
+        : AllocOverrider("v201.Operation.", "StatusNotification"), evseId(evseId), timestamp(timestamp), currentStatus(currentStatus) {
 
 }
 

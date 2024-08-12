@@ -13,7 +13,7 @@
 using MicroOcpp::Ocpp201::RequestStopTransaction;
 using MicroOcpp::MemJsonDoc;
 
-RequestStopTransaction::RequestStopTransaction(TransactionService& txService) : AllocOverrider("v201.Operation.", getOperationType()), txService(txService) {
+RequestStopTransaction::RequestStopTransaction(TransactionService& txService) : AllocOverrider("v201.Operation.", "RequestStopTransaction"), txService(txService) {
   
 }
 

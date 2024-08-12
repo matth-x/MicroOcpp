@@ -9,7 +9,7 @@
 using MicroOcpp::Ocpp16::UnlockConnector;
 using MicroOcpp::MemJsonDoc;
 
-UnlockConnector::UnlockConnector(Model& model) : AllocOverrider("v16.Operation.", getOperationType()), model(model) {
+UnlockConnector::UnlockConnector(Model& model) : AllocOverrider("v16.Operation.", "UnlockConnector"), model(model) {
   
 }
 

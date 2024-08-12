@@ -15,7 +15,7 @@ using MicroOcpp::Ocpp16::StartTransaction;
 using MicroOcpp::MemJsonDoc;
 
 
-StartTransaction::StartTransaction(Model& model, std::shared_ptr<Transaction> transaction) : AllocOverrider("v16.Operation.", getOperationType()), model(model), transaction(transaction) {
+StartTransaction::StartTransaction(Model& model, std::shared_ptr<Transaction> transaction) : AllocOverrider("v16.Operation.", "StartTransaction"), model(model), transaction(transaction) {
     
 }
 

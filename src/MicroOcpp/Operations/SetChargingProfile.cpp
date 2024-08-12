@@ -11,7 +11,7 @@
 using MicroOcpp::Ocpp16::SetChargingProfile;
 using MicroOcpp::MemJsonDoc;
 
-SetChargingProfile::SetChargingProfile(Model& model, SmartChargingService& scService) : AllocOverrider("v16.Operation.", getOperationType()), model(model), scService(scService) {
+SetChargingProfile::SetChargingProfile(Model& model, SmartChargingService& scService) : AllocOverrider("v16.Operation.", "SetChargingProfile"), model(model), scService(scService) {
 
 }
 

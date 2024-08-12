@@ -13,7 +13,7 @@
 using MicroOcpp::Ocpp201::DeleteCertificate;
 using MicroOcpp::MemJsonDoc;
 
-DeleteCertificate::DeleteCertificate(CertificateService& certService) : AllocOverrider("v201.Operation.", getOperationType()), certService(certService) {
+DeleteCertificate::DeleteCertificate(CertificateService& certService) : AllocOverrider("v201.Operation.", "DeleteCertificate"), certService(certService) {
 
 }
 

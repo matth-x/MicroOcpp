@@ -15,7 +15,7 @@ using namespace MicroOcpp::Ocpp201;
 using MicroOcpp::MemJsonDoc;
 
 TransactionEvent::TransactionEvent(Model& model, std::shared_ptr<TransactionEventData> txEvent)
-        : AllocOverrider("v201.Operation.", getOperationType()), model(model), txEvent(txEvent) {
+        : AllocOverrider("v201.Operation.", "TransactionEvent"), model(model), txEvent(txEvent) {
 
 }
 

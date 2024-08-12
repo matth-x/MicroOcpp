@@ -13,7 +13,7 @@ using namespace MicroOcpp;
 namespace MicroOcpp {
 namespace Ocpp16 {
 
-Authorize::Authorize(Model& model, const char *idTagIn) : AllocOverrider("v16.Operation.", getOperationType()), model(model) {
+Authorize::Authorize(Model& model, const char *idTagIn) : AllocOverrider("v16.Operation.", "Authorize"), model(model) {
     if (idTagIn && strnlen(idTagIn, IDTAG_LEN_MAX + 2) <= IDTAG_LEN_MAX) {
         snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
     } else {

@@ -8,11 +8,11 @@
 using MicroOcpp::Ocpp16::DataTransfer;
 using MicroOcpp::MemJsonDoc;
 
-DataTransfer::DataTransfer() : AllocOverrider("v16.Operation.", getOperationType()) {
+DataTransfer::DataTransfer() : AllocOverrider("v16.Operation.", "DataTransfer") {
 
 }
 
-DataTransfer::DataTransfer(const MemString &msg) : AllocOverrider("v16.Operation.", getOperationType()), msg{makeMemString(getMemoryTag(), msg.c_str())} {
+DataTransfer::DataTransfer(const MemString &msg) : AllocOverrider("v16.Operation.", "DataTransfer"), msg{makeMemString(getMemoryTag(), msg.c_str())} {
 
 }
 

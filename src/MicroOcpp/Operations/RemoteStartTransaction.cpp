@@ -13,7 +13,7 @@
 using MicroOcpp::Ocpp16::RemoteStartTransaction;
 using MicroOcpp::MemJsonDoc;
 
-RemoteStartTransaction::RemoteStartTransaction(Model& model) : AllocOverrider("v16.Operation.", getOperationType()), model(model) {
+RemoteStartTransaction::RemoteStartTransaction(Model& model) : AllocOverrider("v16.Operation.", "RemoteStartTransaction"), model(model) {
   
 }
 

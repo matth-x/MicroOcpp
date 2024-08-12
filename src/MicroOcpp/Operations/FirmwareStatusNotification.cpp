@@ -10,7 +10,7 @@
 using MicroOcpp::Ocpp16::FirmwareStatusNotification;
 using MicroOcpp::MemJsonDoc;
 
-FirmwareStatusNotification::FirmwareStatusNotification(FirmwareStatus status) : AllocOverrider("v16.Operation.", getOperationType()), status{status} {
+FirmwareStatusNotification::FirmwareStatusNotification(FirmwareStatus status) : AllocOverrider("v16.Operation.", "FirmwareStatusNotification"), status{status} {
 
 }
 

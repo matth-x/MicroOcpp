@@ -14,7 +14,7 @@ using MicroOcpp::MemJsonDoc;
 #define ENERGY_METER_TIMEOUT_MS 30 * 1000  //after waiting for 30s, send MeterValues without missing readings
 
 //can only be used for echo server debugging
-MeterValues::MeterValues() : AllocOverrider("v16.Operation.", getOperationType()) {
+MeterValues::MeterValues() : AllocOverrider("v16.Operation.", "MeterValues") {
     
 }
 

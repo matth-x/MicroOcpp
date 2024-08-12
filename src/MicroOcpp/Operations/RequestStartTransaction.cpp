@@ -13,7 +13,7 @@
 using MicroOcpp::Ocpp201::RequestStartTransaction;
 using MicroOcpp::MemJsonDoc;
 
-RequestStartTransaction::RequestStartTransaction(TransactionService& txService) : AllocOverrider("v201.Operation.", getOperationType()), txService(txService) {
+RequestStartTransaction::RequestStartTransaction(TransactionService& txService) : AllocOverrider("v201.Operation.", "RequestStartTransaction"), txService(txService) {
   
 }
 

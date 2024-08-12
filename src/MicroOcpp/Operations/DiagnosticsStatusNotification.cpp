@@ -10,7 +10,7 @@
 using MicroOcpp::Ocpp16::DiagnosticsStatusNotification;
 using MicroOcpp::MemJsonDoc;
 
-DiagnosticsStatusNotification::DiagnosticsStatusNotification(DiagnosticsStatus status) : AllocOverrider("v16.Operation.", getOperationType()), status(status) {
+DiagnosticsStatusNotification::DiagnosticsStatusNotification(DiagnosticsStatus status) : AllocOverrider("v16.Operation.", "DiagnosticsStatusNotification"), status(status) {
     
 }
 

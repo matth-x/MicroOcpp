@@ -15,7 +15,7 @@ using namespace MicroOcpp::Ocpp201;
 using MicroOcpp::MemJsonDoc;
 
 NotifyReport::NotifyReport(Model& model, int requestId, const Timestamp& generatedAt, bool tbc, int seqNo, const MemVector<Variable*>& reportData)
-        : AllocOverrider("v201.Operation.", getOperationType()), model(model), requestId(requestId), generatedAt(generatedAt), tbc(tbc), seqNo(seqNo), reportData(reportData) {
+        : AllocOverrider("v201.Operation.", "NotifyReport"), model(model), requestId(requestId), generatedAt(generatedAt), tbc(tbc), seqNo(seqNo), reportData(reportData) {
 
 }
 

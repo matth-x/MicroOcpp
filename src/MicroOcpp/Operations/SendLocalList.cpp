@@ -13,7 +13,7 @@
 using MicroOcpp::Ocpp16::SendLocalList;
 using MicroOcpp::MemJsonDoc;
 
-SendLocalList::SendLocalList(AuthorizationService& authService) : AllocOverrider("v16.Operation.", getOperationType()), authService(authService) {
+SendLocalList::SendLocalList(AuthorizationService& authService) : AllocOverrider("v16.Operation.", "SendLocalList"), authService(authService) {
   
 }
 

@@ -9,7 +9,7 @@
 using MicroOcpp::Ocpp16::ClearCache;
 using MicroOcpp::MemJsonDoc;
 
-ClearCache::ClearCache(std::shared_ptr<FilesystemAdapter> filesystem) : AllocOverrider("v16.Operation.", getOperationType()), filesystem(filesystem) {
+ClearCache::ClearCache(std::shared_ptr<FilesystemAdapter> filesystem) : AllocOverrider("v16.Operation.", "ClearCache"), filesystem(filesystem) {
   
 }
 

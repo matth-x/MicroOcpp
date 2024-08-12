@@ -12,7 +12,7 @@
 using MicroOcpp::Ocpp16::ChangeAvailability;
 using MicroOcpp::MemJsonDoc;
 
-ChangeAvailability::ChangeAvailability(Model& model) : AllocOverrider("v16.Operation.", getOperationType()), model(model) {
+ChangeAvailability::ChangeAvailability(Model& model) : AllocOverrider("v16.Operation.", "ChangeAvailability"), model(model) {
 
 }
 

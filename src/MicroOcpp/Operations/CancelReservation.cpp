@@ -13,7 +13,7 @@
 using MicroOcpp::Ocpp16::CancelReservation;
 using MicroOcpp::MemJsonDoc;
 
-CancelReservation::CancelReservation(ReservationService& reservationService) : AllocOverrider("v16.Operation.", getOperationType()), reservationService(reservationService) {
+CancelReservation::CancelReservation(ReservationService& reservationService) : AllocOverrider("v16.Operation.", "CancelReservation"), reservationService(reservationService) {
   
 }
 
