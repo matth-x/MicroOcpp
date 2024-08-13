@@ -11,9 +11,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::RemoteStartTransaction;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-RemoteStartTransaction::RemoteStartTransaction(Model& model) : AllocOverrider("v16.Operation.", "RemoteStartTransaction"), model(model) {
+RemoteStartTransaction::RemoteStartTransaction(Model& model) : MemoryManaged("v16.Operation.", "RemoteStartTransaction"), model(model) {
   
 }
 
@@ -116,8 +116,8 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<MemJsonDoc> RemoteStartTransaction::createConf(){
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+std::unique_ptr<JsonDoc> RemoteStartTransaction::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     if (accepted) {
         payload["status"] = "Accepted";
@@ -127,8 +127,8 @@ std::unique_ptr<MemJsonDoc> RemoteStartTransaction::createConf(){
     return doc;
 }
 
-std::unique_ptr<MemJsonDoc> RemoteStartTransaction::createReq() {
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+std::unique_ptr<JsonDoc> RemoteStartTransaction::createReq() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
     payload["idTag"] = "A0000000";

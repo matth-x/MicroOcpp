@@ -16,17 +16,17 @@ int32_t SampledValueDeSerializer<int32_t>::deserialize(const char *str) {
     return strtol(str, nullptr, 10);
 }
 
-MemString SampledValueDeSerializer<int32_t>::serialize(int32_t& val) {
+String SampledValueDeSerializer<int32_t>::serialize(int32_t& val) {
     char str [12] = {'\0'};
     snprintf(str, 12, "%" PRId32, val);
-    return makeMemString("v16.Metering.SampledValueDeSerializer<int32_t>", str);
+    return makeString("v16.Metering.SampledValueDeSerializer<int32_t>", str);
 }
 
-MemString SampledValueDeSerializer<float>::serialize(float& val) {
+String SampledValueDeSerializer<float>::serialize(float& val) {
     char str [20];
     str[0] = '\0';
     snprintf(str, 20, MO_SAMPLEDVALUE_FLOAT_FORMAT, val);
-    return makeMemString("v16.Metering.SampledValueDeSerializer<float>", str);
+    return makeString("v16.Metering.SampledValueDeSerializer<float>", str);
 }
 
 //helper function
@@ -89,7 +89,7 @@ ReadingContext deserializeReadingContext(const char *context) {
 }
 }} //end namespaces
 
-std::unique_ptr<MemJsonDoc> SampledValue::toJson() {
+std::unique_ptr<JsonDoc> SampledValue::toJson() {
     auto value = serializeValue();
     if (value.empty()) {
         return nullptr;
@@ -97,7 +97,7 @@ std::unique_ptr<MemJsonDoc> SampledValue::toJson() {
     size_t capacity = 0;
     capacity += JSON_OBJECT_SIZE(8);
     capacity += value.length() + 1;
-    auto result = makeMemJsonDoc("v16.Metering.SampledValue", capacity);
+    auto result = makeJsonDoc("v16.Metering.SampledValue", capacity);
     auto payload = result->to<JsonObject>();
     payload["value"] = value;
     auto context_cstr = Ocpp16::serializeReadingContext(context);

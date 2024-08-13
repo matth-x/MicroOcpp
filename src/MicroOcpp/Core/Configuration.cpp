@@ -25,8 +25,8 @@ struct Validator {
 namespace ConfigurationLocal {
 
 std::shared_ptr<FilesystemAdapter> filesystem;
-auto configurationContainers = makeMemVector<std::shared_ptr<ConfigurationContainer>>("v16.Configuration.Containers");
-auto validators = makeMemVector<Validator>("v16.Configuration.Validators");
+auto configurationContainers = makeVector<std::shared_ptr<ConfigurationContainer>>("v16.Configuration.Containers");
+auto validators = makeVector<Validator>("v16.Configuration.Validators");
 
 }
 
@@ -193,8 +193,8 @@ Configuration *getConfigurationPublic(const char *key) {
     return nullptr;
 }
 
-MemVector<ConfigurationContainer*> getConfigurationContainersPublic() {
-    auto res = makeMemVector<ConfigurationContainer*>("v16.Configuration.Containers");
+Vector<ConfigurationContainer*> getConfigurationContainersPublic() {
+    auto res = makeVector<ConfigurationContainer*>("v16.Configuration.Containers");
 
     for (auto& container : configurationContainers) {
         if (container->isAccessible()) {
@@ -211,8 +211,8 @@ bool configuration_init(std::shared_ptr<FilesystemAdapter> _filesystem) {
 }
 
 void configuration_deinit() {
-    makeMemVector<decltype(configurationContainers)::value_type>("v16.Configuration.Containers").swap(configurationContainers); //release allocated memory (see https://cplusplus.com/reference/vector/vector/clear/)
-    makeMemVector<decltype(validators)::value_type>("v16.Configuration.Validators").swap(validators);
+    makeVector<decltype(configurationContainers)::value_type>("v16.Configuration.Containers").swap(configurationContainers); //release allocated memory (see https://cplusplus.com/reference/vector/vector/clear/)
+    makeVector<decltype(validators)::value_type>("v16.Configuration.Validators").swap(validators);
     filesystem.reset();
 }
 

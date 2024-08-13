@@ -14,7 +14,7 @@
 using namespace MicroOcpp;
 
 MeteringService::MeteringService(Context& context, int numConn, std::shared_ptr<FilesystemAdapter> filesystem)
-      : AllocOverrider("v16.Metering.MeteringService"), context(context), meterStore(filesystem), connectors(makeMemVector<std::unique_ptr<MeteringConnector>>(getMemoryTag())) {
+      : MemoryManaged("v16.Metering.MeteringService"), context(context), meterStore(filesystem), connectors(makeVector<std::unique_ptr<MeteringConnector>>(getMemoryTag())) {
 
     //set factory defaults for Metering-related config keys
     declareConfiguration<const char*>("MeterValuesSampledData", "Energy.Active.Import.Register,Power.Active.Import");

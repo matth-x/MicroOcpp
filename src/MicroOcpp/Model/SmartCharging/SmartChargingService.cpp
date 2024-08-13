@@ -16,7 +16,7 @@
 using namespace::MicroOcpp;
 
 SmartChargingConnector::SmartChargingConnector(Model& model, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ProfileStack& ChargePointMaxProfile, ProfileStack& ChargePointTxDefaultProfile) :
-        AllocOverrider("v16.SmartCharging.SmartChargingConnector"), model(model), filesystem{filesystem}, connectorId{connectorId}, ChargePointMaxProfile(ChargePointMaxProfile), ChargePointTxDefaultProfile(ChargePointTxDefaultProfile) {
+        MemoryManaged("v16.SmartCharging.SmartChargingConnector"), model(model), filesystem{filesystem}, connectorId{connectorId}, ChargePointMaxProfile(ChargePointMaxProfile), ChargePointTxDefaultProfile(ChargePointTxDefaultProfile) {
     
 }
 
@@ -311,7 +311,7 @@ SmartChargingConnector *SmartChargingService::getScConnectorById(unsigned int co
 }
 
 SmartChargingService::SmartChargingService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int numConnectors)
-      : AllocOverrider("v16.SmartCharging.SmartChargingService"), context(context), filesystem{filesystem}, connectors{makeMemVector<SmartChargingConnector>(getMemoryTag())}, numConnectors(numConnectors) {
+      : MemoryManaged("v16.SmartCharging.SmartChargingService"), context(context), filesystem{filesystem}, connectors{makeVector<SmartChargingConnector>(getMemoryTag())}, numConnectors(numConnectors) {
     
     for (unsigned int cId = 1; cId < numConnectors; cId++) {
         connectors.emplace_back(context.getModel(), filesystem, cId, ChargePointMaxProfile, ChargePointTxDefaultProfile);
@@ -738,7 +738,7 @@ bool SmartChargingServiceUtils::storeProfile(std::shared_ptr<FilesystemAdapter> 
         return true; //not an error
     }
 
-    auto chargingProfileJson = initMemJsonDoc("v16.SmartCharging.ChargingProfile");
+    auto chargingProfileJson = initJsonDoc("v16.SmartCharging.ChargingProfile");
     if (!chargingProfile->toJson(chargingProfileJson)) {
         return false;
     }

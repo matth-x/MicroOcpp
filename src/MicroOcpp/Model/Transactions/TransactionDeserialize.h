@@ -12,7 +12,7 @@
 
 namespace MicroOcpp {
 
-bool serializeTransaction(Transaction& tx, MemJsonDoc& out);
+bool serializeTransaction(Transaction& tx, JsonDoc& out);
 bool deserializeTransaction(Transaction& tx, JsonObject in);
 
 }

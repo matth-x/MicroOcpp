@@ -20,12 +20,12 @@ class Context;
 class Request;
 class FilesystemAdapter;
 
-class MeteringService : public AllocOverrider {
+class MeteringService : public MemoryManaged {
 private:
     Context& context;
     MeterStore meterStore;
 
-    MemVector<std::unique_ptr<MeteringConnector>> connectors;
+    Vector<std::unique_ptr<MeteringConnector>> connectors;
 public:
     MeteringService(Context& context, int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 

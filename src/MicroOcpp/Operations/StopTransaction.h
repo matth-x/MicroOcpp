@@ -21,20 +21,20 @@ class Transaction;
 
 namespace Ocpp16 {
 
-class StopTransaction : public Operation, public AllocOverrider {
+class StopTransaction : public Operation, public MemoryManaged {
 private:
     Model& model;
     std::shared_ptr<Transaction> transaction;
-    MemVector<std::unique_ptr<MeterValue>> transactionData;
+    Vector<std::unique_ptr<MeterValue>> transactionData;
 public:
 
     StopTransaction(Model& model, std::shared_ptr<Transaction> transaction);
 
-    StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, MemVector<std::unique_ptr<MicroOcpp::MeterValue>> transactionData);
+    StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, Vector<std::unique_ptr<MicroOcpp::MeterValue>> transactionData);
 
     const char* getOperationType() override;
 
-    std::unique_ptr<MemJsonDoc> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
@@ -42,7 +42,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 };
 
 } //end namespace Ocpp16

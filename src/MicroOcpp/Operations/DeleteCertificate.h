@@ -17,7 +17,7 @@ class CertificateService;
 
 namespace Ocpp201 {
 
-class DeleteCertificate : public Operation, public AllocOverrider {
+class DeleteCertificate : public Operation, public MemoryManaged {
 private:
     CertificateService& certService;
     const char *status = nullptr;
@@ -29,7 +29,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

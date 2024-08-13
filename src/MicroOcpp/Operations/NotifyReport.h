@@ -22,7 +22,7 @@ class Variable;
 
 namespace Ocpp201 {
 
-class NotifyReport : public Operation, public AllocOverrider {
+class NotifyReport : public Operation, public MemoryManaged {
 private:
     Model& model;
 
@@ -30,14 +30,14 @@ private:
     Timestamp generatedAt;
     bool tbc;
     int seqNo;
-    MemVector<Variable*> reportData;
+    Vector<Variable*> reportData;
 public:
 
-    NotifyReport(Model& model, int requestId, const Timestamp& generatedAt, bool tbc, int seqNo, const MemVector<Variable*>& reportData);
+    NotifyReport(Model& model, int requestId, const Timestamp& generatedAt, bool tbc, int seqNo, const Vector<Variable*>& reportData);
 
     const char* getOperationType() override;
 
-    std::unique_ptr<MemJsonDoc> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 };

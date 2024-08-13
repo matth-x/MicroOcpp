@@ -12,10 +12,10 @@
 #include <MicroOcpp/Version.h>
 
 using MicroOcpp::Ocpp16::StartTransaction;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
 
-StartTransaction::StartTransaction(Model& model, std::shared_ptr<Transaction> transaction) : AllocOverrider("v16.Operation.", "StartTransaction"), model(model), transaction(transaction) {
+StartTransaction::StartTransaction(Model& model, std::shared_ptr<Transaction> transaction) : MemoryManaged("v16.Operation.", "StartTransaction"), model(model), transaction(transaction) {
     
 }
 
@@ -27,9 +27,9 @@ const char* StartTransaction::getOperationType() {
     return "StartTransaction";
 }
 
-std::unique_ptr<MemJsonDoc> StartTransaction::createReq() {
+std::unique_ptr<JsonDoc> StartTransaction::createReq() {
 
-    auto doc = makeMemJsonDoc(getMemoryTag(),
+    auto doc = makeJsonDoc(getMemoryTag(),
                 JSON_OBJECT_SIZE(6) + 
                 (IDTAG_LEN_MAX + 1) +
                 (JSONDATE_LENGTH + 1));
@@ -94,8 +94,8 @@ void StartTransaction::processReq(JsonObject payload) {
 
 }
 
-std::unique_ptr<MemJsonDoc> StartTransaction::createConf() {
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
+std::unique_ptr<JsonDoc> StartTransaction::createConf() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
     JsonObject payload = doc->to<JsonObject>();
 
     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");

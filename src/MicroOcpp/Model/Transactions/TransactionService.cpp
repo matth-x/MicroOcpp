@@ -24,7 +24,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::Ocpp201;
 
 TransactionService::Evse::Evse(Context& context, TransactionService& txService, unsigned int evseId) :
-        AllocOverrider("v201.Transactions.TransactionServiceEvse"), context(context), txService(txService), evseId(evseId) {
+        MemoryManaged("v201.Transactions.TransactionServiceEvse"), context(context), txService(txService), evseId(evseId) {
 
 }
 
@@ -501,7 +501,7 @@ bool TransactionService::isTxStopPoint(TxStartStopPoint check) {
     return false;
 }
 
-bool TransactionService::parseTxStartStopPoint(const char *csl, MemVector<TxStartStopPoint>& dst) {
+bool TransactionService::parseTxStartStopPoint(const char *csl, Vector<TxStartStopPoint>& dst) {
     dst.clear();
 
     while (*csl == ',') {
@@ -547,7 +547,7 @@ bool TransactionService::parseTxStartStopPoint(const char *csl, MemVector<TxStar
     return true;
 }
 
-TransactionService::TransactionService(Context& context) : AllocOverrider("v201.Transactions.TransactionService"), context(context), evses(makeMemVector<Evse>(getMemoryTag())), txStartPointParsed(makeMemVector<TxStartStopPoint>(getMemoryTag())),  txStopPointParsed(makeMemVector<TxStartStopPoint>(getMemoryTag())) {
+TransactionService::TransactionService(Context& context) : MemoryManaged("v201.Transactions.TransactionService"), context(context), evses(makeVector<Evse>(getMemoryTag())), txStartPointParsed(makeVector<TxStartStopPoint>(getMemoryTag())),  txStopPointParsed(makeVector<TxStartStopPoint>(getMemoryTag())) {
     auto variableService = context.getModel().getVariableService();
 
     txStartPointString = variableService->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "PowerPathClosed");
@@ -559,12 +559,12 @@ TransactionService::TransactionService(Context& context) : AllocOverrider("v201.
     variableService->declareVariable<bool>("AuthCtrlr", "AuthorizeRemoteStart", false, MO_VARIABLE_VOLATILE, Variable::Mutability::ReadOnly);
 
     variableService->registerValidator<const char*>("TxCtrlr", "TxStartPoint", [this] (const char *value) -> bool {
-        auto validated = makeMemVector<TxStartStopPoint>(getMemoryTag());
+        auto validated = makeVector<TxStartStopPoint>(getMemoryTag());
         return this->parseTxStartStopPoint(value, validated);
     });
 
     variableService->registerValidator<const char*>("TxCtrlr", "TxStopPoint", [this] (const char *value) -> bool {
-        auto validated = makeMemVector<TxStartStopPoint>(getMemoryTag());
+        auto validated = makeVector<TxStartStopPoint>(getMemoryTag());
         return this->parseTxStartStopPoint(value, validated);
     });
 

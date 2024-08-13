@@ -9,9 +9,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::SetChargingProfile;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-SetChargingProfile::SetChargingProfile(Model& model, SmartChargingService& scService) : AllocOverrider("v16.Operation.", "SetChargingProfile"), model(model), scService(scService) {
+SetChargingProfile::SetChargingProfile(Model& model, SmartChargingService& scService) : MemoryManaged("v16.Operation.", "SetChargingProfile"), model(model), scService(scService) {
 
 }
 
@@ -85,8 +85,8 @@ void SetChargingProfile::processReq(JsonObject payload) {
     accepted = scService.setChargingProfile(connectorId, std::move(chargingProfile));
 }
 
-std::unique_ptr<MemJsonDoc> SetChargingProfile::createConf(){
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+std::unique_ptr<JsonDoc> SetChargingProfile::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     if (accepted) {
         payload["status"] = "Accepted";

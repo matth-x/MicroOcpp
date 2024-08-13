@@ -9,9 +9,9 @@
 using namespace MicroOcpp;
 
 MeterValue::MeterValue(const Timestamp& timestamp) :
-        AllocOverrider("v16.Metering.MeterValue"), 
+        MemoryManaged("v16.Metering.MeterValue"), 
         timestamp(timestamp), 
-        sampledValue(makeMemVector<std::unique_ptr<SampledValue>>(getMemoryTag())) {
+        sampledValue(makeVector<std::unique_ptr<SampledValue>>(getMemoryTag())) {
 
 }
 
@@ -19,9 +19,9 @@ void MeterValue::addSampledValue(std::unique_ptr<SampledValue> sample) {
     sampledValue.push_back(std::move(sample));
 }
 
-std::unique_ptr<MemJsonDoc> MeterValue::toJson() {
+std::unique_ptr<JsonDoc> MeterValue::toJson() {
     size_t capacity = 0;
-    auto entries = makeMemVector<std::unique_ptr<MemJsonDoc>>(getMemoryTag());
+    auto entries = makeVector<std::unique_ptr<JsonDoc>>(getMemoryTag());
     for (auto sample = sampledValue.begin(); sample != sampledValue.end(); sample++) {
         auto json = (*sample)->toJson();
         if (!json) {
@@ -35,7 +35,7 @@ std::unique_ptr<MemJsonDoc> MeterValue::toJson() {
     capacity += JSONDATE_LENGTH + 1;
     capacity += JSON_OBJECT_SIZE(2);
     
-    auto result = makeMemJsonDoc(getMemoryTag(), capacity);
+    auto result = makeJsonDoc(getMemoryTag(), capacity);
     auto jsonPayload = result->to<JsonObject>();
 
     char timestampStr [JSONDATE_LENGTH + 1] = {'\0'};
@@ -67,12 +67,12 @@ ReadingContext MeterValue::getReadingContext() {
     return ReadingContext::NOT_SET;
 }
 
-MeterValueBuilder::MeterValueBuilder(const MemVector<std::unique_ptr<SampledValueSampler>> &samplers,
+MeterValueBuilder::MeterValueBuilder(const Vector<std::unique_ptr<SampledValueSampler>> &samplers,
             std::shared_ptr<Configuration> samplersSelectStr) :
-            AllocOverrider("v16.Metering.MeterValueBuilder"),
+            MemoryManaged("v16.Metering.MeterValueBuilder"),
             samplers(samplers),
             selectString(samplersSelectStr),
-            select_mask(makeMemVector<bool>(getMemoryTag())) {
+            select_mask(makeVector<bool>(getMemoryTag())) {
 
     updateObservedSamplers();
     select_observe = selectString->getValueRevision();

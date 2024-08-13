@@ -20,7 +20,7 @@ class VariableService;
 
 namespace Ocpp201 {
 
-class GetBaseReport : public Operation, public AllocOverrider {
+class GetBaseReport : public Operation, public MemoryManaged {
 private:
     VariableService& variableService;
 
@@ -34,7 +34,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 

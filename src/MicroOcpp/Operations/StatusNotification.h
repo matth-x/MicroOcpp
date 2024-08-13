@@ -17,7 +17,7 @@ const char *cstrFromOcppEveState(ChargePointStatus state);
 
 namespace Ocpp16 {
 
-class StatusNotification : public Operation, public AllocOverrider {
+class StatusNotification : public Operation, public MemoryManaged {
 private:
     int connectorId = 1;
     ChargePointStatus currentStatus = ChargePointStatus_UNDEFINED;
@@ -28,13 +28,13 @@ public:
 
     const char* getOperationType() override;
 
-    std::unique_ptr<MemJsonDoc> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     int getConnectorId() {
         return connectorId;
@@ -51,7 +51,7 @@ public:
 namespace MicroOcpp {
 namespace Ocpp201 {
 
-class StatusNotification : public Operation, public AllocOverrider {
+class StatusNotification : public Operation, public MemoryManaged {
 private:
     EvseId evseId;
     Timestamp timestamp;
@@ -61,7 +61,7 @@ public:
 
     const char* getOperationType() override;
 
-    std::unique_ptr<MemJsonDoc> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 };

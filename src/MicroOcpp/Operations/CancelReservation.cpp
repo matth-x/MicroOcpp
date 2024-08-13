@@ -11,9 +11,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::CancelReservation;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-CancelReservation::CancelReservation(ReservationService& reservationService) : AllocOverrider("v16.Operation.", "CancelReservation"), reservationService(reservationService) {
+CancelReservation::CancelReservation(ReservationService& reservationService) : MemoryManaged("v16.Operation.", "CancelReservation"), reservationService(reservationService) {
   
 }
 
@@ -33,8 +33,8 @@ void CancelReservation::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<MemJsonDoc> CancelReservation::createConf(){
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+std::unique_ptr<JsonDoc> CancelReservation::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     if (found) {
         payload["status"] = "Accepted";

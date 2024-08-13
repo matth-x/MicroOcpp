@@ -52,7 +52,7 @@ TEST_CASE( "Charging sessions" ) {
     SECTION("Check idle state"){
 
         bool checkedBN = false;
-        checkMsg.registerOperation("BootNotification", [engine] () -> Operation* {return new Ocpp16::BootNotification(engine->getModel(), makeMemJsonDoc("UnitTests"));});
+        checkMsg.registerOperation("BootNotification", [engine] () -> Operation* {return new Ocpp16::BootNotification(engine->getModel(), makeJsonDoc("UnitTests"));});
         checkMsg.setOnRequest("BootNotification",
             [&checkedBN] (JsonObject request) {
                 checkedBN = !strcmp(request["chargePointModel"] | "Invalid", "test-runner1234");
@@ -392,7 +392,7 @@ TEST_CASE( "Charging sessions" ) {
                 [] (JsonObject payload) {}, //ignore req
                 [&txId_generate] () {
                     //create conf
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
                     JsonObject payload = doc->to<JsonObject>();
 
                     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
@@ -472,7 +472,7 @@ TEST_CASE( "Charging sessions" ) {
                 [] (JsonObject payload) {}, //ignore req
                 [&txId_generate] () {
                     //create conf
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
                     JsonObject payload = doc->to<JsonObject>();
 
                     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
@@ -588,7 +588,7 @@ TEST_CASE( "Charging sessions" ) {
                 },
                 [] () {
                     //create conf
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
                     JsonObject payload = doc->to<JsonObject>();
 
                     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
@@ -634,7 +634,7 @@ TEST_CASE( "Charging sessions" ) {
                 "ChangeAvailability",
                 [] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = 1;
                     payload["type"] = "Inoperative";
@@ -689,7 +689,7 @@ TEST_CASE( "Charging sessions" ) {
             new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
                 [] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = 1;
                     return doc;
@@ -716,7 +716,7 @@ TEST_CASE( "Charging sessions" ) {
             new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
                 [] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = 1;
                     return doc;
@@ -741,7 +741,7 @@ TEST_CASE( "Charging sessions" ) {
             new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
                 [] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = 1;
                     return doc;
@@ -833,7 +833,7 @@ TEST_CASE( "Charging sessions" ) {
                 },
                 [&txId] () {
                     //create conf
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
                     JsonObject payload = doc->to<JsonObject>();
 
                     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
@@ -962,7 +962,7 @@ TEST_CASE( "Charging sessions" ) {
                 },
                 [&txId] () {
                     //create conf
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
                     JsonObject payload = doc->to<JsonObject>();
 
                     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
@@ -1030,7 +1030,7 @@ TEST_CASE( "Charging sessions" ) {
                 },
                 [&txId] () {
                     //create conf
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
                     JsonObject payload = doc->to<JsonObject>();
 
                     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");

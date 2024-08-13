@@ -72,7 +72,7 @@ public:
     virtual bool isConnected() {return true;} //MO ignores true. This default implementation keeps backwards-compatibility
 };
 
-class LoopbackConnection : public Connection, public AllocOverrider {
+class LoopbackConnection : public Connection, public MemoryManaged {
 private:
     ReceiveTXTcallback receiveTXT;
 
@@ -105,7 +105,7 @@ public:
 namespace MicroOcpp {
 namespace EspWiFi {
 
-class WSClient : public Connection, public AllocOverrider {
+class WSClient : public Connection, public MemoryManaged {
 private:
     WebSocketsClient *wsock;
     unsigned long lastRecv = 0, lastConnected = 0;

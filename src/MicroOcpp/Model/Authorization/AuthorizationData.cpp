@@ -11,11 +11,11 @@
 
 using namespace MicroOcpp;
 
-AuthorizationData::AuthorizationData() : AllocOverrider("v16.Authorization.AuthorizationData") {
+AuthorizationData::AuthorizationData() : MemoryManaged("v16.Authorization.AuthorizationData") {
 
 }
 
-AuthorizationData::AuthorizationData(AuthorizationData&& other) : AllocOverrider("v16.Authorization.AuthorizationData") {
+AuthorizationData::AuthorizationData(AuthorizationData&& other) : MemoryManaged("v16.Authorization.AuthorizationData") {
     operator=(std::move(other));
 }
 

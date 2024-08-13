@@ -10,9 +10,9 @@
 #include <functional>
 
 using MicroOcpp::Ocpp16::ChangeAvailability;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-ChangeAvailability::ChangeAvailability(Model& model) : AllocOverrider("v16.Operation.", "ChangeAvailability"), model(model) {
+ChangeAvailability::ChangeAvailability(Model& model) : MemoryManaged("v16.Operation.", "ChangeAvailability"), model(model) {
 
 }
 
@@ -85,8 +85,8 @@ void ChangeAvailability::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<MemJsonDoc> ChangeAvailability::createConf(){
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+std::unique_ptr<JsonDoc> ChangeAvailability::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     if (!accepted) {
         payload["status"] = "Rejected";

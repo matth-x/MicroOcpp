@@ -19,7 +19,7 @@ namespace MicroOcpp {
 class Connection;
 class FilesystemAdapter;
 
-class Context : public AllocOverrider {
+class Context : public MemoryManaged {
 private:
     Connection& connection;
     OperationRegistry operationRegistry;

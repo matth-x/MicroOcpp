@@ -9,9 +9,9 @@
 #include <functional>
 
 using MicroOcpp::Ocpp16::ClearChargingProfile;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-ClearChargingProfile::ClearChargingProfile(SmartChargingService& scService) : AllocOverrider("v16.Operation.", "ClearChargingProfile"), scService(scService) {
+ClearChargingProfile::ClearChargingProfile(SmartChargingService& scService) : MemoryManaged("v16.Operation.", "ClearChargingProfile"), scService(scService) {
 
 }
 
@@ -70,8 +70,8 @@ void ClearChargingProfile::processReq(JsonObject payload) {
     matchingProfilesFound = scService.clearChargingProfile(filter);
 }
 
-std::unique_ptr<MemJsonDoc> ClearChargingProfile::createConf(){
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+std::unique_ptr<JsonDoc> ClearChargingProfile::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     if (matchingProfilesFound)
         payload["status"] = "Accepted";

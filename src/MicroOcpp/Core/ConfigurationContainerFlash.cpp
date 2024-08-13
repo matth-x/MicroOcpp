@@ -13,15 +13,15 @@
 
 namespace MicroOcpp {
 
-class ConfigurationContainerFlash : public ConfigurationContainer, public AllocOverrider {
+class ConfigurationContainerFlash : public ConfigurationContainer, public MemoryManaged {
 private:
-    MemVector<std::shared_ptr<Configuration>> configurations;
+    Vector<std::shared_ptr<Configuration>> configurations;
     std::shared_ptr<FilesystemAdapter> filesystem;
     uint16_t revisionSum = 0;
 
     bool loaded = false;
 
-    MemVector<char*> keyPool;
+    Vector<char*> keyPool;
     
     void clearKeyPool(const char *key) {
         auto it = keyPool.begin();
@@ -48,7 +48,7 @@ private:
     }
 public:
     ConfigurationContainerFlash(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename, bool accessible) :
-            ConfigurationContainer(filename, accessible), AllocOverrider("v16.Configuration.ContainerFlash.", filename), configurations(makeMemVector<std::shared_ptr<Configuration>>(getMemoryTag())), filesystem(filesystem), keyPool(makeMemVector<char*>(getMemoryTag())) { }
+            ConfigurationContainer(filename, accessible), MemoryManaged("v16.Configuration.ContainerFlash.", filename), configurations(makeVector<std::shared_ptr<Configuration>>(getMemoryTag())), filesystem(filesystem), keyPool(makeVector<char*>(getMemoryTag())) { }
 
     ~ConfigurationContainerFlash() {
         auto it = keyPool.begin();
@@ -243,7 +243,7 @@ public:
             jsonCapacity = MO_MAX_JSON_CAPACITY;
         }
 
-        auto doc = initMemJsonDoc(getMemoryTag(), jsonCapacity);
+        auto doc = initJsonDoc(getMemoryTag(), jsonCapacity);
         JsonObject head = doc.createNestedObject("head");
         head["content-type"] = "ocpp_config_file";
         head["version"] = "2.0";

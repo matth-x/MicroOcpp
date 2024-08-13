@@ -17,7 +17,7 @@ namespace MicroOcpp {
 
 class Context;
 
-class ResetService : public AllocOverrider {
+class ResetService : public MemoryManaged {
 private:
     Context& context;
 
@@ -65,7 +65,7 @@ class Variable;
 
 namespace Ocpp201 {
 
-class ResetService : public AllocOverrider {
+class ResetService : public MemoryManaged {
 private:
     Context& context;
 
@@ -87,7 +87,7 @@ private:
         void loop();
     };
 
-    MemVector<Evse> evses;
+    Vector<Evse> evses;
     Evse *getEvse(unsigned int connectorId);
     Evse *getOrCreateEvse(unsigned int connectorId);
 

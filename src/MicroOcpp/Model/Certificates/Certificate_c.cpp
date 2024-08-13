@@ -16,17 +16,17 @@ namespace MicroOcpp {
 /*
  * C++ wrapper for the C-style certificate interface
  */
-class CertificateStoreC : public CertificateStore, public AllocOverrider {
+class CertificateStoreC : public CertificateStore, public MemoryManaged {
 private:
     ocpp_cert_store *certstore = nullptr;
 public:
-    CertificateStoreC(ocpp_cert_store *certstore) : AllocOverrider("v201.Certificates.CertificateStoreC"), certstore(certstore) {
+    CertificateStoreC(ocpp_cert_store *certstore) : MemoryManaged("v201.Certificates.CertificateStoreC"), certstore(certstore) {
 
     }
 
     ~CertificateStoreC() = default;
 
-    GetInstalledCertificateStatus getCertificateIds(const MemVector<GetCertificateIdType>& certificateType, MemVector<CertificateChainHash>& out) override {
+    GetInstalledCertificateStatus getCertificateIds(const Vector<GetCertificateIdType>& certificateType, Vector<CertificateChainHash>& out) override {
         out.clear();
 
         ocpp_cert_chain_hash *cch;

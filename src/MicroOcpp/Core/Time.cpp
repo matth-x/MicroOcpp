@@ -11,20 +11,20 @@ namespace MicroOcpp {
 const Timestamp MIN_TIME = Timestamp(2010, 0, 0, 0, 0, 0);
 const Timestamp MAX_TIME = Timestamp(2037, 0, 0, 0, 0, 0);
 
-Timestamp::Timestamp() : AllocOverrider("Timestamp") {
+Timestamp::Timestamp() : MemoryManaged("Timestamp") {
     
 }
 
-Timestamp::Timestamp(const Timestamp& other) : AllocOverrider("Timestamp") {
+Timestamp::Timestamp(const Timestamp& other) : MemoryManaged("Timestamp") {
     *this = other;
 }
 
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
     Timestamp::Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second, int32_t ms) :
-                AllocOverrider("Timestamp"), year(year), month(month), day(day), hour(hour), minute(minute), second(second), ms(ms) { }
+                MemoryManaged("Timestamp"), year(year), month(month), day(day), hour(hour), minute(minute), second(second), ms(ms) { }
 #else 
     Timestamp::Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second) :
-                AllocOverrider("Timestamp"), year(year), month(month), day(day), hour(hour), minute(minute), second(second) { }
+                MemoryManaged("Timestamp"), year(year), month(month), day(day), hour(hour), minute(minute), second(second) { }
 #endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
 int noDays(int month, int year) {

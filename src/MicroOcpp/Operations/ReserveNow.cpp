@@ -14,9 +14,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::ReserveNow;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-ReserveNow::ReserveNow(Model& model) : AllocOverrider("v16.Operation.", "ReserveNow"), model(model) {
+ReserveNow::ReserveNow(Model& model) : MemoryManaged("v16.Operation.", "ReserveNow"), model(model) {
   
 }
 
@@ -115,8 +115,8 @@ void ReserveNow::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<MemJsonDoc> ReserveNow::createConf(){
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+std::unique_ptr<JsonDoc> ReserveNow::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
     if (reservationStatus) {

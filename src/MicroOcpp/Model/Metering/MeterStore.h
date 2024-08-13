@@ -12,7 +12,7 @@
 
 namespace MicroOcpp {
 
-class TransactionMeterData : public AllocOverrider {
+class TransactionMeterData : public MemoryManaged {
 private:
     const unsigned int connectorId; //assignment to Transaction object
     const unsigned int txNr; //assignment to Transaction object
@@ -22,14 +22,14 @@ private:
 
     std::shared_ptr<FilesystemAdapter> filesystem;
 
-    MemVector<std::unique_ptr<MeterValue>> txData;
+    Vector<std::unique_ptr<MeterValue>> txData;
 
 public:
     TransactionMeterData(unsigned int connectorId, unsigned int txNr, std::shared_ptr<FilesystemAdapter> filesystem);
 
     bool addTxData(std::unique_ptr<MeterValue> mv);
 
-    MemVector<std::unique_ptr<MeterValue>> retrieveStopTxData(); //will invalidate internal cache
+    Vector<std::unique_ptr<MeterValue>> retrieveStopTxData(); //will invalidate internal cache
 
     bool restore(MeterValueBuilder& mvBuilder); //load record from memory; true if record found, false if nothing loaded
 
@@ -40,11 +40,11 @@ public:
     bool isFinalized() {return finalized;}
 };
 
-class MeterStore : public AllocOverrider {
+class MeterStore : public MemoryManaged {
 private:
     std::shared_ptr<FilesystemAdapter> filesystem;
     
-    MemVector<std::weak_ptr<TransactionMeterData>> txMeterData;
+    Vector<std::weak_ptr<TransactionMeterData>> txMeterData;
 
 public:
     MeterStore() = delete;

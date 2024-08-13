@@ -10,29 +10,29 @@
 
 namespace MicroOcpp {
 
-class NotImplemented : public Operation, public AllocOverrider {
+class NotImplemented : public Operation, public MemoryManaged {
 public:
-    NotImplemented() : AllocOverrider("v16.CallError.NotImplemented") { }
+    NotImplemented() : MemoryManaged("v16.CallError.NotImplemented") { }
 
     const char *getErrorCode() override {
         return "NotImplemented";
     }
 };
 
-class MsgBufferExceeded : public Operation, public AllocOverrider {
+class MsgBufferExceeded : public Operation, public MemoryManaged {
 private:
     size_t maxCapacity;
     size_t msgLen;
 public:
-    MsgBufferExceeded(size_t maxCapacity, size_t msgLen) : AllocOverrider("v16.CallError.MsgBufferExceeded"), maxCapacity(maxCapacity), msgLen(msgLen) { }
+    MsgBufferExceeded(size_t maxCapacity, size_t msgLen) : MemoryManaged("v16.CallError.MsgBufferExceeded"), maxCapacity(maxCapacity), msgLen(msgLen) { }
     const char *getErrorCode() override {
         return "GenericError";
     }
     const char *getErrorDescription() override {
         return "JSON too long or too many fields. Cannot deserialize";
     }
-    std::unique_ptr<MemJsonDoc> getErrorDetails() override {
-        auto errDoc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2));
+    std::unique_ptr<JsonDoc> getErrorDetails() override {
+        auto errDoc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2));
         JsonObject err = errDoc->to<JsonObject>();
         err["max_capacity"] = maxCapacity;
         err["msg_length"] = msgLen;

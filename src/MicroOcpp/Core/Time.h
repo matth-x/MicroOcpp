@@ -24,7 +24,7 @@
 
 namespace MicroOcpp {
 
-class Timestamp : public AllocOverrider {
+class Timestamp : public MemoryManaged {
 private:
     /*
      * Internal representation of the current time. The initial values correspond to UNIX-time 0. January

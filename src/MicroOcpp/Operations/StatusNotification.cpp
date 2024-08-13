@@ -46,7 +46,7 @@ const char *cstrFromOcppEveState(ChargePointStatus state) {
 namespace Ocpp16 {
 
 StatusNotification::StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorData errorData)
-        : AllocOverrider("v16.Operation.", "StatusNotification"), connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
+        : MemoryManaged("v16.Operation.", "StatusNotification"), connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
     
     if (currentStatus != ChargePointStatus_UNDEFINED) {
         MO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
@@ -57,8 +57,8 @@ const char* StatusNotification::getOperationType(){
     return "StatusNotification";
 }
 
-std::unique_ptr<MemJsonDoc> StatusNotification::createReq() {
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(7) + (JSONDATE_LENGTH + 1));
+std::unique_ptr<JsonDoc> StatusNotification::createReq() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(7) + (JSONDATE_LENGTH + 1));
     JsonObject payload = doc->to<JsonObject>();
 
     payload["connectorId"] = connectorId;
@@ -107,7 +107,7 @@ void StatusNotification::processReq(JsonObject payload) {
 /*
  * For debugging only
  */
-std::unique_ptr<MemJsonDoc> StatusNotification::createConf(){
+std::unique_ptr<JsonDoc> StatusNotification::createConf(){
     return createEmptyDocument();
 }
 
@@ -120,7 +120,7 @@ namespace MicroOcpp {
 namespace Ocpp201 {
 
 StatusNotification::StatusNotification(EvseId evseId, ChargePointStatus currentStatus, const Timestamp &timestamp)
-        : AllocOverrider("v201.Operation.", "StatusNotification"), evseId(evseId), timestamp(timestamp), currentStatus(currentStatus) {
+        : MemoryManaged("v201.Operation.", "StatusNotification"), evseId(evseId), timestamp(timestamp), currentStatus(currentStatus) {
 
 }
 
@@ -128,8 +128,8 @@ const char* StatusNotification::getOperationType(){
     return "StatusNotification";
 }
 
-std::unique_ptr<MemJsonDoc> StatusNotification::createReq() {
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1));
+std::unique_ptr<JsonDoc> StatusNotification::createReq() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1));
     JsonObject payload = doc->to<JsonObject>();
 
     char timestamp_cstr[JSONDATE_LENGTH + 1] = {'\0'};

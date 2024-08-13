@@ -28,7 +28,7 @@ class Model;
 
 using ProfileStack = std::array<std::unique_ptr<ChargingProfile>, MO_ChargeProfileMaxStackLevel + 1>;
 
-class SmartChargingConnector : public AllocOverrider {
+class SmartChargingConnector : public MemoryManaged {
 private:
     Model& model;
     std::shared_ptr<FilesystemAdapter> filesystem;
@@ -73,11 +73,11 @@ public:
     size_t getChargingProfilesCount();
 };
 
-class SmartChargingService : public AllocOverrider {
+class SmartChargingService : public MemoryManaged {
 private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
-    MemVector<SmartChargingConnector> connectors; //connectorId 0 excluded
+    Vector<SmartChargingConnector> connectors; //connectorId 0 excluded
     SmartChargingConnector *getScConnectorById(unsigned int connectorId);
     unsigned int numConnectors; //connectorId 0 included
     

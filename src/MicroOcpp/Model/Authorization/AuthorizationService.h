@@ -18,7 +18,7 @@ namespace MicroOcpp {
 
 class Context;
 
-class AuthorizationService : public AllocOverrider {
+class AuthorizationService : public MemoryManaged {
 private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;

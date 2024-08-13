@@ -15,17 +15,17 @@
 
 namespace MicroOcpp {
 
-class MeterValue : public AllocOverrider {
+class MeterValue : public MemoryManaged {
 private:
     Timestamp timestamp;
-    MemVector<std::unique_ptr<SampledValue>> sampledValue;
+    Vector<std::unique_ptr<SampledValue>> sampledValue;
 public:
     MeterValue(const Timestamp& timestamp);
     MeterValue(const MeterValue& other) = delete;
 
     void addSampledValue(std::unique_ptr<SampledValue> sample);
 
-    std::unique_ptr<MemJsonDoc> toJson();
+    std::unique_ptr<JsonDoc> toJson();
 
     const Timestamp& getTimestamp();
     void setTimestamp(Timestamp timestamp);
@@ -33,17 +33,17 @@ public:
     ReadingContext getReadingContext();
 };
 
-class MeterValueBuilder : public AllocOverrider {
+class MeterValueBuilder : public MemoryManaged {
 private:
-    const MemVector<std::unique_ptr<SampledValueSampler>> &samplers;
+    const Vector<std::unique_ptr<SampledValueSampler>> &samplers;
     std::shared_ptr<Configuration> selectString;
-    MemVector<bool> select_mask;
+    Vector<bool> select_mask;
     unsigned int select_n {0};
     decltype(selectString->getValueRevision()) select_observe;
 
     void updateObservedSamplers();
 public:
-    MeterValueBuilder(const MemVector<std::unique_ptr<SampledValueSampler>> &samplers,
+    MeterValueBuilder(const Vector<std::unique_ptr<SampledValueSampler>> &samplers,
             std::shared_ptr<Configuration> samplersSelectStr);
     
     std::unique_ptr<MeterValue> takeSample(const Timestamp& timestamp, const ReadingContext& context);

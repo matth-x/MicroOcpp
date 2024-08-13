@@ -17,7 +17,7 @@ size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_siz
 
 using namespace MicroOcpp;
 
-VolatileRequestQueue::VolatileRequestQueue(unsigned int priority) : AllocOverrider("VolatileRequestQueue"), priority{priority} {
+VolatileRequestQueue::VolatileRequestQueue(unsigned int priority) : MemoryManaged("VolatileRequestQueue"), priority{priority} {
 
 }
 
@@ -118,7 +118,7 @@ bool VolatileRequestQueue::pushRequestBack(std::unique_ptr<Request> request) {
 }
 
 RequestQueue::RequestQueue(Connection& connection, OperationRegistry& operationRegistry)
-            : AllocOverrider("RequestQueue"), connection(connection), operationRegistry(operationRegistry) {
+            : MemoryManaged("RequestQueue"), connection(connection), operationRegistry(operationRegistry) {
 
     ReceiveTXTcallback callback = [this] (const char *payload, size_t length) {
         return this->receiveMessage(payload, length);
@@ -167,11 +167,11 @@ void RequestQueue::loop() {
 
     if (recvReqFront) {
 
-        auto response = initMemJsonDoc(getMemoryTag());
+        auto response = initJsonDoc(getMemoryTag());
         auto ret = recvReqFront->createResponse(response);
 
         if (ret == Request::CreateResponseResult::Success) {
-            auto out = makeMemString(getMemoryTag());
+            auto out = makeString(getMemoryTag());
             serializeJson(response, out);
     
             bool success = connection.sendTXT(out.c_str(), out.length());
@@ -208,13 +208,13 @@ void RequestQueue::loop() {
 
     if (sendReqFront && !sendReqFront->isRequestSent()) {
 
-        auto request = initMemJsonDoc(getMemoryTag());
+        auto request = initJsonDoc(getMemoryTag());
         auto ret = sendReqFront->createRequest(request);
 
         if (ret == Request::CreateRequestResult::Success) {
 
             //send request
-            auto out = makeMemString(getMemoryTag());
+            auto out = makeString(getMemoryTag());
             serializeJson(request, out);
 
             bool success = connection.sendTXT(out.c_str(), out.length());
@@ -267,12 +267,12 @@ bool RequestQueue::receiveMessage(const char* payload, size_t length) {
         capacity = MO_MAX_JSON_CAPACITY;
     }
     
-    auto doc = initMemJsonDoc(getMemoryTag());
+    auto doc = initJsonDoc(getMemoryTag());
     DeserializationError err = DeserializationError::NoMemory;
 
     while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
 
-        doc = initMemJsonDoc(getMemoryTag(), capacity);
+        doc = initJsonDoc(getMemoryTag(), capacity);
         err = deserializeJson(doc, payload, length);
 
         capacity *= 2;
@@ -308,7 +308,7 @@ bool RequestQueue::receiveMessage(const char* payload, size_t length) {
                 * If the input type is MESSAGE_TYPE_CALLRESULT, then abort the operation to avoid getting stalled.
                 */
 
-            doc = initMemJsonDoc(getMemoryTag(), 200);
+            doc = initJsonDoc(getMemoryTag(), 200);
             char onlyRpcHeader[200];
             size_t onlyRpcHeader_len = removePayload(payload, length, onlyRpcHeader, sizeof(onlyRpcHeader));
             DeserializationError err2 = deserializeJson(doc, onlyRpcHeader, onlyRpcHeader_len);

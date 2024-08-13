@@ -18,12 +18,12 @@ namespace MicroOcpp {
 
 class Context;
 
-class ReservationService : public AllocOverrider {
+class ReservationService : public MemoryManaged {
 private:
     Context& context;
 
     const int maxReservations; // = number of physical connectors
-    MemVector<std::unique_ptr<Reservation>> reservations;
+    Vector<std::unique_ptr<Reservation>> reservations;
 
     std::shared_ptr<Configuration> reserveConnectorZeroSupportedBool;
 

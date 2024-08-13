@@ -10,9 +10,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp201::InstallCertificate;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-InstallCertificate::InstallCertificate(CertificateService& certService) : AllocOverrider("v201.Operation.", "InstallCertificate"), certService(certService) {
+InstallCertificate::InstallCertificate(CertificateService& certService) : MemoryManaged("v201.Operation.", "InstallCertificate"), certService(certService) {
 
 }
 
@@ -75,8 +75,8 @@ void InstallCertificate::processReq(JsonObject payload) {
     //operation executed successfully
 }
 
-std::unique_ptr<MemJsonDoc> InstallCertificate::createConf(){
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+std::unique_ptr<JsonDoc> InstallCertificate::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = status;
     return doc;

@@ -13,14 +13,14 @@ namespace MicroOcpp {
 
 class TransactionStore;
 
-class ConnectorTransactionStore : public AllocOverrider {
+class ConnectorTransactionStore : public MemoryManaged {
 private:
     TransactionStore& context;
     const unsigned int connectorId;
 
     std::shared_ptr<FilesystemAdapter> filesystem;
     
-    MemVector<std::weak_ptr<Transaction>> transactions;
+    Vector<std::weak_ptr<Transaction>> transactions;
 
 public:
     ConnectorTransactionStore(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem);
@@ -38,9 +38,9 @@ public:
     bool remove(unsigned int txNr);
 };
 
-class TransactionStore : public AllocOverrider {
+class TransactionStore : public MemoryManaged {
 private:
-    MemVector<std::unique_ptr<ConnectorTransactionStore>> connectors;
+    Vector<std::unique_ptr<ConnectorTransactionStore>> connectors;
 public:
     TransactionStore(unsigned int nConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 

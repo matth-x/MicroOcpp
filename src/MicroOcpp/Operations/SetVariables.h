@@ -27,10 +27,10 @@ struct SetVariableData {
     // SetVariableDataType
     Variable::AttributeType attributeType = Variable::AttributeType::Actual;
     const char *attributeValue; // will become invalid after processReq
-    MemString componentName;
+    String componentName;
     int componentEvseId = -1;
     int componentEvseConnectorId = -1;
-    MemString variableName;
+    String variableName;
 
     // SetVariableResultType
     SetVariableStatus attributeStatus;
@@ -38,10 +38,10 @@ struct SetVariableData {
     SetVariableData(const char *memory_tag = nullptr);
 };
 
-class SetVariables : public Operation, public AllocOverrider {
+class SetVariables : public Operation, public MemoryManaged {
 private:
     VariableService& variableService;
-    MemVector<SetVariableData> queries;
+    Vector<SetVariableData> queries;
 
     const char *errorCode = nullptr;
 public:
@@ -51,7 +51,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 

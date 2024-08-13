@@ -30,7 +30,7 @@ namespace MicroOcpp {
 
 class FilesystemAdapterIndex;
 
-class IndexedFileAdapter : public FileAdapter, public AllocOverrider {
+class IndexedFileAdapter : public FileAdapter, public MemoryManaged {
 private:
     FilesystemAdapterIndex& index;
     char fn [MO_MAX_PATH_SIZE];
@@ -39,7 +39,7 @@ private:
     size_t written = 0;
 public:
     IndexedFileAdapter(FilesystemAdapterIndex& index, const char *fn, std::unique_ptr<FileAdapter> file)
-            : AllocOverrider("FilesystemIndex"), index(index), file(std::move(file)) {
+            : MemoryManaged("FilesystemIndex"), index(index), file(std::move(file)) {
         snprintf(this->fn, sizeof(this->fn), "%s", fn);
     }
 
@@ -66,18 +66,18 @@ public:
     }
 };
 
-class FilesystemAdapterIndex : public FilesystemAdapter, public AllocOverrider {
+class FilesystemAdapterIndex : public FilesystemAdapter, public MemoryManaged {
 private:
     std::shared_ptr<FilesystemAdapter> filesystem;
 
     struct IndexEntry {
-        MemString fname;
+        String fname;
         size_t size;
 
-        IndexEntry(const char *fname, size_t size) : fname(makeMemString("FilesystemIndex", fname)), size(size) { }
+        IndexEntry(const char *fname, size_t size) : fname(makeString("FilesystemIndex", fname)), size(size) { }
     };
 
-    MemVector<IndexEntry> index;
+    Vector<IndexEntry> index;
 
     IndexEntry *getEntryByFname(const char *fn) {
         auto entry = std::find_if(index.begin(), index.end(),
@@ -104,7 +104,7 @@ private:
     
     void (*onDestruct)(void*) = nullptr;
 public:
-    FilesystemAdapterIndex(std::shared_ptr<FilesystemAdapter> filesystem, void (*onDestruct)(void*) = nullptr) : AllocOverrider("FilesystemIndex"), filesystem(std::move(filesystem)), index(makeMemVector<IndexEntry>("FilesystemIndex")), onDestruct(onDestruct) { }
+    FilesystemAdapterIndex(std::shared_ptr<FilesystemAdapter> filesystem, void (*onDestruct)(void*) = nullptr) : MemoryManaged("FilesystemIndex"), filesystem(std::move(filesystem)), index(makeVector<IndexEntry>("FilesystemIndex")), onDestruct(onDestruct) { }
 
     ~FilesystemAdapterIndex() {
         if (onDestruct) {
@@ -267,10 +267,10 @@ std::shared_ptr<FilesystemAdapter> decorateIndex(std::shared_ptr<FilesystemAdapt
 
 namespace MicroOcpp {
 
-class ArduinoFileAdapter : public FileAdapter, public AllocOverrider {
+class ArduinoFileAdapter : public FileAdapter, public MemoryManaged {
     File file;
 public:
-    ArduinoFileAdapter(File&& file) : AllocOverrider("Filesystem"), file(file) {}
+    ArduinoFileAdapter(File&& file) : MemoryManaged("Filesystem"), file(file) {}
 
     ~ArduinoFileAdapter() {
         if (file) {
@@ -292,14 +292,14 @@ public:
     }
 };
 
-class ArduinoFilesystemAdapter : public FilesystemAdapter, public AllocOverrider {
+class ArduinoFilesystemAdapter : public FilesystemAdapter, public MemoryManaged {
 private:
     bool valid = false;
     FilesystemOpt config;
 
     void (* onDestruct)(void*) = nullptr;
 public:
-    ArduinoFilesystemAdapter(FilesystemOpt config, void (*onDestruct)(void*) = nullptr) : AllocOverrider("Filesystem"), config(config), onDestruct(onDestruct) {
+    ArduinoFilesystemAdapter(FilesystemOpt config, void (*onDestruct)(void*) = nullptr) : MemoryManaged("Filesystem"), config(config), onDestruct(onDestruct) {
         valid = true;
 
         if (config.mustMount()) { 
@@ -485,10 +485,10 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 namespace MicroOcpp {
 
-class EspIdfFileAdapter : public FileAdapter, public AllocOverrider {
+class EspIdfFileAdapter : public FileAdapter, public MemoryManaged {
     FILE *file {nullptr};
 public:
-    EspIdfFileAdapter(FILE *file) : AllocOverrider("Filesystem"), file(file) {}
+    EspIdfFileAdapter(FILE *file) : MemoryManaged("Filesystem"), file(file) {}
 
     ~EspIdfFileAdapter() {
         fclose(file);
@@ -511,13 +511,13 @@ public:
     }
 };
 
-class EspIdfFilesystemAdapter : public FilesystemAdapter, public AllocOverrider {
+class EspIdfFilesystemAdapter : public FilesystemAdapter, public MemoryManaged {
 public:
     FilesystemOpt config;
 
     void (* onDestruct)(void*) = nullptr;
 public:
-    EspIdfFilesystemAdapter(FilesystemOpt config, void (* onDestruct)(void*) = nullptr) : AllocOverrider("Filesystem"), config(config), onDestruct(onDestruct) { }
+    EspIdfFilesystemAdapter(FilesystemOpt config, void (* onDestruct)(void*) = nullptr) : MemoryManaged("Filesystem"), config(config), onDestruct(onDestruct) { }
 
     ~EspIdfFilesystemAdapter() {
         if (config.mustMount()) {
@@ -670,10 +670,10 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 namespace MicroOcpp {
 
-class PosixFileAdapter : public FileAdapter, public AllocOverrider {
+class PosixFileAdapter : public FileAdapter, public MemoryManaged {
     FILE *file {nullptr};
 public:
-    PosixFileAdapter(FILE *file) : AllocOverrider("Filesystem"), file(file) {}
+    PosixFileAdapter(FILE *file) : MemoryManaged("Filesystem"), file(file) {}
 
     ~PosixFileAdapter() {
         fclose(file);
@@ -696,13 +696,13 @@ public:
     }
 };
 
-class PosixFilesystemAdapter : public FilesystemAdapter, public AllocOverrider {
+class PosixFilesystemAdapter : public FilesystemAdapter, public MemoryManaged {
 public:
     FilesystemOpt config;
 
     void (* onDestruct)(void*) = nullptr;
 public:
-    PosixFilesystemAdapter(FilesystemOpt config, void (* onDestruct)(void*) = nullptr) : AllocOverrider("Filesystem"), config(config), onDestruct(onDestruct) { }
+    PosixFilesystemAdapter(FilesystemOpt config, void (* onDestruct)(void*) = nullptr) : MemoryManaged("Filesystem"), config(config), onDestruct(onDestruct) { }
 
     ~PosixFilesystemAdapter() {
         if (onDestruct) {

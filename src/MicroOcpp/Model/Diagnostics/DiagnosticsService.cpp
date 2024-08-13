@@ -22,7 +22,7 @@
 using namespace MicroOcpp;
 using Ocpp16::DiagnosticsStatus;
 
-DiagnosticsService::DiagnosticsService(Context& context) : AllocOverrider("v16.Diagnostics.DiagnosticsService"), context(context), location(makeMemString(getMemoryTag())), diagFileList(makeMemVector<MemString>(getMemoryTag())) {
+DiagnosticsService::DiagnosticsService(Context& context) : MemoryManaged("v16.Diagnostics.DiagnosticsService"), context(context), location(makeString(getMemoryTag())), diagFileList(makeVector<String>(getMemoryTag())) {
 
     context.getOperationRegistry().registerOperation("GetDiagnostics", [this] () {
         return new Ocpp16::GetDiagnostics(*this);});
@@ -118,12 +118,12 @@ void DiagnosticsService::loop() {
 }
 
 //timestamps before year 2021 will be treated as "undefined"
-MemString DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime) {
+String DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime) {
     if (onUpload == nullptr) {
-        return makeMemString(getMemoryTag());
+        return makeString(getMemoryTag());
     }
 
-    MemString fileName;
+    String fileName;
     if (refreshFilename) {
         fileName = refreshFilename().c_str();
     } else {
@@ -271,8 +271,8 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
 
         auto& model = context.getModel();
 
-        auto cpModel = makeMemString(getMemoryTag());
-        auto fwVersion = makeMemString(getMemoryTag());
+        auto cpModel = makeString(getMemoryTag());
+        auto fwVersion = makeString(getMemoryTag());
 
         if (auto bootService = model.getBootService()) {
             if (auto cpCreds = bootService->getChargePointCredentials()) {

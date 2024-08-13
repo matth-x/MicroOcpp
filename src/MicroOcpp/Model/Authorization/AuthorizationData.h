@@ -37,7 +37,7 @@ enum class AuthorizationStatus : uint8_t {
 const char *serializeAuthorizationStatus(AuthorizationStatus status);
 AuthorizationStatus deserializeAuthorizationStatus(const char *cstr);
 
-class AuthorizationData : public AllocOverrider {
+class AuthorizationData : public MemoryManaged {
 private:
     //data structure optimized for memory consumption
 

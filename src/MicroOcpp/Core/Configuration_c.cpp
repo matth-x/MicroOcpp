@@ -9,7 +9,7 @@
 
 using namespace MicroOcpp;
 
-class ConfigurationC : public Configuration, public AllocOverrider {
+class ConfigurationC : public Configuration, public MemoryManaged {
 private:
     ocpp_configuration *config;
 public:
@@ -19,7 +19,7 @@ public:
     }
 
     bool setKey(const char *key) override {
-        updateMemTag("v16.Configuration.", key);
+        updateMemoryTag("v16.Configuration.", key);
         return config->set_key(config->user_data, key);
     }
 
@@ -116,12 +116,12 @@ public:
     }
 };
 
-class ConfigurationContainerC : public ConfigurationContainer, public AllocOverrider {
+class ConfigurationContainerC : public ConfigurationContainer, public MemoryManaged {
 private:
     ocpp_configuration_container *container;
 public:
     ConfigurationContainerC(ocpp_configuration_container *container, const char *filename, bool accessible) :
-            ConfigurationContainer(filename, accessible), AllocOverrider("v16.Configuration.ContainerC.", filename), container(container) {
+            ConfigurationContainer(filename, accessible), MemoryManaged("v16.Configuration.ContainerC.", filename), container(container) {
 
     }
 

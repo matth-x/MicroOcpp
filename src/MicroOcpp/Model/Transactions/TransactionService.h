@@ -25,10 +25,10 @@ namespace MicroOcpp {
 class Context;
 class Variable;
 
-class TransactionService : public AllocOverrider {
+class TransactionService : public MemoryManaged {
 public:
 
-    class Evse : public AllocOverrider {
+    class Evse : public MemoryManaged {
     private:
         Context& context;
         TransactionService& txService;
@@ -79,7 +79,7 @@ private:
     };
 
     Context& context;
-    MemVector<Evse> evses;
+    Vector<Evse> evses;
 
     Variable *txStartPointString = nullptr;
     Variable *txStopPointString = nullptr;
@@ -88,12 +88,12 @@ private:
     Variable *evConnectionTimeOutInt = nullptr;
     uint16_t trackTxStartPoint = -1;
     uint16_t trackTxStopPoint = -1;
-    MemVector<TxStartStopPoint> txStartPointParsed;
-    MemVector<TxStartStopPoint> txStopPointParsed;
+    Vector<TxStartStopPoint> txStartPointParsed;
+    Vector<TxStartStopPoint> txStopPointParsed;
     bool isTxStartPoint(TxStartStopPoint check);
     bool isTxStopPoint(TxStartStopPoint check);
 
-    bool parseTxStartStopPoint(const char *src, MemVector<TxStartStopPoint>& dst);
+    bool parseTxStartStopPoint(const char *src, Vector<TxStartStopPoint>& dst);
 
 public:
     TransactionService(Context& context);

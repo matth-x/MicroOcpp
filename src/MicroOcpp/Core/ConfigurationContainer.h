@@ -38,9 +38,9 @@ public:
     virtual void loadStaticKey(Configuration& config, const char *key) { } //possible optimization: can replace internal key with passed static key
 };
 
-class ConfigurationContainerVolatile : public ConfigurationContainer, public AllocOverrider {
+class ConfigurationContainerVolatile : public ConfigurationContainer, public MemoryManaged {
 private:
-    MemVector<std::shared_ptr<Configuration>> configurations;
+    Vector<std::shared_ptr<Configuration>> configurations;
 public:
     ConfigurationContainerVolatile(const char *filename, bool accessible);
 

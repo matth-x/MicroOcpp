@@ -12,9 +12,9 @@
 namespace MicroOcpp {
 namespace Ocpp16 {
 
-class GetConfiguration : public Operation, public AllocOverrider {
+class GetConfiguration : public Operation, public MemoryManaged {
 private:
-    MemVector<MemString> keys;
+    Vector<String> keys;
 
     const char *errorCode {nullptr};
     const char *errorDescription = "";
@@ -25,7 +25,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
     const char *getErrorDescription() override {return errorDescription;}

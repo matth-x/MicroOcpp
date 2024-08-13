@@ -20,9 +20,9 @@ namespace MicroOcpp {
 class Operation;
 class Model;
 
-class Request : public AllocOverrider {
+class Request : public MemoryManaged {
 private:
-    MemString messageID;
+    String messageID;
     std::unique_ptr<Operation> operation;
     void setMessageID(const char *id);
     OnReceiveConfListener onReceiveConfListener = [] (JsonObject payload) {};
@@ -64,7 +64,7 @@ public:
         Success,
         Failure
     };
-    CreateRequestResult createRequest(MemJsonDoc& out);
+    CreateRequestResult createRequest(JsonDoc& out);
 
    /**
     * Decides if message belongs to this operation instance and if yes, proccesses it. Receives both Confirmations and Errors
@@ -91,7 +91,7 @@ public:
         Failure
     };
 
-    CreateResponseResult createResponse(MemJsonDoc& out);
+    CreateResponseResult createResponse(JsonDoc& out);
 
     void setOnReceiveConfListener(OnReceiveConfListener onReceiveConf); //listener executed when we received the .conf() to a .req() we sent
     void setOnReceiveReqListener(OnReceiveReqListener onReceiveReq); //listener executed when we receive a .req()

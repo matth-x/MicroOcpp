@@ -26,10 +26,10 @@ namespace Ocpp201 {
 struct GetVariableData {
     // GetVariableDataType
     Variable::AttributeType attributeType = Variable::AttributeType::Actual;
-    MemString componentName;
+    String componentName;
     int componentEvseId = -1;
     int componentEvseConnectorId = -1;
-    MemString variableName;
+    String variableName;
 
     // GetVariableResultType
     GetVariableStatus attributeStatus;
@@ -38,10 +38,10 @@ struct GetVariableData {
     GetVariableData(const char *memory_tag = nullptr);
 };
 
-class GetVariables : public Operation, public AllocOverrider {
+class GetVariables : public Operation, public MemoryManaged {
 private:
     VariableService& variableService;
-    MemVector<GetVariableData> queries;
+    Vector<GetVariableData> queries;
 
     const char *errorCode = nullptr;
 public:
@@ -51,7 +51,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 

@@ -137,12 +137,12 @@ using CertificateHash = ocpp_cert_hash;
 /*
  * See OCPP 2.0.1 part 2 Data Type 2.5
  */
-struct CertificateChainHash : public AllocOverrider {
+struct CertificateChainHash : public MemoryManaged {
     GetCertificateIdType certificateType;
     CertificateHash certificateHashData;
-    MemVector<CertificateHash> childCertificateHashData;
+    Vector<CertificateHash> childCertificateHashData;
 
-    CertificateChainHash() : AllocOverrider("v2.0.1.Certificates.CertificateChainHash"), childCertificateHashData(makeMemVector<CertificateHash>(getMemoryTag())) { }
+    CertificateChainHash() : MemoryManaged("v2.0.1.Certificates.CertificateChainHash"), childCertificateHashData(makeVector<CertificateHash>(getMemoryTag())) { }
 };
 
 /*
@@ -152,7 +152,7 @@ class CertificateStore {
 public:
     virtual ~CertificateStore() = default;
 
-    virtual GetInstalledCertificateStatus getCertificateIds(const MemVector<GetCertificateIdType>& certificateType, MemVector<CertificateChainHash>& out) = 0;
+    virtual GetInstalledCertificateStatus getCertificateIds(const Vector<GetCertificateIdType>& certificateType, Vector<CertificateChainHash>& out) = 0;
     virtual DeleteCertificateStatus deleteCertificate(const CertificateHash& hash) = 0;
     virtual InstallCertificateStatus installCertificate(InstallCertificateType certificateType, const char *certificate) = 0;
 };

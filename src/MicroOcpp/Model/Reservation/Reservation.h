@@ -27,7 +27,7 @@ namespace MicroOcpp {
 
 class Model;
 
-class Reservation : public AllocOverrider {
+class Reservation : public MemoryManaged {
 private:
     Model& model;
     const unsigned int slot;

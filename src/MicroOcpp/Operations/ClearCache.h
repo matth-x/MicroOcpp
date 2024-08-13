@@ -11,7 +11,7 @@
 namespace MicroOcpp {
 namespace Ocpp16 {
 
-class ClearCache : public Operation, public AllocOverrider {
+class ClearCache : public Operation, public MemoryManaged {
 private:
     std::shared_ptr<FilesystemAdapter> filesystem;
     bool success = true;
@@ -22,7 +22,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 };
 
 } //end namespace Ocpp16

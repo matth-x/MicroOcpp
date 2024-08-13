@@ -437,11 +437,11 @@ void setOnSendConf(const char *operationType, OnSendConfListener onSendConf);
  * 
  * Use case 1, extend the library by sending additional operations. E.g. DataTransfer:
  * 
- * sendRequest("DataTransfer", [] () -> std::unique_ptr<MicroOcpp::MemJsonDoc> {
+ * sendRequest("DataTransfer", [] () -> std::unique_ptr<MicroOcpp::JsonDoc> {
  *     //will be called to create the request once this operation is being sent out
  *     size_t capacity = JSON_OBJECT_SIZE(3) +
  *                       JSON_OBJECT_SIZE(2); //for calculating the required capacity, see https://arduinojson.org/v6/assistant/
- *     auto res = std::unique_ptr<MicroOcpp::MemJsonDoc>(new MicroOcpp::MemJsonDoc(capacity)); 
+ *     auto res = std::unique_ptr<MicroOcpp::JsonDoc>(new MicroOcpp::JsonDoc(capacity)); 
  *     JsonObject request = *res;
  *     request["vendorId"] = "My company Ltd.";
  *     request["messageId"] = "TargetValues";
@@ -458,10 +458,10 @@ void setOnSendConf(const char *operationType, OnSendConfListener onSendConf);
  * 
  * Use case 2, bypass the business logic of this library for custom behavior. E.g. StartTransaction:
  * 
- * sendRequest("StartTransaction", [] () -> std::unique_ptr<MicroOcpp::MemJsonDoc> {
+ * sendRequest("StartTransaction", [] () -> std::unique_ptr<MicroOcpp::JsonDoc> {
  *     //will be called to create the request once this operation is being sent out
  *     size_t capacity = JSON_OBJECT_SIZE(4); //for calculating the required capacity, see https://arduinojson.org/v6/assistant/
- *     auto res = std::unique_ptr<MicroOcpp::MemJsonDoc>(new MicroOcpp::MemJsonDoc(capacity)); 
+ *     auto res = std::unique_ptr<MicroOcpp::JsonDoc>(new MicroOcpp::JsonDoc(capacity)); 
  *     JsonObject request = res->to<JsonObject>();
  *     request["connectorId"] = 1;
  *     request["idTag"] = "A9C3CE1D7B71EA";
@@ -478,7 +478,7 @@ void setOnSendConf(const char *operationType, OnSendConfListener onSendConf);
  * its own.
  */
 void sendRequest(const char *operationType,
-            std::function<std::unique_ptr<MicroOcpp::MemJsonDoc> ()> fn_createReq,
+            std::function<std::unique_ptr<MicroOcpp::JsonDoc> ()> fn_createReq,
             std::function<void (JsonObject)> fn_processConf);
 
 /*
@@ -496,11 +496,11 @@ void sendRequest(const char *operationType,
  *     const char *messageId = request["messageId"];
  *     int battery_capacity = request["data"]["battery_capacity"];
  *     int battery_soc = request["data"]["battery_soc"];
- * }, [] () -> std::unique_ptr<MicroOcpp::MemJsonDoc> {
+ * }, [] () -> std::unique_ptr<MicroOcpp::JsonDoc> {
  *     //will be called  to create the response once this operation is being sent out
  *     size_t capacity = JSON_OBJECT_SIZE(2) +
  *                       JSON_OBJECT_SIZE(1); //for calculating the required capacity, see https://arduinojson.org/v6/assistant/
- *     auto res = std::unique_ptr<MicroOcpp::MemJsonDoc>(new MicroOcpp::MemJsonDoc(capacity)); 
+ *     auto res = std::unique_ptr<MicroOcpp::JsonDoc>(new MicroOcpp::JsonDoc(capacity)); 
  *     JsonObject response = res->to<JsonObject>();
  *     response["status"] = "Accepted";
  *     response["data"]["max_energy"] = 59;
@@ -509,7 +509,7 @@ void sendRequest(const char *operationType,
  */
 void setRequestHandler(const char *operationType,
             std::function<void (JsonObject)> fn_processReq,
-            std::function<std::unique_ptr<MicroOcpp::MemJsonDoc> ()> fn_createConf);
+            std::function<std::unique_ptr<MicroOcpp::JsonDoc> ()> fn_createConf);
 
 /*
  * Send OCPP operations manually not bypassing the internal business logic

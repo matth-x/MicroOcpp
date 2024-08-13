@@ -19,7 +19,7 @@ class SampledValueDeSerializer {
 public:
     static T deserialize(const char *str);
     static bool ready(T& val);
-    static MemString serialize(T& val);
+    static String serialize(T& val);
     static int32_t toInteger(T& val);
 };
 
@@ -28,7 +28,7 @@ class SampledValueDeSerializer<int32_t> { // example class
 public:
     static int32_t deserialize(const char *str);
     static bool ready(int32_t& val) {return true;} //int32_t is always valid
-    static MemString serialize(int32_t& val);
+    static String serialize(int32_t& val);
     static int32_t toInteger(int32_t& val) {return val;} //no conversion required
 };
 
@@ -37,25 +37,25 @@ class SampledValueDeSerializer<float> { // Used in meterValues
 public:
     static float deserialize(const char *str) {return atof(str);}
     static bool ready(float& val) {return true;} //float is always valid
-    static MemString serialize(float& val);
+    static String serialize(float& val);
     static int32_t toInteger(float& val) {return (int32_t) val;}
 };
 
 class SampledValueProperties {
 private:
-    MemString format;
-    MemString measurand;
-    MemString phase;
-    MemString location;
-    MemString unit;
+    String format;
+    String measurand;
+    String phase;
+    String location;
+    String unit;
 
 public:
     SampledValueProperties() :
-            format(makeMemString("v16.Metering.SampledValueProperties")),
-            measurand(makeMemString("v16.Metering.SampledValueProperties")),
-            phase(makeMemString("v16.Metering.SampledValueProperties")),
-            location(makeMemString("v16.Metering.SampledValueProperties")),
-            unit(makeMemString("v16.Metering.SampledValueProperties")) { }
+            format(makeString("v16.Metering.SampledValueProperties")),
+            measurand(makeString("v16.Metering.SampledValueProperties")),
+            phase(makeString("v16.Metering.SampledValueProperties")),
+            location(makeString("v16.Metering.SampledValueProperties")),
+            unit(makeString("v16.Metering.SampledValueProperties")) { }
     SampledValueProperties(const SampledValueProperties& other) :
             format(other.format),
             measurand(other.measurand),
@@ -97,13 +97,13 @@ class SampledValue {
 protected:
     const SampledValueProperties& properties;
     const ReadingContext context;
-    virtual MemString serializeValue() = 0;
+    virtual String serializeValue() = 0;
 public:
     SampledValue(const SampledValueProperties& properties, ReadingContext context) : properties(properties), context(context) { }
     SampledValue(const SampledValue& other) : properties(other.properties), context(other.context) { }
     virtual ~SampledValue() = default;
 
-    std::unique_ptr<MemJsonDoc> toJson();
+    std::unique_ptr<JsonDoc> toJson();
 
     virtual operator bool() = 0;
     virtual int32_t toInteger() = 0;
@@ -112,17 +112,17 @@ public:
 };
 
 template <class T, class DeSerializer>
-class SampledValueConcrete : public SampledValue, public AllocOverrider {
+class SampledValueConcrete : public SampledValue, public MemoryManaged {
 private:
     T value;
 public:
-    SampledValueConcrete(const SampledValueProperties& properties, ReadingContext context, const T&& value) : SampledValue(properties, context), AllocOverrider("v16.Metering.SampledValueConcrete"), value(value) { }
-    SampledValueConcrete(const SampledValueConcrete& other) : SampledValue(other), AllocOverrider(other), value(other.value) { }
+    SampledValueConcrete(const SampledValueProperties& properties, ReadingContext context, const T&& value) : SampledValue(properties, context), MemoryManaged("v16.Metering.SampledValueConcrete"), value(value) { }
+    SampledValueConcrete(const SampledValueConcrete& other) : SampledValue(other), MemoryManaged(other), value(other.value) { }
     ~SampledValueConcrete() = default;
 
     operator bool() override {return DeSerializer::ready(value);}
 
-    MemString serializeValue() override {return DeSerializer::serialize(value);}
+    String serializeValue() override {return DeSerializer::serialize(value);}
 
     int32_t toInteger() override { return DeSerializer::toInteger(value);}
 };
@@ -139,11 +139,11 @@ public:
 };
 
 template <class T, class DeSerializer>
-class SampledValueSamplerConcrete : public SampledValueSampler, public AllocOverrider {
+class SampledValueSamplerConcrete : public SampledValueSampler, public MemoryManaged {
 private:
     std::function<T(ReadingContext context)> sampler;
 public:
-    SampledValueSamplerConcrete(SampledValueProperties properties, std::function<T(ReadingContext)> sampler) : SampledValueSampler(properties), AllocOverrider("v16.Metering.SampledValueSamplerConcrete"), sampler(sampler) { }
+    SampledValueSamplerConcrete(SampledValueProperties properties, std::function<T(ReadingContext)> sampler) : SampledValueSampler(properties), MemoryManaged("v16.Metering.SampledValueSamplerConcrete"), sampler(sampler) { }
     std::unique_ptr<SampledValue> takeValue(ReadingContext context) override {
         return std::unique_ptr<SampledValueConcrete<T, DeSerializer>>(new SampledValueConcrete<T, DeSerializer>(
             properties,

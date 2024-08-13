@@ -31,12 +31,12 @@ enum class InstallationStatus {
 class Context;
 class Request;
 
-class FirmwareService : public AllocOverrider {
+class FirmwareService : public MemoryManaged {
 private:
     Context& context;
     
     std::shared_ptr<Configuration> previousBuildNumberString;
-    MemString buildNumber;
+    String buildNumber;
 
     std::function<DownloadStatus()> downloadStatusInput;
     bool downloadIssued = false;
@@ -51,7 +51,7 @@ private:
     Ocpp16::FirmwareStatus lastReportedStatus = Ocpp16::FirmwareStatus::Idle;
     bool checkedSuccessfulFwUpdate = false;
 
-    MemString location;
+    String location;
     Timestamp retreiveDate;
     unsigned int retries = 0;
     unsigned int retryInterval = 0;

@@ -14,10 +14,10 @@ class DiagnosticsService;
 
 namespace Ocpp16 {
 
-class GetDiagnostics : public Operation, public AllocOverrider {
+class GetDiagnostics : public Operation, public MemoryManaged {
 private:
     DiagnosticsService& diagService;
-    MemString fileName;
+    String fileName;
 
     const char *errorCode = nullptr;
 public:
@@ -27,7 +27,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

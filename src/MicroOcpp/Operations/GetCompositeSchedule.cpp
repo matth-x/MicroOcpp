@@ -8,9 +8,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::GetCompositeSchedule;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-GetCompositeSchedule::GetCompositeSchedule(Model& model, SmartChargingService& scService) : AllocOverrider("v16.Operation.", "GetCompositeSchedule"), model(model), scService(scService) {
+GetCompositeSchedule::GetCompositeSchedule(Model& model, SmartChargingService& scService) : MemoryManaged("v16.Operation.", "GetCompositeSchedule"), model(model), scService(scService) {
 
 }
 
@@ -41,12 +41,12 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<MemJsonDoc> GetCompositeSchedule::createConf(){
+std::unique_ptr<JsonDoc> GetCompositeSchedule::createConf(){
 
     bool success = false;
 
     auto chargingSchedule = scService.getCompositeSchedule((unsigned int) connectorId, duration, chargingRateUnit);
-    MemJsonDoc chargingScheduleDoc {0};
+    JsonDoc chargingScheduleDoc {0};
 
     if (chargingSchedule) {
         success = chargingSchedule->toJson(chargingScheduleDoc);
@@ -59,7 +59,7 @@ std::unique_ptr<MemJsonDoc> GetCompositeSchedule::createConf(){
     }
 
     if (success && chargingSchedule) {
-        auto doc = makeMemJsonDoc(getMemoryTag(),
+        auto doc = makeJsonDoc(getMemoryTag(),
                         JSON_OBJECT_SIZE(4) +
                         chargingScheduleDoc.memoryUsage());
         JsonObject payload = doc->to<JsonObject>();
@@ -69,7 +69,7 @@ std::unique_ptr<MemJsonDoc> GetCompositeSchedule::createConf(){
         payload["chargingSchedule"] = chargingScheduleDoc;
         return doc;
     } else {
-        auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+        auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
         JsonObject payload = doc->to<JsonObject>();
         payload["status"] = "Rejected";
         return doc;

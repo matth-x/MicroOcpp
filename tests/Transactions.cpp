@@ -42,7 +42,7 @@ TEST_CASE( "Transactions" ) {
             [] (JsonObject) {}, //ignore req
             [] () {
                 //create conf
-                auto doc = makeMemJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
+                auto doc = makeJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
                 auto payload = doc->to<JsonObject>();
                 payload["idTokenInfo"]["status"] = "Accepted";
                 return doc;

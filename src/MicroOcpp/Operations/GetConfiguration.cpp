@@ -7,9 +7,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::GetConfiguration;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-GetConfiguration::GetConfiguration() : AllocOverrider("v16.Operation.", "GetConfiguration"), keys{makeMemVector<MemString>(getMemoryTag())} {
+GetConfiguration::GetConfiguration() : MemoryManaged("v16.Operation.", "GetConfiguration"), keys{makeVector<String>(getMemoryTag())} {
 
 }
 
@@ -21,14 +21,14 @@ void GetConfiguration::processReq(JsonObject payload) {
 
     JsonArray requestedKeys = payload["key"];
     for (size_t i = 0; i < requestedKeys.size(); i++) {
-        keys.emplace_back(makeMemString(getMemoryTag(), requestedKeys[i].as<const char*>()));
+        keys.emplace_back(makeString(getMemoryTag(), requestedKeys[i].as<const char*>()));
     }
 }
 
-std::unique_ptr<MemJsonDoc> GetConfiguration::createConf(){
+std::unique_ptr<JsonDoc> GetConfiguration::createConf(){
 
-    MemVector<Configuration*> configurations = makeMemVector<Configuration*>(getMemoryTag());
-    MemVector<const char*> unknownKeys = makeMemVector<const char*>(getMemoryTag());
+    Vector<Configuration*> configurations = makeVector<Configuration*>(getMemoryTag());
+    Vector<const char*> unknownKeys = makeVector<const char*>(getMemoryTag());
 
     auto containers = getConfigurationContainersPublic();
 
@@ -83,10 +83,10 @@ std::unique_ptr<MemJsonDoc> GetConfiguration::createConf(){
     
     MO_DBG_DEBUG("GetConfiguration capacity: %zu", jcapacity);
 
-    std::unique_ptr<MemJsonDoc> doc;
+    std::unique_ptr<JsonDoc> doc;
 
     if (jcapacity <= MO_MAX_JSON_CAPACITY) {
-        doc = makeMemJsonDoc(getMemoryTag(), jcapacity);
+        doc = makeJsonDoc(getMemoryTag(), jcapacity);
     }
 
     if (!doc || doc->capacity() < jcapacity) {

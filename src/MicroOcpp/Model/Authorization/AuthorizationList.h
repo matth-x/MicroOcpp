@@ -23,10 +23,10 @@
 
 namespace MicroOcpp {
 
-class AuthorizationList : public AllocOverrider {
+class AuthorizationList : public MemoryManaged {
 private:
     int listVersion = 0;
-    MemVector<AuthorizationData> localAuthorizationList; //sorted list
+    Vector<AuthorizationData> localAuthorizationList; //sorted list
 public:
     AuthorizationList();
     ~AuthorizationList();

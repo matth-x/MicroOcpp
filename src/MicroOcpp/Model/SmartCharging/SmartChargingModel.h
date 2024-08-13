@@ -76,12 +76,12 @@ public:
     int numberPhases = 3;
 };
 
-class ChargingSchedule : public AllocOverrider {
+class ChargingSchedule : public MemoryManaged {
 public:
     int duration = -1;
     Timestamp startSchedule;
     ChargingRateUnitType chargingRateUnit;
-    MemVector<ChargingSchedulePeriod> chargingSchedulePeriod;
+    Vector<ChargingSchedulePeriod> chargingSchedulePeriod;
     float minChargingRate = -1.0f;
 
     ChargingProfileKindType chargingProfileKind; //copied from ChargingProfile to increase cohesion of limit algorithms
@@ -99,7 +99,7 @@ public:
      */
     bool calculateLimit(const Timestamp &t, const Timestamp &startOfCharging, ChargeRate& limit, Timestamp& nextChange);
 
-    bool toJson(MemJsonDoc& out);
+    bool toJson(JsonDoc& out);
 
     /*
     * print on console
@@ -107,7 +107,7 @@ public:
     void printSchedule();
 };
 
-class ChargingProfile : public AllocOverrider {
+class ChargingProfile : public MemoryManaged {
 public:
     int chargingProfileId = -1;
     int transactionId = -1;
@@ -142,7 +142,7 @@ public:
     
     ChargingProfilePurposeType getChargingProfilePurpose();
 
-    bool toJson(MemJsonDoc& out);
+    bool toJson(JsonDoc& out);
 
     /*
     * print on console

@@ -25,7 +25,7 @@
 using namespace MicroOcpp;
 using MicroOcpp::Ocpp16::FirmwareStatus;
 
-FirmwareService::FirmwareService(Context& context) : AllocOverrider("v16.Firmware.FirmwareService"), context(context), buildNumber(makeMemString(getMemoryTag())), location(makeMemString(getMemoryTag())) {
+FirmwareService::FirmwareService(Context& context) : MemoryManaged("v16.Firmware.FirmwareService"), context(context), buildNumber(makeString(getMemoryTag())), location(makeString(getMemoryTag())) {
     
     context.getOperationRegistry().registerOperation("UpdateFirmware", [this] () {
         return new Ocpp16::UpdateFirmware(*this);});

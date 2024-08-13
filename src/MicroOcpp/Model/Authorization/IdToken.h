@@ -18,7 +18,7 @@
 namespace MicroOcpp {
 
 // IdTokenType (2.28)
-class IdToken : public AllocOverrider {
+class IdToken : public MemoryManaged {
 public:
 
     // IdTokenEnumType (3.43)

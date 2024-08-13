@@ -364,7 +364,7 @@ void ocpp_set_console_out_c(void (*console_out)(const char *msg)) {
 
 void ocpp_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data) {
     
-    MicroOcpp::MemString idTag_capture = MicroOcpp::makeMemString("MicroOcpp_c.cpp", idTag);
+    MicroOcpp::String idTag_capture = MicroOcpp::makeString("MicroOcpp_c.cpp", idTag);
 
     authorize(idTag,
             onConfirmation ? [onConfirmation, idTag_capture, user_data] (JsonObject payload) {

@@ -15,7 +15,7 @@
 
 using namespace MicroOcpp;
 
-IdToken::IdToken(const char *token, Type type, const char *memoryTag) : AllocOverrider(memoryTag ? memoryTag : "v201.Authorization.IdToken"), type(type) {
+IdToken::IdToken(const char *token, Type type, const char *memoryTag) : MemoryManaged(memoryTag ? memoryTag : "v201.Authorization.IdToken"), type(type) {
     if (token) {
         auto ret = snprintf(idToken, MO_IDTOKEN_LEN_MAX + 1, "%s", token);
         if (ret < 0 || ret >= MO_IDTOKEN_LEN_MAX + 1) {

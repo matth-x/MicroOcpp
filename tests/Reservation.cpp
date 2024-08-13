@@ -92,7 +92,7 @@ TEST_CASE( "Reservation" ) {
                 "RemoteStartTransaction",
                 [] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["idTag"] = "wrong idTag";
                     return doc;},
@@ -115,7 +115,7 @@ TEST_CASE( "Reservation" ) {
                 "RemoteStartTransaction",
                 [idTag] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["idTag"] = idTag;
                     return doc;},
@@ -177,7 +177,7 @@ TEST_CASE( "Reservation" ) {
                     [parentIdTag, &checkProcessed] () {
                         //create conf
                         checkProcessed = true;
-                        auto doc = makeMemJsonDoc("UnitTests", 
+                        auto doc = makeJsonDoc("UnitTests", 
                                 JSON_OBJECT_SIZE(1) + //payload root
                                 JSON_OBJECT_SIZE(3)); //idTagInfo
                         auto payload = doc->to<JsonObject>();
@@ -319,7 +319,7 @@ TEST_CASE( "Reservation" ) {
                 "ReserveNow",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests", 
+                    auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
                             JSONDATE_LENGTH + 1);
                     auto payload = doc->to<JsonObject>();
@@ -355,7 +355,7 @@ TEST_CASE( "Reservation" ) {
                 "ReserveNow",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests", 
+                    auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
                             JSONDATE_LENGTH + 1);
                     auto payload = doc->to<JsonObject>();
@@ -390,7 +390,7 @@ TEST_CASE( "Reservation" ) {
                 "ReserveNow",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests", 
+                    auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
                             JSONDATE_LENGTH + 1);
                     auto payload = doc->to<JsonObject>();
@@ -427,7 +427,7 @@ TEST_CASE( "Reservation" ) {
                 "ReserveNow",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests", 
+                    auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
                             JSONDATE_LENGTH + 1);
                     auto payload = doc->to<JsonObject>();
@@ -473,7 +473,7 @@ TEST_CASE( "Reservation" ) {
                 "CancelReservation",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["reservationId"] = reservationId;
                     return doc;},
@@ -494,7 +494,7 @@ TEST_CASE( "Reservation" ) {
                 "CancelReservation",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["reservationId"] = reservationId;
                     return doc;},

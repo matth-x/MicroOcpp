@@ -14,7 +14,7 @@
 
 using namespace MicroOcpp;
 
-AuthorizationList::AuthorizationList() : AllocOverrider("v16.Authorization.AuthorizationList"), localAuthorizationList(makeMemVector<AuthorizationData>(getMemoryTag())) {
+AuthorizationList::AuthorizationList() : MemoryManaged("v16.Authorization.AuthorizationList"), localAuthorizationList(makeVector<AuthorizationData>(getMemoryTag())) {
 
 }
 
@@ -60,8 +60,8 @@ bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool d
         }
     }
 
-    auto authlist_index = makeMemVector<int>(getMemoryTag());
-    auto remove_list = makeMemVector<int>(getMemoryTag());
+    auto authlist_index = makeVector<int>(getMemoryTag());
+    auto remove_list = makeVector<int>(getMemoryTag());
 
     unsigned int resultingListLength = 0;
 

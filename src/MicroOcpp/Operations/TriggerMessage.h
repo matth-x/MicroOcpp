@@ -15,7 +15,7 @@ class Context;
 
 namespace Ocpp16 {
 
-class TriggerMessage : public Operation, public AllocOverrider {
+class TriggerMessage : public Operation, public MemoryManaged {
 private:
     Context& context;
     const char *statusMessage = nullptr;
@@ -28,7 +28,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

@@ -7,9 +7,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::UnlockConnector;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-UnlockConnector::UnlockConnector(Model& model) : AllocOverrider("v16.Operation.", "UnlockConnector"), model(model) {
+UnlockConnector::UnlockConnector(Model& model) : MemoryManaged("v16.Operation.", "UnlockConnector"), model(model) {
   
 }
 
@@ -47,7 +47,7 @@ void UnlockConnector::processReq(JsonObject payload) {
 #endif //MO_ENABLE_CONNECTOR_LOCK
 }
 
-std::unique_ptr<MemJsonDoc> UnlockConnector::createConf() {
+std::unique_ptr<JsonDoc> UnlockConnector::createConf() {
 
     const char *status = "NotSupported";
 
@@ -73,7 +73,7 @@ std::unique_ptr<MemJsonDoc> UnlockConnector::createConf() {
     }
 #endif //MO_ENABLE_CONNECTOR_LOCK
 
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = status;
     return doc;

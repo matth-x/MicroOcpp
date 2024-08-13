@@ -89,7 +89,7 @@ bool Configuration::isReadOnly() {
  * before its initialization stage. Then the library won't create new config objects but 
  */
 
-class ConfigInt : public Configuration, public AllocOverrider {
+class ConfigInt : public Configuration, public MemoryManaged {
 private:
     const char *key = nullptr;
     int val = 0;
@@ -99,7 +99,7 @@ public:
 
     bool setKey(const char *key) override {
         this->key = key;
-        updateMemTag("v16.Configuration.", key);
+        updateMemoryTag("v16.Configuration.", key);
         return true;
     }
 
@@ -121,7 +121,7 @@ public:
     }
 };
 
-class ConfigBool : public Configuration, public AllocOverrider {
+class ConfigBool : public Configuration, public MemoryManaged {
 private:
     const char *key = nullptr;
     bool val = false;
@@ -131,7 +131,7 @@ public:
 
     bool setKey(const char *key) override {
         this->key = key;
-        updateMemTag("v16.Configuration.", key);
+        updateMemoryTag("v16.Configuration.", key);
         return true;
     }
 
@@ -153,7 +153,7 @@ public:
     }
 };
 
-class ConfigString : public Configuration, public AllocOverrider {
+class ConfigString : public Configuration, public MemoryManaged {
 private:
     const char *key = nullptr;
     char *val = nullptr;
@@ -169,7 +169,7 @@ public:
 
     bool setKey(const char *key) override {
         this->key = key;
-        updateMemTag("v16.Configuration.", key);
+        updateMemoryTag("v16.Configuration.", key);
         if (val) {
             MO_MEM_SET_TAG(val, getMemoryTag());
         }

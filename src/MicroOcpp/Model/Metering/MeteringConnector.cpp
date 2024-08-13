@@ -18,7 +18,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::Ocpp16;
 
 MeteringConnector::MeteringConnector(Model& model, int connectorId, MeterStore& meterStore)
-        : AllocOverrider("v16.Metering.MeteringConnector"), model(model), connectorId{connectorId}, meterStore(meterStore), meterData(makeMemVector<std::unique_ptr<MeterValue>>(getMemoryTag())), samplers(makeMemVector<std::unique_ptr<SampledValueSampler>>(getMemoryTag())) {
+        : MemoryManaged("v16.Metering.MeteringConnector"), model(model), connectorId{connectorId}, meterStore(meterStore), meterData(makeVector<std::unique_ptr<MeterValue>>(getMemoryTag())), samplers(makeVector<std::unique_ptr<SampledValueSampler>>(getMemoryTag())) {
 
     auto meterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData", "");
     declareConfiguration<int>("MeterValuesSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
@@ -58,7 +58,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
 
     if ((txBreak || meterData.size() >= (size_t) meterValueCacheSizeInt->getInt()) && !meterData.empty()) {
         auto meterValues = std::unique_ptr<MeterValues>(new MeterValues(std::move(meterData), connectorId, transaction));
-        meterData = makeMemVector<std::unique_ptr<MeterValue>>(getMemoryTag());
+        meterData = makeVector<std::unique_ptr<MeterValue>>(getMemoryTag());
         return std::move(meterValues); //std::move is required for some compilers even if it's not mandated by standard C++
     }
 

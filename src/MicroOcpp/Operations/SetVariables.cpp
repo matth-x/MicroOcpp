@@ -12,13 +12,13 @@
 
 using MicroOcpp::Ocpp201::SetVariableData;
 using MicroOcpp::Ocpp201::SetVariables;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-SetVariableData::SetVariableData(const char *memory_tag) : componentName{makeMemString(memory_tag)}, variableName{makeMemString(memory_tag)} {
+SetVariableData::SetVariableData(const char *memory_tag) : componentName{makeString(memory_tag)}, variableName{makeString(memory_tag)} {
 
 }
 
-SetVariables::SetVariables(VariableService& variableService) : AllocOverrider("v201.Operation.", "SetVariables"), variableService(variableService), queries(makeMemVector<SetVariableData>(getMemoryTag())) {
+SetVariables::SetVariables(VariableService& variableService) : MemoryManaged("v201.Operation.", "SetVariables"), variableService(variableService), queries(makeVector<SetVariableData>(getMemoryTag())) {
   
 }
 
@@ -99,7 +99,7 @@ void SetVariables::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<MemJsonDoc> SetVariables::createConf(){
+std::unique_ptr<JsonDoc> SetVariables::createConf(){
     size_t capacity = JSON_ARRAY_SIZE(queries.size());
     for (const auto& data : queries) {
         capacity += 
@@ -110,7 +110,7 @@ std::unique_ptr<MemJsonDoc> SetVariables::createConf(){
                 JSON_OBJECT_SIZE(2) + // variable
                     data.variableName.length() + 1;
     }
-    auto doc = makeMemJsonDoc(getMemoryTag(), capacity);
+    auto doc = makeJsonDoc(getMemoryTag(), capacity);
 
     JsonObject payload = doc->to<JsonObject>();
     JsonArray setVariableResult = payload.createNestedArray("setVariableResult");

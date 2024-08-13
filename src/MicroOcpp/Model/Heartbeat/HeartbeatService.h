@@ -14,7 +14,7 @@ namespace MicroOcpp {
 
 class Context;
 
-class HeartbeatService : public AllocOverrider {
+class HeartbeatService : public MemoryManaged {
 private:
     Context& context;
 

@@ -11,9 +11,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp201::RequestStartTransaction;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-RequestStartTransaction::RequestStartTransaction(TransactionService& txService) : AllocOverrider("v201.Operation.", "RequestStartTransaction"), txService(txService) {
+RequestStartTransaction::RequestStartTransaction(TransactionService& txService) : MemoryManaged("v201.Operation.", "RequestStartTransaction"), txService(txService) {
   
 }
 
@@ -46,9 +46,9 @@ void RequestStartTransaction::processReq(JsonObject payload) {
     status = txService.requestStartTransaction(evseId, remoteStartId, idToken, transactionId);
 }
 
-std::unique_ptr<MemJsonDoc> RequestStartTransaction::createConf(){
+std::unique_ptr<JsonDoc> RequestStartTransaction::createConf(){
 
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2));
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2));
     JsonObject payload = doc->to<JsonObject>();
 
     const char *statusCstr = "";

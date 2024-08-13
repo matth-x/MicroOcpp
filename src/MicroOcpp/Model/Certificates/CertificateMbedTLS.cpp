@@ -134,7 +134,7 @@ bool ocpp_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmType 
 
 namespace MicroOcpp {
 
-class CertificateStoreMbedTLS : public CertificateStore, public AllocOverrider {
+class CertificateStoreMbedTLS : public CertificateStore, public MemoryManaged {
 private:
     std::shared_ptr<FilesystemAdapter> filesystem;
 
@@ -185,11 +185,11 @@ private:
     }
 public:
     CertificateStoreMbedTLS(std::shared_ptr<FilesystemAdapter> filesystem)
-            : AllocOverrider("v201.Certificates.CertificateStoreMbedTLS"), filesystem(filesystem) {
+            : MemoryManaged("v201.Certificates.CertificateStoreMbedTLS"), filesystem(filesystem) {
 
     }
 
-    GetInstalledCertificateStatus getCertificateIds(const MemVector<GetCertificateIdType>& certificateType, MemVector<CertificateChainHash>& out) override {
+    GetInstalledCertificateStatus getCertificateIds(const Vector<GetCertificateIdType>& certificateType, Vector<CertificateChainHash>& out) override {
         out.clear();
 
         for (auto certType : certificateType) {
@@ -325,7 +325,7 @@ public:
 #endif // MO_DBG_LEVEL >= MO_DL_DEBUG
 
         //check if cert is already stored on flash
-        auto installedCerts = makeMemVector<CertificateChainHash>(getMemoryTag());
+        auto installedCerts = makeVector<CertificateChainHash>(getMemoryTag());
         auto ret = getCertificateIds({certTypeGetType}, installedCerts);
         if (ret == GetInstalledCertificateStatus_Accepted) {
             for (auto &installedCert : installedCerts) {

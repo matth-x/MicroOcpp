@@ -22,7 +22,7 @@
 
 namespace MicroOcpp {
 
-class FtpTransferMbedTLS : public FtpUpload, public FtpDownload, public AllocOverrider {
+class FtpTransferMbedTLS : public FtpUpload, public FtpDownload, public MemoryManaged {
 private:
     //MbedTLS common
     mbedtls_entropy_context entropy;
@@ -50,15 +50,15 @@ private:
     bool data_conn_accepted = false; //Server sent okay to upload / download data
 
     //FTP URL
-    MemString user;
-    MemString pass;
-    MemString ctrl_host;
-    MemString ctrl_port;
-    MemString dir;
-    MemString fname;
+    String user;
+    String pass;
+    String ctrl_host;
+    String ctrl_port;
+    String dir;
+    String fname;
 
-    MemString data_host;
-    MemString data_port;
+    String data_host;
+    String data_port;
 
     bool read_url_ctrl(const char *ftp_url);
     bool read_url_data(const char *data_url);
@@ -112,7 +112,7 @@ public:
             const char *ca_cert = nullptr); // nullptr to disable cert check; will be ignored for non-TLS connections
 };
 
-class FtpClientMbedTLS : public FtpClient, public AllocOverrider {
+class FtpClientMbedTLS : public FtpClient, public MemoryManaged {
 private:
     const char *client_cert = nullptr;
     const char *client_key = nullptr;
@@ -165,18 +165,18 @@ void mo_mbedtls_log(void *user, int level, const char *file, int line, const cha
  */
 
 FtpTransferMbedTLS::FtpTransferMbedTLS(bool tls_only, const char *client_cert, const char *client_key) : 
-        AllocOverrider("FTP.TransferMbedTLS"),
+        MemoryManaged("FTP.TransferMbedTLS"),
         client_cert(client_cert),
         client_key(client_key),
         isSecure(tls_only),
-        user(makeMemString(getMemoryTag())),
-        pass(makeMemString(getMemoryTag())),
-        ctrl_host(makeMemString(getMemoryTag())),
-        ctrl_port(makeMemString(getMemoryTag())),
-        dir(makeMemString(getMemoryTag())),
-        fname(makeMemString(getMemoryTag())),
-        data_host(makeMemString(getMemoryTag())),
-        data_port(makeMemString(getMemoryTag())) {
+        user(makeString(getMemoryTag())),
+        pass(makeString(getMemoryTag())),
+        ctrl_host(makeString(getMemoryTag())),
+        ctrl_port(makeString(getMemoryTag())),
+        dir(makeString(getMemoryTag())),
+        fname(makeString(getMemoryTag())),
+        data_host(makeString(getMemoryTag())),
+        data_port(makeString(getMemoryTag())) {
 
     mbedtls_net_init(&ctrl_fd);
     mbedtls_ssl_init(&ctrl_ssl);
@@ -793,7 +793,7 @@ bool FtpTransferMbedTLS::isActive() {
 }
 
 bool FtpTransferMbedTLS::read_url_ctrl(const char *ftp_url_raw) {
-    MemString ftp_url = makeMemString(getMemoryTag(), ftp_url_raw); //copy input ftp_url
+    String ftp_url = makeString(getMemoryTag(), ftp_url_raw); //copy input ftp_url
 
     //tolower protocol specifier
     for (auto c = ftp_url.begin(); *c != ':' && c != ftp_url.end(); c++) {
@@ -801,7 +801,7 @@ bool FtpTransferMbedTLS::read_url_ctrl(const char *ftp_url_raw) {
     }
 
     //parse FTP URL: protocol specifier
-    MemString proto = makeMemString(getMemoryTag());
+    String proto = makeString(getMemoryTag());
     if (!strncmp(ftp_url.c_str(), "ftps://", strlen("ftps://"))) {
         //FTP over TLS (RFC 4217)
         proto = "ftps://";
@@ -816,7 +816,7 @@ bool FtpTransferMbedTLS::read_url_ctrl(const char *ftp_url_raw) {
 
     //parse FTP URL: dir and fname
     auto dir_pos = ftp_url.find_first_of('/', proto.length());
-    if (dir_pos != MemString::npos) {
+    if (dir_pos != String::npos) {
         auto fname_pos = ftp_url.find_last_of('/');
         dir = ftp_url.substr(dir_pos, fname_pos - dir_pos);
         fname = ftp_url.substr(fname_pos + 1);
@@ -831,11 +831,11 @@ bool FtpTransferMbedTLS::read_url_ctrl(const char *ftp_url_raw) {
 
     //parse FTP URL: user, pass, host, port
 
-    MemString user_pass_host_port = ftp_url.substr(proto.length(), dir_pos - proto.length());
-    MemString user_pass = makeMemString(getMemoryTag());
-    MemString host_port = makeMemString(getMemoryTag());
+    String user_pass_host_port = ftp_url.substr(proto.length(), dir_pos - proto.length());
+    String user_pass = makeString(getMemoryTag());
+    String host_port = makeString(getMemoryTag());
     auto user_pass_delim = user_pass_host_port.find_first_of('@');
-    if (user_pass_delim != MemString::npos) {
+    if (user_pass_delim != String::npos) {
         host_port = user_pass_host_port.substr(user_pass_delim + 1);
         user_pass = user_pass_host_port.substr(0, user_pass_delim);
     } else {
@@ -844,7 +844,7 @@ bool FtpTransferMbedTLS::read_url_ctrl(const char *ftp_url_raw) {
 
     if (!user_pass.empty()) {
         auto user_delim = user_pass.find_first_of(':');
-        if (user_delim != MemString::npos) {
+        if (user_delim != String::npos) {
             user = user_pass.substr(0, user_delim);
             pass = user_pass.substr(user_delim + 1);
         } else {
@@ -860,7 +860,7 @@ bool FtpTransferMbedTLS::read_url_ctrl(const char *ftp_url_raw) {
     }
 
     auto host_port_delim = host_port.find(':');
-    if (host_port_delim != MemString::npos) {
+    if (host_port_delim != String::npos) {
         ctrl_host = host_port.substr(0, host_port_delim);
         ctrl_port = host_port.substr(host_port_delim + 1);
     } else {
@@ -876,7 +876,7 @@ bool FtpTransferMbedTLS::read_url_ctrl(const char *ftp_url_raw) {
 
 bool FtpTransferMbedTLS::read_url_data(const char *data_url_raw) {
 
-    MemString data_url = makeMemString(getMemoryTag(), data_url_raw); //format like " Entering Passive Mode (h1,h2,h3,h4,p1,p2)"
+    String data_url = makeString(getMemoryTag(), data_url_raw); //format like " Entering Passive Mode (h1,h2,h3,h4,p1,p2)"
 
     // parse address field. Replace all non-digits by delimiter character ' '
     for (char& c : data_url) {
@@ -914,7 +914,7 @@ bool FtpTransferMbedTLS::read_url_data(const char *data_url_raw) {
 }
 
 FtpClientMbedTLS::FtpClientMbedTLS(bool tls_only, const char *client_cert, const char *client_key)
-        : AllocOverrider("FTP.ClientMbedTLS"), client_cert(client_cert), client_key(client_key), tls_only(tls_only) {
+        : MemoryManaged("FTP.ClientMbedTLS"), client_cert(client_cert), client_key(client_key), tls_only(tls_only) {
 
 }
 

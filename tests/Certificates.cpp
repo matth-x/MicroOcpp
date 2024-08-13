@@ -109,7 +109,7 @@ TEST_CASE( "M - Certificates" ) {
         auto ret1 = certs->installCertificate(InstallCertificateType_CSMSRootCertificate, root_cert);
         REQUIRE(ret1 == InstallCertificateStatus_Accepted);
 
-        auto chain = makeMemVector<CertificateChainHash>("UnitTests");
+        auto chain = makeVector<CertificateChainHash>("UnitTests");
         auto ret2 = certs->getCertificateIds({GetCertificateIdType_CSMSRootCertificate}, chain);
 
         REQUIRE(ret2 == GetInstalledCertificateStatus_Accepted);
@@ -140,7 +140,7 @@ TEST_CASE( "M - Certificates" ) {
         auto ret1 = certs->installCertificate(InstallCertificateType_CSMSRootCertificate, root_cert);
         REQUIRE(ret1 == InstallCertificateStatus_Accepted);
 
-        auto chain = makeMemVector<CertificateChainHash>("UnitTests");
+        auto chain = makeVector<CertificateChainHash>("UnitTests");
         auto ret2 = certs->getCertificateIds({GetCertificateIdType_CSMSRootCertificate}, chain);
         REQUIRE(ret2 == GetInstalledCertificateStatus_Accepted);
 
@@ -167,7 +167,7 @@ TEST_CASE( "M - Certificates" ) {
                 "InstallCertificate",
                 [] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests",
+                    auto doc = makeJsonDoc("UnitTests",
                             JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["certificateType"] = "CSMSRootCertificate"; //of InstallCertificateTypeEnumType
@@ -199,7 +199,7 @@ TEST_CASE( "M - Certificates" ) {
                 "DeleteCertificate",
                 [] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests",
+                    auto doc = makeJsonDoc("UnitTests",
                             JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["certificateHashData"]["hashAlgorithm"] = root_cert_hash_algorithm; //of HashAlgorithmType
@@ -227,7 +227,7 @@ TEST_CASE( "M - Certificates" ) {
                 "GetInstalledCertificateIds",
                 [] () {
                     //create req
-                    auto doc = makeMemJsonDoc("UnitTests",
+                    auto doc = makeJsonDoc("UnitTests",
                             JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["certificateType"][0] = "CSMSRootCertificate"; //of GetCertificateIdTypeEnumType

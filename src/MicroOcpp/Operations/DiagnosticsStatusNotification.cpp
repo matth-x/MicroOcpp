@@ -8,9 +8,9 @@
 #include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
 
 using MicroOcpp::Ocpp16::DiagnosticsStatusNotification;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-DiagnosticsStatusNotification::DiagnosticsStatusNotification(DiagnosticsStatus status) : AllocOverrider("v16.Operation.", "DiagnosticsStatusNotification"), status(status) {
+DiagnosticsStatusNotification::DiagnosticsStatusNotification(DiagnosticsStatus status) : MemoryManaged("v16.Operation.", "DiagnosticsStatusNotification"), status(status) {
     
 }
 
@@ -32,8 +32,8 @@ const char *DiagnosticsStatusNotification::cstrFromStatus(DiagnosticsStatus stat
     return nullptr; //cannot be reached
 }
 
-std::unique_ptr<MemJsonDoc> DiagnosticsStatusNotification::createReq() {
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+std::unique_ptr<JsonDoc> DiagnosticsStatusNotification::createReq() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = cstrFromStatus(status);
     return doc;

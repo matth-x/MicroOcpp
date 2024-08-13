@@ -12,7 +12,7 @@ namespace MicroOcpp {
 
 class Context;
 
-class ConnectorsCommon : public AllocOverrider {
+class ConnectorsCommon : public MemoryManaged {
 private:
     Context& context;
 public:

@@ -82,7 +82,7 @@ Variable::~Variable() {
 
 void Variable::setName(const char *name) {
     this->variableName = name;
-    updateMemTag("v201.Variables.Variable.", name);
+    updateMemoryTag("v201.Variables.Variable.", name);
 }
 const char *Variable::getName() const {
     return variableName;

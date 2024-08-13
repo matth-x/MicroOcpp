@@ -39,7 +39,7 @@
 namespace MicroOcpp {
 
 template <class T>
-struct VariableValidator : public AllocOverrider {
+struct VariableValidator : public MemoryManaged {
     ComponentId component;
     const char *name;
     std::function<bool(T)> validate;
@@ -48,15 +48,15 @@ struct VariableValidator : public AllocOverrider {
 
 class Context;
 
-class VariableService : public AllocOverrider {
+class VariableService : public MemoryManaged {
 private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
-    MemVector<std::shared_ptr<VariableContainer>> containers;
+    Vector<std::shared_ptr<VariableContainer>> containers;
 
-    MemVector<VariableValidator<int>> validatorInt;
-    MemVector<VariableValidator<bool>> validatorBool;
-    MemVector<VariableValidator<const char*>> validatorString;
+    Vector<VariableValidator<int>> validatorInt;
+    Vector<VariableValidator<bool>> validatorBool;
+    Vector<VariableValidator<const char*>> validatorString;
 
     VariableValidator<int> *getValidatorInt(const ComponentId& component, const char *name);
     VariableValidator<bool> *getValidatorBool(const ComponentId& component, const char *name);

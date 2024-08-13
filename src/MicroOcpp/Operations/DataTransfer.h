@@ -10,22 +10,22 @@
 namespace MicroOcpp {
 namespace Ocpp16 {
 
-class DataTransfer : public Operation, public AllocOverrider {
+class DataTransfer : public Operation, public MemoryManaged {
 private:
-    MemString msg;
+    String msg;
 public:
     DataTransfer();
-    DataTransfer(const MemString &msg);
+    DataTransfer(const String &msg);
 
     const char* getOperationType() override;
 
-    std::unique_ptr<MemJsonDoc> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
     
 };
 

@@ -8,9 +8,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::Reset;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-Reset::Reset(Model& model) : AllocOverrider("v16.Operation.", "Reset"), model(model) {
+Reset::Reset(Model& model) : MemoryManaged("v16.Operation.", "Reset"), model(model) {
   
 }
 
@@ -43,8 +43,8 @@ void Reset::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<MemJsonDoc> Reset::createConf() {
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+std::unique_ptr<JsonDoc> Reset::createConf() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = resetAccepted ? "Accepted" : "Rejected";
     return doc;
@@ -57,7 +57,7 @@ std::unique_ptr<MemJsonDoc> Reset::createConf() {
 namespace MicroOcpp {
 namespace Ocpp201 {
 
-Reset::Reset(ResetService& resetService) : AllocOverrider("v201.Operation.", "Reset"), resetService(resetService) {
+Reset::Reset(ResetService& resetService) : MemoryManaged("v201.Operation.", "Reset"), resetService(resetService) {
   
 }
 
@@ -91,8 +91,8 @@ void Reset::processReq(JsonObject payload) {
     status = resetService.initiateReset(type, evseId);
 }
 
-std::unique_ptr<MemJsonDoc> Reset::createConf() {
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+std::unique_ptr<JsonDoc> Reset::createConf() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
     const char *statusCstr = "";

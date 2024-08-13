@@ -34,7 +34,7 @@ RegistrationStatus deserializeRegistrationStatus(const char *serialized);
 
 class Context;
 
-class BootService : public AllocOverrider {
+class BootService : public MemoryManaged {
 private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
@@ -44,7 +44,7 @@ private:
 
     RegistrationStatus status = RegistrationStatus::Pending;
     
-    MemString cpCredentials;
+    String cpCredentials;
 
     std::shared_ptr<Configuration> preBootTransactionsBool;
 
@@ -61,7 +61,7 @@ public:
 
     void setChargePointCredentials(JsonObject credentials);
     void setChargePointCredentials(const char *credentials); //credentials: serialized BootNotification payload
-    std::unique_ptr<MemJsonDoc> getChargePointCredentials();
+    std::unique_ptr<JsonDoc> getChargePointCredentials();
 
     void notifyRegistrationStatus(RegistrationStatus status);
     void setRetryInterval(unsigned long interval);

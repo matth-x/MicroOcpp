@@ -19,7 +19,7 @@ class TransactionService;
 
 namespace Ocpp201 {
 
-class RequestStopTransaction : public Operation, public AllocOverrider {
+class RequestStopTransaction : public Operation, public MemoryManaged {
 private:
     TransactionService& txService;
 
@@ -33,7 +33,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 

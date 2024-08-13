@@ -28,7 +28,7 @@
 namespace MicroOcpp {
 
 // VariableCharacteristicsType (2.51)
-struct VariableCharacteristics : public AllocOverrider {
+struct VariableCharacteristics : public MemoryManaged {
 
     // DataEnumType (3.26)
     enum class DataType : uint8_t {
@@ -49,7 +49,7 @@ struct VariableCharacteristics : public AllocOverrider {
     const char *valuesList = nullptr; //no copy
     //bool supportsMonitoring; //stored in Variable
 
-    VariableCharacteristics() : AllocOverrider("v201.Variables.VariableCharacteristics") { }
+    VariableCharacteristics() : MemoryManaged("v201.Variables.VariableCharacteristics") { }
 };
 
 // SetVariableStatusEnumType (3.79)
@@ -128,7 +128,7 @@ struct ComponentId {
  * the value of the variable. To make it use the host system's key-value store, extend this class
  * with a custom implementation of the virtual methods and pass its instances to MO.
  */
-class Variable : public AllocOverrider {
+class Variable : public MemoryManaged {
 public:
     //AttributeEnumType (3.2)
     enum class AttributeType : uint8_t {

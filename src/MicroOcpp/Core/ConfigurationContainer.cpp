@@ -13,7 +13,7 @@ ConfigurationContainer::~ConfigurationContainer() {
 }
 
 ConfigurationContainerVolatile::ConfigurationContainerVolatile(const char *filename, bool accessible) :
-        ConfigurationContainer(filename, accessible), AllocOverrider("v16.Configuration.ContainerVoltaile.", filename), configurations(makeMemVector<std::shared_ptr<Configuration>>(getMemoryTag())) {
+        ConfigurationContainer(filename, accessible), MemoryManaged("v16.Configuration.ContainerVoltaile.", filename), configurations(makeVector<std::shared_ptr<Configuration>>(getMemoryTag())) {
 
 }
 

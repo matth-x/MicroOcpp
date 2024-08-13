@@ -27,7 +27,7 @@
 
 using namespace MicroOcpp;
 
-Model::Model(ProtocolVersion version, uint16_t bootNr) : AllocOverrider("Model"), connectors(makeMemVector<std::unique_ptr<Connector>>(getMemoryTag())), version(version), bootNr(bootNr) {
+Model::Model(ProtocolVersion version, uint16_t bootNr) : MemoryManaged("Model"), connectors(makeVector<std::unique_ptr<Connector>>(getMemoryTag())), version(version), bootNr(bootNr) {
 
 }
 
@@ -114,7 +114,7 @@ ConnectorsCommon *Model::getConnectorsCommon() {
     return chargeControlCommon.get();
 }
 
-void Model::setConnectors(MemVector<std::unique_ptr<Connector>>&& connectors) {
+void Model::setConnectors(Vector<std::unique_ptr<Connector>>&& connectors) {
     this->connectors = std::move(connectors);
     capabilitiesUpdated = true;
 }
@@ -266,7 +266,7 @@ void Model::updateSupportedStandardProfiles() {
         return;
     }
 
-    auto buf = makeMemString(getMemoryTag(), supportedFeatureProfilesString->getString());
+    auto buf = makeString(getMemoryTag(), supportedFeatureProfilesString->getString());
 
     if (chargeControlCommon &&
             heartbeatService &&

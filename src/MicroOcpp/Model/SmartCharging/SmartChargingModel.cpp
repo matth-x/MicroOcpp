@@ -18,7 +18,7 @@ ChargeRate MicroOcpp::chargeRate_min(const ChargeRate& a, const ChargeRate& b) {
     return res;
 }
 
-ChargingSchedule::ChargingSchedule() : AllocOverrider("v16.SmartCharging.SmartChargingModel"), chargingSchedulePeriod{makeMemVector<ChargingSchedulePeriod>(getMemoryTag())} {
+ChargingSchedule::ChargingSchedule() : MemoryManaged("v16.SmartCharging.SmartChargingModel"), chargingSchedulePeriod{makeVector<ChargingSchedulePeriod>(getMemoryTag())} {
 
 }
 
@@ -120,13 +120,13 @@ bool ChargingSchedule::calculateLimit(const Timestamp &t, const Timestamp &start
     }
 }
 
-bool ChargingSchedule::toJson(MemJsonDoc& doc) {
+bool ChargingSchedule::toJson(JsonDoc& doc) {
     size_t capacity = 0;
     capacity += JSON_OBJECT_SIZE(5); //no of fields of ChargingSchedule
     capacity += JSONDATE_LENGTH + 1; //startSchedule
     capacity += JSON_ARRAY_SIZE(chargingSchedulePeriod.size()) + chargingSchedulePeriod.size() * JSON_OBJECT_SIZE(3);
 
-    doc = initMemJsonDoc("v16.SmartCharging.ChargingSchedule", capacity);
+    doc = initJsonDoc("v16.SmartCharging.ChargingSchedule", capacity);
     if (duration >= 0) {
         doc["duration"] = duration;
     }
@@ -177,7 +177,7 @@ void ChargingSchedule::printSchedule(){
     }
 }
 
-ChargingProfile::ChargingProfile() : AllocOverrider("v16.SmartCharging.ChargingProfile") {
+ChargingProfile::ChargingProfile() : MemoryManaged("v16.SmartCharging.ChargingProfile") {
 
 }
 
@@ -213,14 +213,14 @@ ChargingProfilePurposeType ChargingProfile::getChargingProfilePurpose(){
     return chargingProfilePurpose;
 }
 
-bool ChargingProfile::toJson(MemJsonDoc& doc) {
+bool ChargingProfile::toJson(JsonDoc& doc) {
     
-    auto chargingScheduleDoc = initMemJsonDoc("v16.SmartCharging.ChargingSchedule");
+    auto chargingScheduleDoc = initJsonDoc("v16.SmartCharging.ChargingSchedule");
     if (!chargingSchedule.toJson(chargingScheduleDoc)) {
         return false;
     }
 
-    doc = initMemJsonDoc("v16.SmartCharging.ChargingProfile",
+    doc = initJsonDoc("v16.SmartCharging.ChargingProfile",
             JSON_OBJECT_SIZE(9) + //no. of fields in ChargingProfile
             2 * (JSONDATE_LENGTH + 1) + //validFrom and validTo
             chargingScheduleDoc.memoryUsage()); //nested JSON object

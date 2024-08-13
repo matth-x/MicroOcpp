@@ -10,11 +10,11 @@
 using namespace MicroOcpp;
 
 ConnectorTransactionStore::ConnectorTransactionStore(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem) :
-        AllocOverrider("v16.Transactions.TransactionStore"),
+        MemoryManaged("v16.Transactions.TransactionStore"),
         context(context),
         connectorId(connectorId),
         filesystem(filesystem),
-        transactions{makeMemVector<std::weak_ptr<Transaction>>(getMemoryTag())} {
+        transactions{makeVector<std::weak_ptr<Transaction>>(getMemoryTag())} {
 
 }
 
@@ -136,7 +136,7 @@ bool ConnectorTransactionStore::commit(Transaction *transaction) {
         return false;
     }
     
-    auto txDoc = initMemJsonDoc(getMemoryTag());
+    auto txDoc = initJsonDoc(getMemoryTag());
     if (!serializeTransaction(*transaction, txDoc)) {
         MO_DBG_ERR("Serialization error");
         return false;
@@ -177,7 +177,7 @@ bool ConnectorTransactionStore::remove(unsigned int txNr) {
 }
 
 TransactionStore::TransactionStore(unsigned int nConnectors, std::shared_ptr<FilesystemAdapter> filesystem) :
-        AllocOverrider{"v16.Transactions.TransactionStore"}, connectors{makeMemVector<std::unique_ptr<ConnectorTransactionStore>>(getMemoryTag())} {
+        MemoryManaged{"v16.Transactions.TransactionStore"}, connectors{makeVector<std::unique_ptr<ConnectorTransactionStore>>(getMemoryTag())} {
 
     for (unsigned int i = 0; i < nConnectors; i++) {
         connectors.push_back(std::unique_ptr<ConnectorTransactionStore>(

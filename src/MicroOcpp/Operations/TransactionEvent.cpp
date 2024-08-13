@@ -12,10 +12,10 @@
 #include <MicroOcpp/Debug.h>
 
 using namespace MicroOcpp::Ocpp201;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
 TransactionEvent::TransactionEvent(Model& model, std::shared_ptr<TransactionEventData> txEvent)
-        : AllocOverrider("v201.Operation.", "TransactionEvent"), model(model), txEvent(txEvent) {
+        : MemoryManaged("v201.Operation.", "TransactionEvent"), model(model), txEvent(txEvent) {
 
 }
 
@@ -23,8 +23,8 @@ const char* TransactionEvent::getOperationType() {
     return "TransactionEvent";
 }
 
-std::unique_ptr<MemJsonDoc> TransactionEvent::createReq() {
-    auto doc = makeMemJsonDoc(getMemoryTag(),
+std::unique_ptr<JsonDoc> TransactionEvent::createReq() {
+    auto doc = makeJsonDoc(getMemoryTag(),
                 JSON_OBJECT_SIZE(12) + //total of 12 fields
                 JSONDATE_LENGTH + 1 + //timestamp string
                 JSON_OBJECT_SIZE(5) + //transactionInfo
@@ -277,7 +277,7 @@ void TransactionEvent::processReq(JsonObject payload) {
      */
 }
 
-std::unique_ptr<MemJsonDoc> TransactionEvent::createConf() {
+std::unique_ptr<JsonDoc> TransactionEvent::createConf() {
     return createEmptyDocument();
 }
 

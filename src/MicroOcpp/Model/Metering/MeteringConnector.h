@@ -22,13 +22,13 @@ class Operation;
 class Transaction;
 class MeterStore;
 
-class MeteringConnector : public AllocOverrider {
+class MeteringConnector : public MemoryManaged {
 private:
     Model& model;
     const int connectorId;
     MeterStore& meterStore;
     
-    MemVector<std::unique_ptr<MeterValue>> meterData;
+    Vector<std::unique_ptr<MeterValue>> meterData;
     std::shared_ptr<TransactionMeterData> stopTxnData;
 
     std::unique_ptr<MeterValueBuilder> sampledDataBuilder;
@@ -46,7 +46,7 @@ private:
     std::shared_ptr<Transaction> transaction;
     bool trackTxRunning = false;
  
-    MemVector<std::unique_ptr<SampledValueSampler>> samplers;
+    Vector<std::unique_ptr<SampledValueSampler>> samplers;
     int energySamplerIndex {-1};
 
     std::shared_ptr<Configuration> meterValueSampleIntervalInt;

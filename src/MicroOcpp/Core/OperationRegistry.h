@@ -24,7 +24,7 @@ struct OperationCreator {
 
 class OperationRegistry {
 private:
-    MemVector<OperationCreator> registry;
+    Vector<OperationCreator> registry;
     OperationCreator *findCreator(const char *operationType);
 
 public:

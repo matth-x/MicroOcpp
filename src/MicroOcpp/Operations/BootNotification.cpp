@@ -12,9 +12,9 @@
 #include <string.h>
 
 using MicroOcpp::Ocpp16::BootNotification;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-BootNotification::BootNotification(Model& model, std::unique_ptr<MemJsonDoc> payload) : AllocOverrider("v16.Operation.", "BootNotification"), model(model), credentials(std::move(payload)) {
+BootNotification::BootNotification(Model& model, std::unique_ptr<JsonDoc> payload) : MemoryManaged("v16.Operation.", "BootNotification"), model(model), credentials(std::move(payload)) {
     
 }
 
@@ -22,18 +22,18 @@ const char* BootNotification::getOperationType(){
     return "BootNotification";
 }
 
-std::unique_ptr<MemJsonDoc> BootNotification::createReq() {
+std::unique_ptr<JsonDoc> BootNotification::createReq() {
     if (credentials) {
 #if MO_ENABLE_V201
         if (model.getVersion().major == 2) {
-            auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2) + credentials->memoryUsage());
+            auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2) + credentials->memoryUsage());
             JsonObject payload = doc->to<JsonObject>();
             payload["reason"] = "PowerUp";
             payload["chargingStation"] = *credentials;
             return doc;
         }
 #endif
-        return std::unique_ptr<MemJsonDoc>(new MemJsonDoc(*credentials));
+        return std::unique_ptr<JsonDoc>(new JsonDoc(*credentials));
     } else {
         MO_DBG_ERR("payload undefined");
         return createEmptyDocument();
@@ -100,8 +100,8 @@ void BootNotification::processReq(JsonObject payload){
      */
 }
 
-std::unique_ptr<MemJsonDoc> BootNotification::createConf(){
-    auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(3) + (JSONDATE_LENGTH + 1));
+std::unique_ptr<JsonDoc> BootNotification::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(3) + (JSONDATE_LENGTH + 1));
     JsonObject payload = doc->to<JsonObject>();
 
     //safety mechanism; in some test setups the library has to answer BootNotifications without valid system time

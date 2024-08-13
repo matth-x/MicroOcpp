@@ -8,9 +8,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::GetDiagnostics;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-GetDiagnostics::GetDiagnostics(DiagnosticsService& diagService) : AllocOverrider("v16.Operation.", "GetDiagnostics"), diagService(diagService), fileName(makeMemString(getMemoryTag())) {
+GetDiagnostics::GetDiagnostics(DiagnosticsService& diagService) : MemoryManaged("v16.Operation.", "GetDiagnostics"), diagService(diagService), fileName(makeString(getMemoryTag())) {
 
 }
 
@@ -51,11 +51,11 @@ void GetDiagnostics::processReq(JsonObject payload) {
     fileName = diagService.requestDiagnosticsUpload(location, (unsigned int) retries, (unsigned int) retryInterval, startTime, stopTime);
 }
 
-std::unique_ptr<MemJsonDoc> GetDiagnostics::createConf(){
+std::unique_ptr<JsonDoc> GetDiagnostics::createConf(){
     if (fileName.empty()) {
         return createEmptyDocument();
     } else {
-        auto doc = makeMemJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+        auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
         JsonObject payload = doc->to<JsonObject>();
         payload["fileName"] = fileName.c_str();
         return doc;

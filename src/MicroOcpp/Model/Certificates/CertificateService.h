@@ -28,7 +28,7 @@ namespace MicroOcpp {
 
 class Context;
 
-class CertificateService : public AllocOverrider {
+class CertificateService : public MemoryManaged {
 private:
     Context& context;
     std::unique_ptr<CertificateStore> certStore;

@@ -49,7 +49,7 @@ TEST_CASE("Metering") {
         sendRequest("ChangeConfiguration",
             [] () {
                 //create req
-                auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
+                auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                 auto payload = doc->to<JsonObject>();
                 payload["key"] = "MeterValuesSampledData";
                 payload["value"] = "Energy.Active.Import.Register,INVALID,Voltage"; //invalid request
@@ -69,7 +69,7 @@ TEST_CASE("Metering") {
         sendRequest("ChangeConfiguration",
             [] () {
                 //create req
-                auto doc = makeMemJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
+                auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                 auto payload = doc->to<JsonObject>();
                 payload["key"] = "MeterValuesSampledData";
                 payload["value"] = "Voltage,Energy.Active.Import.Register"; //valid request

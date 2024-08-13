@@ -32,8 +32,8 @@ void *mo_mem_malloc(const char *tag, size_t size);
 
 void mo_mem_free(void* ptr);
 
-#define MO_MALLOC(TAG, SIZE) mo_mem_malloc(TAG, SIZE)
-#define MO_FREE(PTR) mo_mem_free(PTR)
+#define MO_MALLOC mo_mem_malloc
+#define MO_FREE mo_mem_free
 
 #else
 #define MO_MALLOC(TAG, SIZE) malloc(SIZE) //default malloc provided by host system
@@ -103,13 +103,13 @@ void mo_mem_free_ext(void* ptr);
 
 namespace MicroOcpp {
 
-class AllocOverrider {
+class MemoryManaged {
 private:
     #if MO_ENABLE_HEAP_PROFILER
     char *tag = nullptr;
     #endif
 protected:
-    void updateMemTag(const char *src1, const char *src2 = nullptr) {
+    void updateMemoryTag(const char *src1, const char *src2 = nullptr) {
         #if MO_ENABLE_HEAP_PROFILER
         if (!src1 && !src2) {
             //empty source does not update tag
@@ -150,29 +150,29 @@ public:
         MO_FREE(ptr);
     }
 
-    AllocOverrider(const char *tag = nullptr, const char *tag_suffix = nullptr) {
+    MemoryManaged(const char *tag = nullptr, const char *tag_suffix = nullptr) {
         #if MO_ENABLE_HEAP_PROFILER
-        updateMemTag(tag, tag_suffix);
+        updateMemoryTag(tag, tag_suffix);
         #endif
     }
 
-    AllocOverrider(AllocOverrider&& other) {
+    MemoryManaged(MemoryManaged&& other) {
         #if MO_ENABLE_HEAP_PROFILER
         tag = other.tag;
         other.tag = nullptr;
         #endif
     }
 
-    ~AllocOverrider() {
+    ~MemoryManaged() {
         #if MO_ENABLE_HEAP_PROFILER
         MO_FREE(tag);
         tag = nullptr;
         #endif
     }
 
-    void operator=(const AllocOverrider& other) {
+    void operator=(const MemoryManaged& other) {
         #if MO_ENABLE_HEAP_PROFILER
-        updateMemTag(other.tag);
+        updateMemoryTag(other.tag);
         #endif
     }
 };
@@ -182,20 +182,20 @@ struct Allocator {
 
     Allocator(const char *tag = nullptr, const char *tag_suffix = nullptr) {
         #if MO_ENABLE_HEAP_PROFILER
-        updateMemTag(tag, tag_suffix);
+        updateMemoryTag(tag, tag_suffix);
         #endif
     }
 
     template<class U>
     Allocator(const Allocator<U>& other) {
         #if MO_ENABLE_HEAP_PROFILER
-        updateMemTag(other.tag);
+        updateMemoryTag(other.tag);
         #endif
     }
 
     Allocator(const Allocator& other) {
         #if MO_ENABLE_HEAP_PROFILER
-        updateMemTag(other.tag);
+        updateMemoryTag(other.tag);
         #endif
     }
 
@@ -203,7 +203,7 @@ struct Allocator {
     //Allocator(Allocator<U>&& other) {
     Allocator(Allocator&& other) {
         #if MO_ENABLE_HEAP_PROFILER
-        updateMemTag(other.tag); //ignore move semantics for allocators as it simplifies moving std::vector<T, Allocator<T>>. This is okay because the Allocator's state is only the memory tag which is not exclusively owned
+        updateMemoryTag(other.tag); //ignore move semantics for allocators as it simplifies moving std::vector<T, Allocator<T>>. This is okay because the Allocator's state is only the memory tag which is not exclusively owned
         #endif
     }
 
@@ -252,7 +252,7 @@ struct Allocator {
     #if MO_ENABLE_HEAP_PROFILER
     char *tag = nullptr;
 
-    void updateMemTag(const char *src1, const char *src2 = nullptr) {
+    void updateMemoryTag(const char *src1, const char *src2 = nullptr) {
         if (!src1 && !src2) {
             //empty source does not update tag
             return;
@@ -281,14 +281,14 @@ Allocator<T> makeAllocator(const char *tag, const char *tag_suffix = nullptr) {
     return Allocator<T>(tag, tag_suffix);
 }
 
-using MemString = std::basic_string<char, std::char_traits<char>, MicroOcpp::Allocator<char>>;
+using String = std::basic_string<char, std::char_traits<char>, MicroOcpp::Allocator<char>>;
 
 template<class T>
-using MemVector = std::vector<T, Allocator<T>>;
+using Vector = std::vector<T, Allocator<T>>;
 
 template<class T>
-MemVector<T> makeMemVector(const char *tag) {
-    return MemVector<T>(Allocator<T>(tag));
+Vector<T> makeVector(const char *tag) {
+    return Vector<T>(Allocator<T>(tag));
 }
 
 class ArduinoJsonAllocator {
@@ -296,7 +296,7 @@ private:
     #if MO_ENABLE_HEAP_PROFILER
     char *tag = nullptr;
 
-    void updateMemTag(const char *src1, const char *src2 = nullptr) {
+    void updateMemoryTag(const char *src1, const char *src2 = nullptr) {
         if (!src1 && !src2) {
             //empty source does not update tag
             return;
@@ -322,13 +322,13 @@ public:
 
     ArduinoJsonAllocator(const char *tag = nullptr, const char *tag_suffix = nullptr) {
         #if MO_ENABLE_HEAP_PROFILER
-        updateMemTag(tag, tag_suffix);
+        updateMemoryTag(tag, tag_suffix);
         #endif
     }
 
     ArduinoJsonAllocator(const ArduinoJsonAllocator& other) {
         #if MO_ENABLE_HEAP_PROFILER
-        updateMemTag(other.tag);
+        updateMemoryTag(other.tag);
         #endif
     }
 
@@ -360,7 +360,7 @@ public:
     }
 };
 
-using MemJsonDoc = BasicJsonDocument<ArduinoJsonAllocator>;
+using JsonDoc = BasicJsonDocument<ArduinoJsonAllocator>;
 
 template<class T, typename ...Args>
 T *mo_mem_new(const char *tag, Args&& ...args)  {
@@ -386,14 +386,14 @@ void mo_mem_delete(T *ptr)  {
 
 namespace MicroOcpp {
 
-class AllocOverrider {
+class MemoryManaged {
 protected:
     const char *getMemoryTag() const {return nullptr;}
-    void updateMemTag(const char*,const char*) { } 
+    void updateMemoryTag(const char*,const char*) { } 
 public:
-    AllocOverrider() { }
-    AllocOverrider(const char*) { }
-    AllocOverrider(const char*,const char*) { }
+    MemoryManaged() { }
+    MemoryManaged(const char*) { }
+    MemoryManaged(const char*,const char*) { }
 };
 
 template<class T>
@@ -405,17 +405,17 @@ Allocator<T> makeAllocator(const char *, const char *unused = nullptr) {
     return Allocator<T>();
 }
 
-using MemString = std::string;
+using String = std::string;
 
 template<class T>
-using MemVector = std::vector<T>;
+using Vector = std::vector<T>;
 
 template<class T>
-MemVector<T> makeMemVector(const char *tag) {
-    return MemVector<T>();
+Vector<T> makeVector(const char *tag) {
+    return Vector<T>();
 }
 
-using MemJsonDoc = DynamicJsonDocument;
+using JsonDoc = DynamicJsonDocument;
 
 template <class T, typename ...Args>
 T *mo_mem_new(Args&& ...args)  {
@@ -433,10 +433,10 @@ void mo_mem_delete(T *ptr)  {
 
 namespace MicroOcpp {
 
-MemString makeMemString(const char *tag, const char *val = nullptr);
+String makeString(const char *tag, const char *val = nullptr);
 
-MemJsonDoc initMemJsonDoc(const char *tag, size_t capacity = 0);
-std::unique_ptr<MemJsonDoc> makeMemJsonDoc(const char *tag, size_t capacity = 0);
+JsonDoc initJsonDoc(const char *tag, size_t capacity = 0);
+std::unique_ptr<JsonDoc> makeJsonDoc(const char *tag, size_t capacity = 0);
 
 }
 

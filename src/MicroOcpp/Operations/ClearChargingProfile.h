@@ -13,7 +13,7 @@ class SmartChargingService;
 
 namespace Ocpp16 {
 
-class ClearChargingProfile : public Operation, public AllocOverrider {
+class ClearChargingProfile : public Operation, public MemoryManaged {
 private:
     SmartChargingService& scService;
     bool matchingProfilesFound = false;
@@ -24,7 +24,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
     
 };
 

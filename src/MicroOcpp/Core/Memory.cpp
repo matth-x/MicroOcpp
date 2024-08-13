@@ -259,35 +259,35 @@ void mo_mem_print_stats() {
 
 namespace MicroOcpp {
 
-MemString makeMemString(const char *tag, const char *val) {
+String makeString(const char *tag, const char *val) {
 #if MO_OVERRIDE_ALLOCATION
     if (val) {
-        return MemString(val, Allocator<char>(tag));
+        return String(val, Allocator<char>(tag));
     } else {
-        return MemString(Allocator<char>(tag));
+        return String(Allocator<char>(tag));
     }
 #else
     if (val) {
-        return MemString(val);
+        return String(val);
     } else {
-        return MemString();
+        return String();
     }
 #endif
 }
 
-MemJsonDoc initMemJsonDoc(const char *tag, size_t capacity) {
+JsonDoc initJsonDoc(const char *tag, size_t capacity) {
 #if MO_OVERRIDE_ALLOCATION
-    return MemJsonDoc(capacity, ArduinoJsonAllocator(tag));
+    return JsonDoc(capacity, ArduinoJsonAllocator(tag));
 #else
-    return MemJsonDoc(capacity);
+    return JsonDoc(capacity);
 #endif
 }
 
-std::unique_ptr<MemJsonDoc> makeMemJsonDoc(const char *tag, size_t capacity) {
+std::unique_ptr<JsonDoc> makeJsonDoc(const char *tag, size_t capacity) {
 #if MO_OVERRIDE_ALLOCATION
-    return std::unique_ptr<MemJsonDoc>(new MemJsonDoc(capacity, ArduinoJsonAllocator(tag)));
+    return std::unique_ptr<JsonDoc>(new JsonDoc(capacity, ArduinoJsonAllocator(tag)));
 #else
-    return std::unique_ptr<MemJsonDoc>(new MemJsonDoc(capacity));
+    return std::unique_ptr<JsonDoc>(new JsonDoc(capacity));
 #endif
 }
 

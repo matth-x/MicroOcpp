@@ -15,7 +15,7 @@ class Model;
 
 namespace Ocpp16 {
 
-class UnlockConnector : public Operation, public AllocOverrider {
+class UnlockConnector : public Operation, public MemoryManaged {
 private:
     Model& model;
 
@@ -33,7 +33,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<MemJsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

@@ -14,7 +14,7 @@
 using namespace MicroOcpp;
 
 CertificateService::CertificateService(Context& context)
-        : AllocOverrider("v201.Certificates.CertificateService"), context(context) {
+        : MemoryManaged("v201.Certificates.CertificateService"), context(context) {
 
     context.getOperationRegistry().registerOperation("DeleteCertificate", [this] () {
         return new Ocpp201::DeleteCertificate(*this);});

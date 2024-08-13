@@ -14,13 +14,13 @@
 
 using MicroOcpp::Ocpp201::GetVariableData;
 using MicroOcpp::Ocpp201::GetVariables;
-using MicroOcpp::MemJsonDoc;
+using MicroOcpp::JsonDoc;
 
-GetVariableData::GetVariableData(const char *memory_tag) : componentName{makeMemString(memory_tag)}, variableName{makeMemString(memory_tag)} {
+GetVariableData::GetVariableData(const char *memory_tag) : componentName{makeString(memory_tag)}, variableName{makeString(memory_tag)} {
 
 }
 
-GetVariables::GetVariables(VariableService& variableService) : AllocOverrider("v201.Operation.", "GetVariableData"), variableService(variableService), queries(makeMemVector<GetVariableData>(getMemoryTag())) {
+GetVariables::GetVariables(VariableService& variableService) : MemoryManaged("v201.Operation.", "GetVariableData"), variableService(variableService), queries(makeVector<GetVariableData>(getMemoryTag())) {
 
 }
 
@@ -81,7 +81,7 @@ void GetVariables::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<MemJsonDoc> GetVariables::createConf(){
+std::unique_ptr<JsonDoc> GetVariables::createConf(){
 
     // process GetVariables queries
     for (auto& query : queries) {
@@ -133,7 +133,7 @@ std::unique_ptr<MemJsonDoc> GetVariables::createConf(){
                     data.variableName.length() + 1;
     }
 
-    auto doc = makeMemJsonDoc(getMemoryTag(), capacity);
+    auto doc = makeJsonDoc(getMemoryTag(), capacity);
 
     JsonObject payload = doc->to<JsonObject>();
     JsonArray getVariableResult = payload.createNestedArray("getVariableResult");

@@ -45,9 +45,9 @@ class ResetService;
 }
 #endif //MO_ENABLE_V201
 
-class Model : public AllocOverrider {
+class Model : public MemoryManaged {
 private:
-    MemVector<std::unique_ptr<Connector>> connectors;
+    Vector<std::unique_ptr<Connector>> connectors;
     std::unique_ptr<TransactionStore> transactionStore;
     std::unique_ptr<SmartChargingService> smartChargingService;
     std::unique_ptr<ConnectorsCommon> chargeControlCommon;
@@ -105,7 +105,7 @@ public:
     void setConnectorsCommon(std::unique_ptr<ConnectorsCommon> ccs);
     ConnectorsCommon *getConnectorsCommon();
 
-    void setConnectors(MemVector<std::unique_ptr<Connector>>&& connectors);
+    void setConnectors(Vector<std::unique_ptr<Connector>>&& connectors);
     unsigned int getNumConnectors() const;
     Connector *getConnector(unsigned int connectorId);
 

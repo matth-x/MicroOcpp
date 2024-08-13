@@ -85,7 +85,7 @@ void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const cha
     /*
      * parse backendUrl so that it suits the links2004/arduinoWebSockets interface
      */
-    MemString url = makeMemString("MicroOcpp.cpp", url.c_str());
+    String url = makeString("MicroOcpp.cpp", url.c_str());
 
     //tolower protocol specifier
     for (auto c = url.begin(); *c != ':' && c != url.end(); c++) {
@@ -103,16 +103,16 @@ void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const cha
     }
 
     //parse host, port
-    MemString host_port_path = url.substr(url.find_first_of("://") + strlen("://"));
-    MemString host_port = host_port_path.substr(0, host_port_path.find_first_of('/'));
-    MemString path = host_port_path.substr(host_port.length());
-    MemString host = host_port.substr(0, host_port.find_first_of(':'));
+    String host_port_path = url.substr(url.find_first_of("://") + strlen("://"));
+    String host_port = host_port_path.substr(0, host_port_path.find_first_of('/'));
+    String path = host_port_path.substr(host_port.length());
+    String host = host_port.substr(0, host_port.find_first_of(':'));
     if (host.empty()) {
         MO_DBG_ERR("could not parse host: %s", url.c_str());
         return;
     }
     uint16_t port = 0;
-    MemString port_str = host_port.substr(host.length());
+    String port_str = host_port.substr(host.length());
     if (port_str.empty()) {
         port = isTLS ? 443U : 80U;
     } else {
@@ -293,7 +293,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new BootService(*context, filesystem)));
     model.setConnectorsCommon(std::unique_ptr<ConnectorsCommon>(
         new ConnectorsCommon(*context, MO_NUMCONNECTORS, filesystem)));
-    auto connectors = makeMemVector<std::unique_ptr<Connector>>("v16.ConnectorBase.Connector");
+    auto connectors = makeVector<std::unique_ptr<Connector>>("v16.ConnectorBase.Connector");
     for (unsigned int connectorId = 0; connectorId < MO_NUMCONNECTORS; connectorId++) {
         connectors.emplace_back(new Connector(*context, filesystem, connectorId));
     }
@@ -480,8 +480,8 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
             {
                 // We have a parent ID tag, so we need to check if this new card also has one
                 auto authorize = makeRequest(new Ocpp16::Authorize(context->getModel(), idTag));
-                MemString idTag_capture = makeMemString("MicroOcpp.cpp", idTag);
-                MemString reason_capture = makeMemString("MicroOcpp.cpp", reason ? reason : "");
+                String idTag_capture = makeString("MicroOcpp.cpp", idTag);
+                String reason_capture = makeString("MicroOcpp.cpp", reason ? reason : "");
                 authorize->setOnReceiveConfListener([idTag_capture, reason_capture, connectorId, tx] (JsonObject response) {
                     JsonObject idTagInfo = response["idTagInfo"];
 
@@ -1097,7 +1097,7 @@ void setOnSendConf(const char *operationType, OnSendConfListener onSendConf) {
 }
 
 void sendRequest(const char *operationType,
-            std::function<std::unique_ptr<MemJsonDoc> ()> fn_createReq,
+            std::function<std::unique_ptr<JsonDoc> ()> fn_createReq,
             std::function<void (JsonObject)> fn_processConf) {
 
     if (!context) {
@@ -1115,7 +1115,7 @@ void sendRequest(const char *operationType,
 
 void setRequestHandler(const char *operationType,
             std::function<void (JsonObject)> fn_processReq,
-            std::function<std::unique_ptr<MemJsonDoc> ()> fn_createConf) {
+            std::function<std::unique_ptr<JsonDoc> ()> fn_createConf) {
 
     if (!context) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
@@ -1126,7 +1126,7 @@ void setRequestHandler(const char *operationType,
         return;
     }
 
-    MemString captureOpType = makeMemString("MicroOcpp.cpp", operationType);
+    String captureOpType = makeString("MicroOcpp.cpp", operationType);
 
     context->getOperationRegistry().registerOperation(operationType, [captureOpType, fn_processReq, fn_createConf] () {
         return new CustomOperation(captureOpType.c_str(), fn_processReq, fn_createConf);
