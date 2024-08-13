@@ -79,7 +79,7 @@ std::unique_ptr<JsonDoc> StopTransaction::createReq() {
         txDataJson.emplace_back(std::move(mvJson));
     }
 
-    JsonDoc txDataDoc = JsonDoc(JSON_ARRAY_SIZE(txDataJson.size()) + txDataJson_size);
+    auto txDataDoc = initJsonDoc(getMemoryTag(), JSON_ARRAY_SIZE(txDataJson.size()) + txDataJson_size);
     for (auto mvJson = txDataJson.begin(); mvJson != txDataJson.end(); mvJson++) {
         txDataDoc.add(**mvJson);
     }

@@ -6,7 +6,6 @@
 #define MO_METERINGSERVICE_H
 
 #include <functional>
-#include <vector>
 #include <memory>
 
 #include <MicroOcpp/Model/Metering/MeteringConnector.h>

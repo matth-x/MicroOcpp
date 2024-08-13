@@ -7,8 +7,6 @@
 
 #include <functional>
 #include <memory>
-#include <string>
-#include <deque>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Ftp.h>
 #include <MicroOcpp/Core/Memory.h>

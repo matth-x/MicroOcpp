@@ -14,7 +14,6 @@
 #if MO_ENABLE_V201
 
 #include <stdint.h>
-#include <vector>
 #include <memory>
 #include <limits>
 

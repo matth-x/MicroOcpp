@@ -11,7 +11,6 @@
 
 #include <MicroOcpp/Model/Authorization/AuthorizationData.h>
 #include <MicroOcpp/Core/Memory.h>
-#include <vector>
 
 #ifndef MO_LocalAuthListMaxLength
 #define MO_LocalAuthListMaxLength 48

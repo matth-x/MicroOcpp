@@ -6,9 +6,9 @@
 #define MO_STOPTRANSACTION_H
 
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Operations/CiStrings.h>
-#include <vector>
 
 namespace MicroOcpp {
 

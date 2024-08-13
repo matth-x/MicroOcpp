@@ -6,9 +6,8 @@
 #define MO_METERVALUES_H
 
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Core/Time.h>
-
-#include <vector>
 
 namespace MicroOcpp {
 

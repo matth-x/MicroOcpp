@@ -6,8 +6,7 @@
 #define MO_GETCONFIGURATION_H
 
 #include <MicroOcpp/Core/Operation.h>
-
-#include <vector>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 namespace Ocpp16 {

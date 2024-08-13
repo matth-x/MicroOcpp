@@ -24,7 +24,7 @@ void GetInstalledCertificateIds::processReq(JsonObject payload) {
         return;
     }
 
-    Vector<GetCertificateIdType> certificateType = makeVector<GetCertificateIdType>(getMemoryTag());
+    auto certificateType = makeVector<GetCertificateIdType>(getMemoryTag());
     for (const char *certificateTypeCstr : payload["certificateType"].as<JsonArray>()) {
         if (!strcmp(certificateTypeCstr, "V2GRootCertificate")) {
             certificateType.push_back(GetCertificateIdType_V2GRootCertificate);

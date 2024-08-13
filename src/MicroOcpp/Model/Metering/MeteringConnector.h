@@ -7,7 +7,6 @@
 
 #include <functional>
 #include <memory>
-#include <vector>
 
 #include <MicroOcpp/Model/Metering/MeterValue.h>
 #include <MicroOcpp/Model/Metering/MeterStore.h>

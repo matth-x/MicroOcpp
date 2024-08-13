@@ -15,7 +15,6 @@
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Operations/CiStrings.h>
 
-#include <vector>
 #include <functional>
 #include <memory>
 

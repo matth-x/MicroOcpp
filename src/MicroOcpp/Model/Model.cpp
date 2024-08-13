@@ -4,8 +4,6 @@
 
 #include <MicroOcpp/Model/Model.h>
 
-#include <string>
-
 #include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <MicroOcpp/Model/ConnectorBase/ConnectorsCommon.h>

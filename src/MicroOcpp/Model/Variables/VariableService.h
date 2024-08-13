@@ -10,7 +10,6 @@
 #define MO_VARIABLESERVICE_H
 
 #include <stdint.h>
-#include <vector>
 #include <memory>
 #include <limits>
 #include <functional>

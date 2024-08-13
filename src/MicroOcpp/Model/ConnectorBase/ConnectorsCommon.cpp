@@ -2,8 +2,6 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <string>
-
 #include <MicroOcpp/Model/ConnectorBase/ConnectorsCommon.h>
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Core/Configuration.h>

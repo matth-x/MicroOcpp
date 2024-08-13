@@ -8,9 +8,9 @@
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <MicroOcpp/Core/ConfigurationContainer.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #include <memory>
-#include <vector>
 
 #define CONFIGURATION_FN (MO_FILENAME_PREFIX "ocpp-config.jsn")
 #define CONFIGURATION_VOLATILE "/volatile"

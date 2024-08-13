@@ -21,7 +21,7 @@ void GetConfiguration::processReq(JsonObject payload) {
 
     JsonArray requestedKeys = payload["key"];
     for (size_t i = 0; i < requestedKeys.size(); i++) {
-        keys.emplace_back(makeString(getMemoryTag(), requestedKeys[i].as<const char*>()));
+        keys.push_back(makeString(getMemoryTag(), requestedKeys[i].as<const char*>()));
     }
 }
 

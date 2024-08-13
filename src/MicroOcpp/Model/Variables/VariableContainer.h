@@ -13,7 +13,6 @@
 
 #if MO_ENABLE_V201
 
-#include <vector>
 #include <memory>
 
 #include <MicroOcpp/Model/Variables/Variable.h>

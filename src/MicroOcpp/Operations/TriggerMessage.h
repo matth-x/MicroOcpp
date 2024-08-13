@@ -6,8 +6,7 @@
 #define MO_TRIGGERMESSAGE_H
 
 #include <MicroOcpp/Core/Operation.h>
-
-#include <vector>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 

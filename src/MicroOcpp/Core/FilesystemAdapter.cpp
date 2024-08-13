@@ -22,9 +22,7 @@
 
 #if MO_ENABLE_FILE_INDEX
 
-#include <vector>
 #include <algorithm>
-#include <string>
 
 namespace MicroOcpp {
 

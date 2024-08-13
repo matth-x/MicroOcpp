@@ -6,7 +6,6 @@
 #define MO_RESETSERVICE_H
 
 #include <functional>
-#include <vector>
 
 #include <MicroOcpp/Version.h>
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>

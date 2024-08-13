@@ -6,7 +6,6 @@
 
 #if MO_ENABLE_MBEDTLS
 
-#include <string>
 #include <string.h>
 #include <functional>
 

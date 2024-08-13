@@ -247,10 +247,10 @@ void mo_mem_print_stats() {
         MO_CONSOLE_PRINTF("%s - %zu B (max. %zu B)\n", tag.first.c_str(), tag.second.current_size, tag.second.max_size);
     }
 
-    MO_CONSOLE_PRINTF("Blocks: %zu\nTags: %zu\nCurrent usage: %zu B\nMaximum usage: %zu B\n", memBlocks.size(), memTags.size(), memTotal, memTotalMax);
+    MO_CONSOLE_PRINTF(" *** Summary ***\nBlocks: %zu\nTags: %zu\nCurrent usage: %zu B\nMaximum usage: %zu B\n", memBlocks.size(), memTags.size(), memTotal, memTotalMax);
     #if MO_DBG_LEVEL >= MO_DL_DEBUG
     {
-        MO_CONSOLE_PRINTF("Total blocks (control value 1): %zu B\nTags (control value): %zu\nTotal tagged (control value 2): %zu B\nTotal tagged (control value 3): %zu B\nUntagged: %zu\nTotal untagged: %zu B\n", size, tags.size(), size_control, size_control2, untagged, untagged_size);
+        MO_CONSOLE_PRINTF(" *** Debug information ***\nTotal blocks (control value 1): %zu B\nTags (control value): %zu\nTotal tagged (control value 2): %zu B\nTotal tagged (control value 3): %zu B\nUntagged: %zu\nTotal untagged: %zu B\n", size, tags.size(), size_control, size_control2, untagged, untagged_size);
     }
     #endif
 }

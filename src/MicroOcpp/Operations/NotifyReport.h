@@ -13,8 +13,6 @@
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Memory.h>
 
-#include <vector>
-
 namespace MicroOcpp {
 
 class Model;

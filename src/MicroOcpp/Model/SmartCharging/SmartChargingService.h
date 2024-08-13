@@ -55,7 +55,7 @@ private:
 
 public:
     SmartChargingConnector(Model& model, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ProfileStack& ChargePointMaxProfile, ProfileStack& ChargePointTxDefaultProfile);
-    SmartChargingConnector(SmartChargingConnector&& other) = default;
+    SmartChargingConnector(SmartChargingConnector&&) = default;
     ~SmartChargingConnector();
 
     void loop();

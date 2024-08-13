@@ -5,7 +5,6 @@
 #ifndef MO_CONFIGURATIONCONTAINER_H
 #define MO_CONFIGURATIONCONTAINER_H
 
-#include <vector>
 #include <memory>
 
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>

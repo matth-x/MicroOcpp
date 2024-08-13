@@ -50,7 +50,7 @@ std::unique_ptr<JsonDoc> FilesystemUtils::loadJson(std::shared_ptr<FilesystemAda
         capacity = MO_MAX_JSON_CAPACITY;
     }
     
-    auto doc = std::unique_ptr<JsonDoc>(nullptr);
+    std::unique_ptr<JsonDoc> doc;
     DeserializationError err = DeserializationError::NoMemory;
     ArduinoJsonFileAdapter fileReader {file.get()};
 

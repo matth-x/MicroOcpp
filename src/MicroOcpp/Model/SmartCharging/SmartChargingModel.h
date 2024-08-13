@@ -18,7 +18,6 @@
 #endif
 
 #include <memory>
-#include <vector>
 #include <limits>
 
 #include <ArduinoJson.h>

@@ -12,7 +12,7 @@ namespace MicroOcpp {
 
 class NotImplemented : public Operation, public MemoryManaged {
 public:
-    NotImplemented() : MemoryManaged("v16.CallError.NotImplemented") { }
+    NotImplemented() : MemoryManaged("v16.CallError.", "NotImplemented") { }
 
     const char *getErrorCode() override {
         return "NotImplemented";
@@ -24,7 +24,7 @@ private:
     size_t maxCapacity;
     size_t msgLen;
 public:
-    MsgBufferExceeded(size_t maxCapacity, size_t msgLen) : MemoryManaged("v16.CallError.MsgBufferExceeded"), maxCapacity(maxCapacity), msgLen(msgLen) { }
+    MsgBufferExceeded(size_t maxCapacity, size_t msgLen) : MemoryManaged("v16.CallError.", "GenericError"), maxCapacity(maxCapacity), msgLen(msgLen) { }
     const char *getErrorCode() override {
         return "GenericError";
     }

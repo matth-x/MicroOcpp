@@ -9,9 +9,8 @@
 
 #if MO_ENABLE_V201
 
-#include <string>
-
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Model/Variables/Variable.h>
 
 namespace MicroOcpp {

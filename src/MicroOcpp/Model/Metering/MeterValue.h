@@ -11,7 +11,6 @@
 #include <MicroOcpp/Core/Memory.h>
 #include <ArduinoJson.h>
 #include <memory>
-#include <vector>
 
 namespace MicroOcpp {
 
