@@ -18,7 +18,7 @@
 
 using namespace MicroOcpp;
 
-ReservationService::ReservationService(Context& context, unsigned int numConnectors) : context(context), maxReservations((int) numConnectors - 1) {
+ReservationService::ReservationService(Context& context, unsigned int numConnectors) : MemoryManaged("v16.Reservation.ReservationService"), context(context), maxReservations((int) numConnectors - 1), reservations(makeVector<std::unique_ptr<Reservation>>(getMemoryTag())) {
     if (maxReservations > 0) {
         reservations.reserve((size_t) maxReservations);
         for (int i = 0; i < maxReservations; i++) {

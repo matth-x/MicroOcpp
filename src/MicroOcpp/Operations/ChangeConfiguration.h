@@ -10,7 +10,7 @@
 namespace MicroOcpp {
 namespace Ocpp16 {
 
-class ChangeConfiguration : public Operation {
+class ChangeConfiguration : public Operation, public MemoryManaged {
 private:
     bool reject = false;
     bool rebootRequired = false;
@@ -25,7 +25,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 

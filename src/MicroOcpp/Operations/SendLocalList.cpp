@@ -11,8 +11,9 @@
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
 
 using MicroOcpp::Ocpp16::SendLocalList;
+using MicroOcpp::JsonDoc;
 
-SendLocalList::SendLocalList(AuthorizationService& authService) : authService(authService) {
+SendLocalList::SendLocalList(AuthorizationService& authService) : MemoryManaged("v16.Operation.", "SendLocalList"), authService(authService) {
   
 }
 
@@ -55,8 +56,8 @@ void SendLocalList::processReq(JsonObject payload) {
     updateFailure = !authService.updateLocalList(localAuthorizationList, listVersion, differential);
 }
 
-std::unique_ptr<DynamicJsonDocument> SendLocalList::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> SendLocalList::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
     if (versionMismatch) {

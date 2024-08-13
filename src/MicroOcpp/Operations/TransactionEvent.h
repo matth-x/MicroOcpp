@@ -19,7 +19,7 @@ namespace Ocpp201 {
 
 class TransactionEventData;
 
-class TransactionEvent : public Operation {
+class TransactionEvent : public Operation, public MemoryManaged {
 private:
     Model& model;
     std::shared_ptr<TransactionEventData> txEvent;
@@ -31,7 +31,7 @@ public:
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
@@ -39,7 +39,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 };
 
 } //end namespace Ocpp201

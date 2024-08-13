@@ -4,7 +4,7 @@
 
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 #include <MicroOcpp/Core/Context.h>
@@ -71,7 +71,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 1;
@@ -125,7 +125,7 @@ TEST_CASE( "FirmwareManagement" ) {
             if (checkProcessed == 0) {
                 if (checkProcessedOnDownloadStatus == 0) checkProcessedOnDownloadStatus = 1;
                 return DownloadStatus::NotDownloaded;
-            } else if (checkProcessed >= 1) {
+            } else {
                 if (checkProcessedOnDownloadStatus == 1) checkProcessedOnDownloadStatus = 2;
                 return DownloadStatus::Downloaded;
             }
@@ -135,7 +135,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 1;
@@ -192,7 +192,7 @@ TEST_CASE( "FirmwareManagement" ) {
             if (checkProcessed == 0) {
                 if (checkProcessedOnInstallStatus == 0) checkProcessedOnInstallStatus = 1;
                 return InstallationStatus::NotInstalled;
-            } else if (checkProcessed >= 1) {
+            } else {
                 if (checkProcessedOnInstallStatus == 1) checkProcessedOnInstallStatus = 2;
                 return InstallationStatus::Installed;
             }
@@ -202,7 +202,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 1;
@@ -262,7 +262,7 @@ TEST_CASE( "FirmwareManagement" ) {
             if (checkProcessed == 0) {
                 if (checkProcessedOnDownloadStatus == 0) checkProcessedOnDownloadStatus = 1;
                 return DownloadStatus::NotDownloaded;
-            } else if (checkProcessed >= 1) {
+            } else {
                 if (checkProcessedOnDownloadStatus == 1) checkProcessedOnDownloadStatus = 2;
                 return DownloadStatus::Downloaded;
             }
@@ -279,7 +279,7 @@ TEST_CASE( "FirmwareManagement" ) {
             if (checkProcessed <= 2) {
                 if (checkProcessedOnInstallStatus == 0) checkProcessedOnInstallStatus = 1;
                 return InstallationStatus::NotInstalled;
-            } else if (checkProcessed >= 3) {
+            } else {
                 if (checkProcessedOnInstallStatus == 1) checkProcessedOnInstallStatus = 2;
                 return InstallationStatus::Installed;
             }
@@ -289,7 +289,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 1;
@@ -357,7 +357,7 @@ TEST_CASE( "FirmwareManagement" ) {
             } else if (checkProcessed == 2) {
                 if (checkProcessedOnDownloadStatus == 2) checkProcessedOnDownloadStatus = 3;
                 return DownloadStatus::NotDownloaded;
-            } else if (checkProcessed >= 3) {
+            } else {
                 if (checkProcessedOnDownloadStatus == 3) checkProcessedOnDownloadStatus = 4;
                 return DownloadStatus::DownloadFailed;
             }
@@ -373,7 +373,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 2;
@@ -442,7 +442,7 @@ TEST_CASE( "FirmwareManagement" ) {
             } else if (checkProcessed == 2) {
                 if (checkProcessedOnInstallStatus == 2) checkProcessedOnInstallStatus = 3;
                 return InstallationStatus::NotInstalled;
-            } else if (checkProcessed >= 3) {
+            } else {
                 if (checkProcessedOnInstallStatus == 3) checkProcessedOnInstallStatus = 4;
                 return InstallationStatus::InstallationFailed;
             }
@@ -452,7 +452,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 2;
@@ -514,7 +514,7 @@ TEST_CASE( "FirmwareManagement" ) {
             if (checkProcessed == 0) {
                 if (checkProcessedOnDownloadStatus == 0) checkProcessedOnDownloadStatus = 1;
                 return DownloadStatus::NotDownloaded;
-            } else if (checkProcessed >= 1) {
+            } else {
                 if (checkProcessedOnDownloadStatus == 1) checkProcessedOnDownloadStatus = 2;
                 return DownloadStatus::Downloaded;
             }
@@ -531,7 +531,7 @@ TEST_CASE( "FirmwareManagement" ) {
             if (checkProcessed <= 2) {
                 if (checkProcessedOnInstallStatus == 0) checkProcessedOnInstallStatus = 1;
                 return InstallationStatus::NotInstalled;
-            } else if (checkProcessed >= 3) {
+            } else {
                 if (checkProcessedOnInstallStatus == 1) checkProcessedOnInstallStatus = 2;
                 return InstallationStatus::Installed;
             }
@@ -541,7 +541,7 @@ TEST_CASE( "FirmwareManagement" ) {
                 "UpdateFirmware",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(4));
                     auto payload = doc->to<JsonObject>();
                     payload["location"] = FTP_URL;
                     payload["retries"] = 1;

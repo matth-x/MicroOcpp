@@ -9,16 +9,17 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::MeterValues;
+using MicroOcpp::JsonDoc;
 
 #define ENERGY_METER_TIMEOUT_MS 30 * 1000  //after waiting for 30s, send MeterValues without missing readings
 
 //can only be used for echo server debugging
-MeterValues::MeterValues() {
+MeterValues::MeterValues() : MemoryManaged("v16.Operation.", "MeterValues") {
     
 }
 
-MeterValues::MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction) 
-      : meterValue{std::move(meterValue)}, connectorId{connectorId}, transaction{transaction} {
+MeterValues::MeterValues(Vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction) 
+      : MemoryManaged("v16.Operation.", "MeterValues"), meterValue{std::move(meterValue)}, connectorId{connectorId}, transaction{transaction} {
     
 }
 
@@ -30,11 +31,11 @@ const char* MeterValues::getOperationType(){
     return "MeterValues";
 }
 
-std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
+std::unique_ptr<JsonDoc> MeterValues::createReq() {
 
     size_t capacity = 0;
     
-    std::vector<std::unique_ptr<DynamicJsonDocument>> entries;
+    auto entries = makeVector<std::unique_ptr<JsonDoc>>(getMemoryTag());
     for (auto value = meterValue.begin(); value != meterValue.end(); value++) {
         auto entry = (*value)->toJson();
         if (entry) {
@@ -48,7 +49,7 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
     capacity += JSON_OBJECT_SIZE(3);
     capacity += JSON_ARRAY_SIZE(entries.size());
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity + 100)); //TODO remove safety space
+    auto doc = makeJsonDoc(getMemoryTag(), capacity);
     auto payload = doc->to<JsonObject>();
     payload["connectorId"] = connectorId;
 
@@ -77,6 +78,6 @@ void MeterValues::processReq(JsonObject payload) {
 
 }
 
-std::unique_ptr<DynamicJsonDocument> MeterValues::createConf(){
+std::unique_ptr<JsonDoc> MeterValues::createConf(){
     return createEmptyDocument();
 }

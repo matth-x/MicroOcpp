@@ -6,15 +6,14 @@
 #define MO_GETCONFIGURATION_H
 
 #include <MicroOcpp/Core/Operation.h>
-
-#include <vector>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 namespace Ocpp16 {
 
-class GetConfiguration : public Operation {
+class GetConfiguration : public Operation, public MemoryManaged {
 private:
-    std::vector<std::string> keys;
+    Vector<String> keys;
 
     const char *errorCode {nullptr};
     const char *errorDescription = "";
@@ -25,7 +24,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
     const char *getErrorDescription() override {return errorDescription;}

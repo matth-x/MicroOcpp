@@ -7,6 +7,7 @@
 
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <memory>
 
 #define MO_BOOT_INTERVAL_DEFAULT 60
@@ -33,7 +34,7 @@ RegistrationStatus deserializeRegistrationStatus(const char *serialized);
 
 class Context;
 
-class BootService {
+class BootService : public MemoryManaged {
 private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
@@ -43,7 +44,7 @@ private:
 
     RegistrationStatus status = RegistrationStatus::Pending;
     
-    std::string cpCredentials;
+    String cpCredentials;
 
     std::shared_ptr<Configuration> preBootTransactionsBool;
 
@@ -60,7 +61,7 @@ public:
 
     void setChargePointCredentials(JsonObject credentials);
     void setChargePointCredentials(const char *credentials); //credentials: serialized BootNotification payload
-    std::unique_ptr<DynamicJsonDocument> getChargePointCredentials();
+    std::unique_ptr<JsonDoc> getChargePointCredentials();
 
     void notifyRegistrationStatus(RegistrationStatus status);
     void setRetryInterval(unsigned long interval);

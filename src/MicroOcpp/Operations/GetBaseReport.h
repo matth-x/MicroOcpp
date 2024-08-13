@@ -9,9 +9,8 @@
 
 #if MO_ENABLE_V201
 
-#include <string>
-
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Model/Variables/Variable.h>
 
 namespace MicroOcpp {
@@ -20,7 +19,7 @@ class VariableService;
 
 namespace Ocpp201 {
 
-class GetBaseReport : public Operation {
+class GetBaseReport : public Operation, public MemoryManaged {
 private:
     VariableService& variableService;
 
@@ -34,7 +33,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 

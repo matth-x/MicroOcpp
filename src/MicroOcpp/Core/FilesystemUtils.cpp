@@ -9,7 +9,7 @@
 
 using namespace MicroOcpp;
 
-std::unique_ptr<DynamicJsonDocument> FilesystemUtils::loadJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn) {
+std::unique_ptr<JsonDoc> FilesystemUtils::loadJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn, const char *memoryTag) {
     if (!filesystem || !fn || *fn == '\0') {
         MO_DBG_ERR("Format error");
         return nullptr;
@@ -50,13 +50,13 @@ std::unique_ptr<DynamicJsonDocument> FilesystemUtils::loadJson(std::shared_ptr<F
         capacity = MO_MAX_JSON_CAPACITY;
     }
     
-    auto doc = std::unique_ptr<DynamicJsonDocument>(nullptr);
+    std::unique_ptr<JsonDoc> doc;
     DeserializationError err = DeserializationError::NoMemory;
     ArduinoJsonFileAdapter fileReader {file.get()};
 
     while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
 
-        doc.reset(new DynamicJsonDocument(capacity));
+        doc = makeJsonDoc(memoryTag, capacity);
         err = deserializeJson(*doc, fileReader);
 
         capacity *= 2;
@@ -75,7 +75,7 @@ std::unique_ptr<DynamicJsonDocument> FilesystemUtils::loadJson(std::shared_ptr<F
     return doc;
 }
 
-bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn, const DynamicJsonDocument& doc) {
+bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn, const JsonDoc& doc) {
     if (!filesystem || !fn || *fn == '\0') {
         MO_DBG_ERR("Format error");
         return false;

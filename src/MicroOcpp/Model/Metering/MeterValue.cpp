@@ -8,9 +8,20 @@
 
 using namespace MicroOcpp;
 
-std::unique_ptr<DynamicJsonDocument> MeterValue::toJson() {
+MeterValue::MeterValue(const Timestamp& timestamp) :
+        MemoryManaged("v16.Metering.MeterValue"), 
+        timestamp(timestamp), 
+        sampledValue(makeVector<std::unique_ptr<SampledValue>>(getMemoryTag())) {
+
+}
+
+void MeterValue::addSampledValue(std::unique_ptr<SampledValue> sample) {
+    sampledValue.push_back(std::move(sample));
+}
+
+std::unique_ptr<JsonDoc> MeterValue::toJson() {
     size_t capacity = 0;
-    std::vector<std::unique_ptr<DynamicJsonDocument>> entries;
+    auto entries = makeVector<std::unique_ptr<JsonDoc>>(getMemoryTag());
     for (auto sample = sampledValue.begin(); sample != sampledValue.end(); sample++) {
         auto json = (*sample)->toJson();
         if (!json) {
@@ -24,7 +35,7 @@ std::unique_ptr<DynamicJsonDocument> MeterValue::toJson() {
     capacity += JSONDATE_LENGTH + 1;
     capacity += JSON_OBJECT_SIZE(2);
     
-    auto result = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity + 100)); //TODO remove safety space
+    auto result = makeJsonDoc(getMemoryTag(), capacity);
     auto jsonPayload = result->to<JsonObject>();
 
     char timestampStr [JSONDATE_LENGTH + 1] = {'\0'};
@@ -56,11 +67,13 @@ ReadingContext MeterValue::getReadingContext() {
     return ReadingContext::NOT_SET;
 }
 
-MeterValueBuilder::MeterValueBuilder(const std::vector<std::unique_ptr<SampledValueSampler>> &samplers,
+MeterValueBuilder::MeterValueBuilder(const Vector<std::unique_ptr<SampledValueSampler>> &samplers,
             std::shared_ptr<Configuration> samplersSelectStr) :
+            MemoryManaged("v16.Metering.MeterValueBuilder"),
             samplers(samplers),
-            selectString(samplersSelectStr) {
-        
+            selectString(samplersSelectStr),
+            select_mask(makeVector<bool>(getMemoryTag())) {
+
     updateObservedSamplers();
     select_observe = selectString->getValueRevision();
 }
@@ -89,7 +102,7 @@ void MeterValueBuilder::updateObservedSamplers() {
 
         if (sr != sl + 1) {
             for (size_t i = 0; i < samplers.size(); i++) {
-                if (!strncmp(samplers[i]->getProperties().getMeasurand().c_str(), sstring + sl, sr - sl)) {
+                if (!strncmp(samplers[i]->getProperties().getMeasurand(), sstring + sl, sr - sl)) {
                     select_mask[i] = true;
                     select_n++;
                 }
@@ -139,11 +152,11 @@ std::unique_ptr<MeterValue> MeterValueBuilder::deserializeSample(const JsonObjec
     for (JsonObject svJson : sampledValue) {  //for each sampled value, search sampler with matching measurand type
         for (auto& sampler : samplers) {
             auto& properties = sampler->getProperties();
-            if (!properties.getMeasurand().compare(svJson["measurand"] | "") &&
-                    !properties.getFormat().compare(svJson["format"] | "") &&
-                    !properties.getPhase().compare(svJson["phase"] | "") &&
-                    !properties.getLocation().compare(svJson["location"] | "") &&
-                    !properties.getUnit().compare(svJson["unit"] | "")) {
+            if (!strcmp(properties.getMeasurand(), svJson["measurand"] | "") &&
+                    !strcmp(properties.getFormat(), svJson["format"] | "") &&
+                    !strcmp(properties.getPhase(), svJson["phase"] | "") &&
+                    !strcmp(properties.getLocation(), svJson["location"] | "") &&
+                    !strcmp(properties.getUnit(), svJson["unit"] | "")) {
                 //found correct sampler
                 auto dVal = sampler->deserializeValue(svJson);
                 if (dVal) {

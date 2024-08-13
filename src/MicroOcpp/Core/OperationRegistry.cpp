@@ -11,7 +11,7 @@
 
 using namespace MicroOcpp;
 
-OperationRegistry::OperationRegistry() {
+OperationRegistry::OperationRegistry() : registry(makeVector<OperationCreator>("OperationRegistry")) {
 
 }
 

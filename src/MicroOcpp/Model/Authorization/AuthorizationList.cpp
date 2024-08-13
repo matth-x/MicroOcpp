@@ -14,7 +14,7 @@
 
 using namespace MicroOcpp;
 
-AuthorizationList::AuthorizationList() {
+AuthorizationList::AuthorizationList() : MemoryManaged("v16.Authorization.AuthorizationList"), localAuthorizationList(makeVector<AuthorizationData>(getMemoryTag())) {
 
 }
 
@@ -60,8 +60,8 @@ bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool d
         }
     }
 
-    std::vector<int> authlist_index;
-    std::vector<int> remove_list;
+    auto authlist_index = makeVector<int>(getMemoryTag());
+    auto remove_list = makeVector<int>(getMemoryTag());
 
     unsigned int resultingListLength = 0;
 
@@ -74,7 +74,7 @@ bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool d
         resultingListLength = localAuthorizationList.size();
 
         //also, build index here
-        authlist_index = std::vector<int>(authlistJson.size(), -1);
+        authlist_index.resize(authlistJson.size(), -1);
 
         for (size_t i = 0; i < authlistJson.size(); i++) {
 
@@ -113,7 +113,7 @@ bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool d
         localAuthorizationList.clear();
 
         for (size_t i = 0; i < authlistJson.size(); i++) {
-            localAuthorizationList.push_back(AuthorizationData());
+            localAuthorizationList.emplace_back();
             localAuthorizationList.back().readJson(authlistJson[i], compact);
         }
     } else if (differential) {
@@ -138,7 +138,7 @@ bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool d
                 } else {
                     //no, create new
                     authlist_index[i] = localAuthorizationList.size();
-                    localAuthorizationList.push_back(AuthorizationData());
+                    localAuthorizationList.emplace_back();
                 }
             }
 
@@ -150,7 +150,7 @@ bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool d
 
         for (size_t i = 0; i < authlistJson.size(); i++) {
             if (authlistJson[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
-                localAuthorizationList.push_back(AuthorizationData());
+                localAuthorizationList.emplace_back();
                 localAuthorizationList.back().readJson(authlistJson[i], compact);
             }
         }

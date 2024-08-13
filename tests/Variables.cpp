@@ -8,7 +8,7 @@
 
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -277,7 +277,7 @@ TEST_CASE( "Variable" ) {
                 "GetVariables",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     return doc;},
                 [&checkProcessed] (JsonObject payload) {
@@ -314,7 +314,7 @@ TEST_CASE( "Variable" ) {
                 "GetVariable",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(2)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     auto key = payload.createNestedArray("key");
                     key.add(KNOWN_KEY);
@@ -368,7 +368,7 @@ TEST_CASE( "Variable" ) {
                 "ChangeVariable",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = KNOWN_KEY;
                     payload["value"] = "1234";
@@ -390,7 +390,7 @@ TEST_CASE( "Variable" ) {
                 "ChangeVariable",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = UNKOWN_KEY;
                     payload["value"] = "no effect";
@@ -411,7 +411,7 @@ TEST_CASE( "Variable" ) {
                 "ChangeVariable",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = KNOWN_KEY;
                     payload["value"] = "not convertible to int";
@@ -438,7 +438,7 @@ TEST_CASE( "Variable" ) {
                 "ChangeVariable",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = KNOWN_KEY;
                     payload["value"] = "100234";
@@ -460,7 +460,7 @@ TEST_CASE( "Variable" ) {
                 "ChangeVariable",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = KNOWN_KEY;
                     payload["value"] = "4321";

@@ -4,11 +4,12 @@
 
 #include <MicroOcpp/Core/Configuration_c.h>
 #include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Debug.h>
 
 using namespace MicroOcpp;
 
-class ConfigurationC : public Configuration {
+class ConfigurationC : public Configuration, public MemoryManaged {
 private:
     ocpp_configuration *config;
 public:
@@ -18,6 +19,7 @@ public:
     }
 
     bool setKey(const char *key) override {
+        updateMemoryTag("v16.Configuration.", key);
         return config->set_key(config->user_data, key);
     }
 
@@ -114,12 +116,12 @@ public:
     }
 };
 
-class ConfigurationContainerC : public ConfigurationContainer {
+class ConfigurationContainerC : public ConfigurationContainer, public MemoryManaged {
 private:
     ocpp_configuration_container *container;
 public:
     ConfigurationContainerC(ocpp_configuration_container *container, const char *filename, bool accessible) :
-            ConfigurationContainer(filename, accessible), container(container) {
+            ConfigurationContainer(filename, accessible), MemoryManaged("v16.Configuration.ContainerC.", filename), container(container) {
 
     }
 
@@ -150,7 +152,7 @@ public:
         ocpp_configuration *config = container->create_configuration(container->user_data, dt, key);
 
         if (config) {
-            return std::make_shared<ConfigurationC>(config);
+            return std::allocate_shared<ConfigurationC>(makeAllocator<ConfigurationC>(getMemoryTag()), config);
         } else {
             MO_DBG_ERR("could not create config: %s", key);
             return nullptr;

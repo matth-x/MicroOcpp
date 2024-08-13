@@ -12,7 +12,8 @@ ConfigurationContainer::~ConfigurationContainer() {
 
 }
 
-ConfigurationContainerVolatile::ConfigurationContainerVolatile(const char *filename, bool accessible) : ConfigurationContainer(filename, accessible) {
+ConfigurationContainerVolatile::ConfigurationContainerVolatile(const char *filename, bool accessible) :
+        ConfigurationContainer(filename, accessible), MemoryManaged("v16.Configuration.ContainerVoltaile.", filename), configurations(makeVector<std::shared_ptr<Configuration>>(getMemoryTag())) {
 
 }
 
@@ -25,7 +26,7 @@ bool ConfigurationContainerVolatile::save() {
 }
 
 std::shared_ptr<Configuration> ConfigurationContainerVolatile::createConfiguration(TConfig type, const char *key) {
-    std::shared_ptr<Configuration> res = makeConfiguration(type, key);
+    auto res = std::shared_ptr<Configuration>(makeConfiguration(type, key).release(), std::default_delete<Configuration>(), makeAllocator<Configuration>("v16.Configuration.", key));
     if (!res) {
         //allocation failure - OOM
         MO_DBG_ERR("OOM");

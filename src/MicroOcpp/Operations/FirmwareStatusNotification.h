@@ -12,7 +12,7 @@
 namespace MicroOcpp {
 namespace Ocpp16 {
 
-class FirmwareStatusNotification : public Operation {
+class FirmwareStatusNotification : public Operation, public MemoryManaged {
 private:
     FirmwareStatus status = FirmwareStatus::Idle;
     static const char *cstrFromFwStatus(FirmwareStatus status);
@@ -21,7 +21,7 @@ public:
 
     const char* getOperationType() override {return "FirmwareStatusNotification"; }
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 

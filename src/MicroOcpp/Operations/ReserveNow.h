@@ -17,7 +17,7 @@ class Model;
 
 namespace Ocpp16 {
 
-class ReserveNow : public Operation {
+class ReserveNow : public Operation, public MemoryManaged {
 private:
     Model& model;
     const char *errorCode = nullptr;
@@ -31,7 +31,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

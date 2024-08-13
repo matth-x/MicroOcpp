@@ -16,17 +16,17 @@ int32_t SampledValueDeSerializer<int32_t>::deserialize(const char *str) {
     return strtol(str, nullptr, 10);
 }
 
-std::string SampledValueDeSerializer<int32_t>::serialize(int32_t& val) {
+MicroOcpp::String SampledValueDeSerializer<int32_t>::serialize(int32_t& val) {
     char str [12] = {'\0'};
     snprintf(str, 12, "%" PRId32, val);
-    return std::string(str);
+    return makeString("v16.Metering.SampledValueDeSerializer<int32_t>", str);
 }
 
-std::string SampledValueDeSerializer<float>::serialize(float& val) {
+MicroOcpp::String SampledValueDeSerializer<float>::serialize(float& val) {
     char str [20];
     str[0] = '\0';
     snprintf(str, 20, MO_SAMPLEDVALUE_FLOAT_FORMAT, val);
-    return std::string(str);
+    return makeString("v16.Metering.SampledValueDeSerializer<float>", str);
 }
 
 //helper function
@@ -89,34 +89,29 @@ ReadingContext deserializeReadingContext(const char *context) {
 }
 }} //end namespaces
 
-std::unique_ptr<DynamicJsonDocument> SampledValue::toJson() {
+std::unique_ptr<JsonDoc> SampledValue::toJson() {
     auto value = serializeValue();
     if (value.empty()) {
         return nullptr;
     }
     size_t capacity = 0;
     capacity += JSON_OBJECT_SIZE(8);
-    capacity += value.length() + 1
-                + properties.getFormat().length() + 1
-                + properties.getMeasurand().length() + 1
-                + properties.getPhase().length() + 1
-                + properties.getLocation().length() + 1
-                + properties.getUnit().length() + 1;
-    auto result = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity + 100)); //TODO remove safety space
+    capacity += value.length() + 1;
+    auto result = makeJsonDoc("v16.Metering.SampledValue", capacity);
     auto payload = result->to<JsonObject>();
     payload["value"] = value;
     auto context_cstr = Ocpp16::serializeReadingContext(context);
     if (context_cstr)
         payload["context"] = context_cstr;
-    if (!properties.getFormat().empty())
+    if (*properties.getFormat())
         payload["format"] = properties.getFormat();
-    if (!properties.getMeasurand().empty())
+    if (*properties.getMeasurand())
         payload["measurand"] = properties.getMeasurand();
-    if (!properties.getPhase().empty())
+    if (*properties.getPhase())
         payload["phase"] = properties.getPhase();
-    if (!properties.getLocation().empty())
+    if (*properties.getLocation())
         payload["location"] = properties.getLocation();
-    if (!properties.getUnit().empty())
+    if (*properties.getUnit())
         payload["unit"] = properties.getUnit();
     return result;
 }

@@ -6,6 +6,7 @@
 
 #if MO_ENABLE_CERT_MGMT
 
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Debug.h>
 
 #include <string.h>
@@ -15,17 +16,17 @@ namespace MicroOcpp {
 /*
  * C++ wrapper for the C-style certificate interface
  */
-class CertificateStoreC : public CertificateStore {
+class CertificateStoreC : public CertificateStore, public MemoryManaged {
 private:
     ocpp_cert_store *certstore = nullptr;
 public:
-    CertificateStoreC(ocpp_cert_store *certstore) : certstore(certstore) {
+    CertificateStoreC(ocpp_cert_store *certstore) : MemoryManaged("v201.Certificates.CertificateStoreC"), certstore(certstore) {
 
     }
 
     ~CertificateStoreC() = default;
 
-    GetInstalledCertificateStatus getCertificateIds(const std::vector<GetCertificateIdType>& certificateType, std::vector<CertificateChainHash>& out) override {
+    GetInstalledCertificateStatus getCertificateIds(const Vector<GetCertificateIdType>& certificateType, Vector<CertificateChainHash>& out) override {
         out.clear();
 
         ocpp_cert_chain_hash *cch;

@@ -8,9 +8,9 @@
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <MicroOcpp/Core/ConfigurationContainer.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #include <memory>
-#include <vector>
 
 #define CONFIGURATION_FN (MO_FILENAME_PREFIX "ocpp-config.jsn")
 #define CONFIGURATION_VOLATILE "/volatile"
@@ -27,7 +27,7 @@ void registerConfigurationValidator(const char *key, std::function<bool(const ch
 void addConfigurationContainer(std::shared_ptr<ConfigurationContainer> container);
 
 Configuration *getConfigurationPublic(const char *key);
-std::vector<ConfigurationContainer*> getConfigurationContainersPublic();
+Vector<ConfigurationContainer*> getConfigurationContainersPublic();
 
 bool configuration_init(std::shared_ptr<FilesystemAdapter> filesytem);
 void configuration_deinit();

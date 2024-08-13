@@ -33,7 +33,7 @@ RegistrationStatus MicroOcpp::deserializeRegistrationStatus(const char *serializ
     }
 }
 
-BootService::BootService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
+BootService::BootService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : MemoryManaged("v16.Boot.BootService"), context(context), filesystem(filesystem), cpCredentials{makeString(getMemoryTag())} {
     
     //if transactions can start before the BootNotification succeeds
     preBootTransactionsBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", false);
@@ -102,16 +102,16 @@ void BootService::setChargePointCredentials(const char *credentials) {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> BootService::getChargePointCredentials() {
+std::unique_ptr<JsonDoc> BootService::getChargePointCredentials() {
     if (cpCredentials.size() <= 2) {
         return createEmptyDocument();
     }
 
-    std::unique_ptr<DynamicJsonDocument> doc;
+    std::unique_ptr<JsonDoc> doc;
     size_t capacity = JSON_OBJECT_SIZE(9) + cpCredentials.size();
     DeserializationError err = DeserializationError::NoMemory;
     while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
-        doc.reset(new DynamicJsonDocument(capacity));
+        doc = makeJsonDoc(getMemoryTag(), capacity);
         err = deserializeJson(*doc, cpCredentials);
 
         capacity *= 2;
@@ -149,7 +149,7 @@ bool BootService::loadBootStats(std::shared_ptr<FilesystemAdapter> filesystem, B
         
         bool success = true;
 
-        auto json = FilesystemUtils::loadJson(filesystem, MO_FILENAME_PREFIX "bootstats.jsn");
+        auto json = FilesystemUtils::loadJson(filesystem, MO_FILENAME_PREFIX "bootstats.jsn", "v16.Boot.BootService");
         if (json) {
             int bootNrIn = (*json)["bootNr"] | -1;
             if (bootNrIn >= 0 && bootNrIn <= std::numeric_limits<uint16_t>::max()) {
@@ -185,7 +185,7 @@ bool BootService::storeBootStats(std::shared_ptr<FilesystemAdapter> filesystem, 
         return false;
     }
 
-    DynamicJsonDocument json {JSON_OBJECT_SIZE(2)};
+    auto json = initJsonDoc("v16.Boot.BootService", JSON_OBJECT_SIZE(2));
 
     json["bootNr"] = bstats.bootNr;
     json["lastSuccess"] = bstats.lastBootSuccess;

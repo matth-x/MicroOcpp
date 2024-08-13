@@ -9,8 +9,9 @@
 #include <cctype> //for tolower
 
 using MicroOcpp::Ocpp16::ChangeConfiguration;
+using MicroOcpp::JsonDoc;
 
-ChangeConfiguration::ChangeConfiguration() {
+ChangeConfiguration::ChangeConfiguration() : MemoryManaged("v16.Operation.", "ChangeConfiguration") {
   
 }
 
@@ -141,8 +142,8 @@ void ChangeConfiguration::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> ChangeConfiguration::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> ChangeConfiguration::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     if (notSupported) {
         payload["status"] = "NotSupported";

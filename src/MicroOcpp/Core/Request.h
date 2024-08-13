@@ -13,14 +13,16 @@
 
 #include <MicroOcpp/Core/RequestCallbacks.h>
 
+#include <MicroOcpp/Core/Memory.h>
+
 namespace MicroOcpp {
 
 class Operation;
 class Model;
 
-class Request {
+class Request : public MemoryManaged {
 private:
-    std::string messageID {};
+    String messageID;
     std::unique_ptr<Operation> operation;
     void setMessageID(const char *id);
     OnReceiveConfListener onReceiveConfListener = [] (JsonObject payload) {};
@@ -39,7 +41,7 @@ private:
     bool requestSent = false;
 public:
 
-    Request(std::unique_ptr<Operation> msg);
+    Request(std::unique_ptr<Operation> msg, const char *memory_tag = "Request");
 
     ~Request();
 
@@ -62,7 +64,7 @@ public:
         Success,
         Failure
     };
-    CreateRequestResult createRequest(DynamicJsonDocument& out);
+    CreateRequestResult createRequest(JsonDoc& out);
 
    /**
     * Decides if message belongs to this operation instance and if yes, proccesses it. Receives both Confirmations and Errors
@@ -89,7 +91,7 @@ public:
         Failure
     };
 
-    CreateResponseResult createResponse(DynamicJsonDocument& out);
+    CreateResponseResult createResponse(JsonDoc& out);
 
     void setOnReceiveConfListener(OnReceiveConfListener onReceiveConf); //listener executed when we received the .conf() to a .req() we sent
     void setOnReceiveReqListener(OnReceiveReqListener onReceiveReq); //listener executed when we receive a .req()
@@ -119,8 +121,9 @@ public:
 /*
  * Simple factory functions
  */
-std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> op);
+std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> op, const char *memoryTag = "Request");
 std::unique_ptr<Request> makeRequest(Operation *op); //takes ownership of op
+std::unique_ptr<Request> makeRequest(const char *memoryTag, Operation *op); //takes ownership of op
 
 } //end namespace MicroOcpp
 

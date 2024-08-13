@@ -27,12 +27,12 @@ namespace MicroOcpp {
 
 template <class T>
 VariableValidator<T>::VariableValidator(const ComponentId& component, const char *name, std::function<bool(T)> validate) :
-        component(component), name(name), validate(validate) {
+        MemoryManaged("v201.Variables.VariableValidator.", name), component(component), name(name), validate(validate) {
 
 }
 
 template <class T>
-VariableValidator<T> *getVariableValidator(std::vector<VariableValidator<T>>& collection, const ComponentId& component, const char *name) {
+VariableValidator<T> *getVariableValidator(Vector<VariableValidator<T>>& collection, const ComponentId& component, const char *name) {
     for (auto& validator : collection) {
         if (!strcmp(name, validator.name) && component.equals(validator.component)) {
             return &validator;
@@ -80,7 +80,7 @@ std::shared_ptr<VariableContainer> VariableService::getContainer(const char *fil
 }
 
 template <class T>
-bool registerVariableValidator(std::vector<VariableValidator<T>>& collection, const ComponentId& component, const char *name, std::function<bool(T)> validate) {
+bool registerVariableValidator(Vector<VariableValidator<T>>& collection, const ComponentId& component, const char *name, std::function<bool(T)> validate) {
     for (auto it = collection.begin(); it != collection.end(); it++) {
         if (!strcmp(name, it->name) && component.equals(it->component)) {
             collection.erase(it);
@@ -148,7 +148,13 @@ Variable *VariableService::getVariable(Variable::InternalDataType type, const Co
     return nullptr;
 }
 
-VariableService::VariableService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
+VariableService::VariableService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) :
+            MemoryManaged("v201.Variables.VariableService"),
+            context(context), filesystem(filesystem),
+            containers(makeVector<std::shared_ptr<VariableContainer>>(getMemoryTag())),
+            validatorInt(makeVector<VariableValidator<int>>(getMemoryTag())),
+            validatorBool(makeVector<VariableValidator<bool>>(getMemoryTag())),
+            validatorString(makeVector<VariableValidator<const char*>>(getMemoryTag())) {
     context.getOperationRegistry().registerOperation("SetVariables", [this] () {
         return new Ocpp201::SetVariables(*this);});
     context.getOperationRegistry().registerOperation("GetVariables", [this] () {
@@ -438,7 +444,7 @@ GenericDeviceModelStatus VariableService::getBaseReport(int requestId, ReportBas
         return GenericDeviceModelStatus_NotSupported;
     }
 
-    std::vector<Variable*> variables;
+    Vector<Variable*> variables = makeVector<Variable*>(getMemoryTag());
 
     for (const auto& container : containers) {
         if (!container->isAccessible()) {

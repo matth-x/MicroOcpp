@@ -12,9 +12,9 @@
 #include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Operations/CiStrings.h>
 
-#include <vector>
 #include <functional>
 #include <memory>
 
@@ -35,7 +35,7 @@ class Model;
 class Operation;
 class Transaction;
 
-class Connector : public RequestEmitter {
+class Connector : public RequestEmitter, public MemoryManaged {
 private:
     Context& context;
     Model& model;
@@ -52,8 +52,8 @@ private:
     std::function<bool()> connectorPluggedInput;
     std::function<bool()> evReadyInput;
     std::function<bool()> evseReadyInput;
-    std::vector<std::function<ErrorData ()>> errorDataInputs;
-    std::vector<bool> trackErrorDataInputs;
+    Vector<std::function<ErrorData ()>> errorDataInputs;
+    Vector<bool> trackErrorDataInputs;
     int reportedErrorIndex = -1; //last reported error
     bool isFaulted();
     const char *getErrorCode();

@@ -8,6 +8,7 @@
 #include <limits>
 
 #include <MicroOcpp/Core/Connection.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #include <memory>
 #include <ArduinoJson.h>
@@ -34,7 +35,7 @@ public:
     virtual std::unique_ptr<Request> fetchFrontRequest() = 0;
 };
 
-class VolatileRequestQueue : public RequestEmitter {
+class VolatileRequestQueue : public RequestEmitter, public MemoryManaged {
 private:
     std::unique_ptr<Request> requests [MO_REQUEST_CACHE_MAXSIZE];
     size_t front = 0, len = 0;
@@ -50,7 +51,7 @@ public:
     bool pushRequestBack(std::unique_ptr<Request> request);
 };
 
-class RequestQueue {
+class RequestQueue : public MemoryManaged {
 private:
     Connection& connection;
     OperationRegistry& operationRegistry;

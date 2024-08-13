@@ -23,7 +23,7 @@ VariableContainer::~VariableContainer() {
 }
 
 VariableContainerVolatile::VariableContainerVolatile(const char *filename, bool accessible) :
-        VariableContainer(filename, accessible) {
+        VariableContainer(filename, accessible), MemoryManaged("v201.Variables.VariableContainerVolatile.", filename), variables(makeVector<std::unique_ptr<Variable>>(getMemoryTag())) {
 
 }
 

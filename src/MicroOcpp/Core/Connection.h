@@ -8,6 +8,7 @@
 #include <functional>
 #include <memory>
 
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Platform.h>
 
 //On all platforms other than Arduino, the integrated WS lib (links2004/arduinoWebSockets) cannot be
@@ -71,7 +72,7 @@ public:
     virtual bool isConnected() {return true;} //MO ignores true. This default implementation keeps backwards-compatibility
 };
 
-class LoopbackConnection : public Connection {
+class LoopbackConnection : public Connection, public MemoryManaged {
 private:
     ReceiveTXTcallback receiveTXT;
 
@@ -81,6 +82,8 @@ private:
     unsigned long lastRecv = 0;
     unsigned long lastConn = 0;
 public:
+    LoopbackConnection();
+
     void loop() override;
     bool sendTXT(const char *msg, size_t length) override;
     void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) override;
@@ -102,7 +105,7 @@ public:
 namespace MicroOcpp {
 namespace EspWiFi {
 
-class WSClient : public Connection {
+class WSClient : public Connection, public MemoryManaged {
 private:
     WebSocketsClient *wsock;
     unsigned long lastRecv = 0, lastConnected = 0;

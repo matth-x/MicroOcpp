@@ -6,32 +6,34 @@
 
 #include <algorithm>
 #include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Debug.h>
 
 #define MAX_CONFIGURATIONS 50
 
 namespace MicroOcpp {
 
-class ConfigurationContainerFlash : public ConfigurationContainer {
+class ConfigurationContainerFlash : public ConfigurationContainer, public MemoryManaged {
 private:
-    std::vector<std::shared_ptr<Configuration>> configurations;
+    Vector<std::shared_ptr<Configuration>> configurations;
     std::shared_ptr<FilesystemAdapter> filesystem;
     uint16_t revisionSum = 0;
 
     bool loaded = false;
 
-    std::vector<std::unique_ptr<char[]>> keyPool;
+    Vector<char*> keyPool;
     
     void clearKeyPool(const char *key) {
-        keyPool.erase(std::remove_if(keyPool.begin(), keyPool.end(), 
-            [key] (const std::unique_ptr<char[]>& k) {
-                #if MO_DBG_LEVEL >= MO_DL_VERBOSE
-                if (!strcmp(k.get(), key)) {
-                    MO_DBG_VERBOSE("clear key %s", key);
-                }
-                #endif
-                return !strcmp(k.get(), key);
-            }), keyPool.end());
+        auto it = keyPool.begin();
+        while (it != keyPool.end()) {
+            if (!strcmp(*it, key)) {
+                MO_DBG_VERBOSE("clear key %s", key);
+                MO_FREE(*it);
+                it = keyPool.erase(it);
+            } else {
+                ++it;
+            }
+        }
     }
 
     bool configurationsUpdated() {
@@ -46,8 +48,16 @@ private:
     }
 public:
     ConfigurationContainerFlash(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename, bool accessible) :
-            ConfigurationContainer(filename, accessible), filesystem(filesystem) { }
+            ConfigurationContainer(filename, accessible), MemoryManaged("v16.Configuration.ContainerFlash.", filename), configurations(makeVector<std::shared_ptr<Configuration>>(getMemoryTag())), filesystem(filesystem), keyPool(makeVector<char*>(getMemoryTag())) { }
 
+    ~ConfigurationContainerFlash() {
+        auto it = keyPool.begin();
+        while (it != keyPool.end()) {
+            MO_FREE(*it);
+            it = keyPool.erase(it);
+        }
+    }
+    
     bool load() override {
 
         if (loaded) {
@@ -65,7 +75,7 @@ public:
             return save();
         }
 
-        auto doc = FilesystemUtils::loadJson(filesystem, getFilename());
+        auto doc = FilesystemUtils::loadJson(filesystem, getFilename(), getMemoryTag());
         if (!doc) {
             MO_DBG_ERR("failed to load %s", getFilename());
             return false;
@@ -110,8 +120,8 @@ public:
                 MO_DBG_ERR("corrupt config");
                 continue;
             }
-            
-            std::unique_ptr<char[]> key_pooled;
+
+            char *key_pooled = nullptr;
 
             auto config = getConfiguration(key).get();
             if (config && config->getType() != type) {
@@ -120,20 +130,32 @@ public:
                 config = nullptr;
             }
             if (!config) {
-                key_pooled.reset(new char[strlen(key) + 1]);
-                strcpy(key_pooled.get(), key);
+                #if MO_ENABLE_HEAP_PROFILER
+                char memoryTag [64];
+                snprintf(memoryTag, sizeof(memoryTag), "%s%s", "v16.Configuration.", key);
+                #else
+                const char *memoryTag = nullptr;
+                (void)memoryTag;
+                #endif
+                key_pooled = static_cast<char*>(MO_MALLOC(memoryTag, strlen(key) + 1));
+                if (!key_pooled) {
+                    MO_DBG_ERR("OOM: %s", key);
+                    return false;
+                }
+                strcpy(key_pooled, key);
             }
 
             switch (type) {
                 case TConfig::Int: {
                     if (!stored["value"].is<int>()) {
                         MO_DBG_ERR("corrupt config");
+                        MO_FREE(key_pooled);
                         continue;
                     }
                     int value = stored["value"] | 0;
                     if (!config) {
                         //create new config
-                        config = createConfiguration(TConfig::Int, key_pooled.get()).get();
+                        config = createConfiguration(TConfig::Int, key_pooled).get();
                     }
                     if (config) {
                         config->setInt(value);
@@ -143,12 +165,13 @@ public:
                 case TConfig::Bool: {
                     if (!stored["value"].is<bool>()) {
                         MO_DBG_ERR("corrupt config");
+                        MO_FREE(key_pooled);
                         continue;
                     }
                     bool value = stored["value"] | false;
                     if (!config) {
                         //create new config
-                        config = createConfiguration(TConfig::Bool, key_pooled.get()).get();
+                        config = createConfiguration(TConfig::Bool, key_pooled).get();
                     }
                     if (config) {
                         config->setBool(value);
@@ -158,12 +181,13 @@ public:
                 case TConfig::String: {
                     if (!stored["value"].is<const char*>()) {
                         MO_DBG_ERR("corrupt config");
+                        MO_FREE(key_pooled);
                         continue;
                     }
                     const char *value = stored["value"] | "";
                     if (!config) {
                         //create new config
-                        config = createConfiguration(TConfig::String, key_pooled.get()).get();
+                        config = createConfiguration(TConfig::String, key_pooled).get();
                     }
                     if (config) {
                         config->setString(value);
@@ -181,6 +205,7 @@ public:
                 }
             } else {
                 MO_DBG_ERR("OOM: %s", key);
+                MO_FREE(key_pooled);
             }
         }
 
@@ -218,7 +243,7 @@ public:
             jsonCapacity = MO_MAX_JSON_CAPACITY;
         }
 
-        DynamicJsonDocument doc {jsonCapacity};
+        auto doc = initJsonDoc(getMemoryTag(), jsonCapacity);
         JsonObject head = doc.createNestedObject("head");
         head["content-type"] = "ocpp_config_file";
         head["version"] = "2.0";
@@ -267,7 +292,7 @@ public:
     }
 
     std::shared_ptr<Configuration> createConfiguration(TConfig type, const char *key) override {
-        std::shared_ptr<Configuration> res = makeConfiguration(type, key);
+        auto res = std::shared_ptr<Configuration>(makeConfiguration(type, key).release(), std::default_delete<Configuration>(), makeAllocator<Configuration>("v16.Configuration.", key));
         if (!res) {
             //allocation failure - OOM
             MO_DBG_ERR("OOM");

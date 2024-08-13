@@ -11,7 +11,7 @@
 #include <MicroOcpp/Core/FilesystemUtils.h>
 #include <MicroOcpp/Debug.h>
 #include <MicroOcpp/Version.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 using namespace MicroOcpp;
@@ -25,8 +25,8 @@ public:
     void processReq(JsonObject payload) override {
         //ignore payload - result is determined at construction time
     }
-    std::unique_ptr<DynamicJsonDocument> createConf() override {
-        auto res = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1)));
+    std::unique_ptr<JsonDoc> createConf() override {
+        auto res = makeJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
         auto payload = res->to<JsonObject>();
         payload["idTagInfo"]["status"] = status;
         return res;
@@ -42,8 +42,8 @@ public:
     void processReq(JsonObject payload) override {
         //ignore payload - result is determined at construction time
     }
-    std::unique_ptr<DynamicJsonDocument> createConf() override {
-        auto res = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(1)));
+    std::unique_ptr<JsonDoc> createConf() override {
+        auto res = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(1));
         auto payload = res->to<JsonObject>();
         payload["idTagInfo"]["status"] = status;
         payload["transactionId"] = 1000;

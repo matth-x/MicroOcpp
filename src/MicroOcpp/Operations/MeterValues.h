@@ -6,9 +6,8 @@
 #define MO_METERVALUES_H
 
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Core/Time.h>
-
-#include <vector>
 
 namespace MicroOcpp {
 
@@ -17,16 +16,16 @@ class Transaction;
 
 namespace Ocpp16 {
 
-class MeterValues : public Operation {
+class MeterValues : public Operation, public MemoryManaged {
 private:
-    std::vector<std::unique_ptr<MeterValue>> meterValue;
+    Vector<std::unique_ptr<MeterValue>> meterValue;
 
     unsigned int connectorId = 0;
 
     std::shared_ptr<Transaction> transaction;
 
 public:
-    MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction = nullptr);
+    MeterValues(Vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction = nullptr);
 
     MeterValues(); //for debugging only. Make this for the server pendant
 
@@ -34,13 +33,13 @@ public:
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 };
 
 } //end namespace Ocpp16

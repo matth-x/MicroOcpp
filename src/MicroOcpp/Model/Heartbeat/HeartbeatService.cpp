@@ -11,7 +11,7 @@
 
 using namespace MicroOcpp;
 
-HeartbeatService::HeartbeatService(Context& context) : context(context) {
+HeartbeatService::HeartbeatService(Context& context) : MemoryManaged("v16.Heartbeat.HeartbeatService"), context(context) {
     heartbeatIntervalInt = declareConfiguration<int>("HeartbeatInterval", 86400);
     lastHeartbeat = mocpp_tick_ms();
 

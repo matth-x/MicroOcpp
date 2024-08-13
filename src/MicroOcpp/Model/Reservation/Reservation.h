@@ -11,6 +11,7 @@
 
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #ifndef RESERVATION_FN
 #define RESERVATION_FN (MO_FILENAME_PREFIX "reservations.jsn")
@@ -26,7 +27,7 @@ namespace MicroOcpp {
 
 class Model;
 
-class Reservation {
+class Reservation : public MemoryManaged {
 private:
     Model& model;
     const unsigned int slot;

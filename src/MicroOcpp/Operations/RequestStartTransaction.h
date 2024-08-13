@@ -9,8 +9,8 @@
 
 #if MO_ENABLE_V201
 
-#include <string>
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Model/Transactions/TransactionDefs.h>
 
 namespace MicroOcpp {
@@ -19,7 +19,7 @@ class TransactionService;
 
 namespace Ocpp201 {
 
-class RequestStartTransaction : public Operation {
+class RequestStartTransaction : public Operation, public MemoryManaged {
 private:
     TransactionService& txService;
 
@@ -34,7 +34,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 

@@ -56,6 +56,12 @@ std::shared_ptr<FilesystemAdapter> filesystem;
 } //end namespace MicroOcpp::Facade
 } //end namespace MicroOcpp
 
+#if MO_ENABLE_HEAP_PROFILER
+#ifndef MO_HEAP_PROFILER_EXTERNAL_CONTROL
+#define MO_HEAP_PROFILER_EXTERNAL_CONTROL 0 //enable if you want to manually reset the heap profiler (e.g. for keeping stats over multiple MO lifecycles)
+#endif
+#endif
+
 using namespace MicroOcpp;
 using namespace MicroOcpp::Facade;
 using namespace MicroOcpp::Ocpp16;
@@ -79,7 +85,7 @@ void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const cha
     /*
      * parse backendUrl so that it suits the links2004/arduinoWebSockets interface
      */
-    std::string url = backendUrl;
+    auto url = makeString("MicroOcpp.cpp", backendUrl);
 
     //tolower protocol specifier
     for (auto c = url.begin(); *c != ':' && c != url.end(); c++) {
@@ -97,16 +103,16 @@ void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const cha
     }
 
     //parse host, port
-    std::string host_port_path = url.substr(url.find_first_of("://") + strlen("://"));
-    std::string host_port = host_port_path.substr(0, host_port_path.find_first_of('/'));
-    std::string path = host_port_path.substr(host_port.length());
-    std::string host = host_port.substr(0, host_port.find_first_of(':'));
+    auto host_port_path = url.substr(url.find_first_of("://") + strlen("://"));
+    auto host_port = host_port_path.substr(0, host_port_path.find_first_of('/'));
+    auto path = host_port_path.substr(host_port.length());
+    auto host = host_port.substr(0, host_port.find_first_of(':'));
     if (host.empty()) {
         MO_DBG_ERR("could not parse host: %s", url.c_str());
         return;
     }
     uint16_t port = 0;
-    std::string port_str = host_port.substr(host.length());
+    auto port_str = host_port.substr(host.length());
     if (port_str.empty()) {
         port = isTLS ? 443U : 80U;
     } else {
@@ -287,7 +293,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         new BootService(*context, filesystem)));
     model.setConnectorsCommon(std::unique_ptr<ConnectorsCommon>(
         new ConnectorsCommon(*context, MO_NUMCONNECTORS, filesystem)));
-    std::vector<std::unique_ptr<Connector>> connectors;
+    auto connectors = makeVector<std::unique_ptr<Connector>>("v16.ConnectorBase.Connector");
     for (unsigned int connectorId = 0; connectorId < MO_NUMCONNECTORS; connectorId++) {
         connectors.emplace_back(new Connector(*context, filesystem, connectorId));
     }
@@ -404,6 +410,10 @@ void mocpp_deinitialize() {
 
     configuration_deinit();
 
+#if !MO_HEAP_PROFILER_EXTERNAL_CONTROL
+    MO_MEM_DEINIT();
+#endif
+
     MO_DBG_DEBUG("deinitialized OCPP\n");
 }
 
@@ -470,8 +480,8 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
             {
                 // We have a parent ID tag, so we need to check if this new card also has one
                 auto authorize = makeRequest(new Ocpp16::Authorize(context->getModel(), idTag));
-                std::string idTag_capture = idTag;
-                std::string reason_capture = reason ? reason : "";
+                auto idTag_capture = makeString("MicroOcpp.cpp", idTag);
+                auto reason_capture = makeString("MicroOcpp.cpp", reason ? reason : "");
                 authorize->setOnReceiveConfListener([idTag_capture, reason_capture, connectorId, tx] (JsonObject response) {
                     JsonObject idTagInfo = response["idTagInfo"];
 
@@ -1087,7 +1097,7 @@ void setOnSendConf(const char *operationType, OnSendConfListener onSendConf) {
 }
 
 void sendRequest(const char *operationType,
-            std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createReq,
+            std::function<std::unique_ptr<JsonDoc> ()> fn_createReq,
             std::function<void (JsonObject)> fn_processConf) {
 
     if (!context) {
@@ -1105,7 +1115,7 @@ void sendRequest(const char *operationType,
 
 void setRequestHandler(const char *operationType,
             std::function<void (JsonObject)> fn_processReq,
-            std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createConf) {
+            std::function<std::unique_ptr<JsonDoc> ()> fn_createConf) {
 
     if (!context) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
@@ -1116,7 +1126,7 @@ void setRequestHandler(const char *operationType,
         return;
     }
 
-    std::string captureOpType = operationType;
+    auto captureOpType = makeString("MicroOcpp.cpp", operationType);
 
     context->getOperationRegistry().registerOperation(operationType, [captureOpType, fn_processReq, fn_createConf] () {
         return new CustomOperation(captureOpType.c_str(), fn_processReq, fn_createConf);

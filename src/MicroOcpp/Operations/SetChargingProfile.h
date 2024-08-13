@@ -14,7 +14,7 @@ class SmartChargingService;
 
 namespace Ocpp16 {
 
-class SetChargingProfile : public Operation {
+class SetChargingProfile : public Operation, public MemoryManaged {
 private:
     Model& model;
     SmartChargingService& scService;
@@ -31,7 +31,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
     const char *getErrorDescription() override {return errorDescription;}

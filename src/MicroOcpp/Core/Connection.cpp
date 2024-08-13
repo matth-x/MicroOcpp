@@ -7,6 +7,8 @@
 
 using namespace MicroOcpp;
 
+LoopbackConnection::LoopbackConnection() : MemoryManaged("WebSocketLoopback") { }
+
 void LoopbackConnection::loop() { }
 
 bool LoopbackConnection::sendTXT(const char *msg, size_t length) {
@@ -51,7 +53,7 @@ void LoopbackConnection::setConnected(bool connected) {
 
 using namespace MicroOcpp::EspWiFi;
 
-WSClient::WSClient(WebSocketsClient *wsock) : wsock(wsock) {
+WSClient::WSClient(WebSocketsClient *wsock) : MemoryManaged("WebSocketsClient"), wsock(wsock) {
 
 }
 

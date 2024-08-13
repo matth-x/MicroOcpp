@@ -4,10 +4,10 @@
 
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/ConfigurationContainerFlash.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Debug.h>
 
 #include <string.h>
-#include <vector>
 #include <algorithm>
 #include <ArduinoJson.h>
 
@@ -24,8 +24,8 @@ struct Validator {
 namespace ConfigurationLocal {
 
 std::shared_ptr<FilesystemAdapter> filesystem;
-std::vector<std::shared_ptr<ConfigurationContainer>> configurationContainers;
-std::vector<Validator> validators;
+auto configurationContainers = makeVector<std::shared_ptr<ConfigurationContainer>>("v16.Configuration.Containers");
+auto validators = makeVector<Validator>("v16.Configuration.Validators");
 
 }
 
@@ -50,8 +50,8 @@ void addConfigurationContainer(std::shared_ptr<ConfigurationContainer> container
 }
 
 std::shared_ptr<ConfigurationContainer> getContainer(const char *filename) {
-    std::vector<std::shared_ptr<ConfigurationContainer>>::iterator container = std::find_if(configurationContainers.begin(), configurationContainers.end(),
-        [filename](std::shared_ptr<ConfigurationContainer> &elem) {
+    auto container = std::find_if(configurationContainers.begin(), configurationContainers.end(),
+        [filename](decltype(configurationContainers)::value_type &elem) {
             return !strcmp(elem->getFilename(), filename);
         });
 
@@ -192,8 +192,8 @@ Configuration *getConfigurationPublic(const char *key) {
     return nullptr;
 }
 
-std::vector<ConfigurationContainer*> getConfigurationContainersPublic() {
-    std::vector<ConfigurationContainer*> res;
+Vector<ConfigurationContainer*> getConfigurationContainersPublic() {
+    auto res = makeVector<ConfigurationContainer*>("v16.Configuration.Containers");
 
     for (auto& container : configurationContainers) {
         if (container->isAccessible()) {
@@ -210,8 +210,8 @@ bool configuration_init(std::shared_ptr<FilesystemAdapter> _filesystem) {
 }
 
 void configuration_deinit() {
-    configurationContainers.clear();
-    validators.clear();
+    makeVector<decltype(configurationContainers)::value_type>("v16.Configuration.Containers").swap(configurationContainers); //release allocated memory (see https://cplusplus.com/reference/vector/vector/clear/)
+    makeVector<decltype(validators)::value_type>("v16.Configuration.Validators").swap(validators);
     filesystem.reset();
 }
 

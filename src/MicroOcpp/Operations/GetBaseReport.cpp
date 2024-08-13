@@ -11,8 +11,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp201::GetBaseReport;
+using MicroOcpp::JsonDoc;
 
-GetBaseReport::GetBaseReport(VariableService& variableService) : variableService(variableService) {
+GetBaseReport::GetBaseReport(VariableService& variableService) : MemoryManaged("v201.Operation.", "GetBaseReport"), variableService(variableService) {
   
 }
 
@@ -47,9 +48,9 @@ void GetBaseReport::processReq(JsonObject payload) {
     status = variableService.getBaseReport(requestId, reportBase);
 }
 
-std::unique_ptr<DynamicJsonDocument> GetBaseReport::createConf(){
+std::unique_ptr<JsonDoc> GetBaseReport::createConf(){
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
     const char *statusCstr = "";

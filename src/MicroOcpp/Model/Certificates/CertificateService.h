@@ -22,12 +22,13 @@
 #include <memory>
 
 #include <MicroOcpp/Model/Certificates/Certificate.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
 class Context;
 
-class CertificateService {
+class CertificateService : public MemoryManaged {
 private:
     Context& context;
     std::unique_ptr<CertificateStore> certStore;

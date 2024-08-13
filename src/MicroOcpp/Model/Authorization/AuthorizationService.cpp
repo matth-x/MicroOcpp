@@ -22,8 +22,8 @@
 
 using namespace MicroOcpp;
 
-AuthorizationService::AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
-    
+AuthorizationService::AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : MemoryManaged("v16.Authorization.AuthorizationService"), context(context), filesystem(filesystem) {
+
     localAuthListEnabledBool = declareConfiguration<bool>("LocalAuthListEnabled", true);
     declareConfiguration<int>("LocalAuthListMaxLength", MO_LocalAuthListMaxLength, CONFIGURATION_VOLATILE, true);
     declareConfiguration<int>("SendLocalListMaxLength", MO_SendLocalListMaxLength, CONFIGURATION_VOLATILE, true);
@@ -56,7 +56,7 @@ bool AuthorizationService::loadLists() {
         return true;
     }
     
-    auto doc = FilesystemUtils::loadJson(filesystem, MO_LOCALAUTHORIZATIONLIST_FN);
+    auto doc = FilesystemUtils::loadJson(filesystem, MO_LOCALAUTHORIZATIONLIST_FN, getMemoryTag());
     if (!doc) {
         MO_DBG_ERR("failed to load %s", MO_LOCALAUTHORIZATIONLIST_FN);
         return false;
@@ -106,7 +106,7 @@ bool AuthorizationService::updateLocalList(JsonArray localAuthorizationListJson,
 
     if (success) {
         
-        DynamicJsonDocument doc (
+        auto doc = initJsonDoc(getMemoryTag(),
                 JSON_OBJECT_SIZE(3) +
                 localAuthorizationList.getJsonCapacity());
 

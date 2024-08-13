@@ -26,7 +26,7 @@
 using namespace MicroOcpp;
 
 ResetService::ResetService(Context& context)
-      : context(context) {
+      : MemoryManaged("v16.Reset.ResetService"), context(context) {
 
     resetRetriesInt = declareConfiguration<int>("ResetRetries", 2);
 
@@ -110,7 +110,7 @@ namespace MicroOcpp {
 namespace Ocpp201 {
 
 ResetService::ResetService(Context& context)
-      : context(context) {
+      : MemoryManaged("v201.Reset.ResetService"), context(context), evses(makeVector<Evse>(getMemoryTag())) {
 
     auto varService = context.getModel().getVariableService();
     resetRetriesInt = varService->declareVariable<int>("OCPPCommCtrlr", "ResetRetries", 0);

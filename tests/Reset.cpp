@@ -15,7 +15,7 @@
 #include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
 #include <MicroOcpp/Debug.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"
@@ -94,7 +94,7 @@ TEST_CASE( "Reset" ) {
                 "Reset",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["type"] = "OnIdle";
                     return doc;},
@@ -193,7 +193,7 @@ TEST_CASE( "Reset" ) {
                 "Reset",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["type"] = "Immediate";
                     return doc;},
@@ -245,7 +245,7 @@ TEST_CASE( "Reset" ) {
                 "Reset",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["type"] = "Immediate";
                     return doc;},
@@ -277,7 +277,7 @@ TEST_CASE( "Reset" ) {
                 "Reset",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["type"] = "OnIdle";
                     payload["evseId"] = 1;

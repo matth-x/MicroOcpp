@@ -14,11 +14,11 @@
 #if MO_ENABLE_V201
 
 #include <stdint.h>
-#include <vector>
 #include <memory>
 #include <limits>
 
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #ifndef MO_VARIABLE_TYPECHECK
 #define MO_VARIABLE_TYPECHECK 1
@@ -27,7 +27,7 @@
 namespace MicroOcpp {
 
 // VariableCharacteristicsType (2.51)
-struct VariableCharacteristics {
+struct VariableCharacteristics : public MemoryManaged {
 
     // DataEnumType (3.26)
     enum class DataType : uint8_t {
@@ -47,6 +47,8 @@ struct VariableCharacteristics {
     int maxLimit = std::numeric_limits<int>::max();
     const char *valuesList = nullptr; //no copy
     //bool supportsMonitoring; //stored in Variable
+
+    VariableCharacteristics() : MemoryManaged("v201.Variables.VariableCharacteristics") { }
 };
 
 // SetVariableStatusEnumType (3.79)
@@ -125,7 +127,7 @@ struct ComponentId {
  * the value of the variable. To make it use the host system's key-value store, extend this class
  * with a custom implementation of the virtual methods and pass its instances to MO.
  */
-class Variable {
+class Variable : public MemoryManaged {
 public:
     //AttributeEnumType (3.2)
     enum class AttributeType : uint8_t {

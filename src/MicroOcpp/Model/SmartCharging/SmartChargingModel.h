@@ -18,12 +18,12 @@
 #endif
 
 #include <memory>
-#include <vector>
 #include <limits>
 
 #include <ArduinoJson.h>
 
 #include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
@@ -75,16 +75,18 @@ public:
     int numberPhases = 3;
 };
 
-class ChargingSchedule {
+class ChargingSchedule : public MemoryManaged {
 public:
     int duration = -1;
     Timestamp startSchedule;
     ChargingRateUnitType chargingRateUnit;
-    std::vector<ChargingSchedulePeriod> chargingSchedulePeriod;
+    Vector<ChargingSchedulePeriod> chargingSchedulePeriod;
     float minChargingRate = -1.0f;
 
     ChargingProfileKindType chargingProfileKind; //copied from ChargingProfile to increase cohesion of limit algorithms
     RecurrencyKindType recurrencyKind = RecurrencyKindType::NOT_SET; //copied from ChargingProfile to increase cohesion of limit algorithms
+
+    ChargingSchedule();
 
     /**
      * limit: output parameter
@@ -96,7 +98,7 @@ public:
      */
     bool calculateLimit(const Timestamp &t, const Timestamp &startOfCharging, ChargeRate& limit, Timestamp& nextChange);
 
-    bool toJson(DynamicJsonDocument& out);
+    bool toJson(JsonDoc& out);
 
     /*
     * print on console
@@ -104,7 +106,7 @@ public:
     void printSchedule();
 };
 
-class ChargingProfile {
+class ChargingProfile : public MemoryManaged {
 public:
     int chargingProfileId = -1;
     int transactionId = -1;
@@ -115,6 +117,8 @@ public:
     Timestamp validFrom;
     Timestamp validTo;
     ChargingSchedule chargingSchedule;
+
+    ChargingProfile();
 
     /**
      * limit: output parameter
@@ -137,7 +141,7 @@ public:
     
     ChargingProfilePurposeType getChargingProfilePurpose();
 
-    bool toJson(DynamicJsonDocument& out);
+    bool toJson(JsonDoc& out);
 
     /*
     * print on console

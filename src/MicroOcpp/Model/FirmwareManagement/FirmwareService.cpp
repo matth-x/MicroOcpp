@@ -22,10 +22,11 @@
 #define MO_IGNORE_FW_RETR_DATE 0
 #endif
 
-using namespace MicroOcpp;
+using MicroOcpp::FirmwareService;
 using MicroOcpp::Ocpp16::FirmwareStatus;
+using MicroOcpp::Request;
 
-FirmwareService::FirmwareService(Context& context) : context(context) {
+FirmwareService::FirmwareService(Context& context) : MemoryManaged("v16.Firmware.FirmwareService"), context(context), buildNumber(makeString(getMemoryTag())), location(makeString(getMemoryTag())) {
     
     context.getOperationRegistry().registerOperation("UpdateFirmware", [this] () {
         return new Ocpp16::UpdateFirmware(*this);});

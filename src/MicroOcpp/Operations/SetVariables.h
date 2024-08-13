@@ -9,10 +9,8 @@
 
 #if MO_ENABLE_V201
 
-#include <string>
-#include <vector>
-
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Model/Variables/Variable.h>
 
 namespace MicroOcpp {
@@ -27,19 +25,21 @@ struct SetVariableData {
     // SetVariableDataType
     Variable::AttributeType attributeType = Variable::AttributeType::Actual;
     const char *attributeValue; // will become invalid after processReq
-    std::string componentName;
+    String componentName;
     int componentEvseId = -1;
     int componentEvseConnectorId = -1;
-    std::string variableName;
+    String variableName;
 
     // SetVariableResultType
     SetVariableStatus attributeStatus;
+
+    SetVariableData(const char *memory_tag = nullptr);
 };
 
-class SetVariables : public Operation {
+class SetVariables : public Operation, public MemoryManaged {
 private:
     VariableService& variableService;
-    std::vector<SetVariableData> queries;
+    Vector<SetVariableData> queries;
 
     const char *errorCode = nullptr;
 public:
@@ -49,7 +49,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 

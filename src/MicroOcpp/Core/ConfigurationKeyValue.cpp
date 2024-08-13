@@ -3,10 +3,10 @@
 // MIT License
 
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Debug.h>
 
 #include <string.h>
-#include <vector>
 #include <ArduinoJson.h>
 
 #define KEY_MAXLEN 60
@@ -89,7 +89,7 @@ bool Configuration::isReadOnly() {
  * before its initialization stage. Then the library won't create new config objects but 
  */
 
-class ConfigInt : public Configuration {
+class ConfigInt : public Configuration, public MemoryManaged {
 private:
     const char *key = nullptr;
     int val = 0;
@@ -99,6 +99,7 @@ public:
 
     bool setKey(const char *key) override {
         this->key = key;
+        updateMemoryTag("v16.Configuration.", key);
         return true;
     }
 
@@ -120,7 +121,7 @@ public:
     }
 };
 
-class ConfigBool : public Configuration {
+class ConfigBool : public Configuration, public MemoryManaged {
 private:
     const char *key = nullptr;
     bool val = false;
@@ -130,6 +131,7 @@ public:
 
     bool setKey(const char *key) override {
         this->key = key;
+        updateMemoryTag("v16.Configuration.", key);
         return true;
     }
 
@@ -151,7 +153,7 @@ public:
     }
 };
 
-class ConfigString : public Configuration {
+class ConfigString : public Configuration, public MemoryManaged {
 private:
     const char *key = nullptr;
     char *val = nullptr;
@@ -162,11 +164,15 @@ public:
     ConfigString& operator=(const ConfigString&) = delete;
 
     ~ConfigString() {
-        free(val);
+        MO_FREE(val);
     }
 
     bool setKey(const char *key) override {
         this->key = key;
+        updateMemoryTag("v16.Configuration.", key);
+        if (val) {
+            MO_MEM_SET_TAG(val, getMemoryTag());
+        }
         return true;
     }
 
@@ -201,12 +207,12 @@ public:
         value_revision++;
 
         if (this->val) {
-            free(this->val);
+            MO_FREE(this->val);
             this->val = nullptr;
         }
 
         if (!src_empty) {
-            this->val = (char*) malloc(size);
+            this->val = (char*) MO_MALLOC(getMemoryTag(), size);
             if (!this->val) {
                 return false;
             }

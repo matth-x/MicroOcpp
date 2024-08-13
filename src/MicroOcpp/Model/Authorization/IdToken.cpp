@@ -15,21 +15,22 @@
 
 using namespace MicroOcpp;
 
-IdToken::IdToken() {
-    idToken[0] = '\0';
+IdToken::IdToken(const char *token, Type type, const char *memoryTag) : MemoryManaged(memoryTag ? memoryTag : "v201.Authorization.IdToken"), type(type) {
+    if (token) {
+        auto ret = snprintf(idToken, MO_IDTOKEN_LEN_MAX + 1, "%s", token);
+        if (ret < 0 || ret >= MO_IDTOKEN_LEN_MAX + 1) {
+            MO_DBG_ERR("invalid token");
+            *idToken = '\0';
+        }
+    }
 }
 
-IdToken::IdToken(const char *token, Type type) : type(type) {
-    auto ret = snprintf(idToken, MO_IDTOKEN_LEN_MAX + 1, "%s", token);
-    if (ret < 0 || ret >= MO_IDTOKEN_LEN_MAX + 1) {
-        MO_DBG_ERR("invalid token");
-        *idToken = '\0';
-    }
+IdToken::IdToken(const IdToken& other, const char *memoryTag) : IdToken(other.idToken, other.type, memoryTag ? memoryTag : other.getMemoryTag()) { 
+
 }
 
 bool IdToken::parseCstr(const char *token, const char *typeCstr) {
     if (!token || !typeCstr) {
-        MO_DBG_DEBUG("TRACE");
         return false;
     }
 
@@ -42,7 +43,6 @@ bool IdToken::parseCstr(const char *token, const char *typeCstr) {
     } else if (!strcmp(typeCstr, "ISO15693")) {
         type = Type::ISO15693;
     } else if (!strcmp(typeCstr, "KeyCode")) {
-        MO_DBG_DEBUG("TRACE");
         type = Type::KeyCode;
     } else if (!strcmp(typeCstr, "Local")) {
         type = Type::Local;
@@ -51,7 +51,6 @@ bool IdToken::parseCstr(const char *token, const char *typeCstr) {
     } else if (!strcmp(typeCstr, "NoAuthorization")) {
         type = Type::NoAuthorization;
     } else {
-        MO_DBG_DEBUG("TRACE");
         return false;
     }
 

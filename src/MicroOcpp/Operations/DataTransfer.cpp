@@ -6,17 +6,22 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::DataTransfer;
+using MicroOcpp::JsonDoc;
 
-DataTransfer::DataTransfer(const std::string &msg) {
-    this->msg = msg;
+DataTransfer::DataTransfer() : MemoryManaged("v16.Operation.", "DataTransfer") {
+
+}
+
+DataTransfer::DataTransfer(const String &msg) : MemoryManaged("v16.Operation.", "DataTransfer"), msg{makeString(getMemoryTag(), msg.c_str())} {
+
 }
 
 const char* DataTransfer::getOperationType(){
     return "DataTransfer";
 }
 
-std::unique_ptr<DynamicJsonDocument> DataTransfer::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2) + (msg.length() + 1)));
+std::unique_ptr<JsonDoc> DataTransfer::createReq() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2) + (msg.length() + 1));
     JsonObject payload = doc->to<JsonObject>();
     payload["vendorId"] = "CustomVendor";
     payload["data"] = msg;
@@ -24,9 +29,9 @@ std::unique_ptr<DynamicJsonDocument> DataTransfer::createReq() {
 }
 
 void DataTransfer::processConf(JsonObject payload){
-    std::string status = payload["status"] | "Invalid";
+    const char *status = payload["status"] | "Invalid";
 
-    if (status == "Accepted") {
+    if (!strcmp(status, "Accepted")) {
         MO_DBG_DEBUG("Request has been accepted");
     } else {
         MO_DBG_INFO("Request has been denied");
@@ -37,8 +42,8 @@ void DataTransfer::processReq(JsonObject payload) {
     // Do nothing - we're just required to reject these DataTransfer requests
 }
 
-std::unique_ptr<DynamicJsonDocument> DataTransfer::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> DataTransfer::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = "Rejected";
     return doc;

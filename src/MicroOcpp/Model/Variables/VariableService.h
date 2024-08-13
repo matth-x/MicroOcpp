@@ -10,7 +10,6 @@
 #define MO_VARIABLESERVICE_H
 
 #include <stdint.h>
-#include <vector>
 #include <memory>
 #include <limits>
 #include <functional>
@@ -22,6 +21,7 @@
 #include <MicroOcpp/Model/Variables/Variable.h>
 #include <MicroOcpp/Model/Variables/VariableContainer.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #ifndef MO_VARIABLE_FN
 #define MO_VARIABLE_FN (MO_FILENAME_PREFIX "ocpp-vars.jsn")
@@ -38,7 +38,7 @@
 namespace MicroOcpp {
 
 template <class T>
-struct VariableValidator {
+struct VariableValidator : public MemoryManaged {
     ComponentId component;
     const char *name;
     std::function<bool(T)> validate;
@@ -47,15 +47,15 @@ struct VariableValidator {
 
 class Context;
 
-class VariableService {
+class VariableService : public MemoryManaged {
 private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
-    std::vector<std::shared_ptr<VariableContainer>> containers;
+    Vector<std::shared_ptr<VariableContainer>> containers;
 
-    std::vector<VariableValidator<int>> validatorInt;
-    std::vector<VariableValidator<bool>> validatorBool;
-    std::vector<VariableValidator<const char*>> validatorString;
+    Vector<VariableValidator<int>> validatorInt;
+    Vector<VariableValidator<bool>> validatorBool;
+    Vector<VariableValidator<const char*>> validatorString;
 
     VariableValidator<int> *getValidatorInt(const ComponentId& component, const char *name);
     VariableValidator<bool> *getValidatorBool(const ComponentId& component, const char *name);

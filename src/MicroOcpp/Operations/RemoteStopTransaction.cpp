@@ -8,8 +8,9 @@
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 
 using MicroOcpp::Ocpp16::RemoteStopTransaction;
+using MicroOcpp::JsonDoc;
 
-RemoteStopTransaction::RemoteStopTransaction(Model& model) : model(model) {
+RemoteStopTransaction::RemoteStopTransaction(Model& model) : MemoryManaged("v16.Operation.", "RemoteStopTransaction"), model(model) {
   
 }
 
@@ -34,8 +35,8 @@ void RemoteStopTransaction::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> RemoteStopTransaction::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> RemoteStopTransaction::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     if (accepted){
         payload["status"] = "Accepted";

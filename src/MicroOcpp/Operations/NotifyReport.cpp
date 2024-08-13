@@ -11,11 +11,11 @@
 #include <MicroOcpp/Model/Variables/Variable.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp201::NotifyReport;
 using namespace MicroOcpp::Ocpp201;
+using MicroOcpp::JsonDoc;
 
-NotifyReport::NotifyReport(Model& model, int requestId, const Timestamp& generatedAt, bool tbc, int seqNo, const std::vector<Variable*>& reportData)
-        : model(model), requestId(requestId), generatedAt(generatedAt), tbc(tbc), seqNo(seqNo), reportData(reportData) {
+NotifyReport::NotifyReport(Model& model, int requestId, const Timestamp& generatedAt, bool tbc, int seqNo, const Vector<Variable*>& reportData)
+        : MemoryManaged("v201.Operation.", "NotifyReport"), model(model), requestId(requestId), generatedAt(generatedAt), tbc(tbc), seqNo(seqNo), reportData(reportData) {
 
 }
 
@@ -23,7 +23,7 @@ const char* NotifyReport::getOperationType() {
     return "NotifyReport";
 }
 
-std::unique_ptr<DynamicJsonDocument> NotifyReport::createReq() {
+std::unique_ptr<JsonDoc> NotifyReport::createReq() {
 
     #define VALUE_BUFSIZE 30 // for primitives (int)
 
@@ -81,7 +81,7 @@ std::unique_ptr<DynamicJsonDocument> NotifyReport::createReq() {
         capacity += JSON_OBJECT_SIZE(2); //variableCharacteristics composite: only send two data fields
     }
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
+    auto doc = makeJsonDoc(getMemoryTag(), capacity);
 
     JsonObject payload = doc->to<JsonObject>();
     payload["requestId"] = requestId;

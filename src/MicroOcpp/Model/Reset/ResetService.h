@@ -6,17 +6,17 @@
 #define MO_RESETSERVICE_H
 
 #include <functional>
-#include <vector>
 
 #include <MicroOcpp/Version.h>
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Model/Reset/ResetDefs.h>
 
 namespace MicroOcpp {
 
 class Context;
 
-class ResetService {
+class ResetService : public MemoryManaged {
 private:
     Context& context;
 
@@ -64,7 +64,7 @@ class Variable;
 
 namespace Ocpp201 {
 
-class ResetService {
+class ResetService : public MemoryManaged {
 private:
     Context& context;
 
@@ -86,7 +86,7 @@ private:
         void loop();
     };
 
-    std::vector<Evse> evses;
+    Vector<Evse> evses;
     Evse *getEvse(unsigned int connectorId);
     Evse *getOrCreateEvse(unsigned int connectorId);
 

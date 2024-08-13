@@ -6,6 +6,7 @@
 #include "MicroOcpp.h"
 
 #include <MicroOcpp/Model/Certificates/Certificate_c.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #include <MicroOcpp/Platform.h>
 #include <MicroOcpp/Debug.h>
@@ -363,7 +364,7 @@ void ocpp_set_console_out_c(void (*console_out)(const char *msg)) {
 
 void ocpp_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data) {
     
-    std::string idTag_capture = idTag;
+    auto idTag_capture = MicroOcpp::makeString("MicroOcpp_c.cpp", idTag);
 
     authorize(idTag,
             onConfirmation ? [onConfirmation, idTag_capture, user_data] (JsonObject payload) {

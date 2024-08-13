@@ -11,8 +11,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp201::DeleteCertificate;
+using MicroOcpp::JsonDoc;
 
-DeleteCertificate::DeleteCertificate(CertificateService& certService) : certService(certService) {
+DeleteCertificate::DeleteCertificate(CertificateService& certService) : MemoryManaged("v201.Operation.", "DeleteCertificate"), certService(certService) {
 
 }
 
@@ -85,8 +86,8 @@ void DeleteCertificate::processReq(JsonObject payload) {
     //operation executed successfully
 }
 
-std::unique_ptr<DynamicJsonDocument> DeleteCertificate::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> DeleteCertificate::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = status;
     return doc;

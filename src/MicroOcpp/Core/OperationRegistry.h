@@ -6,9 +6,8 @@
 #define MO_OPERATIONREGISTRY_H
 
 #include <functional>
-#include <vector>
 #include <memory>
-#include <ArduinoJson.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Core/RequestCallbacks.h>
 
 namespace MicroOcpp {
@@ -25,7 +24,7 @@ struct OperationCreator {
 
 class OperationRegistry {
 private:
-    std::vector<OperationCreator> registry;
+    Vector<OperationCreator> registry;
     OperationCreator *findCreator(const char *operationType);
 
 public:

@@ -13,7 +13,7 @@ class Model;
 
 namespace Ocpp16 {
 
-class ChangeAvailability : public Operation {
+class ChangeAvailability : public Operation, public MemoryManaged {
 private:
     Model& model;
     bool scheduled = false;
@@ -27,7 +27,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

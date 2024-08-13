@@ -6,12 +6,13 @@
 #define MO_CHARGECONTROLCOMMON_H
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
 class Context;
 
-class ConnectorsCommon {
+class ConnectorsCommon : public MemoryManaged {
 private:
     Context& context;
 public:

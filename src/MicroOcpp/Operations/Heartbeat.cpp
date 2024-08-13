@@ -8,8 +8,9 @@
 #include <string.h>
 
 using MicroOcpp::Ocpp16::Heartbeat;
+using MicroOcpp::JsonDoc;
 
-Heartbeat::Heartbeat(Model& model) : model(model) {
+Heartbeat::Heartbeat(Model& model) : MemoryManaged("v16.Operation.", "Heartbeat"), model(model) {
   
 }
 
@@ -17,7 +18,7 @@ const char* Heartbeat::getOperationType(){
     return "Heartbeat";
 }
 
-std::unique_ptr<DynamicJsonDocument> Heartbeat::createReq() {
+std::unique_ptr<JsonDoc> Heartbeat::createReq() {
     return createEmptyDocument();
 }
 
@@ -44,8 +45,8 @@ void Heartbeat::processReq(JsonObject payload) {
 
 }
 
-std::unique_ptr<DynamicJsonDocument> Heartbeat::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + (JSONDATE_LENGTH + 1)));
+std::unique_ptr<JsonDoc> Heartbeat::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + (JSONDATE_LENGTH + 1));
     JsonObject payload = doc->to<JsonObject>();
 
     //safety mechanism; in some test setups the library could have to answer Heartbeats without valid system time

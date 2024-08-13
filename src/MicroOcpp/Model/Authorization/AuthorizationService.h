@@ -12,12 +12,13 @@
 #include <MicroOcpp/Model/Authorization/AuthorizationList.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
 class Context;
 
-class AuthorizationService {
+class AuthorizationService : public MemoryManaged {
 private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;

@@ -14,7 +14,7 @@
 using namespace MicroOcpp;
 
 MeteringService::MeteringService(Context& context, int numConn, std::shared_ptr<FilesystemAdapter> filesystem)
-      : context(context), meterStore(filesystem) {
+      : MemoryManaged("v16.Metering.MeteringService"), context(context), meterStore(filesystem), connectors(makeVector<std::unique_ptr<MeteringConnector>>(getMemoryTag())) {
 
     //set factory defaults for Metering-related config keys
     declareConfiguration<const char*>("MeterValuesSampledData", "Energy.Active.Import.Register,Power.Active.Import");
@@ -115,18 +115,14 @@ std::unique_ptr<Request> MeteringService::takeTriggeredMeterValues(int connector
         MO_DBG_ERR("connectorId out of bounds. Ignore");
         return nullptr;
     }
-    auto& connector = connectors.at(connectorId);
-    if (connector.get()) {
-        auto msg = connector->takeTriggeredMeterValues();
-        if (msg) {
-            auto meterValues = makeRequest(std::move(msg));
-            meterValues->setTimeout(120000);
-            return meterValues;
-        }
-        MO_DBG_DEBUG("Did not take any samples for connectorId %d", connectorId);
-        return nullptr;
+
+    auto msg = connectors[connectorId]->takeTriggeredMeterValues();
+    if (msg) {
+        auto meterValues = makeRequest(std::move(msg));
+        meterValues->setTimeout(120000);
+        return meterValues;
     }
-    MO_DBG_ERR("Could not find connector");
+    MO_DBG_DEBUG("Did not take any samples for connectorId %d", connectorId);
     return nullptr;
 }
 
@@ -140,9 +136,7 @@ void MeteringService::beginTxMeterData(Transaction *transaction) {
         MO_DBG_ERR("connectorId is out of bounds");
         return;
     }
-    auto& connector = connectors[connectorId];
-
-    connector->beginTxMeterData(transaction);
+    connectors[connectorId]->beginTxMeterData(transaction);
 }
 
 std::shared_ptr<TransactionMeterData> MeteringService::endTxMeterData(Transaction *transaction) {
@@ -155,9 +149,7 @@ std::shared_ptr<TransactionMeterData> MeteringService::endTxMeterData(Transactio
         MO_DBG_ERR("connectorId is out of bounds");
         return nullptr;
     }
-    auto& connector = connectors[connectorId];
-
-    return connector->endTxMeterData(transaction);
+    return connectors[connectorId]->endTxMeterData(transaction);
 }
 
 void MeteringService::abortTxMeterData(unsigned int connectorId) {
@@ -165,9 +157,7 @@ void MeteringService::abortTxMeterData(unsigned int connectorId) {
         MO_DBG_ERR("connectorId is out of bounds");
         return;
     }
-    auto& connector = connectors[connectorId];
-
-    connector->abortTxMeterData();
+    connectors[connectorId]->abortTxMeterData();
 }
 
 std::shared_ptr<TransactionMeterData> MeteringService::getStopTxMeterData(Transaction *transaction) {
@@ -180,9 +170,7 @@ std::shared_ptr<TransactionMeterData> MeteringService::getStopTxMeterData(Transa
         MO_DBG_ERR("connectorId is out of bounds");
         return nullptr;
     }
-    auto& connector = connectors[connectorId];
-
-    return connector->getStopTxMeterData(transaction);
+    return connectors[connectorId]->getStopTxMeterData(transaction);
 }
 
 bool MeteringService::removeTxMeterData(unsigned int connectorId, unsigned int txNr) {

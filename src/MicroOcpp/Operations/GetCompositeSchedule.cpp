@@ -8,8 +8,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::GetCompositeSchedule;
+using MicroOcpp::JsonDoc;
 
-GetCompositeSchedule::GetCompositeSchedule(Model& model, SmartChargingService& scService) : model(model), scService(scService) {
+GetCompositeSchedule::GetCompositeSchedule(Model& model, SmartChargingService& scService) : MemoryManaged("v16.Operation.", "GetCompositeSchedule"), model(model), scService(scService) {
 
 }
 
@@ -40,12 +41,12 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
+std::unique_ptr<JsonDoc> GetCompositeSchedule::createConf(){
 
     bool success = false;
 
     auto chargingSchedule = scService.getCompositeSchedule((unsigned int) connectorId, duration, chargingRateUnit);
-    DynamicJsonDocument chargingScheduleDoc {0};
+    JsonDoc chargingScheduleDoc {0};
 
     if (chargingSchedule) {
         success = chargingSchedule->toJson(chargingScheduleDoc);
@@ -58,9 +59,9 @@ std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
     }
 
     if (success && chargingSchedule) {
-        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+        auto doc = makeJsonDoc(getMemoryTag(),
                         JSON_OBJECT_SIZE(4) +
-                        chargingScheduleDoc.memoryUsage()));
+                        chargingScheduleDoc.memoryUsage());
         JsonObject payload = doc->to<JsonObject>();
         payload["status"] = "Accepted";
         payload["connectorId"] = connectorId;
@@ -68,7 +69,7 @@ std::unique_ptr<DynamicJsonDocument> GetCompositeSchedule::createConf(){
         payload["chargingSchedule"] = chargingScheduleDoc;
         return doc;
     } else {
-        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+        auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
         JsonObject payload = doc->to<JsonObject>();
         payload["status"] = "Rejected";
         return doc;
