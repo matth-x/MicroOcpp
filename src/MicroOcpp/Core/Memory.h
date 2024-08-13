@@ -43,7 +43,8 @@ void mo_mem_free(void* ptr);
 
 #if MO_OVERRIDE_ALLOCATION && MO_ENABLE_HEAP_PROFILER
 
-void mo_mem_reset(); //reset heap stats
+void mo_mem_deinit(); //release allocated memory and deinit
+void mo_mem_reset(); //reset maximum heap occuption
 
 void mo_mem_set_tag(void *ptr, const char *tag);
 
@@ -52,17 +53,17 @@ void mo_mem_get_maximum_heap(const char *tag);
 void mo_mem_get_current_heap_by_tag(const char *tag);
 void mo_mem_get_maximum_heap_by_tag(const char *tag);
 
-void mo_mem_reset_maximm_heap();
-
 int mo_mem_write_stats_json(char *buf, size_t size);
 
 void mo_mem_print_stats();
 
+#define MO_MEM_DEINIT mo_mem_deinit
 #define MO_MEM_RESET mo_mem_reset
 #define MO_MEM_SET_TAG mo_mem_set_tag
 #define MO_MEM_PRINT_STATS mo_mem_print_stats
 
 #else
+#define MO_MEM_DEINIT(...) (void)0
 #define MO_MEM_RESET(...) (void)0
 #define MO_MEM_SET_TAG(...) (void)0
 #define MO_MEM_PRINT_STATS(...) (void)0
@@ -387,7 +388,7 @@ namespace MicroOcpp {
 
 class AllocOverrider {
 protected:
-    const char *getMemoryTag() {return nullptr;}
+    const char *getMemoryTag() const {return nullptr;}
     void updateMemTag(const char*,const char*) { } 
 public:
     AllocOverrider() { }

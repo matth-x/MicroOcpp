@@ -28,7 +28,7 @@ public:
 
     void testRunEnded( Catch::TestRunStats const& testRunStats ) override {
         MO_MEM_PRINT_STATS();
-        MO_MEM_RESET();
+        MO_MEM_DEINIT();
     }
 };
 

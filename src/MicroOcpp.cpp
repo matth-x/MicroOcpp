@@ -411,7 +411,7 @@ void mocpp_deinitialize() {
     configuration_deinit();
 
 #if !MO_HEAP_PROFILER_EXTERNAL_CONTROL
-    MO_MEM_RESET();
+    MO_MEM_DEINIT();
 #endif
 
     MO_DBG_DEBUG("deinitialized OCPP\n");

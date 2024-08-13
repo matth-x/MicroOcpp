@@ -46,6 +46,10 @@ struct MemTagInfo {
         }
         current_size -= size;
     }
+
+    void reset() {
+        max_size = current_size;
+    }
 };
 
 std::map<std::string,MemTagInfo> memTags;
@@ -152,9 +156,20 @@ void mo_mem_free(void* ptr) {
 
 #if MO_OVERRIDE_ALLOCATION && MO_ENABLE_HEAP_PROFILER
 
-void mo_mem_reset() {
+void mo_mem_deinit() {
     memBlocks.clear();
     memTags.clear();
+}
+
+void mo_mem_reset() {
+    MO_DBG_DEBUG("Reset all maximum values to current values");
+
+    auto tagInfo = memTags.begin();
+    if (tagInfo != memTags.end()) {
+        tagInfo->second.reset();
+    }
+
+    memTotalMax = memTotal;
 }
 
 void mo_mem_set_tag(void *ptr, const char *tag) {
