@@ -16,13 +16,13 @@ int32_t SampledValueDeSerializer<int32_t>::deserialize(const char *str) {
     return strtol(str, nullptr, 10);
 }
 
-String SampledValueDeSerializer<int32_t>::serialize(int32_t& val) {
+MicroOcpp::String SampledValueDeSerializer<int32_t>::serialize(int32_t& val) {
     char str [12] = {'\0'};
     snprintf(str, 12, "%" PRId32, val);
     return makeString("v16.Metering.SampledValueDeSerializer<int32_t>", str);
 }
 
-String SampledValueDeSerializer<float>::serialize(float& val) {
+MicroOcpp::String SampledValueDeSerializer<float>::serialize(float& val) {
     char str [20];
     str[0] = '\0';
     snprintf(str, 20, MO_SAMPLEDVALUE_FLOAT_FORMAT, val);

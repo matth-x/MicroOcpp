@@ -85,7 +85,7 @@ void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const cha
     /*
      * parse backendUrl so that it suits the links2004/arduinoWebSockets interface
      */
-    String url = makeString("MicroOcpp.cpp", url.c_str());
+    auto url = makeString("MicroOcpp.cpp", backendUrl);
 
     //tolower protocol specifier
     for (auto c = url.begin(); *c != ':' && c != url.end(); c++) {
@@ -103,16 +103,16 @@ void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const cha
     }
 
     //parse host, port
-    String host_port_path = url.substr(url.find_first_of("://") + strlen("://"));
-    String host_port = host_port_path.substr(0, host_port_path.find_first_of('/'));
-    String path = host_port_path.substr(host_port.length());
-    String host = host_port.substr(0, host_port.find_first_of(':'));
+    auto host_port_path = url.substr(url.find_first_of("://") + strlen("://"));
+    auto host_port = host_port_path.substr(0, host_port_path.find_first_of('/'));
+    auto path = host_port_path.substr(host_port.length());
+    auto host = host_port.substr(0, host_port.find_first_of(':'));
     if (host.empty()) {
         MO_DBG_ERR("could not parse host: %s", url.c_str());
         return;
     }
     uint16_t port = 0;
-    String port_str = host_port.substr(host.length());
+    auto port_str = host_port.substr(host.length());
     if (port_str.empty()) {
         port = isTLS ? 443U : 80U;
     } else {
@@ -480,8 +480,8 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
             {
                 // We have a parent ID tag, so we need to check if this new card also has one
                 auto authorize = makeRequest(new Ocpp16::Authorize(context->getModel(), idTag));
-                String idTag_capture = makeString("MicroOcpp.cpp", idTag);
-                String reason_capture = makeString("MicroOcpp.cpp", reason ? reason : "");
+                auto idTag_capture = makeString("MicroOcpp.cpp", idTag);
+                auto reason_capture = makeString("MicroOcpp.cpp", reason ? reason : "");
                 authorize->setOnReceiveConfListener([idTag_capture, reason_capture, connectorId, tx] (JsonObject response) {
                     JsonObject idTagInfo = response["idTagInfo"];
 
@@ -1126,7 +1126,7 @@ void setRequestHandler(const char *operationType,
         return;
     }
 
-    String captureOpType = makeString("MicroOcpp.cpp", operationType);
+    auto captureOpType = makeString("MicroOcpp.cpp", operationType);
 
     context->getOperationRegistry().registerOperation(operationType, [captureOpType, fn_processReq, fn_createConf] () {
         return new CustomOperation(captureOpType.c_str(), fn_processReq, fn_createConf);
