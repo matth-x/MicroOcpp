@@ -65,8 +65,8 @@ MeteringService::MeteringService(Context& context, int numConn, std::shared_ptr<
      * is connected with a WebSocket echo server, let it reply to its own requests.
      * Mocking an OCPP Server on the same device makes running (unit) tests easier.
      */
-    context.getOperationRegistry().registerOperation("MeterValues", [] () {
-        return new Ocpp16::MeterValues();});
+    context.getOperationRegistry().registerOperation("MeterValues", [this] () {
+        return new Ocpp16::MeterValues(this->context.getModel());});
 }
 
 void MeteringService::loop(){

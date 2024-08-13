@@ -57,7 +57,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
     }
 
     if ((txBreak || meterData.size() >= (size_t) meterValueCacheSizeInt->getInt()) && !meterData.empty()) {
-        auto meterValues = std::unique_ptr<MeterValues>(new MeterValues(std::move(meterData), connectorId, transaction));
+        auto meterValues = std::unique_ptr<MeterValues>(new MeterValues(model, std::move(meterData), connectorId, transaction));
         meterData.clear();
         return std::move(meterValues); //std::move is required for some compilers even if it's not mandated by standard C++
     }
@@ -169,7 +169,7 @@ std::unique_ptr<Operation> MeteringConnector::takeTriggeredMeterValues() {
         transaction = model.getConnector(connectorId)->getTransaction();
     }
 
-    return std::unique_ptr<MeterValues>(new MeterValues(std::move(mv_now), connectorId, transaction));
+    return std::unique_ptr<MeterValues>(new MeterValues(model, std::move(mv_now), connectorId, transaction));
 }
 
 void MeteringConnector::addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler) {
