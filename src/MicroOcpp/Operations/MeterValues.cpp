@@ -13,12 +13,12 @@ using MicroOcpp::Ocpp16::MeterValues;
 #define ENERGY_METER_TIMEOUT_MS 30 * 1000  //after waiting for 30s, send MeterValues without missing readings
 
 //can only be used for echo server debugging
-MeterValues::MeterValues() {
+MeterValues::MeterValues(Model& model) : model{model} {
     
 }
 
-MeterValues::MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction) 
-      : meterValue{std::move(meterValue)}, connectorId{connectorId}, transaction{transaction} {
+MeterValues::MeterValues(Model& model, std::vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction) 
+      : model{model}, meterValue{std::move(meterValue)}, connectorId{connectorId}, transaction{transaction} {
     
 }
 
@@ -35,8 +35,15 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
     size_t capacity = 0;
     
     std::vector<std::unique_ptr<DynamicJsonDocument>> entries;
-    for (auto value = meterValue.begin(); value != meterValue.end(); value++) {
-        auto entry = (*value)->toJson();
+    for (auto mv = meterValue.begin(); mv != meterValue.end(); mv++) {
+
+        if ((*mv)->getTimestamp() < MIN_TIME) {
+            MO_DBG_DEBUG("adjust preboot MeterValue timestamp");
+            Timestamp adjusted = model.getClock().adjustPrebootTimestamp((*mv)->getTimestamp());
+            (*mv)->setTimestamp(adjusted);
+        }
+
+        auto entry = (*mv)->toJson();
         if (entry) {
             capacity += entry->capacity();
             entries.push_back(std::move(entry));
