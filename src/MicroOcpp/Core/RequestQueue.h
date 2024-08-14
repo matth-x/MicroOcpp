@@ -39,9 +39,8 @@ class VolatileRequestQueue : public RequestEmitter, public MemoryManaged {
 private:
     std::unique_ptr<Request> requests [MO_REQUEST_CACHE_MAXSIZE];
     size_t front = 0, len = 0;
-    const unsigned int priority;
 public:
-    VolatileRequestQueue(unsigned int priority = 1);
+    VolatileRequestQueue();
     ~VolatileRequestQueue();
     void loop();
 
@@ -57,8 +56,8 @@ private:
     OperationRegistry& operationRegistry;
 
     RequestEmitter* sendQueues [MO_NUM_REQUEST_QUEUES];
-    VolatileRequestQueue defaultSendQueue {1};
-    VolatileRequestQueue preBootSendQueue {0};
+    VolatileRequestQueue defaultSendQueue;
+    VolatileRequestQueue *preBootSendQueue = nullptr;
     std::unique_ptr<Request> sendReqFront;
 
     VolatileRequestQueue recvQueue;
@@ -85,6 +84,7 @@ public:
     void sendRequestPreBoot(std::unique_ptr<Request> request); //send an OCPP operation request to the server; adds request to preBootQueue
 
     void addSendQueue(RequestEmitter* sendQueue);
+    void setPreBootSendQueue(VolatileRequestQueue *preBootQueue);
 
     unsigned int getNextOpNr();
 };

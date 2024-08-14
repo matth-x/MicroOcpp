@@ -20,6 +20,18 @@
 
 using namespace MicroOcpp;
 
+unsigned int PreBootQueue::getFrontRequestOpNr() {
+    if (!activatedPostBootCommunication) {
+        return 0;
+    }
+
+    return VolatileRequestQueue::getFrontRequestOpNr();
+}
+
+void PreBootQueue::activatePostBootCommunication() {
+    activatedPostBootCommunication = true;
+}
+
 RegistrationStatus MicroOcpp::deserializeRegistrationStatus(const char *serialized) {
     if (!strcmp(serialized, "Accepted")) {
         return RegistrationStatus::Accepted;
@@ -34,6 +46,8 @@ RegistrationStatus MicroOcpp::deserializeRegistrationStatus(const char *serializ
 }
 
 BootService::BootService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : MemoryManaged("v16.Boot.BootService"), context(context), filesystem(filesystem), cpCredentials{makeString(getMemoryTag())} {
+    
+    context.getRequestQueue().setPreBootSendQueue(&preBootQueue); //register PreBootQueue in RequestQueue module
     
     //if transactions can start before the BootNotification succeeds
     preBootTransactionsBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", false);
@@ -61,6 +75,13 @@ void BootService::loop() {
         loadBootStats(filesystem, bootstats);
         bootstats.lastBootSuccess = bootstats.bootNr;
         storeBootStats(filesystem, bootstats);
+    }
+
+    preBootQueue.loop();
+
+    if (!activatedPostBootCommunication && status == RegistrationStatus::Accepted) {
+        preBootQueue.activatePostBootCommunication();
+        activatedPostBootCommunication = true;
     }
 
     if (!activatedModel && (status == RegistrationStatus::Accepted || preBootTransactionsBool->getBool())) {
