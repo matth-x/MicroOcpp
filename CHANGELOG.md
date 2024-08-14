@@ -40,6 +40,7 @@
 - Don't change into Unavailable upon Reset ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
 - Reject DataTransfer by default ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
 - UnlockConnector NotSupported if connectorId invalid ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
+- Fix regression bug of [#345](https://github.com/matth-x/MicroOcpp/pull/345) ([#353](https://github.com/matth-x/MicroOcpp/pull/353))
 
 ## [1.1.0] - 2024-05-21
 
