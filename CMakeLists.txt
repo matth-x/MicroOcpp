@@ -148,6 +148,7 @@ set(MO_SRC_UNIT
     tests/Certificates.cpp
     tests/FirmwareManagement.cpp
     tests/ChargePointError.cpp
+    tests/Boot.cpp
 )
 
 add_executable(mo_unit_tests

@@ -7,6 +7,7 @@
 
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/Memory.h>
 #include <memory>
 
@@ -32,12 +33,23 @@ enum class RegistrationStatus {
 
 RegistrationStatus deserializeRegistrationStatus(const char *serialized);
 
+class PreBootQueue : public VolatileRequestQueue {
+private:
+    bool activatedPostBootCommunication = false;
+public:
+    unsigned int getFrontRequestOpNr() override; //override FrontRequestOpNr behavior: in PreBoot mode, always return 0 to avoid other RequestEmitters from sending msgs
+    
+    void activatePostBootCommunication(); //end PreBoot mode, now send Requests normally
+};
+
 class Context;
 
 class BootService : public MemoryManaged {
 private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
+
+    PreBootQueue preBootQueue;
 
     unsigned long interval_s = MO_BOOT_INTERVAL_DEFAULT;
     unsigned long lastBootNotification = -1UL / 2;
@@ -49,6 +61,7 @@ private:
     std::shared_ptr<Configuration> preBootTransactionsBool;
 
     bool activatedModel = false;
+    bool activatedPostBootCommunication = false;
 
     unsigned long firstExecutionTimestamp = 0;
     bool executedFirstTime = false;

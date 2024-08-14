@@ -17,7 +17,7 @@ size_t removePayload(const char *src, size_t src_size, char *dst, size_t dst_siz
 
 using namespace MicroOcpp;
 
-VolatileRequestQueue::VolatileRequestQueue(unsigned int priority) : MemoryManaged("VolatileRequestQueue"), priority{priority} {
+VolatileRequestQueue::VolatileRequestQueue() : MemoryManaged("VolatileRequestQueue") {
 
 }
 
@@ -59,7 +59,7 @@ unsigned int VolatileRequestQueue::getFrontRequestOpNr() {
         return NoOperation;
     }
 
-    return priority;
+    return 1; //return OpNr 1 to grant PreBoot queue higher priority (=0), but send messages before tx-msg queue (starting with 10)
 }
 
 std::unique_ptr<Request> VolatileRequestQueue::fetchFrontRequest() {
@@ -128,7 +128,6 @@ RequestQueue::RequestQueue(Connection& connection, OperationRegistry& operationR
 
     memset(sendQueues, 0, sizeof(sendQueues));
     addSendQueue(&defaultSendQueue);
-    addSendQueue(&preBootSendQueue);
 }
 
 void RequestQueue::loop() {
@@ -149,7 +148,6 @@ void RequestQueue::loop() {
     }
 
     defaultSendQueue.loop();
-    preBootSendQueue.loop();
 
     if (!connection.isConnected()) {
         return;
@@ -234,7 +232,11 @@ void RequestQueue::sendRequest(std::unique_ptr<Request> op){
 }
 
 void RequestQueue::sendRequestPreBoot(std::unique_ptr<Request> op){
-    preBootSendQueue.pushRequestBack(std::move(op));
+    if (!preBootSendQueue) {
+        MO_DBG_ERR("did not set PreBoot queue");
+        return;
+    }
+    preBootSendQueue->pushRequestBack(std::move(op));
 }
 
 void RequestQueue::addSendQueue(RequestEmitter* sendQueue) {
@@ -245,6 +247,11 @@ void RequestQueue::addSendQueue(RequestEmitter* sendQueue) {
         }
     }
     MO_DBG_ERR("exceeded sendQueue capacity");
+}
+
+void RequestQueue::setPreBootSendQueue(VolatileRequestQueue *preBootQueue) {
+    this->preBootSendQueue = preBootQueue;
+    addSendQueue(preBootQueue);
 }
 
 unsigned int RequestQueue::getNextOpNr() {
