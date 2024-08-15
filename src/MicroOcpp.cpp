@@ -259,20 +259,11 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
     BootService::loadBootStats(filesystem, bootstats);
 
     if (autoRecover && bootstats.getBootFailureCount() > 3) {
-        MO_DBG_ERR("multiple initialization failures detected");
-        if (filesystem) {
-            bool success = FilesystemUtils::remove_if(filesystem, [] (const char *fname) -> bool {
-                return !strncmp(fname, "sd", strlen("sd")) ||
-                       !strncmp(fname, "tx", strlen("tx")) ||
-                       !strncmp(fname, "op", strlen("op")) ||
-                       !strncmp(fname, "sc-", strlen("sc-")) ||
-                       !strncmp(fname, "reservation", strlen("reservation"));
-            });
-            MO_DBG_ERR("clear local state files (recovery): %s", success ? "success" : "not completed");
-
-            bootstats = BootStats();
-        }
+        BootService::recover(filesystem, bootstats);
+        bootstats = BootStats();
     }
+
+    BootService::migrate(filesystem, bootstats);
 
     bootstats.bootNr++; //assign new boot number to this run
     BootService::storeBootStats(filesystem, bootstats);
@@ -373,13 +364,8 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
     }
     credsJson.reset();
 
-    auto mocppVersion = declareConfiguration<const char*>("MicroOcppVersion", MO_VERSION, MO_KEYVALUE_FN, false, false, false);
-
     configuration_load();
 
-    if (mocppVersion) {
-        mocppVersion->setString(MO_VERSION);
-    }
     MO_DBG_INFO("initialized MicroOcpp v" MO_VERSION);
 }
 

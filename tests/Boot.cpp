@@ -12,6 +12,7 @@
 #include <MicroOcpp/Operations/BootNotification.h>
 #include <MicroOcpp/Operations/StatusNotification.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
+#include <MicroOcpp/Model/Boot/BootService.h>
 #include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Debug.h>
 #include <catch2/catch.hpp>
@@ -307,6 +308,122 @@ TEST_CASE( "Boot Behavior" ) {
         loop();
         REQUIRE( startTxCount == 2 );
 
+    }
+
+    SECTION("Auto recovery") {
+
+        //start transaction which will persist a few boot cycles, but then will be wiped by auto recovery
+        loop();
+        beginTransaction("mIdTag");
+        loop();
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Charging );
+
+        declareConfiguration<const char*>("keepConfigOverRecovery", "originalVal");
+        configuration_save();
+
+        mocpp_deinitialize();
+
+        //MO has 2 unexpected power cycles. Probably just back luck - keep the local state and configuration
+
+        //Increase the power cycle counter manually because it's not possible to interrupt the MO lifecycle during unit tests
+        BootStats bootstats;
+        BootService::loadBootStats(filesystem, bootstats);
+        bootstats.bootNr += 2;
+        BootService::storeBootStats(filesystem, bootstats);
+
+        mocpp_initialize(loopback, ChargerCredentials(), filesystem, /*enable auto recovery*/ true);
+        BootService::loadBootStats(filesystem, bootstats);
+        REQUIRE( bootstats.getBootFailureCount() == 2 + 1 ); //two boot failures have been measured, +1 because each power cycle is counted as potentially failing until reaching the long runtime barrier
+
+        loop();
+
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Charging );
+
+        REQUIRE( !strcmp(declareConfiguration<const char*>("keepConfigOverRecovery", "otherVal")->getString(), "originalVal") );
+
+        //check that the power cycle counter has been updated properly after the controller has been running stable over a long time
+        mtime += MO_BOOTSTATS_LONGTIME_MS;
+        loop();
+        BootService::loadBootStats(filesystem, bootstats);
+        REQUIRE( bootstats.getBootFailureCount() == 0 );
+
+        mocpp_deinitialize();
+
+        //MO has 10 power cycles without running for at least 3 minutes and wipes the local state, but keeps the configuration
+
+        BootStats bootstats2;
+        BootService::loadBootStats(filesystem, bootstats2);
+        bootstats2.bootNr += 10;
+        BootService::storeBootStats(filesystem, bootstats2);
+
+        mocpp_initialize(loopback, ChargerCredentials(), filesystem, /*enable auto recovery*/ true);
+
+        REQUIRE( !strcmp(declareConfiguration<const char*>("keepConfigOverRecovery", "otherVal")->getString(), "originalVal") );
+        BootStats bootstats3;
+        BootService::loadBootStats(filesystem, bootstats3);
+        REQUIRE( bootstats3.getBootFailureCount() == 0 + 1 ); //failure count is reset, but +1 because each power cycle is counted as potentially failing until reaching the long runtime barrier
+
+        loop();
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Available );
+
+    }
+
+    SECTION("Migration") {
+
+        //migration removes files from previous MO versions which were running on the controller. This includes the
+        //transaction cache, but configs are preserved
+
+        auto old_opstore = filesystem->open(MO_FILENAME_PREFIX "opstore.jsn", "w"); //the opstore has been removed in MO v1.2.0
+        old_opstore->write("example content", sizeof("example content") - 1);
+        old_opstore.reset(); //flushes the file
+
+        loop();
+        auto tx = beginTransaction("mIdTag"); //tx store will also be removed
+        auto txNr = tx->getTxNr(); //remember this for later usage
+        tx.reset(); //reset this smart pointer
+        loop();
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Charging );
+        endTransaction();
+        loop();
+
+        REQUIRE( getOcppContext()->getModel().getTransactionStore()->getTransaction(1, txNr) != nullptr ); //tx exists on flash
+
+        declareConfiguration<const char*>("keepConfigOverMigration", "originalVal"); //migration keeps configs
+        configuration_save();
+
+        mocpp_deinitialize();
+
+        //After a FW update, the tracked version number has changed
+        BootStats bootstats;
+        BootService::loadBootStats(filesystem, bootstats);
+        snprintf(bootstats.microOcppVersion, sizeof(bootstats.microOcppVersion), "oldFwVers");
+        BootService::storeBootStats(filesystem, bootstats);
+
+        mocpp_initialize(loopback, ChargerCredentials(), filesystem); //MO migrates here
+
+        size_t msize = 0;
+        REQUIRE( filesystem->stat(MO_FILENAME_PREFIX "opstore.jsn", &msize) != 0 ); //opstore has been removed
+
+        REQUIRE( getOcppContext()->getModel().getTransactionStore()->getTransaction(1, txNr) == nullptr ); //tx history entry has been removed
+
+        REQUIRE( !strcmp(declareConfiguration<const char*>("keepConfigOverMigration", "otherVal")->getString(), "originalVal") ); //config has been preserved
+    }
+
+    SECTION("Clean unused configs") {
+
+        declareConfiguration<const char*>("neverDeclaredInsideMO", "originalVal"); //unused configs will be cleared automatically after the controller has been running for a long time
+        configuration_save();
+
+        mocpp_deinitialize();
+
+        mocpp_initialize(loopback, ChargerCredentials(), filesystem); //all configs are loaded here, including the test config of this section
+        loop();
+
+        //unused configs will be cleared automatically after long time
+        mtime += MO_BOOTSTATS_LONGTIME_MS;
+        loop();
+
+        REQUIRE( !strcmp(declareConfiguration<const char*>("neverDeclaredInsideMO", "newVal")->getString(), "newVal") ); //config has been removed
     }
 
     mocpp_deinitialize();

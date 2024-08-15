@@ -13,7 +13,13 @@
 
 #define MO_BOOT_INTERVAL_DEFAULT 60
 
+#ifndef MO_BOOTSTATS_LONGTIME_MS
+#define MO_BOOTSTATS_LONGTIME_MS 180 * 1000
+#endif
+
 namespace MicroOcpp {
+
+#define MO_BOOTSTATS_VERSION_SIZE 10
 
 struct BootStats {
     uint16_t bootNr = 0;
@@ -22,6 +28,8 @@ struct BootStats {
     uint16_t getBootFailureCount() {
         return bootNr - lastBootSuccess;
     }
+
+    char microOcppVersion [MO_BOOTSTATS_VERSION_SIZE] = {'\0'};
 };
 
 enum class RegistrationStatus {
@@ -79,8 +87,12 @@ public:
     void notifyRegistrationStatus(RegistrationStatus status);
     void setRetryInterval(unsigned long interval);
 
-    static bool loadBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& out);
-    static bool storeBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats bstats);
+    static bool loadBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats);
+    static bool storeBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats);
+
+    static bool recover(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats); //delete all persistent files which could lead to a crash
+
+    static bool migrate(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats); //migrate persistent storage if running on a new MO version
 };
 
 }

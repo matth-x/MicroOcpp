@@ -35,6 +35,8 @@ public:
     virtual std::shared_ptr<Configuration> getConfiguration(const char *key) = 0;
 
     virtual void loadStaticKey(Configuration& config, const char *key) { } //possible optimization: can replace internal key with passed static key
+
+    virtual void removeUnused() { } //remove configs which haven't been accessed (optional and only if known)
 };
 
 class ConfigurationContainerVolatile : public ConfigurationContainer, public MemoryManaged {

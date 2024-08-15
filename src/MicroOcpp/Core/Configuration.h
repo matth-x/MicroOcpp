@@ -36,5 +36,7 @@ bool configuration_load(const char *filename = nullptr);
 
 bool configuration_save();
 
+bool configuration_clean_unused(); //remove configs which haven't been accessed
+
 } //end namespace MicroOcpp
 #endif
