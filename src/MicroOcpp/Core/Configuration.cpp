@@ -243,7 +243,7 @@ bool configuration_clean_unused() {
     for (auto& container : configurationContainers) {
         container->removeUnused();
     }
-    configuration_save();
+    return configuration_save();
 }
 
 } //end namespace MicroOcpp
