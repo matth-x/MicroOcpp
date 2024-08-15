@@ -180,7 +180,7 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_PLATFORM=MO_PLATFORM_UNIX
     MO_NUMCONNECTORS=3
     MO_CUSTOM_TIMER
-    MO_DBG_LEVEL=MO_DL_DEBUG
+    MO_DBG_LEVEL=MO_DL_INFO
     MO_TRAFFIC_OUT
     MO_FILENAME_PREFIX="./mo_store/"
     MO_LocalAuthListMaxLength=8
