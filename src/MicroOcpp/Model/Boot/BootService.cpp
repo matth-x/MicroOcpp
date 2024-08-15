@@ -14,10 +14,6 @@
 #include <MicroOcpp/Platform.h>
 #include <MicroOcpp/Debug.h>
 
-#ifndef MO_BOOTSTATS_LONGTIME_MS
-#define MO_BOOTSTATS_LONGTIME_MS 180 * 1000
-#endif
-
 using namespace MicroOcpp;
 
 unsigned int PreBootQueue::getFrontRequestOpNr() {
@@ -71,6 +67,9 @@ void BootService::loop() {
     if (!executedLongTime && mocpp_tick_ms() - firstExecutionTimestamp >= MO_BOOTSTATS_LONGTIME_MS) {
         executedLongTime = true;
         MO_DBG_DEBUG("boot success timer reached");
+
+        configuration_clean_unused();
+
         BootStats bootstats;
         loadBootStats(filesystem, bootstats);
         bootstats.lastBootSuccess = bootstats.bootNr;
@@ -185,6 +184,14 @@ bool BootService::loadBootStats(std::shared_ptr<FilesystemAdapter> filesystem, B
             } else {
                 success = false;
             }
+
+            const char *microOcppVersionIn = (*json)["MicroOcppVersion"] | (const char*)nullptr;
+            if (microOcppVersionIn) {
+                auto ret = snprintf(bstats.microOcppVersion, sizeof(bstats.microOcppVersion), "%s", microOcppVersionIn);
+                if (ret < 0 || (size_t)ret >= sizeof(bstats.microOcppVersion)) {
+                    success = false;
+                }
+            } //else: version specifier can be missing after upgrade from pre 1.2.0 version
         } else {
             success = false;
         }
@@ -201,15 +208,59 @@ bool BootService::loadBootStats(std::shared_ptr<FilesystemAdapter> filesystem, B
     }
 }
 
-bool BootService::storeBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats bstats) {
+bool BootService::storeBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats) {
     if (!filesystem) {
         return false;
     }
 
-    auto json = initJsonDoc("v16.Boot.BootService", JSON_OBJECT_SIZE(2));
+    auto json = initJsonDoc("v16.Boot.BootService", JSON_OBJECT_SIZE(3));
 
     json["bootNr"] = bstats.bootNr;
     json["lastSuccess"] = bstats.lastBootSuccess;
+    json["MicroOcppVersion"] = (const char*)bstats.microOcppVersion;
 
     return FilesystemUtils::storeJson(filesystem, MO_FILENAME_PREFIX "bootstats.jsn", json);
+}
+
+bool BootService::recover(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats) {
+    if (!filesystem) {
+        return false;
+    }
+
+    bool success = FilesystemUtils::remove_if(filesystem, [] (const char *fname) -> bool {
+        return !strncmp(fname, "sd", strlen("sd")) ||
+                !strncmp(fname, "tx", strlen("tx")) ||
+                !strncmp(fname, "op", strlen("op")) ||
+                !strncmp(fname, "sc-", strlen("sc-")) ||
+                !strncmp(fname, "reservation", strlen("reservation")) ||
+                !strncmp(fname, "client-state", strlen("client-state"));
+    });
+    MO_DBG_ERR("clear local state files (recovery): %s", success ? "success" : "not completed");
+
+    return success;
+}
+
+bool BootService::migrate(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats) {
+    if (!filesystem) {
+        return false;
+    }
+
+    bool success = true;
+
+    if (strcmp(bstats.microOcppVersion, MO_VERSION)) {
+        MO_DBG_INFO("migrate persistent storage to MO v" MO_VERSION);
+        success = FilesystemUtils::remove_if(filesystem, [] (const char *fname) -> bool {
+            return !strncmp(fname, "sd", strlen("sd")) ||
+                    !strncmp(fname, "tx", strlen("tx")) ||
+                    !strncmp(fname, "op", strlen("op")) ||
+                    !strncmp(fname, "sc-", strlen("sc-")) ||
+                    !strncmp(fname, "client-state", strlen("client-state")) ||
+                    !strcmp(fname, "arduino-ocpp.cnf") ||
+                    !strcmp(fname, "ocpp-creds.jsn");
+        });
+
+        snprintf(bstats.microOcppVersion, sizeof(bstats.microOcppVersion), "%s", MO_VERSION);
+        MO_DBG_DEBUG("clear local state files (migration): %s", success ? "success" : "not completed");
+    }
+    return success;
 }

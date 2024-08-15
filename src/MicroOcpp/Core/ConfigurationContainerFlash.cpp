@@ -334,6 +334,25 @@ public:
         config.setKey(key);
         clearKeyPool(key);
     }
+
+    void removeUnused() override {
+        //if a config's key is still in the keyPool, we know it's unused because it has never been declared in FW (originates from an older FW version)
+
+        auto key = keyPool.begin();
+        while (key != keyPool.end()) {
+
+            for (auto config = configurations.begin(); config != configurations.end(); ++config) {
+                if ((*config)->getKey() == *key) {
+                    MO_DBG_DEBUG("remove unused config %s", (*config)->getKey());
+                    configurations.erase(config);
+                    break;
+                }
+            }
+
+            MO_FREE(*key);
+            key = keyPool.erase(key);
+        }
+    }
 };
 
 std::unique_ptr<ConfigurationContainer> makeConfigurationContainerFlash(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename, bool accessible) {
