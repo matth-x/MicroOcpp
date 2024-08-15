@@ -520,7 +520,8 @@ TEST_CASE( "Charging sessions" ) {
         const char *tx3_idTag = "Tx#3";
         const char *tx4_idTag = "Tx#4";
 
-        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true)->setBool(true);
+        declareConfiguration<bool>("AllowOfflineTxForUnknownId", true)->setBool(true);
         configuration_save();
         loop();
 
@@ -528,7 +529,7 @@ TEST_CASE( "Charging sessions" ) {
         loopback.setConnected(false);
 
         MO_DBG_DEBUG("begin tx (%s)", tx1_idTag);
-        beginTransaction_authorized(tx1_idTag);
+        beginTransaction(tx1_idTag);
         loop();
         REQUIRE(isTransactionRunning());
         endTransaction();
@@ -543,7 +544,7 @@ TEST_CASE( "Charging sessions" ) {
         // start Tx #2 (PreBoot tx, won't get timestamp)
 
         MO_DBG_DEBUG("begin tx (%s)", tx2_idTag);
-        beginTransaction_authorized(tx2_idTag);
+        beginTransaction(tx2_idTag);
         loop();
         REQUIRE(isTransactionRunning());
         endTransaction();
@@ -558,7 +559,7 @@ TEST_CASE( "Charging sessions" ) {
         // start Tx #3 (PreBoot tx, will eventually get timestamp)
 
         MO_DBG_DEBUG("begin tx (%s)", tx3_idTag);
-        beginTransaction_authorized(tx3_idTag);
+        beginTransaction(tx3_idTag);
         loop();
         REQUIRE(isTransactionRunning());
         endTransaction();
@@ -604,7 +605,7 @@ TEST_CASE( "Charging sessions" ) {
 
         // start Tx #4
         MO_DBG_DEBUG("begin tx (%s)", tx4_idTag);
-        beginTransaction_authorized(tx4_idTag);
+        beginTransaction(tx4_idTag);
         loop();
         REQUIRE(isTransactionRunning());
         endTransaction();
