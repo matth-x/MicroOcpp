@@ -230,7 +230,6 @@ bool BootService::recover(std::shared_ptr<FilesystemAdapter> filesystem, BootSta
     bool success = FilesystemUtils::remove_if(filesystem, [] (const char *fname) -> bool {
         return !strncmp(fname, "sd", strlen("sd")) ||
                 !strncmp(fname, "tx", strlen("tx")) ||
-                !strncmp(fname, "op", strlen("op")) ||
                 !strncmp(fname, "sc-", strlen("sc-")) ||
                 !strncmp(fname, "reservation", strlen("reservation")) ||
                 !strncmp(fname, "client-state", strlen("client-state"));
@@ -254,7 +253,7 @@ bool BootService::migrate(std::shared_ptr<FilesystemAdapter> filesystem, BootSta
                     !strncmp(fname, "tx", strlen("tx")) ||
                     !strncmp(fname, "op", strlen("op")) ||
                     !strncmp(fname, "sc-", strlen("sc-")) ||
-                    !strncmp(fname, "client-state", strlen("client-state")) ||
+                    !strcmp(fname, "client-state.cnf") ||
                     !strcmp(fname, "arduino-ocpp.cnf") ||
                     !strcmp(fname, "ocpp-creds.jsn");
         });
