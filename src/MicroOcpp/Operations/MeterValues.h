@@ -11,6 +11,7 @@
 
 namespace MicroOcpp {
 
+class Model;
 class MeterValue;
 class Transaction;
 
@@ -18,6 +19,7 @@ namespace Ocpp16 {
 
 class MeterValues : public Operation, public MemoryManaged {
 private:
+    Model& model; //for adjusting the timestamp if MeterValue has been created before BootNotification
     Vector<std::unique_ptr<MeterValue>> meterValue;
 
     unsigned int connectorId = 0;
@@ -25,9 +27,9 @@ private:
     std::shared_ptr<Transaction> transaction;
 
 public:
-    MeterValues(Vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction = nullptr);
+    MeterValues(Model& model, Vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction = nullptr);
 
-    MeterValues(); //for debugging only. Make this for the server pendant
+    MeterValues(Model& model); //for debugging only. Make this for the server pendant
 
     ~MeterValues();
 
