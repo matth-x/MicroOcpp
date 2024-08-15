@@ -92,14 +92,14 @@ Connector::Connector(Context& context, std::shared_ptr<FilesystemAdapter> filesy
             if (txNrPivot == std::numeric_limits<unsigned int>::max()) {
                 txNrPivot = parsedTxNr;
                 txNrBegin = parsedTxNr;
-                txNrBack = (parsedTxNr + 1) % MAX_TX_CNT;
+                txNrEnd = (parsedTxNr + 1) % MAX_TX_CNT;
                 return 0;
             }
 
             if ((parsedTxNr + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT < MAX_TX_CNT / 2) {
                 //parsedTxNr is after pivot point
-                if ((parsedTxNr + 1 + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT > (txNrBack + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT) {
-                    txNrBack = (parsedTxNr + 1) % MAX_TX_CNT;
+                if ((parsedTxNr + 1 + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT > (txNrEnd + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT) {
+                    txNrEnd = (parsedTxNr + 1) % MAX_TX_CNT;
                 }
             } else if ((txNrPivot + MAX_TX_CNT - parsedTxNr) % MAX_TX_CNT < MAX_TX_CNT / 2) {
                 //parsedTxNr is before pivot point
@@ -108,16 +108,16 @@ Connector::Connector(Context& context, std::shared_ptr<FilesystemAdapter> filesy
                 }
             }
 
-            MO_DBG_DEBUG("found %s%u.jsn - Internal range from %u to %u (exclusive)", txFnamePrefix, parsedTxNr, txNrBegin, txNrBack);
+            MO_DBG_DEBUG("found %s%u.jsn - Internal range from %u to %u (exclusive)", txFnamePrefix, parsedTxNr, txNrBegin, txNrEnd);
         }
         return 0;
     });
 
-    MO_DBG_DEBUG("found %u transactions for connector %u. Internal range from %u to %u (exclusive)", (txNrBack + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT, connectorId, txNrBegin, txNrBack);
+    MO_DBG_DEBUG("found %u transactions for connector %u. Internal range from %u to %u (exclusive)", (txNrEnd + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT, connectorId, txNrBegin, txNrEnd);
     txNrFront = txNrBegin;
 
     if (model.getTransactionStore()) {
-        unsigned int txNrLatest = (txNrBack + MAX_TX_CNT - 1) % MAX_TX_CNT; //txNr of the most recent tx on flash
+        unsigned int txNrLatest = (txNrEnd + MAX_TX_CNT - 1) % MAX_TX_CNT; //txNr of the most recent tx on flash
         transaction = model.getTransactionStore()->getTransaction(connectorId, txNrLatest); //returns nullptr if txNrLatest does not exist on flash
     } else {
         MO_DBG_ERR("must initialize TxStore before Connector");
@@ -263,26 +263,26 @@ void Connector::loop() {
         }
 
         if (removed) {
-            if (txNrFront == txNrBack) {
+            if (txNrFront == txNrEnd) {
                 txNrFront = transaction->getTxNr();
             }
-            txNrBack = transaction->getTxNr(); //roll back creation of last tx entry
+            txNrEnd = transaction->getTxNr(); //roll back creation of last tx entry
         }
 
         MO_DBG_DEBUG("collect aborted or silent transaction %u-%u %s", connectorId, transaction->getTxNr(), removed ? "" : "failure");
-        MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrBack=%u", txNrBegin, txNrFront, txNrBack);
+        MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
         transaction = nullptr;
     }
 
     if (transaction && transaction->isAborted()) {
         MO_DBG_DEBUG("collect aborted transaction %u-%u", connectorId, transaction->getTxNr());
-        MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrBack=%u", txNrBegin, txNrFront, txNrBack);
+        MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
         transaction = nullptr;
     }
 
     if (transaction && transaction->getStopSync().isRequested()) {
         MO_DBG_DEBUG("collect obsolete transaction %u-%u", connectorId, transaction->getTxNr());
-        MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrBack=%u", txNrBegin, txNrFront, txNrBack);
+        MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
         transaction = nullptr;
     }
 
@@ -550,8 +550,8 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
     std::shared_ptr<Transaction> tx;
 
     //clean possible aborted tx
-    unsigned int txr = txNrBack;
-    unsigned int txSize = (txNrBack + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT;
+    unsigned int txr = txNrEnd;
+    unsigned int txSize = (txNrEnd + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT;
     for (unsigned int i = 0; i < txSize; i++) {
         txr = (txr + MAX_TX_CNT - 1) % MAX_TX_CNT; //decrement by 1
 
@@ -567,10 +567,10 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
                 removed &= model.getTransactionStore()->remove(connectorId, txr);
             }
             if (removed) {
-                if (txNrFront == txNrBack) {
+                if (txNrFront == txNrEnd) {
                     txNrFront = txr;
                 }
-                txNrBack = txr;
+                txNrEnd = txr;
                 MO_DBG_WARN("deleted dangling silent or aborted tx for new transaction");
             } else {
                 MO_DBG_ERR("memory corruption");
@@ -582,18 +582,18 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
         }
     }
 
-    txSize = (txNrBack + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT; //refresh after cleaning txs
+    txSize = (txNrEnd + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT; //refresh after cleaning txs
 
     //try to create new transaction
     if (txSize < MO_TXRECORD_SIZE) {
-        tx = model.getTransactionStore()->createTransaction(connectorId, txNrBack);
+        tx = model.getTransactionStore()->createTransaction(connectorId, txNrEnd);
     }
 
     if (!tx) {
         //could not create transaction - now, try to replace tx history entry
 
         unsigned int txl = txNrBegin;
-        txSize = (txNrBack + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT;
+        txSize = (txNrEnd + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT;
 
         for (unsigned int i = 0; i < txSize; i++) {
 
@@ -621,9 +621,9 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
                         txNrFront = txNrBegin;
                     }
                     MO_DBG_DEBUG("deleted tx history entry for new transaction");
-                    MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrBack=%u", txNrBegin, txNrFront, txNrBack);
+                    MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
 
-                    tx = model.getTransactionStore()->createTransaction(connectorId, txNrBack);
+                    tx = model.getTransactionStore()->createTransaction(connectorId, txNrEnd);
                 } else {
                     MO_DBG_ERR("memory corruption");
                     break;
@@ -643,7 +643,7 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
         //couldn't create normal transaction -> check if to start charging without real transaction
         if (silentOfflineTransactionsBool && silentOfflineTransactionsBool->getBool()) {
             //try to handle charging session without sending StartTx or StopTx to the server
-            tx = model.getTransactionStore()->createTransaction(connectorId, txNrBack, true);
+            tx = model.getTransactionStore()->createTransaction(connectorId, txNrEnd, true);
 
             if (tx) {
                 MO_DBG_DEBUG("created silent transaction");
@@ -661,9 +661,9 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
     }
 
     if (tx) {
-        txNrBack = (txNrBack + 1) % MAX_TX_CNT;
-        MO_DBG_DEBUG("advance txNrBack %u-%u", connectorId, txNrBack);
-        MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrBack=%u", txNrBegin, txNrFront, txNrBack);
+        txNrEnd = (txNrEnd + 1) % MAX_TX_CNT;
+        MO_DBG_DEBUG("advance txNrEnd %u-%u", connectorId, txNrEnd);
+        MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
     }
 
     return tx;
@@ -1083,12 +1083,12 @@ unsigned int Connector::getFrontRequestOpNr() {
      * Advance front transaction?
      */
 
-    unsigned int txSize = (txNrBack + MAX_TX_CNT - txNrFront) % MAX_TX_CNT;
+    unsigned int txSize = (txNrEnd + MAX_TX_CNT - txNrFront) % MAX_TX_CNT;
 
     if (transactionFront && txSize == 0) {
         //catch edge case where txBack has been rolled back and txFront was equal to txBack
         MO_DBG_DEBUG("collect front transaction %u-%u after tx rollback", connectorId, transactionFront->getTxNr());
-        MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrBack=%u", txNrBegin, txNrFront, txNrBack);
+        MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
         transactionFront = nullptr;
     }
 
@@ -1110,7 +1110,7 @@ unsigned int Connector::getFrontRequestOpNr() {
             MO_DBG_DEBUG("collect front transaction %u-%u", connectorId, transactionFront->getTxNr());
             transactionFront = nullptr;
             txNrFront = (txNrFront + 1) % MAX_TX_CNT;
-            MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrBack=%u", txNrBegin, txNrFront, txNrBack);
+            MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
         } else {
             //front is accurate. Done here
             break;
@@ -1269,4 +1269,16 @@ std::unique_ptr<Request> Connector::fetchFrontRequest() {
     }
 
     return nullptr;
+}
+
+unsigned int Connector::getTxNrBeginHistory() {
+    return txNrBegin;
+}
+
+unsigned int Connector::getTxNrFront() {
+    return txNrFront;
+}
+
+unsigned int Connector::getTxNrEnd() {
+    return txNrEnd;
 }

@@ -19,8 +19,9 @@
 #include <MicroOcpp/Version.h> //for MO_ENABLE_V201
 #include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h> //for MO_ENABLE_CONNECTOR_LOCK
 
-using namespace MicroOcpp;
-using Ocpp16::DiagnosticsStatus;
+using MicroOcpp::DiagnosticsService;
+using MicroOcpp::Ocpp16::DiagnosticsStatus;
+using MicroOcpp::Request;
 
 DiagnosticsService::DiagnosticsService(Context& context) : MemoryManaged("v16.Diagnostics.DiagnosticsService"), context(context), location(makeString(getMemoryTag())), diagFileList(makeVector<String>(getMemoryTag())) {
 
