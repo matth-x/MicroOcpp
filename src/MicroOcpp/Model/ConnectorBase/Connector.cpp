@@ -1166,7 +1166,7 @@ std::unique_ptr<Request> Connector::fetchFrontRequest() {
             }
 
             Timestamp nextAttempt = transactionFront->getStartSync().getAttemptTime() +
-                                    transactionFront->getStartSync().getAttemptNr() * transactionMessageRetryIntervalInt->getInt();
+                                    transactionFront->getStartSync().getAttemptNr() * std::max(0, transactionMessageRetryIntervalInt->getInt());
 
             if (nextAttempt > model.getClock().now()) {
                 return nullptr;
@@ -1223,7 +1223,7 @@ std::unique_ptr<Request> Connector::fetchFrontRequest() {
             }
 
             Timestamp nextAttempt = transactionFront->getStopSync().getAttemptTime() +
-                                    transactionFront->getStopSync().getAttemptNr() * transactionMessageRetryIntervalInt->getInt();
+                                    transactionFront->getStopSync().getAttemptNr() * std::max(0, transactionMessageRetryIntervalInt->getInt());
 
             if (nextAttempt > model.getClock().now()) {
                 return nullptr;

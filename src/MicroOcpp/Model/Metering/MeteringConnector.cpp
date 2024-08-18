@@ -5,6 +5,7 @@
 #include <MicroOcpp/Model/Metering/MeteringConnector.h>
 #include <MicroOcpp/Model/Metering/MeterStore.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Core/Configuration.h>
@@ -20,7 +21,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::Ocpp16;
 
 MeteringConnector::MeteringConnector(Context& context, int connectorId, MeterStore& meterStore)
-        : MemoryManaged("v16.Metering.MeteringConnector"), context(context), model(context.getModel()), connectorId{connectorId}, meterStore(meterStore), meterData(makeVector<std::unique_ptr<MeterValues>>(getMemoryTag())), samplers(makeVector<std::unique_ptr<SampledValueSampler>>(getMemoryTag())) {
+        : MemoryManaged("v16.Metering.MeteringConnector"), context(context), model(context.getModel()), connectorId{connectorId}, meterStore(meterStore), meterData(makeVector<std::unique_ptr<MeterValue>>(getMemoryTag())), samplers(makeVector<std::unique_ptr<SampledValueSampler>>(getMemoryTag())) {
 
     context.getRequestQueue().addSendQueue(this);
 
@@ -39,6 +40,9 @@ MeteringConnector::MeteringConnector(Context& context, int connectorId, MeterSto
 
     meterValuesInTxOnlyBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "MeterValuesInTxOnly", true);
     stopTxnDataCapturePeriodicBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "StopTxnDataCapturePeriodic", false);
+
+    transactionMessageAttemptsInt = declareConfiguration<int>("TransactionMessageAttempts", 3);
+    transactionMessageRetryIntervalInt = declareConfiguration<int>("TransactionMessageRetryInterval", 60);
 
     sampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, meterValuesSampledDataString));
     alignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, meterValuesAlignedDataString));
@@ -96,11 +100,14 @@ void MeteringConnector::loop() {
 
                 if (auto alignedMeterValue = alignedDataBuilder->takeSample(model.getClock().now(), ReadingContext::SampleClock)) {
                     if (meterData.size() >= MO_METERVALUES_CACHE_MAXSIZE) {
-                        MO_DBG_INFO("MeterValue cache full. Drop oldest MV");
+                        MO_DBG_INFO("MeterValue cache full. Drop old MV");
                         meterData.erase(meterData.begin());
                     }
                     alignedMeterValue->setOpNr(context.getRequestQueue().getNextOpNr());
-                    meterData.push_back(std::unique_ptr<MeterValues>(new MeterValues(model, std::move(alignedMeterValue), connectorId, transaction)));
+                    if (transaction) {
+                        alignedMeterValue->setTxNr(transaction->getTxNr());
+                    }
+                    meterData.push_back(std::move(alignedMeterValue));
                 }
 
                 if (stopTxnData) {
@@ -133,11 +140,14 @@ void MeteringConnector::loop() {
         if (mocpp_tick_ms() - lastSampleTime >= (unsigned long) (meterValueSampleIntervalInt->getInt() * 1000)) {
             if (auto sampledMeterValue = sampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::SamplePeriodic)) {
                 if (meterData.size() >= MO_METERVALUES_CACHE_MAXSIZE) {
-                    MO_DBG_INFO("MeterValue cache full. Drop oldest MV");
+                    MO_DBG_INFO("MeterValue cache full. Drop old MV");
                     meterData.erase(meterData.begin());
                 }
                 sampledMeterValue->setOpNr(context.getRequestQueue().getNextOpNr());
-                meterData.push_back(std::unique_ptr<MeterValues>(new MeterValues(model, std::move(sampledMeterValue), connectorId, transaction)));
+                if (transaction) {
+                    sampledMeterValue->setTxNr(transaction->getTxNr());
+                }
+                meterData.push_back(std::move(sampledMeterValue));
             }
 
             if (stopTxnData && stopTxnDataCapturePeriodicBool->getBool()) {
@@ -238,27 +248,55 @@ bool MeteringConnector::existsSampler(const char *measurand, size_t len) {
 }
 
 unsigned int MeteringConnector::getFrontRequestOpNr() {
-    if (!meterData.empty()) {
-        return meterData.front()->getOpNr();
+    if (!meterDataFront && !meterData.empty()) {
+        MO_DBG_DEBUG("advance MV front");
+        meterDataFront = std::move(meterData.front());
+        meterData.erase(meterData.begin());
+    }
+    if (meterDataFront) {
+        return meterDataFront->getOpNr();
     }
     return NoOperation;
 }
 
 std::unique_ptr<Request> MeteringConnector::fetchFrontRequest() {
 
-    auto mv_front = meterData.begin();
-    if (mv_front == meterData.end()) {
+    if (!meterDataFront) {
         return nullptr;
     }
 
-    std::unique_ptr<MeterValues> meterValue = std::move(*mv_front);
-    meterData.erase(mv_front);
+    if ((int)meterDataFront->getAttemptNr() >= transactionMessageAttemptsInt->getInt()) {
+        MO_DBG_WARN("exceeded TransactionMessageAttempts. Discard MeterValue");
+        meterDataFront.reset();
+        return nullptr;
+    }
+
+    if (mocpp_tick_ms() - meterDataFront->getAttemptTime() < meterDataFront->getAttemptNr() * (unsigned long)(std::max(0, transactionMessageRetryIntervalInt->getInt())) * 1000UL) {
+        return nullptr;
+    }
+
+    meterDataFront->advanceAttemptNr();
+    meterDataFront->setAttemptTime(mocpp_tick_ms());
+
+    //fetch tx for meterValue
+    std::shared_ptr<Transaction> tx;
+    if (meterDataFront->getTxNr() >= 0) {
+        tx = model.getTransactionStore()->getTransaction(connectorId, meterDataFront->getTxNr());
+    }
 
     //discard MV if it belongs to silent tx
-    if (meterValue->getTransaction() && meterValue->getTransaction()->isSilent()) {
+    if (tx && tx->isSilent()) {
         MO_DBG_DEBUG("Drop MeterValue belonging to silent tx");
+        meterDataFront.reset();
         return nullptr;
     }
 
-    return makeRequest(std::move(meterValue));
+    auto meterValues = makeRequest(new MeterValues(model, meterDataFront.get(), connectorId, tx));
+    meterValues->setOnReceiveConfListener([this] (JsonObject) {
+        //operation success
+        MO_DBG_DEBUG("drop MV front");
+        meterDataFront.reset();
+    });
+
+    return meterValues;
 }

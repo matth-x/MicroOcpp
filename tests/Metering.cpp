@@ -8,6 +8,7 @@
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Metering/MeteringConnector.h>
 #include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Operations/CustomOperation.h>
 #include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
@@ -478,7 +479,7 @@ TEST_CASE("Metering") {
     SECTION("Queue multiple MeterValues") {
 
         Timestamp base;
-
+        base.setTime(BASE_TIME);
         model.getClock().setTime(BASE_TIME);
 
         addMeterValueInput([base] () {
@@ -597,12 +598,93 @@ TEST_CASE("Metering") {
         loop();
 
         tx->setSilent();
+        tx->commit();
 
         loopback.setConnected(true);
 
         loop();
 
         REQUIRE(countProcessed == 0);
+    }
+
+    SECTION("TxMsg retry behavior") {
+
+        printf("\n\nTRACE TxMsg retry behavior");
+        
+        Timestamp base;
+
+        addMeterValueInput([&base] () {
+            //simulate 3600W consumption
+            return getOcppContext()->getModel().getClock().now() - base;
+        }, "Energy.Active.Import.Register");
+
+        auto MeterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
+        MeterValuesSampledDataString->setString("Energy.Active.Import.Register");
+
+        auto MeterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
+        MeterValueSampleIntervalInt->setInt(10);
+
+        configuration_save();
+
+        const size_t NUM_ATTEMPTS = 3;
+        const int RETRY_INTERVAL_SECS = 3600;
+
+        declareConfiguration<int>("TransactionMessageAttempts", 0)->setInt(NUM_ATTEMPTS);
+        declareConfiguration<int>("TransactionMessageRetryInterval", 0)->setInt(RETRY_INTERVAL_SECS);
+
+        unsigned int attemptNr = 0;
+
+        getOcppContext()->getOperationRegistry().registerOperation("MeterValues", [&attemptNr] () {
+            return new Ocpp16::CustomOperation("MeterValues",
+                [&attemptNr] (JsonObject payload) {
+                    //receive req
+                    attemptNr++;
+                },
+                [] () {
+                    //create conf
+                    return createEmptyDocument();
+                },
+                [] () {
+                    //ErrorCode for CALLERROR
+                    return "InternalError";
+                });});
+
+        loop();
+
+        auto trackMtime = mtime;
+        base = model.getClock().now();
+
+        beginTransaction("mIdTag");
+
+        loop();
+
+        mtime = trackMtime + 10 * 1000;
+
+        loop();
+
+        REQUIRE(attemptNr == 1);
+
+        endTransaction();
+
+        mtime = trackMtime + 20 * 1000;
+        loop();
+        REQUIRE(attemptNr == 1);
+
+        mtime = trackMtime + 10 * 1000 + RETRY_INTERVAL_SECS * 1000;
+        loop();
+        REQUIRE(attemptNr == 2);
+
+        mtime = trackMtime + 10 * 1000 + 2 * RETRY_INTERVAL_SECS * 1000;
+        loop();
+        REQUIRE(attemptNr == 2);
+
+        mtime = trackMtime + 10 * 1000 + 3 * RETRY_INTERVAL_SECS * 1000;
+        loop();
+        REQUIRE(attemptNr == 3);
+
+        mtime = trackMtime + 10 * 1000 + 7 * RETRY_INTERVAL_SECS * 1000;
+        loop();
+        REQUIRE(attemptNr == 3);
     }
 
     mocpp_deinitialize();

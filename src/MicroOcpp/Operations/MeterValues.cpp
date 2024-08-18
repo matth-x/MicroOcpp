@@ -10,16 +10,20 @@
 
 using MicroOcpp::Ocpp16::MeterValues;
 using MicroOcpp::JsonDoc;
-using MicroOcpp::Transaction;
 
 //can only be used for echo server debugging
 MeterValues::MeterValues(Model& model) : MemoryManaged("v16.Operation.", "MeterValues"), model(model) {
     
 }
 
-MeterValues::MeterValues(Model& model, std::unique_ptr<MeterValue> meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction) 
-      : MemoryManaged("v16.Operation.", "MeterValues"), model(model), meterValue{std::move(meterValue)}, connectorId{connectorId}, transaction{transaction} {
+MeterValues::MeterValues(Model& model, MeterValue *meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction) 
+      : MemoryManaged("v16.Operation.", "MeterValues"), model(model), meterValue{meterValue}, connectorId{connectorId}, transaction{transaction} {
     
+}
+
+MeterValues::MeterValues(Model& model, std::unique_ptr<MeterValue> meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction)
+      : MeterValues(model, meterValue.get(), connectorId, transaction) {
+    this->meterValueOwnership = std::move(meterValue);
 }
 
 MeterValues::~MeterValues(){
@@ -73,17 +77,6 @@ std::unique_ptr<JsonDoc> MeterValues::createReq() {
 
 void MeterValues::processConf(JsonObject payload) {
     MO_DBG_DEBUG("Request has been confirmed");
-}
-
-std::shared_ptr<Transaction>& MeterValues::getTransaction() {
-    return transaction;
-}
-
-unsigned int MeterValues::getOpNr() {
-    if (!meterValue) {
-        return 1;
-    }
-    return meterValue->getOpNr();
 }
 
 

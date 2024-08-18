@@ -14,7 +14,6 @@
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/Memory.h>
-#include <MicroOcpp/Operations/MeterValues.h>
 
 #ifndef MO_METERVALUES_CACHE_MAXSIZE
 #define MO_METERVALUES_CACHE_MAXSIZE MO_REQUEST_CACHE_MAXSIZE
@@ -25,7 +24,6 @@ namespace MicroOcpp {
 class Context;
 class Model;
 class Operation;
-class Transaction;
 class MeterStore;
 
 class MeteringConnector : public MemoryManaged, public RequestEmitter {
@@ -35,7 +33,8 @@ private:
     const int connectorId;
     MeterStore& meterStore;
     
-    Vector<std::unique_ptr<Ocpp16::MeterValues>> meterData;
+    Vector<std::unique_ptr<MeterValue>> meterData;
+    std::unique_ptr<MeterValue> meterDataFront;
     std::shared_ptr<TransactionMeterData> stopTxnData;
 
     std::unique_ptr<MeterValueBuilder> sampledDataBuilder;
@@ -62,6 +61,9 @@ private:
 
     std::shared_ptr<Configuration> meterValuesInTxOnlyBool;
     std::shared_ptr<Configuration> stopTxnDataCapturePeriodicBool;
+
+    std::shared_ptr<Configuration> transactionMessageAttemptsInt;
+    std::shared_ptr<Configuration> transactionMessageRetryIntervalInt;
 public:
     MeteringConnector(Context& context, int connectorId, MeterStore& meterStore);
 
