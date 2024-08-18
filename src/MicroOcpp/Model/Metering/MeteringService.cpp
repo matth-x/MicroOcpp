@@ -22,8 +22,9 @@ MeteringService::MeteringService(Context& context, int numConn, std::shared_ptr<
     declareConfiguration<const char*>("MeterValuesAlignedData", "Energy.Active.Import.Register,Power.Active.Import");
     declareConfiguration<const char*>("StopTxnAlignedData", "");
     
+    connectors.reserve(numConn);
     for (int i = 0; i < numConn; i++) {
-        connectors.emplace_back(new MeteringConnector(context.getModel(), i, meterStore));
+        connectors.emplace_back(new MeteringConnector(context, i, meterStore));
     }
 
     std::function<bool(const char*)> validateSelectString = [this] (const char *csl) {
@@ -83,14 +84,8 @@ MeteringService::MeteringService(Context& context, int numConn, std::shared_ptr<
 }
 
 void MeteringService::loop(){
-
     for (unsigned int i = 0; i < connectors.size(); i++){
-        auto meterValuesMsg = connectors[i]->loop();
-        if (meterValuesMsg != nullptr) {
-            auto meterValues = makeRequest(std::move(meterValuesMsg));
-            meterValues->setTimeout(120000);
-            context.initiateRequest(std::move(meterValues));
-        }
+        connectors[i]->loop();
     }
 }
 

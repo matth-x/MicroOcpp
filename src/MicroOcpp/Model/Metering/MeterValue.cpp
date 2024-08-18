@@ -2,6 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#include <limits>
+
 #include <MicroOcpp/Model/Metering/MeterValue.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Debug.h>
@@ -65,6 +67,42 @@ ReadingContext MeterValue::getReadingContext() {
         }
     }
     return ReadingContext::NOT_SET;
+}
+
+void MeterValue::setTxNr(unsigned int txNr) {
+    if (txNr > (unsigned int)std::numeric_limits<int>::max()) {
+        MO_DBG_ERR("invalid arg");
+        return;
+    }
+    this->txNr = (int)txNr;
+}
+
+int MeterValue::getTxNr() {
+    return txNr;
+}
+
+void MeterValue::setOpNr(unsigned int opNr) {
+    this->opNr = opNr;
+}
+
+unsigned int MeterValue::getOpNr() {
+    return opNr;
+}
+
+void MeterValue::advanceAttemptNr() {
+    attemptNr++;
+}
+
+unsigned int MeterValue::getAttemptNr() {
+    return attemptNr;
+}
+
+unsigned long MeterValue::getAttemptTime() {
+    return attemptTime;
+}
+
+void MeterValue::setAttemptTime(unsigned long timestamp) {
+    this->attemptTime = timestamp;
 }
 
 MeterValueBuilder::MeterValueBuilder(const Vector<std::unique_ptr<SampledValueSampler>> &samplers,

@@ -95,7 +95,7 @@ private:
 
     unsigned int txNrBegin = 0; //oldest (historical) transaction on flash. Has no function, but is useful for error diagnosis
     unsigned int txNrFront = 0; //oldest transaction which is still queued to be sent to the server
-    unsigned int txNrBack = 0; //one position behind newest transaction
+    unsigned int txNrEnd = 0; //one position behind newest transaction
 
     std::shared_ptr<Transaction> transactionFront;
 public:
@@ -157,6 +157,10 @@ public:
 
     unsigned int getFrontRequestOpNr() override;
     std::unique_ptr<Request> fetchFrontRequest() override;
+
+    unsigned int getTxNrBeginHistory(); //if getTxNrBeginHistory() != getTxNrFront(), then return value is the txNr of the oldest tx history entry. If equal to getTxNrFront(), then the history is empty
+    unsigned int getTxNrFront(); //if getTxNrEnd() != getTxNrFront(), then return value is the txNr of the oldest transaction queued to be sent to the server. If equal to getTxNrEnd(), then there is no tx to be sent to the server
+    unsigned int getTxNrEnd(); //upper limit for the range of valid txNrs
 };
 
 } //end namespace MicroOcpp

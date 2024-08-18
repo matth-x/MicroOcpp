@@ -18,7 +18,7 @@
 #endif
 
 #ifndef MO_NUM_REQUEST_QUEUES
-#define MO_NUM_REQUEST_QUEUES 5
+#define MO_NUM_REQUEST_QUEUES 10
 #endif
 
 namespace MicroOcpp {

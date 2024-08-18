@@ -12,22 +12,29 @@
 #include <MicroOcpp/Model/Metering/MeterStore.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/Memory.h>
+
+#ifndef MO_METERVALUES_CACHE_MAXSIZE
+#define MO_METERVALUES_CACHE_MAXSIZE MO_REQUEST_CACHE_MAXSIZE
+#endif
 
 namespace MicroOcpp {
 
+class Context;
 class Model;
 class Operation;
-class Transaction;
 class MeterStore;
 
-class MeteringConnector : public MemoryManaged {
+class MeteringConnector : public MemoryManaged, public RequestEmitter {
 private:
+    Context& context;
     Model& model;
     const int connectorId;
     MeterStore& meterStore;
     
     Vector<std::unique_ptr<MeterValue>> meterData;
+    std::unique_ptr<MeterValue> meterDataFront;
     std::shared_ptr<TransactionMeterData> stopTxnData;
 
     std::unique_ptr<MeterValueBuilder> sampledDataBuilder;
@@ -49,16 +56,18 @@ private:
     int energySamplerIndex {-1};
 
     std::shared_ptr<Configuration> meterValueSampleIntervalInt;
-    std::shared_ptr<Configuration> meterValueCacheSizeInt;
 
     std::shared_ptr<Configuration> clockAlignedDataIntervalInt;
 
     std::shared_ptr<Configuration> meterValuesInTxOnlyBool;
     std::shared_ptr<Configuration> stopTxnDataCapturePeriodicBool;
-public:
-    MeteringConnector(Model& model, int connectorId, MeterStore& meterStore);
 
-    std::unique_ptr<Operation> loop();
+    std::shared_ptr<Configuration> transactionMessageAttemptsInt;
+    std::shared_ptr<Configuration> transactionMessageRetryIntervalInt;
+public:
+    MeteringConnector(Context& context, int connectorId, MeterStore& meterStore);
+
+    void loop();
 
     void addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler);
 
@@ -75,6 +84,10 @@ public:
     std::shared_ptr<TransactionMeterData> getStopTxMeterData(Transaction *transaction);
 
     bool existsSampler(const char *measurand, size_t len);
+
+    //RequestEmitter implementation
+    unsigned int getFrontRequestOpNr() override;
+    std::unique_ptr<Request> fetchFrontRequest() override;
 
 };
 

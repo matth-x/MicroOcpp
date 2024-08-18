@@ -18,6 +18,11 @@ class MeterValue : public MemoryManaged {
 private:
     Timestamp timestamp;
     Vector<std::unique_ptr<SampledValue>> sampledValue;
+
+    int txNr = -1;
+    unsigned int opNr = 1;
+    unsigned int attemptNr = 0;
+    unsigned long attemptTime = 0;
 public:
     MeterValue(const Timestamp& timestamp);
     MeterValue(const MeterValue& other) = delete;
@@ -30,6 +35,18 @@ public:
     void setTimestamp(Timestamp timestamp);
 
     ReadingContext getReadingContext();
+
+    void setTxNr(unsigned int txNr);
+    int getTxNr();
+
+    void setOpNr(unsigned int opNr);
+    unsigned int getOpNr();
+
+    void advanceAttemptNr();
+    unsigned int getAttemptNr();
+
+    unsigned long getAttemptTime();
+    void setAttemptTime(unsigned long timestamp);
 };
 
 class MeterValueBuilder : public MemoryManaged {
