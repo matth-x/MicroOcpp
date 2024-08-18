@@ -14,6 +14,8 @@
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"
 
+#define TRIGGER_METERVALUES "[2,\"msgId01\",\"TriggerMessage\",{\"requestedMessage\":\"MeterValues\"}]"
+
 using namespace MicroOcpp;
 
 TEST_CASE("Metering") {
@@ -608,8 +610,6 @@ TEST_CASE("Metering") {
     }
 
     SECTION("TxMsg retry behavior") {
-
-        printf("\n\nTRACE TxMsg retry behavior");
         
         Timestamp base;
 
@@ -685,6 +685,45 @@ TEST_CASE("Metering") {
         mtime = trackMtime + 10 * 1000 + 7 * RETRY_INTERVAL_SECS * 1000;
         loop();
         REQUIRE(attemptNr == 3);
+    }
+
+    SECTION("TriggerMessage") {
+        
+        addMeterValueInput([] () {
+            return 12345;
+        }, "Energy.Active.Import.Register");
+
+        auto MeterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
+        MeterValuesSampledDataString->setString("Energy.Active.Import.Register");
+
+        Timestamp base;
+
+        bool checkProcessed = false;
+
+        setOnReceiveRequest("MeterValues", [&base, &checkProcessed] (JsonObject payload) {
+            int connectorId = payload["connectorId"] | -1;
+            if (connectorId != 1) {
+                return;
+            }
+
+            checkProcessed = true;
+
+            Timestamp t0;
+            t0.setTime(payload["meterValue"][0]["timestamp"] | "");
+
+            REQUIRE( std::abs(t0 - base) <= 1 );
+            REQUIRE( !strncmp(payload["meterValue"][0]["sampledValue"][0]["value"] | "", "12345", strlen("12345")) );
+        });
+
+        loop();
+
+        base = model.getClock().now();
+
+        loopback.sendTXT(TRIGGER_METERVALUES, sizeof(TRIGGER_METERVALUES) - 1);
+        loop();
+
+        REQUIRE(checkProcessed);
+
     }
 
     mocpp_deinitialize();

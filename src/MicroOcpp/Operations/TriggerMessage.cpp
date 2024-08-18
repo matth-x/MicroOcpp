@@ -36,12 +36,16 @@ void TriggerMessage::processReq(JsonObject payload) {
             if (connectorId < 0) {
                 auto nConnectors = mService->getNumConnectors();
                 for (decltype(nConnectors) cId = 0; cId < nConnectors; cId++) {
-                    context.getRequestQueue().sendRequestPreBoot(mService->takeTriggeredMeterValues(cId));
-                    statusMessage = "Accepted";
+                    if (auto meterValues = mService->takeTriggeredMeterValues(cId)) {
+                        context.getRequestQueue().sendRequestPreBoot(std::move(meterValues));
+                        statusMessage = "Accepted";
+                    }
                 }
             } else if (connectorId < mService->getNumConnectors()) {
-                context.getRequestQueue().sendRequestPreBoot(mService->takeTriggeredMeterValues(connectorId));
-                statusMessage = "Accepted";
+                if (auto meterValues = mService->takeTriggeredMeterValues(connectorId)) {
+                    context.getRequestQueue().sendRequestPreBoot(std::move(meterValues));
+                    statusMessage = "Accepted";
+                }
             } else {
                 errorCode = "PropertyConstraintViolation";
             }
