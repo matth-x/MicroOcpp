@@ -6,6 +6,7 @@
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Metering/MeteringConnector.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
@@ -101,19 +102,14 @@ TEST_CASE("Metering") {
         auto MeterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
         MeterValueSampleIntervalInt->setInt(10);
 
-        auto MeterValueCacheSizeInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "MeterValueCacheSize", 0);
-        MeterValueCacheSizeInt->setInt(2);
-
         bool checkProcessed = false;
 
         setOnReceiveRequest("MeterValues", [base, &checkProcessed] (JsonObject payload) {
             checkProcessed = true;
-            Timestamp t0, t1;
+            Timestamp t0;
             t0.setTime(payload["meterValue"][0]["timestamp"] | "");
-            t1.setTime(payload["meterValue"][1]["timestamp"] | "");
 
             REQUIRE((t0 - base >= 10 && t0 - base <= 11));
-            REQUIRE((t1 - base >= 20 && t1 - base <= 21));
 
             REQUIRE(!strcmp(payload["meterValue"][0]["sampledValue"][0]["context"] | "", "Sample.Periodic"));
         });
@@ -129,10 +125,6 @@ TEST_CASE("Metering") {
         loop();
 
         mtime = trackMtime + 10 * 1000;
-
-        loop(),
-
-        mtime = trackMtime + 20 * 1000;
 
         loop();
 
@@ -163,19 +155,14 @@ TEST_CASE("Metering") {
         auto MeterValuesAlignedDataString = declareConfiguration<const char*>("MeterValuesAlignedData", "", CONFIGURATION_FN);
         MeterValuesAlignedDataString->setString("Energy.Active.Import.Register");
 
-        auto MeterValueCacheSizeInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "MeterValueCacheSize", 0, CONFIGURATION_FN);
-        MeterValueCacheSizeInt->setInt(2);
-
         bool checkProcessed = false;
 
         setOnReceiveRequest("MeterValues", [base, &checkProcessed] (JsonObject payload) {
             checkProcessed = true;
-            Timestamp t0, t1;
+            Timestamp t0;
             t0.setTime(payload["meterValue"][0]["timestamp"] | "");
-            t1.setTime(payload["meterValue"][1]["timestamp"] | "");
 
             REQUIRE((t0 - base >= 900 && t0 - base <= 901));
-            REQUIRE((t1 - base >= 1800 && t1 - base <= 1801));
 
             REQUIRE(!strcmp(payload["meterValue"][0]["sampledValue"][0]["context"] | "", "Sample.Clock"));
         });
@@ -194,10 +181,6 @@ TEST_CASE("Metering") {
         loop();
 
         model.getClock().setTime("2023-01-01T00:29:50Z");
-        loop();
-
-        model.getClock().setTime("2023-01-01T00:30:00Z");
-        loop();
 
         endTransaction();
 
@@ -329,27 +312,91 @@ TEST_CASE("Metering") {
         auto MeterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
         MeterValueSampleIntervalInt->setInt(10);
 
-        auto MeterValueCacheSizeInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "MeterValueCacheSize", 0, CONFIGURATION_FN);
-        MeterValueCacheSizeInt->setInt(10);
-
         bool checkProcessed = false;
 
         setOnReceiveRequest("MeterValues", [base, &checkProcessed] (JsonObject payload) {
             checkProcessed = true;
-            Timestamp t0, t1;
+            Timestamp t0;
             t0.setTime(payload["meterValue"][0]["timestamp"] | "");
-            t1.setTime(payload["meterValue"][1]["timestamp"] | "");
 
             REQUIRE((t0 - base >= 10 && t0 - base <= 11));
-            REQUIRE((t1 - base >= 20 && t1 - base <= 21));
             
-            REQUIRE(!strcmp(payload["meterValue"][0]["sampledValue"][0]["measurand"] | "", "Energy.Active.Import.Register"));
-            REQUIRE(!strcmp(payload["meterValue"][1]["sampledValue"][0]["measurand"] | "", "Power.Active.Import"));
+            REQUIRE(!strcmp(payload["meterValue"][0]["sampledValue"][0]["measurand"] | "", "Power.Active.Import"));
         });
 
         loop();
 
         model.getClock().setTime(BASE_TIME);
+
+        auto trackMtime = mtime;
+
+        beginTransaction_authorized("mIdTag");
+
+        MeterValuesSampledDataString->setString("Power.Active.Import");
+
+        loop();
+
+        mtime = trackMtime + 10 * 1000;
+
+        loop();
+
+        endTransaction();
+
+        loop();
+
+        REQUIRE(checkProcessed);
+    }
+
+    SECTION("Preserve order of tx-related msgs") {
+
+        loopback.setConnected(false);
+
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true)->setBool(true);
+
+        Timestamp base;
+        base.setTime(BASE_TIME);
+
+        addMeterValueInput([base] () {
+            //simulate 3600W consumption
+            return getOcppContext()->getModel().getClock().now() - base;
+        }, "Energy.Active.Import.Register");
+
+        auto MeterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
+        MeterValuesSampledDataString->setString("Energy.Active.Import.Register");
+
+        auto MeterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
+        MeterValueSampleIntervalInt->setInt(10);
+
+        configuration_save();
+
+        unsigned int countProcessed = 0;
+
+        setOnReceiveRequest("StartTransaction", [&countProcessed] (JsonObject) {
+            REQUIRE(countProcessed == 0);
+            countProcessed++;
+        });
+
+        int assignedTxId = -1;
+
+        setOnSendConf("StartTransaction", [&assignedTxId] (JsonObject conf) {
+            assignedTxId = conf["transactionId"];
+        });
+
+        setOnReceiveRequest("MeterValues", [&countProcessed, &assignedTxId] (JsonObject req) {
+            REQUIRE(countProcessed == 1);
+            countProcessed++;
+
+            int transactionId = req["transactionId"] | -1000;
+
+            REQUIRE(assignedTxId == transactionId);
+        });
+
+        setOnReceiveRequest("StopTransaction", [&countProcessed] (JsonObject) {
+            REQUIRE(countProcessed == 2);
+            countProcessed++;
+        });
+
+        loop();
 
         auto trackMtime = mtime;
 
@@ -361,9 +408,59 @@ TEST_CASE("Metering") {
 
         loop();
 
-        MeterValuesSampledDataString->setString("Power.Active.Import");
+        endTransaction();
 
-        mtime = trackMtime + 20 * 1000;
+        loop();
+
+        loopback.setConnected(true);
+
+        loop();
+
+        REQUIRE(countProcessed == 3);
+
+        /*
+         * Combine test case with power loss. Start tx before power loss, then enqueue 1 MV, then StopTx
+         */
+
+        countProcessed = 0;
+
+        beginTransaction("mIdTag");
+
+        loop();
+
+        mocpp_deinitialize();
+
+        loopback.setConnected(false);
+
+        mocpp_initialize(loopback, ChargerCredentials());
+        getOcppContext()->getModel().getClock().setTime(BASE_TIME);
+
+        base.setTime(BASE_TIME);
+
+        addMeterValueInput([base] () {
+            //simulate 3600W consumption
+            return getOcppContext()->getModel().getClock().now() - base;
+        }, "Energy.Active.Import.Register");
+
+        setOnReceiveRequest("MeterValues", [&countProcessed, &assignedTxId] (JsonObject req) {
+            REQUIRE(countProcessed == 1);
+            countProcessed++;
+
+            int transactionId = req["transactionId"] | -1000;
+
+            REQUIRE(assignedTxId == transactionId);
+        });
+
+        setOnReceiveRequest("StopTransaction", [&countProcessed] (JsonObject) {
+            REQUIRE(countProcessed == 2);
+            countProcessed++;
+        });
+
+        trackMtime = mtime;
+
+        loop();
+
+        mtime = trackMtime + 10 * 1000;
 
         loop();
 
@@ -371,7 +468,141 @@ TEST_CASE("Metering") {
 
         loop();
 
-        REQUIRE(checkProcessed);
+        loopback.setConnected(true);
+
+        loop();
+
+        REQUIRE(countProcessed == 3);
+    }
+
+    SECTION("Queue multiple MeterValues") {
+
+        Timestamp base;
+
+        model.getClock().setTime(BASE_TIME);
+
+        addMeterValueInput([base] () {
+            //simulate 3600W consumption
+            return getOcppContext()->getModel().getClock().now() - base;
+        }, "Energy.Active.Import.Register");
+
+        auto MeterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
+        MeterValuesSampledDataString->setString("Energy.Active.Import.Register");
+
+        auto MeterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
+        MeterValueSampleIntervalInt->setInt(10);
+
+        unsigned int nrInitiated = 0;
+        unsigned int countProcessed = 0;
+
+        setOnReceiveRequest("MeterValues", [&base, &nrInitiated, &countProcessed] (JsonObject payload) {
+            countProcessed++;
+
+            Timestamp t0;
+            t0.setTime(payload["meterValue"][0]["timestamp"] | "");
+
+            REQUIRE((t0 - base >= 10 * ((int)nrInitiated - (MO_METERVALUES_CACHE_MAXSIZE - (int)countProcessed)) && t0 - base <= 1 + 10 * ((int)nrInitiated - (MO_METERVALUES_CACHE_MAXSIZE - (int)countProcessed))));
+        });
+
+
+        loop();
+
+        beginTransaction_authorized("mIdTag");
+
+        base = model.getClock().now();
+        auto trackMtime = mtime;
+
+        loop();
+
+        loopback.setConnected(false);
+
+        //initiate 10 more MeterValues than can be cached
+        for (unsigned long i = 1; i <= 10 + MO_METERVALUES_CACHE_MAXSIZE; i++) {
+            mtime = trackMtime + i * 10 * 1000;
+            loop();
+
+            nrInitiated++;
+        }
+
+        loopback.setConnected(true);
+
+        loop();
+
+        REQUIRE(countProcessed == MO_METERVALUES_CACHE_MAXSIZE);
+
+        endTransaction();
+
+        loop();
+
+    }
+
+    SECTION("Drop MeterValues for silent tx") {
+
+        loopback.setConnected(false);
+
+        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true)->setBool(true);
+
+        Timestamp base;
+        base.setTime(BASE_TIME);
+
+        addMeterValueInput([base] () {
+            //simulate 3600W consumption
+            return getOcppContext()->getModel().getClock().now() - base;
+        }, "Energy.Active.Import.Register");
+
+        auto MeterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData","", CONFIGURATION_FN);
+        MeterValuesSampledDataString->setString("Energy.Active.Import.Register");
+
+        auto MeterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval",0, CONFIGURATION_FN);
+        MeterValueSampleIntervalInt->setInt(10);
+
+        configuration_save();
+
+        unsigned int countProcessed = 0;
+
+        setOnReceiveRequest("StartTransaction", [&countProcessed] (JsonObject) {
+            countProcessed++;
+        });
+
+        int assignedTxId = -1;
+
+        setOnSendConf("StartTransaction", [&assignedTxId] (JsonObject conf) {
+            assignedTxId = conf["transactionId"];
+        });
+
+        setOnReceiveRequest("MeterValues", [&countProcessed, &assignedTxId] (JsonObject req) {
+            countProcessed++;
+        });
+
+        setOnReceiveRequest("StopTransaction", [&countProcessed] (JsonObject) {
+            REQUIRE(countProcessed == 2);
+        });
+
+        loop();
+
+        auto trackMtime = mtime;
+
+        auto tx = beginTransaction_authorized("mIdTag");
+
+        loop();
+
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Charging );
+
+        mtime = trackMtime + 10 * 1000;
+
+        loop();
+
+        endTransaction();
+
+        loop();
+
+        tx->setSilent();
+
+        loopback.setConnected(true);
+
+        loop();
+
+        REQUIRE(countProcessed == 0);
     }
 
     mocpp_deinitialize();

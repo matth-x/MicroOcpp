@@ -29,7 +29,7 @@ namespace MicroOcpp {
 
 using namespace MicroOcpp;
 
-Request::Request(std::unique_ptr<Operation> msg, const char *memory_tag) : MemoryManaged(memory_tag), messageID(makeString(getMemoryTag())), operation(std::move(msg)) {
+Request::Request(std::unique_ptr<Operation> msg) : MemoryManaged("Request.", msg->getOperationType()), messageID(makeString(getMemoryTag())), operation(std::move(msg)) {
     timeout_start = mocpp_tick_ms();
     debugRequest_start = mocpp_tick_ms();
 }
@@ -289,19 +289,15 @@ bool Request::isRequestSent() {
 
 namespace MicroOcpp {
 
-std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> operation, const char *memoryTag){
+std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> operation){
     if (operation == nullptr) {
         return nullptr;
     }
-    return std::unique_ptr<Request>(new Request(std::move(operation), memoryTag));
+    return std::unique_ptr<Request>(new Request(std::move(operation)));
 }
 
 std::unique_ptr<Request> makeRequest(Operation *operation) {
     return makeRequest(std::unique_ptr<Operation>(operation));
-}
-
-std::unique_ptr<Request> makeRequest(const char *memoryTag, Operation *operation) {
-    return makeRequest(std::unique_ptr<Operation>(operation), memoryTag);
 }
 
 } //end namespace MicroOcpp

@@ -20,14 +20,14 @@ namespace Ocpp16 {
 class MeterValues : public Operation, public MemoryManaged {
 private:
     Model& model; //for adjusting the timestamp if MeterValue has been created before BootNotification
-    Vector<std::unique_ptr<MeterValue>> meterValue;
+    std::unique_ptr<MeterValue> meterValue;
 
     unsigned int connectorId = 0;
 
     std::shared_ptr<Transaction> transaction;
 
 public:
-    MeterValues(Model& model, Vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction = nullptr);
+    MeterValues(Model& model, std::unique_ptr<MeterValue> meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction = nullptr);
 
     MeterValues(Model& model); //for debugging only. Make this for the server pendant
 
@@ -38,6 +38,9 @@ public:
     std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
+
+    std::shared_ptr<Transaction>& getTransaction();
+    unsigned int getOpNr();
 
     void processReq(JsonObject payload) override;
 

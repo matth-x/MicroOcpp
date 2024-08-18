@@ -10,15 +10,14 @@
 
 using MicroOcpp::Ocpp16::MeterValues;
 using MicroOcpp::JsonDoc;
-
-#define ENERGY_METER_TIMEOUT_MS 30 * 1000  //after waiting for 30s, send MeterValues without missing readings
+using MicroOcpp::Transaction;
 
 //can only be used for echo server debugging
 MeterValues::MeterValues(Model& model) : MemoryManaged("v16.Operation.", "MeterValues"), model(model) {
     
 }
 
-MeterValues::MeterValues(Model& model, Vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction) 
+MeterValues::MeterValues(Model& model, std::unique_ptr<MeterValue> meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction) 
       : MemoryManaged("v16.Operation.", "MeterValues"), model(model), meterValue{std::move(meterValue)}, connectorId{connectorId}, transaction{transaction} {
     
 }
@@ -34,27 +33,27 @@ const char* MeterValues::getOperationType(){
 std::unique_ptr<JsonDoc> MeterValues::createReq() {
 
     size_t capacity = 0;
-    
-    auto entries = makeVector<std::unique_ptr<JsonDoc>>(getMemoryTag());
-    for (auto mv = meterValue.begin(); mv != meterValue.end(); mv++) {
 
-        if ((*mv)->getTimestamp() < MIN_TIME) {
+    std::unique_ptr<JsonDoc> meterValueJson;
+
+    if (meterValue) {
+
+        if (meterValue->getTimestamp() < MIN_TIME) {
             MO_DBG_DEBUG("adjust preboot MeterValue timestamp");
-            Timestamp adjusted = model.getClock().adjustPrebootTimestamp((*mv)->getTimestamp());
-            (*mv)->setTimestamp(adjusted);
+            Timestamp adjusted = model.getClock().adjustPrebootTimestamp(meterValue->getTimestamp());
+            meterValue->setTimestamp(adjusted);
         }
 
-        auto entry = (*mv)->toJson();
-        if (entry) {
-            capacity += entry->capacity();
-            entries.push_back(std::move(entry));
+        meterValueJson = meterValue->toJson();
+        if (meterValueJson) {
+            capacity += meterValueJson->capacity();
         } else {
             MO_DBG_ERR("Energy meter reading not convertible to JSON");
         }
     }
 
     capacity += JSON_OBJECT_SIZE(3);
-    capacity += JSON_ARRAY_SIZE(entries.size());
+    capacity += JSON_ARRAY_SIZE(1);
 
     auto doc = makeJsonDoc(getMemoryTag(), capacity);
     auto payload = doc->to<JsonObject>();
@@ -64,9 +63,9 @@ std::unique_ptr<JsonDoc> MeterValues::createReq() {
         payload["transactionId"] = transaction->getTransactionId();
     }
 
-    auto meterValueJson = payload.createNestedArray("meterValue");
-    for (auto entry = entries.begin(); entry != entries.end(); entry++) {
-        meterValueJson.add(**entry);
+    auto meterValueArray = payload.createNestedArray("meterValue");
+    if (meterValueJson) {
+        meterValueArray.add(*meterValueJson);
     }
 
     return doc;
@@ -74,6 +73,17 @@ std::unique_ptr<JsonDoc> MeterValues::createReq() {
 
 void MeterValues::processConf(JsonObject payload) {
     MO_DBG_DEBUG("Request has been confirmed");
+}
+
+std::shared_ptr<Transaction>& MeterValues::getTransaction() {
+    return transaction;
+}
+
+unsigned int MeterValues::getOpNr() {
+    if (!meterValue) {
+        return 1;
+    }
+    return meterValue->getOpNr();
 }
 
 

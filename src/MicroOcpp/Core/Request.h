@@ -41,7 +41,7 @@ private:
     bool requestSent = false;
 public:
 
-    Request(std::unique_ptr<Operation> msg, const char *memory_tag = "Request");
+    Request(std::unique_ptr<Operation> msg);
 
     ~Request();
 
@@ -121,9 +121,8 @@ public:
 /*
  * Simple factory functions
  */
-std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> op, const char *memoryTag = "Request");
+std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> op);
 std::unique_ptr<Request> makeRequest(Operation *op); //takes ownership of op
-std::unique_ptr<Request> makeRequest(const char *memoryTag, Operation *op); //takes ownership of op
 
 } //end namespace MicroOcpp
 

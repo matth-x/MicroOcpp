@@ -67,6 +67,14 @@ ReadingContext MeterValue::getReadingContext() {
     return ReadingContext::NOT_SET;
 }
 
+void MeterValue::setOpNr(unsigned int opNr) {
+    this->opNr = opNr;
+}
+
+unsigned int MeterValue::getOpNr() {
+    return opNr;
+}
+
 MeterValueBuilder::MeterValueBuilder(const Vector<std::unique_ptr<SampledValueSampler>> &samplers,
             std::shared_ptr<Configuration> samplersSelectStr) :
             MemoryManaged("v16.Metering.MeterValueBuilder"),
