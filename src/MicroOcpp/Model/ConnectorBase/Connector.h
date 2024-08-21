@@ -158,6 +158,8 @@ public:
     unsigned int getFrontRequestOpNr() override;
     std::unique_ptr<Request> fetchFrontRequest() override;
 
+    bool triggerStatusNotification();
+
     unsigned int getTxNrBeginHistory(); //if getTxNrBeginHistory() != getTxNrFront(), then return value is the txNr of the oldest tx history entry. If equal to getTxNrFront(), then the history is empty
     unsigned int getTxNrFront(); //if getTxNrEnd() != getTxNrFront(), then return value is the txNr of the oldest transaction queued to be sent to the server. If equal to getTxNrEnd(), then there is no tx to be sent to the server
     unsigned int getTxNrEnd(); //upper limit for the range of valid txNrs

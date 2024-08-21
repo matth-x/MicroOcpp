@@ -1271,6 +1271,37 @@ std::unique_ptr<Request> Connector::fetchFrontRequest() {
     return nullptr;
 }
 
+bool Connector::triggerStatusNotification() {
+
+    ErrorData errorData {nullptr};
+    errorData.severity = 0;
+
+    if (reportedErrorIndex >= 0) {
+        errorData = errorDataInputs[reportedErrorIndex].operator()();
+    } else {
+        //find errorData with maximum severity
+        for (auto i = errorDataInputs.size(); i >= 1; i--) {
+            auto index = i - 1;
+            ErrorData error = errorDataInputs[index].operator()();
+            if (error.isError && error.severity >= errorData.severity) {
+                errorData = error;
+            }
+        }
+    }
+
+    auto statusNotification = makeRequest(new Ocpp16::StatusNotification(
+                connectorId,
+                getStatus(),
+                context.getModel().getClock().now(),
+                errorData));
+
+    statusNotification->setTimeout(60000);
+
+    context.getRequestQueue().sendRequestPreBoot(std::move(statusNotification));
+
+    return true;
+}
+
 unsigned int Connector::getTxNrBeginHistory() {
     return txNrBegin;
 }

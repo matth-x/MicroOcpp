@@ -5,7 +5,6 @@
 #include <MicroOcpp/Operations/TriggerMessage.h>
 #include <MicroOcpp/Model/ConnectorBase/Connector.h>
 #include <MicroOcpp/Model/Metering/MeteringService.h>
-#include <MicroOcpp/Operations/StatusNotification.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Core/Request.h>
@@ -63,16 +62,9 @@ void TriggerMessage::processReq(JsonObject payload) {
 
         for (auto i = cIdRangeBegin; i < cIdRangeEnd; i++) {
             auto connector = context.getModel().getConnector(i);
-
-            auto statusNotification = makeRequest(new Ocpp16::StatusNotification(
-                        i,
-                        connector->getStatus(), //will be determined in StatusNotification::initiate
-                        context.getModel().getClock().now()));
-
-            statusNotification->setTimeout(60000);
-
-            context.getRequestQueue().sendRequestPreBoot(std::move(statusNotification));
-            statusMessage = "Accepted";
+            if (connector->triggerStatusNotification()) {
+                statusMessage = "Accepted";
+            }
         }
     } else {
         auto msg = context.getOperationRegistry().deserializeOperation(requestedMessage);
