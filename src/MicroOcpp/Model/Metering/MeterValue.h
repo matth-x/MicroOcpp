@@ -9,6 +9,7 @@
 #include <MicroOcpp/Model/Metering/SampledValue.h>
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Version.h>
 #include <ArduinoJson.h>
 #include <memory>
 
@@ -49,10 +50,21 @@ public:
     void setAttemptTime(unsigned long timestamp);
 };
 
+#if MO_ENABLE_V201
+class Variable;
+#endif
+
 class MeterValueBuilder : public MemoryManaged {
 private:
     const Vector<std::unique_ptr<SampledValueSampler>> &samplers;
+
     std::shared_ptr<Configuration> selectString;
+    #if MO_ENABLE_V201
+    Variable *selectString_v201 = nullptr;
+    #endif
+    const char *getSelectStringValueCompat();
+    unsigned int getSelectStringValueRevisionCompat();
+
     Vector<bool> select_mask;
     unsigned int select_n {0};
     decltype(selectString->getValueRevision()) select_observe;
@@ -61,10 +73,15 @@ private:
 public:
     MeterValueBuilder(const Vector<std::unique_ptr<SampledValueSampler>> &samplers,
             std::shared_ptr<Configuration> samplersSelectStr);
-    
+
+    #if MO_ENABLE_V201
+    MeterValueBuilder(const Vector<std::unique_ptr<SampledValueSampler>> &samplers,
+            Variable *samplersSelectStr_v201);
+    #endif
+
     std::unique_ptr<MeterValue> takeSample(const Timestamp& timestamp, const ReadingContext& context);
 
-    std::unique_ptr<MeterValue> deserializeSample(const JsonObject mvJson);
+    static std::unique_ptr<MeterValue> deserializeSample(Vector<std::unique_ptr<SampledValueSampler>>& samplers, const JsonObject mvJson);
 };
 
 }

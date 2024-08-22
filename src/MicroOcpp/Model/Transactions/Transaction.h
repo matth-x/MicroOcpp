@@ -193,6 +193,7 @@ public:
 #include <MicroOcpp/Model/Transactions/TransactionDefs.h>
 #include <MicroOcpp/Model/Authorization/IdToken.h>
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
+#include <MicroOcpp/Model/Metering/MeterValue.h>
 
 namespace MicroOcpp {
 namespace Ocpp201 {
@@ -255,11 +256,11 @@ public:
      * Transaction substates. Notify server about any change when transaction is running
      */
     //bool trackParkingBayOccupancy; // not supported
-    bool trackEvConnected;
-    bool trackAuthorized;
-    bool trackDataSigned;
-    bool trackPowerPathClosed;
-    bool trackEnergyTransfer;
+    bool trackEvConnected = false;
+    bool trackAuthorized = false;
+    bool trackDataSigned = false;
+    bool trackPowerPathClosed = false;
+    bool trackEnergyTransfer = false;
 
     /*
      * Transaction lifecycle
@@ -293,6 +294,14 @@ public:
     StopReason stopReason = StopReason::UNDEFINED;
     TransactionEventTriggerReason stopTrigger = TransactionEventTriggerReason::UNDEFINED;
     std::unique_ptr<IdToken> stopIdToken; // if null, then stopIdToken equals idToken
+
+    /*
+     * Attributes for internal store
+     */
+    unsigned int evseId = 0;
+    unsigned int txNr = 0; //internal key attribute (!= transactionId); {evseId*txNr} is unique key
+
+    bool silent = false; //silent Tx: process tx locally, without reporting to the server
 
     Transaction() : MemoryManaged("v201.Transactions.Transaction") { }
 };
@@ -336,8 +345,9 @@ public:
     std::unique_ptr<IdToken> idToken;
     EvseId evse = -1;
     //meterValue not supported
+    Vector<std::unique_ptr<MeterValue>> meterValue;
 
-    TransactionEventData(std::shared_ptr<Transaction> transaction, unsigned int seqNo) : MemoryManaged("v201.Transactions.TransactionEventData"), transaction(transaction), seqNo(seqNo) { }
+    TransactionEventData(std::shared_ptr<Transaction> transaction, unsigned int seqNo) : MemoryManaged("v201.Transactions.TransactionEventData"), transaction(transaction), seqNo(seqNo), meterValue(makeVector<std::unique_ptr<MeterValue>>(getMemoryTag())) { }
 };
 
 } // namespace Ocpp201

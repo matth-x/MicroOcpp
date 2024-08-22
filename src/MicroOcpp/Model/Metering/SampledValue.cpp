@@ -90,16 +90,39 @@ ReadingContext deserializeReadingContext(const char *context) {
 }} //end namespaces
 
 std::unique_ptr<JsonDoc> SampledValue::toJson() {
+    size_t capacity = 0;
+
+    #if MO_ENABLE_V201
+    String valueString = makeString("v16.Metering.SampledValue");
+    int valueInt = 0;
+    if (properties.isV201Compat()) {
+        valueInt = toInteger();
+    } else {
+        valueString = serializeValue();
+        if (valueString.empty()) {
+            return nullptr;
+        }
+        capacity += valueString.length() + 1;
+    }
+    #else
     auto value = serializeValue();
     if (value.empty()) {
         return nullptr;
     }
-    size_t capacity = 0;
-    capacity += JSON_OBJECT_SIZE(8);
     capacity += value.length() + 1;
+    #endif
+    capacity += JSON_OBJECT_SIZE(8);
     auto result = makeJsonDoc("v16.Metering.SampledValue", capacity);
     auto payload = result->to<JsonObject>();
+    #if MO_ENABLE_V201
+    if (properties.isV201Compat()) {
+        payload["value"] = valueInt;
+    } else {
+        payload["value"] = valueString;
+    }
+    #else
     payload["value"] = value;
+    #endif
     auto context_cstr = Ocpp16::serializeReadingContext(context);
     if (context_cstr)
         payload["context"] = context_cstr;

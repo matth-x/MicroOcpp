@@ -74,7 +74,7 @@ void MeteringConnector::loop() {
             if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
                 MO_DBG_WARN("reload stopTxnData, %s, for tx-%u-%u", stopTxnData ? "replace" : "first time", connectorId, transaction->getTxNr());
                 //reload (e.g. after power cut during transaction)
-                stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction.get());
+                stopTxnData = meterStore.getTxMeterData(samplers, connectorId, transaction->getTxNr());
             }
         } else {
             //check outside of transaction
@@ -195,7 +195,7 @@ std::unique_ptr<SampledValue> MeteringConnector::readTxEnergyMeter(ReadingContex
 
 void MeteringConnector::beginTxMeterData(Transaction *transaction) {
     if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
-        stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
+        stopTxnData = meterStore.getTxMeterData(samplers, connectorId, transaction->getTxNr());
     }
 
     if (stopTxnData) {
@@ -208,7 +208,7 @@ void MeteringConnector::beginTxMeterData(Transaction *transaction) {
 
 std::shared_ptr<TransactionMeterData> MeteringConnector::endTxMeterData(Transaction *transaction) {
     if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
-        stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
+        stopTxnData = meterStore.getTxMeterData(samplers, connectorId, transaction->getTxNr());
     }
 
     if (stopTxnData) {
@@ -226,7 +226,7 @@ void MeteringConnector::abortTxMeterData() {
 }
 
 std::shared_ptr<TransactionMeterData> MeteringConnector::getStopTxMeterData(Transaction *transaction) {
-    auto txData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
+    auto txData = meterStore.getTxMeterData(samplers, connectorId, transaction->getTxNr());
 
     if (!txData) {
         MO_DBG_ERR("could not create TxData");

@@ -11,6 +11,7 @@
 
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Platform.h>
+#include <MicroOcpp/Version.h>
 
 namespace MicroOcpp {
 
@@ -49,6 +50,10 @@ private:
     String location;
     String unit;
 
+    #if MO_ENABLE_V201
+    bool v201Compat = false;
+    #endif
+
 public:
     SampledValueProperties() :
             format(makeString("v16.Metering.SampledValueProperties")),
@@ -74,6 +79,11 @@ public:
     const char *getLocation() const {return location.c_str();}
     void setUnit(const char *unit) {this->unit = unit;}
     const char *getUnit() const {return unit.c_str();}
+
+    #if MO_ENABLE_V201
+    void setV201Compat() {v201Compat = true;}
+    bool isV201Compat() const {return v201Compat;}
+    #endif
 };
 
 enum class ReadingContext {

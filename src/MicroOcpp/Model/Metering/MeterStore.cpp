@@ -93,7 +93,7 @@ Vector<std::unique_ptr<MeterValue>> TransactionMeterData::retrieveStopTxData() {
     return std::move(txData);
 }
 
-bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
+bool TransactionMeterData::restore(Vector<std::unique_ptr<SampledValueSampler>>& samplers) {
     if (!filesystem) {
         MO_DBG_DEBUG("No FS - nothing to restore");
         return true;
@@ -121,7 +121,7 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
         }
 
         JsonObject mvJson = doc->as<JsonObject>();
-        std::unique_ptr<MeterValue> mv = mvBuilder.deserializeSample(mvJson);
+        std::unique_ptr<MeterValue> mv = MeterValueBuilder::deserializeSample(samplers, mvJson);
 
         if (!mv) {
             MO_DBG_ERR("Deserialization error");
@@ -153,19 +153,12 @@ MeterStore::MeterStore(std::shared_ptr<FilesystemAdapter> filesystem) : MemoryMa
     }
 }
 
-std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuilder& mvBuilder, Transaction *transaction) {
-    if (!transaction || transaction->isSilent()) {
-        //no tx assignment -> don't store txData
-        //tx is silent -> no StopTx will be sent and don't store txData
-        return nullptr;
-    }
-    auto connectorId = transaction->getConnectorId();
-    auto txNr = transaction->getTxNr();
+std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(Vector<std::unique_ptr<SampledValueSampler>>& samplers, unsigned int evseId, unsigned int txNr) {
     
     auto cached = std::find_if(txMeterData.begin(), txMeterData.end(),
-            [connectorId, txNr] (std::weak_ptr<TransactionMeterData>& txm) {
+            [evseId, txNr] (std::weak_ptr<TransactionMeterData>& txm) {
                 if (auto txml = txm.lock()) {
-                    return txml->getConnectorId() == connectorId && txml->getTxNr() == txNr;
+                    return txml->getConnectorId() == evseId && txml->getTxNr() == txNr;
                 } else {
                     return false;
                 }
@@ -187,11 +180,11 @@ std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuild
 
     //create new object and cache weak pointer
 
-    auto tx = std::make_shared<TransactionMeterData>(connectorId, txNr, filesystem);
+    auto tx = std::make_shared<TransactionMeterData>(evseId, txNr, filesystem);
     
     if (filesystem) {
         char fn [MO_MAX_PATH_SIZE] = {'\0'};
-        auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", connectorId, txNr, 0);
+        auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "sd" "-%u-%u-%u.jsn", evseId, txNr, 0);
         if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
             MO_DBG_ERR("fn error: %i", ret);
             return nullptr; //cannot store
@@ -201,8 +194,8 @@ std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuild
         bool exists = filesystem->stat(fn, &size) == 0;
 
         if (exists) {
-            if (!tx->restore(mvBuilder)) {
-                remove(connectorId, txNr);
+            if (!tx->restore(samplers)) {
+                remove(evseId, txNr);
                 MO_DBG_ERR("removed corrupted tx entries");
             }
         }

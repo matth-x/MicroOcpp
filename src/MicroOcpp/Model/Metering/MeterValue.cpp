@@ -5,6 +5,7 @@
 #include <limits>
 
 #include <MicroOcpp/Model/Metering/MeterValue.h>
+#include <MicroOcpp/Model/Variables/Variable.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Debug.h>
 
@@ -105,6 +106,23 @@ void MeterValue::setAttemptTime(unsigned long timestamp) {
     this->attemptTime = timestamp;
 }
 
+const char *MeterValueBuilder::getSelectStringValueCompat() {
+    #if MO_ENABLE_V201
+    if (selectString_v201) {
+        return selectString_v201->getString();
+    }
+    #endif
+    return selectString->getString(); 
+}
+unsigned int MeterValueBuilder::getSelectStringValueRevisionCompat() {
+    #if MO_ENABLE_V201
+    if (selectString_v201) {
+        return selectString_v201->getWriteCount();
+    }
+    #endif
+    return selectString->getValueRevision(); 
+}
+
 MeterValueBuilder::MeterValueBuilder(const Vector<std::unique_ptr<SampledValueSampler>> &samplers,
             std::shared_ptr<Configuration> samplersSelectStr) :
             MemoryManaged("v16.Metering.MeterValueBuilder"),
@@ -113,8 +131,21 @@ MeterValueBuilder::MeterValueBuilder(const Vector<std::unique_ptr<SampledValueSa
             select_mask(makeVector<bool>(getMemoryTag())) {
 
     updateObservedSamplers();
-    select_observe = selectString->getValueRevision();
+    select_observe = getSelectStringValueRevisionCompat();
 }
+
+#if MO_ENABLE_V201
+MeterValueBuilder::MeterValueBuilder(const Vector<std::unique_ptr<SampledValueSampler>> &samplers,
+        Variable *samplersSelectStr_v201) :
+            MemoryManaged("v16.Metering.MeterValueBuilder"),
+            samplers(samplers),
+            selectString_v201(samplersSelectStr_v201),
+            select_mask(makeVector<bool>(getMemoryTag())) {
+
+    updateObservedSamplers();
+    select_observe = getSelectStringValueRevisionCompat();
+}
+#endif
 
 void MeterValueBuilder::updateObservedSamplers() {
 
@@ -127,7 +158,7 @@ void MeterValueBuilder::updateObservedSamplers() {
         select_mask[i] = false;
     }
     
-    auto sstring = selectString->getString();
+    auto sstring = getSelectStringValueCompat();
     auto ssize = strlen(sstring) + 1;
     size_t sl = 0, sr = 0;
     while (sstring && sl < ssize) {
@@ -153,11 +184,11 @@ void MeterValueBuilder::updateObservedSamplers() {
 }
 
 std::unique_ptr<MeterValue> MeterValueBuilder::takeSample(const Timestamp& timestamp, const ReadingContext& context) {
-    if (select_observe != selectString->getValueRevision() || //OCPP server has changed configuration about which measurands to take
+    if (select_observe != getSelectStringValueRevisionCompat() || //OCPP server has changed configuration about which measurands to take
             samplers.size() != select_mask.size()) {    //Client has added another Measurand; synchronize lists
         MO_DBG_DEBUG("Updating observed samplers due to config change or samplers added");
         updateObservedSamplers();
-        select_observe = selectString->getValueRevision();
+        select_observe = getSelectStringValueRevisionCompat();
     }
 
     if (select_n == 0) {
@@ -175,7 +206,7 @@ std::unique_ptr<MeterValue> MeterValueBuilder::takeSample(const Timestamp& times
     return sample;
 }
 
-std::unique_ptr<MeterValue> MeterValueBuilder::deserializeSample(const JsonObject mvJson) {
+std::unique_ptr<MeterValue> MeterValueBuilder::deserializeSample(Vector<std::unique_ptr<SampledValueSampler>>& samplers, const JsonObject mvJson) {
 
     Timestamp timestamp;
     bool ret = timestamp.setTime(mvJson["timestamp"] | "Invalid");

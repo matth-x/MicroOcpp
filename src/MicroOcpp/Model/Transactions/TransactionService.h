@@ -24,6 +24,8 @@ namespace MicroOcpp {
 
 class Context;
 class Variable;
+class TransactionMeterData;
+class MeterValueBuilder;
 
 class TransactionService : public MemoryManaged {
 public:
@@ -33,6 +35,7 @@ public:
         Context& context;
         TransactionService& txService;
         const unsigned int evseId;
+        unsigned int txNrCounter = 0;
         std::shared_ptr<Ocpp201::Transaction> transaction;
         Ocpp201::TransactionEventData::ChargingState trackChargingState = Ocpp201::TransactionEventData::ChargingState::UNDEFINED;
 
@@ -44,6 +47,16 @@ public:
         std::function<bool()> stopTxReadyInput;
 
         std::unique_ptr<Ocpp201::Transaction> allocateTransaction();
+
+        /*
+         * Tx-related metering
+         */
+
+        std::shared_ptr<TransactionMeterData> sampledDataTxEnded;
+
+        unsigned long lastSampleTimeTxUpdated = 0; //0 means not charging right now
+        unsigned long lastSampleTimeTxEnded = 0;
+
     public:
         Evse(Context& context, TransactionService& txService, unsigned int evseId);
 
@@ -86,6 +99,8 @@ private:
     Variable *stopTxOnInvalidIdBool = nullptr;
     Variable *stopTxOnEVSideDisconnectBool = nullptr;
     Variable *evConnectionTimeOutInt = nullptr;
+    Variable *sampledDataTxUpdatedInterval = nullptr;
+    Variable *sampledDataTxEndedInterval = nullptr;
     uint16_t trackTxStartPoint = -1;
     uint16_t trackTxStopPoint = -1;
     Vector<TxStartStopPoint> txStartPointParsed;

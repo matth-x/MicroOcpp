@@ -31,7 +31,7 @@ public:
 
     Vector<std::unique_ptr<MeterValue>> retrieveStopTxData(); //will invalidate internal cache
 
-    bool restore(MeterValueBuilder& mvBuilder); //load record from memory; true if record found, false if nothing loaded
+    bool restore(Vector<std::unique_ptr<SampledValueSampler>>& samplers); //load record from memory; true if record found, false if nothing loaded
 
     unsigned int getConnectorId() {return connectorId;}
     unsigned int getTxNr() {return txNr;}
@@ -51,7 +51,7 @@ public:
     MeterStore(MeterStore&) = delete;
     MeterStore(std::shared_ptr<FilesystemAdapter> filesystem);
 
-    std::shared_ptr<TransactionMeterData> getTxMeterData(MeterValueBuilder& mvBuilder, Transaction *transaction);
+    std::shared_ptr<TransactionMeterData> getTxMeterData(Vector<std::unique_ptr<SampledValueSampler>>& samplers, unsigned int evseId, unsigned int txNr);
 
     bool remove(unsigned int connectorId, unsigned int txNr);
 };

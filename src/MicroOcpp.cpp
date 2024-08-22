@@ -647,11 +647,7 @@ void setEnergyMeterInput(std::function<int()> energyInput, unsigned int connecto
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
-    auto& model = context->getModel();
-    if (!model.getMeteringService()) {
-        model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*context, MO_NUMCONNECTORS, filesystem)));
-    }
+
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Energy.Active.Import.Register");
     meterProperties.setUnit("Wh");
@@ -660,7 +656,7 @@ void setEnergyMeterInput(std::function<int()> energyInput, unsigned int connecto
             meterProperties,
             [energyInput] (ReadingContext) {return energyInput();}
     ));
-    model.getMeteringService()->addMeterValueSampler(connectorId, std::move(mvs));
+    addMeterValueInput(std::move(mvs), connectorId);
 }
 
 void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId) {
@@ -669,11 +665,6 @@ void setPowerMeterInput(std::function<float()> powerInput, unsigned int connecto
         return;
     }
 
-    auto& model = context->getModel();
-    if (!model.getMeteringService()) {
-        model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*context, MO_NUMCONNECTORS, filesystem)));
-    }
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Power.Active.Import");
     meterProperties.setUnit("W");
@@ -682,7 +673,7 @@ void setPowerMeterInput(std::function<float()> powerInput, unsigned int connecto
             meterProperties,
             [powerInput] (ReadingContext) {return powerInput();}
     ));
-    model.getMeteringService()->addMeterValueSampler(connectorId, std::move(mvs));
+    addMeterValueInput(std::move(mvs), connectorId);
 }
 
 void setSmartChargingPowerOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId) {
@@ -873,6 +864,21 @@ void addMeterValueInput(std::unique_ptr<SampledValueSampler> valueInput, unsigne
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        auto& model = context->getModel();
+        if (!model.getMeteringServiceV201()) {
+            model.setMeteringServiceV201(std::unique_ptr<Ocpp201::MeteringService>(
+                new Ocpp201::MeteringService(context->getModel(), MO_NUM_EVSE, filesystem)));
+        }
+        if (auto mEvse = model.getMeteringServiceV201()->getEvse(connectorId)) {
+            mEvse->addMeterValueSampler(std::move(valueInput));
+        } else {
+            MO_DBG_ERR("inalid arg");
+        }
+        return;
+    }
+    #endif
     auto& model = context->getModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(

@@ -240,6 +240,15 @@ void Model::setResetServiceV201(std::unique_ptr<Ocpp201::ResetService> rs) {
 Ocpp201::ResetService *Model::getResetServiceV201() const {
     return resetServiceV201.get();
 }
+
+void Model::setMeteringServiceV201(std::unique_ptr<Ocpp201::MeteringService> rs) {
+    this->meteringServiceV201 = std::move(rs);
+    capabilitiesUpdated = true;
+}
+
+Ocpp201::MeteringService *Model::getMeteringServiceV201() const {
+    return meteringServiceV201.get();
+}
 #endif
 
 Clock& Model::getClock() {
