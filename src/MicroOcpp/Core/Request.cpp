@@ -7,6 +7,7 @@
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Core/RequestStore.h>
+#include <MicroOcpp/Core/UuidUtils.h>
 
 #include <MicroOcpp/Operations/StartTransaction.h>
 #include <MicroOcpp/Operations/StopTransaction.h>
@@ -250,8 +251,8 @@ void Request::initiate(std::unique_ptr<StoredOperationHandler> opStorage) {
     debugRequest_start = mocpp_tick_ms();
 
     //assign messageID
-    char id_str [16] = {'\0'};
-    sprintf(id_str, "%d", unique_id_counter++);
+    char id_str [37] = {'\0'};
+    generateUUID(id_str, 37);
     messageID = std::string {id_str};
 
     if (operation) {

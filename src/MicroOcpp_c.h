@@ -178,6 +178,14 @@ void ocpp_setOnSendConf(const char *operationType, OnMessage onConfirmation);
  */
 void ocpp_set_console_out_c(void (*console_out)(const char *msg));
 
+#ifdef MO_CUSTOM_RNG
+/**
+ * If build flag MO_CUSTOM_RNG is set, calls to get random numbers shall be
+ * forwarded to the function provided through this setter.
+ */
+void ocpp_set_rng_c( uint32_t (*rng)(void));
+#endif
+
 /*
  * Send OCPP operations
  */

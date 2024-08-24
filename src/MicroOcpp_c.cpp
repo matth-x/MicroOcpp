@@ -343,6 +343,13 @@ void ocpp_set_console_out_c(void (*console_out)(const char *msg)) {
     mocpp_set_console_out(console_out);
 }
 
+#ifdef MO_CUSTOM_RNG
+void ocpp_set_rng_c(uint32_t (*rng)(void))
+{
+    mocpp_set_rng(rng);
+}
+#endif
+
 void ocpp_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data) {
     
     std::string idTag_capture = idTag;

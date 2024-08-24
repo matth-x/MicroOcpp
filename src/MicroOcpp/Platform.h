@@ -5,6 +5,8 @@
 #ifndef MO_PLATFORM_H
 #define MO_PLATFORM_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 #define EXT_C extern "C"
 #else
@@ -92,6 +94,15 @@ unsigned long mocpp_tick_ms_espidf();
 unsigned long mocpp_tick_ms_unix();
 #define mocpp_tick_ms mocpp_tick_ms_unix
 #endif
+#endif
+
+#ifdef MO_CUSTOM_RNG
+void mocpp_set_rng(uint32_t (*rng)());
+uint32_t mocpp_rng_custom();
+#define mocpp_rng mocpp_rng_custom
+#else
+uint32_t mocpp_time_based_prng(void);
+#define mocpp_rng mocpp_time_based_prng
 #endif
 
 #ifndef MO_MAX_JSON_CAPACITY
