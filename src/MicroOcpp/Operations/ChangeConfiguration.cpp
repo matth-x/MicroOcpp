@@ -101,8 +101,6 @@ void ChangeConfiguration::processReq(JsonObject payload) {
         numBool = true;
     } else if (tolower(value[0]) == 'f' && tolower(value[1]) == 'a' && tolower(value[2]) == 'l' && tolower(value[3]) == 's' && tolower(value[4]) == 'e' && !value[5]) {
         numBool = false;
-    } else if (convertibleInt) {
-        numBool = numInt != 0;
     } else {
         convertibleBool = false;
     }
