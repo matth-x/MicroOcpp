@@ -44,6 +44,7 @@
 - Fix regression bug of [#345](https://github.com/matth-x/MicroOcpp/pull/345) ([#353](https://github.com/matth-x/MicroOcpp/pull/353), [#356](https://github.com/matth-x/MicroOcpp/pull/356))
 - Correct MeterValue PreBoot timestamp ([#354](https://github.com/matth-x/MicroOcpp/pull/354))
 - Send errorCode in triggered StatusNotif ([#359](https://github.com/matth-x/MicroOcpp/pull/359))
+- Remove int to bool conversion in ChangeConfig ([#362](https://github.com/matth-x/MicroOcpp/pull/362))
 
 ## [1.1.0] - 2024-05-21
 
