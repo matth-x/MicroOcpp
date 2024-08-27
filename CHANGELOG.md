@@ -1,51 +1,5 @@
 # Changelog
 
-## Unreleased
-
-### Changed
-
-- Change `MicroOcpp::ChargePointStatus` into C-style enum ([#309](https://github.com/matth-x/MicroOcpp/pull/309))
-- Connector lock disabled by default per `MO_ENABLE_CONNECTOR_LOCK` ([#312](https://github.com/matth-x/MicroOcpp/pull/312))
-- Relaxed temporal order of non-tx-related operations ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
-- Use pseudo-GUIDs as messageId ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
-- ISO 8601 milliseconds omitted by default ([352](https://github.com/matth-x/MicroOcpp/pull/352))
-
-### Added
-
-- Provide ChargePointStatus in API ([#309](https://github.com/matth-x/MicroOcpp/pull/309))
-- Built-in OTA over FTP ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
-- Built-in Diagnostics over FTP ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
-- Error `severity` mechanism ([#331](https://github.com/matth-x/MicroOcpp/pull/331))
-- Build flag `MO_REPORT_NOERROR` to report error recovery ([#331](https://github.com/matth-x/MicroOcpp/pull/331))
-- Support for `parentIdTag` ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
-- Input validation for unsigned int Configs ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
-- Support for TransactionMessageAttempts/-RetryInterval ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
-- Heap profiler and custom allocator support ([#350](https://github.com/matth-x/MicroOcpp/pull/350))
-- Migration of persistent storage ([#355](https://github.com/matth-x/MicroOcpp/pull/355))
-
-### Removed
-
-- ESP32 built-in HTTP OTA ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
-- Operation store (files op-*.jsn and opstore.jsn) ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
-- Explicit tracking of txNr (file txstore.jsn) ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
-- SimpleRequestFactory ([#351](https://github.com/matth-x/MicroOcpp/pull/351))
-
-### Fixed
-
-- Skip Unix files . and .. in ftw_root ([#313](https://github.com/matth-x/MicroOcpp/pull/313))
-- Skip clock-aligned measurements when time not set
-- Hold back error StatusNotifs when time not set ([#311](https://github.com/matth-x/MicroOcpp/issues/311))
-- Don't send Available when tx occupies connector ([#315](https://github.com/matth-x/MicroOcpp/issues/315))
-- Make ChargingScheduleAllowedChargingRateUnit read-only ([#328](https://github.com/matth-x/MicroOcpp/issues/328))
-- Don't send StatusNotifs while offline ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
-- Don't change into Unavailable upon Reset ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
-- Reject DataTransfer by default ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
-- UnlockConnector NotSupported if connectorId invalid ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
-- Fix regression bug of [#345](https://github.com/matth-x/MicroOcpp/pull/345) ([#353](https://github.com/matth-x/MicroOcpp/pull/353), [#356](https://github.com/matth-x/MicroOcpp/pull/356))
-- Correct MeterValue PreBoot timestamp ([#354](https://github.com/matth-x/MicroOcpp/pull/354))
-- Send errorCode in triggered StatusNotif ([#359](https://github.com/matth-x/MicroOcpp/pull/359))
-- Remove int to bool conversion in ChangeConfig ([#362](https://github.com/matth-x/MicroOcpp/pull/362))
-
 ## [1.1.0] - 2024-05-21
 
 ### Changed

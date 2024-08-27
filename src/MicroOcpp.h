@@ -23,75 +23,76 @@
 #include <MicroOcpp/Version.h>
 #include <MicroOcpp/Model/Certificates/Certificate.h>
 
+using MicroOcpp::OnAbortListener;
 using MicroOcpp::OnReceiveConfListener;
+using MicroOcpp::OnReceiveErrorListener;
 using MicroOcpp::OnReceiveReqListener;
 using MicroOcpp::OnSendConfListener;
-using MicroOcpp::OnAbortListener;
 using MicroOcpp::OnTimeoutListener;
-using MicroOcpp::OnReceiveErrorListener;
 
 #ifndef MO_CUSTOM_WS
-//use links2004/WebSockets library
+// use links2004/WebSockets library
 
 /*
  * Initialize the library with the OCPP URL, EVSE voltage and filesystem configuration.
- * 
- * If the connections fails, please refer to 
+ *
+ * If the connections fails, please refer to
  * https://github.com/matth-x/MicroOcpp/issues/36#issuecomment-989716573 for recommendations on
  * how to track down the issue with the connection.
- * 
+ *
  * This is a convenience function only available for Arduino.
  */
 void mocpp_initialize(
-            const char *backendUrl,    //e.g. "wss://example.com:8443/steve/websocket/CentralSystemService"
-            const char *chargeBoxId,   //e.g. "charger001"
-            const char *chargePointModel = "Demo Charger",     //model name of this charger
-            const char *chargePointVendor = "My Company Ltd.", //brand name
-            MicroOcpp::FilesystemOpt fsOpt = MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail, //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
-            const char *password = nullptr, //password present in the websocket message header
-            const char *CA_cert = nullptr, //TLS certificate
-            bool autoRecover = false); //automatically sanitize the local data store when the lib detects recurring crashes. Not recommended during development
+    const char *backendUrl,                                                            // e.g. "wss://example.com:8443/steve/websocket/CentralSystemService"
+    const char *chargeBoxId,                                                           // e.g. "charger001"
+    const char *chargePointModel = "Demo Charger",                                     // model name of this charger
+    const char *chargePointVendor = "My Company Ltd.",                                 // brand name
+    MicroOcpp::FilesystemOpt fsOpt = MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail, // If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
+    const char *password = nullptr,                                                    // password present in the websocket message header
+    const char *CA_cert = nullptr,                                                     // TLS certificate
+    bool autoRecover = false);                                                         // automatically sanitize the local data store when the lib detects recurring crashes. Not recommended during development
 #endif
 
 /*
  * Convenience initialization: use this for passing the BootNotification payload JSON to the mocpp_initialize(...) below
  *
  * Example usage:
- * 
+ *
  *     mocpp_initialize(osock, ChargerCredentials("Demo Charger", "My Company Ltd."));
- * 
+ *
  * For a description of the fields, refer to OCPP 1.6 Specification - Edition 2 p. 60
  */
-struct ChargerCredentials {
+struct ChargerCredentials
+{
     ChargerCredentials(
-            const char *chargePointModel = "Demo Charger",
-            const char *chargePointVendor = "My Company Ltd.",
-            const char *firmwareVersion = nullptr,
-            const char *chargePointSerialNumber = nullptr,
-            const char *meterSerialNumber = nullptr,
-            const char *meterType = nullptr,
-            const char *chargeBoxSerialNumber = nullptr,
-            const char *iccid = nullptr,
-            const char *imsi = nullptr);
-    
+        const char *chargePointModel = "Demo Charger",
+        const char *chargePointVendor = "My Company Ltd.",
+        const char *firmwareVersion = nullptr,
+        const char *chargePointSerialNumber = nullptr,
+        const char *meterSerialNumber = nullptr,
+        const char *meterType = nullptr,
+        const char *chargeBoxSerialNumber = nullptr,
+        const char *iccid = nullptr,
+        const char *imsi = nullptr);
+
     /*
      * OCPP 2.0.1 compatible charger credentials. Use this if initializing the library with ProtocolVersion(2,0,1)
      */
     static ChargerCredentials v201(
-            const char *chargePointModel = "Demo Charger",
-            const char *chargePointVendor = "My Company Ltd.",
-            const char *firmwareVersion = nullptr,
-            const char *chargePointSerialNumber = nullptr,
-            const char *meterSerialNumber = nullptr,
-            const char *meterType = nullptr,
-            const char *chargeBoxSerialNumber = nullptr,
-            const char *iccid = nullptr,
-            const char *imsi = nullptr);
+        const char *chargePointModel = "Demo Charger",
+        const char *chargePointVendor = "My Company Ltd.",
+        const char *firmwareVersion = nullptr,
+        const char *chargePointSerialNumber = nullptr,
+        const char *meterSerialNumber = nullptr,
+        const char *meterType = nullptr,
+        const char *chargeBoxSerialNumber = nullptr,
+        const char *iccid = nullptr,
+        const char *imsi = nullptr);
 
-    operator const char *() {return payload;}
+    operator const char *() { return payload; }
 
 private:
-    char payload [512] = {'{', '}', '\0'};
+    char payload[512] = {'{', '}', '\0'};
 };
 
 /*
@@ -99,21 +100,30 @@ private:
  * (=Connection), EVSE voltage and filesystem configuration. This library requires that you handle
  * establishing the connection and keeping it alive. Please refer to
  * https://github.com/matth-x/MicroOcpp/tree/main/examples/ESP-TLS for an example how to use it.
- * 
+ *
  * This GitHub project also delivers an Connection implementation based on links2004/WebSockets. If
  * you need another WebSockets implementation, you can subclass the Connection class and pass it to
  * this initialize() function. Please refer to
  * https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/MongooseConnectionClient.cpp for
  * an example.
  */
+# if MO_ENABLE_V201
 void mocpp_initialize(
-            MicroOcpp::Connection& connection, //WebSocket adapter for MicroOcpp
-            const char *bootNotificationCredentials = ChargerCredentials("Demo Charger", "My Company Ltd."), //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
-            std::shared_ptr<MicroOcpp::FilesystemAdapter> filesystem =
-                MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail), //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
-            bool autoRecover = false, //automatically sanitize the local data store when the lib detects recurring crashes. Not recommended during development
-            MicroOcpp::ProtocolVersion version = MicroOcpp::ProtocolVersion(1,6));
-
+    MicroOcpp::Connection &connection,                                                               // WebSocket adapter for MicroOcpp
+    const char *bootNotificationCredentials = ChargerCredentials("Demo Charger", "My Company Ltd."), // e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
+    std::shared_ptr<MicroOcpp::FilesystemAdapter> filesystem =
+        MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail), // If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
+    bool autoRecover = false,                                                                      // automatically sanitize the local data store when the lib detects recurring crashes. Not recommended during development
+    MicroOcpp::ProtocolVersion version = MicroOcpp::ProtocolVersion(2,0,1));
+#else
+void mocpp_initialize(
+    MicroOcpp::Connection &connection,                                                               // WebSocket adapter for MicroOcpp
+    const char *bootNotificationCredentials = ChargerCredentials("Demo Charger", "My Company Ltd."), // e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
+    std::shared_ptr<MicroOcpp::FilesystemAdapter> filesystem =
+        MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail), // If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
+    bool autoRecover = false,                                                                      // automatically sanitize the local data store when the lib detects recurring crashes. Not recommended during development
+    MicroOcpp::ProtocolVersion version = MicroOcpp::ProtocolVersion(1, 6));
+#endif
 /*
  * Stop the OCPP library and release allocated resources.
  */
@@ -126,7 +136,7 @@ void mocpp_loop();
 
 /*
  * Transaction management.
- * 
+ *
  * Begin the transaction process and prepare it. When all conditions for the transaction are true,
  * eventually send a StartTransaction request to the OCPP server.
  * Conditions:
@@ -137,9 +147,9 @@ void mocpp_loop();
  *        rules will apply as in the specification.
  *     4) the vehicle is already plugged or will be plugged soon (only applicable if the
  *        ConnectorPlugged Input is set)
- * 
+ *
  * See beginTransaction_authorized for skipping steps 1) to 3)
- * 
+ *
  * Returns the transaction object if it was possible to create the transaction process. Returns
  * nullptr if either another transaction process is still active or you need to try it again later.
  */
@@ -163,23 +173,23 @@ std::shared_ptr<MicroOcpp::Transaction> beginTransaction_authorized(const char *
  *           matches with the parentIdTag of beginTransaction.
  *         - [Planned, not released yet] If none of step 2) applies, then the OCPP lib will check
  *           the authorization status via an Authorize request
- * 
+ *
  * See endTransaction_authorized for skipping the authorization check, i.e. step 2)
- * 
+ *
  * If the transaction is ended by swiping an RFID card, then idTag should contain its identifier. If
  * charging stops for a different reason than swiping the card, idTag should be null or empty.
- * 
+ *
  * Please refer to OCPP 1.6 Specification - Edition 2 p. 90 for a list of valid reasons. `reason`
  * can also be nullptr.
- * 
+ *
  * It is safe to call this function at any time, i.e. when no transaction runs or when the transaction
  * has already been ended. For example you can place
  *     `endTransaction(nullptr, "Reboot");`
  * in the beginning of the program just to ensure that there is no transaction from a previous run.
- * 
+ *
  * If called with idTag=nullptr, this is functionally equivalent to
  *     `endTransaction_authorized(nullptr, reason);`
- * 
+ *
  * Returns true if there is a transaction which could eventually be ended by this action
  */
 bool endTransaction(const char *idTag = nullptr, const char *reason = nullptr, unsigned int connectorId = 1);
@@ -187,7 +197,7 @@ bool endTransaction(const char *idTag = nullptr, const char *reason = nullptr, u
 /*
  * End the transaction process definitely without authorization check. See endTransaction(...) for a
  * complete description.
- * 
+ *
  * Use this function if you manage authorization on your own and want to bypass the Authorization
  * management of this lib.
  */
@@ -202,9 +212,9 @@ bool endTransaction_authorized(const char *idTag, const char *reason = nullptr, 
  *     - Running: transaction started and running
  *     - Running/StopTxAwait: transaction still running but will end at the next possible time
  *     - Finished: transaction stopped
- * 
+ *
  * isTransactionActive() and isTransactionRunning() give the status by combining them:
- * 
+ *
  *     State               | isTransactionActive() | isTransactionRunning()
  *     --------------------+-----------------------+-----------------------
  *     Preparing           | true                  | false
@@ -226,7 +236,7 @@ const char *getTransactionIdTag(unsigned int connectorId = 1);
  * Returns the current transaction process. Returns nullptr if no transaction is running, preparing or finishing
  *
  * See the class definition in MicroOcpp/Model/Transactions/Transaction.h for possible uses of this object
- * 
+ *
  * Examples:
  * auto tx = getTransaction(); //fetch tx object
  * if (tx) { //check if tx object exists
@@ -236,9 +246,9 @@ const char *getTransactionIdTag(unsigned int connectorId = 1);
  *     bool deauthorized = tx->isIdTagDeauthorized(); //if StartTransaction has been rejected
  * }
  */
-std::shared_ptr<MicroOcpp::Transaction>& getTransaction(unsigned int connectorId = 1);
+std::shared_ptr<MicroOcpp::Transaction> &getTransaction(unsigned int connectorId = 1);
 
-/* 
+/*
  * Returns if the OCPP library allows the EVSE to charge at the moment.
  *
  * If you integrate it into a J1772 charger, true means that the Control Pilot can send the PWM signal
@@ -253,62 +263,62 @@ ChargePointStatus getChargePointStatus(unsigned int connectorId = 1);
 
 /*
  * Define the Inputs and Outputs of this library.
- * 
+ *
  * This library interacts with the hardware of your charger by Inputs and Outputs. Inputs and Outputs
  * are tiny function-objects which read information from the EVSE or control the behavior of the EVSE.
- * 
+ *
  * An Input is a function which returns the current state of a variable of the EVSE. For example, if
  * the energy meter stores the energy register in the global variable `e_reg`, then you can allow
- * this library to read it by defining the Input 
+ * this library to read it by defining the Input
  *     `[] () {return e_reg;}`
  * and passing it to the library.
- * 
+ *
  * An Output is a function which gets a state value from the OCPP library and applies it to the EVSE.
  * For example, to let Smart Charging control the PWM signal of the Control Pilot, define the Output
  *     `[] (float p_max) {pwm = p_max / PWM_FACTOR;}` (simplified example)
  * and pass it to the library.
- * 
+ *
  * Configure the library with Inputs and Outputs once in the setup() function.
  */
 
-void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int connectorId = 1); //Input about if an EV is plugged to this EVSE
+void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int connectorId = 1); // Input about if an EV is plugged to this EVSE
 
-void setEnergyMeterInput(std::function<int()> energyInput, unsigned int connectorId = 1); //Input of the electricity meter register in Wh
+void setEnergyMeterInput(std::function<int()> energyInput, unsigned int connectorId = 1); // Input of the electricity meter register in Wh
 
-void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId = 1); //Input of the power meter reading in W
+void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId = 1); // Input of the power meter reading in W
 
-//Smart Charging Output, alternative for Watts only, Current only, or Watts x Current x numberPhases.
-//Only one of the Smart Charging Outputs can be set at a time.
-//MO will execute the callback whenever the OCPP charging limit changes and will pass the limit for now
-//to the callback. If OCPP does not define a limit, then MO passes the value -1 for "undefined".
-void setSmartChargingPowerOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId = 1); //Output (in Watts) for the Smart Charging limit
-void setSmartChargingCurrentOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId = 1); //Output (in Amps) for the Smart Charging limit
-void setSmartChargingOutput(std::function<void(float,float,int)> chargingLimitOutput, unsigned int connectorId = 1); //Output (in Watts, Amps, numberPhases) for the Smart Charging limit
+// Smart Charging Output, alternative for Watts only, Current only, or Watts x Current x numberPhases.
+// Only one of the Smart Charging Outputs can be set at a time.
+// MO will execute the callback whenever the OCPP charging limit changes and will pass the limit for now
+// to the callback. If OCPP does not define a limit, then MO passes the value -1 for "undefined".
+void setSmartChargingPowerOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId = 1);        // Output (in Watts) for the Smart Charging limit
+void setSmartChargingCurrentOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId = 1);      // Output (in Amps) for the Smart Charging limit
+void setSmartChargingOutput(std::function<void(float, float, int)> chargingLimitOutput, unsigned int connectorId = 1); // Output (in Watts, Amps, numberPhases) for the Smart Charging limit
 
 /*
  * Define the Inputs and Outputs of this library. (Advanced)
- * 
+ *
  * These Inputs and Outputs are optional depending on the use case of your charger.
  */
 
-void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorId = 1); //Input if EV is ready to charge (= J1772 State C)
+void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorId = 1); // Input if EV is ready to charge (= J1772 State C)
 
-void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connectorId = 1); //Input if EVSE allows charge (= PWM signal on)
+void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connectorId = 1); // Input if EVSE allows charge (= PWM signal on)
 
-void addErrorCodeInput(std::function<const char*()> errorCodeInput, unsigned int connectorId = 1); //Input for Error codes (please refer to OCPP 1.6, Edit2, p. 71 and 72 for valid error codes)
+void addErrorCodeInput(std::function<const char *()> errorCodeInput, unsigned int connectorId = 1); // Input for Error codes (please refer to OCPP 1.6, Edit2, p. 71 and 72 for valid error codes)
 void addErrorDataInput(std::function<MicroOcpp::ErrorData()> errorDataInput, unsigned int connectorId = 1);
 
-void addMeterValueInput(std::function<float ()> valueInput, const char *measurand = nullptr, const char *unit = nullptr, const char *location = nullptr, const char *phase = nullptr, unsigned int connectorId = 1); //integrate further metering Inputs
+void addMeterValueInput(std::function<float()> valueInput, const char *measurand = nullptr, const char *unit = nullptr, const char *location = nullptr, const char *phase = nullptr, unsigned int connectorId = 1); // integrate further metering Inputs
 
-void addMeterValueInput(std::unique_ptr<MicroOcpp::SampledValueSampler> valueInput, unsigned int connectorId = 1); //integrate further metering Inputs (more extensive alternative)
+void addMeterValueInput(std::unique_ptr<MicroOcpp::SampledValueSampler> valueInput, unsigned int connectorId = 1); // integrate further metering Inputs (more extensive alternative)
 
-void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId = 1); //Input if instead of Available, send StatusNotification Preparing / Finishing
+void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId = 1); // Input if instead of Available, send StatusNotification Preparing / Finishing
 
-void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int connectorId = 1); //Input if the charger is ready for StartTransaction
+void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int connectorId = 1); // Input if the charger is ready for StartTransaction
 
-void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connectorId = 1); //Input if charger is ready for StopTransaction
+void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connectorId = 1); // Input if charger is ready for StopTransaction
 
-void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcpp::TxNotification)> notificationOutput, unsigned int connectorId = 1); //called when transaction state changes (see TxNotification for possible events). Transaction can be null
+void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction *, MicroOcpp::TxNotification)> notificationOutput, unsigned int connectorId = 1); // called when transaction state changes (see TxNotification for possible events). Transaction can be null
 
 #if MO_ENABLE_CONNECTOR_LOCK
 /*
@@ -320,26 +330,26 @@ void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcp
  *     - UnlockConnectorResult_UnlockFailed if not successful (e.g. lock stuck)
  */
 void setOnUnlockConnectorInOut(std::function<UnlockConnectorResult()> onUnlockConnectorInOut, unsigned int connectorId = 1);
-#endif //MO_ENABLE_CONNECTOR_LOCK
+#endif // MO_ENABLE_CONNECTOR_LOCK
 
 /*
  * Access further information about the internal state of the library
  */
 
-bool isOperative(unsigned int connectorId = 1); //if the charge point is operative (see OCPP1.6 Edit2, p. 45) and ready for transactions
+bool isOperative(unsigned int connectorId = 1); // if the charge point is operative (see OCPP1.6 Edit2, p. 45) and ready for transactions
 
 /*
  * Configure the device management
  */
 
-void setOnResetNotify(std::function<bool(bool)> onResetNotify); //call onResetNotify(isHard) before Reset. If you return false, Reset will be aborted. Optional
+void setOnResetNotify(std::function<bool(bool)> onResetNotify); // call onResetNotify(isHard) before Reset. If you return false, Reset will be aborted. Optional
 
-void setOnResetExecute(std::function<void(bool)> onResetExecute); //reset handler. This function should reboot this controller immediately. Already defined for the ESP32 on Arduino
+void setOnResetExecute(std::function<void(bool)> onResetExecute); // reset handler. This function should reboot this controller immediately. Already defined for the ESP32 on Arduino
 
-
-namespace MicroOcpp {
-class FirmwareService;
-class DiagnosticsService;
+namespace MicroOcpp
+{
+    class FirmwareService;
+    class DiagnosticsService;
 }
 
 /*
@@ -348,9 +358,9 @@ class DiagnosticsService;
  * for the productive system you will have to develop a configuration targeting the specific
  * OCPP backend.
  * See MicroOcpp/Model/FirmwareManagement/FirmwareService.h
- * 
+ *
  * Lazy initialization: The FW Service will be created at the first call to this function
- * 
+ *
  * To use, add `#include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>`
  */
 MicroOcpp::FirmwareService *getFirmwareService();
@@ -359,49 +369,50 @@ MicroOcpp::FirmwareService *getFirmwareService();
  * This library implements the OCPP messaging side of Diagnostics, but no logging or the
  * log upload to your backend.
  * To integrate Diagnostics, see MicroOcpp/Model/Diagnostics/DiagnosticsService.h
- * 
+ *
  * Lazy initialization: The Diag Service will be created at the first call to this function
- * 
+ *
  * To use, add `#include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>`
  */
 MicroOcpp::DiagnosticsService *getDiagnosticsService();
 
 #if MO_ENABLE_CERT_MGMT
 /*
- * Set a custom Certificate Store which implements certificate updates on the host system. 
+ * Set a custom Certificate Store which implements certificate updates on the host system.
  * MicroOcpp will forward OCPP-side update requests to the certificate store, as well as
  * query the certificate store upon server request.
  *
  * To enable OCPP-side certificate updates (UCs M03 - M05), set the build flag
  * MO_ENABLE_CERT_MGMT=1 so that this function becomes accessible.
- * 
+ *
  * To use the built-in certificate store (depends on MbedTLS), set the build flag
  * MO_ENABLE_MBEDTLS=1. To not use the built-in implementation, but still enable MbedTLS,
  * additionally set MO_ENABLE_CERT_STORE_MBEDTLS=0.
  */
 void setCertificateStore(std::unique_ptr<MicroOcpp::CertificateStore> certStore);
-#endif //MO_ENABLE_CERT_MGMT
+#endif // MO_ENABLE_CERT_MGMT
 
 /*
  * Add features and customize the behavior of the OCPP client
  */
 
-namespace MicroOcpp {
-class Context;
+namespace MicroOcpp
+{
+    class Context;
 }
 
-//Get access to internal functions and data structures. The returned Context object allows
-//you to bypass the facade functions of this header and implement custom functionality.
-//To use, add `#include <MicroOcpp/Core/Context.h>`
+// Get access to internal functions and data structures. The returned Context object allows
+// you to bypass the facade functions of this header and implement custom functionality.
+// To use, add `#include <MicroOcpp/Core/Context.h>`
 MicroOcpp::Context *getOcppContext();
 
 /*
  * Set a listener which is notified when the OCPP lib processes an incoming operation of type
  * operationType. After the operation has been interpreted, onReceiveReq will be called with
  * the original message from the OCPP server.
- * 
+ *
  * Example usage:
- * 
+ *
  * setOnReceiveRequest("SetChargingProfile", [] (JsonObject payload) {
  *     Serial.print("[main] received charging profile for connector: "; //Arduino print function
  *     Serial.printf("update connector %i with chargingProfileId %i\n",
@@ -415,9 +426,9 @@ void setOnReceiveRequest(const char *operationType, OnReceiveReqListener onRecei
  * Set a listener which is notified when the OCPP lib sends the confirmation to an incoming
  * operation of type operation type. onSendConf will be passed the original output of the
  * OCPP lib.
- * 
+ *
  * Example usage:
- * 
+ *
  * setOnSendConf("RemoteStopTransaction", [] (JsonObject payload) -> void {
  *     if (!strcmp(payload["status"], "Rejected")) {
  *         //the OCPP lib rejected the RemoteStopTransaction command. In this example, the customer
@@ -426,7 +437,7 @@ void setOnReceiveRequest(const char *operationType, OnReceiveReqListener onRecei
  *         Serial.println("[main] override rejected RemoteStopTransaction"); //Arduino print function
  *     }
  * });
- * 
+ *
  */
 void setOnSendConf(const char *operationType, OnSendConfListener onSendConf);
 
@@ -434,14 +445,14 @@ void setOnSendConf(const char *operationType, OnSendConfListener onSendConf);
  * Create and send an operation without using the built-in Operation class. This function bypasses
  * the business logic which comes with this library. E.g. you can send unknown operations, extend
  * OCPP or replace parts of the business logic with custom behavior.
- * 
+ *
  * Use case 1, extend the library by sending additional operations. E.g. DataTransfer:
- * 
+ *
  * sendRequest("DataTransfer", [] () -> std::unique_ptr<MicroOcpp::JsonDoc> {
  *     //will be called to create the request once this operation is being sent out
  *     size_t capacity = JSON_OBJECT_SIZE(3) +
  *                       JSON_OBJECT_SIZE(2); //for calculating the required capacity, see https://arduinojson.org/v6/assistant/
- *     auto res = std::unique_ptr<MicroOcpp::JsonDoc>(new MicroOcpp::JsonDoc(capacity)); 
+ *     auto res = std::unique_ptr<MicroOcpp::JsonDoc>(new MicroOcpp::JsonDoc(capacity));
  *     JsonObject request = *res;
  *     request["vendorId"] = "My company Ltd.";
  *     request["messageId"] = "TargetValues";
@@ -455,13 +466,13 @@ void setOnSendConf(const char *operationType, OnSendConfListener onSendConf);
  *         int max_energy = response["data"]["max_energy"];
  *     }
  * });
- * 
+ *
  * Use case 2, bypass the business logic of this library for custom behavior. E.g. StartTransaction:
- * 
+ *
  * sendRequest("StartTransaction", [] () -> std::unique_ptr<MicroOcpp::JsonDoc> {
  *     //will be called to create the request once this operation is being sent out
  *     size_t capacity = JSON_OBJECT_SIZE(4); //for calculating the required capacity, see https://arduinojson.org/v6/assistant/
- *     auto res = std::unique_ptr<MicroOcpp::JsonDoc>(new MicroOcpp::JsonDoc(capacity)); 
+ *     auto res = std::unique_ptr<MicroOcpp::JsonDoc>(new MicroOcpp::JsonDoc(capacity));
  *     JsonObject request = res->to<JsonObject>();
  *     request["connectorId"] = 1;
  *     request["idTag"] = "A9C3CE1D7B71EA";
@@ -473,23 +484,23 @@ void setOnSendConf(const char *operationType, OnSendConfListener onSendConf);
  *     const char *status = response["idTagInfo"]["status"];
  *     int transactionId = response["transactionId"];
  * });
- * 
+ *
  * In Use case 2, the library won't send any further StatusNotification or StopTransaction on
  * its own.
  */
 void sendRequest(const char *operationType,
-            std::function<std::unique_ptr<MicroOcpp::JsonDoc> ()> fn_createReq,
-            std::function<void (JsonObject)> fn_processConf);
+                 std::function<std::unique_ptr<MicroOcpp::JsonDoc>()> fn_createReq,
+                 std::function<void(JsonObject)> fn_processConf);
 
 /*
  * Set a custom handler for an incoming operation type. This will update the core Operation registry
  * of the library, potentially replacing the built-in Operation handler and bypassing the
  * business logic of this library.
- * 
+ *
  * Note that when replacing an operation handler, the attached listeners will be reset.
- * 
+ *
  * Example usage:
- * 
+ *
  * setRequestHandler("DataTransfer", [] (JsonObject request) -> void {
  *     //will be called with the request message from the server
  *     const char *vendorId = request["vendorId"];
@@ -500,7 +511,7 @@ void sendRequest(const char *operationType,
  *     //will be called  to create the response once this operation is being sent out
  *     size_t capacity = JSON_OBJECT_SIZE(2) +
  *                       JSON_OBJECT_SIZE(1); //for calculating the required capacity, see https://arduinojson.org/v6/assistant/
- *     auto res = std::unique_ptr<MicroOcpp::JsonDoc>(new MicroOcpp::JsonDoc(capacity)); 
+ *     auto res = std::unique_ptr<MicroOcpp::JsonDoc>(new MicroOcpp::JsonDoc(capacity));
  *     JsonObject response = res->to<JsonObject>();
  *     response["status"] = "Accepted";
  *     response["data"]["max_energy"] = 59;
@@ -508,15 +519,15 @@ void sendRequest(const char *operationType,
  * });
  */
 void setRequestHandler(const char *operationType,
-            std::function<void (JsonObject)> fn_processReq,
-            std::function<std::unique_ptr<MicroOcpp::JsonDoc> ()> fn_createConf);
+                       std::function<void(JsonObject)> fn_processReq,
+                       std::function<std::unique_ptr<MicroOcpp::JsonDoc>()> fn_createConf);
 
 /*
  * Send OCPP operations manually not bypassing the internal business logic
- * 
+ *
  * On receipt of the .conf() response the library calls the callback function
  * "OnReceiveConfListener onConf" and passes the OCPP payload to it.
- * 
+ *
  * For your first EVSE integration, the `onReceiveConfListener` is probably sufficient. For
  * advanced EVSE projects, the other listeners likely become relevant:
  * - `onAbortListener`: will be called whenever the engine stops trying to finish an operation
@@ -525,32 +536,32 @@ void setRequestHandler(const char *operationType,
  *           expires. Note that timeouts also trigger the `onAbortListener`.
  * - `onReceiveErrorListener`: will be called when the Central System returns a CallError.
  *           Again, each error also triggers the `onAbortListener`.
- * 
+ *
  * The functions for sending OCPP operations are non-blocking. The program will resume immediately
  * with the code after with the subsequent code in any case.
  */
 
 void authorize(
-            const char *idTag,                           //RFID tag (e.g. ISO 14443 UID tag with 4 or 7 bytes)
-            OnReceiveConfListener onConf = nullptr,      //callback (confirmation received)
-            OnAbortListener onAbort = nullptr,           //callback (confirmation not received), optional
-            OnTimeoutListener onTimeout = nullptr,       //callback (timeout expired), optional
-            OnReceiveErrorListener onError = nullptr,    //callback (error code received), optional
-            unsigned int timeout = 0); //custom timeout behavior, optional
+    const char *idTag,                        // RFID tag (e.g. ISO 14443 UID tag with 4 or 7 bytes)
+    OnReceiveConfListener onConf = nullptr,   // callback (confirmation received)
+    OnAbortListener onAbort = nullptr,        // callback (confirmation not received), optional
+    OnTimeoutListener onTimeout = nullptr,    // callback (timeout expired), optional
+    OnReceiveErrorListener onError = nullptr, // callback (error code received), optional
+    unsigned int timeout = 0);                // custom timeout behavior, optional
 
 bool startTransaction(
-            const char *idTag,
-            OnReceiveConfListener onConf = nullptr,
-            OnAbortListener onAbort = nullptr,
-            OnTimeoutListener onTimeout = nullptr,
-            OnReceiveErrorListener onError = nullptr,
-            unsigned int timeout = 0);
+    const char *idTag,
+    OnReceiveConfListener onConf = nullptr,
+    OnAbortListener onAbort = nullptr,
+    OnTimeoutListener onTimeout = nullptr,
+    OnReceiveErrorListener onError = nullptr,
+    unsigned int timeout = 0);
 
 bool stopTransaction(
-            OnReceiveConfListener onConf = nullptr,
-            OnAbortListener onAbort = nullptr,
-            OnTimeoutListener onTimeout = nullptr,
-            OnReceiveErrorListener onError = nullptr,
-            unsigned int timeout = 0);
+    OnReceiveConfListener onConf = nullptr,
+    OnAbortListener onAbort = nullptr,
+    OnTimeoutListener onTimeout = nullptr,
+    OnReceiveErrorListener onError = nullptr,
+    unsigned int timeout = 0);
 
 #endif

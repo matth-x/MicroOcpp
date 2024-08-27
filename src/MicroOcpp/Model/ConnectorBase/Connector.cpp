@@ -778,8 +778,12 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
     }
 
     transaction->commit();
-
+#if MO_ENABLE_V201
+    auto authorize = makeRequest(new Ocpp201::Authorize(context.getModel(), idTag));
+#else
     auto authorize = makeRequest(new Ocpp16::Authorize(context.getModel(), idTag));
+
+#endif
     authorize->setTimeout(authorizationTimeoutInt && authorizationTimeoutInt->getInt() > 0 ? authorizationTimeoutInt->getInt() * 1000UL : 20UL * 1000UL);
 
     if (!context.getConnection().isConnected()) {

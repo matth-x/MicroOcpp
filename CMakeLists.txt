@@ -15,7 +15,6 @@ set(MO_SRC
     src/MicroOcpp/Core/FilesystemAdapter.cpp
     src/MicroOcpp/Core/FilesystemUtils.cpp
     src/MicroOcpp/Core/FtpMbedTLS.cpp
-    src/MicroOcpp/Core/Memory.cpp
     src/MicroOcpp/Core/RequestQueue.cpp
     src/MicroOcpp/Core/Context.cpp
     src/MicroOcpp/Core/Operation.cpp
@@ -23,6 +22,8 @@ set(MO_SRC
     src/MicroOcpp/Core/Request.cpp
     src/MicroOcpp/Core/Connection.cpp
     src/MicroOcpp/Core/Time.cpp
+    src/MicroOcpp/Core/RequestQueueStorageStrategy.cpp
+    src/MicroOcpp/Core/RequestStore.cpp
     src/MicroOcpp/Operations/Authorize.cpp
     src/MicroOcpp/Operations/BootNotification.cpp
     src/MicroOcpp/Operations/CancelReservation.cpp
@@ -64,6 +65,7 @@ set(MO_SRC
     src/MicroOcpp/Operations/UpdateFirmware.cpp
     src/MicroOcpp/Debug.cpp
     src/MicroOcpp/Platform.cpp
+    src/MicroOcpp/Core/SimpleRequestFactory.cpp
     src/MicroOcpp/Core/OperationRegistry.cpp
     src/MicroOcpp/Model/Authorization/AuthorizationData.cpp
     src/MicroOcpp/Model/Authorization/AuthorizationList.cpp
@@ -115,7 +117,7 @@ if(ESP_PLATFORM)
     return()
 endif()
 
-project(MicroOcpp VERSION 1.2.0)
+project(MicroOcpp VERSION 1.1.0)
 
 add_library(MicroOcpp ${MO_SRC})
 
@@ -146,9 +148,6 @@ set(MO_SRC_UNIT
     tests/Variables.cpp
     tests/Transactions.cpp
     tests/Certificates.cpp
-    tests/FirmwareManagement.cpp
-    tests/ChargePointError.cpp
-    tests/Boot.cpp
 )
 
 add_executable(mo_unit_tests
@@ -171,7 +170,7 @@ if (MO_BUILD_UNIT_MBEDTLS)
 endif()
 
 target_include_directories(mo_unit_tests PUBLIC
-    "./tests"
+    "./tests/catch2"
     "./tests/helpers"
     "./src"
 )
@@ -180,7 +179,7 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_PLATFORM=MO_PLATFORM_UNIX
     MO_NUMCONNECTORS=3
     MO_CUSTOM_TIMER
-    MO_DBG_LEVEL=MO_DL_INFO
+    MO_DBG_LEVEL=MO_DL_DEBUG
     MO_TRAFFIC_OUT
     MO_FILENAME_PREFIX="./mo_store/"
     MO_LocalAuthListMaxLength=8
@@ -190,12 +189,6 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_ChargingScheduleMaxPeriods=4
     MO_MaxChargingProfilesInstalled=3
     MO_ENABLE_CERT_MGMT=1
-    MO_ENABLE_CONNECTOR_LOCK=1
-    MO_REPORT_NOERROR=1
-    MO_OVERRIDE_ALLOCATION=1
-    MO_ENABLE_HEAP_PROFILER=1
-    MO_HEAP_PROFILER_EXTERNAL_CONTROL=1
-    CATCH_CONFIG_EXTERNAL_INTERFACES
 )
 
 target_compile_options(mo_unit_tests PUBLIC
