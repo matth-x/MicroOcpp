@@ -96,14 +96,14 @@ jobs:
     needs: profile_firmware
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: 3.x
-      - uses: actions/cache@v2
-        with:
-          key: ${{ github.ref }}
-          path: .cache
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
+    - uses: actions/cache@v2
+      with:
+        key: ${{ github.ref }}
+        path: .cache
     - name: Install Python dependencies
       run: pip install pandas mkdocs-material
     - name: Get v16 bloaty analysis
