@@ -93,16 +93,34 @@ jobs:
         if-no-files-found: error
 
   evaluate_firmware_size:
+    needs: fake_artifact
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: 3.x
-      - uses: actions/cache@v2
-        with:
-          key: ${{ github.ref }}
-          path: .cache
+    - uses: actions/checkout@v3
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
+    - uses: actions/cache@v2
+      with:
+        key: ${{ github.ref }}
+        path: .cache
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install --upgrade pandas
+    - name: Get v16 bloaty file
+      uses: actions/download-artifact@v4
+      with:
+        name: firmware_v16_2.elf
+        path: docs/assets/bloaty_v16.csv
+    
 
   deploy:
     runs-on: ubuntu-latest
