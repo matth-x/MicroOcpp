@@ -6,7 +6,7 @@ name: documentation
 on:
   push:
     branches:
-      - main
+      - feature/benchmarks
 permissions:
   contents: write
 jobs:
