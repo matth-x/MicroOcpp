@@ -10,6 +10,43 @@ on:
 permissions:
   contents: write
 jobs:
+  build_firmware_size:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Cache PlatformIO
+      uses: actions/cache@v2
+      with:
+        path: ~/.platformio
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+    - name: Set up Python
+      uses: actions/setup-python@v4
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install --upgrade platformio
+    - name: Run PlatformIO
+      run: pio ci --lib="." --build-dir="./tests/benchmarks/firmware_size/build" --keep-build-dir --project-conf="./tests/benchmarks/firmware_size/platformio.ini" -e v16 ./tests/benchmarks/firmware_size/main_v16.cpp
+    - name: Upload v16 firmware files
+      uses: actions/upload-artifact@v4
+      with:
+        name: Firmware v16 linker file
+        path: tests/benchmarks/firmware_size/build/.pio/build/v16/firmware.elf
+        if-no-files-found: error
+    - name: Upload v201 firmware files
+      uses: actions/upload-artifact@v4
+      with:
+        name: Firmware v201 linker file
+        path: tests/benchmarks/firmware_size/build/.pio/build/v201/firmware.elf
+        if-no-files-found: error
+
   deploy:
     runs-on: ubuntu-latest
     steps:
