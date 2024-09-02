@@ -115,11 +115,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install --upgrade pandas
-    - name: Get v16 bloaty file
+    - name: Get v16 bloaty analysis
       uses: actions/download-artifact@v4
       with:
         name: firmware_v16_2.elf
         path: docs/assets/bloaty_v16.csv
+    - name: Evaluate and create reports
+      run: tests/benchmarks/scripts/eval_firmware_size.py
     
 
   deploy:
