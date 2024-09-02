@@ -121,7 +121,7 @@ jobs:
         name: bloaty_v16.csv
         path: docs/assets/bloaty_v16.csv
     - name: Evaluate and create reports
-      run: tests/benchmarks/scripts/eval_firmware_size.py
+      run: python tests/benchmarks/scripts/eval_firmware_size.py
     
 
   deploy:
