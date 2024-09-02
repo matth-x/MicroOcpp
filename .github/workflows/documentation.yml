@@ -93,7 +93,7 @@ jobs:
         if-no-files-found: error
 
   evaluate_firmware_size:
-    needs: fake_artifact
+    needs: profile_firmware
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -118,7 +118,7 @@ jobs:
     - name: Get v16 bloaty analysis
       uses: actions/download-artifact@v4
       with:
-        name: firmware_v16_2.elf
+        name: bloaty_v16.csv
         path: docs/assets/bloaty_v16.csv
     - name: Evaluate and create reports
       run: tests/benchmarks/scripts/eval_firmware_size.py
