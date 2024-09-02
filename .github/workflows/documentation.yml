@@ -41,36 +41,20 @@ jobs:
       with:
         name: firmware_v16.elf
         path: "${{ github.workspace }}/firmware_v16.elf"
+        retention-days: 1
         if-no-files-found: error
 
   evaluate_firmware_size:
     runs-on: ubuntu-latest
     steps:
-    - name: Get build tools
-      run: |
-        sudo apt update
-        sudo apt install build-essential cmake ninja-build
-        sudo apt -y install gcc-9 g++-9
-        g++ --version
-    - name: Check out bloaty
-      uses: actions/checkout@v3
-      with:
-        repository: google/bloaty
-        ref: 379d5305670c00c36a57e608079fd253f13bde63
-        path: "${{ github.workspace }}/bloaty"
-        submodules: recursive
-    - name: Install bloaty
-      run: |
-        cmake -B "${{ github.workspace }}/bloaty/build" -G Ninja -S "${{ github.workspace }}/bloaty"
-        cmake --build "${{ github.workspace }}/bloaty/build"
-        cmake --build "${{ github.workspace }}/bloaty/build" --target install
     - name: Get v16 firmware file
       uses: actions/download-artifact@v4
       with:
         name: firmware_v16.elf
     - name: Run bloaty
-      run: |
-        bloaty ./firmware_v16.elf -d compileunits --csv -n 0 > bloaty_v16.csv
+      uses: carlosperate/bloaty-action@v1
+      with:
+        bloaty-args: ./firmware_v16.elf -d compileunits --csv -n 0 > bloaty_v16.csv
     - name: Upload v16 bloaty report
       uses: actions/upload-artifact@v4
       with:
