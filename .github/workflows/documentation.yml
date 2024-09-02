@@ -33,18 +33,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade platformio
     - name: Run PlatformIO
-      run: pio ci --lib="." --project-conf="./tests/benchmarks/firmware_size/platformio.ini" -e v16 ./tests/benchmarks/firmware_size/main_v16.cpp
+      run: pio ci --lib="." --build-dir="${{ github.workspace }}/build" --keep-build-dir --project-conf="./tests/benchmarks/firmware_size/platformio.ini" -e v16 ./tests/benchmarks/firmware_size/main_v16.cpp
     - name: Upload v16 firmware files
       uses: actions/upload-artifact@v4
       with:
         name: Firmware v16 linker file
-        path: tests/benchmarks/firmware_size/build/.pio/build/v16/firmware.elf
-        if-no-files-found: error
-    - name: Upload v201 firmware files
-      uses: actions/upload-artifact@v4
-      with:
-        name: Firmware v201 linker file
-        path: tests/benchmarks/firmware_size/build/.pio/build/v201/firmware.elf
+        path: "${{ github.workspace }}/build/.pio/build/v16/firmware.elf"
         if-no-files-found: error
 
   deploy:
