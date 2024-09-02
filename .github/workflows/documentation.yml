@@ -40,7 +40,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: firmware_v16.elf
-        path: "${{ github.workspace }}/firmware_v16_2.elf"
+        path: "${{ github.workspace }}/firmware_v16.elf"
         if-no-files-found: error
         retention-days: 1
   
@@ -53,12 +53,12 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: firmware_v16.elf
-        path: "${{ github.workspace }}/firmware_v16.elf"
+        path: "${{ github.workspace }}/firmware_v16_2.elf"
         if-no-files-found: error
         retention-days: 1
 
   evaluate_firmware_size:
-    needs: fake_artifact
+    needs: build_firmware_size
     runs-on: ubuntu-latest
     steps:
     - name: Get build tools
