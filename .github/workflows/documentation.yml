@@ -44,6 +44,8 @@ jobs:
         if-no-files-found: error
 
   evaluate_firmware_size:
+    runs-on: ubuntu-latest
+    steps:
     - name: Get build tools
       run: |
         sudo apt update
