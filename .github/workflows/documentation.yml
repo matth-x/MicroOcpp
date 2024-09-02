@@ -33,7 +33,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade platformio
     - name: Check paths
-      run: pwd |
+      run: |
+        pwd
         readlink -e ~
     - name: Run PlatformIO
       run: pio ci --lib="." --build-dir="${{ github.workspace }}/../build" --keep-build-dir --project-conf="./tests/benchmarks/firmware_size/platformio.ini" -e v16 ./tests/benchmarks/firmware_size/main_v16.cpp
