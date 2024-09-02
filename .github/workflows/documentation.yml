@@ -84,7 +84,7 @@ jobs:
         name: firmware_v16.elf
     - name: Run bloaty
       run: |
-        "${{ github.workspace }}/bloaty" ./firmware_v16.elf -d compileunits --csv -n 0 > bloaty_v16.csv
+        "${{ github.workspace }}/bloaty/build/bloaty" ./firmware_v16.elf -d compileunits --csv -n 0 > bloaty_v16.csv
     - name: Upload v16 bloaty report
       uses: actions/upload-artifact@v4
       with:
