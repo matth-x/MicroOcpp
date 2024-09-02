@@ -41,7 +41,6 @@ jobs:
       with:
         name: firmware_v16.elf
         path: "${{ github.workspace }}/firmware_v16.elf"
-        retention-days: 1
         if-no-files-found: error
 
   evaluate_firmware_size:
