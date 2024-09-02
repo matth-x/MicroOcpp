@@ -40,12 +40,25 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: firmware_v16.elf
+        path: "${{ github.workspace }}/firmware_v16_2.elf"
+        if-no-files-found: error
+        retention-days: 1
+  
+  fake_artifact:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Create artifact
+      run: echo "fake artifact" > firmware_v16.elf
+    - name: Upload v16 firmware file
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware_v16.elf
         path: "${{ github.workspace }}/firmware_v16.elf"
         if-no-files-found: error
         retention-days: 1
 
   evaluate_firmware_size:
-    needs: build_firmware_size
+    needs: fake_artifact
     runs-on: ubuntu-latest
     steps:
     - name: Get build tools
@@ -63,7 +76,6 @@ jobs:
         submodules: recursive
     - name: Install bloaty
       run: |
-        cd "${{ github.workspace }}/bloaty"
         cmake -B "${{ github.workspace }}/bloaty/build" -G Ninja -S "${{ github.workspace }}/bloaty"
         cmake --build "${{ github.workspace }}/bloaty/build" -j 32
     - name: Get v16 firmware file
@@ -72,7 +84,7 @@ jobs:
         name: firmware_v16.elf
     - name: Run bloaty
       run: |
-        bloaty ./firmware_v16.elf -d compileunits --csv -n 0 > bloaty_v16.csv
+        "${{ github.workspace }}/bloaty" ./firmware_v16.elf -d compileunits --csv -n 0 > bloaty_v16.csv
     - name: Upload v16 bloaty report
       uses: actions/upload-artifact@v4
       with:
