@@ -32,13 +32,18 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install --upgrade platformio
+    - name: Check paths
+      run: pwd |
+        readlink -e ~
     - name: Run PlatformIO
       run: pio ci --lib="." --build-dir="${{ github.workspace }}/../build" --keep-build-dir --project-conf="./tests/benchmarks/firmware_size/platformio.ini" -e v16 ./tests/benchmarks/firmware_size/main_v16.cpp
+    - name: Move firmware files
+      run: mv "${{ github.workspace }}/../build/.pio/build/v16/firmware.elf" "${{ github.workspace }}/firmware_v16.elf"
     - name: Upload v16 firmware files
       uses: actions/upload-artifact@v4
       with:
         name: Firmware v16 linker file
-        path: "${{ github.workspace }}/../build/.pio/build/v16/firmware.elf"
+        path: "${{ github.workspace }}/firmware_v16.elf"
         if-no-files-found: error
 
   deploy:
