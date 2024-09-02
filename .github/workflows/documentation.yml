@@ -49,6 +49,7 @@ jobs:
     steps:
     - name: Get v16 firmware file
       uses: actions/download-artifact@v4
+      run-id: ${{ github.event.workflow_run.id }}
       with:
         name: firmware_v16.elf
     - name: Run bloaty
