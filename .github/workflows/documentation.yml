@@ -33,7 +33,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade platformio
     - name: Run PlatformIO
-      run: pio ci --lib="." --build-dir="./tests/benchmarks/firmware_size/build" --keep-build-dir --project-conf="./tests/benchmarks/firmware_size/platformio.ini" -e v16 ./tests/benchmarks/firmware_size/main_v16.cpp
+      run: pio ci --lib="." --project-conf="./tests/benchmarks/firmware_size/platformio.ini" -e v16 ./tests/benchmarks/firmware_size/main_v16.cpp
     - name: Upload v16 firmware files
       uses: actions/upload-artifact@v4
       with:
