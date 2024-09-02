@@ -254,7 +254,7 @@ print(modules)
 
 # store csv with all details
 
-modules.to_csv("compile_units.csv")
+modules.to_csv("docs/assets/compile_units.csv")
 
 print('Uncategorized compile units: ', (modules['Module'].values == '').sum())
 
@@ -266,7 +266,7 @@ modules_v16_by_module.loc['**Total**'] = [modules_v16_by_module[COLUMN_BINSIZE].
 
 print(modules_v16_by_module)
 
-modules_v16_by_module.to_csv('modules_v16.csv')
+modules_v16_by_module.to_csv('docs/assets/modules_v16.csv')
 
 # store csv with size by Module for v201
 
@@ -276,4 +276,4 @@ modules_v201_by_module.loc['**Total**'] = [modules_v201_by_module[COLUMN_BINSIZE
 
 print(modules_v201_by_module)
 
-modules_v201_by_module.to_csv('modules_v16.csv')
+modules_v201_by_module.to_csv('docs/assets/modules_v16.csv')
