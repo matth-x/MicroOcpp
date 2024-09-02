@@ -39,7 +39,7 @@ jobs:
     - name: Upload v16 firmware file
       uses: actions/upload-artifact@v4
       with:
-        name: firmware_v16_2.elf
+        name: firmware_v16.elf
         path: "${{ github.workspace }}/firmware_v16.elf"
         if-no-files-found: error
         retention-days: 1
@@ -52,13 +52,13 @@ jobs:
     - name: Upload v16 firmware file
       uses: actions/upload-artifact@v4
       with:
-        name: firmware_v16.elf
+        name: firmware_v16_2.elf
         path: "${{ github.workspace }}/firmware_v16.elf"
         if-no-files-found: error
         retention-days: 1
 
-  evaluate_firmware_size:
-    needs: fake_artifact
+  profile_firmware:
+    needs: build_firmware_size
     runs-on: ubuntu-latest
     steps:
     - name: Get build tools
@@ -91,6 +91,18 @@ jobs:
         name: bloaty_v16.csv
         path: bloaty_v16.csv
         if-no-files-found: error
+
+  evaluate_firmware_size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - uses: actions/cache@v2
+        with:
+          key: ${{ github.ref }}
+          path: .cache
 
   deploy:
     runs-on: ubuntu-latest
