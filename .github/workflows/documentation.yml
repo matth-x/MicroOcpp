@@ -44,6 +44,7 @@ jobs:
         if-no-files-found: error
 
   evaluate_firmware_size:
+    needs: build_firmware_size
     runs-on: ubuntu-latest
     steps:
     - name: Get v16 firmware file
