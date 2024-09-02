@@ -92,39 +92,8 @@ jobs:
         path: bloaty_v16.csv
         if-no-files-found: error
 
-  evaluate_firmware_size:
-    needs: profile_firmware
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Cache pip
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.x
-    - uses: actions/cache@v2
-      with:
-        key: ${{ github.ref }}
-        path: .cache
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install --upgrade pandas
-    - name: Get v16 bloaty analysis
-      uses: actions/download-artifact@v4
-      with:
-        name: bloaty_v16.csv
-        path: docs/assets/bloaty_v16.csv
-    - name: Evaluate and create reports
-      run: python tests/benchmarks/scripts/eval_firmware_size.py
-    
-
   deploy:
+    needs: profile_firmware
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -135,5 +104,14 @@ jobs:
         with:
           key: ${{ github.ref }}
           path: .cache
-      - run: pip install mkdocs-material 
-      - run: mkdocs gh-deploy --force
+    - name: Install Python dependencies
+      run: pip install pandas mkdocs-material
+    - name: Get v16 bloaty analysis
+      uses: actions/download-artifact@v4
+      with:
+        name: bloaty_v16.csv
+        path: docs/assets
+    - name: Evaluate and create reports
+      run: python tests/benchmarks/scripts/eval_firmware_size.py
+    - name: Run mkdocs
+      run: mkdocs gh-deploy --force
