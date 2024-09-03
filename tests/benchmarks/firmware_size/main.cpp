@@ -16,7 +16,7 @@ void setup() {
 #if MO_ENABLE_V201
     mocpp_initialize(g_loopback, ChargerCredentials::v201(),MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail),true,MicroOcpp::ProtocolVersion(2,0,1));
 #else
-    mocpp_initialize(g_loopback, ChargerCredentials()
+    mocpp_initialize(g_loopback, ChargerCredentials();
 #endif
 
     ocpp_beginTransaction("");
