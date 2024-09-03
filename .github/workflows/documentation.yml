@@ -10,6 +10,42 @@ on:
 permissions:
   contents: write
 jobs:
+  test_artifact:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Create artifact
+      run: |
+        echo "ls:"
+        ls
+        mkdir some_folder
+        echo "fake artifact 1" > some_folder/test_artifact_1.txt
+        echo "fake artifact 2" > some_folder/test_artifact_2.txt
+        echo "ls some_folder:"
+        ls some_folder
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Test artifacts
+        path: "${{ github.workspace }}/some_folder"
+        if-no-files-found: error
+        retention-days: 1
+  
+  test_artifact2:
+    needs: test_artifact
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download test artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: Test artifacts
+        path: some_other_folder
+    - name: Show result
+      run: |
+        echo "ls:"
+        ls
+        echo "ls some_other_folder:"
+        ls some_other_folder
+  
   build_firmware_size:
     runs-on: ubuntu-latest
     steps:
@@ -50,19 +86,6 @@ jobs:
       with:
         name: firmware_v201.elf
         path: "${{ github.workspace }}/firmware_v201.elf"
-        if-no-files-found: error
-        retention-days: 1
-  
-  fake_artifact:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Create artifact
-      run: echo "fake artifact" > firmware_v16.elf
-    - name: Upload v16 firmware file
-      uses: actions/upload-artifact@v4
-      with:
-        name: firmware_v16_2.elf
-        path: "${{ github.workspace }}/firmware_v16.elf"
         if-no-files-found: error
         retention-days: 1
 
