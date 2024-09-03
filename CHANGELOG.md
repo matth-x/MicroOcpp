@@ -22,6 +22,7 @@
 - Support for TransactionMessageAttempts/-RetryInterval ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
 - Heap profiler and custom allocator support ([#350](https://github.com/matth-x/MicroOcpp/pull/350))
 - Migration of persistent storage ([#355](https://github.com/matth-x/MicroOcpp/pull/355))
+- Benchmarks pipeline ([#369](https://github.com/matth-x/MicroOcpp/pull/369))
 
 ### Removed
 
