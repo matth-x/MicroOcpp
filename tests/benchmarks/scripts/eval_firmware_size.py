@@ -284,7 +284,7 @@ print('Uncategorized compile units (v16): ', (cunits_v16['Module'].values == '')
 print('Uncategorized compile units (v201): ', (cunits_v201['Module'].values == '').sum())
 
 cunits_v16.to_csv("docs/assets/tables/compile_units_v16.csv")
-cunits_v16.to_csv("docs/assets/tables/compile_units_v201.csv")
+cunits_v201.to_csv("docs/assets/tables/compile_units_v201.csv")
 
 # store csv with size by Module for v16
 
