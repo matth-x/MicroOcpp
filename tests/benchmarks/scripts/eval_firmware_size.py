@@ -296,24 +296,29 @@ def categorize_table(df):
 categorize_table(cunits_v16)
 categorize_table(cunits_v201)
 
+categorize_success = True
+
 if cunits_v16[COLUMN_BINSIZE].isnull().any():
     print('Error: categorized the following compilation units erroneously (v16):\n')
     print(cunits_v16.loc[cunits_v16[COLUMN_BINSIZE].isnull()])
-    sys.exit('\nError categorizing compilation units')
+    categorize_success = False
 
 if cunits_v201[COLUMN_BINSIZE].isnull().any():
     print('Error: categorized the following compilation units erroneously (v201):\n')
     print(cunits_v201.loc[cunits_v201[COLUMN_BINSIZE].isnull()])
-    sys.exit('\nError categorizing compilation units')
+    categorize_success = False
 
 if (cunits_v16['Module'].values == '').sum() > 0:
     print('Error: did not categorize the following compilation units (v16):\n')
     print(cunits_v16.loc[cunits_v16['Module'].values == ''])
-    sys.exit('\nError categorizing compilation units')
+    categorize_success = False
 
 if (cunits_v201['Module'].values == '').sum() > 0:
     print('Error: did not categorize the following compilation units (v201):\n')
     print(cunits_v201.loc[cunits_v201['Module'].values == ''])
+    categorize_success = False
+
+if not categorize_success:
     sys.exit('\nError categorizing compilation units')
 
 # store csv with all details
