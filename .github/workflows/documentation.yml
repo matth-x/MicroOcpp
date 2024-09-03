@@ -6,7 +6,9 @@ name: documentation
 on:
   push:
     branches:
-      - feature/benchmarks
+      - main
+  pull_request:
+
 permissions:
   contents: write
 jobs:
@@ -137,6 +139,7 @@ jobs:
   deploy:
     needs: evaluate_firmware
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
