@@ -13,7 +13,11 @@ void setup() {
 
     ocpp_deinitialize();
 
-    mocpp_initialize(g_loopback, ChargerCredentials());
+#if MO_ENABLE_V201
+    mocpp_initialize(g_loopback, ChargerCredentials::v201(),MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail),true,MicroOcpp::ProtocolVersion(2,0,1));
+#else
+    mocpp_initialize(g_loopback, ChargerCredentials()
+#endif
 
     ocpp_beginTransaction("");
     ocpp_beginTransaction_authorized("","");
@@ -40,35 +44,25 @@ void setup() {
     ocpp_setStartTxReadyInput([] () {return false;});
     ocpp_setStopTxReadyInput([] () {return false;});
     ocpp_setTxNotificationOutput([] (OCPP_Transaction*, OCPP_TxNotification) {});
+
+#if MO_ENABLE_CONNECTOR_LOCK
     ocpp_setOnUnlockConnectorInOut([] () {return UnlockConnectorResult_UnlockFailed;});
+#endif
+
     isOperative();
     setOnResetNotify([] (bool) {return false;});
     setOnResetExecute([] (bool) {return false;});
     getFirmwareService()->getFirmwareStatus();
     getDiagnosticsService()->getDiagnosticsStatus();
+
+#if MO_ENABLE_CERT_MGMT
     setCertificateStore(nullptr);
+#endif
+
     getOcppContext();
 
 }
 
 void loop() {
-
-    /*
-     * Do all OCPP stuff (process WebSocket input, send recorded meter values to Central System, etc.)
-     */
     mocpp_loop();
-
-    /*
-     * Energize EV plug if OCPP transaction is up and running
-     */
-    if (ocppPermitsCharge()) {
-        //OCPP set up and transaction running. Energize the EV plug here
-    } else {
-        //No transaction running at the moment. De-energize EV plug
-    }
-
-    /*
-     * Use NFC reader to start and stop transactions
-     */
-    
 }

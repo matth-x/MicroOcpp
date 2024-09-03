@@ -12,6 +12,7 @@ def load_compilation_units(fn):
     return df
     
 cunits_v16 = load_compilation_units('docs/assets/tables/bloaty_v16.csv')
+cunits_v201 = load_compilation_units('docs/assets/tables/bloaty_v201.csv')
 
 # categorize data
 
@@ -260,12 +261,15 @@ def categorize_table(df):
     print(df)
 
 categorize_table(cunits_v16)
+categorize_table(cunits_v201)
 
 # store csv with all details
 
-cunits_v16.to_csv("docs/assets/tables/compile_units_v16.csv")
+print('Uncategorized compile units (v16): ', (cunits_v16['Module'].values == '').sum())
+print('Uncategorized compile units (v201): ', (cunits_v201['Module'].values == '').sum())
 
-print('Uncategorized compile units: ', (cunits_v16['Module'].values == '').sum())
+cunits_v16.to_csv("docs/assets/tables/compile_units_v16.csv")
+cunits_v16.to_csv("docs/assets/tables/compile_units_v201.csv")
 
 # store csv with size by Module for v16
 
@@ -279,10 +283,10 @@ modules_v16_by_module.to_csv('docs/assets/tables/modules_v16.csv')
 
 # store csv with size by Module for v201
 
-#modules_v201 = modules.loc[modules['v201'].values == 'x'].sort_index()
-#modules_v201_by_module = modules_v201[['Module', COLUMN_BINSIZE]].groupby('Module').sum()
-#modules_v201_by_module.loc['**Total**'] = [modules_v201_by_module[COLUMN_BINSIZE].sum()]
+modules_v201 = cunits_v201.loc[cunits_v201['v201'].values == 'x'].sort_index()
+modules_v201_by_module = modules_v201[['Module', COLUMN_BINSIZE]].groupby('Module').sum()
+modules_v201_by_module.loc['**Total**'] = [modules_v201_by_module[COLUMN_BINSIZE].sum()]
 
-#print(modules_v201_by_module)
+print(modules_v201_by_module)
 
-#modules_v201_by_module.to_csv('docs/assets/tables/modules_v16.csv')
+modules_v201_by_module.to_csv('docs/assets/tables/modules_v201.csv')
