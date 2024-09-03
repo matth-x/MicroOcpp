@@ -105,12 +105,12 @@ jobs:
         key: ${{ github.ref }}
         path: .cache
     - name: Install Python dependencies
-      run: pip install pandas mkdocs-material
+      run: pip install pandas mkdocs-material mkdocs-table-reader-plugin
     - name: Get v16 bloaty analysis
       uses: actions/download-artifact@v4
       with:
         name: bloaty_v16.csv
-        path: docs/assets
+        path: docs/assets/tables
     - name: Evaluate and create reports
       run: python tests/benchmarks/scripts/eval_firmware_size.py
     - name: Run mkdocs
