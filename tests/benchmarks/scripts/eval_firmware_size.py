@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import pandas as pd
 
@@ -22,7 +23,7 @@ def categorize_table(df):
 
     df["v16"] = ' '
     df["v201"] = ' '
-    df["Module"] = ' '
+    df["Module"] = ''
 
     TICK = 'x'
 
@@ -124,9 +125,10 @@ def categorize_table(df):
     df.at['Model/Certificates/CertificateMbedTLS.cpp', 'v16'] = TICK
     df.at['Model/Certificates/CertificateMbedTLS.cpp', 'v201'] = TICK
     df.at['Model/Certificates/CertificateMbedTLS.cpp', 'Module'] = MODULE_CERTS
-    df.at['Model/Certificates/Certificate_c.cpp', 'v16'] = TICK
-    df.at['Model/Certificates/Certificate_c.cpp', 'v201'] = TICK
-    df.at['Model/Certificates/Certificate_c.cpp', 'Module'] = MODULE_CERTS
+    if 'Model/Certificates/Certificate_c.cpp' in df.index:
+        df.at['Model/Certificates/Certificate_c.cpp', 'v16'] = TICK
+        df.at['Model/Certificates/Certificate_c.cpp', 'v201'] = TICK
+        df.at['Model/Certificates/Certificate_c.cpp', 'Module'] = MODULE_CERTS
     df.at['Model/Certificates/CertificateService.cpp', 'v16'] = TICK
     df.at['Model/Certificates/CertificateService.cpp', 'v201'] = TICK
     df.at['Model/Certificates/CertificateService.cpp', 'Module'] = MODULE_CERTS
@@ -170,16 +172,20 @@ def categorize_table(df):
     df.at['Model/Transactions/Transaction.cpp', 'Module'] = MODULE_TX
     df.at['Model/Transactions/TransactionDeserialize.cpp', 'v16'] = TICK
     df.at['Model/Transactions/TransactionDeserialize.cpp', 'Module'] = MODULE_TX
-    df.at['Model/Transactions/TransactionService.cpp', 'v201'] = TICK
-    df.at['Model/Transactions/TransactionService.cpp', 'Module'] = MODULE_TX
+    if 'Model/Transactions/TransactionService.cpp' in df.index:
+        df.at['Model/Transactions/TransactionService.cpp', 'v201'] = TICK
+        df.at['Model/Transactions/TransactionService.cpp', 'Module'] = MODULE_TX
     df.at['Model/Transactions/TransactionStore.cpp', 'v16'] = TICK
     df.at['Model/Transactions/TransactionStore.cpp', 'Module'] = MODULE_TX
-    df.at['Model/Variables/Variable.cpp', 'v201'] = TICK
-    df.at['Model/Variables/Variable.cpp', 'Module'] = MODULE_PROVISIONING_VARS
-    df.at['Model/Variables/VariableContainer.cpp', 'v201'] = TICK
-    df.at['Model/Variables/VariableContainer.cpp', 'Module'] = MODULE_PROVISIONING_VARS
-    df.at['Model/Variables/VariableService.cpp', 'v201'] = TICK
-    df.at['Model/Variables/VariableService.cpp', 'Module'] = MODULE_PROVISIONING_VARS
+    if 'Model/Variables/Variable.cpp' in df.index:
+        df.at['Model/Variables/Variable.cpp', 'v201'] = TICK
+        df.at['Model/Variables/Variable.cpp', 'Module'] = MODULE_PROVISIONING_VARS
+    if 'Model/Variables/VariableContainer.cpp' in df.index:
+        df.at['Model/Variables/VariableContainer.cpp', 'v201'] = TICK
+        df.at['Model/Variables/VariableContainer.cpp', 'Module'] = MODULE_PROVISIONING_VARS
+    if 'Model/Variables/VariableService.cpp' in df.index:
+        df.at['Model/Variables/VariableService.cpp', 'v201'] = TICK
+        df.at['Model/Variables/VariableService.cpp', 'Module'] = MODULE_PROVISIONING_VARS
     df.at['Operations/Authorize.cpp', 'v16'] = TICK
     df.at['Operations/Authorize.cpp', 'v201'] = TICK
     df.at['Operations/Authorize.cpp', 'Module'] = MODULE_AUTHORIZATION
@@ -208,8 +214,9 @@ def categorize_table(df):
     df.at['Operations/DiagnosticsStatusNotification.cpp', 'Module'] = MODULE_FW_MNGT
     df.at['Operations/FirmwareStatusNotification.cpp', 'v16'] = TICK
     df.at['Operations/FirmwareStatusNotification.cpp', 'Module'] = MODULE_FW_MNGT
-    df.at['Operations/GetBaseReport.cpp', 'v201'] = TICK
-    df.at['Operations/GetBaseReport.cpp', 'Module'] = MODULE_PROVISIONING_VARS
+    if 'Operations/GetBaseReport.cpp' in df.index:
+        df.at['Operations/GetBaseReport.cpp', 'v201'] = TICK
+        df.at['Operations/GetBaseReport.cpp', 'Module'] = MODULE_PROVISIONING_VARS
     df.at['Operations/GetCompositeSchedule.cpp', 'v16'] = TICK
     df.at['Operations/GetCompositeSchedule.cpp', 'Module'] = MODULE_SMARTCHARGING
     df.at['Operations/GetConfiguration.cpp', 'v16'] = TICK
@@ -221,8 +228,9 @@ def categorize_table(df):
     df.at['Operations/GetInstalledCertificateIds.cpp', 'Module'] = MODULE_SMARTCHARGING
     df.at['Operations/GetLocalListVersion.cpp', 'v16'] = TICK
     df.at['Operations/GetLocalListVersion.cpp', 'Module'] = MODULE_LOCALAUTH
-    df.at['Operations/GetVariables.cpp', 'v201'] = TICK
-    df.at['Operations/GetVariables.cpp', 'Module'] = MODULE_PROVISIONING_VARS
+    if 'Operations/GetVariables.cpp' in df.index:
+        df.at['Operations/GetVariables.cpp', 'v201'] = TICK
+        df.at['Operations/GetVariables.cpp', 'Module'] = MODULE_PROVISIONING_VARS
     df.at['Operations/Heartbeat.cpp', 'v16'] = TICK
     df.at['Operations/Heartbeat.cpp', 'v201'] = TICK
     df.at['Operations/Heartbeat.cpp', 'Module'] = MODULE_AVAILABILITY
@@ -231,29 +239,34 @@ def categorize_table(df):
     df.at['Operations/InstallCertificate.cpp', 'Module'] = MODULE_CERTS
     df.at['Operations/MeterValues.cpp', 'v16'] = TICK
     df.at['Operations/MeterValues.cpp', 'Module'] = MODULE_METERVALUES
-    df.at['Operations/NotifyReport.cpp', 'v201'] = TICK
-    df.at['Operations/NotifyReport.cpp', 'Module'] = MODULE_PROVISIONING_VARS
+    if 'Operations/NotifyReport.cpp' in df.index:
+        df.at['Operations/NotifyReport.cpp', 'v201'] = TICK
+        df.at['Operations/NotifyReport.cpp', 'Module'] = MODULE_PROVISIONING_VARS
     df.at['Operations/RemoteStartTransaction.cpp', 'v16'] = TICK
     df.at['Operations/RemoteStartTransaction.cpp', 'Module'] = MODULE_TX
     df.at['Operations/RemoteStopTransaction.cpp', 'v16'] = TICK
     df.at['Operations/RemoteStopTransaction.cpp', 'Module'] = MODULE_TX
-    df.at['Operations/RequestStartTransaction.cpp', 'v201'] = TICK
-    df.at['Operations/RequestStartTransaction.cpp', 'Module'] = MODULE_TX
-    df.at['Operations/RequestStopTransaction.cpp', 'v201'] = TICK
-    df.at['Operations/RequestStopTransaction.cpp', 'Module'] = MODULE_TX
+    if 'Operations/RequestStartTransaction.cpp' in df.index:
+        df.at['Operations/RequestStartTransaction.cpp', 'v201'] = TICK
+        df.at['Operations/RequestStartTransaction.cpp', 'Module'] = MODULE_TX
+    if 'Operations/RequestStopTransaction.cpp' in df.index:
+        df.at['Operations/RequestStopTransaction.cpp', 'v201'] = TICK
+        df.at['Operations/RequestStopTransaction.cpp', 'Module'] = MODULE_TX
     df.at['Operations/ReserveNow.cpp', 'v16'] = TICK
     df.at['Operations/ReserveNow.cpp', 'Module'] = MODULE_RESERVATION
     df.at['Operations/Reset.cpp', 'v16'] = TICK
     df.at['Operations/Reset.cpp', 'v201'] = TICK
     df.at['Operations/Reset.cpp', 'Module'] = MODULE_PROVISIONING
-    df.at['Operations/SecurityEventNotification.cpp', 'v201'] = TICK
-    df.at['Operations/SecurityEventNotification.cpp', 'Module'] = MODULE_SECURITY
+    if 'Operations/SecurityEventNotification.cpp' in df.index:
+        df.at['Operations/SecurityEventNotification.cpp', 'v201'] = TICK
+        df.at['Operations/SecurityEventNotification.cpp', 'Module'] = MODULE_SECURITY
     df.at['Operations/SendLocalList.cpp', 'v16'] = TICK
     df.at['Operations/SendLocalList.cpp', 'Module'] = MODULE_LOCALAUTH
     df.at['Operations/SetChargingProfile.cpp', 'v16'] = TICK
     df.at['Operations/SetChargingProfile.cpp', 'Module'] = MODULE_SMARTCHARGING
-    df.at['Operations/SetVariables.cpp', 'v201'] = TICK
-    df.at['Operations/SetVariables.cpp', 'Module'] = MODULE_PROVISIONING_VARS
+    if 'Operations/SetVariables.cpp' in df.index:
+        df.at['Operations/SetVariables.cpp', 'v201'] = TICK
+        df.at['Operations/SetVariables.cpp', 'Module'] = MODULE_PROVISIONING_VARS
     df.at['Operations/StartTransaction.cpp', 'v16'] = TICK
     df.at['Operations/StartTransaction.cpp', 'Module'] = MODULE_TX
     df.at['Operations/StatusNotification.cpp', 'v16'] = TICK
@@ -261,22 +274,44 @@ def categorize_table(df):
     df.at['Operations/StatusNotification.cpp', 'Module'] = MODULE_AVAILABILITY
     df.at['Operations/StopTransaction.cpp', 'v16'] = TICK
     df.at['Operations/StopTransaction.cpp', 'Module'] = MODULE_TX
-    df.at['Operations/TransactionEvent.cpp', 'v201'] = TICK
-    df.at['Operations/TransactionEvent.cpp', 'Module'] = MODULE_TX
+    if 'Operations/TransactionEvent.cpp' in df.index:
+        df.at['Operations/TransactionEvent.cpp', 'v201'] = TICK
+        df.at['Operations/TransactionEvent.cpp', 'Module'] = MODULE_TX
     df.at['Operations/TriggerMessage.cpp', 'v16'] = TICK
     df.at['Operations/TriggerMessage.cpp', 'Module'] = MODULE_TRIGGERMESSAGE
     df.at['Operations/UnlockConnector.cpp', 'v16'] = TICK
     df.at['Operations/UnlockConnector.cpp', 'Module'] = MODULE_CORE
     df.at['Operations/UpdateFirmware.cpp', 'v16'] = TICK
     df.at['Operations/UpdateFirmware.cpp', 'Module'] = MODULE_FW_MNGT
-    df.at['MicroOcpp_c.cpp', 'v16'] = TICK
-    df.at['MicroOcpp_c.cpp', 'v201'] = TICK
-    df.at['MicroOcpp_c.cpp', 'Module'] = MODULE_GENERAL
+    if 'MicroOcpp_c.cpp' in df.index:
+        df.at['MicroOcpp_c.cpp', 'v16'] = TICK
+        df.at['MicroOcpp_c.cpp', 'v201'] = TICK
+        df.at['MicroOcpp_c.cpp', 'Module'] = MODULE_GENERAL
 
     print(df)
 
 categorize_table(cunits_v16)
 categorize_table(cunits_v201)
+
+if cunits_v16[COLUMN_BINSIZE].isnull().any():
+    print('Error: categorized the following compilation units erroneously (v16):\n')
+    print(cunits_v16.loc[cunits_v16[COLUMN_BINSIZE].isnull()])
+    sys.exit('\nError categorizing compilation units')
+
+if cunits_v201[COLUMN_BINSIZE].isnull().any():
+    print('Error: categorized the following compilation units erroneously (v201):\n')
+    print(cunits_v201.loc[cunits_v201[COLUMN_BINSIZE].isnull()])
+    sys.exit('\nError categorizing compilation units')
+
+if (cunits_v16['Module'].values == '').sum() > 0:
+    print('Error: did not categorize the following compilation units (v16):\n')
+    print(cunits_v16.loc[cunits_v16['Module'].values == ''])
+    sys.exit('\nError categorizing compilation units')
+
+if (cunits_v201['Module'].values == '').sum() > 0:
+    print('Error: did not categorize the following compilation units (v201):\n')
+    print(cunits_v201.loc[cunits_v201['Module'].values == ''])
+    sys.exit('\nError categorizing compilation units')
 
 # store csv with all details
 
