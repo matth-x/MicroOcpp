@@ -72,24 +72,18 @@ jobs:
       run: pio ci --lib="." --build-dir="${{ github.workspace }}/../build" --keep-build-dir --project-conf="./tests/benchmarks/firmware_size/platformio.ini" ./tests/benchmarks/firmware_size/main.cpp
     - name: Move firmware files # change path to location without parent dir ('..') statement (to make upload-artifact happy)
       run: |
-        mv "${{ github.workspace }}/../build/.pio/build/v16/firmware.elf"  "${{ github.workspace }}/firmware_v16.elf"
-        mv "${{ github.workspace }}/../build/.pio/build/v201/firmware.elf" "${{ github.workspace }}/firmware_v201.elf"
-    - name: Upload v16 firmware file
+        mkdir firmware_elf
+        mv "${{ github.workspace }}/../build/.pio/build/v16/firmware.elf"  firmware_elf/firmware_v16.elf
+        mv "${{ github.workspace }}/../build/.pio/build/v201/firmware.elf" firmware_elf/firmware_v201.elf
+    - name: Upload firmware linker files
       uses: actions/upload-artifact@v4
       with:
-        name: firmware_v16.elf
-        path: "${{ github.workspace }}/firmware_v16.elf"
-        if-no-files-found: error
-        retention-days: 1
-    - name: Upload v201 firmware file
-      uses: actions/upload-artifact@v4
-      with:
-        name: firmware_v201.elf
-        path: "${{ github.workspace }}/firmware_v201.elf"
+        name: firmware_elf
+        path: firmware
         if-no-files-found: error
         retention-days: 1
 
-  profile_firmware:
+  evaluate_firmware:
     needs: build_firmware_size
     runs-on: ubuntu-latest
     steps:
@@ -104,39 +98,34 @@ jobs:
       with:
         repository: google/bloaty
         ref: 379d5305670c00c36a57e608079fd253f13bde63
-        path: "${{ github.workspace }}/bloaty"
+        path: tools/bloaty
         submodules: recursive
     - name: Install bloaty
       run: |
-        cmake -B "${{ github.workspace }}/bloaty/build" -G Ninja -S "${{ github.workspace }}/bloaty"
-        cmake --build "${{ github.workspace }}/bloaty/build" -j 32
-    - name: Get v16 firmware file
+        cmake -B tools/bloaty/build -G Ninja -S tools/bloaty
+        cmake --build tools/bloaty/build -j 32
+    - name: Get firmware linker files
       uses: actions/download-artifact@v4
       with:
-        name: firmware_v16.elf
-    - name: Get v201 firmware file
-      uses: actions/download-artifact@v4
-      with:
-        name: firmware_v201.elf
+        name: firmware_elf
+        path: firmware
     - name: Run bloaty
       run: |
-        "${{ github.workspace }}/bloaty/build/bloaty" ./firmware_v16.elf  -d compileunits --csv -n 0 > bloaty_v16.csv
-        "${{ github.workspace }}/bloaty/build/bloaty" ./firmware_v201.elf -d compileunits --csv -n 0 > bloaty_v201.csv
-    - name: Upload v16 bloaty report
+        mkdir docs/assets
+        mkdir docs/assets/tables
+        tools/bloaty/build/bloaty firmware/firmware_v16.elf  -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v16.csv
+        tools/bloaty/build/bloaty firmware/firmware_v201.elf -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v201.csv
+    - name: Evaluate and create reports
+      run: python tests/benchmarks/scripts/eval_firmware_size.py
+    - name: Upload reports
       uses: actions/upload-artifact@v4
       with:
-        name: bloaty_v16.csv
-        path: bloaty_v16.csv
-        if-no-files-found: error
-    - name: Upload v201 bloaty report
-      uses: actions/upload-artifact@v4
-      with:
-        name: bloaty_v201.csv
-        path: bloaty_v201.csv
+        name: Firmware size reports CSV
+        path: docs/assets/tables
         if-no-files-found: error
 
   deploy:
-    needs: profile_firmware
+    needs: evaluate_firmware
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -149,17 +138,10 @@ jobs:
         path: .cache
     - name: Install Python dependencies
       run: pip install pandas mkdocs-material mkdocs-table-reader-plugin
-    - name: Get v16 bloaty analysis
+    - name: Get firmware size reports
       uses: actions/download-artifact@v4
       with:
-        name: bloaty_v16.csv
+        name: Firmware size reports CSV
         path: docs/assets/tables
-    - name: Get v201 bloaty analysis
-      uses: actions/download-artifact@v4
-      with:
-        name: bloaty_v201.csv
-        path: docs/assets/tables
-    - name: Evaluate and create reports
-      run: python tests/benchmarks/scripts/eval_firmware_size.py
     - name: Run mkdocs
       run: mkdocs gh-deploy --force
