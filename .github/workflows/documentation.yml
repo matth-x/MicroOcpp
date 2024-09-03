@@ -10,41 +10,41 @@ on:
 permissions:
   contents: write
 jobs:
-  test_artifact:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Create artifact
-      run: |
-        echo "ls:"
-        ls
-        mkdir some_folder
-        echo "fake artifact 1" > some_folder/test_artifact_1.txt
-        echo "fake artifact 2" > some_folder/test_artifact_2.txt
-        echo "ls some_folder:"
-        ls some_folder
-    - name: Upload test artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: Test artifacts
-        path: "${{ github.workspace }}/some_folder"
-        if-no-files-found: error
-        retention-days: 1
-  
-  test_artifact2:
-    needs: test_artifact
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download test artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: Test artifacts
-        path: some_other_folder
-    - name: Show result
-      run: |
-        echo "ls:"
-        ls
-        echo "ls some_other_folder:"
-        ls some_other_folder
+#  test_artifact:
+#    runs-on: ubuntu-latest
+#    steps:
+#    - name: Create artifact
+#      run: |
+#        echo "ls:"
+#        ls
+#        mkdir some_folder
+#        echo "fake artifact 1" > some_folder/test_artifact_1.txt
+#        echo "fake artifact 2" > some_folder/test_artifact_2.txt
+#        echo "ls some_folder:"
+#        ls some_folder
+#    - name: Upload test artifacts
+#      uses: actions/upload-artifact@v4
+#      with:
+#        name: Test artifacts
+#        path: "${{ github.workspace }}/some_folder"
+#        if-no-files-found: error
+#        retention-days: 1
+#  
+#  test_artifact2:
+#    needs: test_artifact
+#    runs-on: ubuntu-latest
+#    steps:
+#    - name: Download test artifact
+#      uses: actions/download-artifact@v4
+#      with:
+#        name: Test artifacts
+#        path: some_other_folder
+#    - name: Show result
+#      run: |
+#        echo "ls:"
+#        ls
+#        echo "ls some_other_folder:"
+#        ls some_other_folder
   
   build_firmware_size:
     runs-on: ubuntu-latest
@@ -78,7 +78,7 @@ jobs:
     - name: Upload firmware linker files
       uses: actions/upload-artifact@v4
       with:
-        name: firmware_elf
+        name: Firmware linker files
         path: firmware
         if-no-files-found: error
         retention-days: 1
@@ -87,6 +87,16 @@ jobs:
     needs: build_firmware_size
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
+    - uses: actions/cache@v2
+      with:
+        key: ${{ github.ref }}
+        path: .cache
+    - name: Install Python dependencies
+      run: pip install pandas 
     - name: Get build tools
       run: |
         sudo apt update
@@ -107,11 +117,12 @@ jobs:
     - name: Get firmware linker files
       uses: actions/download-artifact@v4
       with:
-        name: firmware_elf
+        name: Firmware linker files
         path: firmware
     - name: Run bloaty
       run: |
-        mkdir docs && mkdir docs/assets && mkdir docs/assets/tables
+        mkdir docs/assets
+        mkdir docs/assets/tables
         tools/bloaty/build/bloaty firmware/firmware_v16.elf  -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v16.csv
         tools/bloaty/build/bloaty firmware/firmware_v201.elf -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v201.csv
     - name: Evaluate and create reports
