@@ -3,33 +3,52 @@
 // MIT License
 
 #include <MicroOcpp.h>
+#include <MicroOcpp_c.h>
+#include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
+#include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
 
 MicroOcpp::LoopbackConnection g_loopback;
 
 void setup() {
 
+    ocpp_deinitialize();
 
     mocpp_initialize(g_loopback, ChargerCredentials());
 
-    /*
-     * Integrate OCPP functionality. You can leave out the following part if your EVSE doesn't need it.
-     */
-    setEnergyMeterInput([]() {
-        //take the energy register of the main electricity meter and return the value in watt-hours
-        return 0.f;
-    });
+    ocpp_beginTransaction("");
+    ocpp_beginTransaction_authorized("","");
+    ocpp_endTransaction("","");
+    ocpp_endTransaction_authorized("","");
+    ocpp_isTransactionActive();
+    ocpp_isTransactionRunning();
+    ocpp_getTransactionIdTag();
+    ocpp_getTransaction();
+    ocpp_ocppPermitsCharge();
+    ocpp_getChargePointStatus();
+    ocpp_setConnectorPluggedInput([] () {return false;});
+    ocpp_setEnergyMeterInput([] () {return 0;});
+    ocpp_setPowerMeterInput([] () {return 0.f;});
+    ocpp_setSmartChargingPowerOutput([] (float) {});
+    ocpp_setSmartChargingCurrentOutput([] (float) {});
+    ocpp_setSmartChargingOutput([] (float,float,int) {});
+    ocpp_setEvReadyInput([] () {return false;});
+    ocpp_setEvseReadyInput([] () {return false;});
+    ocpp_addErrorCodeInput([] () {return (const char*)nullptr;});
+    addErrorDataInput([] () {return MicroOcpp::ErrorData("");});
+    ocpp_addMeterValueInputFloat([] () {return 0.f;},"","","","");
+    ocpp_setOccupiedInput([] () {return false;});
+    ocpp_setStartTxReadyInput([] () {return false;});
+    ocpp_setStopTxReadyInput([] () {return false;});
+    ocpp_setTxNotificationOutput([] (OCPP_Transaction*, OCPP_TxNotification) {});
+    ocpp_setOnUnlockConnectorInOut([] () {return UnlockConnectorResult_UnlockFailed;});
+    isOperative();
+    setOnResetNotify([] (bool) {return false;});
+    setOnResetExecute([] (bool) {return false;});
+    getFirmwareService()->getFirmwareStatus();
+    getDiagnosticsService()->getDiagnosticsStatus();
+    setCertificateStore(nullptr);
+    getOcppContext();
 
-    setSmartChargingCurrentOutput([](float limit) {
-        //set the SAE J1772 Control Pilot value here
-        Serial.printf("[main] Smart Charging allows maximum charge rate: %.0f\n", limit);
-    });
-
-    setConnectorPluggedInput([]() {
-        //return true if an EV is plugged to this EVSE
-        return false;
-    });
-
-    //... see MicroOcpp.h for more settings
 }
 
 void loop() {
