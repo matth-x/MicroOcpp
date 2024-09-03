@@ -28,9 +28,9 @@ def categorize_table(df):
     TICK = 'x'
 
     MODULE_GENERAL = 'General'
-    MODULE_HAL = 'General - HAL'
-    MODULE_TESTS = 'General - Testing'
+    MODULE_HAL = 'General - Hardware Abstraction Layer'
     MODULE_RPC = 'General - RPC framework'
+    MODULE_API = 'General - API'
     MODULE_CORE = 'Core'
     MODULE_CONFIGURATION = 'Configuration'
     MODULE_FW_MNGT = 'Firmware Management'
@@ -49,7 +49,7 @@ def categorize_table(df):
 
     df.at['MicroOcpp.cpp', 'v16'] = TICK
     df.at['MicroOcpp.cpp', 'v201'] = TICK
-    df.at['MicroOcpp.cpp', 'Module'] = MODULE_GENERAL
+    df.at['MicroOcpp.cpp', 'Module'] = MODULE_API
     df.at['Core/Configuration.cpp', 'v16'] = TICK
     df.at['Core/Configuration.cpp', 'v201'] = TICK
     df.at['Core/Configuration.cpp', 'Module'] = MODULE_CONFIGURATION
@@ -83,7 +83,7 @@ def categorize_table(df):
     df.at['Core/FtpMbedTLS.cpp', 'Module'] = MODULE_GENERAL
     df.at['Core/Memory.cpp', 'v16'] = TICK
     df.at['Core/Memory.cpp', 'v201'] = TICK
-    df.at['Core/Memory.cpp', 'Module'] = MODULE_TESTS
+    df.at['Core/Memory.cpp', 'Module'] = MODULE_GENERAL
     df.at['Core/Operation.cpp', 'v16'] = TICK
     df.at['Core/Operation.cpp', 'v201'] = TICK
     df.at['Core/Operation.cpp', 'Module'] = MODULE_RPC
@@ -289,7 +289,7 @@ def categorize_table(df):
     if 'MicroOcpp_c.cpp' in df.index:
         df.at['MicroOcpp_c.cpp', 'v16'] = TICK
         df.at['MicroOcpp_c.cpp', 'v201'] = TICK
-        df.at['MicroOcpp_c.cpp', 'Module'] = MODULE_GENERAL
+        df.at['MicroOcpp_c.cpp', 'Module'] = MODULE_API
 
     print(df)
 
