@@ -18,9 +18,11 @@ This chapter presents benchmarks of the memory and flash requirements. They shou
 
 When compiling a firmware with MicroOCPP, the resulting binary will contain functionality which is not related to OCPP, like hardware drivers, modules which are shared, like MbedTLS and the actual MicroOCPP object files. The size of the latter is the final flash requirement of MicroOCPP.
 
-For the flash benchmark, the profiler compiles a [dummy OCPP firmware](https://github.com/matth-x/MicroOcpp/tree/main/tests/benchmarks/firmware_size/main.cpp), analyzes the size of the compilation units using [bloaty](https://github.com/google/bloaty) and evaluates the bloaty report using a [Python script](https://github.com/matth-x/MicroOcpp/tree/main/tests/benchmarks/scripts/eval_firmware_size.py). To give realistic results, the firwmare is compiled with `-Os`, no RTTI or exectiions and newlib as the standard C library. The following tables show the results.
+For the flash benchmark, the profiler compiles a [dummy OCPP firmware](https://github.com/matth-x/MicroOcpp/tree/main/tests/benchmarks/firmware_size/main.cpp), analyzes the size of the compilation units using [bloaty](https://github.com/google/bloaty) and evaluates the bloaty report using a [Python script](https://github.com/matth-x/MicroOcpp/tree/main/tests/benchmarks/scripts/eval_firmware_size.py). To give realistic results, the firwmare is compiled with `-Os`, no RTTI or exceptions and newlib as the standard C library. The following tables show the results.
 
 ### OCPP 1.6
+
+The following table shows the cumulated size of the objects files per module. The Module category consists of the OCPP 2.0.1 functional blocks, OCPP 1.6 feature profiles and general functionality which is shared accross the library. If a feature of the implementation falls under both an OCPP 2.0.1 functional block and OCPP 1.6 feature profile definition, it is preferrably assigned to the OCPP 2.0.1 category. This allows for better comparability between both OCPP versions.
 
 **Table 1: Firmware size per Module**
 

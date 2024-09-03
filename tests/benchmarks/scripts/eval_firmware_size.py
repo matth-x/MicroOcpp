@@ -136,6 +136,9 @@ def categorize_table(df):
     df.at['Model/ConnectorBase/Connector.cpp', 'Module'] = MODULE_CORE
     df.at['Model/ConnectorBase/ConnectorsCommon.cpp', 'v16'] = TICK
     df.at['Model/ConnectorBase/ConnectorsCommon.cpp', 'Module'] = MODULE_CORE
+    if 'Model/ConnectorBase/Notification.cpp' in df.index:
+        df.at['Model/ConnectorBase/Notification.cpp', 'v16'] = TICK
+        df.at['Model/ConnectorBase/Notification.cpp', 'Module'] = MODULE_CORE
     df.at['Model/Diagnostics/DiagnosticsService.cpp', 'v16'] = TICK
     df.at['Model/Diagnostics/DiagnosticsService.cpp', 'Module'] = MODULE_FW_MNGT
     df.at['Model/FirmwareManagement/FirmwareService.cpp', 'v16'] = TICK
