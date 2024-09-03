@@ -72,7 +72,7 @@ jobs:
       run: pio ci --lib="." --build-dir="${{ github.workspace }}/../build" --keep-build-dir --project-conf="./tests/benchmarks/firmware_size/platformio.ini" ./tests/benchmarks/firmware_size/main.cpp
     - name: Move firmware files # change path to location without parent dir ('..') statement (to make upload-artifact happy)
       run: |
-        mkdir firmware_elf
+        mkdir firmware
         mv "${{ github.workspace }}/../build/.pio/build/v16/firmware.elf"  firmware/firmware_v16.elf
         mv "${{ github.workspace }}/../build/.pio/build/v201/firmware.elf" firmware/firmware_v201.elf
     - name: Upload firmware linker files
