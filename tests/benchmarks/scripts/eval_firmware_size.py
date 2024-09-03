@@ -6,16 +6,17 @@ import pandas as pd
 COLUMN_BINSIZE = 'Binary size (Bytes)'
 
 def load_compilation_units(fn):
-    cunits_v16 = pd.read_csv(fn, index_col="compileunits").filter(like="lib/MicroOcpp/src/MicroOcpp", axis=0).filter(['Module','v16','v201','vmsize'], axis=1).sort_index()
-    cunits_v16.index.names = ['Compile Unit']
-    cunits_v16.rename(columns={'vmsize': COLUMN_BINSIZE}, inplace=True)
+    df = pd.read_csv(fn, index_col="compileunits").filter(like="lib/MicroOcpp/src/MicroOcpp", axis=0).filter(['Module','v16','v201','vmsize'], axis=1).sort_index()
+    df.index.names = ['Compile Unit']
+    df.rename(columns={'vmsize': COLUMN_BINSIZE}, inplace=True)
+    return df
     
 cunits_v16 = load_compilation_units('docs/assets/tables/bloaty_v16.csv')
 
 # categorize data
 
 def categorize_table(df):
-    
+
     df["v16"] = ''
     df["v201"] = ''
     df["Module"] = ''
