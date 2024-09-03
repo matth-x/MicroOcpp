@@ -22,13 +22,13 @@ For the flash benchmark, the profiler compiles a [dummy OCPP firmware](https://g
 
 ### OCPP 1.6
 
-** Firmware size per Module **
+**Table 1: Firmware size per Module**
 
 {{ read_csv('modules_v16.csv') }}
 
 ### OCPP 2.0.1
 
-** Firmware size per Module **
+**Table 2: Firmware size per Module**
 
 {{ read_csv('modules_v201.csv') }}
 
@@ -36,10 +36,10 @@ For the flash benchmark, the profiler compiles a [dummy OCPP firmware](https://g
 
 This section contains the raw data which is the basis for the evaluations above.
 
-** All compilation units for OCPP 1.6 firmware **
+**Table 3: All compilation units for OCPP 1.6 firmware**
 
 {{ read_csv('compile_units_v16.csv') }}
 
-** All compilation units for OCPP 2.0.1 firmware **
+**Table 4: All compilation units for OCPP 2.0.1 firmware**
 
 {{ read_csv('compile_units_v201.csv') }}
