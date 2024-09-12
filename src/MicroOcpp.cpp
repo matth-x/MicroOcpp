@@ -21,6 +21,7 @@
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
 #include <MicroOcpp/Model/Certificates/CertificateMbedTLS.h>
+#include <MicroOcpp/Model/Availability/AvailabilityService.h>
 #include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Core/OperationRegistry.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -278,17 +279,30 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 
     auto& model = context->getModel();
 
-    model.setTransactionStore(std::unique_ptr<TransactionStore>(
-        new TransactionStore(MO_NUMCONNECTORS, filesystem)));
     model.setBootService(std::unique_ptr<BootService>(
         new BootService(*context, filesystem)));
-    model.setConnectorsCommon(std::unique_ptr<ConnectorsCommon>(
-        new ConnectorsCommon(*context, MO_NUMCONNECTORS, filesystem)));
-    auto connectors = makeVector<std::unique_ptr<Connector>>("v16.ConnectorBase.Connector");
-    for (unsigned int connectorId = 0; connectorId < MO_NUMCONNECTORS; connectorId++) {
-        connectors.emplace_back(new Connector(*context, filesystem, connectorId));
+
+#if MO_ENABLE_V201
+    if (version.major == 2) {
+        model.setAvailabilityService(std::unique_ptr<AvailabilityService>(
+            new AvailabilityService(*context, MO_NUM_EVSE)));
+        model.setVariableService(std::unique_ptr<VariableService>(
+            new VariableService(*context, filesystem)));
+        model.setTransactionService(std::unique_ptr<TransactionService>(
+            new TransactionService(*context)));
+    } else
+#endif
+    {
+        model.setTransactionStore(std::unique_ptr<TransactionStore>(
+            new TransactionStore(MO_NUMCONNECTORS, filesystem)));
+        model.setConnectorsCommon(std::unique_ptr<ConnectorsCommon>(
+            new ConnectorsCommon(*context, MO_NUMCONNECTORS, filesystem)));
+        auto connectors = makeVector<std::unique_ptr<Connector>>("v16.ConnectorBase.Connector");
+        for (unsigned int connectorId = 0; connectorId < MO_NUMCONNECTORS; connectorId++) {
+            connectors.emplace_back(new Connector(*context, filesystem, connectorId));
+        }
+        model.setConnectors(std::move(connectors));
     }
-    model.setConnectors(std::move(connectors));
     model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
         new HeartbeatService(*context)));
 
@@ -300,13 +314,6 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 #if MO_ENABLE_RESERVATION
     model.setReservationService(std::unique_ptr<ReservationService>(
         new ReservationService(*context, MO_NUMCONNECTORS)));
-#endif
-
-#if MO_ENABLE_V201
-    model.setVariableService(std::unique_ptr<VariableService>(
-        new VariableService(*context, filesystem)));
-    model.setTransactionService(std::unique_ptr<TransactionService>(
-        new TransactionService(*context)));
 #endif
 
 #if MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
@@ -366,7 +373,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 
     configuration_load();
 
-    MO_DBG_INFO("initialized MicroOcpp v" MO_VERSION);
+    MO_DBG_INFO("initialized MicroOcpp v" MO_VERSION " running OCPP %i.%i.%i", version.major, version.minor, version.patch);
 }
 
 void mocpp_deinitialize() {
@@ -612,6 +619,15 @@ ChargePointStatus getChargePointStatus(unsigned int connectorId) {
         MO_DBG_WARN("OCPP uninitialized");
         return ChargePointStatus_UNDEFINED;
     }
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (auto availabilityService = context->getModel().getAvailabilityService()) {
+            if (auto evse = availabilityService->getEvse(connectorId)) {
+                return evse->getStatus();
+            }
+        }
+    }
+#endif
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -627,6 +643,11 @@ void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int c
     }
 #if MO_ENABLE_V201
     if (context->getVersion().major == 2) {
+        if (auto availabilityService = context->getModel().getAvailabilityService()) {
+            if (auto evse = availabilityService->getEvse(connectorId)) {
+                evse->setConnectorPluggedInput(pluggedInput);
+            }
+        }
         if (auto txService = context->getModel().getTransactionService()) {
             if (auto evse = txService->getEvse(connectorId)) {
                 evse->setConnectorPluggedInput(pluggedInput);
@@ -886,6 +907,15 @@ void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId) 
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (auto availabilityService = context->getModel().getAvailabilityService()) {
+            if (auto evse = availabilityService->getEvse(connectorId)) {
+                evse->setOccupiedInput(occupied);
+            }
+        }
+    }
+#endif
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -953,6 +983,19 @@ bool isOperative(unsigned int connectorId) {
         MO_DBG_WARN("OCPP uninitialized");
         return true; //assume "true" as default state
     }
+#if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (auto availabilityService = context->getModel().getAvailabilityService()) {
+            auto chargePoint = availabilityService->getEvse(OCPP_ID_OF_CP);
+            auto connector = availabilityService->getEvse(connectorId);
+            if (!chargePoint || !connector) {
+                MO_DBG_ERR("could not find connector");
+                return true; //assume "true" as default state
+            }
+            return chargePoint->isOperative() && connector->isOperative();
+        }
+    }
+#endif
     auto& model = context->getModel();
     auto chargePoint = model.getConnector(OCPP_ID_OF_CP);
     auto connector = model.getConnector(connectorId);

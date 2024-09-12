@@ -37,6 +37,7 @@ class CertificateService;
 #endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_V201
+class AvailabilityService;
 class VariableService;
 class TransactionService;
 
@@ -71,6 +72,7 @@ private:
 #endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_V201
+    std::unique_ptr<AvailabilityService> availabilityService;
     std::unique_ptr<VariableService> variableService;
     std::unique_ptr<TransactionService> transactionService;
     std::unique_ptr<Ocpp201::ResetService> resetServiceV201;
@@ -142,6 +144,9 @@ public:
 #endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_V201
+    void setAvailabilityService(std::unique_ptr<AvailabilityService> as);
+    AvailabilityService *getAvailabilityService() const;
+
     void setVariableService(std::unique_ptr<VariableService> vs);
     VariableService *getVariableService() const;
 

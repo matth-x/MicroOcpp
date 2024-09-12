@@ -20,7 +20,7 @@ GetVariableData::GetVariableData(const char *memory_tag) : componentName{makeStr
 
 }
 
-GetVariables::GetVariables(VariableService& variableService) : MemoryManaged("v201.Operation.", "GetVariableData"), variableService(variableService), queries(makeVector<GetVariableData>(getMemoryTag())) {
+GetVariables::GetVariables(VariableService& variableService) : MemoryManaged("v201.Operation.", "GetVariables"), variableService(variableService), queries(makeVector<GetVariableData>(getMemoryTag())) {
 
 }
 

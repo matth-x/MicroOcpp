@@ -51,6 +51,7 @@ set(MO_SRC
     src/MicroOcpp/Operations/RequestStopTransaction.cpp
     src/MicroOcpp/Operations/ReserveNow.cpp
     src/MicroOcpp/Operations/Reset.cpp
+    src/MicroOcpp/Operations/SecurityEventNotification.cpp
     src/MicroOcpp/Operations/SendLocalList.cpp
     src/MicroOcpp/Operations/SetChargingProfile.cpp
     src/MicroOcpp/Operations/SetVariables.cpp
@@ -65,6 +66,7 @@ set(MO_SRC
     src/MicroOcpp/Debug.cpp
     src/MicroOcpp/Platform.cpp
     src/MicroOcpp/Core/OperationRegistry.cpp
+    src/MicroOcpp/Model/Availability/AvailabilityService.cpp
     src/MicroOcpp/Model/Authorization/AuthorizationData.cpp
     src/MicroOcpp/Model/Authorization/AuthorizationList.cpp
     src/MicroOcpp/Model/Authorization/AuthorizationService.cpp
@@ -149,6 +151,7 @@ set(MO_SRC_UNIT
     tests/FirmwareManagement.cpp
     tests/ChargePointError.cpp
     tests/Boot.cpp
+    tests/Security.cpp
 )
 
 add_executable(mo_unit_tests
@@ -192,6 +195,7 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_ENABLE_CERT_MGMT=1
     MO_ENABLE_CONNECTOR_LOCK=1
     MO_REPORT_NOERROR=1
+    MO_ENABLE_V201=1
     MO_OVERRIDE_ALLOCATION=1
     MO_ENABLE_HEAP_PROFILER=1
     MO_HEAP_PROFILER_EXTERNAL_CONTROL=1

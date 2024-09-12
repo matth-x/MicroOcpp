@@ -255,11 +255,11 @@ public:
      * Transaction substates. Notify server about any change when transaction is running
      */
     //bool trackParkingBayOccupancy; // not supported
-    bool trackEvConnected;
-    bool trackAuthorized;
-    bool trackDataSigned;
-    bool trackPowerPathClosed;
-    bool trackEnergyTransfer;
+    bool trackEvConnected = false;
+    bool trackAuthorized = false;
+    bool trackDataSigned = false;
+    bool trackPowerPathClosed = false;
+    bool trackEnergyTransfer = false;
 
     /*
      * Transaction lifecycle
