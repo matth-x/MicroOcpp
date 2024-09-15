@@ -187,7 +187,7 @@ std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuild
 
     //create new object and cache weak pointer
 
-    auto tx = std::make_shared<TransactionMeterData>(connectorId, txNr, filesystem);
+    auto tx = std::allocate_shared<TransactionMeterData>(makeAllocator<TransactionMeterData>(getMemoryTag()), connectorId, txNr, filesystem);
     
     if (filesystem) {
         char fn [MO_MAX_PATH_SIZE] = {'\0'};

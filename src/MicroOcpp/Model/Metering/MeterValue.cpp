@@ -62,11 +62,11 @@ void MeterValue::setTimestamp(Timestamp timestamp) {
 ReadingContext MeterValue::getReadingContext() {
     //all sampledValues have the same ReadingContext. Just get the first result
     for (auto sample = sampledValue.begin(); sample != sampledValue.end(); sample++) {
-        if ((*sample)->getReadingContext() != ReadingContext::NOT_SET) {
+        if ((*sample)->getReadingContext() != ReadingContext_UNDEFINED) {
             return (*sample)->getReadingContext();
         }
     }
-    return ReadingContext::NOT_SET;
+    return ReadingContext_UNDEFINED;
 }
 
 void MeterValue::setTxNr(unsigned int txNr) {

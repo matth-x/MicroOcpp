@@ -15,6 +15,7 @@
 
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Model/Transactions/TransactionDefs.h>
+#include <MicroOcpp/Model/Metering/MeterValuesV201.h>
 #include <MicroOcpp/Core/Memory.h>
 
 #include <memory>
@@ -33,6 +34,7 @@ public:
         Context& context;
         TransactionService& txService;
         const unsigned int evseId;
+        unsigned int txNrCounter = 0;
         std::shared_ptr<Ocpp201::Transaction> transaction;
         Ocpp201::TransactionEventData::ChargingState trackChargingState = Ocpp201::TransactionEventData::ChargingState::UNDEFINED;
 
@@ -44,6 +46,7 @@ public:
         std::function<bool()> stopTxReadyInput;
 
         std::unique_ptr<Ocpp201::Transaction> allocateTransaction();
+
     public:
         Evse(Context& context, TransactionService& txService, unsigned int evseId);
 
@@ -86,6 +89,8 @@ private:
     Variable *stopTxOnInvalidIdBool = nullptr;
     Variable *stopTxOnEVSideDisconnectBool = nullptr;
     Variable *evConnectionTimeOutInt = nullptr;
+    Variable *sampledDataTxUpdatedInterval = nullptr;
+    Variable *sampledDataTxEndedInterval = nullptr;
     uint16_t trackTxStartPoint = -1;
     uint16_t trackTxStopPoint = -1;
     Vector<TxStartStopPoint> txStartPointParsed;

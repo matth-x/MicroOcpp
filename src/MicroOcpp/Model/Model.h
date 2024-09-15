@@ -43,6 +43,7 @@ class TransactionService;
 
 namespace Ocpp201 {
 class ResetService;
+class MeteringService;
 }
 #endif //MO_ENABLE_V201
 
@@ -76,6 +77,7 @@ private:
     std::unique_ptr<VariableService> variableService;
     std::unique_ptr<TransactionService> transactionService;
     std::unique_ptr<Ocpp201::ResetService> resetServiceV201;
+    std::unique_ptr<Ocpp201::MeteringService> meteringServiceV201;
 #endif
 
     Clock clock;
@@ -155,6 +157,9 @@ public:
 
     void setResetServiceV201(std::unique_ptr<Ocpp201::ResetService> rs);
     Ocpp201::ResetService *getResetServiceV201() const;
+
+    void setMeteringServiceV201(std::unique_ptr<Ocpp201::MeteringService> ms);
+    Ocpp201::MeteringService *getMeteringServiceV201() const;
 #endif
 
     Clock &getClock();

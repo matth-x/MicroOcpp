@@ -653,6 +653,7 @@ void setConnectorPluggedInput(std::function<bool()> pluggedInput, unsigned int c
                 evse->setConnectorPluggedInput(pluggedInput);
             }
         }
+        return;
     }
 #endif
     auto connector = context->getModel().getConnector(connectorId);
@@ -668,11 +669,14 @@ void setEnergyMeterInput(std::function<int()> energyInput, unsigned int connecto
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
-    auto& model = context->getModel();
-    if (!model.getMeteringService()) {
-        model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*context, MO_NUMCONNECTORS, filesystem)));
+
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        addMeterValueInput([energyInput] () {return static_cast<float>(energyInput());}, "Energy.Active.Import.Register", "Wh", nullptr, nullptr, connectorId);
+        return;
     }
+    #endif
+
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Energy.Active.Import.Register");
     meterProperties.setUnit("Wh");
@@ -681,7 +685,7 @@ void setEnergyMeterInput(std::function<int()> energyInput, unsigned int connecto
             meterProperties,
             [energyInput] (ReadingContext) {return energyInput();}
     ));
-    model.getMeteringService()->addMeterValueSampler(connectorId, std::move(mvs));
+    addMeterValueInput(std::move(mvs), connectorId);
 }
 
 void setPowerMeterInput(std::function<float()> powerInput, unsigned int connectorId) {
@@ -690,11 +694,13 @@ void setPowerMeterInput(std::function<float()> powerInput, unsigned int connecto
         return;
     }
 
-    auto& model = context->getModel();
-    if (!model.getMeteringService()) {
-        model.setMeteringSerivce(std::unique_ptr<MeteringService>(
-            new MeteringService(*context, MO_NUMCONNECTORS, filesystem)));
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        addMeterValueInput([powerInput] () {return static_cast<float>(powerInput());}, "Power.Active.Import", "W", nullptr, nullptr, connectorId);
+        return;
     }
+    #endif
+
     SampledValueProperties meterProperties;
     meterProperties.setMeasurand("Power.Active.Import");
     meterProperties.setUnit("W");
@@ -703,7 +709,7 @@ void setPowerMeterInput(std::function<float()> powerInput, unsigned int connecto
             meterProperties,
             [powerInput] (ReadingContext) {return powerInput();}
     ));
-    model.getMeteringService()->addMeterValueSampler(connectorId, std::move(mvs));
+    addMeterValueInput(std::move(mvs), connectorId);
 }
 
 void setSmartChargingPowerOutput(std::function<void(float)> chargingLimitOutput, unsigned int connectorId) {
@@ -820,6 +826,7 @@ void setEvseReadyInput(std::function<bool()> evseReadyInput, unsigned int connec
                 evse->setEvseReadyInput(evseReadyInput);
             }
         }
+        return;
     }
 #endif
     auto connector = context->getModel().getConnector(connectorId);
@@ -872,6 +879,33 @@ void addMeterValueInput(std::function<float ()> valueInput, const char *measuran
         MO_DBG_WARN("measurand unspecified; assume %s", measurand);
     }
 
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        auto& model = context->getModel();
+        if (!model.getMeteringServiceV201()) {
+            model.setMeteringServiceV201(std::unique_ptr<Ocpp201::MeteringService>(
+                new Ocpp201::MeteringService(context->getModel(), MO_NUM_EVSE)));
+        }
+        if (auto mEvse = model.getMeteringServiceV201()->getEvse(connectorId)) {
+            
+            Ocpp201::SampledValueProperties properties;
+            properties.setMeasurand(measurand); //mandatory for MO
+
+            if (unit)
+                properties.setUnitOfMeasureUnit(unit);
+            if (location)
+                properties.setLocation(location);
+            if (phase)
+                properties.setPhase(phase);
+
+            mEvse->addMeterValueInput([valueInput] (ReadingContext) {return static_cast<double>(valueInput());}, properties);
+        } else {
+            MO_DBG_ERR("inalid arg");
+        }
+        return;
+    }
+    #endif
+
     SampledValueProperties properties;
     properties.setMeasurand(measurand); //mandatory for MO
 
@@ -885,7 +919,7 @@ void addMeterValueInput(std::function<float ()> valueInput, const char *measuran
     auto valueSampler = std::unique_ptr<MicroOcpp::SampledValueSamplerConcrete<float, MicroOcpp::SampledValueDeSerializer<float>>>(
                                     new MicroOcpp::SampledValueSamplerConcrete<float, MicroOcpp::SampledValueDeSerializer<float>>(
                 properties,
-                [valueInput] (MicroOcpp::ReadingContext) {return valueInput();}));
+                [valueInput] (ReadingContext) {return valueInput();}));
     addMeterValueInput(std::move(valueSampler), connectorId);
 }
 
@@ -894,6 +928,12 @@ void addMeterValueInput(std::unique_ptr<SampledValueSampler> valueInput, unsigne
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        MO_DBG_ERR("addMeterValueInput(std::unique_ptr<SampledValueSampler>...) not compatible with v201. Use addMeterValueInput(std::function<float>...) instead");
+        return;
+    }
+    #endif
     auto& model = context->getModel();
     if (!model.getMeteringService()) {
         model.setMeteringSerivce(std::unique_ptr<MeteringService>(
@@ -1219,7 +1259,7 @@ bool startTransaction(const char *idTag, OnReceiveConfListener onConf, OnAbortLi
     }
 
     if (auto mService = context->getModel().getMeteringService()) {
-        auto meterStart = mService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionBegin);
+        auto meterStart = mService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext_TransactionBegin);
         if (meterStart && *meterStart) {
             transaction->setMeterStart(meterStart->toInteger());
         } else {
@@ -1275,7 +1315,7 @@ bool stopTransaction(OnReceiveConfListener onConf, OnAbortListener onAbort, OnTi
     }
 
     if (auto mService = context->getModel().getMeteringService()) {
-        auto meterStop = mService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionEnd);
+        auto meterStop = mService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext_TransactionEnd);
         if (meterStop && *meterStop) {
             transaction->setMeterStop(meterStop->toInteger());
         } else {

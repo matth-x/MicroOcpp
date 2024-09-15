@@ -86,6 +86,8 @@ set(MO_SRC
     src/MicroOcpp/Model/Metering/MeteringService.cpp
     src/MicroOcpp/Model/Metering/MeterStore.cpp
     src/MicroOcpp/Model/Metering/MeterValue.cpp
+    src/MicroOcpp/Model/Metering/MeterValuesV201.cpp
+    src/MicroOcpp/Model/Metering/ReadingContext.cpp
     src/MicroOcpp/Model/Metering/SampledValue.cpp
     src/MicroOcpp/Model/Reservation/Reservation.cpp
     src/MicroOcpp/Model/Reservation/ReservationService.cpp

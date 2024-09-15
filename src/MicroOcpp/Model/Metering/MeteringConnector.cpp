@@ -98,7 +98,7 @@ void MeteringConnector::loop() {
                 "in time (tolerance <= 60s)" : "off, e.g. because of first run. Ignore");
             if (abs(dt) <= 60) { //is measurement still "clock-aligned"?
 
-                if (auto alignedMeterValue = alignedDataBuilder->takeSample(model.getClock().now(), ReadingContext::SampleClock)) {
+                if (auto alignedMeterValue = alignedDataBuilder->takeSample(model.getClock().now(), ReadingContext_SampleClock)) {
                     if (meterData.size() >= MO_METERVALUES_CACHE_MAXSIZE) {
                         MO_DBG_INFO("MeterValue cache full. Drop old MV");
                         meterData.erase(meterData.begin());
@@ -111,7 +111,7 @@ void MeteringConnector::loop() {
                 }
 
                 if (stopTxnData) {
-                    auto alignedStopTx = stopTxnAlignedDataBuilder->takeSample(model.getClock().now(), ReadingContext::SampleClock);
+                    auto alignedStopTx = stopTxnAlignedDataBuilder->takeSample(model.getClock().now(), ReadingContext_SampleClock);
                     if (alignedStopTx) {
                         stopTxnData->addTxData(std::move(alignedStopTx));
                     }
@@ -138,7 +138,7 @@ void MeteringConnector::loop() {
         //record periodic tx data
 
         if (mocpp_tick_ms() - lastSampleTime >= (unsigned long) (meterValueSampleIntervalInt->getInt() * 1000)) {
-            if (auto sampledMeterValue = sampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::SamplePeriodic)) {
+            if (auto sampledMeterValue = sampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_SamplePeriodic)) {
                 if (meterData.size() >= MO_METERVALUES_CACHE_MAXSIZE) {
                     MO_DBG_INFO("MeterValue cache full. Drop old MV");
                     meterData.erase(meterData.begin());
@@ -151,7 +151,7 @@ void MeteringConnector::loop() {
             }
 
             if (stopTxnData && stopTxnDataCapturePeriodicBool->getBool()) {
-                auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::SamplePeriodic);
+                auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_SamplePeriodic);
                 if (sampleStopTx) {
                     stopTxnData->addTxData(std::move(sampleStopTx));
                 }
@@ -163,7 +163,7 @@ void MeteringConnector::loop() {
 
 std::unique_ptr<Operation> MeteringConnector::takeTriggeredMeterValues() {
 
-    auto sample = sampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::Trigger);
+    auto sample = sampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_Trigger);
 
     if (!sample) {
         return nullptr;
@@ -199,7 +199,7 @@ void MeteringConnector::beginTxMeterData(Transaction *transaction) {
     }
 
     if (stopTxnData) {
-        auto sampleTxBegin = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::TransactionBegin);
+        auto sampleTxBegin = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_TransactionBegin);
         if (sampleTxBegin) {
             stopTxnData->addTxData(std::move(sampleTxBegin));
         }
@@ -212,7 +212,7 @@ std::shared_ptr<TransactionMeterData> MeteringConnector::endTxMeterData(Transact
     }
 
     if (stopTxnData) {
-        auto sampleTxEnd = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::TransactionEnd);
+        auto sampleTxEnd = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_TransactionEnd);
         if (sampleTxEnd) {
             stopTxnData->addTxData(std::move(sampleTxEnd));
         }

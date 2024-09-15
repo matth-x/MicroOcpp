@@ -342,7 +342,7 @@ void Connector::loop() {
 
                 auto meteringService = model.getMeteringService();
                 if (transaction->getMeterStart() < 0 && meteringService) {
-                    auto meterStart = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionBegin);
+                    auto meterStart = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext_TransactionBegin);
                     if (meterStart && *meterStart) {
                         transaction->setMeterStart(meterStart->toInteger());
                     } else {
@@ -386,7 +386,7 @@ void Connector::loop() {
                 
                 auto meteringService = model.getMeteringService();
                 if (transaction->getMeterStop() < 0 && meteringService) {
-                    auto meterStop = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext::TransactionEnd);
+                    auto meterStop = meteringService->readTxEnergyMeter(transaction->getConnectorId(), ReadingContext_TransactionEnd);
                     if (meterStop && *meterStop) {
                         transaction->setMeterStop(meterStop->toInteger());
                     } else {

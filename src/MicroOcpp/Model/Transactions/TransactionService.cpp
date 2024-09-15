@@ -24,7 +24,10 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::Ocpp201;
 
 TransactionService::Evse::Evse(Context& context, TransactionService& txService, unsigned int evseId) :
-        MemoryManaged("v201.Transactions.TransactionServiceEvse"), context(context), txService(txService), evseId(evseId) {
+        MemoryManaged("v201.Transactions.TransactionServiceEvse"),
+        context(context),
+        txService(txService),
+        evseId(evseId) {
 
 }
 
@@ -34,6 +37,9 @@ std::unique_ptr<Ocpp201::Transaction> TransactionService::Evse::allocateTransact
         // OOM
         return nullptr;
     }
+
+    tx->evseId = evseId;
+    tx->txNr = txNrCounter;
 
     //simple clock-based hash
     int v = context.getModel().getClock().now() - Timestamp(2020,0,0,0,0,0);
@@ -152,7 +158,7 @@ void TransactionService::Evse::loop() {
                 (!stopTxReadyInput || stopTxReadyInput())) {
             // yes, stop running tx
 
-            txEvent = std::make_shared<TransactionEventData>(transaction, transaction->seqNoCounter++);
+            txEvent = std::allocate_shared<TransactionEventData>(makeAllocator<TransactionEventData>(getMemoryTag()), transaction, transaction->seqNoCounter++);
             if (!txEvent) {
                 // OOM
                 return;
@@ -219,7 +225,7 @@ void TransactionService::Evse::loop() {
                 }
             }
 
-            txEvent = std::make_shared<TransactionEventData>(transaction, transaction->seqNoCounter++);
+            txEvent = std::allocate_shared<TransactionEventData>(makeAllocator<TransactionEventData>(getMemoryTag()), transaction, transaction->seqNoCounter++);
             if (!txEvent) {
                 // OOM
                 return;
@@ -277,6 +283,9 @@ void TransactionService::Evse::loop() {
             transaction->trackAuthorized = false;
             txUpdateCondition = true;
             triggerReason = TransactionEventTriggerReason::StopAuthorized;
+        } else if (txService.sampledDataTxUpdatedInterval && txService.sampledDataTxUpdatedInterval->getInt() > 0 && mocpp_tick_ms() - transaction->lastSampleTimeTxUpdated >= (unsigned long)txService.sampledDataTxUpdatedInterval->getInt() * 1000UL) {
+            txUpdateCondition = true;
+            triggerReason = TransactionEventTriggerReason::MeterValuePeriodic;
         } else if (evReadyInput && evReadyInput() && !transaction->trackPowerPathClosed) {
             transaction->trackPowerPathClosed = true;
         } else if (evReadyInput && !evReadyInput() && transaction->trackPowerPathClosed) {
@@ -286,7 +295,7 @@ void TransactionService::Evse::loop() {
         if (txUpdateCondition && !txEvent && transaction->started && !transaction->stopped) {
             // yes, updated
 
-            txEvent = std::make_shared<TransactionEventData>(transaction, transaction->seqNoCounter++);
+            txEvent = std::allocate_shared<TransactionEventData>(makeAllocator<TransactionEventData>(getMemoryTag()), transaction, transaction->seqNoCounter++);
             if (!txEvent) {
                 // OOM
                 return;
@@ -294,6 +303,22 @@ void TransactionService::Evse::loop() {
 
             txEvent->eventType = TransactionEventData::Type::Updated;
             txEvent->triggerReason = triggerReason;
+        }
+    }
+
+    //General Metering behavior. There is another section for TxStarted, Updated and TxEnded MeterValues
+    if (transaction) {
+
+        if (transaction->started && !transaction->stopped &&
+                 txService.sampledDataTxEndedInterval && txService.sampledDataTxEndedInterval->getInt() > 0 &&
+                 mocpp_tick_ms() - transaction->lastSampleTimeTxEnded >= (unsigned long)txService.sampledDataTxEndedInterval->getInt() * 1000UL) {
+            transaction->lastSampleTimeTxEnded = mocpp_tick_ms();
+            auto meteringService = context.getModel().getMeteringServiceV201();
+            auto meteringEvse = meteringService ? meteringService->getEvse(evseId) : nullptr;
+            auto mvTxEnded = meteringEvse ? meteringEvse->takeTxEndedMeterValue(ReadingContext_SamplePeriodic) : nullptr;
+            if (mvTxEnded) {
+                transaction->addSampledDataTxEnded(std::move(mvTxEnded));
+            }
         }
     }
 
@@ -311,7 +336,38 @@ void TransactionService::Evse::loop() {
             txEvent->remoteStartId = transaction->remoteStartId;
             transaction->notifyRemoteStartId = false;
         }
-        // meterValue not supported
+        if (txEvent->eventType == TransactionEventData::Type::Started) {
+            auto meteringService = context.getModel().getMeteringServiceV201();
+            auto meteringEvse = meteringService ? meteringService->getEvse(evseId) : nullptr;
+            auto mvTxStarted = meteringEvse ? meteringEvse->takeTxStartedMeterValue() : nullptr;
+            if (mvTxStarted) {
+                txEvent->meterValue.push_back(std::move(mvTxStarted));
+            }
+            auto mvTxEnded = meteringEvse ? meteringEvse->takeTxEndedMeterValue(ReadingContext_TransactionBegin) : nullptr;
+            if (mvTxEnded) {
+                transaction->addSampledDataTxEnded(std::move(mvTxEnded));
+            }
+            transaction->lastSampleTimeTxEnded = mocpp_tick_ms();
+            transaction->lastSampleTimeTxUpdated = mocpp_tick_ms();
+        } else if (txEvent->eventType == TransactionEventData::Type::Updated) {
+            if (txService.sampledDataTxUpdatedInterval && txService.sampledDataTxUpdatedInterval->getInt() > 0 && mocpp_tick_ms() - transaction->lastSampleTimeTxUpdated >= (unsigned long)txService.sampledDataTxUpdatedInterval->getInt() * 1000UL) {
+                transaction->lastSampleTimeTxUpdated = mocpp_tick_ms();
+                auto meteringService = context.getModel().getMeteringServiceV201();
+                auto meteringEvse = meteringService ? meteringService->getEvse(evseId) : nullptr;
+                auto mv = meteringEvse ? meteringEvse->takeTxUpdatedMeterValue() : nullptr;
+                if (mv) {
+                    txEvent->meterValue.push_back(std::move(mv));
+                }
+            }
+        } else if (txEvent->eventType == TransactionEventData::Type::Ended) {
+            auto meteringService = context.getModel().getMeteringServiceV201();
+            auto meteringEvse = meteringService ? meteringService->getEvse(evseId) : nullptr;
+            auto mvTxEnded = meteringEvse ? meteringEvse->takeTxEndedMeterValue(ReadingContext_TransactionEnd) : nullptr;
+            if (mvTxEnded) {
+                transaction->addSampledDataTxEnded(std::move(mvTxEnded));
+            }
+            transaction->lastSampleTimeTxEnded = mocpp_tick_ms();
+        }
 
         if (transaction->notifyStopIdToken && transaction->stopIdToken) {
             txEvent->idToken = std::unique_ptr<IdToken>(new IdToken(*transaction->stopIdToken.get(), getMemoryTag()));
@@ -547,26 +603,40 @@ bool TransactionService::parseTxStartStopPoint(const char *csl, Vector<TxStartSt
     return true;
 }
 
-TransactionService::TransactionService(Context& context) : MemoryManaged("v201.Transactions.TransactionService"), context(context), evses(makeVector<Evse>(getMemoryTag())), txStartPointParsed(makeVector<TxStartStopPoint>(getMemoryTag())),  txStopPointParsed(makeVector<TxStartStopPoint>(getMemoryTag())) {
-    auto variableService = context.getModel().getVariableService();
+TransactionService::TransactionService(Context& context) :
+        MemoryManaged("v201.Transactions.TransactionService"),
+        context(context),
+        evses(makeVector<Evse>(getMemoryTag())),
+        txStartPointParsed(makeVector<TxStartStopPoint>(getMemoryTag())),
+        txStopPointParsed(makeVector<TxStartStopPoint>(getMemoryTag())) {
+    auto varService = context.getModel().getVariableService();
 
-    txStartPointString = variableService->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "PowerPathClosed");
-    txStopPointString  = variableService->declareVariable<const char*>("TxCtrlr", "TxStopPoint",  "PowerPathClosed");
-    stopTxOnInvalidIdBool = variableService->declareVariable<bool>("TxCtrlr", "StopTxOnInvalidId", true);
-    stopTxOnEVSideDisconnectBool = variableService->declareVariable<bool>("TxCtrlr", "StopTxOnEVSideDisconnect", true);
-    evConnectionTimeOutInt = variableService->declareVariable<int>("TxCtrlr", "EVConnectionTimeOut", 30);
+    txStartPointString = varService->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "PowerPathClosed");
+    txStopPointString  = varService->declareVariable<const char*>("TxCtrlr", "TxStopPoint",  "PowerPathClosed");
+    stopTxOnInvalidIdBool = varService->declareVariable<bool>("TxCtrlr", "StopTxOnInvalidId", true);
+    stopTxOnEVSideDisconnectBool = varService->declareVariable<bool>("TxCtrlr", "StopTxOnEVSideDisconnect", true);
+    evConnectionTimeOutInt = varService->declareVariable<int>("TxCtrlr", "EVConnectionTimeOut", 30);
+    sampledDataTxUpdatedInterval = varService->declareVariable<int>("SampledDataCtrlr", "TxUpdatedInterval", 0);
+    sampledDataTxEndedInterval = varService->declareVariable<int>("SampledDataCtrlr", "TxEndedInterval", 5);
 
-    variableService->declareVariable<bool>("AuthCtrlr", "AuthorizeRemoteStart", false, MO_VARIABLE_VOLATILE, Variable::Mutability::ReadOnly);
+    varService->declareVariable<bool>("AuthCtrlr", "AuthorizeRemoteStart", false, MO_VARIABLE_VOLATILE, Variable::Mutability::ReadOnly);
 
-    variableService->registerValidator<const char*>("TxCtrlr", "TxStartPoint", [this] (const char *value) -> bool {
+    varService->registerValidator<const char*>("TxCtrlr", "TxStartPoint", [this] (const char *value) -> bool {
         auto validated = makeVector<TxStartStopPoint>(getMemoryTag());
         return this->parseTxStartStopPoint(value, validated);
     });
 
-    variableService->registerValidator<const char*>("TxCtrlr", "TxStopPoint", [this] (const char *value) -> bool {
+    varService->registerValidator<const char*>("TxCtrlr", "TxStopPoint", [this] (const char *value) -> bool {
         auto validated = makeVector<TxStartStopPoint>(getMemoryTag());
         return this->parseTxStartStopPoint(value, validated);
     });
+
+    std::function<bool(int)> validateUnsignedInt = [] (int val) {
+        return val >= 0;
+    };
+
+    varService->registerValidator<int>("SampledDataCtrlr", "TxUpdatedInterval", validateUnsignedInt);
+    varService->registerValidator<int>("SampledDataCtrlr", "TxEndedInterval", validateUnsignedInt);
 
     evses.reserve(MO_NUM_EVSE);
 

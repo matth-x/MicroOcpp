@@ -179,7 +179,7 @@ public:
     std::shared_ptr<Configuration> getConfiguration(const char *key) override {
         ocpp_configuration *config = container->get_configuration_by_key(container->user_data, key);
         if (config) {
-            return std::make_shared<ConfigurationC>(config);
+            return std::allocate_shared<ConfigurationC>(makeAllocator<ConfigurationC>(getMemoryTag()), config);
         } else {
             return nullptr;
         }
@@ -193,5 +193,5 @@ public:
 };
 
 void ocpp_configuration_container_add(ocpp_configuration_container *container, const char *container_path, bool accessible) {
-    addConfigurationContainer(std::make_shared<ConfigurationContainerC>(container, container_path, accessible));
+    addConfigurationContainer(std::allocate_shared<ConfigurationContainerC>(makeAllocator<ConfigurationContainerC>("v16.Configuration.ContainerC.", container_path), container, container_path, accessible));
 }

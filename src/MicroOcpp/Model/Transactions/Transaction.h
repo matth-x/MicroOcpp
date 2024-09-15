@@ -189,10 +189,16 @@ public:
 #if MO_ENABLE_V201
 
 #include <memory>
+#include <limits>
 
 #include <MicroOcpp/Model/Transactions/TransactionDefs.h>
 #include <MicroOcpp/Model/Authorization/IdToken.h>
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
+#include <MicroOcpp/Model/Metering/MeterValuesV201.h>
+
+#ifndef MO_SAMPLEDDATATXENDED_SIZE_MAX
+#define MO_SAMPLEDDATATXENDED_SIZE_MAX 5
+#endif
 
 namespace MicroOcpp {
 namespace Ocpp201 {
@@ -294,7 +300,46 @@ public:
     TransactionEventTriggerReason stopTrigger = TransactionEventTriggerReason::UNDEFINED;
     std::unique_ptr<IdToken> stopIdToken; // if null, then stopIdToken equals idToken
 
-    Transaction() : MemoryManaged("v201.Transactions.Transaction") { }
+    /*
+     * Tx-related metering
+     */
+
+    Vector<std::unique_ptr<Ocpp201::MeterValue>> sampledDataTxEnded;
+
+    unsigned long lastSampleTimeTxUpdated = 0; //0 means not charging right now
+    unsigned long lastSampleTimeTxEnded = 0;
+
+    /*
+     * Attributes for internal store
+     */
+    unsigned int evseId = 0;
+    unsigned int txNr = 0; //internal key attribute (!= transactionId); {evseId*txNr} is unique key
+
+    bool silent = false; //silent Tx: process tx locally, without reporting to the server
+
+    Transaction() : MemoryManaged("v201.Transactions.Transaction"), sampledDataTxEnded(makeVector<std::unique_ptr<Ocpp201::MeterValue>>(getMemoryTag())) { }
+
+    void addSampledDataTxEnded(std::unique_ptr<Ocpp201::MeterValue> mv) {
+        if (sampledDataTxEnded.size() >= MO_SAMPLEDDATATXENDED_SIZE_MAX) {
+            int deltaMin = std::numeric_limits<int>::max();
+            size_t indexMin = sampledDataTxEnded.size();
+            for (size_t i = 1; i + 1 <= sampledDataTxEnded.size(); i++) {
+                size_t t0 = sampledDataTxEnded.size() - i - 1;
+                size_t t1 = sampledDataTxEnded.size() - i;
+
+                auto delta = sampledDataTxEnded[t1]->getTimestamp() - sampledDataTxEnded[t0]->getTimestamp();
+
+                if (delta < deltaMin) {
+                    deltaMin = delta;
+                    indexMin = t1;
+                }
+            }
+
+            sampledDataTxEnded.erase(sampledDataTxEnded.begin() + indexMin);
+        }
+
+        sampledDataTxEnded.push_back(std::move(mv));
+    }
 };
 
 // TransactionEventRequest (1.60.1)
@@ -336,8 +381,9 @@ public:
     std::unique_ptr<IdToken> idToken;
     EvseId evse = -1;
     //meterValue not supported
+    Vector<std::unique_ptr<MeterValue>> meterValue;
 
-    TransactionEventData(std::shared_ptr<Transaction> transaction, unsigned int seqNo) : MemoryManaged("v201.Transactions.TransactionEventData"), transaction(transaction), seqNo(seqNo) { }
+    TransactionEventData(std::shared_ptr<Transaction> transaction, unsigned int seqNo) : MemoryManaged("v201.Transactions.TransactionEventData"), transaction(transaction), seqNo(seqNo), meterValue(makeVector<std::unique_ptr<MeterValue>>(getMemoryTag())) { }
 };
 
 } // namespace Ocpp201
