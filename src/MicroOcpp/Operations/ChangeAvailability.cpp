@@ -21,40 +21,19 @@ const char* ChangeAvailability::getOperationType(){
 }
 
 void ChangeAvailability::processReq(JsonObject payload) {
-
-    unsigned int connectorId = 0;
-    const char *type = "_Undefined";
-
-    #if MO_ENABLE_V201
-    if (model.getVersion().major == 2) {
-        //OCPP 2.0.1
-        int connectorIdRaw = payload["evse"]["id"] | 0;
-        if (connectorIdRaw < 0) {
-            errorCode = "FormationViolation";
-            return;
-        }
-
-        connectorId = (unsigned int)connectorIdRaw;
-        type = payload["operationalStatus"] | type;
-    } else
-    #endif //MO_ENABLE_V201
-    {
-        //OCPP 1.6
-        int connectorIdRaw = payload["connectorId"] | -1;
-        if (connectorIdRaw < 0) {
-            errorCode = "FormationViolation";
-            return;
-        }
-
-        connectorId = (unsigned int)connectorIdRaw;
-        type = payload["type"] | type;
+    int connectorIdRaw = payload["connectorId"] | -1;
+    if (connectorIdRaw < 0) {
+        errorCode = "FormationViolation";
+        return;
     }
+    unsigned int connectorId = (unsigned int)connectorIdRaw;
 
     if (connectorId >= model.getNumConnectors()) {
         errorCode = "PropertyConstraintViolation";
         return;
     }
 
+    const char *type = payload["type"] | "INVALID";
     bool available = false;
 
     if (!strcmp(type, "Operative")) {
