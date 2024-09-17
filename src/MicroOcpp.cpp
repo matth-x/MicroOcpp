@@ -536,6 +536,21 @@ bool isTransactionActive(unsigned int connectorId) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return false;
     }
+
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        TransactionService::Evse *evse = nullptr;
+        if (auto txService = context->getModel().getTransactionService()) {
+            evse = txService->getEvse(connectorId);
+        }
+        if (!evse) {
+            MO_DBG_ERR("could not find EVSE");
+            return false;
+        }
+        return evse->getTransaction() && evse->getTransaction()->active;
+    }
+    #endif
+
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -550,6 +565,21 @@ bool isTransactionRunning(unsigned int connectorId) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return false;
     }
+
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        TransactionService::Evse *evse = nullptr;
+        if (auto txService = context->getModel().getTransactionService()) {
+            evse = txService->getEvse(connectorId);
+        }
+        if (!evse) {
+            MO_DBG_ERR("could not find EVSE");
+            return false;
+        }
+        return evse->getTransaction() && evse->getTransaction()->started && !evse->getTransaction()->stopped;
+    }
+    #endif
+
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -564,6 +594,21 @@ const char *getTransactionIdTag(unsigned int connectorId) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return nullptr;
     }
+
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        TransactionService::Evse *evse = nullptr;
+        if (auto txService = context->getModel().getTransactionService()) {
+            evse = txService->getEvse(connectorId);
+        }
+        if (!evse) {
+            MO_DBG_ERR("could not find EVSE");
+            return nullptr;
+        }
+        return evse->getTransaction() ? evse->getTransaction()->idToken.get() : nullptr;
+    }
+    #endif
+
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
