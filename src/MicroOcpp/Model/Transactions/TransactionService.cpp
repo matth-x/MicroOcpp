@@ -118,7 +118,7 @@ void TransactionService::Evse::loop() {
             stopReason = Ocpp201::Transaction::StopReason::EVDisconnected;
         } else if ((txService.isTxStopPoint(TxStartStopPoint::Authorized) ||
                     txService.isTxStopPoint(TxStartStopPoint::PowerPathClosed)) &&
-                    (!transaction || !transaction->isAuthorized)) {
+                    (!transaction || !transaction->isAuthorizationActive)) {
             // user revoked authorization (or EV or any "local" entity)
             txStopCondition = true;
             triggerReason = TransactionEventTriggerReason::StopAuthorized;
@@ -182,7 +182,7 @@ void TransactionService::Evse::loop() {
         // tx should be started?
         if (txService.isTxStartPoint(TxStartStopPoint::PowerPathClosed) &&
                     (!connectorPluggedInput || connectorPluggedInput()) &&
-                    transaction && transaction->isAuthorized) {
+                    transaction && transaction->isAuthorizationActive && transaction->isAuthorized) {
             txStartCondition = true;
             if (transaction->remoteStartId >= 0) {
                 triggerReason = TransactionEventTriggerReason::RemoteStart;
@@ -190,7 +190,7 @@ void TransactionService::Evse::loop() {
                 triggerReason = TransactionEventTriggerReason::Authorized;
             }
         } else if (txService.isTxStartPoint(TxStartStopPoint::Authorized) &&
-                    transaction && transaction->isAuthorized) {
+                    transaction && transaction->isAuthorizationActive && transaction->isAuthorized) {
             txStartCondition = true;
             if (transaction->remoteStartId >= 0) {
                 triggerReason = TransactionEventTriggerReason::RemoteStart;
@@ -239,7 +239,7 @@ void TransactionService::Evse::loop() {
     TransactionEventData::ChargingState chargingState = TransactionEventData::ChargingState::Idle;
     if (connectorPluggedInput && !connectorPluggedInput()) {
         chargingState = TransactionEventData::ChargingState::Idle;
-    } else if (!transaction || !transaction->isAuthorized) {
+    } else if (!transaction || !transaction->isAuthorizationActive || !transaction->isAuthorized) {
         chargingState = TransactionEventData::ChargingState::EVConnected;
     } else if (evseReadyInput && !evseReadyInput()) { 
         chargingState = TransactionEventData::ChargingState::SuspendedEVSE;
@@ -263,7 +263,7 @@ void TransactionService::Evse::loop() {
         }
         trackChargingState = chargingState;
 
-        if (transaction->isAuthorized && !transaction->trackAuthorized) {
+        if ((transaction->isAuthorizationActive && transaction->isAuthorized) && !transaction->trackAuthorized) {
             transaction->trackAuthorized = true;
             txUpdateCondition = true;
             if (transaction->remoteStartId >= 0) {
@@ -279,7 +279,7 @@ void TransactionService::Evse::loop() {
             transaction->trackEvConnected = false;
             txUpdateCondition = true;
             triggerReason = TransactionEventTriggerReason::EVCommunicationLost;
-        } else if (!transaction->isAuthorized && transaction->trackAuthorized) {
+        } else if (!(transaction->isAuthorizationActive && transaction->isAuthorized) && transaction->trackAuthorized) {
             transaction->trackAuthorized = false;
             txUpdateCondition = true;
             triggerReason = TransactionEventTriggerReason::StopAuthorized;
@@ -406,7 +406,7 @@ void TransactionService::Evse::setEvseReadyInput(std::function<bool()> connector
 bool TransactionService::Evse::beginAuthorization(IdToken idToken, bool validateIdToken) {
     MO_DBG_DEBUG("begin auth: %s", idToken.get());
 
-    if (transaction && (transaction->idToken.get() || !transaction->active)) {
+    if (transaction && transaction->isAuthorizationActive) {
         MO_DBG_WARN("tx process still running. Please call endTransaction(...) before");
         return false;
     }
@@ -422,6 +422,7 @@ bool TransactionService::Evse::beginAuthorization(IdToken idToken, bool validate
         }
     }
 
+    transaction->isAuthorizationActive = true;
     transaction->idToken = idToken;
     transaction->beginTimestamp = context.getModel().getClock().now();
 
@@ -431,6 +432,7 @@ bool TransactionService::Evse::beginAuthorization(IdToken idToken, bool validate
         auto authorize = makeRequest(new Authorize(context.getModel(), idToken));
         if (!authorize) {
             // OOM
+            abortTransaction();
             return false;
         }
 
@@ -457,7 +459,7 @@ bool TransactionService::Evse::beginAuthorization(IdToken idToken, bool validate
 }
 bool TransactionService::Evse::endAuthorization(IdToken idToken, bool validateIdToken) {
 
-    if (!transaction || !transaction->active) {
+    if (!transaction || !transaction->isAuthorizationActive) {
         //transaction already ended / not active anymore
         return false;
     }
@@ -467,11 +469,11 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken, bool validateId
     
     if (transaction->idToken.equals(idToken)) {
         // use same idToken like tx start
-        transaction->isAuthorized = false;
+        transaction->isAuthorizationActive = false;
         transaction->notifyIdToken = true;
     } else if (!validateIdToken) {
         transaction->stopIdToken = std::unique_ptr<IdToken>(new IdToken(idToken, getMemoryTag()));
-        transaction->isAuthorized = false;
+        transaction->isAuthorizationActive = false;
         transaction->notifyStopIdToken = true;
     } else {
         // use a different idToken for stopping the tx
@@ -504,7 +506,7 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken, bool validateId
                 return;
             }
 
-            tx->isAuthorized = false;
+            tx->isAuthorizationActive = false;
             tx->notifyStopIdToken = true;
         });
         authorize->setTimeout(20 * 1000);
@@ -536,6 +538,7 @@ std::shared_ptr<MicroOcpp::Ocpp201::Transaction>& TransactionService::Evse::getT
 bool TransactionService::Evse::ocppPermitsCharge() {
     return transaction &&
            transaction->active &&
+           transaction->isAuthorizationActive &&
            transaction->isAuthorized &&
            !transaction->isDeauthorized;
 }

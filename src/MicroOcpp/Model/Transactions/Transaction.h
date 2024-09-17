@@ -278,6 +278,7 @@ public:
     /*
      * Global transaction data
      */
+    bool isAuthorizationActive = false; //period between beginAuthorization and endAuthorization
     bool isAuthorized = false;    //if the given idToken was authorized
     bool isDeauthorized = false;  //if the server revoked a local authorization
     unsigned int seqNoCounter = 0; // increment by 1 for each event
