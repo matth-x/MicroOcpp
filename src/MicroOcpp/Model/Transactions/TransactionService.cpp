@@ -55,6 +55,8 @@ std::unique_ptr<Ocpp201::Transaction> TransactionService::Evse::allocateTransact
 
     tx->beginTimestamp = context.getModel().getClock().now();
 
+    MO_DBG_DEBUG("allocated tx %u-%s", evseId, tx->transactionId);
+
     return tx;
 }
 
@@ -89,6 +91,18 @@ void TransactionService::Evse::loop() {
                 transaction->active = false;
                 transaction->stopTrigger = TransactionEventTriggerReason::EVConnectTimeout;
                 transaction->stopReason = Ocpp201::Transaction::StopReason::Timeout;
+            }
+
+            if (transaction->active &&
+                    transaction->isDeauthorized &&
+                    !transaction->started &&
+                    (txService.isTxStartPoint(TxStartStopPoint::Authorized) || txService.isTxStartPoint(TxStartStopPoint::PowerPathClosed) ||
+                     txService.isTxStopPoint(TxStartStopPoint::Authorized)  || txService.isTxStopPoint(TxStartStopPoint::PowerPathClosed))) {
+                
+                MO_DBG_INFO("Session mngt: Deauthorized before start");
+                transaction->active = false;
+                transaction->stopTrigger = TransactionEventTriggerReason::Deauthorized;
+                transaction->stopReason = Ocpp201::Transaction::StopReason::DeAuthorized;
             }
         }
     }
@@ -187,7 +201,7 @@ void TransactionService::Evse::loop() {
             if (transaction->remoteStartId >= 0) {
                 triggerReason = TransactionEventTriggerReason::RemoteStart;
             } else {
-                triggerReason = TransactionEventTriggerReason::Authorized;
+                triggerReason = TransactionEventTriggerReason::CablePluggedIn;
             }
         } else if (txService.isTxStartPoint(TxStartStopPoint::Authorized) &&
                     transaction && transaction->isAuthorizationActive && transaction->isAuthorized) {
@@ -447,6 +461,10 @@ bool TransactionService::Evse::beginAuthorization(IdToken idToken, bool validate
             tx->isAuthorized = true;
             tx->notifyIdToken = true;
         });
+        authorize->setOnAbortListener([this, tx] () {
+            MO_DBG_DEBUG("Authorize timeout (%s)", tx->idToken.get());
+            tx->isDeauthorized = true;
+        });
         authorize->setTimeout(20 * 1000);
         context.initiateRequest(std::move(authorize));
     } else {
@@ -620,7 +638,7 @@ TransactionService::TransactionService(Context& context) :
     stopTxOnEVSideDisconnectBool = varService->declareVariable<bool>("TxCtrlr", "StopTxOnEVSideDisconnect", true);
     evConnectionTimeOutInt = varService->declareVariable<int>("TxCtrlr", "EVConnectionTimeOut", 30);
     sampledDataTxUpdatedInterval = varService->declareVariable<int>("SampledDataCtrlr", "TxUpdatedInterval", 0);
-    sampledDataTxEndedInterval = varService->declareVariable<int>("SampledDataCtrlr", "TxEndedInterval", 5);
+    sampledDataTxEndedInterval = varService->declareVariable<int>("SampledDataCtrlr", "TxEndedInterval", 0);
 
     varService->declareVariable<bool>("AuthCtrlr", "AuthorizeRemoteStart", false, MO_VARIABLE_VOLATILE, Variable::Mutability::ReadOnly);
 
