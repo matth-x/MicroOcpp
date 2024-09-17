@@ -9,8 +9,8 @@
 
 #include <functional>
 
-using MicroOcpp::Ocpp16::ChangeAvailability;
-using MicroOcpp::JsonDoc;
+namespace MicroOcpp {
+namespace Ocpp16 {
 
 ChangeAvailability::ChangeAvailability(Model& model) : MemoryManaged("v16.Operation.", "ChangeAvailability"), model(model) {
 
@@ -77,3 +77,78 @@ std::unique_ptr<JsonDoc> ChangeAvailability::createConf(){
         
     return doc;
 }
+
+} // namespace Ocpp16
+} // namespace MicroOcpp
+
+#if MO_ENABLE_V201
+
+#include <MicroOcpp/Model/Availability/AvailabilityService.h>
+
+namespace MicroOcpp {
+namespace Ocpp201 {
+
+ChangeAvailability::ChangeAvailability(AvailabilityService& availabilityService) : MemoryManaged("v201.Operation.", "ChangeAvailability"), availabilityService(availabilityService) {
+
+}
+
+const char* ChangeAvailability::getOperationType(){
+    return "ChangeAvailability";
+}
+
+void ChangeAvailability::processReq(JsonObject payload) {
+    int evseIdRaw = payload["evse"]["id"] | 0;
+    if (evseIdRaw < 0) {
+        errorCode = "FormationViolation";
+        return;
+    }
+    unsigned int evseId = (unsigned int)evseIdRaw;
+
+    if (!availabilityService.getEvse(evseId)) {
+        errorCode = "PropertyConstraintViolation";
+        return;
+    }
+
+    const char *type = payload["operationalStatus"] | "_Undefined";
+
+    bool operative = false;
+
+    if (!strcmp(type, "Operative")) {
+        operative = true;
+    } else if (!strcmp(type, "Inoperative")) {
+        operative = false;
+    } else {
+        errorCode = "PropertyConstraintViolation";
+        return;
+    }
+
+    if (evseId == 0) {
+        status = availabilityService.changeAvailability(operative);
+    } else {
+        status = availabilityService.getEvse(evseId)->changeAvailability(operative);
+    }
+}
+
+std::unique_ptr<JsonDoc> ChangeAvailability::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+    JsonObject payload = doc->to<JsonObject>();
+
+    switch (status) {
+        case ChangeAvailabilityStatus::Accepted:
+            payload["status"] = "Accepted";
+            break;
+        case ChangeAvailabilityStatus::Scheduled:
+            payload["status"] = "Scheduled";
+            break;
+        case ChangeAvailabilityStatus::Rejected:
+            payload["status"] = "Rejected";
+            break;
+    }
+
+    return doc;
+}
+
+} // namespace Ocpp201
+} // namespace MicroOcpp
+
+#endif //MO_ENABLE_V201

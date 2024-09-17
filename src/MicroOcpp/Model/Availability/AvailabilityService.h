@@ -17,6 +17,7 @@
 
 #include <functional>
 
+#include <MicroOcpp/Model/Availability/ChangeAvailabilityStatus.h>
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
 #include <MicroOcpp/Core/Configuration.h>
@@ -61,6 +62,8 @@ public:
     void setInoperative(void *requesterId);
     void resetInoperative(void *requesterId);
 
+    ChangeAvailabilityStatus changeAvailability(bool operative);
+
     void setFaulted(void *requesterId);
     void resetFaulted(void *requesterId);
 
@@ -72,7 +75,7 @@ class AvailabilityService : public MemoryManaged {
 private:
     Context& context;
 
-    AvailabilityServiceEvse* evses [MO_NUM_EVSE + 1] = {nullptr};
+    AvailabilityServiceEvse* evses [MO_NUM_EVSE] = {nullptr};
 
 public:
     AvailabilityService(Context& context, size_t numEvses);
@@ -81,6 +84,8 @@ public:
     void loop();
 
     AvailabilityServiceEvse *getEvse(unsigned int evseId);
+
+    ChangeAvailabilityStatus changeAvailability(bool operative);
 };
 
 } // namespace MicroOcpp
