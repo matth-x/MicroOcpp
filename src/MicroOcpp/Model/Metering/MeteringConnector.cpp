@@ -90,7 +90,7 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
 
         auto& timestampNow = model.getClock().now();
         auto dt = nextAlignedTime - timestampNow;
-        if (dt <= 0 ||                              //normal case: interval elapsed
+        if (dt < 0 ||                              //normal case: interval elapsed
                 dt > clockAlignedDataIntervalInt->getInt()) {   //special case: clock has been adjusted or first run
 
             MO_DBG_DEBUG("Clock aligned measurement %" PRId32 "s: %s", dt,
