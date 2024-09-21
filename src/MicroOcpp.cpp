@@ -22,6 +22,7 @@
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
 #include <MicroOcpp/Model/Certificates/CertificateMbedTLS.h>
 #include <MicroOcpp/Model/Availability/AvailabilityService.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 #include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Core/OperationRegistry.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -290,6 +291,8 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
             new VariableService(*context, filesystem)));
         model.setTransactionService(std::unique_ptr<TransactionService>(
             new TransactionService(*context)));
+        model.setRemoteControlService(std::unique_ptr<RemoteControlService>(
+            new RemoteControlService(*context, MO_NUM_EVSE)));
     } else
 #endif
     {

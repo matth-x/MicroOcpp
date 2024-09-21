@@ -40,6 +40,7 @@ class CertificateService;
 class AvailabilityService;
 class VariableService;
 class TransactionService;
+class RemoteControlService;
 
 namespace Ocpp201 {
 class ResetService;
@@ -78,6 +79,7 @@ private:
     std::unique_ptr<TransactionService> transactionService;
     std::unique_ptr<Ocpp201::ResetService> resetServiceV201;
     std::unique_ptr<Ocpp201::MeteringService> meteringServiceV201;
+    std::unique_ptr<RemoteControlService> remoteControlService;
 #endif
 
     Clock clock;
@@ -160,6 +162,9 @@ public:
 
     void setMeteringServiceV201(std::unique_ptr<Ocpp201::MeteringService> ms);
     Ocpp201::MeteringService *getMeteringServiceV201() const;
+
+    void setRemoteControlService(std::unique_ptr<RemoteControlService> rs);
+    RemoteControlService *getRemoteControlService() const;
 #endif
 
     Clock &getClock();

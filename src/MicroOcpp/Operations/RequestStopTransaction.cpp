@@ -7,13 +7,13 @@
 #if MO_ENABLE_V201
 
 #include <MicroOcpp/Operations/RequestStopTransaction.h>
-#include <MicroOcpp/Model/Transactions/TransactionService.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp201::RequestStopTransaction;
 using MicroOcpp::JsonDoc;
 
-RequestStopTransaction::RequestStopTransaction(TransactionService& txService) : MemoryManaged("v201.Operation.", "RequestStopTransaction"), txService(txService) {
+RequestStopTransaction::RequestStopTransaction(RemoteControlService& rcService) : MemoryManaged("v201.Operation.", "RequestStopTransaction"), rcService(rcService) {
   
 }
 
@@ -30,7 +30,7 @@ void RequestStopTransaction::processReq(JsonObject payload) {
         return;
     }
 
-    status = txService.requestStopTransaction(payload["transactionId"].as<const char*>());
+    status = rcService.requestStopTransaction(payload["transactionId"].as<const char*>());
 }
 
 std::unique_ptr<JsonDoc> RequestStopTransaction::createConf(){

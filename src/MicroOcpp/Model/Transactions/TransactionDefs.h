@@ -11,10 +11,5 @@
 
 #define MO_TXID_LEN_MAX 36
 
-typedef enum RequestStartStopStatus {
-    RequestStartStopStatus_Accepted,
-    RequestStartStopStatus_Rejected
-}   RequestStartStopStatus;
-
 #endif //MO_ENABLE_V201
 #endif

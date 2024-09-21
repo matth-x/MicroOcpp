@@ -669,11 +669,6 @@ TransactionService::TransactionService(Context& context) :
     evses[0].connectorPluggedInput = [] () {return false;};
     evses[0].evReadyInput = [] () {return false;};
     evses[0].evseReadyInput = [] () {return false;};
-
-    context.getOperationRegistry().registerOperation("RequestStartTransaction", [this] () {
-        return new RequestStartTransaction(*this);});
-    context.getOperationRegistry().registerOperation("RequestStopTransaction", [this] () {
-        return new RequestStopTransaction(*this);});
 }
 
 void TransactionService::loop() {
@@ -712,53 +707,6 @@ TransactionService::Evse *TransactionService::getEvse(unsigned int evseId) {
         MO_DBG_ERR("invalid arg");
         return nullptr;
     }
-}
-
-RequestStartStopStatus TransactionService::requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, IdToken idToken, char *transactionIdOut) {
-    auto evse = getEvse(evseId);
-    if (!evse) {
-        return RequestStartStopStatus_Rejected;
-    }
-
-    auto tx = evse->getTransaction();
-    if (tx) {
-        auto ret = snprintf(transactionIdOut, MO_TXID_LEN_MAX + 1, "%s", tx->transactionId);
-        if (ret < 0 || ret >= MO_TXID_LEN_MAX + 1) {
-            MO_DBG_ERR("internal error");
-            return RequestStartStopStatus_Rejected;
-        }
-    }
-
-    if (!evse->beginAuthorization(idToken, false)) {
-        MO_DBG_INFO("EVSE still occupied with pending tx");
-        return RequestStartStopStatus_Rejected;
-    }
-
-    tx = evse->getTransaction();
-    if (!tx) {
-        MO_DBG_ERR("internal error");
-        return RequestStartStopStatus_Rejected;
-    }
-
-    tx->remoteStartId = remoteStartId;
-    tx->notifyRemoteStartId = true;
-
-    return RequestStartStopStatus_Accepted;
-}
-
-RequestStartStopStatus TransactionService::requestStopTransaction(const char *transactionId) {
-    bool success = false;
-
-    for (Evse& evse : evses) {
-        if (evse.getTransaction() && !strcmp(evse.getTransaction()->transactionId, transactionId)) {
-            success = evse.abortTransaction(Ocpp201::Transaction::StopReason::Remote, TransactionEventTriggerReason::RemoteStop);
-            break;
-        }
-    }
-
-    return success ?
-            RequestStartStopStatus_Accepted :
-            RequestStartStopStatus_Rejected;
 }
 
 #endif // MO_ENABLE_V201

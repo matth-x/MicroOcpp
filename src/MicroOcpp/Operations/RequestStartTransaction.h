@@ -11,24 +11,25 @@
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Memory.h>
-#include <MicroOcpp/Model/Transactions/TransactionDefs.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlDefs.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
 
 namespace MicroOcpp {
 
-class TransactionService;
+class RemoteControlService;
 
 namespace Ocpp201 {
 
 class RequestStartTransaction : public Operation, public MemoryManaged {
 private:
-    TransactionService& txService;
+    RemoteControlService& rcService;
 
     RequestStartStopStatus status;
-    char transactionId [MO_TXID_LEN_MAX + 1] = {'\0'};
+    std::shared_ptr<Ocpp201::Transaction> transaction;
 
     const char *errorCode = nullptr;
 public:
-    RequestStartTransaction(TransactionService& txService);
+    RequestStartTransaction(RemoteControlService& rcService);
 
     const char* getOperationType() override;
 

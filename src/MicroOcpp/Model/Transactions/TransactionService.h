@@ -14,7 +14,6 @@
 #if MO_ENABLE_V201
 
 #include <MicroOcpp/Model/Transactions/Transaction.h>
-#include <MicroOcpp/Model/Transactions/TransactionDefs.h>
 #include <MicroOcpp/Model/Metering/MeterValuesV201.h>
 #include <MicroOcpp/Core/Memory.h>
 
@@ -106,10 +105,6 @@ public:
     void loop();
 
     Evse *getEvse(unsigned int evseId);
-
-    RequestStartStopStatus requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, IdToken idToken, char *transactionIdOut); //ChargingProfile, GroupIdToken not supported yet
-
-    RequestStartStopStatus requestStopTransaction(const char *transactionId);
 };
 
 } // namespace MicroOcpp

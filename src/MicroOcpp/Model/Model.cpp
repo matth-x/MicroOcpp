@@ -20,6 +20,7 @@
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
 #include <MicroOcpp/Model/Availability/AvailabilityService.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 
 #include <MicroOcpp/Core/Configuration.h>
 
@@ -142,6 +143,15 @@ void Model::setMeteringSerivce(std::unique_ptr<MeteringService> ms) {
 
 MeteringService* Model::getMeteringService() const {
     return meteringService.get();
+}
+
+void Model::setRemoteControlService(std::unique_ptr<RemoteControlService> rs) {
+    remoteControlService = std::move(rs);
+    capabilitiesUpdated = true;
+}
+
+RemoteControlService *Model::getRemoteControlService() const {
+    return remoteControlService.get();
 }
 
 void Model::setFirmwareService(std::unique_ptr<FirmwareService> fws) {
