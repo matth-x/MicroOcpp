@@ -263,6 +263,31 @@ void TransactionService::Evse::loop() {
         chargingState = TransactionEventData::ChargingState::Charging;
     }
 
+    //General Metering behavior. There is another section for TxStarted, Updated and TxEnded MeterValues
+    std::unique_ptr<MicroOcpp::Ocpp201::MeterValue> mvTxUpdated;
+
+    if (transaction) {
+
+        if (txService.sampledDataTxUpdatedInterval && txService.sampledDataTxUpdatedInterval->getInt() > 0 && mocpp_tick_ms() - transaction->lastSampleTimeTxUpdated >= (unsigned long)txService.sampledDataTxUpdatedInterval->getInt() * 1000UL) {
+            transaction->lastSampleTimeTxUpdated = mocpp_tick_ms();
+            auto meteringService = context.getModel().getMeteringServiceV201();
+            auto meteringEvse = meteringService ? meteringService->getEvse(evseId) : nullptr;
+            mvTxUpdated = meteringEvse ? meteringEvse->takeTxUpdatedMeterValue() : nullptr;
+        }
+
+        if (transaction->started && !transaction->stopped &&
+                 txService.sampledDataTxEndedInterval && txService.sampledDataTxEndedInterval->getInt() > 0 &&
+                 mocpp_tick_ms() - transaction->lastSampleTimeTxEnded >= (unsigned long)txService.sampledDataTxEndedInterval->getInt() * 1000UL) {
+            transaction->lastSampleTimeTxEnded = mocpp_tick_ms();
+            auto meteringService = context.getModel().getMeteringServiceV201();
+            auto meteringEvse = meteringService ? meteringService->getEvse(evseId) : nullptr;
+            auto mvTxEnded = meteringEvse ? meteringEvse->takeTxEndedMeterValue(ReadingContext_SamplePeriodic) : nullptr;
+            if (mvTxEnded) {
+                transaction->addSampledDataTxEnded(std::move(mvTxEnded));
+            }
+        }
+    }
+
     if (transaction) {
         // update tx?
 
@@ -297,7 +322,7 @@ void TransactionService::Evse::loop() {
             transaction->trackAuthorized = false;
             txUpdateCondition = true;
             triggerReason = TransactionEventTriggerReason::StopAuthorized;
-        } else if (txService.sampledDataTxUpdatedInterval && txService.sampledDataTxUpdatedInterval->getInt() > 0 && mocpp_tick_ms() - transaction->lastSampleTimeTxUpdated >= (unsigned long)txService.sampledDataTxUpdatedInterval->getInt() * 1000UL) {
+        } else if (mvTxUpdated) {
             txUpdateCondition = true;
             triggerReason = TransactionEventTriggerReason::MeterValuePeriodic;
         } else if (evReadyInput && evReadyInput() && !transaction->trackPowerPathClosed) {
@@ -317,22 +342,6 @@ void TransactionService::Evse::loop() {
 
             txEvent->eventType = TransactionEventData::Type::Updated;
             txEvent->triggerReason = triggerReason;
-        }
-    }
-
-    //General Metering behavior. There is another section for TxStarted, Updated and TxEnded MeterValues
-    if (transaction) {
-
-        if (transaction->started && !transaction->stopped &&
-                 txService.sampledDataTxEndedInterval && txService.sampledDataTxEndedInterval->getInt() > 0 &&
-                 mocpp_tick_ms() - transaction->lastSampleTimeTxEnded >= (unsigned long)txService.sampledDataTxEndedInterval->getInt() * 1000UL) {
-            transaction->lastSampleTimeTxEnded = mocpp_tick_ms();
-            auto meteringService = context.getModel().getMeteringServiceV201();
-            auto meteringEvse = meteringService ? meteringService->getEvse(evseId) : nullptr;
-            auto mvTxEnded = meteringEvse ? meteringEvse->takeTxEndedMeterValue(ReadingContext_SamplePeriodic) : nullptr;
-            if (mvTxEnded) {
-                transaction->addSampledDataTxEnded(std::move(mvTxEnded));
-            }
         }
     }
 
@@ -363,16 +372,6 @@ void TransactionService::Evse::loop() {
             }
             transaction->lastSampleTimeTxEnded = mocpp_tick_ms();
             transaction->lastSampleTimeTxUpdated = mocpp_tick_ms();
-        } else if (txEvent->eventType == TransactionEventData::Type::Updated) {
-            if (txService.sampledDataTxUpdatedInterval && txService.sampledDataTxUpdatedInterval->getInt() > 0 && mocpp_tick_ms() - transaction->lastSampleTimeTxUpdated >= (unsigned long)txService.sampledDataTxUpdatedInterval->getInt() * 1000UL) {
-                transaction->lastSampleTimeTxUpdated = mocpp_tick_ms();
-                auto meteringService = context.getModel().getMeteringServiceV201();
-                auto meteringEvse = meteringService ? meteringService->getEvse(evseId) : nullptr;
-                auto mv = meteringEvse ? meteringEvse->takeTxUpdatedMeterValue() : nullptr;
-                if (mv) {
-                    txEvent->meterValue.push_back(std::move(mv));
-                }
-            }
         } else if (txEvent->eventType == TransactionEventData::Type::Ended) {
             auto meteringService = context.getModel().getMeteringServiceV201();
             auto meteringEvse = meteringService ? meteringService->getEvse(evseId) : nullptr;
@@ -381,6 +380,9 @@ void TransactionService::Evse::loop() {
                 transaction->addSampledDataTxEnded(std::move(mvTxEnded));
             }
             transaction->lastSampleTimeTxEnded = mocpp_tick_ms();
+        }
+        if (mvTxUpdated) {
+            txEvent->meterValue.push_back(std::move(mvTxUpdated));
         }
 
         if (transaction->notifyStopIdToken && transaction->stopIdToken) {
