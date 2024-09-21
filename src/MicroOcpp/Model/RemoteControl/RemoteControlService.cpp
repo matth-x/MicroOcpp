@@ -9,6 +9,7 @@
 #include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Debug.h>
+#include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
 #include <MicroOcpp/Operations/RequestStartTransaction.h>
 #include <MicroOcpp/Operations/RequestStopTransaction.h>
@@ -66,6 +67,9 @@ RemoteControlService::RemoteControlService(Context& context, size_t numEvses) : 
         evses[i] = new RemoteControlServiceEvse(context, (unsigned int)i);
     }
 
+    auto varService = context.getModel().getVariableService();
+    authorizeRemoteStart = varService->declareVariable<bool>("AuthCtrlr", "AuthorizeRemoteStart", false);
+
     context.getOperationRegistry().registerOperation("RequestStartTransaction", [this] () -> Operation* {
         if (!this->context.getModel().getTransactionService()) {
             return nullptr; //-> NotSupported
@@ -114,7 +118,7 @@ RequestStartStopStatus RemoteControlService::requestStartTransaction(unsigned in
 
     transactionOut = evse->getTransaction();
 
-    if (!evse->beginAuthorization(idToken, false)) {
+    if (!evse->beginAuthorization(idToken, authorizeRemoteStart->getBool())) {
         MO_DBG_INFO("EVSE still occupied with pending tx");
         return RequestStartStopStatus_Rejected;
     }

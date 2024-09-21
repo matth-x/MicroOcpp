@@ -17,6 +17,7 @@
 namespace MicroOcpp {
 
 class Context;
+class Variable;
 
 class RemoteControlServiceEvse : public MemoryManaged {
 private:
@@ -42,8 +43,9 @@ public:
 class RemoteControlService : public MemoryManaged {
 private:
     Context& context;
-
     RemoteControlServiceEvse* evses [MO_NUM_EVSE] = {nullptr};
+
+    Variable *authorizeRemoteStart = nullptr;
 
 public:
     RemoteControlService(Context& context, size_t numEvses);
