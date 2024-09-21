@@ -295,7 +295,7 @@ MeteringService::MeteringService(Model& model, size_t numEvses) {
     //define factory defaults
     varService->declareVariable<const char*>("SampledDataCtrlr", "TxStartedMeasurands", "");
     varService->declareVariable<const char*>("SampledDataCtrlr", "TxUpdatedMeasurands", "");
-    varService->declareVariable<const char*>("SampledDataCtrlr", "TxEndedMeasurands", "Energy.Active.Import.Register");
+    varService->declareVariable<const char*>("SampledDataCtrlr", "TxEndedMeasurands", "");
     varService->declareVariable<const char*>("AlignedDataCtrlr", "AlignedDataMeasurands", "");
 
     std::function<bool(const char*)> validateSelectString = [this] (const char *csl) {
