@@ -4,6 +4,7 @@
 
 
 #include <MicroOcpp/Operations/RemoteStartTransaction.h>
+#include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/ConnectorBase/Connector.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
@@ -98,7 +99,13 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
         }
 
         if (success) {
-            auto tx = selectConnector->beginTransaction_authorized(idTag);
+            std::shared_ptr<MicroOcpp::Transaction> tx;
+            auto authorizeRemoteTxRequests = declareConfiguration<bool>("AuthorizeRemoteTxRequests", false);
+            if (authorizeRemoteTxRequests && authorizeRemoteTxRequests->getBool()) {
+                tx = selectConnector->beginTransaction(idTag);
+            } else {
+                tx = selectConnector->beginTransaction_authorized(idTag);
+            }
             selectConnector->updateTxNotification(TxNotification::RemoteStart);
             if (tx) {
                 if (chargingProfileId >= 0) {
