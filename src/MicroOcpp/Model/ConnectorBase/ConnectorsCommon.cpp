@@ -35,7 +35,7 @@ ConnectorsCommon::ConnectorsCommon(Context& context, unsigned int numConn, std::
     /*
      * Further configuration keys which correspond to the Core profile
      */
-    declareConfiguration<bool>("AuthorizeRemoteTxRequests", false, CONFIGURATION_VOLATILE, true);
+    declareConfiguration<bool>("AuthorizeRemoteTxRequests", false);
     declareConfiguration<int>("GetConfigurationMaxKeys", 30, CONFIGURATION_VOLATILE, true);
     
     context.getOperationRegistry().registerOperation("ChangeAvailability", [&context] () {

@@ -9,6 +9,8 @@
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Core/Request.h>
+#include <MicroOcpp/Operations/CustomOperation.h>
 #include <MicroOcpp/Debug.h>
 #include <MicroOcpp/Version.h>
 #include <catch2/catch.hpp>
@@ -63,10 +65,10 @@ TEST_CASE( "Configuration Behavior" ) {
     LoopbackConnection loopback;
     mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-    auto engine = getOcppContext();
-    auto& checkMsg = engine->getOperationRegistry();
+    auto context = getOcppContext();
+    auto& checkMsg = context->getOperationRegistry();
 
-    auto connector = engine->getModel().getConnector(1);
+    auto connector = context->getModel().getConnector(1);
 
     mocpp_set_timer(custom_timer_cb);
 
@@ -223,6 +225,64 @@ TEST_CASE( "Configuration Behavior" ) {
         loopback.setOnline(true);
     }
 #endif //MO_ENABLE_LOCAL_AUTH
+
+    SECTION("AuthorizeRemoteTxRequests") {
+        auto configBool = declareConfiguration<bool>("AuthorizeRemoteTxRequests", false);
+
+        bool receivedAuthorize = false;
+
+        setOnReceiveRequest("Authorize", [&receivedAuthorize] (JsonObject payload) {
+            receivedAuthorize = true;
+            REQUIRE( !strcmp(payload["idTag"] | "_Undefined", "mIdTag") );
+        });
+
+        SECTION("set true") {
+            configBool->setBool(true);
+
+            context->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                    "RemoteStartTransaction",
+                    [] () {
+                        //create req
+                        auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
+                        auto payload = doc->to<JsonObject>();
+                        payload["idTag"] = "mIdTag";
+                        return doc;},
+                    [] (JsonObject) {
+                        //ignore conf
+                    }
+            )));
+
+            loop();
+
+            REQUIRE(receivedAuthorize);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
+        }
+
+        SECTION("set false") {
+            configBool->setBool(false);
+
+            context->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                    "RemoteStartTransaction",
+                    [] () {
+                        //create req
+                        auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
+                        auto payload = doc->to<JsonObject>();
+                        payload["idTag"] = "mIdTag";
+                        return doc;},
+                    [] (JsonObject) {
+                        //ignore conf
+                    }
+            )));
+
+            loop();
+
+            REQUIRE(!receivedAuthorize);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
+        }
+
+        endTransaction();
+        loop();
+    }
 
     mocpp_deinitialize();
 }
