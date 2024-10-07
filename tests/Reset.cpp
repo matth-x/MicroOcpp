@@ -51,8 +51,8 @@ TEST_CASE( "Reset" ) {
             });});
 
     // Register Reset handlers
-    bool checkNotified [MO_NUM_EVSE] = {false};
-    bool checkExecuted [MO_NUM_EVSE] = {false};
+    bool checkNotified [MO_NUM_EVSEID] = {false};
+    bool checkExecuted [MO_NUM_EVSEID] = {false};
 
     setOnResetNotify([&checkNotified] (bool) {
         MO_DBG_DEBUG("Notify");
@@ -65,7 +65,7 @@ TEST_CASE( "Reset" ) {
         return false; // Reset fails because we're not actually exiting the process
     });
     
-    for (size_t i = 1; i < MO_NUM_EVSE; i++) {
+    for (size_t i = 1; i < MO_NUM_EVSEID; i++) {
         context->getModel().getResetServiceV201()->setNotifyReset([&checkNotified, i] (ResetType) {
             MO_DBG_DEBUG("Notify %zu", i);
             checkNotified[i] = true;
@@ -110,7 +110,7 @@ TEST_CASE( "Reset" ) {
 
         REQUIRE(checkProcessed);
 
-        for (size_t i = 0; i < MO_NUM_EVSE; i++) {
+        for (size_t i = 0; i < MO_NUM_EVSEID; i++) {
             REQUIRE( checkNotified[i] );
         }
 
@@ -163,7 +163,7 @@ TEST_CASE( "Reset" ) {
 
         REQUIRE(checkProcessed);
 
-        for (size_t i = 0; i < MO_NUM_EVSE; i++) {
+        for (size_t i = 0; i < MO_NUM_EVSEID; i++) {
             REQUIRE( checkNotified[i] );
         }
 
@@ -181,7 +181,7 @@ TEST_CASE( "Reset" ) {
         REQUIRE( !ocppPermitsCharge(1) );
         REQUIRE( ocppPermitsCharge(2) );
 
-        REQUIRE( getChargePointStatus(1) == ChargePointStatus_Unavailable );
+        //REQUIRE( getChargePointStatus(1) == ChargePointStatus_Unavailable ); //change: Reset doesn't lead to Unavailable state
 
         context->getModel().getTransactionService()->getEvse(2)->endAuthorization("mIdToken");
         setConnectorPluggedInput([] () {return false;}, 2);
@@ -265,7 +265,7 @@ TEST_CASE( "Reset" ) {
         REQUIRE(checkProcessed);
         REQUIRE(checkProcessedTx);
 
-        for (size_t i = 0; i < MO_NUM_EVSE; i++) {
+        for (size_t i = 0; i < MO_NUM_EVSEID; i++) {
             REQUIRE( checkNotified[i] );
         }
 
@@ -350,7 +350,7 @@ TEST_CASE( "Reset" ) {
         REQUIRE(checkProcessed);
         REQUIRE(checkNotified[1]);
 
-        REQUIRE( getChargePointStatus(1) == ChargePointStatus_Unavailable );
+        //REQUIRE( getChargePointStatus(1) == ChargePointStatus_Unavailable ); //change: Reset doesn't lead to Unavailable state
         REQUIRE( getChargePointStatus(2) == ChargePointStatus_Available );
 
         mtime += 30000; // Reset has some delays to ensure that the WS is not cut off immediately

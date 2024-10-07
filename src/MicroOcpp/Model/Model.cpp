@@ -145,15 +145,6 @@ MeteringService* Model::getMeteringService() const {
     return meteringService.get();
 }
 
-void Model::setRemoteControlService(std::unique_ptr<RemoteControlService> rs) {
-    remoteControlService = std::move(rs);
-    capabilitiesUpdated = true;
-}
-
-RemoteControlService *Model::getRemoteControlService() const {
-    return remoteControlService.get();
-}
-
 void Model::setFirmwareService(std::unique_ptr<FirmwareService> fws) {
     firmwareService = std::move(fws);
     capabilitiesUpdated = true;
@@ -272,6 +263,15 @@ void Model::setMeteringServiceV201(std::unique_ptr<Ocpp201::MeteringService> rs)
 
 Ocpp201::MeteringService *Model::getMeteringServiceV201() const {
     return meteringServiceV201.get();
+}
+
+void Model::setRemoteControlService(std::unique_ptr<RemoteControlService> rs) {
+    remoteControlService = std::move(rs);
+    capabilitiesUpdated = true;
+}
+
+RemoteControlService *Model::getRemoteControlService() const {
+    return remoteControlService.get();
 }
 #endif
 

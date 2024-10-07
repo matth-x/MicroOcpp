@@ -55,7 +55,7 @@ TEST_CASE( "C++ API test" ) {
         auto valueSampler = std::unique_ptr<MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>>(
                                         new MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>(
                     svprops,
-                    [c = &checkpoints[ncheck++]] (MicroOcpp::ReadingContext) -> int32_t {*c = true; return 0;}));
+                    [c = &checkpoints[ncheck++]] (ReadingContext) -> int32_t {*c = true; return 0;}));
         addMeterValueInput(std::move(valueSampler));
 
         setOccupiedInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return false;});
@@ -234,13 +234,13 @@ TEST_CASE( "C API test" ) {
         auto valueSampler = std::unique_ptr<MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>>(
                                         new MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>(
                     svprops,
-                    [] (MicroOcpp::ReadingContext) -> int32_t {checkpointsc[16] = true; return 0;})); ncheckc++;
+                    [] (ReadingContext) -> int32_t {checkpointsc[16] = true; return 0;})); ncheckc++;
         ocpp_addMeterValueInput(reinterpret_cast<MeterValueInput*>(valueSampler.release()));
 
         valueSampler = std::unique_ptr<MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>>(
                                         new MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>(
                     svprops,
-                    [] (MicroOcpp::ReadingContext) -> int32_t {checkpointsc[17] = true; return 0;})); ncheckc++;
+                    [] (ReadingContext) -> int32_t {checkpointsc[17] = true; return 0;})); ncheckc++;
         ocpp_addMeterValueInput_m(2, reinterpret_cast<MeterValueInput*>(valueSampler.release()));
 
         ocpp_setOccupiedInput([] () -> bool {checkpointsc[18] = true; return true;}); ncheckc++;
