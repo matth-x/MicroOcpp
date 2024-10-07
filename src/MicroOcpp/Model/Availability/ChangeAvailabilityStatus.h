@@ -9,7 +9,7 @@
 
 #if MO_ENABLE_V201
 
-#include <stddef.h>
+#include <stdint.h>
 
 namespace MicroOcpp {
 
