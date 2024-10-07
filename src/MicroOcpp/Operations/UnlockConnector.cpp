@@ -81,6 +81,7 @@ std::unique_ptr<JsonDoc> UnlockConnector::createConf() {
 
 
 #if MO_ENABLE_V201
+#if MO_ENABLE_CONNECTOR_LOCK
 
 #include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 
@@ -159,4 +160,5 @@ std::unique_ptr<JsonDoc> UnlockConnector::createConf() {
 } // namespace Ocpp201
 } // namespace MicroOcpp
 
+#endif //MO_ENABLE_CONNECTOR_LOCK
 #endif //MO_ENABLE_V201
