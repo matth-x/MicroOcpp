@@ -17,10 +17,8 @@
 
 using namespace MicroOcpp;
 
-AvailabilityServiceEvse::AvailabilityServiceEvse(Context& context, unsigned int evseId) : MemoryManaged("v201.Availability.AvailabilityServiceEvse"), context(context), evseId(evseId) {
+AvailabilityServiceEvse::AvailabilityServiceEvse(Context& context, AvailabilityService& availabilityService, unsigned int evseId) : MemoryManaged("v201.Availability.AvailabilityServiceEvse"), context(context), availabilityService(availabilityService), evseId(evseId) {
 
-    snprintf(availabilityBoolKey, sizeof(availabilityBoolKey), MO_CONFIG_EXT_PREFIX "AVAIL_CONN_%d", evseId);
-    availabilityBool = declareConfiguration<bool>(availabilityBoolKey, true, MO_KEYVALUE_FN, false, false, false);
 }
 
 void AvailabilityServiceEvse::loop() {
@@ -51,23 +49,9 @@ void AvailabilityServiceEvse::setOccupiedInput(std::function<bool()> occupiedInp
 ChargePointStatus AvailabilityServiceEvse::getStatus() {
     ChargePointStatus res = ChargePointStatus_UNDEFINED;
 
-    /*
-    * Handle special case: This is the Connector for the whole CP (i.e. evseId=0) --> only states Available, Unavailable, Faulted are possible
-    */
-    if (evseId == 0) {
-        if (isFaulted()) {
-            res = ChargePointStatus_Faulted;
-        } else if (!isOperative()) {
-            res = ChargePointStatus_Unavailable;
-        } else {
-            res = ChargePointStatus_Available;
-        }
-        return res;
-    }
-
     if (isFaulted()) {
         res = ChargePointStatus_Faulted;
-    } else if (!isOperative()) {
+    } else if (!isAvailable()) {
         res = ChargePointStatus_Unavailable;
     }
     #if MO_ENABLE_RESERVATION
@@ -85,38 +69,48 @@ ChargePointStatus AvailabilityServiceEvse::getStatus() {
     return res;
 }
 
-void AvailabilityServiceEvse::setInoperative(void *requesterId) {
+void AvailabilityServiceEvse::setUnavailable(void *requesterId) {
     for (size_t i = 0; i < MO_INOPERATIVE_REQUESTERS_MAX; i++) {
-        if (!inoperativeRequesters[i]) {
-            inoperativeRequesters[i] = requesterId;
+        if (!unavailableRequesters[i]) {
+            unavailableRequesters[i] = requesterId;
             return;
         }
     }
-    MO_DBG_ERR("exceeded max. inoperative requesters");
+    MO_DBG_ERR("exceeded max. unavailable requesters");
 }
 
-void AvailabilityServiceEvse::resetInoperative(void *requesterId) {
+void AvailabilityServiceEvse::setAvailable(void *requesterId) {
     for (size_t i = 0; i < MO_INOPERATIVE_REQUESTERS_MAX; i++) {
-        if (inoperativeRequesters[i] == requesterId) {
-            inoperativeRequesters[i] = nullptr;
+        if (unavailableRequesters[i] == requesterId) {
+            unavailableRequesters[i] = nullptr;
             return;
         }
     }
-    MO_DBG_ERR("could not find inoperative requester");
+    MO_DBG_ERR("could not find unavailable requester");
 }
 
 ChangeAvailabilityStatus AvailabilityServiceEvse::changeAvailability(bool operative) {
     if (operative) {
-        resetInoperative(this);
+        setAvailable(this);
     } else {
-        setInoperative(this);
+        setUnavailable(this);
     }
 
-    if (isOperative() && !operative) {
-        return ChangeAvailabilityStatus::Scheduled;
-    } else {
-        return ChangeAvailabilityStatus::Accepted;
+    if (!operative) {
+        if (isAvailable()) {
+            return ChangeAvailabilityStatus::Scheduled;
+        }
+
+        if (evseId == 0) {
+            for (unsigned int id = 1; id < MO_NUM_EVSEID; id++) {
+                if (availabilityService.getEvse(id) && availabilityService.getEvse(id)->isAvailable()) {
+                    return ChangeAvailabilityStatus::Scheduled;
+                }
+            }
+        }
     }
+
+    return ChangeAvailabilityStatus::Accepted;
 }
 
 void AvailabilityServiceEvse::setFaulted(void *requesterId) {
@@ -139,37 +133,26 @@ void AvailabilityServiceEvse::resetFaulted(void *requesterId) {
     MO_DBG_ERR("could not find faulted requester");
 }
 
-bool AvailabilityServiceEvse::isOperative() {
-    if (availabilityBool && !availabilityBool->getBool()) {
-        return false;
-    }
+bool AvailabilityServiceEvse::isAvailable() {
 
     auto txService = context.getModel().getTransactionService();
-
-    if (evseId == 0) {
-        for (unsigned int id = 1; id < MO_NUM_EVSE; id++) {
-            TransactionService::Evse *evse;
-            if (txService && (evse = txService->getEvse(id))) {
-                if (evse->getTransaction() &&
-                        evse->getTransaction()->started &&
-                        !evse->getTransaction()->stopped) {
-                    return true;
-                }
-            }
+    auto txEvse = txService ? txService->getEvse(evseId) : nullptr;
+    if (txEvse) {
+        if (txEvse->getTransaction() &&
+                txEvse->getTransaction()->started &&
+                !txEvse->getTransaction()->stopped) {
+            return true;
         }
-    } else {
-        TransactionService::Evse *evse;
-        if (txService && (evse = txService->getEvse(evseId))) {
-            if (evse->getTransaction() &&
-                    evse->getTransaction()->started &&
-                    !evse->getTransaction()->stopped) {
-                return true;
-            }
+    }
+
+    if (evseId > 0) {
+        if (availabilityService.getEvse(0) && !availabilityService.getEvse(0)->isAvailable()) {
+            return false;
         }
     }
 
     for (size_t i = 0; i < MO_INOPERATIVE_REQUESTERS_MAX; i++) {
-        if (inoperativeRequesters[i]) {
+        if (unavailableRequesters[i]) {
             return false;
         }
     }
@@ -187,8 +170,8 @@ bool AvailabilityServiceEvse::isFaulted() {
 
 AvailabilityService::AvailabilityService(Context& context, size_t numEvses) : MemoryManaged("v201.Availability.AvailabilityService"), context(context) {
 
-    for (size_t i = 0; i < numEvses && i < MO_NUM_EVSE; i++) {
-        evses[i] = new AvailabilityServiceEvse(context, (unsigned int)i);
+    for (size_t i = 0; i < numEvses && i < MO_NUM_EVSEID; i++) {
+        evses[i] = new AvailabilityServiceEvse(context, *this, (unsigned int)i);
     }
 
     context.getOperationRegistry().registerOperation("StatusNotification", [&context] () {
@@ -198,37 +181,23 @@ AvailabilityService::AvailabilityService(Context& context, size_t numEvses) : Me
 }
 
 AvailabilityService::~AvailabilityService() {
-    for (size_t i = 0; i < MO_NUM_EVSE && evses[i]; i++) {
+    for (size_t i = 0; i < MO_NUM_EVSEID && evses[i]; i++) {
         delete evses[i];
     }
 }
 
 void AvailabilityService::loop() {
-    for (size_t i = 0; i < MO_NUM_EVSE && evses[i]; i++) {
+    for (size_t i = 0; i < MO_NUM_EVSEID && evses[i]; i++) {
         evses[i]->loop();
     }
 }
 
 AvailabilityServiceEvse *AvailabilityService::getEvse(unsigned int evseId) {
-    if (evseId >= MO_NUM_EVSE) {
+    if (evseId >= MO_NUM_EVSEID) {
         MO_DBG_ERR("invalid arg");
         return nullptr;
     }
     return evses[evseId];
-}
-
-ChangeAvailabilityStatus AvailabilityService::changeAvailability(bool operative) {
-    bool scheduled = false;
-
-    for (size_t i = 0; i < MO_NUM_EVSE && evses[i]; i++) {
-        scheduled |= evses[i]->changeAvailability(operative) == ChangeAvailabilityStatus::Scheduled;
-    }
-
-    if (scheduled) {
-        return ChangeAvailabilityStatus::Scheduled;
-    } else {
-        return ChangeAvailabilityStatus::Accepted;
-    }
 }
 
 #endif // MO_ENABLE_V201

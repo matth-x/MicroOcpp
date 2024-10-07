@@ -97,14 +97,25 @@ const char* ChangeAvailability::getOperationType(){
 }
 
 void ChangeAvailability::processReq(JsonObject payload) {
-    int evseIdRaw = payload["evse"]["id"] | 0;
-    if (evseIdRaw < 0) {
-        errorCode = "FormationViolation";
-        return;
-    }
-    unsigned int evseId = (unsigned int)evseIdRaw;
 
-    if (!availabilityService.getEvse(evseId)) {
+    unsigned int evseId = 0;
+    
+    if (payload.containsKey("evse")) {
+        int evseIdRaw = payload["evse"]["id"] | -1;
+        if (evseIdRaw < 0) {
+            errorCode = "FormationViolation";
+            return;
+        }
+        evseId = (unsigned int)evseIdRaw;
+
+        if ((payload["evse"]["connectorId"] | 1) != 1) {
+            errorCode = "PropertyConstraintViolation";
+            return;
+        }
+    }
+
+    auto availabilityEvse = availabilityService.getEvse(evseId);
+    if (!availabilityEvse) {
         errorCode = "PropertyConstraintViolation";
         return;
     }
@@ -122,11 +133,7 @@ void ChangeAvailability::processReq(JsonObject payload) {
         return;
     }
 
-    if (evseId == 0) {
-        status = availabilityService.changeAvailability(operative);
-    } else {
-        status = availabilityService.getEvse(evseId)->changeAvailability(operative);
-    }
+    status = availabilityEvse->changeAvailability(operative);
 }
 
 std::unique_ptr<JsonDoc> ChangeAvailability::createConf(){

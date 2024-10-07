@@ -286,13 +286,13 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
 #if MO_ENABLE_V201
     if (version.major == 2) {
         model.setAvailabilityService(std::unique_ptr<AvailabilityService>(
-            new AvailabilityService(*context, MO_NUM_EVSE)));
+            new AvailabilityService(*context, MO_NUM_EVSEID)));
         model.setVariableService(std::unique_ptr<VariableService>(
             new VariableService(*context, filesystem)));
         model.setTransactionService(std::unique_ptr<TransactionService>(
             new TransactionService(*context)));
         model.setRemoteControlService(std::unique_ptr<RemoteControlService>(
-            new RemoteControlService(*context, MO_NUM_EVSE)));
+            new RemoteControlService(*context, MO_NUM_EVSEID)));
     } else
 #endif
     {
@@ -932,7 +932,7 @@ void addMeterValueInput(std::function<float ()> valueInput, const char *measuran
         auto& model = context->getModel();
         if (!model.getMeteringServiceV201()) {
             model.setMeteringServiceV201(std::unique_ptr<Ocpp201::MeteringService>(
-                new Ocpp201::MeteringService(context->getModel(), MO_NUM_EVSE)));
+                new Ocpp201::MeteringService(context->getModel(), MO_NUM_EVSEID)));
         }
         if (auto mEvse = model.getMeteringServiceV201()->getEvse(connectorId)) {
             
@@ -1080,7 +1080,7 @@ bool isOperative(unsigned int connectorId) {
                 MO_DBG_ERR("could not find connector");
                 return true; //assume "true" as default state
             }
-            return chargePoint->isOperative() && connector->isOperative();
+            return chargePoint->isAvailable() && connector->isAvailable();
         }
     }
 #endif

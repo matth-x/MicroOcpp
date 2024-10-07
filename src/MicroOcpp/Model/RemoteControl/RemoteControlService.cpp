@@ -63,7 +63,7 @@ UnlockStatus RemoteControlServiceEvse::unlockConnector() {
 
 RemoteControlService::RemoteControlService(Context& context, size_t numEvses) : MemoryManaged("v201.RemoteControl.RemoteControlService"), context(context) {
 
-    for (size_t i = 0; i < numEvses && i < MO_NUM_EVSE; i++) {
+    for (size_t i = 0; i < numEvses && i < MO_NUM_EVSEID; i++) {
         evses[i] = new RemoteControlServiceEvse(context, (unsigned int)i);
     }
 
@@ -89,13 +89,13 @@ RemoteControlService::RemoteControlService(Context& context, size_t numEvses) : 
 }
 
 RemoteControlService::~RemoteControlService() {
-    for (size_t i = 0; i < MO_NUM_EVSE && evses[i]; i++) {
+    for (size_t i = 0; i < MO_NUM_EVSEID && evses[i]; i++) {
         delete evses[i];
     }
 }
 
 RemoteControlServiceEvse *RemoteControlService::getEvse(unsigned int evseId) {
-    if (evseId >= MO_NUM_EVSE) {
+    if (evseId >= MO_NUM_EVSEID) {
         MO_DBG_ERR("invalid arg");
         return nullptr;
     }
@@ -145,7 +145,7 @@ RequestStartStopStatus RemoteControlService::requestStopTransaction(const char *
 
     bool success = false;
 
-    for (unsigned int evseId = 0; evseId < MO_NUM_EVSE; evseId++) {
+    for (unsigned int evseId = 0; evseId < MO_NUM_EVSEID; evseId++) {
         if (auto evse = txService->getEvse(evseId)) {
             if (evse->getTransaction() && !strcmp(evse->getTransaction()->transactionId, transactionId)) {
                 success = evse->abortTransaction(Ocpp201::Transaction::StopReason::Remote, Ocpp201::TransactionEventTriggerReason::RemoteStop);

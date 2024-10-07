@@ -661,9 +661,9 @@ TransactionService::TransactionService(Context& context) :
     varService->registerValidator<int>("SampledDataCtrlr", "TxUpdatedInterval", validateUnsignedInt);
     varService->registerValidator<int>("SampledDataCtrlr", "TxEndedInterval", validateUnsignedInt);
 
-    evses.reserve(MO_NUM_EVSE);
+    evses.reserve(MO_NUM_EVSEID);
 
-    for (unsigned int evseId = 0; evseId < MO_NUM_EVSE; evseId++) {
+    for (unsigned int evseId = 0; evseId < MO_NUM_EVSEID; evseId++) {
         evses.emplace_back(context, *this, evseId);
     }
 
@@ -690,7 +690,7 @@ void TransactionService::loop() {
     if (auto& tx0 = evses[0].getTransaction()) {
         //pending tx on evseId 0
         if (tx0->active) {
-            for (unsigned int evseId = 1; evseId < MO_NUM_EVSE; evseId++) {
+            for (unsigned int evseId = 1; evseId < MO_NUM_EVSEID; evseId++) {
                 if (!evses[evseId].getTransaction() && 
                         (!evses[evseId].connectorPluggedInput || evses[evseId].connectorPluggedInput())) {
                     MO_DBG_INFO("assign tx to evse %u", evseId);

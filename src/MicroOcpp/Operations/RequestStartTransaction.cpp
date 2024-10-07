@@ -24,7 +24,7 @@ const char* RequestStartTransaction::getOperationType(){
 void RequestStartTransaction::processReq(JsonObject payload) {
 
     int evseId = payload["evseId"] | 0;
-    if (evseId < 0 || evseId >= MO_NUM_EVSE) {
+    if (evseId < 0 || evseId >= MO_NUM_EVSEID) {
         errorCode = "PropertyConstraintViolation";
         return;
     }

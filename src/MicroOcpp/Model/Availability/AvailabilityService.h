@@ -20,7 +20,6 @@
 #include <MicroOcpp/Model/Availability/ChangeAvailabilityStatus.h>
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
-#include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/Memory.h>
 
 #ifndef MO_INOPERATIVE_REQUESTERS_MAX
@@ -34,23 +33,23 @@
 namespace MicroOcpp {
 
 class Context;
+class AvailabilityService;
 
 class AvailabilityServiceEvse : public MemoryManaged {
 private:
     Context& context;
+    AvailabilityService& availabilityService;
     const unsigned int evseId;
 
     std::function<bool()> connectorPluggedInput;
     std::function<bool()> occupiedInput; //instead of Available, go into Occupied
 
-    std::shared_ptr<Configuration> availabilityBool;
-    char availabilityBoolKey [sizeof(MO_CONFIG_EXT_PREFIX "AVAIL_CONN_xxxx") + 1];
-    void *inoperativeRequesters [MO_INOPERATIVE_REQUESTERS_MAX] = {nullptr};
+    void *unavailableRequesters [MO_INOPERATIVE_REQUESTERS_MAX] = {nullptr};
     void *faultedRequesters [MO_FAULTED_REQUESTERS_MAX] = {nullptr};
 
     ChargePointStatus reportedStatus = ChargePointStatus_UNDEFINED;
 public:
-    AvailabilityServiceEvse(Context& context, unsigned int evseId);
+    AvailabilityServiceEvse(Context& context, AvailabilityService& availabilityService, unsigned int evseId);
 
     void loop();
 
@@ -59,15 +58,15 @@ public:
 
     ChargePointStatus getStatus();
 
-    void setInoperative(void *requesterId);
-    void resetInoperative(void *requesterId);
+    void setUnavailable(void *requesterId);
+    void setAvailable(void *requesterId);
 
     ChangeAvailabilityStatus changeAvailability(bool operative);
 
     void setFaulted(void *requesterId);
     void resetFaulted(void *requesterId);
 
-    bool isOperative();
+    bool isAvailable();
     bool isFaulted();
 };
 
@@ -75,7 +74,7 @@ class AvailabilityService : public MemoryManaged {
 private:
     Context& context;
 
-    AvailabilityServiceEvse* evses [MO_NUM_EVSE] = {nullptr};
+    AvailabilityServiceEvse* evses [MO_NUM_EVSEID] = {nullptr};
 
 public:
     AvailabilityService(Context& context, size_t numEvses);
@@ -84,8 +83,6 @@ public:
     void loop();
 
     AvailabilityServiceEvse *getEvse(unsigned int evseId);
-
-    ChangeAvailabilityStatus changeAvailability(bool operative);
 };
 
 } // namespace MicroOcpp

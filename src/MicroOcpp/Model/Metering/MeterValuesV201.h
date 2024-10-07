@@ -137,7 +137,7 @@ public:
 
 class MeteringService : public MemoryManaged {
 private:
-    MeteringServiceEvse* evses [MO_NUM_EVSE] = {nullptr};
+    MeteringServiceEvse* evses [MO_NUM_EVSEID] = {nullptr};
 public:
     MeteringService(Model& model, size_t numEvses);
     ~MeteringService();

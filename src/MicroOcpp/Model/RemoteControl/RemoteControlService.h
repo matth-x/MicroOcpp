@@ -43,7 +43,7 @@ public:
 class RemoteControlService : public MemoryManaged {
 private:
     Context& context;
-    RemoteControlServiceEvse* evses [MO_NUM_EVSE] = {nullptr};
+    RemoteControlServiceEvse* evses [MO_NUM_EVSEID] = {nullptr};
 
     Variable *authorizeRemoteStart = nullptr;
 

@@ -312,7 +312,7 @@ MeteringService::MeteringService(Model& model, size_t numEvses) {
                 r++;
             }
             bool found = false;
-            for (size_t evseId = 0; evseId < MO_NUM_EVSE && evses[evseId]; evseId++) {
+            for (size_t evseId = 0; evseId < MO_NUM_EVSEID && evses[evseId]; evseId++) {
                 if (evses[evseId]->existsMeasurand(l, (size_t) (r - l))) {
                     found = true;
                     break;
@@ -333,13 +333,13 @@ MeteringService::MeteringService(Model& model, size_t numEvses) {
     varService->registerValidator<const char*>("SampledDataCtrlr", "TxEndedMeasurands", validateSelectString);
     varService->registerValidator<const char*>("AlignedDataCtrlr", "AlignedDataMeasurands", validateSelectString);
 
-    for (size_t evseId = 0; evseId < std::min(numEvses, (size_t)MO_NUM_EVSE); evseId++) {
+    for (size_t evseId = 0; evseId < std::min(numEvses, (size_t)MO_NUM_EVSEID); evseId++) {
         evses[evseId] = new MeteringServiceEvse(model, evseId);
     }
 }
 
 MeteringService::~MeteringService() {
-    for (size_t evseId = 0; evseId < MO_NUM_EVSE && evses[evseId]; evseId++) {
+    for (size_t evseId = 0; evseId < MO_NUM_EVSEID && evses[evseId]; evseId++) {
         delete evses[evseId];
     }
 }

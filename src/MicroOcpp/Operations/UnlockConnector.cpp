@@ -100,7 +100,7 @@ void UnlockConnector::processReq(JsonObject payload) {
     int evseId = payload["evseId"] | -1;
     int connectorId = payload["connectorId"] | -1;
 
-    if (evseId < 1 || evseId >= MO_NUM_EVSE || connectorId < 1) {
+    if (evseId < 1 || evseId >= MO_NUM_EVSEID || connectorId < 1) {
         errorCode = "PropertyConstraintViolation";
         return;
     }
