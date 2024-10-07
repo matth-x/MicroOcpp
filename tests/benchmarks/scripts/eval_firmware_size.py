@@ -41,6 +41,7 @@ def categorize_table(df):
     MODULE_AUTHORIZATION = 'C - Authorization'
     MODULE_LOCALAUTH = 'D - Local Authorization List Management'
     MODULE_TX = 'E - Transactions'
+    MODULE_REMOTECONTROL = 'F - RemoteControl'
     MODULE_AVAILABILITY = 'G - Availability'
     MODULE_RESERVATION = 'H - Reservation'
     MODULE_METERVALUES = 'J - MeterValues'
@@ -154,8 +155,17 @@ def categorize_table(df):
     df.at['Model/Metering/MeterStore.cpp', 'Module'] = MODULE_METERVALUES
     df.at['Model/Metering/MeterValue.cpp', 'v16'] = TICK
     df.at['Model/Metering/MeterValue.cpp', 'Module'] = MODULE_METERVALUES
+    if 'Model/Metering/MeterValuesV201.cpp' in df.index:
+        df.at['Model/Metering/MeterValuesV201.cpp', 'v201'] = TICK
+        df.at['Model/Metering/MeterValuesV201.cpp', 'Module'] = MODULE_METERVALUES
+    if 'Model/Metering/ReadingContext.cpp' in df.index:
+        df.at['Model/Metering/ReadingContext.cpp', 'v201'] = TICK
+        df.at['Model/Metering/ReadingContext.cpp', 'Module'] = MODULE_METERVALUES
     df.at['Model/Metering/SampledValue.cpp', 'v16'] = TICK
     df.at['Model/Metering/SampledValue.cpp', 'Module'] = MODULE_METERVALUES
+    if 'Model/RemoteControl/RemoteControlService.cpp' in df.index:
+        df.at['Model/RemoteControl/RemoteControlService.cpp', 'v201'] = TICK
+        df.at['Model/RemoteControl/RemoteControlService.cpp', 'Module'] = MODULE_REMOTECONTROL
     df.at['Model/Model.cpp', 'v16'] = TICK
     df.at['Model/Model.cpp', 'v201'] = TICK
     df.at['Model/Model.cpp', 'Module'] = MODULE_GENERAL
