@@ -9,6 +9,7 @@
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
 #include <MicroOcpp/Model/Reset/ResetService.h>
@@ -38,9 +39,20 @@ TEST_CASE( "Reset" ) {
 
     mocpp_set_timer(custom_timer_cb);
 
+    getOcppContext()->getOperationRegistry().registerOperation("Authorize", [] () {
+        return new Ocpp16::CustomOperation("Authorize",
+            [] (JsonObject) {}, //ignore req
+            [] () {
+                //create conf
+                auto doc = makeJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
+                auto payload = doc->to<JsonObject>();
+                payload["idTokenInfo"]["status"] = "Accepted";
+                return doc;
+            });});
+
     // Register Reset handlers
-    bool checkNotified [MO_NUM_EVSE] = {false};
-    bool checkExecuted [MO_NUM_EVSE] = {false};
+    bool checkNotified [MO_NUM_EVSEID] = {false};
+    bool checkExecuted [MO_NUM_EVSEID] = {false};
 
     setOnResetNotify([&checkNotified] (bool) {
         MO_DBG_DEBUG("Notify");
@@ -53,7 +65,7 @@ TEST_CASE( "Reset" ) {
         return false; // Reset fails because we're not actually exiting the process
     });
     
-    for (size_t i = 1; i < MO_NUM_EVSE; i++) {
+    for (size_t i = 1; i < MO_NUM_EVSEID; i++) {
         context->getModel().getResetServiceV201()->setNotifyReset([&checkNotified, i] (ResetType) {
             MO_DBG_DEBUG("Notify %zu", i);
             checkNotified[i] = true;
@@ -67,6 +79,43 @@ TEST_CASE( "Reset" ) {
     }
 
     loop();
+
+    SECTION("B11 - Reset - Without ongoing transaction") {
+
+        MO_MEM_RESET();
+
+        bool checkProcessed = false;
+
+        auto resetRequest = makeRequest(new Ocpp16::CustomOperation(
+                "Reset",
+                [] () {
+                    //create req
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
+                    auto payload = doc->to<JsonObject>();
+                    payload["type"] = "OnIdle";
+                    return doc;},
+                [&checkProcessed] (JsonObject payload) {
+                    //receive conf
+                    checkProcessed = true;
+
+                    REQUIRE(!strcmp(payload["status"], "Accepted"));
+                }
+        ));
+
+        context->initiateRequest(std::move(resetRequest));
+
+        loop();
+        mtime += 30000; // Reset has some delays to ensure that the WS is not cut off immediately
+        loop();
+
+        REQUIRE(checkProcessed);
+
+        for (size_t i = 0; i < MO_NUM_EVSEID; i++) {
+            REQUIRE( checkNotified[i] );
+        }
+
+        MO_MEM_PRINT_STATS();
+    }
 
     SECTION("Schedule full charger Reset") {
 
@@ -114,7 +163,7 @@ TEST_CASE( "Reset" ) {
 
         REQUIRE(checkProcessed);
 
-        for (size_t i = 0; i < MO_NUM_EVSE; i++) {
+        for (size_t i = 0; i < MO_NUM_EVSEID; i++) {
             REQUIRE( checkNotified[i] );
         }
 
@@ -132,7 +181,7 @@ TEST_CASE( "Reset" ) {
         REQUIRE( !ocppPermitsCharge(1) );
         REQUIRE( ocppPermitsCharge(2) );
 
-        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus_Unavailable );
+        //REQUIRE( getChargePointStatus(1) == ChargePointStatus_Unavailable ); //change: Reset doesn't lead to Unavailable state
 
         context->getModel().getTransactionService()->getEvse(2)->endAuthorization("mIdToken");
         setConnectorPluggedInput([] () {return false;}, 2);
@@ -150,8 +199,8 @@ TEST_CASE( "Reset" ) {
         REQUIRE( checkExecuted[0] );
 
         // Technically, Reset failed at this point, because the program is still running. Check if connectors are Available agin
-        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus_Available );
-        REQUIRE( context->getModel().getConnector(2)->getStatus() == ChargePointStatus_Available );
+        REQUIRE( getChargePointStatus(1) == ChargePointStatus_Available );
+        REQUIRE( getChargePointStatus(2) == ChargePointStatus_Available );
     }
 
     SECTION("Immediate full charger Reset") {
@@ -166,6 +215,8 @@ TEST_CASE( "Reset" ) {
         context->getModel().getTransactionService()->getEvse(2)->beginAuthorization("mIdToken2");
 
         loop();
+
+        MO_MEM_RESET();
 
         REQUIRE( ocppPermitsCharge(1) );
         REQUIRE( ocppPermitsCharge(2) );
@@ -214,7 +265,7 @@ TEST_CASE( "Reset" ) {
         REQUIRE(checkProcessed);
         REQUIRE(checkProcessedTx);
 
-        for (size_t i = 0; i < MO_NUM_EVSE; i++) {
+        for (size_t i = 0; i < MO_NUM_EVSEID; i++) {
             REQUIRE( checkNotified[i] );
         }
 
@@ -224,11 +275,13 @@ TEST_CASE( "Reset" ) {
 
         REQUIRE( checkExecuted[0] );
 
+        MO_MEM_PRINT_STATS();
+
         loop();
 
         // Technically, Reset failed at this point, because the program is still running. Check if connectors are Available agin
-        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus_Available );
-        REQUIRE( context->getModel().getConnector(2)->getStatus() == ChargePointStatus_Available );
+        REQUIRE( getChargePointStatus(1) == ChargePointStatus_Available );
+        REQUIRE( getChargePointStatus(2) == ChargePointStatus_Available );
     }
 
     SECTION("Reject Reset") {
@@ -264,9 +317,9 @@ TEST_CASE( "Reset" ) {
         REQUIRE(checkProcessed);
         REQUIRE(checkNotified[2]);
 
-        REQUIRE( context->getModel().getConnector(0)->getStatus() == ChargePointStatus_Available );
-        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus_Available );
-        REQUIRE( context->getModel().getConnector(2)->getStatus() == ChargePointStatus_Available );
+        REQUIRE( getChargePointStatus(0) == ChargePointStatus_Available );
+        REQUIRE( getChargePointStatus(1) == ChargePointStatus_Available );
+        REQUIRE( getChargePointStatus(2) == ChargePointStatus_Available );
     }
 
     SECTION("Reset single EVSE") {
@@ -297,14 +350,14 @@ TEST_CASE( "Reset" ) {
         REQUIRE(checkProcessed);
         REQUIRE(checkNotified[1]);
 
-        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus_Unavailable );
-        REQUIRE( context->getModel().getConnector(2)->getStatus() == ChargePointStatus_Available );
+        //REQUIRE( getChargePointStatus(1) == ChargePointStatus_Unavailable ); //change: Reset doesn't lead to Unavailable state
+        REQUIRE( getChargePointStatus(2) == ChargePointStatus_Available );
 
         mtime += 30000; // Reset has some delays to ensure that the WS is not cut off immediately
         loop();
 
         REQUIRE(checkExecuted[1]);
-        REQUIRE( context->getModel().getConnector(1)->getStatus() == ChargePointStatus_Available );
+        REQUIRE( getChargePointStatus(1) == ChargePointStatus_Available );
     }
 
     mocpp_deinitialize();

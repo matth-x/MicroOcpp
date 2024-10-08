@@ -164,8 +164,7 @@ void mo_mem_deinit() {
 void mo_mem_reset() {
     MO_DBG_DEBUG("Reset all maximum values to current values");
 
-    auto tagInfo = memTags.begin();
-    if (tagInfo != memTags.end()) {
+    for (auto tagInfo = (memTags).begin(); tagInfo != memTags.end(); ++tagInfo) {
         tagInfo->second.reset();
     }
 

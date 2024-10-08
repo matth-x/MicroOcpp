@@ -426,5 +426,51 @@ TEST_CASE( "Boot Behavior" ) {
         REQUIRE( !strcmp(declareConfiguration<const char*>("neverDeclaredInsideMO", "newVal")->getString(), "newVal") ); //config has been removed
     }
 
+    SECTION("Boot with v201") {
+
+        mocpp_deinitialize();
+
+        mocpp_initialize(loopback, ChargerCredentials::v201(CHARGEPOINTMODEL, CHARGEPOINTVENDOR), filesystem, false, ProtocolVersion(2,0,1));
+
+        bool checkProcessed = false;
+
+        getOcppContext()->getOperationRegistry().registerOperation("BootNotification",
+            [&checkProcessed] () {
+                return new Ocpp16::CustomOperation("BootNotification",
+                    [ &checkProcessed] (JsonObject payload) {
+                        //process req
+                        checkProcessed = true;
+                        REQUIRE( !strcmp(payload["reason"] | "_Undefined", "PowerUp") );
+                        REQUIRE( !strcmp(payload["chargingStation"]["model"] | "_Undefined", CHARGEPOINTMODEL) );
+                        REQUIRE( !strcmp(payload["chargingStation"]["vendorName"] | "_Undefined", CHARGEPOINTVENDOR) );
+                    },
+                    [] () {
+                        //create conf
+                        auto conf = makeJsonDoc(UNIT_MEM_TAG, JSON_OBJECT_SIZE(3));
+                        (*conf)["currentTime"] = BASE_TIME;
+                        (*conf)["interval"] = 3600;
+                        (*conf)["status"] = "Accepted";
+                        return conf;
+                    });
+            });
+
+        MO_MEM_RESET();
+        
+        loop();
+
+        REQUIRE(checkProcessed);
+        REQUIRE(getOcppContext()->getModel().getClock().now() >= MIN_TIME);
+
+        MO_MEM_PRINT_STATS();
+
+        MO_MEM_RESET();
+
+        mtime += 3600 * 1000;
+        loop();
+
+        MO_DBG_INFO("Memory requirements UC G02:");
+        MO_MEM_PRINT_STATS();
+    }
+
     mocpp_deinitialize();
 }

@@ -9,6 +9,7 @@
 #include <memory>
 #include <functional>
 
+#include <MicroOcpp/Model/Metering/ReadingContext.h>
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Platform.h>
 
@@ -76,23 +77,6 @@ public:
     const char *getUnit() const {return unit.c_str();}
 };
 
-enum class ReadingContext {
-    InterruptionBegin,
-    InterruptionEnd,
-    Other,
-    SampleClock,
-    SamplePeriodic,
-    TransactionBegin,
-    TransactionEnd,
-    Trigger,
-    NOT_SET
-};
-
-namespace Ocpp16 {
-const char *serializeReadingContext(ReadingContext context);
-ReadingContext deserializeReadingContext(const char *serialized);
-}
-
 class SampledValue {
 protected:
     const SampledValueProperties& properties;
@@ -153,7 +137,7 @@ public:
     std::unique_ptr<SampledValue> deserializeValue(JsonObject svJson) override {
         return std::unique_ptr<SampledValueConcrete<T, DeSerializer>>(new SampledValueConcrete<T, DeSerializer>(
             properties,
-            Ocpp16::deserializeReadingContext(svJson["context"] | "NOT_SET"),
+            deserializeReadingContext(svJson["context"] | "NOT_SET"),
             DeSerializer::deserialize(svJson["value"] | "")));
     }
 };

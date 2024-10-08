@@ -37,11 +37,14 @@ class CertificateService;
 #endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_V201
+class AvailabilityService;
 class VariableService;
 class TransactionService;
+class RemoteControlService;
 
 namespace Ocpp201 {
 class ResetService;
+class MeteringService;
 }
 #endif //MO_ENABLE_V201
 
@@ -71,9 +74,12 @@ private:
 #endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_V201
+    std::unique_ptr<AvailabilityService> availabilityService;
     std::unique_ptr<VariableService> variableService;
     std::unique_ptr<TransactionService> transactionService;
     std::unique_ptr<Ocpp201::ResetService> resetServiceV201;
+    std::unique_ptr<Ocpp201::MeteringService> meteringServiceV201;
+    std::unique_ptr<RemoteControlService> remoteControlService;
 #endif
 
     Clock clock;
@@ -142,6 +148,9 @@ public:
 #endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_V201
+    void setAvailabilityService(std::unique_ptr<AvailabilityService> as);
+    AvailabilityService *getAvailabilityService() const;
+
     void setVariableService(std::unique_ptr<VariableService> vs);
     VariableService *getVariableService() const;
 
@@ -150,6 +159,12 @@ public:
 
     void setResetServiceV201(std::unique_ptr<Ocpp201::ResetService> rs);
     Ocpp201::ResetService *getResetServiceV201() const;
+
+    void setMeteringServiceV201(std::unique_ptr<Ocpp201::MeteringService> ms);
+    Ocpp201::MeteringService *getMeteringServiceV201() const;
+
+    void setRemoteControlService(std::unique_ptr<RemoteControlService> rs);
+    RemoteControlService *getRemoteControlService() const;
 #endif
 
     Clock &getClock();

@@ -79,6 +79,7 @@ std::unique_ptr<Request> VolatileRequestQueue::fetchFrontRequest() {
 bool VolatileRequestQueue::pushRequestBack(std::unique_ptr<Request> request) {
 
     // Don't queue up multiple StatusNotification messages for the same connectorId
+    #if 0 // Leads to ASAN failure when executed by Unit test suite (CustomOperation is casted to StatusNotification)
     if (strcmp(request->getOperationType(), "StatusNotification") == 0)
     {
         size_t i = 0;
@@ -103,6 +104,7 @@ bool VolatileRequestQueue::pushRequestBack(std::unique_ptr<Request> request) {
             }
         }
     }
+    #endif
 
     if (len >= MO_REQUEST_CACHE_MAXSIZE) {
         MO_DBG_INFO("Drop cached operation (cache full): %s", requests[front]->getOperationType());

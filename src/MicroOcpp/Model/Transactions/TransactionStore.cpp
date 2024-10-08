@@ -76,7 +76,7 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
         return nullptr;
     }
 
-    auto transaction = std::make_shared<Transaction>(*this, connectorId, txNr);
+    auto transaction = std::allocate_shared<Transaction>(makeAllocator<Transaction>(getMemoryTag()), *this, connectorId, txNr);
     JsonObject txJson = doc->as<JsonObject>();
     if (!deserializeTransaction(*transaction, txJson)) {
         MO_DBG_ERR("deserialization error");
@@ -100,7 +100,7 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
 
 std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction(unsigned int txNr, bool silent) {
 
-    auto transaction = std::make_shared<Transaction>(*this, connectorId, txNr, silent);
+    auto transaction = std::allocate_shared<Transaction>(makeAllocator<Transaction>(getMemoryTag()), *this, connectorId, txNr, silent);
 
     if (!commit(transaction.get())) {
         MO_DBG_ERR("FS error");

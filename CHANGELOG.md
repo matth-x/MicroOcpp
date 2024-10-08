@@ -9,6 +9,9 @@
 - Relaxed temporal order of non-tx-related operations ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
 - Use pseudo-GUIDs as messageId ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
 - ISO 8601 milliseconds omitted by default ([352](https://github.com/matth-x/MicroOcpp/pull/352))
+- Rename `MO_NUM_EVSE` into `MO_NUM_EVSEID` (v2.0.1) ([#371](https://github.com/matth-x/MicroOcpp/pull/371))
+- Change `MicroOcpp::ReadingContext` into C-style struct ([#371](https://github.com/matth-x/MicroOcpp/pull/371))
+- Refactor RequestStartTransaction (v2.0.1) ([#371](https://github.com/matth-x/MicroOcpp/pull/371))
 
 ### Added
 
@@ -23,6 +26,9 @@
 - Heap profiler and custom allocator support ([#350](https://github.com/matth-x/MicroOcpp/pull/350))
 - Migration of persistent storage ([#355](https://github.com/matth-x/MicroOcpp/pull/355))
 - Benchmarks pipeline ([#369](https://github.com/matth-x/MicroOcpp/pull/369))
+- MeterValues port for OCPP 2.0.1 ([#371](https://github.com/matth-x/MicroOcpp/pull/371))
+- UnlockConnector port for OCPP 2.0.1 ([#371](https://github.com/matth-x/MicroOcpp/pull/371))
+- More APIs ported to OCPP 2.0.1 ([#371](https://github.com/matth-x/MicroOcpp/pull/371))
 - Support for AuthorizeRemoteTxRequests ([#373](https://github.com/matth-x/MicroOcpp/pull/373))
 
 ### Removed
@@ -39,7 +45,7 @@
 - Hold back error StatusNotifs when time not set ([#311](https://github.com/matth-x/MicroOcpp/issues/311))
 - Don't send Available when tx occupies connector ([#315](https://github.com/matth-x/MicroOcpp/issues/315))
 - Make ChargingScheduleAllowedChargingRateUnit read-only ([#328](https://github.com/matth-x/MicroOcpp/issues/328))
-- Don't send StatusNotifs while offline ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
+- ~Don't send StatusNotifs while offline ([#344](https://github.com/matth-x/MicroOcpp/pull/344))~ (see ([#371](https://github.com/matth-x/MicroOcpp/pull/371)))
 - Don't change into Unavailable upon Reset ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
 - Reject DataTransfer by default ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
 - UnlockConnector NotSupported if connectorId invalid ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
@@ -47,6 +53,7 @@
 - Correct MeterValue PreBoot timestamp ([#354](https://github.com/matth-x/MicroOcpp/pull/354))
 - Send errorCode in triggered StatusNotif ([#359](https://github.com/matth-x/MicroOcpp/pull/359))
 - Remove int to bool conversion in ChangeConfig ([#362](https://github.com/matth-x/MicroOcpp/pull/362))
+- Multiple fixes of the OCPP 2.0.1 extension ([#371](https://github.com/matth-x/MicroOcpp/pull/371))
 
 ## [1.1.0] - 2024-05-21
 

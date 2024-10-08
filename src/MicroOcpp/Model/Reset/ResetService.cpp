@@ -125,14 +125,14 @@ ResetService::~ResetService() {
 
 ResetService::Evse::Evse(Context& context, ResetService& resetService, unsigned int evseId) : context(context), resetService(resetService), evseId(evseId) {
     auto varService = context.getModel().getVariableService();
-    varService->declareVariable<bool>(ComponentId("EVSE", evseId), "AllowReset", true, MO_VARIABLE_FN, Variable::Mutability::ReadOnly);
+    varService->declareVariable<bool>(ComponentId("EVSE", evseId >= 1 ? evseId : -1), "AllowReset", true, MO_VARIABLE_FN, Variable::Mutability::ReadOnly);
 }
 
 void ResetService::Evse::loop() {
 
     if (outstandingResetRetries && awaitTxStop) {
 
-        for (unsigned int eId = std::max(1U, evseId); eId < (evseId == 0 ? MO_NUM_EVSE : evseId + 1); eId++) {
+        for (unsigned int eId = std::max(1U, evseId); eId < (evseId == 0 ? MO_NUM_EVSEID : evseId + 1); eId++) {
             //If evseId > 0, execute this block one time for evseId. If evseId == 0, then iterate over all evseIds > 0
 
             auto txService = context.getModel().getTransactionService();
@@ -202,7 +202,7 @@ ResetService::Evse *ResetService::getOrCreateEvse(unsigned int evseId) {
         return evse;
     }
 
-    if (evseId >= MO_NUM_EVSE) {
+    if (evseId >= MO_NUM_EVSEID) {
         MO_DBG_ERR("evseId out of bound");
         return nullptr;
     }
@@ -266,7 +266,7 @@ ResetStatus ResetService::initiateReset(ResetType type, unsigned int evseId) {
     }
 
     //Check if EVSEs are ready for Reset
-    for (unsigned int eId = evseId; eId < (evseId == 0 ? MO_NUM_EVSE : evseId + 1); eId++) {
+    for (unsigned int eId = evseId; eId < (evseId == 0 ? MO_NUM_EVSEID : evseId + 1); eId++) {
         //If evseId > 0, execute this block one time for evseId. If evseId == 0, then iterate over all evseIds
 
         if (auto it = getEvse(eId)) {
@@ -294,7 +294,7 @@ ResetStatus ResetService::initiateReset(ResetType type, unsigned int evseId) {
     bool scheduled = false;
 
     //Tx-related behavior: if immediate Reset, stop txs; otherwise schedule Reset
-    for (unsigned int eId = std::max(1U, evseId); eId < (evseId == 0 ? MO_NUM_EVSE : evseId + 1); eId++) {
+    for (unsigned int eId = std::max(1U, evseId); eId < (evseId == 0 ? MO_NUM_EVSEID : evseId + 1); eId++) {
         //If evseId > 0, execute this block one time for evseId. If evseId == 0, then iterate over all evseIds > 0
 
         auto txService = context.getModel().getTransactionService();

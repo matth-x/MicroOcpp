@@ -11,8 +11,10 @@
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
+#include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
 #include <MicroOcpp/Debug.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
@@ -33,7 +35,6 @@ TEST_CASE( "Transactions" ) {
             ProtocolVersion(2,0,1));
 
     auto context = getOcppContext();
-    auto& checkMsg = context->getOperationRegistry();
 
     mocpp_set_timer(custom_timer_cb);
 
@@ -99,6 +100,170 @@ TEST_CASE( "Transactions" ) {
 
         REQUIRE( (context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr || 
                   context->getModel().getTransactionService()->getEvse(1)->getTransaction()->stopped));
+    }
+
+    SECTION("UC C01-04") {
+
+        //scenario preparation
+
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Available );
+
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "")->setString("PowerPathClosed");
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStopPoint", "")->setString("PowerPathClosed");
+
+        setConnectorPluggedInput([] () {return false;});
+
+        loop();
+
+        MO_MEM_RESET();
+
+        context->getModel().getTransactionService()->getEvse(1)->beginAuthorization("mIdToken");
+        loop();
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() != nullptr );
+        REQUIRE( !context->getModel().getTransactionService()->getEvse(1)->getTransaction()->started );
+        REQUIRE( !context->getModel().getTransactionService()->getEvse(1)->getTransaction()->stopped );
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Available );
+
+        MO_DBG_INFO("Memory requirements UC C01-04:");
+
+        MO_MEM_PRINT_STATS();
+    }
+
+    SECTION("UC E01 - S5 / E06") {
+
+        //scenario preparation
+
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Available );
+
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "")->setString("PowerPathClosed");
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStopPoint", "")->setString("PowerPathClosed");
+
+        setConnectorPluggedInput([] () {return false;});
+
+        loop();
+
+        MO_MEM_RESET();
+
+        //run scenario
+
+        setConnectorPluggedInput([] () {return true;});
+        loop();
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Occupied );
+
+        context->getModel().getTransactionService()->getEvse(1)->beginAuthorization("mIdToken");
+        loop();
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() != nullptr );
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction()->started );
+        REQUIRE( !context->getModel().getTransactionService()->getEvse(1)->getTransaction()->stopped );
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Occupied );
+
+        MO_DBG_INFO("Memory requirements UC E01 - S5:");
+
+        MO_MEM_PRINT_STATS();
+
+        auto trackTx = context->getModel().getTransactionService()->getEvse(1)->getTransaction();
+
+        MO_MEM_RESET();
+
+        setConnectorPluggedInput([] () {return false;});
+        loop();
+
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
+        REQUIRE( trackTx->stopped );
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Available );
+        trackTx.reset();
+
+        MO_DBG_INFO("Memory requirements UC E06:");
+        MO_MEM_PRINT_STATS();
+
+    }
+
+    SECTION("UC G01") {
+
+        setConnectorPluggedInput([] () {return false;});
+        loop();
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Available );
+        MO_MEM_RESET();
+
+        setConnectorPluggedInput([] () {return true;});
+        loop();
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Occupied );
+
+        MO_DBG_INFO("Memory requirements UC G01:");
+        MO_MEM_PRINT_STATS();
+    }
+
+    SECTION("UC J02") {
+
+        //scenario preparation
+
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Available );
+
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "")->setString("PowerPathClosed");
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStopPoint", "")->setString("PowerPathClosed");
+
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("SampledDataCtrlr", "SampledDataTxStartedMeasurands", "")->setString("Energy.Active.Import.Register");
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("SampledDataCtrlr", "SampledDataTxUpdatedMeasurands", "")->setString("Power.Active.Import");
+        getOcppContext()->getModel().getVariableService()->declareVariable<int>("SampledDataCtrlr", "TxUpdatedInterval", 0)->setInt(60);
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("SampledDataCtrlr", "SampledDataTxEndedMeasurands", "")->setString("Current.Import");
+        getOcppContext()->getModel().getVariableService()->declareVariable<int>("SampledDataCtrlr", "TxEndededInterval", 0)->setInt(100);
+
+        setConnectorPluggedInput([] () {return false;});
+        setEnergyMeterInput([] () {return 100;});
+        setPowerMeterInput([] () {return 200;});
+        addMeterValueInput([] () {return 30;}, "Current.Import", "A");
+
+        Timestamp tStart, tUpdated, tEnded;
+
+        setOnReceiveRequest("TransactionEvent", [&tStart, &tUpdated, &tEnded] (JsonObject request) {
+            const char *eventType = request["eventType"] | (const char*)nullptr;
+            bool eventTypeError = false;
+            if (!strcmp(eventType, "Started")) {
+                tStart = getOcppContext()->getModel().getClock().now();
+
+                REQUIRE( request["meterValue"].as<JsonArray>().size() >= 1 );
+
+                Timestamp tMv;
+                tMv.setTime(request["meterValue"][0]["timestamp"]);
+                REQUIRE( std::abs(tStart - tMv) <= 1);
+
+                REQUIRE( request["meterValue"][0]["sampledValue"].as<JsonArray>().size() >= 1 );
+
+                REQUIRE( !strcmp(request["meterValue"][0]["sampledValue"][0]["measurand"] | "_Undefined", "Energy.Active.Import.Register") );
+                REQUIRE( !strcmp(request["meterValue"][0]["sampledValue"][0]["measurand"] | "_Undefined", "Energy.Active.Import.Register") );
+            } else if (!strcmp(eventType, "Updated")) {
+                tUpdated = getOcppContext()->getModel().getClock().now();
+
+            } else if (!strcmp(eventType, "Ended")) {
+                tEnded = getOcppContext()->getModel().getClock().now();
+
+            } else {
+                eventTypeError = true;
+            }
+            REQUIRE( !eventTypeError );
+        });
+
+        loop();
+
+        MO_MEM_RESET();
+
+        //run scenario
+
+        setConnectorPluggedInput([] () {return true;});
+        context->getModel().getTransactionService()->getEvse(1)->beginAuthorization("mIdToken");
+        loop();
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() != nullptr );
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction()->started );
+        REQUIRE( !context->getModel().getTransactionService()->getEvse(1)->getTransaction()->stopped );
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Occupied );
+
+        MO_DBG_INFO("Memory requirements UC E01 - S5:");
+
+        MO_MEM_PRINT_STATS();
     }
 
     mocpp_deinitialize();

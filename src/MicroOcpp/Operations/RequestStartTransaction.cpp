@@ -7,13 +7,13 @@
 #if MO_ENABLE_V201
 
 #include <MicroOcpp/Operations/RequestStartTransaction.h>
-#include <MicroOcpp/Model/Transactions/TransactionService.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp201::RequestStartTransaction;
 using MicroOcpp::JsonDoc;
 
-RequestStartTransaction::RequestStartTransaction(TransactionService& txService) : MemoryManaged("v201.Operation.", "RequestStartTransaction"), txService(txService) {
+RequestStartTransaction::RequestStartTransaction(RemoteControlService& rcService) : MemoryManaged("v201.Operation.", "RequestStartTransaction"), rcService(rcService) {
   
 }
 
@@ -24,7 +24,7 @@ const char* RequestStartTransaction::getOperationType(){
 void RequestStartTransaction::processReq(JsonObject payload) {
 
     int evseId = payload["evseId"] | 0;
-    if (evseId < 0 || evseId >= MO_NUM_EVSE) {
+    if (evseId < 0 || evseId >= MO_NUM_EVSEID) {
         errorCode = "PropertyConstraintViolation";
         return;
     }
@@ -43,7 +43,7 @@ void RequestStartTransaction::processReq(JsonObject payload) {
         return;
     }
 
-    status = txService.requestStartTransaction(evseId, remoteStartId, idToken, transactionId);
+    status = rcService.requestStartTransaction(evseId, remoteStartId, idToken, transaction);
 }
 
 std::unique_ptr<JsonDoc> RequestStartTransaction::createConf(){
@@ -67,8 +67,8 @@ std::unique_ptr<JsonDoc> RequestStartTransaction::createConf(){
 
     payload["status"] = statusCstr;
 
-    if (*transactionId) {
-        payload["transactionId"] = (const char*)transactionId; //force zero-copy mode
+    if (transaction) {
+        payload["transactionId"] = (const char*)transaction->transactionId; //force zero-copy mode
     }
 
     return doc;

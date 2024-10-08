@@ -24,13 +24,31 @@ const char* TransactionEvent::getOperationType() {
 }
 
 std::unique_ptr<JsonDoc> TransactionEvent::createReq() {
-    auto doc = makeJsonDoc(getMemoryTag(),
-                JSON_OBJECT_SIZE(12) + //total of 12 fields
-                JSONDATE_LENGTH + 1 + //timestamp string
-                JSON_OBJECT_SIZE(5) + //transactionInfo
-                    MO_TXID_LEN_MAX + 1 + //transactionId
-                MO_IDTOKEN_LEN_MAX + 1); //idToken
-                //meterValue not supported
+
+    size_t capacity = 0;
+
+    if (txEvent->eventType == TransactionEventData::Type::Ended) {
+        for (size_t i = 0; i < txEvent->transaction->sampledDataTxEnded.size(); i++) {
+            JsonDoc meterValueJson = initJsonDoc(getMemoryTag()); //just measure, create again for serialization later
+            txEvent->transaction->sampledDataTxEnded[i]->toJson(meterValueJson);
+            capacity += meterValueJson.capacity();
+        }
+    }
+
+    for (size_t i = 0; i < txEvent->meterValue.size(); i++) {
+        JsonDoc meterValueJson = initJsonDoc(getMemoryTag()); //just measure, create again for serialization later
+        txEvent->meterValue[i]->toJson(meterValueJson);
+        capacity += meterValueJson.capacity();
+    }
+
+    capacity +=
+            JSON_OBJECT_SIZE(12) + //total of 12 fields
+            JSONDATE_LENGTH + 1 + //timestamp string
+            JSON_OBJECT_SIZE(5) + //transactionInfo
+                MO_TXID_LEN_MAX + 1 + //transactionId
+            MO_IDTOKEN_LEN_MAX + 1; //idToken
+
+    auto doc = makeJsonDoc(getMemoryTag(), capacity);
     JsonObject payload = doc->to<JsonObject>();
 
     const char *eventType = "";
@@ -255,7 +273,19 @@ std::unique_ptr<JsonDoc> TransactionEvent::createReq() {
         }
     }
 
-    // meterValue not supported
+    if (txEvent->eventType == TransactionEventData::Type::Ended) {
+        for (size_t i = 0; i < txEvent->transaction->sampledDataTxEnded.size(); i++) {
+            JsonDoc meterValueJson = initJsonDoc(getMemoryTag());
+            txEvent->transaction->sampledDataTxEnded[i]->toJson(meterValueJson);
+            payload["meterValue"].add(meterValueJson);
+        }
+    }
+
+    for (size_t i = 0; i < txEvent->meterValue.size(); i++) {
+        JsonDoc meterValueJson = initJsonDoc(getMemoryTag());
+        txEvent->meterValue[i]->toJson(meterValueJson);
+        payload["meterValue"].add(meterValueJson);
+    }
 
     return doc;
 }

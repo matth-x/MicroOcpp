@@ -8,6 +8,7 @@
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <MicroOcpp/Model/ConnectorBase/ConnectorsCommon.h>
 #include <MicroOcpp/Model/Metering/MeteringService.h>
+#include <MicroOcpp/Model/Metering/MeterValuesV201.h>
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
 #include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
 #include <MicroOcpp/Model/Heartbeat/HeartbeatService.h>
@@ -18,6 +19,8 @@
 #include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
+#include <MicroOcpp/Model/Availability/AvailabilityService.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 
 #include <MicroOcpp/Core/Configuration.h>
 
@@ -77,6 +80,9 @@ void Model::loop() {
         resetService->loop();
 
 #if MO_ENABLE_V201
+    if (availabilityService)
+        availabilityService->loop();
+
     if (transactionService)
         transactionService->loop();
     
@@ -214,6 +220,15 @@ CertificateService *Model::getCertificateService() const {
 #endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_V201
+void Model::setAvailabilityService(std::unique_ptr<AvailabilityService> as) {
+    this->availabilityService = std::move(as);
+    capabilitiesUpdated = true;
+}
+
+AvailabilityService *Model::getAvailabilityService() const {
+    return availabilityService.get();
+}
+
 void Model::setVariableService(std::unique_ptr<VariableService> vs) {
     this->variableService = std::move(vs);
     capabilitiesUpdated = true;
@@ -239,6 +254,24 @@ void Model::setResetServiceV201(std::unique_ptr<Ocpp201::ResetService> rs) {
 
 Ocpp201::ResetService *Model::getResetServiceV201() const {
     return resetServiceV201.get();
+}
+
+void Model::setMeteringServiceV201(std::unique_ptr<Ocpp201::MeteringService> rs) {
+    this->meteringServiceV201 = std::move(rs);
+    capabilitiesUpdated = true;
+}
+
+Ocpp201::MeteringService *Model::getMeteringServiceV201() const {
+    return meteringServiceV201.get();
+}
+
+void Model::setRemoteControlService(std::unique_ptr<RemoteControlService> rs) {
+    remoteControlService = std::move(rs);
+    capabilitiesUpdated = true;
+}
+
+RemoteControlService *Model::getRemoteControlService() const {
+    return remoteControlService.get();
 }
 #endif
 

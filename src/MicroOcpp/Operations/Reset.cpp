@@ -81,7 +81,7 @@ void Reset::processReq(JsonObject payload) {
 
     int evseIdRaw = payload["evseId"] | 0;
 
-    if (evseIdRaw < 0 || evseIdRaw >= MO_NUM_EVSE) {
+    if (evseIdRaw < 0 || evseIdRaw >= MO_NUM_EVSEID) {
         errorCode = "PropertyConstraintViolation";
         return;
     }

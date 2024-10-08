@@ -58,9 +58,9 @@ std::unique_ptr<JsonDoc> StopTransaction::createReq() {
     for (auto mv = transactionData.begin(); mv != transactionData.end(); mv++) {
         if ((*mv)->getTimestamp() < MIN_TIME) {
             //time off. Try to adjust, otherwise send invalid value
-            if ((*mv)->getReadingContext() == ReadingContext::TransactionBegin) {
+            if ((*mv)->getReadingContext() == ReadingContext_TransactionBegin) {
                 (*mv)->setTimestamp(transaction->getStartTimestamp());
-            } else if ((*mv)->getReadingContext() == ReadingContext::TransactionEnd) {
+            } else if ((*mv)->getReadingContext() == ReadingContext_TransactionEnd) {
                 (*mv)->setTimestamp(transaction->getStopTimestamp());
             } else {
                 (*mv)->setTimestamp(transaction->getStartTimestamp() + 1);

@@ -11,23 +11,23 @@
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Memory.h>
-#include <MicroOcpp/Model/Transactions/TransactionDefs.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlDefs.h>
 
 namespace MicroOcpp {
 
-class TransactionService;
+class RemoteControlService;
 
 namespace Ocpp201 {
 
 class RequestStopTransaction : public Operation, public MemoryManaged {
 private:
-    TransactionService& txService;
+    RemoteControlService& rcService;
 
     RequestStartStopStatus status;
 
     const char *errorCode = nullptr;
 public:
-    RequestStopTransaction(TransactionService& txService);
+    RequestStopTransaction(RemoteControlService& rcService);
 
     const char* getOperationType() override;
 
