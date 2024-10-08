@@ -101,6 +101,7 @@
 - Change arduinoWebSockets URL param to path ([#278](https://github.com/matth-x/MicroOcpp/issues/278))
 - Avoid creating conf when operation fails ([#290](https://github.com/matth-x/MicroOcpp/pull/290))
 - Fix whitespaces in MeterValues ([#301](https://github.com/matth-x/MicroOcpp/pull/301))
+- Make SmartChargingProfile txId field optional ([#348](https://github.com/matth-x/MicroOcpp/pull/348))
 
 ## [1.0.3] - 2024-04-06
 
