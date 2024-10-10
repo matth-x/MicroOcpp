@@ -207,7 +207,7 @@ void mo_mem_print_stats() {
 
     for (const auto& heapEntry : memBlocks) {
         size += heapEntry.second.size;
-        #if MO_DBG_LEVEL >= MO_DL_DEBUG
+        #if MO_DBG_LEVEL >= MO_DL_VERBOSE
         {
             MO_CONSOLE_PRINTF("@%p - %zu B (%s)\n", heapEntry.first, heapEntry.second.size, heapEntry.second.tag.c_str());
         }
@@ -252,6 +252,41 @@ void mo_mem_print_stats() {
         MO_CONSOLE_PRINTF(" *** Debug information ***\nTotal blocks (control value 1): %zu B\nTags (control value): %zu\nTotal tagged (control value 2): %zu B\nTotal tagged (control value 3): %zu B\nUntagged: %zu\nTotal untagged: %zu B\n", size, tags.size(), size_control, size_control2, untagged, untagged_size);
     }
     #endif
+}
+
+int mo_mem_write_stats_json(char *buf, size_t size) {
+    DynamicJsonDocument doc {size * 2};
+
+    doc["total_current"] = memTotal;
+    doc["total_max"] = memTotalMax;
+    doc["total_blocks"] = memBlocks.size();
+
+    JsonArray by_tag = doc.createNestedArray("by_tag");
+    for (const auto& tag : memTags) {
+        JsonObject entry = by_tag.createNestedObject();
+        entry["tag"] = tag.first.c_str();
+        entry["current"] = tag.second.current_size;
+        entry["max"] = tag.second.max_size;
+    }
+
+    size_t untagged = 0, untagged_size = 0;
+
+    for (const auto& heapEntry : memBlocks) {
+        if (heapEntry.second.tag.empty()) {
+            untagged ++;
+            untagged_size += heapEntry.second.size;
+        }
+    }
+
+    doc["untagged_blocks"] = untagged;
+    doc["untagged_size"] = untagged_size;
+
+    if (doc.overflowed()) {
+        MO_DBG_ERR("exceeded JSON capacity");
+        return -1;
+    }
+
+    return (int)serializeJson(doc, buf, size);
 }
 
 #endif //MO_OVERRIDE_ALLOCATION && MO_ENABLE_HEAP_PROFILER
