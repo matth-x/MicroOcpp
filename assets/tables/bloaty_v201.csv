@@ -1,0 +1,1804 @@
+compileunits,vmsize,filesize
+lib/MicroOcpp/src/MicroOcpp.cpp,17700,1604403
+[section .debug_loc],0,607517
+lib/MicroOcpp/src/MicroOcpp/Model/ConnectorBase/Connector.cpp,12452,562747
+lib/MicroOcpp/src/MicroOcpp/Model/Transactions/TransactionService.cpp,8008,542832
+lib/MicroOcpp/src/MicroOcpp/Model/Model.cpp,2312,523550
+lib/MicroOcpp/src/MicroOcpp/Model/Variables/VariableService.cpp,5000,476963
+[section .xt.prop],0,431508
+lib/MicroOcpp/src/MicroOcpp/Model/Metering/MeteringConnector.cpp,4312,417161
+lib/MicroOcpp/src/MicroOcpp/Model/Diagnostics/DiagnosticsService.cpp,5825,368825
+lib/MicroOcpp/src/MicroOcpp/Model/SmartCharging/SmartChargingService.cpp,6932,362852
+lib/MicroOcpp/src/MicroOcpp/Operations/StopTransaction.cpp,1848,346183
+lib/MicroOcpp/src/MicroOcpp/Model/Metering/MeterValue.cpp,3276,332855
+lib/MicroOcpp/src/MicroOcpp/Model/Metering/MeteringService.cpp,1848,325596
+lib/MicroOcpp/src/MicroOcpp/Core/Configuration.cpp,3104,315287
+lib/MicroOcpp/src/MicroOcpp/Model/Boot/BootService.cpp,3872,309057
+lib/MicroOcpp/src/MicroOcpp/Model/FirmwareManagement/FirmwareService.cpp,4060,307266
+src/main.cpp,924,297575
+lib/MicroOcpp/src/MicroOcpp/Operations/StartTransaction.cpp,1292,297397
+lib/MicroOcpp/src/MicroOcpp/Model/Reset/ResetService.cpp,2804,294331
+lib/MicroOcpp/src/MicroOcpp/Core/RequestQueue.cpp,6760,287285
+lib/MicroOcpp/src/MicroOcpp/Model/Metering/MeterValuesV201.cpp,3576,280502
+lib/MicroOcpp/src/MicroOcpp/Model/Metering/MeterStore.cpp,2900,278484
+lib/MicroOcpp/src/MicroOcpp/Core/ConfigurationContainerFlash.cpp,4192,276816
+lib/MicroOcpp/src/MicroOcpp_c.cpp,1796,273531
+lib/MicroOcpp/src/MicroOcpp/Operations/TriggerMessage.cpp,844,264449
+lib/MicroOcpp/src/MicroOcpp/Operations/TransactionEvent.cpp,2528,254618
+lib/MicroOcpp/src/MicroOcpp/Operations/GetConfiguration.cpp,2688,253842
+lib/MicroOcpp/src/MicroOcpp/Core/Request.cpp,3484,249023
+lib/MicroOcpp/src/MicroOcpp/Operations/GetVariables.cpp,2356,244836
+lib/MicroOcpp/src/MicroOcpp/Model/Transactions/TransactionStore.cpp,2352,239475
+lib/MicroOcpp/src/MicroOcpp/Model/Authorization/AuthorizationService.cpp,1712,239100
+lib/MicroOcpp/src/MicroOcpp/Model/Authorization/AuthorizationList.cpp,3760,233779
+lib/MicroOcpp/src/MicroOcpp/Operations/SetVariables.cpp,1916,233660
+lib/MicroOcpp/src/MicroOcpp/Operations/BootNotification.cpp,1404,231238
+lib/MicroOcpp/src/MicroOcpp/Operations/GetCompositeSchedule.cpp,1040,230005
+lib/MicroOcpp/src/MicroOcpp/Operations/RemoteStartTransaction.cpp,1192,226400
+lib/MicroOcpp/src/MicroOcpp/Model/SmartCharging/SmartChargingModel.cpp,3804,226292
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/vfprintf.c,46880,223109
+lib/MicroOcpp/src/MicroOcpp/Operations/MeterValues.cpp,660,221542
+lib/MicroOcpp/src/MicroOcpp/Model/Reservation/ReservationService.cpp,1384,220990
+lib/MicroOcpp/src/MicroOcpp/Model/Availability/AvailabilityService.cpp,1388,220676
+lib/MicroOcpp/src/MicroOcpp/Operations/NotifyReport.cpp,2112,217727
+lib/MicroOcpp/src/MicroOcpp/Model/ConnectorBase/ConnectorsCommon.cpp,2468,215793
+lib/MicroOcpp/src/MicroOcpp/Model/RemoteControl/RemoteControlService.cpp,936,208517
+lib/MicroOcpp/src/MicroOcpp/Operations/SetChargingProfile.cpp,732,205393
+lib/MicroOcpp/src/MicroOcpp/Core/FilesystemUtils.cpp,4592,196083
+lib/MicroOcpp/src/MicroOcpp/Operations/Authorize.cpp,1060,193801
+[section .debug_frame],0,193748
+lib/MicroOcpp/src/MicroOcpp/Operations/ReserveNow.cpp,1160,192837
+lib/MicroOcpp/src/MicroOcpp/Core/FtpMbedTLS.cpp,5172,192066
+lib/MicroOcpp/src/MicroOcpp/Model/Certificates/CertificateMbedTLS.cpp,2104,188181
+lib/MicroOcpp/src/MicroOcpp/Operations/ChangeAvailability.cpp,948,185478
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/components/esp_littlefs/src/littlefs/lfs.c,17525,185269
+lib/MicroOcpp/src/MicroOcpp/Model/Transactions/TransactionDeserialize.cpp,3000,184879
+lib/MicroOcpp/src/MicroOcpp/Operations/Reset.cpp,860,181550
+lib/MicroOcpp/src/MicroOcpp/Operations/RemoteStopTransaction.cpp,408,174963
+lib/MicroOcpp/src/MicroOcpp/Operations/GetInstalledCertificateIds.cpp,1596,172580
+lib/MicroOcpp/src/MicroOcpp/Core/Context.cpp,396,167283
+lib/MicroOcpp/src/MicroOcpp/Model/Heartbeat/HeartbeatService.cpp,420,166927
+lib/MicroOcpp/src/MicroOcpp/Model/Certificates/CertificateService.cpp,468,165164
+lib/MicroOcpp/src/MicroOcpp/Core/ConfigurationContainer.cpp,864,161575
+lib/MicroOcpp/src/MicroOcpp/Core/OperationRegistry.cpp,1632,161045
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/src/c++11/string-inst.cc,1608,160122
+lib/MicroOcpp/src/MicroOcpp/Operations/Heartbeat.cpp,780,159150
+lib/MicroOcpp/src/MicroOcpp/Operations/GetLocalListVersion.cpp,268,154629
+lib/MicroOcpp/src/MicroOcpp/Core/FilesystemAdapter.cpp,1196,146242
+lib/MicroOcpp/src/MicroOcpp/Operations/UnlockConnector.cpp,172,140368
+lib/MicroOcpp/src/MicroOcpp/Model/Reservation/Reservation.cpp,1072,139672
+lib/MicroOcpp/src/MicroOcpp/Operations/GetDiagnostics.cpp,652,139311
+lib/MicroOcpp/src/MicroOcpp/Operations/ClearChargingProfile.cpp,836,136068
+[section .flash.rodata],134214,134214
+[section .shstrtab],0,133949
+lib/MicroOcpp/src/MicroOcpp/Model/Variables/VariableContainer.cpp,428,129438
+/home/runner/.platformio/packages/framework-arduinoespressif32/libraries/FS/src/vfs_api.cpp,4794,127877
+lib/MicroOcpp/src/MicroOcpp/Operations/RequestStartTransaction.cpp,520,127192
+lib/MicroOcpp/src/MicroOcpp/Operations/GetBaseReport.cpp,544,125308
+lib/MicroOcpp/src/MicroOcpp/Model/Variables/Variable.cpp,1760,124893
+lib/MicroOcpp/src/MicroOcpp/Operations/SendLocalList.cpp,560,122829
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/src/c++11/cow-string-inst.cc,340,122754
+lib/MicroOcpp/src/MicroOcpp/Model/Authorization/AuthorizationData.cpp,1356,120842
+lib/MicroOcpp/src/MicroOcpp/Operations/StatusNotification.cpp,1324,118889
+lib/MicroOcpp/src/MicroOcpp/Model/Metering/SampledValue.cpp,780,118402
+lib/MicroOcpp/src/MicroOcpp/Operations/DataTransfer.cpp,520,116835
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/ssl_tls.c,9166,111047
+lib/MicroOcpp/src/MicroOcpp/Operations/UpdateFirmware.cpp,364,110911
+lib/MicroOcpp/src/MicroOcpp/Operations/RequestStopTransaction.cpp,396,109550
+lib/MicroOcpp/src/MicroOcpp/Operations/CancelReservation.cpp,368,107701
+lib/MicroOcpp/src/MicroOcpp/Operations/DeleteCertificate.cpp,716,104198
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/tasks.c,7709,100688
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/driver/uart.c,5244,100669
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/ssl_msg.c,9668,99416
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/nvs_flash/src/nvs_api.cpp,164,98539
+lib/MicroOcpp/src/MicroOcpp/Operations/ChangeConfiguration.cpp,860,98274
+lib/MicroOcpp/src/MicroOcpp/Operations/InstallCertificate.cpp,536,97615
+lib/MicroOcpp/src/MicroOcpp/Operations/ClearCache.cpp,440,96423
+lib/MicroOcpp/src/MicroOcpp/Model/Certificates/Certificate_c.cpp,0,95308
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/vfscanf.c,17936,92137
+/home/runner/.platformio/packages/framework-arduinoespressif32/cores/esp32/WString.cpp,1556,89093
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/api/sockets.c,2098,87565
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/nvs_flash/src/nvs_storage.cpp,1104,86700
+lib/MicroOcpp/src/MicroOcpp/Operations/CustomOperation.cpp,0,86562
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/heap/heap_tlsf.c,3556,86201
+[section .debug_ranges],0,85896
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/bignum.c,7520,85368
+lib/MicroOcpp/src/MicroOcpp/Core/ConfigurationKeyValue.cpp,708,84127
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/components/esp_littlefs/src/esp_littlefs.c,6757,82352
+lib/MicroOcpp/src/MicroOcpp/Operations/FirmwareStatusNotification.cpp,244,82032
+lib/MicroOcpp/src/MicroOcpp/Operations/DiagnosticsStatusNotification.cpp,220,81942
+lib/MicroOcpp/src/MicroOcpp/Core/Memory.cpp,156,81025
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/ecp.c,7420,80962
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/ssl_cli.c,6992,78697
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/ssl_srv.c,7812,78064
+lib/MicroOcpp/src/MicroOcpp/Model/Transactions/Transaction.cpp,156,76016
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/driver/gpio.c,2652,75953
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/x509_crt.c,5532,75375
+lib/MicroOcpp/src/MicroOcpp/Core/Time.cpp,2504,74142
+/home/runner/.platformio/packages/framework-arduinoespressif32/cores/esp32/HardwareSerial.cpp,901,71458
+/home/runner/.platformio/packages/framework-arduinoespressif32/libraries/FS/src/FS.cpp,612,69957
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/rsa.c,5992,69502
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/esp_flash_api.c,2551,69313
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/nvs_flash/src/nvs_page.cpp,3240,68423
+/home/runner/.platformio/packages/framework-arduinoespressif32/libraries/LittleFS/src/LittleFS.cpp,797,67722
+lib/MicroOcpp/src/MicroOcpp/Core/Operation.cpp,104,66929
+/home/runner/.platformio/packages/framework-arduinoespressif32/cores/esp32/Esp.cpp,95,66685
+lib/MicroOcpp/src/MicroOcpp/Core/Connection.cpp,272,66596
+/home/runner/.platformio/packages/framework-arduinoespressif32/libraries/Update/src/Updater.cpp,1859,66026
+[ELF Section Headers],0,65200
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/bt/controller/esp32/bt.c,394,61586
+lib/MicroOcpp/src/MicroOcpp/Model/Certificates/Certificate.cpp,668,61291
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/nvs_flash/src/nvs_partition_manager.cpp,484,61091
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/ecp_curves.c,7340,60572
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/vfs/vfs.c,2791,60240
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/driver/spi_common.c,32,59675
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/tcp.c,5828,59594
+lib/MicroOcpp/src/MicroOcpp/Model/Authorization/IdToken.cpp,352,58838
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/src/c++11/cow-stdexcept.cc,88,57457
+,0,56737
+/home/runner/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-uart.c,3015,56660
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/startup.c,639,55842
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/api/api_msg.c,4298,55116
+/home/runner/.platformio/packages/framework-arduinoespressif32/cores/esp32/Print.cpp,168,54663
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/espcoredump/src/core_dump_flash.c,2426,54117
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/ipv6/nd6.c,7427,53054
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/port/esp32/rtc_clk.c,1976,52818
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/port/cpu_start.c,996,51971
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/driver/spi_bus_lock.c,4,49317
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/vfs/vfs_uart.c,3658,49199
+/home/runner/.platformio/packages/framework-arduinoespressif32/cores/esp32/Stream.cpp,136,48725
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/espcoredump/src/core_dump_elf.c,5349,47537
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/tcp_in.c,8118,47427
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/tcp_out.c,5614,47254
+/home/runner/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-misc.c,703,46876
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/bootloader_support/src/bootloader_utility.c,8,46785
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/sha/parallel_engine/esp_sha1.c,5316,46573
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/queue.c,3269,46563
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/nvs_flash/src/nvs_pagemanager.cpp,1106,46532
+[section .symtab],0,45712
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/esp_flash_spi_init.c,238,45389
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_pm/pm_impl.c,8,45240
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/spi_flash_os_func_app.c,410,44558
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/driver/rtc_io.c,844,44229
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/port/soc/esp32/clk.c,689,43972
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/nvs_flash/src/nvs_handle_simple.cpp,0,43764
+/home/runner/.platformio/packages/framework-arduinoespressif32/cores/esp32/MD5Builder.cpp,152,42922
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/panic.c,912,42557
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/sleep_gpio.c,204,42551
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/pbuf.c,2238,41585
+/home/runner/.platformio/packages/framework-arduinoespressif32/cores/esp32/FunctionalInterrupt.cpp,0,41458
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_wifi/esp32/esp_adapter.c,488,40929
+/home/runner/.platformio/packages/framework-arduinoespressif32/cores/esp32/main.cpp,92,39489
+lib/MicroOcpp/src/MicroOcpp/Model/Metering/ReadingContext.cpp,180,39253
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/pkparse.c,3308,38639
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_ringbuf/ringbuf.c,1043,38265
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_wifi/src/wifi_init.c,40,37836
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/spi_flash_chip_generic.c,2819,37798
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/intr_alloc.c,2376,37641
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libgcc/unwind-dw2-fde.c,3100,37590
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/dns.c,5336,37488
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/spi_flash_hal_iram.c,1948,36376
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/cipher.c,2236,36182
+/home/runner/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-cpu.c,883,35472
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/port/esp32/rtc_init.c,960,34130
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/x509.c,1723,34024
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/netif.c,887,33908
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_timer/src/esp_timer_impl_lac.c,875,33865
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/bootloader_support/src/bootloader_common_loader.c,500,33848
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/app_update/esp_ota_ops.c,1368,33587
+/home/runner/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-gpio.c,16,33580
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/src/c++11/random.cc,0,33362
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/port/panic_handler.c,596,33353
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/api/api_lib.c,508,32513
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/task_wdt.c,1436,32379
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/port/soc/esp32/system_internal.c,372,32338
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libgcc/libgcc2.c,0,32069
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/udp.c,3258,31992
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/bootloader_support/src/bootloader_flash.c,792,31934
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/port/esp32/rtc_time.c,921,31830
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/newlib/time.c,580,31799
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/src/c++11/sso_string.cc,0,31324
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/mprec.c,2628,30539
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/ipv6/ip6.c,3550,30460
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/wdt_hal_iram.c,1376,30426
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/freertos_hooks.c,472,30246
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/pthread/pthread.c,618,30122
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libgcc/config/xtensa/unwind-dw2-xtensa.c,2276,29657
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/strtod.c,3860,29574
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/heap/heap_caps.c,1313,29231
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/driver/rtc_module.c,260,29176
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/espcoredump/src/port/xtensa/core_dump_port.c,2731,27982
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/nvs_flash/src/nvs_item_hash_list.cpp,448,27614
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/dtoa.c,3472,27559
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/bootloader_support/src/esp_image_format.c,1408,27487
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/esp_clk.c,304,27323
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/partition.c,1653,27215
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/eh_personality.cc,1568,27187
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/flash_ops.c,208,26966
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/esp_system.c,180,26894
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/src/c++11/functexcept.cc,256,26811
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/constant_time.c,1696,26444
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/ecdsa.c,1672,26396
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/flash_mmap.c,1754,26352
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/aes/esp_aes_gcm.c,2220,26339
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/camellia.c,4128,25933
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/ipv4/ip4.c,1718,25720
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/uart_hal.c,476,25681
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/cpu_util.c,208,25664
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/src/c++98/stdexcept.cc,132,25247
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/port/esp32/spiram.c,244,25055
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/memspi_host_driver.c,471,24955
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/port/brownout.c,96,24698
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/soc_hal.c,240,24467
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/ipv4/etharp.c,343,24241
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/eh_alloc.cc,600,23987
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/sha/parallel_engine/esp_sha512.c,5856,23853
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/port/xtensa/port.c,1104,23731
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/port/soc/esp32/reset_reason.c,270,23386
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/newlib/port/esp_time_impl.c,284,23363
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/cipher_wrap.c,2644,23272
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_timer/src/esp_timer.c,1248,23268
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/components/esp-rainmaker/components/esp-insights/components/esp_diagnostics/src/esp_diagnostics_log_hook.c,2112,23128
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/nvs_flash/src/nvs_partition.cpp,220,23084
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/dhm.c,1332,22919
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_common/src/esp_err_to_name.c,1766,22878
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/ctr_drbg.c,1448,21976
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/components/esp-rainmaker/components/esp-insights/components/esp_diagnostics/src/esp_diagnostics_utils.c,68,21883
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/ipv4/igmp.c,742,21690
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/esp_bignum.c,1168,21636
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/net_sockets.c,412,21539
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/raw.c,986,21186
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/int_wdt.c,324,21044
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/ipv6/mld6.c,1441,21029
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/soc/esp32/rtc_io_periph.c,1168,21003
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/spi_flash_hal.c,336,20556
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/efuse/src/esp_efuse_utility.c,821,20472
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/aes/block/esp_aes.c,1108,20348
+[section .flash.text],20341,20341
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/sha/parallel_engine/esp_sha256.c,3368,19958
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/port/esp32/freertos/sys_arch.c,800,19872
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/heap/multi_heap.c,685,19477
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/api/tcpip.c,294,19338
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/pkcs12.c,1508,19142
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/spi_flash_chip_mxic.c,168,18987
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/pk_wrap.c,912,18903
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/ecdh.c,728,18795
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/oid.c,1708,18687
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/entropy.c,756,18630
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/cache_utils.c,990,18626
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/espcoredump/src/core_dump_common.c,1797,18361
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/nvs_flash/src/nvs_partition_lookup.cpp,60,18228
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/newlib/locks.c,975,18033
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/driver/periph_ctrl.c,1059,18026
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/md.c,1400,17962
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/ccm.c,1356,17894
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/memp.c,291,17705
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/timeouts.c,328,17676
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/hmac_drbg.c,824,17549
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/vfs/vfs_console.c,700,17362
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/api/netdb.c,604,17335
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/pkwrite.c,328,17191
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/gdtoa-gethex.c,1352,17186
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/ipv6/icmp6.c,653,16979
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/pem.c,1160,16810
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/nvs_flash/src/nvs_types.cpp,84,16738
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/error.c,3060,16528
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/src/c++11/snprintf_lite.cc,392,16514
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/bootloader_support/src/bootloader_flash_config_esp32.c,836,16442
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/asn1write.c,476,16429
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/pkcs5.c,1156,16403
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/bt/controller/esp32/hli_api.c,112,16279
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/heap/heap_caps_init.c,921,16109
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/efuse/esp32/esp_efuse_utility.c,40,16032
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/asn1parse.c,1136,15787
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/heap/multi_heap_poisoning.c,641,15724
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/inet_chksum.c,512,15707
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/spi_flash_chip_winbond.c,788,15698
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/efuse/src/esp_efuse_api.c,124,15616
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/pk.c,740,15568
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/rsa_internal.c,1548,15552
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_ipc/src/esp_ipc_isr/esp_ipc_isr.c,477,15311
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/port/esp32/sar_periph_ctrl.c,28,15217
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/cxx/cxx_guards.cpp,8,15207
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/src/c++11/functional.cc,72,15041
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/pthread/pthread_local_storage.c,554,14962
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/ipv4/icmp.c,678,14707
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/components/esp_littlefs/src/littlefs_esp_part.c,200,14683
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/ssl_ciphersuites.c,6384,14670
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/esp32/bignum.c,685,14642
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/uart_hal_iram.c,276,14585
+[section .strtab],0,14456
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/sha/parallel_engine/sha.c,592,14392
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/port/port_common.c,453,14121
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/port/arch/xtensa/panic_arch.c,816,14062
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/ipv4/ip4_addr.c,464,14041
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/port/arch/xtensa/debug_helpers.c,540,13993
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/esp_additions/task_snapshot.c,368,13557
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_ipc/src/esp_ipc.c,670,13104
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/pthread/pthread_cond_var.c,8,12807
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/efuse/src/esp_efuse_api_key_esp32.c,64,12665
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/netif/ethernet.c,140,12526
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/sha_hal.c,296,12450
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/ipv4/ip4_frag.c,389,12440
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/ipv6/ip6_frag.c,405,12440
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/ipv6/ip6_addr.c,408,12414
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/log/log.c,949,12313
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/ubsan.c,8,12196
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/pthread/pthread_rwlock.c,8,11871
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/eh_globals.cc,196,11723
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/search/qsort.c,868,11610
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/ip.c,216,11495
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_rom/patches/esp_rom_uart.c,164,11398
+[section .xt.lit],0,11352
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/crosscore_int.c,382,11072
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/api/netbuf.c,32,10939
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/spi_flash_os_func_noos.c,140,10899
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/aes/esp_aes_xts.c,808,10869
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_timer/src/ets_timer_legacy.c,257,10790
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/spi_flash_chip_gd.c,331,10760
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/eh_catch.cc,192,10656
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/espcoredump/src/core_dump_checksum.c,414,10562
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/log/log_freertos.c,232,10501
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/regi2c_ctrl.c,60,10483
+[section .dram0.data],10455,10455
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/heap/port/memory_layout_utils.c,544,10444
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/base64.c,352,10151
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/fseeko.c,820,10120
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/aes_hal.c,220,10060
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/esp32/brownout_hal.c,256,9968
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/def.c,148,9958
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/compare_set.c,310,9921
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/findfp.c,548,9852
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/cpu_hal.c,136,9834
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/spi_flash_encrypt_hal_iram.c,156,9790
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/port/esp32/hooks/tcp_isn_default.c,384,9785
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/soc/esp32/uart_periph.c,72,9640
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/xtensa/xtensa_intr.c,132,9546
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/app_update/esp_app_desc.c,456,9515
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/fvwrite.c,688,9436
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/gdtoa-hexnan.c,372,9214
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/spi_flash_chip_issi.c,224,9166
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/strtoll.c,448,9003
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/list.c,180,8983
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/strtoull.c,436,8930
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/strtol.c,352,8910
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/core/mem.c,136,8794
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/eh_terminate.cc,120,8716
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/port/soc/esp32/cache_err_int.c,116,8502
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/strtoul.c,312,8426
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/efuse/esp32/esp_efuse_fields.c,24,8394
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/hw_random.c,148,8286
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_timer/src/system_time.c,112,8152
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/newlib/syscalls.c,88,8115
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/newlib/assert.c,268,8096
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_phy/src/phy_override.c,8,8078
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/eh_call.cc,56,8062
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/ungetc.c,464,7923
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/efuse/esp32/esp_efuse_table.c,20,7888
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/fflush.c,516,7883
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_phy/src/lib_printf.c,108,7833
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/si_class_type_info.cc,304,7764
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/newlib/abort.c,140,7728
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/aes/esp_aes_common.c,140,7714
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/spi_flash/spi_flash_chip_drivers.c,28,7700
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/mpu_hal.c,60,7697
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/port/esp32/dport_access.c,88,7685
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/new_op.cc,56,7651
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/bootloader_support/src/idf/bootloader_sha.c,200,7561
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/newlib/heap.c,140,7523
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/interrupt_controller_hal.c,64,7456
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/newlib/newlib_init.c,452,7429
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/sha512.c,100,7404
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/class_type_info.cc,272,7392
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/sha256.c,88,7311
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/port/port_systick.c,32,7278
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/lwip/lwip/src/api/err.c,104,7149
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/esp32/interrupt_descriptor_table.c,520,7122
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/makebuf.c,260,7091
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/setvbuf.c,436,7046
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/eh_throw.cc,232,7033
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/port/xtensa/xtensa_init.c,36,6983
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/locale/locale.c,456,6940
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/sha1.c,88,6843
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/soc/esp32/gpio_periph.c,203,6753
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/md/esp_md.c,108,6701
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/eh_term_handler.cc,4,6656
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/bootloader_support/src/bootloader_mem.c,16,6607
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/fread.c,288,6603
+[Unmapped],0,6595
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/del_op.cc,16,6448
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/fclose.c,256,6426
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/md5.c,88,6352
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_hw_support/port/esp32/chip_info.c,168,6273
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/refill.c,308,6267
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/heap/port/esp32/memory_layout.c,1112,6261
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/FreeRTOS-openocd.c,4,6181
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/mbtowc_r.c,64,6105
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/snprintf.c,220,6101
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/memmove.c,64,6053
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/locale/localeconv.c,44,6045
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/fwrite.c,212,6001
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/fopen.c,220,5994
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/wctomb_r.c,68,5986
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/stdio.c,192,5982
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/puts.c,200,5975
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/ftello.c,280,5960
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/esp32/efuse_hal.c,88,5907
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/mbrtowc.c,80,5872
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/esp_err.c,116,5653
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/eh_exception.cc,8,5614
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/sscanf.c,192,5610
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/newlib/pthread.c,16,5460
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/fwalk.c,120,5403
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/sprintf.c,160,5388
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/vsnprintf.c,129,5387
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/port/xtensa/xtensa_vectors.S,1596,5303
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/wsetup.c,220,5292
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/printf.c,120,5291
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/newlib/reent_init.c,60,5217
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/locale/lnumeric.c,20,5215
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/components/esp_littlefs/src/lfs_config.c,141,5176
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/reent/reent.c,252,5173
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/platform.c,44,5124
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/sccl.c,136,5099
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/fileno.c,144,5054
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/ctype/iswspace_l.c,28,5021
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libm/math/s_frexp.c,92,5015
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/hal/efuse_hal.c,72,4983
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/vprintf.c,100,4953
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/bootloader_support/src/bootloader_efuse.c,32,4919
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/fseek.c,52,4891
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/stack_check.c,68,4885
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/ftell.c,44,4862
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/utoa.c,116,4853
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/syscalls/sysstat.c,20,4387
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/flags.c,128,4384
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/strlcat.c,84,4302
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/itoa.c,76,4288
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/esp_mem.c,32,4230
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/memcmp.c,84,4206
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/strlcpy.c,72,4165
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/port/esp_hardware.c,24,4055
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/mbedtls/mbedtls/library/platform_util.c,28,4041
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/time/time.c,32,3904
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/syscalls/sysgettod.c,24,3868
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/strdup_r.c,32,3862
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/tinfo.cc,16,3861
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/memchr.c,28,3824
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/strspn.c,44,3785
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/strncmp.c,64,3781
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/strcspn.c,44,3763
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/atoi.c,40,3754
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/strstr.c,56,3743
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/strcat.c,36,3690
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/strchr.c,32,3651
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdlib/atof.c,20,3631
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/stdio/rename.c,20,3625
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libm/common/s_nan.c,12,3622
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/syscalls/sysunlink.c,24,3614
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/strnlen.c,32,3602
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/strdup.c,20,3557
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/string/bzero.c,16,3550
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libm/common/sf_nan.c,8,3525
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/errno/errno.c,16,3443
+[section .iram0.text],3372,3372
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/bad_alloc.cc,48,3225
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/new_opnt.cc,56,2927
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/new_handler.cc,21,2826
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/pure.cc,8,2803
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/eh_unex_handler.cc,4,2593
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/del_opvnt.cc,12,2431
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/new_opvnt.cc,20,2424
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/del_ops.cc,12,2300
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/port/soc/esp32/highint_hdl.S,760,2274
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/del_opv.cc,12,2271
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libstdc++-v3/libsupc++/new_opv.cc,0,2268
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/port/xtensa/portasm.S,496,2159
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/port/xtensa/xtensa_context.S,368,1591
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/machine/xtensa/memcpy.S,312,1425
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/bt/controller/esp32/hli_vectors.S,312,1368
+windowspill_asm.S,312,1361
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/machine/xtensa/strncpy.S,276,1196
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/machine/xtensa/strcmp.S,292,1168
+lib/MicroOcpp/src/MicroOcpp/Model/ConnectorBase/Notification.cpp,72,1057
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/ctype/iswspace.c,20,855
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/ctype/tolower.c,24,849
+/Users/igrokhotkov/e/esp32/hal/hal/state_asm.S,128,782
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/machine/xtensa/strcpy.S,144,713
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/port/xtensa/xtensa_vector_defaults.S,88,703
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/gcc/libgcc/config/xtensa/lib2funcs.S,104,663
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/machine/xtensa/memset.S,116,654
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_ipc/src/esp_ipc_isr/esp_ipc_isr_handler.S,92,605
+[section .iram0.vectors],603,603
+/builds/idf/crosstool-NG/.build/xtensa-esp32-elf/src/newlib/newlib/libc/machine/xtensa/strlen.S,100,573
+[section .xt.prop._ZN18ArduinoJson6201_F111parseNumberEPKcRNS_11VariantDataE],0,552
+[section .xt.prop._ZN18ArduinoJson6201_F111parseNumberIiEET_PKc],0,552
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlash4loadEv],0,552
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/port/arch/xtensa/panic_handler_asm.S,68,501
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/xtensa/xtensa_intr_asm.S,52,467
+[section .xt.prop._ZN9MicroOcpp23CertificateStoreMbedTLS18installCertificateE22InstallCertificateTypePKc],0,408
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_system/port/arch/xtensa/debug_helpers_asm.S,32,401
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/esp_ipc/src/esp_ipc_isr/esp_ipc_isr_routines.S,12,389
+[section .xt.prop._ZNK18ArduinoJson6201_F111VariantData6acceptINS_14JsonSerializerINS_18StaticStringWriterEEEEENT_11result_typeERS5_],0,360
+[section .xt.prop._ZNK18ArduinoJson6201_F111VariantData6acceptINS_14JsonSerializerINS_6WriterINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEEEEEENT_11result_typeERSC_],0,348
+/Users/igrokhotkov/e/esp32/hal/hal/interrupts.c,32,328
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderIN9MicroOcpp22ArduinoJsonFileAdapterEvEENS_12StringCopierEE12parseVariantINS_14AllowAllFilterEEENS_20DeserializationError4CodeERNS_11VariantDataET_NS_12NestingLimitE],0,324
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEENS_12StringCopierEE12parseVariantINS_14AllowAllFilterEEENS_20DeserializationError4CodeERNS_11VariantDataET_NS_12NestingLimitE],0,324
+/Users/igrokhotkov/e/esp32/hal/hal/int_asm.S,8,321
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPKcvEENS_12StringCopierEE12parseVariantINS_14AllowAllFilterEEENS_20DeserializationError4CodeERNS_11VariantDataET_NS_12NestingLimitE],0,312
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPcvEENS_11StringMoverEE12parseVariantINS_14AllowAllFilterEEENS_20DeserializationError4CodeERNS_11VariantDataET_NS_12NestingLimitE],0,300
+[section .xt.prop._ZNK18ArduinoJson6201_F111VariantData6acceptINS_14JsonSerializerINS_6WriterIN9MicroOcpp22ArduinoJsonFileAdapterEvEEEEEENT_11result_typeERS8_],0,300
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlash4saveEv],0,288
+_ZNSt17_Function_handlerIFbiiN9MicroOcpp26ChargingProfilePurposeTypeEiEZNS0_20SmartChargingService18setChargingProfileEjSt10unique_ptrINS0_15ChargingProfileESt14default_deleteIS5_EEEUliiS1_iE0_E9_M_invokeERKSt9_Any_dataOiSE_OS1_SE_,20,268
+[section .xt.prop._ZN18ArduinoJson6201_F114CollectionData8copyFromERKS0_PNS_10MemoryPoolE],0,264
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderIN9MicroOcpp22ArduinoJsonFileAdapterEvEENS_12StringCopierEE11parseObjectINS_14AllowAllFilterEEENS_20DeserializationError4CodeERNS_14CollectionDataET_NS_12NestingLimitE],0,264
+[section .xt.prop._ZN18ArduinoJson6201_F111VariantData9setStringINS_23ZeroTerminatedRamStringEEEbT_PNS_10MemoryPoolE],0,240
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderIN9MicroOcpp22ArduinoJsonFileAdapterEvEENS_12StringCopierEE17parseQuotedStringEv],0,240
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEENS_12StringCopierEE17parseQuotedStringEv],0,240
+coex_core_pre_init,172,238
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPKcvEENS_12StringCopierEE17parseQuotedStringEv],0,228
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPcvEENS_11StringMoverEE17parseQuotedStringEv],0,228
+[section .xt.prop._ZN18ArduinoJson6201_F1ltIiEENS_9enable_ifIXntsrNS_10is_base_ofINS_18VariantOperatorTagET_EE5valueEbE4typeENS_11MemberProxyINS_10JsonObjectEPKcEERKS4_],0,228
+[section .xt.prop._ZNK18ArduinoJson6201_F111VariantData10asIntegralIiEET_v],0,216
+[section .xt.prop._ZNSt6vectorIbSaIbEE13_M_insert_auxESt13_Bit_iteratorb],0,216
+[section .xt.prop._ZN18ArduinoJson6201_F111VariantData8copyFromERKS0_PNS_10MemoryPoolE],0,204
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp17AuthorizationDataESaIS1_EE17_M_realloc_insertIJEEEvN9__gnu_cxx17__normal_iteratorIPS1_S3_EEDpOT_],0,204
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp7Ocpp20117SampledValueInputESaIS2_EE17_M_realloc_insertIJRSt8functionIFd14ReadingContextEERKNS1_22SampledValuePropertiesEEEEvN9__gnu_cxx17__normal_iteratorIPS2_S4_EEDpOT_],0,204
+_ZTVSt19_Sp_counted_deleterIPN9MicroOcpp24ArduinoFilesystemAdapterESt14default_deleteINS0_17FilesystemAdapterEESaIS4_ELN9__gnu_cxx12_Lock_policyE2EE,28,193
+[section .xt.prop._ZN18ArduinoJson6201_F110MemoryPool10saveStringINS_14SizedRamStringEEEPKcT_],0,192
+[section .xt.prop._ZN18ArduinoJson6201_F110MemoryPool10saveStringINS_17JsonStringAdapterEEEPKcT_],0,192
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEENS_12StringCopierEE11parseObjectINS_14AllowAllFilterEEENS_20DeserializationError4CodeERNS_14CollectionDataET_NS_12NestingLimitE],0,192
+[section .xt.prop._ZN18ArduinoJson6201_F19ConverterIivE8fromJsonENS_16JsonVariantConstE],0,192
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlash19createConfigurationENS_7TConfigEPKc],0,192
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlash6removeEPNS_13ConfigurationE],0,192
+[section .xt.prop._ZNK18ArduinoJson6201_F111VariantData7asFloatIfEET_v],0,192
+[section .xt.prop._ZNSt6vectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaIS5_EE17_M_realloc_insertIJRPKcEEEvN9__gnu_cxx17__normal_iteratorIPS5_S7_EEDpOT_],0,192
+[section .xt.prop._ZNSt6vectorIbSaIbEE14_M_fill_insertESt13_Bit_iteratorjb],0,192
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEjjPKcj],0,192
+_ZTVSt19_Sp_counted_deleterIPN9MicroOcpp22ConfigurationContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EE,28,184
+_ZTVSt19_Sp_counted_deleterIPN9MicroOcpp7Ocpp20111TransactionESt14default_deleteIS2_ESaIvELN9__gnu_cxx12_Lock_policyE2EE,44,181
+[section .xt.prop._ZN18ArduinoJson6201_F113TextFormatterINS_18StaticStringWriterEE10writeFloatIdEEvT_],0,180
+[section .xt.prop._ZN18ArduinoJson6201_F113TextFormatterINS_6WriterIN9MicroOcpp22ArduinoJsonFileAdapterEvEEE10writeFloatIdEEvT_],0,180
+[section .xt.prop._ZN18ArduinoJson6201_F114CollectionData9addMemberINS_19StaticStringAdapterEEEPNS_11VariantDataET_PNS_10MemoryPoolE],0,180
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPKcvEENS_12StringCopierEE11parseObjectINS_14AllowAllFilterEEENS_20DeserializationError4CodeERNS_14CollectionDataET_NS_12NestingLimitE],0,180
+[section .xt.prop._ZNK18ArduinoJson6201_F111VariantData10asIntegralIjEET_v],0,180
+[section .xt.prop._ZN18ArduinoJson6201_F113TextFormatterINS_6WriterINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEEE10writeFloatIdEEvT_],0,168
+[section .xt.prop._ZN18ArduinoJson6201_F1orIbEENS_9enable_ifIXaantsrNS_9IsVariantIT_EE5valuentsrNS_8is_arrayIS3_EE5valueES3_E4typeERKNS_11MemberProxyINS_10JsonObjectEPKcEERKS3_],0,168
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp16OperationCreatorESaIS1_EE17_M_realloc_insertIJRKS1_EEEvN9__gnu_cxx17__normal_iteratorIPS1_S3_EEDpOT_],0,168
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp17VariableValidatorIiEESaIS2_EE17_M_realloc_insertIJRKNS0_11ComponentIdERPKcRSt8functionIFbiEEEEEvN9__gnu_cxx17__normal_iteratorIPS2_S4_EEDpOT_],0,168
+[section .xt.prop._ZNSt6vectorISt8functionIFN9MicroOcpp9ErrorDataEvEESaIS4_EE17_M_realloc_insertIJRKS4_EEEvN9__gnu_cxx17__normal_iteratorIPS4_S6_EEDpOT_],0,168
+[section .xt.prop._ZNSt6vectorIiSaIiEE14_M_fill_insertEN9__gnu_cxx17__normal_iteratorIPiS1_EEjRKi],0,168
+[section .comment],0,166
+_ZNSt17_Function_handlerIFN9MicroOcpp18InstallationStatusEvEZNS0_26makeDefaultFirmwareServiceERNS0_7ContextEEUlvE2_E9_M_invokeERKSt9_Any_data,8,166
+_ZTVSt19_Sp_counted_deleterIPN9MicroOcpp17VariableContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EE,28,163
+_ZTVSt19_Sp_counted_deleterIPN9MicroOcpp13ConfigurationESt14default_deleteIS1_ESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE,28,161
+[ELF Program Headers],0,160
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPcvEENS_11StringMoverEE11parseObjectINS_14AllowAllFilterEEENS_20DeserializationError4CodeERNS_14CollectionDataET_NS_12NestingLimitE],0,156
+[section .xt.prop._ZN9MicroOcpp23CertificateStoreMbedTLS11getCertHashEPKc17HashAlgorithmTypeR14ocpp_cert_hash],0,156
+[section .xt.prop._ZN9MicroOcpp23CertificateStoreMbedTLS17getCertificateIdsERKSt6vectorI20GetCertificateIdTypeSaIS2_EERS1_INS_20CertificateChainHashESaIS7_EE],0,156
+[section .xt.prop._ZN9MicroOcpp24ArduinoFilesystemAdapter8ftw_rootESt8functionIFiPKcEE],0,156
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp17VariableValidatorIPKcEESaIS4_EE17_M_realloc_insertIJRKNS0_11ComponentIdERS3_RSt8functionIFbS3_EEEEEvN9__gnu_cxx17__normal_iteratorIPS4_S6_EEDpOT_],0,156
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp22SmartChargingConnectorESaIS1_EE17_M_realloc_insertIJRNS0_5ModelERSt10shared_ptrINS0_17FilesystemAdapterEERjRSt5arrayISt10unique_ptrINS0_15ChargingProfileESt14default_deleteISE_EELj9EESJ_EEEvN9__gnu_cxx17__normal_iteratorIPS1_S3_EEDpOT_],0,156
+_ZTVSt23_Sp_counted_ptr_inplaceIN9MicroOcpp7Ocpp20120TransactionEventDataESaIS2_ELN9__gnu_cxx12_Lock_policyE2EE,28,156
+_ZTVSt23_Sp_counted_ptr_inplaceIN9MicroOcpp20TransactionMeterDataESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE,28,148
+[section .xt.prop._ZN9MicroOcpp22SampledValuePropertiesC2ERKS0_],0,144
+[section .xt.prop._ZN9MicroOcpp22SampledValuePropertiesC2Ev],0,144
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp7Ocpp20112ResetService4EvseESaIS3_EE17_M_realloc_insertIJRNS0_7ContextERS2_RjEEEvN9__gnu_cxx17__normal_iteratorIPS3_S5_EEDpOT_],0,144
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp7Ocpp20115GetVariableDataESaIS2_EE17_M_realloc_insertIJPKcEEEvN9__gnu_cxx17__normal_iteratorIPS2_S4_EEDpOT_],0,144
+[section .xt.prop._ZNSt6vectorISt10shared_ptrIN9MicroOcpp22ConfigurationContainerEESaIS3_EE17_M_realloc_insertIJRKS3_EEEvN9__gnu_cxx17__normal_iteratorIPS3_S5_EEDpOT_],0,144
+_ZTVN9MicroOcpp6Ocpp1618SetChargingProfileE,52,141
+_ZTVN9MicroOcpp6Ocpp1614UpdateFirmwareE,52,139
+_ZTVSt23_Sp_counted_ptr_inplaceIN9MicroOcpp11TransactionESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE,28,139
+_ZNSt17_Function_handlerIFbvEZN9MicroOcpp18TransactionServiceC4ERNS1_7ContextEEUlvE3_E9_M_invokeERKSt9_Any_data,8,136
+_ZNSt17_Function_handlerIFbvEZN9MicroOcpp18TransactionServiceC4ERNS1_7ContextEEUlvE4_E9_M_invokeERKSt9_Any_data,8,136
+_ZTVN9MicroOcpp7Ocpp20112GetVariablesE,52,136
+_ZTVN9MicroOcpp6Ocpp1617CancelReservationE,52,135
+_ZTVN9MicroOcpp7Ocpp20123RequestStartTransactionE,52,134
+[section .xt.prop._ZN18ArduinoJson6201_F110FloatPartsIdE9normalizeERd],0,132
+[section .xt.prop._ZN18ArduinoJson6201_F14Utf815encodeCodepointINS_12StringCopierEEEvjRT_],0,132
+[section .xt.prop._ZN9MicroOcpp12ConfigString9setStringEPKc],0,132
+[section .xt.prop._ZN9MicroOcpp15VariableServiceD2Ev],0,132
+[section .xt.prop._ZN9MicroOcpp20declareConfigurationIPKcEESt10shared_ptrINS_13ConfigurationEES2_T_S2_bbb],0,132
+[section .xt.prop._ZN9MicroOcpp20declareConfigurationIbEESt10shared_ptrINS_13ConfigurationEEPKcT_S5_bbb],0,132
+[section .xt.prop._ZN9MicroOcpp20declareConfigurationIiEESt10shared_ptrINS_13ConfigurationEEPKcT_S5_bbb],0,132
+[section .xt.prop._ZN9MicroOcpp7Ocpp20111Transaction21addSampledDataTxEndedESt10unique_ptrINS0_10MeterValueESt14default_deleteIS3_EE],0,132
+[section .xt.prop._ZNK18ArduinoJson6201_F111VariantData9isIntegerIiEEbv],0,132
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp7Ocpp20115SetVariableDataESaIS2_EE17_M_realloc_insertIJPKcEEEvN9__gnu_cxx17__normal_iteratorIPS2_S4_EEDpOT_],0,132
+[section .xt.prop._ZNSt6vectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaIS5_EE17_M_realloc_insertIJS5_EEEvN9__gnu_cxx17__normal_iteratorIPS5_S7_EEDpOT_],0,132
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN18ArduinoJson6201_F117BasicJsonDocumentINS1_16DefaultAllocatorEEESt14default_deleteIS4_EESaIS7_EE17_M_realloc_insertIJS7_EEEvN9__gnu_cxx17__normal_iteratorIPS7_S9_EEDpOT_],0,132
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp10MeterValueESt14default_deleteIS2_EESaIS5_EE17_M_realloc_insertIJS5_EEEvN9__gnu_cxx17__normal_iteratorIPS5_S7_EEDpOT_],0,132
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp12SampledValueESt14default_deleteIS2_EESaIS5_EE17_M_realloc_insertIJS5_EEEvN9__gnu_cxx17__normal_iteratorIPS5_S7_EEDpOT_],0,132
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp25ConnectorTransactionStoreESt14default_deleteIS2_EESaIS5_EE17_M_realloc_insertIJS5_EEEvN9__gnu_cxx17__normal_iteratorIPS5_S7_EEDpOT_],0,132
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp7Ocpp20110MeterValueESt14default_deleteIS3_EESaIS6_EE17_M_realloc_insertIJS6_EEEvN9__gnu_cxx17__normal_iteratorIPS6_S8_EEDpOT_],0,132
+_ZTVN9MicroOcpp6Ocpp1620ClearChargingProfileE,52,130
+_ZTVN9MicroOcpp7Ocpp20118StatusNotificationE,52,129
+_ZTVN9MicroOcpp6Ocpp1618StatusNotificationE,52,128
+_ZTVSt23_Sp_counted_ptr_inplaceI11VFSFileImplSaIS0_ELN9__gnu_cxx12_Lock_policyE2EE,28,127
+_ZTVN9MicroOcpp6Ocpp1616BootNotificationE,68,126
+_ZTVN9MicroOcpp6Ocpp1615UnlockConnectorE,68,125
+_ZTVN9MicroOcpp6Ocpp1622RemoteStartTransactionE,60,124
+_ZTVN9MicroOcpp6Ocpp1629DiagnosticsStatusNotificationE,52,123
+_ZTV11VFSFileImpl,88,122
+_ZTVN9MicroOcpp27ConfigurationContainerFlashE,60,122
+_ZTVN9MicroOcpp27SampledValueSamplerConcreteIfNS_24SampledValueDeSerializerIfEEEE,24,122
+_ZTVN9MicroOcpp27SampledValueSamplerConcreteIiNS_24SampledValueDeSerializerIiEEEE,24,122
+_ZTVN9MicroOcpp7Ocpp20126GetInstalledCertificateIdsE,52,121
+[section .xt.prop._ZN18ArduinoJson6201_F110FloatPartsIdEC2Ed],0,120
+[section .xt.prop._ZN18ArduinoJson6201_F110MemoryPool22saveStringFromFreeZoneEj],0,120
+[section .xt.prop._ZN18ArduinoJson6201_F14Utf815encodeCodepointINS_11StringMoverEEEvjRT_],0,120
+[section .xt.prop._ZN18ArduinoJson6201_F1orIiEENS_9enable_ifIXaantsrNS_9IsVariantIT_EE5valuentsrNS_8is_arrayIS3_EE5valueES3_E4typeERKNS_11MemberProxyINS9_INS9_INS_10JsonObjectEPKcEESC_EESC_EERKS3_],0,120
+[section .xt.prop._ZN18ArduinoJson6201_F1orIiEENS_9enable_ifIXaantsrNS_9IsVariantIT_EE5valuentsrNS_8is_arrayIS3_EE5valueES3_E4typeERKNS_11MemberProxyINS_10JsonObjectEPKcEERKS3_],0,120
+[section .xt.prop._ZN18ArduinoJson6201_F1orIiEENS_9enable_ifIXaantsrNS_9IsVariantIT_EE5valuentsrNS_8is_arrayIS3_EE5valueES3_E4typeERKNS_11MemberProxyIRNS_12JsonDocumentEPKcEERKS3_],0,120
+[section .xt.prop._ZN18ArduinoJson6201_F1orIiEENS_9enable_ifIXaantsrNS_9IsVariantIT_EE5valuentsrNS_8is_arrayIS3_EE5valueES3_E4typeERKNS_12ElementProxyIRNS_12JsonDocumentEEERKS3_],0,120
+[section .xt.prop._ZN9MicroOcpp23CertificateStoreMbedTLS17deleteCertificateERK14ocpp_cert_hash],0,120
+[section .xt.prop._ZN9MicroOcpp24ArduinoFilesystemAdapter4openEPKcS2_],0,120
+[section .xt.prop._ZNSt14_Function_base13_Base_managerISt8functionIFjPKhjEEE10_M_managerERSt9_Any_dataRKS7_St18_Manager_operation],0,120
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp9ConnectorESt14default_deleteIS2_EESaIS5_EE17_M_realloc_insertIJPS2_EEEvN9__gnu_cxx17__normal_iteratorIPS5_S7_EEDpOT_],0,120
+_ZTVN9MicroOcpp6Ocpp1626FirmwareStatusNotificationE,52,120
+_ZTV12VariableBoolI16VariableFullDataE,48,119
+_ZTVN9MicroOcpp20SampledValueConcreteIfNS_24SampledValueDeSerializerIfEEEE,28,119
+_ZTVN9MicroOcpp20SampledValueConcreteIiNS_24SampledValueDeSerializerIiEEEE,28,119
+_ZTVN9MicroOcpp7Ocpp20112SetVariablesE,64,119
+_ZTVN9MicroOcpp30ConfigurationContainerVolatileE,52,117
+_ZTVN9MicroOcpp7Ocpp20122RequestStopTransactionE,52,117
+_ZTVN9MicroOcpp6Ocpp1621RemoteStopTransactionE,52,115
+_ZTVN9MicroOcpp6Ocpp1620GetCompositeScheduleE,52,114
+_ZTVN9MicroOcpp6Ocpp169HeartbeatE,64,114
+_ZTVSt15_Sp_counted_ptrIP12LittleFSImplLN9__gnu_cxx12_Lock_policyE2EE,28,114
+esp_coex_adapter_register,72,114
+_ZTVN9MicroOcpp6Ocpp1619ChangeConfigurationE,52,113
+_ZTVN9MicroOcpp6Ocpp1619GetLocalListVersionE,52,113
+_ZTVN9MicroOcpp7Ocpp20118ChangeAvailabilityE,52,113
+_ZTVN9MicroOcpp7Ocpp20118InstallCertificateE,52,113
+_ZTVN9MicroOcpp6Ocpp1618ChangeAvailabilityE,52,112
+_ZTVN9MicroOcpp7Ocpp20117DeleteCertificateE,52,112
+_ZTVN9MicroOcpp7Ocpp20116TransactionEventE,52,111
+_ZTVN9MicroOcpp6Ocpp1616GetConfigurationE,52,110
+_ZTVN9MicroOcpp6Ocpp1616StartTransactionE,52,110
+_ZTVN9MicroOcpp18LoopbackConnectionE,40,109
+_ZTVN9MicroOcpp6Ocpp1615StopTransactionE,52,109
+[section .xt.prop._ZN14intrusive_listIN3nvs7Storage14NamespaceEntryEE17clearAndFreeNodesEv],0,108
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPKcvEENS_12StringCopierEE11skipKeywordES3_],0,108
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPcvEENS_11StringMoverEE11skipKeywordEPKc],0,108
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderIN9MicroOcpp22ArduinoJsonFileAdapterEvEENS_12StringCopierEE11skipKeywordEPKc],0,108
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEENS_12StringCopierEE11skipKeywordEPKc],0,108
+[section .xt.prop._ZN18ArduinoJson6201_F1orERKNS_11MemberProxyINS0_INS_10JsonObjectEPKcEES3_EES3_],0,108
+[section .xt.prop._ZN18ArduinoJson6201_F1orERKNS_11MemberProxyIRNS_12JsonDocumentEPKcEES4_],0,108
+[section .xt.prop._ZN18ArduinoJson6201_F1orERKNS_12ElementProxyINS_9JsonArrayEEEPKc],0,108
+[section .xt.prop._ZN18ArduinoJson6201_F1orIjEENS_9enable_ifIXaantsrNS_9IsVariantIT_EE5valuentsrNS_8is_arrayIS3_EE5valueES3_E4typeERKNS_11MemberProxyINS_10JsonObjectEPKcEERKS3_],0,108
+[section .xt.prop._ZN9MicroOcpp15VariableService15declareVariableIPKcEEPNS_8VariableERKNS_11ComponentIdES3_T_S3_NS4_10MutabilityENS4_16AttributeTypeSetEbb],0,108
+[section .xt.prop._ZN9MicroOcpp15VariableService15declareVariableIbEEPNS_8VariableERKNS_11ComponentIdEPKcT_S8_NS2_10MutabilityENS2_16AttributeTypeSetEbb],0,108
+[section .xt.prop._ZN9MicroOcpp15VariableService15declareVariableIiEEPNS_8VariableERKNS_11ComponentIdEPKcT_S8_NS2_10MutabilityENS2_16AttributeTypeSetEbb],0,108
+[section .xt.prop._ZN9MicroOcpp16OperationCreatorC2ERKS0_],0,108
+[section .xt.prop._ZN9MicroOcpp6Ocpp1615StopTransactionD2Ev],0,108
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp11TransactionELN9__gnu_cxx12_Lock_policyE2EEC2ERKSt10__weak_ptrIS1_LS3_2EESt9nothrow_t],0,108
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp20TransactionMeterDataELN9__gnu_cxx12_Lock_policyE2EEC2ERKSt10__weak_ptrIS1_LS3_2EESt9nothrow_t],0,108
+[section .xt.prop._ZNSt20__uninitialized_copyILb0EE13__uninit_copyIPKN9MicroOcpp7Ocpp20117SampledValueInputEPS4_EET0_T_S9_S8_],0,108
+[section .xt.prop._ZNSt20__uninitialized_copyILb0EE13__uninit_copyISt13move_iteratorIPN9MicroOcpp17AuthorizationDataEES5_EET0_T_S8_S7_],0,108
+[section .xt.prop._ZNSt20__uninitialized_copyILb0EE13__uninit_copyISt13move_iteratorIPN9MicroOcpp22SmartChargingConnectorEES5_EET0_T_S8_S7_],0,108
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp22ChargingSchedulePeriodESaIS1_EE17_M_realloc_insertIJEEEvN9__gnu_cxx17__normal_iteratorIPS1_S3_EEDpOT_],0,108
+[section .xt.prop._ZNSt6vectorISt10shared_ptrIN9MicroOcpp13ConfigurationEESaIS3_EE17_M_realloc_insertIJRKS3_EEEvN9__gnu_cxx17__normal_iteratorIPS3_S5_EEDpOT_],0,108
+[section .xt.prop._ZNSt6vectorISt10shared_ptrIN9MicroOcpp17VariableContainerEESaIS3_EE17_M_realloc_insertIJRKS3_EEEvN9__gnu_cxx17__normal_iteratorIPS3_S5_EEDpOT_],0,108
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp19SampledValueSamplerESt14default_deleteIS2_EESaIS5_EE17_M_realloc_insertIJS5_EEEvN9__gnu_cxx17__normal_iteratorIPS5_S7_EEDpOT_],0,108
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp8VariableESt14default_deleteIS2_EESaIS5_EE17_M_realloc_insertIJS5_EEEvN9__gnu_cxx17__normal_iteratorIPS5_S7_EEDpOT_],0,108
+[section .xt.prop._ZNSt6vectorIiSaIiEE12emplace_backIJiEEEvDpOT_],0,108
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEaSEOS4_],0,108
+_ZTVN9MicroOcpp6Ocpp1614GetDiagnosticsE,52,108
+_ZTVN9MicroOcpp6Ocpp1614TriggerMessageE,52,108
+_ZTVN9MicroOcpp7Ocpp20113GetBaseReportE,52,108
+_ZTV14VariableStringI18VariableSingleDataE,48,107
+_ZTVN9MicroOcpp6Ocpp1613SendLocalListE,52,107
+_ZTVN9MicroOcpp7Ocpp20112NotifyReportE,52,107
+_ZTVN9MicroOcpp6Ocpp1612DataTransferE,52,106
+_ZTSN9__gnu_cxx26__concurrence_unlock_errorE,44,105
+_ZTV12VariableBoolI18VariableSingleDataE,48,105
+_ZTV14VariableStringI16VariableFullDataE,48,105
+_ZTVN3nvs12NVSPartitionE,48,105
+_ZTVN9MicroOcpp6Ocpp1611MeterValuesE,52,105
+_ZTV11VariableIntI18VariableSingleDataE,48,104
+_ZTVN9MicroOcpp17MsgBufferExceededE,52,104
+_ZTVN9MicroOcpp25VariableContainerVolatileE,44,104
+_ZTVN9MicroOcpp6Ocpp1610ClearCacheE,52,104
+_ZTVN9MicroOcpp6Ocpp1610ReserveNowE,52,104
+_ZTVN9MicroOcpp12ConfigStringE,56,103
+_ZTVN9MicroOcpp7Ocpp2019AuthorizeE,52,103
+_ZTV11VariableIntI16VariableFullDataE,48,102
+_ZTVN9MicroOcpp6Ocpp169AuthorizeE,52,102
+_ZTSN9__gnu_cxx24__concurrence_lock_errorE,42,101
+_ZTVN10__cxxabiv120__si_class_type_infoE,44,101
+_ZTVN9MicroOcpp10ConfigBoolE,56,101
+_ZTVN9MicroOcpp14NotImplementedE,52,101
+_ZTVN9MicroOcpp18FtpTransferMbedTLSE,48,101
+_ZTVN9MicroOcpp7Ocpp2015ResetE,52,99
+_ZTVN9MicroOcpp9ConfigIntE,56,99
+coex_schm_init,68,99
+_ZTVN10__cxxabiv117__class_type_infoE,44,98
+_ZTVN9MicroOcpp6Ocpp165ResetE,52,98
+_ZThn4_N9MicroOcpp18FtpTransferMbedTLS8isActiveEv,16,98
+[section .xt.prop._ZN14VariableStringI16VariableFullDataE9setStringEPKcN9MicroOcpp8Variable13AttributeTypeE],0,96
+[section .xt.prop._ZN14VariableStringI18VariableSingleDataE9setStringEPKcN9MicroOcpp8Variable13AttributeTypeE],0,96
+[section .xt.prop._ZN18ArduinoJson6201_F113TextFormatterINS_18StaticStringWriterEE9writeCharEc],0,96
+[section .xt.prop._ZN18ArduinoJson6201_F113TextFormatterINS_6WriterIN9MicroOcpp22ArduinoJsonFileAdapterEvEEE9writeCharEc],0,96
+[section .xt.prop._ZN18ArduinoJson6201_F113TextFormatterINS_6WriterINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEEE9writeCharEc],0,96
+[section .xt.prop._ZN18ArduinoJson6201_F114CollectionData7addSlotEPNS_10MemoryPoolE],0,96
+[section .xt.prop._ZN9MicroOcpp15MeteringServiceD2Ev],0,96
+[section .xt.prop._ZN9MicroOcpp20getVariableValidatorIPKcEEPNS_17VariableValidatorIT_EERSt6vectorIS5_SaIS5_EERKNS_11ComponentIdES2_],0,96
+[section .xt.prop._ZN9MicroOcpp20getVariableValidatorIbEEPNS_17VariableValidatorIT_EERSt6vectorIS3_SaIS3_EERKNS_11ComponentIdEPKc],0,96
+[section .xt.prop._ZN9MicroOcpp20getVariableValidatorIiEEPNS_17VariableValidatorIT_EERSt6vectorIS3_SaIS3_EERKNS_11ComponentIdEPKc],0,96
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlash12removeUnusedEv],0,96
+[section .xt.prop._ZNSs4_Rep9_S_createEjjRKSaIcE],0,96
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp18TransactionService16TxStartStopPointESaIS2_EE12emplace_backIJS2_EEEvDpOT_],0,96
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp9ValidatorESaIS1_EE17_M_realloc_insertIJS1_EEEvN9__gnu_cxx17__normal_iteratorIPS1_S3_EEDpOT_],0,96
+_ZTVN9MicroOcpp9OperationE,52,95
+_ZTV14HardwareSerial,56,93
+_ZTVN9MicroOcpp16FtpClientMbedTLSE,40,91
+_ZTVN9MicroOcpp24ArduinoFilesystemAdapterE,32,91
+_ZTVN9MicroOcpp8VariableE,48,90
+_ZTVN2fs4FileE,56,87
+_ZTVN9MicroOcpp23CertificateStoreMbedTLSE,28,86
+_ZTSSt11logic_error,19,85
+_ZTVN9MicroOcpp18ArduinoFileAdapterE,32,85
+[section .xt.prop._ZN14intrusive_listIN3nvs12NVSPartitionEE5eraseENS2_8iteratorE],0,84
+[section .xt.prop._ZN14intrusive_listIN3nvs4PageEE5eraseENS2_8iteratorE],0,84
+[section .xt.prop._ZN14intrusive_listIN3nvs8HashList13HashListBlockEE5eraseENS3_8iteratorE],0,84
+[section .xt.prop._ZN18ArduinoJson6201_F113TextFormatterINS_18StaticStringWriterEE12writeIntegerIyEENS_9enable_ifIXsrNS_11is_unsignedIT_EE5valueEvE4typeES6_],0,84
+[section .xt.prop._ZN18ArduinoJson6201_F114JsonSerializerINS_6WriterIN9MicroOcpp22ArduinoJsonFileAdapterEvEEE11visitObjectERKNS_14CollectionDataE],0,84
+[section .xt.prop._ZN18ArduinoJson6201_F1orIiEENS_9enable_ifIXaantsrNS_9IsVariantIT_EE5valuentsrNS_8is_arrayIS3_EE5valueES3_E4typeERKNS_11MemberProxyINS9_INS_10JsonObjectEPKcEESC_EERKS3_],0,84
+[section .xt.prop._ZN9MicroOcpp17MeteringConnectorD2Ev],0,84
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlash12clearKeyPoolEPKc],0,84
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlash16getConfigurationEPKc],0,84
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlashD2Ev],0,84
+[section .xt.prop._ZN9MicroOcpp27SampledValueSamplerConcreteIfNS_24SampledValueDeSerializerIfEEEC2ENS_22SampledValuePropertiesESt8functionIFf14ReadingContextEE],0,84
+[section .xt.prop._ZNK18ArduinoJson6201_F111VariantData8asStringEv],0,84
+[section .xt.prop._ZNKSt6vectorIN9MicroOcpp22ChargingSchedulePeriodESaIS1_EE12_M_check_lenEjPKc],0,84
+[section .xt.prop._ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag],0,84
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp17VariableContainerELN9__gnu_cxx12_Lock_policyE2EEaSIS1_St14default_deleteIS1_EEENSt9enable_ifIXsrSt6__and_IJSt20__sp_compatible_withIPT_PS1_ESt14is_convertibleINSt10unique_ptrISB_T0_E7pointerESD_EEE5valueERS4_E4typeEOSI_],0,84
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp7Ocpp20111TransactionELN9__gnu_cxx12_Lock_policyE2EEaSIS2_St14default_deleteIS2_EEENSt9enable_ifIXsrSt6__and_IJSt20__sp_compatible_withIPT_PS2_ESt14is_convertibleINSt10unique_ptrISC_T0_E7pointerESE_EEE5valueERS5_E4typeEOSJ_],0,84
+[section .xt.prop._ZNSt6vectorIPKcSaIS1_EE17_M_realloc_insertIJS1_EEEvN9__gnu_cxx17__normal_iteratorIPS1_S3_EEDpOT_],0,84
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp10MeterValueESt14default_deleteIS2_EESaIS5_EED2Ev],0,84
+[section .xt.prop._ZNSt6vectorISt8weak_ptrIN9MicroOcpp11TransactionEESaIS3_EE17_M_realloc_insertIJS3_EEEvN9__gnu_cxx17__normal_iteratorIPS3_S5_EEDpOT_],0,84
+[section .xt.prop._ZNSt6vectorISt8weak_ptrIN9MicroOcpp20TransactionMeterDataEESaIS3_EE17_M_realloc_insertIJS3_EEEvN9__gnu_cxx17__normal_iteratorIPS3_S5_EEDpOT_],0,84
+[section .xt.prop._ZNSt6vectorISt8weak_ptrIN9MicroOcpp20TransactionMeterDataEESaIS3_EE8_M_eraseEN9__gnu_cxx17__normal_iteratorIPS3_S5_EES9_],0,84
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE7reserveEj],0,84
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE9_M_createERjj],0,84
+[section .xt.prop._ZSt4fillSt13_Bit_iteratorS_RKb],0,84
+_ZTVN9__gnu_cxx26__concurrence_unlock_errorE,20,81
+_ZTVN9__gnu_cxx24__concurrence_lock_errorE,20,79
+_ZTVN9MicroOcpp19SampledValueSamplerE,24,78
+_ZTVSt17bad_function_call,36,78
+_ZTSSt9bad_alloc,16,76
+_ZTV12LittleFSImpl,40,75
+_ZThn4_N9MicroOcpp18FtpTransferMbedTLS4loopEv,12,74
+_ZTIN9__gnu_cxx26__concurrence_unlock_errorE,12,73
+[section .xt.prop._ZN18ArduinoJson6201_F111VariantData14getOrAddMemberINS_19StaticStringAdapterEEEPS0_T_PNS_10MemoryPoolE],0,72
+[section .xt.prop._ZN18ArduinoJson6201_F113TextFormatterINS_6WriterIN9MicroOcpp22ArduinoJsonFileAdapterEvEEE12writeIntegerIyEENS_9enable_ifIXsrNS_11is_unsignedIT_EE5valueEvE4typeES9_],0,72
+[section .xt.prop._ZN18ArduinoJson6201_F113TextFormatterINS_6WriterINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEEE12writeIntegerIyEENS_9enable_ifIXsrNS_11is_unsignedIT_EE5valueEvE4typeESD_],0,72
+[section .xt.prop._ZN18ArduinoJson6201_F115variantCopyFromEPNS_11VariantDataEPKS0_PNS_10MemoryPoolE],0,72
+[section .xt.prop._ZN18ArduinoJson6201_F117variantAddElementEPNS_11VariantDataEPNS_10MemoryPoolE],0,72
+[section .xt.prop._ZN18ArduinoJson6201_F117variantGetElementEPKNS_11VariantDataEj],0,72
+[section .xt.prop._ZN18ArduinoJson6201_F15Utf169Codepoint6appendEt],0,72
+[section .xt.prop._ZN18ArduinoJson6201_F19serializeINS_14JsonSerializerEEENS_9enable_ifIXsrT_INS_18StaticStringWriterEE12producesTextEjE4typeENS_16JsonVariantConstEPvj],0,72
+[section .xt.prop._ZN18ArduinoJson6201_F1orERKNS_11MemberProxyINS_10JsonObjectEPKcEES3_],0,72
+[section .xt.prop._ZN3nvs4Lock4initEv],0,72
+[section .xt.prop._ZN6String6setLenEi],0,72
+[section .xt.prop._ZN9MicroOcpp10MeterStoreD2Ev],0,72
+[section .xt.prop._ZN9MicroOcpp24ArduinoFilesystemAdapter4statEPKcPj],0,72
+[section .xt.prop._ZN9__gnu_cxx13__scoped_lockD2Ev],0,72
+[section .xt.prop._ZNKSt6vectorIPN9MicroOcpp13ConfigurationESaIS2_EE12_M_check_lenEjPKc],0,72
+[section .xt.prop._ZNKSt6vectorISt10shared_ptrIN9MicroOcpp13ConfigurationEESaIS3_EE12_M_check_lenEjPKc],0,72
+[section .xt.prop._ZNKSt6vectorISt10shared_ptrIN9MicroOcpp17VariableContainerEESaIS3_EE12_M_check_lenEjPKc],0,72
+[section .xt.prop._ZNKSt6vectorIiSaIiEE12_M_check_lenEjPKc],0,72
+[section .xt.prop._ZNKSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE5rfindEcj],0,72
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp7Ocpp20111TransactionELN9__gnu_cxx12_Lock_policyE2EEaSERKS5_],0,72
+[section .xt.prop._ZNSt6vectorI20GetCertificateIdTypeSaIS0_EE17_M_realloc_insertIJS0_EEEvN9__gnu_cxx17__normal_iteratorIPS0_S2_EEDpOT_],0,72
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp20CertificateChainHashESaIS1_EE17_M_realloc_insertIJEEEvN9__gnu_cxx17__normal_iteratorIPS1_S3_EEDpOT_],0,72
+[section .xt.prop._ZNSt6vectorIPN9MicroOcpp22ConfigurationContainerESaIS2_EE17_M_realloc_insertIJS2_EEEvN9__gnu_cxx17__normal_iteratorIPS2_S4_EEDpOT_],0,72
+[section .xt.prop._ZNSt6vectorIPN9MicroOcpp8VariableESaIS2_EE17_M_realloc_insertIJRKS2_EEEvN9__gnu_cxx17__normal_iteratorIPS2_S4_EEDpOT_],0,72
+[section .xt.prop._ZNSt6vectorIPcSaIS0_EE17_M_realloc_insertIJS0_EEEvN9__gnu_cxx17__normal_iteratorIPS0_S2_EEDpOT_],0,72
+[section .xt.prop._ZNSt6vectorISt8weak_ptrIN9MicroOcpp11TransactionEESaIS3_EE8_M_eraseEN9__gnu_cxx17__normal_iteratorIPS3_S5_EE],0,72
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE7_S_moveEPcPKcj],0,72
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE9_M_mutateEjjPKcj],0,72
+[section .xt.prop._ZSt11make_sharedI11VFSFileImplJP7VFSImplRPKcS5_EESt10shared_ptrIT_EDpOT0_],0,72
+_ZTVSt11logic_error,20,72
+_ZTIN9__gnu_cxx24__concurrence_lock_errorE,12,71
+_ZTVN9MicroOcpp20VolatileRequestQueueE,16,71
+_ZThn4_N9MicroOcpp18FtpTransferMbedTLSD0Ev,12,71
+_ZThn4_N9MicroOcpp18FtpTransferMbedTLSD1Ev,12,71
+spi_flash_hal_supports_direct_read,20,71
+_ZTVN9MicroOcpp17MeteringConnectorE,16,68
+_ZTISt12out_of_range,12,65
+_ZTSSt17bad_function_call,22,64
+_ZTVN3nvs19NVSPartitionManagerE,16,64
+_ZTVN9MicroOcpp12PreBootQueueE,16,63
+[section .xt.prop._ZN14VariableStringI18VariableSingleDataE9getStringEN9MicroOcpp8Variable13AttributeTypeE],0,60
+[section .xt.prop._ZN14intrusive_listIN3nvs4PageEE5clearEv],0,60
+[section .xt.prop._ZN14intrusive_listIN3nvs4PageEE9push_backEPS1_],0,60
+[section .xt.prop._ZN14intrusive_listIN3nvs7Storage14NamespaceEntryEE9push_backEPS2_],0,60
+[section .xt.prop._ZN16VariableFullDataIPcE3getEN9MicroOcpp8Variable13AttributeTypeE],0,60
+[section .xt.prop._ZN16VariableFullDataIbE3getEN9MicroOcpp8Variable13AttributeTypeE],0,60
+[section .xt.prop._ZN16VariableFullDataIiE3getEN9MicroOcpp8Variable13AttributeTypeE],0,60
+[section .xt.prop._ZN18ArduinoJson6201_F111VariantData10addElementEPNS_10MemoryPoolE],0,60
+[section .xt.prop._ZN18ArduinoJson6201_F112StringCopier6appendEc],0,60
+[section .xt.prop._ZN18ArduinoJson6201_F113serializeJsonINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEEjNS_16JsonVariantConstERT_],0,60
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPKcvEENS_12StringCopierEE22canBeInNonQuotedStringEc],0,60
+[section .xt.prop._ZN18ArduinoJson6201_F117CountingDecoratorINS_18StaticStringWriterEE5writeEPKhj],0,60
+[section .xt.prop._ZN18ArduinoJson6201_F121variantGetOrAddMemberINS_19StaticStringAdapterEEEPNS_11VariantDataES3_T_PNS_10MemoryPoolE],0,60
+[section .xt.prop._ZN18ArduinoJson6201_F18slotSizeEPKNS_11VariantSlotE],0,60
+[section .xt.prop._ZN18ArduinoJson6201_F19ConverterIPKcvE6toJsonES2_NS_11JsonVariantE$isra$70],0,60
+[section .xt.prop._ZN18ArduinoJson6201_F19ConverterIPKcvE8fromJsonENS_16JsonVariantConstE],0,60
+[section .xt.prop._ZN3nvs4ItemC2EhNS_8ItemTypeEhPKch],0,60
+[section .xt.prop._ZN9MicroOcpp17MsgBufferExceeded15getErrorDetailsEv],0,60
+[section .xt.prop._ZN9MicroOcpp18TransactionServiceD2Ev],0,60
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlash21configurationsUpdatedEv],0,60
+[section .xt.prop._ZN9MicroOcpp27SampledValueSamplerConcreteIfNS_24SampledValueDeSerializerIfEEE9takeValueE14ReadingContext],0,60
+[section .xt.prop._ZN9MicroOcpp27SampledValueSamplerConcreteIiNS_24SampledValueDeSerializerIiEEE9takeValueE14ReadingContext],0,60
+[section .xt.prop._ZN9MicroOcpp30ConfigurationContainerVolatileD2Ev],0,60
+[section .xt.prop._ZN9MicroOcpp6Ocpp1616GetConfigurationD2Ev],0,60
+[section .xt.prop._ZN9MicroOcpp7Ocpp20116TransactionEventD2Ev],0,60
+[section .xt.prop._ZN9MicroOcpp7Ocpp20123RequestStartTransactionD2Ev],0,60
+[section .xt.prop._ZN9MicroOcpp7Ocpp20126GetInstalledCertificateIdsD2Ev],0,60
+[section .xt.prop._ZNK18ArduinoJson6201_F19JsonArray3addEv],0,60
+[section .xt.prop._ZNK6String10startsWithEPKc],0,60
+[section .xt.prop._ZNK6String3lenEv],0,60
+[section .xt.prop._ZNK6String8endsWithEPKc],0,60
+[section .xt.prop._ZNKSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE8_M_checkEjPKc],0,60
+[section .xt.prop._ZNSs7_M_copyEPcPKcj],0,60
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp16TransactionStoreESt14default_deleteIS1_EED2Ev],0,60
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp18ReservationServiceESt14default_deleteIS1_EED2Ev],0,60
+[section .xt.prop._ZNSt11char_traitsIcE4findEPKcjRS1_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPN9MicroOcpp17AuthorizationDataEEEvT_S5_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPN9MicroOcpp18TransactionService4EvseEEEvT_S6_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPN9MicroOcpp20CertificateChainHashEEEvT_S5_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPN9MicroOcpp22SmartChargingConnectorEEEvT_S5_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPN9MicroOcpp7Ocpp20112ResetService4EvseEEEvT_S7_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPN9MicroOcpp7Ocpp20115GetVariableDataEEEvT_S6_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPN9MicroOcpp7Ocpp20115SetVariableDataEEEvT_S6_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPN9MicroOcpp7Ocpp20117SampledValueInputEEEvT_S6_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEEvT_S9_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPSt10unique_ptrIN9MicroOcpp11ReservationESt14default_deleteIS4_EEEEvT_S9_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPSt10unique_ptrIN9MicroOcpp17MeteringConnectorESt14default_deleteIS4_EEEEvT_S9_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPSt10unique_ptrIN9MicroOcpp19SampledValueSamplerESt14default_deleteIS4_EEEEvT_S9_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPSt10unique_ptrIN9MicroOcpp8VariableESt14default_deleteIS4_EEEEvT_S9_],0,60
+[section .xt.prop._ZNSt12_Destroy_auxILb0EE9__destroyIPSt10unique_ptrIN9MicroOcpp9ConnectorESt14default_deleteIS4_EEEEvT_S9_],0,60
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp11TransactionELN9__gnu_cxx12_Lock_policyE2EEaSERKS4_],0,60
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp7Ocpp20120TransactionEventDataELN9__gnu_cxx12_Lock_policyE2EEC2ISaIS2_EJRSt10shared_ptrINS1_11TransactionEEjEEESt20_Sp_alloc_shared_tagIT_EDpOT0_],0,60
+[section .xt.prop._ZNSt14_Function_base13_Base_managerIPFPKcvEE10_M_managerERSt9_Any_dataRKS6_St18_Manager_operation],0,60
+[section .xt.prop._ZNSt14_Function_base13_Base_managerIPFbvEE10_M_managerERSt9_Any_dataRKS4_St18_Manager_operation],0,60
+[section .xt.prop._ZNSt14_Function_base13_Base_managerIPFfvEE10_M_managerERSt9_Any_dataRKS4_St18_Manager_operation],0,60
+[section .xt.prop._ZNSt14_Function_base13_Base_managerIPFivEE10_M_managerERSt9_Any_dataRKS4_St18_Manager_operation],0,60
+[section .xt.prop._ZNSt14_Function_base13_Base_managerIPFvfEE10_M_managerERSt9_Any_dataRKS4_St18_Manager_operation],0,60
+[section .xt.prop._ZNSt14_Function_base13_Base_managerIPFvffiEE10_M_managerERSt9_Any_dataRKS4_St18_Manager_operation],0,60
+[section .xt.prop._ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED2Ev],0,60
+[section .xt.prop._ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv],0,60
+[section .xt.prop._ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE15_M_weak_releaseEv],0,60
+[section .xt.prop._ZNSt18_Bit_iterator_base10_M_bump_upEv],0,60
+[section .xt.prop._ZNSt18_Bit_iterator_base7_M_incrEi],0,60
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp20TransactionMeterDataESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv],0,60
+[section .xt.prop._ZNSt5arrayISt10unique_ptrIN9MicroOcpp15ChargingProfileESt14default_deleteIS2_EELj9EED2Ev],0,60
+[section .xt.prop._ZNSt6vectorI20GetCertificateIdTypeSaIS0_EE12emplace_backIJS0_EEEvDpOT_],0,60
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp16OperationCreatorESaIS1_EED2Ev],0,60
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp17AuthorizationDataESaIS1_EE12emplace_backIJEEEvDpOT_],0,60
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp9ValidatorESaIS1_EED2Ev],0,60
+[section .xt.prop._ZNSt6vectorISt10shared_ptrIN9MicroOcpp22ConfigurationContainerEESaIS3_EE9push_backERKS3_],0,60
+[section .xt.prop._ZNSt6vectorISt10shared_ptrIN9MicroOcpp22ConfigurationContainerEESaIS3_EED2Ev],0,60
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN18ArduinoJson6201_F117BasicJsonDocumentINS1_16DefaultAllocatorEEESt14default_deleteIS4_EESaIS7_EED2Ev],0,60
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp10MeterValueESt14default_deleteIS2_EESaIS5_EE12emplace_backIJS5_EEEvDpOT_],0,60
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp10MeterValueESt14default_deleteIS2_EESaIS5_EE8_M_eraseEN9__gnu_cxx17__normal_iteratorIPS5_S7_EE],0,60
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp11ReservationESt14default_deleteIS2_EESaIS5_EE17_M_realloc_insertIJPS2_EEEvN9__gnu_cxx17__normal_iteratorIPS5_S7_EEDpOT_],0,60
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp12SampledValueESt14default_deleteIS2_EESaIS5_EE12emplace_backIJS5_EEEvDpOT_],0,60
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp12SampledValueESt14default_deleteIS2_EESaIS5_EED2Ev],0,60
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp17MeteringConnectorESt14default_deleteIS2_EESaIS5_EE17_M_realloc_insertIJPS2_EEEvN9__gnu_cxx17__normal_iteratorIPS5_S7_EEDpOT_],0,60
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp25ConnectorTransactionStoreESt14default_deleteIS2_EESaIS5_EED2Ev],0,60
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp7Ocpp20110MeterValueESt14default_deleteIS3_EESaIS6_EE12emplace_backIJS6_EEEvDpOT_],0,60
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp7Ocpp20110MeterValueESt14default_deleteIS3_EESaIS6_EED2Ev],0,60
+[section .xt.prop._ZNSt6vectorISt8functionIFN9MicroOcpp9ErrorDataEvEESaIS4_EED2Ev],0,60
+[section .xt.prop._ZNSt6vectorISt8weak_ptrIN9MicroOcpp11TransactionEESaIS3_EE12emplace_backIJS3_EEEvDpOT_],0,60
+[section .xt.prop._ZNSt6vectorIbSaIbEE6resizeEjb],0,60
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE7_S_copyEPcPKcj],0,60
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE9_M_appendEPKcj],0,60
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEC2EOS4_],0,60
+[section .xt.prop._ZNSt8functionIFN9MicroOcpp18InstallationStatusEvEEaSERKS3_],0,60
+[section .xt.prop._ZNSt8functionIFN9MicroOcpp9ErrorDataEvEEC2ERKS3_],0,60
+[section .xt.prop._ZNSt8functionIFPKcvEEC2ERKS3_],0,60
+[section .xt.prop._ZNSt8functionIFPN9MicroOcpp9OperationEvEEC2ERKS4_],0,60
+[section .xt.prop._ZNSt8functionIFb9ResetTypeEEC2ERKS2_],0,60
+[section .xt.prop._ZNSt8functionIFbPKcEEC2ERKS3_],0,60
+[section .xt.prop._ZNSt8functionIFbPKcEEaSERKS3_],0,60
+[section .xt.prop._ZNSt8functionIFbbEEC2ERKS1_],0,60
+[section .xt.prop._ZNSt8functionIFbiEEC2ERKS1_],0,60
+[section .xt.prop._ZNSt8functionIFbvEEC2ERKS1_],0,60
+[section .xt.prop._ZNSt8functionIFbvEEaSERKS1_],0,60
+[section .xt.prop._ZNSt8functionIFd14ReadingContextEEC2ERKS2_],0,60
+[section .xt.prop._ZNSt8functionIFfvEEC2ERKS1_],0,60
+[section .xt.prop._ZNSt8functionIFivEEC2ERKS1_],0,60
+[section .xt.prop._ZNSt8functionIFjPKhjEEC2ERKS3_],0,60
+[section .xt.prop._ZNSt8functionIFjPcjEEC2ERKS2_],0,60
+[section .xt.prop._ZNSt8functionIFjPhjEEC2ERKS2_],0,60
+[section .xt.prop._ZNSt8functionIFv17MO_FtpCloseReasonEEC2ERKS2_],0,60
+[section .xt.prop._ZNSt8functionIFvN18ArduinoJson6201_F110JsonObjectEEEC2ERKS3_],0,60
+[section .xt.prop._ZNSt8functionIFvbEEC2ERKS1_],0,60
+[section .xt.prop._ZNSt8functionIFvfEEC2ERKS1_],0,60
+[section .xt.prop._ZNSt8functionIFvffiEEC2ERKS1_],0,60
+[section .xt.prop._ZNSt8functionIFvvEEC2ERKS1_],0,60
+[section .xt.prop._ZNSt8functionIFvvEEaSERKS1_],0,60
+[section .xt.prop._ZSt22__uninitialized_copy_aISt13move_iteratorIPN9MicroOcpp16OperationCreatorEES3_S2_ET0_T_S6_S5_RSaIT1_E$isra$54],0,60
+[section .xt.prop._ZSt22__uninitialized_copy_aISt13move_iteratorIPN9MicroOcpp7Ocpp20112ResetService4EvseEES5_S4_ET0_T_S8_S7_RSaIT1_E$isra$46],0,60
+[section .xt.prop._ZSt34__uninitialized_move_if_noexcept_aIPN9MicroOcpp17VariableValidatorIPKcEES5_SaIS4_EET0_T_S8_S7_RT1_$isra$148],0,60
+[section .xt.prop._ZSt34__uninitialized_move_if_noexcept_aIPN9MicroOcpp17VariableValidatorIiEES3_SaIS2_EET0_T_S6_S5_RT1_$isra$142],0,60
+[section .xt.prop._ZSt34__uninitialized_move_if_noexcept_aIPN9MicroOcpp20CertificateChainHashES2_SaIS1_EET0_T_S5_S4_RT1_$isra$58],0,60
+[section .xt.prop._ZSt34__uninitialized_move_if_noexcept_aIPN9MicroOcpp7Ocpp20115GetVariableDataES3_SaIS2_EET0_T_S6_S5_RT1_$isra$87],0,60
+[section .xt.prop._ZSt34__uninitialized_move_if_noexcept_aIPN9MicroOcpp7Ocpp20115SetVariableDataES3_SaIS2_EET0_T_S6_S5_RT1_$isra$87],0,60
+[section .xt.prop._ZSt34__uninitialized_move_if_noexcept_aIPN9MicroOcpp9ValidatorES2_SaIS1_EET0_T_S5_S4_RT1_$isra$87],0,60
+[section .xt.prop._ZSt34__uninitialized_move_if_noexcept_aIPSt8functionIFN9MicroOcpp9ErrorDataEvEES5_SaIS4_EET0_T_S8_S7_RT1_$isra$128],0,60
+[section .xt.prop._ZSt34__uninitialized_move_if_noexcept_aIPSt8weak_ptrIN9MicroOcpp11TransactionEES4_SaIS3_EET0_T_S7_S6_RT1_$isra$75],0,60
+[section .xt.prop._ZSt34__uninitialized_move_if_noexcept_aIPSt8weak_ptrIN9MicroOcpp20TransactionMeterDataEES4_SaIS3_EET0_T_S7_S6_RT1_$isra$97],0,60
+[section .xt.prop._ZSt4moveIN9__gnu_cxx17__normal_iteratorIPSt10shared_ptrIN9MicroOcpp13ConfigurationEESt6vectorIS5_SaIS5_EEEESA_ET0_T_SC_SB_],0,60
+[section .xt.prop._ZSt4swapIN9MicroOcpp17AuthorizationDataEENSt9enable_ifIXsrSt6__and_IJSt6__not_ISt15__is_tuple_likeIT_EESt21is_move_constructibleIS6_ESt18is_move_assignableIS6_EEE5valueEvE4typeERS6_SG_],0,60
+_ZTVN9MicroOcpp9ConnectorE,16,59
+_ZTISt9exception,8,57
+_ZTSSt12length_error,20,57
+_ZTSSt12out_of_range,20,57
+_ZTVSt12length_error,20,57
+_ZTVSt12out_of_range,20,57
+[section .xtensa.info],0,56
+coex_schm_env,32,55
+esp_aes_xts_setkey_dec,16,55
+_ZTISt17bad_function_call,12,54
+_ZTVSt9bad_alloc,20,53
+coex_env,28,53
+mbedtls_ct_size_mask,16,53
+[ELF Header],0,52
+mbedtls_x509_time_is_future,8,52
+xPortcheckValidStackMem,12,52
+_ZZ5setupvENUlvE10_4_FUNEv,8,51
+_ZZ5setupvENUlvE11_4_FUNEv,8,51
+_ZZ5setupvENUlvE12_4_FUNEv,8,51
+_ZZ5setupvENUlfE3_4_FUNEf,8,50
+_ZZ5setupvENUlvE5_4_FUNEv,8,50
+_ZZ5setupvENUlvE6_4_FUNEv,8,50
+_ZZ5setupvENUlvE9_4_FUNEv,8,50
+_ZTISt12length_error,12,49
+newlib_include_heap_impl,8,49
+[section .xt.prop._ZN11VariableIntI16VariableFullDataE6getIntEN9MicroOcpp8Variable13AttributeTypeE],0,48
+[section .xt.prop._ZN11VariableIntI18VariableSingleDataE6getIntEN9MicroOcpp8Variable13AttributeTypeE],0,48
+[section .xt.prop._ZN11VariableIntI18VariableSingleDataE6setIntEiN9MicroOcpp8Variable13AttributeTypeE],0,48
+[section .xt.prop._ZN12VariableBoolI16VariableFullDataE7getBoolEN9MicroOcpp8Variable13AttributeTypeE],0,48
+[section .xt.prop._ZN12VariableBoolI18VariableSingleDataE7getBoolEN9MicroOcpp8Variable13AttributeTypeE],0,48
+[section .xt.prop._ZN12VariableBoolI18VariableSingleDataE7setBoolEbN9MicroOcpp8Variable13AttributeTypeE],0,48
+[section .xt.prop._ZN14VariableStringI16VariableFullDataE9getStringEN9MicroOcpp8Variable13AttributeTypeE],0,48
+[section .xt.prop._ZN18ArduinoJson6201_F111VariantSlot4nextEv],0,48
+[section .xt.prop._ZN18ArduinoJson6201_F113TextFormatterINS_18StaticStringWriterEE8writeRawEPKc],0,48
+[section .xt.prop._ZN18ArduinoJson6201_F113TextFormatterINS_6WriterIN9MicroOcpp22ArduinoJsonFileAdapterEvEEE8writeRawEPKc],0,48
+[section .xt.prop._ZN18ArduinoJson6201_F113convertToJsonERKNS_12JsonDocumentENS_11JsonVariantE],0,48
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPKcvEENS_12StringCopierEE3eatEc],0,48
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPcvEENS_11StringMoverEE22canBeInNonQuotedStringEc],0,48
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPcvEENS_11StringMoverEE3eatEc],0,48
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderIN9MicroOcpp22ArduinoJsonFileAdapterEvEENS_12StringCopierEE22canBeInNonQuotedStringEc],0,48
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderIN9MicroOcpp22ArduinoJsonFileAdapterEvEENS_12StringCopierEE3eatEc],0,48
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEENS_12StringCopierEE22canBeInNonQuotedStringEc],0,48
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEENS_12StringCopierEE3eatEc],0,48
+[section .xt.prop._ZN18ArduinoJson6201_F116variantGetMemberINS_19StaticStringAdapterEEEPNS_11VariantDataEPKS2_T_],0,48
+[section .xt.prop._ZN18ArduinoJson6201_F19ConverterIPKcvE9checkJsonENS_16JsonVariantConstE],0,48
+[section .xt.prop._ZN2fs4FileC2ESt10shared_ptrINS_8FileImplEE],0,48
+[section .xt.prop._ZN3nvs20isVariableLengthTypeENS_8ItemTypeE],0,48
+[section .xt.prop._ZN9MicroOcpp11Transaction9isAbortedEv],0,48
+[section .xt.prop._ZN9MicroOcpp11Transaction9isRunningEv],0,48
+[section .xt.prop._ZN9MicroOcpp12ConfigString9getStringEv],0,48
+[section .xt.prop._ZN9MicroOcpp14NotImplemented12getErrorCodeEv],0,48
+[section .xt.prop._ZN9MicroOcpp16OperationCreatoraSEOS0_],0,48
+[section .xt.prop._ZN9MicroOcpp17MsgBufferExceeded12getErrorCodeEv],0,48
+[section .xt.prop._ZN9MicroOcpp17MsgBufferExceeded19getErrorDescriptionEv],0,48
+[section .xt.prop._ZN9MicroOcpp18ArduinoFileAdapter5writeEPKcj],0,48
+[section .xt.prop._ZN9MicroOcpp18ArduinoFileAdapterD2Ev],0,48
+[section .xt.prop._ZN9MicroOcpp24ArduinoFilesystemAdapter6removeEPKc],0,48
+[section .xt.prop._ZN9MicroOcpp24ArduinoFilesystemAdapterD2Ev],0,48
+[section .xt.prop._ZN9MicroOcpp27SampledValueSamplerConcreteIfNS_24SampledValueDeSerializerIfEEE16deserializeValueEN18ArduinoJson6201_F110JsonObjectE],0,48
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614GetDiagnostics16getOperationTypeEv],0,48
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614UpdateFirmware16getOperationTypeEv],0,48
+[section .xt.prop._ZN9MicroOcpp6Ocpp1626FirmwareStatusNotification16getOperationTypeEv],0,48
+[section .xt.prop._ZN9MicroOcpp6Ocpp1629DiagnosticsStatusNotification16getOperationTypeEv],0,48
+[section .xt.prop._ZN9MicroOcpp7Ocpp20117DeleteCertificate16getOperationTypeEv],0,48
+[section .xt.prop._ZN9MicroOcpp7Ocpp20118InstallCertificate16getOperationTypeEv],0,48
+[section .xt.prop._ZN9MicroOcpp7Ocpp20126GetInstalledCertificateIds16getOperationTypeEv],0,48
+[section .xt.prop._ZN9MicroOcpp9Operation19getErrorDescriptionEv],0,48
+[section .xt.prop._ZN9__gnu_cxx7__mutex4lockEv],0,48
+[section .xt.prop._ZNK19CompressedEnumTableIN3nvs4Page10EntryStateELj2ELj126EE3getEjPS2_],0,48
+[section .xt.prop._ZNK9__gnu_cxx24__concurrence_lock_error4whatEv],0,48
+[section .xt.prop._ZNK9__gnu_cxx26__concurrence_unlock_error4whatEv],0,48
+[section .xt.prop._ZNKSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE11_M_disjunctEPKc],0,48
+[section .xt.prop._ZNKSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE15_M_check_lengthEjjPKc],0,48
+[section .xt.prop._ZNKSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE6substrEjj],0,48
+[section .xt.prop._ZNKSt8functionIFN9MicroOcpp12UploadStatusEvEEclEv],0,48
+[section .xt.prop._ZNKSt8functionIFN9MicroOcpp14DownloadStatusEvEEclEv],0,48
+[section .xt.prop._ZNKSt8functionIFN9MicroOcpp18InstallationStatusEvEEclEv],0,48
+[section .xt.prop._ZNKSt8functionIFN9MicroOcpp9ErrorDataEvEEclEv],0,48
+[section .xt.prop._ZNKSt8functionIFbPKcEEclES1_],0,48
+[section .xt.prop._ZNKSt8functionIFbvEEclEv],0,48
+[section .xt.prop._ZNKSt8functionIFfvEEclEv],0,48
+[section .xt.prop._ZNKSt8functionIFivEEclEv],0,48
+[section .xt.prop._ZNKSt8functionIFv17MO_FtpCloseReasonEEclES0_],0,48
+[section .xt.prop._ZNKSt8functionIFvN18ArduinoJson6201_F110JsonObjectEEEclES1_],0,48
+[section .xt.prop._ZNKSt8functionIFvfEEclEf],0,48
+[section .xt.prop._ZNKSt8functionIFvjjEEclEjj],0,48
+[section .xt.prop._ZNKSt8functionIFvvEEclEv],0,48
+[section .xt.prop._ZNSs4_Rep10_M_disposeERKSaIcE],0,48
+[section .xt.prop._ZNSs4_Rep26_M_set_length_and_sharableEj],0,48
+[section .xt.prop._ZNSt11__copy_moveILb1ELb1ESt26random_access_iterator_tagE8__copy_mIPN9MicroOcpp13ConfigurationEEEPT_PKS6_S9_S7_],0,48
+[section .xt.prop._ZNSt11__copy_moveILb1ELb1ESt26random_access_iterator_tagE8__copy_mIiEEPT_PKS3_S6_S4_],0,48
+[section .xt.prop._ZNSt11char_traitsIcE4copyEPcPKcj],0,48
+[section .xt.prop._ZNSt11char_traitsIcE7compareEPKcS2_j],0,48
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp11TransactionELN9__gnu_cxx12_Lock_policyE2EEC2ERKS4_],0,48
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp13ConfigurationELN9__gnu_cxx12_Lock_policyE2EEC2ERKS4_],0,48
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp17FilesystemAdapterELN9__gnu_cxx12_Lock_policyE2EEC2ERKS4_],0,48
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp17VariableContainerELN9__gnu_cxx12_Lock_policyE2EEC2ERKS4_],0,48
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp22ConfigurationContainerELN9__gnu_cxx12_Lock_policyE2EEC2ERKS4_],0,48
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp7Ocpp20111TransactionELN9__gnu_cxx12_Lock_policyE2EEC2ERKS5_],0,48
+[section .xt.prop._ZNSt14_Bit_referenceaSERKS_],0,48
+[section .xt.prop._ZNSt14_Bit_referenceaSEb],0,48
+[section .xt.prop._ZNSt14_Function_base13_Base_managerIN9MicroOcpp7Request15onAbortListenerMUlvE_EE10_M_managerERSt9_Any_dataRKS5_St18_Manager_operation],0,48
+[section .xt.prop._ZNSt14_Function_base13_Base_managerIN9MicroOcpp7Request17onTimeoutListenerMUlvE_EE10_M_managerERSt9_Any_dataRKS5_St18_Manager_operation],0,48
+[section .xt.prop._ZNSt14_Function_base13_Base_managerIN9MicroOcpp7Request18onSendConfListenerMUlN18ArduinoJson6201_F110JsonObjectEE_EE10_M_managerERSt9_Any_dataRKS7_St18_Manager_operation],0,48
+[section .xt.prop._ZNSt14_Function_base13_Base_managerIN9MicroOcpp7Request20onReceiveReqListenerMUlN18ArduinoJson6201_F110JsonObjectEE_EE10_M_managerERSt9_Any_dataRKS7_St18_Manager_operation],0,48
+[section .xt.prop._ZNSt14_Function_base13_Base_managerIN9MicroOcpp7Request21onReceiveConfListenerMUlN18ArduinoJson6201_F110JsonObjectEE_EE10_M_managerERSt9_Any_dataRKS7_St18_Manager_operation],0,48
+[section .xt.prop._ZNSt14_Function_base13_Base_managerIN9MicroOcpp7Request22onReceiveErrorListenerMUlPKcS4_N18ArduinoJson6201_F110JsonObjectEE_EE10_M_managerERSt9_Any_dataRKS9_St18_Manager_operation],0,48
+[section .xt.prop._ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EEC2ERKS2_],0,48
+[section .xt.prop._ZNSt15_Sp_counted_ptrIP12LittleFSImplLN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv],0,48
+[section .xt.prop._ZNSt17_Function_handlerIFjPhjESt8functionIFjPKhjEEE9_M_invokeERKSt9_Any_dataOS0_Oj],0,48
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp13ConfigurationESt14default_deleteIS1_ESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv],0,48
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp22ConfigurationContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv],0,48
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp24ArduinoFilesystemAdapterESt14default_deleteINS0_17FilesystemAdapterEESaIS4_ELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv],0,48
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceI11VFSFileImplSaIS0_ELN9__gnu_cxx12_Lock_policyE2EE14_M_get_deleterERKSt9type_info],0,48
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp20TransactionMeterDataESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE14_M_get_deleterERKSt9type_info],0,48
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE12_M_constructIPcEEvT_S7_St20forward_iterator_tag],0,48
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE6appendEPKcj],0,48
+[section .xt.prop._ZNSt8functionIFbPKcEE4swapERS3_],0,48
+[section .xt.prop._ZNSt8functionIFbvEE4swapERS1_],0,48
+[section .xt.prop._ZNSt8functionIFjPhjEEaSERKS2_],0,48
+[section .xt.prop._ZNSt8functionIFv17MO_FtpCloseReasonEEaSERKS2_],0,48
+[section .xt.prop._ZNSt8functionIFvN18ArduinoJson6201_F110JsonObjectEEEaSEOS3_],0,48
+[section .xt.prop._ZNSt8functionIFvN18ArduinoJson6201_F110JsonObjectEEEaSERKS3_],0,48
+[section .xt.prop._ZNSt8functionIFvffiEEaSERKS1_],0,48
+[section .xt.prop._ZSt14__fill_bvectorPmjjb],0,48
+[section .xt.prop._ZSt4swapISt9_Any_dataENSt9enable_ifIXsrSt6__and_IJSt6__not_ISt15__is_tuple_likeIT_EESt21is_move_constructibleIS5_ESt18is_move_assignableIS5_EEE5valueEvE4typeERS5_SF_],0,48
+_ZTISt11logic_error,12,48
+_ZTSSt9exception,15,48
+coex_schm_all_default,10,48
+$_213,8,46
+spi_flash_hal_suspend,8,46
+_ZTISt9bad_alloc,12,45
+tlsf_alloc_overhead,8,44
+_Z12serialEvent1v,8,42
+_Z12serialEvent2v,8,42
+coex_pre_init,10,40
+sys_now,16,40
+[section .xt.prop._ZN11VariableIntI16VariableFullDataE13getWriteCountEv],0,36
+[section .xt.prop._ZN11VariableIntI16VariableFullDataE19getInternalDataTypeEv],0,36
+[section .xt.prop._ZN11VariableIntI16VariableFullDataE6setIntEiN9MicroOcpp8Variable13AttributeTypeE],0,36
+[section .xt.prop._ZN11VariableIntI16VariableFullDataED0Ev],0,36
+[section .xt.prop._ZN11VariableIntI16VariableFullDataED2Ev],0,36
+[section .xt.prop._ZN11VariableIntI18VariableSingleDataE13getWriteCountEv],0,36
+[section .xt.prop._ZN11VariableIntI18VariableSingleDataE19getInternalDataTypeEv],0,36
+[section .xt.prop._ZN11VariableIntI18VariableSingleDataED0Ev],0,36
+[section .xt.prop._ZN11VariableIntI18VariableSingleDataED2Ev],0,36
+[section .xt.prop._ZN12LittleFSImplD0Ev],0,36
+[section .xt.prop._ZN12LittleFSImplD2Ev],0,36
+[section .xt.prop._ZN12VariableBoolI16VariableFullDataE13getWriteCountEv],0,36
+[section .xt.prop._ZN12VariableBoolI16VariableFullDataE19getInternalDataTypeEv],0,36
+[section .xt.prop._ZN12VariableBoolI16VariableFullDataE7setBoolEbN9MicroOcpp8Variable13AttributeTypeE],0,36
+[section .xt.prop._ZN12VariableBoolI16VariableFullDataED0Ev],0,36
+[section .xt.prop._ZN12VariableBoolI16VariableFullDataED2Ev],0,36
+[section .xt.prop._ZN12VariableBoolI18VariableSingleDataE13getWriteCountEv],0,36
+[section .xt.prop._ZN12VariableBoolI18VariableSingleDataE19getInternalDataTypeEv],0,36
+[section .xt.prop._ZN12VariableBoolI18VariableSingleDataED0Ev],0,36
+[section .xt.prop._ZN12VariableBoolI18VariableSingleDataED2Ev],0,36
+[section .xt.prop._ZN14HardwareSerial9readBytesEPcj],0,36
+[section .xt.prop._ZN14VariableStringI16VariableFullDataE13getWriteCountEv],0,36
+[section .xt.prop._ZN14VariableStringI16VariableFullDataE19getInternalDataTypeEv],0,36
+[section .xt.prop._ZN14VariableStringI16VariableFullDataED0Ev],0,36
+[section .xt.prop._ZN14VariableStringI16VariableFullDataED2Ev],0,36
+[section .xt.prop._ZN14VariableStringI18VariableSingleDataE13getWriteCountEv],0,36
+[section .xt.prop._ZN14VariableStringI18VariableSingleDataE19getInternalDataTypeEv],0,36
+[section .xt.prop._ZN14VariableStringI18VariableSingleDataED0Ev],0,36
+[section .xt.prop._ZN14VariableStringI18VariableSingleDataED2Ev],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F111FloatTraitsIdLj8EE24positiveBinaryPowerOfTenEi],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F112JsonDocument2asINS_9JsonArrayEEET_v],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F112JsonDocument2toINS_10JsonObjectEEENS_9VariantToIT_E4typeEv],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F112StringCopier11startStringEv],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F113TextFormatterINS_6WriterINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEEE8writeRawEPKc],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPKcvEENS_12StringCopierEE7currentEv],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPcvEENS_11StringMoverEE7currentEv],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderIN9MicroOcpp22ArduinoJsonFileAdapterEvEENS_12StringCopierEE7currentEv],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEENS_12StringCopierEE7currentEv],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F117BasicJsonDocumentINS_16DefaultAllocatorEE11reallocPoolEj],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F117BasicJsonDocumentINS_16DefaultAllocatorEE14moveAssignFromERS2_],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F117BasicJsonDocumentINS_16DefaultAllocatorEE8freePoolEv],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F117BasicJsonDocumentINS_16DefaultAllocatorEEC2ERKS2_],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F117BasicJsonDocumentINS_16DefaultAllocatorEEC2EjS1_],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F117CountingDecoratorINS_18StaticStringWriterEE5writeEh],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F117CountingDecoratorINS_6WriterIN9MicroOcpp22ArduinoJsonFileAdapterEvEEE5writeEPKhj],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F117CountingDecoratorINS_6WriterIN9MicroOcpp22ArduinoJsonFileAdapterEvEEE5writeEh],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F117CountingDecoratorINS_6WriterINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEEE5writeEPKhj],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F117CountingDecoratorINS_6WriterINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEEE5writeEh],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F118StaticJsonDocumentILj512EEC2Ev],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F19ConverterINS_10JsonObjectEvE8fromJsonENS_11JsonVariantE],0,36
+[section .xt.prop._ZN18ArduinoJson6201_F19ConverterIbvE6toJsonEbNS_11JsonVariantE],0,36
+[section .xt.prop._ZN2fs4File9readBytesEPcj],0,36
+[section .xt.prop._ZN2fs4FileD0Ev],0,36
+[section .xt.prop._ZN2fs4FileD2Ev],0,36
+[section .xt.prop._ZN3nvs12NVSPartitionD0Ev],0,36
+[section .xt.prop._ZN3nvs12NVSPartitionD2Ev],0,36
+[section .xt.prop._ZN3nvs19NVSPartitionManagerD0Ev],0,36
+[section .xt.prop._ZN3nvs19NVSPartitionManagerD2Ev],0,36
+[section .xt.prop._ZN5Print17availableForWriteEv],0,36
+[section .xt.prop._ZN6Stream9readBytesEPhj],0,36
+[section .xt.prop._ZN6String4initEv],0,36
+[section .xt.prop._ZN9MicroOcpp10ChargeRateneERKS0_],0,36
+[section .xt.prop._ZN9MicroOcpp10ConfigBool6getKeyEv],0,36
+[section .xt.prop._ZN9MicroOcpp10ConfigBool6setKeyEPKc],0,36
+[section .xt.prop._ZN9MicroOcpp10ConfigBool7getBoolEv],0,36
+[section .xt.prop._ZN9MicroOcpp10ConfigBool7getTypeEv],0,36
+[section .xt.prop._ZN9MicroOcpp10ConfigBool7setBoolEb],0,36
+[section .xt.prop._ZN9MicroOcpp10ConfigBoolD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp10ConfigBoolD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp11BootServiceD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp11TransactionC2ERNS_25ConnectorTransactionStoreEjjb],0,36
+[section .xt.prop._ZN9MicroOcpp12ConfigString6getKeyEv],0,36
+[section .xt.prop._ZN9MicroOcpp12ConfigString6setKeyEPKc],0,36
+[section .xt.prop._ZN9MicroOcpp12ConfigString7getTypeEv],0,36
+[section .xt.prop._ZN9MicroOcpp12ConfigStringD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp12ConfigStringD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp14NotImplementedD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp14NotImplementedD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp15FirmwareServiceD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp16FtpClientMbedTLSD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp16FtpClientMbedTLSD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp16OperationCreatorD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp17MsgBufferExceededD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp17MsgBufferExceededD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp18ArduinoFileAdapter4readEPcj],0,36
+[section .xt.prop._ZN9MicroOcpp18ArduinoFileAdapter4readEv],0,36
+[section .xt.prop._ZN9MicroOcpp18ArduinoFileAdapter4seekEj],0,36
+[section .xt.prop._ZN9MicroOcpp18ArduinoFileAdapterD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp18LoopbackConnection11isConnectedEv],0,36
+[section .xt.prop._ZN9MicroOcpp18LoopbackConnectionD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp18LoopbackConnectionD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp20SampledValueConcreteIfNS_24SampledValueDeSerializerIfEEE14serializeValueB5cxx11Ev],0,36
+[section .xt.prop._ZN9MicroOcpp20SampledValueConcreteIfNS_24SampledValueDeSerializerIfEEE9toIntegerEv],0,36
+[section .xt.prop._ZN9MicroOcpp20SampledValueConcreteIfNS_24SampledValueDeSerializerIfEEED0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp20SampledValueConcreteIfNS_24SampledValueDeSerializerIfEEED2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp20SampledValueConcreteIfNS_24SampledValueDeSerializerIfEEEcvbEv],0,36
+[section .xt.prop._ZN9MicroOcpp20SampledValueConcreteIiNS_24SampledValueDeSerializerIiEEE14serializeValueB5cxx11Ev],0,36
+[section .xt.prop._ZN9MicroOcpp20SampledValueConcreteIiNS_24SampledValueDeSerializerIiEEE9toIntegerEv],0,36
+[section .xt.prop._ZN9MicroOcpp20SampledValueConcreteIiNS_24SampledValueDeSerializerIiEEED0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp20SampledValueConcreteIiNS_24SampledValueDeSerializerIiEEED2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp20SampledValueConcreteIiNS_24SampledValueDeSerializerIiEEEcvbEv],0,36
+[section .xt.prop._ZN9MicroOcpp22ConfigurationContainer12removeUnusedEv],0,36
+[section .xt.prop._ZN9MicroOcpp22ConfigurationContainer13loadStaticKeyERNS_13ConfigurationEPKc],0,36
+[section .xt.prop._ZN9MicroOcpp22SampledValuePropertiesD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp23CertificateStoreMbedTLSD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp23CertificateStoreMbedTLSD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp24ArduinoFilesystemAdapterD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlash13loadStaticKeyERNS_13ConfigurationEPKc],0,36
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlash16getConfigurationEj],0,36
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlash4sizeEv],0,36
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlashD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp27SampledValueSamplerConcreteIfNS_24SampledValueDeSerializerIfEEED0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp27SampledValueSamplerConcreteIfNS_24SampledValueDeSerializerIfEEED2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp27SampledValueSamplerConcreteIiNS_24SampledValueDeSerializerIiEEE16deserializeValueEN18ArduinoJson6201_F110JsonObjectE],0,36
+[section .xt.prop._ZN9MicroOcpp27SampledValueSamplerConcreteIiNS_24SampledValueDeSerializerIiEEED0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp27SampledValueSamplerConcreteIiNS_24SampledValueDeSerializerIiEEED2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp30ConfigurationContainerVolatileD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1610ClearCacheD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1610ClearCacheD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1610ReserveNow12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1612DataTransferD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1612DataTransferD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1613SendLocalList12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614GetDiagnostics12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614GetDiagnosticsD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614GetDiagnosticsD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614TriggerMessage12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614TriggerMessageD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614TriggerMessageD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614UpdateFirmware12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614UpdateFirmwareD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614UpdateFirmwareD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1615StopTransactionD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1615UnlockConnector12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1615UnlockConnectorD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1615UnlockConnectorD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1616BootNotification12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1616BootNotificationD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1616BootNotificationD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1616GetConfiguration12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1616GetConfiguration19getErrorDescriptionEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1616GetConfigurationD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1617CancelReservation12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1617CancelReservationD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1617CancelReservationD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1618ChangeAvailability12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1618ChangeAvailabilityD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1618ChangeAvailabilityD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1618SetChargingProfile12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1618SetChargingProfile19getErrorDescriptionEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1618StatusNotificationD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1618StatusNotificationD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1619ChangeConfiguration12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1619ChangeConfigurationD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1619ChangeConfigurationD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1619GetLocalListVersionD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1619GetLocalListVersionD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1620ClearChargingProfileD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1620ClearChargingProfileD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1620GetCompositeSchedule12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1620GetCompositeScheduleD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1620GetCompositeScheduleD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1621RemoteStopTransaction12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1621RemoteStopTransactionD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1621RemoteStopTransactionD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1622RemoteStartTransaction12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1622RemoteStartTransaction19getErrorDescriptionEv],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1622RemoteStartTransactionD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1622RemoteStartTransactionD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1626FirmwareStatusNotificationD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1626FirmwareStatusNotificationD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1629DiagnosticsStatusNotificationD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp1629DiagnosticsStatusNotificationD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp165ResetD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp165ResetD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp169AuthorizeD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp169AuthorizeD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp169HeartbeatD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp6Ocpp169HeartbeatD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20112GetVariables12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20112GetVariablesD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20112GetVariablesD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20112NotifyReportD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20112NotifyReportD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20112SetVariables12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20112SetVariablesD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20112SetVariablesD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20113GetBaseReport12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20113GetBaseReportD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20113GetBaseReportD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20116TransactionEvent12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20116TransactionEventD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20117DeleteCertificate12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20117DeleteCertificateD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20117DeleteCertificateD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20118ChangeAvailability12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20118ChangeAvailabilityD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20118ChangeAvailabilityD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20118InstallCertificate12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20118InstallCertificateD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20118InstallCertificateD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20118StatusNotificationD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20118StatusNotificationD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20122RequestStopTransaction12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20122RequestStopTransactionD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20122RequestStopTransactionD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20123RequestStartTransaction12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20123RequestStartTransactionD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20126GetInstalledCertificateIds12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp20126GetInstalledCertificateIdsD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp2015Reset12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp2015ResetD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp2015ResetD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp2019AuthorizeD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp7Ocpp2019AuthorizeD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp9ConfigInt6getIntEv],0,36
+[section .xt.prop._ZN9MicroOcpp9ConfigInt6getKeyEv],0,36
+[section .xt.prop._ZN9MicroOcpp9ConfigInt6setIntEi],0,36
+[section .xt.prop._ZN9MicroOcpp9ConfigInt6setKeyEPKc],0,36
+[section .xt.prop._ZN9MicroOcpp9ConfigInt7getTypeEv],0,36
+[section .xt.prop._ZN9MicroOcpp9ConfigIntD0Ev],0,36
+[section .xt.prop._ZN9MicroOcpp9ConfigIntD2Ev],0,36
+[section .xt.prop._ZN9MicroOcpp9Operation10processErrEPKcS2_N18ArduinoJson6201_F110JsonObjectE],0,36
+[section .xt.prop._ZN9MicroOcpp9Operation12getErrorCodeEv],0,36
+[section .xt.prop._ZN9MicroOcpp9Operation15getErrorDetailsEv],0,36
+[section .xt.prop._ZN9__gnu_cxx24__concurrence_lock_errorD0Ev],0,36
+[section .xt.prop._ZN9__gnu_cxx24__concurrence_lock_errorD2Ev],0,36
+[section .xt.prop._ZN9__gnu_cxx26__concurrence_unlock_errorD0Ev],0,36
+[section .xt.prop._ZN9__gnu_cxx26__concurrence_unlock_errorD2Ev],0,36
+[section .xt.prop._ZNK18ArduinoJson6201_F111VariantData9getMemberINS_19StaticStringAdapterEEEPS0_T_],0,36
+[section .xt.prop._ZNK18ArduinoJson6201_F112SafeBoolIdomINS_10JsonStringEE14safeBoolHelperEv],0,36
+[section .xt.prop._ZNK18ArduinoJson6201_F114VariantRefBaseINS_11JsonVariantEE2toINS_10JsonObjectEEENS_9enable_ifIXsrNS_7is_sameIT_S4_EE5valueES4_E4typeEv],0,36
+[section .xt.prop._ZNK18ArduinoJson6201_F114VariantRefBaseINS_11MemberProxyINS_10JsonObjectEPKcEEE2toINS_9JsonArrayEEENS_9enable_ifIXsrNS_7is_sameIT_S8_EE5valueES8_E4typeEv],0,36
+[section .xt.prop._ZNK18ArduinoJson6201_F114VariantRefBaseINS_11MemberProxyINS_10JsonObjectEPKcEEE2toIS2_EENS_9enable_ifIXsrNS_7is_sameIT_S2_EE5valueES2_E4typeEv],0,36
+[section .xt.prop._ZNKSt10__weak_ptrIN9MicroOcpp20TransactionMeterDataELN9__gnu_cxx12_Lock_policyE2EE7expiredEv],0,36
+[section .xt.prop._ZNKSt13_Bit_iteratorplEi],0,36
+[section .xt.prop._ZNKSt6vectorIbSaIbEE4sizeEv],0,36
+[section .xt.prop._ZNKSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE4findEcj],0,36
+[section .xt.prop._ZNKSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE7compareEPKc],0,36
+[section .xt.prop._ZNSs13_S_copy_charsEPcPKcS1_],0,36
+[section .xt.prop._ZNSs4_Rep10_M_destroyERKSaIcE],0,36
+[section .xt.prop._ZNSsC2EPKcRKSaIcE],0,36
+[section .xt.prop._ZNSsD2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN18ArduinoJson6201_F117BasicJsonDocumentINS0_16DefaultAllocatorEEESt14default_deleteIS3_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp10MeterValueESt14default_deleteIS1_EE5resetEPS1_],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp10MeterValueESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp11BootServiceESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp11FileAdapterESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp11FtpDownloadESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp12ResetServiceESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp12SampledValueESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp15ChargingProfileESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp15ChargingProfileESt14default_deleteIS1_EEaSEOS4_],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp15FirmwareServiceESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp15MeteringServiceESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp15VariableServiceESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp16CertificateStoreESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp16ChargingScheduleESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp16HeartbeatServiceESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp17MeterValueBuilderESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp17MeterValueBuilderESt14default_deleteIS1_EEaSEOS4_],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp18CertificateServiceESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp18DiagnosticsServiceESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp18FtpTransferMbedTLSESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp18TransactionServiceESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp19AvailabilityServiceESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp19SampledValueSamplerESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp20AuthorizationServiceESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp20RemoteControlServiceESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp20SmartChargingServiceESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp25ConnectorTransactionStoreESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp27SampledValueSamplerConcreteIfNS0_24SampledValueDeSerializerIfEEEESt14default_deleteIS4_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp27SampledValueSamplerConcreteIiNS0_24SampledValueDeSerializerIiEEEESt14default_deleteIS4_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp7IdTokenESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp7IdTokenESt14default_deleteIS1_EEaSEOS4_],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp7Ocpp20110MeterValueESt14default_deleteIS2_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp7Ocpp20111TransactionESt14default_deleteIS2_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp7Ocpp20112ResetServiceESt14default_deleteIS2_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp7Ocpp20115MeteringServiceESt14default_deleteIS2_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp7RequestESt14default_deleteIS1_EE5resetEPS1_],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp7RequestESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp7RequestESt14default_deleteIS1_EEaSEOS4_],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp8VariableESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp9FtpClientESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp9FtpUploadESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp9OperationESt14default_deleteIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp9TimestampESt14default_deleteIS1_EE5resetEPS1_],0,36
+[section .xt.prop._ZNSt12_Vector_baseI20GetCertificateIdTypeSaIS0_EED2Ev],0,36
+[section .xt.prop._ZNSt12_Vector_baseIN9MicroOcpp18TransactionService16TxStartStopPointESaIS2_EED2Ev],0,36
+[section .xt.prop._ZNSt12_Vector_baseIiSaIiEED2Ev],0,36
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp11TransactionELN9__gnu_cxx12_Lock_policyE2EEaSEOS4_],0,36
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp13ConfigurationELN9__gnu_cxx12_Lock_policyE2EEaSEOS4_],0,36
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp20TransactionMeterDataELN9__gnu_cxx12_Lock_policyE2EEaSEOS4_],0,36
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp7Ocpp20111TransactionELN9__gnu_cxx12_Lock_policyE2EEaSEOS5_],0,36
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp7Ocpp20120TransactionEventDataELN9__gnu_cxx12_Lock_policyE2EEaSEOS5_],0,36
+[section .xt.prop._ZNSt12__weak_countILN9__gnu_cxx12_Lock_policyE2EED2Ev],0,36
+[section .xt.prop._ZNSt13_Bvector_baseISaIbEE13_M_deallocateEv],0,36
+[section .xt.prop._ZNSt14_Function_baseD2Ev],0,36
+[section .xt.prop._ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EEC2IN9MicroOcpp17VariableContainerESt14default_deleteIS5_EEEOSt10unique_ptrIT_T0_E],0,36
+[section .xt.prop._ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EEC2IN9MicroOcpp22ConfigurationContainerESt14default_deleteIS5_EEEOSt10unique_ptrIT_T0_E],0,36
+[section .xt.prop._ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EEC2IN9MicroOcpp7Ocpp20111TransactionESt14default_deleteIS6_EEEOSt10unique_ptrIT_T0_E],0,36
+[section .xt.prop._ZNSt15_Sp_counted_ptrIP12LittleFSImplLN9__gnu_cxx12_Lock_policyE2EE10_M_destroyEv],0,36
+[section .xt.prop._ZNSt15_Sp_counted_ptrIP12LittleFSImplLN9__gnu_cxx12_Lock_policyE2EE14_M_get_deleterERKSt9type_info],0,36
+[section .xt.prop._ZNSt15_Sp_counted_ptrIP12LittleFSImplLN9__gnu_cxx12_Lock_policyE2EED0Ev],0,36
+[section .xt.prop._ZNSt15_Sp_counted_ptrIP12LittleFSImplLN9__gnu_cxx12_Lock_policyE2EED2Ev],0,36
+[section .xt.prop._ZNSt15__allocated_ptrISaISt23_Sp_counted_ptr_inplaceI11VFSFileImplSaIS1_ELN9__gnu_cxx12_Lock_policyE2EEEED2Ev],0,36
+[section .xt.prop._ZNSt17_Function_handlerIFPKcvEPS2_E9_M_invokeERKSt9_Any_data],0,36
+[section .xt.prop._ZNSt17_Function_handlerIFbvEPS0_E9_M_invokeERKSt9_Any_data],0,36
+[section .xt.prop._ZNSt17_Function_handlerIFfvEPS0_E9_M_invokeERKSt9_Any_data],0,36
+[section .xt.prop._ZNSt17_Function_handlerIFivEPS0_E9_M_invokeERKSt9_Any_data],0,36
+[section .xt.prop._ZNSt17_Function_handlerIFvN18ArduinoJson6201_F110JsonObjectEEN9MicroOcpp7Request18onSendConfListenerMUlS1_E_EE9_M_invokeERKSt9_Any_dataOS1_],0,36
+[section .xt.prop._ZNSt17_Function_handlerIFvN18ArduinoJson6201_F110JsonObjectEEN9MicroOcpp7Request20onReceiveReqListenerMUlS1_E_EE9_M_invokeERKSt9_Any_dataOS1_],0,36
+[section .xt.prop._ZNSt17_Function_handlerIFvN18ArduinoJson6201_F110JsonObjectEEN9MicroOcpp7Request21onReceiveConfListenerMUlS1_E_EE9_M_invokeERKSt9_Any_dataOS1_],0,36
+[section .xt.prop._ZNSt17_Function_handlerIFvPKcS1_N18ArduinoJson6201_F110JsonObjectEEN9MicroOcpp7Request22onReceiveErrorListenerMUlS1_S1_S3_E_EE9_M_invokeERKSt9_Any_dataOS1_SC_OS3_],0,36
+[section .xt.prop._ZNSt17_Function_handlerIFvfEPS0_E9_M_invokeERKSt9_Any_dataOf],0,36
+[section .xt.prop._ZNSt17_Function_handlerIFvffiEPS0_E9_M_invokeERKSt9_Any_dataOfS6_Oi],0,36
+[section .xt.prop._ZNSt17_Function_handlerIFvvEN9MicroOcpp7Request15onAbortListenerMUlvE_EE9_M_invokeERKSt9_Any_data],0,36
+[section .xt.prop._ZNSt17_Function_handlerIFvvEN9MicroOcpp7Request17onTimeoutListenerMUlvE_EE9_M_invokeERKSt9_Any_data],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp13ConfigurationESt14default_deleteIS1_ESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE10_M_destroyEv],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp13ConfigurationESt14default_deleteIS1_ESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE14_M_get_deleterERKSt9type_info],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp13ConfigurationESt14default_deleteIS1_ESaIS1_ELN9__gnu_cxx12_Lock_policyE2EED0Ev],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp13ConfigurationESt14default_deleteIS1_ESaIS1_ELN9__gnu_cxx12_Lock_policyE2EED2Ev],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp17VariableContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EE10_M_destroyEv],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp17VariableContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp17VariableContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EE14_M_get_deleterERKSt9type_info],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp17VariableContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EED0Ev],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp17VariableContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EED2Ev],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp22ConfigurationContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EE10_M_destroyEv],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp22ConfigurationContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EE14_M_get_deleterERKSt9type_info],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp22ConfigurationContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EED0Ev],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp22ConfigurationContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EED2Ev],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp24ArduinoFilesystemAdapterESt14default_deleteINS0_17FilesystemAdapterEESaIS4_ELN9__gnu_cxx12_Lock_policyE2EE10_M_destroyEv],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp24ArduinoFilesystemAdapterESt14default_deleteINS0_17FilesystemAdapterEESaIS4_ELN9__gnu_cxx12_Lock_policyE2EE14_M_get_deleterERKSt9type_info],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp24ArduinoFilesystemAdapterESt14default_deleteINS0_17FilesystemAdapterEESaIS4_ELN9__gnu_cxx12_Lock_policyE2EED0Ev],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp24ArduinoFilesystemAdapterESt14default_deleteINS0_17FilesystemAdapterEESaIS4_ELN9__gnu_cxx12_Lock_policyE2EED2Ev],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp7Ocpp20111TransactionESt14default_deleteIS2_ESaIvELN9__gnu_cxx12_Lock_policyE2EE10_M_destroyEv],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp7Ocpp20111TransactionESt14default_deleteIS2_ESaIvELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp7Ocpp20111TransactionESt14default_deleteIS2_ESaIvELN9__gnu_cxx12_Lock_policyE2EE14_M_get_deleterERKSt9type_info],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp7Ocpp20111TransactionESt14default_deleteIS2_ESaIvELN9__gnu_cxx12_Lock_policyE2EED0Ev],0,36
+[section .xt.prop._ZNSt19_Sp_counted_deleterIPN9MicroOcpp7Ocpp20111TransactionESt14default_deleteIS2_ESaIvELN9__gnu_cxx12_Lock_policyE2EED2Ev],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceI11VFSFileImplSaIS0_ELN9__gnu_cxx12_Lock_policyE2EE10_M_destroyEv],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceI11VFSFileImplSaIS0_ELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceI11VFSFileImplSaIS0_ELN9__gnu_cxx12_Lock_policyE2EED0Ev],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceI11VFSFileImplSaIS0_ELN9__gnu_cxx12_Lock_policyE2EED2Ev],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp11TransactionESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE10_M_destroyEv],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp11TransactionESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp11TransactionESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE14_M_get_deleterERKSt9type_info],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp11TransactionESaIS1_ELN9__gnu_cxx12_Lock_policyE2EED0Ev],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp11TransactionESaIS1_ELN9__gnu_cxx12_Lock_policyE2EED2Ev],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp20TransactionMeterDataESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE10_M_destroyEv],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp20TransactionMeterDataESaIS1_ELN9__gnu_cxx12_Lock_policyE2EED0Ev],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp20TransactionMeterDataESaIS1_ELN9__gnu_cxx12_Lock_policyE2EED2Ev],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp7Ocpp20120TransactionEventDataESaIS2_ELN9__gnu_cxx12_Lock_policyE2EE10_M_destroyEv],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp7Ocpp20120TransactionEventDataESaIS2_ELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp7Ocpp20120TransactionEventDataESaIS2_ELN9__gnu_cxx12_Lock_policyE2EE14_M_get_deleterERKSt9type_info],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp7Ocpp20120TransactionEventDataESaIS2_ELN9__gnu_cxx12_Lock_policyE2EED0Ev],0,36
+[section .xt.prop._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp7Ocpp20120TransactionEventDataESaIS2_ELN9__gnu_cxx12_Lock_policyE2EED2Ev],0,36
+[section .xt.prop._ZNSt5arrayISt10unique_ptrIN9MicroOcpp15ChargingProfileESt14default_deleteIS2_EELj9EEC2EOS6_],0,36
+[section .xt.prop._ZNSt5arrayISt10unique_ptrIN9MicroOcpp15ChargingProfileESt14default_deleteIS2_EELj9EEC2Ev],0,36
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp17AuthorizationDataESaIS1_EE5clearEv],0,36
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp20CertificateChainHashESaIS1_EE5clearEv],0,36
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp20CertificateChainHashESaIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp22SmartChargingConnectorESaIS1_EED2Ev],0,36
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp7Ocpp20112ResetService4EvseESaIS3_EED2Ev],0,36
+[section .xt.prop._ZNSt6vectorIN9MicroOcpp7Ocpp20117SampledValueInputESaIS2_EED2Ev],0,36
+[section .xt.prop._ZNSt6vectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaIS5_EED2Ev],0,36
+[section .xt.prop._ZNSt6vectorIPcSaIS0_EE8_M_eraseEN9__gnu_cxx17__normal_iteratorIPS0_S2_EE],0,36
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp9ConnectorESt14default_deleteIS2_EESaIS5_EED2Ev],0,36
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_disposeEv],0,36
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE12_M_constructIPKcEEvT_S8_St20forward_iterator_tag],0,36
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE13_S_copy_charsEPcPKcS7_],0,36
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE13_S_copy_charsEPcS5_S5_],0,36
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE6appendEPKc],0,36
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE6assignEPKc],0,36
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE9_M_assignERKS4_],0,36
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE9push_backEc],0,36
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEC2ERKS4_],0,36
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEC2ERKS4_jj],0,36
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEaSEPKc],0,36
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEpLEPKc],0,36
+[section .xt.prop._ZNSt8functionIFPN9MicroOcpp9OperationEvEE4swapERS4_],0,36
+[section .xt.prop._ZNSt8functionIFbiEE4swapERS1_],0,36
+[section .xt.prop._ZNSt8functionIFfvEE4swapERS1_],0,36
+[section .xt.prop._ZNSt8functionIFvN18ArduinoJson6201_F110JsonObjectEEE4swapERS3_],0,36
+[section .xt.prop._ZSt3minIN9MicroOcpp9TimestampEERKT_S4_S4_],0,36
+[section .xt.prop._ZStmiRKSt18_Bit_iterator_baseS1_],0,36
+coex_bb_rst_mux,4,36
+g_coa_funcs_p,4,34
+aes_setkey_enc_wrap,16,32
+btInUse,8,32
+init,8,24
+[section .xt.prop._ZN11VariableIntI16VariableFullDataED5Ev],0,12
+[section .xt.prop._ZN11VariableIntI18VariableSingleDataED5Ev],0,12
+[section .xt.prop._ZN12VariableBoolI16VariableFullDataED5Ev],0,12
+[section .xt.prop._ZN12VariableBoolI18VariableSingleDataED5Ev],0,12
+[section .xt.prop._ZN14VariableStringI16VariableFullDataED5Ev],0,12
+[section .xt.prop._ZN14VariableStringI18VariableSingleDataED5Ev],0,12
+[section .xt.prop._ZN18ArduinoJson6201_F110FloatPartsIdEC5Ed],0,12
+[section .xt.prop._ZN2fs4FileC5ESt10shared_ptrINS_8FileImplEE],0,12
+[section .xt.prop._ZN2fs4FileD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp14NotImplementedD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp17MeteringConnectorD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp17MsgBufferExceededD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp18ArduinoFileAdapterD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp22SampledValuePropertiesC5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp23CertificateStoreMbedTLSD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp24ArduinoFilesystemAdapterD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp27ConfigurationContainerFlashD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp27SampledValueSamplerConcreteIfNS_24SampledValueDeSerializerIfEEED5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp27SampledValueSamplerConcreteIiNS_24SampledValueDeSerializerIiEEED5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1612DataTransferD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614GetDiagnosticsD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614TriggerMessageD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1614UpdateFirmwareD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1615StopTransactionD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1615UnlockConnectorD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1616GetConfigurationD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1617CancelReservationD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1618ChangeAvailabilityD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1618StatusNotificationD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1619ChangeConfigurationD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1619GetLocalListVersionD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1620ClearChargingProfileD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1620GetCompositeScheduleD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1621RemoteStopTransactionD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1622RemoteStartTransactionD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1626FirmwareStatusNotificationD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp1629DiagnosticsStatusNotificationD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp165ResetD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp169AuthorizeD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp6Ocpp169HeartbeatD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp7Ocpp20112NotifyReportD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp7Ocpp20113GetBaseReportD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp7Ocpp20116TransactionEventD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp7Ocpp20117DeleteCertificateD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp7Ocpp20118ChangeAvailabilityD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp7Ocpp20118InstallCertificateD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp7Ocpp20118StatusNotificationD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp7Ocpp20122RequestStopTransactionD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp7Ocpp20123RequestStartTransactionD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp7Ocpp20126GetInstalledCertificateIdsD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp7Ocpp2015ResetD5Ev],0,12
+[section .xt.prop._ZN9MicroOcpp7Ocpp2019AuthorizeD5Ev],0,12
+[section .xt.prop._ZN9__gnu_cxx13__scoped_lockD5Ev],0,12
+[section .xt.prop._ZN9__gnu_cxx24__concurrence_lock_errorD5Ev],0,12
+[section .xt.prop._ZN9__gnu_cxx26__concurrence_unlock_errorD5Ev],0,12
+[section .xt.prop._ZNSs4_Rep20_S_empty_rep_storageE],0,12
+[section .xt.prop._ZNSt10unique_ptrIN9MicroOcpp11BootServiceESt14default_deleteIS1_EED5Ev],0,12
+[section .xt.prop._ZNSt12__shared_ptrIN9MicroOcpp7Ocpp20120TransactionEventDataELN9__gnu_cxx12_Lock_policyE2EEC5ISaIS2_EJRSt10shared_ptrINS1_11TransactionEEjEEESt20_Sp_alloc_shared_tagIT_EDpOT0_],0,12
+[section .xt.prop._ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EEC5IN9MicroOcpp17VariableContainerESt14default_deleteIS5_EEEOSt10unique_ptrIT_T0_E],0,12
+[section .xt.prop._ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EEC5IN9MicroOcpp22ConfigurationContainerESt14default_deleteIS5_EEEOSt10unique_ptrIT_T0_E],0,12
+[section .xt.prop._ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EEC5IN9MicroOcpp7Ocpp20111TransactionESt14default_deleteIS6_EEEOSt10unique_ptrIT_T0_E],0,12
+[section .xt.prop._ZNSt6vectorISt10unique_ptrIN9MicroOcpp12SampledValueESt14default_deleteIS2_EESaIS5_EED5Ev],0,12
+[section .xt.prop._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEC5ERKS4_jj],0,12
+[section .xt.prop._ZTIN9__gnu_cxx24__concurrence_lock_errorE],0,12
+[section .xt.prop._ZTIN9__gnu_cxx26__concurrence_unlock_errorE],0,12
+[section .xt.prop._ZTISt11logic_error],0,12
+[section .xt.prop._ZTISt12length_error],0,12
+[section .xt.prop._ZTISt12out_of_range],0,12
+[section .xt.prop._ZTISt17bad_function_call],0,12
+[section .xt.prop._ZTISt9bad_alloc],0,12
+[section .xt.prop._ZTISt9exception],0,12
+[section .xt.prop._ZTV11VFSFileImpl],0,12
+[section .xt.prop._ZTV11VariableIntI16VariableFullDataE],0,12
+[section .xt.prop._ZTV11VariableIntI18VariableSingleDataE],0,12
+[section .xt.prop._ZTV12LittleFSImpl],0,12
+[section .xt.prop._ZTV12VariableBoolI16VariableFullDataE],0,12
+[section .xt.prop._ZTV12VariableBoolI18VariableSingleDataE],0,12
+[section .xt.prop._ZTV14HardwareSerial],0,12
+[section .xt.prop._ZTV14VariableStringI16VariableFullDataE],0,12
+[section .xt.prop._ZTV14VariableStringI18VariableSingleDataE],0,12
+[section .xt.prop._ZTVN10__cxxabiv117__class_type_infoE],0,12
+[section .xt.prop._ZTVN10__cxxabiv120__si_class_type_infoE],0,12
+[section .xt.prop._ZTVN2fs4FileE],0,12
+[section .xt.prop._ZTVN3nvs12NVSPartitionE],0,12
+[section .xt.prop._ZTVN3nvs19NVSPartitionManagerE],0,12
+[section .xt.prop._ZTVN9MicroOcpp10ConfigBoolE],0,12
+[section .xt.prop._ZTVN9MicroOcpp12ConfigStringE],0,12
+[section .xt.prop._ZTVN9MicroOcpp12PreBootQueueE],0,12
+[section .xt.prop._ZTVN9MicroOcpp14NotImplementedE],0,12
+[section .xt.prop._ZTVN9MicroOcpp16FtpClientMbedTLSE],0,12
+[section .xt.prop._ZTVN9MicroOcpp17MeteringConnectorE],0,12
+[section .xt.prop._ZTVN9MicroOcpp17MsgBufferExceededE],0,12
+[section .xt.prop._ZTVN9MicroOcpp18ArduinoFileAdapterE],0,12
+[section .xt.prop._ZTVN9MicroOcpp18FtpTransferMbedTLSE],0,12
+[section .xt.prop._ZTVN9MicroOcpp18LoopbackConnectionE],0,12
+[section .xt.prop._ZTVN9MicroOcpp19SampledValueSamplerE],0,12
+[section .xt.prop._ZTVN9MicroOcpp20SampledValueConcreteIfNS_24SampledValueDeSerializerIfEEEE],0,12
+[section .xt.prop._ZTVN9MicroOcpp20SampledValueConcreteIiNS_24SampledValueDeSerializerIiEEEE],0,12
+[section .xt.prop._ZTVN9MicroOcpp20VolatileRequestQueueE],0,12
+[section .xt.prop._ZTVN9MicroOcpp23CertificateStoreMbedTLSE],0,12
+[section .xt.prop._ZTVN9MicroOcpp24ArduinoFilesystemAdapterE],0,12
+[section .xt.prop._ZTVN9MicroOcpp25VariableContainerVolatileE],0,12
+[section .xt.prop._ZTVN9MicroOcpp27ConfigurationContainerFlashE],0,12
+[section .xt.prop._ZTVN9MicroOcpp27SampledValueSamplerConcreteIfNS_24SampledValueDeSerializerIfEEEE],0,12
+[section .xt.prop._ZTVN9MicroOcpp27SampledValueSamplerConcreteIiNS_24SampledValueDeSerializerIiEEEE],0,12
+[section .xt.prop._ZTVN9MicroOcpp30ConfigurationContainerVolatileE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1610ClearCacheE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1610ReserveNowE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1611MeterValuesE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1612DataTransferE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1613SendLocalListE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1614GetDiagnosticsE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1614TriggerMessageE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1614UpdateFirmwareE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1615StopTransactionE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1615UnlockConnectorE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1616BootNotificationE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1616GetConfigurationE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1616StartTransactionE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1617CancelReservationE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1618ChangeAvailabilityE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1618SetChargingProfileE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1618StatusNotificationE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1619ChangeConfigurationE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1619GetLocalListVersionE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1620ClearChargingProfileE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1620GetCompositeScheduleE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1621RemoteStopTransactionE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1622RemoteStartTransactionE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1626FirmwareStatusNotificationE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp1629DiagnosticsStatusNotificationE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp165ResetE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp169AuthorizeE],0,12
+[section .xt.prop._ZTVN9MicroOcpp6Ocpp169HeartbeatE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp20112GetVariablesE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp20112NotifyReportE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp20112SetVariablesE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp20113GetBaseReportE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp20116TransactionEventE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp20117DeleteCertificateE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp20118ChangeAvailabilityE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp20118InstallCertificateE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp20118StatusNotificationE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp20122RequestStopTransactionE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp20123RequestStartTransactionE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp20126GetInstalledCertificateIdsE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp2015ResetE],0,12
+[section .xt.prop._ZTVN9MicroOcpp7Ocpp2019AuthorizeE],0,12
+[section .xt.prop._ZTVN9MicroOcpp8VariableE],0,12
+[section .xt.prop._ZTVN9MicroOcpp9ConfigIntE],0,12
+[section .xt.prop._ZTVN9MicroOcpp9ConnectorE],0,12
+[section .xt.prop._ZTVN9MicroOcpp9OperationE],0,12
+[section .xt.prop._ZTVN9__gnu_cxx24__concurrence_lock_errorE],0,12
+[section .xt.prop._ZTVN9__gnu_cxx26__concurrence_unlock_errorE],0,12
+[section .xt.prop._ZTVSt11logic_error],0,12
+[section .xt.prop._ZTVSt12length_error],0,12
+[section .xt.prop._ZTVSt12out_of_range],0,12
+[section .xt.prop._ZTVSt15_Sp_counted_ptrIP12LittleFSImplLN9__gnu_cxx12_Lock_policyE2EE],0,12
+[section .xt.prop._ZTVSt17bad_function_call],0,12
+[section .xt.prop._ZTVSt19_Sp_counted_deleterIPN9MicroOcpp13ConfigurationESt14default_deleteIS1_ESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE],0,12
+[section .xt.prop._ZTVSt19_Sp_counted_deleterIPN9MicroOcpp17VariableContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EE],0,12
+[section .xt.prop._ZTVSt19_Sp_counted_deleterIPN9MicroOcpp22ConfigurationContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EE],0,12
+[section .xt.prop._ZTVSt19_Sp_counted_deleterIPN9MicroOcpp24ArduinoFilesystemAdapterESt14default_deleteINS0_17FilesystemAdapterEESaIS4_ELN9__gnu_cxx12_Lock_policyE2EE],0,12
+[section .xt.prop._ZTVSt19_Sp_counted_deleterIPN9MicroOcpp7Ocpp20111TransactionESt14default_deleteIS2_ESaIvELN9__gnu_cxx12_Lock_policyE2EE],0,12
+[section .xt.prop._ZTVSt23_Sp_counted_ptr_inplaceI11VFSFileImplSaIS0_ELN9__gnu_cxx12_Lock_policyE2EE],0,12
+[section .xt.prop._ZTVSt23_Sp_counted_ptr_inplaceIN9MicroOcpp11TransactionESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE],0,12
+[section .xt.prop._ZTVSt23_Sp_counted_ptr_inplaceIN9MicroOcpp20TransactionMeterDataESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE],0,12
+[section .xt.prop._ZTVSt23_Sp_counted_ptr_inplaceIN9MicroOcpp7Ocpp20120TransactionEventDataESaIS2_ELN9__gnu_cxx12_Lock_policyE2EE],0,12
+[section .xt.prop._ZTVSt9bad_alloc],0,12
+[section .xt.prop._ZZN18ArduinoJson6201_F111FloatTraitsIdLj8EE24negativeBinaryPowerOfTenEiE7factors],0,12
+[section .xt.prop._ZZN18ArduinoJson6201_F111FloatTraitsIdLj8EE24positiveBinaryPowerOfTenEiE7factors],0,12
+[section .xt.prop._ZZN18ArduinoJson6201_F111FloatTraitsIdLj8EE31negativeBinaryPowerOfTenPlusOneEiE7factors],0,12
+[section .xt.prop._ZZNSt19_Sp_make_shared_tag5_S_tiEvE5__tag],0,12
+[section .xt.lit._ZN11VariableIntI16VariableFullDataED5Ev],0,8
+[section .xt.lit._ZN11VariableIntI18VariableSingleDataED5Ev],0,8
+[section .xt.lit._ZN12VariableBoolI16VariableFullDataED5Ev],0,8
+[section .xt.lit._ZN12VariableBoolI18VariableSingleDataED5Ev],0,8
+[section .xt.lit._ZN14VariableStringI16VariableFullDataED5Ev],0,8
+[section .xt.lit._ZN14VariableStringI18VariableSingleDataE9getStringEN9MicroOcpp8Variable13AttributeTypeE],0,8
+[section .xt.lit._ZN14VariableStringI18VariableSingleDataED5Ev],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F110FloatPartsIdE9normalizeERd],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F110FloatPartsIdEC5Ed],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F111VariantData8copyFromERKS0_PNS_10MemoryPoolE],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F111parseNumberIiEET_PKc],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F113TextFormatterINS_18StaticStringWriterEE10writeFloatIdEEvT_],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F113TextFormatterINS_18StaticStringWriterEE12writeIntegerIyEENS_9enable_ifIXsrNS_11is_unsignedIT_EE5valueEvE4typeES6_],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F113TextFormatterINS_18StaticStringWriterEE8writeRawEPKc],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F113TextFormatterINS_18StaticStringWriterEE9writeCharEc],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F113TextFormatterINS_6WriterIN9MicroOcpp22ArduinoJsonFileAdapterEvEEE10writeFloatIdEEvT_],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F113TextFormatterINS_6WriterIN9MicroOcpp22ArduinoJsonFileAdapterEvEEE8writeRawEPKc],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F113TextFormatterINS_6WriterIN9MicroOcpp22ArduinoJsonFileAdapterEvEEE9writeCharEc],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F113TextFormatterINS_6WriterINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEEE9writeCharEc],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPKcvEENS_12StringCopierEE12parseVariantINS_14AllowAllFilterEEENS_20DeserializationError4CodeERNS_11VariantDataET_NS_12NestingLimitE],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPKcvEENS_12StringCopierEE17parseQuotedStringEv],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPKcvEENS_12StringCopierEE22canBeInNonQuotedStringEc],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F116JsonDeserializerINS_13BoundedReaderIPcvEENS_11StringMoverEE17parseQuotedStringEv],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderIN9MicroOcpp22ArduinoJsonFileAdapterEvEENS_12StringCopierEE11parseObjectINS_14AllowAllFilterEEENS_20DeserializationError4CodeERNS_14CollectionDataET_NS_12NestingLimitE],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderIN9MicroOcpp22ArduinoJsonFileAdapterEvEENS_12StringCopierEE12parseVariantINS_14AllowAllFilterEEENS_20DeserializationError4CodeERNS_11VariantDataET_NS_12NestingLimitE],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderIN9MicroOcpp22ArduinoJsonFileAdapterEvEENS_12StringCopierEE17parseQuotedStringEv],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEENS_12StringCopierEE11parseObjectINS_14AllowAllFilterEEENS_20DeserializationError4CodeERNS_14CollectionDataET_NS_12NestingLimitE],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEENS_12StringCopierEE12parseVariantINS_14AllowAllFilterEEENS_20DeserializationError4CodeERNS_11VariantDataET_NS_12NestingLimitE],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F116JsonDeserializerINS_6ReaderINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEENS_12StringCopierEE17parseQuotedStringEv],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F14Utf815encodeCodepointINS_12StringCopierEEEvjRT_],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F19ConverterIivE8fromJsonENS_16JsonVariantConstE],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F1ltIiEENS_9enable_ifIXntsrNS_10is_base_ofINS_18VariantOperatorTagET_EE5valueEbE4typeENS_11MemberProxyINS_10JsonObjectEPKcEERKS4_],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F1orERKNS_11MemberProxyINS_10JsonObjectEPKcEES3_],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F1orIiEENS_9enable_ifIXaantsrNS_9IsVariantIT_EE5valuentsrNS_8is_arrayIS3_EE5valueES3_E4typeERKNS_11MemberProxyINS9_INS9_INS_10JsonObjectEPKcEESC_EESC_EERKS3_],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F1orIiEENS_9enable_ifIXaantsrNS_9IsVariantIT_EE5valuentsrNS_8is_arrayIS3_EE5valueES3_E4typeERKNS_11MemberProxyINS_10JsonObjectEPKcEERKS3_],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F1orIiEENS_9enable_ifIXaantsrNS_9IsVariantIT_EE5valuentsrNS_8is_arrayIS3_EE5valueES3_E4typeERKNS_11MemberProxyIRNS_12JsonDocumentEPKcEERKS3_],0,8
+[section .xt.lit._ZN18ArduinoJson6201_F1orIiEENS_9enable_ifIXaantsrNS_9IsVariantIT_EE5valuentsrNS_8is_arrayIS3_EE5valueES3_E4typeERKNS_12ElementProxyIRNS_12JsonDocumentEEERKS3_],0,8
+[section .xt.lit._ZN2fs4FileC5ESt10shared_ptrINS_8FileImplEE],0,8
+[section .xt.lit._ZN2fs4FileD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp14NotImplemented12getErrorCodeEv],0,8
+[section .xt.lit._ZN9MicroOcpp14NotImplementedD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp17MeteringConnectorD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp17MsgBufferExceeded12getErrorCodeEv],0,8
+[section .xt.lit._ZN9MicroOcpp17MsgBufferExceeded15getErrorDetailsEv],0,8
+[section .xt.lit._ZN9MicroOcpp17MsgBufferExceeded19getErrorDescriptionEv],0,8
+[section .xt.lit._ZN9MicroOcpp17MsgBufferExceededD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp18ArduinoFileAdapter5writeEPKcj],0,8
+[section .xt.lit._ZN9MicroOcpp18ArduinoFileAdapterD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp20declareConfigurationIPKcEESt10shared_ptrINS_13ConfigurationEES2_T_S2_bbb],0,8
+[section .xt.lit._ZN9MicroOcpp20declareConfigurationIbEESt10shared_ptrINS_13ConfigurationEEPKcT_S5_bbb],0,8
+[section .xt.lit._ZN9MicroOcpp20declareConfigurationIiEESt10shared_ptrINS_13ConfigurationEEPKcT_S5_bbb],0,8
+[section .xt.lit._ZN9MicroOcpp22SampledValuePropertiesC5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp23CertificateStoreMbedTLS11getCertHashEPKc17HashAlgorithmTypeR14ocpp_cert_hash],0,8
+[section .xt.lit._ZN9MicroOcpp23CertificateStoreMbedTLS17deleteCertificateERK14ocpp_cert_hash],0,8
+[section .xt.lit._ZN9MicroOcpp23CertificateStoreMbedTLS18installCertificateE22InstallCertificateTypePKc],0,8
+[section .xt.lit._ZN9MicroOcpp23CertificateStoreMbedTLSD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp24ArduinoFilesystemAdapter4statEPKcPj],0,8
+[section .xt.lit._ZN9MicroOcpp24ArduinoFilesystemAdapter6removeEPKc],0,8
+[section .xt.lit._ZN9MicroOcpp24ArduinoFilesystemAdapter8ftw_rootESt8functionIFiPKcEE],0,8
+[section .xt.lit._ZN9MicroOcpp24ArduinoFilesystemAdapterD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp27ConfigurationContainerFlash19createConfigurationENS_7TConfigEPKc],0,8
+[section .xt.lit._ZN9MicroOcpp27ConfigurationContainerFlash4loadEv],0,8
+[section .xt.lit._ZN9MicroOcpp27ConfigurationContainerFlash4saveEv],0,8
+[section .xt.lit._ZN9MicroOcpp27ConfigurationContainerFlashD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp27SampledValueSamplerConcreteIfNS_24SampledValueDeSerializerIfEEE16deserializeValueEN18ArduinoJson6201_F110JsonObjectE],0,8
+[section .xt.lit._ZN9MicroOcpp27SampledValueSamplerConcreteIfNS_24SampledValueDeSerializerIfEEE9takeValueE14ReadingContext],0,8
+[section .xt.lit._ZN9MicroOcpp27SampledValueSamplerConcreteIfNS_24SampledValueDeSerializerIfEEED5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp27SampledValueSamplerConcreteIiNS_24SampledValueDeSerializerIiEEE9takeValueE14ReadingContext],0,8
+[section .xt.lit._ZN9MicroOcpp27SampledValueSamplerConcreteIiNS_24SampledValueDeSerializerIiEEED5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1612DataTransferD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1614GetDiagnostics16getOperationTypeEv],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1614GetDiagnosticsD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1614TriggerMessageD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1614UpdateFirmware16getOperationTypeEv],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1614UpdateFirmwareD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1615StopTransactionD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1615UnlockConnectorD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1616GetConfigurationD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1617CancelReservationD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1618ChangeAvailabilityD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1618StatusNotificationD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1619ChangeConfigurationD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1619GetLocalListVersionD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1620ClearChargingProfileD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1620GetCompositeScheduleD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1621RemoteStopTransactionD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1622RemoteStartTransactionD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1626FirmwareStatusNotification16getOperationTypeEv],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1626FirmwareStatusNotificationD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1629DiagnosticsStatusNotification16getOperationTypeEv],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp1629DiagnosticsStatusNotificationD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp165ResetD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp169AuthorizeD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp6Ocpp169HeartbeatD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp20112NotifyReportD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp20113GetBaseReportD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp20116TransactionEventD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp20117DeleteCertificate16getOperationTypeEv],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp20117DeleteCertificateD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp20118ChangeAvailabilityD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp20118InstallCertificate16getOperationTypeEv],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp20118InstallCertificateD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp20118StatusNotificationD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp20122RequestStopTransactionD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp20123RequestStartTransactionD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp20126GetInstalledCertificateIds16getOperationTypeEv],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp20126GetInstalledCertificateIdsD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp2015ResetD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp7Ocpp2019AuthorizeD5Ev],0,8
+[section .xt.lit._ZN9MicroOcpp9Operation19getErrorDescriptionEv],0,8
+[section .xt.lit._ZN9__gnu_cxx13__scoped_lockD5Ev],0,8
+[section .xt.lit._ZN9__gnu_cxx24__concurrence_lock_errorD5Ev],0,8
+[section .xt.lit._ZN9__gnu_cxx26__concurrence_unlock_errorD5Ev],0,8
+[section .xt.lit._ZN9__gnu_cxx7__mutex4lockEv],0,8
+[section .xt.lit._ZNK18ArduinoJson6201_F111VariantData10asIntegralIiEET_v],0,8
+[section .xt.lit._ZNK18ArduinoJson6201_F111VariantData10asIntegralIjEET_v],0,8
+[section .xt.lit._ZNK18ArduinoJson6201_F111VariantData6acceptINS_14JsonSerializerINS_18StaticStringWriterEEEEENT_11result_typeERS5_],0,8
+[section .xt.lit._ZNK18ArduinoJson6201_F111VariantData7asFloatIfEET_v],0,8
+[section .xt.lit._ZNK18ArduinoJson6201_F111VariantData9isIntegerIiEEbv],0,8
+[section .xt.lit._ZNK9__gnu_cxx24__concurrence_lock_error4whatEv],0,8
+[section .xt.lit._ZNK9__gnu_cxx26__concurrence_unlock_error4whatEv],0,8
+[section .xt.lit._ZNKSt6vectorIN9MicroOcpp22ChargingSchedulePeriodESaIS1_EE12_M_check_lenEjPKc],0,8
+[section .xt.lit._ZNKSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE6substrEjj],0,8
+[section .xt.lit._ZNKSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE8_M_checkEjPKc],0,8
+[section .xt.lit._ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag],0,8
+[section .xt.lit._ZNSs4_Rep26_M_set_length_and_sharableEj],0,8
+[section .xt.lit._ZNSs4_Rep9_S_createEjjRKSaIcE],0,8
+[section .xt.lit._ZNSt10unique_ptrIN9MicroOcpp11BootServiceESt14default_deleteIS1_EED5Ev],0,8
+[section .xt.lit._ZNSt11char_traitsIcE4findEPKcjRS1_],0,8
+[section .xt.lit._ZNSt12__shared_ptrIN9MicroOcpp7Ocpp20120TransactionEventDataELN9__gnu_cxx12_Lock_policyE2EEC5ISaIS2_EJRSt10shared_ptrINS1_11TransactionEEjEEESt20_Sp_alloc_shared_tagIT_EDpOT0_],0,8
+[section .xt.lit._ZNSt14_Bit_referenceaSERKS_],0,8
+[section .xt.lit._ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EEC5IN9MicroOcpp17VariableContainerESt14default_deleteIS5_EEEOSt10unique_ptrIT_T0_E],0,8
+[section .xt.lit._ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EEC5IN9MicroOcpp22ConfigurationContainerESt14default_deleteIS5_EEEOSt10unique_ptrIT_T0_E],0,8
+[section .xt.lit._ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EEC5IN9MicroOcpp7Ocpp20111TransactionESt14default_deleteIS6_EEEOSt10unique_ptrIT_T0_E],0,8
+[section .xt.lit._ZNSt19_Sp_counted_deleterIPN9MicroOcpp13ConfigurationESt14default_deleteIS1_ESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv],0,8
+[section .xt.lit._ZNSt19_Sp_counted_deleterIPN9MicroOcpp22ConfigurationContainerESt14default_deleteIS1_ESaIvELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv],0,8
+[section .xt.lit._ZNSt19_Sp_counted_deleterIPN9MicroOcpp24ArduinoFilesystemAdapterESt14default_deleteINS0_17FilesystemAdapterEESaIS4_ELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv],0,8
+[section .xt.lit._ZNSt23_Sp_counted_ptr_inplaceI11VFSFileImplSaIS0_ELN9__gnu_cxx12_Lock_policyE2EE14_M_get_deleterERKSt9type_info],0,8
+[section .xt.lit._ZNSt23_Sp_counted_ptr_inplaceIN9MicroOcpp20TransactionMeterDataESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE14_M_get_deleterERKSt9type_info],0,8
+[section .xt.lit._ZNSt6vectorIN9MicroOcpp16OperationCreatorESaIS1_EE17_M_realloc_insertIJRKS1_EEEvN9__gnu_cxx17__normal_iteratorIPS1_S3_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorIN9MicroOcpp17VariableValidatorIiEESaIS2_EE17_M_realloc_insertIJRKNS0_11ComponentIdERPKcRSt8functionIFbiEEEEEvN9__gnu_cxx17__normal_iteratorIPS2_S4_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorIN9MicroOcpp18TransactionService16TxStartStopPointESaIS2_EE12emplace_backIJS2_EEEvDpOT_],0,8
+[section .xt.lit._ZNSt6vectorIN9MicroOcpp20CertificateChainHashESaIS1_EE17_M_realloc_insertIJEEEvN9__gnu_cxx17__normal_iteratorIPS1_S3_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorIN9MicroOcpp7Ocpp20112ResetService4EvseESaIS3_EE17_M_realloc_insertIJRNS0_7ContextERS2_RjEEEvN9__gnu_cxx17__normal_iteratorIPS3_S5_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorIN9MicroOcpp7Ocpp20115GetVariableDataESaIS2_EE17_M_realloc_insertIJPKcEEEvN9__gnu_cxx17__normal_iteratorIPS2_S4_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorIN9MicroOcpp7Ocpp20117SampledValueInputESaIS2_EE17_M_realloc_insertIJRSt8functionIFd14ReadingContextEERKNS1_22SampledValuePropertiesEEEEvN9__gnu_cxx17__normal_iteratorIPS2_S4_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorIN9MicroOcpp9ValidatorESaIS1_EE17_M_realloc_insertIJS1_EEEvN9__gnu_cxx17__normal_iteratorIPS1_S3_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaIS5_EE17_M_realloc_insertIJRPKcEEEvN9__gnu_cxx17__normal_iteratorIPS5_S7_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorIPKcSaIS1_EE17_M_realloc_insertIJS1_EEEvN9__gnu_cxx17__normal_iteratorIPS1_S3_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorISt10shared_ptrIN9MicroOcpp13ConfigurationEESaIS3_EE17_M_realloc_insertIJRKS3_EEEvN9__gnu_cxx17__normal_iteratorIPS3_S5_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorISt10shared_ptrIN9MicroOcpp17VariableContainerEESaIS3_EE17_M_realloc_insertIJRKS3_EEEvN9__gnu_cxx17__normal_iteratorIPS3_S5_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorISt10shared_ptrIN9MicroOcpp22ConfigurationContainerEESaIS3_EE17_M_realloc_insertIJRKS3_EEEvN9__gnu_cxx17__normal_iteratorIPS3_S5_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorISt10unique_ptrIN9MicroOcpp12SampledValueESt14default_deleteIS2_EESaIS5_EED5Ev],0,8
+[section .xt.lit._ZNSt6vectorISt10unique_ptrIN9MicroOcpp9ConnectorESt14default_deleteIS2_EESaIS5_EE17_M_realloc_insertIJPS2_EEEvN9__gnu_cxx17__normal_iteratorIPS5_S7_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorISt8functionIFN9MicroOcpp9ErrorDataEvEESaIS4_EE17_M_realloc_insertIJRKS4_EEEvN9__gnu_cxx17__normal_iteratorIPS4_S6_EEDpOT_],0,8
+[section .xt.lit._ZNSt6vectorIbSaIbEE13_M_insert_auxESt13_Bit_iteratorb],0,8
+[section .xt.lit._ZNSt6vectorIbSaIbEE14_M_fill_insertESt13_Bit_iteratorjb],0,8
+[section .xt.lit._ZNSt6vectorIiSaIiEE12emplace_backIJiEEEvDpOT_],0,8
+[section .xt.lit._ZNSt6vectorIiSaIiEE14_M_fill_insertEN9__gnu_cxx17__normal_iteratorIPiS1_EEjRKi],0,8
+[section .xt.lit._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_replaceEjjPKcj],0,8
+[section .xt.lit._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE12_M_constructIPcEEvT_S7_St20forward_iterator_tag],0,8
+[section .xt.lit._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE6appendEPKcj],0,8
+[section .xt.lit._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE7_S_moveEPcPKcj],0,8
+[section .xt.lit._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE9_M_createERjj],0,8
+[section .xt.lit._ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEC5ERKS4_jj],0,8
+[section .xt.lit._ZSt11make_sharedI11VFSFileImplJP7VFSImplRPKcS5_EESt10shared_ptrIT_EDpOT0_],0,8
+[LOAD #2 [RWX]],1,1

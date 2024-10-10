@@ -1,0 +1,892 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../benchmarks/">
+      
+      
+        <link rel="next" href="../migration/">
+      
+      
+      <link rel="icon" href="../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
+    
+    
+      
+        <title>Technical introduction - MicroOCPP docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.8c3ca2c6.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#technical-introduction" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="MicroOCPP docs" class="md-header__button md-logo" aria-label="MicroOCPP docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 89 89">
+  <path d="M3.136,17.387l0,42.932l42.932,21.467l-42.932,-64.399Z" />
+  <path d="M21.91,8l42.933,64.398l-18.775,9.388l-42.932,-64.399l18.774,-9.387Z" style="fill-opacity: 0.5" />
+  <path d="M67.535,17.387l-27.262,18.156l21.878,32.818l5.384,2.691l0,-53.665Z" />
+  <path d="M67.535,17.387l0,53.666l18.774,-9.388l0,-53.665l-18.774,9.387Z" style="fill-opacity: 0.25" />
+</svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MicroOCPP docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Technical introduction
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../benchmarks/" class="md-tabs__link">
+        
+  
+    
+  
+  Benchmarks
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+    
+  
+  Technical introduction
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../migration/" class="md-tabs__link">
+        
+  
+    
+  
+  Migrating to v1.1
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../modules/" class="md-tabs__link">
+        
+  
+    
+  
+  Modules
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../prerequisites/" class="md-tabs__link">
+        
+  
+    
+  
+  Development tools and basic prerequisites
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../security/" class="md-tabs__link">
+        
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="MicroOCPP docs" class="md-nav__button md-logo" aria-label="MicroOCPP docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 89 89">
+  <path d="M3.136,17.387l0,42.932l42.932,21.467l-42.932,-64.399Z" />
+  <path d="M21.91,8l42.933,64.398l-18.775,9.388l-42.932,-64.399l18.774,-9.387Z" style="fill-opacity: 0.5" />
+  <path d="M67.535,17.387l-27.262,18.156l21.878,32.818l5.384,2.691l0,-53.665Z" />
+  <path d="M67.535,17.387l0,53.666l18.774,-9.388l0,-53.665l-18.774,9.387Z" style="fill-opacity: 0.25" />
+</svg>
+
+    </a>
+    MicroOCPP docs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmarks/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Benchmarks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Technical introduction
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Technical introduction
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#scope-of-microocpp" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scope of MicroOCPP
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#high-level-ocpp-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      High-level OCPP support
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#customizability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Customizability
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#main-loop-paradigm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Main-loop paradigm
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-api-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How the API works
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transaction-safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transaction safety
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unit-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit testing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#microcontroller-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Microcontroller optimization
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Migrating to v1.1
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Modules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../prerequisites/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development tools and basic prerequisites
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#scope-of-microocpp" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scope of MicroOCPP
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#high-level-ocpp-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      High-level OCPP support
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#customizability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Customizability
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#main-loop-paradigm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Main-loop paradigm
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-api-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How the API works
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transaction-safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transaction safety
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unit-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit testing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#microcontroller-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Microcontroller optimization
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="technical-introduction">Technical introduction</h1>
+<p>This chapter covers the technical concepts of MicroOCPP.</p>
+<h2 id="scope-of-microocpp">Scope of MicroOCPP</h2>
+<p>The OCPP specification defines a charger data model, operations on the data model and the resulting physical behavior on the charger side. MicroOCPP implements the full scope of OCPP, i.e. a minimalistic data store for the data model, the OCPP operations and an interface to the surrounding firmware.</p>
+<p>Another part of OCPP is its messaging mechanism, the so-called Remote Procedure Calls (RPC) framework. MicroOCPP also implements the specified RPC framework with the required guarantees of message delivery or the corresponding error handling.</p>
+<p>At the lowest layer, OCPP relies on standard WebSockets. MicroOCPP works with any WebSocket library and has a lean interface to integrate them.</p>
+<p>The high-level API in <code>MicroOcpp.h</code> bundles all touch points of the EVSE firmware with the OCPP library.</p>
+<p style="text-align:center">
+    <img src="../img/components_overview.svg">
+    <br />
+    <em>Overview of the architecture</em>
+</p>
+
+<h2 id="high-level-ocpp-support">High-level OCPP support</h2>
+<p>Being a full implementation of OCPP, MicroOCPP handles the OCPP communication, i.e. it sends OCPP requests and processes incoming OCPP requests autonomously. The messages are triggered by the internal data model and by input from the high-level API. Incoming OCPP requests are used to update the internal data model and if an action on the charger is required, the library signals that to the main firmware through the high-level API.</p>
+<p>In consequence, the high-level API decouples the main firmware from the OCPP communication and hides the operations. This has the following good reasons:</p>
+<ul>
+<li>The high-level API guarantees correctnes of the OCPP integration. As soon as the charger adopts it properly, it is fully OCPP-compliant</li>
+<li>The hardware-near design decreases the integration effort into the firmware hugely</li>
+<li>The API won't change substantially for the OCPP 2.0.1 upgrade. The EVSE will get OCPP 2.0.1 support on the fly by a later firmware update</li>
+</ul>
+<h2 id="customizability">Customizability</h2>
+<p>One core principle of the architecture of MicroOCPP is the customizability and the selective usage of its components.</p>
+<p>Selective usage of components means that the EVSE firmware can use parts of MicroOCPP and work with its own implementation for the rest. In that case only the selected parts of MicroOCPP will be compiled into the firmware. For example, the main firmware can use the RPC framework and build a custom implementation of the OCPP logic on top of it. This could be necessary if the OCPP behavior should be tightly coupled to other modules of the firmware. In a different scenario, the EVSE firmware could already contain an extensive RPC framework and the OCPP client should reuse it. Then, only the business logic and high-level API are of interest.</p>
+<p style="text-align:center">
+    <img src="../img/components_selective.svg">
+    <br />
+    <em>Selective usage of MicroOCPP</em>
+</p>
+
+<p>Customizations of the library allow to integrate use cases for which the high-level API is too restrictive. The high-level API is designed to provide a facade for the expected usage of the library, but since the charging sector is driven by innovation, new use cases for OCPP emerge every day. If a custom use case cannot be integrated on the API level, the main firmware can access the internal data structures of MicroOCPP and complement the required functionality or replace parts of the internal behavior with custom implementations which fits the concrete scenarios better.</p>
+<h2 id="main-loop-paradigm">Main-loop paradigm</h2>
+<p>MicroOCPP works with the common main-loop execution model of microcontrollers. After initialization, the EVSE firmware most likely enters a main-loop and repeats it infinitely. To run MicroOCPP, a call to its loop function must be placed into the main loop of the firmware. Then at each main-loop iteration, MicroOCPP executes its internal routines, i.e. it processes input data, updates its data model, executes operations and creates new output data. The MicroOCPP loop function does not block the main loop but executes immediately. This library does not contain any delay functions. Some activities of the library spread over many loop iterations like the start of a charging session which needs to await the approval of an NFC card and a hardware diagnosis of the high power electronics for example. All activities in MicroOCPP support the distribution over many loop calls, leading to a pseudo-parallel execution behavior.</p>
+<p>No separate RTOS task is needed and MicroOCPP does not have an internal mechanism for multi-task synchronization. However, it is of course possible to create a dedicated OCPP task, as long as extra care is taken of the synchronization.</p>
+<h2 id="how-the-api-works">How the API works</h2>
+<p>The high-level API consists of four parts:</p>
+<ul>
+<li><strong>Library lifecycle</strong>: The library has initialize functions with a few initialization options. Dynamic system components like the WebSocket adapter need to be set at initialization time. The deinitialize function reverts the library into an unitialized state. That's useful for memory inspection tools like valgrind or to disable the OCPP communication. The loop function also counts as part of the lifecycle management.</li>
+<li><strong>Sensor Inputs</strong>: EVSEs are mechanical systems with a variety of sensor information. OCPP is used to send parts of the sensor readings to the server. The other part of the sensor data flows into the local charger model of MicroOCPP where it is further processed. To update MicroOCPP with the input data from the sensors, the firmware needs to bind the sensors to the library. An <em>Input-binding</em>, or in short <em>Input</em>, is a function which transfers the current sensor value to MicroOCPP. Inputs are callback functions which read a specific sensor value and pass the value in the return statement. The firmware defines those callback functions for each sensor and adds them to MicroOCPP during initialization. After initialization, MicroOCPP uses the callbacks and executes them to fetch the most recent sensor values. <br/>
+This concept is reused for the data <em>Outputs</em> of the library to the firmware, where the callback applies output data from MicroOCPP to the firmware.</li>
+<li><strong>Transaction management</strong>: OCPP considers EVSEs as vending machines. To enable payment processing and the billing of the EVSE usage, all charging activity is assigned to transactions. A big portion of OCPP is about transactions, their prerequisites, runtime and their termination scenarios. The MicroOCPP API breaks transactions down into an initiation and termination function and gives a transparent view on the current process status, authorization result and offline behavior strategy. For non-commercial setups, the transaction mechanism is the same but has only informational purposes.</li>
+<li><strong>Device management</strong>: MicroOCPP implements the OCPP side of the device management operations. For the actual execution, the firmware needs to provide the charger-side implementations of the operations to MicroOCPP by passing handler functions to the API. For example, the OCPP server can restart the charger. Upon receipt of the request, MicroOCPP terminates the transactions and eventually triggers the system restart using the handler function which the firmware has provided through the high-level API.</li>
+</ul>
+<h2 id="transaction-safety">Transaction safety</h2>
+<p>Software in EVSEs needs to withstand hazardous operating conditions. EVSEs are located on the street or in garages where the WiFi or LTE signal strength is often weak, leading to long offline periods or where random power cuts can occur. In addition to that, the lack of process virtualization on microcontrollers means that a malfunction in one part of the firmware leads to the crash of all other parts.</p>
+<p>The transaction process of MicroOCPP is robust against random failures or resets. A minimal transaction log on the flash storage ensures that each operation on a transaction is fully executed. It will always result in a consistent state between the EVSE and the OCPP server, even over resets of the microcontroller. The RPC queue facilitates this by tracking the delivery status of relevant messages. If the microcontroller is reset while the delivery status of a message is unknown, MicroOCPP takes up the message delivery again at the next start up and completes it.</p>
+<p>A requirement for the transaction safety feature is the availability of a journaling file system. Examples include LittleFS, SPIFFS and the POSIX file API, but some microcontroller platforms don't support this natively, so an extension would be required.</p>
+<h2 id="unit-testing">Unit testing</h2>
+<p>MicroOCPP includes a number of unit tests based on the <a href="https://github.com/catchorg/Catch2">Catch2</a> framework. A <a href="https://github.com/matth-x/MicroOcpp/actions">GitHub Action</a> runs the unit tests against each new commit in the MicroOCPP repository, which ensures that new features don't break old code.</p>
+<p>The scope of the unit tests is to to ensure a correct implementation of OCPP and to validate the high-level API against its definition. For that, it is not necessary to establish an actual test connection to an OCPP server. In fact, real-world communication would disturb the tests and make them undeterministic. That's why the test suite is fully based on an integrated, tiny OCPP test server which the OCPP client reaches over a loopback connection. The test suite does not access the WebSocket library. When making the unit tests of the main firmware, it is not necessary to check the full OCPP communication, but only to validate correct usage of the high-level API. An example of how the library can be initialized with a loopback connection can be found in its test suite.</p>
+<h2 id="microcontroller-optimization">Microcontroller optimization</h2>
+<p>As a library for microcontrollers, the design of MicroOCPP considers the strict memory limits and complies with the best practices of embedded software development. Also, a few measures were taken to optimize the memory usage which include the spare inclusion of external libraries, an optimization of the internal data structures and the exclusion of C++ run-time type information (RTTI) and exceptions. Features of C++ which may have a larger footprint are carefully used such as the standard template library (STL) and lambda functions. The STL increases the robustness of the code and lambdas prove to be a powerful tool to deal with the complexity of asynchronous data processing in embedded systems. That's also why the high-level API has many functional parameters.</p>
+<p>Because of the high importance of C in the embedded world, MicroOCPP provides its high-level API in C too. It is typically simple to instruct the compiler to compile and link the C++-based library in a C-based firmware development. In case that the firmware requires custom features which are not part of the C-API, then the firmware can implement it in a new C++ source file, export the new functions to the C namespace and use it normally in the main source.</p>
+<p>While memory constraints are of concern, the execution time generally is not. OCPP is rather uncomplex on the algorithmic side for clients, since there is no need for elaborate planning algorithms or complex data transformations.</p>
+<p>Low resource requirements also allow new usage areas on top of EV charging. For example, MicroOCPP has been ported to ordinary IoT equipment such as Wi-Fi sockets to integrate further electric devices into OCPP networks.</p>
+<p>Although MicroOCPP is optimized for the usage on microcontrollers, it is also suitable for embedded Linux systems. With more memory available, the upper limits of the internal data structures can be increased, leading to a more versatile support of charging use cases. Also, the separation of the charger firmware into multiple processes can lead to more robustness. MicroOCPP can be extended by an inter-process communication (IPC) interface to run in a separate process.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../benchmarks/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Benchmarks">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Benchmarks
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../migration/" class="md-footer__link md-footer__link--next" aria-label="Next: Migrating to v1.1">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Migrating to v1.1
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["announce.dismiss", "content.action.edit", "content.action.view", "content.code.annotate", "content.code.copy", "content.tooltips", "navigation.footer", "navigation.indexes", "navigation.sections", "navigation.tabs", "navigation.top", "navigation.tracking", "search.highlight", "search.share", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.525ec568.min.js"></script>
+      
+    
+  </body>
+</html>
