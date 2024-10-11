@@ -67,7 +67,7 @@ jobs:
       with:
         python-version: 3.x
     - name: Install Python dependencies
-      run: pip install pandas paramiko
+      run: pip install requests paramiko pandas
     - name: Get Simulator
       uses: actions/download-artifact@v4
       with:
