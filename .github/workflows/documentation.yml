@@ -82,7 +82,7 @@ jobs:
         echo "show MicroOcppSimulator/public"
         ls MicroOcppSimulator/public
         echo "show MO_SIM_CONFIG"
-        echo $(MO_SIM_CONFIG)
+        echo "$MO_SIM_CONFIG"
     - name: Measure heap and create reports
       run: python tests/benchmarks/scripts/measure_heap.py
     - name: Upload reports
