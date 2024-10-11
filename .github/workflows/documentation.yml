@@ -168,9 +168,7 @@ jobs:
         if-no-files-found: error
 
   deploy:
-    needs: |
-      evaluate_firmware
-      measure_heap
+    needs: [evaluate_firmware, measure_heap]
     name: Deploy docs
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
