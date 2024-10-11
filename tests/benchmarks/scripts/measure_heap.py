@@ -223,8 +223,7 @@ def run_measurements():
     # Add some meta information
     max_memory = 0
     for index, row in df.iterrows():
-        if int(row[3]) > max_memory:
-            max_memory = int(row[3])
+        max_memory = max(max_memory, int(row[3]))
 
     functional_blocks = set()
     for index, row in df.iterrows():
@@ -238,7 +237,7 @@ def run_measurements():
     df.loc['|MO_SIM_000'] = ['-', '**Simulator stats**', ' ', ' ']
     df.loc['|MO_SIM_010'] = ['-', 'Base memory occupation', ' ', str(base_memory_level)]
     df.loc['|MO_SIM_020'] = ['-', 'Test case maximum', ' ', str(max_memory)]
-    df.loc['|MO_SIM_030'] = ['-', 'Base + test case maximum', ' ', str(base_memory_level + max_memory)]
+    df.loc['|MO_SIM_030'] = ['-', 'Total memory maximum', ' ', str(base_memory_level + max_memory)]
 
     df.sort_index(inplace=True)
     
