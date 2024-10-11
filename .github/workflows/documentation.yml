@@ -44,9 +44,9 @@ jobs:
       with:
         path: MicroOcppSimulator/lib/MicroOcpp
     - name: Generate CMake files
-      run: cmake -S . -B ./build -DCMAKE_CXX_FLAGS="-DMO_OVERRIDE_ALLOCATION=1 -DMO_ENABLE_HEAP_PROFILER=1"
+      run: cmake -S ./MicroOcppSimulator -B ./MicroOcppSimulator/build -DCMAKE_CXX_FLAGS="-DMO_OVERRIDE_ALLOCATION=1 -DMO_ENABLE_HEAP_PROFILER=1"
     - name: Compile
-      run: cmake --build ./build -j 32 --target mo_simulator
+      run: cmake --build ./MicroOcppSimulator/build -j 32 --target mo_simulator
     - name: Upload Simulator executable
       uses: actions/upload-artifact@v4
       with:
