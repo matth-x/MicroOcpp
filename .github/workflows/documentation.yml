@@ -20,8 +20,15 @@ jobs:
     - name: Check env vars
       run: |
         echo "show MO_SIM_CONFIG"
+        echo "${{ MO_SIM_CONFIG }}"
+        echo "end"
+    - name: Check env vars
+      run: |
+        echo "show MO_SIM_CONFIG"
         echo "$MO_SIM_CONFIG"
         echo "end"
+      env:
+        MO_SIM_CONFIG: ${{ secrets.MO_SIM_CONFIG }}
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
       with:
@@ -90,6 +97,8 @@ jobs:
         echo "$MO_SIM_CONFIG"
     - name: Measure heap and create reports
       run: python tests/benchmarks/scripts/measure_heap.py
+      env:
+        MO_SIM_CONFIG: ${{ secrets.MO_SIM_CONFIG }}
     - name: Upload reports
       uses: actions/upload-artifact@v4
       with:
