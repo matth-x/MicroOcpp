@@ -247,6 +247,9 @@ def run_measurements():
 
 def run_measurements_and_retry():
 
+    print("Show MO_SIM_CONFIG")
+    print(os.environ['MO_SIM_CONFIG'])
+
     if (    'TEST_DRIVER_URL'    not in os.environ or
             'TEST_DRIVER_CONFIG' not in os.environ or
             'TEST_DRIVER_KEY'    not in os.environ or
