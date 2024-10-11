@@ -17,13 +17,6 @@ jobs:
     name: Build Simulator
     runs-on: ubuntu-latest
     steps:
-    - name: Check env vars
-      run: |
-        echo "show MO_SIM_CONFIG"
-        echo "$MO_SIM_CONFIG"
-        echo "end"
-      env:
-        MO_SIM_CONFIG: ${{ secrets.MO_SIM_CONFIG }}
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
       with:
@@ -80,20 +73,19 @@ jobs:
       with:
         name: Simulator executable
         path: MicroOcppSimulator
-    - name: Check Simulator and env vars
-      run: |
-        echo "show MicroOcppSimulator"
-        ls MicroOcppSimulator
-        echo "show MicroOcppSimulator/build"
-        ls MicroOcppSimulator/build
-        echo "show MicroOcppSimulator/public"
-        ls MicroOcppSimulator/public
-        echo "show MO_SIM_CONFIG"
-        echo "$MO_SIM_CONFIG"
     - name: Measure heap and create reports
       run: python tests/benchmarks/scripts/measure_heap.py
       env:
+        TEST_DRIVER_URL: ${{ secrets.TEST_DRIVER_URL }}
+        TEST_DRIVER_CONFIG: ${{ secrets.TEST_DRIVER_CONFIG }}
+        TEST_DRIVER_KEY: ${{ secrets.TEST_DRIVER_KEY }}
         MO_SIM_CONFIG: ${{ secrets.MO_SIM_CONFIG }}
+        MO_SIM_OCPP_SERVER: ${{ secrets.MO_SIM_OCPP_SERVER }}
+        MO_SIM_API_CERT: ${{ secrets.MO_SIM_API_CERT }}
+        MO_SIM_API_KEY: ${{ secrets.MO_SIM_API_KEY }}
+        MO_SIM_API_CONFIG: ${{ secrets.MO_SIM_API_CONFIG }}
+        SSH_LOCAL_PRIV: ${{ secrets.SSH_LOCAL_PRIV }}
+        SSH_HOST_PUB: ${{ secrets.SSH_HOST_PUB }}
     - name: Upload reports
       uses: actions/upload-artifact@v4
       with:
