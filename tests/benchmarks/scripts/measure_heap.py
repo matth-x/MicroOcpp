@@ -25,6 +25,7 @@ def connect_ssh():
         file = open(os.path.join('tests', 'benchmarks', 'scripts', 'id_ed25519'), 'w')
         file.write(os.environ['SSH_LOCAL_PRIV'])
         file.close()
+        print('SSH ID written to file')
 
     client = paramiko.SSHClient()
     client.get_host_keys().add('cicd.micro-ocpp.com', 'ssh-ed25519', paramiko.pkey.PKey.from_type_string('ssh-ed25519', base64.b64decode(os.environ['SSH_HOST_PUB'])))
@@ -115,7 +116,7 @@ def run_measurements():
                             headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']},
                             verify=False)
 
-    print(json.dumps(response.json(), indent=4))
+    #print(json.dumps(response.json(), indent=4))
 
     testcases = []
 
@@ -159,7 +160,7 @@ def run_measurements():
                              headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']},
                              verify=False)
     print(f'Status code {response.status_code}')
-    print(json.dumps(response.json(), indent=4))
+    #print(json.dumps(response.json(), indent=4))
 
     for testcase in testcases:
         print('\nRun ' + testcase['functional_block'] + ' > ' + testcase['description'] + ' (' + testcase['testcase_name'] + ')')
@@ -178,7 +179,7 @@ def run_measurements():
                                     headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']},
                                     verify=False)
             print(f'Status code {response.status_code}')
-            print(json.dumps(response.json(), indent=4))
+            #print(json.dumps(response.json(), indent=4))
             if response.status_code == 200:
                 simulator_connected = True
                 break
@@ -199,7 +200,7 @@ def run_measurements():
                                  headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']},
                                  verify=False)
         print(f'Status code {test_response.status_code}')
-        print(json.dumps(test_response.json(), indent=4))
+        #print(json.dumps(test_response.json(), indent=4))
 
         mo_sim_response = requests.get('https://cicd.micro-ocpp.com:8443/api/memory/info', 
                              auth=(json.loads(os.environ['MO_SIM_API_CONFIG'])['user'],
@@ -214,7 +215,7 @@ def run_measurements():
                              headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']},
                              verify=False)
     print(f'Status code {response.status_code}')
-    print(json.dumps(response.json(), indent=4))
+    #print(json.dumps(response.json(), indent=4))
 
     cleanup_simulator()
 
@@ -247,6 +248,8 @@ def run_measurements():
 
 def run_measurements_and_retry():
 
+    print(f'Show {os.environ['SSH_LOCAL_PRIV'][0]}, {os.environ['SSH_LOCAL_PRIV'][1]}, {os.environ['SSH_LOCAL_PRIV'][len(os.environ['SSH_LOCAL_PRIV']-2)]}, {os.environ['SSH_LOCAL_PRIV'][len(os.environ['SSH_LOCAL_PRIV'])-1]} end')
+
     if (    'TEST_DRIVER_URL'    not in os.environ or
             'TEST_DRIVER_CONFIG' not in os.environ or
             'TEST_DRIVER_KEY'    not in os.environ or
@@ -275,7 +278,7 @@ def run_measurements_and_retry():
                                     headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']},
                                     verify=False)
             print(f'Status code {response.status_code}')
-            print(json.dumps(response.json(), indent=4))
+            #print(json.dumps(response.json(), indent=4))
 
             cleanup_simulator()
 
