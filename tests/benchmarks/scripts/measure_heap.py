@@ -21,15 +21,15 @@ requests.packages.urllib3.disable_warnings() # avoid the URL to be printed to co
 
 def connect_ssh():
 
-    if not os.path.isfile(os.path.join('id_ed25519')):
-        file = open(os.path.join('id_ed25519'), 'w')
+    if not os.path.isfile(os.path.join('tests', 'benchmarks', 'scripts', 'id_ed25519')):
+        file = open(os.path.join('tests', 'benchmarks', 'scripts', 'id_ed25519'), 'w')
         file.write(os.environ['SSH_LOCAL_PRIV'])
         file.close()
         print('SSH ID written to file')
 
     client = paramiko.SSHClient()
     client.get_host_keys().add('cicd.micro-ocpp.com', 'ssh-ed25519', paramiko.pkey.PKey.from_type_string('ssh-ed25519', base64.b64decode(os.environ['SSH_HOST_PUB'])))
-    client.connect('cicd.micro-ocpp.com', key_filename=os.path.join('id_ed25519'))
+    client.connect('cicd.micro-ocpp.com', key_filename=os.path.join('tests', 'benchmarks', 'scripts', 'id_ed25519'), look_for_keys=False)
     return client
 
 def close_ssh(client: paramiko.SSHClient):
@@ -245,6 +245,8 @@ def run_measurements():
     print(df)
 
     df.to_csv('docs/assets/tables/heap_v201.csv',index=False,columns=['Testcase','Pass','Heap usage (Bytes)'])
+
+run_measurements()
 
 def run_measurements_and_retry():
 
