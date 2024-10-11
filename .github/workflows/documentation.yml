@@ -36,9 +36,13 @@ jobs:
         path: MicroOcppSimulator
         ref: feature/remote-api
         submodules: 'recursive'
-    - name: Update MicroOcpp submodule to this commit
+    - name: Clean MicroOcpp submodule
       run: |
-        git -C MicroOcppSimulator/lib/MicroOcpp checkout ${{ github.sha }}
+        rm -rf MicroOcppSimulator/lib/MicroOcpp
+    - name: Checkout MicroOcpp submodule
+      uses: actions/checkout@v3
+      with:
+        path: MicroOcppSimulator/lib/MicroOcpp
     - name: Generate CMake files
       run: cmake -S . -B ./build -DCMAKE_CXX_FLAGS="-DMO_OVERRIDE_ALLOCATION=1 -DMO_ENABLE_HEAP_PROFILER=1"
     - name: Compile
