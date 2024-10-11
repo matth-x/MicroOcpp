@@ -143,14 +143,18 @@ def run_measurements():
     deploy_simulator()
 
     ##
-    #print('Test RMT_API')
-    #setup_simulator()
-    #response = requests.get('https://cicd.micro-ocpp.com:8443/api/memory/info', 
-    #                         auth=(json.loads(os.environ['MO_SIM_API_CONFIG'])['user'],
-    #                               json.loads(os.environ['MO_SIM_API_CONFIG'])['pass']))
-    #print(f'Status code {response.status_code}')
-    #print(response.text)
-    #print(json.dumps(response.json(), indent=4))
+    print('Test Simulator Rmt API')
+    setup_simulator()
+    response = requests.get('https://cicd.micro-ocpp.com:8443/api/memory/info', 
+                             auth=(json.loads(os.environ['MO_SIM_API_CONFIG'])['user'],
+                                   json.loads(os.environ['MO_SIM_API_CONFIG'])['pass']))
+    print(f'Status code {response.status_code}, current heap={response.json()["total_current"]}, max heap={response.json()["total_max"]}')
+
+    response = requests.post('https://cicd.micro-ocpp.com:8443/api/memory/reset', 
+                             auth=(json.loads(os.environ['MO_SIM_API_CONFIG'])['user'],
+                                   json.loads(os.environ['MO_SIM_API_CONFIG'])['pass']))
+    print(f'Status code {response.status_code}')
+
     #cleanup_simulator()
     #return
 
@@ -181,11 +185,21 @@ def run_measurements():
                 print(f'Waiting for the Simulator to connect ({i}) ...')
                 time.sleep(3)
         
+        response = requests.post('https://cicd.micro-ocpp.com:8443/api/memory/reset', 
+                             auth=(json.loads(os.environ['MO_SIM_API_CONFIG'])['user'],
+                                   json.loads(os.environ['MO_SIM_API_CONFIG'])['pass']))
+        print(f'Status code {response.status_code}')
+        
         response = requests.post(os.environ['TEST_DRIVER_URL'] + '/testcases/' + testcase['testcase_name'] + '/execute', 
                                  headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']},
                                  verify=False)
         print(f'Status code {response.status_code}')
         print(json.dumps(response.json(), indent=4))
+
+        response = requests.get('https://cicd.micro-ocpp.com:8443/api/memory/info', 
+                             auth=(json.loads(os.environ['MO_SIM_API_CONFIG'])['user'],
+                                   json.loads(os.environ['MO_SIM_API_CONFIG'])['pass']))
+        print(f'Status code {response.status_code}, current heap={response.json()["total_current"]}, max heap={response.json()["total_max"]}')
 
     print("Stop Test Driver")
     
