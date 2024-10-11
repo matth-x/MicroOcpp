@@ -34,7 +34,7 @@ def deploy_simulator():
     client = connect_ssh()
 
     print('   - stop Simulator, if still running')
-    stdin, stdout, stderr = client.exec_command('killall mo_simulator')
+    stdin, stdout, stderr = client.exec_command('killall -s SIGINT mo_simulator')
 
     print('   - clean previous deployment')
     stdin, stdout, stderr = client.exec_command('rm -rf ' + os.path.join('MicroOcppSimulator'))
@@ -63,7 +63,7 @@ def cleanup_simulator():
     client = connect_ssh()
 
     print('   - stop Simulator, if still running')
-    stdin, stdout, stderr = client.exec_command('killall mo_simulator')
+    stdin, stdout, stderr = client.exec_command('killall -s SIGINT mo_simulator')
 
     print('   - clean deployment')
     stdin, stdout, stderr = client.exec_command('rm -rf ' + os.path.join('MicroOcppSimulator'))
@@ -78,7 +78,7 @@ def setup_simulator():
     client = connect_ssh()
 
     print('   - stop Simulator, if still running')
-    stdin, stdout, stderr = client.exec_command('killall mo_simulator')
+    stdin, stdout, stderr = client.exec_command('killall -s SIGINT mo_simulator')
 
     print('   - clean state')
     stdin, stdout, stderr = client.exec_command('rm -rf ' + os.path.join('MicroOcppSimulator', 'mo_store', '*'))
@@ -94,7 +94,7 @@ def setup_simulator():
 
     print('   - start Simulator')
 
-    stdin, stdout, stderr = client.exec_command('cd ' + os.path.join('MicroOcppSimulator') + ' && ./build/mo_simulator')
+    stdin, stdout, stderr = client.exec_command('mkdir -p logs && cd ' + os.path.join('MicroOcppSimulator') + ' && ./build/mo_simulator > ~/logs/sim_"$(date +%Y-%m-%d_%H-%M-%S.log)"')
     close_ssh(client)
 
     print('   - done')
@@ -175,10 +175,10 @@ def run_measurements():
                                     verify=False)
             print(f'Status code {response.status_code}')
             print(json.dumps(response.json(), indent=4))
-            if response.json()['isConnected'] == True:
+            if response.status_code == 200:
                 break
             else:
-                print(f'Waiting for SUT to connect ({i}) ...')
+                print(f'Waiting for the Simulator to connect ({i}) ...')
                 time.sleep(3)
         
         response = requests.post(os.environ['TEST_DRIVER_URL'] + '/testcases/' + testcase['testcase_name'] + '/execute', 
