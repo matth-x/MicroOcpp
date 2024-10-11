@@ -20,11 +20,6 @@ jobs:
     - name: Check env vars
       run: |
         echo "show MO_SIM_CONFIG"
-        echo "${{ MO_SIM_CONFIG }}"
-        echo "end"
-    - name: Check env vars
-      run: |
-        echo "show MO_SIM_CONFIG"
         echo "$MO_SIM_CONFIG"
         echo "end"
       env:
