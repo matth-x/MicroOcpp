@@ -248,8 +248,6 @@ def run_measurements():
 
 def run_measurements_and_retry():
 
-    print(f"Show {os.environ['SSH_LOCAL_PRIV'][0]}, {os.environ['SSH_LOCAL_PRIV'][1]}, {os.environ['SSH_LOCAL_PRIV'][len(os.environ['SSH_LOCAL_PRIV'])-2]}, {os.environ['SSH_LOCAL_PRIV'][len(os.environ['SSH_LOCAL_PRIV'])-1]} end")
-
     if (    'TEST_DRIVER_URL'    not in os.environ or
             'TEST_DRIVER_CONFIG' not in os.environ or
             'TEST_DRIVER_KEY'    not in os.environ or
