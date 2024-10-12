@@ -74,7 +74,9 @@ jobs:
         name: Simulator executable
         path: MicroOcppSimulator
     - name: Measure heap and create reports
-      run: python tests/benchmarks/scripts/measure_heap.py
+      run: |
+        mkdir -p docs/assets/tables
+        python tests/benchmarks/scripts/measure_heap.py
       env:
         TEST_DRIVER_URL: ${{ secrets.TEST_DRIVER_URL }}
         TEST_DRIVER_CONFIG: ${{ secrets.TEST_DRIVER_CONFIG }}
@@ -170,8 +172,7 @@ jobs:
         path: firmware
     - name: Run bloaty
       run: |
-        mkdir docs/assets
-        mkdir docs/assets/tables
+        mkdir -p docs/assets/tables
         tools/bloaty/build/bloaty firmware/firmware_v16.elf  -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v16.csv
         tools/bloaty/build/bloaty firmware/firmware_v201.elf -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v201.csv
     - name: Evaluate and create reports

@@ -3,6 +3,7 @@ import sys
 import requests
 import paramiko
 import base64
+import traceback
 import io
 import json
 import time
@@ -10,8 +11,8 @@ import pandas as pd
 
 
 # Test case selection
-testcase_name_list = ['TC_B_06_CS', 'TC_B_07_CS', 'TC_C_02_CS']
-#testcase_name_list = ['TC_B_06_CS']
+#testcase_name_list = ['TC_B_06_CS', 'TC_B_07_CS', 'TC_C_02_CS']
+testcase_name_list = ['TC_B_06_CS']
 
 # Result data set
 df = pd.DataFrame(columns=['FN_BLOCK', 'Testcase', 'Pass', 'Heap usage (Bytes)'])
@@ -146,12 +147,12 @@ def run_measurements():
     response = requests.post('https://cicd.micro-ocpp.com:8443/api/memory/reset', 
                              auth=(json.loads(os.environ['MO_SIM_API_CONFIG'])['user'],
                                    json.loads(os.environ['MO_SIM_API_CONFIG'])['pass']))
-    print(f'Status code {response.status_code}')
+    print(f'Simulator API /memory/reset:\n > {response.status_code}')
 
     response = requests.get('https://cicd.micro-ocpp.com:8443/api/memory/info', 
                              auth=(json.loads(os.environ['MO_SIM_API_CONFIG'])['user'],
                                    json.loads(os.environ['MO_SIM_API_CONFIG'])['pass']))
-    print(f'Status code {response.status_code}, current heap={response.json()["total_current"]}, max heap={response.json()["total_max"]}')
+    print(f'Simulator API /memory/info:\n > {response.status_code}, current heap={response.json()["total_current"]}, max heap={response.json()["total_max"]}')
     base_memory_level = response.json()["total_max"]
 
     print("Start Test Driver")
@@ -159,7 +160,7 @@ def run_measurements():
     response = requests.post(os.environ['TEST_DRIVER_URL'] + '/ocpp2.0.1/CS/session/start/' + os.environ['TEST_DRIVER_CONFIG'], 
                              headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']},
                              verify=False)
-    print(f'Status code {response.status_code}')
+    print(f'Test Driver /*/*/session/start/*:\n > {response.status_code}')
     #print(json.dumps(response.json(), indent=4))
 
     for testcase in testcases:
@@ -178,7 +179,7 @@ def run_measurements():
             response = requests.get(os.environ['TEST_DRIVER_URL'] + '/sut_connection_status', 
                                     headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']},
                                     verify=False)
-            print(f'Status code {response.status_code}')
+            print(f'Test Driver /sut_connection_status:\n > {response.status_code}')
             #print(json.dumps(response.json(), indent=4))
             if response.status_code == 200:
                 simulator_connected = True
@@ -194,27 +195,27 @@ def run_measurements():
         response = requests.post('https://cicd.micro-ocpp.com:8443/api/memory/reset', 
                              auth=(json.loads(os.environ['MO_SIM_API_CONFIG'])['user'],
                                    json.loads(os.environ['MO_SIM_API_CONFIG'])['pass']))
-        print(f'Status code {response.status_code}')
+        print(f'Simulator API /memory/reset:\n > {response.status_code}')
         
         test_response = requests.post(os.environ['TEST_DRIVER_URL'] + '/testcases/' + testcase['testcase_name'] + '/execute', 
                                  headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']},
                                  verify=False)
-        print(f'Status code {test_response.status_code}')
+        print(f'Test Driver /testcases/{testcase["testcase_name"]}/execute:\n > {test_response.status_code}')
         #print(json.dumps(test_response.json(), indent=4))
 
-        mo_sim_response = requests.get('https://cicd.micro-ocpp.com:8443/api/memory/info', 
+        sim_response = requests.get('https://cicd.micro-ocpp.com:8443/api/memory/info', 
                              auth=(json.loads(os.environ['MO_SIM_API_CONFIG'])['user'],
                                    json.loads(os.environ['MO_SIM_API_CONFIG'])['pass']))
-        print(f'Status code {mo_sim_response.status_code}, current heap={mo_sim_response.json()["total_current"]}, max heap={mo_sim_response.json()["total_max"]}')
+        print(f'Simulator API /memory/info:\n > {sim_response.status_code}, current heap={sim_response.json()["total_current"]}, max heap={sim_response.json()["total_max"]}')
 
-        df.loc[testcase['testcase_name']] = [testcase['functional_block'], testcase['description'], 'x' if test_response.json()['data'][0]['verdict'] == "pass" else '-', str(mo_sim_response.json()["total_max"] - base_memory_level)]
+        df.loc[testcase['testcase_name']] = [testcase['functional_block'], testcase['description'], 'x' if test_response.json()['data'][0]['verdict'] == "pass" else '-', str(sim_response.json()["total_max"] - base_memory_level)]
 
     print("Stop Test Driver")
     
     response = requests.post(os.environ['TEST_DRIVER_URL'] + '/session/stop', 
                              headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']},
                              verify=False)
-    print(f'Status code {response.status_code}')
+    print(f'Test Driver /session/stop:\n > {response.status_code}')
     #print(json.dumps(response.json(), indent=4))
 
     cleanup_simulator()
@@ -224,12 +225,14 @@ def run_measurements():
     # Add some meta information
     max_memory = 0
     for index, row in df.iterrows():
-        max_memory = max(max_memory, int(row[3]))
+        memory = row['Heap usage (Bytes)']
+        if memory.isdigit():
+            max_memory = max(max_memory, int(memory))
 
     functional_blocks = set()
     for index, row in df.iterrows():
-        functional_blocks.add(row[0])
-    
+        functional_blocks.add(row['FN_BLOCK'])
+
     print(functional_blocks)
 
     for i in functional_blocks:
@@ -246,7 +249,7 @@ def run_measurements():
 
     df.to_csv('docs/assets/tables/heap_v201.csv',index=False,columns=['Testcase','Pass','Heap usage (Bytes)'])
 
-run_measurements()
+    print('Stored test results to CSV')
 
 def run_measurements_and_retry():
 
@@ -273,11 +276,13 @@ def run_measurements_and_retry():
         except:
             print(f'Error detected ({i+1})')
 
+            traceback.print_exc()
+
             print("Stop Test Driver")    
             response = requests.post(os.environ['TEST_DRIVER_URL'] + '/session/stop', 
                                     headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']},
                                     verify=False)
-            print(f'Status code {response.status_code}')
+            print(f'Test Driver /session/stop:\n > {response.status_code}')
             #print(json.dumps(response.json(), indent=4))
 
             cleanup_simulator()
