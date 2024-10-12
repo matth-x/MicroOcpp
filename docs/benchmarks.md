@@ -45,3 +45,7 @@ This section contains the raw data which is the basis for the evaluations above.
 **Table 4: All compilation units for OCPP 2.0.1 firmware**
 
 {{ read_csv('compile_units_v201.csv') }}
+
+## Heap memory (preview)
+
+{{ read_csv('heap_v201.csv') }}

@@ -59,7 +59,7 @@ jobs:
 
   measure_heap:
     needs: build_simulator
-    name: Execute heap measurements
+    name: Heap measurements
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -91,7 +91,7 @@ jobs:
     - name: Upload reports
       uses: actions/upload-artifact@v4
       with:
-        name: Memory occupation reports CSV
+        name: Memory usage reports CSV
         path: docs/assets/tables
         if-no-files-found: error
 
@@ -188,7 +188,7 @@ jobs:
     needs: [evaluate_firmware, measure_heap]
     name: Deploy docs
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    #if: github.ref == 'refs/heads/main'
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
@@ -208,7 +208,7 @@ jobs:
     - name: Get memory occupation reports
       uses: actions/download-artifact@v4
       with:
-        name: Memory occupation reports CSV
+        name: Memory usage reports CSV
         path: docs/assets/tables
     - name: Run mkdocs
       run: mkdocs gh-deploy --force
