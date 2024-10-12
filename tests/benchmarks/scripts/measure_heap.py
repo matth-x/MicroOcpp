@@ -98,8 +98,6 @@ testcase_name_list = [
     'TC_J_10_CS',
 ]
 
-testcase_name_list = ['TC_B_06_CS', 'TC_E_05_CS']
-
 # Result data set
 df = pd.DataFrame(columns=['FN_BLOCK', 'Testcase', 'Pass', 'Heap usage (Bytes)'])
 df.index.names = ['TC_ID']
