@@ -29,7 +29,7 @@ def connect_ssh():
 
     client = paramiko.SSHClient()
     client.get_host_keys().add('cicd.micro-ocpp.com', 'ssh-ed25519', paramiko.pkey.PKey.from_type_string('ssh-ed25519', base64.b64decode(os.environ['SSH_HOST_PUB'])))
-    client.connect('cicd.micro-ocpp.com', key_filename=os.path.join('tests', 'benchmarks', 'scripts', 'id_ed25519'), look_for_keys=False, disabled_algorithms={'pubkeys': ['rsa-sha2-256', 'rsa-sha2-512']})
+    client.connect('cicd.micro-ocpp.com', username='ocpp', key_filename=os.path.join('tests', 'benchmarks', 'scripts', 'id_ed25519'), look_for_keys=False)
     return client
 
 def close_ssh(client: paramiko.SSHClient):
