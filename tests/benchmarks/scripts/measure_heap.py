@@ -10,15 +10,102 @@ import time
 import pandas as pd
 
 
-# Test case selection
-#testcase_name_list = ['TC_B_06_CS', 'TC_B_07_CS', 'TC_C_02_CS']
-testcase_name_list = ['TC_B_06_CS']
+requests.packages.urllib3.disable_warnings() # avoid the URL to be printed to console
+
+# Test case selection (commented out a few to simplify testing for now)
+testcase_name_list = [
+    'TC_B_06_CS',
+    #'TC_B_07_CS',
+    #'TC_B_09_CS',
+    'TC_B_10_CS',
+    #'TC_B_11_CS',
+    #'TC_B_12_CS',
+    'TC_B_13_CS',
+    #'TC_B_32_CS',
+    #'TC_B_34_CS',
+    'TC_B_35_CS',
+    #'TC_B_36_CS',
+    #'TC_B_37_CS',
+    'TC_B_39_CS',
+    #'TC_C_02_CS',
+    #'TC_C_04_CS',
+    'TC_C_06_CS',
+    #'TC_C_07_CS',
+    #'TC_C_49_CS',
+    'TC_E_01_CS',
+    #'TC_E_02_CS',
+    #'TC_E_03_CS',
+    'TC_E_04_CS',
+    #'TC_E_05_CS',
+    #'TC_E_06_CS',
+    'TC_E_07_CS',
+    #'TC_E_09_CS',
+    #'TC_E_13_CS',
+    'TC_E_15_CS',
+    #'TC_E_17_CS',
+    #'TC_E_20_CS',
+    'TC_E_21_CS',
+    #'TC_E_24_CS',
+    #'TC_E_25_CS',
+    'TC_E_28_CS',
+    #'TC_E_29_CS',
+    #'TC_E_30_CS',
+    'TC_E_31_CS',
+    #'TC_E_32_CS',
+    #'TC_E_33_CS',
+    'TC_E_34_CS',
+    #'TC_E_35_CS',
+    #'TC_E_39_CS',
+    'TC_F_01_CS',
+    #'TC_F_02_CS',
+    #'TC_F_03_CS',
+    'TC_F_04_CS',
+    #'TC_F_05_CS',
+    #'TC_F_06_CS',
+    'TC_F_07_CS',
+    #'TC_F_08_CS',
+    #'TC_F_09_CS',
+    'TC_F_10_CS',
+    #'TC_F_11_CS',
+    #'TC_F_12_CS',
+    'TC_F_13_CS',
+    #'TC_F_14_CS',
+    #'TC_F_20_CS',
+    'TC_F_23_CS',
+    #'TC_F_24_CS',
+    #'TC_F_26_CS',
+    'TC_F_27_CS',
+    #'TC_G_01_CS',
+    #'TC_G_02_CS',
+    'TC_G_03_CS',
+    #'TC_G_04_CS',
+    #'TC_G_05_CS',
+    'TC_G_06_CS',
+    #'TC_G_07_CS',
+    #'TC_G_08_CS',
+    'TC_G_09_CS',
+    #'TC_G_10_CS',
+    #'TC_G_11_CS',
+    'TC_G_12_CS',
+    #'TC_G_13_CS',
+    #'TC_G_14_CS',
+    'TC_G_15_CS',
+    #'TC_G_16_CS',
+    #'TC_G_17_CS',
+    'TC_J_07_CS',
+    #'TC_J_08_CS',
+    #'TC_J_09_CS',
+    'TC_J_10_CS',
+]
+
+testcase_name_list = ['TC_B_06_CS', 'TC_E_05_CS']
 
 # Result data set
 df = pd.DataFrame(columns=['FN_BLOCK', 'Testcase', 'Pass', 'Heap usage (Bytes)'])
 df.index.names = ['TC_ID']
 
-requests.packages.urllib3.disable_warnings() # avoid the URL to be printed to console
+max_memory_total = 0
+min_memory_base = 1000 * 1000 * 1000
 
 def connect_ssh():
 
@@ -111,6 +198,9 @@ def setup_simulator():
 
 def run_measurements():
     
+    global max_memory_total
+    global min_memory_base
+    
     print("Fetch TCs from Test Driver")
 
     response = requests.get(os.environ['TEST_DRIVER_URL'] + '/ocpp2.0.1/CS/testcases/' + os.environ['TEST_DRIVER_CONFIG'], 
@@ -154,6 +244,7 @@ def run_measurements():
                                    json.loads(os.environ['MO_SIM_API_CONFIG'])['pass']))
     print(f'Simulator API /memory/info:\n > {response.status_code}, current heap={response.json()["total_current"]}, max heap={response.json()["total_max"]}')
     base_memory_level = response.json()["total_max"]
+    min_memory_base = min(min_memory_base, response.json()["total_max"])
 
     print("Start Test Driver")
 
@@ -201,14 +292,20 @@ def run_measurements():
                                  headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']},
                                  verify=False)
         print(f'Test Driver /testcases/{testcase["testcase_name"]}/execute:\n > {test_response.status_code}')
-        #print(json.dumps(test_response.json(), indent=4))
+        #try:
+        #    print(json.dumps(test_response.json(), indent=4))
+        #except:
+        #    print(' > No JSON')
 
         sim_response = requests.get('https://cicd.micro-ocpp.com:8443/api/memory/info', 
                              auth=(json.loads(os.environ['MO_SIM_API_CONFIG'])['user'],
                                    json.loads(os.environ['MO_SIM_API_CONFIG'])['pass']))
         print(f'Simulator API /memory/info:\n > {sim_response.status_code}, current heap={sim_response.json()["total_current"]}, max heap={sim_response.json()["total_max"]}')
 
-        df.loc[testcase['testcase_name']] = [testcase['functional_block'], testcase['description'], 'x' if test_response.json()['data'][0]['verdict'] == "pass" else '-', str(sim_response.json()["total_max"] - base_memory_level)]
+        df.loc[testcase['testcase_name']] = [testcase['functional_block'], testcase['description'], 'x' if test_response.status_code == 200 and test_response.json()['data'][0]['verdict'] == "pass" else '-', str(sim_response.json()["total_max"] - min(base_memory_level, sim_response.json()["total_current"]))]
+
+        max_memory_total = max(max_memory_total, sim_response.json()["total_max"])
+        min_memory_base = min(min_memory_base, sim_response.json()["total_current"])
 
     print("Stop Test Driver")
     
@@ -239,9 +336,9 @@ def run_measurements():
         df.loc[f'TC_{i[0]}'] = [i, f'**{i}**', ' ', ' ']
 
     df.loc['|MO_SIM_000'] = ['-', '**Simulator stats**', ' ', ' ']
-    df.loc['|MO_SIM_010'] = ['-', 'Base memory occupation', ' ', str(base_memory_level)]
+    df.loc['|MO_SIM_010'] = ['-', 'Base memory occupation', ' ', str(min_memory_base)]
     df.loc['|MO_SIM_020'] = ['-', 'Test case maximum', ' ', str(max_memory)]
-    df.loc['|MO_SIM_030'] = ['-', 'Total memory maximum', ' ', str(base_memory_level + max_memory)]
+    df.loc['|MO_SIM_030'] = ['-', 'Total memory maximum', ' ', str(max_memory_total)]
 
     df.sort_index(inplace=True)
     
