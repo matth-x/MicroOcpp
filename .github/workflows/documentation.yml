@@ -188,7 +188,7 @@ jobs:
     needs: [evaluate_firmware, measure_heap]
     name: Deploy docs
     runs-on: ubuntu-latest
-    #if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
