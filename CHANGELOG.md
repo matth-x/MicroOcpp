@@ -25,7 +25,7 @@
 - Support for TransactionMessageAttempts/-RetryInterval ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
 - Heap profiler and custom allocator support ([#350](https://github.com/matth-x/MicroOcpp/pull/350))
 - Migration of persistent storage ([#355](https://github.com/matth-x/MicroOcpp/pull/355))
-- Benchmarks pipeline ([#369](https://github.com/matth-x/MicroOcpp/pull/369))
+- Benchmarks pipeline ([#369](https://github.com/matth-x/MicroOcpp/pull/369), [#376](https://github.com/matth-x/MicroOcpp/pull/376))
 - MeterValues port for OCPP 2.0.1 ([#371](https://github.com/matth-x/MicroOcpp/pull/371))
 - UnlockConnector port for OCPP 2.0.1 ([#371](https://github.com/matth-x/MicroOcpp/pull/371))
 - More APIs ported to OCPP 2.0.1 ([#371](https://github.com/matth-x/MicroOcpp/pull/371))

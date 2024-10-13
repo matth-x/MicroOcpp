@@ -2,7 +2,7 @@
 # Copyright Matthias Akstaller 2019 - 2024
 # MIT License
 
-name: documentation 
+name: Documentation
 on:
   push:
     branches:
@@ -11,8 +11,92 @@ on:
 
 permissions:
   contents: write
+
 jobs:
+  build_simulator:
+    name: Build Simulator
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
+    - uses: actions/cache@v2
+      with:
+        key: ${{ github.ref }}
+        path: .cache
+    - name: Get build tools
+      run: |
+        sudo apt update
+        sudo apt install cmake libssl-dev build-essential
+    - name: Checkout Simulator
+      uses: actions/checkout@v3
+      with:
+        repository: matth-x/MicroOcppSimulator
+        path: MicroOcppSimulator
+        ref: feature/remote-api
+        submodules: 'recursive'
+    - name: Clean MicroOcpp submodule
+      run: |
+        rm -rf MicroOcppSimulator/lib/MicroOcpp
+    - name: Checkout MicroOcpp submodule
+      uses: actions/checkout@v3
+      with:
+        path: MicroOcppSimulator/lib/MicroOcpp
+    - name: Generate CMake files
+      run: cmake -S ./MicroOcppSimulator -B ./MicroOcppSimulator/build -DCMAKE_CXX_FLAGS="-DMO_OVERRIDE_ALLOCATION=1 -DMO_ENABLE_HEAP_PROFILER=1"
+    - name: Compile
+      run: cmake --build ./MicroOcppSimulator/build -j 32 --target mo_simulator
+    - name: Upload Simulator executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: Simulator executable
+        path: |
+          MicroOcppSimulator/build/mo_simulator
+          MicroOcppSimulator/public/bundle.html.gz
+        if-no-files-found: error
+        retention-days: 1
+
+  measure_heap:
+    needs: build_simulator
+    name: Heap measurements
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
+    - name: Install Python dependencies
+      run: pip install requests paramiko pandas
+    - name: Get Simulator
+      uses: actions/download-artifact@v4
+      with:
+        name: Simulator executable
+        path: MicroOcppSimulator
+    - name: Measure heap and create reports
+      run: |
+        mkdir -p docs/assets/tables
+        python tests/benchmarks/scripts/measure_heap.py
+      env:
+        TEST_DRIVER_URL: ${{ secrets.TEST_DRIVER_URL }}
+        TEST_DRIVER_CONFIG: ${{ secrets.TEST_DRIVER_CONFIG }}
+        TEST_DRIVER_KEY: ${{ secrets.TEST_DRIVER_KEY }}
+        MO_SIM_CONFIG: ${{ secrets.MO_SIM_CONFIG }}
+        MO_SIM_OCPP_SERVER: ${{ secrets.MO_SIM_OCPP_SERVER }}
+        MO_SIM_API_CERT: ${{ secrets.MO_SIM_API_CERT }}
+        MO_SIM_API_KEY: ${{ secrets.MO_SIM_API_KEY }}
+        MO_SIM_API_CONFIG: ${{ secrets.MO_SIM_API_CONFIG }}
+        SSH_LOCAL_PRIV: ${{ secrets.SSH_LOCAL_PRIV }}
+        SSH_HOST_PUB: ${{ secrets.SSH_HOST_PUB }}
+    - name: Upload reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: Memory usage reports CSV
+        path: docs/assets/tables
+        if-no-files-found: error
+
   build_firmware_size:
+    name: Build firmware
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -51,6 +135,7 @@ jobs:
 
   evaluate_firmware:
     needs: build_firmware_size
+    name: Static firmware analysis
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -87,8 +172,7 @@ jobs:
         path: firmware
     - name: Run bloaty
       run: |
-        mkdir docs/assets
-        mkdir docs/assets/tables
+        mkdir -p docs/assets/tables
         tools/bloaty/build/bloaty firmware/firmware_v16.elf  -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v16.csv
         tools/bloaty/build/bloaty firmware/firmware_v201.elf -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v201.csv
     - name: Evaluate and create reports
@@ -101,7 +185,8 @@ jobs:
         if-no-files-found: error
 
   deploy:
-    needs: evaluate_firmware
+    needs: [evaluate_firmware, measure_heap]
+    name: Deploy docs
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
@@ -119,6 +204,11 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: Firmware size reports CSV
+        path: docs/assets/tables
+    - name: Get memory occupation reports
+      uses: actions/download-artifact@v4
+      with:
+        name: Memory usage reports CSV
         path: docs/assets/tables
     - name: Run mkdocs
       run: mkdocs gh-deploy --force

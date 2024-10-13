@@ -34,14 +34,26 @@ The following table shows the cumulated size of the objects files per module. Th
 
 {{ read_csv('modules_v201.csv') }}
 
+## Memory usage
+
+MicroOCPP uses the heap memory to process incoming messages, maintain the device model and create outgoing OCPP messages. The total heap usage should remain low enough to not risk a heap depletion which would not only affect the OCPP module, but the whole controller, because heap memory is typically shared on microcontrollers. To assess the heap usage of MicroOCPP, a test suite runs a variety of simulated charger use cases and measures the maximum occupied memory. Then, the maximum observed value is considered as the memory requirement of MicroOCPP.
+
+Another important figure is the base level which is much closer to the average heap usage. The total heap usage consists of a base level and a dynamic part. Some memory objects are only initialized once during startup or as the device model is populated (e.g. Charging Schedules) and therefore belong to the base which changes only slowly over time. In contrast, objects for the JSON parsing and serialization and the internal execution of the operations are highly dynamic as they are instantiated for one operation and freed again after completion of the action. If the firmware contains multiple components besides MicroOCPP with this usage pattern, then the average total memory occupation of the device RAM is even closer to the base levels of the individual components.
+
+The following table shows the dynamic heap usage for a variety of test cases, followed by the base level and resulting maximum memory occupation of MicroOCPP. At the time being, the measurements are limited to only OCPP 2.0.1 and a narrow set of test cases. They will be gradually extended over time.
+
+**Table 3: Memory usage per use case and total**
+
+{{ read_csv('heap_v201.csv') }}
+
 ## Full data sets
 
 This section contains the raw data which is the basis for the evaluations above.
 
-**Table 3: All compilation units for OCPP 1.6 firmware**
+**Table 4: All compilation units for OCPP 1.6 firmware**
 
 {{ read_csv('compile_units_v16.csv') }}
 
-**Table 4: All compilation units for OCPP 2.0.1 firmware**
+**Table 5: All compilation units for OCPP 2.0.1 firmware**
 
 {{ read_csv('compile_units_v201.csv') }}
