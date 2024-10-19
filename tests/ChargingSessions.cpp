@@ -1082,5 +1082,151 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE( checkProcessedStopTx );
     }
 
+    SECTION("StatusNotification") {
+
+        mocpp_deinitialize();
+
+        mocpp_initialize(loopback, ChargerCredentials());
+
+        bool checkProcessed = false;
+        const char *checkStatus = "";
+
+        getOcppContext()->getOperationRegistry().setOnRequest("StatusNotification",
+            [&checkProcessed, &checkStatus] (JsonObject payload) {
+                //process req
+                if (payload["connectorId"].as<int>() == 1) {
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(payload["status"] | "_Undefined", checkStatus) );
+                }
+            });
+
+        checkStatus = "Available";
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "Preparing";
+        checkProcessed = false;
+        setConnectorPluggedInput([] () {return true;});
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "Available";
+        checkProcessed = false;
+        setConnectorPluggedInput([] () {return false;});
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "Preparing";
+        checkProcessed = false;
+        beginTransaction("mIdTag");
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "Available";
+        checkProcessed = false;
+        endTransaction("mIdTag");
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "Preparing";
+        beginTransaction("mIdTag");
+        loop();
+        checkProcessed = false;
+
+        checkStatus = "Charging";
+        checkProcessed = false;
+        setConnectorPluggedInput([] () {return true;});
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "SuspendedEV";
+        checkProcessed = false;
+        setEvReadyInput([] () {return false;});
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "SuspendedEVSE";
+        checkProcessed = false;
+        setEvReadyInput([] () {return true;});
+        setEvseReadyInput([] () {return false;});
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "Charging";
+        checkProcessed = false;
+        setEvReadyInput([] () {return true;});
+        setEvseReadyInput([] () {return true;});
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "Finishing";
+        checkProcessed = false;
+        endTransaction();
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "Available";
+        checkProcessed = false;
+        setConnectorPluggedInput([] () {return false;});
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "Available";
+        const char *checkStatus2 = checkStatus;
+        checkProcessed = false;
+        mocpp_deinitialize();
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        getOcppContext()->getOperationRegistry().setOnRequest("StatusNotification",
+            [&checkProcessed, &checkStatus, &checkStatus2] (JsonObject payload) {
+                //process req
+                if (payload["connectorId"].as<int>() == 1) {
+                    checkProcessed = true;
+                    REQUIRE( (!strcmp(payload["status"] | "_Undefined", checkStatus) || !strcmp(payload["status"] | "_Undefined", checkStatus2)) );
+                }
+            });
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "Charging";
+        checkStatus2 = "Preparing";
+        checkProcessed = false;
+        beginTransaction("mIdTag");
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "Charging";
+        checkStatus2 = checkStatus;
+        checkProcessed = false;
+        mocpp_deinitialize();
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        getOcppContext()->getOperationRegistry().setOnRequest("StatusNotification",
+            [&checkProcessed, &checkStatus] (JsonObject payload) {
+                //process req
+                if (payload["connectorId"].as<int>() == 1) {
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(payload["status"] | "_Undefined", checkStatus) );
+                }
+            });
+        loop();
+        REQUIRE( checkProcessed );
+
+        checkStatus = "Available";
+        checkStatus2 = checkStatus;
+        checkProcessed = false;
+        endTransaction();
+        mocpp_deinitialize();
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        getOcppContext()->getOperationRegistry().setOnRequest("StatusNotification",
+            [&checkProcessed, &checkStatus] (JsonObject payload) {
+                //process req
+                if (payload["connectorId"].as<int>() == 1) {
+                    checkProcessed = true;
+                    REQUIRE( !strcmp(payload["status"] | "_Undefined", checkStatus) );
+                }
+            });
+        loop();
+        REQUIRE( checkProcessed );
+    }
+
     mocpp_deinitialize();
 }
