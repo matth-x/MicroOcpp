@@ -1,0 +1,19 @@
+Module,Binary size (Bytes)
+B - Provisioning,6704
+C - Authorization,640
+Configuration,12384
+Core,16028
+D - Local Authorization List Management,7576
+E - Transactions,10340
+Firmware Management,11345
+G - Availability,2588
+General,14612
+General - API,16284
+General - Hardware Abstraction Layer,1468
+General - RPC framework,11796
+H - Reservation,3976
+J - MeterValues,13776
+K - SmartCharging,14952
+M - Certificate Management,4452
+TriggerMessage,836
+**Total**,149757

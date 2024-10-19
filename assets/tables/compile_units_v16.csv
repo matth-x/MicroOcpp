@@ -1,0 +1,79 @@
+Compile Unit,Binary size (Bytes),v16,v201,Module
+MicroOcpp.cpp,14368,x,x,General - API
+Core/Configuration.cpp,3104,x,x,Configuration
+Core/ConfigurationContainer.cpp,864,x,x,Configuration
+Core/ConfigurationContainerFlash.cpp,4192,x,x,Configuration
+Core/ConfigurationKeyValue.cpp,708,x,x,Configuration
+Core/Connection.cpp,272,x,x,General - Hardware Abstraction Layer
+Core/Context.cpp,380,x,x,General
+Core/FilesystemAdapter.cpp,1196,x,x,General - Hardware Abstraction Layer
+Core/FilesystemUtils.cpp,4592,x,x,General
+Core/FtpMbedTLS.cpp,5140,x,x,General
+Core/Memory.cpp,156,x,x,General
+Core/Operation.cpp,104,x,x,General - RPC framework
+Core/OperationRegistry.cpp,1616,x,x,General - RPC framework
+Core/Request.cpp,3400,x,x,General - RPC framework
+Core/RequestQueue.cpp,6676,x,x,General - RPC framework
+Core/Time.cpp,2472,x,x,General
+Model/Authorization/AuthorizationData.cpp,1320,x, ,D - Local Authorization List Management
+Model/Authorization/AuthorizationList.cpp,3732,x, ,D - Local Authorization List Management
+Model/Authorization/AuthorizationService.cpp,1704,x, ,D - Local Authorization List Management
+Model/Boot/BootService.cpp,3804,x,x,B - Provisioning
+Model/Certificates/Certificate.cpp,668,x,x,M - Certificate Management
+Model/Certificates/CertificateMbedTLS.cpp,2100,x,x,M - Certificate Management
+Model/Certificates/CertificateService.cpp,468,x,x,M - Certificate Management
+Model/Certificates/Certificate_c.cpp,0,x,x,M - Certificate Management
+Model/ConnectorBase/Connector.cpp,12256,x, ,Core
+Model/ConnectorBase/ConnectorsCommon.cpp,2136,x, ,Core
+Model/ConnectorBase/Notification.cpp,72,x, ,Core
+Model/Diagnostics/DiagnosticsService.cpp,5825,x, ,Firmware Management
+Model/FirmwareManagement/FirmwareService.cpp,4060,x, ,Firmware Management
+Model/Heartbeat/HeartbeatService.cpp,420,x,x,G - Availability
+Model/Metering/MeterStore.cpp,2900,x, ,J - MeterValues
+Model/Metering/MeterValue.cpp,3276,x, ,J - MeterValues
+Model/Metering/MeteringConnector.cpp,4312,x, ,J - MeterValues
+Model/Metering/MeteringService.cpp,1848,x, ,J - MeterValues
+Model/Metering/ReadingContext.cpp,180, ,x,J - MeterValues
+Model/Metering/SampledValue.cpp,780,x, ,J - MeterValues
+Model/Model.cpp,1872,x,x,General
+Model/Reservation/Reservation.cpp,1072,x, ,H - Reservation
+Model/Reservation/ReservationService.cpp,1384,x, ,H - Reservation
+Model/Reset/ResetService.cpp,984,x,x,B - Provisioning
+Model/SmartCharging/SmartChargingModel.cpp,3804,x, ,K - SmartCharging
+Model/SmartCharging/SmartChargingService.cpp,6932,x, ,K - SmartCharging
+Model/Transactions/Transaction.cpp,156,x,x,E - Transactions
+Model/Transactions/TransactionDeserialize.cpp,3048,x, ,E - Transactions
+Model/Transactions/TransactionStore.cpp,2352,x, ,E - Transactions
+Operations/Authorize.cpp,640,x,x,C - Authorization
+Operations/BootNotification.cpp,1288,x,x,B - Provisioning
+Operations/CancelReservation.cpp,364,x, ,H - Reservation
+Operations/ChangeAvailability.cpp,496,x, ,G - Availability
+Operations/ChangeConfiguration.cpp,836,x, ,Configuration
+Operations/ClearCache.cpp,432,x, ,Core
+Operations/ClearChargingProfile.cpp,824,x, ,K - SmartCharging
+Operations/CustomOperation.cpp,0,x,x,General - RPC framework
+Operations/DataTransfer.cpp,516,x, ,Core
+Operations/DeleteCertificate.cpp,700,x,x,M - Certificate Management
+Operations/DiagnosticsStatusNotification.cpp,220,x, ,Firmware Management
+Operations/FirmwareStatusNotification.cpp,244,x, ,Firmware Management
+Operations/GetCompositeSchedule.cpp,1076,x, ,K - SmartCharging
+Operations/GetConfiguration.cpp,2680,x,x,Configuration
+Operations/GetDiagnostics.cpp,640,x, ,Firmware Management
+Operations/GetInstalledCertificateIds.cpp,1588,x, ,K - SmartCharging
+Operations/GetLocalListVersion.cpp,268,x, ,D - Local Authorization List Management
+Operations/Heartbeat.cpp,780,x,x,G - Availability
+Operations/InstallCertificate.cpp,516,x,x,M - Certificate Management
+Operations/MeterValues.cpp,660,x, ,J - MeterValues
+Operations/RemoteStartTransaction.cpp,1180,x, ,E - Transactions
+Operations/RemoteStopTransaction.cpp,404,x, ,E - Transactions
+Operations/ReserveNow.cpp,1156,x, ,H - Reservation
+Operations/Reset.cpp,628,x,x,B - Provisioning
+Operations/SendLocalList.cpp,552,x, ,D - Local Authorization List Management
+Operations/SetChargingProfile.cpp,728,x, ,K - SmartCharging
+Operations/StartTransaction.cpp,1352,x, ,E - Transactions
+Operations/StatusNotification.cpp,892,x,x,G - Availability
+Operations/StopTransaction.cpp,1848,x, ,E - Transactions
+Operations/TriggerMessage.cpp,836,x, ,TriggerMessage
+Operations/UnlockConnector.cpp,616,x, ,Core
+Operations/UpdateFirmware.cpp,356,x, ,Firmware Management
+MicroOcpp_c.cpp,1916,x,x,General - API

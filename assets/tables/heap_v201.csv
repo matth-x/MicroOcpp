@@ -1,0 +1,39 @@
+Testcase,Pass,Heap usage (Bytes)
+**B:Provisioning**, , 
+Get Variables - single value,x,1556
+Set Variables - multiple values,x,2435
+Get Base Report - FullInventory,x,18597
+Set Variables - Unknown component,x,1507
+Set Variables - Read-only,-,1536
+**C:Authorization**, , 
+Local start transaction - Authorization Blocked,x,1476
+**E:Transactions**, , 
+Start transaction options - PowerPathClosed,x,2127
+Local start transaction - Authorization first - Success,-,2127
+Stop transaction options - PowerPathClosed - Local stop,-,2127
+Stop transaction options - StopAuthorized - Local,-,2127
+Stop transaction options - StopAuthorized - Remote,-,2127
+Check Transaction status - TransactionId unknown,-,1445
+Check Transaction status - Transaction with id ended - with message in queue,-,1445
+Check Transaction status - Without transactionId - without message in queue,-,1445
+**F:Remote Control**, , 
+Remote start transaction - Cable plugin first,-,2127
+Remote start transaction - Remote start first - Cable plugin timeout,x,1556
+Remote unlock Connector -  Without ongoing transaction - No cable connected,-,1445
+Remote unlock Connector -  Without ongoing transaction - UnknownConnector,-,1445
+Trigger message - TransactionEvent - Specific EVSE,-,2127
+Trigger message - StatusNotification - Specific EVSE - Available,-,1445
+Trigger message - NotImplemented,-,1445
+**G:Availability**, , 
+Change Availability EVSE - Operative to inoperative,x,1445
+Change Availability Charging Station - Inoperative to operative,x,1445
+Change Availability EVSE - Operative to operative,x,1445
+Change Availability Charging Station - Operative to operative,x,1445
+Change Availability Connector - Operative to operative,x,1445
+**J:Meter Values**, , 
+[Watchlist] Sampled Meter Values - EventType Started - EVSE known,-,3239
+[Watchlist] Sampled Meter Values - EventType Ended,-,1445
+**Simulator stats**, , 
+Base memory occupation, ,15781
+Test case maximum, ,18597
+Total memory maximum, ,34378
