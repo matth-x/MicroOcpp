@@ -68,8 +68,6 @@ public:
         friend TransactionService;
     };
 
-private:
-
     // TxStartStopPoint (2.6.4.1)
     enum class TxStartStopPoint : uint8_t {
         ParkingBayOccupancy,
@@ -80,6 +78,7 @@ private:
         EnergyTransfer
     };
 
+private:
     Context& context;
     Vector<Evse> evses;
 
@@ -96,15 +95,14 @@ private:
     Vector<TxStartStopPoint> txStopPointParsed;
     bool isTxStartPoint(TxStartStopPoint check);
     bool isTxStopPoint(TxStartStopPoint check);
-
-    bool parseTxStartStopPoint(const char *src, Vector<TxStartStopPoint>& dst);
-
 public:
     TransactionService(Context& context);
 
     void loop();
 
     Evse *getEvse(unsigned int evseId);
+
+    bool parseTxStartStopPoint(const char *src, Vector<TxStartStopPoint>& dst);
 };
 
 } // namespace MicroOcpp

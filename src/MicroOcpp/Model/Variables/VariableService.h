@@ -12,7 +12,6 @@
 #include <stdint.h>
 #include <memory>
 #include <limits>
-#include <functional>
 
 #include <MicroOcpp/Version.h>
 
@@ -23,16 +22,12 @@
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/Memory.h>
 
-#ifndef MO_VARIABLE_FN
-#define MO_VARIABLE_FN (MO_FILENAME_PREFIX "ocpp-vars.jsn")
+#ifndef MO_VARIABLESTORE_FN_PREFIX
+#define MO_VARIABLESTORE_FN_PREFIX (MO_FILENAME_PREFIX "ocpp-vars-")
 #endif
 
-#ifndef MO_VARIABLE_VOLATILE
-#define MO_VARIABLE_VOLATILE "/volatile"
-#endif
-
-#ifndef MO_VARIABLE_INTERNAL_FN
-#define MO_VARIABLE_INTERNAL_FN (MO_FILENAME_PREFIX "mo-vars.jsn")
+#ifndef MO_VARIABLESTORE_FN_SUFFIX
+#define MO_VARIABLESTORE_FN_SUFFIX ".jsn"
 #endif
 
 namespace MicroOcpp {
@@ -41,17 +36,26 @@ template <class T>
 struct VariableValidator : public MemoryManaged {
     ComponentId component;
     const char *name;
-    std::function<bool(T)> validate;
-    VariableValidator(const ComponentId& component, const char *name, std::function<bool(T)> validate);
+    void *userPtr;
+    bool (*validateFn)(T, void*);
+    VariableValidator(const ComponentId& component, const char *name, bool (*validate)(T, void*), void *userPtr);
+    bool validate(T);
 };
 
 class Context;
+
+#ifndef MO_VARIABLESTORE_BUCKETS
+#define MO_VARIABLESTORE_BUCKETS 8
+#endif
 
 class VariableService : public MemoryManaged {
 private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
-    Vector<std::shared_ptr<VariableContainer>> containers;
+    Vector<VariableContainer*> containers;
+    VariableContainerExternal containerExternal;
+    VariableContainerInternal containersInternal [MO_VARIABLESTORE_BUCKETS];
+    VariableContainerInternal& getContainerInternalByVariable(const ComponentId& component, const char *name);
 
     Vector<VariableValidator<int>> validatorInt;
     Vector<VariableValidator<bool>> validatorBool;
@@ -60,27 +64,25 @@ private:
     VariableValidator<int> *getValidatorInt(const ComponentId& component, const char *name);
     VariableValidator<bool> *getValidatorBool(const ComponentId& component, const char *name);
     VariableValidator<const char*> *getValidatorString(const ComponentId& component, const char *name);
-
-    std::unique_ptr<VariableContainer> createContainer(const char *filename, bool accessible) const;
-
-    VariableContainer *declareContainer(const char *filename, bool accessible);
-
-    Variable *getVariable(Variable::InternalDataType type, const ComponentId& component, const char *name, bool accessible);
-
 public:
     VariableService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem);
 
+    //Get Variable. If not existent, create Variable owned by MO and return
     template <class T> 
-    Variable *declareVariable(const ComponentId& component, const char *name, T factoryDefault, const char *containerPath = MO_VARIABLE_FN, Variable::Mutability mutability = Variable::Mutability::ReadWrite, Variable::AttributeTypeSet attributes = Variable::AttributeTypeSet(), bool rebootRequired = false, bool accessible = true);
+    Variable *declareVariable(const ComponentId& component, const char *name, T factoryDefault, Variable::Mutability mutability = Variable::Mutability::ReadWrite, bool persistent = true, Variable::AttributeTypeSet attributes = Variable::AttributeTypeSet(), bool rebootRequired = false);
+
+    bool addVariable(Variable *variable); //Add Variable without transferring ownership
+    bool addVariable(std::unique_ptr<Variable> variable); //Add Variable and transfer ownership
+
+    //Get Variable. If not existent, return nullptr
+    Variable *getVariable(const ComponentId& component, const char *name);
 
     bool commit();
 
-    void addContainer(std::shared_ptr<VariableContainer> container);
-
-    std::shared_ptr<VariableContainer> getContainer(const char *filename);
+    void addContainer(VariableContainer *container);
 
     template <class T>
-    bool registerValidator(const ComponentId& component, const char *name, std::function<bool(T)> validate);
+    bool registerValidator(const ComponentId& component, const char *name, bool (*validate)(T, void*), void *userPtr = nullptr);
 
     SetVariableStatus setVariable(Variable::AttributeType attrType, const char *attrVal, const ComponentId& component, const char *variableName);
 

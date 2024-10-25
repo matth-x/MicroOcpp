@@ -16,61 +16,59 @@
 #include <memory>
 
 #include <MicroOcpp/Model/Variables/Variable.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
 class VariableContainer {
-private:
-    const char *filename;
-    bool accessible;
 public:
-    VariableContainer(const char *filename, bool accessible) : filename(filename), accessible(accessible) { }
+    ~VariableContainer();
+    virtual size_t size() = 0;
+    virtual Variable *getVariable(size_t i) = 0;
+    virtual Variable *getVariable(const ComponentId& component, const char *variableName) = 0;
 
-    virtual ~VariableContainer();
-
-    const char *getFilename() {return filename;}
-    bool isAccessible() const {return accessible;} //accessible by OCPP server or only used as internal persistent store
-
-    virtual bool load() = 0; //called at the end of mocpp_intialize, to load the Variables with the stored value
-    virtual bool save() = 0;
-
-    /*
-     * Factory method to create Variable objects. This doesn't add the returned Variable to the managed
-     * variable store. Instead, the caller must add the returned Variable via `add(...)`
-     * The function signature consists of the requested low-level data type (Int, Bool, or String) and
-     * a composite key to identify the Variable to create (componentName x variableName x attribute type)
-     *
-     * Variable::InternalDataType dtype: internal low-level data type. Defines which value getters / setters are valid.
-     *         if dtype == InternalDataType::Int, then getInt() and setInt(...) are valid
-     *         if dtype == InternalDataType::String, then getString() and setString(...) are valid. Etc.
-     */
-    virtual std::unique_ptr<Variable> createVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet attributes) = 0; // factory method
-    virtual bool add(std::unique_ptr<Variable> variable) = 0;
-
-    virtual size_t size() const = 0;
-    virtual Variable *getVariable(size_t i) const = 0;
-    virtual Variable *getVariable(const ComponentId& component, const char *variableName) const = 0;
+    virtual bool commit();
 };
 
-class VariableContainerVolatile : public VariableContainer, public MemoryManaged {
+class VariableContainerExternal : public VariableContainer, public MemoryManaged {
+private:
+    Vector<Variable*> variables;
+public:
+    VariableContainerExternal();
+
+    size_t size() override;
+    Variable *getVariable(size_t i) override;
+    Variable *getVariable(const ComponentId& component, const char *variableName) override;
+
+    bool add(Variable *variable);
+};
+
+class VariableContainerInternal : public VariableContainer, public MemoryManaged {
 private:
     Vector<std::unique_ptr<Variable>> variables;
+    std::shared_ptr<FilesystemAdapter> filesystem;
+    char *filename = nullptr;
+
+    uint16_t trackWriteCount = 0;
+    bool checkWriteCountUpdated();
+
+    bool loaded = false;
+
 public:
-    VariableContainerVolatile(const char *filename, bool accessible);
-    ~VariableContainerVolatile();
+    VariableContainerInternal();
+    ~VariableContainerInternal();
 
-    //VariableContainer definitions
-    bool load() override;
-    bool save() override;
-    std::unique_ptr<Variable> createVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet attributes) override;
-    bool add(std::unique_ptr<Variable> config) override;
-    size_t size() const override;
-    Variable *getVariable(size_t i) const override;
-    Variable *getVariable(const ComponentId& component, const char *variableName) const override;
+    size_t size() override;
+    Variable *getVariable(size_t i) override;
+    Variable *getVariable(const ComponentId& component, const char *variableName) override;
+
+    bool add(std::unique_ptr<Variable> variable);
+
+    bool enablePersistency(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename); 
+    bool load(); //load variables from flash
+    bool commit() override;
 };
-
-std::unique_ptr<VariableContainerVolatile> makeVariableContainerVolatile(const char *filename, bool accessible);
 
 } //end namespace MicroOcpp
 

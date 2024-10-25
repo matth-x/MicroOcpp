@@ -34,24 +34,14 @@ TEST_CASE( "Variable" ) {
     FilesystemUtils::remove_if(filesystem, [] (const char*) {return true;});
 
     SECTION("Basic container operations"){
-        std::unique_ptr<VariableContainer> container;
-
-        SECTION("Volatile storage") {
-            container = makeVariableContainerVolatile(MO_VARIABLE_VOLATILE "/volatile1", true);
-        }
-
-#if 0
-        SECTION("Persistent storage") {
-            container = makeVariableContainerFlash(filesystem, MO_FILENAME_PREFIX "persistent1.jsn", true);
-        }
-#endif
+        auto container = std::unique_ptr<VariableContainerInternal>(new VariableContainerInternal());
 
         //check emptyness
         REQUIRE( container->size() == 0 );
 
         //add first config, fetch by index
         Variable::AttributeTypeSet attrs = Variable::AttributeType::Actual;
-        auto configFirst = container->createVariable(Variable::InternalDataType::Int, attrs);
+        auto configFirst = makeVariable(Variable::InternalDataType::Int, attrs);
         configFirst->setName("cFirst");
         configFirst->setComponentId("mComponent");
         auto configFirstRaw = configFirst.get();
@@ -61,14 +51,14 @@ TEST_CASE( "Variable" ) {
         REQUIRE( container->getVariable((size_t) 0) == configFirstRaw);
 
         //add one config of each type
-        auto cInt = container->createVariable(Variable::InternalDataType::Int, attrs);
+        auto cInt = makeVariable(Variable::InternalDataType::Int, attrs);
         cInt->setName("cInt");
         cInt->setComponentId("mComponent");
-        auto cBool = container->createVariable(Variable::InternalDataType::Bool, attrs);
+        auto cBool = makeVariable(Variable::InternalDataType::Bool, attrs);
         cBool->setName("cBool");
         cBool->setComponentId("mComponent");
         auto cBoolRaw = cBool.get();
-        auto cString = container->createVariable(Variable::InternalDataType::String, attrs);
+        auto cString = makeVariable(Variable::InternalDataType::String, attrs);
         cString->setName("cString");
         cString->setComponentId("mComponent");
 
@@ -82,34 +72,46 @@ TEST_CASE( "Variable" ) {
         REQUIRE( container->getVariable(cBoolRaw->getComponentId(), cBoolRaw->getName()) == cBoolRaw);
     }
 
-#if 0
     SECTION("Persistency on filesystem") {
 
-        auto container = makeVariableContainerFlash(filesystem, MO_FILENAME_PREFIX "persistent1.jsn", true);
+        auto container = std::unique_ptr<VariableContainerInternal>(new VariableContainerInternal());
+        container->enablePersistency(filesystem, MO_FILENAME_PREFIX "persistent1.jsn");
 
         //trivial load call
         REQUIRE( container->load() );
         REQUIRE( container->size() == 0 );
 
         //add config, store, load again
-        auto cString = container->createVariable(Variable::InternalDataType::String, "cString");
+        auto cString = makeVariable(Variable::InternalDataType::String, Variable::AttributeType::Actual);
+        cString->setName("cString");
+        cString->setComponentId("mComponent");
         cString->setString("mValue");
+        container->add(std::move(cString));
+        REQUIRE( container->size() == 1 );
 
-        REQUIRE( container->save() ); //store
+        REQUIRE( container->commit() ); //store
 
         container.reset(); //destroy
 
         //...load again
-        auto container2 = makeVariableContainerFlash(filesystem, MO_FILENAME_PREFIX "persistent1.jsn", true);
+        auto container2 = std::unique_ptr<VariableContainerInternal>(new VariableContainerInternal());
+        container2->enablePersistency(filesystem, MO_FILENAME_PREFIX "persistent1.jsn");
         REQUIRE( container2->size() == 0 );
+
+        auto cString2 = makeVariable(Variable::InternalDataType::String, Variable::AttributeType::Actual);
+        cString2->setName("cString");
+        cString2->setComponentId("mComponent");
+        cString2->setString("mValue");
+        container2->add(std::move(cString2));
+        REQUIRE( container2->size() == 1 );
+
         REQUIRE( container2->load() );
         REQUIRE( container2->size() == 1 );
 
-        auto cString2 = container2->getVariable("cString");
-        REQUIRE( cString2 != nullptr );
-        REQUIRE( !strcmp(cString2->getString(), "mValue") );
+        auto cString3 = container2->getVariable("mComponent", "cString");
+        REQUIRE( cString3 != nullptr );
+        REQUIRE( !strcmp(cString3->getString(), "mValue") );
     }
-#endif
 
     LoopbackConnection loopback; //initialize Context with dummy socket
     mocpp_set_timer(custom_timer_cb);
@@ -154,16 +156,6 @@ TEST_CASE( "Variable" ) {
         auto cInt3 = vs->declareVariable<int>("mComponent", "cInt", -1);
         REQUIRE( cInt3 == cInt2 );
 
-        //declare config twice but in different container
-        auto cInt4 = vs->declareVariable<int>("mComponent", "cInt", -1, MO_VARIABLE_VOLATILE "/volatile2");
-        REQUIRE( cInt4 == cInt2 );
-
-        //declare config twice but with conflicting type (will supersede old type because to simplify FW upgrades)
-        auto cNewType = vs->declareVariable<const char*>("mComponent", "cInt", "mValue2");
-        REQUIRE( cNewType != cInt2 );
-        REQUIRE( cInt2->isDetached() ); // Container should not store this
-        REQUIRE( !strcmp(cNewType->getString(), "mValue2") );
-
 #if 0
         //store, destroy, reload
         REQUIRE( configuration_save() );
@@ -195,46 +187,32 @@ TEST_CASE( "Variable" ) {
         //config accessibility / permissions
         vs = getOcppContext()->getModel().getVariableService();
         Variable::Mutability mutability = Variable::Mutability::ReadWrite;
+        bool persistent = false;
         Variable::AttributeTypeSet attrs = Variable::AttributeType::Actual;
         bool rebootRequired = false;
-        bool isAccessible = true;
-        auto cInt6 = vs->declareVariable<int>("mComponent", "cInt", 42, MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
+        auto cInt6 = vs->declareVariable<int>("mComponent", "cInt", 42, mutability, persistent, attrs, rebootRequired);
         REQUIRE( cInt6->getMutability() == Variable::Mutability::ReadWrite );
+        REQUIRE( !cInt6->isPersistent() );
         REQUIRE( !cInt6->isRebootRequired() );
         REQUIRE( vs->declareVariable<int>("mComponent", "cInt", 42) );
 
         //revoke permissions
         mutability = Variable::Mutability::ReadOnly;
+        persistent = true;
         rebootRequired = true;
-        vs->declareVariable<int>("mComponent", "cInt", 42, MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
+        vs->declareVariable<int>("mComponent", "cInt", 42, mutability, persistent, attrs, rebootRequired);
         REQUIRE( cInt6->getMutability() == mutability );
+        REQUIRE( cInt6->isPersistent() );
         REQUIRE( cInt6->isRebootRequired() );
 
         //revoked permissions cannot be reverted
         mutability = Variable::Mutability::ReadWrite;
+        persistent = false;
         rebootRequired = false;
-        auto cInt7 = vs->declareVariable<int>("mComponent", "cInt", 42, MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
+        auto cInt7 = vs->declareVariable<int>("mComponent", "cInt", 42, mutability, persistent, attrs, rebootRequired);
         REQUIRE( cInt7->getMutability() == Variable::Mutability::ReadOnly );
+        REQUIRE( cInt6->isPersistent() );
         REQUIRE( cInt7->isRebootRequired() );
-
-        //accessibility cannot be changed after first initialization
-        isAccessible = false;
-        vs->declareVariable<int>("mComponent", "cInt", 42, MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
-        vs->declareVariable<int>("mComponent", "cInt2", 42, MO_VARIABLE_VOLATILE, mutability, attrs, rebootRequired, isAccessible);
-        Variable *result = nullptr;
-        REQUIRE( vs->getVariable(Variable::AttributeType::Actual, "mComponent", "cInt", &result) == GetVariableStatus::Accepted );
-        REQUIRE( result != nullptr );
-        result = nullptr;
-        REQUIRE( vs->getVariable(Variable::AttributeType::Actual, "mComponent", "cInt2", &result) == GetVariableStatus::Accepted );
-        REQUIRE( result != nullptr );
-
-        //create config in hidden container
-        isAccessible = false;
-        auto cHidden = vs->declareVariable<int>("mComponent", "cHidden", 42, MO_VARIABLE_VOLATILE "/hidden.json", mutability, attrs, rebootRequired, isAccessible);
-        (void)cHidden;
-        result = nullptr;
-        REQUIRE( vs->getVariable(Variable::AttributeType::Actual, "mComponent", "cHidden", &result) == GetVariableStatus::Accepted );
-        REQUIRE( result != nullptr );
     }
 
 #if 0
@@ -515,7 +493,7 @@ TEST_CASE( "Variable" ) {
         mocpp_initialize(loopback, ChargerCredentials(), filesystem, false, ProtocolVersion(2,0,1));
 
         auto vs = getOcppContext()->getModel().getVariableService();
-        auto varString = vs->declareVariable<const char*>("mComponent", "mString", "mValue", MO_VARIABLE_VOLATILE);
+        auto varString = vs->declareVariable<const char*>("mComponent", "mString", "mValue");
         REQUIRE( varString != nullptr );
         REQUIRE( !strcmp(varString->getString(), "mValue") );
 
@@ -564,7 +542,7 @@ TEST_CASE( "Variable" ) {
         mocpp_initialize(loopback, ChargerCredentials(), filesystem, false, ProtocolVersion(2,0,1));
 
         auto vs = getOcppContext()->getModel().getVariableService();
-        auto varString = vs->declareVariable<const char*>("mComponent", "mString", "", MO_VARIABLE_VOLATILE);
+        auto varString = vs->declareVariable<const char*>("mComponent", "mString", "");
         REQUIRE( varString != nullptr );
         REQUIRE( !strcmp(varString->getString(), "") );
 
@@ -612,7 +590,7 @@ TEST_CASE( "Variable" ) {
         mocpp_initialize(loopback, ChargerCredentials(), filesystem, false, ProtocolVersion(2,0,1));
 
         auto vs = getOcppContext()->getModel().getVariableService();
-        auto varString = vs->declareVariable<const char*>("mComponent", "mString", "", MO_VARIABLE_VOLATILE);
+        auto varString = vs->declareVariable<const char*>("mComponent", "mString", "");
         REQUIRE( varString != nullptr );
         REQUIRE( !strcmp(varString->getString(), "") );
 

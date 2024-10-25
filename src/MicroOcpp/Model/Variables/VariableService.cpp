@@ -26,14 +26,20 @@
 namespace MicroOcpp {
 
 template <class T>
-VariableValidator<T>::VariableValidator(const ComponentId& component, const char *name, std::function<bool(T)> validate) :
-        MemoryManaged("v201.Variables.VariableValidator.", name), component(component), name(name), validate(validate) {
+VariableValidator<T>::VariableValidator(const ComponentId& component, const char *name, bool (*validateFn)(T, void*), void *userPtr) :
+        MemoryManaged("v201.Variables.VariableValidator.", name), component(component), name(name), userPtr(userPtr), validateFn(validateFn) {
 
 }
 
 template <class T>
+bool VariableValidator<T>::validate(T v) {
+    return validateFn(v, userPtr);
+}
+
+template <class T>
 VariableValidator<T> *getVariableValidator(Vector<VariableValidator<T>>& collection, const ComponentId& component, const char *name) {
-    for (auto& validator : collection) {
+    for (size_t i = 0; i < collection.size(); i++) {
+        auto& validator = collection[i];
         if (!strcmp(name, validator.name) && component.equals(validator.component)) {
             return &validator;
         }
@@ -53,108 +59,90 @@ VariableValidator<const char*> *VariableService::getValidatorString(const Compon
     return getVariableValidator<const char*>(validatorString, component, name);
 }
 
-std::unique_ptr<VariableContainer> VariableService::createContainer(const char *filename, bool accessible) const {
-    //create non-persistent Variable store (i.e. lives only in RAM) if
-    //     - Flash FS usage is switched off OR
-    //     - Filename starts with "/volatile"
-//    if (!filesystem ||
-//                 !strncmp(filename, MO_VARIABLE_VOLATILE, strlen(MO_VARIABLE_VOLATILE))) {
-        return makeVariableContainerVolatile(filename, accessible);
-//    } else {
-//        //create persistent Variable store. This is the normal case
-//        return makeVariableContainerFlash(filesystem, filename, accessible);
-//    }
-}
-
-void VariableService::addContainer(std::shared_ptr<VariableContainer> container) {
-    containers.push_back(std::move(container));
-}
-
-std::shared_ptr<VariableContainer> VariableService::getContainer(const char *filename) {
-    for (auto& container : containers) {
-        if (!strcmp(filename, container->getFilename())) {
-            return container;
-        }
+VariableContainerInternal& VariableService::getContainerInternalByVariable(const ComponentId& component, const char *name) {
+    unsigned int hash = 0;
+    for (size_t i = 0; i < strlen(component.name); i++) {
+        hash += (unsigned int)component.name[i];
     }
-    return nullptr;
+    if (component.evse.id >= 0)
+        hash += (unsigned int)component.evse.id;
+    if (component.evse.connectorId >= 0)
+        hash += (unsigned int)component.evse.connectorId;
+    for (size_t i = 0; i < strlen(name); i++) {
+        hash += (unsigned int)name[i];
+    }
+    return containersInternal[hash % MO_VARIABLESTORE_BUCKETS];
+}
+
+void VariableService::addContainer(VariableContainer *container) {
+    containers.push_back(container);
 }
 
 template <class T>
-bool registerVariableValidator(Vector<VariableValidator<T>>& collection, const ComponentId& component, const char *name, std::function<bool(T)> validate) {
+bool registerVariableValidator(Vector<VariableValidator<T>>& collection, const ComponentId& component, const char *name, bool (*validate)(T, void*), void *userPtr) {
     for (auto it = collection.begin(); it != collection.end(); it++) {
         if (!strcmp(name, it->name) && component.equals(it->component)) {
             collection.erase(it);
             break;
         }
     }
-    collection.emplace_back(component, name, validate);
+    collection.emplace_back(component, name, validate, userPtr);
     return true;
 }
 
 template <>
-bool VariableService::registerValidator<int>(const ComponentId& component, const char *name, std::function<bool(int)> validate) {
-    return registerVariableValidator<int>(validatorInt, component, name, validate);
+bool VariableService::registerValidator<int>(const ComponentId& component, const char *name, bool (*validate)(int, void*), void *userPtr) {
+    return registerVariableValidator<int>(validatorInt, component, name, validate, userPtr);
 }
 
 template <>
-bool VariableService::registerValidator<bool>(const ComponentId& component, const char *name, std::function<bool(bool)> validate) {
-    return registerVariableValidator<bool>(validatorBool, component, name, validate);
+bool VariableService::registerValidator<bool>(const ComponentId& component, const char *name, bool (*validate)(bool, void*), void *userPtr) {
+    return registerVariableValidator<bool>(validatorBool, component, name, validate, userPtr);
 }
 
 template <>
-bool VariableService::registerValidator<const char*>(const ComponentId& component, const char *name, std::function<bool(const char*)> validate) {
-    return registerVariableValidator<const char*>(validatorString, component, name, validate);
+bool VariableService::registerValidator<const char*>(const ComponentId& component, const char *name, bool (*validate)(const char*, void*), void *userPtr) {
+    return registerVariableValidator<const char*>(validatorString, component, name, validate, userPtr);
 }
 
-VariableContainer *VariableService::declareContainer(const char *filename, bool accessible) {
+Variable *VariableService::getVariable(const ComponentId& component, const char *name) {
 
-    auto container = getContainer(filename);
-    
-    if (!container) {
-        MO_DBG_DEBUG("init new configurations container: %s", filename);
-
-        container = createContainer(filename, accessible);
-        if (!container) {
-            MO_DBG_ERR("OOM");
-            return nullptr;
-        }
-        containers.push_back(container);
+    if (auto variable = getContainerInternalByVariable(component, name).getVariable(component, name)) {
+        return variable;
     }
 
-    if (container->isAccessible() != accessible) {
-        MO_DBG_ERR("%s: conflicting accessibility declarations (expect %s)", filename, container->isAccessible() ? "accessible" : "inaccessible");
-    }
-
-    return container.get();
-}
-
-Variable *VariableService::getVariable(Variable::InternalDataType type, const ComponentId& component, const char *name, bool accessible) {
-    for (auto& container : containers) {
+    for (size_t i = 0; i < containers.size(); i++) {
+        auto container = containers[containers.size() - i - 1]; //search from back, because internal containers at front don't contain variable
         if (auto variable = container->getVariable(component, name)) {
-            if (variable->isDetached()) {
-                continue;
-            }
-            if (variable->getInternalDataType() != type) {
-                MO_DBG_ERR("conflicting type for %s - remove old variable", name);
-                variable->detach();
-                continue;
-            }
-            if (container->isAccessible() != accessible) {
-                MO_DBG_ERR("conflicting accessibility for %s", name);
-            }
             return variable;
         }
     }
+
     return nullptr;
 }
 
 VariableService::VariableService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) :
             MemoryManaged("v201.Variables.VariableService"),
             context(context), filesystem(filesystem),
-            containers(makeVector<std::shared_ptr<VariableContainer>>(getMemoryTag())),
+            containers(makeVector<VariableContainer*>(getMemoryTag())),
             validatorInt(makeVector<VariableValidator<int>>(getMemoryTag())),
             validatorBool(makeVector<VariableValidator<bool>>(getMemoryTag())),
             validatorString(makeVector<VariableValidator<const char*>>(getMemoryTag())) {
+    
+    containers.reserve(MO_VARIABLESTORE_BUCKETS + 1);
+
+    for (unsigned int i = 0; i < MO_VARIABLESTORE_BUCKETS; i++) {
+        char fn [MO_MAX_PATH_SIZE];
+        auto ret = snprintf(fn, sizeof(fn), "%s%02x%s", MO_VARIABLESTORE_FN_PREFIX, i, MO_VARIABLESTORE_FN_SUFFIX);
+        if (ret < 0 || (size_t)ret >= sizeof(fn)) {
+            MO_DBG_ERR("fn error");
+            continue;
+        }
+        containersInternal[i].enablePersistency(filesystem, fn);
+        containers.push_back(&containersInternal[i]);
+    }
+    containers.push_back(&containerExternal);
+
     context.getOperationRegistry().registerOperation("SetVariables", [this] () {
         return new Ocpp201::SetVariables(*this);});
     context.getOperationRegistry().registerOperation("GetVariables", [this] () {
@@ -183,9 +171,13 @@ bool loadVariableFactoryDefault<const char*>(Variable& variable, const char *fac
     return variable.setString(factoryDef);
 }
 
-void loadVariableCharacteristics(Variable& variable, Variable::Mutability mutability, bool rebootRequired, Variable::InternalDataType defaultDataType) {
+void loadVariableCharacteristics(Variable& variable, Variable::Mutability mutability, bool persistent, bool rebootRequired, Variable::InternalDataType defaultDataType) {
     if (variable.getMutability() == Variable::Mutability::ReadWrite) {
         variable.setMutability(mutability);
+    }
+
+    if (persistent) {
+        variable.setPersistent();
     }
 
     if (rebootRequired) {
@@ -216,17 +208,13 @@ template<> Variable::InternalDataType getInternalDataType<bool>() {return Variab
 template<> Variable::InternalDataType getInternalDataType<const char*>() {return Variable::InternalDataType::String;}
 
 template<class T>
-Variable *VariableService::declareVariable(const ComponentId& component, const char *name, T factoryDefault, const char *containerPath, Variable::Mutability mutability, Variable::AttributeTypeSet attributes, bool rebootRequired, bool accessible) {
+Variable *VariableService::declareVariable(const ComponentId& component, const char *name, T factoryDefault, Variable::Mutability mutability, bool persistent, Variable::AttributeTypeSet attributes, bool rebootRequired) {
 
-    auto res = getVariable(getInternalDataType<T>(), component, name, accessible);
+    auto res = getVariable(component, name);
     if (!res) {
-        auto container = declareContainer(containerPath, accessible);
-        if (!container) {
-            return nullptr;
-        }
-
-        auto variable = container->createVariable(getInternalDataType<T>(), attributes);
+        auto variable = makeVariable(getInternalDataType<T>(), attributes);
         if (!variable) {
+            MO_DBG_ERR("OOM");
             return nullptr;
         }
 
@@ -239,24 +227,32 @@ Variable *VariableService::declareVariable(const ComponentId& component, const c
 
         res = variable.get();
 
-        if (!container->add(std::move(variable))) {
+        if (!getContainerInternalByVariable(component, name).add(std::move(variable))) {
             return nullptr;
         }
     }
 
-    loadVariableCharacteristics(*res, mutability, rebootRequired, getInternalDataType<T>());
+    loadVariableCharacteristics(*res, mutability, persistent, rebootRequired, getInternalDataType<T>());
     return res;
 }
 
-template Variable *VariableService::declareVariable<int>(const ComponentId&, const char*, int, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
-template Variable *VariableService::declareVariable<bool>(const ComponentId&, const char*, bool, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
-template Variable *VariableService::declareVariable<const char*>(const ComponentId&, const char*, const char*, const char*, Variable::Mutability, Variable::AttributeTypeSet, bool, bool);
+template Variable *VariableService::declareVariable<int>(        const ComponentId&, const char*, int,         Variable::Mutability, bool, Variable::AttributeTypeSet, bool);
+template Variable *VariableService::declareVariable<bool>(       const ComponentId&, const char*, bool,        Variable::Mutability, bool, Variable::AttributeTypeSet, bool);
+template Variable *VariableService::declareVariable<const char*>(const ComponentId&, const char*, const char*, Variable::Mutability, bool, Variable::AttributeTypeSet, bool);
+
+bool VariableService::addVariable(Variable *variable) {
+    return containerExternal.add(variable);
+}
+
+bool VariableService::addVariable(std::unique_ptr<Variable> variable) {
+    return getContainerInternalByVariable(variable->getComponentId(), variable->getName()).add(std::move(variable));
+}
 
 bool VariableService::commit() {
     bool success = true;
 
-    for (auto& container : containers) {
-        if (!container->save()) {
+    for (size_t i = 0; i < containers.size(); i++) {
+        if (!containers[i]->commit()) {
             success = false;
         }
     }
@@ -269,11 +265,9 @@ SetVariableStatus VariableService::setVariable(Variable::AttributeType attrType,
     Variable *variable = nullptr;
 
     bool foundComponent = false;
-    for (const auto& container : containers) {
-        if (!container->isAccessible()) {
-            // container intended for internal use only
-            continue;
-        }
+    for (size_t i = 0; i < containers.size(); i++) {
+        auto container = containers[i];
+
         for (size_t i = 0; i < container->size(); i++) {
             auto entry = container->getVariable(i);
 
@@ -406,7 +400,9 @@ SetVariableStatus VariableService::setVariable(Variable::AttributeType attrType,
 GetVariableStatus VariableService::getVariable(Variable::AttributeType attrType, const ComponentId& component, const char *variableName, Variable **result) {
 
     bool foundComponent = false;
-    for (const auto& container : containers) {
+    for (size_t i = 0; i < containers.size(); i++) {
+        auto container = containers[i];
+
         for (size_t i = 0; i < container->size(); i++) {
             auto variable = container->getVariable(i);
 
@@ -446,11 +442,9 @@ GenericDeviceModelStatus VariableService::getBaseReport(int requestId, ReportBas
 
     Vector<Variable*> variables = makeVector<Variable*>(getMemoryTag());
 
-    for (const auto& container : containers) {
-        if (!container->isAccessible()) {
-            // container intended for internal use only
-            continue;
-        }
+    for (size_t i = 0; i < containers.size(); i++) {
+        auto container = containers[i];
+
         for (size_t i = 0; i < container->size(); i++) {
             auto variable = container->getVariable(i);
 

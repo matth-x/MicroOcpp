@@ -626,6 +626,23 @@ bool TransactionService::parseTxStartStopPoint(const char *csl, Vector<TxStartSt
     return true;
 }
 
+namespace MicroOcpp {
+
+bool validateTxStartStopPoint(const char *value, void *userPtr) {
+    auto txService = static_cast<TransactionService*>(userPtr);
+
+    auto validated = makeVector<TransactionService::TxStartStopPoint>("v201.Transactions.TransactionService");
+    return txService->parseTxStartStopPoint(value, validated);
+}
+
+bool validateUnsignedInt(int val, void*) {
+    return val >= 0;
+}
+
+} //namespace MicroOcpp
+
+using namespace MicroOcpp;
+
 TransactionService::TransactionService(Context& context) :
         MemoryManaged("v201.Transactions.TransactionService"),
         context(context),
@@ -642,22 +659,10 @@ TransactionService::TransactionService(Context& context) :
     sampledDataTxUpdatedInterval = varService->declareVariable<int>("SampledDataCtrlr", "TxUpdatedInterval", 0);
     sampledDataTxEndedInterval = varService->declareVariable<int>("SampledDataCtrlr", "TxEndedInterval", 0);
 
-    varService->declareVariable<bool>("AuthCtrlr", "AuthorizeRemoteStart", false, MO_VARIABLE_VOLATILE, Variable::Mutability::ReadOnly);
+    varService->declareVariable<bool>("AuthCtrlr", "AuthorizeRemoteStart", false, Variable::Mutability::ReadOnly, false);
 
-    varService->registerValidator<const char*>("TxCtrlr", "TxStartPoint", [this] (const char *value) -> bool {
-        auto validated = makeVector<TxStartStopPoint>(getMemoryTag());
-        return this->parseTxStartStopPoint(value, validated);
-    });
-
-    varService->registerValidator<const char*>("TxCtrlr", "TxStopPoint", [this] (const char *value) -> bool {
-        auto validated = makeVector<TxStartStopPoint>(getMemoryTag());
-        return this->parseTxStartStopPoint(value, validated);
-    });
-
-    std::function<bool(int)> validateUnsignedInt = [] (int val) {
-        return val >= 0;
-    };
-
+    varService->registerValidator<const char*>("TxCtrlr", "TxStartPoint", validateTxStartStopPoint, this);
+    varService->registerValidator<const char*>("TxCtrlr", "TxStopPoint", validateTxStartStopPoint, this);
     varService->registerValidator<int>("SampledDataCtrlr", "TxUpdatedInterval", validateUnsignedInt);
     varService->registerValidator<int>("SampledDataCtrlr", "TxEndedInterval", validateUnsignedInt);
 

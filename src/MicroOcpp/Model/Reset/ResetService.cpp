@@ -125,7 +125,7 @@ ResetService::~ResetService() {
 
 ResetService::Evse::Evse(Context& context, ResetService& resetService, unsigned int evseId) : context(context), resetService(resetService), evseId(evseId) {
     auto varService = context.getModel().getVariableService();
-    varService->declareVariable<bool>(ComponentId("EVSE", evseId >= 1 ? evseId : -1), "AllowReset", true, MO_VARIABLE_FN, Variable::Mutability::ReadOnly);
+    varService->declareVariable<bool>(ComponentId("EVSE", evseId >= 1 ? evseId : -1), "AllowReset", true, Variable::Mutability::ReadOnly, false);
 }
 
 void ResetService::Evse::loop() {
