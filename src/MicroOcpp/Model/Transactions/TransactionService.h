@@ -14,27 +14,35 @@
 #if MO_ENABLE_V201
 
 #include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/Metering/MeterValuesV201.h>
+#include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/Memory.h>
 
 #include <memory>
 #include <functional>
 
+#ifndef MO_TXRECORD_SIZE_V201
+#define MO_TXRECORD_SIZE_V201 4 //maximum number of tx to hold on flash storage
+#endif
+
 namespace MicroOcpp {
 
 class Context;
+class FilesystemAdapter;
 class Variable;
 
 class TransactionService : public MemoryManaged {
 public:
 
-    class Evse : public MemoryManaged {
+    class Evse : public RequestEmitter, public MemoryManaged {
     private:
         Context& context;
         TransactionService& txService;
+        Ocpp201::TransactionStoreEvse& txStore;
         const unsigned int evseId;
         unsigned int txNrCounter = 0;
-        std::shared_ptr<Ocpp201::Transaction> transaction;
+        std::unique_ptr<Ocpp201::Transaction> transaction;
         Ocpp201::TransactionEventData::ChargingState trackChargingState = Ocpp201::TransactionEventData::ChargingState::UNDEFINED;
 
         std::function<bool()> connectorPluggedInput;
@@ -44,10 +52,20 @@ public:
         std::function<bool()> startTxReadyInput;
         std::function<bool()> stopTxReadyInput;
 
-        std::unique_ptr<Ocpp201::Transaction> allocateTransaction();
+        bool beginTransaction();
+        bool endTransaction(Ocpp201::Transaction::StoppedReason stoppedReason, Ocpp201::TransactionEventTriggerReason stopTrigger);
+
+        unsigned int txNrBegin = 0; //oldest (historical) transaction on flash. Has no function, but is useful for error diagnosis
+        unsigned int txNrFront = 0; //oldest transaction which is still queued to be sent to the server
+        unsigned int txNrEnd = 0; //one position behind newest transaction
+
+        Ocpp201::Transaction *txFront = nullptr;
+        std::unique_ptr<Ocpp201::Transaction> txFrontCache; //helper owner for txFront. Empty if txFront == transaction.get()
+        std::unique_ptr<Ocpp201::TransactionEventData> txEventFront;
+        bool txEventFrontIsRequested = false;
 
     public:
-        Evse(Context& context, TransactionService& txService, unsigned int evseId);
+        Evse(Context& context, TransactionService& txService, Ocpp201::TransactionStoreEvse& txStore, unsigned int evseId);
 
         void loop();
 
@@ -56,14 +74,17 @@ public:
         void setEvseReadyInput(std::function<bool()> connectorEnergized);
 
         bool beginAuthorization(IdToken idToken, bool validateIdToken = true); // authorize by swipe RFID
-        bool endAuthorization(IdToken idToken = IdToken(), bool validateIdToken = true); // stop authorization by swipe RFID
+        bool endAuthorization(IdToken idToken = IdToken(), bool validateIdToken = false); // stop authorization by swipe RFID
 
         // stop transaction, but neither upon user request nor OCPP server request (e.g. after PowerLoss)
-        bool abortTransaction(Ocpp201::Transaction::StopReason stopReason = Ocpp201::Transaction::StopReason::Other, Ocpp201::TransactionEventTriggerReason stopTrigger = Ocpp201::TransactionEventTriggerReason::AbnormalCondition);
+        bool abortTransaction(Ocpp201::Transaction::StoppedReason stoppedReason = Ocpp201::Transaction::StoppedReason::Other, Ocpp201::TransactionEventTriggerReason stopTrigger = Ocpp201::TransactionEventTriggerReason::AbnormalCondition);
 
-        std::shared_ptr<Ocpp201::Transaction>& getTransaction();
+        Ocpp201::Transaction *getTransaction();
 
         bool ocppPermitsCharge();
+
+        unsigned int getFrontRequestOpNr() override;
+        std::unique_ptr<Request> fetchFrontRequest() override;
 
         friend TransactionService;
     };
@@ -80,7 +101,8 @@ public:
 
 private:
     Context& context;
-    Vector<Evse> evses;
+    Ocpp201::TransactionStore txStore;
+    Evse *evses [MO_NUM_EVSEID] = {nullptr};
 
     Variable *txStartPointString = nullptr;
     Variable *txStopPointString = nullptr;
@@ -89,6 +111,9 @@ private:
     Variable *evConnectionTimeOutInt = nullptr;
     Variable *sampledDataTxUpdatedInterval = nullptr;
     Variable *sampledDataTxEndedInterval = nullptr;
+    Variable *messageAttemptsTransactionEventInt = nullptr;
+    Variable *messageAttemptIntervalTransactionEventInt = nullptr;
+    Variable *silentOfflineTransactionsBool = nullptr;
     uint16_t trackTxStartPoint = -1;
     uint16_t trackTxStopPoint = -1;
     Vector<TxStartStopPoint> txStartPointParsed;
@@ -96,7 +121,7 @@ private:
     bool isTxStartPoint(TxStartStopPoint check);
     bool isTxStopPoint(TxStartStopPoint check);
 public:
-    TransactionService(Context& context);
+    TransactionService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int numEvseIds);
 
     void loop();
 

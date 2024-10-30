@@ -11,6 +11,8 @@
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Operations/CiStrings.h>
 
+#define MAX_TX_CNT 100000U //upper limit of txNr (internal usage). Must be at least 2*MO_TXRECORD_SIZE+1
+
 namespace MicroOcpp {
 
 /*
@@ -233,7 +235,7 @@ class Transaction : public MemoryManaged {
 public:
 
     // ReasonEnumType (3.67)
-    enum class StopReason : uint8_t {
+    enum class StoppedReason : uint8_t {
         UNDEFINED, // not part of OCPP
         DeAuthorized,
         EmergencyStop,
@@ -273,7 +275,6 @@ public:
     bool active = true; //once active is false, the tx must stop (or cannot start at all)
     bool started = false; //if a TxEvent with event type TxStarted has been initiated
     bool stopped = false; //if a TxEvent with event type TxEnded has been initiated
-    bool stoppedConfirmed = false; //if all TxEvents have been sent to the server (acknowledged or aborted)
 
     /*
      * Global transaction data
@@ -281,7 +282,6 @@ public:
     bool isAuthorizationActive = false; //period between beginAuthorization and endAuthorization
     bool isAuthorized = false;    //if the given idToken was authorized
     bool isDeauthorized = false;  //if the server revoked a local authorization
-    unsigned int seqNoCounter = 0; // increment by 1 for each event
     IdToken idToken;
     Timestamp beginTimestamp = MIN_TIME;
     char transactionId [MO_TXID_LEN_MAX + 1] = {'\0'};
@@ -297,7 +297,7 @@ public:
 
     bool evConnectionTimeoutListen = true;
 
-    StopReason stopReason = StopReason::UNDEFINED;
+    StoppedReason stoppedReason = StoppedReason::UNDEFINED;
     TransactionEventTriggerReason stopTrigger = TransactionEventTriggerReason::UNDEFINED;
     std::unique_ptr<IdToken> stopIdToken; // if null, then stopIdToken equals idToken
 
@@ -316,9 +316,15 @@ public:
     unsigned int evseId = 0;
     unsigned int txNr = 0; //internal key attribute (!= transactionId); {evseId*txNr} is unique key
 
+    unsigned int seqNoEnd = 0; // increment by 1 for each event
+    Vector<unsigned int> seqNos; //track stored txEvents
+
     bool silent = false; //silent Tx: process tx locally, without reporting to the server
 
-    Transaction() : MemoryManaged("v201.Transactions.Transaction"), sampledDataTxEnded(makeVector<std::unique_ptr<Ocpp201::MeterValue>>(getMemoryTag())) { }
+    Transaction() :
+            MemoryManaged("v201.Transactions.Transaction"),
+            sampledDataTxEnded(makeVector<std::unique_ptr<Ocpp201::MeterValue>>(getMemoryTag())),
+            seqNos(makeVector<unsigned int>(getMemoryTag())) { }
 
     void addSampledDataTxEnded(std::unique_ptr<Ocpp201::MeterValue> mv) {
         if (sampledDataTxEnded.size() >= MO_SAMPLEDDATATXENDED_SIZE_MAX) {
@@ -365,9 +371,10 @@ public:
     };
 
 //private:
-    std::shared_ptr<Transaction> transaction;
+    Transaction *transaction;
     Type eventType;
     Timestamp timestamp;
+    uint16_t bootNr = 0;
     TransactionEventTriggerReason triggerReason;
     const unsigned int seqNo;
     bool offline = false;
@@ -383,9 +390,26 @@ public:
     EvseId evse = -1;
     //meterValue not supported
     Vector<std::unique_ptr<MeterValue>> meterValue;
+    
+    unsigned int opNr = 0;
+    unsigned int attemptNr = 0;
+    Timestamp attemptTime = MIN_TIME;
 
-    TransactionEventData(std::shared_ptr<Transaction> transaction, unsigned int seqNo) : MemoryManaged("v201.Transactions.TransactionEventData"), transaction(transaction), seqNo(seqNo), meterValue(makeVector<std::unique_ptr<MeterValue>>(getMemoryTag())) { }
+    TransactionEventData(Transaction *transaction, unsigned int seqNo) : MemoryManaged("v201.Transactions.TransactionEventData"), transaction(transaction), seqNo(seqNo), meterValue(makeVector<std::unique_ptr<MeterValue>>(getMemoryTag())) { }
 };
+
+const char *serializeTransactionStoppedReason(Transaction::StoppedReason stoppedReason);
+bool deserializeTransactionStoppedReason(const char *stoppedReasonCstr, Transaction::StoppedReason& stoppedReasonOut);
+
+const char *serializeTransactionEventType(TransactionEventData::Type type);
+bool deserializeTransactionEventType(const char *typeCstr, TransactionEventData::Type& typeOut);
+
+const char *serializeTransactionEventTriggerReason(TransactionEventTriggerReason triggerReason);
+bool deserializeTransactionEventTriggerReason(const char *triggerReasonCstr, TransactionEventTriggerReason& triggerReasonOut);
+
+const char *serializeTransactionEventChargingState(TransactionEventData::ChargingState chargingState);
+bool deserializeTransactionEventChargingState(const char *chargingStateCstr, TransactionEventData::ChargingState& chargingStateOut);
+
 
 } // namespace Ocpp201
 } // namespace MicroOcpp

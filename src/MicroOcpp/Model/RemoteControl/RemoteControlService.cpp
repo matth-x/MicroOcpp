@@ -40,7 +40,7 @@ UnlockStatus RemoteControlServiceEvse::unlockConnector() {
                 if (tx->started && !tx->stopped && tx->isAuthorized) {
                     return UnlockStatus_OngoingAuthorizedTransaction;
                 } else {
-                    evse->abortTransaction(Ocpp201::Transaction::StopReason::Other,Ocpp201::TransactionEventTriggerReason::UnlockCommand);
+                    evse->abortTransaction(Ocpp201::Transaction::StoppedReason::Other,Ocpp201::TransactionEventTriggerReason::UnlockCommand);
                 }
             }
         }
@@ -102,7 +102,7 @@ RemoteControlServiceEvse *RemoteControlService::getEvse(unsigned int evseId) {
     return evses[evseId];
 }
 
-RequestStartStopStatus RemoteControlService::requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, IdToken idToken, std::shared_ptr<Ocpp201::Transaction>& transactionOut) {
+RequestStartStopStatus RemoteControlService::requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, IdToken idToken, char *transactionIdOut, size_t transactionIdBufSize) {
     
     TransactionService *txService = context.getModel().getTransactionService();
     if (!txService) {
@@ -116,21 +116,32 @@ RequestStartStopStatus RemoteControlService::requestStartTransaction(unsigned in
         return RequestStartStopStatus_Rejected;
     }
 
-    transactionOut = evse->getTransaction();
-
     if (!evse->beginAuthorization(idToken, authorizeRemoteStart->getBool())) {
         MO_DBG_INFO("EVSE still occupied with pending tx");
+        if (auto tx = evse->getTransaction()) {
+            auto ret = snprintf(transactionIdOut, transactionIdBufSize, "%s", tx->transactionId);
+            if (ret < 0 || (size_t)ret >= transactionIdBufSize) {
+                MO_DBG_ERR("internal error");
+                return RequestStartStopStatus_Rejected;
+            }
+        }
         return RequestStartStopStatus_Rejected;
     }
 
-    transactionOut = evse->getTransaction();
-    if (!transactionOut) {
+    auto tx = evse->getTransaction();
+    if (!tx) {
         MO_DBG_ERR("internal error");
         return RequestStartStopStatus_Rejected;
     }
 
-    transactionOut->remoteStartId = remoteStartId;
-    transactionOut->notifyRemoteStartId = true;
+    auto ret = snprintf(transactionIdOut, transactionIdBufSize, "%s", tx->transactionId);
+    if (ret < 0 || (size_t)ret >= transactionIdBufSize) {
+        MO_DBG_ERR("internal error");
+        return RequestStartStopStatus_Rejected;
+    }
+
+    tx->remoteStartId = remoteStartId;
+    tx->notifyRemoteStartId = true;
 
     return RequestStartStopStatus_Accepted;
 }
@@ -148,7 +159,7 @@ RequestStartStopStatus RemoteControlService::requestStopTransaction(const char *
     for (unsigned int evseId = 0; evseId < MO_NUM_EVSEID; evseId++) {
         if (auto evse = txService->getEvse(evseId)) {
             if (evse->getTransaction() && !strcmp(evse->getTransaction()->transactionId, transactionId)) {
-                success = evse->abortTransaction(Ocpp201::Transaction::StopReason::Remote, Ocpp201::TransactionEventTriggerReason::RemoteStop);
+                success = evse->abortTransaction(Ocpp201::Transaction::StoppedReason::Remote, Ocpp201::TransactionEventTriggerReason::RemoteStop);
                 break;
             }
         }

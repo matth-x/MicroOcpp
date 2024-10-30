@@ -22,6 +22,8 @@ IdToken::IdToken(const char *token, Type type, const char *memoryTag) : MemoryMa
             MO_DBG_ERR("invalid token");
             *idToken = '\0';
         }
+    } else {
+        *idToken = '\0';
     }
 }
 
@@ -63,11 +65,11 @@ bool IdToken::parseCstr(const char *token, const char *typeCstr) {
 }
 
 const char *IdToken::get() const {
-    return *idToken ? idToken : nullptr;;
+    return idToken;
 }
 
 const char *IdToken::getTypeCstr() const {
-    const char *res = nullptr;
+    const char *res = "";
     switch (type) {
         case Type::UNDEFINED:
             MO_DBG_ERR("internal error");
@@ -98,7 +100,7 @@ const char *IdToken::getTypeCstr() const {
             break;
     }
 
-    return res ? res : "";
+    return res;
 }
 
 bool IdToken::equals(const IdToken& other) {

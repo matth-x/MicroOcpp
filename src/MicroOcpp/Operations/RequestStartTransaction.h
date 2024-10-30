@@ -26,6 +26,7 @@ private:
 
     RequestStartStopStatus status;
     std::shared_ptr<Ocpp201::Transaction> transaction;
+    char transactionId [MO_TXID_LEN_MAX + 1] = {'\0'};
 
     const char *errorCode = nullptr;
 public:

@@ -43,7 +43,7 @@ void RequestStartTransaction::processReq(JsonObject payload) {
         return;
     }
 
-    status = rcService.requestStartTransaction(evseId, remoteStartId, idToken, transaction);
+    status = rcService.requestStartTransaction(evseId, remoteStartId, idToken, transactionId, sizeof(transactionId));
 }
 
 std::unique_ptr<JsonDoc> RequestStartTransaction::createConf(){

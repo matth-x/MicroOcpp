@@ -22,12 +22,12 @@ class TransactionEventData;
 class TransactionEvent : public Operation, public MemoryManaged {
 private:
     Model& model;
-    std::shared_ptr<TransactionEventData> txEvent;
+    TransactionEventData *txEvent;
 
     const char *errorCode = nullptr;
 public:
 
-    TransactionEvent(Model& model, std::shared_ptr<TransactionEventData> txEvent);
+    TransactionEvent(Model& model, TransactionEventData *txEvent);
 
     const char* getOperationType() override;
 

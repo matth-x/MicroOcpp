@@ -303,7 +303,7 @@ ResetStatus ResetService::initiateReset(ResetType type, unsigned int evseId) {
             if (tx->active) {
                 //Tx in progress. Check behavior
                 if (type == ResetType_Immediate) {
-                    txService->getEvse(eId)->abortTransaction(Transaction::StopReason::ImmediateReset, TransactionEventTriggerReason::ResetCommand);
+                    txService->getEvse(eId)->abortTransaction(Transaction::StoppedReason::ImmediateReset, TransactionEventTriggerReason::ResetCommand);
                 } else {
                     scheduled = true;
                     break;
