@@ -517,7 +517,7 @@ bool TransactionStoreEvse::serializeTransactionEvent(TransactionEventData& txEve
 bool TransactionStoreEvse::deserializeTransactionEvent(TransactionEventData& txEvent, JsonObject txEventJson) {
 
     TransactionEventData::Type eventType;
-    if (!deserializeTransactionEventType(txEventJson["eventType"] | "_Undefined", eventType)) {
+    if (!deserializeTransactionEventType(txEventJson["eventType"] | "Updated", eventType)) {
         return false;
     }
     txEvent.eventType = eventType;
@@ -688,7 +688,7 @@ bool TransactionStoreEvse::discoverStoredTx(unsigned int& txNrBeginOut, unsigned
                 }
             }
 
-            MO_DBG_DEBUG("found %s%u.json - Internal range from %u to %u (exclusive)", fnPrefix, parsedTxNr, txNrBegin, txNrEnd);
+            MO_DBG_DEBUG("found %s%u-*.json - Internal range from %u to %u (exclusive)", fnPrefix, parsedTxNr, txNrBegin, txNrEnd);
         }
         return 0;
     });
@@ -923,8 +923,9 @@ bool TransactionStoreEvse::commit(Transaction& tx, TransactionEventData *txEvent
         for (size_t i = 2; i + 1 <= tx.seqNos.size(); i++) { //always keep first and final txEvent
             size_t t0 = tx.seqNos.size() - i - 1;
             size_t t1 = tx.seqNos.size() - i;
+            size_t t2 = tx.seqNos.size() - i + 1;
 
-            auto delta = tx.seqNos[t1] - tx.seqNos[t0];
+            auto delta = tx.seqNos[t2] - tx.seqNos[t0];
 
             if (delta < deltaMin) {
                 deltaMin = delta;
@@ -933,7 +934,7 @@ bool TransactionStoreEvse::commit(Transaction& tx, TransactionEventData *txEvent
         }
 
         if (indexMin < tx.seqNos.size()) {
-            MO_DBG_DEBUG("delete intermediate txEvent %u-%u-%u", evseId, tx.txNr, tx.seqNos[indexMin]);
+            MO_DBG_DEBUG("delete intermediate txEvent %u-%u-%u - delta=%u", evseId, tx.txNr, tx.seqNos[indexMin], deltaMin);
             remove(tx, tx.seqNos[indexMin]); //remove can call commit() again. Ensure that remove is not executed for last element
         } else {
             MO_DBG_ERR("internal error");

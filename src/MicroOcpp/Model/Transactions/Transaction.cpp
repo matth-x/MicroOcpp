@@ -255,7 +255,9 @@ const char *serializeTransactionEventTriggerReason(TransactionEventTriggerReason
     return triggerReasonCstr;
 }
 bool deserializeTransactionEventTriggerReason(const char *triggerReasonCstr, TransactionEventTriggerReason& triggerReasonOut) {
-    if (!strcmp(triggerReasonCstr, "Authorized")) {
+    if (!triggerReasonCstr || !*triggerReasonCstr) {
+        triggerReasonOut = TransactionEventTriggerReason::UNDEFINED;
+    } else if (!strcmp(triggerReasonCstr, "Authorized")) {
         triggerReasonOut = TransactionEventTriggerReason::Authorized;
     } else if (!strcmp(triggerReasonCstr, "CablePluggedIn")) {
         triggerReasonOut = TransactionEventTriggerReason::CablePluggedIn;

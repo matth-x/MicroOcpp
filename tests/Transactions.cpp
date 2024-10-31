@@ -333,7 +333,79 @@ TEST_CASE( "Transactions" ) {
 
         REQUIRE( checkReceivedStarted );
         REQUIRE( checkReceivedEnded );
+    }
 
+    SECTION("TxEvents queue size limit") {
+
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "")->setString("Authorized");
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStopPoint", "")->setString("Authorized");
+
+        bool checkReceivedStarted = false, checkReceivedEnded = false;
+        size_t checkSeqNosSize = 0;
+
+        getOcppContext()->getOperationRegistry().registerOperation("TransactionEvent", [&checkReceivedStarted, &checkReceivedEnded, &checkSeqNosSize] () {
+            return new Ocpp16::CustomOperation("TransactionEvent",
+                [&checkReceivedStarted, &checkReceivedEnded, &checkSeqNosSize] (JsonObject request) {
+                    //process req
+                    const char *eventType = request["eventType"] | (const char*)nullptr;
+                    if (!strcmp(eventType, "Started")) {
+                        checkReceivedStarted = true;
+                    } else if (!strcmp(eventType, "Ended")) {
+                        checkReceivedEnded = true;
+                    }
+                    checkSeqNosSize++;
+                },
+                [] () {
+                    //create conf
+                    auto doc = makeJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
+                    auto payload = doc->to<JsonObject>();
+                    payload["idTokenInfo"]["status"] = "Accepted";
+                    return doc;
+                });});
+    
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
+
+        loopback.setConnected(false);
+
+        context->getModel().getTransactionService()->getEvse(1)->beginAuthorization("mIdToken", false);
+
+        loop();
+
+        auto tx = context->getModel().getTransactionService()->getEvse(1)->getTransaction();
+        REQUIRE( tx != nullptr );
+
+        for (size_t i = 0; i < MO_TXEVENTRECORD_SIZE_V201 * 2; i++) {
+            setEvReadyInput([] () {return false;});
+            loop();
+            setEvReadyInput([] () {return true;});
+            loop();
+            setEvReadyInput([] () {return false;});
+            loop();
+        }
+
+        REQUIRE( tx->seqNos.size() == MO_TXEVENTRECORD_SIZE_V201 );
+
+        for (auto seqNo : tx->seqNos) {
+            MO_DBG_DEBUG("stored seqNo %u", seqNo);
+        }
+
+        for (size_t i = 1; i < tx->seqNos.size(); i++) {
+            auto delta = tx->seqNos[i] - tx->seqNos[i-1];
+            REQUIRE(delta <= 2 * tx->seqNos.back() / MO_TXEVENTRECORD_SIZE_V201 );
+        }
+
+        context->getModel().getTransactionService()->getEvse(1)->endAuthorization();
+
+        loop();
+
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
+
+        loopback.setConnected(true);
+        loop();
+
+        REQUIRE( checkReceivedStarted );
+        REQUIRE( checkReceivedEnded );
+        REQUIRE( checkSeqNosSize == MO_TXEVENTRECORD_SIZE_V201 );
     }
 
     SECTION("Tx queue") {
@@ -411,6 +483,251 @@ TEST_CASE( "Transactions" ) {
         context->getModel().getTransactionService()->getEvse(1)->endAuthorization();
         loop();
         REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
+    }
+
+    SECTION("Power loss during running transaction") {
+
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "")->setString("Authorized");
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStopPoint", "")->setString("Authorized");
+
+        REQUIRE( getOcppContext()->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
+
+        const char *idTag = "example123";
+
+        getOcppContext()->getModel().getTransactionService()->getEvse(1)->beginAuthorization(idTag, false);
+        loop();
+
+        auto tx = getOcppContext()->getModel().getTransactionService()->getEvse(1)->getTransaction();
+        REQUIRE( tx != nullptr );
+        REQUIRE( tx->started );
+
+        auto txNr = tx->txNr;
+        std::string txId = tx->transactionId;
+
+        //power cut
+        mocpp_deinitialize();
+
+        //power restored
+        mocpp_initialize(loopback,
+            ChargerCredentials(),
+            makeDefaultFilesystemAdapter(FilesystemOpt::Use_Mount_FormatOnFail),
+            false,
+            ProtocolVersion(2,0,1));
+        mocpp_set_timer(custom_timer_cb);
+
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "")->setString("Authorized");
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStopPoint", "")->setString("Authorized");
+
+        bool checkProcessed = false;
+
+        getOcppContext()->getOperationRegistry().registerOperation("TransactionEvent", [&checkProcessed, txId] () {
+            return new Ocpp16::CustomOperation("TransactionEvent",
+                [&checkProcessed, txId] (JsonObject request) {
+                    //process req
+                    const char *eventType = request["eventType"] | (const char*)nullptr;
+                    REQUIRE( strcmp(eventType, "Started") );
+                    if (!strcmp(eventType, "Ended")) {
+                        checkProcessed = true;
+                    }
+                    REQUIRE( !txId.compare(request["transactionInfo"]["transactionId"] | "_Undefined") );
+                },
+                [] () {
+                    //create conf
+                    auto doc = makeJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
+                    auto payload = doc->to<JsonObject>();
+                    payload["idTokenInfo"]["status"] = "Accepted";
+                    return doc;
+                });});
+        
+        loop(); //let MO spin up and reconnect
+
+        tx = getOcppContext()->getModel().getTransactionService()->getEvse(1)->getTransaction();
+        REQUIRE( tx != nullptr );
+        REQUIRE( tx->started );
+        REQUIRE( !tx->stopped );
+        REQUIRE( tx->txNr == txNr );
+        REQUIRE( !txId.compare(tx->transactionId) );
+        REQUIRE( !strcmp(tx->idToken.get(), idTag) );
+
+        getOcppContext()->getModel().getTransactionService()->getEvse(1)->endAuthorization();
+        loop();
+
+        tx = getOcppContext()->getModel().getTransactionService()->getEvse(1)->getTransaction();
+        REQUIRE( tx == nullptr );
+        REQUIRE( checkProcessed ); //txEvent was sent
+    }
+
+    SECTION("Power loss with enqueued txEvents") {
+
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "")->setString("Authorized");
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStopPoint", "")->setString("Authorized");
+
+        REQUIRE( getOcppContext()->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
+
+        loopback.setConnected(false);
+
+        const char *idTag = "example123";
+
+        getOcppContext()->getModel().getTransactionService()->getEvse(1)->beginAuthorization(idTag, false);
+        loop();
+
+        auto tx = getOcppContext()->getModel().getTransactionService()->getEvse(1)->getTransaction();
+        REQUIRE( tx != nullptr );
+        REQUIRE( tx->started );
+
+        auto txNr = tx->txNr;
+        std::string txId = tx->transactionId;
+
+        setEvReadyInput([] () {return false;});
+        loop();
+        setEvReadyInput([] () {return true;});
+        loop();
+        setEvReadyInput([] () {return false;});
+        loop();
+
+        size_t seqNosSize = tx->seqNos.size();
+        size_t checkSeqNosSize = 0;
+
+        //power cut
+        mocpp_deinitialize();
+
+        //power restored
+        mocpp_initialize(loopback,
+            ChargerCredentials(),
+            makeDefaultFilesystemAdapter(FilesystemOpt::Use_Mount_FormatOnFail),
+            false,
+            ProtocolVersion(2,0,1));
+        mocpp_set_timer(custom_timer_cb);
+
+        loopback.setConnected(true);
+
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "")->setString("Authorized");
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStopPoint", "")->setString("Authorized");
+
+        bool checkReceivedStarted = false, checkReceivedEnded = false;
+
+        getOcppContext()->getOperationRegistry().registerOperation("TransactionEvent", [&checkReceivedStarted, &checkReceivedEnded, txId, &checkSeqNosSize] () {
+            return new Ocpp16::CustomOperation("TransactionEvent",
+                [&checkReceivedStarted, &checkReceivedEnded, txId, &checkSeqNosSize] (JsonObject request) {
+                    //process req
+                    const char *eventType = request["eventType"] | (const char*)nullptr;
+                    if (!strcmp(eventType, "Started")) {
+                        checkReceivedStarted = true;
+                    } else if (!strcmp(eventType, "Ended")) {
+                        checkReceivedEnded = true;
+                    }
+                    REQUIRE( !txId.compare(request["transactionInfo"]["transactionId"] | "_Undefined") );
+                    checkSeqNosSize++;
+                },
+                [] () {
+                    //create conf
+                    auto doc = makeJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
+                    auto payload = doc->to<JsonObject>();
+                    payload["idTokenInfo"]["status"] = "Accepted";
+                    return doc;
+                });});
+        
+        loop(); //let MO spin up and reconnect
+
+        REQUIRE( checkReceivedStarted );
+        REQUIRE( (seqNosSize == checkSeqNosSize || seqNosSize + 1 == checkSeqNosSize) );
+
+        tx = getOcppContext()->getModel().getTransactionService()->getEvse(1)->getTransaction();
+        REQUIRE( tx != nullptr );
+        REQUIRE( tx->started );
+        REQUIRE( !tx->stopped );
+        REQUIRE( tx->txNr == txNr );
+        REQUIRE( !txId.compare(tx->transactionId) );
+        REQUIRE( !strcmp(tx->idToken.get(), idTag) );
+
+        getOcppContext()->getModel().getTransactionService()->getEvse(1)->endAuthorization();
+        loop();
+
+        tx = getOcppContext()->getModel().getTransactionService()->getEvse(1)->getTransaction();
+        REQUIRE( tx == nullptr );
+        REQUIRE( checkReceivedEnded ); //txEvent was sent
+    }
+
+    SECTION("Power loss with enqueued transactions") {
+
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "")->setString("Authorized");
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStopPoint", "")->setString("Authorized");
+
+        std::map<std::string,std::tuple<bool,bool>> txEventRequests;
+
+        REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
+
+        loopback.setConnected(false);
+
+        for (size_t i = 0; i < MO_TXRECORD_SIZE_V201; i++) {
+
+            char idTokenBuf [MO_IDTOKEN_LEN_MAX + 1];
+            snprintf(idTokenBuf, sizeof(idTokenBuf), "mIdToken-%zu", i);
+
+            REQUIRE( context->getModel().getTransactionService()->getEvse(1)->beginAuthorization(idTokenBuf, false) );
+
+            loop();
+
+            auto tx = context->getModel().getTransactionService()->getEvse(1)->getTransaction();
+
+            REQUIRE( tx != nullptr );
+            REQUIRE( tx->started );
+            txEventRequests[tx->transactionId] = {false, false};
+
+            context->getModel().getTransactionService()->getEvse(1)->endAuthorization();
+
+            loop();
+
+            REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
+        }
+
+        //power cut
+        mocpp_deinitialize();
+
+        //power restored
+        mocpp_initialize(loopback,
+            ChargerCredentials(),
+            makeDefaultFilesystemAdapter(FilesystemOpt::Use_Mount_FormatOnFail),
+            false,
+            ProtocolVersion(2,0,1));
+        mocpp_set_timer(custom_timer_cb);
+
+        loopback.setConnected(true);
+
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "")->setString("Authorized");
+        getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStopPoint", "")->setString("Authorized");
+
+        getOcppContext()->getOperationRegistry().registerOperation("TransactionEvent", [&txEventRequests] () {
+            return new Ocpp16::CustomOperation("TransactionEvent",
+                [&txEventRequests] (JsonObject request) {
+                    //process req
+                    const char *eventType = request["eventType"] | (const char*)nullptr;
+                    if (!strcmp(eventType, "Started")) {
+                        std::get<0>(txEventRequests[request["transactionInfo"]["transactionId"] | "_Undefined"]) = true;
+                    } else if (!strcmp(eventType, "Ended")) {
+                        std::get<1>(txEventRequests[request["transactionInfo"]["transactionId"] | "_Undefined"]) = true;
+                    }
+                },
+                [] () {
+                    //create conf
+                    auto doc = makeJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
+                    auto payload = doc->to<JsonObject>();
+                    payload["idTokenInfo"]["status"] = "Accepted";
+                    return doc;
+                });});
+
+        loopback.setConnected(true);
+        loop();
+
+        for (const auto& txReq : txEventRequests) {
+            MO_DBG_DEBUG("check txId %s", txReq.first.c_str());
+            REQUIRE( std::get<0>(txReq.second) );
+            REQUIRE( std::get<1>(txReq.second) );
+        }
+
+        REQUIRE( txEventRequests.size() == MO_TXRECORD_SIZE_V201 );
+
+        REQUIRE( getOcppContext()->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
     }
 
     mocpp_deinitialize();
