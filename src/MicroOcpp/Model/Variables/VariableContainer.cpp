@@ -278,9 +278,6 @@ bool VariableContainerOwning::commit() {
                 if (variable.hasAttribute(Variable::AttributeType::MaxSet)) stored["valMaxSet"] = variable.getString(Variable::AttributeType::MaxSet);
                 break;
         }
-
-        char buf [1000];
-        serializeJson(doc, buf, 1000);
     }
 
 
