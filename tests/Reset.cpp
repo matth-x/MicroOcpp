@@ -50,6 +50,17 @@ TEST_CASE( "Reset" ) {
                 return doc;
             });});
 
+    getOcppContext()->getOperationRegistry().registerOperation("TransactionEvent", [] () {
+        return new Ocpp16::CustomOperation("TransactionEvent",
+            [] (JsonObject) {}, //ignore req
+            [] () {
+                //create conf
+                auto doc = makeJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
+                auto payload = doc->to<JsonObject>();
+                payload["idTokenInfo"]["status"] = "Accepted";
+                return doc;
+            });});
+
     // Register Reset handlers
     bool checkNotified [MO_NUM_EVSEID] = {false};
     bool checkExecuted [MO_NUM_EVSEID] = {false};
