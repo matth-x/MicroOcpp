@@ -1011,6 +1011,12 @@ TransactionService::TransactionService(Context& context, std::shared_ptr<Filesys
     }
 }
 
+TransactionService::~TransactionService() {
+    for (unsigned int evseId = 0; evseId < MO_NUM_EVSEID && evses[evseId]; evseId++) {
+        delete evses[evseId];
+    }
+}
+
 void TransactionService::loop() {
     for (unsigned int evseId = 0; evseId < MO_NUM_EVSEID && evses[evseId]; evseId++) {
         evses[evseId]->loop();

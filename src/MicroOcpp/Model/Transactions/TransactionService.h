@@ -122,6 +122,7 @@ private:
     bool isTxStopPoint(TxStartStopPoint check);
 public:
     TransactionService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int numEvseIds);
+    ~TransactionService();
 
     void loop();
 
