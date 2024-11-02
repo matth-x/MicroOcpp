@@ -53,9 +53,9 @@ private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
     Vector<VariableContainer*> containers;
-    VariableContainerExternal containerExternal;
-    VariableContainerInternal containersInternal [MO_VARIABLESTORE_BUCKETS];
-    VariableContainerInternal& getContainerInternalByVariable(const ComponentId& component, const char *name);
+    VariableContainerNonOwning containerExternal;
+    VariableContainerOwning containersInternal [MO_VARIABLESTORE_BUCKETS];
+    VariableContainerOwning& getContainerInternalByVariable(const ComponentId& component, const char *name);
 
     Vector<VariableValidator<int>> validatorInt;
     Vector<VariableValidator<bool>> validatorBool;

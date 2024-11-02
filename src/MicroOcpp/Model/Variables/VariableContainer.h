@@ -31,11 +31,11 @@ public:
     virtual bool commit();
 };
 
-class VariableContainerExternal : public VariableContainer, public MemoryManaged {
+class VariableContainerNonOwning : public VariableContainer, public MemoryManaged {
 private:
     Vector<Variable*> variables;
 public:
-    VariableContainerExternal();
+    VariableContainerNonOwning();
 
     size_t size() override;
     Variable *getVariable(size_t i) override;
@@ -44,7 +44,7 @@ public:
     bool add(Variable *variable);
 };
 
-class VariableContainerInternal : public VariableContainer, public MemoryManaged {
+class VariableContainerOwning : public VariableContainer, public MemoryManaged {
 private:
     Vector<std::unique_ptr<Variable>> variables;
     std::shared_ptr<FilesystemAdapter> filesystem;
@@ -56,8 +56,8 @@ private:
     bool loaded = false;
 
 public:
-    VariableContainerInternal();
-    ~VariableContainerInternal();
+    VariableContainerOwning();
+    ~VariableContainerOwning();
 
     size_t size() override;
     Variable *getVariable(size_t i) override;

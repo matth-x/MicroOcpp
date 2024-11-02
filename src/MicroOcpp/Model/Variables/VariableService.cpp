@@ -59,7 +59,7 @@ VariableValidator<const char*> *VariableService::getValidatorString(const Compon
     return getVariableValidator<const char*>(validatorString, component, name);
 }
 
-VariableContainerInternal& VariableService::getContainerInternalByVariable(const ComponentId& component, const char *name) {
+VariableContainerOwning& VariableService::getContainerInternalByVariable(const ComponentId& component, const char *name) {
     unsigned int hash = 0;
     for (size_t i = 0; i < strlen(component.name); i++) {
         hash += (unsigned int)component.name[i];

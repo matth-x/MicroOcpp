@@ -27,20 +27,20 @@ bool VariableContainer::commit() {
     return true;
 }
 
-VariableContainerExternal::VariableContainerExternal() :
-            VariableContainer(), MemoryManaged("v201.Variables.VariableContainerExternal"), variables(makeVector<Variable*>(getMemoryTag())) {
+VariableContainerNonOwning::VariableContainerNonOwning() :
+            VariableContainer(), MemoryManaged("v201.Variables.VariableContainerNonOwning"), variables(makeVector<Variable*>(getMemoryTag())) {
 
 }
 
-size_t VariableContainerExternal::size() {
+size_t VariableContainerNonOwning::size() {
     return variables.size();
 }
 
-Variable *VariableContainerExternal::getVariable(size_t i) {
+Variable *VariableContainerNonOwning::getVariable(size_t i) {
     return variables[i];
 }
 
-Variable *VariableContainerExternal::getVariable(const ComponentId& component, const char *variableName) {
+Variable *VariableContainerNonOwning::getVariable(const ComponentId& component, const char *variableName) {
     for (size_t i = 0; i < variables.size(); i++) {
         auto& var = variables[i];
         if (!strcmp(var->getName(), variableName) &&
@@ -51,12 +51,12 @@ Variable *VariableContainerExternal::getVariable(const ComponentId& component, c
     return nullptr;
 }
 
-bool VariableContainerExternal::add(Variable *variable) {
+bool VariableContainerNonOwning::add(Variable *variable) {
     variables.push_back(variable);
     return true;
 }
 
-bool VariableContainerInternal::checkWriteCountUpdated() {
+bool VariableContainerOwning::checkWriteCountUpdated() {
 
     decltype(trackWriteCount) writeCount = 0;
 
@@ -71,25 +71,25 @@ bool VariableContainerInternal::checkWriteCountUpdated() {
     return updated;
 }
 
-VariableContainerInternal::VariableContainerInternal() :
-            VariableContainer(), MemoryManaged("v201.Variables.VariableContainerInternal"), variables(makeVector<std::unique_ptr<Variable>>(getMemoryTag())) {
+VariableContainerOwning::VariableContainerOwning() :
+            VariableContainer(), MemoryManaged("v201.Variables.VariableContainerOwning"), variables(makeVector<std::unique_ptr<Variable>>(getMemoryTag())) {
 
 }
 
-VariableContainerInternal::~VariableContainerInternal() {
+VariableContainerOwning::~VariableContainerOwning() {
     MO_FREE(filename);
     filename = nullptr;
 }
 
-size_t VariableContainerInternal::size() {
+size_t VariableContainerOwning::size() {
     return variables.size();
 }
 
-Variable *VariableContainerInternal::getVariable(size_t i) {
+Variable *VariableContainerOwning::getVariable(size_t i) {
     return variables[i].get();
 }
 
-Variable *VariableContainerInternal::getVariable(const ComponentId& component, const char *variableName) {
+Variable *VariableContainerOwning::getVariable(const ComponentId& component, const char *variableName) {
     for (size_t i = 0; i < variables.size(); i++) {
         auto& var = variables[i];
         if (!strcmp(var->getName(), variableName) &&
@@ -100,12 +100,12 @@ Variable *VariableContainerInternal::getVariable(const ComponentId& component, c
     return nullptr;
 }
 
-bool VariableContainerInternal::add(std::unique_ptr<Variable> variable) {
+bool VariableContainerOwning::add(std::unique_ptr<Variable> variable) {
     variables.push_back(std::move(variable));
     return true;
 }
 
-bool VariableContainerInternal::enablePersistency(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename) {
+bool VariableContainerOwning::enablePersistency(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename) {
     this->filesystem = filesystem;
 
     MO_FREE(this->filename);
@@ -123,7 +123,7 @@ bool VariableContainerInternal::enablePersistency(std::shared_ptr<FilesystemAdap
     return true;
 }
 
-bool VariableContainerInternal::load() {
+bool VariableContainerOwning::load() {
     if (loaded) {
         return true;
     }
@@ -200,7 +200,7 @@ bool VariableContainerInternal::load() {
     return true;
 }
 
-bool VariableContainerInternal::commit() {
+bool VariableContainerOwning::commit() {
     if (!filesystem || !filename) {
         //persistency disabled - nothing to do
         return true;

@@ -34,7 +34,7 @@ TEST_CASE( "Variable" ) {
     FilesystemUtils::remove_if(filesystem, [] (const char*) {return true;});
 
     SECTION("Basic container operations"){
-        auto container = std::unique_ptr<VariableContainerInternal>(new VariableContainerInternal());
+        auto container = std::unique_ptr<VariableContainerOwning>(new VariableContainerOwning());
 
         //check emptyness
         REQUIRE( container->size() == 0 );
@@ -74,7 +74,7 @@ TEST_CASE( "Variable" ) {
 
     SECTION("Persistency on filesystem") {
 
-        auto container = std::unique_ptr<VariableContainerInternal>(new VariableContainerInternal());
+        auto container = std::unique_ptr<VariableContainerOwning>(new VariableContainerOwning());
         container->enablePersistency(filesystem, MO_FILENAME_PREFIX "persistent1.jsn");
 
         //trivial load call
@@ -94,7 +94,7 @@ TEST_CASE( "Variable" ) {
         container.reset(); //destroy
 
         //...load again
-        auto container2 = std::unique_ptr<VariableContainerInternal>(new VariableContainerInternal());
+        auto container2 = std::unique_ptr<VariableContainerOwning>(new VariableContainerOwning());
         container2->enablePersistency(filesystem, MO_FILENAME_PREFIX "persistent1.jsn");
         REQUIRE( container2->size() == 0 );
 
