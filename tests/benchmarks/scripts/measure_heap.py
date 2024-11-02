@@ -181,7 +181,7 @@ def setup_simulator():
     print('   - upload credentials')
     sftp = client.open_sftp()
     sftp.putfo(io.StringIO(os.environ['MO_SIM_CONFIG']),     os.path.join('MicroOcppSimulator', 'mo_store', 'simulator.jsn'))
-    sftp.putfo(io.StringIO(os.environ['MO_SIM_OCPP_SERVER']),os.path.join('MicroOcppSimulator', 'mo_store', 'ws-conn.jsn'))
+    sftp.putfo(io.StringIO(os.environ['MO_SIM_OCPP_SERVER']),os.path.join('MicroOcppSimulator', 'mo_store', 'ws-conn-v201.jsn'))
     sftp.putfo(io.StringIO(os.environ['MO_SIM_API_CERT']),   os.path.join('MicroOcppSimulator', 'mo_store', 'api_cert.pem'))
     sftp.putfo(io.StringIO(os.environ['MO_SIM_API_KEY']),    os.path.join('MicroOcppSimulator', 'mo_store', 'api_key.pem'))
     sftp.putfo(io.StringIO(os.environ['MO_SIM_API_CONFIG']), os.path.join('MicroOcppSimulator', 'mo_store', 'api.jsn'))
