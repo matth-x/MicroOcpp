@@ -47,6 +47,10 @@ TransactionService::Evse::Evse(Context& context, TransactionService& txService, 
     transaction = txStore.loadTransaction(txNrLatest); //returns nullptr if txNrLatest does not exist on flash
 }
 
+TransactionService::Evse::~Evse() {
+    
+}
+
 bool TransactionService::Evse::beginTransaction() {
 
     if (transaction) {

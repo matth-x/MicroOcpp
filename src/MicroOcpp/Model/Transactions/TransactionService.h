@@ -66,6 +66,7 @@ public:
 
     public:
         Evse(Context& context, TransactionService& txService, Ocpp201::TransactionStoreEvse& txStore, unsigned int evseId);
+        virtual ~Evse();
 
         void loop();
 
