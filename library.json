@@ -46,8 +46,7 @@
             "LICENSE",
             "mkdocs.yml",
             "platformio.ini",
-            "README.md",
-            "SConscript.py"
+            "README.md"
         ]
     },
 
