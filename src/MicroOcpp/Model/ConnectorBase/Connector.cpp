@@ -81,37 +81,39 @@ Connector::Connector(Context& context, std::shared_ptr<FilesystemAdapter> filesy
 
     unsigned int txNrPivot = std::numeric_limits<unsigned int>::max();
 
-    filesystem->ftw_root([this, txFnamePrefix, txFnamePrefixLen, &txNrPivot] (const char *fname) {
-        if (!strncmp(fname, txFnamePrefix, txFnamePrefixLen)) {
-            unsigned int parsedTxNr = 0;
-            for (size_t i = txFnamePrefixLen; fname[i] >= '0' && fname[i] <= '9'; i++) {
-                parsedTxNr *= 10;
-                parsedTxNr += fname[i] - '0';
-            }
-
-            if (txNrPivot == std::numeric_limits<unsigned int>::max()) {
-                txNrPivot = parsedTxNr;
-                txNrBegin = parsedTxNr;
-                txNrEnd = (parsedTxNr + 1) % MAX_TX_CNT;
-                return 0;
-            }
-
-            if ((parsedTxNr + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT < MAX_TX_CNT / 2) {
-                //parsedTxNr is after pivot point
-                if ((parsedTxNr + 1 + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT > (txNrEnd + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT) {
-                    txNrEnd = (parsedTxNr + 1) % MAX_TX_CNT;
+    if (filesystem) {
+        filesystem->ftw_root([this, txFnamePrefix, txFnamePrefixLen, &txNrPivot] (const char *fname) {
+            if (!strncmp(fname, txFnamePrefix, txFnamePrefixLen)) {
+                unsigned int parsedTxNr = 0;
+                for (size_t i = txFnamePrefixLen; fname[i] >= '0' && fname[i] <= '9'; i++) {
+                    parsedTxNr *= 10;
+                    parsedTxNr += fname[i] - '0';
                 }
-            } else if ((txNrPivot + MAX_TX_CNT - parsedTxNr) % MAX_TX_CNT < MAX_TX_CNT / 2) {
-                //parsedTxNr is before pivot point
-                if ((txNrPivot + MAX_TX_CNT - parsedTxNr) % MAX_TX_CNT > (txNrPivot + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT) {
+
+                if (txNrPivot == std::numeric_limits<unsigned int>::max()) {
+                    txNrPivot = parsedTxNr;
                     txNrBegin = parsedTxNr;
+                    txNrEnd = (parsedTxNr + 1) % MAX_TX_CNT;
+                    return 0;
                 }
-            }
 
-            MO_DBG_DEBUG("found %s%u.jsn - Internal range from %u to %u (exclusive)", txFnamePrefix, parsedTxNr, txNrBegin, txNrEnd);
-        }
-        return 0;
-    });
+                if ((parsedTxNr + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT < MAX_TX_CNT / 2) {
+                    //parsedTxNr is after pivot point
+                    if ((parsedTxNr + 1 + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT > (txNrEnd + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT) {
+                        txNrEnd = (parsedTxNr + 1) % MAX_TX_CNT;
+                    }
+                } else if ((txNrPivot + MAX_TX_CNT - parsedTxNr) % MAX_TX_CNT < MAX_TX_CNT / 2) {
+                    //parsedTxNr is before pivot point
+                    if ((txNrPivot + MAX_TX_CNT - parsedTxNr) % MAX_TX_CNT > (txNrPivot + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT) {
+                        txNrBegin = parsedTxNr;
+                    }
+                }
+
+                MO_DBG_DEBUG("found %s%u.jsn - Internal range from %u to %u (exclusive)", txFnamePrefix, parsedTxNr, txNrBegin, txNrEnd);
+            }
+            return 0;
+        });
+    }
 
     MO_DBG_DEBUG("found %u transactions for connector %u. Internal range from %u to %u (exclusive)", (txNrEnd + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT, connectorId, txNrBegin, txNrEnd);
     txNrFront = txNrBegin;

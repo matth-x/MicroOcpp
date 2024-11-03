@@ -1228,5 +1228,54 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE( checkProcessed );
     }
 
+    SECTION("No filesystem access behavior") {
+
+        //re-init without filesystem access
+        mocpp_deinitialize();
+
+        mocpp_initialize(loopback, ChargerCredentials(), MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Deactivate));
+        mocpp_set_timer(custom_timer_cb);
+        
+        loop();
+
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Available );
+        REQUIRE( !ocppPermitsCharge() );
+
+        for (size_t i = 0; i < 3; i++) {
+
+            beginTransaction("mIdTag");
+            loop();
+
+            REQUIRE( getChargePointStatus() == ChargePointStatus_Charging );
+            REQUIRE( ocppPermitsCharge() );
+
+            endTransaction();
+            loop();
+
+            REQUIRE( getChargePointStatus() == ChargePointStatus_Available );
+            REQUIRE( !ocppPermitsCharge() );
+        }
+
+        //Tx status will be lost over reboot
+
+        beginTransaction("mIdTag");
+        loop();
+
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Charging );
+        REQUIRE( ocppPermitsCharge() );
+
+        mocpp_deinitialize();
+
+        mocpp_initialize(loopback, ChargerCredentials(), MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Deactivate));
+        mocpp_set_timer(custom_timer_cb);
+
+        loop();
+
+        REQUIRE( getChargePointStatus() == ChargePointStatus_Available );
+        REQUIRE( !ocppPermitsCharge() );
+
+        //Note: queueing offline transactions without FS is currently not implemented
+    }
+
     mocpp_deinitialize();
 }
