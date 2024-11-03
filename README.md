@@ -4,7 +4,7 @@
 [![Unit tests]( https://github.com/matth-x/MicroOcpp/workflows/Unit%20tests/badge.svg)](https://github.com/matth-x/MicroOcpp/actions)
 [![codecov](https://codecov.io/github/matth-x/ArduinoOcpp/branch/develop/graph/badge.svg?token=UN6LO96HM7)](https://codecov.io/github/matth-x/ArduinoOcpp)
 
-OCPP 1.6 / 2.0.1 Client for microcontrollers. Portable C/C++. Compatible with Espressif, Arduino, NXP, STM, Linux and more.
+OCPP 1.6 / 2.0.1 client for microcontrollers. Portable C/C++. Compatible with Espressif, Arduino, NXP, STM, Linux and more.
 
 :heavy_check_mark: Works with [15+ commercial Central Systems](https://www.micro-ocpp.com/#h.314525e8447cc93c_81)
 
