@@ -387,6 +387,7 @@ TEST_CASE( "Transactions" ) {
 
         for (auto seqNo : tx->seqNos) {
             MO_DBG_DEBUG("stored seqNo %u", seqNo);
+            (void)seqNo;
         }
 
         for (size_t i = 1; i < tx->seqNos.size(); i++) {
