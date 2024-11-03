@@ -1,0 +1,2394 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../intro-tech/">
+      
+      
+      <link rel="icon" href="../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.43">
+    
+    
+      
+        <title>Benchmarks - MicroOCPP docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.0253249f.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#benchmarks" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="MicroOCPP docs" class="md-header__button md-logo" aria-label="MicroOCPP docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 89 89">
+  <path d="M3.136,17.387l0,42.932l42.932,21.467l-42.932,-64.399Z" />
+  <path d="M21.91,8l42.933,64.398l-18.775,9.388l-42.932,-64.399l18.774,-9.387Z" style="fill-opacity: 0.5" />
+  <path d="M67.535,17.387l-27.262,18.156l21.878,32.818l5.384,2.691l0,-53.665Z" />
+  <path d="M67.535,17.387l0,53.666l18.774,-9.388l0,-53.665l-18.774,9.387Z" style="fill-opacity: 0.25" />
+</svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MicroOCPP docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Benchmarks
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+    
+  
+  Benchmarks
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../intro-tech/" class="md-tabs__link">
+        
+  
+    
+  
+  Technical introduction
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../migration/" class="md-tabs__link">
+        
+  
+    
+  
+  Migrating to v1.1
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../modules/" class="md-tabs__link">
+        
+  
+    
+  
+  Modules
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../prerequisites/" class="md-tabs__link">
+        
+  
+    
+  
+  Development tools and basic prerequisites
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../security/" class="md-tabs__link">
+        
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="MicroOCPP docs" class="md-nav__button md-logo" aria-label="MicroOCPP docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 89 89">
+  <path d="M3.136,17.387l0,42.932l42.932,21.467l-42.932,-64.399Z" />
+  <path d="M21.91,8l42.933,64.398l-18.775,9.388l-42.932,-64.399l18.774,-9.387Z" style="fill-opacity: 0.5" />
+  <path d="M67.535,17.387l-27.262,18.156l21.878,32.818l5.384,2.691l0,-53.665Z" />
+  <path d="M67.535,17.387l0,53.666l18.774,-9.388l0,-53.665l-18.774,9.387Z" style="fill-opacity: 0.25" />
+</svg>
+
+    </a>
+    MicroOCPP docs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Benchmarks
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Benchmarks
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#firmware-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      Firmware size
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Firmware size">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ocpp-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      OCPP 1.6
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ocpp-201" class="md-nav__link">
+    <span class="md-ellipsis">
+      OCPP 2.0.1
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory usage
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-data-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full data sets
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../intro-tech/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Technical introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Migrating to v1.1
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Modules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../prerequisites/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development tools and basic prerequisites
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#firmware-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      Firmware size
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Firmware size">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ocpp-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      OCPP 1.6
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ocpp-201" class="md-nav__link">
+    <span class="md-ellipsis">
+      OCPP 2.0.1
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory usage
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-data-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full data sets
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="benchmarks">Benchmarks</h1>
+<p>Microcontrollers have tight hardware constraints which affect how much resources the firmware can demand. It is important to make sure that the available resources are not depleted to allow for robust operation and that there is sufficient flash head room to allow for future software upgrades.</p>
+<p>In general, microcontrollers have three relevant hardware constraints:</p>
+<ul>
+<li>Limited processing speed</li>
+<li>Limited memory size</li>
+<li>Limited flash size</li>
+</ul>
+<p>For OCPP, the relevant bottlenecks are especially the memory and flash size. The processing speed is no concern, since OCPP is not computationally complex and does not include any extensive planning algorithms on the charger size. A previous <a href="https://github.com/matth-x/MicroOcpp-benchmark">benchmark on the ESP-IDF</a> showed that the processing times are in the lower milliseconds range and are probably outweighed by IO times and network round trip times.</p>
+<p>However, the memory and flash requirements are important figures, because the device model of OCPP has a significant size. The microcontroller needs to keep the model data in the heap memory for the largest part and the firmware which covers the corresponding processing routines needs to have sufficient space on flash.</p>
+<p>This chapter presents benchmarks of the memory and flash requirements. They should help to determine the required microcontroller capabilities, or to give general insights for taking further action on optimizing the firmware.</p>
+<h2 id="firmware-size">Firmware size</h2>
+<p>When compiling a firmware with MicroOCPP, the resulting binary will contain functionality which is not related to OCPP, like hardware drivers, modules which are shared, like MbedTLS and the actual MicroOCPP object files. The size of the latter is the final flash requirement of MicroOCPP.</p>
+<p>For the flash benchmark, the profiler compiles a <a href="https://github.com/matth-x/MicroOcpp/tree/main/tests/benchmarks/firmware_size/main.cpp">dummy OCPP firmware</a>, analyzes the size of the compilation units using <a href="https://github.com/google/bloaty">bloaty</a> and evaluates the bloaty report using a <a href="https://github.com/matth-x/MicroOcpp/tree/main/tests/benchmarks/scripts/eval_firmware_size.py">Python script</a>. To give realistic results, the firwmare is compiled with <code>-Os</code>, no RTTI or exceptions and newlib as the standard C library. The following tables show the results.</p>
+<h3 id="ocpp-16">OCPP 1.6</h3>
+<p>The following table shows the cumulated size of the objects files per module. The Module category consists of the OCPP 2.0.1 functional blocks, OCPP 1.6 feature profiles and general functionality which is shared accross the library. If a feature of the implementation falls under both an OCPP 2.0.1 functional block and OCPP 1.6 feature profile definition, it is preferrably assigned to the OCPP 2.0.1 category. This allows for better comparability between both OCPP versions.</p>
+<p><strong>Table 1: Firmware size per Module</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Module</th>
+<th style="text-align: right;">Binary size (Bytes)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">B - Provisioning</td>
+<td style="text-align: right;">6704</td>
+</tr>
+<tr>
+<td style="text-align: left;">C - Authorization</td>
+<td style="text-align: right;">640</td>
+</tr>
+<tr>
+<td style="text-align: left;">Configuration</td>
+<td style="text-align: right;">12384</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core</td>
+<td style="text-align: right;">16012</td>
+</tr>
+<tr>
+<td style="text-align: left;">D - Local Authorization List Management</td>
+<td style="text-align: right;">7576</td>
+</tr>
+<tr>
+<td style="text-align: left;">E - Transactions</td>
+<td style="text-align: right;">10360</td>
+</tr>
+<tr>
+<td style="text-align: left;">Firmware Management</td>
+<td style="text-align: right;">11345</td>
+</tr>
+<tr>
+<td style="text-align: left;">G - Availability</td>
+<td style="text-align: right;">2588</td>
+</tr>
+<tr>
+<td style="text-align: left;">General</td>
+<td style="text-align: right;">14612</td>
+</tr>
+<tr>
+<td style="text-align: left;">General - API</td>
+<td style="text-align: right;">16284</td>
+</tr>
+<tr>
+<td style="text-align: left;">General - Hardware Abstraction Layer</td>
+<td style="text-align: right;">1468</td>
+</tr>
+<tr>
+<td style="text-align: left;">General - RPC framework</td>
+<td style="text-align: right;">11796</td>
+</tr>
+<tr>
+<td style="text-align: left;">H - Reservation</td>
+<td style="text-align: right;">3976</td>
+</tr>
+<tr>
+<td style="text-align: left;">J - MeterValues</td>
+<td style="text-align: right;">13776</td>
+</tr>
+<tr>
+<td style="text-align: left;">K - SmartCharging</td>
+<td style="text-align: right;">14952</td>
+</tr>
+<tr>
+<td style="text-align: left;">M - Certificate Management</td>
+<td style="text-align: right;">4452</td>
+</tr>
+<tr>
+<td style="text-align: left;">TriggerMessage</td>
+<td style="text-align: right;">836</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Total</strong></td>
+<td style="text-align: right;">149761</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ocpp-201">OCPP 2.0.1</h3>
+<p><strong>Table 2: Firmware size per Module</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Module</th>
+<th style="text-align: right;">Binary size (Bytes)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">B - Provisioning</td>
+<td style="text-align: right;">8752</td>
+</tr>
+<tr>
+<td style="text-align: left;">B - Provisioning - Variables</td>
+<td style="text-align: right;">15344</td>
+</tr>
+<tr>
+<td style="text-align: left;">C - Authorization</td>
+<td style="text-align: right;">1356</td>
+</tr>
+<tr>
+<td style="text-align: left;">Configuration</td>
+<td style="text-align: right;">11556</td>
+</tr>
+<tr>
+<td style="text-align: left;">E - Transactions</td>
+<td style="text-align: right;">13540</td>
+</tr>
+<tr>
+<td style="text-align: left;">F - RemoteControl</td>
+<td style="text-align: right;">844</td>
+</tr>
+<tr>
+<td style="text-align: left;">G - Availability</td>
+<td style="text-align: right;">3904</td>
+</tr>
+<tr>
+<td style="text-align: left;">General</td>
+<td style="text-align: right;">15132</td>
+</tr>
+<tr>
+<td style="text-align: left;">General - API</td>
+<td style="text-align: right;">19364</td>
+</tr>
+<tr>
+<td style="text-align: left;">General - Hardware Abstraction Layer</td>
+<td style="text-align: right;">1468</td>
+</tr>
+<tr>
+<td style="text-align: left;">General - RPC framework</td>
+<td style="text-align: right;">11980</td>
+</tr>
+<tr>
+<td style="text-align: left;">J - MeterValues</td>
+<td style="text-align: right;">3508</td>
+</tr>
+<tr>
+<td style="text-align: left;">M - Certificate Management</td>
+<td style="text-align: right;">4492</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Total</strong></td>
+<td style="text-align: right;">111240</td>
+</tr>
+</tbody>
+</table>
+<h2 id="memory-usage">Memory usage</h2>
+<p>MicroOCPP uses the heap memory to process incoming messages, maintain the device model and create outgoing OCPP messages. The total heap usage should remain low enough to not risk a heap depletion which would not only affect the OCPP module, but the whole controller, because heap memory is typically shared on microcontrollers. To assess the heap usage of MicroOCPP, a test suite runs a variety of simulated charger use cases and measures the maximum occupied memory. Then, the maximum observed value is considered as the memory requirement of MicroOCPP.</p>
+<p>Another important figure is the base level which is much closer to the average heap usage. The total heap usage consists of a base level and a dynamic part. Some memory objects are only initialized once during startup or as the device model is populated (e.g. Charging Schedules) and therefore belong to the base which changes only slowly over time. In contrast, objects for the JSON parsing and serialization and the internal execution of the operations are highly dynamic as they are instantiated for one operation and freed again after completion of the action. If the firmware contains multiple components besides MicroOCPP with this usage pattern, then the average total memory occupation of the device RAM is even closer to the base levels of the individual components.</p>
+<p>The following table shows the dynamic heap usage for a variety of test cases, followed by the base level and resulting maximum memory occupation of MicroOCPP. At the time being, the measurements are limited to only OCPP 2.0.1 and a narrow set of test cases. They will be gradually extended over time.</p>
+<p><strong>Table 3: Memory usage per use case and total</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Testcase</th>
+<th style="text-align: left;">Pass</th>
+<th style="text-align: left;">Heap usage (Bytes)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>B:Provisioning</strong></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Get Variables - single value</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">2380</td>
+</tr>
+<tr>
+<td style="text-align: left;">Set Variables - multiple values</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">2523</td>
+</tr>
+<tr>
+<td style="text-align: left;">Get Base Report - FullInventory</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">22287</td>
+</tr>
+<tr>
+<td style="text-align: left;">Set Variables - Unknown component</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">1899</td>
+</tr>
+<tr>
+<td style="text-align: left;">Set Variables - Read-only</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">2349</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>C:Authorization</strong></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Local start transaction - Authorization Blocked</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">2997</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>E:Transactions</strong></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Start transaction options - PowerPathClosed</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">3173</td>
+</tr>
+<tr>
+<td style="text-align: left;">Local start transaction - Authorization first - Success</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">3173</td>
+</tr>
+<tr>
+<td style="text-align: left;">Stop transaction options - PowerPathClosed - Local stop</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">3173</td>
+</tr>
+<tr>
+<td style="text-align: left;">Stop transaction options - StopAuthorized - Local</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">3173</td>
+</tr>
+<tr>
+<td style="text-align: left;">Stop transaction options - StopAuthorized - Remote</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">3173</td>
+</tr>
+<tr>
+<td style="text-align: left;">Check Transaction status - TransactionId unknown</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">1445</td>
+</tr>
+<tr>
+<td style="text-align: left;">Check Transaction status - Transaction with id ended - with message in queue</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">1445</td>
+</tr>
+<tr>
+<td style="text-align: left;">Check Transaction status - Without transactionId - without message in queue</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">1445</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>F:Remote Control</strong></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Remote start transaction - Cable plugin first</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">2997</td>
+</tr>
+<tr>
+<td style="text-align: left;">Remote start transaction - Remote start first - Cable plugin timeout</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">3277</td>
+</tr>
+<tr>
+<td style="text-align: left;">Remote unlock Connector -  Without ongoing transaction - No cable connected</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">1445</td>
+</tr>
+<tr>
+<td style="text-align: left;">Remote unlock Connector -  Without ongoing transaction - UnknownConnector</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">1445</td>
+</tr>
+<tr>
+<td style="text-align: left;">Trigger message - TransactionEvent - Specific EVSE</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">3173</td>
+</tr>
+<tr>
+<td style="text-align: left;">Trigger message - StatusNotification - Specific EVSE - Available</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">1445</td>
+</tr>
+<tr>
+<td style="text-align: left;">Trigger message - NotImplemented</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">1445</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>G:Availability</strong></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Change Availability EVSE - Operative to inoperative</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">1445</td>
+</tr>
+<tr>
+<td style="text-align: left;">Change Availability Charging Station - Inoperative to operative</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">1445</td>
+</tr>
+<tr>
+<td style="text-align: left;">Change Availability EVSE - Operative to operative</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">1445</td>
+</tr>
+<tr>
+<td style="text-align: left;">Change Availability Charging Station - Operative to operative</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">1445</td>
+</tr>
+<tr>
+<td style="text-align: left;">Change Availability Connector - Operative to operative</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">1445</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>J:Meter Values</strong></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">[Watchlist] Sampled Meter Values - EventType Started - EVSE known</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">3239</td>
+</tr>
+<tr>
+<td style="text-align: left;">[Watchlist] Sampled Meter Values - EventType Ended</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">1445</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Simulator stats</strong></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Base memory occupation</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">16824</td>
+</tr>
+<tr>
+<td style="text-align: left;">Test case maximum</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">22287</td>
+</tr>
+<tr>
+<td style="text-align: left;">Total memory maximum</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">39111</td>
+</tr>
+</tbody>
+</table>
+<h2 id="full-data-sets">Full data sets</h2>
+<p>This section contains the raw data which is the basis for the evaluations above.</p>
+<p><strong>Table 4: All compilation units for OCPP 1.6 firmware</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Compile Unit</th>
+<th style="text-align: right;">Binary size (Bytes)</th>
+<th style="text-align: left;">v16</th>
+<th style="text-align: left;">v201</th>
+<th style="text-align: left;">Module</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">MicroOcpp.cpp</td>
+<td style="text-align: right;">14368</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - API</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Configuration.cpp</td>
+<td style="text-align: right;">3104</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">Configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/ConfigurationContainer.cpp</td>
+<td style="text-align: right;">864</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">Configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/ConfigurationContainerFlash.cpp</td>
+<td style="text-align: right;">4192</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">Configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/ConfigurationKeyValue.cpp</td>
+<td style="text-align: right;">708</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">Configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Connection.cpp</td>
+<td style="text-align: right;">272</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - Hardware Abstraction Layer</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Context.cpp</td>
+<td style="text-align: right;">380</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/FilesystemAdapter.cpp</td>
+<td style="text-align: right;">1196</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - Hardware Abstraction Layer</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/FilesystemUtils.cpp</td>
+<td style="text-align: right;">4592</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/FtpMbedTLS.cpp</td>
+<td style="text-align: right;">5140</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Memory.cpp</td>
+<td style="text-align: right;">156</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Operation.cpp</td>
+<td style="text-align: right;">104</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - RPC framework</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/OperationRegistry.cpp</td>
+<td style="text-align: right;">1616</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - RPC framework</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Request.cpp</td>
+<td style="text-align: right;">3400</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - RPC framework</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/RequestQueue.cpp</td>
+<td style="text-align: right;">6676</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - RPC framework</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Time.cpp</td>
+<td style="text-align: right;">2472</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Authorization/AuthorizationData.cpp</td>
+<td style="text-align: right;">1320</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">D - Local Authorization List Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Authorization/AuthorizationList.cpp</td>
+<td style="text-align: right;">3732</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">D - Local Authorization List Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Authorization/AuthorizationService.cpp</td>
+<td style="text-align: right;">1704</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">D - Local Authorization List Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Boot/BootService.cpp</td>
+<td style="text-align: right;">3804</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Certificates/Certificate.cpp</td>
+<td style="text-align: right;">668</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">M - Certificate Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Certificates/CertificateMbedTLS.cpp</td>
+<td style="text-align: right;">2100</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">M - Certificate Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Certificates/CertificateService.cpp</td>
+<td style="text-align: right;">468</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">M - Certificate Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Certificates/Certificate_c.cpp</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">M - Certificate Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/ConnectorBase/Connector.cpp</td>
+<td style="text-align: right;">12240</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Core</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/ConnectorBase/ConnectorsCommon.cpp</td>
+<td style="text-align: right;">2136</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Core</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/ConnectorBase/Notification.cpp</td>
+<td style="text-align: right;">72</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Core</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Diagnostics/DiagnosticsService.cpp</td>
+<td style="text-align: right;">5825</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Firmware Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/FirmwareManagement/FirmwareService.cpp</td>
+<td style="text-align: right;">4060</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Firmware Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Heartbeat/HeartbeatService.cpp</td>
+<td style="text-align: right;">420</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">G - Availability</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Metering/MeterStore.cpp</td>
+<td style="text-align: right;">2900</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Metering/MeterValue.cpp</td>
+<td style="text-align: right;">3276</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Metering/MeteringConnector.cpp</td>
+<td style="text-align: right;">4312</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Metering/MeteringService.cpp</td>
+<td style="text-align: right;">1848</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Metering/ReadingContext.cpp</td>
+<td style="text-align: right;">180</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Metering/SampledValue.cpp</td>
+<td style="text-align: right;">780</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Model.cpp</td>
+<td style="text-align: right;">1872</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Reservation/Reservation.cpp</td>
+<td style="text-align: right;">1072</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">H - Reservation</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Reservation/ReservationService.cpp</td>
+<td style="text-align: right;">1384</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">H - Reservation</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Reset/ResetService.cpp</td>
+<td style="text-align: right;">984</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/SmartCharging/SmartChargingModel.cpp</td>
+<td style="text-align: right;">3804</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">K - SmartCharging</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/SmartCharging/SmartChargingService.cpp</td>
+<td style="text-align: right;">6932</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">K - SmartCharging</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Transactions/Transaction.cpp</td>
+<td style="text-align: right;">156</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Transactions/TransactionDeserialize.cpp</td>
+<td style="text-align: right;">3048</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Transactions/TransactionStore.cpp</td>
+<td style="text-align: right;">2372</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/Authorize.cpp</td>
+<td style="text-align: right;">640</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">C - Authorization</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/BootNotification.cpp</td>
+<td style="text-align: right;">1288</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/CancelReservation.cpp</td>
+<td style="text-align: right;">364</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">H - Reservation</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/ChangeAvailability.cpp</td>
+<td style="text-align: right;">496</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">G - Availability</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/ChangeConfiguration.cpp</td>
+<td style="text-align: right;">836</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/ClearCache.cpp</td>
+<td style="text-align: right;">432</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Core</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/ClearChargingProfile.cpp</td>
+<td style="text-align: right;">824</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">K - SmartCharging</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/CustomOperation.cpp</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - RPC framework</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/DataTransfer.cpp</td>
+<td style="text-align: right;">516</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Core</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/DeleteCertificate.cpp</td>
+<td style="text-align: right;">700</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">M - Certificate Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/DiagnosticsStatusNotification.cpp</td>
+<td style="text-align: right;">220</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Firmware Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/FirmwareStatusNotification.cpp</td>
+<td style="text-align: right;">244</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Firmware Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/GetCompositeSchedule.cpp</td>
+<td style="text-align: right;">1076</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">K - SmartCharging</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/GetConfiguration.cpp</td>
+<td style="text-align: right;">2680</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">Configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/GetDiagnostics.cpp</td>
+<td style="text-align: right;">640</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Firmware Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/GetInstalledCertificateIds.cpp</td>
+<td style="text-align: right;">1588</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">K - SmartCharging</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/GetLocalListVersion.cpp</td>
+<td style="text-align: right;">268</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">D - Local Authorization List Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/Heartbeat.cpp</td>
+<td style="text-align: right;">780</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">G - Availability</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/InstallCertificate.cpp</td>
+<td style="text-align: right;">516</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">M - Certificate Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/MeterValues.cpp</td>
+<td style="text-align: right;">660</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/RemoteStartTransaction.cpp</td>
+<td style="text-align: right;">1180</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/RemoteStopTransaction.cpp</td>
+<td style="text-align: right;">404</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/ReserveNow.cpp</td>
+<td style="text-align: right;">1156</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">H - Reservation</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/Reset.cpp</td>
+<td style="text-align: right;">628</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/SendLocalList.cpp</td>
+<td style="text-align: right;">552</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">D - Local Authorization List Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/SetChargingProfile.cpp</td>
+<td style="text-align: right;">728</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">K - SmartCharging</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/StartTransaction.cpp</td>
+<td style="text-align: right;">1352</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/StatusNotification.cpp</td>
+<td style="text-align: right;">892</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">G - Availability</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/StopTransaction.cpp</td>
+<td style="text-align: right;">1848</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/TriggerMessage.cpp</td>
+<td style="text-align: right;">836</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">TriggerMessage</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/UnlockConnector.cpp</td>
+<td style="text-align: right;">616</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Core</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/UpdateFirmware.cpp</td>
+<td style="text-align: right;">356</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Firmware Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">MicroOcpp_c.cpp</td>
+<td style="text-align: right;">1916</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - API</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table 5: All compilation units for OCPP 2.0.1 firmware</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Compile Unit</th>
+<th style="text-align: right;">Binary size (Bytes)</th>
+<th style="text-align: left;">v16</th>
+<th style="text-align: left;">v201</th>
+<th style="text-align: left;">Module</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">MicroOcpp.cpp</td>
+<td style="text-align: right;">17568</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - API</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Configuration.cpp</td>
+<td style="text-align: right;">3104</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">Configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/ConfigurationContainer.cpp</td>
+<td style="text-align: right;">864</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">Configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/ConfigurationContainerFlash.cpp</td>
+<td style="text-align: right;">4192</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">Configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/ConfigurationKeyValue.cpp</td>
+<td style="text-align: right;">708</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">Configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Connection.cpp</td>
+<td style="text-align: right;">272</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - Hardware Abstraction Layer</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Context.cpp</td>
+<td style="text-align: right;">396</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/FilesystemAdapter.cpp</td>
+<td style="text-align: right;">1196</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - Hardware Abstraction Layer</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/FilesystemUtils.cpp</td>
+<td style="text-align: right;">4592</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/FtpMbedTLS.cpp</td>
+<td style="text-align: right;">5172</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Memory.cpp</td>
+<td style="text-align: right;">156</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Operation.cpp</td>
+<td style="text-align: right;">104</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - RPC framework</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/OperationRegistry.cpp</td>
+<td style="text-align: right;">1632</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - RPC framework</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Request.cpp</td>
+<td style="text-align: right;">3484</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - RPC framework</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/RequestQueue.cpp</td>
+<td style="text-align: right;">6760</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - RPC framework</td>
+</tr>
+<tr>
+<td style="text-align: left;">Core/Time.cpp</td>
+<td style="text-align: right;">2504</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Authorization/AuthorizationData.cpp</td>
+<td style="text-align: right;">1356</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">D - Local Authorization List Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Authorization/AuthorizationList.cpp</td>
+<td style="text-align: right;">3760</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">D - Local Authorization List Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Authorization/AuthorizationService.cpp</td>
+<td style="text-align: right;">1712</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">D - Local Authorization List Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Authorization/IdToken.cpp</td>
+<td style="text-align: right;">344</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">C - Authorization</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Availability/AvailabilityService.cpp</td>
+<td style="text-align: right;">1380</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">G - Availability</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Boot/BootService.cpp</td>
+<td style="text-align: right;">3872</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Certificates/Certificate.cpp</td>
+<td style="text-align: right;">668</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">M - Certificate Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Certificates/CertificateMbedTLS.cpp</td>
+<td style="text-align: right;">2104</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">M - Certificate Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Certificates/CertificateService.cpp</td>
+<td style="text-align: right;">468</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">M - Certificate Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Certificates/Certificate_c.cpp</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">M - Certificate Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/ConnectorBase/Connector.cpp</td>
+<td style="text-align: right;">12448</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Core</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/ConnectorBase/ConnectorsCommon.cpp</td>
+<td style="text-align: right;">2448</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Core</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/ConnectorBase/Notification.cpp</td>
+<td style="text-align: right;">72</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Core</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Diagnostics/DiagnosticsService.cpp</td>
+<td style="text-align: right;">5861</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Firmware Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/FirmwareManagement/FirmwareService.cpp</td>
+<td style="text-align: right;">4076</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Firmware Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Heartbeat/HeartbeatService.cpp</td>
+<td style="text-align: right;">420</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">G - Availability</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Metering/MeterStore.cpp</td>
+<td style="text-align: right;">2924</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Metering/MeterValue.cpp</td>
+<td style="text-align: right;">3300</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Metering/MeterValuesV201.cpp</td>
+<td style="text-align: right;">3328</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Metering/MeteringConnector.cpp</td>
+<td style="text-align: right;">4312</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Metering/MeteringService.cpp</td>
+<td style="text-align: right;">1848</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Metering/ReadingContext.cpp</td>
+<td style="text-align: right;">180</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Metering/SampledValue.cpp</td>
+<td style="text-align: right;">780</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Model.cpp</td>
+<td style="text-align: right;">2312</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/RemoteControl/RemoteControlService.cpp</td>
+<td style="text-align: right;">844</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">F - RemoteControl</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Reservation/Reservation.cpp</td>
+<td style="text-align: right;">1072</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">H - Reservation</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Reservation/ReservationService.cpp</td>
+<td style="text-align: right;">1384</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">H - Reservation</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Reset/ResetService.cpp</td>
+<td style="text-align: right;">2612</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/SmartCharging/SmartChargingModel.cpp</td>
+<td style="text-align: right;">3804</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">K - SmartCharging</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/SmartCharging/SmartChargingService.cpp</td>
+<td style="text-align: right;">6932</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">K - SmartCharging</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Transactions/Transaction.cpp</td>
+<td style="text-align: right;">1628</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Transactions/TransactionDeserialize.cpp</td>
+<td style="text-align: right;">2964</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Transactions/TransactionService.cpp</td>
+<td style="text-align: right;">9040</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Transactions/TransactionStore.cpp</td>
+<td style="text-align: right;">10960</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Variables/Variable.cpp</td>
+<td style="text-align: right;">1800</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning - Variables</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Variables/VariableContainer.cpp</td>
+<td style="text-align: right;">2196</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning - Variables</td>
+</tr>
+<tr>
+<td style="text-align: left;">Model/Variables/VariableService.cpp</td>
+<td style="text-align: right;">4420</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning - Variables</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/Authorize.cpp</td>
+<td style="text-align: right;">1012</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">C - Authorization</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/BootNotification.cpp</td>
+<td style="text-align: right;">1408</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/CancelReservation.cpp</td>
+<td style="text-align: right;">368</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">H - Reservation</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/ChangeAvailability.cpp</td>
+<td style="text-align: right;">888</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">G - Availability</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/ChangeConfiguration.cpp</td>
+<td style="text-align: right;">860</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/ClearCache.cpp</td>
+<td style="text-align: right;">440</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Core</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/ClearChargingProfile.cpp</td>
+<td style="text-align: right;">752</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">K - SmartCharging</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/CustomOperation.cpp</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - RPC framework</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/DataTransfer.cpp</td>
+<td style="text-align: right;">520</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Core</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/DeleteCertificate.cpp</td>
+<td style="text-align: right;">716</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">M - Certificate Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/DiagnosticsStatusNotification.cpp</td>
+<td style="text-align: right;">220</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Firmware Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/FirmwareStatusNotification.cpp</td>
+<td style="text-align: right;">244</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Firmware Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/GetBaseReport.cpp</td>
+<td style="text-align: right;">544</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning - Variables</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/GetCompositeSchedule.cpp</td>
+<td style="text-align: right;">1040</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">K - SmartCharging</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/GetConfiguration.cpp</td>
+<td style="text-align: right;">2688</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">Configuration</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/GetDiagnostics.cpp</td>
+<td style="text-align: right;">652</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Firmware Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/GetInstalledCertificateIds.cpp</td>
+<td style="text-align: right;">1596</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">K - SmartCharging</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/GetLocalListVersion.cpp</td>
+<td style="text-align: right;">268</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">D - Local Authorization List Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/GetVariables.cpp</td>
+<td style="text-align: right;">2356</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning - Variables</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/Heartbeat.cpp</td>
+<td style="text-align: right;">780</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">G - Availability</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/InstallCertificate.cpp</td>
+<td style="text-align: right;">536</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">M - Certificate Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/MeterValues.cpp</td>
+<td style="text-align: right;">660</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">J - MeterValues</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/NotifyReport.cpp</td>
+<td style="text-align: right;">2112</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning - Variables</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/RemoteStartTransaction.cpp</td>
+<td style="text-align: right;">1192</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/RemoteStopTransaction.cpp</td>
+<td style="text-align: right;">408</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/RequestStartTransaction.cpp</td>
+<td style="text-align: right;">536</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/RequestStopTransaction.cpp</td>
+<td style="text-align: right;">396</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/ReserveNow.cpp</td>
+<td style="text-align: right;">1160</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">H - Reservation</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/Reset.cpp</td>
+<td style="text-align: right;">860</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/SendLocalList.cpp</td>
+<td style="text-align: right;">560</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">D - Local Authorization List Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/SetChargingProfile.cpp</td>
+<td style="text-align: right;">732</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">K - SmartCharging</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/SetVariables.cpp</td>
+<td style="text-align: right;">1916</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">B - Provisioning - Variables</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/StartTransaction.cpp</td>
+<td style="text-align: right;">1292</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/StatusNotification.cpp</td>
+<td style="text-align: right;">1324</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">G - Availability</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/StopTransaction.cpp</td>
+<td style="text-align: right;">1848</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/TransactionEvent.cpp</td>
+<td style="text-align: right;">1940</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">E - Transactions</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/TriggerMessage.cpp</td>
+<td style="text-align: right;">844</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">TriggerMessage</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/UnlockConnector.cpp</td>
+<td style="text-align: right;">172</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Core</td>
+</tr>
+<tr>
+<td style="text-align: left;">Operations/UpdateFirmware.cpp</td>
+<td style="text-align: right;">364</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Firmware Management</td>
+</tr>
+<tr>
+<td style="text-align: left;">MicroOcpp_c.cpp</td>
+<td style="text-align: right;">1796</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;">General - API</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href=".." class="md-footer__link md-footer__link--prev" aria-label="Previous: Home">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Home
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../intro-tech/" class="md-footer__link md-footer__link--next" aria-label="Next: Technical introduction">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Technical introduction
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["announce.dismiss", "content.action.edit", "content.action.view", "content.code.annotate", "content.code.copy", "content.tooltips", "navigation.footer", "navigation.indexes", "navigation.sections", "navigation.tabs", "navigation.top", "navigation.tracking", "search.highlight", "search.share", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,15 @@
+Module,Binary size (Bytes)
+B - Provisioning,8752
+B - Provisioning - Variables,15344
+C - Authorization,1356
+Configuration,11556
+E - Transactions,13540
+F - RemoteControl,844
+G - Availability,3904
+General,15132
+General - API,19364
+General - Hardware Abstraction Layer,1468
+General - RPC framework,11980
+J - MeterValues,3508
+M - Certificate Management,4492
+**Total**,111240
