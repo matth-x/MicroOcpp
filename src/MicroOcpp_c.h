@@ -78,11 +78,11 @@ void ocpp_loop();
  * Charging session management
  */
 
-void ocpp_beginTransaction(const char *idTag);
-void ocpp_beginTransaction_m(unsigned int connectorId, const char *idTag); //multiple connectors version
+bool ocpp_beginTransaction(const char *idTag);
+bool ocpp_beginTransaction_m(unsigned int connectorId, const char *idTag); //multiple connectors version
 
-void ocpp_beginTransaction_authorized(const char *idTag, const char *parentIdTag);
-void ocpp_beginTransaction_authorized_m(unsigned int connectorId, const char *idTag, const char *parentIdTag);
+bool ocpp_beginTransaction_authorized(const char *idTag, const char *parentIdTag);
+bool ocpp_beginTransaction_authorized_m(unsigned int connectorId, const char *idTag, const char *parentIdTag);
 
 bool ocpp_endTransaction(const char *idTag, const char *reason); //idTag, reason can be NULL
 bool ocpp_endTransaction_m(unsigned int connectorId, const char *idTag, const char *reason); //idTag, reason can be NULL

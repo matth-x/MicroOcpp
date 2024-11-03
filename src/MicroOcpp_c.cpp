@@ -131,18 +131,18 @@ std::function<UnlockConnectorResult()> adaptFn(unsigned int connectorId, PollUnl
 }
 #endif //MO_ENABLE_CONNECTOR_LOCK
 
-void ocpp_beginTransaction(const char *idTag) {
-    beginTransaction(idTag);
+bool ocpp_beginTransaction(const char *idTag) {
+    return beginTransaction(idTag);
 }
-void ocpp_beginTransaction_m(unsigned int connectorId, const char *idTag) {
-    beginTransaction(idTag, connectorId);
+bool ocpp_beginTransaction_m(unsigned int connectorId, const char *idTag) {
+    return beginTransaction(idTag, connectorId);
 }
 
-void ocpp_beginTransaction_authorized(const char *idTag, const char *parentIdTag) {
-    beginTransaction_authorized(idTag, parentIdTag);
+bool ocpp_beginTransaction_authorized(const char *idTag, const char *parentIdTag) {
+    return beginTransaction_authorized(idTag, parentIdTag);
 }
-void ocpp_beginTransaction_authorized_m(unsigned int connectorId, const char *idTag, const char *parentIdTag) {
-    beginTransaction_authorized(idTag, parentIdTag, connectorId);
+bool ocpp_beginTransaction_authorized_m(unsigned int connectorId, const char *idTag, const char *parentIdTag) {
+    return beginTransaction_authorized(idTag, parentIdTag, connectorId);
 }
 
 bool ocpp_endTransaction(const char *idTag, const char *reason) {
