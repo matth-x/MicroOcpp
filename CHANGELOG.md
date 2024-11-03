@@ -22,7 +22,7 @@
 - Build flag `MO_REPORT_NOERROR` to report error recovery ([#331](https://github.com/matth-x/MicroOcpp/pull/331))
 - Support for `parentIdTag` ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
 - Input validation for unsigned int Configs ([#344](https://github.com/matth-x/MicroOcpp/pull/344))
-- Support for TransactionMessageAttempts/-RetryInterval ([#345](https://github.com/matth-x/MicroOcpp/pull/345))
+- Support for TransactionMessageAttempts/-RetryInterval ([#345](https://github.com/matth-x/MicroOcpp/pull/345), [#380](https://github.com/matth-x/MicroOcpp/pull/380))
 - Heap profiler and custom allocator support ([#350](https://github.com/matth-x/MicroOcpp/pull/350))
 - Migration of persistent storage ([#355](https://github.com/matth-x/MicroOcpp/pull/355))
 - Benchmarks pipeline ([#369](https://github.com/matth-x/MicroOcpp/pull/369), [#376](https://github.com/matth-x/MicroOcpp/pull/376))
