@@ -4,13 +4,13 @@
 [![Unit tests]( https://github.com/matth-x/MicroOcpp/workflows/Unit%20tests/badge.svg)](https://github.com/matth-x/MicroOcpp/actions)
 [![codecov](https://codecov.io/github/matth-x/ArduinoOcpp/branch/develop/graph/badge.svg?token=UN6LO96HM7)](https://codecov.io/github/matth-x/ArduinoOcpp)
 
-OCPP 1.6 client for microcontrollers. Portable C/C++. Compatible with Espressif, Arduino, NXP, STM, Linux and more.
+OCPP 1.6 / 2.0.1 Client for microcontrollers. Portable C/C++. Compatible with Espressif, Arduino, NXP, STM, Linux and more.
 
 :heavy_check_mark: Works with [15+ commercial Central Systems](https://www.micro-ocpp.com/#h.314525e8447cc93c_81)
 
 :heavy_check_mark: Eligible for public chargers (Eichrecht-compliant)
 
-:heavy_check_mark: Supports all OCPP 1.6 feature profiles and OCPP 2.0.1 preview
+:heavy_check_mark: Supports all OCPP 1.6 feature profiles and the [basic OCPP 2.0.1 UCs](https://github.com/matth-x/MicroOcpp/tree/feature/prepare-release?tab=readme-ov-file#ocpp-201-and-iso-15118)
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp) | Technical introduction: [Docs](https://matth-x.github.io/MicroOcpp/intro-tech) | Website: [www.micro-ocpp.com](https://www.micro-ocpp.com)
 
