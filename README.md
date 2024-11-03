@@ -32,7 +32,7 @@ If you don't have an OCPP server at hand, leave the charge box ID blank and ente
 
 ## Benchmarks
 
-*Full report: [MicroOCPP benchmark (esp-idf)](https://github.com/matth-x/MicroOcpp-benchmark)*
+*Full report: [MicroOCPP benchmarks](https://matth-x.github.io/MicroOcpp/benchmarks/)*
 
 The following measurements were taken on the ESP32 @ 160MHz and represent the optimistic best case scenario for a charger with two physical connectors (i.e. compiled with `-Os`, disabled debug output and logs).
 
@@ -69,7 +69,7 @@ If using the built-in certificate store (to enable, set build flag `MO_ENABLE_MB
 
 - [Mbed-TLS/mbedtls](https://github.com/Mbed-TLS/mbedtls) (version `2.28.1`)
 
-In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/MicroOcpp@1.1.0` in the PIO library manager.
+In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/MicroOcpp@1.2.0` in the PIO library manager.
 
 ## OCPP 2.0.1 and ISO 15118
 
@@ -77,14 +77,19 @@ The following OCPP 2.0.1 use cases are implemented:
 
 | UC | Description | Note |
 | :--- | :--- | :--- |
-| M03 - M05 | Certificate management | Enable Mbed-TLS to use the built-in certificate store |
-| B05 - B07 | Variables | |
 | B01 - B04<br>B11 - B12 | Provisioning | Ported from OCPP 1.6 |
+| B05 - B07 | Variables | |
+| C01 - C06 | Authorization options | |
+| C15 | Offline Authorization | |
 | E01 - E12 | Transactions | |
-| F01 - F02 | Remote Start/Stop Tx | |
+| F01 - F03<br>F05 - F06 | RemoteControl | |
+| G01 - G04 | Availability | |
+| J02 | Tx-related MeterValues | persistency not supported yet |
+| M03 - M05 | Certificate management | Enable Mbed-TLS to use the built-in certificate store |
+| P01 - P02 | Data transfer | |
 | - | Protocol negotiation | The charger can select the OCPP version at runtime |
 
-The OCPP 2.0.1 features are in an alpha development stage (no persistency yet). By default, they are disabled and excluded from the build, so they have no impact on the firmware size. To enable, set the build flag `MO_ENABLE_V201=1` and initialize the library with the ProtocolVersion parameter `2.0.1`  (see [this example](https://github.com/matth-x/MicroOcppSimulator/blob/657e606c3b178d3add242935d413c72624130ff3/src/main.cpp#L43-L47) in the Simulator).
+The OCPP 2.0.1 features are in an alpha development stage. By default, they are disabled and excluded from the build, so they have no impact on the firmware size. To enable, set the build flag `MO_ENABLE_V201=1` and initialize the library with the ProtocolVersion parameter `2.0.1`  (see [this example](https://github.com/matth-x/MicroOcppSimulator/blob/657e606c3b178d3add242935d413c72624130ff3/src/main.cpp#L43-L47) in the Simulator).
 
 An integration of the library for OCPP 1.6 will also be functional with the 2.0.1 upgrade. It works with the same API in MicroOcpp.h.
 
