@@ -11,35 +11,56 @@
 #include <string.h>
 
 #include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/FilesystemUtils.h>
 #include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Variables/VariableService.h>
+#include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Operations/Authorize.h>
 #include <MicroOcpp/Operations/TransactionEvent.h>
 #include <MicroOcpp/Operations/RequestStartTransaction.h>
 #include <MicroOcpp/Operations/RequestStopTransaction.h>
 #include <MicroOcpp/Debug.h>
 
+#ifndef MO_TX_CLEAN_ABORTED
+#define MO_TX_CLEAN_ABORTED 1
+#endif
+
 using namespace MicroOcpp;
 using namespace MicroOcpp::Ocpp201;
 
-TransactionService::Evse::Evse(Context& context, TransactionService& txService, unsigned int evseId) :
+TransactionService::Evse::Evse(Context& context, TransactionService& txService, Ocpp201::TransactionStoreEvse& txStore, unsigned int evseId) :
         MemoryManaged("v201.Transactions.TransactionServiceEvse"),
         context(context),
         txService(txService),
+        txStore(txStore),
         evseId(evseId) {
 
+    context.getRequestQueue().addSendQueue(this); //register at RequestQueue as Request emitter
+
+    txStore.discoverStoredTx(txNrBegin, txNrEnd); //initializes txNrBegin and txNrEnd
+    txNrFront = txNrBegin;
+    MO_DBG_DEBUG("found %u transactions for evseId %u. Internal range from %u to %u (exclusive)", (txNrEnd + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT, evseId, txNrBegin, txNrEnd);
+
+    unsigned int txNrLatest = (txNrEnd + MAX_TX_CNT - 1) % MAX_TX_CNT; //txNr of the most recent tx on flash
+    transaction = txStore.loadTransaction(txNrLatest); //returns nullptr if txNrLatest does not exist on flash
 }
 
-std::unique_ptr<Ocpp201::Transaction> TransactionService::Evse::allocateTransaction() {
-    auto tx =  std::unique_ptr<Ocpp201::Transaction>(new Ocpp201::Transaction());
-    if (!tx) {
-        // OOM
-        return nullptr;
+TransactionService::Evse::~Evse() {
+    
+}
+
+bool TransactionService::Evse::beginTransaction() {
+
+    if (transaction) {
+        MO_DBG_ERR("transaction still running");
+        return false;
     }
 
-    tx->evseId = evseId;
-    tx->txNr = txNrCounter;
+    std::unique_ptr<Ocpp201::Transaction> tx;
+
+    char txId [sizeof(Ocpp201::Transaction::transactionId)];
 
     //simple clock-based hash
     int v = context.getModel().getClock().now() - Timestamp(2020,0,0,0,0,0);
@@ -48,27 +69,178 @@ std::unique_ptr<Ocpp201::Transaction> TransactionService::Evse::allocateTransact
     h *= 749572633U;
     h %= 24593209U;
     for (size_t i = 0; i < sizeof(tx->transactionId) - 3; i += 2) {
-        snprintf(tx->transactionId + i, 3, "%02X", (uint8_t)h);
+        snprintf(txId + i, 3, "%02X", (uint8_t)h);
         h *= 749572633U;
         h %= 24593209U;
     }
 
+    //clean possible aborted tx
+    unsigned int txr = txNrEnd;
+    unsigned int txSize = (txNrEnd + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT;
+    for (unsigned int i = 0; i < txSize; i++) {
+        txr = (txr + MAX_TX_CNT - 1) % MAX_TX_CNT; //decrement by 1
+
+        std::unique_ptr<Ocpp201::Transaction> intermediateTx;
+
+        Ocpp201::Transaction *txhist = nullptr;
+        if (transaction && transaction->txNr == txr) {
+            txhist = transaction.get();
+        } else if (txFront && txFront->txNr == txr) {
+            txhist = txFront;
+        } else {
+            intermediateTx = txStore.loadTransaction(txr);
+            txhist = intermediateTx.get();
+        }
+
+        //check if dangling silent tx, aborted tx, or corrupted entry (txhist == null)
+        if (!txhist || txhist->silent || (!txhist->active && !txhist->started && MO_TX_CLEAN_ABORTED)) {
+            //yes, remove
+            if (txStore.remove(txr)) {
+                if (txNrFront == txNrEnd) {
+                    txNrFront = txr;
+                }
+                txNrEnd = txr;
+                MO_DBG_WARN("deleted dangling silent or aborted tx for new transaction");
+            } else {
+                MO_DBG_ERR("memory corruption");
+                break;
+            }
+        } else {
+            //no, tx record trimmed, end
+            break;
+        }
+    }
+
+    txSize = (txNrEnd + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT; //refresh after cleaning txs
+
+    //try to create new transaction
+    if (txSize < MO_TXRECORD_SIZE) {
+        tx = txStore.createTransaction(txNrEnd, txId);
+    }
+
+    if (!tx) {
+        //could not create transaction - now, try to replace tx history entry
+
+        unsigned int txl = txNrBegin;
+        txSize = (txNrEnd + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT;
+
+        for (unsigned int i = 0; i < txSize; i++) {
+
+            if (tx) {
+                //success, finished here
+                break;
+            }
+
+            //no transaction allocated, delete history entry to make space
+            std::unique_ptr<Ocpp201::Transaction> intermediateTx;
+
+            Ocpp201::Transaction *txhist = nullptr;
+            if (transaction && transaction->txNr == txl) {
+                txhist = transaction.get();
+            } else if (txFront && txFront->txNr == txl) {
+                txhist = txFront;
+            } else {
+                intermediateTx = txStore.loadTransaction(txl);
+                txhist = intermediateTx.get();
+            }
+
+            //oldest entry, now check if it's history and can be removed or corrupted entry
+            if (!txhist || (txhist->stopped && txhist->seqNos.empty()) || (!txhist->active && !txhist->started) || (txhist->silent && txhist->stopped)) {
+                //yes, remove
+
+                if (txStore.remove(txl)) {
+                    txNrBegin = (txl + 1) % MAX_TX_CNT;
+                    if (txNrFront == txl) {
+                        txNrFront = txNrBegin;
+                    }
+                    MO_DBG_DEBUG("deleted tx history entry for new transaction");
+                    MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
+
+                    tx = txStore.createTransaction(txNrEnd, txId);
+                } else {
+                    MO_DBG_ERR("memory corruption");
+                    break;
+                }
+            } else {
+                //no, end of history reached, don't delete further tx
+                MO_DBG_DEBUG("cannot delete more tx");
+                break;
+            }
+
+            txl++;
+            txl %= MAX_TX_CNT;
+        }
+    }
+
+    if (!tx) {
+        //couldn't create normal transaction -> check if to start charging without real transaction
+        if (txService.silentOfflineTransactionsBool && txService.silentOfflineTransactionsBool->getBool()) {
+            //try to handle charging session without sending StartTx or StopTx to the server
+            tx = txStore.createTransaction(txNrEnd, txId);
+
+            if (tx) {
+                tx->silent = true;
+                MO_DBG_DEBUG("created silent transaction");
+            }
+        }
+    }
+
+    if (!tx) {
+        MO_DBG_ERR("transaction queue full");
+        return false;
+    }
+
     tx->beginTimestamp = context.getModel().getClock().now();
 
-    MO_DBG_DEBUG("allocated tx %u-%s", evseId, tx->transactionId);
+    if (!txStore.commit(tx.get())) {
+        MO_DBG_ERR("fs error");
+        return false;
+    }
 
-    return tx;
+    transaction = std::move(tx);
+
+    txNrEnd = (txNrEnd + 1) % MAX_TX_CNT;
+    MO_DBG_DEBUG("advance txNrEnd %u-%u", evseId, txNrEnd);
+    MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
+
+    return true;
+}
+
+bool TransactionService::Evse::endTransaction(Ocpp201::Transaction::StoppedReason stoppedReason = Ocpp201::Transaction::StoppedReason::Other, Ocpp201::TransactionEventTriggerReason stopTrigger = Ocpp201::TransactionEventTriggerReason::AbnormalCondition) {
+
+    if (!transaction || !transaction->active) {
+        //transaction already ended / not active anymore
+        return false;
+    }
+
+    MO_DBG_DEBUG("End transaction started by idTag %s",
+                            transaction->idToken.get());
+
+    transaction->active = false;
+    transaction->stopTrigger = stopTrigger;
+    transaction->stoppedReason = stoppedReason;
+    txStore.commit(transaction.get());
+
+    return true;
 }
 
 void TransactionService::Evse::loop() {
 
     if (transaction && !transaction->active && !transaction->started) {
         MO_DBG_DEBUG("collect aborted transaction %u-%s", evseId, transaction->transactionId);
+        if (txFront == transaction.get()) {
+            MO_DBG_DEBUG("pass ownership from tx to txFront");
+            txFrontCache = std::move(transaction);
+        }
         transaction = nullptr;
     }
 
     if (transaction && transaction->stopped) {
         MO_DBG_DEBUG("collect obsolete transaction %u-%s", evseId, transaction->transactionId);
+        if (txFront == transaction.get()) {
+            MO_DBG_DEBUG("pass ownership from tx to txFront");
+            txFrontCache = std::move(transaction);
+        }
         transaction = nullptr;
     }
 
@@ -88,9 +260,7 @@ void TransactionService::Evse::loop() {
                     context.getModel().getClock().now() - transaction->beginTimestamp >= txService.evConnectionTimeOutInt->getInt()) {
 
                 MO_DBG_INFO("Session mngt: timeout");
-                transaction->active = false;
-                transaction->stopTrigger = TransactionEventTriggerReason::EVConnectTimeout;
-                transaction->stopReason = Ocpp201::Transaction::StopReason::Timeout;
+                endTransaction(Ocpp201::Transaction::StoppedReason::Timeout, TransactionEventTriggerReason::EVConnectTimeout);
             }
 
             if (transaction->active &&
@@ -100,15 +270,12 @@ void TransactionService::Evse::loop() {
                      txService.isTxStopPoint(TxStartStopPoint::Authorized)  || txService.isTxStopPoint(TxStartStopPoint::PowerPathClosed))) {
                 
                 MO_DBG_INFO("Session mngt: Deauthorized before start");
-                transaction->active = false;
-                transaction->stopTrigger = TransactionEventTriggerReason::Deauthorized;
-                transaction->stopReason = Ocpp201::Transaction::StopReason::DeAuthorized;
+                endTransaction(Ocpp201::Transaction::StoppedReason::DeAuthorized, TransactionEventTriggerReason::Deauthorized);
             }
         }
     }
 
-
-    std::shared_ptr<TransactionEventData> txEvent;
+    std::unique_ptr<TransactionEventData> txEvent;
 
     bool txStopCondition = false;
 
@@ -116,55 +283,53 @@ void TransactionService::Evse::loop() {
         // stop tx?
 
         TransactionEventTriggerReason triggerReason = TransactionEventTriggerReason::UNDEFINED;
-        Ocpp201::Transaction::StopReason stopReason = Ocpp201::Transaction::StopReason::UNDEFINED;
+        Ocpp201::Transaction::StoppedReason stoppedReason = Ocpp201::Transaction::StoppedReason::UNDEFINED;
 
         if (transaction && !transaction->active) {
             // tx ended via endTransaction
             txStopCondition = true;
             triggerReason = transaction->stopTrigger;
-            stopReason = transaction->stopReason;
+            stoppedReason = transaction->stoppedReason;
         } else if ((txService.isTxStopPoint(TxStartStopPoint::EVConnected) ||
                     txService.isTxStopPoint(TxStartStopPoint::PowerPathClosed)) &&
                     connectorPluggedInput && !connectorPluggedInput() &&
                     (txService.stopTxOnEVSideDisconnectBool->getBool() || !transaction || !transaction->started)) {
             txStopCondition = true;
             triggerReason = TransactionEventTriggerReason::EVCommunicationLost;
-            stopReason = Ocpp201::Transaction::StopReason::EVDisconnected;
+            stoppedReason = Ocpp201::Transaction::StoppedReason::EVDisconnected;
         } else if ((txService.isTxStopPoint(TxStartStopPoint::Authorized) ||
                     txService.isTxStopPoint(TxStartStopPoint::PowerPathClosed)) &&
                     (!transaction || !transaction->isAuthorizationActive)) {
             // user revoked authorization (or EV or any "local" entity)
             txStopCondition = true;
             triggerReason = TransactionEventTriggerReason::StopAuthorized;
-            stopReason = Ocpp201::Transaction::StopReason::Local;
+            stoppedReason = Ocpp201::Transaction::StoppedReason::Local;
         } else if (txService.isTxStopPoint(TxStartStopPoint::EnergyTransfer) &&
                     evReadyInput && !evReadyInput()) {
             txStopCondition = true;
             triggerReason = TransactionEventTriggerReason::ChargingStateChanged;
-            stopReason = Ocpp201::Transaction::StopReason::StoppedByEV;
+            stoppedReason = Ocpp201::Transaction::StoppedReason::StoppedByEV;
         } else if (txService.isTxStopPoint(TxStartStopPoint::EnergyTransfer) &&
                     (evReadyInput || evseReadyInput) && // at least one of the two defined
                     !(evReadyInput && evReadyInput()) &&
                     !(evseReadyInput && evseReadyInput())) {
             txStopCondition = true;
             triggerReason = TransactionEventTriggerReason::ChargingStateChanged;
-            stopReason = Ocpp201::Transaction::StopReason::Other;
+            stoppedReason = Ocpp201::Transaction::StoppedReason::Other;
         } else if (txService.isTxStopPoint(TxStartStopPoint::Authorized) &&
                     transaction && transaction->isDeauthorized &&
                     txService.stopTxOnInvalidIdBool->getBool()) {
             // OCPP server rejected authorization
             txStopCondition = true;
             triggerReason = TransactionEventTriggerReason::Deauthorized;
-            stopReason = Ocpp201::Transaction::StopReason::DeAuthorized;
+            stoppedReason = Ocpp201::Transaction::StoppedReason::DeAuthorized;
         }
 
         if (txStopCondition &&
                 transaction && transaction->started && transaction->active) {
 
             MO_DBG_INFO("Session mngt: TxStopPoint reached");
-            transaction->active = false;
-            transaction->stopTrigger = triggerReason;
-            transaction->stopReason = stopReason;
+            endTransaction(stoppedReason, triggerReason);
         }
 
         if (transaction &&
@@ -172,14 +337,14 @@ void TransactionService::Evse::loop() {
                 (!stopTxReadyInput || stopTxReadyInput())) {
             // yes, stop running tx
 
-            txEvent = std::allocate_shared<TransactionEventData>(makeAllocator<TransactionEventData>(getMemoryTag()), transaction, transaction->seqNoCounter++);
+            txEvent = txStore.createTransactionEvent(*transaction);
             if (!txEvent) {
                 // OOM
                 return;
             }
 
             transaction->stopTrigger = triggerReason;
-            transaction->stopReason = stopReason;
+            transaction->stoppedReason = stoppedReason;
 
             txEvent->eventType = TransactionEventData::Type::Ended;
             txEvent->triggerReason = triggerReason;
@@ -229,7 +394,7 @@ void TransactionService::Evse::loop() {
             // start tx
 
             if (!transaction) {
-                transaction = allocateTransaction();
+                beginTransaction();
                 if (!transaction) {
                     // OOM
                     return;
@@ -239,7 +404,7 @@ void TransactionService::Evse::loop() {
                 }
             }
 
-            txEvent = std::allocate_shared<TransactionEventData>(makeAllocator<TransactionEventData>(getMemoryTag()), transaction, transaction->seqNoCounter++);
+            txEvent = txStore.createTransactionEvent(*transaction);
             if (!txEvent) {
                 // OOM
                 return;
@@ -334,7 +499,7 @@ void TransactionService::Evse::loop() {
         if (txUpdateCondition && !txEvent && transaction->started && !transaction->stopped) {
             // yes, updated
 
-            txEvent = std::allocate_shared<TransactionEventData>(makeAllocator<TransactionEventData>(getMemoryTag()), transaction, transaction->seqNoCounter++);
+            txEvent = txStore.createTransactionEvent(*transaction);
             if (!txEvent) {
                 // OOM
                 return;
@@ -395,15 +560,35 @@ void TransactionService::Evse::loop() {
     }
 
     if (txEvent) {
-        auto txEventRequest = makeRequest(new Ocpp201::TransactionEvent(context.getModel(), txEvent));
-        txEventRequest->setTimeout(0);
-        context.initiateRequest(std::move(txEventRequest));
-
         if (txEvent->eventType == TransactionEventData::Type::Started) {
             transaction->started = true;
         } else if (txEvent->eventType == TransactionEventData::Type::Ended) {
             transaction->stopped = true;
         }
+    }
+
+    if (txEvent) {
+        txEvent->opNr = context.getRequestQueue().getNextOpNr();
+        MO_DBG_DEBUG("enqueueing new txEvent at opNr %u", txEvent->opNr);
+    }
+
+    if (txEvent) {
+        txStore.commit(txEvent.get());
+    }
+
+    //try to pass ownership to front txEvent immediatley
+    if (txEvent && !txEventFront &&
+            transaction->txNr == txNrFront &&
+            !transaction->seqNos.empty() && transaction->seqNos.front() == txEvent->seqNo) {
+
+        //txFront set up?
+        if (!txFront) {
+            txFront = transaction.get();
+        }
+
+        //keep txEvent loaded (otherwise ReqEmitter would load it again from flash)
+        MO_DBG_DEBUG("new txEvent is front element");
+        txEventFront = std::move(txEvent);
     }
 }
 
@@ -428,7 +613,7 @@ bool TransactionService::Evse::beginAuthorization(IdToken idToken, bool validate
     }
 
     if (!transaction) {
-        transaction = allocateTransaction();
+        beginTransaction();
         if (!transaction) {
             MO_DBG_ERR("could not allocate Tx");
             return false;
@@ -442,8 +627,6 @@ bool TransactionService::Evse::beginAuthorization(IdToken idToken, bool validate
     transaction->idToken = idToken;
     transaction->beginTimestamp = context.getModel().getClock().now();
 
-    auto tx = transaction;
-
     if (validateIdToken) {
         auto authorize = makeRequest(new Authorize(context.getModel(), idToken));
         if (!authorize) {
@@ -452,27 +635,45 @@ bool TransactionService::Evse::beginAuthorization(IdToken idToken, bool validate
             return false;
         }
 
-        authorize->setOnReceiveConfListener([this, tx] (JsonObject response) {
+        char txId [sizeof(transaction->transactionId)]; //capture txId to check if transaction reference is still the same
+        snprintf(txId, sizeof(txId), "%s", transaction->transactionId);
+
+        authorize->setOnReceiveConfListener([this, txId] (JsonObject response) {
+            auto tx = getTransaction();
+            if (!tx || strcmp(tx->transactionId, txId)) {
+                MO_DBG_INFO("dangling Authorize -- discard");
+                return;
+            }
+
             if (strcmp(response["idTokenInfo"]["status"] | "_Undefined", "Accepted")) {
                 MO_DBG_DEBUG("Authorize rejected (%s), abort tx process", tx->idToken.get());
                 tx->isDeauthorized = true;
+                txStore.commit(tx);
                 return;
             }
 
             MO_DBG_DEBUG("Authorized tx with validation (%s)", tx->idToken.get());
             tx->isAuthorized = true;
             tx->notifyIdToken = true;
+            txStore.commit(tx);
         });
-        authorize->setOnAbortListener([this, tx] () {
+        authorize->setOnAbortListener([this, txId] () {
+            auto tx = getTransaction();
+            if (!tx || strcmp(tx->transactionId, txId)) {
+                MO_DBG_INFO("dangling Authorize -- discard");
+                return;
+            }
+
             MO_DBG_DEBUG("Authorize timeout (%s)", tx->idToken.get());
             tx->isDeauthorized = true;
+            txStore.commit(tx);
         });
         authorize->setTimeout(20 * 1000);
         context.initiateRequest(std::move(authorize));
     } else {
-        MO_DBG_DEBUG("Authorized tx directly (%s)", tx->idToken.get());
-        tx->isAuthorized = true;
-        tx->notifyIdToken = true;
+        MO_DBG_DEBUG("Authorized tx directly (%s)", transaction->idToken.get());
+        transaction->isAuthorized = true;
+        transaction->notifyIdToken = true;
     }
 
     return true;
@@ -498,8 +699,6 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken, bool validateId
     } else {
         // use a different idToken for stopping the tx
 
-        auto tx = transaction;
-
         auto authorize = makeRequest(new Authorize(context.getModel(), idToken));
         if (!authorize) {
             // OOM
@@ -507,7 +706,16 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken, bool validateId
             return false;
         }
 
-        authorize->setOnReceiveConfListener([tx, idToken, this] (JsonObject response) {
+        char txId [sizeof(transaction->transactionId)]; //capture txId to check if transaction reference is still the same
+        snprintf(txId, sizeof(txId), "%s", transaction->transactionId);
+
+        authorize->setOnReceiveConfListener([this, txId, idToken] (JsonObject response) {
+            auto tx = getTransaction();
+            if (!tx || strcmp(tx->transactionId, txId)) {
+                MO_DBG_INFO("dangling Authorize -- discard");
+                return;
+            }
+
             if (strcmp(response["idTokenInfo"]["status"] | "_Undefined", "Accepted")) {
                 MO_DBG_DEBUG("Authorize rejected (%s), don't stop tx", idToken.get());
                 return;
@@ -519,15 +727,14 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken, bool validateId
             if (!tx->stopIdToken) {
                 // OOM
                 if (tx->active) {
-                    tx->active = false;
-                    tx->stopTrigger = TransactionEventTriggerReason::AbnormalCondition;
-                    tx->stopReason = Ocpp201::Transaction::StopReason::Other;
+                    abortTransaction();
                 }
                 return;
             }
 
             tx->isAuthorizationActive = false;
             tx->notifyStopIdToken = true;
+            txStore.commit(tx);
         });
         authorize->setTimeout(20 * 1000);
         context.initiateRequest(std::move(authorize));
@@ -535,24 +742,11 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken, bool validateId
 
     return true;
 }
-bool TransactionService::Evse::abortTransaction(Ocpp201::Transaction::StopReason stopReason, TransactionEventTriggerReason stopTrigger) {
-
-    if (!transaction || !transaction->active) {
-        //transaction already ended / not active anymore
-        return false;
-    }
-
-    MO_DBG_DEBUG("Abort session started by idTag %s",
-                            transaction->idToken.get());
-
-    transaction->active = false;
-    transaction->stopTrigger = stopTrigger;
-    transaction->stopReason = stopReason;
-
-    return true;
+bool TransactionService::Evse::abortTransaction(Ocpp201::Transaction::StoppedReason stoppedReason, TransactionEventTriggerReason stopTrigger) {
+    return endTransaction(stoppedReason, stopTrigger);
 }
-std::shared_ptr<MicroOcpp::Ocpp201::Transaction>& TransactionService::Evse::getTransaction() {
-    return transaction;
+MicroOcpp::Ocpp201::Transaction *TransactionService::Evse::getTransaction() {
+    return transaction.get();
 }
 
 bool TransactionService::Evse::ocppPermitsCharge() {
@@ -561,6 +755,142 @@ bool TransactionService::Evse::ocppPermitsCharge() {
            transaction->isAuthorizationActive &&
            transaction->isAuthorized &&
            !transaction->isDeauthorized;
+}
+
+unsigned int TransactionService::Evse::getFrontRequestOpNr() {
+
+    if (txEventFront) {
+        return txEventFront->opNr;
+    }
+
+    /*
+     * Advance front transaction?
+     */
+
+    unsigned int txSize = (txNrEnd + MAX_TX_CNT - txNrFront) % MAX_TX_CNT;
+
+    if (txFront && txSize == 0) {
+        //catch edge case where txBack has been rolled back and txFront was equal to txBack
+        MO_DBG_DEBUG("collect front transaction %u-%u after tx rollback", evseId, txFront->txNr);
+        MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
+        txEventFront = nullptr;
+        txFrontCache = nullptr;
+        txFront = nullptr;
+    }
+
+    for (unsigned int i = 0; i < txSize; i++) {
+
+        if (!txFront) {
+            if (transaction && transaction->txNr == txNrFront) {
+                txFront = transaction.get();
+            } else {
+                txFrontCache = txStore.loadTransaction(txNrFront);
+                txFront = txFrontCache.get();
+            }
+
+            if (txFront) {
+                MO_DBG_DEBUG("load front transaction %u-%u", evseId, txFront->txNr);
+                (void)0;
+            }
+        }
+
+        if (!txFront || (txFront && ((!txFront->active && !txFront->started) || (txFront->stopped && txFront->seqNos.empty()) || txFront->silent))) {
+            //advance front
+            MO_DBG_DEBUG("collect front transaction %u-%u", evseId, txNrFront);
+            txEventFront = nullptr;
+            txFrontCache = nullptr;
+            txFront = nullptr;
+            txNrFront = (txNrFront + 1) % MAX_TX_CNT;
+            MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
+        } else {
+            //front is accurate. Done here
+            break;
+        }
+    }
+
+    if (txFront && !txFront->seqNos.empty()) {
+        MO_DBG_DEBUG("load front txEvent %u-%u-%u from flash", evseId, txFront->txNr, txFront->seqNos.front());
+        txEventFront = txStore.loadTransactionEvent(*txFront, txFront->seqNos.front());
+    }
+
+    if (txEventFront) {
+        return txEventFront->opNr;
+    }
+
+    return NoOperation;
+}
+
+std::unique_ptr<Request> TransactionService::Evse::fetchFrontRequest() {
+
+    if (!txEventFront) {
+        return nullptr;
+    }
+
+    if (txFront && txFront->silent) {
+        return nullptr;
+    }
+
+    if (txEventFront->seqNo == 0 &&
+            txEventFront->timestamp < MIN_TIME &&
+            txEventFront->bootNr != context.getModel().getBootNr()) {
+        //time not set, cannot be restored anymore -> invalid tx
+        MO_DBG_ERR("cannot recover tx from previous power cycle");
+
+        txFront->silent = true;
+        txFront->active = false;
+        txStore.commit(txFront);
+
+        //clean txEvents early
+        auto seqNos = txFront->seqNos;
+        for (size_t i = 0; i < seqNos.size(); i++) {
+            txStore.remove(*txFront, seqNos[i]);
+        }
+        //last remove should keep tx201 file with only tx record and without txEvent
+
+        //next getFrontRequestOpNr() call will collect txFront
+        return nullptr;
+    }
+
+    if ((int)txEventFront->attemptNr >= txService.messageAttemptsTransactionEventInt->getInt()) {
+        MO_DBG_WARN("exceeded TransactionMessageAttempts. Discard txEvent");
+
+        txStore.remove(*txFront, txEventFront->seqNo);
+        txEventFront = nullptr;
+        return nullptr;
+    }
+
+    Timestamp nextAttempt = txEventFront->attemptTime +
+                            txEventFront->attemptNr * std::max(0, txService.messageAttemptIntervalTransactionEventInt->getInt());
+
+    if (nextAttempt > context.getModel().getClock().now()) {
+        return nullptr;
+    }
+
+    if (txEventFrontIsRequested) {
+        //ensure that only one TransactionEvent request is being executed at the same time
+        return nullptr;
+    }
+
+    txEventFront->attemptNr++;
+    txEventFront->attemptTime = context.getModel().getClock().now();
+    txStore.commit(txEventFront.get());
+
+    auto txEventRequest = makeRequest(new TransactionEvent(context.getModel(), txEventFront.get()));
+    txEventRequest->setOnReceiveConfListener([this] (JsonObject) {
+        MO_DBG_DEBUG("completed front txEvent");
+        txStore.remove(*txFront, txEventFront->seqNo);
+        txEventFront = nullptr;
+        txEventFrontIsRequested = false;
+    });
+    txEventRequest->setOnAbortListener([this] () {
+        MO_DBG_DEBUG("unsuccessful front txEvent");
+        txEventFrontIsRequested = false;
+    });
+    txEventRequest->setTimeout(std::min(20, std::max(5, txService.messageAttemptIntervalTransactionEventInt->getInt())) * 1000);
+
+    txEventFrontIsRequested = true;
+
+    return txEventRequest;
 }
 
 bool TransactionService::isTxStartPoint(TxStartStopPoint check) {
@@ -626,10 +956,27 @@ bool TransactionService::parseTxStartStopPoint(const char *csl, Vector<TxStartSt
     return true;
 }
 
-TransactionService::TransactionService(Context& context) :
+namespace MicroOcpp {
+
+bool validateTxStartStopPoint(const char *value, void *userPtr) {
+    auto txService = static_cast<TransactionService*>(userPtr);
+
+    auto validated = makeVector<TransactionService::TxStartStopPoint>("v201.Transactions.TransactionService");
+    return txService->parseTxStartStopPoint(value, validated);
+}
+
+bool validateUnsignedInt(int val, void*) {
+    return val >= 0;
+}
+
+} //namespace MicroOcpp
+
+using namespace MicroOcpp;
+
+TransactionService::TransactionService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int numEvseIds) :
         MemoryManaged("v201.Transactions.TransactionService"),
         context(context),
-        evses(makeVector<Evse>(getMemoryTag())),
+        txStore(filesystem, numEvseIds),
         txStartPointParsed(makeVector<TxStartStopPoint>(getMemoryTag())),
         txStopPointParsed(makeVector<TxStartStopPoint>(getMemoryTag())) {
     auto varService = context.getModel().getVariableService();
@@ -641,41 +988,42 @@ TransactionService::TransactionService(Context& context) :
     evConnectionTimeOutInt = varService->declareVariable<int>("TxCtrlr", "EVConnectionTimeOut", 30);
     sampledDataTxUpdatedInterval = varService->declareVariable<int>("SampledDataCtrlr", "TxUpdatedInterval", 0);
     sampledDataTxEndedInterval = varService->declareVariable<int>("SampledDataCtrlr", "TxEndedInterval", 0);
+    messageAttemptsTransactionEventInt = varService->declareVariable<int>("OCPPCommCtrlr", "MessageAttempts", 3);
+    messageAttemptIntervalTransactionEventInt = varService->declareVariable<int>("OCPPCommCtrlr", "MessageAttemptInterval", 60);
+    silentOfflineTransactionsBool = varService->declareVariable<bool>("CustomizationCtrlr", "SilentOfflineTransactions", false);
 
-    varService->declareVariable<bool>("AuthCtrlr", "AuthorizeRemoteStart", false, MO_VARIABLE_VOLATILE, Variable::Mutability::ReadOnly);
+    varService->declareVariable<bool>("AuthCtrlr", "AuthorizeRemoteStart", false, Variable::Mutability::ReadOnly, false);
 
-    varService->registerValidator<const char*>("TxCtrlr", "TxStartPoint", [this] (const char *value) -> bool {
-        auto validated = makeVector<TxStartStopPoint>(getMemoryTag());
-        return this->parseTxStartStopPoint(value, validated);
-    });
-
-    varService->registerValidator<const char*>("TxCtrlr", "TxStopPoint", [this] (const char *value) -> bool {
-        auto validated = makeVector<TxStartStopPoint>(getMemoryTag());
-        return this->parseTxStartStopPoint(value, validated);
-    });
-
-    std::function<bool(int)> validateUnsignedInt = [] (int val) {
-        return val >= 0;
-    };
-
+    varService->registerValidator<const char*>("TxCtrlr", "TxStartPoint", validateTxStartStopPoint, this);
+    varService->registerValidator<const char*>("TxCtrlr", "TxStopPoint", validateTxStartStopPoint, this);
     varService->registerValidator<int>("SampledDataCtrlr", "TxUpdatedInterval", validateUnsignedInt);
     varService->registerValidator<int>("SampledDataCtrlr", "TxEndedInterval", validateUnsignedInt);
 
-    evses.reserve(MO_NUM_EVSEID);
-
-    for (unsigned int evseId = 0; evseId < MO_NUM_EVSEID; evseId++) {
-        evses.emplace_back(context, *this, evseId);
+    for (unsigned int evseId = 0; evseId < std::min(numEvseIds, (unsigned int)MO_NUM_EVSEID); evseId++) {
+        if (!txStore.getEvse(evseId)) {
+            MO_DBG_ERR("initialization error");
+            break;
+        }
+        evses[evseId] = new Evse(context, *this, *txStore.getEvse(evseId), evseId);
     }
 
     //make sure EVSE 0 will only trigger transactions if TxStartPoint is Authorized
-    evses[0].connectorPluggedInput = [] () {return false;};
-    evses[0].evReadyInput = [] () {return false;};
-    evses[0].evseReadyInput = [] () {return false;};
+    if (evses[0]) {
+        evses[0]->connectorPluggedInput = [] () {return false;};
+        evses[0]->evReadyInput = [] () {return false;};
+        evses[0]->evseReadyInput = [] () {return false;};
+    }
+}
+
+TransactionService::~TransactionService() {
+    for (unsigned int evseId = 0; evseId < MO_NUM_EVSEID && evses[evseId]; evseId++) {
+        delete evses[evseId];
+    }
 }
 
 void TransactionService::loop() {
-    for (Evse& evse : evses) {
-        evse.loop();
+    for (unsigned int evseId = 0; evseId < MO_NUM_EVSEID && evses[evseId]; evseId++) {
+        evses[evseId]->loop();
     }
 
     if (txStartPointString->getWriteCount() != trackTxStartPoint) {
@@ -687,15 +1035,16 @@ void TransactionService::loop() {
     }
 
     // assign tx on evseId 0 to an EVSE
-    if (auto& tx0 = evses[0].getTransaction()) {
+    if (evses[0]->transaction) {
         //pending tx on evseId 0
-        if (tx0->active) {
-            for (unsigned int evseId = 1; evseId < MO_NUM_EVSEID; evseId++) {
-                if (!evses[evseId].getTransaction() && 
-                        (!evses[evseId].connectorPluggedInput || evses[evseId].connectorPluggedInput())) {
+        if (evses[0]->transaction->active) {
+            for (unsigned int evseId = 1; evseId < MO_NUM_EVSEID && evses[evseId]; evseId++) {
+                if (!evses[evseId]->getTransaction() && 
+                        (!evses[evseId]->connectorPluggedInput || evses[evseId]->connectorPluggedInput())) {
                     MO_DBG_INFO("assign tx to evse %u", evseId);
-                    tx0->notifyEvseId = true;
-                    evses[evseId].transaction = std::move(tx0);
+                    evses[0]->transaction->notifyEvseId = true;
+                    evses[0]->transaction->evseId = evseId;
+                    evses[evseId]->transaction = std::move(evses[0]->transaction);
                 }
             }
         }
@@ -703,12 +1052,10 @@ void TransactionService::loop() {
 }
 
 TransactionService::Evse *TransactionService::getEvse(unsigned int evseId) {
-    if (evseId < evses.size()) {
-        return &evses[evseId];
-    } else {
-        MO_DBG_ERR("invalid arg");
+    if (evseId >= MO_NUM_EVSEID) {
         return nullptr;
     }
+    return evses[evseId];
 }
 
 #endif // MO_ENABLE_V201

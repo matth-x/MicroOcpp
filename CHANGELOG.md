@@ -30,6 +30,7 @@
 - UnlockConnector port for OCPP 2.0.1 ([#371](https://github.com/matth-x/MicroOcpp/pull/371))
 - More APIs ported to OCPP 2.0.1 ([#371](https://github.com/matth-x/MicroOcpp/pull/371))
 - Support for AuthorizeRemoteTxRequests ([#373](https://github.com/matth-x/MicroOcpp/pull/373))
+- Persistent Variable and Tx store for OCPP 2.0.1 ([#379](https://github.com/matth-x/MicroOcpp/pull/379))
 
 ### Removed
 

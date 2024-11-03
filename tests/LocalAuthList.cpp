@@ -265,8 +265,6 @@ TEST_CASE( "LocalAuth" ) {
 
         REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
-        unsigned long t_before = mocpp_tick_ms();
-
         beginTransaction("unknownIdTag");
         loop();
 

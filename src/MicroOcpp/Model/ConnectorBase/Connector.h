@@ -22,8 +22,6 @@
 #define MO_TXRECORD_SIZE 4 //no. of tx to hold on flash storage
 #endif
 
-#define MAX_TX_CNT 100000U //upper limit of txNr (internal usage). Must be at least 2*MO_TXRECORD_SIZE+1
-
 #ifndef MO_REPORT_NOERROR
 #define MO_REPORT_NOERROR 0
 #endif

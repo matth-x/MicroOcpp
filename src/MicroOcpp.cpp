@@ -290,7 +290,7 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         model.setVariableService(std::unique_ptr<VariableService>(
             new VariableService(*context, filesystem)));
         model.setTransactionService(std::unique_ptr<TransactionService>(
-            new TransactionService(*context)));
+            new TransactionService(*context, filesystem, MO_NUM_EVSEID)));
         model.setRemoteControlService(std::unique_ptr<RemoteControlService>(
             new RemoteControlService(*context, MO_NUM_EVSEID)));
     } else
@@ -852,6 +852,7 @@ void setEvReadyInput(std::function<bool()> evReadyInput, unsigned int connectorI
                 evse->setEvReadyInput(evReadyInput);
             }
         }
+        return;
     }
 #endif
     auto connector = context->getModel().getConnector(connectorId);

@@ -288,6 +288,46 @@ bool MeteringServiceEvse::existsMeasurand(const char *measurand, size_t len) {
     return false;
 }
 
+namespace MicroOcpp {
+namespace Ocpp201 {
+
+bool validateSelectString(const char *csl, void *userPtr) {
+    auto mService = static_cast<MeteringService*>(userPtr);
+
+    bool isValid = true;
+    const char *l = csl; //the beginning of an entry of the comma-separated list
+    const char *r = l; //one place after the last character of the entry beginning with l
+    while (*l) {
+        if (*l == ',') {
+            l++;
+            continue;
+        }
+        r = l + 1;
+        while (*r != '\0' && *r != ',') {
+            r++;
+        }
+        bool found = false;
+        for (size_t evseId = 0; evseId < MO_NUM_EVSEID && mService->getEvse(evseId); evseId++) {
+            if (mService->getEvse(evseId)->existsMeasurand(l, (size_t) (r - l))) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            isValid = false;
+            MO_DBG_WARN("could not find metering device for %.*s", (int) (r - l), l);
+            break;
+        }
+        l = r;
+    }
+    return isValid;
+}
+
+} //namespace Ocpp201
+} //namespace MicroOcpp
+
+using namespace MicroOcpp::Ocpp201;
+
 MeteringService::MeteringService(Model& model, size_t numEvses) {
 
     auto varService = model.getVariableService();
@@ -298,40 +338,10 @@ MeteringService::MeteringService(Model& model, size_t numEvses) {
     varService->declareVariable<const char*>("SampledDataCtrlr", "TxEndedMeasurands", "");
     varService->declareVariable<const char*>("AlignedDataCtrlr", "AlignedDataMeasurands", "");
 
-    std::function<bool(const char*)> validateSelectString = [this] (const char *csl) {
-        bool isValid = true;
-        const char *l = csl; //the beginning of an entry of the comma-separated list
-        const char *r = l; //one place after the last character of the entry beginning with l
-        while (*l) {
-            if (*l == ',') {
-                l++;
-                continue;
-            }
-            r = l + 1;
-            while (*r != '\0' && *r != ',') {
-                r++;
-            }
-            bool found = false;
-            for (size_t evseId = 0; evseId < MO_NUM_EVSEID && evses[evseId]; evseId++) {
-                if (evses[evseId]->existsMeasurand(l, (size_t) (r - l))) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                isValid = false;
-                MO_DBG_WARN("could not find metering device for %.*s", (int) (r - l), l);
-                break;
-            }
-            l = r;
-        }
-        return isValid;
-    };
-
-    varService->registerValidator<const char*>("SampledDataCtrlr", "TxStartedMeasurands", validateSelectString);
-    varService->registerValidator<const char*>("SampledDataCtrlr", "TxUpdatedMeasurands", validateSelectString);
-    varService->registerValidator<const char*>("SampledDataCtrlr", "TxEndedMeasurands", validateSelectString);
-    varService->registerValidator<const char*>("AlignedDataCtrlr", "AlignedDataMeasurands", validateSelectString);
+    varService->registerValidator<const char*>("SampledDataCtrlr", "TxStartedMeasurands", validateSelectString, this);
+    varService->registerValidator<const char*>("SampledDataCtrlr", "TxUpdatedMeasurands", validateSelectString, this);
+    varService->registerValidator<const char*>("SampledDataCtrlr", "TxEndedMeasurands", validateSelectString, this);
+    varService->registerValidator<const char*>("AlignedDataCtrlr", "AlignedDataMeasurands", validateSelectString, this);
 
     for (size_t evseId = 0; evseId < std::min(numEvses, (size_t)MO_NUM_EVSEID); evseId++) {
         evses[evseId] = new MeteringServiceEvse(model, evseId);

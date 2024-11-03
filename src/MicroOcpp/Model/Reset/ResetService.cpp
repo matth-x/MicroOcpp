@@ -125,7 +125,7 @@ ResetService::~ResetService() {
 
 ResetService::Evse::Evse(Context& context, ResetService& resetService, unsigned int evseId) : context(context), resetService(resetService), evseId(evseId) {
     auto varService = context.getModel().getVariableService();
-    varService->declareVariable<bool>(ComponentId("EVSE", evseId >= 1 ? evseId : -1), "AllowReset", true, MO_VARIABLE_FN, Variable::Mutability::ReadOnly);
+    varService->declareVariable<bool>(ComponentId("EVSE", evseId >= 1 ? evseId : -1), "AllowReset", true, Variable::Mutability::ReadOnly, false);
 }
 
 void ResetService::Evse::loop() {
@@ -303,7 +303,7 @@ ResetStatus ResetService::initiateReset(ResetType type, unsigned int evseId) {
             if (tx->active) {
                 //Tx in progress. Check behavior
                 if (type == ResetType_Immediate) {
-                    txService->getEvse(eId)->abortTransaction(Transaction::StopReason::ImmediateReset, TransactionEventTriggerReason::ResetCommand);
+                    txService->getEvse(eId)->abortTransaction(Transaction::StoppedReason::ImmediateReset, TransactionEventTriggerReason::ResetCommand);
                 } else {
                     scheduled = true;
                     break;

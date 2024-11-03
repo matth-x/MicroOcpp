@@ -53,7 +53,7 @@ public:
 
     RemoteControlServiceEvse *getEvse(unsigned int evseId);
 
-    RequestStartStopStatus requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, IdToken idToken, std::shared_ptr<Ocpp201::Transaction>& transactionOut); //ChargingProfile, GroupIdToken not supported yet
+    RequestStartStopStatus requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, IdToken idToken, char *transactionIdOut, size_t transactionIdBufSize); //ChargingProfile, GroupIdToken not supported yet
 
     RequestStartStopStatus requestStopTransaction(const char *transactionId);
 };

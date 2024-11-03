@@ -165,13 +165,6 @@ bool Variable::isConstant() {
     return constant;
 }
 
-void Variable::detach() {
-    detached = true;
-}
-bool Variable::isDetached() {
-    return detached;
-}
-
 template <class T>
 struct VariableSingleData {
     T value = 0;

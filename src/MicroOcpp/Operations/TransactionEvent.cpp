@@ -14,7 +14,7 @@
 using namespace MicroOcpp::Ocpp201;
 using MicroOcpp::JsonDoc;
 
-TransactionEvent::TransactionEvent(Model& model, std::shared_ptr<TransactionEventData> txEvent)
+TransactionEvent::TransactionEvent(Model& model, TransactionEventData *txEvent)
         : MemoryManaged("v201.Operation.", "TransactionEvent"), model(model), txEvent(txEvent) {
 
 }
@@ -51,96 +51,17 @@ std::unique_ptr<JsonDoc> TransactionEvent::createReq() {
     auto doc = makeJsonDoc(getMemoryTag(), capacity);
     JsonObject payload = doc->to<JsonObject>();
 
-    const char *eventType = "";
-    switch (txEvent->eventType) {
-        case TransactionEventData::Type::Ended:
-            eventType = "Ended";
-            break;
-        case TransactionEventData::Type::Started:
-            eventType = "Started";
-            break;
-        case TransactionEventData::Type::Updated:
-            eventType = "Updated";
-            break;
-    }
-
-    payload["eventType"] = eventType;
+    payload["eventType"] = serializeTransactionEventType(txEvent->eventType);
 
     char timestamp [JSONDATE_LENGTH + 1];
     txEvent->timestamp.toJsonString(timestamp, JSONDATE_LENGTH + 1);
     payload["timestamp"] = timestamp;
 
-    const char *triggerReason = "";
-    switch(txEvent->triggerReason) {
-        case TransactionEventTriggerReason::UNDEFINED:
-            MO_DBG_ERR("internal error");
-            break;
-        case TransactionEventTriggerReason::Authorized:
-            triggerReason = "Authorized";
-            break;
-        case TransactionEventTriggerReason::CablePluggedIn:
-            triggerReason = "CablePluggedIn";
-            break;
-        case TransactionEventTriggerReason::ChargingRateChanged:
-            triggerReason = "ChargingRateChanged";
-            break;
-        case TransactionEventTriggerReason::ChargingStateChanged:
-            triggerReason = "ChargingStateChanged";
-            break;
-        case TransactionEventTriggerReason::Deauthorized:
-            triggerReason = "Deauthorized";
-            break;
-        case TransactionEventTriggerReason::EnergyLimitReached:
-            triggerReason = "EnergyLimitReached";
-            break;
-        case TransactionEventTriggerReason::EVCommunicationLost:
-            triggerReason = "EVCommunicationLost";
-            break;
-        case TransactionEventTriggerReason::EVConnectTimeout:
-            triggerReason = "EVConnectTimeout";
-            break;
-        case TransactionEventTriggerReason::MeterValueClock:
-            triggerReason = "MeterValueClock";
-            break;
-        case TransactionEventTriggerReason::MeterValuePeriodic:
-            triggerReason = "MeterValuePeriodic";
-            break;
-        case TransactionEventTriggerReason::TimeLimitReached:
-            triggerReason = "TimeLimitReached";
-            break;
-        case TransactionEventTriggerReason::Trigger:
-            triggerReason = "Trigger";
-            break;
-        case TransactionEventTriggerReason::UnlockCommand:
-            triggerReason = "UnlockCommand";
-            break;
-        case TransactionEventTriggerReason::StopAuthorized:
-            triggerReason = "StopAuthorized";
-            break;
-        case TransactionEventTriggerReason::EVDeparted:
-            triggerReason = "EVDeparted";
-            break;
-        case TransactionEventTriggerReason::EVDetected:
-            triggerReason = "EVDetected";
-            break;
-        case TransactionEventTriggerReason::RemoteStop:
-            triggerReason = "RemoteStop";
-            break;
-        case TransactionEventTriggerReason::RemoteStart:
-            triggerReason = "RemoteStart";
-            break;
-        case TransactionEventTriggerReason::AbnormalCondition:
-            triggerReason = "AbnormalCondition";
-            break;
-        case TransactionEventTriggerReason::SignedDataReceived:
-            triggerReason = "SignedDataReceived";
-            break;
-        case TransactionEventTriggerReason::ResetCommand:
-            triggerReason = "ResetCommand";
-            break;
+    if (serializeTransactionEventTriggerReason(txEvent->triggerReason)) {
+        payload["triggerReason"] = serializeTransactionEventTriggerReason(txEvent->triggerReason);
+    } else {
+        MO_DBG_ERR("serialization error");
     }
-
-    payload["triggerReason"] = triggerReason;
 
     payload["seqNo"] = txEvent->seqNo;
 
@@ -163,96 +84,13 @@ std::unique_ptr<JsonDoc> TransactionEvent::createReq() {
     JsonObject transactionInfo = payload.createNestedObject("transactionInfo");
     transactionInfo["transactionId"] = txEvent->transaction->transactionId;
 
-    const char *chargingState = nullptr;
-    switch (txEvent->chargingState) {
-        case TransactionEventData::ChargingState::UNDEFINED:
-            // optional, okay
-            break;
-        case TransactionEventData::ChargingState::Charging:
-            chargingState = "Charging";
-            break;
-        case TransactionEventData::ChargingState::EVConnected:
-            chargingState = "EVConnected";
-            break;
-        case TransactionEventData::ChargingState::SuspendedEV:
-            chargingState = "SuspendedEV";
-            break;
-        case TransactionEventData::ChargingState::SuspendedEVSE:
-            chargingState = "SuspendedEVSE";
-            break;
-        case TransactionEventData::ChargingState::Idle:
-            chargingState = "Idle";
-            break;
-    }
-    if (chargingState) { // optional
-        transactionInfo["chargingState"] = chargingState;
+    if (serializeTransactionEventChargingState(txEvent->chargingState)) { // optional
+        transactionInfo["chargingState"] = serializeTransactionEventChargingState(txEvent->chargingState);
     }
 
-    const char *stoppedReason = nullptr;
-    switch (txEvent->transaction->stopReason) {
-        case Transaction::StopReason::UNDEFINED:
-            // optional, okay
-            break;
-        case Transaction::StopReason::Local: 
-            // omit reason Local
-            break;
-        case Transaction::StopReason::DeAuthorized: 
-            stoppedReason = "DeAuthorized"; 
-            break;
-        case Transaction::StopReason::EmergencyStop: 
-            stoppedReason = "EmergencyStop"; 
-            break;
-        case Transaction::StopReason::EnergyLimitReached: 
-            stoppedReason = "EnergyLimitReached";
-            break;
-        case Transaction::StopReason::EVDisconnected: 
-            stoppedReason = "EVDisconnected";
-            break;
-        case Transaction::StopReason::GroundFault: 
-            stoppedReason = "GroundFault";
-            break;
-        case Transaction::StopReason::ImmediateReset:
-            stoppedReason = "ImmediateReset";
-            break;
-        case Transaction::StopReason::LocalOutOfCredit:
-            stoppedReason = "LocalOutOfCredit";
-            break;
-        case Transaction::StopReason::MasterPass:
-            stoppedReason = "MasterPass";
-            break;
-        case Transaction::StopReason::Other:
-            stoppedReason = "Other";
-            break;
-        case Transaction::StopReason::OvercurrentFault:
-            stoppedReason = "OvercurrentFault";
-            break;
-        case Transaction::StopReason::PowerLoss:
-            stoppedReason = "PowerLoss";
-            break;
-        case Transaction::StopReason::PowerQuality:
-            stoppedReason = "PowerQuality";
-            break;
-        case Transaction::StopReason::Reboot:
-            stoppedReason = "Reboot";
-            break;
-        case Transaction::StopReason::Remote:
-            stoppedReason = "Remote";
-            break;
-        case Transaction::StopReason::SOCLimitReached:
-            stoppedReason = "SOCLimitReached";
-            break;
-        case Transaction::StopReason::StoppedByEV:
-            stoppedReason = "StoppedByEV";
-            break;
-        case Transaction::StopReason::TimeLimitReached:
-            stoppedReason = "TimeLimitReached";
-            break;
-        case Transaction::StopReason::Timeout:
-            stoppedReason = "Timeout";
-            break;
-    }
-    if (stoppedReason) { // optional
-        transactionInfo["stoppedReason"] = stoppedReason;
+    if (txEvent->transaction->stoppedReason != Transaction::StoppedReason::Local &&
+            serializeTransactionStoppedReason(txEvent->transaction->stoppedReason)) { // optional
+        transactionInfo["stoppedReason"] = serializeTransactionStoppedReason(txEvent->transaction->stoppedReason);
     }
 
     if (txEvent->remoteStartId >= 0) {
