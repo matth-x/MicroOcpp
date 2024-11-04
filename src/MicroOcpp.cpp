@@ -712,6 +712,30 @@ std::shared_ptr<Transaction>& getTransaction(unsigned int connectorId) {
     return connector->getTransaction();
 }
 
+#if MO_ENABLE_V201
+Ocpp201::Transaction *getTransactionV201(unsigned int evseId) {
+    if (!context) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return nullptr;
+    }
+
+    if (context->getVersion().major != 2) {
+        MO_DBG_ERR("only supported in v201"); //need to call mocpp_initialize before
+        return nullptr;
+    }
+
+    TransactionService::Evse *evse = nullptr;
+    if (auto txService = context->getModel().getTransactionService()) {
+        evse = txService->getEvse(evseId);
+    }
+    if (!evse) {
+        MO_DBG_ERR("could not find EVSE");
+        return nullptr;
+    }
+    return evse->getTransaction();
+}
+#endif //MO_ENABLE_V201
+
 bool ocppPermitsCharge(unsigned int connectorId) {
     if (!context) {
         MO_DBG_WARN("OCPP uninitialized");
