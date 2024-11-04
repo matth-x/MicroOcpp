@@ -6,6 +6,8 @@
 #include "MicroOcpp.h"
 
 #include <MicroOcpp/Model/Certificates/Certificate_c.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Memory.h>
 
 #include <MicroOcpp/Platform.h>
@@ -184,10 +186,29 @@ OCPP_Transaction *ocpp_getTransaction() {
     return ocpp_getTransaction_m(1);
 }
 OCPP_Transaction *ocpp_getTransaction_m(unsigned int connectorId) {
+    #if MO_ENABLE_V201
+    {
+        if (!getOcppContext()) {
+            MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+            return nullptr;
+        }
+        if (getOcppContext()->getModel().getVersion().major == 2) {
+            ocpp_tx_compat_setV201(true); //set the ocpp_tx C-API into v201 mode globally
+            if (getTransactionV201(connectorId)) {
+                return reinterpret_cast<OCPP_Transaction*>(getTransactionV201(connectorId));
+            } else {
+                return nullptr;
+            }
+        } else {
+            ocpp_tx_compat_setV201(false); //set the ocpp_tx C-API into v16 mode globally
+            //continue with V16 implementation
+        }
+    }
+    #endif //MO_ENABLE_V201
     if (getTransaction(connectorId)) {
         return reinterpret_cast<OCPP_Transaction*>(getTransaction(connectorId).get());
     } else {
-        return NULL;
+        return nullptr;
     }
 }
 

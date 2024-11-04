@@ -5,6 +5,8 @@
 #ifndef TRANSACTION_H
 #define TRANSACTION_H
 
+#include <MicroOcpp/Version.h>
+
 /* General Tx defs */
 #ifdef __cplusplus
 extern "C" {
@@ -214,8 +216,6 @@ public:
 };
 
 } // namespace MicroOcpp
-
-#include <MicroOcpp/Version.h>
 
 #if MO_ENABLE_V201
 
@@ -451,7 +451,18 @@ extern "C" {
 struct OCPP_Transaction;
 typedef struct OCPP_Transaction OCPP_Transaction;
 
+/*
+ * Compat mode for transactions. This means that all following C-wrapper functions will interprete the handle as v201 transactions
+ */
+#if MO_ENABLE_V201
+void ocpp_tx_compat_setV201(bool isV201); //if set, all OCPP_Transaction* handles are treated as v201 transactions
+#endif
+
 int ocpp_tx_getTransactionId(OCPP_Transaction *tx);
+#if MO_ENABLE_V201
+const char *ocpp_tx_getTransactionIdV201(OCPP_Transaction *tx);
+#endif
+
 bool ocpp_tx_isAuthorized(OCPP_Transaction *tx);
 bool ocpp_tx_isIdTagDeauthorized(OCPP_Transaction *tx);
 

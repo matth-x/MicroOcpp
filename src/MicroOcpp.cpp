@@ -704,6 +704,12 @@ std::shared_ptr<Transaction>& getTransaction(unsigned int connectorId) {
         MO_DBG_WARN("OCPP uninitialized");
         return mocpp_undefinedTx;
     }
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        MO_DBG_ERR("only supported in v16");
+        return mocpp_undefinedTx;
+    }
+    #endif
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -720,7 +726,7 @@ Ocpp201::Transaction *getTransactionV201(unsigned int evseId) {
     }
 
     if (context->getVersion().major != 2) {
-        MO_DBG_ERR("only supported in v201"); //need to call mocpp_initialize before
+        MO_DBG_ERR("only supported in v201");
         return nullptr;
     }
 
