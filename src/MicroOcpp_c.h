@@ -9,7 +9,6 @@
 
 #include <MicroOcpp/Core/ConfigurationOptions.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
-#include <MicroOcpp/Model/ConnectorBase/Notification.h>
 #include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Model/Certificates/Certificate_c.h>
@@ -156,8 +155,8 @@ void ocpp_setStartTxReadyInput_m(unsigned int connectorId, InputBool_m startTxRe
 void ocpp_setStopTxReadyInput(InputBool stopTxReady);
 void ocpp_setStopTxReadyInput_m(unsigned int connectorId, InputBool_m stopTxReady);
 
-void ocpp_setTxNotificationOutput(void (*notificationOutput)(OCPP_Transaction*, enum OCPP_TxNotification));
-void ocpp_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, OCPP_Transaction*, enum OCPP_TxNotification));
+void ocpp_setTxNotificationOutput(void (*notificationOutput)(OCPP_Transaction*, TxNotification));
+void ocpp_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, OCPP_Transaction*, TxNotification));
 
 #if MO_ENABLE_CONNECTOR_LOCK
 void ocpp_setOnUnlockConnectorInOut(PollUnlockResult onUnlockConnectorInOut);

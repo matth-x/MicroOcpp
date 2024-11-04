@@ -308,14 +308,14 @@ void ocpp_setStopTxReadyInput_m(unsigned int connectorId, InputBool_m stopTxRead
     setStopTxReadyInput(adaptFn(connectorId, stopTxReady), connectorId);
 }
 
-void ocpp_setTxNotificationOutput(void (*notificationOutput)(OCPP_Transaction*, enum OCPP_TxNotification)) {
-    setTxNotificationOutput([notificationOutput] (MicroOcpp::Transaction *tx, MicroOcpp::TxNotification notification) {
-        notificationOutput(reinterpret_cast<OCPP_Transaction*>(tx), convertTxNotification(notification));
+void ocpp_setTxNotificationOutput(void (*notificationOutput)(OCPP_Transaction*, TxNotification)) {
+    setTxNotificationOutput([notificationOutput] (MicroOcpp::Transaction *tx, TxNotification notification) {
+        notificationOutput(reinterpret_cast<OCPP_Transaction*>(tx), notification);
     });
 }
-void ocpp_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, OCPP_Transaction*, enum OCPP_TxNotification)) {
-    setTxNotificationOutput([notificationOutput, connectorId] (MicroOcpp::Transaction *tx, MicroOcpp::TxNotification notification) {
-        notificationOutput(connectorId, reinterpret_cast<OCPP_Transaction*>(tx), convertTxNotification(notification));
+void ocpp_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, OCPP_Transaction*, TxNotification)) {
+    setTxNotificationOutput([notificationOutput, connectorId] (MicroOcpp::Transaction *tx, TxNotification notification) {
+        notificationOutput(connectorId, reinterpret_cast<OCPP_Transaction*>(tx), notification);
     }, connectorId);
 }
 

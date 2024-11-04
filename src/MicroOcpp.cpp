@@ -543,7 +543,7 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
                         MO_DBG_DEBUG("Authorize rejected (%s), continue transaction", idTag_capture.c_str());
                         auto connector = context->getModel().getConnector(connectorId);
                         if (connector) {
-                            connector->updateTxNotification(TxNotification::AuthorizationRejected);
+                            connector->updateTxNotification(TxNotification_AuthorizationRejected);
                         }
                         return;
                     }
@@ -558,7 +558,7 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
                     MO_DBG_DEBUG("Authorization timeout (%s), continue transaction", idTag_capture.c_str());
                     auto connector = context->getModel().getConnector(connectorId);
                     if (connector) {
-                        connector->updateTxNotification(TxNotification::AuthorizationTimeout);
+                        connector->updateTxNotification(TxNotification_AuthorizationTimeout);
                     }
                 });
 
@@ -1140,7 +1140,7 @@ void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connect
     connector->setStopTxReadyInput(stopTxReady);
 }
 
-void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcpp::TxNotification)> notificationOutput, unsigned int connectorId) {
+void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,TxNotification)> notificationOutput, unsigned int connectorId) {
     if (!context) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;

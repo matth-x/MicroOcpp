@@ -373,8 +373,8 @@ TEST_CASE( "Charging sessions" ) {
 
         // now, tx journal is full. Block any further charging session
 
-        auto tx = beginTransaction_authorized("mIdTag");
-        REQUIRE( !tx );
+        auto tx_success = beginTransaction_authorized("mIdTag");
+        REQUIRE( !tx_success );
 
         loop();
 
@@ -449,8 +449,8 @@ TEST_CASE( "Charging sessions" ) {
 
         // now, tx journal is full. Block any further charging session
 
-        auto tx = beginTransaction_authorized("mIdTag");
-        REQUIRE( tx );
+        auto tx_success = beginTransaction_authorized("mIdTag");
+        REQUIRE( tx_success );
 
         loop();
 

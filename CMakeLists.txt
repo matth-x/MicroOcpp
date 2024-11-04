@@ -78,7 +78,6 @@ set(MO_SRC
     src/MicroOcpp/Model/Certificates/CertificateService.cpp
     src/MicroOcpp/Model/ConnectorBase/ConnectorsCommon.cpp
     src/MicroOcpp/Model/ConnectorBase/Connector.cpp
-    src/MicroOcpp/Model/ConnectorBase/Notification.cpp
     src/MicroOcpp/Model/Diagnostics/DiagnosticsService.cpp
     src/MicroOcpp/Model/FirmwareManagement/FirmwareService.cpp
     src/MicroOcpp/Model/Heartbeat/HeartbeatService.cpp

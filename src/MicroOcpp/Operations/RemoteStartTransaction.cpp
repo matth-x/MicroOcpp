@@ -106,7 +106,7 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
             } else {
                 tx = selectConnector->beginTransaction_authorized(idTag);
             }
-            selectConnector->updateTxNotification(TxNotification::RemoteStart);
+            selectConnector->updateTxNotification(TxNotification_RemoteStart);
             if (tx) {
                 if (chargingProfileId >= 0) {
                     tx->setTxProfileId(chargingProfileId);

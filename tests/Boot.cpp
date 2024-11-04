@@ -378,7 +378,8 @@ TEST_CASE( "Boot Behavior" ) {
         old_opstore.reset(); //flushes the file
 
         loop();
-        auto tx = beginTransaction("mIdTag"); //tx store will also be removed
+        beginTransaction("mIdTag"); //tx store will also be removed
+        auto tx = getTransaction();
         auto txNr = tx->getTxNr(); //remember this for later usage
         tx.reset(); //reset this smart pointer
         loop();

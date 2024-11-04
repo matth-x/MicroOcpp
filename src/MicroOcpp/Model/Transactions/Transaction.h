@@ -5,6 +5,35 @@
 #ifndef TRANSACTION_H
 #define TRANSACTION_H
 
+/* General Tx defs */
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
+
+//TxNotification - event from MO to the main firmware to notify it about transaction state changes
+typedef enum {
+    UNDEFINED,
+
+    //Authorization events
+    TxNotification_Authorized, //success
+    TxNotification_AuthorizationRejected, //IdTag/token not authorized
+    TxNotification_AuthorizationTimeout, //authorization failed - offline
+    TxNotification_ReservationConflict, //connector/evse reserved for other IdTag
+
+    TxNotification_ConnectionTimeout, //user took to long to plug vehicle after the authorization
+    TxNotification_DeAuthorized, //server rejected StartTx/TxEvent
+    TxNotification_RemoteStart, //authorized via RemoteStartTx/RequestStartTx
+    TxNotification_RemoteStop, //stopped via RemoteStopTx/RequestStopTx
+
+    //Tx lifecycle events
+    TxNotification_StartTx, //entered running state (StartTx/TxEvent was initiated)
+    TxNotification_StopTx, //left running state (StopTx/TxEvent was initiated)
+}   TxNotification;
+
+#ifdef __cplusplus
+}
+#endif //__cplusplus
+
 #ifdef __cplusplus
 
 #include <MicroOcpp/Core/Time.h>

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Change `MicroOcpp::TxNotification` into C-style enum, replace `OCPP_TxNotication`
+
 ## [1.2.0] - 2024-11-03
 
 ### Changed
