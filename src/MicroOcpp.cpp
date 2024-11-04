@@ -1151,6 +1151,12 @@ void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,TxNotifi
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        MO_DBG_ERR("only supported in v16");
+        return;
+    }
+    #endif
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -1158,6 +1164,30 @@ void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,TxNotifi
     }
     connector->setTxNotificationOutput(notificationOutput);
 }
+
+#if MO_ENABLE_V201
+void setTxNotificationOutputV201(std::function<void(MicroOcpp::Ocpp201::Transaction*,TxNotification)> notificationOutput, unsigned int connectorId) {
+    if (!context) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return;
+    }
+
+    if (context->getVersion().major != 2) {
+        MO_DBG_ERR("only supported in v201");
+        return;
+    }
+
+    TransactionService::Evse *evse = nullptr;
+    if (auto txService = context->getModel().getTransactionService()) {
+        evse = txService->getEvse(connectorId);
+    }
+    if (!evse) {
+        MO_DBG_ERR("could not find EVSE");
+        return;
+    }
+    evse->setTxNotificationOutput(notificationOutput);
+}
+#endif //MO_ENABLE_V201
 
 #if MO_ENABLE_CONNECTOR_LOCK
 void setOnUnlockConnectorInOut(std::function<UnlockConnectorResult()> onUnlockConnectorInOut, unsigned int connectorId) {

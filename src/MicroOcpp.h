@@ -333,6 +333,10 @@ void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connect
 
 void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,TxNotification)> notificationOutput, unsigned int connectorId = 1); //called when transaction state changes (see TxNotification for possible events). Transaction can be null
 
+#if MO_ENABLE_V201
+void setTxNotificationOutputV201(std::function<void(MicroOcpp::Ocpp201::Transaction*,TxNotification)> notificationOutput, unsigned int connectorId = 1);
+#endif //MO_ENABLE_V201
+
 #if MO_ENABLE_CONNECTOR_LOCK
 /*
  * Set an InputOutput (reads and sets information at the same time) for forcing to unlock the

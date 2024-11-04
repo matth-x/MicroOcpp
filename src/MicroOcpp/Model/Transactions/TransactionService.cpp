@@ -261,6 +261,8 @@ void TransactionService::Evse::loop() {
 
                 MO_DBG_INFO("Session mngt: timeout");
                 endTransaction(Ocpp201::Transaction::StoppedReason::Timeout, TransactionEventTriggerReason::EVConnectTimeout);
+
+                updateTxNotification(TxNotification_ConnectionTimeout);
             }
 
             if (transaction->active &&
@@ -576,6 +578,14 @@ void TransactionService::Evse::loop() {
         txStore.commit(txEvent.get());
     }
 
+    if (txEvent) {
+        if (txEvent->eventType == TransactionEventData::Type::Started) {
+            updateTxNotification(TxNotification_StartTx);
+        } else if (txEvent->eventType == TransactionEventData::Type::Ended) {
+            updateTxNotification(TxNotification_StartTx);
+        }
+    }
+
     //try to pass ownership to front txEvent immediatley
     if (txEvent && !txEventFront &&
             transaction->txNr == txNrFront &&
@@ -602,6 +612,16 @@ void TransactionService::Evse::setEvReadyInput(std::function<bool()> evRequestsE
 
 void TransactionService::Evse::setEvseReadyInput(std::function<bool()> connectorEnergized) {
     this->evseReadyInput = connectorEnergized;
+}
+
+void TransactionService::Evse::setTxNotificationOutput(std::function<void(Ocpp201::Transaction*, TxNotification)> txNotificationOutput) {
+    this->txNotificationOutput = txNotificationOutput;
+}
+
+void TransactionService::Evse::updateTxNotification(TxNotification event) {
+    if (txNotificationOutput) {
+        txNotificationOutput(transaction.get(), event);
+    }
 }
 
 bool TransactionService::Evse::beginAuthorization(IdToken idToken, bool validateIdToken) {
@@ -649,6 +669,8 @@ bool TransactionService::Evse::beginAuthorization(IdToken idToken, bool validate
                 MO_DBG_DEBUG("Authorize rejected (%s), abort tx process", tx->idToken.get());
                 tx->isDeauthorized = true;
                 txStore.commit(tx);
+
+                updateTxNotification(TxNotification_AuthorizationRejected);
                 return;
             }
 
@@ -656,6 +678,8 @@ bool TransactionService::Evse::beginAuthorization(IdToken idToken, bool validate
             tx->isAuthorized = true;
             tx->notifyIdToken = true;
             txStore.commit(tx);
+
+            updateTxNotification(TxNotification_Authorized);
         });
         authorize->setOnAbortListener([this, txId] () {
             auto tx = getTransaction();
@@ -667,6 +691,8 @@ bool TransactionService::Evse::beginAuthorization(IdToken idToken, bool validate
             MO_DBG_DEBUG("Authorize timeout (%s)", tx->idToken.get());
             tx->isDeauthorized = true;
             txStore.commit(tx);
+
+            updateTxNotification(TxNotification_AuthorizationTimeout);
         });
         authorize->setTimeout(20 * 1000);
         context.initiateRequest(std::move(authorize));
@@ -674,6 +700,9 @@ bool TransactionService::Evse::beginAuthorization(IdToken idToken, bool validate
         MO_DBG_DEBUG("Authorized tx directly (%s)", transaction->idToken.get());
         transaction->isAuthorized = true;
         transaction->notifyIdToken = true;
+        txStore.commit(transaction.get());
+
+        updateTxNotification(TxNotification_Authorized);
     }
 
     return true;
@@ -692,10 +721,16 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken, bool validateId
         // use same idToken like tx start
         transaction->isAuthorizationActive = false;
         transaction->notifyIdToken = true;
+        txStore.commit(transaction.get());
+
+        updateTxNotification(TxNotification_Authorized);
     } else if (!validateIdToken) {
         transaction->stopIdToken = std::unique_ptr<IdToken>(new IdToken(idToken, getMemoryTag()));
         transaction->isAuthorizationActive = false;
         transaction->notifyStopIdToken = true;
+        txStore.commit(transaction.get());
+
+        updateTxNotification(TxNotification_Authorized);
     } else {
         // use a different idToken for stopping the tx
 
@@ -718,6 +753,8 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken, bool validateId
 
             if (strcmp(response["idTokenInfo"]["status"] | "_Undefined", "Accepted")) {
                 MO_DBG_DEBUG("Authorize rejected (%s), don't stop tx", idToken.get());
+
+                updateTxNotification(TxNotification_AuthorizationRejected);
                 return;
             }
 
@@ -735,6 +772,17 @@ bool TransactionService::Evse::endAuthorization(IdToken idToken, bool validateId
             tx->isAuthorizationActive = false;
             tx->notifyStopIdToken = true;
             txStore.commit(tx);
+
+            updateTxNotification(TxNotification_Authorized);
+        });
+        authorize->setOnTimeoutListener([this, txId] () {
+            auto tx = getTransaction();
+            if (!tx || strcmp(tx->transactionId, txId)) {
+                MO_DBG_INFO("dangling Authorize -- discard");
+                return;
+            }
+
+            updateTxNotification(TxNotification_AuthorizationTimeout);
         });
         authorize->setTimeout(20 * 1000);
         context.initiateRequest(std::move(authorize));
