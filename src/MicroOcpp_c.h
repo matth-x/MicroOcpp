@@ -60,14 +60,16 @@ void ocpp_initialize(
             const char *chargePointModel,     //model name of this charger (e.g. "My Charger")
             const char *chargePointVendor, //brand name (e.g. "My Company Ltd.")
             struct OCPP_FilesystemOpt fsopt, //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
-            bool autoRecover); //automatically sanitize the local data store when the lib detects recurring crashes. During development, `false` is recommended
+            bool autoRecover, //automatically sanitize the local data store when the lib detects recurring crashes. During development, `false` is recommended
+            bool ocpp201); //true to select OCPP 2.0.1, false for OCPP 1.6
 
 //same as above, but more fields for the BootNotification
 void ocpp_initialize_full(
             OCPP_Connection *conn,  //WebSocket adapter for MicroOcpp
             const char *bootNotificationCredentials, //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
             struct OCPP_FilesystemOpt fsopt, //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
-            bool autoRecover); //automatically sanitize the local data store when the lib detects recurring crashes. During development, `false` is recommended
+            bool autoRecover, //automatically sanitize the local data store when the lib detects recurring crashes. During development, `false` is recommended
+            bool ocpp201); //true to select OCPP 2.0.1, false for OCPP 1.6
 
 void ocpp_deinitialize();
 

@@ -195,7 +195,7 @@ TEST_CASE( "C API test" ) {
     fsopt.formatFsOnFail = true;
 
     MicroOcpp::LoopbackConnection loopback;
-    ocpp_initialize(reinterpret_cast<OCPP_Connection*>(&loopback), "test-runner1234", "vendor", fsopt, false);
+    ocpp_initialize(reinterpret_cast<OCPP_Connection*>(&loopback), "test-runner1234", "vendor", fsopt, false, false);
     
     auto context = getOcppContext();
     auto& model = context->getModel();
