@@ -23,6 +23,7 @@ set(MO_SRC
     src/MicroOcpp/Core/Request.cpp
     src/MicroOcpp/Core/Connection.cpp
     src/MicroOcpp/Core/Time.cpp
+    src/MicroOcpp/Core/UuidUtils.cpp
     src/MicroOcpp/Operations/Authorize.cpp
     src/MicroOcpp/Operations/BootNotification.cpp
     src/MicroOcpp/Operations/CancelReservation.cpp

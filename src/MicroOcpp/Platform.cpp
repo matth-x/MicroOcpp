@@ -82,3 +82,31 @@ unsigned long mocpp_tick_ms_unix() {
 }
 #endif
 #endif
+
+#ifdef MO_CUSTOM_RNG
+uint32_t (*mocpp_rng_impl)() = nullptr;
+
+void mocpp_set_rng(uint32_t (*rng)()) {
+    mocpp_rng_impl = rng;
+}
+
+uint32_t mocpp_rng_custom(void) {
+    if (mocpp_rng_impl) {
+        return mocpp_rng_impl();
+    } else {
+        return 0;
+    }
+}
+#else
+
+// Time-based Pseudo RNG.
+// Contains internal state which is mixed with the current timestamp
+// each time it is called. Then this is passed through a multiply-with-carry
+// PRNG operation to get a pseudo-random number.
+uint32_t mocpp_time_based_prng(void) {
+    static uint32_t prng_state = 1;
+    uint32_t entropy = mocpp_tick_ms();
+    prng_state = (prng_state ^ entropy)*1664525U + 1013904223U; // assuming complement-2 integers and non-signaling overflow
+    return prng_state;
+}
+#endif

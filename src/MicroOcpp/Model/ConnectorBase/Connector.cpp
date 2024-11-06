@@ -305,7 +305,7 @@ void Connector::loop() {
                     transaction->getBeginTimestamp() > MIN_TIME &&
                     connectionTimeOutInt && connectionTimeOutInt->getInt() > 0 &&
                     !connectorPluggedInput() &&
-                    model.getClock().now() - transaction->getBeginTimestamp() >= connectionTimeOutInt->getInt()) {
+                    model.getClock().now() - transaction->getBeginTimestamp() > connectionTimeOutInt->getInt()) {
 
                 MO_DBG_INFO("Session mngt: timeout");
                 transaction->setInactive();
