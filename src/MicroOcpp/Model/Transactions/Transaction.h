@@ -8,7 +8,10 @@
 #ifdef __cplusplus
 
 #include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Operations/CiStrings.h>
+
+#define MAX_TX_CNT 100000U //upper limit of txNr (internal usage). Must be at least 2*MO_TXRECORD_SIZE+1
 
 namespace MicroOcpp {
 
@@ -26,14 +29,25 @@ class SendStatus {
 private:
     bool requested = false;
     bool confirmed = false;
+    
+    unsigned int opNr = 0;
+    unsigned int attemptNr = 0;
+    Timestamp attemptTime = MIN_TIME;
 public:
     void setRequested() {this->requested = true;}
     bool isRequested() {return requested;}
     void confirm() {confirmed = true;}
     bool isConfirmed() {return confirmed;}
+    void setOpNr(unsigned int opNr) {this->opNr = opNr;}
+    unsigned int getOpNr() {return opNr;}
+    void advanceAttemptNr() {attemptNr++;}
+    void setAttemptNr(unsigned int attemptNr) {this->attemptNr = attemptNr;}
+    unsigned int getAttemptNr() {return attemptNr;}
+    const Timestamp& getAttemptTime() {return attemptTime;}
+    void setAttemptTime(const Timestamp& timestamp) {attemptTime = timestamp;}
 };
 
-class Transaction {
+class Transaction : public MemoryManaged {
 private:
     ConnectorTransactionStore& context;
 
@@ -43,6 +57,7 @@ private:
      * Attributes existing before StartTransaction
      */
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
+    char parentIdTag [IDTAG_LEN_MAX + 1] = {'\0'};
     bool authorized = false;    //if the given idTag was authorized
     bool deauthorized = false;  //if the server revoked a local authorization
     Timestamp begin_timestamp = MIN_TIME;
@@ -57,7 +72,6 @@ private:
     Timestamp start_timestamp = MIN_TIME;      //timestamp of StartTx; can be set before actually initiating
     uint16_t start_bootNr = 0;
     int transactionId = -1; //only valid if confirmed = true
-    char parentIdTag [IDTAG_LEN_MAX + 1] = {'\0'};
 
     /*
      * Attributes of StopTransaction
@@ -79,6 +93,7 @@ private:
 
 public:
     Transaction(ConnectorTransactionStore& context, unsigned int connectorId, unsigned int txNr, bool silent = false) : 
+                MemoryManaged("v16.Transactions.Transaction"),
                 context(context),
                 connectorId(connectorId), 
                 txNr(txNr),
@@ -112,6 +127,9 @@ public:
     bool setIdTag(const char *idTag);
     const char *getIdTag() {return idTag;}
 
+    bool setParentIdTag(const char *idTag);
+    const char *getParentIdTag() {return parentIdTag;}
+
     void setAuthorized() {authorized = true;}
     void setIdTagDeauthorized() {deauthorized = true;}
 
@@ -137,9 +155,6 @@ public:
     uint16_t getStartBootNr() {return start_bootNr;}
 
     void setTransactionId(int transactionId) {this->transactionId = transactionId;}
-
-    bool setParentIdTag(const char *idTag);
-    const char *getParentIdTag() {return parentIdTag;}
 
     SendStatus& getStopSync() {return stop_sync;}
 
@@ -176,11 +191,16 @@ public:
 #if MO_ENABLE_V201
 
 #include <memory>
+#include <limits>
 
+#include <MicroOcpp/Model/Transactions/TransactionDefs.h>
 #include <MicroOcpp/Model/Authorization/IdToken.h>
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
+#include <MicroOcpp/Model/Metering/MeterValuesV201.h>
 
-#define MO_TXID_LEN_MAX 36
+#ifndef MO_SAMPLEDDATATXENDED_SIZE_MAX
+#define MO_SAMPLEDDATATXENDED_SIZE_MAX 5
+#endif
 
 namespace MicroOcpp {
 namespace Ocpp201 {
@@ -211,11 +231,11 @@ enum class TransactionEventTriggerReason : uint8_t {
     ResetCommand
 };
 
-class Transaction {
+class Transaction : public MemoryManaged {
 public:
 
     // ReasonEnumType (3.67)
-    enum class StopReason : uint8_t {
+    enum class StoppedReason : uint8_t {
         UNDEFINED, // not part of OCPP
         DeAuthorized,
         EmergencyStop,
@@ -238,45 +258,99 @@ public:
         Timeout
     };
 
-    struct SubStatus {
-        bool triggered = false;
-        SendStatus remote;
-    };
-
 //private:
-    //SubStatus parkingBayOccupancy; // not supported
-    SubStatus evConnected;
-    SubStatus authorized;
-    SubStatus dataSigned;
-    SubStatus powerPathClosed;
-    SubStatus energyTransfer;
+    /*
+     * Transaction substates. Notify server about any change when transaction is running
+     */
+    //bool trackParkingBayOccupancy; // not supported
+    bool trackEvConnected = false;
+    bool trackAuthorized = false;
+    bool trackDataSigned = false;
+    bool trackPowerPathClosed = false;
+    bool trackEnergyTransfer = false;
+
+    /*
+     * Transaction lifecycle
+     */
+    bool active = true; //once active is false, the tx must stop (or cannot start at all)
+    bool started = false; //if a TxEvent with event type TxStarted has been initiated
+    bool stopped = false; //if a TxEvent with event type TxEnded has been initiated
 
     /*
      * Global transaction data
      */
-    bool active = true;         //once active is false, the tx must stop (or cannot start at all)
+    bool isAuthorizationActive = false; //period between beginAuthorization and endAuthorization
     bool isAuthorized = false;    //if the given idToken was authorized
     bool isDeauthorized = false;  //if the server revoked a local authorization
-    unsigned int seqNoCounter = 0; // increment by 1 for each event
     IdToken idToken;
     Timestamp beginTimestamp = MIN_TIME;
     char transactionId [MO_TXID_LEN_MAX + 1] = {'\0'};
     int remoteStartId = -1;
 
-    bool idTokenTransmitted = true;
+    //if to fill next TxEvent with optional fields
+    bool notifyEvseId = false;
+    bool notifyIdToken = false;
+    bool notifyStopIdToken = false;
+    bool notifyReservationId = false;
+    bool notifyChargingState = false;
+    bool notifyRemoteStartId = false;
 
     bool evConnectionTimeoutListen = true;
 
-    bool started = false, stopped = false;
-
-    StopReason stopReason = StopReason::UNDEFINED;
+    StoppedReason stoppedReason = StoppedReason::UNDEFINED;
     TransactionEventTriggerReason stopTrigger = TransactionEventTriggerReason::UNDEFINED;
     std::unique_ptr<IdToken> stopIdToken; // if null, then stopIdToken equals idToken
-    bool stopIdTokenTransmitted = true;
+
+    /*
+     * Tx-related metering
+     */
+
+    Vector<std::unique_ptr<Ocpp201::MeterValue>> sampledDataTxEnded;
+
+    unsigned long lastSampleTimeTxUpdated = 0; //0 means not charging right now
+    unsigned long lastSampleTimeTxEnded = 0;
+
+    /*
+     * Attributes for internal store
+     */
+    unsigned int evseId = 0;
+    unsigned int txNr = 0; //internal key attribute (!= transactionId); {evseId*txNr} is unique key
+
+    unsigned int seqNoEnd = 0; // increment by 1 for each event
+    Vector<unsigned int> seqNos; //track stored txEvents
+
+    bool silent = false; //silent Tx: process tx locally, without reporting to the server
+
+    Transaction() :
+            MemoryManaged("v201.Transactions.Transaction"),
+            sampledDataTxEnded(makeVector<std::unique_ptr<Ocpp201::MeterValue>>(getMemoryTag())),
+            seqNos(makeVector<unsigned int>(getMemoryTag())) { }
+
+    void addSampledDataTxEnded(std::unique_ptr<Ocpp201::MeterValue> mv) {
+        if (sampledDataTxEnded.size() >= MO_SAMPLEDDATATXENDED_SIZE_MAX) {
+            int deltaMin = std::numeric_limits<int>::max();
+            size_t indexMin = sampledDataTxEnded.size();
+            for (size_t i = 1; i + 1 <= sampledDataTxEnded.size(); i++) {
+                size_t t0 = sampledDataTxEnded.size() - i - 1;
+                size_t t1 = sampledDataTxEnded.size() - i;
+
+                auto delta = sampledDataTxEnded[t1]->getTimestamp() - sampledDataTxEnded[t0]->getTimestamp();
+
+                if (delta < deltaMin) {
+                    deltaMin = delta;
+                    indexMin = t1;
+                }
+            }
+
+            sampledDataTxEnded.erase(sampledDataTxEnded.begin() + indexMin);
+        }
+
+        sampledDataTxEnded.push_back(std::move(mv));
+    }
 };
 
 // TransactionEventRequest (1.60.1)
-class TransactionEventData {
+class TransactionEventData : public MemoryManaged {
 public:
 
     // TransactionEventEnumType (3.80)
@@ -297,15 +371,17 @@ public:
     };
 
 //private:
-    std::shared_ptr<Transaction> transaction;
+    Transaction *transaction;
     Type eventType;
     Timestamp timestamp;
+    uint16_t bootNr = 0;
     TransactionEventTriggerReason triggerReason;
     const unsigned int seqNo;
     bool offline = false;
     int numberOfPhasesUsed = -1;
     int cableMaxCurrent = -1;
     int reservationId = -1;
+    int remoteStartId = -1;
 
     // TransactionType (2.48)
     ChargingState chargingState = ChargingState::UNDEFINED;
@@ -313,9 +389,27 @@ public:
     std::unique_ptr<IdToken> idToken;
     EvseId evse = -1;
     //meterValue not supported
+    Vector<std::unique_ptr<MeterValue>> meterValue;
+    
+    unsigned int opNr = 0;
+    unsigned int attemptNr = 0;
+    Timestamp attemptTime = MIN_TIME;
 
-    TransactionEventData(std::shared_ptr<Transaction> transaction, unsigned int seqNo) : transaction(transaction), seqNo(seqNo) { }
+    TransactionEventData(Transaction *transaction, unsigned int seqNo) : MemoryManaged("v201.Transactions.TransactionEventData"), transaction(transaction), seqNo(seqNo), meterValue(makeVector<std::unique_ptr<MeterValue>>(getMemoryTag())) { }
 };
+
+const char *serializeTransactionStoppedReason(Transaction::StoppedReason stoppedReason);
+bool deserializeTransactionStoppedReason(const char *stoppedReasonCstr, Transaction::StoppedReason& stoppedReasonOut);
+
+const char *serializeTransactionEventType(TransactionEventData::Type type);
+bool deserializeTransactionEventType(const char *typeCstr, TransactionEventData::Type& typeOut);
+
+const char *serializeTransactionEventTriggerReason(TransactionEventTriggerReason triggerReason);
+bool deserializeTransactionEventTriggerReason(const char *triggerReasonCstr, TransactionEventTriggerReason& triggerReasonOut);
+
+const char *serializeTransactionEventChargingState(TransactionEventData::ChargingState chargingState);
+bool deserializeTransactionEventChargingState(const char *chargingStateCstr, TransactionEventData::ChargingState& chargingStateOut);
+
 
 } // namespace Ocpp201
 } // namespace MicroOcpp
@@ -348,6 +442,7 @@ bool ocpp_tx_getStartTimestamp(OCPP_Transaction *tx, char *buf, size_t len);
 const char *ocpp_tx_getStopIdTag(OCPP_Transaction *tx);
 
 int32_t ocpp_tx_getMeterStop(OCPP_Transaction *tx);
+void ocpp_tx_setMeterStop(OCPP_Transaction* tx, int32_t meter);
 
 bool ocpp_tx_getStopTimestamp(OCPP_Transaction *tx, char *buf, size_t len);
 

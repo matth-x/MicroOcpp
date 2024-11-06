@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/Connection.h>
@@ -7,10 +7,12 @@
 
 using namespace MicroOcpp;
 
+LoopbackConnection::LoopbackConnection() : MemoryManaged("WebSocketLoopback") { }
+
 void LoopbackConnection::loop() { }
 
 bool LoopbackConnection::sendTXT(const char *msg, size_t length) {
-    if (!connected) {
+    if (!connected || !online) {
         return false;
     }
     if (receiveTXT) {
@@ -33,6 +35,13 @@ unsigned long LoopbackConnection::getLastConnected() {
     return lastConn;
 }
 
+void LoopbackConnection::setOnline(bool online) {
+    if (online) {
+        lastConn = mocpp_tick_ms();
+    }
+    this->online = online;
+}
+
 void LoopbackConnection::setConnected(bool connected) {
     if (connected) {
         lastConn = mocpp_tick_ms();
@@ -44,7 +53,7 @@ void LoopbackConnection::setConnected(bool connected) {
 
 using namespace MicroOcpp::EspWiFi;
 
-WSClient::WSClient(WebSocketsClient *wsock) : wsock(wsock) {
+WSClient::WSClient(WebSocketsClient *wsock) : MemoryManaged("WebSocketsClient"), wsock(wsock) {
 
 }
 
@@ -65,7 +74,7 @@ void WSClient::setReceiveTXTcallback(ReceiveTXTcallback &callback) {
                 MO_DBG_INFO("Disconnected");
                 break;
             case WStype_CONNECTED:
-                MO_DBG_INFO("Connected to url: %s", payload);
+                MO_DBG_INFO("Connected (path: %s)", payload);
                 captureLastRecv = mocpp_tick_ms();
                 captureLastConnected = mocpp_tick_ms();
                 break;
@@ -103,6 +112,10 @@ unsigned long WSClient::getLastRecv() {
 
 unsigned long WSClient::getLastConnected() {
     return lastConnected;
+}
+
+bool WSClient::isConnected() {
+    return wsock->isConnected();
 }
 
 #endif

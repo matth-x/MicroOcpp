@@ -1,3 +1,7 @@
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Context.h>
@@ -5,8 +9,11 @@
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Core/Request.h>
+#include <MicroOcpp/Operations/CustomOperation.h>
 #include <MicroOcpp/Debug.h>
-#include "./catch2/catch.hpp"
+#include <MicroOcpp/Version.h>
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 using namespace MicroOcpp;
@@ -20,8 +27,8 @@ public:
     void processReq(JsonObject payload) override {
         //ignore payload - result is determined at construction time
     }
-    std::unique_ptr<DynamicJsonDocument> createConf() override {
-        auto res = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1)));
+    std::unique_ptr<JsonDoc> createConf() override {
+        auto res = makeJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
         auto payload = res->to<JsonObject>();
         payload["idTagInfo"]["status"] = status;
         return res;
@@ -37,8 +44,8 @@ public:
     void processReq(JsonObject payload) override {
         //ignore payload - result is determined at construction time
     }
-    std::unique_ptr<DynamicJsonDocument> createConf() override {
-        auto res = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(1)));
+    std::unique_ptr<JsonDoc> createConf() override {
+        auto res = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(1));
         auto payload = res->to<JsonObject>();
         payload["idTagInfo"]["status"] = status;
         payload["transactionId"] = 1000;
@@ -58,10 +65,10 @@ TEST_CASE( "Configuration Behavior" ) {
     LoopbackConnection loopback;
     mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-    auto engine = getOcppContext();
-    auto& checkMsg = engine->getOperationRegistry();
+    auto context = getOcppContext();
+    auto& checkMsg = context->getOperationRegistry();
 
-    auto connector = engine->getModel().getConnector(1);
+    auto connector = context->getModel().getConnector(1);
 
     mocpp_set_timer(custom_timer_cb);
 
@@ -80,7 +87,7 @@ TEST_CASE( "Configuration Behavior" ) {
             setConnectorPluggedInput([] () {return false;});
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
 
         SECTION("set false") {
@@ -89,12 +96,12 @@ TEST_CASE( "Configuration Behavior" ) {
             setConnectorPluggedInput([] () {return false;});
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::SuspendedEV);
+            REQUIRE(connector->getStatus() == ChargePointStatus_SuspendedEV);
 
             endTransaction();
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
     }
 
@@ -107,15 +114,15 @@ TEST_CASE( "Configuration Behavior" ) {
         SECTION("set true") {
             configBool->setBool(true);
 
-            beginTransaction("mIdTag");
+            beginTransaction("mIdTag_invalid");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
 
-            beginTransaction_authorized("mIdTag");
+            beginTransaction_authorized("mIdTag_invalid2");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
 
         SECTION("set false") {
@@ -124,17 +131,17 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("mIdTag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
 
             beginTransaction_authorized("mIdTag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::SuspendedEVSE);
+            REQUIRE(connector->getStatus() == ChargePointStatus_SuspendedEVSE);
 
             endTransaction();
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
     }
 
@@ -143,7 +150,7 @@ TEST_CASE( "Configuration Behavior" ) {
         auto authorizationTimeoutInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", 1);
         authorizationTimeoutInt->setInt(1); //try normal Authorize for 1s, then enter offline mode
 
-        loopback.setConnected(false); //connection loss
+        loopback.setOnline(false); //connection loss
 
         SECTION("set true") {
             configBool->setBool(true);
@@ -151,29 +158,30 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("mIdTag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
 
             endTransaction();
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
 
         SECTION("set false") {
             configBool->setBool(false);
 
             beginTransaction("mIdTag");
-            REQUIRE(connector->getStatus() == ChargePointStatus::Preparing);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Preparing);
 
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Available);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Available);
         }
 
         endTransaction();
-        loopback.setConnected(true);
+        loopback.setOnline(true);
     }
 
+#if MO_ENABLE_LOCAL_AUTH
     SECTION("LocalPreAuthorize") {
         auto configBool = declareConfiguration<bool>("LocalPreAuthorize", true);
         auto authorizationTimeoutInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20);
@@ -187,7 +195,7 @@ TEST_CASE( "Configuration Behavior" ) {
         loopback.sendTXT(localListMsg, strlen(localListMsg));
         loop();
 
-        loopback.setConnected(false); //connection loss
+        loopback.setOnline(false); //connection loss
 
         SECTION("set true - accepted idtag") {
             configBool->setBool(true);
@@ -195,7 +203,7 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("local-idtag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
         }
 
         SECTION("set false") {
@@ -204,17 +212,76 @@ TEST_CASE( "Configuration Behavior" ) {
             beginTransaction("local-idtag");
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Preparing);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Preparing);
 
-            loopback.setConnected(true);
+            loopback.setOnline(true);
             mtime += 20000; //Authorize will be retried after a few seconds
             loop();
 
-            REQUIRE(connector->getStatus() == ChargePointStatus::Charging);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
         }
 
         endTransaction();
-        loopback.setConnected(true);
+        loopback.setOnline(true);
+    }
+#endif //MO_ENABLE_LOCAL_AUTH
+
+    SECTION("AuthorizeRemoteTxRequests") {
+        auto configBool = declareConfiguration<bool>("AuthorizeRemoteTxRequests", false);
+
+        bool receivedAuthorize = false;
+
+        setOnReceiveRequest("Authorize", [&receivedAuthorize] (JsonObject payload) {
+            receivedAuthorize = true;
+            REQUIRE( !strcmp(payload["idTag"] | "_Undefined", "mIdTag") );
+        });
+
+        SECTION("set true") {
+            configBool->setBool(true);
+
+            context->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                    "RemoteStartTransaction",
+                    [] () {
+                        //create req
+                        auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
+                        auto payload = doc->to<JsonObject>();
+                        payload["idTag"] = "mIdTag";
+                        return doc;},
+                    [] (JsonObject) {
+                        //ignore conf
+                    }
+            )));
+
+            loop();
+
+            REQUIRE(receivedAuthorize);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
+        }
+
+        SECTION("set false") {
+            configBool->setBool(false);
+
+            context->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+                    "RemoteStartTransaction",
+                    [] () {
+                        //create req
+                        auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
+                        auto payload = doc->to<JsonObject>();
+                        payload["idTag"] = "mIdTag";
+                        return doc;},
+                    [] (JsonObject) {
+                        //ignore conf
+                    }
+            )));
+
+            loop();
+
+            REQUIRE(!receivedAuthorize);
+            REQUIRE(connector->getStatus() == ChargePointStatus_Charging);
+        }
+
+        endTransaction();
+        loop();
     }
 
     mocpp_deinitialize();

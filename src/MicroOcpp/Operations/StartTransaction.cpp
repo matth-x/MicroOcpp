@@ -1,20 +1,21 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/StartTransaction.h>
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Core/RequestStore.h>
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
 #include <MicroOcpp/Model/Metering/MeteringService.h>
 #include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Debug.h>
+#include <MicroOcpp/Version.h>
 
 using MicroOcpp::Ocpp16::StartTransaction;
+using MicroOcpp::JsonDoc;
 
 
-StartTransaction::StartTransaction(Model& model, std::shared_ptr<Transaction> transaction) : model(model), transaction(transaction) {
+StartTransaction::StartTransaction(Model& model, std::shared_ptr<Transaction> transaction) : MemoryManaged("v16.Operation.", "StartTransaction"), model(model), transaction(transaction) {
     
 }
 
@@ -26,90 +27,12 @@ const char* StartTransaction::getOperationType() {
     return "StartTransaction";
 }
 
-void StartTransaction::initiate(StoredOperationHandler *opStore) {
-    if (!transaction || transaction->getStartSync().isRequested()) {
-        MO_DBG_ERR("initialization error");
-        return;
-    }
-    
-    auto payload = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
-    (*payload)["connectorId"] = transaction->getConnectorId();
-    (*payload)["txNr"] = transaction->getTxNr();
+std::unique_ptr<JsonDoc> StartTransaction::createReq() {
 
-    if (opStore) {
-        opStore->setPayload(std::move(payload));
-        opStore->commit();
-    }
-
-    transaction->getStartSync().setRequested();
-
-    transaction->commit();
-
-    MO_DBG_INFO("StartTransaction initiated");
-}
-
-bool StartTransaction::restore(StoredOperationHandler *opStore) {
-    if (!opStore) {
-        MO_DBG_ERR("invalid argument");
-        return false;
-    }
-
-    auto payload = opStore->getPayload();
-    if (!payload) {
-        MO_DBG_ERR("memory corruption");
-        return false;
-    }
-
-    int connectorId = (*payload)["connectorId"] | -1;
-    int txNr = (*payload)["txNr"] | -1;
-    if (connectorId < 0 || txNr < 0) {
-        MO_DBG_ERR("record incomplete");
-        return false;
-    }
-
-    auto txStore = model.getTransactionStore();
-
-    if (!txStore) {
-        MO_DBG_ERR("invalid state");
-        return false;
-    }
-
-    transaction = txStore->getTransaction(connectorId, txNr);
-    if (!transaction) {
-        MO_DBG_ERR("referential integrity violation");
-
-        //clean up possible tx records
-        if (auto mSerivce = model.getMeteringService()) {
-            mSerivce->removeTxMeterData(connectorId, txNr);
-        }
-        return false;
-    }
-
-    if (transaction->getStartTimestamp() < MIN_TIME &&
-            transaction->getStartBootNr() != model.getBootNr()) {
-        //time not set, cannot be restored anymore -> invalid tx
-        MO_DBG_ERR("cannot recover tx from previus run");
-
-        //clean up possible tx records
-        if (auto mSerivce = model.getMeteringService()) {
-            mSerivce->removeTxMeterData(connectorId, txNr);
-        }
-
-        transaction->setSilent();
-        transaction->setInactive();
-        transaction->commit();
-        return false;
-    }
-
-    return true;
-}
-
-std::unique_ptr<DynamicJsonDocument> StartTransaction::createReq() {
-
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+    auto doc = makeJsonDoc(getMemoryTag(),
                 JSON_OBJECT_SIZE(6) + 
                 (IDTAG_LEN_MAX + 1) +
-                (JSONDATE_LENGTH + 1)));
+                (JSONDATE_LENGTH + 1));
                 
     JsonObject payload = doc->to<JsonObject>();
 
@@ -156,9 +79,11 @@ void StartTransaction::processConf(JsonObject payload) {
     transaction->getStartSync().confirm();
     transaction->commit();
 
+#if MO_ENABLE_LOCAL_AUTH
     if (auto authService = model.getAuthorizationService()) {
         authService->notifyAuthorization(transaction->getIdTag(), payload["idTagInfo"]);
     }
+#endif //MO_ENABLE_LOCAL_AUTH
 }
 
 void StartTransaction::processReq(JsonObject payload) {
@@ -169,8 +94,8 @@ void StartTransaction::processReq(JsonObject payload) {
 
 }
 
-std::unique_ptr<DynamicJsonDocument> StartTransaction::createConf() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2)));
+std::unique_ptr<JsonDoc> StartTransaction::createConf() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
     JsonObject payload = doc->to<JsonObject>();
 
     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");

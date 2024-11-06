@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef MO_TRANSACTIONEVENT_H
@@ -19,19 +19,19 @@ namespace Ocpp201 {
 
 class TransactionEventData;
 
-class TransactionEvent : public Operation {
+class TransactionEvent : public Operation, public MemoryManaged {
 private:
     Model& model;
-    std::shared_ptr<TransactionEventData> txEvent;
+    TransactionEventData *txEvent;
 
     const char *errorCode = nullptr;
 public:
 
-    TransactionEvent(Model& model, std::shared_ptr<TransactionEventData> txEvent);
+    TransactionEvent(Model& model, TransactionEventData *txEvent);
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
@@ -39,7 +39,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 };
 
 } //end namespace Ocpp201

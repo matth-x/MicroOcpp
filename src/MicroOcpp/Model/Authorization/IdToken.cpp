@@ -15,25 +15,65 @@
 
 using namespace MicroOcpp;
 
-IdToken::IdToken() {
-    idToken[0] = '\0';
-}
-
-IdToken::IdToken(const char *token, Type type) : type(type) {
-    auto ret = snprintf(idToken, MO_IDTOKEN_LEN_MAX + 1, "%s", token);
-    if (ret < 0 || ret >= MO_IDTOKEN_LEN_MAX + 1) {
-        MO_DBG_ERR("invalid token");
+IdToken::IdToken(const char *token, Type type, const char *memoryTag) : MemoryManaged(memoryTag ? memoryTag : "v201.Authorization.IdToken"), type(type) {
+    if (token) {
+        auto ret = snprintf(idToken, MO_IDTOKEN_LEN_MAX + 1, "%s", token);
+        if (ret < 0 || ret >= MO_IDTOKEN_LEN_MAX + 1) {
+            MO_DBG_ERR("invalid token");
+            *idToken = '\0';
+        }
+    } else {
         *idToken = '\0';
     }
 }
 
+IdToken::IdToken(const IdToken& other, const char *memoryTag) : IdToken(other.idToken, other.type, memoryTag ? memoryTag : other.getMemoryTag()) { 
+
+}
+
+bool IdToken::parseCstr(const char *token, const char *typeCstr) {
+    if (!token || !typeCstr) {
+        return false;
+    }
+
+    if (!strcmp(typeCstr, "Central")) {
+        type = Type::Central;
+    } else if (!strcmp(typeCstr, "eMAID")) {
+        type = Type::eMAID;
+    } else if (!strcmp(typeCstr, "ISO14443")) {
+        type = Type::ISO14443;
+    } else if (!strcmp(typeCstr, "ISO15693")) {
+        type = Type::ISO15693;
+    } else if (!strcmp(typeCstr, "KeyCode")) {
+        type = Type::KeyCode;
+    } else if (!strcmp(typeCstr, "Local")) {
+        type = Type::Local;
+    } else if (!strcmp(typeCstr, "MacAddress")) {
+        type = Type::MacAddress;
+    } else if (!strcmp(typeCstr, "NoAuthorization")) {
+        type = Type::NoAuthorization;
+    } else {
+        return false;
+    }
+
+    auto ret = snprintf(idToken, sizeof(idToken), "%s", token);
+    if (ret < 0 || (size_t)ret >= sizeof(idToken)) {
+        return false;
+    }
+
+    return true;
+}
+
 const char *IdToken::get() const {
-    return *idToken ? idToken : nullptr;;
+    return idToken;
 }
 
 const char *IdToken::getTypeCstr() const {
-    const char *res = nullptr;
+    const char *res = "";
     switch (type) {
+        case Type::UNDEFINED:
+            MO_DBG_ERR("internal error");
+            break;
         case Type::Central:
             res = "Central";
             break;
@@ -60,10 +100,7 @@ const char *IdToken::getTypeCstr() const {
             break;
     }
 
-    if (!res) {
-        MO_DBG_ERR("internal error");
-    }
-    return res ? res : "";
+    return res;
 }
 
 bool IdToken::equals(const IdToken& other) {

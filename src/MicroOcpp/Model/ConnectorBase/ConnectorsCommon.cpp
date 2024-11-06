@@ -2,15 +2,13 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include "DataTransfer.h"
-#include <string>
-
 #include <MicroOcpp/Model/ConnectorBase/ConnectorsCommon.h>
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Operations/ChangeAvailability.h>
 #include <MicroOcpp/Operations/ChangeConfiguration.h>
 #include <MicroOcpp/Operations/ClearCache.h>
+#include <MicroOcpp/Operations/DataTransfer.h>
 #include <MicroOcpp/Operations/GetConfiguration.h>
 #include <MicroOcpp/Operations/RemoteStartTransaction.h>
 #include <MicroOcpp/Operations/RemoteStopTransaction.h>
@@ -30,14 +28,14 @@
 using namespace MicroOcpp;
 
 ConnectorsCommon::ConnectorsCommon(Context& context, unsigned int numConn, std::shared_ptr<FilesystemAdapter> filesystem) :
-        context(context) {
+        MemoryManaged("v16.ConnectorBase.ConnectorsCommon"), context(context) {
     
     declareConfiguration<int>("NumberOfConnectors", numConn >= 1 ? numConn - 1 : 0, CONFIGURATION_VOLATILE, true);
     
     /*
      * Further configuration keys which correspond to the Core profile
      */
-    declareConfiguration<bool>("AuthorizeRemoteTxRequests", false, CONFIGURATION_VOLATILE, true);
+    declareConfiguration<bool>("AuthorizeRemoteTxRequests", false);
     declareConfiguration<int>("GetConfigurationMaxKeys", 30, CONFIGURATION_VOLATILE, true);
     
     context.getOperationRegistry().registerOperation("ChangeAvailability", [&context] () {
@@ -86,7 +84,7 @@ ConnectorsCommon::ConnectorsCommon(Context& context, unsigned int numConn, std::
     }
     // OCPP 1.6 + 2.0.1 compliant echo messages
     context.getOperationRegistry().registerOperation("StatusNotification", [&context] () {
-        return new Ocpp16::StatusNotification(-1, ChargePointStatus::NOT_SET, Timestamp());});
+        return new Ocpp16::StatusNotification(-1, ChargePointStatus_UNDEFINED, Timestamp());});
 }
 
 void ConnectorsCommon::loop() {

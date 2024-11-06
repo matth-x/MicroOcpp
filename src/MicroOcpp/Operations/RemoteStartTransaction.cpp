@@ -1,9 +1,10 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 
 #include <MicroOcpp/Operations/RemoteStartTransaction.h>
+#include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/ConnectorBase/Connector.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
@@ -11,8 +12,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::RemoteStartTransaction;
+using MicroOcpp::JsonDoc;
 
-RemoteStartTransaction::RemoteStartTransaction(Model& model) : model(model) {
+RemoteStartTransaction::RemoteStartTransaction(Model& model) : MemoryManaged("v16.Operation.", "RemoteStartTransaction"), model(model) {
   
 }
 
@@ -97,7 +99,13 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
         }
 
         if (success) {
-            auto tx = selectConnector->beginTransaction_authorized(idTag);
+            std::shared_ptr<MicroOcpp::Transaction> tx;
+            auto authorizeRemoteTxRequests = declareConfiguration<bool>("AuthorizeRemoteTxRequests", false);
+            if (authorizeRemoteTxRequests && authorizeRemoteTxRequests->getBool()) {
+                tx = selectConnector->beginTransaction(idTag);
+            } else {
+                tx = selectConnector->beginTransaction_authorized(idTag);
+            }
             selectConnector->updateTxNotification(TxNotification::RemoteStart);
             if (tx) {
                 if (chargingProfileId >= 0) {
@@ -115,8 +123,8 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> RemoteStartTransaction::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     if (accepted) {
         payload["status"] = "Accepted";
@@ -126,8 +134,8 @@ std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createConf(){
     return doc;
 }
 
-std::unique_ptr<DynamicJsonDocument> RemoteStartTransaction::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> RemoteStartTransaction::createReq() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
     payload["idTag"] = "A0000000";

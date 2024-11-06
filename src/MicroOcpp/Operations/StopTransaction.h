@@ -1,14 +1,14 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef STOPTRANSACTION_H
-#define STOPTRANSACTION_H
+#ifndef MO_STOPTRANSACTION_H
+#define MO_STOPTRANSACTION_H
 
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Operations/CiStrings.h>
-#include <vector>
 
 namespace MicroOcpp {
 
@@ -21,24 +21,20 @@ class Transaction;
 
 namespace Ocpp16 {
 
-class StopTransaction : public Operation {
+class StopTransaction : public Operation, public MemoryManaged {
 private:
     Model& model;
     std::shared_ptr<Transaction> transaction;
-    std::vector<std::unique_ptr<MeterValue>> transactionData;
+    Vector<std::unique_ptr<MeterValue>> transactionData;
 public:
 
     StopTransaction(Model& model, std::shared_ptr<Transaction> transaction);
 
-    StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, std::vector<std::unique_ptr<MicroOcpp::MeterValue>> transactionData);
+    StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, Vector<std::unique_ptr<MicroOcpp::MeterValue>> transactionData);
 
     const char* getOperationType() override;
 
-    void initiate(StoredOperationHandler *opStore) override;
-
-    bool restore(StoredOperationHandler *opStore) override;
-
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
@@ -46,7 +42,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 };
 
 } //end namespace Ocpp16

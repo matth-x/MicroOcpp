@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef GETDIAGNOSTICS_H
-#define GETDIAGNOSTICS_H
+#ifndef MO_GETDIAGNOSTICS_H
+#define MO_GETDIAGNOSTICS_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Time.h>
@@ -14,10 +14,10 @@ class DiagnosticsService;
 
 namespace Ocpp16 {
 
-class GetDiagnostics : public Operation {
+class GetDiagnostics : public Operation, public MemoryManaged {
 private:
     DiagnosticsService& diagService;
-    std::string fileName;
+    String fileName;
 
     const char *errorCode = nullptr;
 public:
@@ -27,7 +27,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/GetConfiguration.h>
@@ -7,8 +7,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::GetConfiguration;
+using MicroOcpp::JsonDoc;
 
-GetConfiguration::GetConfiguration() {
+GetConfiguration::GetConfiguration() : MemoryManaged("v16.Operation.", "GetConfiguration"), keys{makeVector<String>(getMemoryTag())} {
 
 }
 
@@ -20,14 +21,14 @@ void GetConfiguration::processReq(JsonObject payload) {
 
     JsonArray requestedKeys = payload["key"];
     for (size_t i = 0; i < requestedKeys.size(); i++) {
-        keys.push_back(requestedKeys[i].as<std::string>());
+        keys.push_back(makeString(getMemoryTag(), requestedKeys[i].as<const char*>()));
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
+std::unique_ptr<JsonDoc> GetConfiguration::createConf(){
 
-    std::vector<Configuration*> configurations;
-    std::vector<const char*> unknownKeys;
+    Vector<Configuration*> configurations = makeVector<Configuration*>(getMemoryTag());
+    Vector<const char*> unknownKeys = makeVector<const char*>(getMemoryTag());
 
     auto containers = getConfigurationContainersPublic();
 
@@ -82,14 +83,16 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
     
     MO_DBG_DEBUG("GetConfiguration capacity: %zu", jcapacity);
 
-    std::unique_ptr<DynamicJsonDocument> doc;
+    std::unique_ptr<JsonDoc> doc;
 
     if (jcapacity <= MO_MAX_JSON_CAPACITY) {
-        doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(jcapacity));
+        doc = makeJsonDoc(getMemoryTag(), jcapacity);
     }
 
     if (!doc || doc->capacity() < jcapacity) {
-        if (doc) {MO_DBG_ERR("OOM");(void)0;}
+        if (doc) {
+            MO_DBG_ERR("OOM");
+        }
 
         errorCode = "InternalError";
         errorDescription = "Query too big. Try fewer keys";
@@ -135,7 +138,7 @@ std::unique_ptr<DynamicJsonDocument> GetConfiguration::createConf(){
     if (!unknownKeys.empty()) {
         JsonArray jsonUnknownKey = payload.createNestedArray("unknownKey");
         for (auto key : unknownKeys) {
-            MO_DBG_DEBUG("Unknown key: %s", key)
+            MO_DBG_DEBUG("Unknown key: %s", key);
             jsonUnknownKey.add(key);
         }
     }

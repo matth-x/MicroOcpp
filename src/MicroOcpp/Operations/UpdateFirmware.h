@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef UPDATEFIRMWARE_H
-#define UPDATEFIRMWARE_H
+#ifndef MO_UPDATEFIRMWARE_H
+#define MO_UPDATEFIRMWARE_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Time.h>
@@ -14,7 +14,7 @@ class FirmwareService;
 
 namespace Ocpp16 {
 
-class UpdateFirmware : public Operation {
+class UpdateFirmware : public Operation, public MemoryManaged {
 private:
   FirmwareService& fwService;
 
@@ -26,7 +26,7 @@ public:
 
   void processReq(JsonObject payload) override;
 
-  std::unique_ptr<DynamicJsonDocument> createConf() override;
+  std::unique_ptr<JsonDoc> createConf() override;
 
   const char *getErrorCode() override {return errorCode;}
 };

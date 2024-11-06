@@ -1,17 +1,18 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CHARGECONTROLCOMMON_H
-#define CHARGECONTROLCOMMON_H
+#ifndef MO_CHARGECONTROLCOMMON_H
+#define MO_CHARGECONTROLCOMMON_H
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
 class Context;
 
-class ConnectorsCommon {
+class ConnectorsCommon : public MemoryManaged {
 private:
     Context& context;
 public:

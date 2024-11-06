@@ -1,15 +1,19 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include "Configuration.h"
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
+
 #include <MicroOcpp/Operations/SendLocalList.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
 
 using MicroOcpp::Ocpp16::SendLocalList;
+using MicroOcpp::JsonDoc;
 
-SendLocalList::SendLocalList(AuthorizationService& authService) : authService(authService) {
+SendLocalList::SendLocalList(AuthorizationService& authService) : MemoryManaged("v16.Operation.", "SendLocalList"), authService(authService) {
   
 }
 
@@ -22,10 +26,6 @@ const char* SendLocalList::getOperationType(){
 }
 
 void SendLocalList::processReq(JsonObject payload) {
-    auto supported_feature_profiles = declareConfiguration<const char*>("SupportedFeatureProfiles", "");
-    if (strstr(supported_feature_profiles->getString(), "LocalAuthListManagement") == NULL) {
-        return;
-    }
 
     if (!payload.containsKey("listVersion") || !payload.containsKey("updateType")) {
         errorCode = "FormationViolation";
@@ -56,14 +56,11 @@ void SendLocalList::processReq(JsonObject payload) {
     updateFailure = !authService.updateLocalList(localAuthorizationList, listVersion, differential);
 }
 
-std::unique_ptr<DynamicJsonDocument> SendLocalList::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> SendLocalList::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
-    auto supported_feature_profiles = declareConfiguration<const char*>("SupportedFeatureProfiles", "");
 
-    if (strstr(supported_feature_profiles->getString(), "LocalAuthListManagement") == NULL) {
-        payload["status"] = "NotSupported";
-    } else if (versionMismatch) {
+    if (versionMismatch) {
         payload["status"] = "VersionMismatch";
     } else if (updateFailure) {
         payload["status"] = "Failed";
@@ -73,3 +70,5 @@ std::unique_ptr<DynamicJsonDocument> SendLocalList::createConf(){
     
     return doc;
 }
+
+#endif //MO_ENABLE_LOCAL_AUTH

@@ -1,13 +1,16 @@
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Configuration.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Operations/BootNotification.h>
 #include <MicroOcpp/Operations/StatusNotification.h>
 #include <MicroOcpp/Debug.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 using namespace MicroOcpp;

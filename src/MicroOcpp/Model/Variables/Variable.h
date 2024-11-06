@@ -14,11 +14,11 @@
 #if MO_ENABLE_V201
 
 #include <stdint.h>
-#include <vector>
 #include <memory>
 #include <limits>
 
 #include <MicroOcpp/Model/ConnectorBase/EvseId.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #ifndef MO_VARIABLE_TYPECHECK
 #define MO_VARIABLE_TYPECHECK 1
@@ -27,7 +27,7 @@
 namespace MicroOcpp {
 
 // VariableCharacteristicsType (2.51)
-struct VariableCharacteristics {
+struct VariableCharacteristics : public MemoryManaged {
 
     // DataEnumType (3.26)
     enum class DataType : uint8_t {
@@ -47,6 +47,8 @@ struct VariableCharacteristics {
     int maxLimit = std::numeric_limits<int>::max();
     const char *valuesList = nullptr; //no copy
     //bool supportsMonitoring; //stored in Variable
+
+    VariableCharacteristics() : MemoryManaged("v201.Variables.VariableCharacteristics") { }
 };
 
 // SetVariableStatusEnumType (3.79)
@@ -67,6 +69,21 @@ enum class GetVariableStatus : uint8_t {
     UnknownVariable,
     NotSupportedAttributeType
 };
+
+// ReportBaseEnumType (3.70)
+typedef enum ReportBase {
+    ReportBase_ConfigurationInventory,
+    ReportBase_FullInventory,
+    ReportBase_SummaryInventory
+}   ReportBase;
+
+// GenericDeviceModelStatus (3.34)
+typedef enum GenericDeviceModelStatus {
+    GenericDeviceModelStatus_Accepted,
+    GenericDeviceModelStatus_Rejected,
+    GenericDeviceModelStatus_NotSupported,
+    GenericDeviceModelStatus_EmptyResultSet
+}   GenericDeviceModelStatus;
 
 // VariableMonitoringType (2.52)
 class VariableMonitor {
@@ -110,7 +127,7 @@ struct ComponentId {
  * the value of the variable. To make it use the host system's key-value store, extend this class
  * with a custom implementation of the virtual methods and pass its instances to MO.
  */
-class Variable {
+class Variable : public MemoryManaged {
 public:
     //AttributeEnumType (3.2)
     enum class AttributeType : uint8_t {
@@ -160,8 +177,6 @@ private:
 
     AttributeTypeSet attributes;
 
-    bool detached = false; // MO-internal: if a conflicting declaration comes in, discard the old Variable
-
     // VariableMonitoringType (2.52)
     //std::vector<VariableMonitor> monitors; // uncomment when testing Monitors
 public:
@@ -207,9 +222,6 @@ public:
     //bool addMonitor(int id, bool transaction, float value, VariableMonitor::Type type, int severity);
     
     virtual uint16_t getWriteCount() = 0; //get write count (use this as a pre-check if the value changed)
-
-    void detach();
-    bool isDetached();
 };
 
 std::unique_ptr<Variable> makeVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet supportAttributes);

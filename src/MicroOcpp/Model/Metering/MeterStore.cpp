@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Model/Metering/MeterStore.h>
@@ -9,16 +9,17 @@
 
 #include <algorithm>
 
+#ifndef MO_MAX_STOPTXDATA_LEN
 #define MO_MAX_STOPTXDATA_LEN 4
+#endif
 
 using namespace MicroOcpp;
 
 TransactionMeterData::TransactionMeterData(unsigned int connectorId, unsigned int txNr, std::shared_ptr<FilesystemAdapter> filesystem)
-        : connectorId(connectorId), txNr(txNr), filesystem{filesystem} {
+        : MemoryManaged("v16.Metering.TransactionMeterData"), connectorId(connectorId), txNr(txNr), filesystem{filesystem}, txData{makeVector<std::unique_ptr<MeterValue>>(getMemoryTag())} {
     
     if (!filesystem) {
         MO_DBG_DEBUG("volatile mode");
-        (void)0;
     }
 }
 
@@ -82,10 +83,10 @@ bool TransactionMeterData::addTxData(std::unique_ptr<MeterValue> mv) {
     return true;
 }
 
-std::vector<std::unique_ptr<MeterValue>> TransactionMeterData::retrieveStopTxData() {
+Vector<std::unique_ptr<MeterValue>> TransactionMeterData::retrieveStopTxData() {
     if (isFinalized()) {
         MO_DBG_ERR("Can only retrieve once");
-        return decltype(txData) {};
+        return makeVector<std::unique_ptr<MeterValue>>(getMemoryTag());
     }
     finalize();
     MO_DBG_DEBUG("creating sd");
@@ -111,7 +112,7 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
             return false; //all files have same length
         }
 
-        auto doc = FilesystemUtils::loadJson(filesystem, fn);
+        auto doc = FilesystemUtils::loadJson(filesystem, fn, getMemoryTag());
 
         if (!doc) {
             misses++;
@@ -136,20 +137,19 @@ bool TransactionMeterData::restore(MeterValueBuilder& mvBuilder) {
 
         txData.push_back(std::move(mv));
 
-        mvCount = i;
         i++;
+        mvCount = i;
         misses = 0;
     }
 
-    MO_DBG_DEBUG("Restored %zu meter values", txData.size());
+    MO_DBG_DEBUG("Restored %zu meter values from sd-%u-%u-0 to %u (exclusive)", txData.size(), connectorId, txNr, mvCount);
     return true;
 }
 
-MeterStore::MeterStore(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem {filesystem} {
+MeterStore::MeterStore(std::shared_ptr<FilesystemAdapter> filesystem) : MemoryManaged("v16.Metering.MeterStore"), filesystem {filesystem}, txMeterData{makeVector<std::weak_ptr<TransactionMeterData>>(getMemoryTag())} {
 
     if (!filesystem) {
         MO_DBG_DEBUG("volatile mode");
-        (void)0;
     }
 }
 
@@ -187,7 +187,7 @@ std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuild
 
     //create new object and cache weak pointer
 
-    auto tx = std::make_shared<TransactionMeterData>(connectorId, txNr, filesystem);
+    auto tx = std::allocate_shared<TransactionMeterData>(makeAllocator<TransactionMeterData>(getMemoryTag()), connectorId, txNr, filesystem);
     
     if (filesystem) {
         char fn [MO_MAX_PATH_SIZE] = {'\0'};
@@ -210,7 +210,7 @@ std::shared_ptr<TransactionMeterData> MeterStore::getTxMeterData(MeterValueBuild
 
     txMeterData.push_back(tx);
 
-    MO_DBG_DEBUG("Added txNr %u, now holding %zu txs", txNr, txMeterData.size());
+    MO_DBG_DEBUG("Added txNr %u, now holding %zu sds", txNr, txMeterData.size());
 
     return tx;
 }
@@ -291,7 +291,6 @@ bool MeterStore::remove(unsigned int connectorId, unsigned int txNr) {
 
     if (success) {
         MO_DBG_DEBUG("Removed meter values for cId %u, txNr %u", connectorId, txNr);
-        (void)0;
     } else {
         MO_DBG_DEBUG("corrupted fs");
     }

@@ -1,11 +1,16 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef RESERVATIONSERVICE_H
-#define RESERVATIONSERVICE_H
+#ifndef MO_RESERVATIONSERVICE_H
+#define MO_RESERVATIONSERVICE_H
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_RESERVATION
 
 #include <MicroOcpp/Model/Reservation/Reservation.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #include <memory>
 
@@ -13,12 +18,12 @@ namespace MicroOcpp {
 
 class Context;
 
-class ReservationService {
+class ReservationService : public MemoryManaged {
 private:
     Context& context;
 
     const int maxReservations; // = number of physical connectors
-    std::vector<std::unique_ptr<Reservation>> reservations;
+    Vector<std::unique_ptr<Reservation>> reservations;
 
     std::shared_ptr<Configuration> reserveConnectorZeroSupportedBool;
 
@@ -44,4 +49,5 @@ public:
 
 }
 
+#endif //MO_ENABLE_RESERVATION
 #endif

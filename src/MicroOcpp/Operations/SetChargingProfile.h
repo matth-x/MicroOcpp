@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef SETCHARGINGPROFILE_H
-#define SETCHARGINGPROFILE_H
+#ifndef MO_SETCHARGINGPROFILE_H
+#define MO_SETCHARGINGPROFILE_H
 
 #include <MicroOcpp/Core/Operation.h>
 
@@ -14,7 +14,7 @@ class SmartChargingService;
 
 namespace Ocpp16 {
 
-class SetChargingProfile : public Operation {
+class SetChargingProfile : public Operation, public MemoryManaged {
 private:
     Model& model;
     SmartChargingService& scService;
@@ -31,7 +31,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
     const char *getErrorDescription() override {return errorDescription;}

@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CLEARCACHE_H
-#define CLEARCACHE_H
+#ifndef MO_CLEARCACHE_H
+#define MO_CLEARCACHE_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -11,7 +11,7 @@
 namespace MicroOcpp {
 namespace Ocpp16 {
 
-class ClearCache : public Operation {
+class ClearCache : public Operation, public MemoryManaged {
 private:
     std::shared_ptr<FilesystemAdapter> filesystem;
     bool success = true;
@@ -22,7 +22,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 };
 
 } //end namespace Ocpp16

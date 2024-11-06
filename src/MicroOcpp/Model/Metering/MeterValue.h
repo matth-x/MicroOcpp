@@ -1,48 +1,65 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef METERVALUE_H
-#define METERVALUE_H
+#ifndef MO_METERVALUE_H
+#define MO_METERVALUE_H
 
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Model/Metering/SampledValue.h>
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <ArduinoJson.h>
 #include <memory>
-#include <vector>
 
 namespace MicroOcpp {
 
-class MeterValue {
+class MeterValue : public MemoryManaged {
 private:
     Timestamp timestamp;
-    std::vector<std::unique_ptr<SampledValue>> sampledValue;
+    Vector<std::unique_ptr<SampledValue>> sampledValue;
+
+    int txNr = -1;
+    unsigned int opNr = 1;
+    unsigned int attemptNr = 0;
+    unsigned long attemptTime = 0;
 public:
-    MeterValue(Timestamp timestamp) : timestamp(timestamp) { }
+    MeterValue(const Timestamp& timestamp);
     MeterValue(const MeterValue& other) = delete;
 
-    void addSampledValue(std::unique_ptr<SampledValue> sample) {sampledValue.push_back(std::move(sample));}
+    void addSampledValue(std::unique_ptr<SampledValue> sample);
 
-    std::unique_ptr<DynamicJsonDocument> toJson();
+    std::unique_ptr<JsonDoc> toJson();
 
     const Timestamp& getTimestamp();
     void setTimestamp(Timestamp timestamp);
 
     ReadingContext getReadingContext();
+
+    void setTxNr(unsigned int txNr);
+    int getTxNr();
+
+    void setOpNr(unsigned int opNr);
+    unsigned int getOpNr();
+
+    void advanceAttemptNr();
+    unsigned int getAttemptNr();
+
+    unsigned long getAttemptTime();
+    void setAttemptTime(unsigned long timestamp);
 };
 
-class MeterValueBuilder {
+class MeterValueBuilder : public MemoryManaged {
 private:
-    const std::vector<std::unique_ptr<SampledValueSampler>> &samplers;
+    const Vector<std::unique_ptr<SampledValueSampler>> &samplers;
     std::shared_ptr<Configuration> selectString;
-    std::vector<bool> select_mask;
+    Vector<bool> select_mask;
     unsigned int select_n {0};
     decltype(selectString->getValueRevision()) select_observe;
 
     void updateObservedSamplers();
 public:
-    MeterValueBuilder(const std::vector<std::unique_ptr<SampledValueSampler>> &samplers,
+    MeterValueBuilder(const Vector<std::unique_ptr<SampledValueSampler>> &samplers,
             std::shared_ptr<Configuration> samplersSelectStr);
     
     std::unique_ptr<MeterValue> takeSample(const Timestamp& timestamp, const ReadingContext& context);

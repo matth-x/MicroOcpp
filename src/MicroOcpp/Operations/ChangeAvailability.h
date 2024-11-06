@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CHANGEAVAILABILITY_H
-#define CHANGEAVAILABILITY_H
+#ifndef MO_CHANGEAVAILABILITY_H
+#define MO_CHANGEAVAILABILITY_H
 
 #include <MicroOcpp/Core/Operation.h>
 
@@ -13,7 +13,7 @@ class Model;
 
 namespace Ocpp16 {
 
-class ChangeAvailability : public Operation {
+class ChangeAvailability : public Operation, public MemoryManaged {
 private:
     Model& model;
     bool scheduled = false;
@@ -27,11 +27,46 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };
 
 } //end namespace Ocpp16
 } //end namespace MicroOcpp
+
+#if MO_ENABLE_V201
+
+#include <MicroOcpp/Model/Availability/ChangeAvailabilityStatus.h>
+#include <MicroOcpp/Model/Authorization/IdToken.h>
+
+namespace MicroOcpp {
+
+class AvailabilityService;
+
+namespace Ocpp201 {
+
+class ChangeAvailability : public Operation, public MemoryManaged {
+private:
+    AvailabilityService& availabilityService;
+    ChangeAvailabilityStatus status = ChangeAvailabilityStatus::Rejected;
+
+    const char *errorCode {nullptr};
+public:
+    ChangeAvailability(AvailabilityService& availabilityService);
+
+    const char* getOperationType() override;
+
+    void processReq(JsonObject payload) override;
+
+    std::unique_ptr<JsonDoc> createConf() override;
+
+    const char *getErrorCode() override {return errorCode;}
+};
+
+} //end namespace Ocpp201
+} //end namespace MicroOcpp
+
+#endif //MO_ENABLE_V201
+
 #endif

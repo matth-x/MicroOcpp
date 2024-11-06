@@ -1,12 +1,16 @@
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Configuration.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"
@@ -472,7 +476,7 @@ TEST_CASE( "SmartCharging" ) {
                 "GetCompositeSchedule",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(3)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(3));
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = 1;
                     payload["duration"] = 86400;
@@ -550,7 +554,7 @@ TEST_CASE( "SmartCharging" ) {
                     //create req
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    auto doc = makeJsonDoc("UnitTests", 2048);
                     *doc = raw[3];
                     return doc;},
                 [&checkProcessed] (JsonObject response) {
@@ -568,7 +572,7 @@ TEST_CASE( "SmartCharging" ) {
                     //create req
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_0_ALT_SAME_ID);
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    auto doc = makeJsonDoc("UnitTests", 2048);
                     *doc = raw[3];
                     (*doc)["connectorId"] = 2;
                     return doc;},
@@ -587,7 +591,7 @@ TEST_CASE( "SmartCharging" ) {
                     //create req
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_1_ABSOLUTE_LIMIT_16A);
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    auto doc = makeJsonDoc("UnitTests", 2048);
                     *doc = raw[3];
                     return doc;},
                 [&checkProcessed] (JsonObject response) {
@@ -610,7 +614,7 @@ TEST_CASE( "SmartCharging" ) {
                         //create req
                         StaticJsonDocument<2048> raw;
                         deserializeJson(raw, SCPROFILE_1_ABSOLUTE_LIMIT_16A);
-                        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                        auto doc = makeJsonDoc("UnitTests", 2048);
                         *doc = raw[3];
                         return doc;},
                     [&checkProcessed] (JsonObject response) {
@@ -632,7 +636,7 @@ TEST_CASE( "SmartCharging" ) {
                         //create req
                         StaticJsonDocument<2048> raw;
                         deserializeJson(raw, SCPROFILE_5_VALID_UNTIL_2022_16A);
-                        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                        auto doc = makeJsonDoc("UnitTests", 2048);
                         *doc = raw[3];
                         return doc;},
                     [&checkProcessed] (JsonObject response) {
@@ -656,7 +660,7 @@ TEST_CASE( "SmartCharging" ) {
                     //create req
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    auto doc = makeJsonDoc("UnitTests", 2048);
                     *doc = raw[3];
                     (*doc)["csChargingProfiles"]["stackLevel"] = MO_ChargeProfileMaxStackLevel;
                     return doc;},
@@ -675,7 +679,7 @@ TEST_CASE( "SmartCharging" ) {
                     //create req
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    auto doc = makeJsonDoc("UnitTests", 2048);
                     *doc = raw[3];
                     (*doc)["csChargingProfiles"]["stackLevel"] = MO_ChargeProfileMaxStackLevel + 1;
                     return doc;},
@@ -701,7 +705,7 @@ TEST_CASE( "SmartCharging" ) {
                     //create req
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    auto doc = makeJsonDoc("UnitTests", 2048);
                     *doc = raw[3];
                     JsonArray chargingSchedulePeriod = (*doc)["csChargingProfiles"]["chargingSchedule"]["chargingSchedulePeriod"];
                     chargingSchedulePeriod.clear();
@@ -726,7 +730,7 @@ TEST_CASE( "SmartCharging" ) {
                     //create req
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    auto doc = makeJsonDoc("UnitTests", 2048);
                     *doc = raw[3];
                     JsonArray chargingSchedulePeriod = (*doc)["csChargingProfiles"]["chargingSchedule"]["chargingSchedulePeriod"];
                     chargingSchedulePeriod.clear();
@@ -762,7 +766,7 @@ TEST_CASE( "SmartCharging" ) {
                     //create req
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_0);
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    auto doc = makeJsonDoc("UnitTests", 2048);
                     *doc = raw[3];
                     return doc;},
                 [&checkProcessed] (JsonObject response) {
@@ -780,7 +784,7 @@ TEST_CASE( "SmartCharging" ) {
                     //create req
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_1_ABSOLUTE_LIMIT_16A);
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    auto doc = makeJsonDoc("UnitTests", 2048);
                     *doc = raw[3];
                     return doc;},
                 [&checkProcessed] (JsonObject response) {
@@ -802,7 +806,7 @@ TEST_CASE( "SmartCharging" ) {
                     //create req
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_0);
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    auto doc = makeJsonDoc("UnitTests", 2048);
                     *doc = raw[3];
                     return doc;},
                 [&checkProcessed] (JsonObject response) {
@@ -820,7 +824,7 @@ TEST_CASE( "SmartCharging" ) {
                     //create req
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_1_ABSOLUTE_LIMIT_16A);
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2048));
+                    auto doc = makeJsonDoc("UnitTests", 2048);
                     *doc = raw[3];
                     return doc;},
                 [&checkProcessed] (JsonObject response) {

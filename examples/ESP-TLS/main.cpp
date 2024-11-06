@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <Arduino.h>
@@ -14,25 +14,18 @@ ESP8266WiFiMulti WiFiMulti;
 #endif
 
 #include <MicroOcpp.h>
-#include <MicroOcpp/Core/Connection.h> //need for setting TLS credentials
 
-#define STASSID  "YOUR_WIFI_SSID"
-#define STAPSK   "YOUR_WIFI_PW"
+#define STASSID "YOUR_WIFI_SSID"
+#define STAPSK  "YOUR_WIFI_PW"
 
-#define OCPP_HOST  "echo.websocket.events"
-#define OCPP_PORT  443
-#define OCPP_URL   "wss://echo.websocket.events/"
+#define OCPP_BACKEND_URL   "wss://echo.websocket.events"
+#define OCPP_CHARGE_BOX_ID ""
+#define OCPP_AUTH_KEY      "SecureAuthKey" // OCPP Security Profile 2: TLS with Basic Authentication
 
 /*
- * OCPP Security Profile 2: TLS with Basic Authentication
- *
- * Example credentials from the OCPP-JSON document (p. 16)
+ * ISRG ROOT X1
  */
-#define OCPP_AUTH_ID  "AL1000"
-#define OCPP_AUTH_KEY "0001020304050607FFFFFFFFFFFFFFFFFFFFFFFF"
-
-const char ENDPOINT_CA_CERT[] PROGMEM = R"EOF(
------BEGIN CERTIFICATE-----
+const char ca_cert[] PROGMEM = R"EOF(-----BEGIN CERTIFICATE-----
 MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
 TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
 cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4
@@ -65,9 +58,6 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 -----END CERTIFICATE-----
 )EOF";
 
-WebSocketsClient wsockSecure {};
-MicroOcpp::EspWiFi::WSClient osockSecure {&wsockSecure};
-
 void setup() {
 
     /*
@@ -76,7 +66,7 @@ void setup() {
 
     Serial.begin(115200);
 
-    Serial.print(F("[main] Wait for WiFi "));
+    Serial.print(F("[main] Wait for WiFi: "));
 
 #if defined(ESP8266)
     WiFiMulti.addAP(STASSID, STAPSK);
@@ -87,12 +77,14 @@ void setup() {
 #elif defined(ESP32)
     WiFi.begin(STASSID, STAPSK);
     while (!WiFi.isConnected()) {
-        delay(1000);
         Serial.print('.');
+        delay(1000);
     }
+#else
+#error only ESP32 or ESP8266 supported at the moment
 #endif
 
-    Serial.print(F(" connected\n"));
+    Serial.println(F(" connected!"));
 
     /*
      * Set system time (required for Certificate validation)
@@ -108,23 +100,22 @@ void setup() {
     Serial.printf(" finished. Unix timestamp is %lu\n", now);
     
     /*
-     * Connect to OCPP Central System (using OCPP Security Profile 2: TLS with Basic Authentication )
+     * Initialize the OCPP library (using OCPP Security Profile 2: TLS with Basic Authentication)
      */
-    wsockSecure.beginSslWithCA(OCPP_HOST,
-                    OCPP_PORT,
-                    OCPP_URL,
-                    ENDPOINT_CA_CERT, "ocpp1.6");
-    wsockSecure.setReconnectInterval(5000);
-    wsockSecure.enableHeartbeat(15000, 3000, 2);
-    wsockSecure.setAuthorization(OCPP_AUTH_ID, OCPP_AUTH_KEY); // => Authorization: Basic QUwxMDAwOgABAgMEBQYH////////////////
-    
-    mocpp_initialize(osockSecure, ChargerCredentials("My Charging Station", "My company name"));
+    mocpp_initialize(
+            OCPP_BACKEND_URL,
+            OCPP_CHARGE_BOX_ID,
+            "My Charging Station",
+            "My company name",
+            MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail,
+            OCPP_AUTH_KEY,
+            ca_cert);
 
     /*
      * ... see MicroOcpp.h for how to integrate the EVSE hardware.
      *
      * This example only showcases the TLS connection. For examples about the HW integration,
-     * please see the other examples
+     * see the other examples
      */
 }
 

@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/OperationRegistry.h>
@@ -11,7 +11,7 @@
 
 using namespace MicroOcpp;
 
-OperationRegistry::OperationRegistry() {
+OperationRegistry::OperationRegistry() : registry(makeVector<OperationCreator>("OperationRegistry")) {
 
 }
 

@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 /**
@@ -18,14 +18,13 @@
  #ifndef MO_OPERATION_H
  #define MO_OPERATION_H
 
-#include <ArduinoJson.h>
 #include <memory>
-
-#include <MicroOcpp/Core/RequestStore.h>
+#include <ArduinoJson.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
-std::unique_ptr<DynamicJsonDocument> createEmptyDocument();
+std::unique_ptr<JsonDoc> createEmptyDocument();
 
 class Operation {
 public:
@@ -35,10 +34,6 @@ public:
     
     virtual const char* getOperationType();
 
-    virtual void initiate(StoredOperationHandler *rpcData);
-
-    virtual bool restore(StoredOperationHandler *rpcData);
-
     /**
      * Create the payload for the respective OCPP message
      * 
@@ -47,7 +42,7 @@ public:
      * This function is usually called multiple times by the Arduino loop(). On first call, the request is initially sent. In the
      * succeeding calls, the implementers decide to either recreate the request, or do nothing as the operation is still pending.
      */
-    virtual std::unique_ptr<DynamicJsonDocument> createReq();
+    virtual std::unique_ptr<JsonDoc> createReq();
 
 
     virtual void processConf(JsonObject payload);
@@ -66,11 +61,11 @@ public:
      * After successfully processing a request sent by the communication counterpart, this function creates the payload for a confirmation
      * message.
      */
-    virtual std::unique_ptr<DynamicJsonDocument> createConf();
+    virtual std::unique_ptr<JsonDoc> createConf();
 
     virtual const char *getErrorCode() {return nullptr;} //nullptr means no error
     virtual const char *getErrorDescription() {return "";}
-    virtual std::unique_ptr<DynamicJsonDocument> getErrorDetails() {return createEmptyDocument();}
+    virtual std::unique_ptr<JsonDoc> getErrorDetails() {return createEmptyDocument();}
 };
 
 } //end namespace MicroOcpp

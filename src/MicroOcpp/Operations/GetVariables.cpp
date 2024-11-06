@@ -12,10 +12,16 @@
 
 #include <cctype> //for tolower
 
+using MicroOcpp::Ocpp201::GetVariableData;
 using MicroOcpp::Ocpp201::GetVariables;
+using MicroOcpp::JsonDoc;
 
-GetVariables::GetVariables(VariableService& variableService) : variableService(variableService) {
-  
+GetVariableData::GetVariableData(const char *memory_tag) : componentName{makeString(memory_tag)}, variableName{makeString(memory_tag)} {
+
+}
+
+GetVariables::GetVariables(VariableService& variableService) : MemoryManaged("v201.Operation.", "GetVariables"), variableService(variableService), queries(makeVector<GetVariableData>(getMemoryTag())) {
+
 }
 
 const char* GetVariables::getOperationType(){
@@ -25,7 +31,7 @@ const char* GetVariables::getOperationType(){
 void GetVariables::processReq(JsonObject payload) {
     for (JsonObject getVariable : payload["getVariableData"].as<JsonArray>()) {
 
-        queries.emplace_back();
+        queries.emplace_back(getMemoryTag());
         auto& data = queries.back();
 
         if (getVariable.containsKey("attributeType")) {
@@ -75,7 +81,7 @@ void GetVariables::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> GetVariables::createConf(){
+std::unique_ptr<JsonDoc> GetVariables::createConf(){
 
     // process GetVariables queries
     for (auto& query : queries) {
@@ -127,7 +133,7 @@ std::unique_ptr<DynamicJsonDocument> GetVariables::createConf(){
                     data.variableName.length() + 1;
     }
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity));
+    auto doc = makeJsonDoc(getMemoryTag(), capacity);
 
     JsonObject payload = doc->to<JsonObject>();
     JsonArray getVariableResult = payload.createNestedArray("getVariableResult");

@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Model/SmartCharging/SmartChargingModel.h>
@@ -16,6 +16,10 @@ ChargeRate MicroOcpp::chargeRate_min(const ChargeRate& a, const ChargeRate& b) {
     res.current = std::min(a.current, b.current);
     res.nphases = std::min(a.nphases, b.nphases);
     return res;
+}
+
+ChargingSchedule::ChargingSchedule() : MemoryManaged("v16.SmartCharging.SmartChargingModel"), chargingSchedulePeriod{makeVector<ChargingSchedulePeriod>(getMemoryTag())} {
+
 }
 
 bool ChargingSchedule::calculateLimit(const Timestamp &t, const Timestamp &startOfCharging, ChargeRate& limit, Timestamp& nextChange) {
@@ -116,13 +120,13 @@ bool ChargingSchedule::calculateLimit(const Timestamp &t, const Timestamp &start
     }
 }
 
-bool ChargingSchedule::toJson(DynamicJsonDocument& doc) {
+bool ChargingSchedule::toJson(JsonDoc& doc) {
     size_t capacity = 0;
     capacity += JSON_OBJECT_SIZE(5); //no of fields of ChargingSchedule
     capacity += JSONDATE_LENGTH + 1; //startSchedule
     capacity += JSON_ARRAY_SIZE(chargingSchedulePeriod.size()) + chargingSchedulePeriod.size() * JSON_OBJECT_SIZE(3);
 
-    doc = DynamicJsonDocument(capacity);
+    doc = initJsonDoc("v16.SmartCharging.ChargingSchedule", capacity);
     if (duration >= 0) {
         doc["duration"] = duration;
     }
@@ -173,6 +177,10 @@ void ChargingSchedule::printSchedule(){
     }
 }
 
+ChargingProfile::ChargingProfile() : MemoryManaged("v16.SmartCharging.ChargingProfile") {
+
+}
+
 bool ChargingProfile::calculateLimit(const Timestamp &t, const Timestamp &startOfCharging, ChargeRate& limit, Timestamp& nextChange){
     if (t > validTo && validTo > MIN_TIME) {
         return false; //no limit defined
@@ -205,14 +213,14 @@ ChargingProfilePurposeType ChargingProfile::getChargingProfilePurpose(){
     return chargingProfilePurpose;
 }
 
-bool ChargingProfile::toJson(DynamicJsonDocument& doc) {
+bool ChargingProfile::toJson(JsonDoc& doc) {
     
-    DynamicJsonDocument chargingScheduleDoc {0};
+    auto chargingScheduleDoc = initJsonDoc("v16.SmartCharging.ChargingSchedule");
     if (!chargingSchedule.toJson(chargingScheduleDoc)) {
         return false;
     }
 
-    doc = DynamicJsonDocument(
+    doc = initJsonDoc("v16.SmartCharging.ChargingProfile",
             JSON_OBJECT_SIZE(9) + //no. of fields in ChargingProfile
             2 * (JSONDATE_LENGTH + 1) + //validFrom and validTo
             chargingScheduleDoc.memoryUsage()); //nested JSON object
@@ -486,7 +494,7 @@ bool MicroOcpp::loadChargingSchedule(JsonObject& json, ChargingSchedule& out) {
     }
 
     for (JsonObject periodJson : periodJsonArray) {
-        out.chargingSchedulePeriod.push_back(ChargingSchedulePeriod());
+        out.chargingSchedulePeriod.emplace_back();
         if (!loadChargingSchedulePeriod(periodJson, out.chargingSchedulePeriod.back())) {
             return false;
         }

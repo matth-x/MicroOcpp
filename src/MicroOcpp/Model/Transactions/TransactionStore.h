@@ -1,41 +1,27 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef TRANSACTIONSTORE_H
-#define TRANSACTIONSTORE_H
+#ifndef MO_TRANSACTIONSTORE_H
+#define MO_TRANSACTIONSTORE_H
 
+#include <MicroOcpp/Version.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
-#include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
-#include <deque>
-
-#define MAX_TX_CNT 100000U
-
-#ifndef MO_TXRECORD_SIZE
-#define MO_TXRECORD_SIZE 4 //no. of tx to hold on flash storage
-#endif
-
-#define MO_TXSTORE_TXBEGIN_KEY "txBegin_"
-#define MO_TXSTORE_TXEND_KEY "txEnd_"
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
 class TransactionStore;
 
-class ConnectorTransactionStore {
+class ConnectorTransactionStore : public MemoryManaged {
 private:
     TransactionStore& context;
     const unsigned int connectorId;
 
     std::shared_ptr<FilesystemAdapter> filesystem;
-    std::shared_ptr<Configuration> txBeginInt; //if txNr < txBegin, tx has been safely deleted
-    char txBeginKey [sizeof(MO_TXSTORE_TXBEGIN_KEY "xxx") + 1]; //"xxx": placeholder for connectorId
-
-    std::shared_ptr<Configuration> txEndInt;
-    char txEndKey [sizeof(MO_TXSTORE_TXEND_KEY "xxx") + 1];
     
-    std::deque<std::weak_ptr<Transaction>> transactions;
+    Vector<std::weak_ptr<Transaction>> transactions;
 
 public:
     ConnectorTransactionStore(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem);
@@ -44,45 +30,88 @@ public:
     ConnectorTransactionStore& operator=(const ConnectorTransactionStore&) = delete;
 
     ~ConnectorTransactionStore();
-    
-    std::shared_ptr<Transaction> getLatestTransaction();
+
     bool commit(Transaction *transaction);
 
     std::shared_ptr<Transaction> getTransaction(unsigned int txNr);
-    std::shared_ptr<Transaction> createTransaction(bool silent = false);
+    std::shared_ptr<Transaction> createTransaction(unsigned int txNr, bool silent = false);
 
     bool remove(unsigned int txNr);
-
-    int getTxBegin();
-    int getTxEnd();
-    void setTxBegin(unsigned int txNr);
-    void setTxEnd(unsigned int txNr);
-
-    unsigned int size();
 };
 
-class TransactionStore {
+class TransactionStore : public MemoryManaged {
 private:
-    std::vector<std::unique_ptr<ConnectorTransactionStore>> connectors;
+    Vector<std::unique_ptr<ConnectorTransactionStore>> connectors;
 public:
     TransactionStore(unsigned int nConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
-    std::shared_ptr<Transaction> getLatestTransaction(unsigned int connectorId);
     bool commit(Transaction *transaction);
 
     std::shared_ptr<Transaction> getTransaction(unsigned int connectorId, unsigned int txNr);
-    std::shared_ptr<Transaction> createTransaction(unsigned int connectorId, bool silent = false);
+    std::shared_ptr<Transaction> createTransaction(unsigned int connectorId, unsigned int txNr, bool silent = false);
 
     bool remove(unsigned int connectorId, unsigned int txNr);
-
-    int getTxBegin(unsigned int connectorId);
-    int getTxEnd(unsigned int connectorId);
-    void setTxBegin(unsigned int connectorId, unsigned int txNr);
-    void setTxEnd(unsigned int connectorId, unsigned int txNr);
-
-    unsigned int size(unsigned int connectorId);
 };
 
 }
+
+#if MO_ENABLE_V201
+
+#ifndef MO_TXEVENTRECORD_SIZE_V201
+#define MO_TXEVENTRECORD_SIZE_V201 10 //maximum number of of txEvents per tx to hold on flash storage
+#endif
+
+namespace MicroOcpp {
+namespace Ocpp201 {
+
+class TransactionStore;
+
+class TransactionStoreEvse : public MemoryManaged {
+private:
+    TransactionStore& txStore;
+    const unsigned int evseId;
+
+    std::shared_ptr<FilesystemAdapter> filesystem;
+
+    bool serializeTransaction(Transaction& tx, JsonObject out);
+    bool serializeTransactionEvent(TransactionEventData& txEvent, JsonObject out);
+    bool deserializeTransaction(Transaction& tx, JsonObject in);
+    bool deserializeTransactionEvent(TransactionEventData& txEvent, JsonObject in);
+
+    bool commit(Transaction& transaction, TransactionEventData *transactionEvent);
+
+public:
+    TransactionStoreEvse(TransactionStore& txStore, unsigned int evseId, std::shared_ptr<FilesystemAdapter> filesystem);
+
+    bool discoverStoredTx(unsigned int& txNrBeginOut, unsigned int& txNrEndOut);
+
+    bool commit(Transaction *transaction);
+    bool commit(TransactionEventData *transactionEvent);
+
+    std::unique_ptr<Transaction> loadTransaction(unsigned int txNr);
+    std::unique_ptr<Transaction> createTransaction(unsigned int txNr, const char *txId);
+
+    std::unique_ptr<TransactionEventData> createTransactionEvent(Transaction& tx);
+    std::unique_ptr<TransactionEventData> loadTransactionEvent(Transaction& tx, unsigned int seqNo);
+
+    bool remove(unsigned int txNr);
+    bool remove(Transaction& tx, unsigned int seqNo);
+};
+
+class TransactionStore : public MemoryManaged {
+private:
+    TransactionStoreEvse *evses [MO_NUM_EVSEID] = {nullptr};
+public:
+    TransactionStore(std::shared_ptr<FilesystemAdapter> filesystem, size_t numEvses);
+
+    ~TransactionStore();
+
+    TransactionStoreEvse *getEvse(unsigned int evseId);
+};
+
+} //namespace Ocpp201
+} //namespace MicroOcpp
+
+#endif //MO_ENABLE_V201
 
 #endif

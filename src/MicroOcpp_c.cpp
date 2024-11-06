@@ -6,6 +6,7 @@
 #include "MicroOcpp.h"
 
 #include <MicroOcpp/Model/Certificates/Certificate_c.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #include <MicroOcpp/Platform.h>
 #include <MicroOcpp/Debug.h>
@@ -13,10 +14,10 @@
 MicroOcpp::Connection *ocppSocket = nullptr;
 
 void ocpp_initialize(OCPP_Connection *conn, const char *chargePointModel, const char *chargePointVendor, struct OCPP_FilesystemOpt fsopt, bool autoRecover) {
-    ocpp_initialize_full(conn, ChargerCredentials(chargePointModel, chargePointVendor), fsopt, autoRecover, NULL);
+    ocpp_initialize_full(conn, ChargerCredentials(chargePointModel, chargePointVendor), fsopt, autoRecover);
 }
 
-void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCredentials, struct OCPP_FilesystemOpt fsopt, bool autoRecover, ocpp_certificate_store *certs) {
+void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCredentials, struct OCPP_FilesystemOpt fsopt, bool autoRecover) {
     if (!conn) {
         MO_DBG_ERR("conn is null");
     }
@@ -25,12 +26,7 @@ void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCre
 
     MicroOcpp::FilesystemOpt adaptFsopt = fsopt;
 
-    std::unique_ptr<MicroOcpp::CertificateStore> certsCwrapper;
-    if (certs) {
-        certsCwrapper = MicroOcpp::makeCertificateStoreCwrapper(certs);
-    }
-
-    mocpp_initialize(*ocppSocket, bootNotificationCredentials, MicroOcpp::makeDefaultFilesystemAdapter(adaptFsopt), autoRecover, MicroOcpp::ProtocolVersion(1,6),std::move(certsCwrapper));
+    mocpp_initialize(*ocppSocket, bootNotificationCredentials, MicroOcpp::makeDefaultFilesystemAdapter(adaptFsopt), autoRecover, MicroOcpp::ProtocolVersion(1,6));
 }
 
 void ocpp_deinitialize() {
@@ -125,6 +121,7 @@ MicroOcpp::OnReceiveErrorListener adaptFn(OnCallError fn) {
     };
 }
 
+#if MO_ENABLE_CONNECTOR_LOCK
 std::function<UnlockConnectorResult()> adaptFn(PollUnlockResult fn) {
     return [fn] () {return fn();};
 }
@@ -132,6 +129,7 @@ std::function<UnlockConnectorResult()> adaptFn(PollUnlockResult fn) {
 std::function<UnlockConnectorResult()> adaptFn(unsigned int connectorId, PollUnlockResult_m fn) {
     return [fn, connectorId] () {return fn(connectorId);};
 }
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
 void ocpp_beginTransaction(const char *idTag) {
     beginTransaction(idTag);
@@ -198,6 +196,14 @@ bool ocpp_ocppPermitsCharge() {
 }
 bool ocpp_ocppPermitsCharge_m(unsigned int connectorId) {
     return ocppPermitsCharge(connectorId);
+}
+
+ChargePointStatus ocpp_getChargePointStatus() {
+    return getChargePointStatus();
+}
+
+ChargePointStatus ocpp_getChargePointStatus_m(unsigned int connectorId) {
+    return getChargePointStatus(connectorId);
 }
 
 void ocpp_setConnectorPluggedInput(InputBool pluggedInput) {
@@ -278,12 +284,15 @@ void ocpp_addMeterValueInput_m(unsigned int connectorId, MeterValueInput *meterV
     addMeterValueInput(std::move(svs), connectorId);
 }
 
+
+#if MO_ENABLE_CONNECTOR_LOCK
 void ocpp_setOnUnlockConnectorInOut(PollUnlockResult onUnlockConnectorInOut) {
     setOnUnlockConnectorInOut(adaptFn(onUnlockConnectorInOut));
 }
 void ocpp_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollUnlockResult_m onUnlockConnectorInOut) {
     setOnUnlockConnectorInOut(adaptFn(connectorId, onUnlockConnectorInOut), connectorId);
 }
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
 void ocpp_setStartTxReadyInput(InputBool startTxReady) {
     setStartTxReadyInput(adaptFn(startTxReady));
@@ -331,6 +340,16 @@ void ocpp_setOnResetExecute(void (*onResetExecute)(bool)) {
     setOnResetExecute([onResetExecute] (bool isHard) {onResetExecute(isHard);});
 }
 
+#if MO_ENABLE_CERT_MGMT
+void ocpp_setCertificateStore(ocpp_cert_store *certs) {
+    std::unique_ptr<MicroOcpp::CertificateStore> certsCwrapper;
+    if (certs) {
+        certsCwrapper = MicroOcpp::makeCertificateStoreCwrapper(certs);
+    }
+    setCertificateStore(std::move(certsCwrapper));
+}
+#endif //MO_ENABLE_CERT_MGMT
+
 void ocpp_setOnReceiveRequest(const char *operationType, OnMessage onRequest) {
     setOnReceiveRequest(operationType, adaptFn(onRequest));
 }
@@ -352,7 +371,7 @@ void ocpp_set_rng_c(uint32_t (*rng)(void))
 
 void ocpp_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data) {
     
-    std::string idTag_capture = idTag;
+    auto idTag_capture = MicroOcpp::makeString("MicroOcpp_c.cpp", idTag);
 
     authorize(idTag,
             onConfirmation ? [onConfirmation, idTag_capture, user_data] (JsonObject payload) {

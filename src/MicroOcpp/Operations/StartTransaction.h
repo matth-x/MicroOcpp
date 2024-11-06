@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef STARTTRANSACTION_H
-#define STARTTRANSACTION_H
+#ifndef MO_STARTTRANSACTION_H
+#define MO_STARTTRANSACTION_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Time.h>
@@ -17,7 +17,7 @@ class Transaction;
 
 namespace Ocpp16 {
 
-class StartTransaction : public Operation {
+class StartTransaction : public Operation, public MemoryManaged {
 private:
     Model& model;
     std::shared_ptr<Transaction> transaction;
@@ -29,17 +29,13 @@ public:
 
     const char* getOperationType() override;
 
-    void initiate(StoredOperationHandler *opStore) override;
-
-    bool restore(StoredOperationHandler *opStore) override;
-
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 };
 
 } //end namespace Ocpp16

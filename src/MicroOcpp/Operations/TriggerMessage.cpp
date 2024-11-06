@@ -1,19 +1,19 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/TriggerMessage.h>
 #include <MicroOcpp/Model/ConnectorBase/Connector.h>
 #include <MicroOcpp/Model/Metering/MeteringService.h>
-#include <MicroOcpp/Operations/StatusNotification.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Context.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::TriggerMessage;
+using MicroOcpp::JsonDoc;
 
-TriggerMessage::TriggerMessage(Context& context) : context(context) {
+TriggerMessage::TriggerMessage(Context& context) : MemoryManaged("v16.Operation.", "TriggerMessage"), context(context) {
 
 }
 
@@ -35,12 +35,16 @@ void TriggerMessage::processReq(JsonObject payload) {
             if (connectorId < 0) {
                 auto nConnectors = mService->getNumConnectors();
                 for (decltype(nConnectors) cId = 0; cId < nConnectors; cId++) {
-                    context.initiatePreBootOperation(mService->takeTriggeredMeterValues(cId));
-                    statusMessage = "Accepted";
+                    if (auto meterValues = mService->takeTriggeredMeterValues(cId)) {
+                        context.getRequestQueue().sendRequestPreBoot(std::move(meterValues));
+                        statusMessage = "Accepted";
+                    }
                 }
             } else if (connectorId < mService->getNumConnectors()) {
-                context.initiatePreBootOperation(mService->takeTriggeredMeterValues(connectorId));
-                statusMessage = "Accepted";
+                if (auto meterValues = mService->takeTriggeredMeterValues(connectorId)) {
+                    context.getRequestQueue().sendRequestPreBoot(std::move(meterValues));
+                    statusMessage = "Accepted";
+                }
             } else {
                 errorCode = "PropertyConstraintViolation";
             }
@@ -58,21 +62,14 @@ void TriggerMessage::processReq(JsonObject payload) {
 
         for (auto i = cIdRangeBegin; i < cIdRangeEnd; i++) {
             auto connector = context.getModel().getConnector(i);
-
-            auto statusNotification = makeRequest(new Ocpp16::StatusNotification(
-                        i,
-                        connector->getStatus(), //will be determined in StatusNotification::initiate
-                        context.getModel().getClock().now()));
-
-            statusNotification->setTimeout(60000);
-
-            context.initiatePreBootOperation(std::move(statusNotification));
-            statusMessage = "Accepted";
+            if (connector->triggerStatusNotification()) {
+                statusMessage = "Accepted";
+            }
         }
     } else {
         auto msg = context.getOperationRegistry().deserializeOperation(requestedMessage);
         if (msg) {
-            context.initiatePreBootOperation(std::move(msg));
+            context.getRequestQueue().sendRequestPreBoot(std::move(msg));
             statusMessage = "Accepted";
         } else {
             statusMessage = "NotImplemented";
@@ -80,8 +77,8 @@ void TriggerMessage::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> TriggerMessage::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> TriggerMessage::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = statusMessage;
     return doc;

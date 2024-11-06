@@ -16,7 +16,7 @@
 using namespace::MicroOcpp;
 
 SmartChargingConnector::SmartChargingConnector(Model& model, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ProfileStack& ChargePointMaxProfile, ProfileStack& ChargePointTxDefaultProfile) :
-        model(model), filesystem{filesystem}, connectorId{connectorId}, ChargePointMaxProfile(ChargePointMaxProfile), ChargePointTxDefaultProfile(ChargePointTxDefaultProfile) {
+        MemoryManaged("v16.SmartCharging.SmartChargingConnector"), model(model), filesystem{filesystem}, connectorId{connectorId}, ChargePointMaxProfile(ChargePointMaxProfile), ChargePointTxDefaultProfile(ChargePointTxDefaultProfile) {
     
 }
 
@@ -159,6 +159,21 @@ void SmartChargingConnector::loop(){
 
         calculateLimit(tnow, limit, nextChange);
 
+#if MO_DBG_LEVEL >= MO_DL_INFO
+        {
+            char timestamp1[JSONDATE_LENGTH + 1] = {'\0'};
+            tnow.toJsonString(timestamp1, JSONDATE_LENGTH + 1);
+            char timestamp2[JSONDATE_LENGTH + 1] = {'\0'};
+            nextChange.toJsonString(timestamp2, JSONDATE_LENGTH + 1);
+            MO_DBG_INFO("New limit for connector %u, scheduled at = %s, nextChange = %s, limit = {%.1f, %.1f, %i}",
+                                connectorId,
+                                timestamp1, timestamp2,
+                                limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
+                                limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
+                                limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
+        }
+#endif
+
         if (trackLimitOutput != limit) {
             if (limitOutput) {
 
@@ -175,7 +190,6 @@ void SmartChargingConnector::loop(){
 void SmartChargingConnector::setSmartChargingOutput(std::function<void(float,float,int)> limitOutput) {
     if (this->limitOutput) {
         MO_DBG_WARN("replacing existing SmartChargingOutput");
-        (void)0;
     }
     this->limitOutput = limitOutput;
 }
@@ -253,7 +267,7 @@ std::unique_ptr<ChargingSchedule> SmartChargingConnector::getCompositeSchedule(i
             }
         }
 
-        periods.push_back(ChargingSchedulePeriod());
+        periods.emplace_back();
         float limit_opt = unit == ChargingRateUnitType_Optional::Watt ? limit.power : limit.current;
         periods.back().limit = limit_opt != std::numeric_limits<float>::max() ? limit_opt : -1.f,
         periods.back().numberPhases = limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1;
@@ -297,14 +311,14 @@ SmartChargingConnector *SmartChargingService::getScConnectorById(unsigned int co
 }
 
 SmartChargingService::SmartChargingService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int numConnectors)
-      : context(context), filesystem{filesystem}, numConnectors(numConnectors) {
+      : MemoryManaged("v16.SmartCharging.SmartChargingService"), context(context), filesystem{filesystem}, connectors{makeVector<SmartChargingConnector>(getMemoryTag())}, numConnectors(numConnectors) {
     
     for (unsigned int cId = 1; cId < numConnectors; cId++) {
-        connectors.push_back(std::move(SmartChargingConnector(context.getModel(), filesystem, cId, ChargePointMaxProfile, ChargePointTxDefaultProfile)));
+        connectors.emplace_back(context.getModel(), filesystem, cId, ChargePointMaxProfile, ChargePointTxDefaultProfile);
     }
 
     declareConfiguration<int>("ChargeProfileMaxStackLevel", MO_ChargeProfileMaxStackLevel, CONFIGURATION_VOLATILE, true);
-    declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE);
+    declareConfiguration<const char*>("ChargingScheduleAllowedChargingRateUnit", "", CONFIGURATION_VOLATILE, true);
     declareConfiguration<int>("ChargingScheduleMaxPeriods", MO_ChargingScheduleMaxPeriods, CONFIGURATION_VOLATILE, true);
     declareConfiguration<int>("MaxChargingProfilesInstalled", MO_MaxChargingProfilesInstalled, CONFIGURATION_VOLATILE, true);
 
@@ -430,7 +444,7 @@ bool SmartChargingService::loadProfiles() {
                     continue; //There is not a profile on the stack iStack with stacklevel iLevel. Normal case, just continue.
                 }
 
-                auto profileDoc = FilesystemUtils::loadJson(filesystem, fn);
+                auto profileDoc = FilesystemUtils::loadJson(filesystem, fn, getMemoryTag());
                 if (!profileDoc) {
                     success = false;
                     MO_DBG_ERR("profile corrupt: %s, remove", fn);
@@ -498,16 +512,19 @@ void SmartChargingService::loop(){
 
         calculateLimit(tnow, limit, nextChange);
 
-#if (MO_DBG_LEVEL >= MO_DL_INFO)
-        char timestamp1[JSONDATE_LENGTH + 1] = {'\0'};
-        tnow.toJsonString(timestamp1, JSONDATE_LENGTH + 1);
-        char timestamp2[JSONDATE_LENGTH + 1] = {'\0'};
-        nextChange.toJsonString(timestamp2, JSONDATE_LENGTH + 1);
-        MO_DBG_INFO("New limit for connector 1, scheduled at = %s, nextChange = %s, limit = {%f,%f,%i}",
-                            timestamp1, timestamp2,
-                            limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
-                            limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
-                            limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
+#if MO_DBG_LEVEL >= MO_DL_INFO
+        {
+            char timestamp1[JSONDATE_LENGTH + 1] = {'\0'};
+            tnow.toJsonString(timestamp1, JSONDATE_LENGTH + 1);
+            char timestamp2[JSONDATE_LENGTH + 1] = {'\0'};
+            nextChange.toJsonString(timestamp2, JSONDATE_LENGTH + 1);
+            MO_DBG_INFO("New limit for connector %u, scheduled at = %s, nextChange = %s, limit = {%.1f, %.1f, %i}",
+                                0,
+                                timestamp1, timestamp2,
+                                limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
+                                limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
+                                limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
+        }
 #endif
 
         if (trackLimitOutput != limit) {
@@ -532,7 +549,6 @@ void SmartChargingService::setSmartChargingOutput(unsigned int connectorId, std:
     if (connectorId == 0) {
         if (this->limitOutput) {
             MO_DBG_WARN("replacing existing SmartChargingOutput");
-            (void)0;
         }
         this->limitOutput = limitOutput;
     } else {
@@ -722,7 +738,7 @@ bool SmartChargingServiceUtils::storeProfile(std::shared_ptr<FilesystemAdapter> 
         return true; //not an error
     }
 
-    DynamicJsonDocument chargingProfileJson {0};
+    auto chargingProfileJson = initJsonDoc("v16.SmartCharging.ChargingProfile");
     if (!chargingProfile->toJson(chargingProfileJson)) {
         return false;
     }

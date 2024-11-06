@@ -1,25 +1,32 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
+
 #include <MicroOcpp/Model/Authorization/AuthorizationData.h>
+#include <MicroOcpp/Debug.h>
 
 using namespace MicroOcpp;
 
-AuthorizationData::AuthorizationData() {
+AuthorizationData::AuthorizationData() : MemoryManaged("v16.Authorization.AuthorizationData") {
 
 }
 
-AuthorizationData::AuthorizationData(AuthorizationData&& other) {
+AuthorizationData::AuthorizationData(AuthorizationData&& other) : MemoryManaged("v16.Authorization.AuthorizationData") {
     operator=(std::move(other));
 }
 
 AuthorizationData::~AuthorizationData() {
-
+    MO_FREE(parentIdTag);
+    parentIdTag = nullptr;
 }
 
 AuthorizationData& AuthorizationData::operator=(AuthorizationData&& other) {
-    parentIdTag = std::move(other.parentIdTag);
+    parentIdTag = other.parentIdTag;
+    other.parentIdTag = nullptr;
     expiryDate = std::move(other.expiryDate);
     strncpy(idTag, other.idTag, IDTAG_LEN_MAX + 1);
     idTag[IDTAG_LEN_MAX] = '\0';
@@ -52,11 +59,18 @@ void AuthorizationData::readJson(JsonObject entry, bool compact) {
     }
 
     if (idTagInfo.containsKey(AUTHDATA_KEY_PARENTIDTAG(compact))) {
-        parentIdTag = std::unique_ptr<char[]>(new char[IDTAG_LEN_MAX + 1]);
-        strncpy(parentIdTag.get(), idTagInfo[AUTHDATA_KEY_PARENTIDTAG(compact)], IDTAG_LEN_MAX + 1);
-        parentIdTag.get()[IDTAG_LEN_MAX] = '\0';
+        MO_FREE(parentIdTag);
+        parentIdTag = nullptr;
+        parentIdTag = static_cast<char*>(MO_MALLOC(getMemoryTag(), IDTAG_LEN_MAX + 1));
+        if (parentIdTag) {
+            strncpy(parentIdTag, idTagInfo[AUTHDATA_KEY_PARENTIDTAG(compact)], IDTAG_LEN_MAX + 1);
+            parentIdTag[IDTAG_LEN_MAX] = '\0';
+        } else {
+            MO_DBG_ERR("OOM");
+        }
     } else {
-        parentIdTag.reset();
+        MO_FREE(parentIdTag);
+        parentIdTag = nullptr;
     }
 
     if (idTagInfo.containsKey(AUTHDATA_KEY_STATUS(compact))) {
@@ -102,7 +116,7 @@ void AuthorizationData::writeJson(JsonObject& entry, bool compact) {
     }
 
     if (parentIdTag) {
-        idTagInfo[AUTHDATA_KEY_PARENTIDTAG(compact)] = (const char *) parentIdTag.get();
+        idTagInfo[AUTHDATA_KEY_PARENTIDTAG(compact)] = (const char *) parentIdTag;
     }
 
     if (status != AuthorizationStatus::Accepted) {
@@ -110,6 +124,19 @@ void AuthorizationData::writeJson(JsonObject& entry, bool compact) {
     } else if (!compact) {
         idTagInfo[AUTHDATA_KEY_STATUS(compact)] = serializeAuthorizationStatus(AuthorizationStatus::Invalid);
     }
+}
+
+const char *AuthorizationData::getIdTag() const {
+    return idTag;
+}
+Timestamp *AuthorizationData::getExpiryDate() const {
+    return expiryDate.get();
+}
+const char *AuthorizationData::getParentIdTag() const {
+    return parentIdTag;
+}
+AuthorizationStatus AuthorizationData::getAuthorizationStatus() const {
+    return status;
 }
 
 void AuthorizationData::reset() {
@@ -152,3 +179,5 @@ MicroOcpp::AuthorizationStatus MicroOcpp::deserializeAuthorizationStatus(const c
         return AuthorizationStatus::UNDEFINED;
     }
 }
+
+#endif //MO_ENABLE_LOCAL_AUTH

@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CLEARCHARGINGPROFILE_H
-#define CLEARCHARGINGPROFILE_H
+#ifndef MO_CLEARCHARGINGPROFILE_H
+#define MO_CLEARCHARGINGPROFILE_H
 
 #include <MicroOcpp/Core/Operation.h>
 
@@ -13,7 +13,7 @@ class SmartChargingService;
 
 namespace Ocpp16 {
 
-class ClearChargingProfile : public Operation {
+class ClearChargingProfile : public Operation, public MemoryManaged {
 private:
     SmartChargingService& scService;
     bool matchingProfilesFound = false;
@@ -24,7 +24,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
     
 };
 

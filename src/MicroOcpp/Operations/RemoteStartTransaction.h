@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef REMOTESTARTTRANSACTION_H
-#define REMOTESTARTTRANSACTION_H
+#ifndef MO_REMOTESTARTTRANSACTION_H
+#define MO_REMOTESTARTTRANSACTION_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Operations/CiStrings.h>
@@ -15,7 +15,7 @@ class ChargingProfile;
 
 namespace Ocpp16 {
 
-class RemoteStartTransaction : public Operation {
+class RemoteStartTransaction : public Operation, public MemoryManaged {
 private:
     Model& model;
 
@@ -28,13 +28,13 @@ public:
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
     const char *getErrorDescription() override {return errorDescription;}

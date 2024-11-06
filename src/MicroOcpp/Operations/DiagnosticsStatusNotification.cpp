@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/DiagnosticsStatusNotification.h>
@@ -8,8 +8,9 @@
 #include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
 
 using MicroOcpp::Ocpp16::DiagnosticsStatusNotification;
+using MicroOcpp::JsonDoc;
 
-DiagnosticsStatusNotification::DiagnosticsStatusNotification(DiagnosticsStatus status) : status(status) {
+DiagnosticsStatusNotification::DiagnosticsStatusNotification(DiagnosticsStatus status) : MemoryManaged("v16.Operation.", "DiagnosticsStatusNotification"), status(status) {
     
 }
 
@@ -31,8 +32,8 @@ const char *DiagnosticsStatusNotification::cstrFromStatus(DiagnosticsStatus stat
     return nullptr; //cannot be reached
 }
 
-std::unique_ptr<DynamicJsonDocument> DiagnosticsStatusNotification::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> DiagnosticsStatusNotification::createReq() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = cstrFromStatus(status);
     return doc;

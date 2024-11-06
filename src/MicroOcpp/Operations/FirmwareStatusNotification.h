@@ -1,18 +1,18 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/Operation.h>
 
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareStatus.h>
 
-#ifndef FIRMWARESTATUSNOTIFICATION_H
-#define FIRMWARESTATUSNOTIFICATION_H
+#ifndef MO_FIRMWARESTATUSNOTIFICATION_H
+#define MO_FIRMWARESTATUSNOTIFICATION_H
 
 namespace MicroOcpp {
 namespace Ocpp16 {
 
-class FirmwareStatusNotification : public Operation {
+class FirmwareStatusNotification : public Operation, public MemoryManaged {
 private:
     FirmwareStatus status = FirmwareStatus::Idle;
     static const char *cstrFromFwStatus(FirmwareStatus status);
@@ -21,7 +21,7 @@ public:
 
     const char* getOperationType() override {return "FirmwareStatusNotification"; }
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 

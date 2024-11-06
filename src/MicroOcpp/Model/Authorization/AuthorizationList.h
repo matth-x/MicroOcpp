@@ -1,12 +1,16 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef AUTHORIZATIONLIST_H
-#define AUTHORIZATIONLIST_H
+#ifndef MO_AUTHORIZATIONLIST_H
+#define MO_AUTHORIZATIONLIST_H
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
 
 #include <MicroOcpp/Model/Authorization/AuthorizationData.h>
-#include <vector>
+#include <MicroOcpp/Core/Memory.h>
 
 #ifndef MO_LocalAuthListMaxLength
 #define MO_LocalAuthListMaxLength 48
@@ -18,10 +22,10 @@
 
 namespace MicroOcpp {
 
-class AuthorizationList {
+class AuthorizationList : public MemoryManaged {
 private:
     int listVersion = 0;
-    std::vector<AuthorizationData> localAuthorizationList; //sorted list
+    Vector<AuthorizationData> localAuthorizationList; //sorted list
 public:
     AuthorizationList();
     ~AuthorizationList();
@@ -41,4 +45,5 @@ public:
 
 }
 
+#endif //MO_ENABLE_LOCAL_AUTH
 #endif

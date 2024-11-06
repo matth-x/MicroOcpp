@@ -1,13 +1,12 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef TRIGGERMESSAGE_H
-#define TRIGGERMESSAGE_H
+#ifndef MO_TRIGGERMESSAGE_H
+#define MO_TRIGGERMESSAGE_H
 
 #include <MicroOcpp/Core/Operation.h>
-
-#include <vector>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
@@ -15,7 +14,7 @@ class Context;
 
 namespace Ocpp16 {
 
-class TriggerMessage : public Operation {
+class TriggerMessage : public Operation, public MemoryManaged {
 private:
     Context& context;
     const char *statusMessage = nullptr;
@@ -28,7 +27,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

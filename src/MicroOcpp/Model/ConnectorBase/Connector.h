@@ -9,12 +9,22 @@
 #include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
 #include <MicroOcpp/Model/ConnectorBase/Notification.h>
 #include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
+#include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Operations/CiStrings.h>
 
-#include <vector>
 #include <functional>
 #include <memory>
+
+#ifndef MO_TXRECORD_SIZE
+#define MO_TXRECORD_SIZE 4 //no. of tx to hold on flash storage
+#endif
+
+#ifndef MO_REPORT_NOERROR
+#define MO_REPORT_NOERROR 0
+#endif
 
 namespace MicroOcpp {
 
@@ -23,12 +33,13 @@ class Model;
 class Operation;
 class Transaction;
 
-class Connector {
+class Connector : public RequestEmitter, public MemoryManaged {
 private:
     Context& context;
     Model& model;
+    std::shared_ptr<FilesystemAdapter> filesystem;
     
-    const int connectorId;
+    const unsigned int connectorId;
 
     std::shared_ptr<Transaction> transaction;
 
@@ -39,17 +50,20 @@ private:
     std::function<bool()> connectorPluggedInput;
     std::function<bool()> evReadyInput;
     std::function<bool()> evseReadyInput;
-    std::vector<std::function<ErrorData ()>> errorDataInputs;
-    std::vector<bool> trackErrorDataInputs;
+    Vector<std::function<ErrorData ()>> errorDataInputs;
+    Vector<bool> trackErrorDataInputs;
+    int reportedErrorIndex = -1; //last reported error
     bool isFaulted();
     const char *getErrorCode();
 
-    ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
+    ChargePointStatus currentStatus = ChargePointStatus_UNDEFINED;
     std::shared_ptr<Configuration> minimumStatusDurationInt; //in seconds
-    ChargePointStatus reportedStatus = ChargePointStatus::NOT_SET;
+    ChargePointStatus reportedStatus = ChargePointStatus_UNDEFINED;
     unsigned long t_statusTransition = 0;
 
+#if MO_ENABLE_CONNECTOR_LOCK
     std::function<UnlockConnectorResult()> onUnlockConnector;
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
     std::function<bool()> startTxReadyInput; //the StartTx request will be delayed while this Input is false
     std::function<bool()> stopTxReadyInput; //the StopTx request will be delayed while this Input is false
@@ -72,9 +86,18 @@ private:
 
     std::shared_ptr<Configuration> txStartOnPowerPathClosedBool; // this postpones the tx start point to when evReadyInput becomes true
 
+    std::shared_ptr<Configuration> transactionMessageAttemptsInt;
+    std::shared_ptr<Configuration> transactionMessageRetryIntervalInt;
+
     bool trackLoopExecute = false; //if loop has been executed once
+
+    unsigned int txNrBegin = 0; //oldest (historical) transaction on flash. Has no function, but is useful for error diagnosis
+    unsigned int txNrFront = 0; //oldest transaction which is still queued to be sent to the server
+    unsigned int txNrEnd = 0; //one position behind newest transaction
+
+    std::shared_ptr<Transaction> transactionFront;
 public:
-    Connector(Context& context, int connectorId);
+    Connector(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId);
     Connector(const Connector&) = delete;
     Connector(Connector&&) = delete;
     Connector& operator=(const Connector&) = delete;
@@ -118,8 +141,10 @@ public:
 
     bool ocppPermitsCharge();
 
+#if MO_ENABLE_CONNECTOR_LOCK
     void setOnUnlockConnector(std::function<UnlockConnectorResult()> unlockConnector);
     std::function<UnlockConnectorResult()> getOnUnlockConnector();
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
     void setStartTxReadyInput(std::function<bool()> startTxReady);
     void setStopTxReadyInput(std::function<bool()> stopTxReady);
@@ -127,6 +152,15 @@ public:
 
     void setTxNotificationOutput(std::function<void(Transaction*,TxNotification)> txNotificationOutput);
     void updateTxNotification(TxNotification event);
+
+    unsigned int getFrontRequestOpNr() override;
+    std::unique_ptr<Request> fetchFrontRequest() override;
+
+    bool triggerStatusNotification();
+
+    unsigned int getTxNrBeginHistory(); //if getTxNrBeginHistory() != getTxNrFront(), then return value is the txNr of the oldest tx history entry. If equal to getTxNrFront(), then the history is empty
+    unsigned int getTxNrFront(); //if getTxNrEnd() != getTxNrFront(), then return value is the txNr of the oldest transaction queued to be sent to the server. If equal to getTxNrEnd(), then there is no tx to be sent to the server
+    unsigned int getTxNrEnd(); //upper limit for the range of valid txNrs
 };
 
 } //end namespace MicroOcpp

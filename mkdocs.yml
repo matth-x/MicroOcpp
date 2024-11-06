@@ -1,4 +1,4 @@
-site_name: MicroOcpp docs
+site_name: MicroOCPP docs
 
 theme:
   name: material
@@ -48,3 +48,8 @@ theme:
 
 extra_css:
   - stylesheets/extra.css
+
+plugins:
+  - search
+  - table-reader:
+      data_path: "docs/assets/tables"

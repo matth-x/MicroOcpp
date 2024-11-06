@@ -1,16 +1,16 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CONFIGURATION_H
-#define CONFIGURATION_H
+#ifndef MO_CONFIGURATION_H
+#define MO_CONFIGURATION_H
 
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <MicroOcpp/Core/ConfigurationContainer.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/Memory.h>
 
 #include <memory>
-#include <vector>
 
 #define CONFIGURATION_FN (MO_FILENAME_PREFIX "ocpp-config.jsn")
 #define CONFIGURATION_VOLATILE "/volatile"
@@ -27,7 +27,7 @@ void registerConfigurationValidator(const char *key, std::function<bool(const ch
 void addConfigurationContainer(std::shared_ptr<ConfigurationContainer> container);
 
 Configuration *getConfigurationPublic(const char *key);
-std::vector<ConfigurationContainer*> getConfigurationContainersPublic();
+Vector<ConfigurationContainer*> getConfigurationContainersPublic();
 
 bool configuration_init(std::shared_ptr<FilesystemAdapter> filesytem);
 void configuration_deinit();
@@ -35,6 +35,8 @@ void configuration_deinit();
 bool configuration_load(const char *filename = nullptr);
 
 bool configuration_save();
+
+bool configuration_clean_unused(); //remove configs which haven't been accessed
 
 } //end namespace MicroOcpp
 #endif

@@ -1,6 +1,12 @@
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
+#include <string.h>
+
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -8,10 +14,11 @@
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/ConfigurationContainer.h>
 #include <MicroOcpp/Core/ConfigurationContainerFlash.h>
+#include <MicroOcpp/Core/Configuration_c.h>
 
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Debug.h>
 
 using namespace MicroOcpp;
@@ -20,6 +27,12 @@ using namespace MicroOcpp;
 #define KNOWN_KEY "__ExistingKey"
 #define UNKOWN_KEY "__UnknownKey"
 #define GET_CONFIG_KNOWN_UNKOWN "[2,\"test-mst\",\"GetConfiguration\",{\"key\":[\"" KNOWN_KEY "\",\"" UNKOWN_KEY "\"]}]"
+
+// some globals for the C-API tests
+bool g_checkProcessed [10];
+ocpp_configuration g_configs [2];
+int g_config_values [2];
+uint16_t g_config_write_count[2];
 
 TEST_CASE( "Configuration" ) {
     printf("\nRun %s\n",  "Configuration");
@@ -275,7 +288,7 @@ TEST_CASE( "Configuration" ) {
                 "GetConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     doc->to<JsonObject>();
                     return doc;},
                 [&checkProcessed] (JsonObject payload) {
@@ -312,7 +325,7 @@ TEST_CASE( "Configuration" ) {
                 "GetConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(2)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1) + JSON_ARRAY_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     auto key = payload.createNestedArray("key");
                     key.add(KNOWN_KEY);
@@ -366,7 +379,7 @@ TEST_CASE( "Configuration" ) {
                 "ChangeConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = KNOWN_KEY;
                     payload["value"] = "1234";
@@ -388,7 +401,7 @@ TEST_CASE( "Configuration" ) {
                 "ChangeConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = UNKOWN_KEY;
                     payload["value"] = "no effect";
@@ -409,7 +422,7 @@ TEST_CASE( "Configuration" ) {
                 "ChangeConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = KNOWN_KEY;
                     payload["value"] = "not convertible to int";
@@ -436,7 +449,7 @@ TEST_CASE( "Configuration" ) {
                 "ChangeConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = KNOWN_KEY;
                     payload["value"] = "100234";
@@ -458,7 +471,7 @@ TEST_CASE( "Configuration" ) {
                 "ChangeConfiguration",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(2)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(2));
                     auto payload = doc->to<JsonObject>();
                     payload["key"] = KNOWN_KEY;
                     payload["value"] = "4321";
@@ -504,6 +517,93 @@ TEST_CASE( "Configuration" ) {
         REQUIRE( getConfigurationPublic("ConnectionTimeOut")->getInt() == 1234 );
         mocpp_deinitialize();
 
+    }
+
+    SECTION("C-API") {
+        ocpp_configuration_container container;
+        memset(&container, 0, sizeof(container));
+
+        bool check_load = false;
+
+        container.load = [] (void *user_data) {
+            g_checkProcessed[0] = true;
+            return true;
+        };
+
+        container.save = [] (void *user_data) {
+            g_checkProcessed[1] = true;
+            return true;
+        };
+
+        ocpp_configuration *config_predefined = &g_configs[0];
+        config_predefined->get_key = [] (void *user_data) -> const char* {return "ConnectionTimeOut";}; // existing OCPP key to use custom config store
+        config_predefined->get_type = [] (void *user_data) -> ocpp_config_datatype {return ENUM_CDT_INT;};
+        config_predefined->set_int = [] (void *user_data, int val) -> void {g_config_values[0] = val;};
+        config_predefined->get_int = [] (void *user_data) -> int {return g_config_values[0];};
+        config_predefined->get_write_count = [] (void *user_data) -> uint16_t {return g_config_write_count[0];};
+
+        container.create_configuration = [] (void *user_data, ocpp_config_datatype dt, const char *key) -> ocpp_configuration* {
+            ocpp_configuration *config_created = &g_configs[1];
+            config_created->get_key = [] (void *user_data) -> const char* {return "MCreatedConfig";}; // non-existing key to test create_configuration function
+            config_created->get_type = [] (void *user_data) -> ocpp_config_datatype {return ENUM_CDT_INT;};
+            config_created->set_int = [] (void *user_data, int val) -> void {g_config_values[1] = val;};
+            config_created->get_int = [] (void *user_data) -> int {return g_config_values[1];};
+            config_created->get_write_count = [] (void *user_data) -> uint16_t {return g_config_write_count[1];};
+            return config_created;
+        };
+
+        container.remove = [] (void *user_data, const char *key) -> void {
+            g_checkProcessed[2] = true;
+        };
+
+        container.size = [] (void *user_data) {
+            return sizeof(g_configs) / sizeof(g_configs[0]);
+        };
+
+        container.get_configuration = [] (void *user_data, size_t i) -> ocpp_configuration* {
+            return &g_configs[i];
+        };
+
+        container.get_configuration_by_key = [] (void *user_data, const char *key) -> ocpp_configuration* {
+            if (!strcmp(key, "ConnectionTimeOut")) {
+                return &g_configs[0];
+            } else if (!strcmp(key, "MCreatedConfig")) {
+                return g_configs[1].get_key ? 
+                    &g_configs[1] : // createConfig has already been called
+                    nullptr; // config hasn't been created yet
+            }
+            return nullptr;
+        };
+
+        ocpp_configuration_container_add(&container, "MContainerPath", true);
+
+        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+        loop();
+
+        REQUIRE( g_checkProcessed[0] );
+
+        auto test_predefined = declareConfiguration<int>("ConnectionTimeOut", 0);
+
+        test_predefined->setInt(12345);
+        REQUIRE( test_predefined->getInt() == 12345 );
+        REQUIRE( config_predefined->get_int(config_predefined->user_data) == 12345 );
+
+        g_checkProcessed[1] = false; // check if store is executed
+        test_predefined->setInt(555);
+        g_config_write_count[0];
+
+        configuration_save();
+
+        REQUIRE( g_checkProcessed[1] );
+
+        // test if declaring new configs is handled
+        auto test_created = declareConfiguration<int>("MCreatedConfig", 123, "MContainerPath");
+        REQUIRE( test_created != nullptr );
+        REQUIRE( test_created->getInt() == 123 );
+        ocpp_configuration *config_created = &g_configs[1];
+        REQUIRE( config_created->get_int(config_created->user_data) == 123 );
+
+        mocpp_deinitialize();
     }
 
 }

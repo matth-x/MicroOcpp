@@ -13,45 +13,43 @@ namespace MicroOcpp {
 //helper function
 const char *cstrFromOcppEveState(ChargePointStatus state) {
     switch (state) {
-        case (ChargePointStatus::Available):
+        case (ChargePointStatus_Available):
             return "Available";
-        case (ChargePointStatus::Preparing):
+        case (ChargePointStatus_Preparing):
             return "Preparing";
-        case (ChargePointStatus::Charging):
+        case (ChargePointStatus_Charging):
             return "Charging";
-        case (ChargePointStatus::SuspendedEVSE):
+        case (ChargePointStatus_SuspendedEVSE):
             return "SuspendedEVSE";
-        case (ChargePointStatus::SuspendedEV):
+        case (ChargePointStatus_SuspendedEV):
             return "SuspendedEV";
-        case (ChargePointStatus::Finishing):
+        case (ChargePointStatus_Finishing):
             return "Finishing";
-        case (ChargePointStatus::Reserved):
+        case (ChargePointStatus_Reserved):
             return "Reserved";
-        case (ChargePointStatus::Unavailable):
+        case (ChargePointStatus_Unavailable):
             return "Unavailable";
-        case (ChargePointStatus::Faulted):
+        case (ChargePointStatus_Faulted):
             return "Faulted";
 #if MO_ENABLE_V201
-        case (ChargePointStatus::Occupied):
+        case (ChargePointStatus_Occupied):
             return "Occupied";
 #endif
         default:
             MO_DBG_ERR("ChargePointStatus not specified");
-            (void)0;
             /* fall through */
-        case (ChargePointStatus::NOT_SET):
-            return "NOT_SET";
+        case (ChargePointStatus_UNDEFINED):
+            return "UNDEFINED";
     }
 }
 
 namespace Ocpp16 {
 
 StatusNotification::StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorData errorData)
-        : connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
+        : MemoryManaged("v16.Operation.", "StatusNotification"), connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
     
-    if (currentStatus != ChargePointStatus::NOT_SET) {
+    if (currentStatus != ChargePointStatus_UNDEFINED) {
         MO_DBG_INFO("New status: %s (connectorId %d)", cstrFromOcppEveState(currentStatus), connectorId);
-        (void)0;
     }
 }
 
@@ -59,8 +57,8 @@ const char* StatusNotification::getOperationType(){
     return "StatusNotification";
 }
 
-std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(7) + (JSONDATE_LENGTH + 1)));
+std::unique_ptr<JsonDoc> StatusNotification::createReq() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(7) + (JSONDATE_LENGTH + 1));
     JsonObject payload = doc->to<JsonObject>();
 
     payload["connectorId"] = connectorId;
@@ -77,7 +75,7 @@ std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
         if (errorData.vendorErrorCode) {
             payload["vendorErrorCode"] = errorData.vendorErrorCode;
         }
-    } else if (currentStatus == ChargePointStatus::NOT_SET) {
+    } else if (currentStatus == ChargePointStatus_UNDEFINED) {
         MO_DBG_ERR("Reporting undefined status");
         payload["errorCode"] = "InternalError";
     } else {
@@ -109,7 +107,7 @@ void StatusNotification::processReq(JsonObject payload) {
 /*
  * For debugging only
  */
-std::unique_ptr<DynamicJsonDocument> StatusNotification::createConf(){
+std::unique_ptr<JsonDoc> StatusNotification::createConf(){
     return createEmptyDocument();
 }
 
@@ -122,7 +120,7 @@ namespace MicroOcpp {
 namespace Ocpp201 {
 
 StatusNotification::StatusNotification(EvseId evseId, ChargePointStatus currentStatus, const Timestamp &timestamp)
-        : evseId(evseId), timestamp(timestamp), currentStatus(currentStatus) {
+        : MemoryManaged("v201.Operation.", "StatusNotification"), evseId(evseId), timestamp(timestamp), currentStatus(currentStatus) {
 
 }
 
@@ -130,8 +128,8 @@ const char* StatusNotification::getOperationType(){
     return "StatusNotification";
 }
 
-std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1)));
+std::unique_ptr<JsonDoc> StatusNotification::createReq() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(4) + (JSONDATE_LENGTH + 1));
     JsonObject payload = doc->to<JsonObject>();
 
     char timestamp_cstr[JSONDATE_LENGTH + 1] = {'\0'};
@@ -139,7 +137,7 @@ std::unique_ptr<DynamicJsonDocument> StatusNotification::createReq() {
     payload["timestamp"] = timestamp_cstr;
     payload["connectorStatus"] = cstrFromOcppEveState(currentStatus);
     payload["evseId"] = evseId.id;
-    payload["connectorId"] = evseId.connectorId >= 0 ? evseId.connectorId : 1;
+    payload["connectorId"] = evseId.id == 0 ? 0 : evseId.connectorId >= 0 ? evseId.connectorId : 1;
 
     return doc;
 }

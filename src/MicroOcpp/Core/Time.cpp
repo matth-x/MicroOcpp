@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/Time.h>
@@ -11,13 +11,21 @@ namespace MicroOcpp {
 const Timestamp MIN_TIME = Timestamp(2010, 0, 0, 0, 0, 0);
 const Timestamp MAX_TIME = Timestamp(2037, 0, 0, 0, 0, 0);
 
-Timestamp::Timestamp() {
+Timestamp::Timestamp() : MemoryManaged("Timestamp") {
     
 }
 
-Timestamp::Timestamp(const Timestamp& other) {
+Timestamp::Timestamp(const Timestamp& other) : MemoryManaged("Timestamp") {
     *this = other;
 }
+
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
+    Timestamp::Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second, int32_t ms) :
+                MemoryManaged("Timestamp"), year(year), month(month), day(day), hour(hour), minute(minute), second(second), ms(ms) { }
+#else 
+    Timestamp::Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second) :
+                MemoryManaged("Timestamp"), year(year), month(month), day(day), hour(hour), minute(minute), second(second) { }
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
 int noDays(int month, int year) {
     return (month == 0 || month == 2 || month == 4 || month == 6 || month == 7 || month == 9 || month == 11) ? 31 :
@@ -102,7 +110,9 @@ bool Timestamp::setTime(const char *jsonDateString) {
     this->hour = hour;
     this->minute = minute;
     this->second = second;
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
     this->ms = ms;
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
     
     return true;
 }
@@ -129,12 +139,17 @@ bool Timestamp::toJsonString(char *jsonDateString, size_t buffsize) const {
     jsonDateString[16] = ':';
     jsonDateString[17] = ((char) ((second / 10) % 10))  + '0';
     jsonDateString[18] = ((char) ((second / 1) % 10))  + '0';
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
     jsonDateString[19] = '.';
     jsonDateString[20] = ((char) ((ms / 100) % 10))  + '0';
     jsonDateString[21] = ((char) ((ms / 10) % 10))  + '0';
     jsonDateString[22] = ((char) ((ms / 1) % 10))  + '0';
     jsonDateString[23] = 'Z';
     jsonDateString[24] = '\0';
+#else
+    jsonDateString[19] = 'Z';
+    jsonDateString[20] = '\0';
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
     return true;
 }
@@ -190,8 +205,9 @@ Timestamp &Timestamp::operator+=(int secs) {
     }
 
     return *this;
-};
+}
 
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
 Timestamp &Timestamp::addMilliseconds(int val) {
 
     ms += val;
@@ -206,6 +222,7 @@ Timestamp &Timestamp::addMilliseconds(int val) {
     }
     return this->operator+=(dsecond);
 }
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
 Timestamp &Timestamp::operator-=(int secs) {
     return operator+=(-secs);
@@ -239,9 +256,11 @@ int Timestamp::operator-(const Timestamp &rhs) const {
 
     int dt = (lhsDays - rhsDays) * (24 * 3600) + (hour - rhs.hour) * 3600 + (minute - rhs.minute) * 60 + second - rhs.second;
 
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
     // Make it so that we round the difference to the nearest second, instead of being up to almost a whole second off
     if ((ms - rhs.ms) > 500) dt++;
     if ((ms - rhs.ms) < -500) dt--;
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
     return dt;
 }
@@ -253,7 +272,9 @@ Timestamp &Timestamp::operator=(const Timestamp &rhs) {
     hour = rhs.hour;
     minute = rhs.minute;
     second = rhs.second;
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
     ms = rhs.ms;
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
     return *this;
 }
@@ -269,7 +290,11 @@ Timestamp operator-(const Timestamp &lhs, int secs) {
 }
 
 bool operator==(const Timestamp &lhs, const Timestamp &rhs) {
-    return lhs.year == rhs.year && lhs.month == rhs.month && lhs.day == rhs.day && lhs.hour == rhs.hour && lhs.minute == rhs.minute && lhs.second == rhs.second && lhs.ms == rhs.ms;
+    return lhs.year == rhs.year && lhs.month == rhs.month && lhs.day == rhs.day && lhs.hour == rhs.hour && lhs.minute == rhs.minute && lhs.second == rhs.second
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
+    && lhs.ms == rhs.ms
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
+    ;
 }
 
 bool operator!=(const Timestamp &lhs, const Timestamp &rhs) {
@@ -289,8 +314,10 @@ bool operator<(const Timestamp &lhs, const Timestamp &rhs) {
         return lhs.minute < rhs.minute;
     if (lhs.second != rhs.second)
         return lhs.second < rhs.second;
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
     if (lhs.ms != rhs.ms)
         return lhs.ms < rhs.ms;
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
     return false;  
 }
 
@@ -332,8 +359,14 @@ const Timestamp &Clock::now() {
     auto tReading = mocpp_tick_ms();
     auto delta = tReading - lastUpdate;
 
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
     currentTime.addMilliseconds(delta);
     lastUpdate = tReading;
+#else
+    auto deltaSecs = delta / 1000;
+    currentTime += deltaSecs;
+    lastUpdate += deltaSecs * 1000;
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
     return currentTime;
 }

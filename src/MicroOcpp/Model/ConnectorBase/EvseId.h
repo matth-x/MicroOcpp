@@ -9,14 +9,14 @@
 
 #if MO_ENABLE_V201
 
-// number of EVSEs. Defaults to MO_NUMCONNECTORS if defined, otherwise to 2
-#ifndef MO_NUM_EVSE
+// number of EVSE IDs (including 0). Defaults to MO_NUMCONNECTORS if defined, otherwise to 2
+#ifndef MO_NUM_EVSEID
 #if defined(MO_NUMCONNECTORS)
-#define MO_NUM_EVSE MO_NUMCONNECTORS
+#define MO_NUM_EVSEID MO_NUMCONNECTORS
 #else
-#define MO_NUM_EVSE 2
+#define MO_NUM_EVSEID 2
 #endif
-#endif // MO_NUM_EVSE
+#endif // MO_NUM_EVSEID
 
 namespace MicroOcpp {
 

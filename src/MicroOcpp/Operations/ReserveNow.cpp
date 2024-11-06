@@ -2,6 +2,10 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_RESERVATION
+
 #include <MicroOcpp/Operations/ReserveNow.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
@@ -10,8 +14,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::ReserveNow;
+using MicroOcpp::JsonDoc;
 
-ReserveNow::ReserveNow(Model& model) : model(model) {
+ReserveNow::ReserveNow(Model& model) : MemoryManaged("v16.Operation.", "ReserveNow"), model(model) {
   
 }
 
@@ -83,19 +88,19 @@ void ReserveNow::processReq(JsonObject payload) {
             connector = model.getConnector((unsigned int) connectorId);
         }
 
-        if (chargePoint->getStatus() == ChargePointStatus::Faulted ||
-                (connector && connector->getStatus() == ChargePointStatus::Faulted)) {
+        if (chargePoint->getStatus() == ChargePointStatus_Faulted ||
+                (connector && connector->getStatus() == ChargePointStatus_Faulted)) {
             reservationStatus = "Faulted";
             return;
         }
 
-        if (chargePoint->getStatus() == ChargePointStatus::Unavailable ||
-                (connector && connector->getStatus() == ChargePointStatus::Unavailable)) {
+        if (chargePoint->getStatus() == ChargePointStatus_Unavailable ||
+                (connector && connector->getStatus() == ChargePointStatus_Unavailable)) {
             reservationStatus = "Unavailable";
             return;
         }
 
-        if (connector && connector->getStatus() != ChargePointStatus::Available) {
+        if (connector && connector->getStatus() != ChargePointStatus_Available) {
             reservationStatus = "Occupied";
             return;
         }
@@ -110,8 +115,8 @@ void ReserveNow::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> ReserveNow::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> ReserveNow::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
     if (reservationStatus) {
@@ -123,3 +128,5 @@ std::unique_ptr<DynamicJsonDocument> ReserveNow::createConf(){
     
     return doc;
 }
+
+#endif //MO_ENABLE_RESERVATION

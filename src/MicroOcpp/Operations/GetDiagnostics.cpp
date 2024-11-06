@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/GetDiagnostics.h>
@@ -8,8 +8,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::GetDiagnostics;
+using MicroOcpp::JsonDoc;
 
-GetDiagnostics::GetDiagnostics(DiagnosticsService& diagService) : diagService(diagService) {
+GetDiagnostics::GetDiagnostics(DiagnosticsService& diagService) : MemoryManaged("v16.Operation.", "GetDiagnostics"), diagService(diagService), fileName(makeString(getMemoryTag())) {
 
 }
 
@@ -39,7 +40,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
     }
 
     Timestamp stopTime;
-    if (payload.containsKey("startTime")) {
+    if (payload.containsKey("stopTime")) {
         if (!stopTime.setTime(payload["stopTime"] | "Invalid")) {
             errorCode = "PropertyConstraintViolation";
             MO_DBG_WARN("bad time format");
@@ -50,13 +51,13 @@ void GetDiagnostics::processReq(JsonObject payload) {
     fileName = diagService.requestDiagnosticsUpload(location, (unsigned int) retries, (unsigned int) retryInterval, startTime, stopTime);
 }
 
-std::unique_ptr<DynamicJsonDocument> GetDiagnostics::createConf(){
+std::unique_ptr<JsonDoc> GetDiagnostics::createConf(){
     if (fileName.empty()) {
         return createEmptyDocument();
     } else {
-        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + fileName.length() + 1));
+        auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
         JsonObject payload = doc->to<JsonObject>();
-        payload["fileName"] = fileName;
+        payload["fileName"] = fileName.c_str();
         return doc;
     }
 }

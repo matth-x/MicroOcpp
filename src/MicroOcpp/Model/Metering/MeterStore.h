@@ -1,37 +1,35 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef METERSTORE_H
-#define METERSTORE_H
+#ifndef MO_METERSTORE_H
+#define MO_METERSTORE_H
 
 #include <MicroOcpp/Model/Metering/MeterValue.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
-
-#include <vector>
-#include <deque>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
-class TransactionMeterData {
+class TransactionMeterData : public MemoryManaged {
 private:
     const unsigned int connectorId; //assignment to Transaction object
     const unsigned int txNr; //assignment to Transaction object
 
-    unsigned int mvCount = 0; //nr of saved meter values
+    unsigned int mvCount = 0; //nr of saved meter values, including gaps
     bool finalized = false; //if true, this is read-only
 
     std::shared_ptr<FilesystemAdapter> filesystem;
 
-    std::vector<std::unique_ptr<MeterValue>> txData;
+    Vector<std::unique_ptr<MeterValue>> txData;
 
 public:
     TransactionMeterData(unsigned int connectorId, unsigned int txNr, std::shared_ptr<FilesystemAdapter> filesystem);
 
     bool addTxData(std::unique_ptr<MeterValue> mv);
 
-    std::vector<std::unique_ptr<MeterValue>> retrieveStopTxData(); //will invalidate internal cache
+    Vector<std::unique_ptr<MeterValue>> retrieveStopTxData(); //will invalidate internal cache
 
     bool restore(MeterValueBuilder& mvBuilder); //load record from memory; true if record found, false if nothing loaded
 
@@ -42,11 +40,11 @@ public:
     bool isFinalized() {return finalized;}
 };
 
-class MeterStore {
+class MeterStore : public MemoryManaged {
 private:
     std::shared_ptr<FilesystemAdapter> filesystem;
     
-    std::vector<std::weak_ptr<TransactionMeterData>> txMeterData;
+    Vector<std::weak_ptr<TransactionMeterData>> txMeterData;
 
 public:
     MeterStore() = delete;

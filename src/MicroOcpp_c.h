@@ -2,12 +2,13 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef ARDUINOOCPP_C_H
-#define ARDUINOOCPP_C_H
+#ifndef MO_MICROOCPP_C_H
+#define MO_MICROOCPP_C_H
 
 #include <stddef.h>
 
 #include <MicroOcpp/Core/ConfigurationOptions.h>
+#include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
 #include <MicroOcpp/Model/ConnectorBase/Notification.h>
 #include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
@@ -40,8 +41,11 @@ typedef void (*OutputFloat)(float limit);
 typedef void (*OutputFloat_m)(unsigned int connectorId, float limit);
 typedef void (*OutputSmartCharging)(float power, float current, int nphases);
 typedef void (*OutputSmartCharging_m)(unsigned int connectorId, float power, float current, int nphases);
+
+#if MO_ENABLE_CONNECTOR_LOCK
 typedef UnlockConnectorResult (*PollUnlockResult)();
 typedef UnlockConnectorResult (*PollUnlockResult_m)(unsigned int connectorId);
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
 
 #ifdef __cplusplus
@@ -64,9 +68,7 @@ void ocpp_initialize_full(
             OCPP_Connection *conn,  //WebSocket adapter for MicroOcpp
             const char *bootNotificationCredentials, //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
             struct OCPP_FilesystemOpt fsopt, //If this library should format the flash if necessary. Find further options in ConfigurationOptions.h
-            bool autoRecover, //automatically sanitize the local data store when the lib detects recurring crashes. During development, `false` is recommended
-            ocpp_certificate_store *certs); //optional. If provided, use given Cert Store, if NULL, use default (default depends on MbedTLS)
-
+            bool autoRecover); //automatically sanitize the local data store when the lib detects recurring crashes. During development, `false` is recommended
 
 void ocpp_deinitialize();
 
@@ -102,6 +104,9 @@ OCPP_Transaction *ocpp_getTransaction_m(unsigned int connectorId);
 
 bool ocpp_ocppPermitsCharge();
 bool ocpp_ocppPermitsCharge_m(unsigned int connectorId);
+
+ChargePointStatus ocpp_getChargePointStatus();
+ChargePointStatus ocpp_getChargePointStatus_m(unsigned int connectorId);
 
 /*
  * Define the Inputs and Outputs of this library.
@@ -154,8 +159,10 @@ void ocpp_setStopTxReadyInput_m(unsigned int connectorId, InputBool_m stopTxRead
 void ocpp_setTxNotificationOutput(void (*notificationOutput)(OCPP_Transaction*, enum OCPP_TxNotification));
 void ocpp_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, OCPP_Transaction*, enum OCPP_TxNotification));
 
+#if MO_ENABLE_CONNECTOR_LOCK
 void ocpp_setOnUnlockConnectorInOut(PollUnlockResult onUnlockConnectorInOut);
 void ocpp_setOnUnlockConnectorInOut_m(unsigned int connectorId, PollUnlockResult_m onUnlockConnectorInOut);
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
 /*
  * Access further information about the internal state of the library
@@ -167,6 +174,10 @@ bool ocpp_isOperative_m(unsigned int connectorId);
 void ocpp_setOnResetNotify(bool (*onResetNotify)(bool));
 
 void ocpp_setOnResetExecute(void (*onResetExecute)(bool));
+
+#if MO_ENABLE_CERT_MGMT
+void ocpp_setCertificateStore(ocpp_cert_store *certs);
+#endif //MO_ENABLE_CERT_MGMT
 
 void ocpp_setOnReceiveRequest(const char *operationType, OnMessage onRequest);
 

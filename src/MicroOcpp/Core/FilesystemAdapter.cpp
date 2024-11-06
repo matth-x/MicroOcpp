@@ -1,9 +1,10 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/ConfigurationOptions.h> //FilesystemOpt
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Debug.h>
 
 #include <cstring>
@@ -21,15 +22,13 @@
 
 #if MO_ENABLE_FILE_INDEX
 
-#include <vector>
 #include <algorithm>
-#include <string>
 
 namespace MicroOcpp {
 
 class FilesystemAdapterIndex;
 
-class IndexedFileAdapter : public FileAdapter {
+class IndexedFileAdapter : public FileAdapter, public MemoryManaged {
 private:
     FilesystemAdapterIndex& index;
     char fn [MO_MAX_PATH_SIZE];
@@ -38,7 +37,7 @@ private:
     size_t written = 0;
 public:
     IndexedFileAdapter(FilesystemAdapterIndex& index, const char *fn, std::unique_ptr<FileAdapter> file)
-            : index(index), file(std::move(file)) {
+            : MemoryManaged("FilesystemIndex"), index(index), file(std::move(file)) {
         snprintf(this->fn, sizeof(this->fn), "%s", fn);
     }
 
@@ -65,18 +64,18 @@ public:
     }
 };
 
-class FilesystemAdapterIndex : public FilesystemAdapter {
+class FilesystemAdapterIndex : public FilesystemAdapter, public MemoryManaged {
 private:
     std::shared_ptr<FilesystemAdapter> filesystem;
 
     struct IndexEntry {
-        std::string fname;
+        String fname;
         size_t size;
 
-        IndexEntry(const char *fname, size_t size) : fname(fname), size(size) { }
+        IndexEntry(const char *fname, size_t size) : fname(makeString("FilesystemIndex", fname)), size(size) { }
     };
 
-    std::vector<IndexEntry> index;
+    Vector<IndexEntry> index;
 
     IndexEntry *getEntryByFname(const char *fn) {
         auto entry = std::find_if(index.begin(), index.end(),
@@ -100,10 +99,16 @@ private:
         const char *fn = path + sizeof(MO_FILENAME_PREFIX) - 1;
         return getEntryByFname(fn);
     }
+    
+    void (*onDestruct)(void*) = nullptr;
 public:
-    FilesystemAdapterIndex(std::shared_ptr<FilesystemAdapter> filesystem) : filesystem(std::move(filesystem)) { }
+    FilesystemAdapterIndex(std::shared_ptr<FilesystemAdapter> filesystem, void (*onDestruct)(void*) = nullptr) : MemoryManaged("FilesystemIndex"), filesystem(std::move(filesystem)), index(makeVector<IndexEntry>("FilesystemIndex")), onDestruct(onDestruct) { }
 
-    ~FilesystemAdapterIndex() = default;
+    ~FilesystemAdapterIndex() {
+        if (onDestruct) {
+            onDestruct(this);
+        }
+    }
 
     int stat(const char *path, size_t *size) override {
         if (auto file = getEntryByPath(path)) {
@@ -227,9 +232,9 @@ IndexedFileAdapter::~IndexedFileAdapter() {
     index.updateFilesize(fn, written);
 }
 
-std::shared_ptr<FilesystemAdapter> decorateIndex(std::shared_ptr<FilesystemAdapter> filesystem) {
+std::shared_ptr<FilesystemAdapter> decorateIndex(std::shared_ptr<FilesystemAdapter> filesystem, void (*onDestruct)(void*) = nullptr) {
 
-    auto fsIndex = std::make_shared<FilesystemAdapterIndex>(std::move(filesystem));
+    auto fsIndex = std::allocate_shared<FilesystemAdapterIndex>(makeAllocator<FilesystemAdapterIndex>("FilesystemIndex"), std::move(filesystem), onDestruct);
     if (!fsIndex) {
         MO_DBG_ERR("OOM");
         return nullptr;
@@ -260,10 +265,10 @@ std::shared_ptr<FilesystemAdapter> decorateIndex(std::shared_ptr<FilesystemAdapt
 
 namespace MicroOcpp {
 
-class ArduinoFileAdapter : public FileAdapter {
+class ArduinoFileAdapter : public FileAdapter, public MemoryManaged {
     File file;
 public:
-    ArduinoFileAdapter(File&& file) : file(file) {}
+    ArduinoFileAdapter(File&& file) : MemoryManaged("Filesystem"), file(file) {}
 
     ~ArduinoFileAdapter() {
         if (file) {
@@ -285,12 +290,14 @@ public:
     }
 };
 
-class ArduinoFilesystemAdapter : public FilesystemAdapter {
+class ArduinoFilesystemAdapter : public FilesystemAdapter, public MemoryManaged {
 private:
     bool valid = false;
     FilesystemOpt config;
+
+    void (* onDestruct)(void*) = nullptr;
 public:
-    ArduinoFilesystemAdapter(FilesystemOpt config) : config(config) {
+    ArduinoFilesystemAdapter(FilesystemOpt config, void (*onDestruct)(void*) = nullptr) : MemoryManaged("Filesystem"), config(config), onDestruct(onDestruct) {
         valid = true;
 
         if (config.mustMount()) { 
@@ -321,6 +328,10 @@ public:
     ~ArduinoFilesystemAdapter() {
         if (config.mustMount()) {
             USE_FS.end();
+        }
+
+        if (onDestruct) {
+            onDestruct(this);
         }
     }
 
@@ -427,6 +438,10 @@ public:
 
 std::weak_ptr<FilesystemAdapter> filesystemCache;
 
+void resetFilesystemCache(void*) {
+    filesystemCache.reset();
+}
+
 std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config) {
 
     if (auto cached = filesystemCache.lock()) {
@@ -438,11 +453,11 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
         return nullptr;
     }
 
-    auto fs_concrete = new ArduinoFilesystemAdapter(config);
-    auto fs = std::shared_ptr<FilesystemAdapter>(fs_concrete);
+    auto fs_concrete = new ArduinoFilesystemAdapter(config, resetFilesystemCache);
+    auto fs = std::shared_ptr<FilesystemAdapter>(fs_concrete, std::default_delete<FilesystemAdapter>(), makeAllocator<FilesystemAdapter>("Filesystem"));
 
 #if MO_ENABLE_FILE_INDEX
-    fs = decorateIndex(fs);
+    fs = decorateIndex(fs, resetFilesystemCache);
 #endif // MO_ENABLE_FILE_INDEX
 
     filesystemCache = fs;
@@ -468,10 +483,10 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 namespace MicroOcpp {
 
-class EspIdfFileAdapter : public FileAdapter {
+class EspIdfFileAdapter : public FileAdapter, public MemoryManaged {
     FILE *file {nullptr};
 public:
-    EspIdfFileAdapter(FILE *file) : file(file) {}
+    EspIdfFileAdapter(FILE *file) : MemoryManaged("Filesystem"), file(file) {}
 
     ~EspIdfFileAdapter() {
         fclose(file);
@@ -494,16 +509,22 @@ public:
     }
 };
 
-class EspIdfFilesystemAdapter : public FilesystemAdapter {
+class EspIdfFilesystemAdapter : public FilesystemAdapter, public MemoryManaged {
 public:
     FilesystemOpt config;
+
+    void (* onDestruct)(void*) = nullptr;
 public:
-    EspIdfFilesystemAdapter(FilesystemOpt config) : config(config) { }
+    EspIdfFilesystemAdapter(FilesystemOpt config, void (* onDestruct)(void*) = nullptr) : MemoryManaged("Filesystem"), config(config), onDestruct(onDestruct) { }
 
     ~EspIdfFilesystemAdapter() {
         if (config.mustMount()) {
             esp_vfs_spiffs_unregister(MO_PARTITION_LABEL);
             MO_DBG_DEBUG("SPIFFS unmounted");
+        }
+
+        if (onDestruct) {
+            onDestruct(this);
         }
     }
 
@@ -565,6 +586,10 @@ public:
 
 std::weak_ptr<FilesystemAdapter> filesystemCache;
 
+void resetFilesystemCache(void*) {
+    filesystemCache.reset();
+}
+
 std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config) {
 
     if (auto cached = filesystemCache.lock()) {
@@ -620,10 +645,10 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
     }
 
     if (mounted) {
-        auto fs = std::shared_ptr<FilesystemAdapter>(new EspIdfFilesystemAdapter(config));
+        auto fs = std::shared_ptr<FilesystemAdapter>(new EspIdfFilesystemAdapter(config, resetFilesystemCache), std::default_delete<FilesystemAdapter>(), makeAllocator<FilesystemAdapter>("Filesystem"));
 
 #if MO_ENABLE_FILE_INDEX
-        fs = decorateIndex(fs);
+        fs = decorateIndex(fs, resetFilesystemCache);
 #endif // MO_ENABLE_FILE_INDEX
 
         filesystemCache = fs;
@@ -643,10 +668,10 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
 
 namespace MicroOcpp {
 
-class PosixFileAdapter : public FileAdapter {
+class PosixFileAdapter : public FileAdapter, public MemoryManaged {
     FILE *file {nullptr};
 public:
-    PosixFileAdapter(FILE *file) : file(file) {}
+    PosixFileAdapter(FILE *file) : MemoryManaged("Filesystem"), file(file) {}
 
     ~PosixFileAdapter() {
         fclose(file);
@@ -669,13 +694,19 @@ public:
     }
 };
 
-class PosixFilesystemAdapter : public FilesystemAdapter {
+class PosixFilesystemAdapter : public FilesystemAdapter, public MemoryManaged {
 public:
     FilesystemOpt config;
-public:
-    PosixFilesystemAdapter(FilesystemOpt config) : config(config) { }
 
-    ~PosixFilesystemAdapter() = default;
+    void (* onDestruct)(void*) = nullptr;
+public:
+    PosixFilesystemAdapter(FilesystemOpt config, void (* onDestruct)(void*) = nullptr) : MemoryManaged("Filesystem"), config(config), onDestruct(onDestruct) { }
+
+    ~PosixFilesystemAdapter() {
+        if (onDestruct) {
+            onDestruct(this);
+        }
+    }
 
     int stat(const char *path, size_t *size) override {
         struct ::stat st;
@@ -709,6 +740,9 @@ public:
 
         int err = 0;
         while (auto entry = readdir(dir)) {
+            if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) {
+                continue; //files . and .. are specific to desktop systems and rarely appear on microcontroller filesystems. Filter them
+            }
             err = fn(entry->d_name);
             if (err) {
                 break;
@@ -721,6 +755,10 @@ public:
 };
 
 std::weak_ptr<FilesystemAdapter> filesystemCache;
+
+void resetFilesystemCache(void*) {
+    filesystemCache.reset();
+}
 
 std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt config) {
 
@@ -737,10 +775,10 @@ std::shared_ptr<FilesystemAdapter> makeDefaultFilesystemAdapter(FilesystemOpt co
         MO_DBG_DEBUG("Skip mounting on UNIX host");
     }
 
-    auto fs = std::shared_ptr<FilesystemAdapter>(new PosixFilesystemAdapter(config));
+    auto fs = std::shared_ptr<FilesystemAdapter>(new PosixFilesystemAdapter(config, resetFilesystemCache), std::default_delete<FilesystemAdapter>(), makeAllocator<FilesystemAdapter>("Filesystem"));
 
 #if MO_ENABLE_FILE_INDEX
-    fs = decorateIndex(fs);
+    fs = decorateIndex(fs, resetFilesystemCache);
 #endif // MO_ENABLE_FILE_INDEX
 
     filesystemCache = fs;

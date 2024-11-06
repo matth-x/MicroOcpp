@@ -5,6 +5,10 @@
 #ifndef MO_INSTALLCERTIFICATE_H
 #define MO_INSTALLCERTIFICATE_H
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_CERT_MGMT
+
 #include <MicroOcpp/Core/Operation.h>
 
 namespace MicroOcpp {
@@ -13,7 +17,7 @@ class CertificateService;
 
 namespace Ocpp201 {
 
-class InstallCertificate : public Operation {
+class InstallCertificate : public Operation, public MemoryManaged {
 private:
     CertificateService& certService;
     const char *status = nullptr;
@@ -25,7 +29,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };
@@ -33,4 +37,5 @@ public:
 } //end namespace Ocpp201
 } //end namespace MicroOcpp
 
+#endif //MO_ENABLE_CERT_MGMT
 #endif

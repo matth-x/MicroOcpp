@@ -17,10 +17,10 @@ const char *cstrFromOcppEveState(ChargePointStatus state);
 
 namespace Ocpp16 {
 
-class StatusNotification : public Operation {
+class StatusNotification : public Operation, public MemoryManaged {
 private:
     int connectorId = 1;
-    ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
+    ChargePointStatus currentStatus = ChargePointStatus_UNDEFINED;
     Timestamp timestamp;
     ErrorData errorData;
 public:
@@ -28,13 +28,13 @@ public:
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     int getConnectorId() {
         return connectorId;
@@ -51,17 +51,17 @@ public:
 namespace MicroOcpp {
 namespace Ocpp201 {
 
-class StatusNotification : public Operation {
+class StatusNotification : public Operation, public MemoryManaged {
 private:
     EvseId evseId;
     Timestamp timestamp;
-    ChargePointStatus currentStatus = ChargePointStatus::NOT_SET;
+    ChargePointStatus currentStatus = ChargePointStatus_UNDEFINED;
 public:
     StatusNotification(EvseId evseId, ChargePointStatus currentStatus, const Timestamp &timestamp);
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 };

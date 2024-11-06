@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -9,7 +9,7 @@
 
 using namespace MicroOcpp;
 
-std::unique_ptr<DynamicJsonDocument> FilesystemUtils::loadJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn) {
+std::unique_ptr<JsonDoc> FilesystemUtils::loadJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn, const char *memoryTag) {
     if (!filesystem || !fn || *fn == '\0') {
         MO_DBG_ERR("Format error");
         return nullptr;
@@ -50,13 +50,13 @@ std::unique_ptr<DynamicJsonDocument> FilesystemUtils::loadJson(std::shared_ptr<F
         capacity = MO_MAX_JSON_CAPACITY;
     }
     
-    auto doc = std::unique_ptr<DynamicJsonDocument>(nullptr);
+    std::unique_ptr<JsonDoc> doc;
     DeserializationError err = DeserializationError::NoMemory;
     ArduinoJsonFileAdapter fileReader {file.get()};
 
     while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
 
-        doc.reset(new DynamicJsonDocument(capacity));
+        doc = makeJsonDoc(memoryTag, capacity);
         err = deserializeJson(*doc, fileReader);
 
         capacity *= 2;
@@ -75,7 +75,7 @@ std::unique_ptr<DynamicJsonDocument> FilesystemUtils::loadJson(std::shared_ptr<F
     return doc;
 }
 
-bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn, const DynamicJsonDocument& doc) {
+bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, const char *fn, const JsonDoc& doc) {
     if (!filesystem || !fn || *fn == '\0') {
         MO_DBG_ERR("Format error");
         return false;
@@ -117,7 +117,7 @@ bool FilesystemUtils::storeJson(std::shared_ptr<FilesystemAdapter> filesystem, c
 
 bool FilesystemUtils::remove_if(std::shared_ptr<FilesystemAdapter> filesystem, std::function<bool(const char*)> pred) {
     auto ret = filesystem->ftw_root([filesystem, pred] (const char *fpath) {
-        if (pred(fpath) && fpath[0] != '.') {
+        if (pred(fpath)) {
 
             char fn [MO_MAX_PATH_SIZE] = {'\0'};
             auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "%s", fpath);
@@ -134,7 +134,6 @@ bool FilesystemUtils::remove_if(std::shared_ptr<FilesystemAdapter> filesystem, s
 
     if (ret != 0) {
         MO_DBG_ERR("ftw_root: %i", ret);
-        (void)0;
     }
 
     return ret == 0;

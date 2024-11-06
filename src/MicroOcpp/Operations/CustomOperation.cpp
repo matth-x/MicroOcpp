@@ -1,20 +1,18 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/CustomOperation.h>
 
 using MicroOcpp::Ocpp16::CustomOperation;
+using MicroOcpp::JsonDoc;
 
 CustomOperation::CustomOperation(const char *operationType,
-            std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createReq,
+            std::function<std::unique_ptr<JsonDoc> ()> fn_createReq,
             std::function<void (JsonObject)> fn_processConf,
-            std::function<bool (const char*, const char*, JsonObject)> fn_processErr,
-            std::function<void (StoredOperationHandler*)> fn_initiate,
-            std::function<bool (StoredOperationHandler*)> fn_restore) :
-        operationType{operationType},
-        fn_initiate{fn_initiate},
-        fn_restore{fn_restore},
+            std::function<bool (const char*, const char*, JsonObject)> fn_processErr) :
+        MemoryManaged("Operation.Custom.", operationType),
+        operationType{makeString(getMemoryTag(), operationType)},
         fn_createReq{fn_createReq},
         fn_processConf{fn_processConf},
         fn_processErr{fn_processErr} {
@@ -23,11 +21,12 @@ CustomOperation::CustomOperation(const char *operationType,
 
 CustomOperation::CustomOperation(const char *operationType,
             std::function<void (JsonObject)> fn_processReq,
-            std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_createConf,
+            std::function<std::unique_ptr<JsonDoc> ()> fn_createConf,
             std::function<const char* ()> fn_getErrorCode,
             std::function<const char* ()> fn_getErrorDescription,
-            std::function<std::unique_ptr<DynamicJsonDocument> ()> fn_getErrorDetails) :
-        operationType{operationType},
+            std::function<std::unique_ptr<JsonDoc> ()> fn_getErrorDetails) :
+        MemoryManaged("Operation.Custom.", operationType),
+        operationType{makeString(getMemoryTag(), operationType)},
         fn_processReq{fn_processReq},
         fn_createConf{fn_createConf},
         fn_getErrorCode{fn_getErrorCode},
@@ -44,21 +43,7 @@ const char* CustomOperation::getOperationType() {
     return operationType.c_str();
 }
 
-void CustomOperation::initiate(StoredOperationHandler *opStore) {
-    if (fn_initiate) {
-        fn_initiate(opStore);
-    }
-}
-
-bool CustomOperation::restore(StoredOperationHandler *opStore) {
-    if (fn_restore) {
-        return fn_restore(opStore);
-    } else {
-        return false;
-    }
-}
-
-std::unique_ptr<DynamicJsonDocument> CustomOperation::createReq() {
+std::unique_ptr<JsonDoc> CustomOperation::createReq() {
     return fn_createReq();
 }
 
@@ -77,7 +62,7 @@ void CustomOperation::processReq(JsonObject payload) {
     return fn_processReq(payload);
 }
 
-std::unique_ptr<DynamicJsonDocument> CustomOperation::createConf() {
+std::unique_ptr<JsonDoc> CustomOperation::createConf() {
     return fn_createConf();
 }
 
@@ -97,7 +82,7 @@ const char *CustomOperation::getErrorDescription() {
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> CustomOperation::getErrorDetails() {
+std::unique_ptr<JsonDoc> CustomOperation::getErrorDetails() {
     if (fn_getErrorDetails) {
         return fn_getErrorDetails();
     } else {

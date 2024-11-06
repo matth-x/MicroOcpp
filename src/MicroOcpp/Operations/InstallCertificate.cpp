@@ -3,12 +3,16 @@
 // MIT License
 
 #include <MicroOcpp/Operations/InstallCertificate.h>
+
+#if MO_ENABLE_CERT_MGMT
+
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp201::InstallCertificate;
+using MicroOcpp::JsonDoc;
 
-InstallCertificate::InstallCertificate(CertificateService& certService) : certService(certService) {
+InstallCertificate::InstallCertificate(CertificateService& certService) : MemoryManaged("v201.Operation.", "InstallCertificate"), certService(certService) {
 
 }
 
@@ -25,13 +29,13 @@ void InstallCertificate::processReq(JsonObject payload) {
     const char *certificateTypeCstr = payload["certificateType"] | "_Invalid";
 
     if (!strcmp(certificateTypeCstr, "V2GRootCertificate")) {
-        certificateType = InstallCertificateType::V2GRootCertificate;
+        certificateType = InstallCertificateType_V2GRootCertificate;
     } else if (!strcmp(certificateTypeCstr, "MORootCertificate")) {
-        certificateType = InstallCertificateType::MORootCertificate;
+        certificateType = InstallCertificateType_MORootCertificate;
     } else if (!strcmp(certificateTypeCstr, "CSMSRootCertificate")) {
-        certificateType = InstallCertificateType::CSMSRootCertificate;
+        certificateType = InstallCertificateType_CSMSRootCertificate;
     } else if (!strcmp(certificateTypeCstr, "ManufacturerRootCertificate")) {
-        certificateType = InstallCertificateType::ManufacturerRootCertificate;
+        certificateType = InstallCertificateType_ManufacturerRootCertificate;
     } else {
         errorCode = "FormationViolation";
         return;
@@ -53,13 +57,13 @@ void InstallCertificate::processReq(JsonObject payload) {
     auto status = certStore->installCertificate(certificateType, certificate);
 
     switch (status) {
-        case InstallCertificateStatus::Accepted:
+        case InstallCertificateStatus_Accepted:
             this->status = "Accepted";
             break;
-        case InstallCertificateStatus::Rejected:
+        case InstallCertificateStatus_Rejected:
             this->status = "Rejected";
             break;
-        case InstallCertificateStatus::Failed:
+        case InstallCertificateStatus_Failed:
             this->status = "Failed";
             break;
         default:
@@ -71,9 +75,11 @@ void InstallCertificate::processReq(JsonObject payload) {
     //operation executed successfully
 }
 
-std::unique_ptr<DynamicJsonDocument> InstallCertificate::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> InstallCertificate::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = status;
     return doc;
 }
+
+#endif //MO_ENABLE_CERT_MGMT

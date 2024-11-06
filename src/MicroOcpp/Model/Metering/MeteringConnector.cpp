@@ -1,12 +1,15 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Model/Metering/MeteringConnector.h>
 #include <MicroOcpp/Model/Metering/MeterStore.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Operations/MeterValues.h>
 #include <MicroOcpp/Platform.h>
 #include <MicroOcpp/Debug.h>
@@ -17,25 +20,29 @@
 using namespace MicroOcpp;
 using namespace MicroOcpp::Ocpp16;
 
-MeteringConnector::MeteringConnector(Model& model, int connectorId, MeterStore& meterStore)
-        : model(model), connectorId{connectorId}, meterStore(meterStore) {
+MeteringConnector::MeteringConnector(Context& context, int connectorId, MeterStore& meterStore)
+        : MemoryManaged("v16.Metering.MeteringConnector"), context(context), model(context.getModel()), connectorId{connectorId}, meterStore(meterStore), meterData(makeVector<std::unique_ptr<MeterValue>>(getMemoryTag())), samplers(makeVector<std::unique_ptr<SampledValueSampler>>(getMemoryTag())) {
+
+    context.getRequestQueue().addSendQueue(this);
 
     auto meterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData", "");
     declareConfiguration<int>("MeterValuesSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
-    meterValueCacheSizeInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "MeterValueCacheSize", 1);
     meterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval", 60);
-    
+
     auto stopTxnSampledDataString = declareConfiguration<const char*>("StopTxnSampledData", "");
     declareConfiguration<int>("StopTxnSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
-    
+
     auto meterValuesAlignedDataString = declareConfiguration<const char*>("MeterValuesAlignedData", "");
     declareConfiguration<int>("MeterValuesAlignedDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
     clockAlignedDataIntervalInt  = declareConfiguration<int>("ClockAlignedDataInterval", 0);
-    
+
     auto stopTxnAlignedDataString = declareConfiguration<const char*>("StopTxnAlignedData", "");
 
     meterValuesInTxOnlyBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "MeterValuesInTxOnly", true);
     stopTxnDataCapturePeriodicBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "StopTxnDataCapturePeriodic", false);
+
+    transactionMessageAttemptsInt = declareConfiguration<int>("TransactionMessageAttempts", 3);
+    transactionMessageRetryIntervalInt = declareConfiguration<int>("TransactionMessageRetryInterval", 60);
 
     sampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, meterValuesSampledDataString));
     alignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, meterValuesAlignedDataString));
@@ -43,7 +50,7 @@ MeteringConnector::MeteringConnector(Model& model, int connectorId, MeterStore& 
     stopTxnAlignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, stopTxnAlignedDataString));
 }
 
-std::unique_ptr<Operation> MeteringConnector::loop() {
+void MeteringConnector::loop() {
 
     bool txBreak = false;
     if (model.getConnector(connectorId)) {
@@ -56,22 +63,16 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
         lastSampleTime = mocpp_tick_ms();
     }
 
-    if ((txBreak || meterData.size() >= (size_t) meterValueCacheSizeInt->getInt()) && !meterData.empty()) {
-        auto meterValues = std::unique_ptr<MeterValues>(new MeterValues(std::move(meterData), connectorId, transaction));
-        meterData.clear();
-        return std::move(meterValues);
-    }
-
     if (model.getConnector(connectorId)) {
         if (transaction != model.getConnector(connectorId)->getTransaction()) {
             transaction = model.getConnector(connectorId)->getTransaction();
         }
-        
+
         if (transaction && transaction->isRunning() && !transaction->isSilent()) {
             //check during transaction
 
             if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
-                MO_DBG_WARN("reload stopTxnData");
+                MO_DBG_WARN("reload stopTxnData, %s, for tx-%u-%u", stopTxnData ? "replace" : "first time", connectorId, transaction->getTxNr());
                 //reload (e.g. after power cut during transaction)
                 stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction.get());
             }
@@ -80,37 +81,43 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
 
             if (connectorId != 0 && meterValuesInTxOnlyBool->getBool()) {
                 //don't take any MeterValues outside of transactions on connectorIds other than 0
-                meterData.clear();
-                return nullptr;
+                return;
             }
         }
     }
 
-    if (clockAlignedDataIntervalInt->getInt() >= 1) {
+    if (clockAlignedDataIntervalInt->getInt() >= 1 && model.getClock().now() >= MIN_TIME) {
 
         auto& timestampNow = model.getClock().now();
         auto dt = nextAlignedTime - timestampNow;
         if (dt < 0 ||                              //normal case: interval elapsed
                 dt > clockAlignedDataIntervalInt->getInt()) {   //special case: clock has been adjusted or first run
 
-            MO_DBG_DEBUG("Clock aligned measurement %" PRId32 "s: %s", dt,
+            MO_DBG_DEBUG("Clock aligned measurement %ds: %s", dt,
                 abs(dt) <= 60 ?
                 "in time (tolerance <= 60s)" : "off, e.g. because of first run. Ignore");
             if (abs(dt) <= 60) { //is measurement still "clock-aligned"?
-                auto alignedMeterValues = alignedDataBuilder->takeSample(model.getClock().now(), ReadingContext::SampleClock);
-                if (alignedMeterValues) {
-                    meterData.push_back(std::move(alignedMeterValues));
+
+                if (auto alignedMeterValue = alignedDataBuilder->takeSample(model.getClock().now(), ReadingContext_SampleClock)) {
+                    if (meterData.size() >= MO_METERVALUES_CACHE_MAXSIZE) {
+                        MO_DBG_INFO("MeterValue cache full. Drop old MV");
+                        meterData.erase(meterData.begin());
+                    }
+                    alignedMeterValue->setOpNr(context.getRequestQueue().getNextOpNr());
+                    if (transaction) {
+                        alignedMeterValue->setTxNr(transaction->getTxNr());
+                    }
+                    meterData.push_back(std::move(alignedMeterValue));
                 }
 
                 if (stopTxnData) {
-                    auto alignedStopTx = stopTxnAlignedDataBuilder->takeSample(model.getClock().now(), ReadingContext::SampleClock);
+                    auto alignedStopTx = stopTxnAlignedDataBuilder->takeSample(model.getClock().now(), ReadingContext_SampleClock);
                     if (alignedStopTx) {
                         stopTxnData->addTxData(std::move(alignedStopTx));
                     }
                 }
-
             }
-            
+
             Timestamp midnightBase = Timestamp(2010,0,0,0,0,0);
             auto intervall = timestampNow - midnightBase;
             intervall %= 3600 * 24;
@@ -131,49 +138,47 @@ std::unique_ptr<Operation> MeteringConnector::loop() {
         //record periodic tx data
 
         if (mocpp_tick_ms() - lastSampleTime >= (unsigned long) (meterValueSampleIntervalInt->getInt() * 1000)) {
-            auto sampleMeterValues = sampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::SamplePeriodic);
-            if (sampleMeterValues) {
-                meterData.push_back(std::move(sampleMeterValues));
+            if (auto sampledMeterValue = sampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_SamplePeriodic)) {
+                if (meterData.size() >= MO_METERVALUES_CACHE_MAXSIZE) {
+                    MO_DBG_INFO("MeterValue cache full. Drop old MV");
+                    meterData.erase(meterData.begin());
+                }
+                sampledMeterValue->setOpNr(context.getRequestQueue().getNextOpNr());
+                if (transaction) {
+                    sampledMeterValue->setTxNr(transaction->getTxNr());
+                }
+                meterData.push_back(std::move(sampledMeterValue));
             }
 
             if (stopTxnData && stopTxnDataCapturePeriodicBool->getBool()) {
-                auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::SamplePeriodic);
+                auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_SamplePeriodic);
                 if (sampleStopTx) {
                     stopTxnData->addTxData(std::move(sampleStopTx));
                 }
             }
             lastSampleTime = mocpp_tick_ms();
-        }   
+        }
     }
-
-    if (clockAlignedDataIntervalInt->getInt() < 1 && meterValueSampleIntervalInt->getInt() < 1) {
-        meterData.clear();
-    }
-
-    return nullptr; //successful method completition. Currently there is no reason to send a MeterValues Msg.
 }
 
 std::unique_ptr<Operation> MeteringConnector::takeTriggeredMeterValues() {
 
-    auto sample = sampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::Trigger);
+    auto sample = sampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_Trigger);
 
     if (!sample) {
         return nullptr;
     }
-
-    decltype(meterData) mv_now;
-    mv_now.push_back(std::move(sample));
 
     std::shared_ptr<Transaction> transaction = nullptr;
     if (model.getConnector(connectorId)) {
         transaction = model.getConnector(connectorId)->getTransaction();
     }
 
-    return std::unique_ptr<MeterValues>(new MeterValues(std::move(mv_now), connectorId, transaction));
+    return std::unique_ptr<MeterValues>(new MeterValues(model, std::move(sample), connectorId, transaction));
 }
 
 void MeteringConnector::addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler) {
-    if (!meterValueSampler->getProperties().getMeasurand().compare("Energy.Active.Import.Register")) {
+    if (!strcmp(meterValueSampler->getProperties().getMeasurand(), "Energy.Active.Import.Register")) {
         energySamplerIndex = samplers.size();
     }
     samplers.push_back(std::move(meterValueSampler));
@@ -194,7 +199,7 @@ void MeteringConnector::beginTxMeterData(Transaction *transaction) {
     }
 
     if (stopTxnData) {
-        auto sampleTxBegin = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::TransactionBegin);
+        auto sampleTxBegin = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_TransactionBegin);
         if (sampleTxBegin) {
             stopTxnData->addTxData(std::move(sampleTxBegin));
         }
@@ -207,13 +212,17 @@ std::shared_ptr<TransactionMeterData> MeteringConnector::endTxMeterData(Transact
     }
 
     if (stopTxnData) {
-        auto sampleTxEnd = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext::TransactionEnd);
+        auto sampleTxEnd = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_TransactionEnd);
         if (sampleTxEnd) {
             stopTxnData->addTxData(std::move(sampleTxEnd));
         }
     }
 
     return std::move(stopTxnData);
+}
+
+void MeteringConnector::abortTxMeterData() {
+    stopTxnData.reset();
 }
 
 std::shared_ptr<TransactionMeterData> MeteringConnector::getStopTxMeterData(Transaction *transaction) {
@@ -229,11 +238,65 @@ std::shared_ptr<TransactionMeterData> MeteringConnector::getStopTxMeterData(Tran
 
 bool MeteringConnector::existsSampler(const char *measurand, size_t len) {
     for (size_t i = 0; i < samplers.size(); i++) {
-        if (samplers[i]->getProperties().getMeasurand().length() == len &&
-                !strncmp(measurand, samplers[i]->getProperties().getMeasurand().c_str(), len)) {
+        if (strlen(samplers[i]->getProperties().getMeasurand()) == len &&
+                !strncmp(measurand, samplers[i]->getProperties().getMeasurand(), len)) {
             return true;
         }
     }
 
     return false;
+}
+
+unsigned int MeteringConnector::getFrontRequestOpNr() {
+    if (!meterDataFront && !meterData.empty()) {
+        MO_DBG_DEBUG("advance MV front");
+        meterDataFront = std::move(meterData.front());
+        meterData.erase(meterData.begin());
+    }
+    if (meterDataFront) {
+        return meterDataFront->getOpNr();
+    }
+    return NoOperation;
+}
+
+std::unique_ptr<Request> MeteringConnector::fetchFrontRequest() {
+
+    if (!meterDataFront) {
+        return nullptr;
+    }
+
+    if ((int)meterDataFront->getAttemptNr() >= transactionMessageAttemptsInt->getInt()) {
+        MO_DBG_WARN("exceeded TransactionMessageAttempts. Discard MeterValue");
+        meterDataFront.reset();
+        return nullptr;
+    }
+
+    if (mocpp_tick_ms() - meterDataFront->getAttemptTime() < meterDataFront->getAttemptNr() * (unsigned long)(std::max(0, transactionMessageRetryIntervalInt->getInt())) * 1000UL) {
+        return nullptr;
+    }
+
+    meterDataFront->advanceAttemptNr();
+    meterDataFront->setAttemptTime(mocpp_tick_ms());
+
+    //fetch tx for meterValue
+    std::shared_ptr<Transaction> tx;
+    if (meterDataFront->getTxNr() >= 0) {
+        tx = model.getTransactionStore()->getTransaction(connectorId, meterDataFront->getTxNr());
+    }
+
+    //discard MV if it belongs to silent tx
+    if (tx && tx->isSilent()) {
+        MO_DBG_DEBUG("Drop MeterValue belonging to silent tx");
+        meterDataFront.reset();
+        return nullptr;
+    }
+
+    auto meterValues = makeRequest(new MeterValues(model, meterDataFront.get(), connectorId, tx));
+    meterValues->setOnReceiveConfListener([this] (JsonObject) {
+        //operation success
+        MO_DBG_DEBUG("drop MV front");
+        meterDataFront.reset();
+    });
+
+    return meterValues;
 }

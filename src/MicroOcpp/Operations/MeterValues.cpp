@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/MeterValues.h>
@@ -9,17 +9,21 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::MeterValues;
-
-#define ENERGY_METER_TIMEOUT_MS 30 * 1000  //after waiting for 30s, send MeterValues without missing readings
+using MicroOcpp::JsonDoc;
 
 //can only be used for echo server debugging
-MeterValues::MeterValues() {
+MeterValues::MeterValues(Model& model) : MemoryManaged("v16.Operation.", "MeterValues"), model(model) {
     
 }
 
-MeterValues::MeterValues(std::vector<std::unique_ptr<MeterValue>>&& meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction) 
-      : meterValue{std::move(meterValue)}, connectorId{connectorId}, transaction{transaction} {
+MeterValues::MeterValues(Model& model, MeterValue *meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction) 
+      : MemoryManaged("v16.Operation.", "MeterValues"), model(model), meterValue{meterValue}, connectorId{connectorId}, transaction{transaction} {
     
+}
+
+MeterValues::MeterValues(Model& model, std::unique_ptr<MeterValue> meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction)
+      : MeterValues(model, meterValue.get(), connectorId, transaction) {
+    this->meterValueOwnership = std::move(meterValue);
 }
 
 MeterValues::~MeterValues(){
@@ -30,26 +34,32 @@ const char* MeterValues::getOperationType(){
     return "MeterValues";
 }
 
-std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
+std::unique_ptr<JsonDoc> MeterValues::createReq() {
 
     size_t capacity = 0;
-    
-    std::vector<std::unique_ptr<DynamicJsonDocument>> entries;
-    for (auto value = meterValue.begin(); value != meterValue.end(); value++) {
-        auto entry = (*value)->toJson();
-        if (entry) {
-            capacity += entry->capacity();
-            entries.push_back(std::move(entry));
+
+    std::unique_ptr<JsonDoc> meterValueJson;
+
+    if (meterValue) {
+
+        if (meterValue->getTimestamp() < MIN_TIME) {
+            MO_DBG_DEBUG("adjust preboot MeterValue timestamp");
+            Timestamp adjusted = model.getClock().adjustPrebootTimestamp(meterValue->getTimestamp());
+            meterValue->setTimestamp(adjusted);
+        }
+
+        meterValueJson = meterValue->toJson();
+        if (meterValueJson) {
+            capacity += meterValueJson->capacity();
         } else {
             MO_DBG_ERR("Energy meter reading not convertible to JSON");
-            (void)0;
         }
     }
 
     capacity += JSON_OBJECT_SIZE(3);
-    capacity += JSON_ARRAY_SIZE(entries.size());
+    capacity += JSON_ARRAY_SIZE(1);
 
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(capacity + 100)); //TODO remove safety space
+    auto doc = makeJsonDoc(getMemoryTag(), capacity);
     auto payload = doc->to<JsonObject>();
     payload["connectorId"] = connectorId;
 
@@ -57,9 +67,9 @@ std::unique_ptr<DynamicJsonDocument> MeterValues::createReq() {
         payload["transactionId"] = transaction->getTransactionId();
     }
 
-    auto meterValueJson = payload.createNestedArray("meterValue");
-    for (auto entry = entries.begin(); entry != entries.end(); entry++) {
-        meterValueJson.add(**entry);
+    auto meterValueArray = payload.createNestedArray("meterValue");
+    if (meterValueJson) {
+        meterValueArray.add(*meterValueJson);
     }
 
     return doc;
@@ -78,6 +88,6 @@ void MeterValues::processReq(JsonObject payload) {
 
 }
 
-std::unique_ptr<DynamicJsonDocument> MeterValues::createConf(){
+std::unique_ptr<JsonDoc> MeterValues::createConf(){
     return createEmptyDocument();
 }

@@ -1,19 +1,23 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_RESERVATION
+
 #include <MicroOcpp/Operations/CancelReservation.h>
-#include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::CancelReservation;
+using MicroOcpp::JsonDoc;
 
-CancelReservation::CancelReservation(Model& model) : model(model) {
+CancelReservation::CancelReservation(ReservationService& reservationService) : MemoryManaged("v16.Operation.", "CancelReservation"), reservationService(reservationService) {
   
 }
 
-const char* CancelReservation::getOperationType(){
+const char* CancelReservation::getOperationType() {
     return "CancelReservation";
 }
 
@@ -23,18 +27,14 @@ void CancelReservation::processReq(JsonObject payload) {
         return;
     }
 
-    if (model.getReservationService()) {
-        if (auto reservation = model.getReservationService()->getReservationById(payload["reservationId"])) {
-            found = true;
-            reservation->clear();
-        }
-    } else {
-        errorCode = "InternalError";
+    if (auto reservation = reservationService.getReservationById(payload["reservationId"])) {
+        found = true;
+        reservation->clear();
     }
 }
 
-std::unique_ptr<DynamicJsonDocument> CancelReservation::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> CancelReservation::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     if (found) {
         payload["status"] = "Accepted";
@@ -43,3 +43,5 @@ std::unique_ptr<DynamicJsonDocument> CancelReservation::createConf(){
     }
     return doc;
 }
+
+#endif //MO_ENABLE_RESERVATION

@@ -13,12 +13,11 @@ using namespace MicroOcpp;
 namespace MicroOcpp {
 namespace Ocpp16 {
 
-Authorize::Authorize(Model& model, const char *idTagIn) : model(model) {
+Authorize::Authorize(Model& model, const char *idTagIn) : MemoryManaged("v16.Operation.", "Authorize"), model(model) {
     if (idTagIn && strnlen(idTagIn, IDTAG_LEN_MAX + 2) <= IDTAG_LEN_MAX) {
         snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
     } else {
         MO_DBG_WARN("Format violation of idTag. Discard idTag");
-        (void)0;
     }
 }
 
@@ -26,8 +25,8 @@ const char* Authorize::getOperationType(){
     return "Authorize";
 }
 
-std::unique_ptr<DynamicJsonDocument> Authorize::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1) + (IDTAG_LEN_MAX + 1)));
+std::unique_ptr<JsonDoc> Authorize::createReq() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + (IDTAG_LEN_MAX + 1));
     JsonObject payload = doc->to<JsonObject>();
     payload["idTag"] = idTag;
     return doc;
@@ -42,9 +41,11 @@ void Authorize::processConf(JsonObject payload){
         MO_DBG_INFO("Request has been denied. Reason: %s", idTagInfo);
     }
 
-    if (model.getAuthorizationService()) {
-        model.getAuthorizationService()->notifyAuthorization(idTag, payload["idTagInfo"]);
+#if MO_ENABLE_LOCAL_AUTH
+    if (auto authService = model.getAuthorizationService()) {
+        authService->notifyAuthorization(idTag, payload["idTagInfo"]);
     }
+#endif //MO_ENABLE_LOCAL_AUTH
 }
 
 void Authorize::processReq(JsonObject payload){
@@ -53,8 +54,8 @@ void Authorize::processReq(JsonObject payload){
      */
 }
 
-std::unique_ptr<DynamicJsonDocument> Authorize::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> Authorize::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), 2 * JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
     idTagInfo["status"] = "Accepted";
@@ -69,7 +70,7 @@ std::unique_ptr<DynamicJsonDocument> Authorize::createConf(){
 namespace MicroOcpp {
 namespace Ocpp201 {
 
-Authorize::Authorize(Model& model, const IdToken& idToken) : model(model) {
+Authorize::Authorize(Model& model, const IdToken& idToken) : MemoryManaged("v201.Operation.Authorize"), model(model) {
     this->idToken = idToken;
 }
 
@@ -77,10 +78,10 @@ const char* Authorize::getOperationType(){
     return "Authorize";
 }
 
-std::unique_ptr<DynamicJsonDocument> Authorize::createReq() {
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+std::unique_ptr<JsonDoc> Authorize::createReq() {
+    auto doc = makeJsonDoc(getMemoryTag(),
             JSON_OBJECT_SIZE(1) +
-            JSON_OBJECT_SIZE(2)));
+            JSON_OBJECT_SIZE(2));
     JsonObject payload = doc->to<JsonObject>();
     payload["idToken"]["idToken"] = idToken.get();
     payload["idToken"]["type"] = idToken.getTypeCstr();
@@ -107,8 +108,8 @@ void Authorize::processReq(JsonObject payload){
      */
 }
 
-std::unique_ptr<DynamicJsonDocument> Authorize::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(2 * JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> Authorize::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), 2 * JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     JsonObject idTagInfo = payload.createNestedObject("idTokenInfo");
     idTagInfo["status"] = "Accepted";

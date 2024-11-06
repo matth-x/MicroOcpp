@@ -1,50 +1,92 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef MO_REQUESTQUEUE_H
 #define MO_REQUESTQUEUE_H
 
-#include <MicroOcpp/Core/RequestQueueStorageStrategy.h>
+#include <limits>
 
-#include <deque>
+#include <MicroOcpp/Core/Connection.h>
+#include <MicroOcpp/Core/Memory.h>
+
 #include <memory>
 #include <ArduinoJson.h>
 
+#ifndef MO_REQUEST_CACHE_MAXSIZE
+#define MO_REQUEST_CACHE_MAXSIZE 10
+#endif
+
+#ifndef MO_NUM_REQUEST_QUEUES
+#define MO_NUM_REQUEST_QUEUES 10
+#endif
+
 namespace MicroOcpp {
 
-class OperationRegistry;
-class Model;
 class Connection;
+class OperationRegistry;
 class Request;
-class FilesystemAdapter;
 
-class RequestQueue {
+class RequestEmitter {
+public:
+    static const unsigned int NoOperation = std::numeric_limits<unsigned int>::max();
+
+    virtual unsigned int getFrontRequestOpNr() = 0; //return OpNr of front request or NoOperation if queue is empty
+    virtual std::unique_ptr<Request> fetchFrontRequest() = 0;
+};
+
+class VolatileRequestQueue : public RequestEmitter, public MemoryManaged {
 private:
-    OperationRegistry& operationRegistry;
-    
-    std::unique_ptr<RequestQueueStorageStrategy> initiatedRequests;
-    std::deque<std::unique_ptr<Request>> receivedRequests;
+    std::unique_ptr<Request> requests [MO_REQUEST_CACHE_MAXSIZE];
+    size_t front = 0, len = 0;
+public:
+    VolatileRequestQueue();
+    ~VolatileRequestQueue();
+    void loop();
 
+    unsigned int getFrontRequestOpNr() override;
+    std::unique_ptr<Request> fetchFrontRequest() override;
+
+    bool pushRequestBack(std::unique_ptr<Request> request);
+};
+
+class RequestQueue : public MemoryManaged {
+private:
+    Connection& connection;
+    OperationRegistry& operationRegistry;
+
+    RequestEmitter* sendQueues [MO_NUM_REQUEST_QUEUES];
+    VolatileRequestQueue defaultSendQueue;
+    VolatileRequestQueue *preBootSendQueue = nullptr;
+    std::unique_ptr<Request> sendReqFront;
+
+    VolatileRequestQueue recvQueue;
+    std::unique_ptr<Request> recvReqFront;
+
+    bool receiveMessage(const char* payload, size_t length); //receive from  server: either a request or response
     void receiveRequest(JsonArray json);
     void receiveRequest(JsonArray json, std::unique_ptr<Request> op);
     void receiveResponse(JsonArray json);
 
-    unsigned long sendBackoffTime = 0;
-    unsigned long sendBackoffPeriod = 0;
     unsigned long sockTrackLastConnected = 0;
-    const unsigned long BACKOFF_PERIOD_MAX = 1048576;
-    const unsigned long BACKOFF_PERIOD_INCREMENT = BACKOFF_PERIOD_MAX / 4;
+
+    unsigned int nextOpNr = 10; //Nr 0 - 9 reservered for internal purposes
 public:
-    RequestQueue(OperationRegistry& operationRegistry, Model *baseModel, std::shared_ptr<FilesystemAdapter> filesystem = nullptr);
+    RequestQueue() = delete;
+    RequestQueue(const RequestQueue&) = delete;
+    RequestQueue(const RequestQueue&&) = delete;
 
-    void setConnection(Connection& sock);
+    RequestQueue(Connection& connection, OperationRegistry& operationRegistry);
 
-    void loop(Connection& ocppSock);
+    void loop(); //polls all reqQueues and decides which request to send (if any)
 
-    void sendRequest(std::unique_ptr<Request> o); //send an OCPP operation request to the server
-    
-    bool receiveMessage(const char* payload, size_t length); //receive from  server: either a request or response
+    void sendRequest(std::unique_ptr<Request> request); //send an OCPP operation request to the server; adds request to default queue
+    void sendRequestPreBoot(std::unique_ptr<Request> request); //send an OCPP operation request to the server; adds request to preBootQueue
+
+    void addSendQueue(RequestEmitter* sendQueue);
+    void setPreBootSendQueue(VolatileRequestQueue *preBootQueue);
+
+    unsigned int getNextOpNr();
 };
 
 } //end namespace MicroOcpp

@@ -15,7 +15,7 @@ class Model;
 
 namespace Ocpp16 {
 
-class Authorize : public Operation {
+class Authorize : public Operation, public MemoryManaged {
 private:
     Model& model;
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
@@ -24,13 +24,13 @@ public:
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
 };
 
@@ -44,7 +44,7 @@ public:
 namespace MicroOcpp {
 namespace Ocpp201 {
 
-class Authorize : public Operation {
+class Authorize : public Operation, public MemoryManaged {
 private:
     Model& model;
     IdToken idToken;
@@ -53,13 +53,13 @@ public:
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
 };
 

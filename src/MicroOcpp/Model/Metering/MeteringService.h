@@ -1,17 +1,17 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef METERINGSERVICE_H
-#define METERINGSERVICE_H
+#ifndef MO_METERINGSERVICE_H
+#define MO_METERINGSERVICE_H
 
 #include <functional>
-#include <vector>
 #include <memory>
 
 #include <MicroOcpp/Model/Metering/MeteringConnector.h>
 #include <MicroOcpp/Model/Metering/SampledValue.h>
 #include <MicroOcpp/Model/Metering/MeterStore.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
@@ -19,12 +19,12 @@ class Context;
 class Request;
 class FilesystemAdapter;
 
-class MeteringService {
+class MeteringService : public MemoryManaged {
 private:
     Context& context;
     MeterStore meterStore;
 
-    std::vector<std::unique_ptr<MeteringConnector>> connectors;
+    Vector<std::unique_ptr<MeteringConnector>> connectors;
 public:
     MeteringService(Context& context, int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
@@ -39,6 +39,8 @@ public:
     void beginTxMeterData(Transaction *transaction);
 
     std::shared_ptr<TransactionMeterData> endTxMeterData(Transaction *transaction); //use return value to keep data in cache
+
+    void abortTxMeterData(unsigned int connectorId); //call this to free resources if txMeterData record is not ended normally. Does not remove files
 
     std::shared_ptr<TransactionMeterData> getStopTxMeterData(Transaction *transaction); //prefer endTxMeterData when possible
 

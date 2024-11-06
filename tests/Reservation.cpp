@@ -1,11 +1,19 @@
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_RESERVATION
+
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
@@ -38,7 +46,7 @@ TEST_CASE( "Reservation" ) {
     loop();
 
     SECTION("Basic reservation") {
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
         REQUIRE( rService );
 
         //set reservation
@@ -50,7 +58,7 @@ TEST_CASE( "Reservation" ) {
 
         rService->updateReservation(reservationId, connectorId, expiryDate, idTag, parentIdTag);
         
-        REQUIRE( connector->getStatus() == ChargePointStatus::Reserved );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
 
         //transaction blocked by reservation
         bool checkTxRejected = false;
@@ -62,69 +70,69 @@ TEST_CASE( "Reservation" ) {
 
         beginTransaction("wrong idTag");
         loop();
-        REQUIRE( connector->getStatus() == ChargePointStatus::Reserved );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
         REQUIRE( checkTxRejected );
 
         //idTag matches reservation
         beginTransaction("mIdTag");
         loop();
-        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
         REQUIRE( connector->getTransaction()->getReservationId() == reservationId );
 
         //reservation is reset after tx
         endTransaction();
         loop();
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         //RemoteStartTx - idTag doesn't match. The tx will start anyway assuming some start trigger in the backend prevails over reservations in the backend implementation
         rService->updateReservation(reservationId, connectorId, expiryDate, idTag, parentIdTag);
-        REQUIRE( connector->getStatus() == ChargePointStatus::Reserved );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
 
         getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
                 "RemoteStartTransaction",
                 [] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["idTag"] = "wrong idTag";
                     return doc;},
                 [] (JsonObject) { } //ignore conf
         )));
         loop();
-        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
         REQUIRE( connector->getTransaction()->getReservationId() != reservationId );
 
         //reservation is reset after tx
         endTransaction();
         loop();
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         //RemoteStartTx - idTag does match
         rService->updateReservation(reservationId, connectorId, expiryDate, idTag, parentIdTag);
-        REQUIRE( connector->getStatus() == ChargePointStatus::Reserved );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
 
         getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
                 "RemoteStartTransaction",
                 [idTag] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["idTag"] = idTag;
                     return doc;},
                 [] (JsonObject) { } //ignore conf
         )));
         loop();
-        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
         REQUIRE( connector->getTransaction()->getReservationId() == reservationId );
 
         //reservation is reset after tx
         endTransaction();
         loop();
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
     }
 
     SECTION("Tx on other connector") {
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         //set reservation
         int reservationId = 123;
@@ -135,21 +143,21 @@ TEST_CASE( "Reservation" ) {
         const char *parentIdTag = nullptr;
 
         rService->updateReservation(reservationId, connectorIdResvd, expiryDate, idTag, parentIdTag);
-        REQUIRE( model.getConnector(connectorIdResvd)->getStatus() == ChargePointStatus::Reserved );
+        REQUIRE( model.getConnector(connectorIdResvd)->getStatus() == ChargePointStatus_Reserved );
 
         beginTransaction(idTag, connectorIdOther);
         loop();
-        REQUIRE( model.getConnector(connectorIdResvd)->getStatus() == ChargePointStatus::Available ); //reservation on first connector withdrawed
-        REQUIRE( model.getConnector(connectorIdOther)->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( model.getConnector(connectorIdResvd)->getStatus() == ChargePointStatus_Available ); //reservation on first connector withdrawed
+        REQUIRE( model.getConnector(connectorIdOther)->getStatus() == ChargePointStatus_Charging );
         REQUIRE( getTransaction(connectorIdOther)->getReservationId() == reservationId ); //reservation transferred to other connector
 
         endTransaction(nullptr, nullptr, connectorIdOther);
         loop();
-        REQUIRE( model.getConnector(connectorIdOther)->getStatus() == ChargePointStatus::Available );
+        REQUIRE( model.getConnector(connectorIdOther)->getStatus() == ChargePointStatus_Available );
     }
 
     SECTION("parentIdTag") {
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         //set reservation
         int reservationId = 123;
@@ -159,7 +167,7 @@ TEST_CASE( "Reservation" ) {
         const char *parentIdTag = "mParentIdTag";
         
         rService->updateReservation(reservationId, connectorId, expiryDate, idTag, parentIdTag);
-        REQUIRE( connector->getStatus() == ChargePointStatus::Reserved );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
 
         bool checkProcessed = false;
         getOcppContext()->getOperationRegistry().registerOperation("Authorize",
@@ -169,9 +177,9 @@ TEST_CASE( "Reservation" ) {
                     [parentIdTag, &checkProcessed] () {
                         //create conf
                         checkProcessed = true;
-                        auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+                        auto doc = makeJsonDoc("UnitTests", 
                                 JSON_OBJECT_SIZE(1) + //payload root
-                                JSON_OBJECT_SIZE(3))); //idTagInfo
+                                JSON_OBJECT_SIZE(3)); //idTagInfo
                         auto payload = doc->to<JsonObject>();
                         payload["idTagInfo"]["parentIdTag"] = parentIdTag;
                         payload["idTagInfo"]["status"] = "Accepted";
@@ -180,17 +188,17 @@ TEST_CASE( "Reservation" ) {
         beginTransaction("other idTag");
         loop();
         REQUIRE( checkProcessed );
-        REQUIRE( connector->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
         REQUIRE( connector->getTransaction()->getReservationId() == reservationId );
 
         //reset tx
         endTransaction();
         loop();
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
     }
 
     SECTION("ConnectorZero") {
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         //set reservation
         Timestamp expiryDate = model.getClock().now() + 3600; //expires one hour in future
@@ -201,19 +209,19 @@ TEST_CASE( "Reservation" ) {
         REQUIRE( rService->updateReservation(1000, 0, expiryDate, idTag, parentIdTag) );
         REQUIRE( rService->updateReservation(1001, 1, expiryDate, idTag, parentIdTag) );
         REQUIRE( !rService->updateReservation(1002, 2, expiryDate, idTag, parentIdTag) );
-        REQUIRE( model.getConnector(2)->getStatus() == ChargePointStatus::Available );
+        REQUIRE( model.getConnector(2)->getStatus() == ChargePointStatus_Available );
 
         //reset reservations
         rService->getReservationById(1000)->clear();
         rService->getReservationById(1001)->clear();
-        REQUIRE( model.getConnector(1)->getStatus() == ChargePointStatus::Available );
+        REQUIRE( model.getConnector(1)->getStatus() == ChargePointStatus_Available );
 
         //if connector 0 is reserved, ensure that at least one physical connector remains available for the idTag of the reservation
         REQUIRE( rService->updateReservation(1000, 0, expiryDate, idTag, parentIdTag) );
 
         beginTransaction("other idTag", 1);
         loop();
-        REQUIRE( model.getConnector(1)->getStatus() == ChargePointStatus::Charging );
+        REQUIRE( model.getConnector(1)->getStatus() == ChargePointStatus_Charging );
 
         bool checkTxRejected = false;
         setTxNotificationOutput([&checkTxRejected] (Transaction*, TxNotification txNotification) {
@@ -225,7 +233,7 @@ TEST_CASE( "Reservation" ) {
         beginTransaction("other idTag 2", 2);
         loop();
         REQUIRE( checkTxRejected );
-        REQUIRE( model.getConnector(2)->getStatus() == ChargePointStatus::Available );
+        REQUIRE( model.getConnector(2)->getStatus() == ChargePointStatus_Available );
         
 
         endTransaction(nullptr, nullptr, 1);
@@ -233,7 +241,7 @@ TEST_CASE( "Reservation" ) {
     }
 
     SECTION("Expiry date") {
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         //set reservation
         int reservationId = 123;
@@ -244,19 +252,19 @@ TEST_CASE( "Reservation" ) {
 
         rService->updateReservation(reservationId, connectorId, expiryDate, idTag, parentIdTag);
         
-        REQUIRE( connector->getStatus() == ChargePointStatus::Reserved );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
 
         Timestamp expired = expiryDate + 1;
         char expired_cstr [JSONDATE_LENGTH + 1];
         expired.toJsonString(expired_cstr, JSONDATE_LENGTH + 1);
         model.getClock().setTime(expired_cstr);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
     }
 
     SECTION("Reservation persistency") {
         unsigned int connectorId = 1;
-        REQUIRE( getOcppContext()->getModel().getConnector(connectorId)->getStatus() == ChargePointStatus::Available );
+        REQUIRE( getOcppContext()->getModel().getConnector(connectorId)->getStatus() == ChargePointStatus_Available );
 
         //set reservation
         int reservationId = 123;
@@ -266,7 +274,7 @@ TEST_CASE( "Reservation" ) {
 
         getOcppContext()->getModel().getReservationService()->updateReservation(reservationId, connectorId, expiryDate, idTag, parentIdTag);
         
-        REQUIRE( getOcppContext()->getModel().getConnector(connectorId)->getStatus() == ChargePointStatus::Reserved );
+        REQUIRE( getOcppContext()->getModel().getConnector(connectorId)->getStatus() == ChargePointStatus_Reserved );
 
         mocpp_deinitialize();
 
@@ -274,7 +282,7 @@ TEST_CASE( "Reservation" ) {
         getOcppContext()->getModel().getClock().setTime(BASE_TIME);
         loop();
 
-        REQUIRE( getOcppContext()->getModel().getConnector(connectorId)->getStatus() == ChargePointStatus::Reserved );
+        REQUIRE( getOcppContext()->getModel().getConnector(connectorId)->getStatus() == ChargePointStatus_Reserved );
 
         auto reservation = getOcppContext()->getModel().getReservationService()->getReservationById(reservationId);
         REQUIRE( reservation->getReservationId() == reservationId );
@@ -291,12 +299,12 @@ TEST_CASE( "Reservation" ) {
         getOcppContext()->getModel().getClock().setTime(BASE_TIME);
         loop();
 
-        REQUIRE( getOcppContext()->getModel().getConnector(connectorId)->getStatus() == ChargePointStatus::Available );
+        REQUIRE( getOcppContext()->getModel().getConnector(connectorId)->getStatus() == ChargePointStatus_Available );
     }
 
     SECTION("ReserveNow") {
 
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         //set reservation
         int reservationId = 123;
@@ -311,9 +319,9 @@ TEST_CASE( "Reservation" ) {
                 "ReserveNow",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+                    auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
-                            JSONDATE_LENGTH + 1));
+                            JSONDATE_LENGTH + 1);
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = connectorId;
                     char expiryDate_cstr [JSONDATE_LENGTH + 1];
@@ -332,24 +340,24 @@ TEST_CASE( "Reservation" ) {
         )));
         loop();
         REQUIRE( checkProcessed );
-        REQUIRE( connector->getStatus() == ChargePointStatus::Reserved );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
 
         model.getReservationService()->getReservationById(reservationId)->clear();
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         //reserve while charger is in Faulted state
         const char *errorCode = "OtherError";
         addErrorCodeInput([&errorCode] () {return errorCode;});
-        REQUIRE( connector->getStatus() == ChargePointStatus::Faulted );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Faulted );
 
         checkProcessed = false;
         getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
                 "ReserveNow",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+                    auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
-                            JSONDATE_LENGTH + 1));
+                            JSONDATE_LENGTH + 1);
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = connectorId;
                     char expiryDate_cstr [JSONDATE_LENGTH + 1];
@@ -368,23 +376,23 @@ TEST_CASE( "Reservation" ) {
         )));
         loop();
         REQUIRE( checkProcessed );
-        REQUIRE( connector->getStatus() == ChargePointStatus::Faulted );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Faulted );
 
         errorCode = nullptr; //reset error
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         //reserve while connector is already occupied
         setConnectorPluggedInput([] {return true;}); //plug EV
-        REQUIRE( connector->getStatus() == ChargePointStatus::Preparing );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
 
         checkProcessed = false;
         getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
                 "ReserveNow",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+                    auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
-                            JSONDATE_LENGTH + 1));
+                            JSONDATE_LENGTH + 1);
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = connectorId;
                     char expiryDate_cstr [JSONDATE_LENGTH + 1];
@@ -403,25 +411,25 @@ TEST_CASE( "Reservation" ) {
         )));
         loop();
         REQUIRE( checkProcessed );
-        REQUIRE( connector->getStatus() == ChargePointStatus::Preparing );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
 
         setConnectorPluggedInput(nullptr); //reset ConnectorPluggedInput
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         //Rejected ReserveNow status not possible
 
         //reserve while connector is inoperative
         connector->setAvailabilityVolatile(false);
-        REQUIRE( connector->getStatus() == ChargePointStatus::Unavailable );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Unavailable );
 
         checkProcessed = false;
         getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
                 "ReserveNow",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(
+                    auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
-                            JSONDATE_LENGTH + 1));
+                            JSONDATE_LENGTH + 1);
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = connectorId;
                     char expiryDate_cstr [JSONDATE_LENGTH + 1];
@@ -440,14 +448,14 @@ TEST_CASE( "Reservation" ) {
         )));
         loop();
         REQUIRE( checkProcessed );
-        REQUIRE( connector->getStatus() == ChargePointStatus::Unavailable );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Unavailable );
 
         connector->setAvailabilityVolatile(true); //revert Unavailable status
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
     }
 
     SECTION("CancelReservation") {
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         //set reservation
         int reservationId = 123;
@@ -457,7 +465,7 @@ TEST_CASE( "Reservation" ) {
         const char *parentIdTag = nullptr;
 
         rService->updateReservation(reservationId, connectorId, expiryDate, idTag, parentIdTag);
-        REQUIRE( connector->getStatus() == ChargePointStatus::Reserved );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
 
         //CancelReservation successfully
         bool checkProcessed = false;
@@ -465,7 +473,7 @@ TEST_CASE( "Reservation" ) {
                 "CancelReservation",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["reservationId"] = reservationId;
                     return doc;},
@@ -478,7 +486,7 @@ TEST_CASE( "Reservation" ) {
         )));
         loop();
         REQUIRE( checkProcessed );
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
 
         //CancelReservation while no reservation exists
         checkProcessed = false;
@@ -486,7 +494,7 @@ TEST_CASE( "Reservation" ) {
                 "CancelReservation",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
-                    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+                    auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
                     auto payload = doc->to<JsonObject>();
                     payload["reservationId"] = reservationId;
                     return doc;},
@@ -499,8 +507,10 @@ TEST_CASE( "Reservation" ) {
         )));
         loop();
         REQUIRE( checkProcessed );
-        REQUIRE( connector->getStatus() == ChargePointStatus::Available );
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
     }
 
     mocpp_deinitialize();
 }
+
+#endif //MO_ENABLE_RESERVATION

@@ -4,12 +4,11 @@
 
 #include <MicroOcpp/Model/Model.h>
 
-#include <string>
-
 #include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <MicroOcpp/Model/ConnectorBase/ConnectorsCommon.h>
 #include <MicroOcpp/Model/Metering/MeteringService.h>
+#include <MicroOcpp/Model/Metering/MeterValuesV201.h>
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
 #include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
 #include <MicroOcpp/Model/Heartbeat/HeartbeatService.h>
@@ -20,6 +19,8 @@
 #include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Model/Transactions/TransactionService.h>
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
+#include <MicroOcpp/Model/Availability/AvailabilityService.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 
 #include <MicroOcpp/Core/Configuration.h>
 
@@ -27,7 +28,7 @@
 
 using namespace MicroOcpp;
 
-Model::Model(ProtocolVersion version, uint16_t bootNr) : version(version), bootNr(bootNr) {
+Model::Model(ProtocolVersion version, uint16_t bootNr) : MemoryManaged("Model"), connectors(makeVector<std::unique_ptr<Connector>>(getMemoryTag())), version(version), bootNr(bootNr) {
 
 }
 
@@ -54,31 +55,39 @@ void Model::loop() {
 
     if (chargeControlCommon)
         chargeControlCommon->loop();
-    
+
     if (smartChargingService)
         smartChargingService->loop();
-    
+
     if (heartbeatService)
         heartbeatService->loop();
-    
+
     if (meteringService)
         meteringService->loop();
-    
+
     if (diagnosticsService)
         diagnosticsService->loop();
-    
+
     if (firmwareService)
         firmwareService->loop();
-    
+
+#if MO_ENABLE_RESERVATION
     if (reservationService)
         reservationService->loop();
-    
+#endif //MO_ENABLE_RESERVATION
+
     if (resetService)
         resetService->loop();
 
 #if MO_ENABLE_V201
+    if (availabilityService)
+        availabilityService->loop();
+
     if (transactionService)
         transactionService->loop();
+    
+    if (resetServiceV201)
+        resetServiceV201->loop();
 #endif
 }
 
@@ -109,7 +118,7 @@ ConnectorsCommon *Model::getConnectorsCommon() {
     return chargeControlCommon.get();
 }
 
-void Model::setConnectors(std::vector<std::unique_ptr<Connector>>&& connectors) {
+void Model::setConnectors(Vector<std::unique_ptr<Connector>>&& connectors) {
     this->connectors = std::move(connectors);
     capabilitiesUpdated = true;
 }
@@ -159,6 +168,7 @@ void Model::setHeartbeatService(std::unique_ptr<HeartbeatService> hs) {
     capabilitiesUpdated = true;
 }
 
+#if MO_ENABLE_LOCAL_AUTH
 void Model::setAuthorizationService(std::unique_ptr<AuthorizationService> as) {
     authorizationService = std::move(as);
     capabilitiesUpdated = true;
@@ -167,7 +177,9 @@ void Model::setAuthorizationService(std::unique_ptr<AuthorizationService> as) {
 AuthorizationService *Model::getAuthorizationService() {
     return authorizationService.get();
 }
+#endif //MO_ENABLE_LOCAL_AUTH
 
+#if MO_ENABLE_RESERVATION
 void Model::setReservationService(std::unique_ptr<ReservationService> rs) {
     reservationService = std::move(rs);
     capabilitiesUpdated = true;
@@ -176,6 +188,7 @@ void Model::setReservationService(std::unique_ptr<ReservationService> rs) {
 ReservationService *Model::getReservationService() {
     return reservationService.get();
 }
+#endif //MO_ENABLE_RESERVATION
 
 void Model::setBootService(std::unique_ptr<BootService> bs){
     bootService = std::move(bs);
@@ -195,6 +208,7 @@ ResetService *Model::getResetService() const {
     return resetService.get();
 }
 
+#if MO_ENABLE_CERT_MGMT
 void Model::setCertificateService(std::unique_ptr<CertificateService> cs) {
     this->certService = std::move(cs);
     capabilitiesUpdated = true;
@@ -203,8 +217,18 @@ void Model::setCertificateService(std::unique_ptr<CertificateService> cs) {
 CertificateService *Model::getCertificateService() const {
     return certService.get();
 }
+#endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_V201
+void Model::setAvailabilityService(std::unique_ptr<AvailabilityService> as) {
+    this->availabilityService = std::move(as);
+    capabilitiesUpdated = true;
+}
+
+AvailabilityService *Model::getAvailabilityService() const {
+    return availabilityService.get();
+}
+
 void Model::setVariableService(std::unique_ptr<VariableService> vs) {
     this->variableService = std::move(vs);
     capabilitiesUpdated = true;
@@ -221,6 +245,33 @@ void Model::setTransactionService(std::unique_ptr<TransactionService> ts) {
 
 TransactionService *Model::getTransactionService() const {
     return transactionService.get();
+}
+
+void Model::setResetServiceV201(std::unique_ptr<Ocpp201::ResetService> rs) {
+    this->resetServiceV201 = std::move(rs);
+    capabilitiesUpdated = true;
+}
+
+Ocpp201::ResetService *Model::getResetServiceV201() const {
+    return resetServiceV201.get();
+}
+
+void Model::setMeteringServiceV201(std::unique_ptr<Ocpp201::MeteringService> rs) {
+    this->meteringServiceV201 = std::move(rs);
+    capabilitiesUpdated = true;
+}
+
+Ocpp201::MeteringService *Model::getMeteringServiceV201() const {
+    return meteringServiceV201.get();
+}
+
+void Model::setRemoteControlService(std::unique_ptr<RemoteControlService> rs) {
+    remoteControlService = std::move(rs);
+    capabilitiesUpdated = true;
+}
+
+RemoteControlService *Model::getRemoteControlService() const {
+    return remoteControlService.get();
 }
 #endif
 
@@ -246,7 +297,7 @@ void Model::updateSupportedStandardProfiles() {
         return;
     }
 
-    std::string buf = supportedFeatureProfilesString->getString();
+    auto buf = makeString(getMemoryTag(), supportedFeatureProfilesString->getString());
 
     if (chargeControlCommon &&
             heartbeatService &&
@@ -265,19 +316,23 @@ void Model::updateSupportedStandardProfiles() {
         }
     }
 
+#if MO_ENABLE_LOCAL_AUTH
     if (authorizationService) {
         if (!strstr(supportedFeatureProfilesString->getString(), "LocalAuthListManagement")) {
             if (!buf.empty()) buf += ',';
             buf += "LocalAuthListManagement";
         }
     }
+#endif //MO_ENABLE_LOCAL_AUTH
 
+#if MO_ENABLE_RESERVATION
     if (reservationService) {
         if (!strstr(supportedFeatureProfilesString->getString(), "Reservation")) {
             if (!buf.empty()) buf += ',';
             buf += "Reservation";
         }
     }
+#endif //MO_ENABLE_RESERVATION
 
     if (smartChargingService) {
         if (!strstr(supportedFeatureProfilesString->getString(), "SmartCharging")) {

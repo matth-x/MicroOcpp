@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef SAMPLEDVALUE_H
@@ -9,6 +9,8 @@
 #include <memory>
 #include <functional>
 
+#include <MicroOcpp/Model/Metering/ReadingContext.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Platform.h>
 
 namespace MicroOcpp {
@@ -18,7 +20,7 @@ class SampledValueDeSerializer {
 public:
     static T deserialize(const char *str);
     static bool ready(T& val);
-    static std::string serialize(T& val);
+    static String serialize(T& val);
     static int32_t toInteger(T& val);
 };
 
@@ -27,7 +29,7 @@ class SampledValueDeSerializer<int32_t> { // example class
 public:
     static int32_t deserialize(const char *str);
     static bool ready(int32_t& val) {return true;} //int32_t is always valid
-    static std::string serialize(int32_t& val);
+    static String serialize(int32_t& val);
     static int32_t toInteger(int32_t& val) {return val;} //no conversion required
 };
 
@@ -36,24 +38,25 @@ class SampledValueDeSerializer<float> { // Used in meterValues
 public:
     static float deserialize(const char *str) {return atof(str);}
     static bool ready(float& val) {return true;} //float is always valid
-    static std::string serialize(float& val) {
-        char str[20];
-        dtostrf(val,4,1,str);
-        return std::string(str);
-    }
+    static String serialize(float& val);
     static int32_t toInteger(float& val) {return (int32_t) val;}
 };
 
 class SampledValueProperties {
 private:
-    std::string format;
-    std::string measurand;
-    std::string phase;
-    std::string location;
-    std::string unit;
+    String format;
+    String measurand;
+    String phase;
+    String location;
+    String unit;
 
 public:
-    SampledValueProperties() { }
+    SampledValueProperties() :
+            format(makeString("v16.Metering.SampledValueProperties")),
+            measurand(makeString("v16.Metering.SampledValueProperties")),
+            phase(makeString("v16.Metering.SampledValueProperties")),
+            location(makeString("v16.Metering.SampledValueProperties")),
+            unit(makeString("v16.Metering.SampledValueProperties")) { }
     SampledValueProperties(const SampledValueProperties& other) :
             format(other.format),
             measurand(other.measurand),
@@ -63,45 +66,28 @@ public:
     ~SampledValueProperties() = default;
 
     void setFormat(const char *format) {this->format = format;}
-    const std::string& getFormat() const {return format;}
+    const char *getFormat() const {return format.c_str();}
     void setMeasurand(const char *measurand) {this->measurand = measurand;}
-    const std::string& getMeasurand() const {return measurand;}
+    const char *getMeasurand() const {return measurand.c_str();}
     void setPhase(const char *phase) {this->phase = phase;}
-    const std::string& getPhase() const {return phase;}
+    const char *getPhase() const {return phase.c_str();}
     void setLocation(const char *location) {this->location = location;}
-    const std::string& getLocation() const {return location;}
+    const char *getLocation() const {return location.c_str();}
     void setUnit(const char *unit) {this->unit = unit;}
-    const std::string& getUnit() const {return unit;}
+    const char *getUnit() const {return unit.c_str();}
 };
-
-enum class ReadingContext {
-    InterruptionBegin,
-    InterruptionEnd,
-    Other,
-    SampleClock,
-    SamplePeriodic,
-    TransactionBegin,
-    TransactionEnd,
-    Trigger,
-    NOT_SET
-};
-
-namespace Ocpp16 {
-const char *serializeReadingContext(ReadingContext context);
-ReadingContext deserializeReadingContext(const char *serialized);
-}
 
 class SampledValue {
 protected:
     const SampledValueProperties& properties;
     const ReadingContext context;
-    virtual std::string serializeValue() = 0;
+    virtual String serializeValue() = 0;
 public:
     SampledValue(const SampledValueProperties& properties, ReadingContext context) : properties(properties), context(context) { }
     SampledValue(const SampledValue& other) : properties(other.properties), context(other.context) { }
     virtual ~SampledValue() = default;
 
-    std::unique_ptr<DynamicJsonDocument> toJson();
+    std::unique_ptr<JsonDoc> toJson();
 
     virtual operator bool() = 0;
     virtual int32_t toInteger() = 0;
@@ -110,17 +96,17 @@ public:
 };
 
 template <class T, class DeSerializer>
-class SampledValueConcrete : public SampledValue {
+class SampledValueConcrete : public SampledValue, public MemoryManaged {
 private:
     T value;
 public:
-    SampledValueConcrete(const SampledValueProperties& properties, ReadingContext context, const T&& value) : SampledValue(properties, context), value(value) { }
-    SampledValueConcrete(const SampledValueConcrete& other) : SampledValue(other), value(other.value) { }
+    SampledValueConcrete(const SampledValueProperties& properties, ReadingContext context, const T&& value) : SampledValue(properties, context), MemoryManaged("v16.Metering.SampledValueConcrete"), value(value) { }
+    SampledValueConcrete(const SampledValueConcrete& other) : SampledValue(other), MemoryManaged(other), value(other.value) { }
     ~SampledValueConcrete() = default;
 
     operator bool() override {return DeSerializer::ready(value);}
 
-    std::string serializeValue() override {return DeSerializer::serialize(value);}
+    String serializeValue() override {return DeSerializer::serialize(value);}
 
     int32_t toInteger() override { return DeSerializer::toInteger(value);}
 };
@@ -137,11 +123,11 @@ public:
 };
 
 template <class T, class DeSerializer>
-class SampledValueSamplerConcrete : public SampledValueSampler {
+class SampledValueSamplerConcrete : public SampledValueSampler, public MemoryManaged {
 private:
     std::function<T(ReadingContext context)> sampler;
 public:
-    SampledValueSamplerConcrete(SampledValueProperties properties, std::function<T(ReadingContext)> sampler) : SampledValueSampler(properties), sampler(sampler) { }
+    SampledValueSamplerConcrete(SampledValueProperties properties, std::function<T(ReadingContext)> sampler) : SampledValueSampler(properties), MemoryManaged("v16.Metering.SampledValueSamplerConcrete"), sampler(sampler) { }
     std::unique_ptr<SampledValue> takeValue(ReadingContext context) override {
         return std::unique_ptr<SampledValueConcrete<T, DeSerializer>>(new SampledValueConcrete<T, DeSerializer>(
             properties,
@@ -151,7 +137,7 @@ public:
     std::unique_ptr<SampledValue> deserializeValue(JsonObject svJson) override {
         return std::unique_ptr<SampledValueConcrete<T, DeSerializer>>(new SampledValueConcrete<T, DeSerializer>(
             properties,
-            Ocpp16::deserializeReadingContext(svJson["context"] | "NOT_SET"),
+            deserializeReadingContext(svJson["context"] | "NOT_SET"),
             DeSerializer::deserialize(svJson["value"] | "")));
     }
 };

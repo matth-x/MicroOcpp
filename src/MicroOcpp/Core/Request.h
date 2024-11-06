@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #ifndef MO_REQUEST_H
@@ -13,17 +13,18 @@
 
 #include <MicroOcpp/Core/RequestCallbacks.h>
 
+#include <MicroOcpp/Core/Memory.h>
+
 namespace MicroOcpp {
 
 class Operation;
 class Model;
-class StoredOperationHandler;
 
-class Request {
+class Request : public MemoryManaged {
 private:
-    std::string messageID {};
+    String messageID;
     std::unique_ptr<Operation> operation;
-    void setMessageID(const std::string &id);
+    void setMessageID(const char *id);
     OnReceiveConfListener onReceiveConfListener = [] (JsonObject payload) {};
     OnReceiveReqListener onReceiveReqListener = [] (JsonObject payload) {};
     OnSendConfListener onSendConfListener = [] (JsonObject payload) {};
@@ -34,28 +35,22 @@ private:
     unsigned long timeout_start = 0;
     unsigned long timeout_period = 40000;
     bool timed_out = false;
-
-    unsigned int trialNo = 0;
     
     unsigned long debugRequest_start = 0;
 
-    std::unique_ptr<StoredOperationHandler> opStore;
+    bool requestSent = false;
 public:
 
     Request(std::unique_ptr<Operation> msg);
 
-    Request();
-
     ~Request();
 
-    void setOperation(std::unique_ptr<Operation> msg);
-    std::unique_ptr<Operation>& getOperation();
+    Operation *getOperation();
 
     void setTimeout(unsigned long timeout); //0 = disable timeout
     bool isTimeoutExceeded();
-    void executeTimeout(); //call Timeout handler
-
-    unsigned int getTrialNo(); //how many times createRequest() has been tried (used for retry behavior)
+    void executeTimeout(); //call Timeout Listener
+    void setOnTimeoutListener(OnTimeoutListener onTimeout);
 
     /**
      * Sends the message(s) that belong to the OCPP Operation. This function puts a JSON message on the lower protocol layer.
@@ -65,7 +60,11 @@ public:
      * This function is usually called multiple times by the Arduino loop(). On first call, the request is initially sent. In the
      * succeeding calls, the implementers decide to either resend the request, or do nothing as the operation is still pending.
      */
-    std::unique_ptr<DynamicJsonDocument> createRequest();
+    enum class CreateRequestResult {
+        Success,
+        Failure
+    };
+    CreateRequestResult createRequest(JsonDoc& out);
 
    /**
     * Decides if message belongs to this operation instance and if yes, proccesses it. Receives both Confirmations and Errors
@@ -86,24 +85,17 @@ public:
      * message. Returns true on success, false otherwise. Returns also true if a CallError has successfully
      * been sent
      */
-    std::unique_ptr<DynamicJsonDocument> createResponse();
+    enum class CreateResponseResult {
+        Success,
+        Pending,
+        Failure
+    };
 
-    void initiate(std::unique_ptr<StoredOperationHandler> opStorage);
+    CreateResponseResult createResponse(JsonDoc& out);
 
-    bool restore(std::unique_ptr<StoredOperationHandler> opStorage, Model *model);
-
-    StoredOperationHandler *getStorageHandler() {return opStore.get();}
-
-    void setOnReceiveConfListener(OnReceiveConfListener onReceiveConf);
-
-    /**
-     * Sets a Listener that is called after this machine processed a request by the communication counterpart
-     */
-    void setOnReceiveReqListener(OnReceiveReqListener onReceiveReq);
-
-    void setOnSendConfListener(OnSendConfListener onSendConf);
-
-    void setOnTimeoutListener(OnTimeoutListener onTimeout);
+    void setOnReceiveConfListener(OnReceiveConfListener onReceiveConf); //listener executed when we received the .conf() to a .req() we sent
+    void setOnReceiveReqListener(OnReceiveReqListener onReceiveReq); //listener executed when we receive a .req()
+    void setOnSendConfListener(OnSendConfListener onSendConf); //listener executed when we send a .conf() to a .req() we received
 
     void setOnReceiveErrorListener(OnReceiveErrorListener onReceiveError);
 
@@ -120,9 +112,17 @@ public:
      */
     void setOnAbortListener(OnAbortListener onAbort);
 
-    const char *getMessageID();
     const char *getOperationType();
+
+    void setRequestSent();
+    bool isRequestSent();
 };
+
+/*
+ * Simple factory functions
+ */
+std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> op);
+std::unique_ptr<Request> makeRequest(Operation *op); //takes ownership of op
 
 } //end namespace MicroOcpp
 

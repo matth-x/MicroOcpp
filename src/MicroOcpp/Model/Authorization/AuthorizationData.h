@@ -1,12 +1,17 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef AUTHORIZATIONDATA_H
-#define AUTHORIZATIONDATA_H
+#ifndef MO_AUTHORIZATIONDATA_H
+#define MO_AUTHORIZATIONDATA_H
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
 
 #include <MicroOcpp/Operations/CiStrings.h>
 #include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <ArduinoJson.h>
 #include <memory>
 
@@ -32,11 +37,11 @@ enum class AuthorizationStatus : uint8_t {
 const char *serializeAuthorizationStatus(AuthorizationStatus status);
 AuthorizationStatus deserializeAuthorizationStatus(const char *cstr);
 
-class AuthorizationData {
+class AuthorizationData : public MemoryManaged {
 private:
     //data structure optimized for memory consumption
 
-    std::unique_ptr<char[]> parentIdTag;
+    char *parentIdTag = nullptr;
     std::unique_ptr<Timestamp> expiryDate;
 
     char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
@@ -54,14 +59,15 @@ public:
     size_t getJsonCapacity() const;
     void writeJson(JsonObject& entry, bool compact = false); //compact: compressed representation for flash storage
 
-    const char *getIdTag() const {return idTag;}
-    Timestamp *getExpiryDate() const {return expiryDate.get();}
-    const char *getParentIdTag() const {return parentIdTag.get();}
-    AuthorizationStatus getAuthorizationStatus() const {return status;}
+    const char *getIdTag() const;
+    Timestamp *getExpiryDate() const;
+    const char *getParentIdTag() const;
+    AuthorizationStatus getAuthorizationStatus() const;
 
     void reset();
 };
 
 }
 
+#endif //MO_ENABLE_LOCAL_AUTH
 #endif

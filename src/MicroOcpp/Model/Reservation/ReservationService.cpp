@@ -1,6 +1,10 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_RESERVATION
 
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Core/Context.h>
@@ -14,7 +18,7 @@
 
 using namespace MicroOcpp;
 
-ReservationService::ReservationService(Context& context, unsigned int numConnectors) : context(context), maxReservations((int) numConnectors - 1) {
+ReservationService::ReservationService(Context& context, unsigned int numConnectors) : MemoryManaged("v16.Reservation.ReservationService"), context(context), maxReservations((int) numConnectors - 1), reservations(makeVector<std::unique_ptr<Reservation>>(getMemoryTag())) {
     if (maxReservations > 0) {
         reservations.reserve((size_t) maxReservations);
         for (int i = 0; i < maxReservations; i++) {
@@ -24,8 +28,8 @@ ReservationService::ReservationService(Context& context, unsigned int numConnect
 
     reserveConnectorZeroSupportedBool = declareConfiguration<bool>("ReserveConnectorZeroSupported", true, CONFIGURATION_VOLATILE, true);
     
-    context.getOperationRegistry().registerOperation("CancelReservation", [&context] () {
-        return new Ocpp16::CancelReservation(context.getModel());});
+    context.getOperationRegistry().registerOperation("CancelReservation", [this] () {
+        return new Ocpp16::CancelReservation(*this);});
     context.getOperationRegistry().registerOperation("ReserveNow", [&context] () {
         return new Ocpp16::ReserveNow(context.getModel());});
 }
@@ -42,7 +46,7 @@ void ReservationService::loop() {
 
             //check if connector went inoperative
             auto cStatus = connector->getStatus();
-            if (cStatus == ChargePointStatus::Faulted || cStatus == ChargePointStatus::Unavailable) {
+            if (cStatus == ChargePointStatus_Faulted || cStatus == ChargePointStatus_Unavailable) {
                 reservation->clear();
                 continue;
             }
@@ -153,7 +157,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
             continue;
         }
         if (auto connector = context.getModel().getConnector(cId)) {
-            if (connector->getStatus() == ChargePointStatus::Available) {
+            if (connector->getStatus() == ChargePointStatus_Available) {
                 availableCount++;
             }
         }
@@ -210,3 +214,5 @@ bool ReservationService::updateReservation(int reservationId, unsigned int conne
     MO_DBG_ERR("error finding blocking reservation");
     return false;
 }
+
+#endif //MO_ENABLE_RESERVATION

@@ -1,16 +1,16 @@
-# <img src="https://github.com/matth-x/MicroOcpp/assets/63792403/1c49d1ad-7afc-48d3-a54e-9aef2d4886db" alt="Icon" height="24"> &nbsp; MicroOcpp
+# <img src="https://github.com/matth-x/MicroOcpp/assets/63792403/1c49d1ad-7afc-48d3-a54e-9aef2d4886db" alt="Icon" height="24"> &nbsp; MicroOCPP
 
 [![Build Status]( https://github.com/matth-x/MicroOcpp/workflows/PlatformIO%20CI/badge.svg)](https://github.com/matth-x/MicroOcpp/actions)
 [![Unit tests]( https://github.com/matth-x/MicroOcpp/workflows/Unit%20tests/badge.svg)](https://github.com/matth-x/MicroOcpp/actions)
 [![codecov](https://codecov.io/github/matth-x/ArduinoOcpp/branch/develop/graph/badge.svg?token=UN6LO96HM7)](https://codecov.io/github/matth-x/ArduinoOcpp)
 
-OCPP 1.6 client for microcontrollers. Portable C/C++. Compatible with Espressif, Arduino, NXP, STM, Linux and more.
+OCPP 1.6 / 2.0.1 client for microcontrollers. Portable C/C++. Compatible with Espressif, Arduino, NXP, STM, Linux and more.
 
 :heavy_check_mark: Works with [15+ commercial Central Systems](https://www.micro-ocpp.com/#h.314525e8447cc93c_81)
 
 :heavy_check_mark: Eligible for public chargers (Eichrecht-compliant)
 
-:heavy_check_mark: Supports all OCPP 1.6 feature profiles and OCPP 2.0.1 preview
+:heavy_check_mark: Supports all OCPP 1.6 feature profiles and the [basic OCPP 2.0.1 UCs](https://github.com/matth-x/MicroOcpp/tree/feature/prepare-release?tab=readme-ov-file#ocpp-201-and-iso-15118)
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp) | Technical introduction: [Docs](https://matth-x.github.io/MicroOcpp/intro-tech) | Website: [www.micro-ocpp.com](https://www.micro-ocpp.com)
 
@@ -18,7 +18,7 @@ Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/mas
 
 *Main repository: [MicroOcppSimulator](https://github.com/matth-x/MicroOcppSimulator)*
 
-The Simulator is a demo & development tool for MicroOcpp which allows to quickly assess the compatibility with different OCPP backends. It simulates a full charging station, adds a GUI and a mocked hardware binding to MicroOcpp and runs in the browser (using WebAssembly): [Try it](https://demo.micro-ocpp.com/)
+The Simulator is a demo & development tool for MicroOCPP which allows to quickly assess the compatibility with different OCPP backends. It simulates a full charging station, adds a GUI and a mocked hardware binding to MicroOCPP and runs in the browser (using WebAssembly): [Try it](https://demo.micro-ocpp.com/)
 
 <div align="center"><img src="https://github.com/matth-x/MicroOcpp/assets/63792403/27f2819b-41fd-41a7-88a8-9e673b8a88b8" alt="Screenshot" width="800em" href="https://demo.micro-ocpp.com/"></div>
 
@@ -32,7 +32,7 @@ If you don't have an OCPP server at hand, leave the charge box ID blank and ente
 
 ## Benchmarks
 
-*Full report: [MicroOcpp benchmark (esp-idf)](https://github.com/matth-x/MicroOcpp-benchmark)*
+*Full report: [MicroOCPP benchmarks](https://matth-x.github.io/MicroOcpp/benchmarks/)*
 
 The following measurements were taken on the ESP32 @ 160MHz and represent the optimistic best case scenario for a charger with two physical connectors (i.e. compiled with `-Os`, disabled debug output and logs).
 
@@ -51,9 +51,9 @@ In practical setups, the execution time is largely determined by IO delays and t
 
 PlatformIO package: [MicroOcpp](https://registry.platformio.org/libraries/matth-x/MicroOcpp)
 
-MicroOcpp is an implementation of the OCPP communication behavior. It automatically initiates the corresponding OCPP operations once the hardware status changes or the RFID input is updated with a new value. Conversely it processes new data from the server, stores it locally and updates the hardware controls when applicable.
+MicroOCPP is an implementation of the OCPP communication behavior. It automatically initiates the corresponding OCPP operations once the hardware status changes or the RFID input is updated with a new value. Conversely it processes new data from the server, stores it locally and updates the hardware controls when applicable.
 
-Please take `examples/ESP/main.cpp` as the starting point for the first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. The API documentation can be found in [`MicroOcpp.h`](https://github.com/matth-x/MicroOcpp/blob/master/src/MicroOcpp.h). Also check out the [Docs](https://matth-x.github.io/MicroOcpp).
+Please take `examples/ESP/main.cpp` as the starting point for the first project. It is a minimal example which shows how to establish an OCPP connection and how to start and stop charging sessions. The API documentation can be found in [`MicroOcpp.h`](https://github.com/matth-x/MicroOcpp/blob/main/src/MicroOcpp.h). Also check out the [Docs](https://matth-x.github.io/MicroOcpp).
 
 ### Dependencies
 
@@ -69,16 +69,34 @@ If using the built-in certificate store (to enable, set build flag `MO_ENABLE_MB
 
 - [Mbed-TLS/mbedtls](https://github.com/Mbed-TLS/mbedtls) (version `2.28.1`)
 
-In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/MicroOcpp@1.0.0` in the PIO library manager.
+In case you use PlatformIO, you can copy all dependencies from `platformio.ini` into your own configuration file. Alternatively, you can install the full library with dependencies by adding `matth-x/MicroOcpp@1.2.0` in the PIO library manager.
 
 ## OCPP 2.0.1 and ISO 15118
 
-MicroOcpp will be upgraded to OCPP 2.0.1 soon. The API has already been prepared for transitioning between both versions, so an integration of the current library version will also be functional with the 2.0.1 upgrade.
+The following OCPP 2.0.1 use cases are implemented:
 
-ISO 15118 defines some use cases which include a message exchange between the charger and server. This library facilitates the integration of ISO 15118 by handling its OCPP-side communication. A public demonstration will follow with the first collaboration on an open OCPP 2.0.1 + ISO 15118 integration.
+| UC | Description | Note |
+| :--- | :--- | :--- |
+| B01 - B04<br>B11 - B12 | Provisioning | Ported from OCPP 1.6 |
+| B05 - B07 | Variables | |
+| C01 - C06 | Authorization options | |
+| C15 | Offline Authorization | |
+| E01 - E12 | Transactions | |
+| F01 - F03<br>F05 - F06 | RemoteControl | |
+| G01 - G04 | Availability | |
+| J02 | Tx-related MeterValues | persistency not supported yet |
+| M03 - M05 | Certificate management | Enable Mbed-TLS to use the built-in certificate store |
+| P01 - P02 | Data transfer | |
+| - | Protocol negotiation | The charger can select the OCPP version at runtime |
 
-## Contact details
+The OCPP 2.0.1 features are in an alpha development stage. By default, they are disabled and excluded from the build, so they have no impact on the firmware size. To enable, set the build flag `MO_ENABLE_V201=1` and initialize the library with the ProtocolVersion parameter `2.0.1`  (see [this example](https://github.com/matth-x/MicroOcppSimulator/blob/657e606c3b178d3add242935d413c72624130ff3/src/main.cpp#L43-L47) in the Simulator).
 
-I hope the given documentation and guidance can help you to successfully integrate an OCPP controller into your EVSE. I will be happy if you reach out!
+An integration of the library for OCPP 1.6 will also be functional with the 2.0.1 upgrade. It works with the same API in MicroOcpp.h.
 
-:envelope: : matthias [A⊤] arduino-ocpp [DО⊤] com
+ISO 15118 defines some use cases which include a message exchange between the charger and server. This library facilitates the integration of ISO 15118 by handling its OCPP-side communication.
+
+## Contact
+
+If you have further questions, feel free to reach out!
+
+:envelope: : matthias [A⊤] micro-ocpp [DО⊤] com

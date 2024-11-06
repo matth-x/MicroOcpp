@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef BOOTNOTIFICATION_H
-#define BOOTNOTIFICATION_H
+#ifndef MO_BOOTNOTIFICATION_H
+#define MO_BOOTNOTIFICATION_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Operations/CiStrings.h>
@@ -19,25 +19,25 @@ class Model;
 
 namespace Ocpp16 {
 
-class BootNotification : public Operation {
+class BootNotification : public Operation, public MemoryManaged {
 private:
     Model& model;
-    std::unique_ptr<DynamicJsonDocument> credentials;
+    std::unique_ptr<JsonDoc> credentials;
     const char *errorCode = nullptr;
 public:
-    BootNotification(Model& model, std::unique_ptr<DynamicJsonDocument> payload);
+    BootNotification(Model& model, std::unique_ptr<JsonDoc> payload);
 
     ~BootNotification() = default;
 
     const char* getOperationType() override;
 
-    std::unique_ptr<DynamicJsonDocument> createReq() override;
+    std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

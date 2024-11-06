@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Operations/SetChargingProfile.h>
@@ -9,8 +9,9 @@
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp16::SetChargingProfile;
+using MicroOcpp::JsonDoc;
 
-SetChargingProfile::SetChargingProfile(Model& model, SmartChargingService& scService) : model(model), scService(scService) {
+SetChargingProfile::SetChargingProfile(Model& model, SmartChargingService& scService) : MemoryManaged("v16.Operation.", "SetChargingProfile"), model(model), scService(scService) {
 
 }
 
@@ -65,7 +66,7 @@ void SetChargingProfile::processReq(JsonObject payload) {
             return;
         }
 
-        if (chargingProfile->getTransactionId() < 0 ||
+        if (chargingProfile->getTransactionId() >= 0 &&
                 chargingProfile->getTransactionId() != transaction->getTransactionId()) {
             //transactionId undefined / mismatch
             accepted = false;
@@ -84,8 +85,8 @@ void SetChargingProfile::processReq(JsonObject payload) {
     accepted = scService.setChargingProfile(connectorId, std::move(chargingProfile));
 }
 
-std::unique_ptr<DynamicJsonDocument> SetChargingProfile::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> SetChargingProfile::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     if (accepted) {
         payload["status"] = "Accepted";

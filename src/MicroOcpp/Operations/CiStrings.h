@@ -1,13 +1,13 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 /*
  * A collection of the fixed-length string types in the OCPP specification
  */
 
-#ifndef CI_STRINGS_H
-#define CI_STRINGS_H
+#ifndef MO_CI_STRINGS_H
+#define MO_CI_STRINGS_H
 
 #define CiString20TypeLen 20
 #define CiString25TypeLen 25

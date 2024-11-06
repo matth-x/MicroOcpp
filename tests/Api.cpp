@@ -1,12 +1,16 @@
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Core/Configuration.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
 #include <MicroOcpp/Debug.h>
-#include "./catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 #define BASE_TIME "2023-01-01T00:00:00.000Z"
@@ -51,14 +55,17 @@ TEST_CASE( "C++ API test" ) {
         auto valueSampler = std::unique_ptr<MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>>(
                                         new MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>(
                     svprops,
-                    [c = &checkpoints[ncheck++]] (MicroOcpp::ReadingContext) -> int32_t {*c = true; return 0;}));
+                    [c = &checkpoints[ncheck++]] (ReadingContext) -> int32_t {*c = true; return 0;}));
         addMeterValueInput(std::move(valueSampler));
 
         setOccupiedInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return false;});
         setStartTxReadyInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return true;});
         setStopTxReadyInput([c = &checkpoints[ncheck++]] () -> bool {*c = true; return true;});
         setTxNotificationOutput([c = &checkpoints[ncheck++]] (MicroOcpp::Transaction*, MicroOcpp::TxNotification) {*c = true;});
+
+#if MO_ENABLE_CONNECTOR_LOCK
         setOnUnlockConnectorInOut([c = &checkpoints[ncheck++]] () -> UnlockConnectorResult {*c = true; return UnlockConnectorResult_Unlocked;});
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
         setOnResetNotify([c = &checkpoints[ncheck++]] (bool) -> bool {*c = true; return true;});
         setOnResetExecute([c = &checkpoints[ncheck++]] (bool) {*c = true;});
@@ -71,13 +78,13 @@ TEST_CASE( "C++ API test" ) {
         setOnSendConf("StatusNotification", [c = &checkpoints[ncheck++]] (JsonObject) {*c = true;});
         sendRequest("DataTransfer", [c = &checkpoints[ncheck++]] () {
             *c = true;
-            auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
             doc->to<JsonObject>();
             return doc;
         }, [c = &checkpoints[ncheck++]] (JsonObject) {*c = true;});
         setRequestHandler("DataTransfer", [c = &checkpoints[ncheck++]] (JsonObject) {*c = true;}, [c = &checkpoints[ncheck++]] () {
             *c = true;
-            auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
             doc->to<JsonObject>();
             return doc;
         });
@@ -138,13 +145,13 @@ TEST_CASE( "C++ API test" ) {
         REQUIRE(isOperative());
 
         sendRequest("UnlockConnector", [] () {
-            auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
             (*doc)["connectorId"] = 1;
             return doc;
         }, [] (JsonObject) {});
 
         sendRequest("Reset", [] () {
-            auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
             (*doc)["type"] = "Hard";
             return doc;
         }, [] (JsonObject) {});
@@ -227,13 +234,13 @@ TEST_CASE( "C API test" ) {
         auto valueSampler = std::unique_ptr<MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>>(
                                         new MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>(
                     svprops,
-                    [] (MicroOcpp::ReadingContext) -> int32_t {checkpointsc[16] = true; return 0;})); ncheckc++;
+                    [] (ReadingContext) -> int32_t {checkpointsc[16] = true; return 0;})); ncheckc++;
         ocpp_addMeterValueInput(reinterpret_cast<MeterValueInput*>(valueSampler.release()));
 
         valueSampler = std::unique_ptr<MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>>(
                                         new MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>(
                     svprops,
-                    [] (MicroOcpp::ReadingContext) -> int32_t {checkpointsc[17] = true; return 0;})); ncheckc++;
+                    [] (ReadingContext) -> int32_t {checkpointsc[17] = true; return 0;})); ncheckc++;
         ocpp_addMeterValueInput_m(2, reinterpret_cast<MeterValueInput*>(valueSampler.release()));
 
         ocpp_setOccupiedInput([] () -> bool {checkpointsc[18] = true; return true;}); ncheckc++;
@@ -244,8 +251,14 @@ TEST_CASE( "C API test" ) {
         ocpp_setStopTxReadyInput_m(2, [] (unsigned int) -> bool {checkpointsc[23] = true; return true;}); ncheckc++;
         ocpp_setTxNotificationOutput([] (OCPP_Transaction*, OCPP_TxNotification) {checkpointsc[24] = true;}); ncheckc++;
         ocpp_setTxNotificationOutput_m(2, [] (unsigned int, OCPP_Transaction*, OCPP_TxNotification) {checkpointsc[25] = true;}); ncheckc++;
+
+#if MO_ENABLE_CONNECTOR_LOCK
         ocpp_setOnUnlockConnectorInOut([] () -> UnlockConnectorResult {checkpointsc[26] = true; return UnlockConnectorResult_Unlocked;}); ncheckc++;
         ocpp_setOnUnlockConnectorInOut_m(2, [] (unsigned int) -> UnlockConnectorResult {checkpointsc[27] = true; return UnlockConnectorResult_Unlocked;}); ncheckc++;
+#else
+        checkpointsc[26] = true;
+        checkpointsc[27] = true;
+#endif //MO_ENABLE_CONNECTOR_LOCK
 
         ocpp_setOnResetNotify([] (bool) -> bool {checkpointsc[28] = true; return true;}); ncheckc++;
         ocpp_setOnResetExecute([] (bool) {checkpointsc[29] = true;}); ncheckc++;
@@ -320,18 +333,18 @@ TEST_CASE( "C API test" ) {
         REQUIRE(ocpp_isOperative_m(2));
 
         sendRequest("UnlockConnector", [] () {
-            auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
             (*doc)["connectorId"] = 1;
             return doc;
         }, [] (JsonObject) {});
         sendRequest("UnlockConnector", [] () {
-            auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
             (*doc)["connectorId"] = 2;
             return doc;
         }, [] (JsonObject) {});
 
         sendRequest("Reset", [] () {
-            auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+            auto doc = MicroOcpp::makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
             (*doc)["type"] = "Hard";
             return doc;
         }, [] (JsonObject) {});

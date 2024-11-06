@@ -1,17 +1,17 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
 #include <MicroOcpp/Model/Heartbeat/HeartbeatService.h>
 #include <MicroOcpp/Core/Context.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Operations/Heartbeat.h>
 #include <MicroOcpp/Platform.h>
 
 using namespace MicroOcpp;
 
-HeartbeatService::HeartbeatService(Context& context) : context(context) {
+HeartbeatService::HeartbeatService(Context& context) : MemoryManaged("v16.Heartbeat.HeartbeatService"), context(context) {
     heartbeatIntervalInt = declareConfiguration<int>("HeartbeatInterval", 86400);
     lastHeartbeat = mocpp_tick_ms();
 

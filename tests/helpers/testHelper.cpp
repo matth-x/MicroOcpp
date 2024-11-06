@@ -1,11 +1,14 @@
-#include <iostream>
+// matth-x/MicroOcpp
+// Copyright Matthias Akstaller 2019 - 2024
+// MIT License
+
+#include <catch2/catch.hpp>
+#include <catch2/catch.hpp>
+
 #include <MicroOcpp.h>
+#include <MicroOcpp/Core/Memory.h>
 
 using namespace MicroOcpp;
-
-void cpp_console_out(const char *msg) {
-    std::cout << msg;
-}
 
 unsigned long mtime = 10000;
 unsigned long custom_timer_cb() {
@@ -18,3 +21,15 @@ void loop() {
         mocpp_loop();
     }
 }
+
+class TestRunListener : public Catch::TestEventListenerBase {
+public:
+    using Catch::TestEventListenerBase::TestEventListenerBase;
+
+    void testRunEnded( Catch::TestRunStats const& testRunStats ) override {
+        MO_MEM_PRINT_STATS();
+        MO_MEM_DEINIT();
+    }
+};
+
+CATCH_REGISTER_LISTENER(TestRunListener)

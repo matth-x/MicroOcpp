@@ -82,6 +82,7 @@ Variable::~Variable() {
 
 void Variable::setName(const char *name) {
     this->variableName = name;
+    updateMemoryTag("v201.Variables.Variable.", name);
 }
 const char *Variable::getName() const {
     return variableName;
@@ -96,11 +97,9 @@ const ComponentId& Variable::getComponentId() const {
 
 void Variable::setInt(int val, AttributeType) {
     MO_DBG_ERR("type err");
-    (void)0;
 }
 void Variable::setBool(bool val, AttributeType) {
     MO_DBG_ERR("type err");
-    (void)0;
 }
 bool Variable::setString(const char *val, AttributeType) {
     MO_DBG_ERR("type err");
@@ -164,13 +163,6 @@ void Variable::setConstant() {
 }
 bool Variable::isConstant() {
     return constant;
-}
-
-void Variable::detach() {
-    detached = true;
-}
-bool Variable::isDetached() {
-    return detached;
 }
 
 template <class T>
@@ -323,13 +315,13 @@ public:
     }
 
     ~VariableString() {
-        delete[] value.get(AttributeType::Actual);
+        MO_FREE(value.get(AttributeType::Actual));
         value.get(AttributeType::Actual) = nullptr;
-        delete[] value.get(AttributeType::Target);
+        MO_FREE(value.get(AttributeType::Target));
         value.get(AttributeType::Target) = nullptr;
-        delete[] value.get(AttributeType::MinSet);
+        MO_FREE(value.get(AttributeType::MinSet));
         value.get(AttributeType::MinSet) = nullptr;
-        delete[] value.get(AttributeType::MaxSet);
+        MO_FREE(value.get(AttributeType::MaxSet));
         value.get(AttributeType::MaxSet) = nullptr;
     }
 
@@ -344,14 +336,15 @@ public:
         size_t len = strlen(val);
         char *valNew = nullptr;
         if (len != 0) {
-            valNew = new char[len + 1];
+            size_t size = len + 1;
+            valNew = static_cast<char*>(MO_MALLOC(getMemoryTag(), size));
             if (!valNew) {
                 MO_DBG_ERR("OOM");
                 return false;
             }
-            memcpy(valNew, val, len + 1);
+            memcpy(valNew, val, size);
         }
-        delete[] value.get(attrType);
+        MO_FREE(value.get(attrType));
         value.get(attrType) = valNew;
         writeCount++;
         return true;

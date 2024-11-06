@@ -1,9 +1,13 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef SENDLOCALLIST_H
-#define SENDLOCALLIST_H
+#ifndef MO_SENDLOCALLIST_H
+#define MO_SENDLOCALLIST_H
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
 
 #include <MicroOcpp/Core/Operation.h>
 
@@ -13,7 +17,7 @@ class AuthorizationService;
 
 namespace Ocpp16 {
 
-class SendLocalList : public Operation {
+class SendLocalList : public Operation, public MemoryManaged {
 private:
     AuthorizationService& authService;
     const char *errorCode = nullptr;
@@ -28,11 +32,13 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };
 
 } //end namespace Ocpp16
 } //end namespace MicroOcpp
+
+#endif //MO_ENABLE_LOCAL_AUTH
 #endif

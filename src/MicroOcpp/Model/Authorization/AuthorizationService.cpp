@@ -1,6 +1,10 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
 
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
 #include <MicroOcpp/Model/ConnectorBase/Connector.h>
@@ -8,7 +12,7 @@
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/OperationRegistry.h>
-#include <MicroOcpp/Core/SimpleRequestFactory.h>
+#include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Operations/GetLocalListVersion.h>
 #include <MicroOcpp/Operations/SendLocalList.h>
 #include <MicroOcpp/Operations/StatusNotification.h>
@@ -18,8 +22,8 @@
 
 using namespace MicroOcpp;
 
-AuthorizationService::AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : context(context), filesystem(filesystem) {
-    
+AuthorizationService::AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : MemoryManaged("v16.Authorization.AuthorizationService"), context(context), filesystem(filesystem) {
+
     localAuthListEnabledBool = declareConfiguration<bool>("LocalAuthListEnabled", true);
     declareConfiguration<int>("LocalAuthListMaxLength", MO_LocalAuthListMaxLength, CONFIGURATION_VOLATILE, true);
     declareConfiguration<int>("SendLocalListMaxLength", MO_SendLocalListMaxLength, CONFIGURATION_VOLATILE, true);
@@ -52,7 +56,7 @@ bool AuthorizationService::loadLists() {
         return true;
     }
     
-    auto doc = FilesystemUtils::loadJson(filesystem, MO_LOCALAUTHORIZATIONLIST_FN);
+    auto doc = FilesystemUtils::loadJson(filesystem, MO_LOCALAUTHORIZATIONLIST_FN, getMemoryTag());
     if (!doc) {
         MO_DBG_ERR("failed to load %s", MO_LOCALAUTHORIZATIONLIST_FN);
         return false;
@@ -102,7 +106,7 @@ bool AuthorizationService::updateLocalList(JsonArray localAuthorizationListJson,
 
     if (success) {
         
-        DynamicJsonDocument doc (
+        auto doc = initJsonDoc(getMemoryTag(),
                 JSON_OBJECT_SIZE(3) +
                 localAuthorizationList.getJsonCapacity());
 
@@ -176,7 +180,7 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
     if (!equivalent) {
         //send error code "LocalListConflict" to server
 
-        ChargePointStatus cpStatus = ChargePointStatus::NOT_SET;
+        ChargePointStatus cpStatus = ChargePointStatus_UNDEFINED;
         if (context.getModel().getNumConnectors() > 0) {
             cpStatus = context.getModel().getConnector(0)->getStatus();
         }
@@ -192,3 +196,5 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
         context.initiateRequest(std::move(statusNotification));
     }
 }
+
+#endif //MO_ENABLE_LOCAL_AUTH

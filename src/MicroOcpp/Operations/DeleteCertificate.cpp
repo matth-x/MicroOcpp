@@ -3,31 +3,37 @@
 // MIT License
 
 #include <MicroOcpp/Operations/DeleteCertificate.h>
+
+#if MO_ENABLE_CERT_MGMT
+
 #include <MicroOcpp/Model/Certificates/Certificate.h>
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
 #include <MicroOcpp/Debug.h>
 
 using MicroOcpp::Ocpp201::DeleteCertificate;
+using MicroOcpp::JsonDoc;
 
-DeleteCertificate::DeleteCertificate(CertificateService& certService) : certService(certService) {
+DeleteCertificate::DeleteCertificate(CertificateService& certService) : MemoryManaged("v201.Operation.", "DeleteCertificate"), certService(certService) {
 
 }
 
 void DeleteCertificate::processReq(JsonObject payload) {
 
-    if (!payload.containsKey("hashAlgorithm") ||
-            !payload.containsKey("issuerNameHash") ||
-            !payload.containsKey("issuerKeyHash") ||
-            !payload.containsKey("serialNumber")) {
+    JsonObject certIdJson = payload["certificateHashData"];
+
+    if (!certIdJson.containsKey("hashAlgorithm") ||
+            !certIdJson.containsKey("issuerNameHash") ||
+            !certIdJson.containsKey("issuerKeyHash") ||
+            !certIdJson.containsKey("serialNumber")) {
         errorCode = "FormationViolation";
         return;
     }
 
-    const char *hashAlgorithm = payload["hashAlgorithm"] | "_Invalid";
+    const char *hashAlgorithm = certIdJson["hashAlgorithm"] | "_Invalid";
 
-    if (!payload["issuerNameHash"].is<const char*>() ||
-            !payload["issuerKeyHash"].is<const char*>() ||
-            !payload["serialNumber"].is<const char*>()) {
+    if (!certIdJson["issuerNameHash"].is<const char*>() ||
+            !certIdJson["issuerKeyHash"].is<const char*>() ||
+            !certIdJson["serialNumber"].is<const char*>()) {
         errorCode = "FormationViolation";
         return;
     }
@@ -35,27 +41,20 @@ void DeleteCertificate::processReq(JsonObject payload) {
     CertificateHash cert;
 
     if (!strcmp(hashAlgorithm, "SHA256")) {
-        cert.hashAlgorithm = HashAlgorithmEnumType::SHA256;
+        cert.hashAlgorithm = HashAlgorithmType_SHA256;
     } else if (!strcmp(hashAlgorithm, "SHA384")) {
-        cert.hashAlgorithm = HashAlgorithmEnumType::SHA384;
+        cert.hashAlgorithm = HashAlgorithmType_SHA384;
     } else if (!strcmp(hashAlgorithm, "SHA512")) {
-        cert.hashAlgorithm = HashAlgorithmEnumType::SHA512;
+        cert.hashAlgorithm = HashAlgorithmType_SHA512;
     } else {
         errorCode = "FormationViolation";
         return;
     }
 
-    auto retIN = snprintf(cert.issuerNameHash, sizeof(cert.issuerNameHash), "%s", payload["issuerNameHash"] | "_Invalid");
-    auto retIK = snprintf(cert.issuerKeyHash, sizeof(cert.issuerKeyHash), "%s", payload["issuerKeyHash"] | "_Invalid");
-    auto retSN = snprintf(cert.serialNumber, sizeof(cert.serialNumber), "%s", payload["serialNumber"] | "_Invalid");
+    auto retIN = ocpp_cert_set_issuerNameHash(&cert, certIdJson["issuerNameHash"] | "_Invalid", cert.hashAlgorithm);
+    auto retIK = ocpp_cert_set_issuerKeyHash(&cert, certIdJson["issuerKeyHash"] | "_Invalid", cert.hashAlgorithm);
+    auto retSN = ocpp_cert_set_serialNumber(&cert, certIdJson["serialNumber"] | "_Invalid");
     if (retIN < 0 || retIK < 0 || retSN < 0) {
-        MO_DBG_ERR("could not parse CertId: %i %i %i", retIN, retIK, retSN);
-        errorCode = "InternalError";
-        return;
-    }
-    if ((size_t)retIN >= sizeof(cert.issuerNameHash) ||
-            (size_t)retIK >= sizeof(cert.issuerKeyHash) ||
-            (size_t)retSN >= sizeof(cert.serialNumber)) {
         errorCode = "FormationViolation";
         return;
     }
@@ -69,13 +68,13 @@ void DeleteCertificate::processReq(JsonObject payload) {
     auto status = certStore->deleteCertificate(cert);
 
     switch (status) {
-        case DeleteCertificateStatus::Accepted:
+        case DeleteCertificateStatus_Accepted:
             this->status = "Accepted";
             break;
-        case DeleteCertificateStatus::Failed:
+        case DeleteCertificateStatus_Failed:
             this->status = "Failed";
             break;
-        case DeleteCertificateStatus::NotFound:
+        case DeleteCertificateStatus_NotFound:
             this->status = "NotFound";
             break;
         default:
@@ -87,9 +86,11 @@ void DeleteCertificate::processReq(JsonObject payload) {
     //operation executed successfully
 }
 
-std::unique_ptr<DynamicJsonDocument> DeleteCertificate::createConf(){
-    auto doc = std::unique_ptr<DynamicJsonDocument>(new DynamicJsonDocument(JSON_OBJECT_SIZE(1)));
+std::unique_ptr<JsonDoc> DeleteCertificate::createConf(){
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = status;
     return doc;
 }
+
+#endif //MO_ENABLE_CERT_MGMT

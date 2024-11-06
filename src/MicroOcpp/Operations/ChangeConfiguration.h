@@ -1,16 +1,16 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CHANGECONFIGURATION_H
-#define CHANGECONFIGURATION_H
+#ifndef MO_CHANGECONFIGURATION_H
+#define MO_CHANGECONFIGURATION_H
 
 #include <MicroOcpp/Core/Operation.h>
 
 namespace MicroOcpp {
 namespace Ocpp16 {
 
-class ChangeConfiguration : public Operation {
+class ChangeConfiguration : public Operation, public MemoryManaged {
 private:
     bool reject = false;
     bool rebootRequired = false;
@@ -25,7 +25,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 

@@ -1,14 +1,14 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef CONFIGURATIONCONTAINER_H
-#define CONFIGURATIONCONTAINER_H
+#ifndef MO_CONFIGURATIONCONTAINER_H
+#define MO_CONFIGURATIONCONTAINER_H
 
-#include <vector>
 #include <memory>
 
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
@@ -35,11 +35,13 @@ public:
     virtual std::shared_ptr<Configuration> getConfiguration(const char *key) = 0;
 
     virtual void loadStaticKey(Configuration& config, const char *key) { } //possible optimization: can replace internal key with passed static key
+
+    virtual void removeUnused() { } //remove configs which haven't been accessed (optional and only if known)
 };
 
-class ConfigurationContainerVolatile : public ConfigurationContainer {
+class ConfigurationContainerVolatile : public ConfigurationContainer, public MemoryManaged {
 private:
-    std::vector<std::shared_ptr<Configuration>> configurations;
+    Vector<std::shared_ptr<Configuration>> configurations;
 public:
     ConfigurationContainerVolatile(const char *filename, bool accessible);
 

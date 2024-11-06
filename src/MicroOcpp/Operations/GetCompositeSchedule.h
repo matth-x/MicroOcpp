@@ -1,9 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef GETCOMPOSITESCHEDULE_H
-#define GETCOMPOSITESCHEDULE_H
+#ifndef MO_GETCOMPOSITESCHEDULE_H
+#define MO_GETCOMPOSITESCHEDULE_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Time.h>
@@ -15,7 +15,7 @@ class Model;
 
 namespace Ocpp16 {
 
-class GetCompositeSchedule : public Operation {
+class GetCompositeSchedule : public Operation, public MemoryManaged {
 private:
     Model& model;
     SmartChargingService& scService;
@@ -31,7 +31,7 @@ public:
 
     void processReq(JsonObject payload) override;
 
-    std::unique_ptr<DynamicJsonDocument> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
 };

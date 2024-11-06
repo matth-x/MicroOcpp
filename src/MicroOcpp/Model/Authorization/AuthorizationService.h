@@ -1,19 +1,24 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2023
+// Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef AUTHORIZATIONSERVICE_H
-#define AUTHORIZATIONSERVICE_H
+#ifndef MO_AUTHORIZATIONSERVICE_H
+#define MO_AUTHORIZATIONSERVICE_H
+
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_LOCAL_AUTH
 
 #include <MicroOcpp/Model/Authorization/AuthorizationList.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
 class Context;
 
-class AuthorizationService {
+class AuthorizationService : public MemoryManaged {
 private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
@@ -39,4 +44,5 @@ public:
 
 }
 
+#endif //MO_ENABLE_LOCAL_AUTH
 #endif
