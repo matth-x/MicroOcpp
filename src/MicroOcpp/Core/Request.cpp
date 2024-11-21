@@ -6,6 +6,7 @@
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Core/UuidUtils.h>
 
 #include <MicroOcpp/Operations/StartTransaction.h>
 #include <MicroOcpp/Operations/StopTransaction.h>
@@ -68,16 +69,9 @@ void Request::setMessageID(const char *id){
 Request::CreateRequestResult Request::createRequest(JsonDoc& requestJson) {
 
     if (messageID.empty()) {
-        unsigned char random [18];
-        char guuid [sizeof(random) * 2 + 1];
-
-        writeRandomNonsecure(random, sizeof(random));
-
-        for (size_t i = 0; i < sizeof(random); i++) {
-            snprintf(guuid + i * 2, 3, "%02x", random[i]);
-        }
-        guuid[8] = guuid[13] = guuid[18] = guuid[23] = '-';
-        messageID = guuid;
+        char uuid [37] = {'\0'};
+        generateUUID(uuid, 37);
+        messageID = uuid;
     }
 
     /*
