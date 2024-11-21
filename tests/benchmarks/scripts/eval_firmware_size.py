@@ -100,10 +100,17 @@ def categorize_table(df):
     df.at['Core/Time.cpp', 'v16'] = TICK
     df.at['Core/Time.cpp', 'v201'] = TICK
     df.at['Core/Time.cpp', 'Module'] = MODULE_GENERAL
+    df.at['Core/UuidUtils.cpp', 'v16'] = TICK
+    df.at['Core/UuidUtils.cpp', 'v201'] = TICK
+    df.at['Core/UuidUtils.cpp', 'Module'] = MODULE_GENERAL
     if 'Debug.cpp' in df.index:
         df.at['Debug.cpp', 'v16'] = TICK
         df.at['Debug.cpp', 'v201'] = TICK
         df.at['Debug.cpp', 'Module'] = MODULE_HAL
+    if 'Platform.cpp' in df.index:
+        df.at['Platform.cpp', 'v16'] = TICK
+        df.at['Platform.cpp', 'v201'] = TICK
+        df.at['Platform.cpp', 'Module'] = MODULE_HAL
     df.at['Model/Authorization/AuthorizationData.cpp', 'v16'] = TICK
     df.at['Model/Authorization/AuthorizationData.cpp', 'Module'] = MODULE_LOCALAUTH
     df.at['Model/Authorization/AuthorizationList.cpp', 'v16'] = TICK
