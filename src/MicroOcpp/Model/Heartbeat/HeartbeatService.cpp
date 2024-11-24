@@ -13,6 +13,7 @@ using namespace MicroOcpp;
 
 HeartbeatService::HeartbeatService(Context& context) : MemoryManaged("v16.Heartbeat.HeartbeatService"), context(context) {
     heartbeatIntervalInt = declareConfiguration<int>("HeartbeatInterval", 86400);
+    registerConfigurationValidator("HeartbeatInterval", VALIDATE_UNSIGNED_INT);
     lastHeartbeat = mocpp_tick_ms();
 
     //Register message handler for TriggerMessage operation

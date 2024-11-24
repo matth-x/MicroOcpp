@@ -9,6 +9,8 @@
 ### Fixed
 
 - Timing issues for OCTT test cases ([#383](https://github.com/matth-x/MicroOcpp/pull/383))
+- Misleading Reset failure dbg msg ([#388](https://github.com/matth-x/MicroOcpp/pull/388))
+- Reject negative ints in ChangeConfig ([#388](https://github.com/matth-x/MicroOcpp/pull/388))
 
 ## [1.2.0] - 2024-11-03
 
