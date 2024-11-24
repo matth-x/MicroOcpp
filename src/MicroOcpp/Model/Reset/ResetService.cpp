@@ -29,6 +29,7 @@ ResetService::ResetService(Context& context)
       : MemoryManaged("v16.Reset.ResetService"), context(context) {
 
     resetRetriesInt = declareConfiguration<int>("ResetRetries", 2);
+    registerConfigurationValidator("ResetRetries", VALIDATE_UNSIGNED_INT);
 
     context.getOperationRegistry().registerOperation("Reset", [&context] () {
         return new Ocpp16::Reset(context.getModel());});

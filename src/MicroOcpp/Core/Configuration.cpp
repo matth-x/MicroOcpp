@@ -246,4 +246,13 @@ bool configuration_clean_unused() {
     return configuration_save();
 }
 
+bool VALIDATE_UNSIGNED_INT(const char *value) {
+    for(size_t i = 0; value[i] != '\0'; i++) {
+        if (value[i] < '0' || value[i] > '9') {
+            return false;
+        }
+    }
+    return true;
+}
+
 } //end namespace MicroOcpp
