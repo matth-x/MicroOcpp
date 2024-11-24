@@ -50,9 +50,10 @@ void ResetService::loop() {
             MO_DBG_ERR("No Reset function set! Abort");
             outstandingResetRetries = 0;
         }
-        MO_DBG_ERR("Reset device failure. %s", outstandingResetRetries == 0 ? "Abort" : "Retry");
 
         if (outstandingResetRetries <= 0) {
+
+            MO_DBG_ERR("Reset device failure. Abort");
 
             ChargePointStatus cpStatus = ChargePointStatus_UNDEFINED;
             if (context.getModel().getNumConnectors() > 0) {
