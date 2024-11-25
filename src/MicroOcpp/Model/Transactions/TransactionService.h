@@ -52,6 +52,8 @@ public:
         std::function<bool()> startTxReadyInput;
         std::function<bool()> stopTxReadyInput;
 
+        std::function<void(Ocpp201::Transaction*,TxNotification)> txNotificationOutput;
+
         bool beginTransaction();
         bool endTransaction(Ocpp201::Transaction::StoppedReason stoppedReason, Ocpp201::TransactionEventTriggerReason stopTrigger);
 
@@ -73,6 +75,9 @@ public:
         void setConnectorPluggedInput(std::function<bool()> connectorPlugged);
         void setEvReadyInput(std::function<bool()> evRequestsEnergy);
         void setEvseReadyInput(std::function<bool()> connectorEnergized);
+
+        void setTxNotificationOutput(std::function<void(Ocpp201::Transaction*,TxNotification)> txNotificationOutput);
+        void updateTxNotification(TxNotification event);
 
         bool beginAuthorization(IdToken idToken, bool validateIdToken = true); // authorize by swipe RFID
         bool endAuthorization(IdToken idToken = IdToken(), bool validateIdToken = false); // stop authorization by swipe RFID

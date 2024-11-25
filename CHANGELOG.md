@@ -4,6 +4,7 @@
 
 ### Changed
 
+- Change `MicroOcpp::TxNotification` into C-style enum, replace `OCPP_TxNotication`
 - Improved UUID generation ([#383](https://github.com/matth-x/MicroOcpp/pull/383))
 
 ### Fixed

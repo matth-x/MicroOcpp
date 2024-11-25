@@ -43,7 +43,7 @@ void setup() {
     ocpp_setOccupiedInput([] () {return false;});
     ocpp_setStartTxReadyInput([] () {return false;});
     ocpp_setStopTxReadyInput([] () {return false;});
-    ocpp_setTxNotificationOutput([] (OCPP_Transaction*, OCPP_TxNotification) {});
+    ocpp_setTxNotificationOutput([] (OCPP_Transaction*, TxNotification) {});
 
 #if MO_ENABLE_CONNECTOR_LOCK
     ocpp_setOnUnlockConnectorInOut([] () {return UnlockConnectorResult_UnlockFailed;});

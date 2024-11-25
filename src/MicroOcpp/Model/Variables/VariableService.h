@@ -77,6 +77,7 @@ public:
     //Get Variable. If not existent, return nullptr
     Variable *getVariable(const ComponentId& component, const char *name);
 
+    bool load();
     bool commit();
 
     void addContainer(VariableContainer *container);

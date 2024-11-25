@@ -248,6 +248,18 @@ bool VariableService::addVariable(std::unique_ptr<Variable> variable) {
     return getContainerInternalByVariable(variable->getComponentId(), variable->getName()).add(std::move(variable));
 }
 
+bool VariableService::load() {
+    bool success = true;
+
+    for (size_t i = 0; i < MO_VARIABLESTORE_BUCKETS; i++) {
+        if (!containersInternal[i].load()) {
+            success = false;
+        }
+    }
+
+    return success;
+}
+
 bool VariableService::commit() {
     bool success = true;
 

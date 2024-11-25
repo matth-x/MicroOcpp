@@ -355,61 +355,170 @@ bool deserializeTransactionEventChargingState(const char *chargingStateCstr, Tra
 
 #endif //MO_ENABLE_V201
 
+#if MO_ENABLE_V201
+bool g_ocpp_tx_compat_v201;
+
+void ocpp_tx_compat_setV201(bool isV201) {
+    g_ocpp_tx_compat_v201 = isV201;
+}
+#endif
+
 int ocpp_tx_getTransactionId(OCPP_Transaction *tx) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        MO_DBG_ERR("only supported in v16");
+        return -1;
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getTransactionId();
 }
+#if MO_ENABLE_V201
+const char *ocpp_tx_getTransactionIdV201(OCPP_Transaction *tx) {
+    if (!g_ocpp_tx_compat_v201) {
+        MO_DBG_ERR("only supported in v201");
+        return nullptr;
+    }
+    return reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx)->transactionId;
+}
+#endif //MO_ENABLE_V201
 bool ocpp_tx_isAuthorized(OCPP_Transaction *tx) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        return reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx)->isAuthorized;
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isAuthorized();
 }
 bool ocpp_tx_isIdTagDeauthorized(OCPP_Transaction *tx) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        return reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx)->isDeauthorized;
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isIdTagDeauthorized();
 }
 
 bool ocpp_tx_isRunning(OCPP_Transaction *tx) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        auto transaction = reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx);
+        return transaction->started && !transaction->stopped;
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isRunning();
 }
 bool ocpp_tx_isActive(OCPP_Transaction *tx) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        return reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx)->active;
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isActive();
 }
 bool ocpp_tx_isAborted(OCPP_Transaction *tx) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        auto transaction = reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx);
+        return !transaction->active && !transaction->started;
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isAborted();
 }
 bool ocpp_tx_isCompleted(OCPP_Transaction *tx) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        auto transaction = reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx);
+        return transaction->stopped && transaction->seqNos.empty();
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isCompleted();
 }
 
 const char *ocpp_tx_getIdTag(OCPP_Transaction *tx) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        auto transaction = reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx);
+        return transaction->idToken.get();
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getIdTag();
 }
 
 bool ocpp_tx_getBeginTimestamp(OCPP_Transaction *tx, char *buf, size_t len) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        return reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx)->beginTimestamp.toJsonString(buf, len);
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getBeginTimestamp().toJsonString(buf, len);
 }
 
 int32_t ocpp_tx_getMeterStart(OCPP_Transaction *tx) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        MO_DBG_ERR("only supported in v16");
+        return -1;
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getMeterStart();
 }
 
 bool ocpp_tx_getStartTimestamp(OCPP_Transaction *tx, char *buf, size_t len) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        MO_DBG_ERR("only supported in v16");
+        return -1;
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getStartTimestamp().toJsonString(buf, len);
 }
 
 const char *ocpp_tx_getStopIdTag(OCPP_Transaction *tx) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        auto transaction = reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx);
+        return transaction->stopIdToken ? transaction->stopIdToken->get() : "";
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getStopIdTag();
 }
 
 int32_t ocpp_tx_getMeterStop(OCPP_Transaction *tx) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        MO_DBG_ERR("only supported in v16");
+        return -1;
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getMeterStop();
 }
 
 void ocpp_tx_setMeterStop(OCPP_Transaction* tx, int32_t meter) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        MO_DBG_ERR("only supported in v16");
+        return;
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->setMeterStop(meter);
 }
 
 bool ocpp_tx_getStopTimestamp(OCPP_Transaction *tx, char *buf, size_t len) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        MO_DBG_ERR("only supported in v16");
+        return -1;
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getStopTimestamp().toJsonString(buf, len);
 }
 
 const char *ocpp_tx_getStopReason(OCPP_Transaction *tx) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        auto transaction = reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx);
+        return serializeTransactionStoppedReason(transaction->stoppedReason);
+    }
+    #endif //MO_ENABLE_V201
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getStopReason();
 }

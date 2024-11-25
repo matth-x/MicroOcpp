@@ -94,7 +94,7 @@ TEST_CASE( "LocalAuth" ) {
         //check TX notification
         bool checkTxAuthorized = false;
         setTxNotificationOutput([&checkTxAuthorized] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification::Authorized) {
+            if (txNotification == TxNotification_Authorized) {
                 checkTxAuthorized = true;
             }
         });
@@ -150,7 +150,7 @@ TEST_CASE( "LocalAuth" ) {
         //check TX notification
         bool checkTxAuthorized = false;
         setTxNotificationOutput([&checkTxAuthorized] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification::Authorized) {
+            if (txNotification == TxNotification_Authorized) {
                 checkTxAuthorized = true;
             }
         });
@@ -182,7 +182,7 @@ TEST_CASE( "LocalAuth" ) {
         //make charger offline and begin tx, but idTag doesn't match - tx should be aborted
         bool checkTxTimeout = false;
         setTxNotificationOutput([&checkTxTimeout] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification::AuthorizationTimeout) {
+            if (txNotification == TxNotification_AuthorizationTimeout) {
                 checkTxTimeout = true;
             }
         });
@@ -217,7 +217,7 @@ TEST_CASE( "LocalAuth" ) {
         //check TX notification
         bool checkTxAuthorized = false;
         setTxNotificationOutput([&checkTxAuthorized] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification::Authorized) {
+            if (txNotification == TxNotification_Authorized) {
                 checkTxAuthorized = true;
             }
         });
@@ -255,7 +255,7 @@ TEST_CASE( "LocalAuth" ) {
         //check TX notification
         bool checkTxAuthorized = false;
         setTxNotificationOutput([&checkTxAuthorized] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification::Authorized) {
+            if (txNotification == TxNotification_Authorized) {
                 checkTxAuthorized = true;
             }
         });
@@ -390,7 +390,7 @@ TEST_CASE( "LocalAuth" ) {
         //check TX notification
         bool checkTxAuthorized = false;
         setTxNotificationOutput([&checkTxAuthorized] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification::Authorized) {
+            if (txNotification == TxNotification_Authorized) {
                 checkTxAuthorized = true;
             }
         });
@@ -427,7 +427,7 @@ TEST_CASE( "LocalAuth" ) {
         //check TX notification
         bool checkTxRejected = false;
         setTxNotificationOutput([&checkTxRejected] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification::AuthorizationRejected) {
+            if (txNotification == TxNotification_AuthorizationRejected) {
                 checkTxRejected = true;
             }
         });

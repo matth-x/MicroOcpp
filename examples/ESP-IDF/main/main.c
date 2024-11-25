@@ -160,7 +160,7 @@ void app_main(void)
             EXAMPLE_MO_OCPP_BACKEND, 
             EXAMPLE_MO_CHARGEBOXID, 
             EXAMPLE_MO_AUTHORIZATIONKEY, "", fsopt);
-    ocpp_initialize(osock, "ESP-IDF charger", "Your brand name here", fsopt, false);
+    ocpp_initialize(osock, "ESP-IDF charger", "Your brand name here", fsopt, false, false);
 
     /* Enter infinite loop */
     while (1) {

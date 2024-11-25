@@ -316,7 +316,7 @@ void Connector::loop() {
                 transaction->setInactive();
                 transaction->commit();
 
-                updateTxNotification(TxNotification::ConnectionTimeout);
+                updateTxNotification(TxNotification_ConnectionTimeout);
             }
         }
 
@@ -377,7 +377,7 @@ void Connector::loop() {
 
                 transaction->commit();
 
-                updateTxNotification(TxNotification::StartTx);
+                updateTxNotification(TxNotification_StartTx);
 
                 //fetchFrontRequest will create the StartTransaction and pass it to the message sender
                 return;
@@ -421,7 +421,7 @@ void Connector::loop() {
 
                 transaction->commit();
 
-                updateTxNotification(TxNotification::StopTx);
+                updateTxNotification(TxNotification_StopTx);
 
                 //fetchFrontRequest will create the StopTransaction and pass it to the message sender
                 return;
@@ -741,7 +741,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             if (parentIdTag) {
                 //parentIdTag known
                 MO_DBG_INFO("connector %u reserved - abort transaction", connectorId);
-                updateTxNotification(TxNotification::ReservationConflict);
+                updateTxNotification(TxNotification_ReservationConflict);
                 return nullptr;
             } else {
                 //parentIdTag unkown but local authorization failed in any case
@@ -781,7 +781,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         }
         transaction->setAuthorized();
 
-        updateTxNotification(TxNotification::Authorized);
+        updateTxNotification(TxNotification_Authorized);
     }
 
     transaction->commit();
@@ -803,7 +803,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             MO_DBG_DEBUG("Authorize rejected (%s), abort tx process", tx->getIdTag());
             tx->setIdTagDeauthorized();
             tx->commit();
-            updateTxNotification(TxNotification::AuthorizationRejected);
+            updateTxNotification(TxNotification_AuthorizationRejected);
             return;
         }
 
@@ -825,7 +825,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
                     MO_DBG_INFO("connector %u reserved - abort transaction", connectorId);
                     tx->setInactive();
                     tx->commit();
-                    updateTxNotification(TxNotification::ReservationConflict);
+                    updateTxNotification(TxNotification_ReservationConflict);
                     return;
                 }
             }
@@ -840,7 +840,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         tx->setAuthorized();
         tx->commit();
 
-        updateTxNotification(TxNotification::Authorized);
+        updateTxNotification(TxNotification_Authorized);
     });
 
     //capture local auth and reservation check in for timeout handler
@@ -855,7 +855,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             MO_DBG_DEBUG("Abort transaction process (%s), timeout, expired local auth", tx->getIdTag());
             tx->setInactive();
             tx->commit();
-            updateTxNotification(TxNotification::AuthorizationTimeout);
+            updateTxNotification(TxNotification_AuthorizationTimeout);
             return;
         }
 
@@ -864,7 +864,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             MO_DBG_INFO("connector %u reserved (offline) - abort transaction", connectorId);
             tx->setInactive();
             tx->commit();
-            updateTxNotification(TxNotification::ReservationConflict);
+            updateTxNotification(TxNotification_ReservationConflict);
             return;
         }
 
@@ -876,7 +876,7 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             tx->setAuthorized();
             tx->commit();
 
-            updateTxNotification(TxNotification::Authorized);
+            updateTxNotification(TxNotification_Authorized);
             return;
         }
 
@@ -887,14 +887,14 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
             }
             tx->setAuthorized();
             tx->commit();
-            updateTxNotification(TxNotification::Authorized);
+            updateTxNotification(TxNotification_Authorized);
             return;
         }
 
         MO_DBG_DEBUG("Abort transaction process (%s): timeout", tx->getIdTag());
         tx->setInactive();
         tx->commit();
-        updateTxNotification(TxNotification::AuthorizationTimeout);
+        updateTxNotification(TxNotification_AuthorizationTimeout);
         return; //offline tx disabled
     });
     context.initiateRequest(std::move(authorize));
@@ -1189,7 +1189,7 @@ std::unique_ptr<Request> Connector::fetchFrontRequest() {
 
                 const char* idTagInfoStatus = response["idTagInfo"]["status"] | "_Undefined";
                 if (strcmp(idTagInfoStatus, "Accepted")) {
-                    updateTxNotification(TxNotification::DeAuthorized);
+                    updateTxNotification(TxNotification_DeAuthorized);
                 }
             });
             auto transactionFront_capture = transactionFront;

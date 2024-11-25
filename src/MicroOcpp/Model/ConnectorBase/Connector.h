@@ -7,8 +7,8 @@
 
 #include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
-#include <MicroOcpp/Model/ConnectorBase/Notification.h>
 #include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/ConfigurationKeyValue.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -31,7 +31,6 @@ namespace MicroOcpp {
 class Context;
 class Model;
 class Operation;
-class Transaction;
 
 class Connector : public RequestEmitter, public MemoryManaged {
 private:
