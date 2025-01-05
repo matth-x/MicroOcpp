@@ -49,7 +49,9 @@ Connector::Connector(Context& context, std::shared_ptr<FilesystemAdapter> filesy
 #endif //MO_ENABLE_CONNECTOR_LOCK
 
     connectionTimeOutInt = declareConfiguration<int>("ConnectionTimeOut", 30);
+    registerConfigurationValidator("ConnectionTimeOut", VALIDATE_UNSIGNED_INT);
     minimumStatusDurationInt = declareConfiguration<int>("MinimumStatusDuration", 0);
+    registerConfigurationValidator("MinimumStatusDuration", VALIDATE_UNSIGNED_INT);
     stopTransactionOnInvalidIdBool = declareConfiguration<bool>("StopTransactionOnInvalidId", true);
     stopTransactionOnEVSideDisconnectBool = declareConfiguration<bool>("StopTransactionOnEVSideDisconnect", true);
     localPreAuthorizeBool = declareConfiguration<bool>("LocalPreAuthorize", false);
@@ -61,6 +63,7 @@ Connector::Connector(Context& context, std::shared_ptr<FilesystemAdapter> filesy
 
     //how long the EVSE tries the Authorize request before it enters offline mode
     authorizationTimeoutInt = MicroOcpp::declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", 20);
+    registerConfigurationValidator(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", VALIDATE_UNSIGNED_INT);
 
     //FreeVend mode
     freeVendActiveBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "FreeVendActive", false);
@@ -69,7 +72,9 @@ Connector::Connector(Context& context, std::shared_ptr<FilesystemAdapter> filesy
     txStartOnPowerPathClosedBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "TxStartOnPowerPathClosed", false);
 
     transactionMessageAttemptsInt = declareConfiguration<int>("TransactionMessageAttempts", 3);
+    registerConfigurationValidator("TransactionMessageAttempts", VALIDATE_UNSIGNED_INT);
     transactionMessageRetryIntervalInt = declareConfiguration<int>("TransactionMessageRetryInterval", 60);
+    registerConfigurationValidator("TransactionMessageRetryInterval", VALIDATE_UNSIGNED_INT);
 
     if (!availabilityBool) {
         MO_DBG_ERR("Cannot declare availabilityBool");

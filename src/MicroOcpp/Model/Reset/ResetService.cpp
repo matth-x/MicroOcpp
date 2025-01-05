@@ -29,6 +29,7 @@ ResetService::ResetService(Context& context)
       : MemoryManaged("v16.Reset.ResetService"), context(context) {
 
     resetRetriesInt = declareConfiguration<int>("ResetRetries", 2);
+    registerConfigurationValidator("ResetRetries", VALIDATE_UNSIGNED_INT);
 
     context.getOperationRegistry().registerOperation("Reset", [&context] () {
         return new Ocpp16::Reset(context.getModel());});
@@ -50,9 +51,10 @@ void ResetService::loop() {
             MO_DBG_ERR("No Reset function set! Abort");
             outstandingResetRetries = 0;
         }
-        MO_DBG_ERR("Reset device failure. %s", outstandingResetRetries == 0 ? "Abort" : "Retry");
 
         if (outstandingResetRetries <= 0) {
+
+            MO_DBG_ERR("Reset device failure. Abort");
 
             ChargePointStatus cpStatus = ChargePointStatus_UNDEFINED;
             if (context.getModel().getNumConnectors() > 0) {

@@ -28,6 +28,7 @@ MeteringConnector::MeteringConnector(Context& context, int connectorId, MeterSto
     auto meterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData", "");
     declareConfiguration<int>("MeterValuesSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
     meterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval", 60);
+    registerConfigurationValidator("MeterValueSampleInterval", VALIDATE_UNSIGNED_INT);
 
     auto stopTxnSampledDataString = declareConfiguration<const char*>("StopTxnSampledData", "");
     declareConfiguration<int>("StopTxnSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
@@ -35,6 +36,7 @@ MeteringConnector::MeteringConnector(Context& context, int connectorId, MeterSto
     auto meterValuesAlignedDataString = declareConfiguration<const char*>("MeterValuesAlignedData", "");
     declareConfiguration<int>("MeterValuesAlignedDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
     clockAlignedDataIntervalInt  = declareConfiguration<int>("ClockAlignedDataInterval", 0);
+    registerConfigurationValidator("ClockAlignedDataInterval", VALIDATE_UNSIGNED_INT);
 
     auto stopTxnAlignedDataString = declareConfiguration<const char*>("StopTxnAlignedData", "");
 
