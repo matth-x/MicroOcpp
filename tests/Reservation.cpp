@@ -63,7 +63,7 @@ TEST_CASE( "Reservation" ) {
         //transaction blocked by reservation
         bool checkTxRejected = false;
         setTxNotificationOutput([&checkTxRejected] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification::ReservationConflict) {
+            if (txNotification == TxNotification_ReservationConflict) {
                 checkTxRejected = true;
             }
         });
@@ -225,7 +225,7 @@ TEST_CASE( "Reservation" ) {
 
         bool checkTxRejected = false;
         setTxNotificationOutput([&checkTxRejected] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification::ReservationConflict) {
+            if (txNotification == TxNotification_ReservationConflict) {
                 checkTxRejected = true;
             }
         }, 2);

@@ -16,7 +16,6 @@
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Model/Metering/SampledValue.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
-#include <MicroOcpp/Model/ConnectorBase/Notification.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
 #include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
 #include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
@@ -127,6 +126,7 @@ void mocpp_loop();
 /*
  * Transaction management.
  * 
+ * OCPP 1.6 (2.0.1 see below):
  * Begin the transaction process and prepare it. When all conditions for the transaction are true,
  * eventually send a StartTransaction request to the OCPP server.
  * Conditions:
@@ -140,18 +140,24 @@ void mocpp_loop();
  * 
  * See beginTransaction_authorized for skipping steps 1) to 3)
  * 
- * Returns the transaction object if it was possible to create the transaction process. Returns
- * nullptr if either another transaction process is still active or you need to try it again later.
+ * Returns true if it was possible to create the transaction process. Returns
+ * false if either another transaction process is still active or you need to try it again later.
+ * 
+ * OCPP 2.0.1:
+ * Authorize a transaction. Like the OCPP 1.6 behavior, this should be called when the user swipes the
+ * card to start charging, but the semantic is slightly different. This function begins the authorized
+ * phase, but a transaction may already have started due to an earlier transaction start point.
  */
-std::shared_ptr<MicroOcpp::Transaction> beginTransaction(const char *idTag, unsigned int connectorId = 1);
+bool beginTransaction(const char *idTag, unsigned int connectorId = 1);
 
 /*
  * Begin the transaction process and skip the OCPP-side authorization. See beginTransaction(...) for a
  * complete description
  */
-std::shared_ptr<MicroOcpp::Transaction> beginTransaction_authorized(const char *idTag, const char *parentIdTag = nullptr, unsigned int connectorId = 1);
+bool beginTransaction_authorized(const char *idTag, const char *parentIdTag = nullptr, unsigned int connectorId = 1);
 
 /*
+ * OCPP 1.6 (2.0.1 see below):
  * End the transaction process if idTag is authorized to stop the transaction. The OCPP lib sends
  * a StopTransaction request if the following conditions are true:
  * Conditions:
@@ -181,6 +187,15 @@ std::shared_ptr<MicroOcpp::Transaction> beginTransaction_authorized(const char *
  *     `endTransaction_authorized(nullptr, reason);`
  * 
  * Returns true if there is a transaction which could eventually be ended by this action
+ * 
+ * OCPP 2.0.1:
+ * End the user authorization. Like when running with OCPP 1.6, this should be called when the user
+ * swipes the card to stop charging. The difference between the 1.6/2.0.1 behavior is that in 1.6,
+ * endTransaction always sets the transaction inactive so that it wants to stop. In 2.0.1, this only
+ * revokes the user authorization which may terminate the transaction but doesn't have to if the
+ * transaction stop point is set to EvConnected.
+ * 
+ * Note: the stop reason parameter is ignored when running with OCPP 2.0.1. It's always Local
  */
 bool endTransaction(const char *idTag = nullptr, const char *reason = nullptr, unsigned int connectorId = 1);
 
@@ -237,6 +252,14 @@ const char *getTransactionIdTag(unsigned int connectorId = 1);
  * }
  */
 std::shared_ptr<MicroOcpp::Transaction>& getTransaction(unsigned int connectorId = 1);
+
+#if MO_ENABLE_V201
+/*
+ * OCPP 2.0.1 version of getTransaction(). Note that the return transaction object is of another type
+ * and unlike the 1.6 version, this function does not give ownership.
+ */
+MicroOcpp::Ocpp201::Transaction *getTransactionV201(unsigned int evseId = 1);
+#endif //MO_ENABLE_V201
 
 /* 
  * Returns if the OCPP library allows the EVSE to charge at the moment.
@@ -308,7 +331,11 @@ void setStartTxReadyInput(std::function<bool()> startTxReady, unsigned int conne
 
 void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connectorId = 1); //Input if charger is ready for StopTransaction
 
-void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcpp::TxNotification)> notificationOutput, unsigned int connectorId = 1); //called when transaction state changes (see TxNotification for possible events). Transaction can be null
+void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,TxNotification)> notificationOutput, unsigned int connectorId = 1); //called when transaction state changes (see TxNotification for possible events). Transaction can be null
+
+#if MO_ENABLE_V201
+void setTxNotificationOutputV201(std::function<void(MicroOcpp::Ocpp201::Transaction*,TxNotification)> notificationOutput, unsigned int connectorId = 1);
+#endif //MO_ENABLE_V201
 
 #if MO_ENABLE_CONNECTOR_LOCK
 /*

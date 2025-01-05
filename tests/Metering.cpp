@@ -585,7 +585,8 @@ TEST_CASE("Metering") {
 
         auto trackMtime = mtime;
 
-        auto tx = beginTransaction_authorized("mIdTag");
+        beginTransaction_authorized("mIdTag");
+        auto tx = getTransaction();
 
         loop();
 

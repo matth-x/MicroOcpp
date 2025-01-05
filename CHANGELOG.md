@@ -4,7 +4,14 @@
 
 ### Changed
 
+- Change `MicroOcpp::TxNotification` into C-style enum, replace `OCPP_TxNotication` ([#386](https://github.com/matth-x/MicroOcpp/pull/386))
 - Improved UUID generation ([#383](https://github.com/matth-x/MicroOcpp/pull/383))
+- `beginTransaction()` returns bool for better v2.0.1 interop ([#386](https://github.com/matth-x/MicroOcpp/pull/386))
+
+### Added
+
+- `getTransactionV201()` exposes v201 Tx in API ([#386](https://github.com/matth-x/MicroOcpp/pull/386))
+- v201 support in Transaction.h C-API ([#386](https://github.com/matth-x/MicroOcpp/pull/386))
 
 ### Fixed
 

@@ -5,7 +5,10 @@
 #include "MicroOcpp_c.h"
 #include "MicroOcpp.h"
 
+#include <MicroOcpp/Version.h>
 #include <MicroOcpp/Model/Certificates/Certificate_c.h>
+#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Core/Memory.h>
 
 #include <MicroOcpp/Platform.h>
@@ -13,11 +16,14 @@
 
 MicroOcpp::Connection *ocppSocket = nullptr;
 
-void ocpp_initialize(OCPP_Connection *conn, const char *chargePointModel, const char *chargePointVendor, struct OCPP_FilesystemOpt fsopt, bool autoRecover) {
-    ocpp_initialize_full(conn, ChargerCredentials(chargePointModel, chargePointVendor), fsopt, autoRecover);
+void ocpp_initialize(OCPP_Connection *conn, const char *chargePointModel, const char *chargePointVendor, struct OCPP_FilesystemOpt fsopt, bool autoRecover, bool ocpp201) {
+    ocpp_initialize_full(conn, ocpp201 ?
+                                    ChargerCredentials::v201(chargePointModel, chargePointVendor) :
+                                    ChargerCredentials(chargePointModel, chargePointVendor),
+                               fsopt, autoRecover, ocpp201);
 }
 
-void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCredentials, struct OCPP_FilesystemOpt fsopt, bool autoRecover) {
+void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCredentials, struct OCPP_FilesystemOpt fsopt, bool autoRecover, bool ocpp201) {
     if (!conn) {
         MO_DBG_ERR("conn is null");
     }
@@ -26,7 +32,10 @@ void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCre
 
     MicroOcpp::FilesystemOpt adaptFsopt = fsopt;
 
-    mocpp_initialize(*ocppSocket, bootNotificationCredentials, MicroOcpp::makeDefaultFilesystemAdapter(adaptFsopt), autoRecover, MicroOcpp::ProtocolVersion(1,6));
+    mocpp_initialize(*ocppSocket, bootNotificationCredentials, MicroOcpp::makeDefaultFilesystemAdapter(adaptFsopt), autoRecover,
+            ocpp201 ?
+                MicroOcpp::ProtocolVersion(2,0,1) :
+                MicroOcpp::ProtocolVersion(1,6));
 }
 
 void ocpp_deinitialize() {
@@ -131,18 +140,18 @@ std::function<UnlockConnectorResult()> adaptFn(unsigned int connectorId, PollUnl
 }
 #endif //MO_ENABLE_CONNECTOR_LOCK
 
-void ocpp_beginTransaction(const char *idTag) {
-    beginTransaction(idTag);
+bool ocpp_beginTransaction(const char *idTag) {
+    return beginTransaction(idTag);
 }
-void ocpp_beginTransaction_m(unsigned int connectorId, const char *idTag) {
-    beginTransaction(idTag, connectorId);
+bool ocpp_beginTransaction_m(unsigned int connectorId, const char *idTag) {
+    return beginTransaction(idTag, connectorId);
 }
 
-void ocpp_beginTransaction_authorized(const char *idTag, const char *parentIdTag) {
-    beginTransaction_authorized(idTag, parentIdTag);
+bool ocpp_beginTransaction_authorized(const char *idTag, const char *parentIdTag) {
+    return beginTransaction_authorized(idTag, parentIdTag);
 }
-void ocpp_beginTransaction_authorized_m(unsigned int connectorId, const char *idTag, const char *parentIdTag) {
-    beginTransaction_authorized(idTag, parentIdTag, connectorId);
+bool ocpp_beginTransaction_authorized_m(unsigned int connectorId, const char *idTag, const char *parentIdTag) {
+    return beginTransaction_authorized(idTag, parentIdTag, connectorId);
 }
 
 bool ocpp_endTransaction(const char *idTag, const char *reason) {
@@ -184,10 +193,29 @@ OCPP_Transaction *ocpp_getTransaction() {
     return ocpp_getTransaction_m(1);
 }
 OCPP_Transaction *ocpp_getTransaction_m(unsigned int connectorId) {
+    #if MO_ENABLE_V201
+    {
+        if (!getOcppContext()) {
+            MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+            return nullptr;
+        }
+        if (getOcppContext()->getModel().getVersion().major == 2) {
+            ocpp_tx_compat_setV201(true); //set the ocpp_tx C-API into v201 mode globally
+            if (getTransactionV201(connectorId)) {
+                return reinterpret_cast<OCPP_Transaction*>(getTransactionV201(connectorId));
+            } else {
+                return nullptr;
+            }
+        } else {
+            ocpp_tx_compat_setV201(false); //set the ocpp_tx C-API into v16 mode globally
+            //continue with V16 implementation
+        }
+    }
+    #endif //MO_ENABLE_V201
     if (getTransaction(connectorId)) {
         return reinterpret_cast<OCPP_Transaction*>(getTransaction(connectorId).get());
     } else {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -308,14 +336,14 @@ void ocpp_setStopTxReadyInput_m(unsigned int connectorId, InputBool_m stopTxRead
     setStopTxReadyInput(adaptFn(connectorId, stopTxReady), connectorId);
 }
 
-void ocpp_setTxNotificationOutput(void (*notificationOutput)(OCPP_Transaction*, enum OCPP_TxNotification)) {
-    setTxNotificationOutput([notificationOutput] (MicroOcpp::Transaction *tx, MicroOcpp::TxNotification notification) {
-        notificationOutput(reinterpret_cast<OCPP_Transaction*>(tx), convertTxNotification(notification));
+void ocpp_setTxNotificationOutput(void (*notificationOutput)(OCPP_Transaction*, TxNotification)) {
+    setTxNotificationOutput([notificationOutput] (MicroOcpp::Transaction *tx, TxNotification notification) {
+        notificationOutput(reinterpret_cast<OCPP_Transaction*>(tx), notification);
     });
 }
-void ocpp_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, OCPP_Transaction*, enum OCPP_TxNotification)) {
-    setTxNotificationOutput([notificationOutput, connectorId] (MicroOcpp::Transaction *tx, MicroOcpp::TxNotification notification) {
-        notificationOutput(connectorId, reinterpret_cast<OCPP_Transaction*>(tx), convertTxNotification(notification));
+void ocpp_setTxNotificationOutput_m(unsigned int connectorId, void (*notificationOutput)(unsigned int, OCPP_Transaction*, TxNotification)) {
+    setTxNotificationOutput([notificationOutput, connectorId] (MicroOcpp::Transaction *tx, TxNotification notification) {
+        notificationOutput(connectorId, reinterpret_cast<OCPP_Transaction*>(tx), notification);
     }, connectorId);
 }
 

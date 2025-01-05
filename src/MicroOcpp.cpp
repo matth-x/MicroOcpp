@@ -293,6 +293,8 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
             new TransactionService(*context, filesystem, MO_NUM_EVSEID)));
         model.setRemoteControlService(std::unique_ptr<RemoteControlService>(
             new RemoteControlService(*context, MO_NUM_EVSEID)));
+        model.setResetServiceV201(std::unique_ptr<Ocpp201::ResetService>(
+            new Ocpp201::ResetService(*context)));
     } else
 #endif
     {
@@ -305,19 +307,23 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
             connectors.emplace_back(new Connector(*context, filesystem, connectorId));
         }
         model.setConnectors(std::move(connectors));
-    }
-    model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
-        new HeartbeatService(*context)));
 
 #if MO_ENABLE_LOCAL_AUTH
-    model.setAuthorizationService(std::unique_ptr<AuthorizationService>(
-        new AuthorizationService(*context, filesystem)));
+        model.setAuthorizationService(std::unique_ptr<AuthorizationService>(
+            new AuthorizationService(*context, filesystem)));
 #endif //MO_ENABLE_LOCAL_AUTH
 
 #if MO_ENABLE_RESERVATION
-    model.setReservationService(std::unique_ptr<ReservationService>(
-        new ReservationService(*context, MO_NUMCONNECTORS)));
+        model.setReservationService(std::unique_ptr<ReservationService>(
+            new ReservationService(*context, MO_NUMCONNECTORS)));
 #endif
+
+        model.setResetService(std::unique_ptr<ResetService>(
+            new ResetService(*context)));
+    }
+
+    model.setHeartbeatService(std::unique_ptr<HeartbeatService>(
+        new HeartbeatService(*context)));
 
 #if MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
     std::unique_ptr<CertificateStore> certStore = makeCertificateStoreMbedTLS(filesystem);
@@ -329,18 +335,6 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
         model.getCertificateService()->setCertificateStore(std::move(certStore));
     }
 #endif
-
-#if MO_ENABLE_V201
-    if (version.major == 2) {
-        //depends on VariableService
-        model.setResetServiceV201(std::unique_ptr<Ocpp201::ResetService>(
-            new Ocpp201::ResetService(*context)));
-    } else
-#endif
-    {
-        model.setResetService(std::unique_ptr<ResetService>(
-            new ResetService(*context)));
-    }
 
 #if !defined(MO_CUSTOM_UPDATER)
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP32) && MO_ENABLE_MBEDTLS
@@ -375,6 +369,12 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
     credsJson.reset();
 
     configuration_load();
+
+#if MO_ENABLE_V201
+    if (version.major == 2) {
+        model.getVariableService()->load();
+    }
+#endif //MO_ENABLE_V201
 
     MO_DBG_INFO("initialized MicroOcpp v" MO_VERSION " running OCPP %i.%i.%i", version.major, version.minor, version.patch);
 }
@@ -422,41 +422,79 @@ void mocpp_loop() {
     context->loop();
 }
 
-std::shared_ptr<Transaction> beginTransaction(const char *idTag, unsigned int connectorId) {
+bool beginTransaction(const char *idTag, unsigned int connectorId) {
     if (!context) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
-        return nullptr;
+        return false;
     }
+
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (!idTag || strnlen(idTag, MO_IDTOKEN_LEN_MAX + 2) > MO_IDTOKEN_LEN_MAX) {
+            MO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", MO_IDTOKEN_LEN_MAX);
+            return false;
+        }
+        TransactionService::Evse *evse = nullptr;
+        if (auto txService = context->getModel().getTransactionService()) {
+            evse = txService->getEvse(connectorId);
+        }
+        if (!evse) {
+            MO_DBG_ERR("could not find EVSE");
+            return false;
+        }
+        return evse->beginAuthorization(idTag, true);
+    }
+    #endif
+
     if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX) {
         MO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
-        return nullptr;
+        return false;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
-        return nullptr;
+        return false;
     }
 
-    return connector->beginTransaction(idTag);
+    return connector->beginTransaction(idTag) != nullptr;
 }
 
-std::shared_ptr<Transaction> beginTransaction_authorized(const char *idTag, const char *parentIdTag, unsigned int connectorId) {
+bool beginTransaction_authorized(const char *idTag, const char *parentIdTag, unsigned int connectorId) {
     if (!context) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
-        return nullptr;
+        return false;
     }
+
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (!idTag || strnlen(idTag, MO_IDTOKEN_LEN_MAX + 2) > MO_IDTOKEN_LEN_MAX) {
+            MO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", MO_IDTOKEN_LEN_MAX);
+            return false;
+        }
+        TransactionService::Evse *evse = nullptr;
+        if (auto txService = context->getModel().getTransactionService()) {
+            evse = txService->getEvse(connectorId);
+        }
+        if (!evse) {
+            MO_DBG_ERR("could not find EVSE");
+            return false;
+        }
+        return evse->beginAuthorization(idTag, false);
+    }
+    #endif
+
     if (!idTag || strnlen(idTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX ||
         (parentIdTag && strnlen(parentIdTag, IDTAG_LEN_MAX + 2) > IDTAG_LEN_MAX)) {
         MO_DBG_ERR("(parent)idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
-        return nullptr;
+        return false;
     }
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
-        return nullptr;
+        return false;
     }
     
-    return connector->beginTransaction_authorized(idTag, parentIdTag);
+    return connector->beginTransaction_authorized(idTag, parentIdTag) != nullptr;
 }
 
 bool endTransaction(const char *idTag, const char *reason, unsigned int connectorId) {
@@ -464,6 +502,25 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return false;
     }
+
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (!idTag || strnlen(idTag, MO_IDTOKEN_LEN_MAX + 2) > MO_IDTOKEN_LEN_MAX) {
+            MO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", MO_IDTOKEN_LEN_MAX);
+            return false;
+        }
+        TransactionService::Evse *evse = nullptr;
+        if (auto txService = context->getModel().getTransactionService()) {
+            evse = txService->getEvse(connectorId);
+        }
+        if (!evse) {
+            MO_DBG_ERR("could not find EVSE");
+            return false;
+        }
+        return evse->endAuthorization(idTag, true);
+    }
+    #endif
+
     bool res = false;
     if (isTransactionActive(connectorId) && getTransactionIdTag(connectorId)) {
         //end transaction now if either idTag is nullptr (i.e. force stop) or the idTag matches beginTransaction
@@ -486,7 +543,7 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
                         MO_DBG_DEBUG("Authorize rejected (%s), continue transaction", idTag_capture.c_str());
                         auto connector = context->getModel().getConnector(connectorId);
                         if (connector) {
-                            connector->updateTxNotification(TxNotification::AuthorizationRejected);
+                            connector->updateTxNotification(TxNotification_AuthorizationRejected);
                         }
                         return;
                     }
@@ -501,7 +558,7 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
                     MO_DBG_DEBUG("Authorization timeout (%s), continue transaction", idTag_capture.c_str());
                     auto connector = context->getModel().getConnector(connectorId);
                     if (connector) {
-                        connector->updateTxNotification(TxNotification::AuthorizationTimeout);
+                        connector->updateTxNotification(TxNotification_AuthorizationTimeout);
                     }
                 });
 
@@ -524,6 +581,25 @@ bool endTransaction_authorized(const char *idTag, const char *reason, unsigned i
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return false;
     }
+
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        if (!idTag || strnlen(idTag, MO_IDTOKEN_LEN_MAX + 2) > MO_IDTOKEN_LEN_MAX) {
+            MO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", MO_IDTOKEN_LEN_MAX);
+            return false;
+        }
+        TransactionService::Evse *evse = nullptr;
+        if (auto txService = context->getModel().getTransactionService()) {
+            evse = txService->getEvse(connectorId);
+        }
+        if (!evse) {
+            MO_DBG_ERR("could not find EVSE");
+            return false;
+        }
+        return evse->endAuthorization(idTag, false);
+    }
+    #endif
+
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -628,6 +704,12 @@ std::shared_ptr<Transaction>& getTransaction(unsigned int connectorId) {
         MO_DBG_WARN("OCPP uninitialized");
         return mocpp_undefinedTx;
     }
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        MO_DBG_ERR("only supported in v16");
+        return mocpp_undefinedTx;
+    }
+    #endif
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -635,6 +717,30 @@ std::shared_ptr<Transaction>& getTransaction(unsigned int connectorId) {
     }
     return connector->getTransaction();
 }
+
+#if MO_ENABLE_V201
+Ocpp201::Transaction *getTransactionV201(unsigned int evseId) {
+    if (!context) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return nullptr;
+    }
+
+    if (context->getVersion().major != 2) {
+        MO_DBG_ERR("only supported in v201");
+        return nullptr;
+    }
+
+    TransactionService::Evse *evse = nullptr;
+    if (auto txService = context->getModel().getTransactionService()) {
+        evse = txService->getEvse(evseId);
+    }
+    if (!evse) {
+        MO_DBG_ERR("could not find EVSE");
+        return nullptr;
+    }
+    return evse->getTransaction();
+}
+#endif //MO_ENABLE_V201
 
 bool ocppPermitsCharge(unsigned int connectorId) {
     if (!context) {
@@ -1003,6 +1109,7 @@ void setOccupiedInput(std::function<bool()> occupied, unsigned int connectorId) 
                 evse->setOccupiedInput(occupied);
             }
         }
+        return;
     }
 #endif
     auto connector = context->getModel().getConnector(connectorId);
@@ -1039,11 +1146,17 @@ void setStopTxReadyInput(std::function<bool()> stopTxReady, unsigned int connect
     connector->setStopTxReadyInput(stopTxReady);
 }
 
-void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcpp::TxNotification)> notificationOutput, unsigned int connectorId) {
+void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,TxNotification)> notificationOutput, unsigned int connectorId) {
     if (!context) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
     }
+    #if MO_ENABLE_V201
+    if (context->getVersion().major == 2) {
+        MO_DBG_ERR("only supported in v16");
+        return;
+    }
+    #endif
     auto connector = context->getModel().getConnector(connectorId);
     if (!connector) {
         MO_DBG_ERR("could not find connector");
@@ -1051,6 +1164,30 @@ void setTxNotificationOutput(std::function<void(MicroOcpp::Transaction*,MicroOcp
     }
     connector->setTxNotificationOutput(notificationOutput);
 }
+
+#if MO_ENABLE_V201
+void setTxNotificationOutputV201(std::function<void(MicroOcpp::Ocpp201::Transaction*,TxNotification)> notificationOutput, unsigned int connectorId) {
+    if (!context) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return;
+    }
+
+    if (context->getVersion().major != 2) {
+        MO_DBG_ERR("only supported in v201");
+        return;
+    }
+
+    TransactionService::Evse *evse = nullptr;
+    if (auto txService = context->getModel().getTransactionService()) {
+        evse = txService->getEvse(connectorId);
+    }
+    if (!evse) {
+        MO_DBG_ERR("could not find EVSE");
+        return;
+    }
+    evse->setTxNotificationOutput(notificationOutput);
+}
+#endif //MO_ENABLE_V201
 
 #if MO_ENABLE_CONNECTOR_LOCK
 void setOnUnlockConnectorInOut(std::function<UnlockConnectorResult()> onUnlockConnectorInOut, unsigned int connectorId) {
