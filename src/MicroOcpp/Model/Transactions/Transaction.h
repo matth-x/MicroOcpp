@@ -14,7 +14,7 @@ extern "C" {
 
 //TxNotification - event from MO to the main firmware to notify it about transaction state changes
 typedef enum {
-    UNDEFINED,
+    TxNotification_UNDEFINED,
 
     //Authorization events
     TxNotification_Authorized, //success
@@ -472,6 +472,8 @@ bool ocpp_tx_isAborted(OCPP_Transaction *tx);
 bool ocpp_tx_isCompleted(OCPP_Transaction *tx);
 
 const char *ocpp_tx_getIdTag(OCPP_Transaction *tx);
+
+const char *ocpp_tx_getParentIdTag(OCPP_Transaction *tx);
 
 bool ocpp_tx_getBeginTimestamp(OCPP_Transaction *tx, char *buf, size_t len);
 

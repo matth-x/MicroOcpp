@@ -12,12 +12,16 @@
 #include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Model/Certificates/Certificate_c.h>
+#include <MicroOcpp/Model/Metering/ReadingContext.h>
 
 struct OCPP_Connection;
 typedef struct OCPP_Connection OCPP_Connection;
 
 struct MeterValueInput;
 typedef struct MeterValueInput MeterValueInput;
+
+struct FilesystemAdapterC;
+typedef struct FilesystemAdapterC FilesystemAdapterC;
 
 typedef void (*OnMessage) (const char *payload, size_t len);
 typedef void (*OnAbort)   ();
@@ -71,7 +75,17 @@ void ocpp_initialize_full(
             bool autoRecover, //automatically sanitize the local data store when the lib detects recurring crashes. During development, `false` is recommended
             bool ocpp201); //true to select OCPP 2.0.1, false for OCPP 1.6
 
+//same as above, but pass FS handle instead of FS options
+void ocpp_initialize_full2(
+            OCPP_Connection *conn,  //WebSocket adapter for MicroOcpp
+            const char *bootNotificationCredentials, //e.g. '{"chargePointModel":"Demo Charger","chargePointVendor":"My Company Ltd."}' (refer to OCPP 1.6 Specification - Edition 2 p. 60)
+            FilesystemAdapterC *filesystem, //FilesystemAdapter handle initialized by client. MO takes ownership and deletes it during deinitialization
+            bool autoRecover, //automatically sanitize the local data store when the lib detects recurring crashes. During development, `false` is recommended
+            bool ocpp201); //true to select OCPP 2.0.1, false for OCPP 1.6
+
 void ocpp_deinitialize();
+
+bool ocpp_is_initialized();
 
 void ocpp_loop();
 
@@ -145,6 +159,9 @@ void ocpp_addErrorCodeInput_m(unsigned int connectorId, InputString_m errorCodeI
 void ocpp_addMeterValueInputFloat(InputFloat valueInput, const char *measurand, const char *unit, const char *location, const char *phase); //measurand, unit, location and phase can be NULL
 void ocpp_addMeterValueInputFloat_m(unsigned int connectorId, InputFloat_m valueInput, const char *measurand, const char *unit, const char *location, const char *phase); //measurand, unit, location and phase can be NULL
 
+void ocpp_addMeterValueInputIntTx(int (*valueInput)(ReadingContext), const char *measurand, const char *unit, const char *location, const char *phase); //measurand, unit, location and phase can be NULL
+void ocpp_addMeterValueInputIntTx_m(unsigned int connectorId, int (*valueInput)(unsigned int cId, ReadingContext), const char *measurand, const char *unit, const char *location, const char *phase); //measurand, unit, location and phase can be NULL
+
 void ocpp_addMeterValueInput(MeterValueInput *meterValueInput); //takes ownership of meterValueInput
 void ocpp_addMeterValueInput_m(unsigned int connectorId, MeterValueInput *meterValueInput); //takes ownership of meterValueInput
 
@@ -183,20 +200,6 @@ void ocpp_setCertificateStore(ocpp_cert_store *certs);
 void ocpp_setOnReceiveRequest(const char *operationType, OnMessage onRequest);
 
 void ocpp_setOnSendConf(const char *operationType, OnMessage onConfirmation);
-
-/*
- * If build flag MO_CUSTOM_CONSOLE is set, all console output will be forwarded to the print
- * function given by this setter. The parameter msg will also by null-terminated c-strings.
- */
-void ocpp_set_console_out_c(void (*console_out)(const char *msg));
-
-#ifdef MO_CUSTOM_RNG
-/**
- * If build flag MO_CUSTOM_RNG is set, calls to get random numbers shall be
- * forwarded to the function provided through this setter.
- */
-void ocpp_set_rng_c( uint32_t (*rng)(void));
-#endif
 
 /*
  * Send OCPP operations

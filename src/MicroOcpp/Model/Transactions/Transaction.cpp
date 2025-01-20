@@ -444,6 +444,16 @@ const char *ocpp_tx_getIdTag(OCPP_Transaction *tx) {
     return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getIdTag();
 }
 
+const char *ocpp_tx_getParentIdTag(OCPP_Transaction *tx) {
+    #if MO_ENABLE_V201
+    if (g_ocpp_tx_compat_v201) {
+        MO_DBG_ERR("only supported in v16");
+        return nullptr;
+    }
+    #endif //MO_ENABLE_V201
+    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getParentIdTag();
+}
+
 bool ocpp_tx_getBeginTimestamp(OCPP_Transaction *tx, char *buf, size_t len) {
     #if MO_ENABLE_V201
     if (g_ocpp_tx_compat_v201) {
