@@ -75,11 +75,27 @@ bool Configuration::isRebootRequired() {
 }
 
 void Configuration::setReadOnly() {
-    readOnly = true;
+    if (mutability == Mutability::ReadWrite) {
+        mutability = Mutability::ReadOnly;
+    } else {
+        mutability = Mutability::None;
+    }
 }
 
 bool Configuration::isReadOnly() {
-    return readOnly;
+    return mutability == Mutability::ReadOnly;
+}
+
+bool Configuration::isReadable() {
+    return mutability == Mutability::ReadWrite || mutability == Mutability::ReadOnly;
+}
+
+void Configuration::setWriteOnly() {
+    if (mutability == Mutability::ReadWrite) {
+        mutability = Mutability::WriteOnly;
+    } else {
+        mutability = Mutability::None;
+    }
 }
 
 /*
