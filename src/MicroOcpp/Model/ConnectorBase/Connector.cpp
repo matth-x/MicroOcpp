@@ -1172,6 +1172,7 @@ std::unique_ptr<Request> Connector::fetchFrontRequest() {
                 return nullptr;
             }
 
+            const auto attemptNr_capture = transactionFront->getStartSync().getAttemptNr();
             transactionFront->getStartSync().advanceAttemptNr();
             transactionFront->getStartSync().setAttemptTime(model.getClock().now());
             transactionFront->commit();
@@ -1203,6 +1204,19 @@ std::unique_ptr<Request> Connector::fetchFrontRequest() {
                 }
             });
 
+            #if MO_TX_ATTEMPT_TIMEOUT == 0
+            //a timeout should not increase the attemptNr. Roll back to previous attemptNr
+            startTx->setOnTimeoutListener([transactionFront_capture, attemptNr_capture] () {
+                MO_DBG_DEBUG("StartTx timeout -> roll back attemptNr and try again");
+                if (transactionFront_capture) {
+                    transactionFront_capture->getStartSync().setAttemptNr(attemptNr_capture);
+                    transactionFront_capture->commit();
+                }
+            });
+            #else
+            (void)attemptNr_capture;
+            #endif
+
             return startTx;
         }
 
@@ -1229,6 +1243,7 @@ std::unique_ptr<Request> Connector::fetchFrontRequest() {
                 return nullptr;
             }
 
+            const auto attemptNr_capture = transactionFront->getStopSync().getAttemptNr();
             transactionFront->getStopSync().advanceAttemptNr();
             transactionFront->getStopSync().setAttemptTime(model.getClock().now());
             transactionFront->commit();
@@ -1263,6 +1278,19 @@ std::unique_ptr<Request> Connector::fetchFrontRequest() {
                     //next getFrontRequestOpNr() call will collect transactionFront
                 }
             });
+
+            #if MO_TX_ATTEMPT_TIMEOUT == 0
+            //a timeout should not increase the attemptNr. Roll back to previous attemptNr
+            stopTx->setOnTimeoutListener([transactionFront_capture, attemptNr_capture] () {
+                MO_DBG_DEBUG("StopTx timeout -> roll back attemptNr and try again");
+                if (transactionFront_capture) {
+                    transactionFront_capture->getStopSync().setAttemptNr(attemptNr_capture);
+                    transactionFront_capture->commit();
+                }
+            });
+            #else
+            (void)attemptNr_capture;
+            #endif
 
             return stopTx;
         }
