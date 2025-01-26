@@ -26,6 +26,10 @@
 #define MO_REPORT_NOERROR 0
 #endif
 
+#ifndef MO_TX_ATTEMPT_TIMEOUT
+#define MO_TX_ATTEMPT_TIMEOUT 1 //if the timeout of a tx-related msg should increase its attempt counter
+#endif
+
 namespace MicroOcpp {
 
 class Context;
