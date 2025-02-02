@@ -13,6 +13,8 @@
 #include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
+#include <array>
+
 #define BASE_TIME "2023-01-01T00:00:00.000Z"
 #define SCPROFILE "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":0,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"duration\":1000000,\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3}]}}}]"
 
