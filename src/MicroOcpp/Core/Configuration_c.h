@@ -42,8 +42,21 @@ typedef struct ocpp_configuration {
 
     uint16_t (*get_write_count) (void *user_data); // Return number of changes of the value. MO uses this to detect if the firmware has updated the config
 
+    bool read_only;
+    bool write_only;
+    bool reboot_required;
+
     void *mo_data; // Reserved for MO
 } ocpp_configuration;
+
+void ocpp_setRebootRequired(ocpp_configuration *config);
+bool ocpp_isRebootRequired(ocpp_configuration *config);
+
+void ocpp_setReadOnly(ocpp_configuration *config);
+bool ocpp_isReadOnly(ocpp_configuration *config);
+bool ocpp_isReadable(ocpp_configuration *config);
+
+void ocpp_setWriteOnly(ocpp_configuration *config);
 
 typedef struct ocpp_configuration_container {
     void *user_data; //set this at your choice. MO passes it back to the functions below

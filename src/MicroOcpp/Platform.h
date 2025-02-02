@@ -16,6 +16,12 @@
 #define MO_PLATFORM MO_PLATFORM_ARDUINO
 #endif
 
+#ifdef __cplusplus
+#define MO_EXTERN_C extern "C"
+#else
+#define MO_EXTERN_C
+#endif
+
 #if MO_PLATFORM == MO_PLATFORM_NONE
 #ifndef MO_CUSTOM_CONSOLE
 #define MO_CUSTOM_CONSOLE
@@ -32,18 +38,10 @@
 #define MO_CUSTOM_CONSOLE_MAXMSGSIZE 256
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern char _mo_console_msg_buf [MO_CUSTOM_CONSOLE_MAXMSGSIZE]; //define msg_buf in data section to save memory (see https://github.com/matth-x/MicroOcpp/pull/304)
-void _mo_console_out(const char *msg);
+MO_EXTERN_C void _mo_console_out(const char *msg);
 
-void mocpp_set_console_out(void (*console_out)(const char *msg));
-
-#ifdef __cplusplus
-}
-#endif
+MO_EXTERN_C void mocpp_set_console_out(void (*console_out)(const char *msg));
 
 #define MO_CONSOLE_PRINTF(X, ...) \
             do { \
@@ -79,9 +77,9 @@ void mocpp_set_console_out(void (*console_out)(const char *msg));
 #endif
 
 #ifdef MO_CUSTOM_TIMER
-extern "C" void mocpp_set_timer(unsigned long (*get_ms)());
+MO_EXTERN_C void mocpp_set_timer(unsigned long (*get_ms)());
 
-extern "C" unsigned long mocpp_tick_ms_custom();
+MO_EXTERN_C unsigned long mocpp_tick_ms_custom();
 #define mocpp_tick_ms mocpp_tick_ms_custom
 #else
 
@@ -89,20 +87,20 @@ extern "C" unsigned long mocpp_tick_ms_custom();
 #include <Arduino.h>
 #define mocpp_tick_ms millis
 #elif MO_PLATFORM == MO_PLATFORM_ESPIDF
-extern "C" unsigned long mocpp_tick_ms_espidf();
+MO_EXTERN_C unsigned long mocpp_tick_ms_espidf();
 #define mocpp_tick_ms mocpp_tick_ms_espidf
 #elif MO_PLATFORM == MO_PLATFORM_UNIX
-extern "C" unsigned long mocpp_tick_ms_unix();
+MO_EXTERN_C unsigned long mocpp_tick_ms_unix();
 #define mocpp_tick_ms mocpp_tick_ms_unix
 #endif
 #endif
 
 #ifdef MO_CUSTOM_RNG
-void mocpp_set_rng(uint32_t (*rng)());
-uint32_t mocpp_rng_custom();
+MO_EXTERN_C void mocpp_set_rng(uint32_t (*rng)());
+MO_EXTERN_C uint32_t mocpp_rng_custom();
 #define mocpp_rng mocpp_rng_custom
 #else
-uint32_t mocpp_time_based_prng(void);
+MO_EXTERN_C uint32_t mocpp_time_based_prng(void);
 #define mocpp_rng mocpp_time_based_prng
 #endif
 

@@ -7,17 +7,21 @@
 - Change `MicroOcpp::TxNotification` into C-style enum, replace `OCPP_TxNotication` ([#386](https://github.com/matth-x/MicroOcpp/pull/386))
 - Improved UUID generation ([#383](https://github.com/matth-x/MicroOcpp/pull/383))
 - `beginTransaction()` returns bool for better v2.0.1 interop ([#386](https://github.com/matth-x/MicroOcpp/pull/386))
+- Configurations C-API updates ([#400](https://github.com/matth-x/MicroOcpp/pull/400))
+- Platform integrations C-API upates ([#400](https://github.com/matth-x/MicroOcpp/pull/400))
 
 ### Added
 
 - `getTransactionV201()` exposes v201 Tx in API ([#386](https://github.com/matth-x/MicroOcpp/pull/386))
 - v201 support in Transaction.h C-API ([#386](https://github.com/matth-x/MicroOcpp/pull/386))
+- Write-only Configurations ([#400](https://github.com/matth-x/MicroOcpp/pull/400))
 
 ### Fixed
 
 - Timing issues for OCTT test cases ([#383](https://github.com/matth-x/MicroOcpp/pull/383))
 - Misleading Reset failure dbg msg ([#388](https://github.com/matth-x/MicroOcpp/pull/388))
 - Reject negative ints in ChangeConfig ([#388](https://github.com/matth-x/MicroOcpp/pull/388))
+- Revised SCons integration ([#400](https://github.com/matth-x/MicroOcpp/pull/400))
 
 ## [1.2.0] - 2024-11-03
 

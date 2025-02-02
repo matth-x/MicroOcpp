@@ -38,8 +38,25 @@ void ocpp_initialize_full(OCPP_Connection *conn, const char *bootNotificationCre
                 MicroOcpp::ProtocolVersion(1,6));
 }
 
+void ocpp_initialize_full2(OCPP_Connection *conn, const char *bootNotificationCredentials, FilesystemAdapterC *filesystem, bool autoRecover, bool ocpp201) {
+    if (!conn) {
+        MO_DBG_ERR("conn is null");
+    }
+
+    ocppSocket = reinterpret_cast<MicroOcpp::Connection*>(conn);
+
+    mocpp_initialize(*ocppSocket, bootNotificationCredentials, *reinterpret_cast<std::shared_ptr<MicroOcpp::FilesystemAdapter>*>(filesystem), autoRecover,
+            ocpp201 ?
+                MicroOcpp::ProtocolVersion(2,0,1) :
+                MicroOcpp::ProtocolVersion(1,6));
+}
+
 void ocpp_deinitialize() {
     mocpp_deinitialize();
+}
+
+bool ocpp_is_initialized() {
+    return getOcppContext() != nullptr;
 }
 
 void ocpp_loop() {
@@ -302,6 +319,33 @@ void ocpp_addMeterValueInputFloat_m(unsigned int connectorId, InputFloat_m value
     addMeterValueInput(adaptFn(connectorId, valueInput), measurand, unit, location, phase, connectorId);
 }
 
+void ocpp_addMeterValueInputIntTx(int (*valueInput)(ReadingContext), const char *measurand, const char *unit, const char *location, const char *phase) {
+    MicroOcpp::SampledValueProperties props;
+    props.setMeasurand(measurand);
+    props.setUnit(unit);
+    props.setLocation(location);
+    props.setPhase(phase);
+    auto mvs = std::unique_ptr<MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>>(
+                           new MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>(
+            props,
+            [valueInput] (ReadingContext readingContext) {return valueInput(readingContext);}
+    ));
+    addMeterValueInput(std::move(mvs));
+}
+void ocpp_addMeterValueInputIntTx_m(unsigned int connectorId, int (*valueInput)(unsigned int cId, ReadingContext), const char *measurand, const char *unit, const char *location, const char *phase) {
+    MicroOcpp::SampledValueProperties props;
+    props.setMeasurand(measurand);
+    props.setUnit(unit);
+    props.setLocation(location);
+    props.setPhase(phase);
+    auto mvs = std::unique_ptr<MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>>(
+                           new MicroOcpp::SampledValueSamplerConcrete<int32_t, MicroOcpp::SampledValueDeSerializer<int32_t>>(
+            props,
+            [valueInput, connectorId] (ReadingContext readingContext) {return valueInput(connectorId, readingContext);}
+    ));
+    addMeterValueInput(std::move(mvs), connectorId);
+}
+
 void ocpp_addMeterValueInput(MeterValueInput *meterValueInput) {
     ocpp_addMeterValueInput_m(1, meterValueInput);
 }
@@ -385,17 +429,6 @@ void ocpp_setOnReceiveRequest(const char *operationType, OnMessage onRequest) {
 void ocpp_setOnSendConf(const char *operationType, OnMessage onConfirmation) {
     setOnSendConf(operationType, adaptFn(onConfirmation));
 }
-
-void ocpp_set_console_out_c(void (*console_out)(const char *msg)) {
-    mocpp_set_console_out(console_out);
-}
-
-#ifdef MO_CUSTOM_RNG
-void ocpp_set_rng_c(uint32_t (*rng)(void))
-{
-    mocpp_set_rng(rng);
-}
-#endif
 
 void ocpp_authorize(const char *idTag, AuthorizeConfCallback onConfirmation, AuthorizeAbortCallback onAbort, AuthorizeTimeoutCallback onTimeout, AuthorizeErrorCallback onError, void *user_data) {
     
