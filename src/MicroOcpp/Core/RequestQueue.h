@@ -83,6 +83,10 @@ public:
     void sendRequest(std::unique_ptr<Request> request); //send an OCPP operation request to the server; adds request to default queue
     void sendRequestPreBoot(std::unique_ptr<Request> request); //send an OCPP operation request to the server; adds request to preBootQueue
 
+    void handleRequest(const char *operationType, Operation* (*createOperationCb)(const char *operationType, void* user_data), void *user_data = nullptr);
+    void setOnRequest(const char *operationType, void (*onRequest)(const char *payloadJson, size_t len));
+    void setOnConfirmation(const char *operationType, void (*onConfirmation)(const char *payloadJson, size_t len));
+
     void addSendQueue(RequestEmitter* sendQueue);
     void setPreBootSendQueue(VolatileRequestQueue *preBootQueue);
 

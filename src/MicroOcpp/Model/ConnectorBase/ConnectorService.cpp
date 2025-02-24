@@ -2,7 +2,7 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Model/ConnectorBase/ConnectorsCommon.h>
+#include <MicroOcpp/Model/ConnectorBase/ConnectorService.h>
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Operations/ChangeAvailability.h>
@@ -27,8 +27,8 @@
 
 using namespace MicroOcpp;
 
-ConnectorsCommon::ConnectorsCommon(Context& context, unsigned int numConn, std::shared_ptr<FilesystemAdapter> filesystem) :
-        MemoryManaged("v16.ConnectorBase.ConnectorsCommon"), context(context) {
+ConnectorService::ConnectorService(Context& context, unsigned int numConn, std::shared_ptr<FilesystemAdapter> filesystem) :
+        MemoryManaged("v16.ConnectorBase.ConnectorService"), context(context) {
     
     declareConfiguration<int>("NumberOfConnectors", numConn >= 1 ? numConn - 1 : 0, CONFIGURATION_VOLATILE, true);
     
@@ -87,6 +87,6 @@ ConnectorsCommon::ConnectorsCommon(Context& context, unsigned int numConn, std::
         return new Ocpp16::StatusNotification(-1, ChargePointStatus_UNDEFINED, Timestamp());});
 }
 
-void ConnectorsCommon::loop() {
+void ConnectorService::loop() {
     //do nothing
 }

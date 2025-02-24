@@ -15,12 +15,12 @@
 
 using namespace::MicroOcpp;
 
-SmartChargingConnector::SmartChargingConnector(Model& model, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ProfileStack& ChargePointMaxProfile, ProfileStack& ChargePointTxDefaultProfile) :
-        MemoryManaged("v16.SmartCharging.SmartChargingConnector"), model(model), filesystem{filesystem}, connectorId{connectorId}, ChargePointMaxProfile(ChargePointMaxProfile), ChargePointTxDefaultProfile(ChargePointTxDefaultProfile) {
+SmartChargingServiceEvse::SmartChargingServiceEvse(Model& model, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ProfileStack& ChargePointMaxProfile, ProfileStack& ChargePointTxDefaultProfile) :
+        MemoryManaged("v16.SmartCharging.SmartChargingServiceEvse"), model(model), filesystem{filesystem}, connectorId{connectorId}, ChargePointMaxProfile(ChargePointMaxProfile), ChargePointTxDefaultProfile(ChargePointTxDefaultProfile) {
     
 }
 
-SmartChargingConnector::~SmartChargingConnector() {
+SmartChargingServiceEvse::~SmartChargingServiceEvse() {
 
 }
 
@@ -28,7 +28,7 @@ SmartChargingConnector::~SmartChargingConnector() {
  * limitOut: the calculated maximum charge rate at the moment, or the default value if no limit is defined
  * validToOut: The begin of the next SmartCharging restriction after time t
  */
-void SmartChargingConnector::calculateLimit(const Timestamp &t, ChargeRate& limitOut, Timestamp& validToOut) {
+void SmartChargingServiceEvse::calculateLimit(const Timestamp &t, ChargeRate& limitOut, Timestamp& validToOut) {
 
     //initialize output parameters with the default values
     limitOut = ChargeRate();
@@ -100,7 +100,7 @@ void SmartChargingConnector::calculateLimit(const Timestamp &t, ChargeRate& limi
     limitOut = chargeRate_min(txLimit, cpLimit);
 }
 
-void SmartChargingConnector::trackTransaction() {
+void SmartChargingServiceEvse::trackTransaction() {
 
     Transaction *tx = nullptr;
     if (model.getConnector(connectorId)) {
@@ -143,7 +143,7 @@ void SmartChargingConnector::trackTransaction() {
     }
 }
 
-void SmartChargingConnector::loop(){
+void SmartChargingServiceEvse::loop(){
 
     trackTransaction();
 
@@ -187,14 +187,14 @@ void SmartChargingConnector::loop(){
     }
 }
 
-void SmartChargingConnector::setSmartChargingOutput(std::function<void(float,float,int)> limitOutput) {
+void SmartChargingServiceEvse::setSmartChargingOutput(std::function<void(float,float,int)> limitOutput) {
     if (this->limitOutput) {
         MO_DBG_WARN("replacing existing SmartChargingOutput");
     }
     this->limitOutput = limitOutput;
 }
 
-ChargingProfile *SmartChargingConnector::updateProfiles(std::unique_ptr<ChargingProfile> chargingProfile) {
+ChargingProfile *SmartChargingServiceEvse::updateProfiles(std::unique_ptr<ChargingProfile> chargingProfile) {
     
     int stackLevel = chargingProfile->getStackLevel(); //already validated
     
@@ -213,11 +213,11 @@ ChargingProfile *SmartChargingConnector::updateProfiles(std::unique_ptr<Charging
     return nullptr;
 }
 
-void SmartChargingConnector::notifyProfilesUpdated() {
+void SmartChargingServiceEvse::notifyProfilesUpdated() {
     nextChange = model.getClock().now();
 }
 
-bool SmartChargingConnector::clearChargingProfile(const std::function<bool(int, int, ChargingProfilePurposeType, int)> filter) {
+bool SmartChargingServiceEvse::clearChargingProfile(const std::function<bool(int, int, ChargingProfilePurposeType, int)> filter) {
     bool found = false;
 
     ProfileStack *profileStacks [] = {&TxProfile, &TxDefaultProfile};
@@ -237,7 +237,7 @@ bool SmartChargingConnector::clearChargingProfile(const std::function<bool(int, 
     return found;
 }
 
-std::unique_ptr<ChargingSchedule> SmartChargingConnector::getCompositeSchedule(int duration, ChargingRateUnitType_Optional unit) {
+std::unique_ptr<ChargingSchedule> SmartChargingServiceEvse::getCompositeSchedule(int duration, ChargingRateUnitType_Optional unit) {
     
     auto& startSchedule = model.getClock().now();
 
@@ -285,7 +285,7 @@ std::unique_ptr<ChargingSchedule> SmartChargingConnector::getCompositeSchedule(i
     return schedule;
 }
 
-size_t SmartChargingConnector::getChargingProfilesCount() {
+size_t SmartChargingServiceEvse::getChargingProfilesCount() {
     size_t chargingProfilesCount = 0;
     for (size_t i = 0; i < MO_ChargeProfileMaxStackLevel + 1; i++) {
         if (TxDefaultProfile[i]) {
@@ -298,7 +298,7 @@ size_t SmartChargingConnector::getChargingProfilesCount() {
     return chargingProfilesCount;
 }
 
-SmartChargingConnector *SmartChargingService::getScConnectorById(unsigned int connectorId) {
+SmartChargingServiceEvse *SmartChargingService::getScConnectorById(unsigned int connectorId) {
     if (connectorId == 0) {
         return nullptr;
     }
@@ -311,7 +311,7 @@ SmartChargingConnector *SmartChargingService::getScConnectorById(unsigned int co
 }
 
 SmartChargingService::SmartChargingService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int numConnectors)
-      : MemoryManaged("v16.SmartCharging.SmartChargingService"), context(context), filesystem{filesystem}, connectors{makeVector<SmartChargingConnector>(getMemoryTag())}, numConnectors(numConnectors) {
+      : MemoryManaged("v16.SmartCharging.SmartChargingService"), context(context), filesystem{filesystem}, connectors{makeVector<SmartChargingServiceEvse>(getMemoryTag())}, numConnectors(numConnectors) {
     
     for (unsigned int cId = 1; cId < numConnectors; cId++) {
         connectors.emplace_back(context.getModel(), filesystem, cId, ChargePointMaxProfile, ChargePointTxDefaultProfile);

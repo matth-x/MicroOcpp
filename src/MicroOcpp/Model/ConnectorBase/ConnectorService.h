@@ -12,11 +12,11 @@ namespace MicroOcpp {
 
 class Context;
 
-class ConnectorsCommon : public MemoryManaged {
+class ConnectorService : public MemoryManaged {
 private:
     Context& context;
 public:
-    ConnectorsCommon(Context& context, unsigned int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
+    ConnectorService(Context& context, unsigned int numConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
 
     void loop();
 };

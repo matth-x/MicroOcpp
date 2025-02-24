@@ -8,7 +8,7 @@
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Metering/MeteringService.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <MicroOcpp/Model/ConnectorBase/ConnectorsCommon.h>
+#include <MicroOcpp/Model/ConnectorBase/ConnectorService.h>
 #include <MicroOcpp/Model/Heartbeat/HeartbeatService.h>
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
 #include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
@@ -47,10 +47,6 @@ Connection *connection {nullptr};
 
 Context *context {nullptr};
 std::shared_ptr<FilesystemAdapter> filesystem;
-
-#ifndef MO_NUMCONNECTORS
-#define MO_NUMCONNECTORS 2
-#endif
 
 #define OCPP_ID_OF_CP 0
 #define OCPP_ID_OF_CONNECTOR 1
@@ -300,8 +296,8 @@ void mocpp_initialize(Connection& connection, const char *bootNotificationCreden
     {
         model.setTransactionStore(std::unique_ptr<TransactionStore>(
             new TransactionStore(MO_NUMCONNECTORS, filesystem)));
-        model.setConnectorsCommon(std::unique_ptr<ConnectorsCommon>(
-            new ConnectorsCommon(*context, MO_NUMCONNECTORS, filesystem)));
+        model.setConnectorService(std::unique_ptr<ConnectorService>(
+            new ConnectorService(*context, MO_NUMCONNECTORS, filesystem)));
         auto connectors = makeVector<std::unique_ptr<Connector>>("v16.ConnectorBase.Connector");
         for (unsigned int connectorId = 0; connectorId < MO_NUMCONNECTORS; connectorId++) {
             connectors.emplace_back(new Connector(*context, filesystem, connectorId));

@@ -6,7 +6,7 @@
 
 #include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <MicroOcpp/Model/ConnectorBase/ConnectorsCommon.h>
+#include <MicroOcpp/Model/ConnectorBase/ConnectorService.h>
 #include <MicroOcpp/Model/Metering/MeteringService.h>
 #include <MicroOcpp/Model/Metering/MeterValuesV201.h>
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
@@ -34,6 +34,200 @@ Model::Model(ProtocolVersion version, uint16_t bootNr) : MemoryManaged("Model"),
 
 Model::~Model() = default;
 
+void Model::setNumEvseId(unsigned int numEvseId) {
+    if (numEvseId >= MO_NUM_EVSEID) {
+        MO_DBG_ERR("invalid arg");
+        return;
+    }
+    this->numEvseId = numEvseId;
+}
+
+unsigned int Model::getNumEvseId() {
+    return numEvseId;
+}
+
+BootService *Model::getBootService() {
+    if (!bootService) {
+        bootService = new BootService(context);
+    }
+    return bootService;
+}
+
+HeartbeatService *Model::getHeartbeatService() {
+    if (!heartbeatService) {
+        heartbeatService = new HeartbeatService(context);
+    }
+    return heartbeatService;
+}
+
+ResetService *Model::getResetService() {
+    if (!resetService) {
+        resetService = new ResetService(context);
+    }
+    return resetService;
+}
+
+ConnectorService *Model::getConnectorService() {
+    if (!connectorService) {
+        connectorService = new ConnectorService(context);
+    }
+    return connectorService;
+}
+
+Connector *Model::getConnector(unsigned int evseId) {
+    if (evseId >= numEvseId) {
+        MO_DBG_ERR("connector with evseId %u does not exist", evseId);
+        return nullptr;
+    }
+
+    if (!connectors) {
+        connectors = MO_MALLOC(getMemoryTag(), numEvseId * sizeof(Connector*));
+        if (connectors) {
+            memset(connectors, 0, sizeof(*connectors));
+        } else {
+            return nullptr; //OOM
+        }
+    }
+
+    if (!connectors[evseId]) {
+        connectors[evseId] = new Connector(context);
+    }
+    return connectors[evseId];
+}
+
+TransactionStoreEvse *Model::getTransactionStoreEvse(unsigned int evseId) {
+    if (evseId >= numEvseId) {
+        MO_DBG_ERR("connector with evseId %u does not exist", evseId);
+        return nullptr;
+    }
+
+    if (!transactionStoreEvse) {
+        transactionStoreEvse = MO_MALLOC(getMemoryTag(), numEvseId * sizeof(TransactionStoreEvse*));
+        if (transactionStoreEvse) {
+            memset(transactionStoreEvse, 0, sizeof(*transactionStoreEvse));
+        } else {
+            return nullptr; //OOM
+        }
+    }
+
+    if (!transactionStoreEvse[evseId]) {
+        transactionStoreEvse[evseId] = new TransactionStoreEvse(context);
+    }
+    return transactionStoreEvse[evseId];
+}
+
+MeteringService* Model::getMeteringService() {
+    if (!meteringService) {
+        meteringService = new MeteringService(context);
+    }
+    return meteringService;
+}
+
+MeteringServiceEvse* Model::getMeteringServiceEvse(unsigned int evseId) {
+    if (evseId >= numEvseId) {
+        MO_DBG_ERR("connector with evseId %u does not exist", evseId);
+        return nullptr;
+    }
+
+    if (!meteringServiceEvse) {
+        meteringServiceEvse = MO_MALLOC(getMemoryTag(), numEvseId * sizeof(MeteringServiceEvse*));
+        if (meteringServiceEvse) {
+            memset(meteringServiceEvse, 0, sizeof(*meteringServiceEvse));
+        } else {
+            return nullptr; //OOM
+        }
+    }
+
+    if (!meteringServiceEvse[evseId]) {
+        meteringServiceEvse[evseId] = new MeteringServiceEvse(context);
+    }
+    return meteringServiceEvse[evseId];
+}
+
+#if MO_ENABLE_FIRMWAREMANAGEMENT
+FirmwareService *Model::getFirmwareService() {
+    if (!firmwareService) {
+        firmwareService = new FirmwareService(context);
+    }
+    return firmwareService;
+}
+
+DiagnosticsService *Model::getDiagnosticsService() {
+    if (!diagnosticsService) {
+        diagnosticsService = new DiagnosticsService(context);
+    }
+    return diagnosticsService;
+}
+#endif //MO_ENABLE_FIRMWAREMANAGEMENT
+
+#if MO_ENABLE_LOCAL_AUTH
+AuthorizationService *Model::getAuthorizationService() {
+    if (!authorizationService) {
+        authorizationService = new AuthorizationService(context);
+    }
+    return authorizationService;
+}
+#endif //MO_ENABLE_LOCAL_AUTH
+
+#if MO_ENABLE_RESERVATION
+ReservationService *Model::getReservationService() {
+    if (!reservationService) {
+        reservationService = new ReservationService(context);
+    }
+    return reservationService;
+}
+#endif //MO_ENABLE_RESERVATION
+
+#if MO_ENABLE_SMARTCHARGING
+SmartChargingService* Model::getSmartChargingService() {
+    if (!smartChargingService) {
+        smartChargingService = new SmartChargingService(context);
+    }
+    return smartChargingService;
+}
+
+SmartChargingServiceEvse *Model::getSmartChargingServiceEvse(unsigned int evseId) {
+        if (evseId < 1 || evseId >= numEvseId) {
+        MO_DBG_ERR("connector with evseId %u does not exist", evseId);
+        return nullptr;
+    }
+
+    if (!smartChargingServiceEvse) {
+        smartChargingServiceEvse = MO_MALLOC(getMemoryTag(), numEvseId * sizeof(SmartChargingServiceEvse*));
+        if (smartChargingServiceEvse) {
+            memset(smartChargingServiceEvse, 0, sizeof(*smartChargingServiceEvse));
+        } else {
+            return nullptr; //OOM
+        }
+    }
+
+    if (!smartChargingServiceEvse[evseId]) {
+        smartChargingServiceEvse[evseId] = new SmartChargingServiceEvse(context);
+    }
+    return smartChargingServiceEvse[evseId];
+}
+#endif //MO_ENABLE_SMARTCHARGING
+
+#if MO_ENABLE_CERT_MGMT
+CertificateService *Model::getCertificateService() {
+    if (!certService) {
+        certService = new CertificateService(context);
+    }
+    return certService;
+}
+#endif //MO_ENABLE_CERT_MGMT
+
+bool Model::setup() {
+    if (!getBootService()) {
+        return false; //OOM
+    }
+    getBootService()->setup();
+    if (!getHeartbeatService()) {
+        return false; //OOM
+    }
+    getHeartbeatService()->setup();
+}
+
 void Model::loop() {
 
     if (bootService) {
@@ -53,8 +247,8 @@ void Model::loop() {
         connector->loop();
     }
 
-    if (chargeControlCommon)
-        chargeControlCommon->loop();
+    if (connectorService)
+        connectorService->loop();
 
     if (smartChargingService)
         smartChargingService->loop();
@@ -90,134 +284,6 @@ void Model::loop() {
         resetServiceV201->loop();
 #endif
 }
-
-void Model::setTransactionStore(std::unique_ptr<TransactionStore> ts) {
-    transactionStore = std::move(ts);
-    capabilitiesUpdated = true;
-}
-
-TransactionStore *Model::getTransactionStore() {
-    return transactionStore.get();
-}
-
-void Model::setSmartChargingService(std::unique_ptr<SmartChargingService> scs) {
-    smartChargingService = std::move(scs);
-    capabilitiesUpdated = true;
-}
-
-SmartChargingService* Model::getSmartChargingService() const {
-    return smartChargingService.get();
-}
-
-void Model::setConnectorsCommon(std::unique_ptr<ConnectorsCommon> ccs) {
-    chargeControlCommon = std::move(ccs);
-    capabilitiesUpdated = true;
-}
-
-ConnectorsCommon *Model::getConnectorsCommon() {
-    return chargeControlCommon.get();
-}
-
-void Model::setConnectors(Vector<std::unique_ptr<Connector>>&& connectors) {
-    this->connectors = std::move(connectors);
-    capabilitiesUpdated = true;
-}
-
-unsigned int Model::getNumConnectors() const {
-    return connectors.size();
-}
-
-Connector *Model::getConnector(unsigned int connectorId) {
-    if (connectorId >= connectors.size()) {
-        MO_DBG_ERR("connector with connectorId %u does not exist", connectorId);
-        return nullptr;
-    }
-
-    return connectors[connectorId].get();
-}
-
-void Model::setMeteringSerivce(std::unique_ptr<MeteringService> ms) {
-    meteringService = std::move(ms);
-    capabilitiesUpdated = true;
-}
-
-MeteringService* Model::getMeteringService() const {
-    return meteringService.get();
-}
-
-void Model::setFirmwareService(std::unique_ptr<FirmwareService> fws) {
-    firmwareService = std::move(fws);
-    capabilitiesUpdated = true;
-}
-
-FirmwareService *Model::getFirmwareService() const {
-    return firmwareService.get();
-}
-
-void Model::setDiagnosticsService(std::unique_ptr<DiagnosticsService> ds) {
-    diagnosticsService = std::move(ds);
-    capabilitiesUpdated = true;
-}
-
-DiagnosticsService *Model::getDiagnosticsService() const {
-    return diagnosticsService.get();
-}
-
-void Model::setHeartbeatService(std::unique_ptr<HeartbeatService> hs) {
-    heartbeatService = std::move(hs);
-    capabilitiesUpdated = true;
-}
-
-#if MO_ENABLE_LOCAL_AUTH
-void Model::setAuthorizationService(std::unique_ptr<AuthorizationService> as) {
-    authorizationService = std::move(as);
-    capabilitiesUpdated = true;
-}
-
-AuthorizationService *Model::getAuthorizationService() {
-    return authorizationService.get();
-}
-#endif //MO_ENABLE_LOCAL_AUTH
-
-#if MO_ENABLE_RESERVATION
-void Model::setReservationService(std::unique_ptr<ReservationService> rs) {
-    reservationService = std::move(rs);
-    capabilitiesUpdated = true;
-}
-
-ReservationService *Model::getReservationService() {
-    return reservationService.get();
-}
-#endif //MO_ENABLE_RESERVATION
-
-void Model::setBootService(std::unique_ptr<BootService> bs){
-    bootService = std::move(bs);
-    capabilitiesUpdated = true;
-}
-
-BootService *Model::getBootService() const {
-    return bootService.get();
-}
-
-void Model::setResetService(std::unique_ptr<ResetService> rs) {
-    this->resetService = std::move(rs);
-    capabilitiesUpdated = true;
-}
-
-ResetService *Model::getResetService() const {
-    return resetService.get();
-}
-
-#if MO_ENABLE_CERT_MGMT
-void Model::setCertificateService(std::unique_ptr<CertificateService> cs) {
-    this->certService = std::move(cs);
-    capabilitiesUpdated = true;
-}
-
-CertificateService *Model::getCertificateService() const {
-    return certService.get();
-}
-#endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_V201
 void Model::setAvailabilityService(std::unique_ptr<AvailabilityService> as) {
@@ -299,7 +365,7 @@ void Model::updateSupportedStandardProfiles() {
 
     auto buf = makeString(getMemoryTag(), supportedFeatureProfilesString->getString());
 
-    if (chargeControlCommon &&
+    if (connectorService &&
             heartbeatService &&
             bootService) {
         if (!strstr(supportedFeatureProfilesString->getString(), "Core")) {

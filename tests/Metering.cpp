@@ -1,12 +1,11 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Model/Metering/MeteringConnector.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
 #include <catch2/catch.hpp>

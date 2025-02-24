@@ -1,5 +1,5 @@
 # matth-x/MicroOcpp
-# Copyright Matthias Akstaller 2019 - 2024
+# Copyright Matthias Akstaller 2019 - 2025
 # MIT License
 
 cmake_minimum_required(VERSION 3.15)
@@ -77,12 +77,11 @@ set(MO_SRC
     src/MicroOcpp/Model/Certificates/Certificate_c.cpp
     src/MicroOcpp/Model/Certificates/CertificateMbedTLS.cpp
     src/MicroOcpp/Model/Certificates/CertificateService.cpp
-    src/MicroOcpp/Model/ConnectorBase/ConnectorsCommon.cpp
+    src/MicroOcpp/Model/ConnectorBase/ConnectorService.cpp
     src/MicroOcpp/Model/ConnectorBase/Connector.cpp
     src/MicroOcpp/Model/Diagnostics/DiagnosticsService.cpp
     src/MicroOcpp/Model/FirmwareManagement/FirmwareService.cpp
     src/MicroOcpp/Model/Heartbeat/HeartbeatService.cpp
-    src/MicroOcpp/Model/Metering/MeteringConnector.cpp
     src/MicroOcpp/Model/Metering/MeteringService.cpp
     src/MicroOcpp/Model/Metering/MeterStore.cpp
     src/MicroOcpp/Model/Metering/MeterValue.cpp

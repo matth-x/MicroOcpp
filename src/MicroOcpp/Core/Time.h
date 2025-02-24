@@ -26,18 +26,10 @@ namespace MicroOcpp {
 
 class Timestamp : public MemoryManaged {
 private:
-    /*
-     * Internal representation of the current time. The initial values correspond to UNIX-time 0. January
-     * corresponds to month 0 and the first day in the month is day 0.
-     */
-    int16_t year = 1970;
-    int16_t month = 0;
-    int16_t day = 0;
-    int32_t hour = 0;
-    int32_t minute = 0;
-    int32_t second = 0;
+    int32_t time; //Unix time (number of seconds since Jan 1, 1970 UTC, not counting leap seconds)
+
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
-    int32_t ms = 0;
+    int16_t ms = 0; //fractional ms of timestamp. Compound timestamp = time + ms. Range should be [0, 999]
 #endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
 public:
@@ -82,6 +74,8 @@ public:
     Timestamp &operator-=(int secs);
 
     int operator-(const Timestamp &rhs) const;
+
+    operator int32_t() const;
 
     friend Timestamp operator+(const Timestamp &lhs, int secs);
     friend Timestamp operator-(const Timestamp &lhs, int secs);

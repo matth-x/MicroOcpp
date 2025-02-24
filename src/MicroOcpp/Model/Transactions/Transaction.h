@@ -54,7 +54,7 @@ namespace MicroOcpp {
  * See OCPP 1.6 Specification - Edition 2, sections 3.6, 4.8, 4.10 and 5.11. 
  */
 
-class ConnectorTransactionStore;
+class TransactionStoreEvse;
 
 class SendStatus {
 private:
@@ -80,7 +80,7 @@ public:
 
 class Transaction : public MemoryManaged {
 private:
-    ConnectorTransactionStore& context;
+    TransactionStoreEvse& context;
 
     bool active = true; //once active is false, the tx must stop (or cannot start at all)
 
@@ -123,7 +123,7 @@ private:
     bool silent = false; //silent Tx: process tx locally, without reporting to the server
 
 public:
-    Transaction(ConnectorTransactionStore& context, unsigned int connectorId, unsigned int txNr, bool silent = false) : 
+    Transaction(TransactionStoreEvse& context, unsigned int connectorId, unsigned int txNr, bool silent = false) : 
                 MemoryManaged("v16.Transactions.Transaction"),
                 context(context),
                 connectorId(connectorId), 

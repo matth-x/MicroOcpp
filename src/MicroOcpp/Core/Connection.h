@@ -40,10 +40,11 @@ public:
     virtual bool sendTXT(const char *msg, size_t length) = 0;
 
     /*
+     * Pass incoming data from the server to this function. The OCPP library will consume it
      * The OCPP library calls this function once during initialization. It passes a callback function to
      * the socket. The socket should forward any incoming payload from the OCPP server to the receiveTXT callback
      */
-    virtual void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) = 0;
+    bool recvTXT(const char *msg, size_t len) = 0;
 
     /*
      * Returns the timestamp of the last incoming message. Use mocpp_tick_ms() for creating the correct timestamp

@@ -14,7 +14,7 @@ namespace MicroOcpp {
 
 class TransactionStore;
 
-class ConnectorTransactionStore : public MemoryManaged {
+class TransactionStoreEvse : public MemoryManaged {
 private:
     TransactionStore& context;
     const unsigned int connectorId;
@@ -24,12 +24,12 @@ private:
     Vector<std::weak_ptr<Transaction>> transactions;
 
 public:
-    ConnectorTransactionStore(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem);
-    ConnectorTransactionStore(const ConnectorTransactionStore&) = delete;
-    ConnectorTransactionStore(ConnectorTransactionStore&&) = delete;
-    ConnectorTransactionStore& operator=(const ConnectorTransactionStore&) = delete;
+    TransactionStoreEvse(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem);
+    TransactionStoreEvse(const TransactionStoreEvse&) = delete;
+    TransactionStoreEvse(TransactionStoreEvse&&) = delete;
+    TransactionStoreEvse& operator=(const TransactionStoreEvse&) = delete;
 
-    ~ConnectorTransactionStore();
+    ~TransactionStoreEvse();
 
     bool commit(Transaction *transaction);
 
@@ -37,20 +37,6 @@ public:
     std::shared_ptr<Transaction> createTransaction(unsigned int txNr, bool silent = false);
 
     bool remove(unsigned int txNr);
-};
-
-class TransactionStore : public MemoryManaged {
-private:
-    Vector<std::unique_ptr<ConnectorTransactionStore>> connectors;
-public:
-    TransactionStore(unsigned int nConnectors, std::shared_ptr<FilesystemAdapter> filesystem);
-
-    bool commit(Transaction *transaction);
-
-    std::shared_ptr<Transaction> getTransaction(unsigned int connectorId, unsigned int txNr);
-    std::shared_ptr<Transaction> createTransaction(unsigned int connectorId, unsigned int txNr, bool silent = false);
-
-    bool remove(unsigned int connectorId, unsigned int txNr);
 };
 
 }

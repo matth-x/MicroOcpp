@@ -9,7 +9,7 @@
 
 using namespace MicroOcpp;
 
-ConnectorTransactionStore::ConnectorTransactionStore(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem) :
+TransactionStoreEvse::TransactionStoreEvse(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem) :
         MemoryManaged("v16.Transactions.TransactionStore"),
         context(context),
         connectorId(connectorId),
@@ -18,11 +18,11 @@ ConnectorTransactionStore::ConnectorTransactionStore(TransactionStore& context, 
 
 }
 
-ConnectorTransactionStore::~ConnectorTransactionStore() {
+TransactionStoreEvse::~TransactionStoreEvse() {
 
 }
 
-std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned int txNr) {
+std::shared_ptr<Transaction> TransactionStoreEvse::getTransaction(unsigned int txNr) {
 
     //check for most recent element of cache first because of temporal locality
     if (!transactions.empty()) {
@@ -98,7 +98,7 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::getTransaction(unsigned 
     return transaction;
 }
 
-std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction(unsigned int txNr, bool silent) {
+std::shared_ptr<Transaction> TransactionStoreEvse::createTransaction(unsigned int txNr, bool silent) {
 
     auto transaction = std::allocate_shared<Transaction>(makeAllocator<Transaction>(getMemoryTag()), *this, connectorId, txNr, silent);
 
@@ -122,7 +122,7 @@ std::shared_ptr<Transaction> ConnectorTransactionStore::createTransaction(unsign
     return transaction;
 }
 
-bool ConnectorTransactionStore::commit(Transaction *transaction) {
+bool TransactionStoreEvse::commit(Transaction *transaction) {
 
     if (!filesystem) {
         MO_DBG_DEBUG("no FS: nothing to commit");
@@ -151,7 +151,7 @@ bool ConnectorTransactionStore::commit(Transaction *transaction) {
     return true;
 }
 
-bool ConnectorTransactionStore::remove(unsigned int txNr) {
+bool TransactionStoreEvse::remove(unsigned int txNr) {
 
     if (!filesystem) {
         MO_DBG_DEBUG("no FS: nothing to remove");
@@ -174,52 +174,6 @@ bool ConnectorTransactionStore::remove(unsigned int txNr) {
     MO_DBG_DEBUG("remove %s", fn);
     
     return filesystem->remove(fn);
-}
-
-TransactionStore::TransactionStore(unsigned int nConnectors, std::shared_ptr<FilesystemAdapter> filesystem) :
-        MemoryManaged{"v16.Transactions.TransactionStore"}, connectors{makeVector<std::unique_ptr<ConnectorTransactionStore>>(getMemoryTag())} {
-
-    for (unsigned int i = 0; i < nConnectors; i++) {
-        connectors.push_back(std::unique_ptr<ConnectorTransactionStore>(
-            new ConnectorTransactionStore(*this, i, filesystem)));
-    }
-}
-
-bool TransactionStore::commit(Transaction *transaction) {
-    if (!transaction) {
-        MO_DBG_ERR("Invalid arg");
-        return false;
-    }
-    auto connectorId = transaction->getConnectorId();
-    if (connectorId >= connectors.size()) {
-        MO_DBG_ERR("Invalid tx");
-        return false;
-    }
-    return connectors[connectorId]->commit(transaction);
-}
-
-std::shared_ptr<Transaction> TransactionStore::getTransaction(unsigned int connectorId, unsigned int txNr) {
-    if (connectorId >= connectors.size()) {
-        MO_DBG_ERR("Invalid connectorId");
-        return nullptr;
-    }
-    return connectors[connectorId]->getTransaction(txNr);
-}
-
-std::shared_ptr<Transaction> TransactionStore::createTransaction(unsigned int connectorId, unsigned int txNr, bool silent) {
-    if (connectorId >= connectors.size()) {
-        MO_DBG_ERR("Invalid connectorId");
-        return nullptr;
-    }
-    return connectors[connectorId]->createTransaction(txNr, silent);
-}
-
-bool TransactionStore::remove(unsigned int connectorId, unsigned int txNr) {
-    if (connectorId >= connectors.size()) {
-        MO_DBG_ERR("Invalid connectorId");
-        return false;
-    }
-    return connectors[connectorId]->remove(txNr);
 }
 
 #if MO_ENABLE_V201

@@ -28,7 +28,7 @@ class Model;
 
 using ProfileStack = std::array<std::unique_ptr<ChargingProfile>, MO_ChargeProfileMaxStackLevel + 1>;
 
-class SmartChargingConnector : public MemoryManaged {
+class SmartChargingServiceEvse : public MemoryManaged {
 private:
     Model& model;
     std::shared_ptr<FilesystemAdapter> filesystem;
@@ -54,9 +54,9 @@ private:
     void trackTransaction();
 
 public:
-    SmartChargingConnector(Model& model, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ProfileStack& ChargePointMaxProfile, ProfileStack& ChargePointTxDefaultProfile);
-    SmartChargingConnector(SmartChargingConnector&&) = default;
-    ~SmartChargingConnector();
+    SmartChargingServiceEvse(Model& model, std::shared_ptr<FilesystemAdapter> filesystem, unsigned int connectorId, ProfileStack& ChargePointMaxProfile, ProfileStack& ChargePointTxDefaultProfile);
+    SmartChargingServiceEvse(SmartChargingServiceEvse&&) = default;
+    ~SmartChargingServiceEvse();
 
     void loop();
 
@@ -77,8 +77,8 @@ class SmartChargingService : public MemoryManaged {
 private:
     Context& context;
     std::shared_ptr<FilesystemAdapter> filesystem;
-    Vector<SmartChargingConnector> connectors; //connectorId 0 excluded
-    SmartChargingConnector *getScConnectorById(unsigned int connectorId);
+    Vector<SmartChargingServiceEvse> connectors; //connectorId 0 excluded
+    SmartChargingServiceEvse *getScConnectorById(unsigned int connectorId);
     unsigned int numConnectors; //connectorId 0 included
     
     ProfileStack ChargePointMaxProfile;

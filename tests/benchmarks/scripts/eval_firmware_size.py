@@ -142,8 +142,8 @@ def categorize_table(df):
     df.at['Model/Certificates/CertificateService.cpp', 'Module'] = MODULE_CERTS
     df.at['Model/ConnectorBase/Connector.cpp', 'v16'] = TICK
     df.at['Model/ConnectorBase/Connector.cpp', 'Module'] = MODULE_CORE
-    df.at['Model/ConnectorBase/ConnectorsCommon.cpp', 'v16'] = TICK
-    df.at['Model/ConnectorBase/ConnectorsCommon.cpp', 'Module'] = MODULE_CORE
+    df.at['Model/ConnectorBase/ConnectorService.cpp', 'v16'] = TICK
+    df.at['Model/ConnectorBase/ConnectorService.cpp', 'Module'] = MODULE_CORE
     df.at['Model/Diagnostics/DiagnosticsService.cpp', 'v16'] = TICK
     df.at['Model/Diagnostics/DiagnosticsService.cpp', 'Module'] = MODULE_FW_MNGT
     df.at['Model/FirmwareManagement/FirmwareService.cpp', 'v16'] = TICK
@@ -151,8 +151,6 @@ def categorize_table(df):
     df.at['Model/Heartbeat/HeartbeatService.cpp', 'v16'] = TICK
     df.at['Model/Heartbeat/HeartbeatService.cpp', 'v201'] = TICK
     df.at['Model/Heartbeat/HeartbeatService.cpp', 'Module'] = MODULE_AVAILABILITY
-    df.at['Model/Metering/MeteringConnector.cpp', 'v16'] = TICK
-    df.at['Model/Metering/MeteringConnector.cpp', 'Module'] = MODULE_METERVALUES
     df.at['Model/Metering/MeteringService.cpp', 'v16'] = TICK
     df.at['Model/Metering/MeteringService.cpp', 'Module'] = MODULE_METERVALUES
     df.at['Model/Metering/MeterStore.cpp', 'v16'] = TICK
