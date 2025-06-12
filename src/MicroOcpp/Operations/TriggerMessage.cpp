@@ -3,17 +3,20 @@
 // MIT License
 
 #include <MicroOcpp/Operations/TriggerMessage.h>
-#include <MicroOcpp/Model/ConnectorBase/Connector.h>
-#include <MicroOcpp/Model/Metering/MeteringService.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Core/Request.h>
+#include <MicroOcpp/Model/Availability/AvailabilityService.h>
+#include <MicroOcpp/Model/Metering/MeteringService.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp16::TriggerMessage;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16 || MO_ENABLE_V201
 
-TriggerMessage::TriggerMessage(Context& context) : MemoryManaged("v16.Operation.", "TriggerMessage"), context(context) {
+using namespace MicroOcpp;
+
+TriggerMessage::TriggerMessage(Context& context, RemoteControlService& rcService) : MemoryManaged("v16.Operation.", "TriggerMessage"), context(context), rcService(rcService) {
 
 }
 
@@ -23,63 +26,66 @@ const char* TriggerMessage::getOperationType(){
 
 void TriggerMessage::processReq(JsonObject payload) {
 
-    const char *requestedMessage = payload["requestedMessage"] | "Invalid";
-    const int connectorId = payload["connectorId"] | -1;
+    if (!payload.containsKey("requestedMessage") || !payload["requestedMessage"].is<const char*>()) {
+        errorCode = "FormationViolation";
+        return;
+    }
 
-    MO_DBG_INFO("Execute for message type %s, connectorId = %i", requestedMessage, connectorId);
+    const char *requestedMessage = payload["requestedMessage"];
+    int evseId = -1;
 
-    statusMessage = "Rejected";
+    unsigned int numEvseId = MO_NUM_EVSEID;
 
-    if (!strcmp(requestedMessage, "MeterValues")) {
-        if (auto mService = context.getModel().getMeteringService()) {
-            if (connectorId < 0) {
-                auto nConnectors = mService->getNumConnectors();
-                for (decltype(nConnectors) cId = 0; cId < nConnectors; cId++) {
-                    if (auto meterValues = mService->takeTriggeredMeterValues(cId)) {
-                        context.getRequestQueue().sendRequestPreBoot(std::move(meterValues));
-                        statusMessage = "Accepted";
-                    }
-                }
-            } else if (connectorId < mService->getNumConnectors()) {
-                if (auto meterValues = mService->takeTriggeredMeterValues(connectorId)) {
-                    context.getRequestQueue().sendRequestPreBoot(std::move(meterValues));
-                    statusMessage = "Accepted";
-                }
-            } else {
-                errorCode = "PropertyConstraintViolation";
-            }
-        }
-    } else if (!strcmp(requestedMessage, "StatusNotification")) {
-        unsigned int cIdRangeBegin = 0, cIdRangeEnd = 0;
-        if (connectorId < 0) {
-            cIdRangeEnd = context.getModel().getNumConnectors();
-        } else if ((unsigned int) connectorId < context.getModel().getNumConnectors()) {
-            cIdRangeBegin = connectorId;
-            cIdRangeEnd = connectorId + 1;
-        } else {
+    #if MO_ENABLE_V16
+    if (context.getOcppVersion() == MO_OCPP_V16) {
+        numEvseId = context.getModel16().getNumEvseId();
+        evseId = payload["connectorId"] | -1;
+    }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (context.getOcppVersion() == MO_OCPP_V201) {
+        numEvseId = context.getModel201().getNumEvseId();
+        evseId = payload["evse"]["id"] | -1;
+
+        if ((payload["evse"]["connectorId"] | 1) != 1) {
             errorCode = "PropertyConstraintViolation";
+            return;
         }
+    }
+    #endif //MO_ENABLE_V201
+        
+    if (evseId >= numEvseId) {
+        errorCode = "PropertyConstraintViolation";
+        return;
+    }
 
-        for (auto i = cIdRangeBegin; i < cIdRangeEnd; i++) {
-            auto connector = context.getModel().getConnector(i);
-            if (connector->triggerStatusNotification()) {
-                statusMessage = "Accepted";
-            }
-        }
-    } else {
-        auto msg = context.getOperationRegistry().deserializeOperation(requestedMessage);
-        if (msg) {
-            context.getRequestQueue().sendRequestPreBoot(std::move(msg));
-            statusMessage = "Accepted";
-        } else {
-            statusMessage = "NotImplemented";
-        }
+    MO_DBG_INFO("Execute for message type %s, evseId = %i", requestedMessage, evseId);
+
+    status = rcService.triggerMessage(requestedMessage, evseId);
+    if (status == TriggerMessageStatus::ERR_INTERNAL) {
+        MO_DBG_ERR("triggerMessage() failed");
+        errorCode = "InternalError";
+        return;
     }
 }
 
 std::unique_ptr<JsonDoc> TriggerMessage::createConf(){
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
-    payload["status"] = statusMessage;
+    const char *statusStr = "Rejected";
+    switch (status) {
+        case TriggerMessageStatus::Accepted:
+            statusStr = "Accepted";
+            break;
+        case TriggerMessageStatus::Rejected:
+            statusStr = "Rejected";
+            break;
+        case TriggerMessageStatus::NotImplemented:
+            statusStr = "NotImplemented";
+            break;
+    }
+    payload["status"] = statusStr;
     return doc;
 }
+
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201

@@ -2,16 +2,14 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_LOCAL_AUTH
-
 #include <MicroOcpp/Operations/SendLocalList.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
 
-using MicroOcpp::Ocpp16::SendLocalList;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
+
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp16;
 
 SendLocalList::SendLocalList(AuthorizationService& authService) : MemoryManaged("v16.Operation.", "SendLocalList"), authService(authService) {
   
@@ -71,4 +69,4 @@ std::unique_ptr<JsonDoc> SendLocalList::createConf(){
     return doc;
 }
 
-#endif //MO_ENABLE_LOCAL_AUTH
+#endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH

@@ -4,7 +4,7 @@
 
 #include <MicroOcpp/Model/Certificates/CertificateMbedTLS.h>
 
-#if MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
 
 #include <string.h>
 
@@ -13,9 +13,10 @@
 #include <mbedtls/md.h>
 #include <mbedtls/error.h>
 
+#include <MicroOcpp/Core/FilesystemUtils.h>
 #include <MicroOcpp/Debug.h>
 
-bool ocpp_get_cert_hash(mbedtls_x509_crt& cacert, HashAlgorithmType hashAlg, ocpp_cert_hash *out) {
+bool mo_get_cert_hash(mbedtls_x509_crt& cacert, HashAlgorithmType hashAlg, mo_cert_hash *out) {
 
     if (cacert.next) {
         MO_DBG_ERR("only sole root certs supported");
@@ -112,7 +113,7 @@ bool ocpp_get_cert_hash(mbedtls_x509_crt& cacert, HashAlgorithmType hashAlg, ocp
     return true;
 }
 
-bool ocpp_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmType hashAlg, ocpp_cert_hash *out) {
+bool mo_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmType hashAlg, mo_cert_hash *out) {
 
     mbedtls_x509_crt cacert;
     mbedtls_x509_crt_init(&cacert);
@@ -121,7 +122,7 @@ bool ocpp_get_cert_hash(const unsigned char *buf, size_t len, HashAlgorithmType 
     int ret;
 
     if((ret = mbedtls_x509_crt_parse(&cacert, buf, len + 1)) >= 0) {
-        success = ocpp_get_cert_hash(cacert, hashAlg, out);
+        success = mo_get_cert_hash(cacert, hashAlg, out);
     } else {
         char err [100];
         mbedtls_strerror(ret, err, 100);
@@ -136,55 +137,62 @@ namespace MicroOcpp {
 
 class CertificateStoreMbedTLS : public CertificateStore, public MemoryManaged {
 private:
-    std::shared_ptr<FilesystemAdapter> filesystem;
+    MO_FilesystemAdapter *filesystem = nullptr;
 
-    bool getCertHash(const char *fn, HashAlgorithmType hashAlg, CertificateHash& out) {
+    bool getCertHash(const char *path, HashAlgorithmType hashAlg, CertificateHash& out) {
+
+        MO_File *file = nullptr;
+        unsigned char *buf = nullptr;
+        bool success = false;
+
         size_t fsize;
-        if (filesystem->stat(fn, &fsize) != 0) {
-            MO_DBG_ERR("certificate does not exist: %s", fn);
-            return false;
+        if (filesystem->stat(path, &fsize) != 0) {
+            MO_DBG_ERR("certificate does not exist: %s", path);
+            goto exit;
         }
 
         if (fsize >= MO_MAX_CERT_SIZE) {
-            MO_DBG_ERR("cert file exceeds limit: %s,  %zuB", fn, fsize);
-            return false;
+            MO_DBG_ERR("cert file exceeds limit: %s,  %zuB", path, fsize);
+            goto exit;
         }
 
-        auto file = filesystem->open(fn, "r");
+        file = filesystem->open(path, "r");
         if (!file) {
-            MO_DBG_ERR("could not open file: %s", fn);
-            return false;
+            MO_DBG_ERR("could not open file: %s", path);
+            goto exit;
         }
 
-        unsigned char *buf = static_cast<unsigned char*>(MO_MALLOC(getMemoryTag(), fsize + 1));
+        buf = static_cast<unsigned char*>(MO_MALLOC(getMemoryTag(), fsize + 1));
         if (!buf) {
             MO_DBG_ERR("OOM");
-            return false;
+            goto exit;
         }
 
-        bool success = true;
-
         size_t ret;
-        if ((ret = file->read((char*) buf, fsize)) != fsize) {
+        if ((ret = filesystem->read(file, (char*) buf, fsize)) != fsize) {
             MO_DBG_ERR("read error: %zu (expect %zu)", ret, fsize);
-            success = false;
+            goto exit;
         }
 
         buf[fsize] = '\0';
 
-        if (success) {
-            success &= ocpp_get_cert_hash(buf, fsize, hashAlg, &out);
+        if (!mo_get_cert_hash(buf, fsize, hashAlg, &out)) {
+            MO_DBG_ERR("could not read cert: %s", path);
+            goto exit;
         }
 
-        if (!success) {
-            MO_DBG_ERR("could not read cert: %s", fn);
-        }
+        //success
+        success = true;
 
+    exit:
+        if (file) {
+            (void)filesystem->close(file); //read-only
+        }
         MO_FREE(buf);
         return success;
     }
 public:
-    CertificateStoreMbedTLS(std::shared_ptr<FilesystemAdapter> filesystem)
+    CertificateStoreMbedTLS(MO_FilesystemAdapter *filesystem)
             : MemoryManaged("v201.Certificates.CertificateStoreMbedTLS"), filesystem(filesystem) {
 
     }
@@ -210,16 +218,16 @@ public:
                 continue;
             }
 
-            for (size_t i = 0; i < MO_CERT_STORE_SIZE; i++) {
-                char fn [MO_MAX_PATH_SIZE];
-                if (!printCertFn(certTypeFnStr, i, fn, MO_MAX_PATH_SIZE)) {
+            for (unsigned int i = 0; i < MO_CERT_STORE_SIZE; i++) {
+                char path [MO_MAX_PATH_SIZE];
+                if (!printCertPath(filesystem, path, sizeof(path), certTypeFnStr, i)) {
                     MO_DBG_ERR("internal error");
                     out.clear();
                     break;
                 }
 
                 size_t msize;
-                if (filesystem->stat(fn, &msize) != 0) {
+                if (filesystem->stat(path, &msize) != 0) {
                     continue; //no cert installed at this slot
                 }
 
@@ -228,8 +236,8 @@ public:
 
                 rootCert.certificateType = certType;
 
-                if (!getCertHash(fn, HashAlgorithmType_SHA256, rootCert.certificateHashData)) {
-                    MO_DBG_ERR("could not create hash: %s", fn);
+                if (!getCertHash(path, HashAlgorithmType_SHA256, rootCert.certificateHashData)) {
+                    MO_DBG_ERR("could not create hash: %s", path);
                     out.pop_back();
                     continue;
                 }
@@ -246,31 +254,31 @@ public:
 
         //enumerate all certs possibly installed by this CertStore implementation
         for (const char *certTypeFnStr : {MO_CERT_FN_CSMS_ROOT, MO_CERT_FN_MANUFACTURER_ROOT}) {
-            for (size_t i = 0; i < MO_CERT_STORE_SIZE; i++) {
+            for (unsigned int i = 0; i < MO_CERT_STORE_SIZE; i++) {
 
-                char fn [MO_MAX_PATH_SIZE] = {'\0'}; //cert fn on flash storage
+                char path [MO_MAX_PATH_SIZE]; //cert path on flash storage
 
-                if (!printCertFn(certTypeFnStr, i, fn, MO_MAX_PATH_SIZE)) {
+                if (!printCertPath(filesystem, path, sizeof(path), certTypeFnStr, i)) {
                     MO_DBG_ERR("internal error");
                     return DeleteCertificateStatus_Failed;
                 }
 
                 size_t msize;
-                if (filesystem->stat(fn, &msize) != 0) {
+                if (filesystem->stat(path, &msize) != 0) {
                     continue; //no cert installed at this slot
                 }
 
                 CertificateHash probe;
-                if (!getCertHash(fn, hash.hashAlgorithm, probe)) {
-                    MO_DBG_ERR("could not create hash: %s", fn);
+                if (!getCertHash(path, hash.hashAlgorithm, probe)) {
+                    MO_DBG_ERR("could not create hash: %s", path);
                     err = true;
                     continue;
                 }
 
-                if (ocpp_cert_equals(&probe, &hash)) {
+                if (mo_cert_equals(&probe, &hash)) {
                     //found, delete
 
-                    bool success = filesystem->remove(fn);
+                    bool success = filesystem->remove(path);
                     return success ?
                         DeleteCertificateStatus_Accepted :
                         DeleteCertificateStatus_Failed;
@@ -302,7 +310,7 @@ public:
 
         //check if this implementation is able to parse incoming cert
         CertificateHash certId;
-        if (!ocpp_get_cert_hash((const unsigned char*)certificate, strlen(certificate), HashAlgorithmType_SHA256, &certId)) {
+        if (!mo_get_cert_hash((const unsigned char*)certificate, strlen(certificate), HashAlgorithmType_SHA256, &certId)) {
             MO_DBG_ERR("unable to parse cert");
             return InstallCertificateStatus_Rejected;
         }
@@ -313,28 +321,28 @@ public:
             MO_DBG_DEBUG("hashAlgorithm: %s", HashAlgorithmLabel(certId.hashAlgorithm));
             char buf [MO_CERT_HASH_ISSUER_NAME_KEY_SIZE];
 
-            ocpp_cert_print_issuerNameHash(&certId, buf, sizeof(buf));
+            mo_cert_print_issuerNameHash(&certId, buf, sizeof(buf));
             MO_DBG_DEBUG("issuerNameHash: %s", buf);
 
-            ocpp_cert_print_issuerKeyHash(&certId, buf, sizeof(buf));
+            mo_cert_print_issuerKeyHash(&certId, buf, sizeof(buf));
             MO_DBG_DEBUG("issuerKeyHash: %s", buf);
 
-            ocpp_cert_print_serialNumber(&certId, buf, sizeof(buf));
+            mo_cert_print_serialNumber(&certId, buf, sizeof(buf));
             MO_DBG_DEBUG("serialNumber: %s", buf);
         }
-#endif // MO_DBG_LEVEL >= MO_DL_DEBUG
+#endif //MO_DBG_LEVEL >= MO_DL_DEBUG
 
         //check if cert is already stored on flash
         auto installedCerts = makeVector<CertificateChainHash>(getMemoryTag());
         auto ret = getCertificateIds({certTypeGetType}, installedCerts);
         if (ret == GetInstalledCertificateStatus_Accepted) {
             for (auto &installedCert : installedCerts) {
-                if (ocpp_cert_equals(&installedCert.certificateHashData, &certId)) {
+                if (mo_cert_equals(&installedCert.certificateHashData, &certId)) {
                     MO_DBG_INFO("certificate already installed");
                     return InstallCertificateStatus_Accepted;
                 }
                 for (auto& installedChild : installedCert.childCertificateHashData) {
-                    if (ocpp_cert_equals(&installedChild, &certId)) {
+                    if (mo_cert_equals(&installedChild, &certId)) {
                         MO_DBG_INFO("certificate already installed");
                         return InstallCertificateStatus_Accepted;
                     }
@@ -342,51 +350,58 @@ public:
             }
         }
 
-        char fn [MO_MAX_PATH_SIZE] = {'\0'}; //cert fn on flash storage
+        char path [MO_MAX_PATH_SIZE] = {'\0'}; //cert path on flash storage
 
         //check for free cert slot
-        for (size_t i = 0; i < MO_CERT_STORE_SIZE; i++) {
-            if (!printCertFn(certTypeFnStr, i, fn, MO_MAX_PATH_SIZE)) {
-                MO_DBG_ERR("invalid cert fn");
+        for (unsigned int i = 0; i < MO_CERT_STORE_SIZE; i++) {
+            if (!printCertPath(filesystem, path, sizeof(path), certTypeFnStr, i)) {
+                MO_DBG_ERR("invalid cert path");
                 return InstallCertificateStatus_Failed;
             }
 
             size_t msize;
-            if (filesystem->stat(fn, &msize) != 0) {
-                //found free slot; fn contains result
+            if (filesystem->stat(path, &msize) != 0) {
+                //found free slot; path contains result
                 break;
             } else {
-                //this slot is already occupied; invalidate fn and try next
-                fn[0] = '\0';
+                //this slot is already occupied; invalidate path and try next
+                path[0] = '\0';
             }
         }
 
-        if (fn[0] == '\0') {
+        if (path[0] == '\0') {
             MO_DBG_ERR("exceed maximum number of certs; must delete before");
             return InstallCertificateStatus_Rejected;
         }
 
-        auto file = filesystem->open(fn, "w");
+        auto file = filesystem->open(path, "w");
         if (!file) {
             MO_DBG_ERR("could not open file");
             return InstallCertificateStatus_Failed;
         }
 
         size_t cert_len = strlen(certificate);
-        auto written = file->write(certificate, cert_len);
+        auto written = filesystem->write(file, certificate, cert_len);
         if (written < cert_len) {
             MO_DBG_ERR("file write error");
-            file.reset();
-            filesystem->remove(fn);
+            (void)filesystem->close(file);
+            filesystem->remove(path);
             return InstallCertificateStatus_Failed;
         }
 
-        MO_DBG_INFO("installed certificate: %s", fn);
-        return InstallCertificateStatus_Accepted;
+        bool closeSuccess = filesystem->close(file);
+        if (closeSuccess) {
+            MO_DBG_INFO("installed certificate: %s", path);
+            return InstallCertificateStatus_Accepted;
+        } else {
+            MO_DBG_ERR("Error writing file %s", path);
+            filesystem->remove(path);
+            return InstallCertificateStatus_Failed;
+        }
     }
 };
 
-std::unique_ptr<CertificateStore> makeCertificateStoreMbedTLS(std::shared_ptr<FilesystemAdapter> filesystem) {
+std::unique_ptr<CertificateStore> makeCertificateStoreMbedTLS(MO_FilesystemAdapter *filesystem) {
     if (!filesystem) {
         MO_DBG_WARN("default Certificate Store requires FS");
         return nullptr;
@@ -394,21 +409,26 @@ std::unique_ptr<CertificateStore> makeCertificateStoreMbedTLS(std::shared_ptr<Fi
     return std::unique_ptr<CertificateStore>(new CertificateStoreMbedTLS(filesystem));
 }
 
-bool printCertFn(const char *certType, size_t index, char *buf, size_t bufsize) {
-    if (!certType || !*certType || index >= MO_CERT_STORE_SIZE || !buf) {
+bool printCertPath(MO_FilesystemAdapter *filesystem, char *path, size_t size, const char *certType, unsigned int index) {
+    if (!certType || !*certType || index >= MO_CERT_STORE_SIZE || !path) {
         MO_DBG_ERR("invalid args");
         return false;
     }
 
-    auto ret = snprintf(buf, bufsize, MO_FILENAME_PREFIX MO_CERT_FN_PREFIX "%s" "-%zu" MO_CERT_FN_SUFFIX,
-            certType, index);
-    if (ret < 0 || ret >= (int)bufsize) {
-        MO_DBG_ERR("fn error: %i", ret);
+    char fname [MO_MAX_PATH_SIZE];
+    auto ret = snprintf(fname, sizeof(fname), "%s-%.*u" MO_CERT_FN_SUFFIX, certType, MO_CERT_STORE_DIGITS, index);
+    if (ret < 0 || (size_t)ret >= sizeof(fname)) {
+        MO_DBG_ERR("fname error: %i", ret);
         return false;
     }
-    return true;
+
+    auto ret2 = FilesystemUtils::printPath(filesystem, path, size, fname);
+    if (!ret2) {
+        MO_DBG_ERR("path error: %s", fname);
+    }
+    return ret2;
 }
 
 } //namespace MicroOcpp
 
-#endif //MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS

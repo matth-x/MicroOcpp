@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #ifndef MO_CANCELRESERVATION_H
@@ -7,15 +7,14 @@
 
 #include <MicroOcpp/Version.h>
 
-#if MO_ENABLE_RESERVATION
+#if MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 
 #include <MicroOcpp/Core/Operation.h>
 
 namespace MicroOcpp {
+namespace Ocpp16 {
 
 class ReservationService;
-
-namespace Ocpp16 {
 
 class CancelReservation : public Operation, public MemoryManaged {
 private:
@@ -34,8 +33,8 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace Ocpp16
+} //namespace MicroOcpp
 
-#endif //MO_ENABLE_RESERVATION
+#endif //MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 #endif

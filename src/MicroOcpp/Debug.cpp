@@ -1,12 +1,15 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 #include <MicroOcpp/Debug.h>
 
-const char *level_label [] = {
+namespace MicroOcpp {
+const char *dbgLevelLabel [] = {
     "",         //MO_DL_NONE 0x00
     "ERROR",    //MO_DL_ERROR 0x01
     "warning",  //MO_DL_WARN 0x02
@@ -15,40 +18,68 @@ const char *level_label [] = {
     "verbose"   //MO_DL_VERBOSE 0x05
 };
 
-#if MO_DBG_FORMAT == MO_DF_MINIMAL
-void mo_dbg_print_prefix(int level, const char *fn, int line) {
-    (void)0;
+Debug debug;
+} //namespace MicroOcpp
+
+using namespace MicroOcpp;
+    
+void Debug::setDebugCb(void (*debugCb)(const char *msg)) {
+    this->debugCb = debugCb;
 }
 
-#elif MO_DBG_FORMAT == MO_DF_COMPACT
-void mo_dbg_print_prefix(int level, const char *fn, int line) {
+void Debug::setDebugCb2(void (*debugCb2)(int lvl, const char *fn, int line, const char *msg)) {
+    this->debugCb2 = debugCb2;
+}
+
+void Debug::setDebugLevel(int dbgLevel) {
+    if (dbgLevel > MO_DBG_LEVEL) {
+        MO_DBG_ERR("Debug level limited to %s by build config", dbgLevelLabel[MO_DBG_LEVEL]);
+        dbgLevel = MO_DBG_LEVEL;
+    }
+    this->dbgLevel = dbgLevel;
+}
+
+bool Debug::setup() {
+    if (!debugCb && !debugCb2) {
+        // default-initialize console
+        debugCb = getDefaultDebugCb(); //defaultDebugCb is null on unsupported platforms. Just inconvenient, not a failure
+    }
+    return true;
+}
+
+void Debug::operator()(int lvl, const char *fn, int line, const char *format, ...) {
+    if (debugCb2) {
+        va_list args;
+        va_start(args, format);
+        auto ret = vsnprintf(buf, sizeof(buf), format, args);
+        if (ret < 0 || (size_t)ret >= sizeof(buf)) {
+            snprintf(buf + sizeof(buf) - sizeof(" [...]"), sizeof(buf), " [...]");
+        }
+        va_end(args);
+
+        debugCb2(lvl, fn, line, buf);
+    } else if (debugCb) {
         size_t l = strlen(fn);
-        size_t r = l;
         while (l > 0 && fn[l-1] != '/' && fn[l-1] != '\\') {
             l--;
-            if (fn[l] == '.') r = l;
         }
-        MO_CONSOLE_PRINTF("%.*s:%i ", (int) (r - l), fn + l, line);
-}
 
-#elif MO_DBG_FORMAT == MO_DF_FILE_LINE
-void mo_dbg_print_prefix(int level, const char *fn, int line) {
-    size_t l = strlen(fn);
-    while (l > 0 && fn[l-1] != '/' && fn[l-1] != '\\') {
-        l--;
+        auto ret = snprintf(buf, sizeof(buf), "[MO] %s (%s:%i): ", dbgLevelLabel[lvl], fn + l, line);
+        if (ret < 0 || (size_t)ret >= sizeof(buf)) {
+            snprintf(buf + sizeof(buf) - sizeof(" : "), sizeof(buf), " : ");
+        }
+
+        debugCb(buf);
+
+        va_list args;
+        va_start(args, format);
+        ret = vsnprintf(buf, sizeof(buf), format, args);
+        if (ret < 0 || (size_t)ret >= sizeof(buf)) {
+            snprintf(buf + sizeof(buf) - sizeof(" [...]"), sizeof(buf), " [...]");
+        }
+        va_end(args);
+
+        debugCb(buf);
+        debugCb(MO_DBG_ENDL);
     }
-    MO_CONSOLE_PRINTF("[MO] %s (%s:%i): ", level_label[level], fn + l, line);
-}
-
-#elif MO_DBG_FORMAT == MO_DF_FULL
-void mo_dbg_print_prefix(int level, const char *fn, int line) {
-    MO_CONSOLE_PRINTF("[MO] %s (%s:%i): ", level_label[level], fn, line);
-}
-
-#else
-#error invalid MO_DBG_FORMAT definition
-#endif
-
-void mo_dbg_print_suffix() {
-    MO_CONSOLE_PRINTF("\n");
 }

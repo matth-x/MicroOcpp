@@ -4,17 +4,22 @@
 
 
 #include <MicroOcpp/Operations/RemoteStartTransaction.h>
-#include <MicroOcpp/Core/Configuration.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Model/ConnectorBase/Connector.h>
+#include <MicroOcpp/Model/Availability/AvailabilityService.h>
+#include <MicroOcpp/Model/Configuration/ConfigurationService.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Model/Transactions/TransactionService16.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp16::RemoteStartTransaction;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16
 
-RemoteStartTransaction::RemoteStartTransaction(Model& model) : MemoryManaged("v16.Operation.", "RemoteStartTransaction"), model(model) {
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp16;
+
+RemoteStartTransaction::RemoteStartTransaction(Context& context, RemoteControlService& rcService) : MemoryManaged("v16.Operation.", "RemoteStartTransaction"), context(context), rcService(rcService) {
   
 }
 
@@ -40,11 +45,22 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
 
     std::unique_ptr<ChargingProfile> chargingProfile;
 
-    if (payload.containsKey("chargingProfile") && model.getSmartChargingService()) {
+    if (payload.containsKey("chargingProfile") && context.getModel16().getSmartChargingService()) {
         MO_DBG_INFO("Setting Charging profile via RemoteStartTransaction");
 
-        JsonObject chargingProfileJson = payload["chargingProfile"];
-        chargingProfile = loadChargingProfile(chargingProfileJson);
+        chargingProfile = std::unique_ptr<ChargingProfile>(new ChargingProfile());
+        if (!chargingProfile) {
+            MO_DBG_ERR("OOM");
+            errorCode = "InternalError";
+            return;
+        }
+
+        bool valid = chargingProfile->parseJson(context.getClock(), MO_OCPP_V16, payload["chargingProfile"]);
+        if (!valid) {
+            errorCode = "FormationViolation";
+            errorDescription = "chargingProfile validation failed";
+            return;
+        }
 
         if (!chargingProfile) {
             errorCode = "PropertyConstraintViolation";
@@ -52,81 +68,32 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
             return;
         }
 
-        if (chargingProfile->getChargingProfilePurpose() != ChargingProfilePurposeType::TxProfile) {
+        if (chargingProfile->chargingProfilePurpose != ChargingProfilePurposeType::TxProfile) {
             errorCode = "PropertyConstraintViolation";
             errorDescription = "Can only set TxProfile here";
             return;
         }
 
-        if (chargingProfile->getChargingProfileId() < 0) {
+        if (chargingProfile->chargingProfileId < 0) {
             errorCode = "PropertyConstraintViolation";
             errorDescription = "RemoteStartTx profile requires non-negative chargingProfileId";
             return;
         }
     }
 
-    Connector *selectConnector = nullptr;
-    if (connectorId >= 1) {
-        //connectorId specified for given connector, try to start Transaction here
-        if (auto connector = model.getConnector(connectorId)){
-            if (!connector->getTransaction() &&
-                        connector->isOperative()) {
-                selectConnector = connector;
-            }
-        }
-    } else {
-        //connectorId not specified. Find free connector
-        for (unsigned int cid = 1; cid < model.getNumConnectors(); cid++) {
-            auto connector = model.getConnector(cid);
-            if (!connector->getTransaction() &&
-                        connector->isOperative()) {
-                selectConnector = connector;
-                connectorId = cid;
-                break;
-            }
-        }
-    }
+    auto rcSvc = context.getModel16().getRemoteControlService();
 
-    if (selectConnector) {
-
-        bool success = true;
-
-        int chargingProfileId = -1; //keep Id after moving charging profile to SCService
-
-        if (chargingProfile && model.getSmartChargingService()) {
-            chargingProfileId = chargingProfile->getChargingProfileId();
-            success = model.getSmartChargingService()->setChargingProfile(connectorId, std::move(chargingProfile));
-        }
-
-        if (success) {
-            std::shared_ptr<MicroOcpp::Transaction> tx;
-            auto authorizeRemoteTxRequests = declareConfiguration<bool>("AuthorizeRemoteTxRequests", false);
-            if (authorizeRemoteTxRequests && authorizeRemoteTxRequests->getBool()) {
-                tx = selectConnector->beginTransaction(idTag);
-            } else {
-                tx = selectConnector->beginTransaction_authorized(idTag);
-            }
-            selectConnector->updateTxNotification(TxNotification_RemoteStart);
-            if (tx) {
-                if (chargingProfileId >= 0) {
-                    tx->setTxProfileId(chargingProfileId);
-                }
-            } else {
-                success = false;
-            }
-        }
-
-        accepted = success;
-    } else {
-        MO_DBG_INFO("No connector to start transaction");
-        accepted = false;
+    status = rcService.remoteStartTransaction(connectorId, idTag, std::move(chargingProfile));
+    if (status == Ocpp16::RemoteStartStopStatus::ERR_INTERNAL) {
+        errorCode = "InternalError";
+        return;
     }
 }
 
 std::unique_ptr<JsonDoc> RemoteStartTransaction::createConf(){
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
-    if (accepted) {
+    if (status == Ocpp16::RemoteStartStopStatus::Accepted) {
         payload["status"] = "Accepted";
     } else {
         payload["status"] = "Rejected";
@@ -134,15 +101,4 @@ std::unique_ptr<JsonDoc> RemoteStartTransaction::createConf(){
     return doc;
 }
 
-std::unique_ptr<JsonDoc> RemoteStartTransaction::createReq() {
-    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
-    JsonObject payload = doc->to<JsonObject>();
-
-    payload["idTag"] = "A0000000";
-
-    return doc;
-}
-
-void RemoteStartTransaction::processConf(JsonObject payload){
-    
-}
+#endif //MO_ENABLE_V16

@@ -1,8 +1,9 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #include <MicroOcpp/Core/Request.h>
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
@@ -14,64 +15,84 @@
 #include <MicroOcpp/Platform.h>
 #include <MicroOcpp/Debug.h>
 
-namespace MicroOcpp {
-    unsigned int g_randSeed = 1394827383;
-
-    void writeRandomNonsecure(unsigned char *buf, size_t len) {
-        g_randSeed += mocpp_tick_ms();
-        const unsigned int a = 16807;
-        const unsigned int m = 2147483647;
-        for (size_t i = 0; i < len; i++) {
-            g_randSeed = (a * g_randSeed) % m;
-            buf[i] = g_randSeed;
-        }
-    }
-}
-
 using namespace MicroOcpp;
 
-Request::Request(std::unique_ptr<Operation> msg) : MemoryManaged("Request.", msg->getOperationType()), messageID(makeString(getMemoryTag())), operation(std::move(msg)) {
-    timeout_start = mocpp_tick_ms();
-    debugRequest_start = mocpp_tick_ms();
+Request::Request(Context& context, std::unique_ptr<Operation> operation) : MemoryManaged("Request.", operation->getOperationType()), context(context), operation(std::move(operation)) {
+    timeoutStart = context.getClock().getUptime();
+    debugRequestTime = context.getClock().getUptime();
 }
 
 Request::~Request(){
-
+    if (onAbortListener) {
+        onAbortListener();
+    }
+    setMessageID(nullptr);
 }
 
 Operation *Request::getOperation(){
     return operation.get();
 }
 
-void Request::setTimeout(unsigned long timeout) {
-    this->timeout_period = timeout;
+void Request::setTimeout(int32_t timeout) {
+    this->timeoutPeriod = timeout;
 }
 
 bool Request::isTimeoutExceeded() {
-    return timed_out || (timeout_period && mocpp_tick_ms() - timeout_start >= timeout_period);
+    auto& clock = context.getClock();
+    int32_t dt;
+    clock.delta(clock.getUptime(), timeoutStart, dt);
+    return timedOut || (timeoutPeriod > 0 && dt >= timeoutPeriod);
 }
 
 void Request::executeTimeout() {
-    if (!timed_out) {
-        onTimeoutListener();
-        onAbortListener();
+    if (!timedOut) {
+        if (onTimeoutListener) {
+            onTimeoutListener();
+            onTimeoutListener = nullptr;
+        }
+        if (onAbortListener) {
+            onAbortListener();
+            onAbortListener = nullptr;
+        }
     }
-    timed_out = true;
+    timedOut = true;
 }
 
-void Request::setMessageID(const char *id){
-    if (!messageID.empty()){
-        MO_DBG_ERR("messageID already defined");
+bool Request::setMessageID(const char *id){
+    MO_FREE(messageID);
+    messageID = nullptr;
+
+    if (id) {
+        size_t size = strlen(id);
+        messageID = static_cast<char*>(MO_MALLOC(getMemoryTag(), size));
+        if (!messageID) {
+            MO_DBG_ERR("OOM");
+            return false;
+        }
+        memset(messageID, 0, size);
+        auto ret = snprintf(messageID, size, "%s", id);
+        if (ret < 0 || (size_t)ret >= size) {
+            MO_DBG_ERR("snprintf: %i", ret);
+            MO_FREE(messageID);
+            messageID = nullptr;
+            return false;
+        }
     }
-    messageID = id;
+
+    //success
+    return true;
 }
 
 Request::CreateRequestResult Request::createRequest(JsonDoc& requestJson) {
 
-    if (messageID.empty()) {
-        char uuid [37] = {'\0'};
-        generateUUID(uuid, 37);
-        messageID = uuid;
+    if (!messageID) {
+        char uuid [MO_UUID_STR_SIZE] = {'\0'};
+        UuidUtils::generateUUID(context.getRngCb(), uuid, sizeof(uuid));
+        setMessageID(uuid);
+    }
+
+    if (!messageID) {
+        return CreateRequestResult::Failure;
     }
 
     /*
@@ -85,40 +106,44 @@ Request::CreateRequestResult Request::createRequest(JsonDoc& requestJson) {
     /*
      * Create OCPP-J Remote Procedure Call header
      */
-    size_t json_buffsize = JSON_ARRAY_SIZE(4) + (messageID.length() + 1) + requestPayload->capacity();
+    size_t json_buffsize = JSON_ARRAY_SIZE(4) + requestPayload->capacity();
     requestJson = initJsonDoc(getMemoryTag(), json_buffsize);
 
-    requestJson.add(MESSAGE_TYPE_CALL);                    //MessageType
-    requestJson.add(messageID);                      //Unique message ID
+    requestJson.add(MESSAGE_TYPE_CALL);              //MessageType
+    requestJson.add((const char*)messageID);         //Unique message ID (force zero-copy)
     requestJson.add(operation->getOperationType());  //Action
-    requestJson.add(*requestPayload);                      //Payload
+    requestJson.add(*requestPayload);                //Payload
 
-    if (MO_DBG_LEVEL >= MO_DL_DEBUG && mocpp_tick_ms() - debugRequest_start >= 10000) { //print contents on the console
-        debugRequest_start = mocpp_tick_ms();
+    if (MO_DBG_LEVEL >= MO_DL_DEBUG) {
+        auto& clock = context.getClock();
+        int32_t dt;
+        clock.delta(clock.now(), debugRequestTime, dt);
+        if (dt >= 10) {
+            debugRequestTime = clock.now();
 
-        char *buf = new char[1024];
-        size_t len = 0;
-        if (buf) {
-            len = serializeJson(requestJson, buf, 1024);
+            char *buf = static_cast<char*>(MO_MALLOC(getMemoryTag(), 1024));
+            size_t len = 0;
+            if (buf) {
+                len = serializeJson(requestJson, buf, 1024);
+            }
+
+            if (!buf || len < 1) {
+                MO_DBG_DEBUG("Try to send request: %s", operation->getOperationType());
+            } else {
+                MO_DBG_DEBUG("Try to send request: %.*s (...)", 128, buf);
+            }
+
+            MO_FREE(buf);
         }
-
-        if (!buf || len < 1) {
-            MO_DBG_DEBUG("Try to send request: %s", operation->getOperationType());
-        } else {
-            MO_DBG_DEBUG("Try to send request: %.*s (...)", 128, buf);
-        }
-
-        delete[] buf;
     }
 
     return CreateRequestResult::Success;
 }
 
 bool Request::receiveResponse(JsonArray response){
-    /*
-     * check if messageIDs match. If yes, continue with this function. If not, return false for message not consumed
-     */
-    if (messageID.compare(response[1].as<const char*>())){
+
+    //check if messageIDs match
+    if (!messageID || !strcmp(messageID, response[1].as<const char*>())) {
         return false;
     }
 
@@ -135,12 +160,12 @@ bool Request::receiveResponse(JsonArray response){
         /*
         * Hand the payload over to the onReceiveConf Callback
         */
-        onReceiveConfListener(payload);
+        if (onReceiveConfListener) {
+            onReceiveConfListener(payload);
+        }
 
-        /*
-        * return true as this message has been consumed
-        */
-        return true;
+        onAbortListener = nullptr; //ensure onAbort is not called during destruction
+
     } else if (messageTypeId == MESSAGE_TYPE_CALLERROR) {
 
         /*
@@ -149,19 +174,22 @@ bool Request::receiveResponse(JsonArray response){
         const char *errorCode = response[2];
         const char *errorDescription = response[3];
         JsonObject errorDetails = response[4];
-        bool abortOperation = operation->processErr(errorCode, errorDescription, errorDetails);
+        operation->processErr(errorCode, errorDescription, errorDetails);
 
-        if (abortOperation) {
+        if (onReceiveErrorListener) {
             onReceiveErrorListener(errorCode, errorDescription, errorDetails);
+        }
+        if (onAbortListener) {
             onAbortListener();
+            onAbortListener = nullptr; //ensure onAbort is called only once
         }
 
-        return abortOperation;
     } else {
         MO_DBG_WARN("invalid response");
         return false; //don't discard this message but retry sending it
     }
 
+    return true;
 }
 
 bool Request::receiveRequest(JsonArray request) {
@@ -182,12 +210,31 @@ bool Request::receiveRequest(JsonArray request) {
     /*
      * Hand the payload over to the first Callback. It is a callback that notifies the client that request has been processed in the OCPP-library
      */
-    onReceiveReqListener(payload);
+    if (onReceiveReqListener) {
+        size_t bufsize = 1000; //fixed for now, may change to direct pass-through of the input message
+        char *buf = static_cast<char*>(MO_MALLOC(getMemoryTag(), bufsize));
+        if (buf) {
+            auto written = serializeJson(payload, buf, bufsize);
+            if (written >= 2 && written < bufsize) {
+                //success
+                onReceiveReqListener(operation->getOperationType(), buf, onReceiveReqListenerUserData);
+            } else {
+                MO_DBG_ERR("onReceiveReqListener supports only %zu charactes", bufsize);
+            }
+        } else {
+            MO_DBG_ERR("OOM");
+        }
+        MO_FREE(buf);
+    }
 
     return true; //success
 }
 
 Request::CreateResponseResult Request::createResponse(JsonDoc& response) {
+
+    if (!messageID) {
+        return CreateResponseResult::Failure;
+    }
 
     bool operationFailure = operation->getErrorCode() != nullptr;
 
@@ -206,11 +253,24 @@ Request::CreateResponseResult Request::createResponse(JsonDoc& response) {
         response = initJsonDoc(getMemoryTag(), json_buffsize);
 
         response.add(MESSAGE_TYPE_CALLRESULT);   //MessageType
-        response.add(messageID.c_str());            //Unique message ID
-        response.add(*payload);              //Payload
+        response.add((const char*)messageID);    //Unique message ID (force zero-copy)
+        response.add(*payload);                  //Payload
 
         if (onSendConfListener) {
-            onSendConfListener(payload->as<JsonObject>());
+            size_t bufsize = 1000; //fixed for now, may change to direct pass-through of the input message
+            char *buf = static_cast<char*>(MO_MALLOC(getMemoryTag(), bufsize));
+            if (buf) {
+                auto written = serializeJson(payload->as<JsonObject>(), buf, bufsize);
+                if (written >= 2 && written < bufsize) {
+                    //success
+                    onSendConfListener(operation->getOperationType(), buf, onSendConfListenerUserData);
+                } else {
+                    MO_DBG_ERR("onSendConfListener supports only %zu charactes", bufsize);
+                }
+            } else {
+                MO_DBG_ERR("OOM");
+            }
+            MO_FREE(buf);
         }
     } else {
         //operation failure. Send error message instead
@@ -227,46 +287,44 @@ Request::CreateResponseResult Request::createResponse(JsonDoc& response) {
         response = initJsonDoc(getMemoryTag(), json_buffsize);
 
         response.add(MESSAGE_TYPE_CALLERROR);   //MessageType
-        response.add(messageID.c_str());            //Unique message ID
+        response.add((const char*)messageID);   //Unique message ID (force zero-copy)
         response.add(errorCode);
         response.add(errorDescription);
-        response.add(*errorDetails);              //Error description
+        response.add(*errorDetails);             //Error description
     }
+
+    onAbortListener = nullptr; //ensure onAbort is not called during destruction
 
     return CreateResponseResult::Success;
 }
 
-void Request::setOnReceiveConfListener(OnReceiveConfListener onReceiveConf){
-    if (onReceiveConf)
-        onReceiveConfListener = onReceiveConf;
+void Request::setOnReceiveConf(ReceiveConfListener onReceiveConf){
+    onReceiveConfListener = onReceiveConf;
 }
 
 /**
  * Sets a Listener that is called after this machine processed a request by the communication counterpart
  */
-void Request::setOnReceiveReqListener(OnReceiveReqListener onReceiveReq){
-    if (onReceiveReq)
-        onReceiveReqListener = onReceiveReq;
+void Request::setOnReceiveRequest(void (*onReceiveReq)(const char *operationType, const char *payloadJson, void *userData), void *userData){
+    this->onReceiveReqListener = onReceiveReq;
+    this->onReceiveReqListenerUserData = userData;
 }
 
-void Request::setOnSendConfListener(OnSendConfListener onSendConf){
-    if (onSendConf)
-        onSendConfListener = onSendConf;
+void Request::setOnSendConf(void (*onSendConf)(const char *operationType, const char *payloadJson, void *userData), void *userData){
+    this->onSendConfListener = onSendConf;
+    this->onSendConfListenerUserData = userData;
 }
 
-void Request::setOnTimeoutListener(OnTimeoutListener onTimeout) {
-    if (onTimeout)
-        onTimeoutListener = onTimeout;
+void Request::setOnTimeout(TimeoutListener onTimeout) {
+    onTimeoutListener = onTimeout;
 }
 
-void Request::setOnReceiveErrorListener(OnReceiveErrorListener onReceiveError) {
-    if (onReceiveError)
-        onReceiveErrorListener = onReceiveError;
+void Request::setReceiveErrorListener(ReceiveErrorListener onReceiveError) {
+    onReceiveErrorListener = onReceiveError;
 }
 
-void Request::setOnAbortListener(OnAbortListener onAbort) {
-    if (onAbort)
-        onAbortListener = onAbort;
+void Request::setOnAbort(AbortListener onAbort) {
+    onAbortListener = onAbort;
 }
 
 const char *Request::getOperationType() {
@@ -283,15 +341,15 @@ bool Request::isRequestSent() {
 
 namespace MicroOcpp {
 
-std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> operation){
+std::unique_ptr<Request> makeRequest(Context& context, std::unique_ptr<Operation> operation){
     if (operation == nullptr) {
         return nullptr;
     }
-    return std::unique_ptr<Request>(new Request(std::move(operation)));
+    return std::unique_ptr<Request>(new Request(context, std::move(operation)));
 }
 
-std::unique_ptr<Request> makeRequest(Operation *operation) {
-    return makeRequest(std::unique_ptr<Operation>(operation));
+std::unique_ptr<Request> makeRequest(Context& context, Operation *operation) {
+    return makeRequest(context, std::unique_ptr<Operation>(operation));
 }
 
-} //end namespace MicroOcpp
+} //namespace MicroOcpp

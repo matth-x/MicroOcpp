@@ -5,14 +5,13 @@
 #ifndef MO_REQUESTSTARTTRANSACTION_H
 #define MO_REQUESTSTARTTRANSACTION_H
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Model/RemoteControl/RemoteControlDefs.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V201
 
 namespace MicroOcpp {
 
@@ -26,7 +25,7 @@ private:
 
     RequestStartStopStatus status;
     std::shared_ptr<Ocpp201::Transaction> transaction;
-    char transactionId [MO_TXID_LEN_MAX + 1] = {'\0'};
+    char transactionId [MO_TXID_SIZE] = {'\0'};
 
     const char *errorCode = nullptr;
 public:
@@ -44,7 +43,5 @@ public:
 
 } //namespace Ocpp201
 } //namespace MicroOcpp
-
 #endif //MO_ENABLE_V201
-
 #endif

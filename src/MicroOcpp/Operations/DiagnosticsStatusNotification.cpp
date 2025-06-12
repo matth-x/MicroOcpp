@@ -3,33 +3,17 @@
 // MIT License
 
 #include <MicroOcpp/Operations/DiagnosticsStatusNotification.h>
-#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
 
-using MicroOcpp::Ocpp16::DiagnosticsStatusNotification;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16 && MO_ENABLE_DIAGNOSTICS
+
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp16;
 
 DiagnosticsStatusNotification::DiagnosticsStatusNotification(DiagnosticsStatus status) : MemoryManaged("v16.Operation.", "DiagnosticsStatusNotification"), status(status) {
     
-}
-
-const char *DiagnosticsStatusNotification::cstrFromStatus(DiagnosticsStatus status) {
-    switch (status) {
-        case (DiagnosticsStatus::Idle):
-            return "Idle";
-            break;
-        case (DiagnosticsStatus::Uploaded):
-            return "Uploaded";
-            break;
-        case (DiagnosticsStatus::UploadFailed):
-            return "UploadFailed";
-            break;
-        case (DiagnosticsStatus::Uploading):
-            return "Uploading";
-            break;
-    }
-    return nullptr; //cannot be reached
 }
 
 std::unique_ptr<JsonDoc> DiagnosticsStatusNotification::createReq() {
@@ -42,3 +26,5 @@ std::unique_ptr<JsonDoc> DiagnosticsStatusNotification::createReq() {
 void DiagnosticsStatusNotification::processConf(JsonObject payload){
     // no payload, nothing to do
 }
+
+#endif //MO_ENABLE_V16 && MO_ENABLE_DIAGNOSTICS

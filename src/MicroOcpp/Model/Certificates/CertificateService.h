@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 /*
@@ -16,7 +16,7 @@
 
 #include <MicroOcpp/Version.h>
 
-#if MO_ENABLE_CERT_MGMT
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT
 
 #include <functional>
 #include <memory>
@@ -31,15 +31,16 @@ class Context;
 class CertificateService : public MemoryManaged {
 private:
     Context& context;
-    std::unique_ptr<CertificateStore> certStore;
+    CertificateStore *certStore = nullptr;
 public:
     CertificateService(Context& context);
 
-    void setCertificateStore(std::unique_ptr<CertificateStore> certStore);
+    bool setup();
+
     CertificateStore *getCertificateStore();
 };
 
 }
 
-#endif //MO_ENABLE_CERT_MGMT
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT
 #endif

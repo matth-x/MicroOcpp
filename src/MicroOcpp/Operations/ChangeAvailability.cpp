@@ -3,24 +3,23 @@
 // MIT License
 
 #include <MicroOcpp/Operations/ChangeAvailability.h>
+
+#include <MicroOcpp/Model/Availability/AvailabilityService.h>
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Model/ConnectorBase/Connector.h>
-#include <MicroOcpp/Version.h>
 
-#include <functional>
+using namespace MicroOcpp;
 
-namespace MicroOcpp {
-namespace Ocpp16 {
+#if MO_ENABLE_V16
 
-ChangeAvailability::ChangeAvailability(Model& model) : MemoryManaged("v16.Operation.", "ChangeAvailability"), model(model) {
+Ocpp16::ChangeAvailability::ChangeAvailability(Model& model) : MemoryManaged("v16.Operation.", "ChangeAvailability"), model(model) {
 
 }
 
-const char* ChangeAvailability::getOperationType(){
+const char* Ocpp16::ChangeAvailability::getOperationType(){
     return "ChangeAvailability";
 }
 
-void ChangeAvailability::processReq(JsonObject payload) {
+void Ocpp16::ChangeAvailability::processReq(JsonObject payload) {
     int connectorIdRaw = payload["connectorId"] | -1;
     if (connectorIdRaw < 0) {
         errorCode = "FormationViolation";
@@ -28,7 +27,7 @@ void ChangeAvailability::processReq(JsonObject payload) {
     }
     unsigned int connectorId = (unsigned int)connectorIdRaw;
 
-    if (connectorId >= model.getNumConnectors()) {
+    if (connectorId >= model.getNumEvseId()) {
         errorCode = "PropertyConstraintViolation";
         return;
     }
@@ -48,23 +47,29 @@ void ChangeAvailability::processReq(JsonObject payload) {
     }
 
     if (connectorId == 0) {
-        for (unsigned int cId = 0; cId < model.getNumConnectors(); cId++) {
-            auto connector = model.getConnector(cId);
-            connector->setAvailability(available);
-            if (connector->isOperative() && !available) {
-                scheduled = true;
+        for (unsigned int eId = 0; eId < model.getNumEvseId(); eId++) {
+            auto availSvc = model.getAvailabilityService();
+            auto availSvcEvse = availSvc ? availSvc->getEvse(eId) : nullptr;
+            if (availSvcEvse) {
+                availSvcEvse->setAvailability(available);
+                if (availSvcEvse->isOperative() && !available) {
+                    scheduled = true;
+                }
             }
         }
     } else {
-        auto connector = model.getConnector(connectorId);
-        connector->setAvailability(available);
-        if (connector->isOperative() && !available) {
-            scheduled = true;
+        auto availSvc = model.getAvailabilityService();
+        auto availSvcEvse = availSvc ? availSvc->getEvse(connectorId) : nullptr;
+        if (availSvcEvse) {
+            availSvcEvse->setAvailability(available);
+            if (availSvcEvse->isOperative() && !available) {
+                scheduled = true;
+            }
         }
     }
 }
 
-std::unique_ptr<JsonDoc> ChangeAvailability::createConf(){
+std::unique_ptr<JsonDoc> Ocpp16::ChangeAvailability::createConf(){
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     if (!accepted) {
@@ -78,25 +83,19 @@ std::unique_ptr<JsonDoc> ChangeAvailability::createConf(){
     return doc;
 }
 
-} // namespace Ocpp16
-} // namespace MicroOcpp
+#endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
 
-#include <MicroOcpp/Model/Availability/AvailabilityService.h>
-
-namespace MicroOcpp {
-namespace Ocpp201 {
-
-ChangeAvailability::ChangeAvailability(AvailabilityService& availabilityService) : MemoryManaged("v201.Operation.", "ChangeAvailability"), availabilityService(availabilityService) {
+Ocpp201::ChangeAvailability::ChangeAvailability(AvailabilityService& availabilityService) : MemoryManaged("v201.Operation.", "ChangeAvailability"), availabilityService(availabilityService) {
 
 }
 
-const char* ChangeAvailability::getOperationType(){
+const char* Ocpp201::ChangeAvailability::getOperationType(){
     return "ChangeAvailability";
 }
 
-void ChangeAvailability::processReq(JsonObject payload) {
+void Ocpp201::ChangeAvailability::processReq(JsonObject payload) {
 
     unsigned int evseId = 0;
     
@@ -136,7 +135,7 @@ void ChangeAvailability::processReq(JsonObject payload) {
     status = availabilityEvse->changeAvailability(operative);
 }
 
-std::unique_ptr<JsonDoc> ChangeAvailability::createConf(){
+std::unique_ptr<JsonDoc> Ocpp201::ChangeAvailability::createConf(){
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
@@ -154,8 +153,5 @@ std::unique_ptr<JsonDoc> ChangeAvailability::createConf(){
 
     return doc;
 }
-
-} // namespace Ocpp201
-} // namespace MicroOcpp
 
 #endif //MO_ENABLE_V201

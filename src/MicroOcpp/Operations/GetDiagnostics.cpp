@@ -3,14 +3,18 @@
 // MIT License
 
 #include <MicroOcpp/Operations/GetDiagnostics.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp16::GetDiagnostics;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16 && MO_ENABLE_DIAGNOSTICS
 
-GetDiagnostics::GetDiagnostics(DiagnosticsService& diagService) : MemoryManaged("v16.Operation.", "GetDiagnostics"), diagService(diagService), fileName(makeString(getMemoryTag())) {
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp16;
+
+GetDiagnostics::GetDiagnostics(Context& context, DiagnosticsService& diagService) : MemoryManaged("v16.Operation.", "GetDiagnostics"), context(context), diagService(diagService) {
 
 }
 
@@ -32,8 +36,8 @@ void GetDiagnostics::processReq(JsonObject payload) {
 
     Timestamp startTime;
     if (payload.containsKey("startTime")) {
-        if (!startTime.setTime(payload["startTime"] | "Invalid")) {
-            errorCode = "PropertyConstraintViolation";
+        if (!context.getClock().parseString(payload["startTime"] | "_Invalid", startTime)) {
+            errorCode = "FormationViolation";
             MO_DBG_WARN("bad time format");
             return;
         }
@@ -41,23 +45,25 @@ void GetDiagnostics::processReq(JsonObject payload) {
 
     Timestamp stopTime;
     if (payload.containsKey("stopTime")) {
-        if (!stopTime.setTime(payload["stopTime"] | "Invalid")) {
-            errorCode = "PropertyConstraintViolation";
+        if (!context.getClock().parseString(payload["stopTime"] | "_Invalid", stopTime)) {
+            errorCode = "FormationViolation";
             MO_DBG_WARN("bad time format");
             return;
         }
     }
 
-    fileName = diagService.requestDiagnosticsUpload(location, (unsigned int) retries, (unsigned int) retryInterval, startTime, stopTime);
+    (void)diagService.requestDiagnosticsUpload(location, (unsigned int) retries, (unsigned int) retryInterval, startTime, stopTime, filename);
 }
 
 std::unique_ptr<JsonDoc> GetDiagnostics::createConf(){
-    if (fileName.empty()) {
+    if (!*filename) {
         return createEmptyDocument();
     } else {
         auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
         JsonObject payload = doc->to<JsonObject>();
-        payload["fileName"] = fileName.c_str();
+        payload["fileName"] = (const char*)filename; //force zero-copy
         return doc;
     }
 }
+
+#endif //MO_ENABLE_V16 && MO_ENABLE_DIAGNOSTICS

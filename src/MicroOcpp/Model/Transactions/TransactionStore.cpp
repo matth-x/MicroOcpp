@@ -3,187 +3,375 @@
 // MIT License
 
 #include <MicroOcpp/Model/Transactions/TransactionStore.h>
-#include <MicroOcpp/Model/Transactions/TransactionDeserialize.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Debug.h>
-
-using namespace MicroOcpp;
-
-TransactionStoreEvse::TransactionStoreEvse(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem) :
-        MemoryManaged("v16.Transactions.TransactionStore"),
-        context(context),
-        connectorId(connectorId),
-        filesystem(filesystem),
-        transactions{makeVector<std::weak_ptr<Transaction>>(getMemoryTag())} {
-
-}
-
-TransactionStoreEvse::~TransactionStoreEvse() {
-
-}
-
-std::shared_ptr<Transaction> TransactionStoreEvse::getTransaction(unsigned int txNr) {
-
-    //check for most recent element of cache first because of temporal locality
-    if (!transactions.empty()) {
-        if (auto cached = transactions.back().lock()) {
-            if (cached->getTxNr() == txNr) {
-                //cache hit
-                return cached;
-            }
-        }
-    }
-
-    //check all other elements (and free up unused entries)
-    auto cached = transactions.begin();
-    while (cached != transactions.end()) {
-        if (auto tx = cached->lock()) {
-            if (tx->getTxNr() == txNr) {
-                //cache hit
-                return tx;
-            }
-            cached++;
-        } else {
-            //collect outdated cache reference
-            cached = transactions.erase(cached);
-        }
-    }
-
-    //cache miss - load tx from flash if existent
-    
-    if (!filesystem) {
-        MO_DBG_DEBUG("no FS adapter");
-        return nullptr;
-    }
-
-    char fn [MO_MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "tx" "-%u-%u.json", connectorId, txNr);
-    if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
-        MO_DBG_ERR("fn error: %i", ret);
-        return nullptr;
-    }
-
-    size_t msize;
-    if (filesystem->stat(fn, &msize) != 0) {
-        MO_DBG_DEBUG("%u-%u does not exist", connectorId, txNr);
-        return nullptr;
-    }
-
-    auto doc = FilesystemUtils::loadJson(filesystem, fn, getMemoryTag());
-
-    if (!doc) {
-        MO_DBG_ERR("memory corruption");
-        return nullptr;
-    }
-
-    auto transaction = std::allocate_shared<Transaction>(makeAllocator<Transaction>(getMemoryTag()), *this, connectorId, txNr);
-    JsonObject txJson = doc->as<JsonObject>();
-    if (!deserializeTransaction(*transaction, txJson)) {
-        MO_DBG_ERR("deserialization error");
-        return nullptr;
-    }
-
-    //before adding new entry, clean cache
-    cached = transactions.begin();
-    while (cached != transactions.end()) {
-        if (cached->expired()) {
-            //collect outdated cache reference
-            cached = transactions.erase(cached);
-        } else {
-            cached++;
-        }
-    }
-
-    transactions.push_back(transaction);
-    return transaction;
-}
-
-std::shared_ptr<Transaction> TransactionStoreEvse::createTransaction(unsigned int txNr, bool silent) {
-
-    auto transaction = std::allocate_shared<Transaction>(makeAllocator<Transaction>(getMemoryTag()), *this, connectorId, txNr, silent);
-
-    if (!commit(transaction.get())) {
-        MO_DBG_ERR("FS error");
-        return nullptr;
-    }
-
-    //before adding new entry, clean cache
-    auto cached = transactions.begin();
-    while (cached != transactions.end()) {
-        if (cached->expired()) {
-            //collect outdated cache reference
-            cached = transactions.erase(cached);
-        } else {
-            cached++;
-        }
-    }
-
-    transactions.push_back(transaction);
-    return transaction;
-}
-
-bool TransactionStoreEvse::commit(Transaction *transaction) {
-
-    if (!filesystem) {
-        MO_DBG_DEBUG("no FS: nothing to commit");
-        return true;
-    }
-
-    char fn [MO_MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "tx" "-%u-%u.json", connectorId, transaction->getTxNr());
-    if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
-        MO_DBG_ERR("fn error: %i", ret);
-        return false;
-    }
-    
-    auto txDoc = initJsonDoc(getMemoryTag());
-    if (!serializeTransaction(*transaction, txDoc)) {
-        MO_DBG_ERR("Serialization error");
-        return false;
-    }
-
-    if (!FilesystemUtils::storeJson(filesystem, fn, txDoc)) {
-        MO_DBG_ERR("FS error");
-        return false;
-    }
-
-    //success
-    return true;
-}
-
-bool TransactionStoreEvse::remove(unsigned int txNr) {
-
-    if (!filesystem) {
-        MO_DBG_DEBUG("no FS: nothing to remove");
-        return true;
-    }
-
-    char fn [MO_MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "tx" "-%u-%u.json", connectorId, txNr);
-    if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
-        MO_DBG_ERR("fn error: %i", ret);
-        return false;
-    }
-
-    size_t msize;
-    if (filesystem->stat(fn, &msize) != 0) {
-        MO_DBG_DEBUG("%s already removed", fn);
-        return true;
-    }
-
-    MO_DBG_DEBUG("remove %s", fn);
-    
-    return filesystem->remove(fn);
-}
-
-#if MO_ENABLE_V201
 
 #include <algorithm>
 
-namespace MicroOcpp {
-namespace Ocpp201 {
+#if MO_ENABLE_V16
 
-bool TransactionStoreEvse::serializeTransaction(Transaction& tx, JsonObject txJson) {
+namespace MicroOcpp {
+namespace Ocpp16 {
+namespace TransactionStore {
+
+bool serializeSendStatus(Clock& clock, SendStatus& status, JsonObject out);
+bool deserializeSendStatus(Clock& clock, SendStatus& status, JsonObject in);
+
+bool serializeTransaction(Clock& clock, Transaction& tx, JsonDoc& out);
+bool deserializeTransaction(Clock& clock, Transaction& tx, JsonObject in);
+
+} //namespace TransactionStore
+} //namespace Ocpp16
+} //namespace MicroOcpp
+
+using namespace MicroOcpp;
+
+bool Ocpp16::TransactionStore::printTxFname(char *fname, size_t size, unsigned int evseId, unsigned int txNr) {
+    auto ret = snprintf(fname, size, "tx-%.*u-%.*u.json",
+            MO_NUM_EVSEID_DIGITS, evseId, MO_TXNR_DIGITS, txNr);
+    if (ret < 0 || (size_t)ret >= size) {
+        MO_DBG_ERR("fn error: %i", ret);
+        return false;
+    }
+    return true;
+}
+
+FilesystemUtils::LoadStatus Ocpp16::TransactionStore::load(MO_FilesystemAdapter *filesystem, Context& context, unsigned int evseId, unsigned int txNr, Transaction& transaction) {
+
+    char fname [MO_MAX_PATH_SIZE];
+    if (!printTxFname(fname, sizeof(fname), evseId, txNr)) {
+        MO_DBG_ERR("fname error %u %u", evseId, txNr);
+        return FilesystemUtils::LoadStatus::ErrOther;
+    }
+
+    JsonDoc doc (0);
+    auto ret = FilesystemUtils::loadJson(filesystem, fname, doc, "v16.Transactions.TransactionStore");
+    if (ret != FilesystemUtils::LoadStatus::Success) {
+        return ret;
+    }
+
+    auto& clock = context.getClock();
+
+    if (!deserializeTransaction(clock, transaction, doc.as<JsonObject>())) {
+        MO_DBG_ERR("deserialization error %s", fname);
+        return FilesystemUtils::LoadStatus::ErrFileCorruption;
+    }
+
+    //success
+
+    MO_DBG_DEBUG("Restored tx %u-%u", evseId, txNr, txData.size());
+
+    return FilesystemUtils::LoadStatus::Success;
+}
+
+FilesystemUtils::StoreStatus Ocpp16::TransactionStore::store(MO_FilesystemAdapter *filesystem, Context& context, Transaction& transaction) {
+    
+    char fname [MO_MAX_PATH_SIZE];
+    if (!printTxFname(fname, sizeof(fname), transaction.getConnectorId(), transaction.getTxNr())) {
+        MO_DBG_ERR("fname error %u %u", transaction.getConnectorId(), transaction.getTxNr());
+        return FilesystemUtils::StoreStatus::ErrOther;
+    }
+
+    auto& clock = context.getClock();
+
+    JsonDoc doc (0);
+    if (!serializeTransaction(clock, transaction, doc)) {
+        MO_DBG_ERR("serialization error %s", fname);
+        return FilesystemUtils::StoreStatus::ErrJsonCorruption;
+    }
+
+    auto ret = FilesystemUtils::storeJson(filesystem, fname, doc);
+    if (ret != FilesystemUtils::StoreStatus::Success) {
+        MO_DBG_ERR("fs error %s %i", fname, (int)ret);
+    }
+
+    return ret;
+}
+
+bool Ocpp16::TransactionStore::remove(MO_FilesystemAdapter *filesystem, unsigned int evseId, unsigned int txNr) {
+
+    char fname [MO_MAX_PATH_SIZE];
+    if (!printTxFname(fname, sizeof(fname), evseId, txNr)) {
+        MO_DBG_ERR("fname error %u %u", evseId, txNr);
+        return false;
+    }
+
+    char path [MO_MAX_PATH_SIZE];
+    if (!FilesystemUtils::printPath(filesystem, path, sizeof(path), "%s", fname)) {
+        MO_DBG_ERR("fname error %u %u", evseId, txNr);
+        return false;
+    }
+
+    return filesystem->remove(path);
+}
+
+bool Ocpp16::TransactionStore::serializeSendStatus(Clock& clock, SendStatus& status, JsonObject out) {
+    if (status.isRequested()) {
+        out["requested"] = true;
+    }
+    if (status.isConfirmed()) {
+        out["confirmed"] = true;
+    }
+    out["opNr"] = status.getOpNr();
+    if (status.getAttemptNr() != 0) {
+        out["attemptNr"] = status.getAttemptNr();
+    }
+
+    if (status.getAttemptTime().isDefined()) {
+        char attemptTime [MO_JSONDATE_SIZE];
+        if (!clock.toInternalString(status.getAttemptTime(), attemptTime, sizeof(attemptTime))) {
+            return false;
+        }
+        out["attemptTime"] = attemptTime;
+    }
+    return true;
+}
+
+bool Ocpp16::TransactionStore::deserializeSendStatus(Clock& clock, SendStatus& status, JsonObject in) {
+    if (in["requested"] | false) {
+        status.setRequested();
+    }
+    if (in["confirmed"] | false) {
+        status.confirm();
+    }
+    unsigned int opNr = in["opNr"] | (unsigned int)0;
+    if (opNr >= 10) { //10 is first valid tx-related opNr
+        status.setOpNr(opNr);
+    }
+    status.setAttemptNr(in["attemptNr"] | (unsigned int)0);
+    if (in.containsKey("attemptTime")) {
+        Timestamp attemptTime;
+        if (!clock.parseString(in["attemptTime"] | "_Invalid", attemptTime)) {
+            MO_DBG_ERR("deserialization error");
+            return false;
+        }
+        status.setAttemptTime(attemptTime);
+    }
+    return true;
+}
+
+bool Ocpp16::TransactionStore::serializeTransaction(Clock& clock, Transaction& tx, JsonDoc& out) {
+    out = initJsonDoc("v16.Transactions.TransactionDeserialize", 1024);
+    JsonObject state = out.to<JsonObject>();
+
+    JsonObject sessionState = state.createNestedObject("session");
+    if (!tx.isActive()) {
+        sessionState["active"] = false;
+    }
+    if (tx.getIdTag()[0] != '\0') {
+        sessionState["idTag"] = tx.getIdTag();
+    }
+    if (tx.getParentIdTag()[0] != '\0') {
+        sessionState["parentIdTag"] = tx.getParentIdTag();
+    }
+    if (tx.isAuthorized()) {
+        sessionState["authorized"] = true;
+    }
+    if (tx.isIdTagDeauthorized()) {
+        sessionState["deauthorized"] = true;
+    }
+    if (tx.getBeginTimestamp().isDefined()) {
+        char timeStr [MO_JSONDATE_SIZE] = {'\0'};
+        if (!clock.toInternalString(tx.getBeginTimestamp(), timeStr, sizeof(timeStr))) {
+            return false;
+        }
+        sessionState["timestamp"] = timeStr;
+    }
+    if (tx.getReservationId() >= 0) {
+        sessionState["reservationId"] = tx.getReservationId();
+    }
+    if (tx.getTxProfileId() >= 0) {
+        sessionState["txProfileId"] = tx.getTxProfileId();
+    }
+
+    JsonObject txStart = state.createNestedObject("start");
+
+    if (!serializeSendStatus(clock, tx.getStartSync(), txStart)) {
+        return false;
+    }
+
+    if (tx.isMeterStartDefined()) {
+        txStart["meter"] = tx.getMeterStart();
+    }
+
+    if (tx.getStartTimestamp().isDefined()) {
+        char startTimeStr [MO_JSONDATE_SIZE] = {'\0'};
+        if (!clock.toInternalString(tx.getStartTimestamp(), startTimeStr, sizeof(startTimeStr))) {
+            return false;
+        }
+        txStart["timestamp"] = startTimeStr;
+    }
+
+    if (tx.getStartSync().isConfirmed()) {
+        txStart["transactionId"] = tx.getTransactionId();
+    }
+
+    JsonObject txStop = state.createNestedObject("stop");
+
+    if (!serializeSendStatus(clock, tx.getStopSync(), txStop)) {
+        return false;
+    }
+
+    if (tx.getStopIdTag()[0] != '\0') {
+        txStop["idTag"] = tx.getStopIdTag();
+    }
+
+    if (tx.isMeterStopDefined()) {
+        txStop["meter"] = tx.getMeterStop();
+    }
+
+    if (tx.getStopTimestamp().isDefined()) {
+        char stopTimeStr [MO_JSONDATE_SIZE] = {'\0'};
+        if (!clock.toInternalString(tx.getStopTimestamp(), stopTimeStr, sizeof(stopTimeStr))) {
+            return false;
+        }
+        txStop["timestamp"] = stopTimeStr;
+    }
+
+    if (tx.getStopReason()[0] != '\0') {
+        txStop["reason"] = tx.getStopReason();
+    }
+
+    if (tx.isSilent()) {
+        state["silent"] = true;
+    }
+
+    if (out.overflowed()) {
+        MO_DBG_ERR("JSON capacity exceeded");
+        return false;
+    }
+
+    return true;
+}
+
+bool Ocpp16::TransactionStore::deserializeTransaction(Clock& clock, Transaction& tx, JsonObject state) {
+
+    JsonObject sessionState = state["session"];
+
+    if (!(sessionState["active"] | true)) {
+        tx.setInactive();
+    }
+
+    if (sessionState.containsKey("idTag")) {
+        if (!tx.setIdTag(sessionState["idTag"] | "")) {
+            MO_DBG_ERR("read err");
+            return false;
+        }
+    }
+
+    if (sessionState.containsKey("parentIdTag")) {
+        if (!tx.setParentIdTag(sessionState["parentIdTag"] | "")) {
+            MO_DBG_ERR("read err");
+            return false;
+        }
+    }
+
+    if (sessionState["authorized"] | false) {
+        tx.setAuthorized();
+    }
+
+    if (sessionState["deauthorized"] | false) {
+        tx.setIdTagDeauthorized();
+    }
+
+    if (sessionState.containsKey("timestamp")) {
+        Timestamp timestamp;
+        if (!clock.parseString(sessionState["timestamp"] | "_Invalid", timestamp)) {
+            MO_DBG_ERR("read err");
+            return false;
+        }
+        tx.setBeginTimestamp(timestamp);
+    }
+
+    if (sessionState.containsKey("reservationId")) {
+        tx.setReservationId(sessionState["reservationId"] | -1);
+    }
+
+    if (sessionState.containsKey("txProfileId")) {
+        tx.setTxProfileId(sessionState["txProfileId"] | -1);
+    }
+
+    JsonObject txStart = state["start"];
+
+    if (!deserializeSendStatus(clock, tx.getStartSync(), txStart)) {
+        return false;
+    }
+
+    if (txStart.containsKey("meter")) {
+        tx.setMeterStart(txStart["meter"] | 0);
+    }
+
+    if (txStart.containsKey("timestamp")) {
+        Timestamp timestamp;
+        if (!clock.parseString(txStart["timestamp"] | "_Invalid", timestamp)) {
+            MO_DBG_ERR("deserialization error");
+            return false;
+        }
+        tx.setStartTimestamp(timestamp);
+    }
+
+    if (txStart.containsKey("transactionId")) {
+        tx.setTransactionId(txStart["transactionId"] | -1);
+    }
+
+    JsonObject txStop = state["stop"];
+
+    if (!deserializeSendStatus(clock, tx.getStopSync(), txStop)) {
+        return false;
+    }
+
+    if (txStop.containsKey("idTag")) {
+        if (!tx.setStopIdTag(txStop["idTag"] | "")) {
+            MO_DBG_ERR("read err");
+            return false;
+        }
+    }
+
+    if (txStop.containsKey("meter")) {
+        tx.setMeterStop(txStop["meter"] | 0);
+    }
+
+    if (txStop.containsKey("timestamp")) {
+        Timestamp timestamp;
+        if (!clock.parseString(txStop["timestamp"] | "_Invalid", timestamp)) {
+            MO_DBG_ERR("deserialization error");
+            return false;
+        }
+        tx.setStopTimestamp(timestamp);
+    }
+
+    if (txStop.containsKey("reason")) {
+        if (!tx.setStopReason(txStop["reason"] | "")) {
+            MO_DBG_ERR("read err");
+            return false;
+        }
+    }
+
+    if (state["silent"] | false) {
+        tx.setSilent();
+    }
+
+    MO_DBG_DEBUG("DUMP TX (%s)", tx.getIdTag() ? tx.getIdTag() : "idTag missing");
+    MO_DBG_DEBUG("Session   | idTag %s, active: %i, authorized: %i, deauthorized: %i", tx.getIdTag(), tx.isActive(), tx.isAuthorized(), tx.isIdTagDeauthorized());
+    MO_DBG_DEBUG("Start RPC | req: %i, conf: %i", tx.getStartSync().isRequested(), tx.getStartSync().isConfirmed());
+    MO_DBG_DEBUG("Stop  RPC | req: %i, conf: %i",  tx.getStopSync().isRequested(), tx.getStopSync().isConfirmed());
+    if (tx.isSilent()) {
+        MO_DBG_DEBUG("          | silent Tx");
+    }
+
+    return true;
+}
+
+#endif //MO_ENABLE_V16
+
+#if MO_ENABLE_V201
+
+using namespace MicroOcpp;
+
+bool Ocpp201::TransactionStoreEvse::serializeTransaction(Transaction& tx, JsonObject txJson) {
 
     if (tx.trackEvConnected) {
         txJson["trackEvConnected"] = tx.trackEvConnected;
@@ -230,14 +418,30 @@ bool TransactionStoreEvse::serializeTransaction(Transaction& tx, JsonObject txJs
         txJson["idToken"]["type"] = tx.idToken.getTypeCstr();
     }
 
-    if (tx.beginTimestamp > MIN_TIME) {
-        char timeStr [JSONDATE_LENGTH + 1] = {'\0'};
-        tx.beginTimestamp.toJsonString(timeStr, JSONDATE_LENGTH + 1);
+    if (tx.beginTimestamp.isDefined()) {
+        char timeStr [MO_JSONDATE_SIZE] = {'\0'};
+        if (!context.getClock().toInternalString(tx.beginTimestamp, timeStr, sizeof(timeStr))) {
+            MO_DBG_ERR("serialization error");
+            return false;
+        }
         txJson["beginTimestamp"] = timeStr;
+    }
+
+    if (tx.startTimestamp.isDefined()) {
+        char timeStr [MO_JSONDATE_SIZE] = {'\0'};
+        if (!context.getClock().toInternalString(tx.startTimestamp, timeStr, sizeof(timeStr))) {
+            MO_DBG_ERR("serialization error");
+            return false;
+        }
+        txJson["startTimestamp"] = timeStr;
     }
 
     if (tx.remoteStartId >= 0) {
         txJson["remoteStartId"] = tx.remoteStartId;
+    }
+
+    if (tx.txProfileId >= 0) {
+        txJson["txProfileId"] = tx.txProfileId;
     }
 
     if (tx.evConnectionTimeoutListen) {
@@ -248,8 +452,8 @@ bool TransactionStoreEvse::serializeTransaction(Transaction& tx, JsonObject txJs
         txJson["stoppedReason"] = serializeTransactionStoppedReason(tx.stoppedReason);
     }
 
-    if (serializeTransactionEventTriggerReason(tx.stopTrigger)) {
-        txJson["stopTrigger"] = serializeTransactionEventTriggerReason(tx.stopTrigger);
+    if (serializeTxEventTriggerReason(tx.stopTrigger)) {
+        txJson["stopTrigger"] = serializeTxEventTriggerReason(tx.stopTrigger);
     }
 
     if (tx.stopIdToken) {
@@ -269,7 +473,7 @@ bool TransactionStoreEvse::serializeTransaction(Transaction& tx, JsonObject txJs
     return true;
 }
 
-bool TransactionStoreEvse::deserializeTransaction(Transaction& tx, JsonObject txJson) {
+bool Ocpp201::TransactionStoreEvse::deserializeTransaction(Transaction& tx, JsonObject txJson) {
 
     if (txJson.containsKey("trackEvConnected") && !txJson["trackEvConnected"].is<bool>()) {
         return false;
@@ -335,7 +539,13 @@ bool TransactionStoreEvse::deserializeTransaction(Transaction& tx, JsonObject tx
     }
 
     if (txJson.containsKey("beginTimestamp")) {
-        if (!tx.beginTimestamp.setTime(txJson["beginTimestamp"] | "_Undefined")) {
+        if (!context.getClock().parseString(txJson["beginTimestamp"] | "_Invalid", tx.beginTimestamp)) {
+            return false;
+        }
+    }
+
+    if (txJson.containsKey("startTimestamp")) {
+        if (!context.getClock().parseString(txJson["startTimestamp"] | "_Invalid", tx.startTimestamp)) {
             return false;
         }
     }
@@ -348,19 +558,27 @@ bool TransactionStoreEvse::deserializeTransaction(Transaction& tx, JsonObject tx
         tx.remoteStartId = remoteStartIdIn;
     }
 
+    if (txJson.containsKey("txProfileId")) {
+        int txProfileIdIn = txJson["txProfileId"] | -1;
+        if (txProfileIdIn < 0) {
+            return false;
+        }
+        tx.txProfileId = txProfileIdIn;
+    }
+
     if (txJson.containsKey("evConnectionTimeoutListen") && !txJson["evConnectionTimeoutListen"].is<bool>()) {
         return false;
     }
     tx.evConnectionTimeoutListen = txJson["evConnectionTimeoutListen"] | false;
 
-    Transaction::StoppedReason stoppedReason;
+    MO_TxStoppedReason stoppedReason;
     if (!deserializeTransactionStoppedReason(txJson["stoppedReason"] | (const char*)nullptr, stoppedReason)) {
         return false;
     }
     tx.stoppedReason = stoppedReason;
 
-    TransactionEventTriggerReason stopTrigger;
-    if (!deserializeTransactionEventTriggerReason(txJson["stopTrigger"] | (const char*)nullptr, stopTrigger)) {
+    MO_TxEventTriggerReason stopTrigger;
+    if (!deserializeTxEventTriggerReason(txJson["stopTrigger"] | (const char*)nullptr, stopTrigger)) {
         return false;
     }
     tx.stopTrigger = stopTrigger;
@@ -398,22 +616,22 @@ bool TransactionStoreEvse::deserializeTransaction(Transaction& tx, JsonObject tx
     return true;
 }
 
-bool TransactionStoreEvse::serializeTransactionEvent(TransactionEventData& txEvent, JsonObject txEventJson) {
+bool Ocpp201::TransactionStoreEvse::serializeTransactionEvent(TransactionEventData& txEvent, JsonObject txEventJson) {
     
     if (txEvent.eventType != TransactionEventData::Type::Updated) {
         txEventJson["eventType"] = serializeTransactionEventType(txEvent.eventType);
     }
 
-    if (txEvent.timestamp > MIN_TIME) {
-        char timeStr [JSONDATE_LENGTH + 1] = {'\0'};
-        txEvent.timestamp.toJsonString(timeStr, JSONDATE_LENGTH + 1);
+    if (txEvent.timestamp.isDefined()) {
+        char timeStr [MO_JSONDATE_SIZE] = {'\0'};
+        if (!context.getClock().toInternalString(txEvent.timestamp, timeStr, sizeof(timeStr))) {
+            return false;
+        }
         txEventJson["timestamp"] = timeStr;
     }
 
-    txEventJson["bootNr"] = txEvent.bootNr;
-
-    if (serializeTransactionEventTriggerReason(txEvent.triggerReason)) {
-        txEventJson["triggerReason"] = serializeTransactionEventTriggerReason(txEvent.triggerReason);
+    if (serializeTxEventTriggerReason(txEvent.triggerReason)) {
+        txEventJson["triggerReason"] = serializeTxEventTriggerReason(txEvent.triggerReason);
     }
     
     if (txEvent.offline) {
@@ -459,16 +677,18 @@ bool TransactionStoreEvse::serializeTransactionEvent(TransactionEventData& txEve
     txEventJson["opNr"] = txEvent.opNr;
     txEventJson["attemptNr"] = txEvent.attemptNr;
     
-    if (txEvent.attemptTime > MIN_TIME) {
-        char timeStr [JSONDATE_LENGTH + 1] = {'\0'};
-        txEvent.attemptTime.toJsonString(timeStr, JSONDATE_LENGTH + 1);
+    if (txEvent.attemptTime.isDefined()) {
+        char timeStr [MO_JSONDATE_SIZE] = {'\0'};
+        if (!context.getClock().toInternalString(txEvent.attemptTime, timeStr, sizeof(timeStr))) {
+            return false;
+        }
         txEventJson["attemptTime"] = timeStr;
     }
 
     return true;
 }
 
-bool TransactionStoreEvse::deserializeTransactionEvent(TransactionEventData& txEvent, JsonObject txEventJson) {
+bool Ocpp201::TransactionStoreEvse::deserializeTransactionEvent(TransactionEventData& txEvent, JsonObject txEventJson) {
 
     TransactionEventData::Type eventType;
     if (!deserializeTransactionEventType(txEventJson["eventType"] | "Updated", eventType)) {
@@ -477,20 +697,13 @@ bool TransactionStoreEvse::deserializeTransactionEvent(TransactionEventData& txE
     txEvent.eventType = eventType;
 
     if (txEventJson.containsKey("timestamp")) {
-        if (!txEvent.timestamp.setTime(txEventJson["timestamp"] | "_Undefined")) {
+        if (!context.getClock().parseString(txEventJson["timestamp"] | "_Undefined", txEvent.timestamp)) {
             return false;
         }
     }
 
-    int bootNrIn = txEventJson["bootNr"] | -1;
-    if (bootNrIn >= 0 && bootNrIn <= std::numeric_limits<uint16_t>::max()) {
-        txEvent.bootNr = (uint16_t)bootNrIn;
-    } else {
-        return false;
-    }
-
-    TransactionEventTriggerReason triggerReason;
-    if (!deserializeTransactionEventTriggerReason(txEventJson["triggerReason"] | "_Undefined", triggerReason)) {
+    MO_TxEventTriggerReason triggerReason;
+    if (!deserializeTxEventTriggerReason(txEventJson["triggerReason"] | "_Undefined", triggerReason)) {
         return false;
     }
     txEvent.triggerReason = triggerReason;
@@ -585,7 +798,7 @@ bool TransactionStoreEvse::deserializeTransactionEvent(TransactionEventData& txE
     }
 
     if (txEventJson.containsKey("attemptTime")) {
-        if (!txEvent.attemptTime.setTime(txEventJson["attemptTime"] | "_Undefined")) {
+        if (!context.getClock().parseString(txEventJson["attemptTime"] | "_Undefined", txEvent.attemptTime)) {
             return false;
         }
     }
@@ -593,71 +806,55 @@ bool TransactionStoreEvse::deserializeTransactionEvent(TransactionEventData& txE
     return true;
 }
 
-TransactionStoreEvse::TransactionStoreEvse(TransactionStore& txStore, unsigned int evseId, std::shared_ptr<FilesystemAdapter> filesystem) :
+Ocpp201::TransactionStoreEvse::TransactionStoreEvse(Context& context, unsigned int evseId) :
         MemoryManaged("v201.Transactions.TransactionStore"),
-        txStore(txStore),
-        evseId(evseId),
-        filesystem(filesystem) {
+        context(context),
+        evseId(evseId) {
 
 }
 
-bool TransactionStoreEvse::discoverStoredTx(unsigned int& txNrBeginOut, unsigned int& txNrEndOut) {
-
+bool Ocpp201::TransactionStoreEvse::setup() {
+    filesystem = context.getFilesystem();
     if (!filesystem) {
-        MO_DBG_DEBUG("no FS adapter");
-        return true;
+        MO_DBG_DEBUG("volatile mode");
     }
+    return true;
+}
 
-    char fnPrefix [MO_MAX_PATH_SIZE];
-    snprintf(fnPrefix, sizeof(fnPrefix), "tx201-%u-", evseId);
-    size_t fnPrefixLen = strlen(fnPrefix);
-
-    unsigned int txNrPivot = std::numeric_limits<unsigned int>::max();
-    unsigned int txNrBegin = 0, txNrEnd = 0;
-
-    auto ret = filesystem->ftw_root([fnPrefix, fnPrefixLen, &txNrPivot, &txNrBegin, &txNrEnd] (const char *fn) {
-        if (!strncmp(fn, fnPrefix, fnPrefixLen)) {
-            unsigned int parsedTxNr = 0;
-            for (size_t i = fnPrefixLen; fn[i] >= '0' && fn[i] <= '9'; i++) {
-                parsedTxNr *= 10;
-                parsedTxNr += fn[i] - '0';
-            }
-
-            if (txNrPivot == std::numeric_limits<unsigned int>::max()) {
-                txNrPivot = parsedTxNr;
-                txNrBegin = parsedTxNr;
-                txNrEnd = (parsedTxNr + 1) % MAX_TX_CNT;
-                return 0;
-            }
-
-            if ((parsedTxNr + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT < MAX_TX_CNT / 2) {
-                //parsedTxNr is after pivot point
-                if ((parsedTxNr + 1 + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT > (txNrEnd + MAX_TX_CNT - txNrPivot) % MAX_TX_CNT) {
-                    txNrEnd = (parsedTxNr + 1) % MAX_TX_CNT;
-                }
-            } else if ((txNrPivot + MAX_TX_CNT - parsedTxNr) % MAX_TX_CNT < MAX_TX_CNT / 2) {
-                //parsedTxNr is before pivot point
-                if ((txNrPivot + MAX_TX_CNT - parsedTxNr) % MAX_TX_CNT > (txNrPivot + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT) {
-                    txNrBegin = parsedTxNr;
-                }
-            }
-
-            MO_DBG_DEBUG("found %s%u-*.json - Internal range from %u to %u (exclusive)", fnPrefix, parsedTxNr, txNrBegin, txNrEnd);
-        }
-        return 0;
-    });
-
-    if (ret == 0) {
-        txNrBeginOut = txNrBegin;
-        txNrEndOut = txNrEnd;
-        return true;
-    } else {
-        MO_DBG_ERR("fs error");
+bool Ocpp201::TransactionStoreEvse::printTxEventFname(char *fname, size_t size, unsigned int evseId, unsigned int txNr, unsigned int seqNo) {
+    auto ret = snprintf(fname, size, "tx201-%.*u-%.*u-%.*u.json",
+            MO_NUM_EVSEID_DIGITS, evseId, MO_TXNR_DIGITS, txNr, MO_TXEVENTRECORD_DIGITS, seqNo);
+    if (ret < 0 || (size_t)ret >= size) {
+        MO_DBG_ERR("fn error: %i", ret);
         return false;
     }
+    return true;
 }
 
-std::unique_ptr<Transaction> TransactionStoreEvse::loadTransaction(unsigned int txNr) {
+namespace MicroOcpp {
+
+struct LoadSeqNosData {
+    const char *fnPrefix = nullptr;
+    size_t fnPrefixLen = 0;
+    Vector<unsigned int> *seqNos = nullptr;
+};
+
+int loadSeqNoEntry(const char *fname, void* user_data) {
+    auto data = reinterpret_cast<LoadSeqNosData*>(user_data);
+    if (!strncmp(fname, data->fnPrefix, data->fnPrefixLen)) {
+        unsigned int parsedSeqNo = 0;
+        for (size_t i = data->fnPrefixLen; fname[i] >= '0' && fname[i] <= '9'; i++) {
+            parsedSeqNo *= 10;
+            parsedSeqNo += fname[i] - '0';
+        }
+
+        data->seqNos->push_back(parsedSeqNo);
+    }
+    return 0;
+}
+} //namespace MicroOcpp
+
+std::unique_ptr<Ocpp201::Transaction> Ocpp201::TransactionStoreEvse::loadTransaction(unsigned int txNr) {
 
     if (!filesystem) {
         MO_DBG_DEBUG("no FS adapter");
@@ -665,7 +862,8 @@ std::unique_ptr<Transaction> TransactionStoreEvse::loadTransaction(unsigned int 
     }
 
     char fnPrefix [MO_MAX_PATH_SIZE];
-    auto ret= snprintf(fnPrefix, sizeof(fnPrefix), "tx201-%u-%u-", evseId, txNr);
+    auto ret = snprintf(fnPrefix, sizeof(fnPrefix), "tx201-%.*u-%.*u-",
+            MO_NUM_EVSEID_DIGITS, evseId, MO_TXNR_DIGITS, txNr);
     if (ret < 0 || (size_t)ret >= sizeof(fnPrefix)) {
         MO_DBG_ERR("fn error");
         return nullptr;
@@ -674,18 +872,12 @@ std::unique_ptr<Transaction> TransactionStoreEvse::loadTransaction(unsigned int 
 
     Vector<unsigned int> seqNos = makeVector<unsigned int>(getMemoryTag());
 
-    filesystem->ftw_root([fnPrefix, fnPrefixLen, &seqNos] (const char *fn) {
-        if (!strncmp(fn, fnPrefix, fnPrefixLen)) {
-            unsigned int parsedSeqNo = 0;
-            for (size_t i = fnPrefixLen; fn[i] >= '0' && fn[i] <= '9'; i++) {
-                parsedSeqNo *= 10;
-                parsedSeqNo += fn[i] - '0';
-            }
+    LoadSeqNosData data;
+    data.fnPrefix = fnPrefix;
+    data.fnPrefixLen = fnPrefixLen;
+    data.seqNos = &seqNos;
 
-            seqNos.push_back(parsedSeqNo);
-        }
-        return 0;
-    });
+    filesystem->ftw(filesystem->path_prefix, loadSeqNoEntry, reinterpret_cast<void*>(&data));
 
     if (seqNos.empty()) {
         MO_DBG_DEBUG("no tx at tx201-%u-%u", evseId, txNr);
@@ -695,26 +887,29 @@ std::unique_ptr<Transaction> TransactionStoreEvse::loadTransaction(unsigned int 
     std::sort(seqNos.begin(), seqNos.end());
 
     char fn [MO_MAX_PATH_SIZE] = {'\0'};
-    ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "tx201" "-%u-%u-%u.json", evseId, txNr, seqNos.back());
-    if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
+    if (!printTxEventFname(fn, sizeof(fn), evseId, txNr, seqNos.back())) {
         MO_DBG_ERR("fn error: %i", ret);
         return nullptr;
     }
 
-    size_t msize;
-    if (filesystem->stat(fn, &msize) != 0) {
-        MO_DBG_ERR("tx201-%u-%u memory corruption", evseId, txNr);
-        return nullptr;
+    JsonDoc doc (0);
+    auto status = FilesystemUtils::loadJson(filesystem, fn, doc, getMemoryTag());
+    switch (status) {
+        case FilesystemUtils::LoadStatus::Success:
+            break; //continue loading JSON
+        case FilesystemUtils::LoadStatus::FileNotFound:
+            MO_DBG_ERR("memory corruption");
+            return nullptr;
+        case FilesystemUtils::LoadStatus::ErrOOM:
+            MO_DBG_ERR("OOM");
+            return nullptr;
+        case FilesystemUtils::LoadStatus::ErrFileCorruption:
+        case FilesystemUtils::LoadStatus::ErrOther:
+            MO_DBG_ERR("failed to load %s", fn);
+            return nullptr;
     }
 
-    auto doc = FilesystemUtils::loadJson(filesystem, fn, getMemoryTag());
-
-    if (!doc) {
-        MO_DBG_ERR("memory corruption");
-        return nullptr;
-    }
-
-    auto transaction = std::unique_ptr<Transaction>(new Transaction());
+    auto transaction = std::unique_ptr<Transaction>(new Transaction(context.getClock()));
     if (!transaction) {
         MO_DBG_ERR("OOM");
         return nullptr;
@@ -724,7 +919,7 @@ std::unique_ptr<Transaction> TransactionStoreEvse::loadTransaction(unsigned int 
     transaction->txNr = txNr;
     transaction->seqNos = std::move(seqNos);
 
-    JsonObject txJson = (*doc)["tx"];
+    JsonObject txJson = doc["tx"];
 
     if (!deserializeTransaction(*transaction, txJson)) {
         MO_DBG_ERR("deserialization error");
@@ -732,7 +927,7 @@ std::unique_ptr<Transaction> TransactionStoreEvse::loadTransaction(unsigned int 
     }
 
     //determine seqNoEnd and trim seqNos record
-    if (doc->containsKey("txEvent")) {
+    if (doc.containsKey("txEvent")) {
         //last tx201 file contains txEvent -> txNoEnd is one place after tx201 file and seqNos is accurate
         transaction->seqNoEnd = transaction->seqNos.back() + 1;
     } else {
@@ -746,7 +941,7 @@ std::unique_ptr<Transaction> TransactionStoreEvse::loadTransaction(unsigned int 
     return transaction;
 }
 
-std::unique_ptr<Ocpp201::Transaction> TransactionStoreEvse::createTransaction(unsigned int txNr, const char *txId) {
+std::unique_ptr<Ocpp201::Transaction> Ocpp201::TransactionStoreEvse::createTransaction(unsigned int txNr, const char *txId) {
 
     //clean data which could still be here from a rolled-back transaction
     if (!remove(txNr)) {
@@ -754,7 +949,7 @@ std::unique_ptr<Ocpp201::Transaction> TransactionStoreEvse::createTransaction(un
         return nullptr;
     }
 
-    auto transaction = std::unique_ptr<Transaction>(new Transaction());
+    auto transaction = std::unique_ptr<Transaction>(new Transaction(context.getClock()));
     if (!transaction) {
         MO_DBG_ERR("OOM");
         return nullptr;
@@ -777,7 +972,7 @@ std::unique_ptr<Ocpp201::Transaction> TransactionStoreEvse::createTransaction(un
     return transaction;
 }
 
-std::unique_ptr<TransactionEventData> TransactionStoreEvse::createTransactionEvent(Transaction& tx) {
+std::unique_ptr<Ocpp201::TransactionEventData> Ocpp201::TransactionStoreEvse::createTransactionEvent(Transaction& tx) {
 
     auto txEvent = std::unique_ptr<TransactionEventData>(new TransactionEventData(&tx, tx.seqNoEnd));
     if (!txEvent) {
@@ -789,7 +984,7 @@ std::unique_ptr<TransactionEventData> TransactionStoreEvse::createTransactionEve
     return txEvent;
 }
 
-std::unique_ptr<TransactionEventData> TransactionStoreEvse::loadTransactionEvent(Transaction& tx, unsigned int seqNo) {
+std::unique_ptr<Ocpp201::TransactionEventData> Ocpp201::TransactionStoreEvse::loadTransactionEvent(Transaction& tx, unsigned int seqNo) {
 
     if (!filesystem) {
         MO_DBG_DEBUG("no FS adapter");
@@ -807,27 +1002,30 @@ std::unique_ptr<TransactionEventData> TransactionStoreEvse::loadTransactionEvent
         return nullptr;
     }
 
-    char fn [MO_MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "tx201" "-%u-%u-%u.json", evseId, tx.txNr, seqNo);
-    if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
-        MO_DBG_ERR("fn error: %i", ret);
+    char fn [MO_MAX_PATH_SIZE];
+    if (!printTxEventFname(fn, sizeof(fn), evseId, tx.txNr, seqNo)) {
+        MO_DBG_ERR("fn error: %s", fn);
         return nullptr;
     }
 
-    size_t msize;
-    if (filesystem->stat(fn, &msize) != 0) {
-        MO_DBG_ERR("seqNos out of sync: could not find %u-%u-%u", evseId, tx.txNr, seqNo);
-        return nullptr;
+    JsonDoc doc (0);
+    auto ret = FilesystemUtils::loadJson(filesystem, fn, doc, getMemoryTag());
+    switch (ret) {
+        case FilesystemUtils::LoadStatus::Success:
+            break; //continue loading JSON
+        case FilesystemUtils::LoadStatus::FileNotFound:
+            MO_DBG_ERR("seqNos out of sync: could not find %u-%u-%u", evseId, tx.txNr, seqNo);
+            return nullptr;
+        case FilesystemUtils::LoadStatus::ErrOOM:
+            MO_DBG_ERR("OOM");
+            return nullptr;
+        case FilesystemUtils::LoadStatus::ErrFileCorruption:
+        case FilesystemUtils::LoadStatus::ErrOther:
+            MO_DBG_ERR("failed to load %s", fn);
+            return nullptr;
     }
 
-    auto doc = FilesystemUtils::loadJson(filesystem, fn, getMemoryTag());
-
-    if (!doc) {
-        MO_DBG_ERR("memory corruption");
-        return nullptr;
-    }
-
-    if (!doc->containsKey("txEvent")) {
+    if (!doc.containsKey("txEvent")) {
         MO_DBG_DEBUG("%u-%u-%u does not contain txEvent", evseId, tx.txNr, seqNo);
         return nullptr;
     }
@@ -838,7 +1036,7 @@ std::unique_ptr<TransactionEventData> TransactionStoreEvse::loadTransactionEvent
         return nullptr;
     }
 
-    if (!deserializeTransactionEvent(*txEvent, (*doc)["txEvent"])) {
+    if (!deserializeTransactionEvent(*txEvent, doc["txEvent"])) {
         MO_DBG_ERR("deserialization error");
         return nullptr;
     }
@@ -846,7 +1044,7 @@ std::unique_ptr<TransactionEventData> TransactionStoreEvse::loadTransactionEvent
     return txEvent;
 }
 
-bool TransactionStoreEvse::commit(Transaction& tx, TransactionEventData *txEvent) {
+bool Ocpp201::TransactionStoreEvse::commit(Transaction& tx, TransactionEventData *txEvent) {
 
     if (!filesystem) {
         MO_DBG_DEBUG("no FS: nothing to commit");
@@ -871,7 +1069,7 @@ bool TransactionStoreEvse::commit(Transaction& tx, TransactionEventData *txEvent
     }
 
     // Check if to delete intermediate offline txEvent
-    if (seqNosNewSize > MO_TXEVENTRECORD_SIZE_V201) {
+    if (seqNosNewSize > MO_TXEVENTRECORD_SIZE) {
         auto deltaMin = std::numeric_limits<unsigned int>::max();
         size_t indexMin = tx.seqNos.size();
         for (size_t i = 2; i + 1 <= tx.seqNos.size(); i++) { //always keep first and final txEvent
@@ -896,10 +1094,9 @@ bool TransactionStoreEvse::commit(Transaction& tx, TransactionEventData *txEvent
         }
     }
 
-    char fn [MO_MAX_PATH_SIZE] = {'\0'};
-    auto ret = snprintf(fn, MO_MAX_PATH_SIZE, MO_FILENAME_PREFIX "tx201" "-%u-%u-%u.json", evseId, tx.txNr, seqNo);
-    if (ret < 0 || ret >= MO_MAX_PATH_SIZE) {
-        MO_DBG_ERR("fn error: %i", ret);
+    char fn [MO_MAX_PATH_SIZE];
+    if (!printTxEventFname(fn, sizeof(fn), evseId, tx.txNr, seqNo)) {
+        MO_DBG_ERR("fn error: %s", fn);
         return false;
     }
 
@@ -915,7 +1112,7 @@ bool TransactionStoreEvse::commit(Transaction& tx, TransactionEventData *txEvent
         return false;
     }
 
-    if (!FilesystemUtils::storeJson(filesystem, fn, txDoc)) {
+    if (FilesystemUtils::storeJson(filesystem, fn, txDoc) != FilesystemUtils::StoreStatus::Success) {
         MO_DBG_ERR("FS error");
         return false;
     }
@@ -931,15 +1128,15 @@ bool TransactionStoreEvse::commit(Transaction& tx, TransactionEventData *txEvent
     return true;
 }
 
-bool TransactionStoreEvse::commit(Transaction *transaction) {
+bool Ocpp201::TransactionStoreEvse::commit(Transaction *transaction) {
     return commit(*transaction, nullptr);
 }
 
-bool TransactionStoreEvse::commit(TransactionEventData *txEvent) {
+bool Ocpp201::TransactionStoreEvse::commit(TransactionEventData *txEvent) {
     return commit(*txEvent->transaction, txEvent);
 }
 
-bool TransactionStoreEvse::remove(unsigned int txNr) {
+bool Ocpp201::TransactionStoreEvse::remove(unsigned int txNr) {
 
     if (!filesystem) {
         MO_DBG_DEBUG("no FS: nothing to remove");
@@ -947,21 +1144,17 @@ bool TransactionStoreEvse::remove(unsigned int txNr) {
     }
 
     char fnPrefix [MO_MAX_PATH_SIZE];
-    auto ret= snprintf(fnPrefix, sizeof(fnPrefix), "tx201-%u-%u-", evseId, txNr);
+    auto ret = snprintf(fnPrefix, sizeof(fnPrefix), "tx201-%.*u-%.*u-",
+            MO_NUM_EVSEID_DIGITS, evseId, MO_TXNR_DIGITS, txNr);
     if (ret < 0 || (size_t)ret >= sizeof(fnPrefix)) {
         MO_DBG_ERR("fn error");
         return false;
     }
-    size_t fnPrefixLen = strlen(fnPrefix);
 
-    auto success = FilesystemUtils::remove_if(filesystem, [fnPrefix, fnPrefixLen] (const char *fn) {
-        return !strncmp(fn, fnPrefix, fnPrefixLen);
-    });
-
-    return success;
+    return FilesystemUtils::removeByPrefix(filesystem, fnPrefix);
 }
 
-bool TransactionStoreEvse::remove(Transaction& tx, unsigned int seqNo) {
+bool Ocpp201::TransactionStoreEvse::remove(Transaction& tx, unsigned int seqNo) {
 
     if (tx.seqNos.empty()) {
         //nothing to do
@@ -973,15 +1166,28 @@ bool TransactionStoreEvse::remove(Transaction& tx, unsigned int seqNo) {
         //information is commited into tx201 file at seqNoEnd, then delete file at seqNo
 
         char fn [MO_MAX_PATH_SIZE];
-        auto ret = snprintf(fn, sizeof(fn), "%stx201-%u-%u-%u.json", MO_FILENAME_PREFIX, evseId, tx.txNr, tx.seqNoEnd);
-        if (ret < 0 || (size_t)ret >= sizeof(fn)) {
+        if (!printTxEventFname(fn, sizeof(fn), evseId, tx.txNr, seqNo)) {
             MO_DBG_ERR("fn error");
             return false;
         }
 
-        auto doc = FilesystemUtils::loadJson(filesystem, fn, getMemoryTag());
+        JsonDoc doc (0);
+        auto ret = FilesystemUtils::loadJson(filesystem, fn, doc, getMemoryTag());
+        switch (ret) {
+            case FilesystemUtils::LoadStatus::Success:
+                break; //continue loading JSON
+            case FilesystemUtils::LoadStatus::FileNotFound:
+                break;
+            case FilesystemUtils::LoadStatus::ErrOOM:
+                MO_DBG_ERR("OOM");
+                return false;
+            case FilesystemUtils::LoadStatus::ErrFileCorruption:
+            case FilesystemUtils::LoadStatus::ErrOther:
+                MO_DBG_ERR("failed to load %s", fn);
+                break;
+        }
         
-        if (!doc || !doc->containsKey("tx")) {
+        if (ret != FilesystemUtils::LoadStatus::Success || !doc.containsKey("tx")) {
             //no valid tx201 file at seqNoEnd. Commit tx into file seqNoEnd, then remove file at seqNo
 
             if (!commit(tx, nullptr)) {
@@ -1008,15 +1214,20 @@ bool TransactionStoreEvse::remove(Transaction& tx, unsigned int seqNo) {
 
     if (filesystem) {
         char fn [MO_MAX_PATH_SIZE];
-        auto ret = snprintf(fn, sizeof(fn), "%stx201-%u-%u-%u.json", MO_FILENAME_PREFIX, evseId, tx.txNr, seqNo);
-        if (ret < 0 || (size_t)ret >= sizeof(fn)) {
-            MO_DBG_ERR("fn error");
+        if (!printTxEventFname(fn, sizeof(fn), evseId, tx.txNr, seqNo)) {
+            MO_DBG_ERR("fn error: %s", fn);
+            return false;
+        }
+
+        char path [MO_MAX_PATH_SIZE];
+        if (!FilesystemUtils::printPath(filesystem, path, sizeof(path), fn)) {
+            MO_DBG_ERR("path error: %s", fn);
             return false;
         }
 
         size_t msize;
-        if (filesystem->stat(fn, &msize) == 0) {
-            success &= filesystem->remove(fn);
+        if (filesystem->stat(path, &msize) == 0) {
+            success &= filesystem->remove(path);
         } else {
             MO_DBG_ERR("internal error: seqNos out of sync");
             (void)0;
@@ -1037,28 +1248,45 @@ bool TransactionStoreEvse::remove(Transaction& tx, unsigned int seqNo) {
     return success;
 }
 
-TransactionStore::TransactionStore(std::shared_ptr<FilesystemAdapter> filesystem, size_t numEvses) :
-        MemoryManaged{"v201.Transactions.TransactionStore"} {
+Ocpp201::TransactionStore::TransactionStore(Context& context) :
+        MemoryManaged{"v201.Transactions.TransactionStore"}, context(context) {
 
-    for (unsigned int evseId = 0; evseId < MO_NUM_EVSEID && (size_t)evseId < numEvses; evseId++) {
-        evses[evseId] = new TransactionStoreEvse(*this, evseId, filesystem);
-    }
 }
 
-TransactionStore::~TransactionStore() {
-    for (unsigned int evseId = 0; evseId < MO_NUM_EVSEID && evses[evseId]; evseId++) {
+Ocpp201::TransactionStore::~TransactionStore() {
+    for (unsigned int evseId = 0; evseId < numEvseId; evseId++) {
         delete evses[evseId];
     }
 }
 
-TransactionStoreEvse *TransactionStore::getEvse(unsigned int evseId) {
-    if (evseId >= MO_NUM_EVSEID) {
-        return nullptr;
+bool Ocpp201::TransactionStore::setup() {
+
+    numEvseId = context.getModel201().getNumEvseId();
+    for (unsigned int i = 0; i < numEvseId; i++) {
+        if (!getEvse(i) || !getEvse(i)->setup()) {
+            MO_DBG_ERR("initialization error");
+            return false;
+        }
     }
-    return evses[evseId];
+
+    return true;
 }
 
-} //namespace Ocpp201
-} //namespace MicroOcpp
+Ocpp201::TransactionStoreEvse *Ocpp201::TransactionStore::getEvse(unsigned int evseId) {
+    if (evseId >= numEvseId) {
+        MO_DBG_ERR("evseId out of bound");
+        return nullptr;
+    }
+
+    if (!evses[evseId]) {
+        evses[evseId] = new TransactionStoreEvse(context, evseId);
+        if (!evses[evseId]) {
+            MO_DBG_ERR("OOM");
+            return nullptr;
+        }
+    }
+
+    return evses[evseId];
+}
 
 #endif //MO_ENABLE_V201

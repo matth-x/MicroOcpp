@@ -4,7 +4,7 @@
 
 #include <MicroOcpp/Model/Certificates/Certificate_c.h>
 
-#if MO_ENABLE_CERT_MGMT
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT
 
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Debug.h>
@@ -18,9 +18,9 @@ namespace MicroOcpp {
  */
 class CertificateStoreC : public CertificateStore, public MemoryManaged {
 private:
-    ocpp_cert_store *certstore = nullptr;
+    mo_cert_store *certstore = nullptr;
 public:
-    CertificateStoreC(ocpp_cert_store *certstore) : MemoryManaged("v201.Certificates.CertificateStoreC"), certstore(certstore) {
+    CertificateStoreC(mo_cert_store *certstore) : MemoryManaged("v201.Certificates.CertificateStoreC"), certstore(certstore) {
 
     }
 
@@ -29,7 +29,7 @@ public:
     GetInstalledCertificateStatus getCertificateIds(const Vector<GetCertificateIdType>& certificateType, Vector<CertificateChainHash>& out) override {
         out.clear();
 
-        ocpp_cert_chain_hash *cch;
+        mo_cert_chain_hash *cch;
 
         auto ret = certstore->getCertificateIds(certstore->user_data, &certificateType[0], certificateType.size(), &cch);
         if (ret == GetInstalledCertificateStatus_NotFound || !cch) {
@@ -38,15 +38,15 @@ public:
 
         bool err = false;
         
-        for (ocpp_cert_chain_hash *it = cch; it && !err; it = it->next) {
+        for (mo_cert_chain_hash *it = cch; it && !err; it = it->next) {
             out.emplace_back();
             auto &chd_el = out.back();
             chd_el.certificateType = it->certType;
-            memcpy(&chd_el.certificateHashData, &it->certHashData, sizeof(ocpp_cert_hash));
+            memcpy(&chd_el.certificateHashData, &it->certHashData, sizeof(mo_cert_hash));
         }
 
         while (cch) {
-            ocpp_cert_chain_hash *el = cch;
+            mo_cert_chain_hash *el = cch;
             cch = cch->next;
             el->invalidate(el);
         }
@@ -69,9 +69,9 @@ public:
     }
 };
 
-std::unique_ptr<CertificateStore> makeCertificateStoreCwrapper(ocpp_cert_store *certstore) {
+std::unique_ptr<CertificateStore> makeCertificateStoreCwrapper(mo_cert_store *certstore) {
     return std::unique_ptr<CertificateStore>(new CertificateStoreC(certstore));
 }
 
 } //namespace MicroOcpp
-#endif //MO_ENABLE_CERT_MGMT
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT

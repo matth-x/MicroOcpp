@@ -9,22 +9,24 @@
 #ifndef MO_VARIABLE_H
 #define MO_VARIABLE_H
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <stdint.h>
 #include <memory>
 #include <limits>
 
-#include <MicroOcpp/Model/ConnectorBase/EvseId.h>
+#include <MicroOcpp/Model/Common/EvseId.h>
+#include <MicroOcpp/Model/Common/Mutability.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V201
 
 #ifndef MO_VARIABLE_TYPECHECK
 #define MO_VARIABLE_TYPECHECK 1
 #endif
 
 namespace MicroOcpp {
+
+namespace Ocpp201 {
 
 // VariableCharacteristicsType (2.51)
 struct VariableCharacteristics : public MemoryManaged {
@@ -147,13 +149,6 @@ public:
         AttributeTypeSet(AttributeType attrType = AttributeType::Actual);
     };
 
-    //MutabilityEnumType (3.58)
-    enum class Mutability : uint8_t {
-        ReadOnly,
-        WriteOnly,
-        ReadWrite
-    };
-
     //MO-internal optimization: if value is only in int range, store it in more compact representation
     enum class InternalDataType : uint8_t {
         Int,
@@ -226,7 +221,7 @@ public:
 
 std::unique_ptr<Variable> makeVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet supportAttributes);
 
-} // namespace MicroOcpp
-
-#endif // MO_ENABLE_V201
+} //namespace Ocpp201
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V201
 #endif

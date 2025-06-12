@@ -5,28 +5,36 @@
 #ifndef MO_CONNECTION_H
 #define MO_CONNECTION_H
 
-#include <functional>
-#include <memory>
-
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Platform.h>
 
+#define MO_WS_CUSTOM  0
+#define MO_WS_ARDUINO 1
+
 //On all platforms other than Arduino, the integrated WS lib (links2004/arduinoWebSockets) cannot be
 //used. On Arduino its usage is optional.
-#ifndef MO_CUSTOM_WS
-#if MO_PLATFORM != MO_PLATFORM_ARDUINO
-#define MO_CUSTOM_WS
+#ifndef MO_WS_USE
+#if MO_PLATFORM == MO_PLATFORM_ARDUINO
+#define MO_WS_USE MO_WS_ARDUINO
+#else 
+#define MO_WS_USE MO_WS_CUSTOM
 #endif
-#endif //ndef MO_CUSTOM_WS
+#endif //MO_WS_USE
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
-using ReceiveTXTcallback = std::function<bool(const char*, size_t)>;
+class Context;
 
 class Connection {
+protected:
+    Context *context = nullptr;
 public:
-    Connection() = default;
+    Connection();
     virtual ~Connection() = default;
+
+    void setContext(Context *context); // MO will set this during `setConnection()`
 
     /*
      * The OCPP library will call this function frequently. If you need to execute regular routines, like
@@ -44,19 +52,7 @@ public:
      * The OCPP library calls this function once during initialization. It passes a callback function to
      * the socket. The socket should forward any incoming payload from the OCPP server to the receiveTXT callback
      */
-    bool recvTXT(const char *msg, size_t len) = 0;
-
-    /*
-     * Returns the timestamp of the last incoming message. Use mocpp_tick_ms() for creating the correct timestamp
-     *
-     * DEPRECATED: this function is superseded by isConnected(). Will be removed in MO v2.0
-     */
-    virtual unsigned long getLastRecv() {return 0;}
-
-    /*
-     * Returns the timestamp of the last time a connection got successfully established. Use mocpp_tick_ms() for creating the correct timestamp
-     */
-    virtual unsigned long getLastConnected() = 0;
+    bool receiveTXT(const char *msg, size_t len);
 
     /*
      * NEW IN v1.1
@@ -75,58 +71,51 @@ public:
 
 class LoopbackConnection : public Connection, public MemoryManaged {
 private:
-    ReceiveTXTcallback receiveTXT;
-
     //for simulating connection losses
     bool online = true;
     bool connected = true;
-    unsigned long lastRecv = 0;
-    unsigned long lastConn = 0;
 public:
     LoopbackConnection();
 
     void loop() override;
     bool sendTXT(const char *msg, size_t length) override;
-    void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT) override;
-    unsigned long getLastRecv() override;
-    unsigned long getLastConnected() override;
 
     void setOnline(bool online); //"online": sent messages are going through
-    bool isOnline() {return online;}
+    bool isOnline();
     void setConnected(bool connected); //"connected": connection has been established, but messages may not go through (e.g. weak connection)
-    bool isConnected() override {return connected;}
-};
-
-} //end namespace MicroOcpp
-
-#ifndef MO_CUSTOM_WS
-
-#include <WebSocketsClient.h>
-
-namespace MicroOcpp {
-namespace EspWiFi {
-
-class WSClient : public Connection, public MemoryManaged {
-private:
-    WebSocketsClient *wsock;
-    unsigned long lastRecv = 0, lastConnected = 0;
-public:
-    WSClient(WebSocketsClient *wsock);
-
-    void loop();
-
-    bool sendTXT(const char *msg, size_t length);
-
-    void setReceiveTXTcallback(ReceiveTXTcallback &receiveTXT);
-
-    unsigned long getLastRecv() override; //get time of last successful receive in millis
-
-    unsigned long getLastConnected() override; //get last connection creation in millis
-
     bool isConnected() override;
 };
 
-} //end namespace EspWiFi
-} //end namespace MicroOcpp
-#endif //ndef MO_CUSTOM_WS
+} //namespace MicroOcpp
+
+#endif //__cplusplus
+
+#if MO_WS_USE == MO_WS_ARDUINO
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct {
+    const char *backendUrl;       //e.g. "wss://example.com:8443/steve/websocket/CentralSystemService". Must be defined
+    const char *chargeBoxId;      //e.g. "charger001". Can be NULL
+    const char *authorizationKey; //authorizationKey present in the websocket message header. Can be NULL. Set this to enable OCPP Security Profile 2
+    const char *CA_cert;          //TLS certificate. Can be NULL. Set this to enable OCPP Security Profile 2
+} MO_ConnectionConfig;
+
+#ifdef __cplusplus
+} //extern "C"
+
+namespace MicroOcpp {
+
+class WebSocketsClient;
+Connection *makeArduinoWSClient(WebSocketsClient& arduinoWebsockets); //does not take ownership of arduinoWebsockets
+void freeArduinoWSClient(Connection *connection);
+
+Connection *makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion);
+void freeDefaultConnection(Connection *connection);
+
+} //namespace MicroOcpp
+#endif //__cplusplus
+#endif //MO_WS_USE
 #endif

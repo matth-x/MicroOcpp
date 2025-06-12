@@ -3,14 +3,12 @@
 // MIT License
 
 #include <MicroOcpp/Operations/InstallCertificate.h>
-
-#if MO_ENABLE_CERT_MGMT
-
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp201::InstallCertificate;
-using MicroOcpp::JsonDoc;
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT
+
+using namespace MicroOcpp;
 
 InstallCertificate::InstallCertificate(CertificateService& certService) : MemoryManaged("v201.Operation.", "InstallCertificate"), certService(certService) {
 
@@ -82,4 +80,4 @@ std::unique_ptr<JsonDoc> InstallCertificate::createConf(){
     return doc;
 }
 
-#endif //MO_ENABLE_CERT_MGMT
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT

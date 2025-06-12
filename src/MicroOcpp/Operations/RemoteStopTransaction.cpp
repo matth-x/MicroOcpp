@@ -3,45 +3,47 @@
 // MIT License
 
 #include <MicroOcpp/Operations/RemoteStopTransaction.h>
+
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Model/ConnectorBase/Connector.h>
-#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
+#include <MicroOcpp/Model/Transactions/TransactionService16.h>
 
-using MicroOcpp::Ocpp16::RemoteStopTransaction;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16
 
-RemoteStopTransaction::RemoteStopTransaction(Model& model) : MemoryManaged("v16.Operation.", "RemoteStopTransaction"), model(model) {
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp16;
+
+RemoteStopTransaction::RemoteStopTransaction(Context& context, RemoteControlService& rcService) : MemoryManaged("v16.Operation.", "RemoteStopTransaction"), context(context), rcService(rcService) {
   
 }
 
-const char* RemoteStopTransaction::getOperationType(){
+const char* RemoteStopTransaction::getOperationType() {
     return "RemoteStopTransaction";
 }
 
 void RemoteStopTransaction::processReq(JsonObject payload) {
 
-    if (!payload.containsKey("transactionId")) {
+    if (!payload.containsKey("transactionId") || !payload["transactionId"].is<int>()) {
         errorCode = "FormationViolation";
     }
     int transactionId = payload["transactionId"];
 
-    for (unsigned int cId = 0; cId < model.getNumConnectors(); cId++) {
-        auto connector = model.getConnector(cId);
-        if (connector->getTransaction() &&
-                connector->getTransaction()->getTransactionId() == transactionId) {
-            connector->endTransaction(nullptr, "Remote");
-            accepted = true;
-        }
+    status = rcService.remoteStopTransaction(transactionId);
+    if (status == Ocpp16::RemoteStartStopStatus::ERR_INTERNAL) {
+        errorCode = "InternalError";
+        return;
     }
 }
 
-std::unique_ptr<JsonDoc> RemoteStopTransaction::createConf(){
+std::unique_ptr<JsonDoc> RemoteStopTransaction::createConf() {
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
-    if (accepted){
+    if (status == Ocpp16::RemoteStartStopStatus::Accepted) {
         payload["status"] = "Accepted";
     } else {
         payload["status"] = "Rejected";
     }
     return doc;
 }
+
+#endif //MO_ENABLE_V16

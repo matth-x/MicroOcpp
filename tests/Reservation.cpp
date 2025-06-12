@@ -170,7 +170,7 @@ TEST_CASE( "Reservation" ) {
         REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
 
         bool checkProcessed = false;
-        getOcppContext()->getOperationRegistry().registerOperation("Authorize",
+        getOcppContext()->getMessageService().registerOperation("Authorize",
             [parentIdTag, &checkProcessed] () {
                 return new Ocpp16::CustomOperation("Authorize",
                     [] (JsonObject) {}, //ignore req payload
@@ -255,8 +255,8 @@ TEST_CASE( "Reservation" ) {
         REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
 
         Timestamp expired = expiryDate + 1;
-        char expired_cstr [JSONDATE_LENGTH + 1];
-        expired.toJsonString(expired_cstr, JSONDATE_LENGTH + 1);
+        char expired_cstr [MO_JSONDATE_SIZE];
+        expired.toJsonString(expired_cstr, MO_JSONDATE_SIZE);
         model.getClock().setTime(expired_cstr);
 
         REQUIRE( connector->getStatus() == ChargePointStatus_Available );
@@ -321,11 +321,11 @@ TEST_CASE( "Reservation" ) {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
-                            JSONDATE_LENGTH + 1);
+                            MO_JSONDATE_SIZE);
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = connectorId;
-                    char expiryDate_cstr [JSONDATE_LENGTH + 1];
-                    expiryDate.toJsonString(expiryDate_cstr, JSONDATE_LENGTH + 1);
+                    char expiryDate_cstr [MO_JSONDATE_SIZE];
+                    expiryDate.toJsonString(expiryDate_cstr, MO_JSONDATE_SIZE);
                     payload["expiryDate"] = expiryDate_cstr;
                     payload["idTag"] = idTag;
                     payload["parentIdTag"] = parentIdTag;
@@ -357,11 +357,11 @@ TEST_CASE( "Reservation" ) {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
-                            JSONDATE_LENGTH + 1);
+                            MO_JSONDATE_SIZE);
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = connectorId;
-                    char expiryDate_cstr [JSONDATE_LENGTH + 1];
-                    expiryDate.toJsonString(expiryDate_cstr, JSONDATE_LENGTH + 1);
+                    char expiryDate_cstr [MO_JSONDATE_SIZE];
+                    expiryDate.toJsonString(expiryDate_cstr, MO_JSONDATE_SIZE);
                     payload["expiryDate"] = expiryDate_cstr;
                     payload["idTag"] = idTag;
                     payload["parentIdTag"] = parentIdTag;
@@ -392,11 +392,11 @@ TEST_CASE( "Reservation" ) {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
-                            JSONDATE_LENGTH + 1);
+                            MO_JSONDATE_SIZE);
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = connectorId;
-                    char expiryDate_cstr [JSONDATE_LENGTH + 1];
-                    expiryDate.toJsonString(expiryDate_cstr, JSONDATE_LENGTH + 1);
+                    char expiryDate_cstr [MO_JSONDATE_SIZE];
+                    expiryDate.toJsonString(expiryDate_cstr, MO_JSONDATE_SIZE);
                     payload["expiryDate"] = expiryDate_cstr;
                     payload["idTag"] = idTag;
                     payload["parentIdTag"] = parentIdTag;
@@ -429,11 +429,11 @@ TEST_CASE( "Reservation" ) {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
-                            JSONDATE_LENGTH + 1);
+                            MO_JSONDATE_SIZE);
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = connectorId;
-                    char expiryDate_cstr [JSONDATE_LENGTH + 1];
-                    expiryDate.toJsonString(expiryDate_cstr, JSONDATE_LENGTH + 1);
+                    char expiryDate_cstr [MO_JSONDATE_SIZE];
+                    expiryDate.toJsonString(expiryDate_cstr, MO_JSONDATE_SIZE);
                     payload["expiryDate"] = expiryDate_cstr;
                     payload["idTag"] = idTag;
                     payload["parentIdTag"] = parentIdTag;

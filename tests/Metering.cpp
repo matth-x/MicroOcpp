@@ -634,7 +634,7 @@ TEST_CASE("Metering") {
 
         unsigned int attemptNr = 0;
 
-        getOcppContext()->getOperationRegistry().registerOperation("MeterValues", [&attemptNr] () {
+        getOcppContext()->getMessageService().registerOperation("MeterValues", [&attemptNr] () {
             return new Ocpp16::CustomOperation("MeterValues",
                 [&attemptNr] (JsonObject payload) {
                     //receive req

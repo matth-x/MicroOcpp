@@ -3,50 +3,99 @@
 // MIT License
 
 #include <MicroOcpp/Model/Reset/ResetService.h>
-#include <MicroOcpp/Core/Context.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Core/Request.h>
-#include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Operations/Reset.h>
-
-#include <MicroOcpp/Operations/Authorize.h>
-#include <MicroOcpp/Operations/StartTransaction.h>
 #include <MicroOcpp/Operations/StatusNotification.h>
-#include <MicroOcpp/Operations/StopTransaction.h>
-
+#include <MicroOcpp/Model/Availability/AvailabilityService.h>
+#include <MicroOcpp/Model/Configuration/ConfigurationService.h>
 #include <MicroOcpp/Model/Variables/VariableService.h>
-#include <MicroOcpp/Model/Transactions/TransactionService.h>
-
+#include <MicroOcpp/Model/Transactions/TransactionService16.h>
+#include <MicroOcpp/Model/Transactions/TransactionService201.h>
 #include <MicroOcpp/Debug.h>
 
+#if MO_ENABLE_V16
+
 #ifndef MO_RESET_DELAY
-#define MO_RESET_DELAY 10000
+#define MO_RESET_DELAY 10
 #endif
+
+#if MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
+
+namespace MicroOcpp {
+void defaultExecuteResetImpl() {
+    MO_DBG_DEBUG("Perform ESP reset");
+    ESP.restart();
+}
+} //namespace MicroOcpp
+
+#else
+
+namespace MicroOcpp {
+void (*defaultExecuteResetImpl)() = nullptr;
+} //namespace MicroOcpp
+
+#endif //MO_PLATFORM
 
 using namespace MicroOcpp;
 
-ResetService::ResetService(Context& context)
+Ocpp16::ResetService::ResetService(Context& context)
       : MemoryManaged("v16.Reset.ResetService"), context(context) {
 
-    resetRetriesInt = declareConfiguration<int>("ResetRetries", 2);
-    registerConfigurationValidator("ResetRetries", VALIDATE_UNSIGNED_INT);
-
-    context.getOperationRegistry().registerOperation("Reset", [&context] () {
-        return new Ocpp16::Reset(context.getModel());});
 }
 
-ResetService::~ResetService() {
+Ocpp16::ResetService::~ResetService() {
 
 }
+    
+bool Ocpp16::ResetService::setup() {
 
-void ResetService::loop() {
+    auto configService = context.getModel16().getConfigurationService();
+    if (!configService) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
 
-    if (outstandingResetRetries > 0 && mocpp_tick_ms() - t_resetRetry >= MO_RESET_DELAY) {
-        t_resetRetry = mocpp_tick_ms();
+    resetRetriesInt = configService->declareConfiguration<int>("ResetRetries", 2);
+    if (!resetRetriesInt) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+    if (!configService->registerValidator<int>("ResetRetries", VALIDATE_UNSIGNED_INT)) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    if (!executeResetCb && defaultExecuteResetImpl) {
+        MO_DBG_DEBUG("setup default reset function");
+        executeResetCb = [] (bool, void*) {
+            defaultExecuteResetImpl();
+            return false;
+        };
+    }
+
+    context.getMessageService().registerOperation("Reset", [] (Context& context) -> Operation* {
+        return new Reset(*context.getModel16().getResetService());});
+    
+    return true;
+}
+
+void Ocpp16::ResetService::loop() {
+
+    auto& clock = context.getClock();
+
+    int32_t dtLastResetAttempt;
+    if (!clock.delta(clock.getUptime(), lastResetAttempt, dtLastResetAttempt)) {
+        dtLastResetAttempt = MO_RESET_DELAY; 
+    }
+
+    if (outstandingResetRetries > 0 && dtLastResetAttempt >= MO_RESET_DELAY) {
+        lastResetAttempt = clock.getUptime();
         outstandingResetRetries--;
-        if (executeReset) {
+        if (executeResetCb) {
             MO_DBG_INFO("Reset device");
-            executeReset(isHardReset);
+            executeResetCb(isHardReset, executeResetUserData);
         } else {
             MO_DBG_ERR("No Reset function set! Abort");
             outstandingResetRetries = 0;
@@ -56,88 +105,146 @@ void ResetService::loop() {
 
             MO_DBG_ERR("Reset device failure. Abort");
 
-            ChargePointStatus cpStatus = ChargePointStatus_UNDEFINED;
-            if (context.getModel().getNumConnectors() > 0) {
-                cpStatus = context.getModel().getConnector(0)->getStatus();
-            }
+            auto availSvc = context.getModel16().getAvailabilityService();
+            auto availSvcCp = availSvc ? availSvc->getEvse(0) : nullptr;
+            auto cpStatus = availSvcCp ? availSvcCp->getStatus() : MO_ChargePointStatus_UNDEFINED;
 
-            auto statusNotification = makeRequest(new Ocpp16::StatusNotification(
+            MO_ErrorData errorCode;
+            mo_ErrorData_init(&errorCode);
+            mo_ErrorData_setErrorCode(&errorCode, "ResetFailure");
+
+            auto statusNotification = makeRequest(context, new StatusNotification(
+                        context,
                         0,
-                        cpStatus, //will be determined in StatusNotification::initiate
-                        context.getModel().getClock().now(),
-                        "ResetFailure"));
-            statusNotification->setTimeout(60000);
-            context.initiateRequest(std::move(statusNotification));
+                        cpStatus,
+                        context.getClock().now(),
+                        errorCode));
+            statusNotification->setTimeout(60);
+            context.getMessageService().sendRequest(std::move(statusNotification));
         }
     }
 }
 
-void ResetService::setPreReset(std::function<bool(bool)> preReset) {
-    this->preReset = preReset;
+void Ocpp16::ResetService::setNotifyReset(bool (*notifyResetCb)(bool isHard, void *userData), void *userData) {
+    this->notifyResetCb = notifyResetCb;
+    this->notifyResetUserData = userData;
 }
 
-std::function<bool(bool)> ResetService::getPreReset() {
-    return this->preReset;
+bool Ocpp16::ResetService::isPreResetDefined() {
+    return notifyResetCb != nullptr;
 }
 
-void ResetService::setExecuteReset(std::function<void(bool)> executeReset) {
-    this->executeReset = executeReset;
+bool Ocpp16::ResetService::notifyReset(bool isHard) {
+    return notifyResetCb(isHard, notifyResetUserData);
 }
 
-std::function<void(bool)> ResetService::getExecuteReset() {
-    return this->executeReset;
+void Ocpp16::ResetService::setExecuteReset(bool (*executeReset)(bool isHard, void *userData), void *userData) {
+    this->executeResetCb = executeReset;
+    this->executeResetUserData = userData;
 }
 
-void ResetService::initiateReset(bool isHard) {
+bool Ocpp16::ResetService::isExecuteResetDefined() {
+    return executeResetCb != nullptr;
+}
+
+void Ocpp16::ResetService::initiateReset(bool isHard) {
+
+    for (unsigned int eId = 0; eId < context.getModel16().getNumEvseId(); eId++) {
+        auto txSvc = context.getModel16().getTransactionService();
+        auto txSvcEvse = txSvc ? txSvc->getEvse(eId) : nullptr;
+        if (txSvcEvse) {
+            txSvcEvse->endTransaction(nullptr, isHard ? "HardReset" : "SoftReset");
+        }
+    }
+
     isHardReset = isHard;
     outstandingResetRetries = 1 + resetRetriesInt->getInt(); //one initial try + no. of retries
     if (outstandingResetRetries > 5) {
         MO_DBG_ERR("no. of reset trials exceeds 5");
         outstandingResetRetries = 5;
     }
-    t_resetRetry = mocpp_tick_ms();
+    lastResetAttempt = context.getClock().getUptime();
 }
 
-#if MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
-std::function<void(bool isHard)> MicroOcpp::makeDefaultResetFn() {
-    return [] (bool isHard) {
-        MO_DBG_DEBUG("Perform ESP reset");
-        ESP.restart();
-    };
-}
-#endif //MO_PLATFORM == MO_PLATFORM_ARDUINO && (defined(ESP32) || defined(ESP8266))
+#endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
 namespace MicroOcpp {
-namespace Ocpp201 {
 
-ResetService::ResetService(Context& context)
-      : MemoryManaged("v201.Reset.ResetService"), context(context), evses(makeVector<Evse>(getMemoryTag())) {
+Ocpp201::ResetService::ResetService(Context& context)
+      : MemoryManaged("v201.Reset.ResetService"), context(context) {
 
-    auto varService = context.getModel().getVariableService();
+}
+
+Ocpp201::ResetService::~ResetService() {
+    for (unsigned int i = 0; i < numEvseId; i++) {
+        delete evses[i];
+        evses[i] = 0;
+    }
+}
+
+bool Ocpp201::ResetService::setup() {
+    auto varService = context.getModel201().getVariableService();
+    if (!varService) {
+        return false;
+    }
     resetRetriesInt = varService->declareVariable<int>("OCPPCommCtrlr", "ResetRetries", 0);
+    if (!resetRetriesInt) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
 
-    context.getOperationRegistry().registerOperation("Reset", [this] () {
-        return new Ocpp201::Reset(*this);});
+    if (defaultExecuteResetImpl) {
+        if (!getEvse(0)) {
+            MO_DBG_ERR("setup failure");
+        }
+
+        if (!getEvse(0)->executeReset) {
+            MO_DBG_DEBUG("setup default reset function");
+            getEvse(0)->executeReset = [] (unsigned int, void*) -> bool {
+                defaultExecuteResetImpl();
+                return true;
+            };
+        }
+    }
+
+    numEvseId = context.getModel201().getNumEvseId();
+    for (unsigned int i = 0; i < numEvseId; i++) {
+        if (!getEvse(i) || !getEvse(i)->setup()) {
+            MO_DBG_ERR("setup failure");
+            return false;
+        }
+    }
+
+    context.getMessageService().registerOperation("Reset", [] (Context& context) -> Operation* {
+        return new Reset(*context.getModel201().getResetService());});
+    
+    return true;
 }
 
-ResetService::~ResetService() {
+Ocpp201::ResetService::Evse::Evse(Context& context, ResetService& resetService, unsigned int evseId) : MemoryManaged("v201.Reset.ResetService"), context(context), resetService(resetService), evseId(evseId) {
 
 }
 
-ResetService::Evse::Evse(Context& context, ResetService& resetService, unsigned int evseId) : context(context), resetService(resetService), evseId(evseId) {
-    auto varService = context.getModel().getVariableService();
-    varService->declareVariable<bool>(ComponentId("EVSE", evseId >= 1 ? evseId : -1), "AllowReset", true, Variable::Mutability::ReadOnly, false);
+bool Ocpp201::ResetService::Evse::setup() {
+    auto varService = context.getModel201().getVariableService();
+    if (!varService) {
+        return false;
+    }
+    varService->declareVariable<bool>(ComponentId("EVSE", evseId >= 1 ? evseId : -1), "AllowReset", true, Mutability::ReadOnly, false);
+    return true;
 }
 
-void ResetService::Evse::loop() {
+void Ocpp201::ResetService::Evse::loop() {
+
+    auto& clock = context.getClock();
 
     if (outstandingResetRetries && awaitTxStop) {
 
         for (unsigned int eId = std::max(1U, evseId); eId < (evseId == 0 ? MO_NUM_EVSEID : evseId + 1); eId++) {
             //If evseId > 0, execute this block one time for evseId. If evseId == 0, then iterate over all evseIds > 0
 
-            auto txService = context.getModel().getTransactionService();
+            auto txService = context.getModel201().getTransactionService();
             if (txService && txService->getEvse(eId) && txService->getEvse(eId)->getTransaction()) {
                 auto tx = txService->getEvse(eId)->getTransaction();
 
@@ -151,111 +258,106 @@ void ResetService::Evse::loop() {
         awaitTxStop = false;
 
         MO_DBG_INFO("Reset - tx stopped");
-        t_resetRetry = mocpp_tick_ms(); // wait for some more time until final reset
+        lastResetAttempt = clock.getUptime(); // wait for some more time until final reset
     }
 
-    if (outstandingResetRetries && mocpp_tick_ms() - t_resetRetry >= MO_RESET_DELAY) {
-        t_resetRetry = mocpp_tick_ms();
+    int32_t dtLastResetAttempt;
+    if (!clock.delta(clock.getUptime(), lastResetAttempt, dtLastResetAttempt)) {
+        dtLastResetAttempt = MO_RESET_DELAY; 
+    }
+
+    if (outstandingResetRetries && dtLastResetAttempt >= MO_RESET_DELAY) {
+        lastResetAttempt = clock.getUptime();
         outstandingResetRetries--;
 
         MO_DBG_INFO("Reset device");
 
-        bool success = executeReset();
+        bool success = executeReset(evseId, executeResetUserData);
 
         if (success) {
             outstandingResetRetries = 0;
 
             if (evseId != 0) {
                 //Set this EVSE Available again
-                if (auto connector = context.getModel().getConnector(evseId)) {
-                    connector->setAvailabilityVolatile(true);
+
+                auto availSvc = context.getModel201().getAvailabilityService();
+                auto availSvcEvse = availSvc ? availSvc->getEvse(evseId) : nullptr;
+                if (availSvcEvse) {
+                    availSvcEvse->setAvailable(this);
                 }
             }
         } else if (!outstandingResetRetries) {
             MO_DBG_ERR("Reset device failure");
 
+            auto availabilityService = context.getModel201().getAvailabilityService();
+
             if (evseId == 0) {
                 //Set all EVSEs Available again
-                for (unsigned int cId = 0; cId < context.getModel().getNumConnectors(); cId++) {
-                    auto connector = context.getModel().getConnector(cId);
-                    connector->setAvailabilityVolatile(true);
+                for (unsigned int eId = 0; eId < resetService.numEvseId; eId++) {
+                    auto availSvc = context.getModel201().getAvailabilityService();
+                    auto availSvcEvse = availSvc ? availSvc->getEvse(eId) : nullptr;
+                    if (availSvcEvse) {
+                        availSvcEvse->setAvailable(this);
+                    }
                 }
             } else {
                 //Set only this EVSE Available
-                if (auto connector = context.getModel().getConnector(evseId)) {
-                    connector->setAvailabilityVolatile(true);
+                auto availSvc = context.getModel201().getAvailabilityService();
+                auto availSvcEvse = availSvc ? availSvc->getEvse(evseId) : nullptr;
+                if (availSvcEvse) {
+                    availSvcEvse->setAvailable(this);
                 }
             }
         }
     }
 }
 
-ResetService::Evse *ResetService::getEvse(unsigned int evseId) {
-    for (size_t i = 0; i < evses.size(); i++) {
-        if (evses[i].evseId == evseId) {
-            return &evses[i];
-        }
-    }
-    return nullptr;
-}
-
-ResetService::Evse *ResetService::getOrCreateEvse(unsigned int evseId) {
-    if (auto evse = getEvse(evseId)) {
-        return evse;
-    }
-
-    if (evseId >= MO_NUM_EVSEID) {
+Ocpp201::ResetService::Evse *Ocpp201::ResetService::getEvse(unsigned int evseId) {
+    if (evseId >= numEvseId) {
         MO_DBG_ERR("evseId out of bound");
         return nullptr;
     }
 
-    evses.emplace_back(context, *this, evseId);
-    return &evses.back();
+    if (!evses[evseId]) {
+        evses[evseId] = new Evse(context, *this, evseId);
+        if (!evses[evseId]) {
+            MO_DBG_ERR("OOM");
+            return nullptr;
+        }
+    }
+
+    return evses[evseId];
 }
 
-void ResetService::loop() {
-    for (Evse& evse : evses) {
-        evse.loop();
+void Ocpp201::ResetService::loop() {
+    for (unsigned i = 0; i < numEvseId; i++) {
+        if (evses[i]) {
+            evses[i]->loop();
+        }
     }
 }
 
-void ResetService::setNotifyReset(std::function<bool(ResetType)> notifyReset, unsigned int evseId) {
-    Evse *evse = getOrCreateEvse(evseId);
+void Ocpp201::ResetService::setNotifyReset(unsigned int evseId, bool (*notifyReset)(MO_ResetType, unsigned int evseId, void *userData), void *userData) {
+    Evse *evse = getEvse(evseId);
     if (!evse) {
         MO_DBG_ERR("evseId not found");
         return;
     }
     evse->notifyReset = notifyReset;
+    evse->notifyResetUserData = userData;
 }
 
-std::function<bool(ResetType)> ResetService::getNotifyReset(unsigned int evseId) {
-    Evse *evse = getOrCreateEvse(evseId);
-    if (!evse) {
-        MO_DBG_ERR("evseId not found");
-        return nullptr;
-    }
-    return evse->notifyReset;
-}
-
-void ResetService::setExecuteReset(std::function<bool()> executeReset, unsigned int evseId) {
-    Evse *evse = getOrCreateEvse(evseId);
+void Ocpp201::ResetService::setExecuteReset(unsigned int evseId, bool (*executeReset)(unsigned int evseId, void *userData), void *userData) {
+    Evse *evse = getEvse(evseId);
     if (!evse) {
         MO_DBG_ERR("evseId not found");
         return;
     }
     evse->executeReset = executeReset;
+    evse->executeResetUserData = userData;
 }
 
-std::function<bool()> ResetService::getExecuteReset(unsigned int evseId) {
-    Evse *evse = getOrCreateEvse(evseId);
-    if (!evse) {
-        MO_DBG_ERR("evseId not found");
-        return nullptr;
-    }
-    return evse->executeReset;
-}
-
-ResetStatus ResetService::initiateReset(ResetType type, unsigned int evseId) {
+ResetStatus Ocpp201::ResetService::initiateReset(MO_ResetType type, unsigned int evseId) {
     auto evse = getEvse(evseId);
     if (!evse) {
         MO_DBG_ERR("evseId not found");
@@ -268,11 +370,11 @@ ResetStatus ResetService::initiateReset(ResetType type, unsigned int evseId) {
     }
 
     //Check if EVSEs are ready for Reset
-    for (unsigned int eId = evseId; eId < (evseId == 0 ? MO_NUM_EVSEID : evseId + 1); eId++) {
+    for (unsigned int eId = evseId; eId < (evseId == 0 ? numEvseId : evseId + 1); eId++) {
         //If evseId > 0, execute this block one time for evseId. If evseId == 0, then iterate over all evseIds
 
         if (auto it = getEvse(eId)) {
-            if (it->notifyReset && !it->notifyReset(type)) {
+            if (it->notifyReset && !it->notifyReset(type, eId, it->notifyResetUserData)) {
                 MO_DBG_INFO("EVSE %u not able to Reset", evseId);
                 return ResetStatus_Rejected;
             }
@@ -282,14 +384,19 @@ ResetStatus ResetService::initiateReset(ResetType type, unsigned int evseId) {
     //Set EVSEs Unavailable
     if (evseId == 0) {
         //Set all EVSEs Unavailable
-        for (unsigned int cId = 0; cId < context.getModel().getNumConnectors(); cId++) {
-            auto connector = context.getModel().getConnector(cId);
-            connector->setAvailabilityVolatile(false);
+        for (unsigned int eId = 0; eId < numEvseId; eId++) {
+            auto availSvc = context.getModel201().getAvailabilityService();
+            auto availSvcEvse = availSvc ? availSvc->getEvse(eId) : nullptr;
+            if (availSvcEvse) {
+                availSvcEvse->setUnavailable(this);
+            }
         }
     } else {
         //Set this EVSE Unavailable
-        if (auto connector = context.getModel().getConnector(evseId)) {
-            connector->setAvailabilityVolatile(false);
+        auto availSvc = context.getModel201().getAvailabilityService();
+        auto availSvcEvse = availSvc ? availSvc->getEvse(evseId) : nullptr;
+        if (availSvcEvse) {
+            availSvcEvse->setUnavailable(this);
         }
     }
 
@@ -299,13 +406,13 @@ ResetStatus ResetService::initiateReset(ResetType type, unsigned int evseId) {
     for (unsigned int eId = std::max(1U, evseId); eId < (evseId == 0 ? MO_NUM_EVSEID : evseId + 1); eId++) {
         //If evseId > 0, execute this block one time for evseId. If evseId == 0, then iterate over all evseIds > 0
 
-        auto txService = context.getModel().getTransactionService();
+        auto txService = context.getModel201().getTransactionService();
         if (txService && txService->getEvse(eId) && txService->getEvse(eId)->getTransaction()) {
             auto tx = txService->getEvse(eId)->getTransaction();
             if (tx->active) {
                 //Tx in progress. Check behavior
-                if (type == ResetType_Immediate) {
-                    txService->getEvse(eId)->abortTransaction(Transaction::StoppedReason::ImmediateReset, TransactionEventTriggerReason::ResetCommand);
+                if (type == MO_ResetType_Immediate) {
+                    txService->getEvse(eId)->abortTransaction(MO_TxStoppedReason_ImmediateReset, MO_TxEventTriggerReason_ResetCommand);
                 } else {
                     scheduled = true;
                     break;
@@ -322,12 +429,11 @@ ResetStatus ResetService::initiateReset(ResetType type, unsigned int evseId) {
     } else {
         evse->outstandingResetRetries = 1 + resetRetriesInt->getInt(); //one initial try + no. of retries
     }
-    evse->t_resetRetry = mocpp_tick_ms();
+    evse->lastResetAttempt = context.getClock().getUptime();
     evse->awaitTxStop = scheduled;
 
     return scheduled ? ResetStatus_Scheduled : ResetStatus_Accepted;
 }
 
 } //namespace MicroOcpp
-} //namespace Ocpp201
 #endif //MO_ENABLE_V201

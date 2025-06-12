@@ -5,19 +5,17 @@
 #ifndef MO_GETBASEREPORT_H
 #define MO_GETBASEREPORT_H
 
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Model/Variables/Variable.h>
 #include <MicroOcpp/Version.h>
 
 #if MO_ENABLE_V201
 
-#include <MicroOcpp/Core/Operation.h>
-#include <MicroOcpp/Core/Memory.h>
-#include <MicroOcpp/Model/Variables/Variable.h>
-
 namespace MicroOcpp {
+namespace Ocpp201 {
 
 class VariableService;
-
-namespace Ocpp201 {
 
 class GetBaseReport : public Operation, public MemoryManaged {
 private:
@@ -41,7 +39,5 @@ public:
 
 } //namespace Ocpp201
 } //namespace MicroOcpp
-
 #endif //MO_ENABLE_V201
-
 #endif

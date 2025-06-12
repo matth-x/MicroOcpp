@@ -1,21 +1,18 @@
 // matth-x/MicroOcpp
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
-
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <MicroOcpp/Model/Authorization/IdToken.h>
+#include <MicroOcpp/Debug.h>
 
 #include <string.h>
 #include <stdio.h>
 
-#include <MicroOcpp/Debug.h>
+#if MO_ENABLE_V201
 
 using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp201;
 
-IdToken::IdToken(const char *token, Type type, const char *memoryTag) : MemoryManaged(memoryTag ? memoryTag : "v201.Authorization.IdToken"), type(type) {
+IdToken::IdToken(const char *token, MO_IdTokenType type, const char *memoryTag) : MemoryManaged(memoryTag ? memoryTag : "v201.Authorization.IdToken"), type(type) {
     if (token) {
         auto ret = snprintf(idToken, MO_IDTOKEN_LEN_MAX + 1, "%s", token);
         if (ret < 0 || ret >= MO_IDTOKEN_LEN_MAX + 1) {
@@ -37,21 +34,21 @@ bool IdToken::parseCstr(const char *token, const char *typeCstr) {
     }
 
     if (!strcmp(typeCstr, "Central")) {
-        type = Type::Central;
+        type = MO_IdTokenType_Central;
     } else if (!strcmp(typeCstr, "eMAID")) {
-        type = Type::eMAID;
+        type = MO_IdTokenType_eMAID;
     } else if (!strcmp(typeCstr, "ISO14443")) {
-        type = Type::ISO14443;
+        type = MO_IdTokenType_ISO14443;
     } else if (!strcmp(typeCstr, "ISO15693")) {
-        type = Type::ISO15693;
+        type = MO_IdTokenType_ISO15693;
     } else if (!strcmp(typeCstr, "KeyCode")) {
-        type = Type::KeyCode;
+        type = MO_IdTokenType_KeyCode;
     } else if (!strcmp(typeCstr, "Local")) {
-        type = Type::Local;
+        type = MO_IdTokenType_Local;
     } else if (!strcmp(typeCstr, "MacAddress")) {
-        type = Type::MacAddress;
+        type = MO_IdTokenType_MacAddress;
     } else if (!strcmp(typeCstr, "NoAuthorization")) {
-        type = Type::NoAuthorization;
+        type = MO_IdTokenType_NoAuthorization;
     } else {
         return false;
     }
@@ -71,31 +68,31 @@ const char *IdToken::get() const {
 const char *IdToken::getTypeCstr() const {
     const char *res = "";
     switch (type) {
-        case Type::UNDEFINED:
+        case MO_IdTokenType_UNDEFINED:
             MO_DBG_ERR("internal error");
             break;
-        case Type::Central:
+        case MO_IdTokenType_Central:
             res = "Central";
             break;
-        case Type::eMAID:
+        case MO_IdTokenType_eMAID:
             res = "eMAID";
             break;
-        case Type::ISO14443:
+        case MO_IdTokenType_ISO14443:
             res = "ISO14443";
             break;
-        case Type::ISO15693:
+        case MO_IdTokenType_ISO15693:
             res = "ISO15693";
             break;
-        case Type::KeyCode:
+        case MO_IdTokenType_KeyCode:
             res = "KeyCode";
             break;
-        case Type::Local:
+        case MO_IdTokenType_Local:
             res = "Local";
             break;
-        case Type::MacAddress:
+        case MO_IdTokenType_MacAddress:
             res = "MacAddress";
             break;
-        case Type::NoAuthorization:
+        case MO_IdTokenType_NoAuthorization:
             res = "NoAuthorization";
             break;
     }
@@ -107,4 +104,4 @@ bool IdToken::equals(const IdToken& other) {
     return type == other.type && !strcmp(idToken, other.idToken);
 }
 
-#endif // MO_ENABLE_V201
+#endif //MO_ENABLE_V201

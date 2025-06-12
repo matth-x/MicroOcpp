@@ -6,145 +6,159 @@
 #include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Debug.h>
 
+#if MO_ENABLE_V16
+
 using namespace MicroOcpp;
 
-bool Transaction::setIdTag(const char *idTag) {
+Ocpp16::Transaction::Transaction(unsigned int connectorId, unsigned int txNr, bool silent) : 
+                MemoryManaged("v16.Transactions.Transaction"),
+                connectorId(connectorId), 
+                txNr(txNr),
+                silent(silent),
+                meterValues(makeVector<MeterValue*>("v16.Transactions.TransactionMeterData")) { }
+
+Ocpp16::Transaction::~Transaction() {
+    for (size_t i = 0; i < meterValues.size(); i++) {
+        delete meterValues[i];
+    }
+    meterValues.clear();
+}
+
+bool Ocpp16::Transaction::setIdTag(const char *idTag) {
     auto ret = snprintf(this->idTag, IDTAG_LEN_MAX + 1, "%s", idTag);
     return ret >= 0 && ret < IDTAG_LEN_MAX + 1;
 }
 
-bool Transaction::setParentIdTag(const char *idTag) {
+bool Ocpp16::Transaction::setParentIdTag(const char *idTag) {
     auto ret = snprintf(this->parentIdTag, IDTAG_LEN_MAX + 1, "%s", idTag);
     return ret >= 0 && ret < IDTAG_LEN_MAX + 1;
 }
 
-bool Transaction::setStopIdTag(const char *idTag) {
+bool Ocpp16::Transaction::setStopIdTag(const char *idTag) {
     auto ret = snprintf(stop_idTag, IDTAG_LEN_MAX + 1, "%s", idTag);
     return ret >= 0 && ret < IDTAG_LEN_MAX + 1;
 }
 
-bool Transaction::setStopReason(const char *reason) {
+bool Ocpp16::Transaction::setStopReason(const char *reason) {
     auto ret = snprintf(stop_reason, REASON_LEN_MAX + 1, "%s", reason);
     return ret >= 0 && ret < REASON_LEN_MAX + 1;
 }
 
-bool Transaction::commit() {
-    return context.commit(this);
-}
+#endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
 
 namespace MicroOcpp {
 namespace Ocpp201 {
 
-const char *serializeTransactionStoppedReason(Transaction::StoppedReason stoppedReason) {
+const char *serializeTransactionStoppedReason(MO_TxStoppedReason stoppedReason) {
     const char *stoppedReasonCstr = nullptr;
     switch (stoppedReason) {
-        case Transaction::StoppedReason::UNDEFINED:
+        case MO_TxStoppedReason_UNDEFINED:
             // optional, okay
             break;
-        case Transaction::StoppedReason::Local:
+        case MO_TxStoppedReason_Local:
             stoppedReasonCstr = "Local";
             break;
-        case Transaction::StoppedReason::DeAuthorized:
+        case MO_TxStoppedReason_DeAuthorized:
             stoppedReasonCstr = "DeAuthorized";
             break;
-        case Transaction::StoppedReason::EmergencyStop:
+        case MO_TxStoppedReason_EmergencyStop:
             stoppedReasonCstr = "EmergencyStop";
             break;
-        case Transaction::StoppedReason::EnergyLimitReached:
+        case MO_TxStoppedReason_EnergyLimitReached:
             stoppedReasonCstr = "EnergyLimitReached";
             break;
-        case Transaction::StoppedReason::EVDisconnected:
+        case MO_TxStoppedReason_EVDisconnected:
             stoppedReasonCstr = "EVDisconnected";
             break;
-        case Transaction::StoppedReason::GroundFault:
+        case MO_TxStoppedReason_GroundFault:
             stoppedReasonCstr = "GroundFault";
             break;
-        case Transaction::StoppedReason::ImmediateReset:
+        case MO_TxStoppedReason_ImmediateReset:
             stoppedReasonCstr = "ImmediateReset";
             break;
-        case Transaction::StoppedReason::LocalOutOfCredit:
+        case MO_TxStoppedReason_LocalOutOfCredit:
             stoppedReasonCstr = "LocalOutOfCredit";
             break;
-        case Transaction::StoppedReason::MasterPass:
+        case MO_TxStoppedReason_MasterPass:
             stoppedReasonCstr = "MasterPass";
             break;
-        case Transaction::StoppedReason::Other:
+        case MO_TxStoppedReason_Other:
             stoppedReasonCstr = "Other";
             break;
-        case Transaction::StoppedReason::OvercurrentFault:
+        case MO_TxStoppedReason_OvercurrentFault:
             stoppedReasonCstr = "OvercurrentFault";
             break;
-        case Transaction::StoppedReason::PowerLoss:
+        case MO_TxStoppedReason_PowerLoss:
             stoppedReasonCstr = "PowerLoss";
             break;
-        case Transaction::StoppedReason::PowerQuality:
+        case MO_TxStoppedReason_PowerQuality:
             stoppedReasonCstr = "PowerQuality";
             break;
-        case Transaction::StoppedReason::Reboot:
+        case MO_TxStoppedReason_Reboot:
             stoppedReasonCstr = "Reboot";
             break;
-        case Transaction::StoppedReason::Remote:
+        case MO_TxStoppedReason_Remote:
             stoppedReasonCstr = "Remote";
             break;
-        case Transaction::StoppedReason::SOCLimitReached:
+        case MO_TxStoppedReason_SOCLimitReached:
             stoppedReasonCstr = "SOCLimitReached";
             break;
-        case Transaction::StoppedReason::StoppedByEV:
+        case MO_TxStoppedReason_StoppedByEV:
             stoppedReasonCstr = "StoppedByEV";
             break;
-        case Transaction::StoppedReason::TimeLimitReached:
+        case MO_TxStoppedReason_TimeLimitReached:
             stoppedReasonCstr = "TimeLimitReached";
             break;
-        case Transaction::StoppedReason::Timeout:
+        case MO_TxStoppedReason_Timeout:
             stoppedReasonCstr = "Timeout";
             break;
     }
 
     return stoppedReasonCstr;
 }
-bool deserializeTransactionStoppedReason(const char *stoppedReasonCstr, Transaction::StoppedReason& stoppedReasonOut) {
+bool deserializeTransactionStoppedReason(const char *stoppedReasonCstr, MO_TxStoppedReason& stoppedReasonOut) {
     if (!stoppedReasonCstr || !*stoppedReasonCstr) {
-        stoppedReasonOut = Transaction::StoppedReason::UNDEFINED;
+        stoppedReasonOut = MO_TxStoppedReason_UNDEFINED;
     } else if (!strcmp(stoppedReasonCstr, "DeAuthorized")) {
-        stoppedReasonOut = Transaction::StoppedReason::DeAuthorized;
+        stoppedReasonOut = MO_TxStoppedReason_DeAuthorized;
     } else if (!strcmp(stoppedReasonCstr, "EmergencyStop")) {
-        stoppedReasonOut = Transaction::StoppedReason::EmergencyStop;
+        stoppedReasonOut = MO_TxStoppedReason_EmergencyStop;
     } else if (!strcmp(stoppedReasonCstr, "EnergyLimitReached")) {
-        stoppedReasonOut = Transaction::StoppedReason::EnergyLimitReached;
+        stoppedReasonOut = MO_TxStoppedReason_EnergyLimitReached;
     } else if (!strcmp(stoppedReasonCstr, "EVDisconnected")) {
-        stoppedReasonOut = Transaction::StoppedReason::EVDisconnected;
+        stoppedReasonOut = MO_TxStoppedReason_EVDisconnected;
     } else if (!strcmp(stoppedReasonCstr, "GroundFault")) {
-        stoppedReasonOut = Transaction::StoppedReason::GroundFault;
+        stoppedReasonOut = MO_TxStoppedReason_GroundFault;
     } else if (!strcmp(stoppedReasonCstr, "ImmediateReset")) {
-        stoppedReasonOut = Transaction::StoppedReason::ImmediateReset;
+        stoppedReasonOut = MO_TxStoppedReason_ImmediateReset;
     } else if (!strcmp(stoppedReasonCstr, "Local")) {
-        stoppedReasonOut = Transaction::StoppedReason::Local;
+        stoppedReasonOut = MO_TxStoppedReason_Local;
     } else if (!strcmp(stoppedReasonCstr, "LocalOutOfCredit")) {
-        stoppedReasonOut = Transaction::StoppedReason::LocalOutOfCredit;
+        stoppedReasonOut = MO_TxStoppedReason_LocalOutOfCredit;
     } else if (!strcmp(stoppedReasonCstr, "MasterPass")) {
-        stoppedReasonOut = Transaction::StoppedReason::MasterPass;
+        stoppedReasonOut = MO_TxStoppedReason_MasterPass;
     } else if (!strcmp(stoppedReasonCstr, "Other")) {
-        stoppedReasonOut = Transaction::StoppedReason::Other;
+        stoppedReasonOut = MO_TxStoppedReason_Other;
     } else if (!strcmp(stoppedReasonCstr, "OvercurrentFault")) {
-        stoppedReasonOut = Transaction::StoppedReason::OvercurrentFault;
+        stoppedReasonOut = MO_TxStoppedReason_OvercurrentFault;
     } else if (!strcmp(stoppedReasonCstr, "PowerLoss")) {
-        stoppedReasonOut = Transaction::StoppedReason::PowerLoss;
+        stoppedReasonOut = MO_TxStoppedReason_PowerLoss;
     } else if (!strcmp(stoppedReasonCstr, "PowerQuality")) {
-        stoppedReasonOut = Transaction::StoppedReason::PowerQuality;
+        stoppedReasonOut = MO_TxStoppedReason_PowerQuality;
     } else if (!strcmp(stoppedReasonCstr, "Reboot")) {
-        stoppedReasonOut = Transaction::StoppedReason::Reboot;
+        stoppedReasonOut = MO_TxStoppedReason_Reboot;
     } else if (!strcmp(stoppedReasonCstr, "Remote")) {
-        stoppedReasonOut = Transaction::StoppedReason::Remote;
+        stoppedReasonOut = MO_TxStoppedReason_Remote;
     } else if (!strcmp(stoppedReasonCstr, "SOCLimitReached")) {
-        stoppedReasonOut = Transaction::StoppedReason::SOCLimitReached;
+        stoppedReasonOut = MO_TxStoppedReason_SOCLimitReached;
     } else if (!strcmp(stoppedReasonCstr, "StoppedByEV")) {
-        stoppedReasonOut = Transaction::StoppedReason::StoppedByEV;
+        stoppedReasonOut = MO_TxStoppedReason_StoppedByEV;
     } else if (!strcmp(stoppedReasonCstr, "TimeLimitReached")) {
-        stoppedReasonOut = Transaction::StoppedReason::TimeLimitReached;
+        stoppedReasonOut = MO_TxStoppedReason_TimeLimitReached;
     } else if (!strcmp(stoppedReasonCstr, "Timeout")) {
-        stoppedReasonOut = Transaction::StoppedReason::Timeout;
+        stoppedReasonOut = MO_TxStoppedReason_Timeout;
     } else {
         MO_DBG_ERR("deserialization error");
         return false;
@@ -181,124 +195,124 @@ bool deserializeTransactionEventType(const char *typeCstr, TransactionEventData:
     return true;
 }
 
-const char *serializeTransactionEventTriggerReason(TransactionEventTriggerReason triggerReason) {
+const char *serializeTxEventTriggerReason(MO_TxEventTriggerReason triggerReason) {
 
     const char *triggerReasonCstr = nullptr;
     switch(triggerReason) {
-        case TransactionEventTriggerReason::UNDEFINED:
+        case MO_TxEventTriggerReason_UNDEFINED:
             break;
-        case TransactionEventTriggerReason::Authorized:
+        case MO_TxEventTriggerReason_Authorized:
             triggerReasonCstr = "Authorized";
             break;
-        case TransactionEventTriggerReason::CablePluggedIn:
+        case MO_TxEventTriggerReason_CablePluggedIn:
             triggerReasonCstr = "CablePluggedIn";
             break;
-        case TransactionEventTriggerReason::ChargingRateChanged:
+        case MO_TxEventTriggerReason_ChargingRateChanged:
             triggerReasonCstr = "ChargingRateChanged";
             break;
-        case TransactionEventTriggerReason::ChargingStateChanged:
+        case MO_TxEventTriggerReason_ChargingStateChanged:
             triggerReasonCstr = "ChargingStateChanged";
             break;
-        case TransactionEventTriggerReason::Deauthorized:
+        case MO_TxEventTriggerReason_Deauthorized:
             triggerReasonCstr = "Deauthorized";
             break;
-        case TransactionEventTriggerReason::EnergyLimitReached:
+        case MO_TxEventTriggerReason_EnergyLimitReached:
             triggerReasonCstr = "EnergyLimitReached";
             break;
-        case TransactionEventTriggerReason::EVCommunicationLost:
+        case MO_TxEventTriggerReason_EVCommunicationLost:
             triggerReasonCstr = "EVCommunicationLost";
             break;
-        case TransactionEventTriggerReason::EVConnectTimeout:
+        case MO_TxEventTriggerReason_EVConnectTimeout:
             triggerReasonCstr = "EVConnectTimeout";
             break;
-        case TransactionEventTriggerReason::MeterValueClock:
+        case MO_TxEventTriggerReason_MeterValueClock:
             triggerReasonCstr = "MeterValueClock";
             break;
-        case TransactionEventTriggerReason::MeterValuePeriodic:
+        case MO_TxEventTriggerReason_MeterValuePeriodic:
             triggerReasonCstr = "MeterValuePeriodic";
             break;
-        case TransactionEventTriggerReason::TimeLimitReached:
+        case MO_TxEventTriggerReason_TimeLimitReached:
             triggerReasonCstr = "TimeLimitReached";
             break;
-        case TransactionEventTriggerReason::Trigger:
+        case MO_TxEventTriggerReason_Trigger:
             triggerReasonCstr = "Trigger";
             break;
-        case TransactionEventTriggerReason::UnlockCommand:
+        case MO_TxEventTriggerReason_UnlockCommand:
             triggerReasonCstr = "UnlockCommand";
             break;
-        case TransactionEventTriggerReason::StopAuthorized:
+        case MO_TxEventTriggerReason_StopAuthorized:
             triggerReasonCstr = "StopAuthorized";
             break;
-        case TransactionEventTriggerReason::EVDeparted:
+        case MO_TxEventTriggerReason_EVDeparted:
             triggerReasonCstr = "EVDeparted";
             break;
-        case TransactionEventTriggerReason::EVDetected:
+        case MO_TxEventTriggerReason_EVDetected:
             triggerReasonCstr = "EVDetected";
             break;
-        case TransactionEventTriggerReason::RemoteStop:
+        case MO_TxEventTriggerReason_RemoteStop:
             triggerReasonCstr = "RemoteStop";
             break;
-        case TransactionEventTriggerReason::RemoteStart:
+        case MO_TxEventTriggerReason_RemoteStart:
             triggerReasonCstr = "RemoteStart";
             break;
-        case TransactionEventTriggerReason::AbnormalCondition:
+        case MO_TxEventTriggerReason_AbnormalCondition:
             triggerReasonCstr = "AbnormalCondition";
             break;
-        case TransactionEventTriggerReason::SignedDataReceived:
+        case MO_TxEventTriggerReason_SignedDataReceived:
             triggerReasonCstr = "SignedDataReceived";
             break;
-        case TransactionEventTriggerReason::ResetCommand:
+        case MO_TxEventTriggerReason_ResetCommand:
             triggerReasonCstr = "ResetCommand";
             break;
     }
 
     return triggerReasonCstr;
 }
-bool deserializeTransactionEventTriggerReason(const char *triggerReasonCstr, TransactionEventTriggerReason& triggerReasonOut) {
+bool deserializeTxEventTriggerReason(const char *triggerReasonCstr, MO_TxEventTriggerReason& triggerReasonOut) {
     if (!triggerReasonCstr || !*triggerReasonCstr) {
-        triggerReasonOut = TransactionEventTriggerReason::UNDEFINED;
+        triggerReasonOut = MO_TxEventTriggerReason_UNDEFINED;
     } else if (!strcmp(triggerReasonCstr, "Authorized")) {
-        triggerReasonOut = TransactionEventTriggerReason::Authorized;
+        triggerReasonOut = MO_TxEventTriggerReason_Authorized;
     } else if (!strcmp(triggerReasonCstr, "CablePluggedIn")) {
-        triggerReasonOut = TransactionEventTriggerReason::CablePluggedIn;
+        triggerReasonOut = MO_TxEventTriggerReason_CablePluggedIn;
     } else if (!strcmp(triggerReasonCstr, "ChargingRateChanged")) {
-        triggerReasonOut = TransactionEventTriggerReason::ChargingRateChanged;
+        triggerReasonOut = MO_TxEventTriggerReason_ChargingRateChanged;
     } else if (!strcmp(triggerReasonCstr, "ChargingStateChanged")) {
-        triggerReasonOut = TransactionEventTriggerReason::ChargingStateChanged;
+        triggerReasonOut = MO_TxEventTriggerReason_ChargingStateChanged;
     } else if (!strcmp(triggerReasonCstr, "Deauthorized")) {
-        triggerReasonOut = TransactionEventTriggerReason::Deauthorized;
+        triggerReasonOut = MO_TxEventTriggerReason_Deauthorized;
     } else if (!strcmp(triggerReasonCstr, "EnergyLimitReached")) {
-        triggerReasonOut = TransactionEventTriggerReason::EnergyLimitReached;
+        triggerReasonOut = MO_TxEventTriggerReason_EnergyLimitReached;
     } else if (!strcmp(triggerReasonCstr, "EVCommunicationLost")) {
-        triggerReasonOut = TransactionEventTriggerReason::EVCommunicationLost;
+        triggerReasonOut = MO_TxEventTriggerReason_EVCommunicationLost;
     } else if (!strcmp(triggerReasonCstr, "EVConnectTimeout")) {
-        triggerReasonOut = TransactionEventTriggerReason::EVConnectTimeout;
+        triggerReasonOut = MO_TxEventTriggerReason_EVConnectTimeout;
     } else if (!strcmp(triggerReasonCstr, "MeterValueClock")) {
-        triggerReasonOut = TransactionEventTriggerReason::MeterValueClock;
+        triggerReasonOut = MO_TxEventTriggerReason_MeterValueClock;
     } else if (!strcmp(triggerReasonCstr, "MeterValuePeriodic")) {
-        triggerReasonOut = TransactionEventTriggerReason::MeterValuePeriodic;
+        triggerReasonOut = MO_TxEventTriggerReason_MeterValuePeriodic;
     } else if (!strcmp(triggerReasonCstr, "TimeLimitReached")) {
-        triggerReasonOut = TransactionEventTriggerReason::TimeLimitReached;
+        triggerReasonOut = MO_TxEventTriggerReason_TimeLimitReached;
     } else if (!strcmp(triggerReasonCstr, "Trigger")) {
-        triggerReasonOut = TransactionEventTriggerReason::Trigger;
+        triggerReasonOut = MO_TxEventTriggerReason_Trigger;
     } else if (!strcmp(triggerReasonCstr, "UnlockCommand")) {
-        triggerReasonOut = TransactionEventTriggerReason::UnlockCommand;
+        triggerReasonOut = MO_TxEventTriggerReason_UnlockCommand;
     } else if (!strcmp(triggerReasonCstr, "StopAuthorized")) {
-        triggerReasonOut = TransactionEventTriggerReason::StopAuthorized;
+        triggerReasonOut = MO_TxEventTriggerReason_StopAuthorized;
     } else if (!strcmp(triggerReasonCstr, "EVDeparted")) {
-        triggerReasonOut = TransactionEventTriggerReason::EVDeparted;
+        triggerReasonOut = MO_TxEventTriggerReason_EVDeparted;
     } else if (!strcmp(triggerReasonCstr, "EVDetected")) {
-        triggerReasonOut = TransactionEventTriggerReason::EVDetected;
+        triggerReasonOut = MO_TxEventTriggerReason_EVDetected;
     } else if (!strcmp(triggerReasonCstr, "RemoteStop")) {
-        triggerReasonOut = TransactionEventTriggerReason::RemoteStop;
+        triggerReasonOut = MO_TxEventTriggerReason_RemoteStop;
     } else if (!strcmp(triggerReasonCstr, "RemoteStart")) {
-        triggerReasonOut = TransactionEventTriggerReason::RemoteStart;
+        triggerReasonOut = MO_TxEventTriggerReason_RemoteStart;
     } else if (!strcmp(triggerReasonCstr, "AbnormalCondition")) {
-        triggerReasonOut = TransactionEventTriggerReason::AbnormalCondition;
+        triggerReasonOut = MO_TxEventTriggerReason_AbnormalCondition;
     } else if (!strcmp(triggerReasonCstr, "SignedDataReceived")) {
-        triggerReasonOut = TransactionEventTriggerReason::SignedDataReceived;
+        triggerReasonOut = MO_TxEventTriggerReason_SignedDataReceived;
     } else if (!strcmp(triggerReasonCstr, "ResetCommand")) {
-        triggerReasonOut = TransactionEventTriggerReason::ResetCommand;
+        triggerReasonOut = MO_TxEventTriggerReason_ResetCommand;
     } else {
         MO_DBG_ERR("deserialization error");
         return false;
@@ -354,181 +368,3 @@ bool deserializeTransactionEventChargingState(const char *chargingStateCstr, Tra
 } //namespace MicroOcpp
 
 #endif //MO_ENABLE_V201
-
-#if MO_ENABLE_V201
-bool g_ocpp_tx_compat_v201;
-
-void ocpp_tx_compat_setV201(bool isV201) {
-    g_ocpp_tx_compat_v201 = isV201;
-}
-#endif
-
-int ocpp_tx_getTransactionId(OCPP_Transaction *tx) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        MO_DBG_ERR("only supported in v16");
-        return -1;
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getTransactionId();
-}
-#if MO_ENABLE_V201
-const char *ocpp_tx_getTransactionIdV201(OCPP_Transaction *tx) {
-    if (!g_ocpp_tx_compat_v201) {
-        MO_DBG_ERR("only supported in v201");
-        return nullptr;
-    }
-    return reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx)->transactionId;
-}
-#endif //MO_ENABLE_V201
-bool ocpp_tx_isAuthorized(OCPP_Transaction *tx) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        return reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx)->isAuthorized;
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isAuthorized();
-}
-bool ocpp_tx_isIdTagDeauthorized(OCPP_Transaction *tx) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        return reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx)->isDeauthorized;
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isIdTagDeauthorized();
-}
-
-bool ocpp_tx_isRunning(OCPP_Transaction *tx) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        auto transaction = reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx);
-        return transaction->started && !transaction->stopped;
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isRunning();
-}
-bool ocpp_tx_isActive(OCPP_Transaction *tx) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        return reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx)->active;
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isActive();
-}
-bool ocpp_tx_isAborted(OCPP_Transaction *tx) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        auto transaction = reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx);
-        return !transaction->active && !transaction->started;
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isAborted();
-}
-bool ocpp_tx_isCompleted(OCPP_Transaction *tx) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        auto transaction = reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx);
-        return transaction->stopped && transaction->seqNos.empty();
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->isCompleted();
-}
-
-const char *ocpp_tx_getIdTag(OCPP_Transaction *tx) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        auto transaction = reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx);
-        return transaction->idToken.get();
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getIdTag();
-}
-
-const char *ocpp_tx_getParentIdTag(OCPP_Transaction *tx) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        MO_DBG_ERR("only supported in v16");
-        return nullptr;
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getParentIdTag();
-}
-
-bool ocpp_tx_getBeginTimestamp(OCPP_Transaction *tx, char *buf, size_t len) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        return reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx)->beginTimestamp.toJsonString(buf, len);
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getBeginTimestamp().toJsonString(buf, len);
-}
-
-int32_t ocpp_tx_getMeterStart(OCPP_Transaction *tx) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        MO_DBG_ERR("only supported in v16");
-        return -1;
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getMeterStart();
-}
-
-bool ocpp_tx_getStartTimestamp(OCPP_Transaction *tx, char *buf, size_t len) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        MO_DBG_ERR("only supported in v16");
-        return -1;
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getStartTimestamp().toJsonString(buf, len);
-}
-
-const char *ocpp_tx_getStopIdTag(OCPP_Transaction *tx) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        auto transaction = reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx);
-        return transaction->stopIdToken ? transaction->stopIdToken->get() : "";
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getStopIdTag();
-}
-
-int32_t ocpp_tx_getMeterStop(OCPP_Transaction *tx) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        MO_DBG_ERR("only supported in v16");
-        return -1;
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getMeterStop();
-}
-
-void ocpp_tx_setMeterStop(OCPP_Transaction* tx, int32_t meter) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        MO_DBG_ERR("only supported in v16");
-        return;
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->setMeterStop(meter);
-}
-
-bool ocpp_tx_getStopTimestamp(OCPP_Transaction *tx, char *buf, size_t len) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        MO_DBG_ERR("only supported in v16");
-        return -1;
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getStopTimestamp().toJsonString(buf, len);
-}
-
-const char *ocpp_tx_getStopReason(OCPP_Transaction *tx) {
-    #if MO_ENABLE_V201
-    if (g_ocpp_tx_compat_v201) {
-        auto transaction = reinterpret_cast<MicroOcpp::Ocpp201::Transaction*>(tx);
-        return serializeTransactionStoppedReason(transaction->stoppedReason);
-    }
-    #endif //MO_ENABLE_V201
-    return reinterpret_cast<MicroOcpp::Transaction*>(tx)->getStopReason();
-}

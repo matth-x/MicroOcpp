@@ -8,13 +8,34 @@
 #include <functional>
 #include <memory>
 
-#include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Model/Configuration/Configuration.h>
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareStatus.h>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Ftp.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Version.h>
+
+#define MO_FW_UPDATER_CUSTOM 0
+#define MO_FW_UPDATER_BUILTIN_ESP32 1
+#define MO_FW_UPDATER_BUILTIN_ESP8266 2
+
+#ifndef MO_USE_FW_UPDATER
+#ifdef MO_CUSTOM_UPDATER
+#define MO_USE_FW_UPDATER MO_FW_UPDATER_CUSTOM
+#elif MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP32) && MO_ENABLE_MBEDTLS
+#define MO_USE_FW_UPDATER MO_FW_UPDATER_BUILTIN_ESP32
+#elif MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP8266)
+#define MO_USE_FW_UPDATER MO_FW_UPDATER_BUILTIN_ESP8266
+#endif
+#endif //MO_USE_FW_UPDATER
+
+#if MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 
 namespace MicroOcpp {
+
+class Context;
+class Clock;
+class Request;
 
 enum class DownloadStatus {
     NotDownloaded, // == before download or during download
@@ -28,15 +49,15 @@ enum class InstallationStatus {
     InstallationFailed
 };
 
-class Context;
-class Request;
+namespace Ocpp16 {
 
 class FirmwareService : public MemoryManaged {
 private:
     Context& context;
-    
-    std::shared_ptr<Configuration> previousBuildNumberString;
-    String buildNumber;
+    Clock& clock;
+
+    char *buildNumber = nullptr;
+    bool notifyFirmwareUpdate = false;
 
     std::function<DownloadStatus()> downloadStatusInput;
     bool downloadIssued = false;
@@ -48,10 +69,9 @@ private:
     std::function<InstallationStatus()> installationStatusInput;
     bool installationIssued = false;
 
-    Ocpp16::FirmwareStatus lastReportedStatus = Ocpp16::FirmwareStatus::Idle;
-    bool checkedSuccessfulFwUpdate = false;
+    FirmwareStatus lastReportedStatus = FirmwareStatus::Idle;
 
-    String location;
+    char *location = nullptr;
     Timestamp retreiveDate;
     unsigned int retries = 0;
     unsigned int retryInterval = 0;
@@ -59,8 +79,8 @@ private:
     std::function<bool(const char *location)> onDownload;
     std::function<bool(const char *location)> onInstall;
 
-    unsigned long delayTransition = 0;
-    unsigned long timestampTransition = 0;
+    int32_t delayTransition = 0;
+    Timestamp timestampTransition;
 
     enum class UpdateStage {
         Idle,
@@ -80,13 +100,9 @@ private:
 public:
     FirmwareService(Context& context);
 
-    void setBuildNumber(const char *buildNumber);
+    ~FirmwareService();
 
-    void loop();
-
-    void scheduleFirmwareUpdate(const char *location, Timestamp retreiveDate, unsigned int retries = 1, unsigned int retryInterval = 0);
-
-    Ocpp16::FirmwareStatus getFirmwareStatus();
+    bool setBuildNumber(const char *buildNumber);
 
     /*
      * Sets the firmware writer. During the UpdateFirmware process, MO will use an FTP client to download the firmware and forward
@@ -111,25 +127,17 @@ public:
     void setOnInstall(std::function<bool(const char *location)> onInstall);
 
     void setInstallationStatusInput(std::function<InstallationStatus()> installationStatusInput);
+
+    bool setup();
+
+    void loop();
+
+    bool scheduleFirmwareUpdate(const char *location, Timestamp retreiveDate, unsigned int retries = 1, unsigned int retryInterval = 0);
+
+    FirmwareStatus getFirmwareStatus();
 };
 
-} //endif namespace MicroOcpp
-
-#if !defined(MO_CUSTOM_UPDATER)
-
-#if MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP32) && MO_ENABLE_MBEDTLS
-
-namespace MicroOcpp {
-std::unique_ptr<FirmwareService> makeDefaultFirmwareService(Context& context);
-}
-
-#elif MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP8266)
-
-namespace MicroOcpp {
-std::unique_ptr<FirmwareService> makeDefaultFirmwareService(Context& context);
-}
-
-#endif //MO_PLATFORM
-#endif //!defined(MO_CUSTOM_UPDATER)
-
+} //namespace Ocpp16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 #endif

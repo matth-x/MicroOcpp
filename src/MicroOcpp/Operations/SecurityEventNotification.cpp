@@ -2,18 +2,20 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <MicroOcpp/Operations/SecurityEventNotification.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp201::SecurityEventNotification;
-using MicroOcpp::JsonDoc;
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SECURITY_EVENT
 
-SecurityEventNotification::SecurityEventNotification(const char *type, const Timestamp& timestamp) : MemoryManaged("v201.Operation.", "SecurityEventNotification"), type(makeString(getMemoryTag(), type ? type : "")), timestamp(timestamp) {
+using namespace MicroOcpp;
 
+SecurityEventNotification::SecurityEventNotification(Context& context, const char *type, const Timestamp& timestamp) : MemoryManaged("v201.Operation.", "SecurityEventNotification"), context(context), timestamp(timestamp) {
+    auto ret = snprintf(this->type, sizeof(this->type), "%s", type);
+    if (ret < 0 || (size_t)ret >= sizeof(this->type)) {
+        MO_DBG_ERR("type too long (ignored excess characters)");
+    }
 }
 
 const char* SecurityEventNotification::getOperationType(){
@@ -24,14 +26,17 @@ std::unique_ptr<JsonDoc> SecurityEventNotification::createReq() {
 
     auto doc = makeJsonDoc(getMemoryTag(),
                 JSON_OBJECT_SIZE(2) +
-                JSONDATE_LENGTH + 1);
+                MO_JSONDATE_SIZE);
 
     JsonObject payload = doc->to<JsonObject>();
 
-    payload["type"] = type.c_str();
+    payload["type"] = (const char*)type; //force zero-copy
 
-    char timestampStr [JSONDATE_LENGTH + 1];
-    timestamp.toJsonString(timestampStr, sizeof(timestampStr));
+    char timestampStr [MO_JSONDATE_SIZE] = {'\0'};
+    if (!context.getClock().toJsonString(timestamp, timestampStr, sizeof(timestampStr))) {
+        MO_DBG_ERR("internal error");
+        timestampStr[0] = '\0';
+    }
     payload["timestamp"] = timestampStr;
 
     return doc;
@@ -51,4 +56,4 @@ std::unique_ptr<JsonDoc> SecurityEventNotification::createConf() {
     return createEmptyDocument();
 }
 
-#endif // MO_ENABLE_V201
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SECURITY_EVENT

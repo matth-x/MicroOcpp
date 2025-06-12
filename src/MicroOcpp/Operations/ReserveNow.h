@@ -5,25 +5,27 @@
 #ifndef MO_RESERVENOW_H
 #define MO_RESERVENOW_H
 
+#include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Version.h>
 
-#if MO_ENABLE_RESERVATION
-
-#include <MicroOcpp/Core/Operation.h>
+#if MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 
 namespace MicroOcpp {
 
-class Model;
+class Context;
 
 namespace Ocpp16 {
 
+class ReservationService;
+
 class ReserveNow : public Operation, public MemoryManaged {
 private:
-    Model& model;
+    Context& context;
+    ReservationService& rService;
     const char *errorCode = nullptr;
     const char *reservationStatus = nullptr;
 public:
-    ReserveNow(Model& model);
+    ReserveNow(Context& context, ReservationService& rService);
 
     ~ReserveNow();
 
@@ -36,8 +38,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
-
-#endif //MO_ENABLE_RESERVATION
+} //namespace Ocpp16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 #endif

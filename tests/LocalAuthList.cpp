@@ -402,7 +402,7 @@ TEST_CASE( "LocalAuth" ) {
         authService->updateLocalList(localAuthList.as<JsonArray>(), 1, false);
 
         //patch Authorize so it will reject all idTags
-        getOcppContext()->getOperationRegistry().registerOperation("Authorize", [] () {
+        getOcppContext()->getMessageService().registerOperation("Authorize", [] () {
             return new Ocpp16::CustomOperation("Authorize",
                 [] (JsonObject) {}, //ignore req
                 [] () {
@@ -445,7 +445,7 @@ TEST_CASE( "LocalAuth" ) {
 
         //patch Authorize so it will reject all idTags
         bool checkAuthorize = false;
-        getOcppContext()->getOperationRegistry().registerOperation("Authorize", [&checkAuthorize] () {
+        getOcppContext()->getMessageService().registerOperation("Authorize", [&checkAuthorize] () {
             return new Ocpp16::CustomOperation("Authorize",
                 [&checkAuthorize] (JsonObject) {
                     checkAuthorize = true;
@@ -460,7 +460,7 @@ TEST_CASE( "LocalAuth" ) {
         
         //patch StartTransaction so it will DeAuthorize all txs
         bool checkStartTx = false;
-        getOcppContext()->getOperationRegistry().registerOperation("StartTransaction", [&checkStartTx] () {
+        getOcppContext()->getMessageService().registerOperation("StartTransaction", [&checkStartTx] () {
             return new Ocpp16::CustomOperation("StartTransaction",
                 [&checkStartTx] (JsonObject) {
                     checkStartTx = true;
@@ -477,7 +477,7 @@ TEST_CASE( "LocalAuth" ) {
         
         //check resulting StatusNotification message
         bool checkLocalListConflict = false;
-        getOcppContext()->getOperationRegistry().registerOperation("StatusNotification", [&checkLocalListConflict] () {
+        getOcppContext()->getMessageService().registerOperation("StatusNotification", [&checkLocalListConflict] () {
             return new Ocpp16::CustomOperation("StatusNotification",
                 [&checkLocalListConflict] (JsonObject payload) {
                     if (payload["connectorId"] == 0 &&

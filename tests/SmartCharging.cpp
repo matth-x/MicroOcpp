@@ -489,8 +489,8 @@ TEST_CASE( "SmartCharging" ) {
                     REQUIRE(!strcmp(payload["status"], "Accepted"));
                     REQUIRE(payload["connectorId"] == 1);
                     
-                    char checkScheduleStart [JSONDATE_LENGTH + 1];
-                    model.getClock().now().toJsonString(checkScheduleStart, JSONDATE_LENGTH + 1);
+                    char checkScheduleStart [MO_JSONDATE_SIZE];
+                    model.getClock().now().toJsonString(checkScheduleStart, MO_JSONDATE_SIZE);
                     REQUIRE(!strcmp(payload["scheduleStart"], checkScheduleStart));
 
                     JsonObject chargingScheduleJson = payload["chargingSchedule"];

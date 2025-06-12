@@ -5,12 +5,16 @@
 #include <MicroOcpp/Operations/UpdateFirmware.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp16::UpdateFirmware;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 
-UpdateFirmware::UpdateFirmware(FirmwareService& fwService) : MemoryManaged("v16.Operation.", "UpdateFirmware"), fwService(fwService) {
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp16;
+
+UpdateFirmware::UpdateFirmware(Context& context, FirmwareService& fwService) : MemoryManaged("v16.Operation.", "UpdateFirmware"), context(context), fwService(fwService) {
 
 }
 
@@ -22,7 +26,7 @@ void UpdateFirmware::processReq(JsonObject payload) {
         errorCode = "FormationViolation";
         return;
     }
-    
+
     int retries = payload["retries"] | 1;
     int retryInterval = payload["retryInterval"] | 180;
     if (retries < 0 || retryInterval < 0) {
@@ -37,15 +41,17 @@ void UpdateFirmware::processReq(JsonObject payload) {
     }
 
     Timestamp retrieveDate;
-    if (!retrieveDate.setTime(payload["retrieveDate"] | "Invalid")) {
-        errorCode = "PropertyConstraintViolation";
+    if (!context.getClock().parseString(payload["retrieveDate"] | "_Unvalid", retrieveDate)) {
+        errorCode = "FormationViolation";
         MO_DBG_WARN("bad time format");
         return;
     }
-    
+
     fwService.scheduleFirmwareUpdate(location, retrieveDate, (unsigned int) retries, (unsigned int) retryInterval);
 }
 
 std::unique_ptr<JsonDoc> UpdateFirmware::createConf(){
     return createEmptyDocument();
 }
+
+#endif //MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT

@@ -6,10 +6,12 @@
 #include <MicroOcpp/Core/FilesystemUtils.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp16::ClearCache;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16
 
-ClearCache::ClearCache(std::shared_ptr<FilesystemAdapter> filesystem) : MemoryManaged("v16.Operation.", "ClearCache"), filesystem(filesystem) {
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp16;
+
+ClearCache::ClearCache(MO_FilesystemAdapter *filesystem) : MemoryManaged("v16.Operation.", "ClearCache"), filesystem(filesystem) {
   
 }
 
@@ -21,15 +23,16 @@ void ClearCache::processReq(JsonObject payload) {
     MO_DBG_WARN("Clear transaction log (Authorization Cache not supported)");
 
     if (!filesystem) {
-        //no persistency - nothing to do
+        //no persistency - operation not actually supported, so reject
+        success = false;
         return;
     }
 
-    success = FilesystemUtils::remove_if(filesystem, [] (const char *fname) -> bool {
-        return !strncmp(fname, "sd", strlen("sd")) ||
-               !strncmp(fname, "tx", strlen("tx")) ||
-               !strncmp(fname, "op", strlen("op"));
-    });
+    success = true;
+
+    success &= FilesystemUtils::removeByPrefix(filesystem, "sd");
+    success &= FilesystemUtils::removeByPrefix(filesystem, "tx");
+    success &= FilesystemUtils::removeByPrefix(filesystem, "op");
 }
 
 std::unique_ptr<JsonDoc> ClearCache::createConf(){
@@ -42,3 +45,5 @@ std::unique_ptr<JsonDoc> ClearCache::createConf(){
     }
     return doc;
 }
+
+#endif //MO_ENABLE_V16

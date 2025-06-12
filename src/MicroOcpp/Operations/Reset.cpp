@@ -3,77 +3,70 @@
 // MIT License
 
 #include <MicroOcpp/Operations/Reset.h>
-#include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Reset/ResetService.h>
+#include <MicroOcpp/Model/Common/EvseId.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp16::Reset;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16
 
-Reset::Reset(Model& model) : MemoryManaged("v16.Operation.", "Reset"), model(model) {
+using namespace MicroOcpp;
+
+Ocpp16::Reset::Reset(ResetService& resetService) : MemoryManaged("v16.Operation.", "Reset"), resetService(resetService) {
   
 }
 
-const char* Reset::getOperationType(){
+const char* Ocpp16::Reset::getOperationType(){
     return "Reset";
 }
 
-void Reset::processReq(JsonObject payload) {
+void Ocpp16::Reset::processReq(JsonObject payload) {
     /*
      * Process the application data here. Note: you have to implement the device reset procedure in your client code. You have to set
      * a onSendConfListener in which you initiate a reset (e.g. calling ESP.reset() )
      */
     bool isHard = !strcmp(payload["type"] | "undefined", "Hard");
 
-    if (auto rService = model.getResetService()) {
-        if (!rService->getExecuteReset()) {
-            MO_DBG_ERR("No reset handler set. Abort operation");
-            //resetAccepted remains false
-        } else {
-            if (!rService->getPreReset() || rService->getPreReset()(isHard) || isHard) {
-                resetAccepted = true;
-                rService->initiateReset(isHard);
-                for (unsigned int cId = 0; cId < model.getNumConnectors(); cId++) {
-                    model.getConnector(cId)->endTransaction(nullptr, isHard ? "HardReset" : "SoftReset");
-                }
-            }
-        }
+    if (!resetService.isExecuteResetDefined()) {
+        MO_DBG_ERR("No reset handler set. Abort operation");
+        resetAccepted = false;
     } else {
-        resetAccepted = true; //assume that onReceiveReset is set
+        if (!resetService.isPreResetDefined() || resetService.notifyReset(isHard) || isHard) {
+            resetAccepted = true;
+            resetService.initiateReset(isHard);
+        }
     }
 }
 
-std::unique_ptr<JsonDoc> Reset::createConf() {
+std::unique_ptr<JsonDoc> Ocpp16::Reset::createConf() {
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = resetAccepted ? "Accepted" : "Rejected";
     return doc;
 }
 
+#endif //MO_ENABLE_V16
+
 #if MO_ENABLE_V201
 
-#include <MicroOcpp/Model/ConnectorBase/EvseId.h>
+using namespace MicroOcpp;
 
-namespace MicroOcpp {
-namespace Ocpp201 {
-
-Reset::Reset(ResetService& resetService) : MemoryManaged("v201.Operation.", "Reset"), resetService(resetService) {
+Ocpp201::Reset::Reset(ResetService& resetService) : MemoryManaged("v201.Operation.", "Reset"), resetService(resetService) {
   
 }
 
-const char* Reset::getOperationType(){
+const char* Ocpp201::Reset::getOperationType(){
     return "Reset";
 }
 
-void Reset::processReq(JsonObject payload) {
+void Ocpp201::Reset::processReq(JsonObject payload) {
 
-    ResetType type;
+    MO_ResetType type;
     const char *typeCstr = payload["type"] | "_Undefined";
     
     if (!strcmp(typeCstr, "Immediate")) {
-        type = ResetType_Immediate;
+        type = MO_ResetType_Immediate;
     } else if (!strcmp(typeCstr, "OnIdle")) {
-        type = ResetType_OnIdle;
+        type = MO_ResetType_OnIdle;
     } else {
         errorCode = "FormationViolation";
         return;
@@ -91,7 +84,7 @@ void Reset::processReq(JsonObject payload) {
     status = resetService.initiateReset(type, evseId);
 }
 
-std::unique_ptr<JsonDoc> Reset::createConf() {
+std::unique_ptr<JsonDoc> Ocpp201::Reset::createConf() {
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 
@@ -114,6 +107,4 @@ std::unique_ptr<JsonDoc> Reset::createConf() {
     return doc;
 }
 
-} //end namespace Ocpp201
-} //end namespace MicroOcpp
 #endif //MO_ENABLE_V201

@@ -131,8 +131,8 @@ public:
             const char *ca_cert = nullptr) override; // nullptr to disable cert check; will be ignored for non-TLS connections
 };
 
-std::unique_ptr<FtpClient> makeFtpClientMbedTLS(bool tls_only, const char *client_cert, const char *client_key) {
-    return std::unique_ptr<FtpClient>(new FtpClientMbedTLS(tls_only, client_cert, client_key));
+std::unique_ptr<FtpClient> makeFtpClientMbedTLS(MO_FTPConfig config) {
+    return std::unique_ptr<FtpClient>(new FtpClientMbedTLS(config.tls_only, config.client_cert, config.client_key));
 }
 
 void mo_mbedtls_log(void *user, int level, const char *file, int line, const char *str) {
@@ -147,16 +147,22 @@ void mo_mbedtls_log(void *user, int level, const char *file, int line, const cha
      * 
      * To change the debug level, use the build flag MO_DBG_LEVEL_MBEDTLS accordingly
      */
-    const char *lstr = "";
-    if (level <= 1) {
-        lstr = "ERROR";
-    } else if (level <= 3) {
-        lstr = "debug";
-    } else {
-        lstr = "verbose";
+
+    int mo_level = MO_DL_VERBOSE;
+    switch (level) {
+        case 1:
+            mo_level = MO_DL_ERROR;
+            break;
+        case 2:
+        case 3:
+            mo_level = MO_DL_DEBUG;
+            break;
+        case 4:
+            mo_level = MO_DL_VERBOSE;
+            break;
     }
 
-    MO_CONSOLE_PRINTF("[MO] %s (%s:%i): %s\n", lstr, file, line, str);
+    MicroOcpp::debug(mo_level, file, line, "%s", str);
 }
 
 /*

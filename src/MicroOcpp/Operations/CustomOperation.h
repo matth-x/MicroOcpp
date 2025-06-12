@@ -7,40 +7,38 @@
 
 #include <MicroOcpp/Core/Operation.h>
 
-#include <functional>
-
 namespace MicroOcpp {
-
-namespace Ocpp16 {
 
 class CustomOperation : public Operation, public MemoryManaged {
 private:
-    String operationType;
-    std::function<std::unique_ptr<JsonDoc> ()> fn_createReq;
-    std::function<void (JsonObject)> fn_processConf;
-    std::function<bool (const char*, const char*, JsonObject)> fn_processErr;  //optional
-    std::function<void (JsonObject)> fn_processReq;
-    std::function<std::unique_ptr<JsonDoc> ()> fn_createConf;
-    std::function<const char* ()> fn_getErrorCode;            //optional
-    std::function<const char* ()> fn_getErrorDescription;     //optional
-    std::function<std::unique_ptr<JsonDoc> ()> fn_getErrorDetails; //optional
+    const char *operationType = nullptr;
+    void *userData = nullptr;
+    int userStatus = 0; //`onRequest` cb can write this number and pass status from `onRequest` to `writeResponse`
+
+    //Operation initiated on this EVSE
+    char *request = nullptr;
+    void (*onResponse)(const char *payloadJson, void *userData) = nullptr;
+
+    //Operation initiated by server
+    void (*onRequest)(const char *operationType, const char *payloadJson, int *userStatus, void *userData) = nullptr;
+    int (*writeResponse)(const char *operationType, char *buf, size_t size, int userStatus, void *userData) = nullptr;
 public:
 
-    //for operations initiated at this device
-    CustomOperation(const char *operationType,
-            std::function<std::unique_ptr<JsonDoc> ()> fn_createReq,
-            std::function<void (JsonObject)> fn_processConf,
-            std::function<bool (const char*, const char*, JsonObject)> fn_processErr = nullptr);
-    
-    //for operations receied from remote
-    CustomOperation(const char *operationType,
-            std::function<void (JsonObject)> fn_processReq,
-            std::function<std::unique_ptr<JsonDoc> ()> fn_createConf,
-            std::function<const char* ()> fn_getErrorCode = nullptr,
-            std::function<const char* ()> fn_getErrorDescription = nullptr,
-            std::function<std::unique_ptr<JsonDoc> ()> fn_getErrorDetails = nullptr);
-    
+    CustomOperation();
+
     ~CustomOperation();
+
+    //for operations initiated at this device
+    bool setupEvseInitiated(const char *operationType,
+        const char *request,
+        void (*onResponse)(const char *payloadJson, void *userData),
+        void *userData);
+
+    //for operations receied from remote
+    bool setupCsmsInitiated(const char *operationType,
+        void (*onRequest)(const char *operationType, const char *payloadJson, int *userStatus, void *userData),
+        int (*writeResponse)(const char *operationType, char *buf, size_t size, int userStatus, void *userData),
+        void *userData);
 
     const char* getOperationType() override;
 
@@ -48,16 +46,10 @@ public:
 
     void processConf(JsonObject payload) override;
 
-    bool processErr(const char *code, const char *description, JsonObject details) override;
-
     void processReq(JsonObject payload) override;
 
     std::unique_ptr<JsonDoc> createConf() override;
-    const char *getErrorCode() override;
-    const char *getErrorDescription() override;
-    std::unique_ptr<JsonDoc> getErrorDetails() override;
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace MicroOcpp
 #endif

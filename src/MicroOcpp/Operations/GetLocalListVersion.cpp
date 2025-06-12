@@ -2,17 +2,15 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_LOCAL_AUTH
-
 #include <MicroOcpp/Operations/GetLocalListVersion.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp16::GetLocalListVersion;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
+
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp16;
 
 GetLocalListVersion::GetLocalListVersion(Model& model) : MemoryManaged("v16.Operation.", "GetLocalListVersion"), model(model) {
   
@@ -38,4 +36,4 @@ std::unique_ptr<JsonDoc> GetLocalListVersion::createConf(){
     return doc;
 }
 
-#endif //MO_ENABLE_LOCAL_AUTH
+#endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH

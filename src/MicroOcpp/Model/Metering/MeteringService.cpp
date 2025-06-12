@@ -5,372 +5,979 @@
 #include <cstddef>
 #include <cinttypes>
 
-#include <MicroOcpp/Model/Metering/MeteringService.h>
-#include <MicroOcpp/Model/Transactions/Transaction.h>
-#include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Core/Context.h>
-#include <MicroOcpp/Core/Configuration.h>
-#include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Context.h>
+#include <MicroOcpp/Model/Configuration/ConfigurationService.h>
+#include <MicroOcpp/Model/Metering/MeteringService.h>
+#include <MicroOcpp/Model/Metering/MeterStore.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
+#include <MicroOcpp/Model/Transactions/TransactionService16.h>
+#include <MicroOcpp/Model/Transactions/TransactionStore.h>
+#include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Operations/MeterValues.h>
 #include <MicroOcpp/Debug.h>
 
-using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+#if MO_ENABLE_V16 || MO_ENABLE_V201
 
-MeteringServiceEvse::MeteringServiceEvse(Context& context, int connectorId, MeterStore& meterStore)
-        : MemoryManaged("v16.Metering.MeteringServiceEvse"), context(context), model(context.getModel()), connectorId{connectorId}, meterStore(meterStore), meterData(makeVector<std::unique_ptr<MeterValue>>(getMemoryTag())), samplers(makeVector<std::unique_ptr<SampledValueSampler>>(getMemoryTag())) {
+namespace MicroOcpp {
 
-    context.getRequestQueue().addSendQueue(this);
+MeterValue *takeMeterValue(Clock& clock, Vector<MO_MeterInput>& meterInputs, unsigned int evseId, MO_ReadingContext readingContext, uint8_t inputSelectFlag, const char *memoryTag) {
 
-    auto meterValuesSampledDataString = declareConfiguration<const char*>("MeterValuesSampledData", "");
-    declareConfiguration<int>("MeterValuesSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
-    meterValueSampleIntervalInt = declareConfiguration<int>("MeterValueSampleInterval", 60);
-    registerConfigurationValidator("MeterValueSampleInterval", VALIDATE_UNSIGNED_INT);
+    size_t samplesSize = 0;
+    for (size_t i = 0; i < meterInputs.size(); i++) {
+        if (meterInputs[i].mo_flags & inputSelectFlag) {
+            samplesSize++;
+        }
+    }
 
-    auto stopTxnSampledDataString = declareConfiguration<const char*>("StopTxnSampledData", "");
-    declareConfiguration<int>("StopTxnSampledDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
+    if (samplesSize == 0) {
+        MO_DBG_DEBUG("no meter inputs selected");
+        return nullptr;
+    }
 
-    auto meterValuesAlignedDataString = declareConfiguration<const char*>("MeterValuesAlignedData", "");
-    declareConfiguration<int>("MeterValuesAlignedDataMaxLength", 8, CONFIGURATION_VOLATILE, true);
-    clockAlignedDataIntervalInt  = declareConfiguration<int>("ClockAlignedDataInterval", 0);
-    registerConfigurationValidator("ClockAlignedDataInterval", VALIDATE_UNSIGNED_INT);
+    auto meterValue = new MeterValue();
+    if (!meterValue) {
+        MO_DBG_ERR("OOM");
+        goto fail;
+    }
 
-    auto stopTxnAlignedDataString = declareConfiguration<const char*>("StopTxnAlignedData", "");
+    meterValue->sampledValue.resize(samplesSize);
+    if (meterValue->sampledValue.capacity() < samplesSize) {
+        MO_DBG_ERR("OOM");
+        goto fail;
+    }
 
-    meterValuesInTxOnlyBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "MeterValuesInTxOnly", true);
-    stopTxnDataCapturePeriodicBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "StopTxnDataCapturePeriodic", false);
+    meterValue->timestamp = clock.now();
+    meterValue->readingContext = readingContext;
 
-    transactionMessageAttemptsInt = declareConfiguration<int>("TransactionMessageAttempts", 3);
-    transactionMessageRetryIntervalInt = declareConfiguration<int>("TransactionMessageRetryInterval", 60);
+    for (size_t i = 0; i < meterInputs.size(); i++) {
+        auto& mInput = meterInputs[i];
+        if (mInput.mo_flags & inputSelectFlag) {
+            auto sv = new SampledValue(mInput);
+            if (!sv) {
+                MO_DBG_ERR("OOM");
+                goto fail;
+            }
 
-    sampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, meterValuesSampledDataString));
-    alignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, meterValuesAlignedDataString));
-    stopTxnSampledDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, stopTxnSampledDataString));
-    stopTxnAlignedDataBuilder = std::unique_ptr<MeterValueBuilder>(new MeterValueBuilder(samplers, stopTxnAlignedDataString));
+            switch (mInput.type) {
+                case MO_MeterInputType_Int:
+                    sv->valueInt = mInput.getInt();
+                    break;
+                case MO_MeterInputType_IntWithArgs:
+                    sv->valueInt = mInput.getInt2(readingContext, evseId, mInput.user_data);
+                    break;
+                case MO_MeterInputType_Float:
+                    sv->valueFloat = mInput.getFloat();
+                    break;
+                case MO_MeterInputType_FloatWithArgs:
+                    sv->valueFloat = mInput.getFloat2(readingContext, evseId, mInput.user_data);
+                    break;
+                case MO_MeterInputType_String:
+                case MO_MeterInputType_StringWithArgs: {
+                    char bufStack [100];
+                    int ret = -1;
+                    if (mInput.type == MO_MeterInputType_String) {
+                        ret = mInput.getString(bufStack, sizeof(bufStack));
+                    } else { //MO_MeterInputType_StringWithArgs
+                        ret = mInput.getString2(bufStack, sizeof(bufStack), readingContext, evseId, mInput.user_data);
+                    }
+                    if (ret < 0 || ret > MO_SAMPLEDVALUE_STRING_MAX_LEN) {
+                        MO_DBG_ERR("meterInput getString cb: %i", ret);
+                        delete sv;
+                        sv = nullptr;
+                        break; //failure, skip this measurand
+                    }
+
+                    if (ret > 0) {
+                        size_t size = ret + 1;
+                        sv->valueString = static_cast<char*>(MO_MALLOC(memoryTag, size));
+                        if (!sv->valueString) {
+                            MO_DBG_ERR("OOM");
+                            delete sv;
+                            sv = nullptr;
+                            break; //failure, skip this measurand
+                        }
+                        memset(sv->valueString, 0, size);
+
+                        if ((size_t)ret < sizeof(bufStack)) {
+                            //bufStack contains value
+                            snprintf(sv->valueString, size, "%s", bufStack);
+                        } else {
+                            //need to re-run getString with properly sized buffer
+                            if (mInput.type == MO_MeterInputType_String) {
+                                ret = mInput.getString(sv->valueString, size);
+                            } else { //MO_MeterInputType_StringWithArgs
+                                ret = mInput.getString2(sv->valueString, size, readingContext, evseId, mInput.user_data);
+                            }
+                            if (ret < 0 || (size_t)ret >= size) {
+                                MO_DBG_ERR("meterInput getString cb: %i", ret);
+                                MO_FREE(sv->valueString);
+                                sv->valueString = nullptr;
+                                delete sv;
+                                sv = nullptr;
+                                break; //failure, skip this measurand
+                            }
+                        }
+                    }
+
+                    break; //success
+                }
+                #if MO_ENABLE_V201
+                case MO_MeterInputType_SignedValueWithArgs:
+                    sv->valueSigned = static_cast<MO_SignedMeterValue201*>(MO_MALLOC(memoryTag, sizeof(MO_SignedMeterValue201)));
+                    if (!sv->valueSigned) {
+                        MO_DBG_ERR("OOM");
+                        delete sv;
+                        sv = nullptr;
+                        break; //failure, skip this measurand
+                    }
+                    memset(sv->valueSigned, 0, sizeof(*sv->valueSigned));
+
+                    if (!mInput.getSignedValue2(sv->valueSigned, readingContext, evseId, mInput.user_data)) {
+                        if (sv->valueSigned->onDestroy) {
+                            sv->valueSigned->onDestroy(sv->valueSigned->user_data);
+                        }
+                        MO_FREE(sv->valueSigned);
+                        delete sv;
+                        sv = nullptr;
+                        break; //undefined value skip this measurand
+                    }
+                    break;
+                #endif //MO_ENABLE_V201
+                case MO_MeterInputType_UNDEFINED:
+                    MO_DBG_ERR("need to set type of meter input");
+                    delete sv;
+                    sv = nullptr;
+                    break; //failure, skip this measurand
+            }
+
+            if (sv) {
+                meterValue->sampledValue.push_back(sv);
+            }
+        }
+    }
+
+    return meterValue;
+fail:
+    delete meterValue;
+    meterValue = nullptr;
+    return nullptr;
 }
 
-void MeteringServiceEvse::loop() {
+void updateInputSelectFlag(const char *selectString, uint8_t flag, Vector<MO_MeterInput>& meterInputs) {
+    auto size = strlen(selectString) + 1;
+    size_t sl = 0, sr = 0;
+    while (selectString && sl < size) {
+        while (sr < size) {
+            if (selectString[sr] == ',') {
+                break;
+            }
+            sr++;
+        }
+
+        if (sr != sl + 1) {
+            const char *csvMeasurand = selectString + sl;
+            size_t csvMeasurandLen = sr - sl;
+
+            for (size_t i = 0; i < meterInputs.size(); i++) {
+                const char *measurand = meterInputs[i].measurand ? meterInputs[i].measurand : "Energy.Active.Import.Register";
+                if (!strncmp(measurand, csvMeasurand, csvMeasurandLen) && strlen(measurand) == csvMeasurandLen) {
+                    meterInputs[i].mo_flags |= flag;
+                } else {
+                    meterInputs[i].mo_flags &= ~flag;
+                }
+            }
+        }
+
+        sr++;
+        sl = sr;
+    }
+}
+
+bool validateSelectString(const char *selectString, void *user_data) {
+    auto& context = *reinterpret_cast<Context*>(user_data);
+
+    unsigned int numEvseId = 0;
+
+    #if MO_ENABLE_V16
+    if (context.getOcppVersion() == MO_OCPP_V16) {
+        numEvseId = context.getModel16().getNumEvseId();
+    }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (context.getOcppVersion() == MO_OCPP_V201) {
+        numEvseId = context.getModel201().getNumEvseId();
+    }
+    #endif //MO_ENABLE_V201
+
+    bool isValid = true;
+    const char *l = selectString; //the beginning of an entry of the comma-separated list
+    const char *r = l; //one place after the last character of the entry beginning with l
+    while (*l) {
+        if (*l == ',') {
+            l++;
+            continue;
+        }
+        r = l + 1;
+        while (*r != '\0' && *r != ',') {
+            r++;
+        }
+
+        const char *csvMeasurand = l;
+        size_t csvMeasurandLen = (size_t)(r - l);
+
+        //check if measurand exists in MeterInputs. Search through all EVSEs
+        bool found = false;
+        for (unsigned int evseId = 0; evseId < numEvseId; evseId++) {
+
+            Vector<MO_MeterInput> *meterInputsPtr = nullptr;
+
+            #if MO_ENABLE_V16
+            if (context.getOcppVersion() == MO_OCPP_V16) {
+                auto mService = context.getModel16().getMeteringService();
+                auto evse = mService ? mService->getEvse(evseId) : nullptr;
+                meterInputsPtr = evse ? &evse->getMeterInputs() : nullptr;
+            }
+            #endif //MO_ENABLE_V16
+            #if MO_ENABLE_V201
+            if (context.getOcppVersion() == MO_OCPP_V201) {
+                auto mService = context.getModel201().getMeteringService();
+                auto evse = mService ? mService->getEvse(evseId) : nullptr;
+                meterInputsPtr = evse ? &evse->getMeterInputs() : nullptr;
+            }
+            #endif //MO_ENABLE_V201
+
+            if (!meterInputsPtr) {
+                MO_DBG_ERR("internal error");
+                continue;
+            }
+
+            auto& meterInputs = *meterInputsPtr;
+
+            for (size_t i = 0; i < meterInputs.size(); i++) {
+                const char *measurand = meterInputs[i].measurand ? meterInputs[i].measurand : "Energy.Active.Import.Register";
+                if (!strncmp(measurand, csvMeasurand, csvMeasurandLen) && strlen(measurand) == csvMeasurandLen) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found) {
+                break;
+            }
+        }
+        if (!found) {
+            isValid = false;
+            MO_DBG_WARN("could not find metering device for %.*s", (int)csvMeasurandLen, csvMeasurand);
+            break;
+        }
+        l = r;
+    }
+    return isValid;
+}
+
+} //namespace MicroOcpp
+
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201
+
+#if MO_ENABLE_V16
+
+#define MO_FLAG_MeterValuesSampledData (1 << 0)
+#define MO_FLAG_MeterValuesAlignedData (1 << 1)
+#define MO_FLAG_StopTxnSampledData     (1 << 2)
+#define MO_FLAG_StopTxnAlignedData     (1 << 3)
+
+using namespace MicroOcpp;
+
+Ocpp16::MeteringServiceEvse::MeteringServiceEvse(Context& context, MeteringService& mService, unsigned int connectorId)
+        : MemoryManaged("v16.Metering.MeteringServiceEvse"), context(context), clock(context.getClock()), model(context.getModel16()), mService(mService), connectorId(connectorId), meterData(makeVector<MeterValue*>(getMemoryTag())), meterInputs(makeVector<MO_MeterInput>(getMemoryTag())) {
+    Timestamp lastSampleTime = context.getClock().getUptime();
+    Timestamp lastAlignedTime = context.getClock().now();
+}
+
+Ocpp16::MeteringServiceEvse::~MeteringServiceEvse() {
+    for (size_t i = 0; i < meterData.size(); i++) {
+        delete meterData[i];
+    }
+    meterData.clear();
+    delete meterDataFront;
+    meterDataFront = nullptr;
+}
+
+bool Ocpp16::MeteringServiceEvse::addMeterInput(MO_MeterInput meterInput) {
+    auto capacity = meterInputs.size() + 1;
+    meterInputs.resize(capacity);
+    if (meterInputs.capacity() < capacity) {
+        MO_DBG_ERR("OOM");
+        return false;
+    }
+
+    meterInput.mo_flags = 0;
+    meterInputs.push_back(meterInput);
+    return true;
+}
+
+Vector<MO_MeterInput>& Ocpp16::MeteringServiceEvse::getMeterInputs() {
+    return meterInputs;
+}
+
+bool Ocpp16::MeteringServiceEvse::setTxEnergyMeterInput(int32_t (*getInt)()) {
+    txEnergyMeterInput = getInt;
+    return true;
+}
+
+bool Ocpp16::MeteringServiceEvse::setTxEnergyMeterInput2(int32_t (*getInt2)(MO_ReadingContext readingContext, unsigned int evseId, void *user_data), void *user_data) {
+    txEnergyMeterInput2 = getInt2;
+    txEnergyMeterInput2_user_data = user_data;
+    return true;
+}
+
+bool Ocpp16::MeteringServiceEvse::setup() {
+
+    context.getMessageService().addSendQueue(this);
+
+    filesystem = context.getFilesystem();
+    if (!filesystem) {
+        MO_DBG_DEBUG("volatile mode");
+    }
+
+    auto txSvc = context.getModel16().getTransactionService();
+    txSvcEvse = txSvc ? txSvc->getEvse(connectorId) : nullptr;
+    if (!txSvcEvse) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    auto configService = context.getModel16().getConfigurationService();
+    if (!configService) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    if (!txEnergyMeterInput && !txEnergyMeterInput2) {
+        //search default energy meter
+        bool found = false;
+        for (size_t i = 0; i < meterInputs.size(); i++) {
+            auto& mInput = meterInputs[i];
+            if (mInput.measurand && !strcmp(mInput.measurand, "Energy.Active.Import.Register") &&
+                    (!mInput.phase || !*mInput.phase) &&
+                    (!mInput.location || !strcmp(mInput.location, "Outlet")) &&
+                    (!mInput.unit || !strcmp(mInput.unit, "Wh")) &&
+                    (mInput.type == MO_MeterInputType_Int || mInput.type == MO_MeterInputType_IntWithArgs)) {
+                
+                if (mInput.type == MO_MeterInputType_Int) {
+                    txEnergyMeterInput = mInput.getInt;
+                } else {
+                    txEnergyMeterInput2 = mInput.getInt2;
+                    txEnergyMeterInput2_user_data = mInput.user_data;
+                }
+                found = true;
+            }
+        }
+
+        if (found) {
+            MO_DBG_DEBUG("found energy input for Start- and StopTx values");
+        } else {
+            MO_DBG_WARN("no energy meter set up. Start- and StopTx will report 0 Wh");
+        }
+    }
+
+    return true;
+}
+
+MicroOcpp::MeterValue *Ocpp16::MeteringServiceEvse::takeMeterValue(MO_ReadingContext readingContext, uint8_t inputSelectFlag) {
+    return MicroOcpp::takeMeterValue(context.getClock(), meterInputs, connectorId, readingContext, inputSelectFlag, getMemoryTag());
+}
+
+void Ocpp16::MeteringServiceEvse::loop() {
 
     bool txBreak = false;
-    if (model.getConnector(connectorId)) {
-        auto &curTx = model.getConnector(connectorId)->getTransaction();
-        txBreak = (curTx && curTx->isRunning()) != trackTxRunning;
-        trackTxRunning = (curTx && curTx->isRunning());
-    }
+    auto transaction = txSvcEvse->getTransaction();
+    txBreak = (transaction && transaction->isRunning()) != trackTxRunning;
+    trackTxRunning = (transaction && transaction->isRunning());
 
     if (txBreak) {
-        lastSampleTime = mocpp_tick_ms();
+        lastSampleTime = clock.getUptime();
     }
 
-    if (model.getConnector(connectorId)) {
-        if (transaction != model.getConnector(connectorId)->getTransaction()) {
-            transaction = model.getConnector(connectorId)->getTransaction();
-        }
+    if (!transaction && connectorId != 0 && mService.meterValuesInTxOnlyBool->getBool()) {
+        //don't take any MeterValues outside of transactions on connectorIds other than 0
+        return;
+    }
 
-        if (transaction && transaction->isRunning() && !transaction->isSilent()) {
-            //check during transaction
+    updateInputSelectFlags();
 
-            if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
-                MO_DBG_WARN("reload stopTxnData, %s, for tx-%u-%u", stopTxnData ? "replace" : "first time", connectorId, transaction->getTxNr());
-                //reload (e.g. after power cut during transaction)
-                stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction.get());
-            }
+    if (mService.clockAlignedDataIntervalInt->getInt() >= 1 && clock.now().isUnixTime()) {
+
+        bool shouldTakeMeasurement = false;
+        bool shouldUpdateLastTime = false;
+
+        auto& timestampNow = clock.now();
+        int32_t dt;
+        bool dt_defined = clock.delta(timestampNow, lastAlignedTime, dt);
+        if (!dt_defined) {
+            //lastAlignedTime not set yet. Do that now
+            shouldUpdateLastTime = true;
+            MO_DBG_DEBUG("Clock aligned measurement: initial setting");
+        } else if (dt < 0) {
+            //timestampNow before lastAligned time - probably the clock has been adjusted
+            shouldUpdateLastTime = true;
+            MO_DBG_DEBUG("Clock aligned measurement: correct time after clock adjustment (%i)", (int)dt);
+        } else if (dt < mService.clockAlignedDataIntervalInt->getInt()) {
+            //dt is number of seconds elapsed since last measurements and seconds < interval, so do nothing
+            (void)0;
+        } else if (dt <= mService.clockAlignedDataIntervalInt->getInt() + 60) {
+            //elapsed seconds >= interval and still within tolerance band of 60 seconds, take measurement!
+            shouldTakeMeasurement = true;
+            shouldUpdateLastTime = true;
+            MO_DBG_DEBUG("Clock aligned measurement: take measurement (%i)", (int)dt);
         } else {
-            //check outside of transaction
+            //elapsed seconds is past the tolerance band. Measurement wouldn't be clock-aligned anymore, so skip
+            shouldUpdateLastTime = true;
+            MO_DBG_DEBUG("Clock aligned measurement: tolerance exceeded, skip measurement (%i)", (int)dt);
+        }
 
-            if (connectorId != 0 && meterValuesInTxOnlyBool->getBool()) {
-                //don't take any MeterValues outside of transactions on connectorIds other than 0
-                return;
+        if (shouldTakeMeasurement) {
+
+            if (auto alignedMeterValue = takeMeterValue(MO_ReadingContext_SampleClock, MO_FLAG_MeterValuesAlignedData)) {
+                if (meterData.size() >= MO_MVRECORD_SIZE) {
+                    MO_DBG_INFO("MeterValue cache full. Drop old MV");
+                    auto mv = meterData.begin();
+                    delete *mv;
+                    meterData.erase(mv);
+                }
+                alignedMeterValue->opNr = context.getMessageService().getNextOpNr();
+                if (transaction) {
+                    alignedMeterValue->txNr = transaction->getTxNr();
+                }
+                meterData.push_back(alignedMeterValue);
+            }
+
+            if (transaction) {
+                if (auto alignedStopTx = takeMeterValue(MO_ReadingContext_SampleClock, MO_FLAG_StopTxnAlignedData)) {
+                    addTxMeterData(*transaction, alignedStopTx);
+                }
             }
         }
-    }
 
-    if (clockAlignedDataIntervalInt->getInt() >= 1 && model.getClock().now() >= MIN_TIME) {
-
-        auto& timestampNow = model.getClock().now();
-        auto dt = nextAlignedTime - timestampNow;
-        if (dt < 0 ||                              //normal case: interval elapsed
-                dt > clockAlignedDataIntervalInt->getInt()) {   //special case: clock has been adjusted or first run
-
-            MO_DBG_DEBUG("Clock aligned measurement %ds: %s", dt,
-                abs(dt) <= 60 ?
-                "in time (tolerance <= 60s)" : "off, e.g. because of first run. Ignore");
-            if (abs(dt) <= 60) { //is measurement still "clock-aligned"?
-
-                if (auto alignedMeterValue = alignedDataBuilder->takeSample(model.getClock().now(), ReadingContext_SampleClock)) {
-                    if (meterData.size() >= MO_METERVALUES_CACHE_MAXSIZE) {
-                        MO_DBG_INFO("MeterValue cache full. Drop old MV");
-                        meterData.erase(meterData.begin());
-                    }
-                    alignedMeterValue->setOpNr(context.getRequestQueue().getNextOpNr());
-                    if (transaction) {
-                        alignedMeterValue->setTxNr(transaction->getTxNr());
-                    }
-                    meterData.push_back(std::move(alignedMeterValue));
-                }
-
-                if (stopTxnData) {
-                    auto alignedStopTx = stopTxnAlignedDataBuilder->takeSample(model.getClock().now(), ReadingContext_SampleClock);
-                    if (alignedStopTx) {
-                        stopTxnData->addTxData(std::move(alignedStopTx));
-                    }
-                }
-            }
-
-            Timestamp midnightBase = Timestamp(2010,0,0,0,0,0);
-            auto intervall = timestampNow - midnightBase;
-            intervall %= 3600 * 24;
-            Timestamp midnight = timestampNow - intervall;
-            intervall += clockAlignedDataIntervalInt->getInt();
-            if (intervall >= 3600 * 24) {
-                //next measurement is tomorrow; set to precisely 00:00 
-                nextAlignedTime = midnight;
-                nextAlignedTime += 3600 * 24;
+        if (shouldUpdateLastTime) {
+            Timestamp midnightBase;
+            clock.parseString("2010-01-01T00:00:00Z", midnightBase);
+            int32_t dt;
+            clock.delta(timestampNow, midnightBase, dt); //dt is the number of seconds since Jan 1 2010
+            dt %= (int32_t)(3600 * 24); //dt is the number of seconds since midnight
+            Timestamp midnight = timestampNow;
+            clock.add(midnight, -dt); //midnight is last midnight (i.e. today at 00:00)
+            if (dt < mService.clockAlignedDataIntervalInt->getInt()) {
+                //close to midnight, so align to midnight
+                lastAlignedTime = midnight;
             } else {
-                intervall /= clockAlignedDataIntervalInt->getInt();
-                nextAlignedTime = midnight + (intervall * clockAlignedDataIntervalInt->getInt());
+                //at least one period since midnight has elapsed, so align to last period
+                dt /= mService.clockAlignedDataIntervalInt->getInt(); //floor dt to the last full period
+                dt *= mService.clockAlignedDataIntervalInt->getInt();
+                lastAlignedTime = midnight;
+                clock.add(lastAlignedTime, dt);
             }
         }
     }
 
-    if (meterValueSampleIntervalInt->getInt() >= 1) {
+    if (mService.meterValueSampleIntervalInt->getInt() >= 1) {
         //record periodic tx data
 
-        if (mocpp_tick_ms() - lastSampleTime >= (unsigned long) (meterValueSampleIntervalInt->getInt() * 1000)) {
-            if (auto sampledMeterValue = sampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_SamplePeriodic)) {
-                if (meterData.size() >= MO_METERVALUES_CACHE_MAXSIZE) {
-                    MO_DBG_INFO("MeterValue cache full. Drop old MV");
-                    meterData.erase(meterData.begin());
+        auto uptime = clock.getUptime();
+        int32_t dt;
+        clock.delta(uptime, lastSampleTime, dt);
+
+        if (dt >= mService.meterValueSampleIntervalInt->getInt()) {
+            if (auto sampledMeterValue = takeMeterValue(MO_ReadingContext_SamplePeriodic, MO_FLAG_MeterValuesSampledData)) {
+                if (meterData.size() >= MO_MVRECORD_SIZE) {
+                    auto mv = meterData.begin();
+                    delete *mv;
+                    meterData.erase(mv);
                 }
-                sampledMeterValue->setOpNr(context.getRequestQueue().getNextOpNr());
+                sampledMeterValue->opNr = context.getMessageService().getNextOpNr();
                 if (transaction) {
-                    sampledMeterValue->setTxNr(transaction->getTxNr());
+                    sampledMeterValue->txNr = transaction->getTxNr();
                 }
-                meterData.push_back(std::move(sampledMeterValue));
+                meterData.push_back(sampledMeterValue);
             }
 
-            if (stopTxnData && stopTxnDataCapturePeriodicBool->getBool()) {
-                auto sampleStopTx = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_SamplePeriodic);
-                if (sampleStopTx) {
-                    stopTxnData->addTxData(std::move(sampleStopTx));
+            if (transaction && mService.stopTxnDataCapturePeriodicBool->getBool()) {
+                if (auto sampleStopTx = takeMeterValue(MO_ReadingContext_SamplePeriodic, MO_FLAG_StopTxnSampledData)) {
+                    addTxMeterData(*transaction, sampleStopTx);
                 }
             }
-            lastSampleTime = mocpp_tick_ms();
+
+            lastSampleTime = uptime;
         }
     }
 }
 
-std::unique_ptr<Operation> MeteringServiceEvse::takeTriggeredMeterValues() {
+Operation *Ocpp16::MeteringServiceEvse::createTriggeredMeterValues() {
 
-    auto sample = sampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_Trigger);
-
-    if (!sample) {
+    auto meterValue = takeMeterValue(MO_ReadingContext_Trigger, MO_FLAG_MeterValuesSampledData);
+    if (!meterValue) {
+        MO_DBG_ERR("OOM");
         return nullptr;
     }
 
-    std::shared_ptr<Transaction> transaction = nullptr;
-    if (model.getConnector(connectorId)) {
-        transaction = model.getConnector(connectorId)->getTransaction();
+    int transactionId = -1;
+    if (auto tx = txSvcEvse->getTransaction()) {
+        transactionId = tx->getTransactionId();
     }
 
-    auto msg = std::unique_ptr<MeterValues>(new MeterValues(model, std::move(sample), connectorId, transaction));
-    auto meterValues = makeRequest(std::move(msg));
-    meterValues->setTimeout(120000);
-    return meterValues;
-}
-
-void MeteringServiceEvse::addMeterValueSampler(std::unique_ptr<SampledValueSampler> meterValueSampler) {
-    if (!strcmp(meterValueSampler->getProperties().getMeasurand(), "Energy.Active.Import.Register")) {
-        energySamplerIndex = samplers.size();
+    auto operation = new MeterValues(context, connectorId, transactionId, meterValue, /*transferOwnership*/ true);
+    if (!operation) {
+        MO_DBG_ERR("OOM");
+        delete meterValue;
+        return nullptr;
     }
-    samplers.push_back(std::move(meterValueSampler));
+
+    return operation;
 }
 
-std::unique_ptr<SampledValue> MeteringServiceEvse::readTxEnergyMeter(ReadingContext model) {
-    if (energySamplerIndex >= 0 && (size_t) energySamplerIndex < samplers.size()) {
-        return samplers[energySamplerIndex]->takeValue(model);
+int32_t Ocpp16::MeteringServiceEvse::readTxEnergyMeter(MO_ReadingContext readingContext) {
+    if (txEnergyMeterInput) {
+        return txEnergyMeterInput();
+    } else if (txEnergyMeterInput2) {
+        return txEnergyMeterInput2(readingContext, connectorId, txEnergyMeterInput2_user_data);
     } else {
-        MO_DBG_DEBUG("Called readTxEnergyMeter(), but no energySampler or handling strategy set");
-        return nullptr;
+        return 0;
     }
 }
 
-void MeteringServiceEvse::beginTxMeterData(Transaction *transaction) {
-    if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
-        stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
+bool Ocpp16::MeteringServiceEvse::addTxMeterData(Transaction& transaction, MeterValue *mv) {
+
+    auto& txMeterValues = transaction.getTxMeterValues();
+
+    unsigned int mvIndex;
+    bool replaceEntry = false;
+    if (txMeterValues.size() >= MO_STOPTXDATA_MAX_SIZE) {
+        //replace last entry
+        mvIndex = txMeterValues.size() - 1;
+        replaceEntry = true;
+    } else {
+        //append
+        mvIndex = txMeterValues.size();
     }
 
-    if (stopTxnData) {
-        auto sampleTxBegin = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_TransactionBegin);
-        if (sampleTxBegin) {
-            stopTxnData->addTxData(std::move(sampleTxBegin));
-        }
-    }
-}
-
-std::shared_ptr<TransactionMeterData> MeteringServiceEvse::endTxMeterData(Transaction *transaction) {
-    if (!stopTxnData || stopTxnData->getTxNr() != transaction->getTxNr()) {
-        stopTxnData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
+    size_t capacity = mvIndex + 1;
+    txMeterValues.resize(capacity);
+    if (txMeterValues.size() < capacity) {
+        MO_DBG_ERR("OOM");
+        goto fail;
     }
 
-    if (stopTxnData) {
-        auto sampleTxEnd = stopTxnSampledDataBuilder->takeSample(model.getClock().now(), ReadingContext_TransactionEnd);
-        if (sampleTxEnd) {
-            stopTxnData->addTxData(std::move(sampleTxEnd));
-        }
-    }
-
-    return std::move(stopTxnData);
-}
-
-void MeteringServiceEvse::abortTxMeterData() {
-    stopTxnData.reset();
-}
-
-std::shared_ptr<TransactionMeterData> MeteringServiceEvse::getStopTxMeterData(Transaction *transaction) {
-    auto txData = meterStore.getTxMeterData(*stopTxnSampledDataBuilder, transaction);
-
-    if (!txData) {
-        MO_DBG_ERR("could not create TxData");
-        return nullptr;
-    }
-
-    return txData;
-}
-
-bool MeteringServiceEvse::removeTxMeterData(unsigned int txNr) {
-    return meterStore.remove(connectorId, txNr);
-}
-
-bool MeteringServiceEvse::existsSampler(const char *measurand, size_t len) {
-    for (size_t i = 0; i < samplers.size(); i++) {
-        if (strlen(samplers[i]->getProperties().getMeasurand()) == len &&
-                !strncmp(measurand, samplers[i]->getProperties().getMeasurand(), len)) {
-            return true;
+    if (filesystem) {
+        auto ret = MeterStore::store(filesystem, context, connectorId, transaction.getTxNr(), mvIndex, *mv);
+        if (ret != FilesystemUtils::StoreStatus::Success) {
+            MO_DBG_ERR("fs failure");
+            goto fail;
         }
     }
 
+    if (replaceEntry) {
+        delete txMeterValues.back();
+        txMeterValues.back() = mv;
+        MO_DBG_DEBUG("updated latest sd");
+    } else {
+        txMeterValues.emplace_back(mv);
+        MO_DBG_DEBUG("added sd");
+    }
+    return true;
+fail:
+    delete mv;
     return false;
 }
 
-unsigned int MeteringServiceEvse::getFrontRequestOpNr() {
+bool Ocpp16::MeteringServiceEvse::beginTxMeterData(Transaction *transaction) {
+
+    auto& txMeterValues = transaction->getTxMeterValues();
+
+    if (!txMeterValues.empty()) {
+        //first MV already taken
+        return true;
+    }
+
+    auto sampleTxBegin = takeMeterValue(MO_ReadingContext_TransactionBegin, MO_FLAG_StopTxnSampledData);
+    if (!sampleTxBegin) {
+        return true;
+    }
+
+    return addTxMeterData(*transaction, sampleTxBegin);
+}
+
+bool Ocpp16::MeteringServiceEvse::endTxMeterData(Transaction *transaction) {
+
+    auto& txMeterValues = transaction->getTxMeterValues();
+
+    if (!txMeterValues.empty() && txMeterValues.back()->readingContext == MO_ReadingContext_TransactionEnd) {
+        //final MV already taken
+        return true;
+    }
+
+    auto sampleTxEnd = takeMeterValue(MO_ReadingContext_TransactionEnd, MO_FLAG_StopTxnSampledData);
+    if (!sampleTxEnd) {
+        return true;
+    }
+
+    return addTxMeterData(*transaction, sampleTxEnd);
+}
+
+void Ocpp16::MeteringServiceEvse::updateInputSelectFlags() {
+    uint16_t selectInputsWriteCount = 0;
+    selectInputsWriteCount += mService.meterValuesSampledDataString->getWriteCount();
+    selectInputsWriteCount += mService.stopTxnSampledDataString->getWriteCount();
+    selectInputsWriteCount += mService.meterValuesAlignedDataString->getWriteCount();
+    selectInputsWriteCount += mService.stopTxnAlignedDataString->getWriteCount();
+    selectInputsWriteCount += (uint16_t)meterInputs.size(); //also invalidate if new meterInputs were added
+    if (selectInputsWriteCount != trackSelectInputs) {
+        MO_DBG_DEBUG("Updating observed samplers after config change or meterInputs added");
+        updateInputSelectFlag(mService.meterValuesSampledDataString->getString(), MO_FLAG_MeterValuesSampledData, meterInputs);
+        updateInputSelectFlag(mService.stopTxnSampledDataString->getString(), MO_FLAG_StopTxnSampledData, meterInputs);
+        updateInputSelectFlag(mService.meterValuesAlignedDataString->getString(), MO_FLAG_MeterValuesAlignedData, meterInputs);
+        updateInputSelectFlag(mService.stopTxnAlignedDataString->getString(), MO_FLAG_StopTxnAlignedData, meterInputs);
+        trackSelectInputs = selectInputsWriteCount;
+    }
+}
+
+unsigned int Ocpp16::MeteringServiceEvse::getFrontRequestOpNr() {
     if (!meterDataFront && !meterData.empty()) {
         MO_DBG_DEBUG("advance MV front");
-        meterDataFront = std::move(meterData.front());
+        meterDataFront = meterData.front(); //transfer ownership
         meterData.erase(meterData.begin());
     }
     if (meterDataFront) {
-        return meterDataFront->getOpNr();
+        return meterDataFront->opNr;
     }
     return NoOperation;
 }
 
-std::unique_ptr<Request> MeteringServiceEvse::fetchFrontRequest() {
+std::unique_ptr<Request> Ocpp16::MeteringServiceEvse::fetchFrontRequest() {
+
+    if (!mService.connection->isConnected()) {
+        //offline behavior: pause sending messages and do not increment attempt counters
+        return nullptr;
+    }
 
     if (!meterDataFront) {
         return nullptr;
     }
 
-    if ((int)meterDataFront->getAttemptNr() >= transactionMessageAttemptsInt->getInt()) {
+    if (meterValuesInProgress) {
+        //ensure that only one MeterValues request is being executed at the same time
+        return nullptr;
+    }
+
+    if ((int)meterDataFront->attemptNr >= mService.transactionMessageAttemptsInt->getInt()) {
         MO_DBG_WARN("exceeded TransactionMessageAttempts. Discard MeterValue");
-        meterDataFront.reset();
+        delete meterDataFront;
+        meterDataFront = nullptr;
         return nullptr;
     }
 
-    if (mocpp_tick_ms() - meterDataFront->getAttemptTime() < meterDataFront->getAttemptNr() * (unsigned long)(std::max(0, transactionMessageRetryIntervalInt->getInt())) * 1000UL) {
+    int32_t dtLastAttempt;
+    if (!clock.delta(clock.getUptime(), meterDataFront->attemptTime, dtLastAttempt)) {
+        MO_DBG_ERR("internal error");
+        dtLastAttempt = 0;
+    }
+
+    if (dtLastAttempt < meterDataFront->attemptNr * std::max(0, mService.transactionMessageRetryIntervalInt->getInt())) {
         return nullptr;
     }
 
-    meterDataFront->advanceAttemptNr();
-    meterDataFront->setAttemptTime(mocpp_tick_ms());
+    meterDataFront->attemptNr++;
+    meterDataFront->attemptTime = clock.getUptime();
 
-    //fetch tx for meterValue
-    std::shared_ptr<Transaction> tx;
-    if (meterDataFront->getTxNr() >= 0) {
-        tx = model.getTransactionStore()->getTransaction(connectorId, meterDataFront->getTxNr());
+    auto transaction = txSvcEvse->getTransactionFront();
+    if (transaction && transaction->getTxNr() != meterDataFront->txNr) {
+        MO_DBG_ERR("txNr mismatch"); //this could happen if tx-related MeterValues are sent shortly before StartTx or shortly after StopTx, or if txNr is mis-assigned during creation
+        transaction = nullptr;
     }
 
     //discard MV if it belongs to silent tx
-    if (tx && tx->isSilent()) {
+    if (transaction && transaction->isSilent()) {
         MO_DBG_DEBUG("Drop MeterValue belonging to silent tx");
-        meterDataFront.reset();
+        delete meterDataFront;
+        meterDataFront = nullptr;
         return nullptr;
     }
 
-    auto meterValues = makeRequest(new MeterValues(model, meterDataFront.get(), connectorId, tx));
-    meterValues->setOnReceiveConfListener([this] (JsonObject) {
+    int transactionId = -1;
+    if (transaction) {
+        transactionId = transaction->getTransactionId();
+    }
+
+    auto meterValues = makeRequest(context, new MeterValues(context, connectorId, transactionId, meterDataFront, /*transferOwnership*/ false));
+    meterValues->setOnReceiveConf([this] (JsonObject) {
+        meterValuesInProgress = false;
+
         //operation success
         MO_DBG_DEBUG("drop MV front");
-        meterDataFront.reset();
+        delete meterDataFront;
+        meterDataFront = nullptr;
     });
+    meterValues->setOnAbort([this] () {
+        meterValuesInProgress = false;
+    });
+
+    meterValuesInProgress = true;
 
     return meterValues;
 }
 
-MeteringService::MeteringService(Context& context, int numConn, std::shared_ptr<FilesystemAdapter> filesystem)
-      : MemoryManaged("v16.Metering.MeteringService"), context(context), meterStore(filesystem), connectors(makeVector<std::unique_ptr<MeteringServiceEvse>>(getMemoryTag())) {
+Ocpp16::MeteringService::MeteringService(Context& context)
+      : MemoryManaged("v16.Metering.MeteringService"), context(context) {
 
-    //set factory defaults for Metering-related config keys
-    declareConfiguration<const char*>("MeterValuesSampledData", "Energy.Active.Import.Register,Power.Active.Import");
-    declareConfiguration<const char*>("StopTxnSampledData", "");
-    declareConfiguration<const char*>("MeterValuesAlignedData", "Energy.Active.Import.Register,Power.Active.Import");
-    declareConfiguration<const char*>("StopTxnAlignedData", "");
-    
-    connectors.reserve(numConn);
-    for (int i = 0; i < numConn; i++) {
-        connectors.emplace_back(new MeteringServiceEvse(context, i, meterStore));
+}
+
+Ocpp16::MeteringService::~MeteringService() {
+    for (unsigned int i = 0; i < MO_NUM_EVSEID; i++) {
+        delete evses[i];
+        evses[i] = nullptr;
+    }
+}
+
+bool Ocpp16::MeteringService::setup() {
+
+    connection = context.getConnection();
+    if (!connection) {
+        MO_DBG_ERR("setup failure");
+        return false;
     }
 
-    std::function<bool(const char*)> validateSelectString = [this] (const char *csl) {
-        bool isValid = true;
-        const char *l = csl; //the beginning of an entry of the comma-separated list
-        const char *r = l; //one place after the last character of the entry beginning with l
-        while (*l) {
-            if (*l == ',') {
-                l++;
-                continue;
-            }
-            r = l + 1;
-            while (*r != '\0' && *r != ',') {
-                r++;
-            }
-            bool found = false;
-            for (size_t cId = 0; cId < connectors.size(); cId++) {
-                if (connectors[cId]->existsSampler(l, (size_t) (r - l))) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                isValid = false;
-                MO_DBG_WARN("could not find metering device for %.*s", (int) (r - l), l);
-                break;
-            }
-            l = r;
+    auto configService = context.getModel16().getConfigurationService();
+    if (!configService) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    meterValuesSampledDataString = configService->declareConfiguration<const char*>("MeterValuesSampledData", "Energy.Active.Import.Register,Power.Active.Import");
+    stopTxnSampledDataString = configService->declareConfiguration<const char*>("StopTxnSampledData", "");
+    meterValueSampleIntervalInt = configService->declareConfiguration<int>("MeterValueSampleInterval", 60);
+
+    meterValuesAlignedDataString = configService->declareConfiguration<const char*>("MeterValuesAlignedData", "");
+    stopTxnAlignedDataString = configService->declareConfiguration<const char*>("StopTxnAlignedData", "");
+    clockAlignedDataIntervalInt  = configService->declareConfiguration<int>("ClockAlignedDataInterval", 0);
+
+    meterValuesInTxOnlyBool = configService->declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "MeterValuesInTxOnly", true);
+    stopTxnDataCapturePeriodicBool = configService->declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "StopTxnDataCapturePeriodic", false);
+
+    transactionMessageAttemptsInt = configService->declareConfiguration<int>("TransactionMessageAttempts", 3);
+    transactionMessageRetryIntervalInt = configService->declareConfiguration<int>("TransactionMessageRetryInterval", 60);
+
+    if (!meterValuesSampledDataString ||
+            !stopTxnSampledDataString ||
+            !meterValueSampleIntervalInt ||
+            !meterValuesAlignedDataString ||
+            !stopTxnAlignedDataString ||
+            !clockAlignedDataIntervalInt ||
+            !meterValuesInTxOnlyBool ||
+            !stopTxnDataCapturePeriodicBool ||
+            !transactionMessageAttemptsInt ||
+            !transactionMessageRetryIntervalInt) {
+        MO_DBG_ERR("declareConfiguration failed");
+        return false;
+    }
+
+    configService->registerValidator<const char*>("MeterValuesSampledData", validateSelectString, reinterpret_cast<void*>(&context));
+    configService->registerValidator<const char*>("StopTxnSampledData", validateSelectString, reinterpret_cast<void*>(&context));
+    configService->registerValidator<int>("MeterValueSampleInterval", VALIDATE_UNSIGNED_INT);
+
+    configService->registerValidator<const char*>("MeterValuesAlignedData", validateSelectString, reinterpret_cast<void*>(&context));
+    configService->registerValidator<const char*>("StopTxnAlignedData", validateSelectString, reinterpret_cast<void*>(&context));
+    configService->registerValidator<int>("ClockAlignedDataInterval", VALIDATE_UNSIGNED_INT);
+
+    auto rcService = context.getModel16().getRemoteControlService();
+    if (!rcService) {
+        MO_DBG_ERR("initialization error");
+        return false;
+    }
+
+    rcService->addTriggerMessageHandler("MeterValues", [] (Context& context, unsigned int evseId) {
+        auto mvSvc = context.getModel16().getMeteringService();
+        auto mvSvcEvse = mvSvc ? mvSvc->getEvse(evseId) : nullptr;
+        return mvSvcEvse ? mvSvcEvse->createTriggeredMeterValues() : nullptr;
+    });
+
+    #if MO_ENABLE_MOCK_SERVER
+    context.getMessageService().registerOperation("MeterValues", nullptr, nullptr);
+    #endif //MO_ENABLE_MOCK_SERVER
+
+    numEvseId = context.getModel16().getNumEvseId();
+    for (unsigned int i = 0; i < numEvseId; i++) {
+        if (!getEvse(i) || !getEvse(i)->setup()) {
+            MO_DBG_ERR("connector init failure");
+            return false;
         }
-        return isValid;
-    };
+    }
 
-    registerConfigurationValidator("MeterValuesSampledData", validateSelectString);
-    registerConfigurationValidator("StopTxnSampledData", validateSelectString);
-    registerConfigurationValidator("MeterValuesAlignedData", validateSelectString);
-    registerConfigurationValidator("StopTxnAlignedData", validateSelectString);
-    registerConfigurationValidator("MeterValueSampleInterval", VALIDATE_UNSIGNED_INT);
-    registerConfigurationValidator("ClockAlignedDataInterval", VALIDATE_UNSIGNED_INT);
-
-    /*
-     * Register further message handlers to support echo mode: when this library
-     * is connected with a WebSocket echo server, let it reply to its own requests.
-     * Mocking an OCPP Server on the same device makes running (unit) tests easier.
-     */
-    context.getOperationRegistry().registerOperation("MeterValues", [this] () {
-        return new Ocpp16::MeterValues(this->context.getModel());});
+    return true;
 }
 
-void MeteringService::loop(){
-    for (unsigned int i = 0; i < connectors.size(); i++){
-        connectors[i]->loop();
+void Ocpp16::MeteringService::loop(){
+    for (unsigned int i = 0; i < numEvseId; i++){
+        evses[i]->loop();
     }
 }
+
+Ocpp16::MeteringServiceEvse *Ocpp16::MeteringService::getEvse(unsigned int evseId) {
+    if (evseId >= numEvseId) {
+        MO_DBG_ERR("evseId out of bound");
+        return nullptr;
+    }
+
+    if (!evses[evseId]) {
+        evses[evseId] = new MeteringServiceEvse(context, *this, evseId);
+        if (!evses[evseId]) {
+            MO_DBG_ERR("OOM");
+            return nullptr;
+        }
+    }
+
+    return evses[evseId];
+}
+
+#endif //MO_ENABLE_V16
+
+#if MO_ENABLE_V201
+
+#define MO_FLAG_SampledDataTxStarted (1 << 0)
+#define MO_FLAG_SampledDataTxUpdated (1 << 1)
+#define MO_FLAG_SampledDataTxEnded   (1 << 2)
+#define MO_FLAG_AlignedData          (1 << 3)
+
+using namespace MicroOcpp;
+
+Ocpp201::MeteringServiceEvse::MeteringServiceEvse(Context& context, MeteringService& mService, unsigned int evseId)
+        : MemoryManaged("v201.MeterValues.MeteringServiceEvse"), context(context), mService(mService), evseId(evseId), meterInputs(makeVector<MO_MeterInput>(getMemoryTag())) {
+
+}
+
+bool Ocpp201::MeteringServiceEvse::setup() {
+    return true; //nothing to be done here
+}
+
+bool Ocpp201::MeteringServiceEvse::addMeterInput(MO_MeterInput meterInput) {
+    auto capacity = meterInputs.size() + 1;
+    meterInputs.resize(capacity);
+    if (meterInputs.capacity() < capacity) {
+        MO_DBG_ERR("OOM");
+        return false;
+    }
+
+    meterInput.mo_flags = 0;
+    meterInputs.push_back(meterInput);
+    return true;
+}
+
+Vector<MO_MeterInput>& Ocpp201::MeteringServiceEvse::getMeterInputs() {
+    return meterInputs;
+}
+
+void Ocpp201::MeteringServiceEvse::updateInputSelectFlags() {
+    uint16_t selectInputsWriteCount = 0;
+    selectInputsWriteCount += mService.sampledDataTxStartedMeasurands->getWriteCount();
+    selectInputsWriteCount += mService.sampledDataTxUpdatedMeasurands->getWriteCount();
+    selectInputsWriteCount += mService.sampledDataTxEndedMeasurands->getWriteCount();
+    selectInputsWriteCount += mService.alignedDataMeasurands->getWriteCount();
+    selectInputsWriteCount += (uint16_t)meterInputs.size(); //also invalidate if new meterInputs were added
+    if (selectInputsWriteCount != trackSelectInputs) {
+        MO_DBG_DEBUG("Updating observed samplers after variables change or meterInputs added");
+        updateInputSelectFlag(mService.sampledDataTxStartedMeasurands->getString(), MO_FLAG_SampledDataTxStarted, meterInputs);
+        updateInputSelectFlag(mService.sampledDataTxUpdatedMeasurands->getString(), MO_FLAG_SampledDataTxUpdated, meterInputs);
+        updateInputSelectFlag(mService.sampledDataTxEndedMeasurands->getString(), MO_FLAG_SampledDataTxEnded, meterInputs);
+        updateInputSelectFlag(mService.alignedDataMeasurands->getString(), MO_FLAG_AlignedData, meterInputs);
+        trackSelectInputs = selectInputsWriteCount;
+    }
+}
+
+std::unique_ptr<MeterValue> Ocpp201::MeteringServiceEvse::takeTxStartedMeterValue(MO_ReadingContext readingContext) {
+    updateInputSelectFlags();
+    return std::unique_ptr<MeterValue>(MicroOcpp::takeMeterValue(context.getClock(), meterInputs, evseId, readingContext, MO_FLAG_SampledDataTxStarted, getMemoryTag()));
+}
+std::unique_ptr<MeterValue> Ocpp201::MeteringServiceEvse::takeTxUpdatedMeterValue(MO_ReadingContext readingContext) {
+    updateInputSelectFlags();
+    return std::unique_ptr<MeterValue>(MicroOcpp::takeMeterValue(context.getClock(), meterInputs, evseId, readingContext, MO_FLAG_SampledDataTxUpdated, getMemoryTag()));
+}
+std::unique_ptr<MeterValue> Ocpp201::MeteringServiceEvse::takeTxEndedMeterValue(MO_ReadingContext readingContext) {
+    updateInputSelectFlags();
+    return std::unique_ptr<MeterValue>(MicroOcpp::takeMeterValue(context.getClock(), meterInputs, evseId, readingContext, MO_FLAG_SampledDataTxEnded, getMemoryTag()));
+}
+std::unique_ptr<MeterValue> Ocpp201::MeteringServiceEvse::takeTriggeredMeterValues() {
+    updateInputSelectFlags();
+    return std::unique_ptr<MeterValue>(MicroOcpp::takeMeterValue(context.getClock(), meterInputs, evseId, MO_ReadingContext_Trigger, MO_FLAG_AlignedData, getMemoryTag()));
+}
+
+Ocpp201::MeteringService::MeteringService(Context& context) : MemoryManaged("v16.Metering.MeteringService"), context(context) {
+
+}
+
+Ocpp201::MeteringService::~MeteringService() {
+    for (size_t i = 0; i < MO_NUM_EVSEID; i++) {
+        delete evses[i];
+        evses[i] = nullptr;
+    }
+}
+
+Ocpp201::MeteringServiceEvse *Ocpp201::MeteringService::getEvse(unsigned int evseId) {
+    if (evseId >= numEvseId) {
+        MO_DBG_ERR("evseId out of bound");
+        return nullptr;
+    }
+
+    if (!evses[evseId]) {
+        evses[evseId] = new MeteringServiceEvse(context, *this, evseId);
+        if (!evses[evseId]) {
+            MO_DBG_ERR("OOM");
+            return nullptr;
+        }
+    }
+
+    return evses[evseId];
+}
+
+bool Ocpp201::MeteringService::setup() {
+
+    auto varService = context.getModel201().getVariableService();
+    if (!varService) {
+        return false;
+    }
+
+    sampledDataTxStartedMeasurands = varService->declareVariable<const char*>("SampledDataCtrlr", "TxStartedMeasurands", "");
+    sampledDataTxUpdatedMeasurands = varService->declareVariable<const char*>("SampledDataCtrlr", "TxUpdatedMeasurands", "");
+    sampledDataTxEndedMeasurands = varService->declareVariable<const char*>("SampledDataCtrlr", "TxEndedMeasurands", "");
+    alignedDataMeasurands = varService->declareVariable<const char*>("AlignedDataCtrlr", "AlignedDataMeasurands", "");
+
+    if (!sampledDataTxStartedMeasurands ||
+            !sampledDataTxUpdatedMeasurands ||
+            !sampledDataTxEndedMeasurands ||
+            !alignedDataMeasurands) {
+        MO_DBG_ERR("failure to declare variable");
+        return false;
+    }
+
+    //define factory defaults
+    varService->declareVariable<const char*>("SampledDataCtrlr", "TxStartedMeasurands", "");
+    varService->declareVariable<const char*>("SampledDataCtrlr", "TxUpdatedMeasurands", "");
+    varService->declareVariable<const char*>("SampledDataCtrlr", "TxEndedMeasurands", "");
+    varService->declareVariable<const char*>("AlignedDataCtrlr", "AlignedDataMeasurands", "");
+
+    varService->registerValidator<const char*>("SampledDataCtrlr", "TxStartedMeasurands", validateSelectString, reinterpret_cast<void*>(&context));
+    varService->registerValidator<const char*>("SampledDataCtrlr", "TxUpdatedMeasurands", validateSelectString, reinterpret_cast<void*>(&context));
+    varService->registerValidator<const char*>("SampledDataCtrlr", "TxEndedMeasurands", validateSelectString, reinterpret_cast<void*>(&context));
+    varService->registerValidator<const char*>("AlignedDataCtrlr", "AlignedDataMeasurands", validateSelectString, reinterpret_cast<void*>(&context));
+
+    numEvseId = context.getModel201().getNumEvseId();
+    for (size_t i = 0; i < numEvseId; i++) {
+        if (!getEvse(i) || !getEvse(i)->setup()) {
+            MO_DBG_ERR("setup failure");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+#endif //MO_ENABLE_V201

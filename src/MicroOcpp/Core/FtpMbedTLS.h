@@ -29,9 +29,19 @@
 
 #include <MicroOcpp/Core/Ftp.h>
 
+extern "C" {
+
+typedef struct {
+    bool tls_only;
+    const char *client_cert; //zero-copy. client_cert must outlive MO lifecycle. Can be NULL
+    const char *client_key; //zero-copy. client_key must outlive MO lifecycle. Can be NULL
+} MO_FTPConfig;
+
+} //extern "C"
+
 namespace MicroOcpp {
 
-std::unique_ptr<FtpClient> makeFtpClientMbedTLS(bool tls_only = false, const char *client_cert = nullptr, const char *client_key = nullptr);
+std::unique_ptr<FtpClient> makeFtpClientMbedTLS(MO_FTPConfig config);
 
 } //namespace MicroOcpp
 

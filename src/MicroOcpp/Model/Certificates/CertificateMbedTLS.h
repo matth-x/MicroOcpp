@@ -16,7 +16,7 @@
 #define MO_ENABLE_CERT_STORE_MBEDTLS MO_ENABLE_MBEDTLS
 #endif
 
-#if MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
 
 /*
  * Provide certificate interpreter to facilitate cert store in C. A full implementation is only available for C++
@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-bool ocpp_get_cert_hash(const unsigned char *cert, size_t len, enum HashAlgorithmType hashAlg, ocpp_cert_hash *out);
+bool mo_get_cert_hash(const unsigned char *cert, size_t len, enum HashAlgorithmType hashAlg, mo_cert_hash *out);
 
 #ifdef __cplusplus
 } //extern "C"
@@ -49,22 +49,26 @@ bool ocpp_get_cert_hash(const unsigned char *cert, size_t len, enum HashAlgorith
 #endif
 
 #ifndef MO_CERT_FN_MANUFACTURER_ROOT
-#define MO_CERT_FN_MANUFACTURER_ROOT "mfact"
+#define MO_CERT_FN_MANUFACTURER_ROOT "mfct"
 #endif
 
 #ifndef MO_CERT_STORE_SIZE
 #define MO_CERT_STORE_SIZE 3 //max number of certs per certificate type (e.g. CSMS root CA, Manufacturer root CA)
 #endif
 
+#ifndef MO_CERT_STORE_DIGITS
+#define MO_CERT_STORE_DIGITS 1 //digits needed to print MO_CERT_STORE_SIZE-1 (="3", i.e. 1 digit)
+#endif
+
 namespace MicroOcpp {
 
-std::unique_ptr<CertificateStore> makeCertificateStoreMbedTLS(std::shared_ptr<FilesystemAdapter> filesystem);
+std::unique_ptr<CertificateStore> makeCertificateStoreMbedTLS(MO_FilesystemAdapter *filesystem);
 
-bool printCertFn(const char *certType, size_t index, char *buf, size_t bufsize);
+bool printCertPath(MO_FilesystemAdapter *filesystem, char *path, size_t size, const char *certType, unsigned int index);
 
 } //namespace MicroOcpp
 
 #endif //def __cplusplus
-#endif //MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
 
 #endif

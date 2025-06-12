@@ -5,17 +5,15 @@
 #ifndef MO_GETLOCALLISTVERSION_H
 #define MO_GETLOCALLISTVERSION_H
 
+#include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Version.h>
 
-#if MO_ENABLE_LOCAL_AUTH
-
-#include <MicroOcpp/Core/Operation.h>
+#if MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 
 namespace MicroOcpp {
+namespace Ocpp16 {
 
 class Model;
-
-namespace Ocpp16 {
 
 class GetLocalListVersion : public Operation, public MemoryManaged {
 private:
@@ -30,8 +28,7 @@ public:
     std::unique_ptr<JsonDoc> createConf() override;
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
-
-#endif //MO_ENABLE_LOCAL_AUTH
+} //namespace Ocpp16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 #endif

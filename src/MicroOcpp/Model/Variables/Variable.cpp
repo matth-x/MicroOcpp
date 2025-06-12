@@ -6,17 +6,15 @@
  * Implementation of the UCs B05 - B06
  */
 
-#include <MicroOcpp/Version.h>
+#include <string.h>
+
+#include <MicroOcpp/Model/Variables/Variable.h>
+#include <MicroOcpp/Debug.h>
 
 #if MO_ENABLE_V201
 
-#include <MicroOcpp/Model/Variables/Variable.h>
-
-#include <string.h>
-
-#include <MicroOcpp/Debug.h>
-
 using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp201;
 
 ComponentId::ComponentId(const char *name) : name(name) { }
 ComponentId::ComponentId(const char *name, EvseId evse) : name(name), evse(evse) { }
@@ -147,7 +145,7 @@ void Variable::setRebootRequired() {
 void Variable::setMutability(Mutability m) {
     this->mutability = m;
 }
-Variable::Mutability Variable::getMutability() {
+Mutability Variable::getMutability() {
     return mutability;
 }
 
@@ -369,7 +367,7 @@ public:
     }
 };
 
-std::unique_ptr<Variable> MicroOcpp::makeVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet supportAttributes) {
+std::unique_ptr<Variable> MicroOcpp::Ocpp201::makeVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet supportAttributes) {
     switch(dtype) {
         case Variable::InternalDataType::Int:
             if (supportAttributes.count() > 1) {
@@ -395,4 +393,4 @@ std::unique_ptr<Variable> MicroOcpp::makeVariable(Variable::InternalDataType dty
     return nullptr;
 }
 
-#endif // MO_ENABLE_V201
+#endif //MO_ENABLE_V201

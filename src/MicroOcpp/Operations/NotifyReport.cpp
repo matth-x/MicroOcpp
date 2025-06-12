@@ -2,20 +2,20 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <MicroOcpp/Operations/NotifyReport.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Variables/Variable.h>
 #include <MicroOcpp/Debug.h>
 
-using namespace MicroOcpp::Ocpp201;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V201
 
-NotifyReport::NotifyReport(Model& model, int requestId, const Timestamp& generatedAt, bool tbc, int seqNo, const Vector<Variable*>& reportData)
-        : MemoryManaged("v201.Operation.", "NotifyReport"), model(model), requestId(requestId), generatedAt(generatedAt), tbc(tbc), seqNo(seqNo), reportData(reportData) {
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp201;
+
+NotifyReport::NotifyReport(Context& context, int requestId, const Timestamp& generatedAt, bool tbc, unsigned int seqNo, const Vector<Variable*>& reportData)
+        : MemoryManaged("v201.Operation.", "NotifyReport"), context(context), requestId(requestId), generatedAt(generatedAt), tbc(tbc), seqNo(seqNo), reportData(reportData) {
 
 }
 
@@ -36,7 +36,7 @@ std::unique_ptr<JsonDoc> NotifyReport::createReq() {
 
     size_t capacity = 
             JSON_OBJECT_SIZE(5) + //total of 5 fields
-            JSONDATE_LENGTH + 1; //timestamp string
+            MO_JSONDATE_SIZE; //timestamp string
 
     capacity += JSON_ARRAY_SIZE(reportData.size());
     for (auto variable : reportData) {
@@ -86,8 +86,11 @@ std::unique_ptr<JsonDoc> NotifyReport::createReq() {
     JsonObject payload = doc->to<JsonObject>();
     payload["requestId"] = requestId;
 
-    char generatedAtCstr [JSONDATE_LENGTH + 1];
-    generatedAt.toJsonString(generatedAtCstr, sizeof(generatedAtCstr));
+    char generatedAtCstr [MO_JSONDATE_SIZE];
+    if (!context.getClock().toJsonString(generatedAt, generatedAtCstr, sizeof(generatedAtCstr))) {
+        MO_DBG_ERR("internal error");
+        generatedAtCstr[0] = '\0';
+    }
     payload["generatedAt"] = generatedAtCstr;
 
     if (tbc) {
@@ -144,7 +147,7 @@ std::unique_ptr<JsonDoc> NotifyReport::createReq() {
                 attribute["type"] = attributeTypeCstr;
             }
 
-            if (variable->getMutability() != Variable::Mutability::WriteOnly) {
+            if (variable->getMutability() != Mutability::WriteOnly) {
                 switch (variable->getInternalDataType()) {
                     case Variable::InternalDataType::Int: {
                         char valbuf [VALUE_BUFSIZE];
@@ -169,13 +172,13 @@ std::unique_ptr<JsonDoc> NotifyReport::createReq() {
 
             const char *mutabilityCstr = nullptr;
             switch (variable->getMutability()) {
-                case Variable::Mutability::ReadOnly:
+                case Mutability::ReadOnly:
                     mutabilityCstr = "ReadOnly";
                     break;
-                case Variable::Mutability::WriteOnly:
+                case Mutability::WriteOnly:
                     mutabilityCstr = "WriteOnly";
                     break;
-                case Variable::Mutability::ReadWrite:
+                case Mutability::ReadWrite:
                     // leave blank when ReadWrite
                     break;
                 default:
@@ -239,4 +242,4 @@ void NotifyReport::processConf(JsonObject payload) {
     // empty payload
 }
 
-#endif // MO_ENABLE_V201
+#endif //MO_ENABLE_V201

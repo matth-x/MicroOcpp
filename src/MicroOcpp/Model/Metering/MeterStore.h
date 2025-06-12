@@ -8,54 +8,35 @@
 #include <MicroOcpp/Model/Metering/MeterValue.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/FilesystemUtils.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16
+
+#ifndef MO_STOPTXDATA_MAX_SIZE
+#define MO_STOPTXDATA_MAX_SIZE 4
+#endif
+
+#ifndef MO_STOPTXDATA_DIGITS
+#define MO_STOPTXDATA_DIGITS 1 //digits needed to print MO_STOPTXDATA_MAX_SIZE-1 (="3", i.e. 1 digit)
+#endif
 
 namespace MicroOcpp {
 
-class TransactionMeterData : public MemoryManaged {
-private:
-    const unsigned int connectorId; //assignment to Transaction object
-    const unsigned int txNr; //assignment to Transaction object
+class Context;
 
-    unsigned int mvCount = 0; //nr of saved meter values, including gaps
-    bool finalized = false; //if true, this is read-only
+namespace Ocpp16 {
+namespace MeterStore {
 
-    std::shared_ptr<FilesystemAdapter> filesystem;
+bool printTxMeterValueFName(char *fname, size_t size, unsigned int evseId, unsigned int txNr, unsigned int mvIndex);
 
-    Vector<std::unique_ptr<MeterValue>> txData;
+FilesystemUtils::LoadStatus load(MO_FilesystemAdapter *filesystem, Context& context, Vector<MO_MeterInput>& meterInputs, unsigned int evseId, unsigned int txNr, Vector<MeterValue*>& txMeterValue);
+FilesystemUtils::StoreStatus store(MO_FilesystemAdapter *filesystem, Context& context, unsigned int evseId, unsigned int txNr, unsigned int mvIndex, MeterValue& mv);
+bool remove(MO_FilesystemAdapter *filesystem, unsigned int evseId, unsigned int txNr); //removes tx meter values only
 
-public:
-    TransactionMeterData(unsigned int connectorId, unsigned int txNr, std::shared_ptr<FilesystemAdapter> filesystem);
-
-    bool addTxData(std::unique_ptr<MeterValue> mv);
-
-    Vector<std::unique_ptr<MeterValue>> retrieveStopTxData(); //will invalidate internal cache
-
-    bool restore(MeterValueBuilder& mvBuilder); //load record from memory; true if record found, false if nothing loaded
-
-    unsigned int getConnectorId() {return connectorId;}
-    unsigned int getTxNr() {return txNr;}
-    unsigned int getPathsCount() {return mvCount;} //size of spanned path indexes
-    void finalize() {finalized = true;}
-    bool isFinalized() {return finalized;}
-};
-
-class MeterStore : public MemoryManaged {
-private:
-    std::shared_ptr<FilesystemAdapter> filesystem;
-    
-    Vector<std::weak_ptr<TransactionMeterData>> txMeterData;
-
-public:
-    MeterStore() = delete;
-    MeterStore(MeterStore&) = delete;
-    MeterStore(std::shared_ptr<FilesystemAdapter> filesystem);
-
-    std::shared_ptr<TransactionMeterData> getTxMeterData(MeterValueBuilder& mvBuilder, Transaction *transaction);
-
-    bool remove(unsigned int connectorId, unsigned int txNr);
-};
-
-}
-
+} //namespace MeterStore
+} //namespace Ocpp16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16
 #endif

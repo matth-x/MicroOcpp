@@ -3,15 +3,13 @@
 // MIT License
 
 #include <MicroOcpp/Operations/DeleteCertificate.h>
-
-#if MO_ENABLE_CERT_MGMT
-
 #include <MicroOcpp/Model/Certificates/Certificate.h>
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp201::DeleteCertificate;
-using MicroOcpp::JsonDoc;
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT
+
+using namespace MicroOcpp;
 
 DeleteCertificate::DeleteCertificate(CertificateService& certService) : MemoryManaged("v201.Operation.", "DeleteCertificate"), certService(certService) {
 
@@ -51,9 +49,9 @@ void DeleteCertificate::processReq(JsonObject payload) {
         return;
     }
 
-    auto retIN = ocpp_cert_set_issuerNameHash(&cert, certIdJson["issuerNameHash"] | "_Invalid", cert.hashAlgorithm);
-    auto retIK = ocpp_cert_set_issuerKeyHash(&cert, certIdJson["issuerKeyHash"] | "_Invalid", cert.hashAlgorithm);
-    auto retSN = ocpp_cert_set_serialNumber(&cert, certIdJson["serialNumber"] | "_Invalid");
+    auto retIN = mo_cert_set_issuerNameHash(&cert, certIdJson["issuerNameHash"] | "_Invalid", cert.hashAlgorithm);
+    auto retIK = mo_cert_set_issuerKeyHash(&cert, certIdJson["issuerKeyHash"] | "_Invalid", cert.hashAlgorithm);
+    auto retSN = mo_cert_set_serialNumber(&cert, certIdJson["serialNumber"] | "_Invalid");
     if (retIN < 0 || retIK < 0 || retSN < 0) {
         errorCode = "FormationViolation";
         return;
@@ -93,4 +91,4 @@ std::unique_ptr<JsonDoc> DeleteCertificate::createConf(){
     return doc;
 }
 
-#endif //MO_ENABLE_CERT_MGMT
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT

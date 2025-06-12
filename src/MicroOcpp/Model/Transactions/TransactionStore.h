@@ -5,59 +5,69 @@
 #ifndef MO_TRANSACTIONSTORE_H
 #define MO_TRANSACTIONSTORE_H
 
-#include <MicroOcpp/Version.h>
-#include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
+#include <MicroOcpp/Core/FilesystemUtils.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Model/Common/EvseId.h>
+#include <MicroOcpp/Version.h>
 
-namespace MicroOcpp {
+#if MO_OCPP_V16
 
-class TransactionStore;
+#ifndef MO_STOPTXDATA_MAX_SIZE
+#define MO_STOPTXDATA_MAX_SIZE 4
+#endif
 
-class TransactionStoreEvse : public MemoryManaged {
-private:
-    TransactionStore& context;
-    const unsigned int connectorId;
-
-    std::shared_ptr<FilesystemAdapter> filesystem;
-    
-    Vector<std::weak_ptr<Transaction>> transactions;
-
-public:
-    TransactionStoreEvse(TransactionStore& context, unsigned int connectorId, std::shared_ptr<FilesystemAdapter> filesystem);
-    TransactionStoreEvse(const TransactionStoreEvse&) = delete;
-    TransactionStoreEvse(TransactionStoreEvse&&) = delete;
-    TransactionStoreEvse& operator=(const TransactionStoreEvse&) = delete;
-
-    ~TransactionStoreEvse();
-
-    bool commit(Transaction *transaction);
-
-    std::shared_ptr<Transaction> getTransaction(unsigned int txNr);
-    std::shared_ptr<Transaction> createTransaction(unsigned int txNr, bool silent = false);
-
-    bool remove(unsigned int txNr);
-};
-
-}
-
-#if MO_ENABLE_V201
-
-#ifndef MO_TXEVENTRECORD_SIZE_V201
-#define MO_TXEVENTRECORD_SIZE_V201 10 //maximum number of of txEvents per tx to hold on flash storage
+#ifndef MO_STOPTXDATA_DIGITS
+#define MO_STOPTXDATA_DIGITS 1 //digits needed to print MO_STOPTXDATA_MAX_SIZE-1 (="3", i.e. 1 digit)
 #endif
 
 namespace MicroOcpp {
+
+class Context;
+
+namespace Ocpp16 {
+
+class Transaction;
+
+namespace TransactionStore {
+
+bool printTxFname(char *fname, size_t size, unsigned int evseId, unsigned int txNr);
+
+FilesystemUtils::LoadStatus load(MO_FilesystemAdapter *filesystem, Context& context, unsigned int evseId, unsigned int txNr, Transaction& transaction);
+FilesystemUtils::StoreStatus store(MO_FilesystemAdapter *filesystem, Context& context, Transaction& transaction);
+bool remove(MO_FilesystemAdapter *filesystem, unsigned int evseId, unsigned int txNr);
+
+} //namespace TransactionStore
+} //namespace Ocpp16
+} //namespace MicroOcpp
+#endif //MO_OCPP_V16
+
+#if MO_ENABLE_V201
+
+#ifndef MO_TXEVENTRECORD_SIZE
+#define MO_TXEVENTRECORD_SIZE 10 //maximum number of of txEvents per tx to hold on flash storage
+#endif
+
+#ifndef MO_TXEVENTRECORD_DIGITS
+#define MO_TXEVENTRECORD_DIGITS 10 //digits needed to print MO_TXEVENTRECORD_SIZE-1 (="9", i.e. 1 digit)
+#endif
+
+namespace MicroOcpp {
+
+class Context;
+
 namespace Ocpp201 {
 
+class Transaction;
+class TransactionEventData;
 class TransactionStore;
 
 class TransactionStoreEvse : public MemoryManaged {
 private:
-    TransactionStore& txStore;
+    Context& context;
     const unsigned int evseId;
 
-    std::shared_ptr<FilesystemAdapter> filesystem;
+    MO_FilesystemAdapter *filesystem = nullptr;
 
     bool serializeTransaction(Transaction& tx, JsonObject out);
     bool serializeTransactionEvent(TransactionEventData& txEvent, JsonObject out);
@@ -66,10 +76,12 @@ private:
 
     bool commit(Transaction& transaction, TransactionEventData *transactionEvent);
 
-public:
-    TransactionStoreEvse(TransactionStore& txStore, unsigned int evseId, std::shared_ptr<FilesystemAdapter> filesystem);
+    bool printTxEventFname(char *fname, size_t size, unsigned int evseId, unsigned int txNr, unsigned int seqNo);
 
-    bool discoverStoredTx(unsigned int& txNrBeginOut, unsigned int& txNrEndOut);
+public:
+    TransactionStoreEvse(Context& context, unsigned int evseId);
+
+    bool setup();
 
     bool commit(Transaction *transaction);
     bool commit(TransactionEventData *transactionEvent);
@@ -86,18 +98,21 @@ public:
 
 class TransactionStore : public MemoryManaged {
 private:
-    TransactionStoreEvse *evses [MO_NUM_EVSEID] = {nullptr};
+    Context& context;
+    TransactionStoreEvse* evses [MO_NUM_EVSEID] = {nullptr};
+    unsigned int numEvseId = MO_NUM_EVSEID;
 public:
-    TransactionStore(std::shared_ptr<FilesystemAdapter> filesystem, size_t numEvses);
+    TransactionStore(Context& context);
 
     ~TransactionStore();
+
+    bool setup();
 
     TransactionStoreEvse *getEvse(unsigned int evseId);
 };
 
 } //namespace Ocpp201
 } //namespace MicroOcpp
-
 #endif //MO_ENABLE_V201
 
 #endif

@@ -1,16 +1,15 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #ifndef MO_REQUESTQUEUE_H
 #define MO_REQUESTQUEUE_H
 
 #include <limits>
+#include <memory>
 
-#include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Memory.h>
 
-#include <memory>
 #include <ArduinoJson.h>
 
 #ifndef MO_REQUEST_CACHE_MAXSIZE
@@ -27,7 +26,7 @@ class Connection;
 class OperationRegistry;
 class Request;
 
-class RequestEmitter {
+class RequestQueue {
 public:
     static const unsigned int NoOperation = std::numeric_limits<unsigned int>::max();
 
@@ -35,7 +34,7 @@ public:
     virtual std::unique_ptr<Request> fetchFrontRequest() = 0;
 };
 
-class VolatileRequestQueue : public RequestEmitter, public MemoryManaged {
+class VolatileRequestQueue : public RequestQueue, public MemoryManaged {
 private:
     std::unique_ptr<Request> requests [MO_REQUEST_CACHE_MAXSIZE];
     size_t front = 0, len = 0;
@@ -50,48 +49,5 @@ public:
     bool pushRequestBack(std::unique_ptr<Request> request);
 };
 
-class RequestQueue : public MemoryManaged {
-private:
-    Connection& connection;
-    OperationRegistry& operationRegistry;
-
-    RequestEmitter* sendQueues [MO_NUM_REQUEST_QUEUES];
-    VolatileRequestQueue defaultSendQueue;
-    VolatileRequestQueue *preBootSendQueue = nullptr;
-    std::unique_ptr<Request> sendReqFront;
-
-    VolatileRequestQueue recvQueue;
-    std::unique_ptr<Request> recvReqFront;
-
-    bool receiveMessage(const char* payload, size_t length); //receive from  server: either a request or response
-    void receiveRequest(JsonArray json);
-    void receiveRequest(JsonArray json, std::unique_ptr<Request> op);
-    void receiveResponse(JsonArray json);
-
-    unsigned long sockTrackLastConnected = 0;
-
-    unsigned int nextOpNr = 10; //Nr 0 - 9 reservered for internal purposes
-public:
-    RequestQueue() = delete;
-    RequestQueue(const RequestQueue&) = delete;
-    RequestQueue(const RequestQueue&&) = delete;
-
-    RequestQueue(Connection& connection, OperationRegistry& operationRegistry);
-
-    void loop(); //polls all reqQueues and decides which request to send (if any)
-
-    void sendRequest(std::unique_ptr<Request> request); //send an OCPP operation request to the server; adds request to default queue
-    void sendRequestPreBoot(std::unique_ptr<Request> request); //send an OCPP operation request to the server; adds request to preBootQueue
-
-    void handleRequest(const char *operationType, Operation* (*createOperationCb)(const char *operationType, void* user_data), void *user_data = nullptr);
-    void setOnRequest(const char *operationType, void (*onRequest)(const char *payloadJson, size_t len));
-    void setOnConfirmation(const char *operationType, void (*onConfirmation)(const char *payloadJson, size_t len));
-
-    void addSendQueue(RequestEmitter* sendQueue);
-    void setPreBootSendQueue(VolatileRequestQueue *preBootQueue);
-
-    unsigned int getNextOpNr();
-};
-
-} //end namespace MicroOcpp
+} //namespace MicroOcpp
 #endif

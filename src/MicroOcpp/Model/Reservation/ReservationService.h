@@ -5,30 +5,37 @@
 #ifndef MO_RESERVATIONSERVICE_H
 #define MO_RESERVATIONSERVICE_H
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_RESERVATION
+#include <memory>
 
 #include <MicroOcpp/Model/Reservation/Reservation.h>
+#include <MicroOcpp/Model/Common/EvseId.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Version.h>
 
-#include <memory>
+#if MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 
 namespace MicroOcpp {
 
 class Context;
 
+namespace Ocpp16 {
+
 class ReservationService : public MemoryManaged {
 private:
     Context& context;
 
-    const int maxReservations; // = number of physical connectors
-    Vector<std::unique_ptr<Reservation>> reservations;
+    Reservation *reservations [MO_NUM_EVSEID - 1] = {nullptr}; // = number of physical connectors
+    size_t maxReservations = MO_NUM_EVSEID - 1;
 
-    std::shared_ptr<Configuration> reserveConnectorZeroSupportedBool;
+    unsigned int numEvseId = MO_NUM_EVSEID;
+
+    Configuration *reserveConnectorZeroSupportedBool = nullptr;
 
 public:
-    ReservationService(Context& context, unsigned int numConnectors);
+    ReservationService(Context& context);
+    ~ReservationService();
+
+    bool setup();
 
     void loop();
 
@@ -47,7 +54,7 @@ public:
     bool updateReservation(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag = nullptr);
 };
 
-}
-
-#endif //MO_ENABLE_RESERVATION
+} //namespace Ocpp16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 #endif

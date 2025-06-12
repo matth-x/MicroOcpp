@@ -2,36 +2,22 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_RESERVATION
-
 #include <MicroOcpp/Model/Reservation/Reservation.h>
+
+#include <stdio.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Configuration/ConfigurationService.h>
 #include <MicroOcpp/Debug.h>
 
+#if MO_ENABLE_V16 && MO_ENABLE_RESERVATION
+
 using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp16;
 
-Reservation::Reservation(Model& model, unsigned int slot) : MemoryManaged("v16.Reservation.Reservation"), model(model), slot(slot) {
-    
-    snprintf(connectorIdKey, sizeof(connectorIdKey), MO_RESERVATION_CID_KEY "%u", slot);
-    connectorIdInt = declareConfiguration<int>(connectorIdKey, -1, RESERVATION_FN, false, false, false);
+Reservation::Reservation(Context& context, unsigned int slot) : MemoryManaged("v16.Reservation.Reservation"), context(context), slot(slot) {
 
-    snprintf(expiryDateRawKey, sizeof(expiryDateRawKey), MO_RESERVATION_EXPDATE_KEY "%u", slot);
-    expiryDateRawString = declareConfiguration<const char*>(expiryDateRawKey, "", RESERVATION_FN, false, false, false);
-    
-    snprintf(idTagKey, sizeof(idTagKey), MO_RESERVATION_IDTAG_KEY "%u", slot);
-    idTagString = declareConfiguration<const char*>(idTagKey, "", RESERVATION_FN, false, false, false);
-
-    snprintf(reservationIdKey, sizeof(reservationIdKey), MO_RESERVATION_RESID_KEY "%u", slot);
-    reservationIdInt = declareConfiguration<int>(reservationIdKey, -1, RESERVATION_FN, false, false, false);
-
-    snprintf(parentIdTagKey, sizeof(parentIdTagKey), MO_RESERVATION_PARENTID_KEY "%u", slot);
-    parentIdTagString = declareConfiguration<const char*>(parentIdTagKey, "", RESERVATION_FN, false, false, false);
-
-    if (!connectorIdInt || !expiryDateRawString || !idTagString || !reservationIdInt || !parentIdTagString) {
-        MO_DBG_ERR("initialization failure");
-    }
 }
 
 Reservation::~Reservation() {
@@ -52,13 +38,73 @@ Reservation::~Reservation() {
     }
 }
 
+bool Reservation::setup() {
+
+    auto configService = context.getModel16().getConfigurationService();
+    if (!configService) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    int ret;
+
+    ret = snprintf(connectorIdKey, sizeof(connectorIdKey), MO_RESERVATION_CID_KEY "%u", slot);
+    if (ret < 0 || (size_t)ret >= sizeof(connectorIdKey)) {
+        return false;
+    }
+    connectorIdInt = configService->declareConfiguration<int>(connectorIdKey, -1, RESERVATION_FN, Mutability::None);
+
+    ret = snprintf(expiryDateRawKey, sizeof(expiryDateRawKey), MO_RESERVATION_EXPDATE_KEY "%u", slot);
+    if (ret < 0 || (size_t)ret >= sizeof(expiryDateRawKey)) {
+        return false;
+    }
+    expiryDateRawString = configService->declareConfiguration<const char*>(expiryDateRawKey, "", RESERVATION_FN, Mutability::None);
+    
+    ret = snprintf(idTagKey, sizeof(idTagKey), MO_RESERVATION_IDTAG_KEY "%u", slot);
+    if (ret < 0 || (size_t)ret >= sizeof(idTagKey)) {
+        return false;
+    }
+    idTagString = configService->declareConfiguration<const char*>(idTagKey, "", RESERVATION_FN, Mutability::None);
+
+    ret = snprintf(reservationIdKey, sizeof(reservationIdKey), MO_RESERVATION_RESID_KEY "%u", slot);
+    if (ret < 0 || (size_t)ret >= sizeof(reservationIdKey)) {
+        return false;
+    }
+    reservationIdInt = configService->declareConfiguration<int>(reservationIdKey, -1, RESERVATION_FN, Mutability::None);
+
+    ret = snprintf(parentIdTagKey, sizeof(parentIdTagKey), MO_RESERVATION_PARENTID_KEY "%u", slot);
+    if (ret < 0 || (size_t)ret >= sizeof(parentIdTagKey)) {
+        return false;
+    }
+    parentIdTagString = configService->declareConfiguration<const char*>(parentIdTagKey, "", RESERVATION_FN, Mutability::None);
+
+    if (!connectorIdInt || !expiryDateRawString || !idTagString || !reservationIdInt || !parentIdTagString) {
+        MO_DBG_ERR("initialization failure");
+        return false;
+    }
+
+    reservations = configService->findContainerOfConfiguration(connectorIdInt);
+    if (!reservations) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    return true;
+}
+
 bool Reservation::isActive() {
     if (connectorIdInt->getInt() < 0) {
         //reservation invalidated
         return false;
     }
 
-    if (model.getClock().now() > getExpiryDate()) {
+    int32_t dt;
+    if (!context.getClock().delta(context.getClock().now(), getExpiryDate(), dt)) {
+        //expiryDate undefined
+        return false;
+    }
+
+    if (dt >= 0) {
         //reservation expired
         return false;
     }
@@ -91,8 +137,11 @@ int Reservation::getConnectorId() {
 }
 
 Timestamp& Reservation::getExpiryDate() {
-    if (expiryDate == MIN_TIME && *expiryDateRawString->getString()) {
-        expiryDate.setTime(expiryDateRawString->getString());
+    if (!expiryDate.isDefined() && *expiryDateRawString->getString()) {
+        if (!context.getClock().parseString(expiryDateRawString->getString(), expiryDate)) {
+            MO_DBG_ERR("internal error");
+            expiryDate = Timestamp();
+        }
     }
     return expiryDate;
 }
@@ -109,29 +158,39 @@ const char *Reservation::getParentIdTag() {
     return parentIdTagString->getString();
 }
 
-void Reservation::update(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag) {
+bool Reservation::update(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag) {
+    bool success = true;
+    
     reservationIdInt->setInt(reservationId);
     connectorIdInt->setInt((int) connectorId);
     this->expiryDate = expiryDate;
-    char expiryDate_cstr [JSONDATE_LENGTH + 1];
-    if (this->expiryDate.toJsonString(expiryDate_cstr, JSONDATE_LENGTH + 1)) {
-        expiryDateRawString->setString(expiryDate_cstr);
+    char expiryDateStr [MO_INTERNALTIME_SIZE];
+    if (context.getClock().toInternalString(this->expiryDate, expiryDateStr, sizeof(expiryDateStr))) {
+        success &= expiryDateRawString->setString(expiryDateStr);
+    } else {
+        success = false;
     }
-    idTagString->setString(idTag);
-    parentIdTagString->setString(parentIdTag);
+    success &= idTagString->setString(idTag);
+    success &= parentIdTagString->setString(parentIdTag);
 
-    configuration_save();
+    success &= reservations->commit();
+
+    return success; //no roll-back mechanism implemented yet
 }
 
-void Reservation::clear() {
+bool Reservation::clear() {
+    bool success = true;
+
     connectorIdInt->setInt(-1);
-    expiryDate = MIN_TIME;
-    expiryDateRawString->setString("");
-    idTagString->setString("");
+    expiryDate = Timestamp();
+    success &= expiryDateRawString->setString("");
+    success &= idTagString->setString("");
     reservationIdInt->setInt(-1);
-    parentIdTagString->setString("");
+    success &= parentIdTagString->setString("");
 
-    configuration_save();
+    success &= reservations->commit();
+
+    return success; //no roll-back mechanism implemented yet
 }
 
-#endif //MO_ENABLE_RESERVATION
+#endif //MO_ENABLE_V16 && MO_ENABLE_RESERVATION

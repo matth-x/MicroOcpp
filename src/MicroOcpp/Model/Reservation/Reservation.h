@@ -5,16 +5,12 @@
 #ifndef MO_RESERVATION_H
 #define MO_RESERVATION_H
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_RESERVATION
-
-#include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Version.h>
 
 #ifndef RESERVATION_FN
-#define RESERVATION_FN (MO_FILENAME_PREFIX "reservations.jsn")
+#define RESERVATION_FN "reservations.jsn"
 #endif
 
 #define MO_RESERVATION_CID_KEY "cid_"
@@ -23,35 +19,46 @@
 #define MO_RESERVATION_RESID_KEY "rsvid_"
 #define MO_RESERVATION_PARENTID_KEY "pidt_"
 
+#if MO_ENABLE_V16 && MO_ENABLE_RESERVATION
+
 namespace MicroOcpp {
 
-class Model;
+class Context;
+
+namespace Ocpp16 {
+
+class Configuration;
+class ConfigurationContainer;
 
 class Reservation : public MemoryManaged {
 private:
-    Model& model;
+    Context& context;
     const unsigned int slot;
 
-    std::shared_ptr<Configuration> connectorIdInt;
+    ConfigurationContainer *reservations = nullptr;
+
+    Configuration *connectorIdInt = nullptr;
     char connectorIdKey [sizeof(MO_RESERVATION_CID_KEY "xxx") + 1]; //"xxx" = placeholder for digits
-    std::shared_ptr<Configuration> expiryDateRawString;
+    Configuration *expiryDateRawString = nullptr;
     char expiryDateRawKey [sizeof(MO_RESERVATION_EXPDATE_KEY "xxx") + 1];
 
-    Timestamp expiryDate = MIN_TIME;
-    std::shared_ptr<Configuration> idTagString;
+    Timestamp expiryDate;
+    Configuration *idTagString = nullptr;
     char idTagKey [sizeof(MO_RESERVATION_IDTAG_KEY "xxx") + 1];
-    std::shared_ptr<Configuration> reservationIdInt;
+    Configuration *reservationIdInt = nullptr;
     char reservationIdKey [sizeof(MO_RESERVATION_RESID_KEY "xxx") + 1];
-    std::shared_ptr<Configuration> parentIdTagString;
+    Configuration *parentIdTagString = nullptr;
     char parentIdTagKey [sizeof(MO_RESERVATION_PARENTID_KEY "xxx") + 1];
 
 public:
-    Reservation(Model& model, unsigned int slot);
+    Reservation(Context& context, unsigned int slot);
     Reservation(const Reservation&) = delete;
     Reservation(Reservation&&) = delete;
     Reservation& operator=(const Reservation&) = delete;
 
     ~Reservation();
+
+    bool setup();
 
     bool isActive(); //if this object contains a valid, unexpired reservation
 
@@ -64,11 +71,11 @@ public:
     int getReservationId();
     const char *getParentIdTag();
 
-    void update(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag = nullptr);
-    void clear();
+    bool update(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag = nullptr);
+    bool clear();
 };
 
-}
-
-#endif //MO_ENABLE_RESERVATION
+} //namespace Ocpp16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 #endif

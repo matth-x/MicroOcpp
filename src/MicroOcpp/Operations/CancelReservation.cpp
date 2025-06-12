@@ -4,14 +4,14 @@
 
 #include <MicroOcpp/Version.h>
 
-#if MO_ENABLE_RESERVATION
+#if MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 
 #include <MicroOcpp/Operations/CancelReservation.h>
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp16::CancelReservation;
-using MicroOcpp::JsonDoc;
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp16;
 
 CancelReservation::CancelReservation(ReservationService& reservationService) : MemoryManaged("v16.Operation.", "CancelReservation"), reservationService(reservationService) {
   
@@ -44,4 +44,4 @@ std::unique_ptr<JsonDoc> CancelReservation::createConf(){
     return doc;
 }
 
-#endif //MO_ENABLE_RESERVATION
+#endif //MO_ENABLE_V16 && MO_ENABLE_RESERVATION

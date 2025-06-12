@@ -5,19 +5,17 @@
 #ifndef MO_GETVARIABLES_H
 #define MO_GETVARIABLES_H
 
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Model/Variables/Variable.h>
 #include <MicroOcpp/Version.h>
 
 #if MO_ENABLE_V201
 
-#include <MicroOcpp/Core/Operation.h>
-#include <MicroOcpp/Core/Memory.h>
-#include <MicroOcpp/Model/Variables/Variable.h>
-
-namespace MicroOcpp {
+namespace MicroOcpp {    
+namespace Ocpp201 {
 
 class VariableService;
-
-namespace Ocpp201 {
 
 // GetVariableDataType (2.25) and
 // GetVariableResultType (2.26)
@@ -52,12 +50,10 @@ public:
     std::unique_ptr<JsonDoc> createConf() override;
 
     const char *getErrorCode() override {return errorCode;}
-
 };
 
 } //namespace Ocpp201
 } //namespace MicroOcpp
-
 #endif //MO_ENABLE_V201
 
 #endif

@@ -2,19 +2,16 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <MicroOcpp/Operations/GetVariables.h>
 #include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Debug.h>
 
-#include <cctype> //for tolower
+#include <ctype.h> //for tolower
 
-using MicroOcpp::Ocpp201::GetVariableData;
-using MicroOcpp::Ocpp201::GetVariables;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V201
+
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp201;
 
 GetVariableData::GetVariableData(const char *memory_tag) : componentName{makeString(memory_tag)}, variableName{makeString(memory_tag)} {
 
@@ -225,4 +222,4 @@ std::unique_ptr<JsonDoc> GetVariables::createConf(){
     return doc;
 }
 
-#endif // MO_ENABLE_V201
+#endif //MO_ENABLE_V201

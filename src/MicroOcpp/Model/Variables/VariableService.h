@@ -13,27 +13,34 @@
 #include <memory>
 #include <limits>
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <MicroOcpp/Model/Variables/Variable.h>
 #include <MicroOcpp/Model/Variables/VariableContainer.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V201
 
 #ifndef MO_VARIABLESTORE_FN_PREFIX
-#define MO_VARIABLESTORE_FN_PREFIX (MO_FILENAME_PREFIX "ocpp-vars-")
+#define MO_VARIABLESTORE_FN_PREFIX "ocpp-vars-"
 #endif
 
 #ifndef MO_VARIABLESTORE_FN_SUFFIX
 #define MO_VARIABLESTORE_FN_SUFFIX ".jsn"
 #endif
 
+#ifndef MO_VARIABLESTORE_BUCKETS
+#define MO_VARIABLESTORE_BUCKETS 8
+#endif
+
 namespace MicroOcpp {
 
+class Context;
+
+namespace Ocpp201 {
+
 template <class T>
-struct VariableValidator : public MemoryManaged {
+struct VariableValidator {
     ComponentId component;
     const char *name;
     void *userPtr;
@@ -42,16 +49,10 @@ struct VariableValidator : public MemoryManaged {
     bool validate(T);
 };
 
-class Context;
-
-#ifndef MO_VARIABLESTORE_BUCKETS
-#define MO_VARIABLESTORE_BUCKETS 8
-#endif
-
 class VariableService : public MemoryManaged {
 private:
     Context& context;
-    std::shared_ptr<FilesystemAdapter> filesystem;
+    MO_FilesystemAdapter *filesystem = nullptr;
     Vector<VariableContainer*> containers;
     VariableContainerNonOwning containerExternal;
     VariableContainerOwning containersInternal [MO_VARIABLESTORE_BUCKETS];
@@ -64,12 +65,19 @@ private:
     VariableValidator<int> *getValidatorInt(const ComponentId& component, const char *name);
     VariableValidator<bool> *getValidatorBool(const ComponentId& component, const char *name);
     VariableValidator<const char*> *getValidatorString(const ComponentId& component, const char *name);
+
+    Vector<Variable*> getBaseReportVars;
+    int getBaseReportRequestId = -1;
+    unsigned int getBaseReportSeqNo = 0;
+    bool notifyReportInProgress = false;
 public:
-    VariableService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem);
+    VariableService(Context& context);
+
+    bool init();
 
     //Get Variable. If not existent, create Variable owned by MO and return
     template <class T> 
-    Variable *declareVariable(const ComponentId& component, const char *name, T factoryDefault, Variable::Mutability mutability = Variable::Mutability::ReadWrite, bool persistent = true, Variable::AttributeTypeSet attributes = Variable::AttributeTypeSet(), bool rebootRequired = false);
+    Variable *declareVariable(const ComponentId& component, const char *name, T factoryDefault, Mutability mutability = Mutability::ReadWrite, bool persistent = true, Variable::AttributeTypeSet attributes = Variable::AttributeTypeSet(), bool rebootRequired = false);
 
     bool addVariable(Variable *variable); //Add Variable without transferring ownership
     bool addVariable(std::unique_ptr<Variable> variable); //Add Variable and transfer ownership
@@ -77,13 +85,16 @@ public:
     //Get Variable. If not existent, return nullptr
     Variable *getVariable(const ComponentId& component, const char *name);
 
-    bool load();
-    bool commit();
-
     void addContainer(VariableContainer *container);
 
     template <class T>
     bool registerValidator(const ComponentId& component, const char *name, bool (*validate)(T, void*), void *userPtr = nullptr);
+
+    bool setup();
+
+    void loop();
+
+    bool commit();
 
     SetVariableStatus setVariable(Variable::AttributeType attrType, const char *attrVal, const ComponentId& component, const char *variableName);
 
@@ -92,8 +103,7 @@ public:
     GenericDeviceModelStatus getBaseReport(int requestId, ReportBase reportBase);
 };
 
-} // namespace MicroOcpp
-
-#endif // MO_ENABLE_V201
-
+} //namespace MicroOcpp
+} //namespace Ocpp201
+#endif //MO_ENABLE_V201
 #endif

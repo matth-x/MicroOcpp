@@ -39,7 +39,7 @@ TEST_CASE( "Reset" ) {
 
     mocpp_set_timer(custom_timer_cb);
 
-    getOcppContext()->getOperationRegistry().registerOperation("Authorize", [] () {
+    getOcppContext()->getMessageService().registerOperation("Authorize", [] () {
         return new Ocpp16::CustomOperation("Authorize",
             [] (JsonObject) {}, //ignore req
             [] () {
@@ -50,7 +50,7 @@ TEST_CASE( "Reset" ) {
                 return doc;
             });});
 
-    getOcppContext()->getOperationRegistry().registerOperation("TransactionEvent", [] () {
+    getOcppContext()->getMessageService().registerOperation("TransactionEvent", [] () {
         return new Ocpp16::CustomOperation("TransactionEvent",
             [] (JsonObject) {}, //ignore req
             [] () {
@@ -234,7 +234,7 @@ TEST_CASE( "Reset" ) {
 
         bool checkProcessedTx = false;
 
-        getOcppContext()->getOperationRegistry().registerOperation("TransactionEvent", [&checkProcessedTx] () {
+        getOcppContext()->getMessageService().registerOperation("TransactionEvent", [&checkProcessedTx] () {
             return new Ocpp16::CustomOperation("TransactionEvent",
                 [&checkProcessedTx] (JsonObject payload) {
                     //process req
@@ -374,4 +374,4 @@ TEST_CASE( "Reset" ) {
     mocpp_deinitialize();
 }
 
-#endif // MO_ENABLE_V201
+#endif //MO_ENABLE_V201

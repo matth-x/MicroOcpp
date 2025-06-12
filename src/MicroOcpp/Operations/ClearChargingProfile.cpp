@@ -1,17 +1,16 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #include <MicroOcpp/Operations/ClearChargingProfile.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <MicroOcpp/Debug.h>
 
-#include <functional>
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SMARTCHARGING
 
-using MicroOcpp::Ocpp16::ClearChargingProfile;
-using MicroOcpp::JsonDoc;
+using namespace MicroOcpp;
 
-ClearChargingProfile::ClearChargingProfile(SmartChargingService& scService) : MemoryManaged("v16.Operation.", "ClearChargingProfile"), scService(scService) {
+ClearChargingProfile::ClearChargingProfile(SmartChargingService& scService, int ocppVersion) : MemoryManaged("v16.Operation.", "ClearChargingProfile"), scService(scService), ocppVersion(ocppVersion) {
 
 }
 
@@ -21,62 +20,45 @@ const char* ClearChargingProfile::getOperationType(){
 
 void ClearChargingProfile::processReq(JsonObject payload) {
 
-    std::function<bool(int, int, ChargingProfilePurposeType, int)> filter = [payload]
-            (int chargingProfileId, int connectorId, ChargingProfilePurposeType chargingProfilePurpose, int stackLevel) {
-        
-        if (payload.containsKey("id")) {
-            if (chargingProfileId == (payload["id"] | -1)) {
-                return true;
-            } else {
-                return false;
-            }
+    int chargingProfileId = -1;
+    int evseId = -1;
+    ChargingProfilePurposeType chargingProfilePurpose = ChargingProfilePurposeType::UNDEFINED;
+    int stackLevel = -1;
+
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+        chargingProfileId = payload["id"] | -1;
+        evseId = payload["connectorId"] | -1;
+        chargingProfilePurpose = deserializeChargingProfilePurposeType(payload["chargingProfilePurpose"] | "_Undefined");
+        stackLevel = payload["stackLevel"] | -1;
+    }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (ocppVersion == MO_OCPP_V201) {
+        if (payload.containsKey("chargingProfileId")) {
+            chargingProfileId = payload["chargingProfileId"] | -1;
+        } else {
+            JsonObject chargingProfileCriteria = payload["chargingProfileCriteria"];
+            evseId = chargingProfileCriteria["evseId"] | -1;
+            chargingProfilePurpose = deserializeChargingProfilePurposeType(chargingProfileCriteria["chargingProfilePurpose"] | "_Undefined");
+            stackLevel = chargingProfileCriteria["stackLevel"] | -1;
         }
+    }
+    #endif //MO_ENABLE_V201
 
-        if (payload.containsKey("connectorId")) {
-            if (connectorId != (payload["connectorId"] | -1)) {
-                return false;
-            }
-        }
-
-        if (payload.containsKey("chargingProfilePurpose")) {
-            switch (chargingProfilePurpose) {
-                case ChargingProfilePurposeType::ChargePointMaxProfile:
-                    if (strcmp(payload["chargingProfilePurpose"] | "INVALID", "ChargePointMaxProfile")) {
-                        return false;
-                    }
-                    break;
-                case ChargingProfilePurposeType::TxDefaultProfile:
-                    if (strcmp(payload["chargingProfilePurpose"] | "INVALID", "TxDefaultProfile")) {
-                        return false;
-                    }
-                    break;
-                case ChargingProfilePurposeType::TxProfile:
-                    if (strcmp(payload["chargingProfilePurpose"] | "INVALID", "TxProfile")) {
-                        return false;
-                    }
-                    break;
-            }
-        }
-
-        if (payload.containsKey("stackLevel")) {
-            if (stackLevel != (payload["stackLevel"] | -1)) {
-                return false;
-            }
-        }
-
-        return true;
-    };
-
-    matchingProfilesFound = scService.clearChargingProfile(filter);
+    bool matchingProfilesFound = scService.clearChargingProfile(chargingProfileId, evseId, chargingProfilePurpose, stackLevel);
+    if (matchingProfilesFound) {
+        status = "Accepted";
+    } else {
+        status = "Unknown";
+    }
 }
 
 std::unique_ptr<JsonDoc> ClearChargingProfile::createConf(){
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
-    if (matchingProfilesFound)
-        payload["status"] = "Accepted";
-    else
-        payload["status"] = "Unknown";
-        
+    payload["status"] = status;
     return doc;
 }
+
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SMARTCHARGING

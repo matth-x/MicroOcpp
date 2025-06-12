@@ -3,46 +3,193 @@
 // MIT License
 
 #include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
-#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Boot/BootService.h>
+#include <MicroOcpp/Model/Configuration/ConfigurationService.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
+#include <MicroOcpp/Model/SecurityEvent/SecurityEventService.h>
+#include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Debug.h>
 
 #include <MicroOcpp/Operations/GetDiagnostics.h>
 #include <MicroOcpp/Operations/DiagnosticsStatusNotification.h>
+#include <MicroOcpp/Operations/GetLog.h>
+#include <MicroOcpp/Operations/LogStatusNotification.h>
 
 //Fetch relevant data from other modules for diagnostics
-#include <MicroOcpp/Model/Boot/BootService.h>
-#include <MicroOcpp/Operations/StatusNotification.h> //for serializing ChargePointStatus
+#include <MicroOcpp/Model/Availability/AvailabilityService.h>
 #include <MicroOcpp/Core/Connection.h>
-#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Model/Transactions/TransactionService16.h>
+#include <MicroOcpp/Model/Transactions/TransactionService201.h>
 #include <MicroOcpp/Version.h> //for MO_ENABLE_V201
-#include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h> //for MO_ENABLE_CONNECTOR_LOCK
+#include <MicroOcpp/Model/RemoteControl/RemoteControlDefs.h> //for MO_ENABLE_CONNECTOR_LOCK
 
-using MicroOcpp::DiagnosticsService;
-using MicroOcpp::Ocpp16::DiagnosticsStatus;
-using MicroOcpp::Request;
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_DIAGNOSTICS
 
-DiagnosticsService::DiagnosticsService(Context& context) : MemoryManaged("v16.Diagnostics.DiagnosticsService"), context(context), location(makeString(getMemoryTag())), diagFileList(makeVector<String>(getMemoryTag())) {
+#define MO_DIAG_PREAMBLE_SIZE 192U
+#define MO_DIAG_POSTAMBLE_SIZE 1024U
 
-    context.getOperationRegistry().registerOperation("GetDiagnostics", [this] () {
-        return new Ocpp16::GetDiagnostics(*this);});
+#if MO_USE_DIAGNOSTICS == MO_DIAGNOSTICS_BUILTIN_MBEDTLS_ESP32
+size_t defaultDiagnosticsReader(char *buf, size_t size, void *user_data);
+void defaultDiagnosticsOnClose(void *user_data);
+#endif
 
-    //Register message handler for TriggerMessage operation
-    context.getOperationRegistry().registerOperation("DiagnosticsStatusNotification", [this] () {
-        return new Ocpp16::DiagnosticsStatusNotification(getDiagnosticsStatus());});
+using namespace MicroOcpp;
+
+DiagnosticsService::DiagnosticsService(Context& context) : MemoryManaged("v16.Diagnostics.DiagnosticsService"), context(context), diagFileList(makeVector<String>(getMemoryTag())) {
+
 }
 
 DiagnosticsService::~DiagnosticsService() {
+    MO_FREE(customProtocols);
+    customProtocols = nullptr;
+    MO_FREE(location);
+    location = nullptr;
+    MO_FREE(filename);
+    filename = nullptr;
     MO_FREE(diagPreamble);
+    diagPreamble = nullptr;
     MO_FREE(diagPostamble);
+    diagPostamble = nullptr;
+}
+
+bool DiagnosticsService::setup() {
+
+    filesystem = context.getFilesystem();
+    ftpClient = context.getFtpClient();
+
+#if MO_USE_FW_UPDATER == MO_FW_UPDATER_CUSTOM
+    if (!onUpload || !onUploadStatusInput) {
+        MO_DBG_ERR("need to set onUpload cb and onUploadStatusInput cb");
+        return false;
+    }
+#else
+    if ((!onUpload || !onUploadStatusInput) && ftpClient) {
+        if (!filesystem) {
+            MO_DBG_WARN("Security Log upload disabled (volatile mode)");
+        }
+    } else {
+        MO_DBG_ERR("depends on FTP client");
+        return false;
+    }
+#endif
+
+#if MO_USE_DIAGNOSTICS == MO_DIAGNOSTICS_BUILTIN_MBEDTLS_ESP32
+    if (!diagnosticsReader) {
+        diagnosticsReader = defaultDiagnosticsReader;
+        diagnosticsOnClose = defaultDiagnosticsOnClose;
+    }
+#endif //MO_USE_DIAGNOSTICS == MO_DIAGNOSTICS_BUILTIN_MBEDTLS_ESP32
+
+    char fileTransferProtocolsBuf [sizeof("FTP,FTPS,HTTP,HTTPS,SFTP") * 2]; //dimension to fit all allowed protocols (plus some safety space)
+    if (customProtocols) {
+        auto ret = snprintf(fileTransferProtocolsBuf, sizeof(fileTransferProtocolsBuf), "%s", customProtocols);
+        if (ret < 0 || (size_t)ret >= sizeof(fileTransferProtocolsBuf)) {
+            MO_DBG_ERR("custom protocols too long");
+            return false;
+        }
+        MO_FREE(customProtocols);
+        customProtocols = nullptr;
+    }
+    
+
+    ocppVersion = context.getOcppVersion();
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+        auto configService = context.getModel16().getConfigurationService();
+        if (!configService) {
+            MO_DBG_ERR("initialization error");
+            return false;
+        }
+
+        auto fileTransferProtocols = configService->declareConfiguration<const char*>("SupportedFileTransferProtocols", "", MO_CONFIGURATION_VOLATILE, Mutability::ReadOnly);
+        if (!fileTransferProtocols) {
+            MO_DBG_ERR("initialization error");
+            return false;
+        }
+
+        if (customProtocols) {
+            fileTransferProtocols->setString(customProtocols);
+        } else if (ftpClient) {
+            fileTransferProtocols->setString("FTP,FTPS");
+        }
+
+        context.getMessageService().registerOperation("GetDiagnostics", [] (Context& context) -> Operation* {
+            return new Ocpp16::GetDiagnostics(context, *context.getModel16().getDiagnosticsService());});
+
+        context.getMessageService().registerOperation("GetLog", [] (Context& context) -> Operation* {
+            return new GetLog(context, *context.getModel16().getDiagnosticsService());});
+
+        #if MO_ENABLE_MOCK_SERVER
+        context.getMessageService().registerOperation("DiagnosticsStatusNotification", nullptr, nullptr);
+        context.getMessageService().registerOperation("LogStatusNotification", nullptr, nullptr);
+        #endif //MO_ENABLE_MOCK_SERVER
+
+        auto rcService = context.getModel16().getRemoteControlService();
+        if (!rcService) {
+            MO_DBG_ERR("initialization error");
+            return false;
+        }
+
+        rcService->addTriggerMessageHandler("DiagnosticsStatusNotification", [] (Context& context) -> Operation* {
+            auto diagSvc = context.getModel16().getDiagnosticsService();
+            return new Ocpp16::DiagnosticsStatusNotification(diagSvc->getUploadStatus16());
+        });
+
+        rcService->addTriggerMessageHandler("LogStatusNotification", [] (Context& context) -> Operation* {
+            auto diagService = context.getModel16().getDiagnosticsService();
+            return new LogStatusNotification(diagService->getUploadStatus(), diagService->getRequestId());});
+    }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (ocppVersion == MO_OCPP_V201) {
+        auto varService = context.getModel201().getVariableService();
+        if (!varService) {
+            MO_DBG_ERR("initialization error");
+            return false;
+        }
+
+        //if transactions can start before the BootNotification succeeds
+        auto fileTransferProtocols = varService->declareVariable<const char*>("OCPPCommCtrlr", "FileTransferProtocols", "", Mutability::ReadOnly, false);
+        if (!fileTransferProtocols) {
+            MO_DBG_ERR("initialization error");
+            return false;
+        }
+
+        if (customProtocols) {
+            fileTransferProtocols->setString(customProtocols);
+        } else if (ftpClient) {
+            fileTransferProtocols->setString("FTP,FTPS");
+        }
+
+        context.getMessageService().registerOperation("GetLog", [] (Context& context) -> Operation* {
+            return new GetLog(context, *context.getModel201().getDiagnosticsService());});
+
+        #if MO_ENABLE_MOCK_SERVER
+        context.getMessageService().registerOperation("LogStatusNotification", nullptr, nullptr);
+        #endif //MO_ENABLE_MOCK_SERVER
+
+        auto rcService = context.getModel16().getRemoteControlService();
+        if (!rcService) {
+            MO_DBG_ERR("initialization error");
+            return false;
+        }
+
+        rcService->addTriggerMessageHandler("LogStatusNotification", [] (Context& context) -> Operation* {
+            auto diagService = context.getModel201().getDiagnosticsService();
+            return new LogStatusNotification(diagService->getUploadStatus(), diagService->getRequestId());});
+    }
+    #endif //MO_ENABLE_V201
+
+    MO_FREE(customProtocols); //not needed anymore
+    customProtocols = nullptr;
+
+    return true;
 }
 
 void DiagnosticsService::loop() {
-
-    if (ftpUpload && ftpUpload->isActive()) {
-        ftpUpload->loop();
-    }
 
     if (ftpUpload) {
         if (ftpUpload->isActive()) {
@@ -53,120 +200,274 @@ void DiagnosticsService::loop() {
         }
     }
 
-    auto notification = getDiagnosticsStatusNotification();
-    if (notification) {
-        context.initiateRequest(std::move(notification));
+    Operation *uploadStatusNotification = nullptr;
+
+#if MO_ENABLE_V16
+    if (use16impl) {
+        if (getUploadStatus16() != lastReportedUploadStatus16) {
+            lastReportedUploadStatus16 = getUploadStatus16();
+            if (lastReportedUploadStatus16 != Ocpp16::DiagnosticsStatus::Idle) {
+                uploadStatusNotification = new Ocpp16::DiagnosticsStatusNotification(lastReportedUploadStatus16);
+                if (!uploadStatusNotification) {
+                    MO_DBG_ERR("OOM");
+                }
+            }
+        }
+    } else
+#endif
+    {
+        if (getUploadStatus() != lastReportedUploadStatus) {
+            lastReportedUploadStatus = getUploadStatus();
+            if (lastReportedUploadStatus != MO_UploadLogStatus_Idle) {
+                uploadStatusNotification = new LogStatusNotification(lastReportedUploadStatus, requestId);
+                if (!uploadStatusNotification) {
+                    MO_DBG_ERR("OOM");
+                }
+            }
+        }
     }
 
-    const auto& timestampNow = context.getModel().getClock().now();
-    if (retries > 0 && timestampNow >= nextTry) {
+    if (uploadStatusNotification) {
+        auto request = makeRequest(context, uploadStatusNotification);
+        if (!request) {
+            MO_DBG_ERR("OOM");
+            delete uploadStatusNotification;
+        } else {
+            context.getMessageService().sendRequest(std::move(request));
+        }
+        uploadStatusNotification = nullptr;
+    }
+
+    if (runCustomUpload) {
+        if (getUploadStatus() != MO_UploadLogStatus_Uploading) {
+            MO_DBG_INFO("custom upload finished");
+            runCustomUpload = false;
+        }
+        return;
+    }
+
+    auto& clock = context.getClock();
+
+    int32_t dtNextTry;
+    clock.delta(clock.getUptime(), nextTry, dtNextTry);
+
+    if (retries > 0 && dtNextTry >= 0) {
 
         if (!uploadIssued) {
-            if (onUpload != nullptr) {
-                MO_DBG_DEBUG("Call onUpload");
-                onUpload(location.c_str(), startTime, stopTime);
+
+            bool success = false;
+            switch (logType) {
+                case MO_LogType_DiagnosticsLog:
+                    success = uploadDiagnostics();
+                    break;
+                case MO_LogType_SecurityLog:
+                    success = uploadSecurityLog();
+                    break;
+            }
+
+            if (success) {
                 uploadIssued = true;
                 uploadFailure = false;
             } else {
-                MO_DBG_ERR("onUpload must be set! (see setOnUpload). Will abort");
+                MO_DBG_ERR("cannot upload via FTP. Abort");
                 retries = 0;
                 uploadIssued = false;
                 uploadFailure = true;
+                cleanUploadData();
+                cleanGetLogData();
             }
         }
 
         if (uploadIssued) {
-            if (uploadStatusInput != nullptr && uploadStatusInput() == UploadStatus::Uploaded) {
+            if (getUploadStatus() == MO_UploadLogStatus_Uploaded) {
                 //success!
                 MO_DBG_DEBUG("end upload routine (by status)");
                 uploadIssued = false;
                 retries = 0;
+                cleanUploadData();
+                cleanGetLogData();
             }
 
             //check if maximum time elapsed or failed
+            bool isUploadFailure = false;
+            switch(getUploadStatus()) {
+                case MO_UploadLogStatus_BadMessage:
+                case MO_UploadLogStatus_NotSupportedOperation:
+                case MO_UploadLogStatus_PermissionDenied:
+                case MO_UploadLogStatus_UploadFailure:
+                    isUploadFailure = true;
+                    break;
+                case MO_UploadLogStatus_Uploading:
+                case MO_UploadLogStatus_Idle:
+                case MO_UploadLogStatus_Uploaded:
+                case MO_UploadLogStatus_AcceptedCanceled:
+                    isUploadFailure = false;
+                    break;
+            }
+
             const int UPLOAD_TIMEOUT = 60;
-            if (timestampNow - nextTry >= UPLOAD_TIMEOUT
-                    || (uploadStatusInput != nullptr && uploadStatusInput() == UploadStatus::UploadFailed)) {
+            if (isUploadFailure || dtNextTry >= UPLOAD_TIMEOUT) {
                 //maximum upload time elapsed or failed
 
-                if (uploadStatusInput == nullptr) {
-                    //No way to find out if failed. But maximum time has elapsed. Assume success
-                    MO_DBG_DEBUG("end upload routine (by timer)");
-                    uploadIssued = false;
-                    retries = 0;
+                //either we have UploadFailed status or (NotUploaded + timeout) here
+                MO_DBG_WARN("Upload timeout or failed");
+                cleanUploadData();
+
+                const int TRANSITION_DELAY = 10;
+                if (retryInterval <= UPLOAD_TIMEOUT + TRANSITION_DELAY) {
+                    nextTry = clock.getUptime();
+                    clock.add(nextTry, TRANSITION_DELAY); //wait for another 10 seconds
                 } else {
-                    //either we have UploadFailed status or (NotUploaded + timeout) here
-                    MO_DBG_WARN("Upload timeout or failed");
-                    ftpUpload.reset();
+                    clock.add(nextTry, retryInterval);
+                }
+                retries--;
 
-                    const int TRANSITION_DELAY = 10;
-                    if (retryInterval <= UPLOAD_TIMEOUT + TRANSITION_DELAY) {
-                        nextTry = timestampNow;
-                        nextTry += TRANSITION_DELAY; //wait for another 10 seconds
-                    } else {
-                        nextTry += retryInterval;
-                    }
-                    retries--;
-
-                    if (retries == 0) {
-                        MO_DBG_DEBUG("end upload routine (no more retry)");
-                        uploadFailure = true;
-                    }
+                if (retries == 0) {
+                    MO_DBG_DEBUG("end upload routine (no more retry)");
+                    uploadFailure = true;
+                    cleanGetLogData();
                 }
             }
         } //end if (uploadIssued)
     } //end try upload
 }
 
-//timestamps before year 2021 will be treated as "undefined"
-MicroOcpp::String DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime) {
-    if (onUpload == nullptr) {
-        return makeString(getMemoryTag());
+#if MO_ENABLE_V16
+bool DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime, char filenameOut[MO_GETLOG_FNAME_SIZE]) {
+    
+    bool success = false;
+    
+    auto ret = getLog(MO_LogType_DiagnosticsLog, -1, retries, retryInterval, location, startTime, stopTime, filenameOut);
+    switch (ret) {
+        case MO_GetLogStatus_Accepted:
+        case MO_GetLogStatus_AcceptedCanceled:
+            this->use16impl = true;
+            success = true;
+            break;
+        case MO_GetLogStatus_Rejected:
+            filenameOut[0] = '\0'; //clear filename - that means that no upload will follow
+            success = true;
+            break;
+        case MO_GetLogStatus_UNDEFINED:
+            success = false;
+            break;
+    }
+    return success;
+}
+#endif //MO_ENABLE_V16
+
+MO_GetLogStatus DiagnosticsService::getLog(MO_LogType type, int requestId, int retries, unsigned int retryInterval, const char *remoteLocation, Timestamp oldestTimestamp, Timestamp latestTimestamp, char filenameOut[MO_GETLOG_FNAME_SIZE]) {
+
+    if (runCustomUpload || this->retries > 0) {
+        MO_DBG_INFO("upload still running");
+        return MO_GetLogStatus_Rejected;
     }
 
-    String fileName;
+    //clean data which outlives last GetLog
+    ftpUploadStatus = MO_UploadLogStatus_Idle;
+
+    #if MO_ENABLE_V16
+    use16impl = false; //may be re-assigned in requestDiagnosticsUpload
+    #endif
+
+    //set data which is needed for custom upload and built-in upload
+    this->requestId = requestId;
+
+    auto& clock = context.getClock();
+
+    if (onUpload && onUploadStatusInput) {
+        //initiate custom upload
+
+        char oldestTimestampStr [MO_JSONDATE_SIZE];
+        if (oldestTimestamp.isDefined()) {
+            if (!clock.toJsonString(oldestTimestamp, oldestTimestampStr, sizeof(oldestTimestampStr))) {
+                MO_DBG_ERR("toJsonString");
+                return MO_GetLogStatus_UNDEFINED;
+            }
+        }
+
+        char latestTimestampStr [MO_JSONDATE_SIZE];
+        if (latestTimestamp.isDefined()) {
+            if (!clock.toJsonString(latestTimestamp, latestTimestampStr, sizeof(latestTimestampStr))) {
+                MO_DBG_ERR("toJsonString");
+                return MO_GetLogStatus_UNDEFINED;
+            }
+        }
+
+        auto ret = onUpload(
+                type,
+                location,
+                oldestTimestamp.isDefined() ? oldestTimestampStr : nullptr,
+                latestTimestamp.isDefined() ? latestTimestampStr : nullptr,
+                filenameOut,
+                onUploadUserData);
+        if (ret == MO_GetLogStatus_Accepted || ret == MO_GetLogStatus_AcceptedCanceled) {
+            runCustomUpload = true;
+        }
+        return ret;
+    }
+
+    //initiate built-in upload
+
+    bool hasFilename = false;
+    size_t filenameSize = 0;
+
+    MO_FREE(this->location);
+    this->location = nullptr;
+    size_t locationSize = strlen(location);
+    this->location = static_cast<char*>(MO_MALLOC(getMemoryTag, locationSize));
+    if (!this->location) {
+        MO_DBG_ERR("OOM");
+        goto fail;
+    }
+
+    MO_FREE(this->filename);
+    this->filename = nullptr;
+
     if (refreshFilename) {
-        fileName = refreshFilename().c_str();
-    } else {
-        fileName = "diagnostics.log";
+        hasFilename = refreshFilename(type, filenameOut, refreshFilenameUserData);
     }
 
-    this->location.reserve(strlen(location) + 1 + fileName.size());
-
-    this->location = location;
-
-    if (!this->location.empty() && this->location.back() != '/') {
-        this->location.append("/");
+    if (!hasFilename) {
+        auto ret = snprintf(filenameOut, MO_GETLOG_FNAME_SIZE, "diagnostics.log");
+        if (ret < 0 || (size_t)ret >= MO_GETLOG_FNAME_SIZE) {
+            MO_DBG_ERR("snprintf: %i", ret);
+            goto fail;
+        }
     }
-    this->location.append(fileName.c_str());
 
-    this->retries = retries;
-    this->retryInterval = retryInterval;
-    this->startTime = startTime;
-    
-    Timestamp stopMin = Timestamp(2021,0,0,0,0,0);
-    if (stopTime >= stopMin) {
-        this->stopTime = stopTime;
-    } else {
-        auto newStop = context.getModel().getClock().now();
-        newStop += 3600 * 24 * 365; //set new stop time one year in future
-        this->stopTime = newStop;
+    filenameSize = strlen(filenameOut) + 1;
+    this->filename = static_cast<char*>(MO_MALLOC(getMemoryTag(), filenameSize));
+    if (!this->filename) {
+        MO_DBG_ERR("OOM");
+        goto fail;
     }
-    
+    snprintf(this->filename, filenameSize, "%s", filenameOut);
+
+    this->logType = type;
+    this->retries = retries > 0 ? retries : 1;
+    this->retryInterval = retryInterval > 30 ? retryInterval : 30;
+    this->oldestTimestamp = oldestTimestamp;
+    this->latestTimestamp = latestTimestamp;
+
 #if MO_DBG_LEVEL >= MO_DL_INFO
     {
-        char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
-        char dbuf2 [JSONDATE_LENGTH + 1] = {'\0'};
-        this->startTime.toJsonString(dbuf, JSONDATE_LENGTH + 1);
-        this->stopTime.toJsonString(dbuf2, JSONDATE_LENGTH + 1);
+        char dbuf [MO_JSONDATE_SIZE] = {'\0'};
+        char dbuf2 [MO_JSONDATE_SIZE] = {'\0'};
+        if (oldestTimestamp.isDefined()) {
+            clock.toJsonString(oldestTimestamp, dbuf, sizeof(dbuf));
+        }
+        if (latestTimestamp.isDefined()) {
+            clock.toJsonString(latestTimestamp, dbuf2, sizeof(dbuf2));
+        }
 
         MO_DBG_INFO("Scheduled Diagnostics upload!\n" \
                         "                  location = %s\n" \
                         "                  retries = %i" \
                         ", retryInterval = %u" \
-                        "                  startTime = %s\n" \
-                        "                  stopTime = %s",
-                this->location.c_str(),
+                        "                  oldestTimestamp = %s\n" \
+                        "                  latestTimestamp = %s",
+                this->location,
                 this->retries,
                 this->retryInterval,
                 dbuf,
@@ -174,146 +475,208 @@ MicroOcpp::String DiagnosticsService::requestDiagnosticsUpload(const char *locat
     }
 #endif
 
-    nextTry = context.getModel().getClock().now();
-    nextTry += 5; //wait for 5s before upload
+    nextTry = clock.now();
+    clock.add(nextTry, 5); //wait for 5s before upload
     uploadIssued = false;
+    uploadFailure = false;
 
 #if MO_DBG_LEVEL >= MO_DL_DEBUG
     {
-        char dbuf [JSONDATE_LENGTH + 1] = {'\0'};
-        nextTry.toJsonString(dbuf, JSONDATE_LENGTH + 1);
+        char dbuf [MO_JSONDATE_SIZE] = {'\0'};
+        if (nextTry.isDefined()) {
+            clock.toJsonString(nextTry, dbuf, sizeof(dbuf));
+        }
         MO_DBG_DEBUG("Initial try at %s", dbuf);
     }
 #endif
 
-    return fileName;
+    return MO_GetLogStatus_Accepted;
+fail:
+    cleanGetLogData();
+    return MO_GetLogStatus_UNDEFINED;
 }
 
-DiagnosticsStatus DiagnosticsService::getDiagnosticsStatus() {
-    if (uploadFailure) {
-        return DiagnosticsStatus::UploadFailed;
+int DiagnosticsService::getRequestId() {
+    if (runCustomUpload || this->retries > 0) {
+        return requestId;
+    } else {
+        return -1;
     }
+}
 
-    if (uploadIssued) {
-        if (uploadStatusInput != nullptr) {
-            switch (uploadStatusInput()) {
-                case UploadStatus::NotUploaded:
-                    return DiagnosticsStatus::Uploading;
-                case UploadStatus::Uploaded:
-                    return DiagnosticsStatus::Uploaded;
-                case UploadStatus::UploadFailed:
-                    return DiagnosticsStatus::UploadFailed;
-            }
-        }
-        return DiagnosticsStatus::Uploading;
+MO_UploadLogStatus DiagnosticsService::getUploadStatus() {
+
+    MO_UploadLogStatus status = MO_UploadLogStatus_Idle;
+
+    if (runCustomUpload) {
+        status = onUploadStatusInput(onUploadUserData);
+    } else if (uploadFailure) {
+        status = MO_UploadLogStatus_UploadFailure;
+    } else {
+        status = ftpUploadStatus;
     }
-    return DiagnosticsStatus::Idle;
+    return status;
 }
 
-std::unique_ptr<Request> DiagnosticsService::getDiagnosticsStatusNotification() {
+Ocpp16::DiagnosticsStatus DiagnosticsService::getUploadStatus16() {
 
-    if (getDiagnosticsStatus() != lastReportedStatus) {
-        lastReportedStatus = getDiagnosticsStatus();
-        if (lastReportedStatus != DiagnosticsStatus::Idle) {
-            Operation *diagNotificationMsg = new Ocpp16::DiagnosticsStatusNotification(lastReportedStatus);
-            auto diagNotification = makeRequest(diagNotificationMsg);
-            return diagNotification;
-        }
+    MO_UploadLogStatus status = getUploadStatus();
+
+    auto res = Ocpp16::DiagnosticsStatus::Idle;
+
+    switch(status) {
+        case MO_UploadLogStatus_Idle:
+            res = Ocpp16::DiagnosticsStatus::Idle;
+            break;
+        case MO_UploadLogStatus_Uploaded:
+        case MO_UploadLogStatus_AcceptedCanceled:
+            res = Ocpp16::DiagnosticsStatus::Uploaded;
+            break;
+        case MO_UploadLogStatus_BadMessage:
+        case MO_UploadLogStatus_NotSupportedOperation:
+        case MO_UploadLogStatus_PermissionDenied:
+        case MO_UploadLogStatus_UploadFailure:
+            res = Ocpp16::DiagnosticsStatus::UploadFailed;
+            break;
+        case MO_UploadLogStatus_Uploading:
+            res = Ocpp16::DiagnosticsStatus::Uploading;
+            break;
     }
-
-    return nullptr;
+    return res;
 }
 
-void DiagnosticsService::setRefreshFilename(std::function<std::string()> refreshFn) {
-    this->refreshFilename = refreshFn;
+void DiagnosticsService::setRefreshFilename(bool (*refreshFilename)(MO_LogType type, char filenameOut[MO_GETLOG_FNAME_SIZE], void *user_data), void *user_data) {
+    this->refreshFilename = refreshFilename;
+    this->refreshFilenameUserData = user_data;
 }
 
-void DiagnosticsService::setOnUpload(std::function<bool(const char *location, Timestamp &startTime, Timestamp &stopTime)> onUpload) {
+bool DiagnosticsService::setOnUpload(
+        MO_GetLogStatus (*onUpload)(MO_LogType type, const char *location, const char *oldestTimestamp, const char *latestTimestamp, char filenameOut[MO_GETLOG_FNAME_SIZE], void *user_data),
+        MO_UploadLogStatus (*onUploadStatusInput)(void *user_data),
+        const char *customProtocols,
+        void *user_data) {
     this->onUpload = onUpload;
+    this->onUploadStatusInput = onUploadStatusInput;
+
+    MO_FREE(this->customProtocols);
+    this->customProtocols = nullptr;
+    if (customProtocols) {
+        size_t customProtocolsSize = strlen(customProtocols) + 1;
+        this->customProtocols = static_cast<char*>(MO_MALLOC(getMemoryTag(), customProtocolsSize));
+        if (!this->customProtocols) {
+            MO_DBG_ERR("OOM");
+            return false;
+        }
+        snprintf(this->customProtocols, customProtocolsSize, "%s", customProtocols);
+    }
+
+    this->onUploadUserData = user_data;
+    return true;
 }
 
-void DiagnosticsService::setOnUploadStatusInput(std::function<UploadStatus()> uploadStatusInput) {
-    this->uploadStatusInput = uploadStatusInput;
-}
+namespace MicroOcpp {
+struct DiagnosticsReaderFtwData {
+    DiagnosticsService *diagService;
+    int ret;
+};
+} //namespace MicroOcpp
 
-void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, size_t size)> diagnosticsReader, std::function<void()> onClose, std::shared_ptr<FilesystemAdapter> filesystem) {
+using namespace MicroOcpp;
 
-    this->onUpload = [this, diagnosticsReader, onClose, filesystem] (const char *location, Timestamp &startTime, Timestamp &stopTime) -> bool {
+bool DiagnosticsService::uploadDiagnostics() {
 
-        auto ftpClient = context.getFtpClient();
-        if (!ftpClient) {
-            MO_DBG_ERR("FTP client not set");
-            this->ftpUploadStatus = UploadStatus::UploadFailed;
-            return false;
-        }
+    MO_FREE(diagPreamble);
+    diagPreamble = nullptr;
 
-        const size_t diagPreambleSize = 128;
-        diagPreamble = static_cast<char*>(MO_MALLOC(getMemoryTag(), diagPreambleSize));
-        if (!diagPreamble) {
-            MO_DBG_ERR("OOM");
-            this->ftpUploadStatus = UploadStatus::UploadFailed;
-            return false;
-        }
-        diagPreambleLen = 0;
-        diagPreambleTransferred = 0;
+    diagPreamble = static_cast<char*>(MO_MALLOC(getMemoryTag(), MO_DIAG_PREAMBLE_SIZE));
+    if (!diagPreamble) {
+        MO_DBG_ERR("OOM");
+        cleanUploadData();
+        return false;
+    }
+    diagPreambleLen = 0;
+    diagPreambleTransferred = 0;
 
-        diagReaderHasData = diagnosticsReader ? true : false;
+    diagReaderHasData = diagnosticsReader ? true : false;
 
-        const size_t diagPostambleSize = 1024;
-        diagPostamble = static_cast<char*>(MO_MALLOC(getMemoryTag(), diagPostambleSize));
-        if (!diagPostamble) {
-            MO_DBG_ERR("OOM");
-            this->ftpUploadStatus = UploadStatus::UploadFailed;
-            MO_FREE(diagPreamble);
-            return false;
-        }
-        diagPostambleLen = 0;
-        diagPostambleTransferred = 0;
+    MO_FREE(diagPostamble);
+    diagPostamble = nullptr;
 
-        auto& model = context.getModel();
+    diagPostamble = static_cast<char*>(MO_MALLOC(getMemoryTag(), MO_DIAG_POSTAMBLE_SIZE));
+    if (!diagPostamble) {
+        MO_DBG_ERR("OOM");
+        cleanUploadData();
+        return false;
+    }
+    diagPostambleLen = 0;
+    diagPostambleTransferred = 0;
 
-        auto cpModel = makeString(getMemoryTag());
-        auto fwVersion = makeString(getMemoryTag());
+    BootService *bootService = nullptr;
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+        bootService = context.getModel16().getBootService();
+    }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (ocppVersion == MO_OCPP_V201) {
+        bootService = context.getModel201().getBootService();
+    }
+    #endif //MO_ENABLE_V201
 
-        if (auto bootService = model.getBootService()) {
-            if (auto cpCreds = bootService->getChargePointCredentials()) {
-                cpModel = (*cpCreds)["chargePointModel"] | "Charger";
-                fwVersion = (*cpCreds)["firmwareVersion"] | "";
-            }
-        }
+    const char *cpModel = nullptr;
+    const char *fwVersion = nullptr;
 
-        char jsonDate [JSONDATE_LENGTH + 1];
-        model.getClock().now().toJsonString(jsonDate, sizeof(jsonDate));
+    if (bootService) {
+        auto bnData = bootService->getBootNotificationData();
+        cpModel = bnData.chargePointModel;
+        fwVersion = bnData.firmwareVersion;
+    }
 
-        int ret;
+    char jsonDate [MO_JSONDATE_SIZE];
+    if (!context.getClock().toJsonString(context.getClock().now(), jsonDate, sizeof(jsonDate))) {
+        MO_DBG_ERR("internal error");
+        jsonDate[0] = '\0';
+    }
 
-        ret = snprintf(diagPreamble, diagPreambleSize,
-                "### %s Hardware Diagnostics%s%s\n%s\n",
-                cpModel.c_str(),
-                fwVersion.empty() ? "" : " - v. ", fwVersion.c_str(),
-                jsonDate);
+    int ret;
 
-        if (ret < 0 || (size_t)ret >= diagPreambleSize) {
-            MO_DBG_ERR("snprintf: %i", ret);
-            this->ftpUploadStatus = UploadStatus::UploadFailed;
-            MO_FREE(diagPreamble);
-            MO_FREE(diagPostamble);
-            return false;
-        }
+    ret = snprintf(diagPreamble, MO_DIAG_PREAMBLE_SIZE,
+            "### %s Security Log%s%s\n%s\n",
+            cpModel ? cpModel : "Charger",
+            fwVersion ? " - v. " : "", fwVersion ? fwVersion : "",
+            jsonDate);
 
-        diagPreambleLen += (size_t)ret;
+    if (ret < 0 || (size_t)ret >= MO_DIAG_PREAMBLE_SIZE) {
+        MO_DBG_ERR("snprintf: %i", ret);
+        cleanUploadData();
+        return false;
+    }
 
-        Connector *connector0 = model.getConnector(0);
-        Connector *connector1 = model.getConnector(1);
-        Transaction *connector1Tx = connector1 ? connector1->getTransaction().get() : nullptr;
-        Connector *connector2 = model.getNumConnectors() > 2 ? model.getConnector(2) : nullptr;
-        Transaction *connector2Tx = connector2 ? connector2->getTransaction().get() : nullptr;
+    diagPreambleLen += (size_t)ret;
+
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+        //OCPP 1.6 specific diagnostics
+
+        auto& model = context.getModel16();
+
+        auto txSvc = model.getTransactionService();
+        auto txSvcEvse0 = txSvc ? txSvc->getEvse(0) : nullptr;
+        auto txSvcEvse1 = txSvc ? txSvc->getEvse(1) : nullptr;
+        auto txSvcEvse2 = txSvc && model.getNumEvseId() > 2 ? txSvc->getEvse(2) : nullptr;
+        auto txSvcEvse1Tx = txSvcEvse1 ? txSvcEvse1->getTransaction() : nullptr;
+        auto txSvcEvse2Tx = txSvcEvse2 ? txSvcEvse2->getTransaction() : nullptr;
+
+        auto availSvc = model.getAvailabilityService();
+        auto availSvcEvse0 = availSvc ? availSvc->getEvse(0) : nullptr;
+        auto availSvcEvse1 = availSvc ? availSvc->getEvse(1) : nullptr;
+        auto availSvcEvse2 = availSvc ? availSvc->getEvse(2) : nullptr;
 
         ret = 0;
 
-        if (ret >= 0 && (size_t)ret + diagPostambleLen < diagPostambleSize) {
+        if (ret >= 0 && (size_t)ret + diagPostambleLen < MO_DIAG_POSTAMBLE_SIZE) {
             diagPostambleLen += (size_t)ret;
-            ret = snprintf(diagPostamble + diagPostambleLen, diagPostambleSize - diagPostambleLen,
+            ret = snprintf(diagPostamble + diagPostambleLen, MO_DIAG_POSTAMBLE_SIZE - diagPostambleLen,
                 "\n# OCPP"
                 "\nclient_version=%s"
                 "\nuptime=%lus"
@@ -321,8 +684,6 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                 "%s%s"
                 "%s%s"
                 "\nws_status=%s"
-                "\nws_last_conn=%lus"
-                "\nws_last_recv=%lus"
                 "%s%s"
                 "%s%s"
                 "%s%s"
@@ -336,217 +697,381 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                 "\nENABLE_V201=%i"
                 "\n",
                 MO_VERSION,
-                mocpp_tick_ms() / 1000UL,
-                connector0 ? "\nocpp_status_cId0=" : "", connector0 ? cstrFromOcppEveState(connector0->getStatus()) : "",
-                connector1 ? "\nocpp_status_cId1=" : "", connector1 ? cstrFromOcppEveState(connector1->getStatus()) : "",
-                connector2 ? "\nocpp_status_cId2=" : "", connector2 ? cstrFromOcppEveState(connector2->getStatus()) : "",
-                context.getConnection().isConnected() ? "connected" : "unconnected",
-                context.getConnection().getLastConnected() / 1000UL,
-                context.getConnection().getLastRecv() / 1000UL,
-                connector1 ? "\ncId1_hasTx=" : "", connector1 ? (connector1Tx ? "1" : "0") : "",
-                connector1Tx ? "\ncId1_txActive=" : "", connector1Tx ? (connector1Tx->isActive() ? "1" : "0") : "",
-                connector1Tx ? "\ncId1_txHasStarted=" : "", connector1Tx ? (connector1Tx->getStartSync().isRequested() ? "1" : "0") : "",
-                connector1Tx ? "\ncId1_txHasStopped=" : "", connector1Tx ? (connector1Tx->getStopSync().isRequested() ? "1" : "0") : "",
-                connector2 ? "\ncId2_hasTx=" : "", connector2 ? (connector2Tx ? "1" : "0") : "",
-                connector2Tx ? "\ncId2_txActive=" : "", connector2Tx ? (connector2Tx->isActive() ? "1" : "0") : "",
-                connector2Tx ? "\ncId2_txHasStarted=" : "", connector2Tx ? (connector2Tx->getStartSync().isRequested() ? "1" : "0") : "",
-                connector2Tx ? "\ncId2_txHasStopped=" : "", connector2Tx ? (connector2Tx->getStopSync().isRequested() ? "1" : "0") : "",
+                context.getTicksMs() / 1000UL,
+                availSvcEvse0 ? "\nocpp_status_cId0=" : "", availSvcEvse0 ? mo_serializeChargePointStatus(availSvcEvse0->getStatus()) : "",
+                availSvcEvse1 ? "\nocpp_status_cId1=" : "", availSvcEvse1 ? mo_serializeChargePointStatus(availSvcEvse1->getStatus()) : "",
+                availSvcEvse2 ? "\nocpp_status_cId2=" : "", availSvcEvse2 ? mo_serializeChargePointStatus(availSvcEvse2->getStatus()) : "",
+                context.getConnection() && context.getConnection()->isConnected() ? "connected" : "unconnected",
+                txSvcEvse1 ? "\ncId1_hasTx=" : "", txSvcEvse1 ? (txSvcEvse1Tx ? "1" : "0") : "",
+                txSvcEvse1Tx ? "\ncId1_txActive=" : "", txSvcEvse1Tx ? (txSvcEvse1Tx->isActive() ? "1" : "0") : "",
+                txSvcEvse1Tx ? "\ncId1_txHasStarted=" : "", txSvcEvse1Tx ? (txSvcEvse1Tx->getStartSync().isRequested() ? "1" : "0") : "",
+                txSvcEvse1Tx ? "\ncId1_txHasStopped=" : "", txSvcEvse1Tx ? (txSvcEvse1Tx->getStopSync().isRequested() ? "1" : "0") : "",
+                txSvcEvse2 ? "\ncId2_hasTx=" : "", txSvcEvse2 ? (txSvcEvse2Tx ? "1" : "0") : "",
+                txSvcEvse2Tx ? "\ncId2_txActive=" : "", txSvcEvse2Tx ? (txSvcEvse2Tx->isActive() ? "1" : "0") : "",
+                txSvcEvse2Tx ? "\ncId2_txHasStarted=" : "", txSvcEvse2Tx ? (txSvcEvse2Tx->getStartSync().isRequested() ? "1" : "0") : "",
+                txSvcEvse2Tx ? "\ncId2_txHasStopped=" : "", txSvcEvse2Tx ? (txSvcEvse2Tx->getStopSync().isRequested() ? "1" : "0") : "",
                 MO_ENABLE_CONNECTOR_LOCK,
                 MO_ENABLE_FILE_INDEX,
                 MO_ENABLE_V201
                 );
         }
+    }
+    #endif //MO_ENABLE_V16
 
-        if (filesystem) {
+    if (filesystem) {
 
-            if (ret >= 0 && (size_t)ret + diagPostambleLen < diagPostambleSize) {
+        if (ret >= 0 && (size_t)ret + diagPostambleLen < MO_DIAG_POSTAMBLE_SIZE) {
+            diagPostambleLen += (size_t)ret;
+            ret = snprintf(diagPostamble + diagPostambleLen, MO_DIAG_POSTAMBLE_SIZE - diagPostambleLen, "\n# Filesystem\n");
+        }
+
+        DiagnosticsReaderFtwData data;
+        data.diagService = this;
+        data.ret = ret;
+
+        diagFileList.clear();
+
+        filesystem->ftw(filesystem->path_prefix, [] (const char *fname, void *user_data) -> int {
+            auto& data = *reinterpret_cast<DiagnosticsReaderFtwData*>(user_data);
+            auto& diagPostambleLen = data.diagService->diagPostambleLen;
+            auto& diagPostamble = data.diagService->diagPostamble;
+            auto& diagFileList = data.diagService->diagFileList;
+            auto& ret = data.ret;
+
+            if (ret >= 0 && (size_t)ret + diagPostambleLen < MO_DIAG_POSTAMBLE_SIZE) {
                 diagPostambleLen += (size_t)ret;
-                ret = snprintf(diagPostamble + diagPostambleLen, diagPostambleSize - diagPostambleLen, "\n# Filesystem\n");
+                ret = snprintf(diagPostamble + diagPostambleLen, MO_DIAG_POSTAMBLE_SIZE - diagPostambleLen, "%s\n", fname);
+            }
+            diagFileList.emplace_back(fname);
+            return 0;
+        }, reinterpret_cast<void*>(&data));
+
+        ret = data.ret;
+
+        MO_DBG_DEBUG("discovered %zu files", diagFileList.size());
+    }
+
+    if (ret >= 0 && (size_t)ret + diagPostambleLen < MO_DIAG_POSTAMBLE_SIZE) {
+        diagPostambleLen += (size_t)ret;
+    } else {
+        char errMsg [64];
+        auto errLen = snprintf(errMsg, sizeof(errMsg), "\n[Diagnostics cut]\n");
+        size_t ellipseStart = std::min(MO_DIAG_POSTAMBLE_SIZE - (size_t)errLen - 1, diagPostambleLen);
+        auto ret2 = snprintf(diagPostamble + ellipseStart, MO_DIAG_POSTAMBLE_SIZE - ellipseStart, "%s", errMsg);
+        diagPostambleLen += (size_t)ret2;
+    }
+
+    if (!startFtpUpload()) {
+        cleanUploadData();
+        return false;
+    }
+
+    return true;
+}
+
+bool DiagnosticsService::uploadSecurityLog() {
+
+    if (!filesystem) {
+        MO_DBG_ERR("depends on filesystem");
+        cleanUploadData();
+        return false;
+    }
+
+    MO_FREE(diagPreamble);
+    diagPreamble = nullptr;
+
+    diagPreamble = static_cast<char*>(MO_MALLOC(getMemoryTag(), MO_DIAG_PREAMBLE_SIZE));
+    if (!diagPreamble) {
+        MO_DBG_ERR("OOM");
+        cleanUploadData();
+        return false;
+    }
+    diagPreambleLen = 0;
+    diagPreambleTransferred = 0;
+
+    diagReaderHasData = false;
+
+    BootService *bootService = nullptr;
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+        bootService = context.getModel16().getBootService();
+    }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (ocppVersion == MO_OCPP_V201) {
+        bootService = context.getModel201().getBootService();
+    }
+    #endif //MO_ENABLE_V201
+
+    auto cpModel = makeString(getMemoryTag());
+    auto fwVersion = makeString(getMemoryTag());
+
+    if (bootService) {
+        auto bnData = bootService->getBootNotificationData();
+        cpModel = bnData.chargePointModel;
+        fwVersion = bnData.firmwareVersion;
+    }
+
+    char jsonDate [MO_JSONDATE_SIZE];
+    if (!context.getClock().toJsonString(context.getClock().now(), jsonDate, sizeof(jsonDate))) {
+        MO_DBG_ERR("internal error");
+        jsonDate[0] = '\0';
+    }
+
+    int ret;
+
+    ret = snprintf(diagPreamble, MO_DIAG_PREAMBLE_SIZE,
+            "### %s Hardware Diagnostics%s%s\n%s\n",
+            cpModel.c_str(),
+            fwVersion.empty() ? "" : " - v. ", fwVersion.c_str(),
+            jsonDate);
+
+    if (ret < 0 || (size_t)ret >= MO_DIAG_PREAMBLE_SIZE) {
+        MO_DBG_ERR("snprintf: %i", ret);
+        cleanUploadData();
+        return false;
+    }
+
+    diagPreambleLen += (size_t)ret;
+
+    //load Security Log index structure from flash (fileNrBegin denotes first file, fileNrEnd denots index after last file)
+
+    unsigned int fileNrBegin = 0, fileNrEnd = 0;
+
+    if (!FilesystemUtils::loadRingIndex(filesystem, MO_SECLOG_FN_PREFIX, MO_SECLOG_INDEX_MAX, &fileNrBegin, &fileNrEnd)) {
+        MO_DBG_ERR("failed to load security event log");
+        cleanUploadData();
+        return false;
+    }
+
+    DiagnosticsReaderFtwData data;
+    data.diagService = this;
+
+    diagFileList.clear();
+
+    int ret_ftw = filesystem->ftw(filesystem->path_prefix, [] (const char *fname, void *user_data) -> int {
+        auto& data = *reinterpret_cast<DiagnosticsReaderFtwData*>(user_data);
+        auto& diagFileList = data.diagService->diagFileList;
+
+        if (!strncmp(fname, MO_SECLOG_FN_PREFIX, sizeof(MO_SECLOG_FN_PREFIX) - 1)) {
+            //fname starts with "slog-"
+            diagFileList.emplace_back(fname);
+        }
+
+        return 0;
+    }, reinterpret_cast<void*>(&data));
+
+    if (ret_ftw != 0) {
+        MO_DBG_ERR("ftw: %i", ret_ftw);
+        cleanUploadData();
+        return false;
+    }
+
+    MO_DBG_DEBUG("discovered %zu files", diagFileList.size());
+
+    if (!startFtpUpload()) {
+        cleanUploadData();
+        return false;
+    }
+
+    return true;
+}
+
+bool DiagnosticsService::startFtpUpload() {
+
+    size_t locationLen = strlen(location);
+    size_t filenameLen = strlen(filename);
+    size_t urlSize = locationLen +
+                    1 + //separating '/' between location and filename
+                    filenameLen  +
+                    1; //terminating 0
+
+    char *url = static_cast<char*>(MO_MALLOC(getMemoryTag(), urlSize));
+    if (!url) {
+        MO_DBG_ERR("OOM");
+        return false;
+    }
+
+    if (locationLen > 0 && filenameLen > 0 && location[locationLen - 1] != '/') {
+        snprintf(url, urlSize, "%s/%s", location, filename);
+    } else {
+        snprintf(url, urlSize, "%s%s", location, filename);
+    }
+
+    this->ftpUpload = ftpClient->postFile(url,
+        [this] (unsigned char *buf, size_t size) -> size_t {
+            size_t written = 0;
+            if (written < size && diagPreambleTransferred < diagPreambleLen) {
+                size_t writeLen = std::min(size - written, diagPreambleLen - diagPreambleTransferred);
+                memcpy(buf + written, diagPreamble + diagPreambleTransferred, writeLen);
+                diagPreambleTransferred += writeLen;
+                written += writeLen;
             }
 
-            filesystem->ftw_root([this, &ret] (const char *fname) -> int {
-                if (ret >= 0 && (size_t)ret + diagPostambleLen < diagPostambleSize) {
-                    diagPostambleLen += (size_t)ret;
-                    ret = snprintf(diagPostamble + diagPostambleLen, diagPostambleSize - diagPostambleLen, "%s\n", fname);
+            while (written < size && diagReaderHasData && diagnosticsReader) {
+                size_t writeLen = diagnosticsReader((char*)buf + written, size - written, diagnosticsUserData);
+                if (writeLen == 0) {
+                    diagReaderHasData = false;
                 }
-                diagFileList.emplace_back(fname);
-                return 0;
-            });
+                written += writeLen;
+            }
 
-            MO_DBG_DEBUG("discovered %zu files", diagFileList.size());
-        }
+            if (written < size && diagPostambleTransferred < diagPostambleLen) {
+                size_t writeLen = std::min(size - written, diagPostambleLen - diagPostambleTransferred);
+                memcpy(buf + written, diagPostamble + diagPostambleTransferred, writeLen);
+                diagPostambleTransferred += writeLen;
+                written += writeLen;
+            }
 
-        if (ret >= 0 && (size_t)ret + diagPostambleLen < diagPostambleSize) {
-            diagPostambleLen += (size_t)ret;
-        } else {
-            char errMsg [64];
-            auto errLen = snprintf(errMsg, sizeof(errMsg), "\n[Diagnostics cut]\n");
-            size_t ellipseStart = std::min(diagPostambleSize - (size_t)errLen - 1, diagPostambleLen);
-            auto ret2 = snprintf(diagPostamble + ellipseStart, diagPostambleSize - ellipseStart, "%s", errMsg);
-            diagPostambleLen += (size_t)ret2;
-        }
+            while (written < size && !diagFileList.empty() && filesystem) {
 
-        this->ftpUpload = ftpClient->postFile(location,
-            [this, diagnosticsReader, filesystem] (unsigned char *buf, size_t size) -> size_t {
-                size_t written = 0;
-                if (written < size && diagPreambleTransferred < diagPreambleLen) {
-                    size_t writeLen = std::min(size - written, diagPreambleLen - diagPreambleTransferred);
-                    memcpy(buf + written, diagPreamble + diagPreambleTransferred, writeLen);
-                    diagPreambleTransferred += writeLen;
-                    written += writeLen;
+                char fpath [MO_MAX_PATH_SIZE];
+                if (!FilesystemUtils::printPath(filesystem, fpath, sizeof(fpath), diagFileList.back().c_str())) {
+                    MO_DBG_ERR("path error: %s", diagFileList.back().c_str());
+                    diagFileList.pop_back();
+                    continue;
                 }
 
-                while (written < size && diagReaderHasData && diagnosticsReader) {
-                    size_t writeLen = diagnosticsReader((char*)buf + written, size - written);
-                    if (writeLen == 0) {
-                        diagReaderHasData = false;
-                    }
-                    written += writeLen;
-                }
+                if (auto file = filesystem->open(fpath, "r")) {
 
-                if (written < size && diagPostambleTransferred < diagPostambleLen) {
-                    size_t writeLen = std::min(size - written, diagPostambleLen - diagPostambleTransferred);
-                    memcpy(buf + written, diagPostamble + diagPostambleTransferred, writeLen);
-                    diagPostambleTransferred += writeLen;
-                    written += writeLen;
-                }
-
-                while (written < size && !diagFileList.empty() && filesystem) {
-
-                    char fpath [MO_MAX_PATH_SIZE];
-                    auto ret = snprintf(fpath, sizeof(fpath), "%s%s", MO_FILENAME_PREFIX, diagFileList.back().c_str());
-                    if (ret < 0 || (size_t)ret >= sizeof(fpath)) {
-                        MO_DBG_ERR("fn error: %i", ret);
-                        diagFileList.pop_back();
-                        continue;
-                    }
-
-                    if (auto file = filesystem->open(fpath, "r")) {
-
-                        if (diagFilesBackTransferred == 0) {
-                            char fileHeading [30 + MO_MAX_PATH_SIZE];
-                            auto writeLen = snprintf(fileHeading, sizeof(fileHeading), "\n\n# File %s:\n", diagFileList.back().c_str());
-                            if (writeLen < 0 || (size_t)writeLen >= sizeof(fileHeading)) {
-                                MO_DBG_ERR("fn error: %i", ret);
-                                diagFileList.pop_back();
-                                continue;
-                            }
-                            if (writeLen + written > size || //heading doesn't fit anymore, return with a bit unused buffer space and print heading the next time
-                                    writeLen + written == size) { //filling the buffer up exactly would mean that no file payload is written and this head gets printed again
-                                
-                                MO_DBG_DEBUG("upload diag chunk (%zuB)", written);
-                                return written;
-                            }
-
-                            memcpy(buf + written, fileHeading, (size_t)writeLen);
-                            written += (size_t)writeLen;
-                        }
-
-                        file->seek(diagFilesBackTransferred);
-                        size_t writeLen = file->read((char*)buf + written, size - written);
-
-                        if (writeLen < size - written) {
+                    if (diagFilesBackTransferred == 0) {
+                        char fileHeading [30 + MO_MAX_PATH_SIZE];
+                        auto writeLen = snprintf(fileHeading, sizeof(fileHeading), "\n\n# File %s:\n", diagFileList.back().c_str());
+                        if (writeLen < 0 || (size_t)writeLen >= sizeof(fileHeading)) {
+                            MO_DBG_ERR("fn error: %i", writeLen);
                             diagFileList.pop_back();
+                            filesystem->close(file);
+                            continue;
                         }
-                        written += writeLen;
-                    } else {
-                        MO_DBG_ERR("could not open file: %s", fpath);
+                        if (writeLen + written > size || //heading doesn't fit anymore, return with a bit unused buffer space and print heading the next time
+                                writeLen + written == size) { //filling the buffer up exactly would mean that no file payload is written and this head gets printed again
+                            
+                            MO_DBG_DEBUG("upload diag chunk (%zuB)", written);
+                            filesystem->close(file);
+                            return written;
+                        }
+
+                        memcpy(buf + written, fileHeading, (size_t)writeLen);
+                        written += (size_t)writeLen;
+                        filesystem->close(file);
+                    }
+
+                    filesystem->seek(file, diagFilesBackTransferred);
+                    size_t writeLen = filesystem->read(file, (char*)buf + written, size - written);
+
+                    if (writeLen < size - written) {
                         diagFileList.pop_back();
                     }
-                }
-
-                MO_DBG_DEBUG("upload diag chunk (%zuB)", written);
-                return written;
-            },
-            [this, onClose] (MO_FtpCloseReason reason) -> void {
-                if (reason == MO_FtpCloseReason_Success) {
-                    MO_DBG_INFO("FTP upload success");
-                    this->ftpUploadStatus = UploadStatus::Uploaded;
+                    written += writeLen;
                 } else {
-                    MO_DBG_INFO("FTP upload failure (%i)", reason);
-                    this->ftpUploadStatus = UploadStatus::UploadFailed;
+                    MO_DBG_ERR("could not open file: %s", fpath);
+                    diagFileList.pop_back();
                 }
+            }
 
-                MO_FREE(diagPreamble);
-                MO_FREE(diagPostamble);
-                diagFileList.clear();
+            MO_DBG_DEBUG("upload diag chunk (%zuB)", written);
+            return written;
+        },
+        [this] (MO_FtpCloseReason reason) -> void {
+            if (reason == MO_FtpCloseReason_Success) {
+                MO_DBG_INFO("FTP upload success");
+                this->ftpUploadStatus = MO_UploadLogStatus_Uploaded;
+            } else {
+                MO_DBG_INFO("FTP upload failure (%i)", reason);
+                this->ftpUploadStatus = MO_UploadLogStatus_UploadFailure;
+            }
 
-                if (onClose) {
-                    onClose();
-                }
-            });
+            if (diagnosticsOnClose) {
+                diagnosticsOnClose(diagnosticsUserData);
+            }
+        });
 
-        if (this->ftpUpload) {
-            this->ftpUploadStatus = UploadStatus::NotUploaded;
-            return true;
-        } else {
-            this->ftpUploadStatus = UploadStatus::UploadFailed;
-            return false;
-        }
-    };
+    MO_FREE(url);
+    url = nullptr;
 
-    this->uploadStatusInput = [this] () {
-        return this->ftpUploadStatus;
-    };
+    if (!this->ftpUpload) {
+        MO_DBG_ERR("OOM");
+        return false;
+    }
+
+    this->ftpUploadStatus = MO_UploadLogStatus_Uploading;
+    return true;
+}
+
+void DiagnosticsService::cleanUploadData() {
+    ftpUpload.reset();
+
+    MO_FREE(diagPreamble);
+    diagPreamble = nullptr;
+    diagPreambleLen = 0;
+    diagPreambleTransferred = 0;
+
+    diagReaderHasData = false;
+
+    MO_FREE(diagPostamble);
+    diagPostamble = nullptr;
+    diagPostambleLen = 0;
+    diagPostambleTransferred = 0;
+
+    diagFileList.clear();
+    diagFilesBackTransferred = 0;
+}
+
+void DiagnosticsService::cleanGetLogData() {
+    logType = MO_LogType_UNDEFINED;
+    requestId = -1;
+    MO_FREE(location);
+    location = nullptr;
+    MO_FREE(filename);
+    filename = nullptr;
+    retries = 0;
+    retryInterval = 0;
+    oldestTimestamp = Timestamp();
+    latestTimestamp = Timestamp();
 }
 
 void DiagnosticsService::setFtpServerCert(const char *cert) {
     this->ftpServerCert = cert;
 }
 
-#if !defined(MO_CUSTOM_DIAGNOSTICS)
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_DIAGNOSTICS
 
-#if MO_PLATFORM == MO_PLATFORM_ARDUINO && defined(ESP32) && MO_ENABLE_MBEDTLS
+#if MO_USE_DIAGNOSTICS == MO_DIAGNOSTICS_BUILTIN_MBEDTLS_ESP32
 
 #include "esp_heap_caps.h"
 #include <LittleFS.h>
 
+namespace MicroOcpp {
 bool g_diagsSent = false;
+}
 
-std::unique_ptr<DiagnosticsService> MicroOcpp::makeDefaultDiagnosticsService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) {
-    std::unique_ptr<DiagnosticsService> diagService = std::unique_ptr<DiagnosticsService>(new DiagnosticsService(context));
-
-    diagService->setDiagnosticsReader(
-        [] (char *buf, size_t size) -> size_t {
-            if (!g_diagsSent) {
-                g_diagsSent = true;
-                int ret = snprintf(buf, size,
-                    "\n# Memory\n"
-                    "freeHeap=%zu\n"
-                    "minHeap=%zu\n"
-                    "maxAllocHeap=%zu\n"
-                    "LittleFS_used=%zu\n"
-                    "LittleFS_total=%zu\n",
-                    heap_caps_get_free_size(MALLOC_CAP_DEFAULT),
-                    heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT),
-                    heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT),
-                    LittleFS.usedBytes(),
-                    LittleFS.totalBytes()
-                );
-                if (ret < 0 || (size_t)ret >= size) {
-                    MO_DBG_ERR("snprintf: %i", ret);
-                    return 0;
-                }
-                return (size_t)ret;
-            }
+size_t defaultDiagnosticsReader(char *buf, size_t size, void*) {
+    if (!g_diagsSent) {
+        g_diagsSent = true;
+        int ret = snprintf(buf, size,
+            "\n# Memory\n"
+            "freeHeap=%zu\n"
+            "minHeap=%zu\n"
+            "maxAllocHeap=%zu\n"
+            "LittleFS_used=%zu\n"
+            "LittleFS_total=%zu\n",
+            heap_caps_get_free_size(MALLOC_CAP_DEFAULT),
+            heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT),
+            heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT),
+            LittleFS.usedBytes(),
+            LittleFS.totalBytes()
+        );
+        if (ret < 0 || (size_t)ret >= size) {
+            MO_DBG_ERR("snprintf: %i", ret);
             return 0;
-        }, [] () {
-            g_diagsSent = false;
-        },
-        filesystem);
-
-    return diagService;
+        }
+        return (size_t)ret;
+    }
+    return 0;
 }
 
-#elif MO_ENABLE_MBEDTLS
+void defaultDiagnosticsOnClose(void*) {
+    g_diagsSent = false;
+};
 
-std::unique_ptr<DiagnosticsService> MicroOcpp::makeDefaultDiagnosticsService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) {
-    std::unique_ptr<DiagnosticsService> diagService = std::unique_ptr<DiagnosticsService>(new DiagnosticsService(context));
-
-    diagService->setDiagnosticsReader(nullptr, nullptr, filesystem); //report the built-in MO defaults
-
-    return diagService;
-}
-
-#endif //MO_PLATFORM
-#endif //!defined(MO_CUSTOM_DIAGNOSTICS)
+#endif //MO_USE_DIAGNOSTICS

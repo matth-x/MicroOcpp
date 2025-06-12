@@ -1,17 +1,19 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #ifndef MO_CHANGEAVAILABILITY_H
 #define MO_CHANGEAVAILABILITY_H
 
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16
 
 namespace MicroOcpp {
+namespace Ocpp16 {
 
 class Model;
-
-namespace Ocpp16 {
 
 class ChangeAvailability : public Operation, public MemoryManaged {
 private:
@@ -32,19 +34,20 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace Ocpp16
+} //namespace MicroOcpp
+
+#endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
 
-#include <MicroOcpp/Model/Availability/ChangeAvailabilityStatus.h>
+#include <MicroOcpp/Model/Availability/AvailabilityDefs.h>
 #include <MicroOcpp/Model/Authorization/IdToken.h>
 
 namespace MicroOcpp {
+namespace Ocpp201 {
 
 class AvailabilityService;
-
-namespace Ocpp201 {
 
 class ChangeAvailability : public Operation, public MemoryManaged {
 private:
@@ -64,8 +67,8 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //end namespace Ocpp201
-} //end namespace MicroOcpp
+} //namespace Ocpp201
+} //namespace MicroOcpp
 
 #endif //MO_ENABLE_V201
 

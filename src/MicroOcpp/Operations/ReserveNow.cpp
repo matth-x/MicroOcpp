@@ -2,26 +2,27 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_RESERVATION
-
 #include <MicroOcpp/Operations/ReserveNow.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Availability/AvailabilityService.h>
+#include <MicroOcpp/Model/Configuration/ConfigurationService.h>
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
-#include <MicroOcpp/Model/ConnectorBase/Connector.h>
 #include <MicroOcpp/Platform.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp16::ReserveNow;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 
-ReserveNow::ReserveNow(Model& model) : MemoryManaged("v16.Operation.", "ReserveNow"), model(model) {
-  
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp16;
+
+ReserveNow::ReserveNow(Context& context, ReservationService& rService) : MemoryManaged("v16.Operation.", "ReserveNow"), context(context), rService(rService) {
+
 }
 
 ReserveNow::~ReserveNow() {
-  
+
 }
 
 const char* ReserveNow::getOperationType(){
@@ -40,13 +41,13 @@ void ReserveNow::processReq(JsonObject payload) {
     }
 
     int connectorId = payload["connectorId"] | -1;
-    if (connectorId < 0 || (unsigned int) connectorId >= model.getNumConnectors()) {
+    if (connectorId < 0 || (unsigned int) connectorId >= context.getModel16().getNumEvseId()) {
         errorCode = "PropertyConstraintViolation";
         return;
     }
 
     Timestamp expiryDate;
-    if (!expiryDate.setTime(payload["expiryDate"])) {
+    if (!context.getClock().parseString(payload["expiryDate"] | "_Undefined", expiryDate)) {
         MO_DBG_WARN("bad time format");
         errorCode = "PropertyConstraintViolation";
         return;
@@ -65,53 +66,61 @@ void ReserveNow::processReq(JsonObject payload) {
 
     int reservationId = payload["reservationId"] | -1;
 
-    if (model.getReservationService() &&
-                model.getNumConnectors() > 0) {
-        auto rService = model.getReservationService();
-        auto chargePoint = model.getConnector(0);
-
-        auto reserveConnectorZeroSupportedBool = declareConfiguration<bool>("ReserveConnectorZeroSupported", true, CONFIGURATION_VOLATILE);
-        if (connectorId == 0 && (!reserveConnectorZeroSupportedBool || !reserveConnectorZeroSupportedBool->getBool())) {
-            reservationStatus = "Rejected";
-            return;
-        }
-
-        if (auto reservation = rService->getReservationById(reservationId)) {
-            reservation->update(reservationId, (unsigned int) connectorId, expiryDate, idTag, parentIdTag);
-            reservationStatus = "Accepted";
-            return;
-        }
-
-        Connector *connector = nullptr;
-        
-        if (connectorId > 0) {
-            connector = model.getConnector((unsigned int) connectorId);
-        }
-
-        if (chargePoint->getStatus() == ChargePointStatus_Faulted ||
-                (connector && connector->getStatus() == ChargePointStatus_Faulted)) {
-            reservationStatus = "Faulted";
-            return;
-        }
-
-        if (chargePoint->getStatus() == ChargePointStatus_Unavailable ||
-                (connector && connector->getStatus() == ChargePointStatus_Unavailable)) {
-            reservationStatus = "Unavailable";
-            return;
-        }
-
-        if (connector && connector->getStatus() != ChargePointStatus_Available) {
-            reservationStatus = "Occupied";
-            return;
-        }
-
-        if (rService->updateReservation(reservationId, (unsigned int) connectorId, expiryDate, idTag, parentIdTag)) {
-            reservationStatus = "Accepted";
-        } else {
-            reservationStatus = "Occupied";
-        }
-    } else {
+    auto availSvc = context.getModel16().getAvailabilityService();
+    auto availSvcCp = availSvc ? availSvc->getEvse(0) : nullptr;
+    if (!availSvcCp) {
         errorCode = "InternalError";
+        return;
+    }
+
+    AvailabilityServiceEvse *availSvcEvse = nullptr;
+    if (connectorId > 0) {
+        availSvcEvse = availSvc->getEvse(connectorId);
+        if (!availSvcEvse) {
+            errorCode = "InternalError";
+            return;
+        }
+    }
+
+    auto configServce = context.getModel16().getConfigurationService();
+    auto reserveConnectorZeroSupportedBool = configServce ? configServce->declareConfiguration<bool>("ReserveConnectorZeroSupported", true, MO_CONFIGURATION_VOLATILE) : nullptr;
+    if (!reserveConnectorZeroSupportedBool) {
+        errorCode = "InternalError";
+        return;
+    }
+
+    if (connectorId == 0 && !reserveConnectorZeroSupportedBool->getBool()) {
+        reservationStatus = "Rejected";
+        return;
+    }
+
+    if (auto reservation = rService.getReservationById(reservationId)) {
+        reservation->update(reservationId, (unsigned int) connectorId, expiryDate, idTag, parentIdTag);
+        reservationStatus = "Accepted";
+        return;
+    }
+
+    if (availSvcCp->getStatus() == MO_ChargePointStatus_Faulted ||
+            (availSvcEvse && availSvcEvse->getStatus() == MO_ChargePointStatus_Faulted)) {
+        reservationStatus = "Faulted";
+        return;
+    }
+
+    if (availSvcCp->getStatus() == MO_ChargePointStatus_Unavailable ||
+            (availSvcEvse && availSvcEvse->getStatus() == MO_ChargePointStatus_Unavailable)) {
+        reservationStatus = "Unavailable";
+        return;
+    }
+
+    if (availSvcEvse && availSvcEvse->getStatus() != MO_ChargePointStatus_Available) {
+        reservationStatus = "Occupied";
+        return;
+    }
+
+    if (rService.updateReservation(reservationId, (unsigned int) connectorId, expiryDate, idTag, parentIdTag)) {
+        reservationStatus = "Accepted";
+    } else {
+        reservationStatus = "Occupied";
     }
 }
 
@@ -129,4 +138,4 @@ std::unique_ptr<JsonDoc> ReserveNow::createConf(){
     return doc;
 }
 
-#endif //MO_ENABLE_RESERVATION
+#endif //MO_ENABLE_V16 && MO_ENABLE_RESERVATION

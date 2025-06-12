@@ -5,24 +5,30 @@
 #ifndef MO_READINGCONTEXT_H
 #define MO_READINGCONTEXT_H
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16 || MO_ENABLE_V201
+
 typedef enum {
-    ReadingContext_UNDEFINED,
-    ReadingContext_InterruptionBegin,
-    ReadingContext_InterruptionEnd,
-    ReadingContext_Other,
-    ReadingContext_SampleClock,
-    ReadingContext_SamplePeriodic,
-    ReadingContext_TransactionBegin,
-    ReadingContext_TransactionEnd,
-    ReadingContext_Trigger
-}   ReadingContext;
+    MO_ReadingContext_UNDEFINED,
+    MO_ReadingContext_InterruptionBegin,
+    MO_ReadingContext_InterruptionEnd,
+    MO_ReadingContext_Other,
+    MO_ReadingContext_SampleClock,
+    MO_ReadingContext_SamplePeriodic,
+    MO_ReadingContext_TransactionBegin,
+    MO_ReadingContext_TransactionEnd,
+    MO_ReadingContext_Trigger
+}   MO_ReadingContext;
 
 #ifdef __cplusplus
 
 namespace MicroOcpp {
-const char *serializeReadingContext(ReadingContext context);
-ReadingContext deserializeReadingContext(const char *serialized);
+const char *serializeReadingContext(MO_ReadingContext context);
+MO_ReadingContext deserializeReadingContext(const char *serialized);
 }
 
-#endif
+#endif //__cplusplus
+
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201
 #endif

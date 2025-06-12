@@ -6,18 +6,16 @@
  * Implementation of the UCs B05 - B06
  */
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
+#include <string.h>
 
 #include <MicroOcpp/Model/Variables/VariableContainer.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
-
-#include <string.h>
-
 #include <MicroOcpp/Debug.h>
 
+#if MO_ENABLE_V201
+
 using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp201;
 
 VariableContainer::~VariableContainer() {
 
@@ -105,7 +103,7 @@ bool VariableContainerOwning::add(std::unique_ptr<Variable> variable) {
     return true;
 }
 
-bool VariableContainerOwning::enablePersistency(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename) {
+bool VariableContainerOwning::enablePersistency(MO_FilesystemAdapter *filesystem, const char *filename) {
     this->filesystem = filesystem;
 
     MO_FREE(this->filename);
@@ -132,20 +130,24 @@ bool VariableContainerOwning::load() {
         return true; //persistency disabled - nothing to do
     }
 
-    size_t file_size = 0;
-    if (filesystem->stat(filename, &file_size) != 0 // file does not exist
-            || file_size == 0) {                         // file exists, but empty
-        MO_DBG_DEBUG("Populate FS: create variables file");
-        return commit();
-    }
-
-    auto doc = FilesystemUtils::loadJson(filesystem, filename, getMemoryTag());
-    if (!doc) {
-        MO_DBG_ERR("failed to load %s", filename);
-        return false;
+    JsonDoc doc (0);
+    auto ret = FilesystemUtils::loadJson(filesystem, filename, doc, getMemoryTag());
+    switch (ret) {
+        case FilesystemUtils::LoadStatus::Success:
+            break; //continue loading JSON
+        case FilesystemUtils::LoadStatus::FileNotFound:
+            MO_DBG_DEBUG("Populate FS: create variables file");
+            return commit();
+        case FilesystemUtils::LoadStatus::ErrOOM:
+            MO_DBG_ERR("OOM");
+            return false;
+        case FilesystemUtils::LoadStatus::ErrFileCorruption:
+        case FilesystemUtils::LoadStatus::ErrOther:
+            MO_DBG_ERR("failed to load %s", filename);
+            return false;
     }
     
-    JsonArray variablesJson = (*doc)["variables"];
+    JsonArray variablesJson = doc["variables"];
 
     for (JsonObject stored : variablesJson) {
 
@@ -280,8 +282,8 @@ bool VariableContainerOwning::commit() {
         }
     }
 
-
-    bool success = FilesystemUtils::storeJson(filesystem, filename, doc);
+    auto ret = FilesystemUtils::storeJson(filesystem, filename, doc);
+    bool success = (ret == FilesystemUtils::StoreStatus::Success);
 
     if (success) {
         MO_DBG_DEBUG("Saving variables finished");
@@ -292,4 +294,4 @@ bool VariableContainerOwning::commit() {
     return success;
 }
 
-#endif // MO_ENABLE_V201
+#endif //MO_ENABLE_V201

@@ -2,16 +2,14 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <MicroOcpp/Operations/RequestStartTransaction.h>
 #include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp201::RequestStartTransaction;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V201
+
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp201;
 
 RequestStartTransaction::RequestStartTransaction(RemoteControlService& rcService) : MemoryManaged("v201.Operation.", "RequestStartTransaction"), rcService(rcService) {
   
@@ -54,10 +52,10 @@ std::unique_ptr<JsonDoc> RequestStartTransaction::createConf(){
     const char *statusCstr = "";
 
     switch (status) {
-        case RequestStartStopStatus_Accepted:
+        case RequestStartStopStatus::Accepted:
             statusCstr = "Accepted";
             break;
-        case RequestStartStopStatus_Rejected:
+        case RequestStartStopStatus::Rejected:
             statusCstr = "Rejected";
             break;
         default:
@@ -74,4 +72,4 @@ std::unique_ptr<JsonDoc> RequestStartTransaction::createConf(){
     return doc;
 }
 
-#endif // MO_ENABLE_V201
+#endif //MO_ENABLE_V201

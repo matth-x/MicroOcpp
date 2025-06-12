@@ -64,7 +64,7 @@ TEST_CASE( "Boot Behavior" ) {
 
         bool checkProcessed = false;
 
-        getOcppContext()->getOperationRegistry().registerOperation("BootNotification",
+        getOcppContext()->getMessageService().registerOperation("BootNotification",
             [&checkProcessed] () {
                 return new Ocpp16::CustomOperation("BootNotification",
                     [ &checkProcessed] (JsonObject payload) {
@@ -113,7 +113,7 @@ TEST_CASE( "Boot Behavior" ) {
 
         mocpp_initialize(loopback, ChargerCredentials());
 
-        getOcppContext()->getOperationRegistry().registerOperation("BootNotification",
+        getOcppContext()->getMessageService().registerOperation("BootNotification",
             [] () {
                 return new Ocpp16::CustomOperation("BootNotification",
                     [] (JsonObject payload) {
@@ -186,7 +186,7 @@ TEST_CASE( "Boot Behavior" ) {
 
         bool executedTriggerMessage = false;
 
-        getOcppContext()->getOperationRegistry().registerOperation("TriggeredOperation",
+        getOcppContext()->getMessageService().registerOperation("TriggeredOperation",
             [&executedTriggerMessage] () {return new TriggeredOperation(executedTriggerMessage);});
         
         loopback.sendTXT(TRIGGER_MESSAGE, sizeof(TRIGGER_MESSAGE) - 1);
@@ -202,7 +202,7 @@ TEST_CASE( "Boot Behavior" ) {
 
         MO_DBG_INFO("Now, accept BN and check if all queued messages finally arrive");
 
-        getOcppContext()->getOperationRegistry().registerOperation("BootNotification",
+        getOcppContext()->getMessageService().registerOperation("BootNotification",
             [] () {
                 return new Ocpp16::CustomOperation("BootNotification",
                     [] (JsonObject payload) {
@@ -254,7 +254,7 @@ TEST_CASE( "Boot Behavior" ) {
 
         //start another transaction while BN is pending
 
-        getOcppContext()->getOperationRegistry().registerOperation("BootNotification",
+        getOcppContext()->getMessageService().registerOperation("BootNotification",
             [] () {
                 return new Ocpp16::CustomOperation("BootNotification",
                     [] (JsonObject payload) {
@@ -287,7 +287,7 @@ TEST_CASE( "Boot Behavior" ) {
 
         //Now, accept BN and check again
 
-        getOcppContext()->getOperationRegistry().registerOperation("BootNotification",
+        getOcppContext()->getMessageService().registerOperation("BootNotification",
             [] () {
                 return new Ocpp16::CustomOperation("BootNotification",
                     [] (JsonObject payload) {
@@ -435,7 +435,7 @@ TEST_CASE( "Boot Behavior" ) {
 
         bool checkProcessed = false;
 
-        getOcppContext()->getOperationRegistry().registerOperation("BootNotification",
+        getOcppContext()->getMessageService().registerOperation("BootNotification",
             [&checkProcessed] () {
                 return new Ocpp16::CustomOperation("BootNotification",
                     [ &checkProcessed] (JsonObject payload) {

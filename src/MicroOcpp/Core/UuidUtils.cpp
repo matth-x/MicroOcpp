@@ -4,18 +4,21 @@
 #include <stdint.h>
 
 namespace MicroOcpp {
+namespace UuidUtils {
 
-#define UUID_STR_LEN 36
-
-bool generateUUID(char *uuidBuffer, size_t len) {
-  if (len < UUID_STR_LEN + 1)
+bool generateUUID(uint32_t (*rng)(), char *uuidBuffer, size_t size) {
+  if (!rng) {
+    return false;
+  }
+  
+  if (size < MO_UUID_STR_SIZE)
   {
     return false;
   }
 
   uint32_t ar[4];
   for (uint8_t i = 0; i < 4; i++) {
-    ar[i] = mocpp_rng();
+    ar[i] = rng();
   }
 
   // Conforming to RFC 4122 Specification
@@ -49,8 +52,9 @@ bool generateUUID(char *uuidBuffer, size_t len) {
     uuidBuffer[j++] = (ch < 10)? '0' + ch : ('a' - 10) + ch;
   }
 
-  uuidBuffer[UUID_STR_LEN] = 0;
+  uuidBuffer[MO_UUID_STR_SIZE - 1] = 0;
   return true;
 }
 
-}
+} //namespace UuidUtils
+} //namespace MicroOcpp

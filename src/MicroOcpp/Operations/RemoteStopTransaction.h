@@ -6,21 +6,28 @@
 #define MO_REMOTESTOPTRANSACTION_H
 
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlDefs.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16
 
 namespace MicroOcpp {
 
-class Model;
+class Context;
+class RemoteControlService;
 
 namespace Ocpp16 {
 
 class RemoteStopTransaction : public Operation, public MemoryManaged {
 private:
-    Model& model;
-    bool accepted = false;
+    Context& context;
+    RemoteControlService& rcService;
+
+    RemoteStartStopStatus status = RemoteStartStopStatus::Rejected;
 
     const char *errorCode = nullptr;
 public:
-    RemoteStopTransaction(Model& model);
+    RemoteStopTransaction(Context& context, RemoteControlService& rcService);
 
     const char* getOperationType() override;
 
@@ -31,6 +38,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace Ocpp16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16
 #endif

@@ -47,10 +47,7 @@ public:
 
     virtual void processConf(JsonObject payload);
     
-    /*
-     * returns if the operation must be aborted
-     */
-    virtual bool processErr(const char *code, const char *description, JsonObject details) { return true;}
+    virtual void processErr(const char *code, const char *description, JsonObject details) {}
 
     /**
      * Processes the request in the JSON document. 
@@ -68,5 +65,5 @@ public:
     virtual std::unique_ptr<JsonDoc> getErrorDetails() {return createEmptyDocument();}
 };
 
-} //end namespace MicroOcpp
+} //namespace MicroOcpp
  #endif

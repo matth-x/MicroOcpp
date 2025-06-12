@@ -7,59 +7,62 @@
 #include <MicroOcpp/Model/Metering/ReadingContext.h>
 #include <MicroOcpp/Debug.h>
 
+#if MO_ENABLE_V16 || MO_ENABLE_V201
+
 namespace MicroOcpp {
 
-const char *serializeReadingContext(ReadingContext context) {
+const char *serializeReadingContext(MO_ReadingContext context) {
     switch (context) {
-        case (ReadingContext_InterruptionBegin):
+        case (MO_ReadingContext_InterruptionBegin):
             return "Interruption.Begin";
-        case (ReadingContext_InterruptionEnd):
+        case (MO_ReadingContext_InterruptionEnd):
             return "Interruption.End";
-        case (ReadingContext_Other):
+        case (MO_ReadingContext_Other):
             return "Other";
-        case (ReadingContext_SampleClock):
+        case (MO_ReadingContext_SampleClock):
             return "Sample.Clock";
-        case (ReadingContext_SamplePeriodic):
+        case (MO_ReadingContext_SamplePeriodic):
             return "Sample.Periodic";
-        case (ReadingContext_TransactionBegin):
+        case (MO_ReadingContext_TransactionBegin):
             return "Transaction.Begin";
-        case (ReadingContext_TransactionEnd):
+        case (MO_ReadingContext_TransactionEnd):
             return "Transaction.End";
-        case (ReadingContext_Trigger):
+        case (MO_ReadingContext_Trigger):
             return "Trigger";
         default:
-            MO_DBG_ERR("ReadingContext not specified");
+            MO_DBG_ERR("MO_ReadingContext not specified");
             /* fall through */
-        case (ReadingContext_UNDEFINED):
+        case (MO_ReadingContext_UNDEFINED):
             return "";
     }
 }
-ReadingContext deserializeReadingContext(const char *context) {
+MO_ReadingContext deserializeReadingContext(const char *context) {
     if (!context) {
         MO_DBG_ERR("Invalid argument");
-        return ReadingContext_UNDEFINED;
+        return MO_ReadingContext_UNDEFINED;
     }
 
     if (!strcmp(context, "Sample.Periodic")) {
-        return ReadingContext_SamplePeriodic;
+        return MO_ReadingContext_SamplePeriodic;
     } else if (!strcmp(context, "Sample.Clock")) {
-        return ReadingContext_SampleClock;
+        return MO_ReadingContext_SampleClock;
     } else if (!strcmp(context, "Transaction.Begin")) {
-        return ReadingContext_TransactionBegin;
+        return MO_ReadingContext_TransactionBegin;
     } else if (!strcmp(context, "Transaction.End")) {
-        return ReadingContext_TransactionEnd;
+        return MO_ReadingContext_TransactionEnd;
     } else if (!strcmp(context, "Other")) {
-        return ReadingContext_Other;
+        return MO_ReadingContext_Other;
     } else if (!strcmp(context, "Interruption.Begin")) {
-        return ReadingContext_InterruptionBegin;
+        return MO_ReadingContext_InterruptionBegin;
     } else if (!strcmp(context, "Interruption.End")) {
-        return ReadingContext_InterruptionEnd;
+        return MO_ReadingContext_InterruptionEnd;
     } else if (!strcmp(context, "Trigger")) {
-        return ReadingContext_Trigger;
+        return MO_ReadingContext_Trigger;
     }
 
     MO_DBG_ERR("ReadingContext not specified %.10s", context);
-    return ReadingContext_UNDEFINED;
+    return MO_ReadingContext_UNDEFINED;
 }
 
 } //namespace MicroOcpp
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201

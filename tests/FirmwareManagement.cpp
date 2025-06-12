@@ -50,7 +50,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         bool checkProcessed = false;
 
-        getOcppContext()->getOperationRegistry().registerOperation("FirmwareStatusNotification",
+        getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
                 return new Ocpp16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
@@ -90,7 +90,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         int checkProcessed = 0;
 
-        getOcppContext()->getOperationRegistry().registerOperation("FirmwareStatusNotification",
+        getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
                 return new Ocpp16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
@@ -159,7 +159,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         int checkProcessed = 0;
 
-        getOcppContext()->getOperationRegistry().registerOperation("FirmwareStatusNotification",
+        getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
                 return new Ocpp16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
@@ -226,7 +226,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         int checkProcessed = 0;
 
-        getOcppContext()->getOperationRegistry().registerOperation("FirmwareStatusNotification",
+        getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
                 return new Ocpp16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
@@ -315,7 +315,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         int checkProcessed = 0;
 
-        getOcppContext()->getOperationRegistry().registerOperation("FirmwareStatusNotification",
+        getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
                 return new Ocpp16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
@@ -398,7 +398,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         int checkProcessed = 0;
 
-        getOcppContext()->getOperationRegistry().registerOperation("FirmwareStatusNotification",
+        getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
                 return new Ocpp16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
@@ -478,7 +478,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         int checkProcessed = 0;
 
-        getOcppContext()->getOperationRegistry().registerOperation("FirmwareStatusNotification",
+        getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
                 return new Ocpp16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {

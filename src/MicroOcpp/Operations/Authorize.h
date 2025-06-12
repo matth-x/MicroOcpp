@@ -2,18 +2,19 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef AUTHORIZE_H
-#define AUTHORIZE_H
+#ifndef MO_AUTHORIZE_H
+#define MO_AUTHORIZE_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Operations/CiStrings.h>
 #include <MicroOcpp/Version.h>
 
+#if MO_ENABLE_V16
+
 namespace MicroOcpp {
+namespace Ocpp16 {
 
 class Model;
-
-namespace Ocpp16 {
 
 class Authorize : public Operation, public MemoryManaged {
 private:
@@ -28,14 +29,16 @@ public:
 
     void processConf(JsonObject payload) override;
 
-    void processReq(JsonObject payload) override;
-
-    std::unique_ptr<JsonDoc> createConf() override;
+#if MO_ENABLE_MOCK_SERVER
+    static int writeMockConf(const char *operationType, char *buf, size_t size, int userStatus, void *userData);
+#endif
 
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace Ocpp16
+} //namespace MicroOcpp
+
+#endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
 
@@ -43,6 +46,8 @@ public:
 
 namespace MicroOcpp {
 namespace Ocpp201 {
+
+class Model;
 
 class Authorize : public Operation, public MemoryManaged {
 private:
@@ -57,14 +62,14 @@ public:
 
     void processConf(JsonObject payload) override;
 
-    void processReq(JsonObject payload) override;
-
-    std::unique_ptr<JsonDoc> createConf() override;
+#if MO_ENABLE_MOCK_SERVER
+    static int writeMockConf(const char *operationType, char *buf, size_t size, int userStatus, void *userData);
+#endif
 
 };
 
-} //end namespace Ocpp201
-} //end namespace MicroOcpp
+} //namespace Ocpp201
+} //namespace MicroOcpp
 
 #endif //MO_ENABLE_V201
 

@@ -601,7 +601,7 @@ TEST_CASE( "Variable" ) {
         bool checkProcessedNotification = false;
         Timestamp checkTimestamp;
 
-        getOcppContext()->getOperationRegistry().registerOperation("NotifyReport",
+        getOcppContext()->getMessageService().registerOperation("NotifyReport",
             [&checkProcessedNotification, &checkTimestamp] () {
                 return new Ocpp16::CustomOperation("NotifyReport",
                     [ &checkProcessedNotification, &checkTimestamp] (JsonObject payload) {
@@ -658,4 +658,4 @@ TEST_CASE( "Variable" ) {
     mocpp_deinitialize();
 }
 
-#endif // MO_ENABLE_V201
+#endif //MO_ENABLE_V201

@@ -4,14 +4,12 @@
 
 #ifndef MO_REQUESTSTOPTRANSACTION_H
 #define MO_REQUESTSTOPTRANSACTION_H
-
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Model/RemoteControl/RemoteControlDefs.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V201
 
 namespace MicroOcpp {
 
@@ -41,7 +39,5 @@ public:
 
 } //namespace Ocpp201
 } //namespace MicroOcpp
-
 #endif //MO_ENABLE_V201
-
 #endif

@@ -2,71 +2,109 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_RESERVATION
-
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
-#include <MicroOcpp/Core/Context.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Model/ConnectorBase/Connector.h>
-#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Model/Availability/AvailabilityService.h>
+#include <MicroOcpp/Model/Configuration/ConfigurationService.h>
+#include <MicroOcpp/Model/Transactions/TransactionService16.h>
+#include <MicroOcpp/Model/Transactions/TransactionService201.h>
 #include <MicroOcpp/Operations/CancelReservation.h>
 #include <MicroOcpp/Operations/ReserveNow.h>
-
 #include <MicroOcpp/Debug.h>
 
-using namespace MicroOcpp;
+#if MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 
-ReservationService::ReservationService(Context& context, unsigned int numConnectors) : MemoryManaged("v16.Reservation.ReservationService"), context(context), maxReservations((int) numConnectors - 1), reservations(makeVector<std::unique_ptr<Reservation>>(getMemoryTag())) {
-    if (maxReservations > 0) {
-        reservations.reserve((size_t) maxReservations);
-        for (int i = 0; i < maxReservations; i++) {
-            reservations.emplace_back(new Reservation(context.getModel(), i));
+using namespace MicroOcpp;
+using namespace MicroOcpp::Ocpp16;
+
+ReservationService::ReservationService(Context& context) : MemoryManaged("v16.Reservation.ReservationService"), context(context) {
+
+}
+
+ReservationService::~ReservationService() {
+    for (size_t i = 0; i < sizeof(reservations) / sizeof(reservations[0]); i++) {
+        delete reservations[i];
+        reservations[i] = nullptr;
+    }
+}
+
+bool ReservationService::setup() {
+
+    numEvseId = context.getModel16().getNumEvseId();
+
+    maxReservations = numEvseId > 0 ? numEvseId - 1 : 0; // = number of physical connectors
+    for (size_t i = 0; i < maxReservations; i++) {
+        reservations[i] = new Reservation(context, i);
+        if (!reservations[i] || !reservations[i]->setup()) {
+            MO_DBG_ERR("OOM");
+            return false;
         }
     }
 
-    reserveConnectorZeroSupportedBool = declareConfiguration<bool>("ReserveConnectorZeroSupported", true, CONFIGURATION_VOLATILE, true);
-    
-    context.getOperationRegistry().registerOperation("CancelReservation", [this] () {
-        return new Ocpp16::CancelReservation(*this);});
-    context.getOperationRegistry().registerOperation("ReserveNow", [&context] () {
-        return new Ocpp16::ReserveNow(context.getModel());});
+    auto configService = context.getModel16().getConfigurationService();
+    if (!configService) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    reserveConnectorZeroSupportedBool = configService->declareConfiguration<bool>("ReserveConnectorZeroSupported", true, MO_CONFIGURATION_VOLATILE, Mutability::ReadOnly);
+    if (!reserveConnectorZeroSupportedBool) {
+        MO_DBG_ERR("declareConfiguration failed");
+        return false;
+    }
+
+    context.getMessageService().registerOperation("CancelReservation", [] (Context& context) -> Operation* {
+        return new CancelReservation(*context.getModel16().getReservationService());});
+    context.getMessageService().registerOperation("ReserveNow", [] (Context& context) -> Operation* {
+        return new ReserveNow(context, *context.getModel16().getReservationService());});
+
+    return false;
 }
 
 void ReservationService::loop() {
     //check if to end reservations
 
-    for (auto& reservation : reservations) {
-        if (!reservation->isActive()) {
+    for (size_t i = 0; i < maxReservations; i++) {
+        if (!reservations[i]->isActive()) {
             continue;
         }
 
-        if (auto connector = context.getModel().getConnector(reservation->getConnectorId())) {
+        auto connectorid = reservations[i]->getConnectorId();
 
+        auto availSvc = context.getModel16().getAvailabilityService();
+        auto availSvcEvse = availSvc ? availSvc->getEvse(reservations[i]->getConnectorId()) : nullptr;
+        if (availSvcEvse) {
             //check if connector went inoperative
-            auto cStatus = connector->getStatus();
-            if (cStatus == ChargePointStatus_Faulted || cStatus == ChargePointStatus_Unavailable) {
-                reservation->clear();
+            auto cStatus = availSvcEvse->getStatus();
+            if (cStatus == MO_ChargePointStatus_Faulted || cStatus == MO_ChargePointStatus_Unavailable) {
+                reservations[i]->clear();
                 continue;
             }
+        }
 
+        auto txSvc = context.getModel16().getTransactionService();
+        auto txSvcEvse = txSvc ? txSvc->getEvse(reservations[i]->getConnectorId()) : nullptr;
+        if (txSvcEvse) {
             //check if other tx started at this connector (e.g. due to RemoteStartTransaction)
-            if (connector->getTransaction() && connector->getTransaction()->isAuthorized()) {
-                reservation->clear();
+            if (txSvcEvse->getTransaction() && txSvcEvse->getTransaction()->isAuthorized()) {
+                reservations[i]->clear();
                 continue;
             }
         }
 
         //check if tx with same idTag or reservationId has started
-        for (unsigned int cId = 1; cId < context.getModel().getNumConnectors(); cId++) {
-            auto& transaction = context.getModel().getConnector(cId)->getTransaction();
+        for (unsigned int evseId = 1; evseId < numEvseId; evseId++) {
+            auto txSvc = context.getModel16().getTransactionService();
+            auto txSvcEvse = txSvc ? txSvc->getEvse(evseId) : nullptr;
+            auto transaction = txSvcEvse ? txSvcEvse->getTransaction() : nullptr;
             if (transaction && transaction->isAuthorized()) {
-                const char *cIdTag = transaction->getIdTag();
-                if (transaction->getReservationId() == reservation->getReservationId() || 
-                        (cIdTag && !strcmp(cIdTag, reservation->getIdTag()))) {
+                const char *idTag = transaction->getIdTag();
+                if (transaction->getReservationId() == reservations[i]->getReservationId() || 
+                        (idTag && !strcmp(idTag, reservations[i]->getIdTag()))) {
 
-                    reservation->clear();
+                    reservations[i]->clear();
                     break;
                 }
             }
@@ -80,9 +118,9 @@ Reservation *ReservationService::getReservation(unsigned int connectorId) {
         return nullptr; //cannot fetch for connectorId 0 because multiple reservations are possible at a time
     }
 
-    for (auto& reservation : reservations) {
-        if (reservation->isActive() && reservation->matches(connectorId)) {
-            return reservation.get();
+    for (size_t i = 0; i < maxReservations; i++) {
+        if (reservations[i]->isActive() && reservations[i]->matches(connectorId)) {
+            return reservations[i];
         }
     }
     
@@ -97,18 +135,18 @@ Reservation *ReservationService::getReservation(const char *idTag, const char *p
 
     Reservation *connectorReservation = nullptr;
 
-    for (auto& reservation : reservations) {
-        if (!reservation->isActive()) {
+    for (size_t i = 0; i < maxReservations; i++) {
+        if (!reservations[i]->isActive()) {
             continue;
         }
 
         //TODO check for parentIdTag
 
-        if (reservation->matches(idTag, parentIdTag)) {
-            if (reservation->getConnectorId() == 0) {
-                return reservation.get(); //reservation at connectorId 0 has higher priority
+        if (reservations[i]->matches(idTag, parentIdTag)) {
+            if (reservations[i]->getConnectorId() == 0) {
+                return reservations[i]; //reservation at connectorId 0 has higher priority
             } else {
-                connectorReservation = reservation.get();
+                connectorReservation = reservations[i];
             }
         }
     }
@@ -132,7 +170,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
         }
     }
 
-    if (reserveConnectorZeroSupportedBool && !reserveConnectorZeroSupportedBool->getBool()) {
+    if (!reserveConnectorZeroSupportedBool->getBool()) {
         //no connectorZero check - all done
         MO_DBG_DEBUG("no reservation");
         return nullptr;
@@ -143,23 +181,23 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
 
     //Check if there are enough free connectors to satisfy all reservations at connectorId 0
     unsigned int unspecifiedReservations = 0;
-    for (auto& reservation : reservations) {
-        if (reservation->isActive() && reservation->getConnectorId() == 0) {
+    for (size_t i = 0; i < maxReservations; i++) {
+        if (reservations[i]->isActive() && reservations[i]->getConnectorId() == 0) {
             unspecifiedReservations++;
-            blockingReservation = reservation.get();
+            blockingReservation = reservations[i];
         }
     }
 
     unsigned int availableCount = 0;
-    for (unsigned int cId = 1; cId < context.getModel().getNumConnectors(); cId++) {
-        if (cId == connectorId) {
+    for (unsigned int eId = 1; eId < numEvseId; eId++) {
+        if (eId == connectorId) {
             //don't count this connector
             continue;
         }
-        if (auto connector = context.getModel().getConnector(cId)) {
-            if (connector->getStatus() == ChargePointStatus_Available) {
-                availableCount++;
-            }
+        auto availSvc = context.getModel16().getAvailabilityService();
+        auto availSvcEvse = availSvc ? availSvc->getEvse(eId) : nullptr;
+        if (availSvcEvse && availSvcEvse->getStatus() == MO_ChargePointStatus_Available) {
+            availableCount++;
         }
     }
 
@@ -173,9 +211,9 @@ Reservation *ReservationService::getReservation(unsigned int connectorId, const 
 }
 
 Reservation *ReservationService::getReservationById(int reservationId) {
-    for (auto& reservation : reservations) {
-        if (reservation->isActive() && reservation->getReservationId() == reservationId) {
-            return reservation.get();
+    for (size_t i = 0; i < maxReservations; i++) {
+        if (reservations[i]->isActive() && reservations[i]->getReservationId() == reservationId) {
+            return reservations[i];
         }
     }
 
@@ -204,9 +242,9 @@ bool ReservationService::updateReservation(int reservationId, unsigned int conne
     }
 
     //update free reservation slot
-    for (auto& reservation : reservations) {
-        if (!reservation->isActive()) {
-            reservation->update(reservationId, connectorId, expiryDate, idTag, parentIdTag);
+    for (size_t i = 0; i < maxReservations; i++) {
+        if (!reservations[i]->isActive()) {
+            reservations[i]->update(reservationId, connectorId, expiryDate, idTag, parentIdTag);
             return true;
         }
     }
@@ -215,4 +253,4 @@ bool ReservationService::updateReservation(int reservationId, unsigned int conne
     return false;
 }
 
-#endif //MO_ENABLE_RESERVATION
+#endif //MO_ENABLE_V16 && MO_ENABLE_RESERVATION
