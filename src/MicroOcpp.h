@@ -36,6 +36,12 @@ bool mo_isInitialized();
 //Returns Context handle to pass around API functions
 MO_Context *mo_getApiContext();
 
+#if MO_USE_FILEAPI != MO_CUSTOM_FS
+//Set if MO can use the filesystem and if it needs to mount it. See "FilesystemAdapter.h" for all options
+void mo_setDefaultFilesystemConfig(MO_FilesystemOpt opt);
+void mo_setDefaultFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *pathPrefix);
+#endif //#if MO_USE_FILEAPI != MO_CUSTOM_FS
+
 #if MO_WS_USE == MO_WS_ARDUINO
 /*
  * Setup MO with links2004/WebSockets library. Only available on Arduino, for other platforms set custom
@@ -70,12 +76,6 @@ bool mo_setWebsocketUrl(
 void mo_setConnection(MicroOcpp::Connection *connection);
 void mo_setConnection2(MO_Context *ctx, MicroOcpp::Connection *connection);
 #endif
-
-#if MO_USE_FILEAPI != MO_CUSTOM_FS
-//Set if MO can use the filesystem and if it needs to mount it. See "FilesystemAdapter.h" for all options
-void mo_setDefaultFilesystemConfig(MO_FilesystemOpt opt);
-void mo_setDefaultFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *pathPrefix);
-#endif //#if MO_USE_FILEAPI != MO_CUSTOM_FS
 
 //Set the OCPP version `MO_OCPP_V16` or `MO_OCPP_V201`. Works only if build flags `MO_ENABLE_V16` or
 //`MO_ENABLE_V201` are set to 1
@@ -444,6 +444,35 @@ void mo_v201_setOnResetNotify2(MO_Context *ctx, unsigned int evseId, bool (*onRe
 void mo_v201_setOnResetExecute(void (*onResetExecute)()); //identical to `mo_setOnResetExecute`
 void mo_v201_setOnResetExecute2(MO_Context *ctx, unsigned int evseId, bool (*onResetExecute2)(unsigned int, void*), void *userData);
 #endif //MO_ENABLE_V201
+
+/*
+ * Further platform configurations (Advanced)
+ */
+
+//Set custom debug function
+//`setDebugCb`: MO calls `debugCb` with full lines of formatted debug messages
+//`setDebugCb2`: MO calls `debugCb2` with the raw debug message, the file and line where it originated and debug level
+void mo_setDebugCb(void (*debugCb)(const char *msg));
+void mo_setDebugCb2(MO_Context *ctx, void (*debugCb2)(int lvl, const char *fn, int line, const char *msg));
+
+//Set custom timer function which returns the number of milliseconds elapsed since boot. Note: the return value
+//of this function must roll over from (2^32 - 1) to 0. It cannot roll over from an earlier value, otherwise it
+//would break the unsigned integer arithmetics which MO relies on. This is a common pitfall if the platform
+//tick frequency is not 1 tick per ms. Then a helper function is needed which counts the ticks up to 2^32 before
+//rolling over.
+void mo_setTicksCb(unsigned long (*ticksCb)());
+void mo_setTicksCb2(MO_Context *ctx, unsigned long (*ticksCb)());
+
+//Set custom random number generator function. By default, MO uses a pseudo-RNG which with the system time as
+//the only entropy source. Using a true RNG greatly improves security.
+void mo_setRngCb(uint32_t (*rngCb)());
+void mo_setRngCb2(MO_Context *ctx, uint32_t (*rngCb)());
+
+//Returns the internal filesystem adapter or NULL if the initialization failed. Need to set configs using
+//via `mo_setDefaultFilesystemConfig` before accessing the FS adpater. The FS adapter can be passed to other
+//MO utils functions or be used for other purposes than OCPP, as a file abstraction layer
+MO_FilesystemAdapter *mo_getFilesystem();
+MO_FilesystemAdapter *mo_getFilesystem2(MO_Context *ctx);
 
 #if MO_ENABLE_MBEDTLS
 //Set FTP security parameters (e.g. client cert). See "FtpMbedTLS.h" for all options

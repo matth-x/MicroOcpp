@@ -552,6 +552,16 @@ bool Ocpp201::AvailabilityServiceEvse::isAvailable() {
     return true;
 }
 
+bool Ocpp201::AvailabilityServiceEvse::isFaulted() {
+    //for (auto i = errorDataInputs.begin(); i != errorDataInputs.end(); ++i) {
+    for (size_t i = 0; i < faultedInputs.size(); i++) {
+        if (faultedInputs[i].isFaulted(evseId, faultedInputs[i].userData)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool Ocpp201::AvailabilityServiceEvse::addFaultedInput(FaultedInput faultedInput) {
     size_t capacity = faultedInputs.size() + 1;
     faultedInputs.reserve(capacity);

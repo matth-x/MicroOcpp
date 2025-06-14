@@ -19,7 +19,7 @@ DiagnosticsStatusNotification::DiagnosticsStatusNotification(DiagnosticsStatus s
 std::unique_ptr<JsonDoc> DiagnosticsStatusNotification::createReq() {
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
-    payload["status"] = cstrFromStatus(status);
+    payload["status"] = serializeDiagnosticsStatus(status);
     return doc;
 }
 

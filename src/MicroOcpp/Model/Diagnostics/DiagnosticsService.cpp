@@ -545,6 +545,12 @@ Ocpp16::DiagnosticsStatus DiagnosticsService::getUploadStatus16() {
     return res;
 }
 
+void DiagnosticsService::setDiagnosticsReader(size_t (*diagnosticsReader)(char *buf, size_t size, void *user_data), void(*onClose)(void *user_data), void *user_data) {
+    this->diagnosticsReader = diagnosticsReader;
+    this->diagnosticsOnClose = onClose;
+    this->diagnosticsUserData = user_data;
+}
+
 void DiagnosticsService::setRefreshFilename(bool (*refreshFilename)(MO_LogType type, char filenameOut[MO_GETLOG_FNAME_SIZE], void *user_data), void *user_data) {
     this->refreshFilename = refreshFilename;
     this->refreshFilenameUserData = user_data;

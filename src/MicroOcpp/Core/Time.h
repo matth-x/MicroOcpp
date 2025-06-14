@@ -39,7 +39,7 @@ private:
     uint16_t bootNr = 0; //bootNr when timestamp was taken
 
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
-    uint16_t ms = 0; //fractional ms of timestamp. Compound timestamp = time + ms. Range should be 0...999
+    int16_t ms = 0; //fractional ms of timestamp. Compound timestamp = time + ms. Range should be 0...999
 #endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
 public:

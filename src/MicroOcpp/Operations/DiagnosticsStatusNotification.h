@@ -17,7 +17,6 @@ namespace Ocpp16 {
 class DiagnosticsStatusNotification : public Operation, public MemoryManaged {
 private:
     DiagnosticsStatus status = DiagnosticsStatus::Idle;
-    static const char *cstrFromStatus(DiagnosticsStatus status);
 public:
     DiagnosticsStatusNotification(DiagnosticsStatus status);
 

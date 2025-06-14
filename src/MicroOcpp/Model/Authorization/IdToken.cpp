@@ -65,6 +65,10 @@ const char *IdToken::get() const {
     return idToken;
 }
 
+MO_IdTokenType IdToken::getType() const {
+    return type;
+}
+
 const char *IdToken::getTypeCstr() const {
     const char *res = "";
     switch (type) {

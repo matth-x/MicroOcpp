@@ -50,6 +50,7 @@ public:
     bool parseCstr(const char *token, const char *typeCstr);
 
     const char *get() const;
+    MO_IdTokenType getType() const;
     const char *getTypeCstr() const;
 
     bool equals(const IdToken& other);

@@ -85,6 +85,32 @@ bool mo_isInitialized() {
     return g_context != nullptr;
 }
 
+MO_Context *mo_getApiContext() {
+    return reinterpret_cast<MO_Context*>(g_context);
+}
+
+#if MO_USE_FILEAPI != MO_CUSTOM_FS
+//Set if MO can use the filesystem and if it needs to mount it
+void mo_setDefaultFilesystemConfig(MO_FilesystemOpt opt) {
+    mo_setDefaultFilesystemConfig2(mo_getApiContext(), opt, MO_FILENAME_PREFIX);
+}
+
+void mo_setDefaultFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *pathPrefix) {
+    if (!ctx) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return;
+    }
+    auto context = mo_getContext2(ctx);
+
+    MO_FilesystemConfig filesystemConfig;
+    memset(&filesystemConfig, 0, sizeof(filesystemConfig));
+    filesystemConfig.opt = opt;
+    filesystemConfig.path_prefix = pathPrefix;
+
+    context->setDefaultFilesystemConfig(filesystemConfig);
+}
+#endif // MO_USE_FILEAPI != MO_CUSTOM_FS
+
 #if MO_WS_USE == MO_WS_ARDUINO
 //Setup MO with links2004/WebSockets library
 void mo_setWebsocketUrl(const char *backendUrl, const char *chargeBoxId, const char *authorizationKey, const char *CA_cert) {
@@ -125,28 +151,6 @@ void mo_setConnection2(MO_Context *ctx, MicroOcpp::Connection *connection) {
     context->setConnection(connection);
 }
 #endif
-
-#if MO_USE_FILEAPI != MO_CUSTOM_FS
-//Set if MO can use the filesystem and if it needs to mount it
-void mo_setDefaultFilesystemConfig(MO_FilesystemOpt opt) {
-    mo_setDefaultFilesystemConfig2(mo_getApiContext(), opt, MO_FILENAME_PREFIX);
-}
-
-void mo_setDefaultFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *pathPrefix) {
-    if (!ctx) {
-        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
-        return;
-    }
-    auto context = mo_getContext2(ctx);
-
-    MO_FilesystemConfig filesystemConfig;
-    memset(&filesystemConfig, 0, sizeof(filesystemConfig));
-    filesystemConfig.opt = opt;
-    filesystemConfig.path_prefix = pathPrefix;
-
-    context->setDefaultFilesystemConfig(filesystemConfig);
-}
-#endif // MO_USE_FILEAPI != MO_CUSTOM_FS
 
 //Set the OCPP version
 void mo_setOcppVersion(int ocppVersion) {
@@ -1842,6 +1846,68 @@ void mo_v201_setOnResetExecute2(MO_Context *ctx, unsigned int evseId, bool (*onR
 }
 #endif //MO_ENABLE_V201
 
+void mo_setDebugCb(void (*debugCb)(const char *msg)) {
+    if (!g_context) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return;
+    }
+    auto context = g_context;
+
+    context->setDebugCb(debugCb);
+}
+
+void mo_setDebugCb2(MO_Context *ctx, void (*debugCb2)(int lvl, const char *fn, int line, const char *msg)) {
+    if (!ctx) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return;
+    }
+    auto context = mo_getContext2(ctx);
+
+    context->setDebugCb2(debugCb2);
+}
+
+void mo_setTicksCb(unsigned long (*ticksCb)()) {
+    mo_setTicksCb2(mo_getApiContext(), ticksCb);
+}
+
+void mo_setTicksCb2(MO_Context *ctx, unsigned long (*ticksCb)()) {
+    if (!ctx) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return;
+    }
+    auto context = mo_getContext2(ctx);
+
+    context->setTicksCb(ticksCb);
+}
+
+void mo_setRngCb(uint32_t (*rngCb)()) {
+    mo_setRngCb2(mo_getApiContext(), rngCb);
+}
+
+void mo_setRngCb2(MO_Context *ctx, uint32_t (*rngCb)()) {
+    if (!ctx) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return;
+    }
+    auto context = mo_getContext2(ctx);
+
+    context->setRngCb(rngCb);
+}
+
+MO_FilesystemAdapter *mo_getFilesystem() {
+    return mo_getFilesystem2(mo_getApiContext());
+}
+
+MO_FilesystemAdapter *mo_getFilesystem2(MO_Context *ctx) {
+    if (!ctx) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return nullptr;
+    }
+    auto context = mo_getContext2(ctx);
+
+    return context->getFilesystem();
+}
+
 #if MO_ENABLE_MBEDTLS
 void mo_setFtpConfig(MO_Context *ctx, MO_FTPConfig ftpConfig) {
     if (!ctx) {
@@ -2522,7 +2588,7 @@ bool mo_setVarConfigInt(MO_Context *ctx, const char *component201, const char *n
             return false;
         }
         config->setInt(value);
-        success = true;
+        success = configSvc->commit();
     }
     #endif
     #if MO_ENABLE_V201
@@ -2542,7 +2608,7 @@ bool mo_setVarConfigInt(MO_Context *ctx, const char *component201, const char *n
             return false;
         }
         variable->setInt(value);
-        success = true;
+        success = varSvc->commit();
     }
     #endif
 
@@ -2575,7 +2641,7 @@ bool mo_setVarConfigBool(MO_Context *ctx, const char *component201, const char *
             return false;
         }
         config->setBool(value);
-        success = true;
+        success = configSvc->commit();
     }
     #endif
     #if MO_ENABLE_V201
@@ -2595,7 +2661,7 @@ bool mo_setVarConfigBool(MO_Context *ctx, const char *component201, const char *
             return false;
         }
         variable->setBool(value);
-        success = true;
+        success = varSvc->commit();
     }
     #endif
 
@@ -2628,6 +2694,9 @@ bool mo_setVarConfigString(MO_Context *ctx, const char *component201, const char
             return false;
         }
         success = config->setString(value);
+        if (success) {
+            success = configSvc->commit();
+        }
     }
     #endif
     #if MO_ENABLE_V201
@@ -2647,6 +2716,9 @@ bool mo_setVarConfigString(MO_Context *ctx, const char *component201, const char
             return false;
         }
         success = variable->setString(value);
+        if (success) {
+            success = varSvc->commit();
+        }
     }
     #endif
 

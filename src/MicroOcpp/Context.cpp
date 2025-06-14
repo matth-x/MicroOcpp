@@ -14,6 +14,9 @@
 using namespace MicroOcpp;
 
 Context::Context() : MemoryManaged("Context") {
+
+    (void)debug.setup(); //initialize with default debug function. Can replace later
+
 #if MO_USE_FILEAPI != MO_CUSTOM_FS
     memset(&filesystemConfig, 0, sizeof(filesystemConfig));
     filesystemConfig.opt = MO_FS_OPT_USE_MOUNT;
@@ -63,11 +66,17 @@ void Context::setRngCb(uint32_t (*rngCb)()) {
 }
 
 uint32_t (*Context::getRngCb())() {
+    if (!rngCb) {
+        rngCb = getDefaultRngCb();
+    }
     return rngCb;
 }
 
 #if MO_USE_FILEAPI != MO_CUSTOM_FS
 void Context::setDefaultFilesystemConfig(MO_FilesystemConfig filesystemConfig) {
+    if (filesystem) {
+        MO_DBG_ERR("need to set filesystem config before first filesystem usage");
+    }
     this->filesystemConfig = filesystemConfig;
 }
 #endif //MO_USE_FILEAPI != MO_CUSTOM_FS
@@ -77,18 +86,33 @@ void Context::setFilesystem(MO_FilesystemAdapter *filesystem) {
     if (this->filesystem && isFilesystemOwner) {
         mo_freeDefaultFilesystemAdapter(this->filesystem);
         this->filesystem = nullptr;
+        isFilesystemOwner = false;
     }
-    isFilesystemOwner = false;
 #endif //MO_USE_FILEAPI != MO_CUSTOM_FS
     this->filesystem = filesystem;
 }
 
 MO_FilesystemAdapter *Context::getFilesystem() {
+    #if MO_USE_FILEAPI != MO_CUSTOM_FS
+    if (!filesystem && filesystemConfig.opt != MO_FS_OPT_DISABLE) {
+        // init default FS implementaiton
+        filesystem = mo_makeDefaultFilesystemAdapter(filesystemConfig);
+        if (!filesystem) {
+            //nullptr if either FS is disabled or OOM. If OOM, then err msg is already printed
+            return nullptr;
+        }
+        isFilesystemOwner = true;
+    }
+    #endif //MO_USE_FILEAPI != MO_CUSTOM_FS
+
     return filesystem;
 }
 
 #if MO_WS_USE != MO_WS_CUSTOM
 void Context::setDefaultConnectionConfig(MO_ConnectionConfig connectionConfig) {
+    if (connection) {
+        MO_DBG_ERR("need to set connection config before first connection usage");
+    }
     this->connectionConfig = connectionConfig;
 }
 #endif //MO_WS_USE != MO_WS_CUSTOM
@@ -101,8 +125,8 @@ void Context::setConnection(Connection *connection) {
     if (this->connection && isConnectionOwner) {
         freeDefaultConnection(this->connection);
         this->connection = nullptr;
+        isConnectionOwner = false;
     }
-    isConnectionOwner = false;
 #endif //MO_WS_USE != MO_WS_CUSTOM
     this->connection = connection;
     if (this->connection) {
@@ -111,19 +135,51 @@ void Context::setConnection(Connection *connection) {
 }
 
 Connection *Context::getConnection() {
+    #if MO_WS_USE != MO_WS_CUSTOM
+    if (!connection) {
+        // init default Connection implementation
+        connection = static_cast<Connection*>(makeDefaultConnection(connectionConfig));
+        if (!connection) {
+            MO_DBG_ERR("OOM");
+            return nullptr;
+        }
+        isConnectionOwner = true;
+    }
+    #endif //MO_WS_USE != MO_WS_CUSTOM
     return connection;
 }
 
+#if MO_ENABLE_MBEDTLS
+void Context::setDefaultFtpConfig(MO_FTPConfig ftpConfig) {
+    if (ftpClient) {
+        MO_DBG_ERR("need to set FTP config before first FTP usage");
+    }
+    this->ftpConfig = ftpConfig;
+}
+#endif //MO_ENABLE_MBEDTLS
+
 void Context::setFtpClient(FtpClient *ftpClient) {
+    #if MO_ENABLE_MBEDTLS
     if (this->ftpClient && isFtpClientOwner) {
         delete this->ftpClient;
         this->ftpClient = nullptr;
+        isFtpClientOwner = false;
     }
-    isFtpClientOwner = false;
+    #endif //MO_ENABLE_MBEDTLS
     this->ftpClient = ftpClient;
 }
 
 FtpClient *Context::getFtpClient() {
+    #if MO_ENABLE_MBEDTLS
+    if (!ftpClient) {
+        ftpClient = makeFtpClientMbedTLS(ftpConfig).release();
+        if (!ftpClient) {
+            MO_DBG_ERR("OOM");
+            return nullptr;
+        }
+        isFtpClientOwner = true;
+    }
+    #endif //MO_ENABLE_MBEDTLS
     return ftpClient;
 }
 
@@ -131,12 +187,22 @@ void Context::setCertificateStore(CertificateStore *certStore) {
     if (this->certStore && isCertStoreOwner) {
         delete this->certStore;
         this->certStore = nullptr;
+        isCertStoreOwner = false;
     }
-    isCertStoreOwner = false;
     this->certStore = certStore;
 }
 
 CertificateStore *Context::getCertificateStore() {
+    #if MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
+    if (!certStore) {
+        certStore = makeCertificateStoreMbedTLS(filesystem);
+        if (!certStore) {
+            MO_DBG_ERR("OOM");
+            return nullptr;
+        }
+        isCertStoreOwner = true;
+    }
+    #endif //MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
     return certStore;
 }
 
@@ -203,73 +269,25 @@ bool Context::setup() {
         }
     }
 
-    if (!rngCb) {
-        rngCb = getDefaultRngCb();
-        if (!rngCb) {
-            MO_DBG_ERR("random number generator cannot be found");
-            return false;
-        }
+    if (!getRngCb()) {
+        MO_DBG_ERR("random number generator cannot be found");
+        return false;
     }
 
-#if MO_USE_FILEAPI != MO_CUSTOM_FS
-    if (!filesystem && filesystemConfig.opt != MO_FS_OPT_DISABLE) {
-        // init default FS implementaiton
-        filesystem = mo_makeDefaultFilesystemAdapter(filesystemConfig);
-        if (!filesystem) {
-            MO_DBG_ERR("OOM");
-            return false;
-        }
-        isFilesystemOwner = true;
-    }
-#endif //MO_USE_FILEAPI != MO_CUSTOM_FS
-
-    if (!filesystem) {
+    if (!getFilesystem()) {
         MO_DBG_DEBUG("initialize MO without filesystem access");
     }
 
-#if MO_WS_USE != MO_WS_CUSTOM
-    if (!connection) {
-        // init default Connection implementation
-        connection = static_cast<Connection*>(makeDefaultConnection(connectionConfig));
-        if (!connection) {
-            MO_DBG_ERR("OOM");
-            return false;
-        }
-        isConnectionOwner = true;
-    }
-#endif //MO_WS_USE != MO_WS_CUSTOM
-
-    if (!connection) {
+    if (!getConnection()) {
         MO_DBG_ERR("must set WebSocket connection before setup. See the examples in this repository");
         return false;
     }
 
-#if MO_ENABLE_MBEDTLS
-    if (!ftpClient) {
-        ftpClient = makeFtpClientMbedTLS(ftpConfig).release();
-        if (!ftpClient) {
-            MO_DBG_ERR("");
-            return false;
-        }
-        isFtpClientOwner = true;
-    }
-#endif //MO_ENABLE_MBEDTLS
-
-    if (!ftpClient) {
+    if (!getFtpClient()) {
         MO_DBG_DEBUG("initialize MO without FTP client");
     }
 
-    if (!certStore) {
-        #if MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
-        {
-            certStore = makeCertificateStoreMbedTLS(filesystem);
-            if (!certStore) {
-                return false;
-            }
-            isCertStoreOwner = true;
-        }
-        #endif //MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
-
+    if (!getCertificateStore() && MO_ENABLE_CERT_MGMT) {
         if (MO_ENABLE_CERT_MGMT && !certStore) {
             MO_DBG_DEBUG("initialize MO without certificate store");
         }

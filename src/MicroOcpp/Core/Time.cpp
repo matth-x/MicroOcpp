@@ -106,14 +106,18 @@ void Clock::loop() {
     }
 
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
-    addMs(unixTime, platformDeltaMs);
-    addMs(uptime, platformDeltaMs);
-    lastIncrement = platformTimeMs;
+    {
+        addMs(unixTime, platformDeltaMs);
+        addMs(uptime, platformDeltaMs);
+        lastIncrement = platformTimeMs;
+    }
 #else
-    auto platformDeltaS = platformDeltaMs / 1000;
-    add(unixTime, platformDeltaS);
-    add(uptime, platformDeltaS)
-    lastIncrement += platformDeltaS * 1000;
+    {
+        auto platformDeltaS = platformDeltaMs / 1000;
+        add(unixTime, platformDeltaS);
+        add(uptime, platformDeltaS)
+        lastIncrement += platformDeltaS * 1000;
+    }
 #endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 }
 
@@ -175,8 +179,6 @@ bool Clock::delta(const Timestamp& t2, const Timestamp& t1, int32_t& dt) const {
         dt = t2.time - t1.time;
         return true;
     } else {
-
-        
         Timestamp t1Unix, t2Unix;
         if (toUnixTime(t1, t1Unix) && toUnixTime(t2, t2Unix)) {
             dt = t2Unix.time - t1Unix.time;
@@ -214,6 +216,72 @@ bool Clock::add(Timestamp& t, int32_t secs) const {
 
     return true;
 }
+
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
+bool Clock::deltaMs(const Timestamp& t2, const Timestamp& t1, int32_t& dtMs) const {
+
+    if (t1.ms < 0 || t1.ms >= 1000 || t2.ms < 0 || t2.ms >= 1000) {
+        MO_DBG_ERR("invalid timestamp");
+        return false;
+    }
+
+    auto fullSec2 = t2;
+    fullSec2.ms = 0;
+
+    auto fullSec1 = t1;
+    fullSec1.ms = 0;
+
+    int32_t dtS;
+    if (!delta(fullSec2, fullSec1, dtS)) {
+        return false;
+    }
+
+    if ((dtS > 0 && dtS * 1000 + 1000 < dtS) ||
+            dtS < 0 && dtS * 1000 - 1000 > dtS) {
+        MO_DBG_ERR("integer overflow");
+        return false;
+    }
+
+    dtMs = dtS * 1000 + (int32_t)(t2.ms - t1.ms);
+    return true;
+}
+
+bool Clock::addMs(Timestamp& t, int32_t ms) const {
+
+    if (t.ms < 0 || t.ms >= 1000) {
+        MO_DBG_ERR("invalid timestamp");
+        return false;
+    }
+
+    if (ms + t.ms < ms) {
+        MO_DBG_ERR("integer overflow");
+        return false;
+    }
+    ms += t.ms;
+
+    int32_t s = 0;
+    if (ms >= 0) {
+        //positive, addition
+        s = ms / 1000;
+        ms %= 1000;
+    } else {
+        //negative, substraction
+        s = ms / 1000;
+        ms -= s * 1000;
+        if (ms != 0) {
+            s -= 1;
+            ms += 1000;
+        }
+    }
+
+    if (!add(t, s)) {
+        return false;
+    }
+
+    t.ms = ms;
+    return true;
+}
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
 bool Clock::toJsonString(const Timestamp& src, char *dst, size_t size) const {
 
@@ -259,7 +327,7 @@ bool Clock::toJsonString(const Timestamp& src, char *dst, size_t size) const {
     int ret;
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
     ret = snprintf(dst, size, "%04i-%02i-%02iT%02i:%02i:%02i.%03uZ",
-            year, month, day, hour, minute, second, (unsigned int)(t.ms > 999 ? 999 : t.ms));
+            year, month, day, hour, minute, second, (int)(t.ms >= 0 && t.ms <= 999 ? t.ms : 0));
 #else
     ret = snprintf(dst, size, "%04i-%02i-%02iT%02i:%02i:%02iZ",
             year, month, day, hour, minute, second);
@@ -285,9 +353,9 @@ bool Clock::toInternalString(const Timestamp& t, char *dst, size_t size) const {
 
     int ret;
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
-    ret = snprintf(dst, size, "i%ut%li", (unsigned int)t.bootNr, (long int)t.time);
+    ret = snprintf(dst, size, "i%ut%lim%u", (unsigned int)t.bootNr, (long int)t.time, (int)(t.ms >= 0 && t.ms <= 999 ? t.ms : 0));
 #else
-    ret = snprintf(dst, size, "i%ut%lim%u", (unsigned int)t.bootNr, (long int)t.time, (unsigned int)(dst.ms > 999 ? 999 : dst.ms));
+    ret = snprintf(dst, size, "i%ut%li", (unsigned int)t.bootNr, (long int)t.time);
 #endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
     if (ret < 0 || (size_t)ret >= size) {
@@ -350,7 +418,7 @@ bool Clock::parseString(const char *src, Timestamp& dst) const {
         }
 
         // Optional ms
-        uint16_t ms = 0;
+        int16_t ms = 0;
         if (src[i] == 'm') {
             i++;
             for (; isdigit(src[i]); i++) {
@@ -423,7 +491,7 @@ bool Clock::parseString(const char *src, Timestamp& dst) const {
                     (src[18] - '0');
 
         //optional fractals
-        int ms = 0;
+        int16_t ms = 0;
         if (src[19] == '.') {
             if (isdigit(src[20]) ||   //1
                 isdigit(src[21]) ||   //2
@@ -472,7 +540,7 @@ bool Clock::parseString(const char *src, Timestamp& dst) const {
         dst.time = time;
         dst.bootNr = unixTime.bootNr; //set bootNr to a defined value
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
-        dst.ms = (uint16_t)ms;
+        dst.ms = ms;
 #endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
         return true;
     }

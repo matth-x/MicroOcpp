@@ -42,7 +42,7 @@ namespace FilesystemUtils {
  * `size`: number of bytes of `path` */
 bool printPath(MO_FilesystemAdapter *filesystem, char *path, size_t size, const char *fname, ...);
 
-enum class LoadStatus {
+enum class LoadStatus : uint8_t {
     Success, //file operation successful
     FileNotFound,
     ErrOOM,
@@ -51,7 +51,7 @@ enum class LoadStatus {
 };
 LoadStatus loadJson(MO_FilesystemAdapter *filesystem, const char *fname, JsonDoc& doc, const char *memoryTag);
 
-enum class StoreStatus {
+enum class StoreStatus : uint8_t {
     Success, //file operation successful
     ErrFileWrite,
     ErrJsonCorruption,
