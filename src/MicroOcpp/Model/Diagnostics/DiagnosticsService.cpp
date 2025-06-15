@@ -38,7 +38,7 @@ void defaultDiagnosticsOnClose(void *user_data);
 
 using namespace MicroOcpp;
 
-DiagnosticsService::DiagnosticsService(Context& context) : MemoryManaged("v16.Diagnostics.DiagnosticsService"), context(context), diagFileList(makeVector<String>(getMemoryTag())) {
+DiagnosticsService::DiagnosticsService(Context& context) : MemoryManaged("v16/v201.Diagnostics.DiagnosticsService"), context(context), diagFileList(makeVector<String>(getMemoryTag())) {
 
 }
 

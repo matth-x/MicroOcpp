@@ -66,7 +66,9 @@ bool PersistencyUtils::storeBootStats(MO_FilesystemAdapter *filesystem, BootStat
 
     json["bootNr"] = bstats.bootNr;
     json["attempts"] = bstats.attempts;
-    json["MicroOcppVersion"] = (const char*)bstats.microOcppVersion;
+    if (*bstats.microOcppVersion) {
+        json["MicroOcppVersion"] = (const char*)bstats.microOcppVersion;
+    }
 
     auto ret = FilesystemUtils::storeJson(filesystem, "bootstats.jsn", json);
     bool success = (ret == FilesystemUtils::StoreStatus::Success);

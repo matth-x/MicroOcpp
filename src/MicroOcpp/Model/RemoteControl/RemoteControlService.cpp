@@ -47,7 +47,7 @@ bool RemoteControlServiceEvse::setup() {
     }
     #endif
     #if MO_ENABLE_V201
-    if (context.getOcppVersion() == MO_OCPP_V16) {
+    if (context.getOcppVersion() == MO_OCPP_V201) {
         auto txServce = context.getModel201().getTransactionService();
         txServiceEvse201 = txServce ? txServce->getEvse(evseId) : nullptr;
         if (!txServiceEvse201) {
@@ -132,7 +132,7 @@ Ocpp201::UnlockStatus RemoteControlServiceEvse::unlockConnector201() {
 
 #endif //MO_ENABLE_CONNECTOR_LOCK
 
-RemoteControlService::RemoteControlService(Context& context) : MemoryManaged("v16.RemoteControl.RemoteControlService"), context(context) {
+RemoteControlService::RemoteControlService(Context& context) : MemoryManaged("v16/v201.RemoteControl.RemoteControlService"), context(context) {
 
 }
 

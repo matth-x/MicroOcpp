@@ -908,7 +908,7 @@ std::unique_ptr<MeterValue> Ocpp201::MeteringServiceEvse::takeTriggeredMeterValu
     return std::unique_ptr<MeterValue>(MicroOcpp::takeMeterValue(context.getClock(), meterInputs, evseId, MO_ReadingContext_Trigger, MO_FLAG_AlignedData, getMemoryTag()));
 }
 
-Ocpp201::MeteringService::MeteringService(Context& context) : MemoryManaged("v16.Metering.MeteringService"), context(context) {
+Ocpp201::MeteringService::MeteringService(Context& context) : MemoryManaged("v201.Metering.MeteringService"), context(context) {
 
 }
 

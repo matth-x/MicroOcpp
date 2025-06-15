@@ -192,8 +192,8 @@ public:
 friend class MeteringServiceEvse;
 };
 
-}
-}
+} //namespace Ocpp201
+} //namespace MicroOcpp
 
 #endif //MO_ENABLE_V201
 #endif

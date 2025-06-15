@@ -56,9 +56,12 @@ Ocpp16::Model::~Model() {
 #if MO_ENABLE_FIRMWAREMANAGEMENT
     delete firmwareService;
     firmwareService = nullptr;
+#endif //MO_ENABLE_FIRMWAREMANAGEMENT
+
+#if MO_ENABLE_DIAGNOSTICS
     delete diagnosticsService;
     diagnosticsService = nullptr;
-#endif //MO_ENABLE_FIRMWAREMANAGEMENT
+#endif //MO_ENABLE_DIAGNOSTICS
 
 #if MO_ENABLE_LOCAL_AUTH
     delete authorizationService;
@@ -412,11 +415,13 @@ void Ocpp16::Model::loop() {
     if (firmwareService) {
         firmwareService->loop();
     }
+#endif //MO_ENABLE_FIRMWAREMANAGEMENT
 
+#if MO_ENABLE_DIAGNOSTICS
     if (diagnosticsService) {
         diagnosticsService->loop();
     }
-#endif //MO_ENABLE_FIRMWAREMANAGEMENT
+#endif //MO_ENABLE_DIAGNOSTICS
 
 #if MO_ENABLE_RESERVATION
     if (reservationService) {
@@ -456,6 +461,11 @@ Ocpp201::Model::~Model() {
     availabilityService = nullptr;
     delete remoteControlService;
     remoteControlService = nullptr;
+
+#if MO_ENABLE_DIAGNOSTICS
+    delete diagnosticsService;
+    diagnosticsService = nullptr;
+#endif //MO_ENABLE_DIAGNOSTICS
 
 #if MO_ENABLE_SMARTCHARGING
     delete smartChargingService;
@@ -677,11 +687,17 @@ void Ocpp201::Model::loop() {
         availabilityService->loop();
     }
 
-    #if MO_ENABLE_SMARTCHARGING
-        if (smartChargingService) {
-            smartChargingService->loop();
-        }
-    #endif //MO_ENABLE_SMARTCHARGING
+#if MO_ENABLE_DIAGNOSTICS
+    if (diagnosticsService) {
+        diagnosticsService->loop();
+    }
+#endif //MO_ENABLE_DIAGNOSTICS
+
+#if MO_ENABLE_SMARTCHARGING
+    if (smartChargingService) {
+        smartChargingService->loop();
+    }
+#endif //MO_ENABLE_SMARTCHARGING
 }
 
 #endif //MO_ENABLE_V201

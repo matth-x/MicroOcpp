@@ -35,7 +35,7 @@ bool removeProfile(MO_FilesystemAdapter *filesystem, unsigned int evseId, Chargi
 using namespace::MicroOcpp;
 
 SmartChargingServiceEvse::SmartChargingServiceEvse(Context& context, SmartChargingService& scService, unsigned int evseId) :
-        MemoryManaged("v16.SmartCharging.SmartChargingServiceEvse"), context(context), clock(context.getClock()), scService{scService}, evseId{evseId} {
+        MemoryManaged("v16/v201.SmartCharging.SmartChargingServiceEvse"), context(context), clock(context.getClock()), scService{scService}, evseId{evseId} {
     
     mo_chargeRate_init(&trackLimitOutput);
 }
@@ -496,7 +496,7 @@ size_t SmartChargingServiceEvse::getChargingProfilesCount() {
 }
 
 SmartChargingService::SmartChargingService(Context& context)
-      : MemoryManaged("v16.SmartCharging.SmartChargingService"), context(context), clock(context.getClock()) {
+      : MemoryManaged("v16/v201.SmartCharging.SmartChargingService"), context(context), clock(context.getClock()) {
 
     mo_chargeRate_init(&trackLimitOutput);
 }
