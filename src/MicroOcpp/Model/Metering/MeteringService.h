@@ -69,7 +69,7 @@ private:
 
 public:
     MeteringServiceEvse(Context& context, MeteringService& mService, unsigned int connectorId);
-    ~MeteringServiceEvse();
+    virtual ~MeteringServiceEvse();
 
     bool addMeterInput(MO_MeterInput meterInput);
     Vector<MO_MeterInput>& getMeterInputs();

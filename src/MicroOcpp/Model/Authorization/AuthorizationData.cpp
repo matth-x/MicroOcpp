@@ -69,7 +69,7 @@ bool AuthorizationData::readJson(Clock& clock, JsonObject entry, bool internalFo
     if (idTagInfo.containsKey(AUTHDATA_KEY_PARENTIDTAG(internalFormat))) {
         parentIdTag = static_cast<char*>(MO_MALLOC(getMemoryTag(), IDTAG_LEN_MAX + 1));
         if (parentIdTag) {
-            snprintf(parentIdTag, sizeof(parentIdTag), "%s", idTagInfo[AUTHDATA_KEY_PARENTIDTAG(internalFormat)].as<const char*>());
+            snprintf(parentIdTag, IDTAG_LEN_MAX + 1, "%s", idTagInfo[AUTHDATA_KEY_PARENTIDTAG(internalFormat)].as<const char*>());
         } else {
             MO_DBG_ERR("OOM");
             return false;

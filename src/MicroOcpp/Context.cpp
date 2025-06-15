@@ -48,11 +48,11 @@ void Context::setDebugCb2(void (*debugCb2)(int lvl, const char *fn, int line, co
     debug.setDebugCb2(debugCb2); // `debug` globally declared in Debug.h
 }
 
-void Context::setTicksCb(unsigned long (*ticksCb)()) {
+void Context::setTicksCb(uint32_t (*ticksCb)()) {
     this->ticksCb = ticksCb;
 }
 
-unsigned long Context::getTicksMs() {
+uint32_t Context::getTicksMs() {
     if (this->ticksCb) {
         return this->ticksCb();
     } else {

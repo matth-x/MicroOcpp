@@ -1020,7 +1020,7 @@ std::unique_ptr<Request> TransactionServiceEvse::fetchFrontRequest() {
         dtLastAttempt = MO_MAX_TIME;
     }
 
-    if (dtLastAttempt < txEventFront->attemptNr * std::max(0, txService.messageAttemptIntervalTransactionEventInt->getInt())) {
+    if (dtLastAttempt < (int)txEventFront->attemptNr * std::max(0, txService.messageAttemptIntervalTransactionEventInt->getInt())) {
         return nullptr;
     }
 
@@ -1247,6 +1247,10 @@ bool TransactionService::setup() {
                     status = TriggerMessageStatus::ERR_INTERNAL;
                     abortLoop = true;
                     break;
+            }
+
+            if (abortLoop) {
+                break;
             }
         }
 

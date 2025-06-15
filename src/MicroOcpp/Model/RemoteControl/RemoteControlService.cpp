@@ -509,7 +509,7 @@ TriggerMessageStatus RemoteControlService::triggerMessage(const char *requestedM
                 }
             }
 
-            for (int eId = evseIdRangeBegin; eId < evseIdRangeEnd; eId++) {
+            for (unsigned int eId = evseIdRangeBegin; eId < evseIdRangeEnd; eId++) {
 
                 Operation *operation = nullptr;
 

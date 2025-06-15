@@ -83,7 +83,7 @@ private:
     bool commitTransaction(Transaction *transaction);
 public:
     TransactionServiceEvse(Context& context, TransactionService& conService, unsigned int evseId);
-    ~TransactionServiceEvse();
+    virtual ~TransactionServiceEvse();
 
     bool setup();
 

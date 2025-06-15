@@ -20,7 +20,7 @@
 namespace MicroOcpp {
 
 void (*getDefaultDebugCb())(const char*);
-unsigned long (*getDefaultTickCb())();
+uint32_t (*getDefaultTickCb())();
 uint32_t (*getDefaultRngCb())();
 
 } //namespace MicroOcpp

@@ -67,8 +67,6 @@ private:
     void receiveResponse(JsonArray json);
     std::unique_ptr<Request> createRequest(const char *operationType);
 
-    unsigned long sockTrackLastConnected = 0;
-
     unsigned int nextOpNr = 10; //Nr 0 - 9 reservered for internal purposes
 public:
     MessageService(Context& context);

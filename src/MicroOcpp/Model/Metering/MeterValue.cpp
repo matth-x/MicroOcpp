@@ -88,7 +88,7 @@ MeterValue::~MeterValue() {
 #if MO_ENABLE_V201
 
 namespace MicroOcpp {
-bool loadSignedValue(MO_SignedMeterValue201* signedValue, const char *signedMeterData, const char *signingMethod, const char *encodingMethod, const char *publicKey) {
+bool loadSignedValue(MO_SignedMeterValue201* signedValue, const char *signedMeterData, const char *signingMethod, const char *encodingMethod, const char *publicKey, const char *memoryTag) {
 
     size_t signedMeterDataSize = signedMeterData ? strlen(signedMeterData) + 1 : 0;
     size_t signingMethodSize = signingMethod ? strlen(signingMethod) + 1 : 0;
@@ -101,7 +101,7 @@ bool loadSignedValue(MO_SignedMeterValue201* signedValue, const char *signedMete
             encodingMethodSize +
             publicKeySize;
     
-    char *buf = static_cast<char*>(MO_MALLOC(getMemoryTag(), bufsize));
+    char *buf = static_cast<char*>(MO_MALLOC(memoryTag, bufsize));
     if (!buf) {
         MO_DBG_ERR("OOM");
         return false;
@@ -306,7 +306,8 @@ bool MeterValue::parseJson(Clock& clock, Vector<MO_MeterInput>& meterInputs, Jso
                         svJson["signedMeterData"] | (const char*)nullptr,
                         svJson["signingMethod"] | (const char*)nullptr,
                         svJson["encodingMethod"] | (const char*)nullptr,
-                        svJson["publicKey"] | (const char*)nullptr)) {
+                        svJson["publicKey"] | (const char*)nullptr,
+                        getMemoryTag())) {
                     MO_DBG_ERR("OOM");
                     MO_FREE(sv->valueSigned);
                     return false;
@@ -473,7 +474,7 @@ bool MeterValue::toJson(Clock& clock, int ocppVersion, bool internalFormat, Json
                     svJson["value"] = sv->valueInt;
                 } else {
                     int ret = snprintf(valueBuf, sizeof(valueBuf), "%i", sv->valueInt);
-                    if (ret < 0 || ret >= sizeof(valueBuf)) {
+                    if (ret < 0 || (size_t)ret >= sizeof(valueBuf)) {
                         MO_DBG_ERR("serialization error");
                         return false;
                     }
@@ -485,7 +486,7 @@ bool MeterValue::toJson(Clock& clock, int ocppVersion, bool internalFormat, Json
                     svJson["value"] = sv->valueFloat;
                 } else {
                     int ret = snprintf(valueBuf, sizeof(valueBuf), MO_SAMPLEDVALUE_FLOAT_FORMAT, sv->valueFloat);
-                    if (ret < 0 || ret >= sizeof(valueBuf)) {
+                    if (ret < 0 || (size_t)ret >= sizeof(valueBuf)) {
                         MO_DBG_ERR("serialization error");
                         return false;
                     }
@@ -503,7 +504,7 @@ bool MeterValue::toJson(Clock& clock, int ocppVersion, bool internalFormat, Json
                     signedMeterValue = svJson; //write signature data into same sv JSON object
                 } else {
                     int ret = snprintf(valueBuf, sizeof(valueBuf), MO_SAMPLEDVALUE_FLOAT_FORMAT, sv->valueFloat);
-                    if (ret < 0 || ret >= sizeof(valueBuf)) {
+                    if (ret < 0 || (size_t)ret >= sizeof(valueBuf)) {
                         MO_DBG_ERR("serialization error");
                         return false;
                     }
@@ -558,7 +559,7 @@ bool MeterValue::toJson(Clock& clock, int ocppVersion, bool internalFormat, Json
         #endif //MO_ENABLE_V16
         #if MO_ENABLE_V201
         if (ocppVersion == MO_OCPP_V201) {
-            if (meterDevice.unit && strcmp(meterDevice.unit, "Wh") || meterDevice.unitOfMeasureMultiplier != 0) {
+            if ((meterDevice.unit && strcmp(meterDevice.unit, "Wh")) || meterDevice.unitOfMeasureMultiplier != 0) {
                 JsonObject unitJson;
                 if (internalFormat) {
                     unitJson = svJson;

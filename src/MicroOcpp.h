@@ -460,8 +460,8 @@ void mo_setDebugCb2(MO_Context *ctx, void (*debugCb2)(int lvl, const char *fn, i
 //would break the unsigned integer arithmetics which MO relies on. This is a common pitfall if the platform
 //tick frequency is not 1 tick per ms. Then a helper function is needed which counts the ticks up to 2^32 before
 //rolling over.
-void mo_setTicksCb(unsigned long (*ticksCb)());
-void mo_setTicksCb2(MO_Context *ctx, unsigned long (*ticksCb)());
+void mo_setTicksCb(uint32_t (*ticksCb)());
+void mo_setTicksCb2(MO_Context *ctx, uint32_t (*ticksCb)());
 
 //Set custom random number generator function. By default, MO uses a pseudo-RNG which with the system time as
 //the only entropy source. Using a true RNG greatly improves security.

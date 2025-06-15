@@ -7,8 +7,8 @@
 
 #define UNIT_MEM_TAG "UnitTests"
 
-extern unsigned long mtime;
-unsigned long custom_timer_cb();
+extern uint32_t mtime;
+uint32_t custom_timer_cb();
 
 void loop();
 

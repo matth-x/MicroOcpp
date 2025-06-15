@@ -81,8 +81,6 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
         }
     }
 
-    auto rcSvc = context.getModel16().getRemoteControlService();
-
     status = rcService.remoteStartTransaction(connectorId, idTag, std::move(chargingProfile));
     if (status == Ocpp16::RemoteStartStopStatus::ERR_INTERNAL) {
         errorCode = "InternalError";

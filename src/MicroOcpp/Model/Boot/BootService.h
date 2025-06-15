@@ -102,7 +102,7 @@ public:
     void notifyRegistrationStatus(RegistrationStatus status);
     RegistrationStatus getRegistrationStatus();
 
-    void setRetryInterval(unsigned long interval);
+    void setRetryInterval(int interval);
 };
 
 }

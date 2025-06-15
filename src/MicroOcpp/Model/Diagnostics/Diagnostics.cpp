@@ -6,19 +6,24 @@
 
 #include <string.h>
 
+#include <MicroOcpp/Debug.h>
+
 #if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_DIAGNOSTICS
 
 const char *mo_serializeGetLogStatus(MO_GetLogStatus status) {
     const char *statusCstr = "";
     switch (status) {
-        case (MO_GetLogStatus_Accepted):
+        case MO_GetLogStatus_Accepted:
             statusCstr = "Accepted";
             break;
-        case (MO_GetLogStatus_Rejected):
+        case MO_GetLogStatus_Rejected:
             statusCstr = "Rejected";
             break;
-        case (MO_GetLogStatus_AcceptedCanceled):
+        case MO_GetLogStatus_AcceptedCanceled:
             statusCstr = "AcceptedCanceled";
+            break;
+        case MO_GetLogStatus_UNDEFINED:
+            MO_DBG_ERR("serialize undefined");
             break;
     }
     return statusCstr;
@@ -27,28 +32,28 @@ const char *mo_serializeGetLogStatus(MO_GetLogStatus status) {
 const char *mo_serializeUploadLogStatus(MO_UploadLogStatus status) {
     const char *statusCstr = "";
     switch (status) {
-        case (MO_UploadLogStatus_BadMessage):
+        case MO_UploadLogStatus_BadMessage:
             statusCstr = "BadMessage";
             break;
-        case (MO_UploadLogStatus_Idle):
+        case MO_UploadLogStatus_Idle:
             statusCstr = "Idle";
             break;
-        case (MO_UploadLogStatus_NotSupportedOperation):
+        case MO_UploadLogStatus_NotSupportedOperation:
             statusCstr = "NotSupportedOperation";
             break;
-        case (MO_UploadLogStatus_PermissionDenied):
+        case MO_UploadLogStatus_PermissionDenied:
             statusCstr = "PermissionDenied";
             break;
-        case (MO_UploadLogStatus_Uploaded):
+        case MO_UploadLogStatus_Uploaded:
             statusCstr = "Uploaded";
             break;
-        case (MO_UploadLogStatus_UploadFailure):
+        case MO_UploadLogStatus_UploadFailure:
             statusCstr = "UploadFailure";
             break;
-        case (MO_UploadLogStatus_Uploading):
+        case MO_UploadLogStatus_Uploading:
             statusCstr = "Uploading";
             break;
-        case (MO_UploadLogStatus_AcceptedCanceled):
+        case MO_UploadLogStatus_AcceptedCanceled:
             statusCstr = "AcceptedCanceled";
             break;
     }
@@ -80,16 +85,16 @@ namespace Ocpp16 {
 const char *serializeDiagnosticsStatus(DiagnosticsStatus status) {
     const char *statusCstr = "";
     switch (status) {
-        case (DiagnosticsStatus::Idle):
+        case DiagnosticsStatus::Idle:
             statusCstr = "Idle";
             break;
-        case (DiagnosticsStatus::Uploaded):
+        case DiagnosticsStatus::Uploaded:
             statusCstr = "Uploaded";
             break;
-        case (DiagnosticsStatus::UploadFailed):
+        case DiagnosticsStatus::UploadFailed:
             statusCstr = "UploadFailed";
             break;
-        case (DiagnosticsStatus::Uploading):
+        case DiagnosticsStatus::Uploading:
             statusCstr = "Uploading";
             break;
     }

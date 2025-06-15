@@ -71,8 +71,6 @@ void ReservationService::loop() {
             continue;
         }
 
-        auto connectorid = reservations[i]->getConnectorId();
-
         auto availSvc = context.getModel16().getAvailabilityService();
         auto availSvcEvse = availSvc ? availSvc->getEvse(reservations[i]->getConnectorId()) : nullptr;
         if (availSvcEvse) {

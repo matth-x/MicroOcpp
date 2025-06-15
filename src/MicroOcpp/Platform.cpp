@@ -16,7 +16,7 @@ void defaultDebugCbImpl(const char *msg) {
     MO_USE_SERIAL.printf("%s", msg);
 }
 
-unsigned long defaultTickCbImpl() {
+uint32_t defaultTickCbImpl() {
     return millis();
 }
 
@@ -34,9 +34,9 @@ void defaultDebugCbImpl(const char *msg) {
 }
 
 decltype(xTaskGetTickCount()) mocpp_ticks_count = 0;
-unsigned long mocpp_millis_count = 0;
+uint32_t mocpp_millis_count = 0;
 
-unsigned long defaultTickCbImpl() {
+uint32_t defaultTickCbImpl() {
     auto ticks_now = xTaskGetTickCount();
     mocpp_millis_count += ((ticks_now - mocpp_ticks_count) * 1000UL) / configTICK_RATE_HZ;
     mocpp_ticks_count = ticks_now;
@@ -57,21 +57,21 @@ void defaultDebugCbImpl(const char *msg) {
 std::chrono::steady_clock::time_point clock_reference;
 bool clock_initialized = false;
 
-unsigned long defaultTickCbImpl() {
+uint32_t defaultTickCbImpl() {
     if (!clock_initialized) {
         clock_reference = std::chrono::steady_clock::now();
         clock_initialized = true;
     }
     std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now() - clock_reference);
-    return (unsigned long) ms.count();
+    return (uint32_t) ms.count();
 }
 
 } //namespace MicroOcpp
 #else
 namespace MicroOcpp {
 void (*defaultDebugCbImpl)(const char*) = nullptr
-unsigned long (*defaultTickCbImpl)() = nullptr;
+uint32_t (*defaultTickCbImpl)() = nullptr;
 } //namespace MicroOcpp
 #endif
 
@@ -81,7 +81,7 @@ void (*getDefaultDebugCb())(const char*) {
     return defaultDebugCbImpl;
 }
 
-unsigned long (*getDefaultTickCb())() {
+uint32_t (*getDefaultTickCb())() {
     return defaultTickCbImpl;
 }
 

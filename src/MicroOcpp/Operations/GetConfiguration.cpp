@@ -120,7 +120,7 @@ std::unique_ptr<JsonDoc> GetConfiguration::createConf(){
         switch (config->getType()) {
             case Configuration::Type::Int: {
                 auto ret = snprintf(vbuf, VALUE_BUFSIZE, "%i", config->getInt());
-                if (ret < 0 || ret >= VALUE_BUFSIZE) {
+                if (ret < 0 || (size_t)ret >= VALUE_BUFSIZE) {
                     MO_DBG_ERR("value error");
                     continue;
                 }

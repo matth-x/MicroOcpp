@@ -199,7 +199,7 @@ void mo_mem_set_tag(void *ptr, const char *tag) {
 
 void mo_mem_print_stats() {
 
-    MO_DBG_INFO("\n *** Heap usage statistics ***\n");
+    MO_DBG_INFO("\n\n *** Heap usage statistics ***");
 
     size_t size = 0;
 
@@ -243,13 +243,13 @@ void mo_mem_print_stats() {
     size_t size_control2 = 0;
     for (const auto& tag : memTags) {
         size_control2 += tag.second.current_size;
-        MO_DBG_INFO("%s - %zu B (max. %zu B)\n", tag.first.c_str(), tag.second.current_size, tag.second.max_size);
+        MO_DBG_INFO("%s - %zu B (max. %zu B)", tag.first.c_str(), tag.second.current_size, tag.second.max_size);
     }
 
-    MO_DBG_INFO(" *** Summary ***\nBlocks: %zu\nTags: %zu\nCurrent usage: %zu B\nMaximum usage: %zu B\n", memBlocks.size(), memTags.size(), memTotal, memTotalMax);
+    MO_DBG_INFO("\n *** Summary ***\nBlocks: %zu\nTags: %zu\nCurrent usage: %zu B\nMaximum usage: %zu B\n", memBlocks.size(), memTags.size(), memTotal, memTotalMax);
     #if MO_DBG_LEVEL >= MO_DL_DEBUG
     {
-        MO_DBG_INFO(" *** Debug information ***\nTotal blocks (control value 1): %zu B\nTags (control value): %zu\nTotal tagged (control value 2): %zu B\nTotal tagged (control value 3): %zu B\nUntagged: %zu\nTotal untagged: %zu B\n", size, tags.size(), size_control, size_control2, untagged, untagged_size);
+        MO_DBG_INFO("\n *** Debug information ***\nTotal blocks (control value 1): %zu B\nTags (control value): %zu\nTotal tagged (control value 2): %zu B\nTotal tagged (control value 3): %zu B\nUntagged: %zu\nTotal untagged: %zu B\n", size, tags.size(), size_control, size_control2, untagged, untagged_size);
     }
     #endif
 }

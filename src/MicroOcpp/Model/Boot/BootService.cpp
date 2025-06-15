@@ -323,8 +323,8 @@ RegistrationStatus BootService::getRegistrationStatus() {
     return status;
 }
 
-void BootService::setRetryInterval(unsigned long interval_s) {
-    if (interval_s == 0) {
+void BootService::setRetryInterval(int interval_s) {
+    if (interval_s <= 0) {
         this->interval_s = MO_BOOT_INTERVAL_DEFAULT;
     } else {
         this->interval_s = interval_s;

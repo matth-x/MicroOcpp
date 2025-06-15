@@ -289,8 +289,6 @@ void Ocpp201::ResetService::Evse::loop() {
         } else if (!outstandingResetRetries) {
             MO_DBG_ERR("Reset device failure");
 
-            auto availabilityService = context.getModel201().getAvailabilityService();
-
             if (evseId == 0) {
                 //Set all EVSEs Available again
                 for (unsigned int eId = 0; eId < resetService.numEvseId; eId++) {

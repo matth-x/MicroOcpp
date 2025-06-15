@@ -18,7 +18,7 @@ bool PersistencyUtils::loadBootStats(MO_FilesystemAdapter *filesystem, BootStats
     auto ret = FilesystemUtils::loadJson(filesystem, "bootstats.jsn", json, "PersistencyUtils");
     switch (ret) {
         case FilesystemUtils::LoadStatus::Success: {
-            bool success = true;
+            success = true;
 
             int bootNrIn = json["bootNr"] | 0;
             if (bootNrIn >= 0 && bootNrIn <= std::numeric_limits<uint16_t>::max()) {

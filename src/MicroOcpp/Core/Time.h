@@ -61,7 +61,7 @@ private:
     Timestamp unixTime;
     Timestamp uptime;
 
-    unsigned long lastIncrement = 0;
+    uint32_t lastIncrement = 0;
 
 public:
 

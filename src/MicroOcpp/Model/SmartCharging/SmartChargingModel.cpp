@@ -113,7 +113,7 @@ bool ChargingSchedule::resizeChargingSchedulePeriod(size_t chargingSchedulePerio
         return true;
     }
 
-    chargingSchedulePeriod = static_cast<ChargingSchedulePeriod**>(MO_MALLOC(getMemoryTag("v16.SmartCharging.SmartChargingModel"), sizeof(ChargingSchedulePeriod*) * chargingSchedulePeriodSize));
+    chargingSchedulePeriod = static_cast<ChargingSchedulePeriod**>(MO_MALLOC(getMemoryTag(), sizeof(ChargingSchedulePeriod*) * chargingSchedulePeriodSize));
     if (!chargingSchedulePeriod) {
         MO_DBG_ERR("OOM");
         return false;
@@ -509,7 +509,7 @@ bool ChargingProfile::parseJson(Clock& clock, int ocppVersion, JsonObject json) 
     if (ocppVersion == MO_OCPP_V201) {
         if (json.containsKey("transactionId")) {
             auto ret = snprintf(transactionId201, sizeof(transactionId201), "%s", json["transactionId"] | "");
-            if (ret < 0 || ret >= sizeof(transactionId201)) {
+            if (ret < 0 || (size_t)ret >= sizeof(transactionId201)) {
                 MO_DBG_WARN("format violation");
                 return false;
             }

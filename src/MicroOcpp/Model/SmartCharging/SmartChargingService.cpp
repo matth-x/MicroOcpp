@@ -81,7 +81,7 @@ void SmartChargingServiceEvse::calculateLimit(int32_t unixTime, int32_t sessionD
             #if MO_ENABLE_V201
             if (scService.ocppVersion == MO_OCPP_V201) {
                 txMatch = (trackTxRmtProfileId >= 0 && trackTxRmtProfileId == txProfile[i]->chargingProfileId) ||
-                             !*txProfile[i]->transactionId201 < 0 ||
+                             !*txProfile[i]->transactionId201 ||
                              !strcmp(trackTransactionId201, txProfile[i]->transactionId201);
             }
             #endif //MO_ENABLE_V201
@@ -225,7 +225,7 @@ void SmartChargingServiceEvse::trackTransaction() {
             if (strcmp(tx->transactionId, trackTransactionId201)) {
                 update = true;
                 auto ret = snprintf(trackTransactionId201, sizeof(trackTransactionId201), "%s", tx->transactionId);
-                if (ret < 0 || ret >= sizeof(trackTransactionId201)) {
+                if (ret < 0 || (size_t)ret >= sizeof(trackTransactionId201)) {
                     MO_DBG_ERR("snprintf: %i", ret);
                     memset(trackTransactionId201, 0, sizeof(trackTransactionId201));
                 }
@@ -466,7 +466,6 @@ std::unique_ptr<ChargingSchedule> SmartChargingServiceEvse::getCompositeSchedule
             }
         }
 
-        float limit_opt = unit == ChargingRateUnitType::Watt ? limit.power : limit.current;
         schedule->chargingSchedulePeriod[i]->limit = (unit == ChargingRateUnitType::Watt) ? limit.power : limit.current,
         schedule->chargingSchedulePeriod[i]->numberPhases = limit.numberPhases;
         schedule->chargingSchedulePeriod[i]->startPeriod = measuredDuration;
@@ -1113,7 +1112,6 @@ std::unique_ptr<ChargingSchedule> SmartChargingService::getCompositeSchedule(uns
             }
         }
 
-        float limit_opt = (unit == ChargingRateUnitType::Watt) ? limit.power : limit.current;
         schedule->chargingSchedulePeriod[i]->limit = (unit == ChargingRateUnitType::Watt) ? limit.power : limit.current;
         schedule->chargingSchedulePeriod[i]->numberPhases = limit.numberPhases;
         schedule->chargingSchedulePeriod[i]->startPeriod = measuredDuration;
@@ -1143,6 +1141,9 @@ bool SmartChargingServiceUtils::printProfileFileName(char *out, size_t bufsize, 
         case ChargingProfilePurposeType::TxProfile:
             ret = snprintf(out, bufsize, "sc-tx-%.*u-%.*u.jsn", MO_NUM_EVSEID_DIGITS, evseId, MO_ChargeProfileMaxStackLevel_digits, stackLevel);
             break;
+        case ChargingProfilePurposeType::UNDEFINED:
+            MO_DBG_ERR("invalid args");
+            return false;
     }
 
     if (ret < 0 || (size_t) ret >= bufsize) {

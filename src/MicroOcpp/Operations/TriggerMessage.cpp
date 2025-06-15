@@ -54,7 +54,7 @@ void TriggerMessage::processReq(JsonObject payload) {
     }
     #endif //MO_ENABLE_V201
         
-    if (evseId >= numEvseId) {
+    if (evseId >= 0 && (unsigned int)evseId >= numEvseId) {
         errorCode = "PropertyConstraintViolation";
         return;
     }
@@ -82,6 +82,10 @@ std::unique_ptr<JsonDoc> TriggerMessage::createConf(){
             break;
         case TriggerMessageStatus::NotImplemented:
             statusStr = "NotImplemented";
+            break;
+        case TriggerMessageStatus::ERR_INTERNAL:
+            //dead code
+            statusStr = "Rejected";
             break;
     }
     payload["status"] = statusStr;

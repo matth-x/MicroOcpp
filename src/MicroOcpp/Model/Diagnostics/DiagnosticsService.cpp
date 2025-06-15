@@ -265,6 +265,10 @@ void DiagnosticsService::loop() {
                 case MO_LogType_SecurityLog:
                     success = uploadSecurityLog();
                     break;
+                case MO_LogType_UNDEFINED:
+                    MO_DBG_ERR("undefined value");
+                    success = false;
+                    break;
             }
 
             if (success) {
@@ -417,7 +421,7 @@ MO_GetLogStatus DiagnosticsService::getLog(MO_LogType type, int requestId, int r
     MO_FREE(this->location);
     this->location = nullptr;
     size_t locationSize = strlen(location);
-    this->location = static_cast<char*>(MO_MALLOC(getMemoryTag, locationSize));
+    this->location = static_cast<char*>(MO_MALLOC(getMemoryTag(), locationSize));
     if (!this->location) {
         MO_DBG_ERR("OOM");
         goto fail;
@@ -669,7 +673,6 @@ bool DiagnosticsService::uploadDiagnostics() {
         auto& model = context.getModel16();
 
         auto txSvc = model.getTransactionService();
-        auto txSvcEvse0 = txSvc ? txSvc->getEvse(0) : nullptr;
         auto txSvcEvse1 = txSvc ? txSvc->getEvse(1) : nullptr;
         auto txSvcEvse2 = txSvc && model.getNumEvseId() > 2 ? txSvc->getEvse(2) : nullptr;
         auto txSvcEvse1Tx = txSvcEvse1 ? txSvcEvse1->getTransaction() : nullptr;

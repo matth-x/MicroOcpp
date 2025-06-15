@@ -33,7 +33,7 @@ class CertificateStore;
 
 class Context : public MemoryManaged {
 private:
-    unsigned long (*ticksCb)() = nullptr;
+    uint32_t (*ticksCb)() = nullptr;
     uint32_t (*rngCb)() = nullptr;
 
 #if MO_USE_FILEAPI != MO_CUSTOM_FS
@@ -75,8 +75,8 @@ public:
     void setDebugCb(void (*debugCb)(const char *msg));
     void setDebugCb2(void (*debugCb2)(int lvl, const char *fn, int line, const char *msg));
 
-    void setTicksCb(unsigned long (*ticksCb)());
-    unsigned long getTicksMs();
+    void setTicksCb(uint32_t (*ticksCb)());
+    uint32_t getTicksMs();
 
     void setRngCb(uint32_t (*rngCb)());
     uint32_t (*getRngCb())();

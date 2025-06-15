@@ -1866,11 +1866,11 @@ void mo_setDebugCb2(MO_Context *ctx, void (*debugCb2)(int lvl, const char *fn, i
     context->setDebugCb2(debugCb2);
 }
 
-void mo_setTicksCb(unsigned long (*ticksCb)()) {
+void mo_setTicksCb(uint32_t (*ticksCb)()) {
     mo_setTicksCb2(mo_getApiContext(), ticksCb);
 }
 
-void mo_setTicksCb2(MO_Context *ctx, unsigned long (*ticksCb)()) {
+void mo_setTicksCb2(MO_Context *ctx, uint32_t (*ticksCb)()) {
     if (!ctx) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;

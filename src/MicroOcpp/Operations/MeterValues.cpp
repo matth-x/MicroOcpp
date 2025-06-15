@@ -22,10 +22,10 @@ MeterValues::MeterValues(Context& context) : MemoryManaged("v16.Operation.", "Me
 MeterValues::MeterValues(Context& context, unsigned int connectorId, int transactionId, MeterValue *meterValue, bool transferOwnership) :
         MemoryManaged("v16.Operation.", "MeterValues"),
         context(context),
-        connectorId(connectorId),
-        transactionId(transactionId),
         meterValue(meterValue),
-        isMeterValueOwner(transferOwnership) {
+        isMeterValueOwner(transferOwnership),
+        connectorId(connectorId),
+        transactionId(transactionId) {
     
 }
 

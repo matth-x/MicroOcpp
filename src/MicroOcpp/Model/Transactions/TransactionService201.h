@@ -92,7 +92,7 @@ private:
 
 public:
     TransactionServiceEvse(Context& context, TransactionService& txService, TransactionStoreEvse& txStore, unsigned int evseId);
-    ~TransactionServiceEvse();
+    virtual ~TransactionServiceEvse();
 
     bool setup();
 

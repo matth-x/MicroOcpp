@@ -79,7 +79,6 @@ bool TransactionServiceEvse::setup() {
 
     char txFnamePrefix [30];
     snprintf(txFnamePrefix, sizeof(txFnamePrefix), "tx-%.*u-", MO_NUM_EVSEID_DIGITS, evseId);
-    size_t txFnamePrefixLen = strlen(txFnamePrefix);
 
     if (filesystem) {
         if (!FilesystemUtils::loadRingIndex(filesystem, txFnamePrefix, MO_TXNR_MAX, &txNrBegin, &txNrEnd)) {
@@ -860,8 +859,6 @@ bool TransactionServiceEvse::endTransaction(const char *idTag, const char *reaso
         return endTransaction_authorized(idTag, reason);
     }
 
-    bool res = false;
-
     const char *parentIdTag = transaction->getParentIdTag();
     if (strlen(parentIdTag) > 0)
     {
@@ -1214,7 +1211,7 @@ std::unique_ptr<Request> TransactionServiceEvse::fetchFrontRequest() {
                 dtLastAttempt = 0;
             }
 
-            if (dtLastAttempt < transactionFront->getStartSync().getAttemptNr() * std::max(0, cService.transactionMessageRetryIntervalInt->getInt())) {
+            if (dtLastAttempt < (int)transactionFront->getStartSync().getAttemptNr() * std::max(0, cService.transactionMessageRetryIntervalInt->getInt())) {
                 return nullptr;
             }
 
@@ -1341,7 +1338,7 @@ std::unique_ptr<Request> TransactionServiceEvse::fetchFrontRequest() {
                 dtLastAttempt = 0;
             }
 
-            if (dtLastAttempt < transactionFront->getStopSync().getAttemptNr() * std::max(0, cService.transactionMessageRetryIntervalInt->getInt())) {
+            if (dtLastAttempt < (int)transactionFront->getStopSync().getAttemptNr() * std::max(0, cService.transactionMessageRetryIntervalInt->getInt())) {
                 return nullptr;
             }
 

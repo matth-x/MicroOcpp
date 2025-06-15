@@ -165,7 +165,7 @@ std::unique_ptr<JsonDoc> CustomOperation::createConf() {
     size_t capacity = MO_MAX_JSON_CAPACITY / 4;
 
     while (!str && capacity <= MO_MAX_JSON_CAPACITY) {
-        str = static_cast<char*>(MO_MALLOC(memoryTag, capacity));
+        str = static_cast<char*>(MO_MALLOC(getMemoryTag(), capacity));
         if (!str) {
             MO_DBG_ERR("OOM");
             break;

@@ -680,7 +680,7 @@ std::unique_ptr<Request> Ocpp16::MeteringServiceEvse::fetchFrontRequest() {
         dtLastAttempt = 0;
     }
 
-    if (dtLastAttempt < meterDataFront->attemptNr * std::max(0, mService.transactionMessageRetryIntervalInt->getInt())) {
+    if (dtLastAttempt < (int)meterDataFront->attemptNr * std::max(0, mService.transactionMessageRetryIntervalInt->getInt())) {
         return nullptr;
     }
 
@@ -688,7 +688,8 @@ std::unique_ptr<Request> Ocpp16::MeteringServiceEvse::fetchFrontRequest() {
     meterDataFront->attemptTime = clock.getUptime();
 
     auto transaction = txSvcEvse->getTransactionFront();
-    if (transaction && transaction->getTxNr() != meterDataFront->txNr) {
+    bool txNrMatch = (!transaction && meterDataFront->txNr < 0) || (transaction && meterDataFront->txNr >= 0 &&  (unsigned int)meterDataFront->txNr == transaction->getTxNr());
+    if (!txNrMatch) {
         MO_DBG_ERR("txNr mismatch"); //this could happen if tx-related MeterValues are sent shortly before StartTx or shortly after StopTx, or if txNr is mis-assigned during creation
         transaction = nullptr;
     }

@@ -320,7 +320,7 @@ bool FirmwareService::scheduleFirmwareUpdate(const char *location, Timestamp ret
         return false;
     }
     auto ret = snprintf(this->location, len, "%s", location);
-    if (ret < 0 || ret >= len) {
+    if (ret < 0 || (size_t)ret >= len) {
         MO_DBG_ERR("snprintf: %i", ret);
         MO_FREE(this->location);
         this->location = nullptr;

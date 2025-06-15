@@ -3,24 +3,22 @@
 // MIT License
 
 #include <MicroOcpp.h>
-#include <MicroOcpp/Core/Connection.h>
 #include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
 TEST_CASE( "Context lifecycle" ) {
     printf("\nRun %s\n",  "Context lifecycle");
 
-    //initialize Context with dummy socket
-    MicroOcpp::LoopbackConnection loopback;
-    mocpp_initialize(loopback);
+    //initialize Context without any configs
+    mo_initialize();
 
     SECTION("OCPP is initialized"){
-        REQUIRE( getOcppContext() );
+        REQUIRE( mo_getApiContext() );
     }
 
-    mocpp_deinitialize();
+    mo_deinitialize();
 
     SECTION("OCPP is deinitialized"){
-        REQUIRE( !( getOcppContext() ) );
+        REQUIRE( !( mo_getApiContext() ) );
     }
 }

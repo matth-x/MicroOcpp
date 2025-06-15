@@ -100,22 +100,26 @@ void Clock::loop() {
         // rolled over
         if (platformDeltaMs > 3600 * 1000) {
             // timer rolled over and delta is above 1 hour - that's suspicious
-            MO_DBG_ERR("mocpp_tick_ms roll-over error. Must increment milliseconds up to (32^2 - 1) before resetting to 0");
+            MO_DBG_ERR("getTickMs roll-over error. Must increment milliseconds up to (32^2 - 1) before resetting to 0");
             platformDeltaMs = 0;
         }
     }
 
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
     {
-        addMs(unixTime, platformDeltaMs);
-        addMs(uptime, platformDeltaMs);
+        if (platformDeltaMs > (uint32_t)std::numeric_limits<int32_t>::max()) {
+            MO_DBG_ERR("integer overflow");
+            platformDeltaMs = 0;
+        }
+        addMs(unixTime, (int32_t)platformDeltaMs);
+        addMs(uptime, (int32_t)platformDeltaMs);
         lastIncrement = platformTimeMs;
     }
 #else
     {
-        auto platformDeltaS = platformDeltaMs / 1000;
+        auto platformDeltaS = platformDeltaMs / (uint32_t)1000;
         add(unixTime, platformDeltaS);
-        add(uptime, platformDeltaS)
+        add(uptime, platformDeltaS);
         lastIncrement += platformDeltaS * 1000;
     }
 #endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
@@ -237,7 +241,7 @@ bool Clock::deltaMs(const Timestamp& t2, const Timestamp& t1, int32_t& dtMs) con
     }
 
     if ((dtS > 0 && dtS * 1000 + 1000 < dtS) ||
-            dtS < 0 && dtS * 1000 - 1000 > dtS) {
+            (dtS < 0 && dtS * 1000 - 1000 > dtS)) {
         MO_DBG_ERR("integer overflow");
         return false;
     }

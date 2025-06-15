@@ -14,7 +14,6 @@ bool FilesystemUtils::printPath(MO_FilesystemAdapter *filesystem, char *path, si
 
     size_t written = 0;
     int ret;
-    bool success = true;
 
     // write path_prefix
     ret = snprintf(path, size, "%s", filesystem->path_prefix ? filesystem->path_prefix : "");
