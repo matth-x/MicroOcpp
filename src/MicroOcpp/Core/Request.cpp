@@ -121,13 +121,16 @@ Request::CreateRequestResult Request::createRequest(JsonDoc& requestJson) {
         if (dt >= 10) {
             debugRequestTime = clock.now();
 
-            char *buf = static_cast<char*>(MO_MALLOC(getMemoryTag(), 1024));
+            size_t size = measureJson(requestJson) + 1;
+            size = std::min(size, (size_t)256);
+
+            char *buf = static_cast<char*>(MO_MALLOC(getMemoryTag(), size));
             size_t len = 0;
             if (buf) {
-                len = serializeJson(requestJson, buf, 1024);
+                len = serializeJson(requestJson, buf, size);
             }
 
-            if (!buf || len < 1) {
+            if (!buf || len < 1 || (size_t)len >= size) {
                 MO_DBG_DEBUG("Try to send request: %s", operation->getOperationType());
             } else {
                 MO_DBG_DEBUG("Try to send request: %.*s (...)", 128, buf);
@@ -211,7 +214,7 @@ bool Request::receiveRequest(JsonArray request) {
      * Hand the payload over to the first Callback. It is a callback that notifies the client that request has been processed in the OCPP-library
      */
     if (onReceiveReqListener) {
-        size_t bufsize = 1000; //fixed for now, may change to direct pass-through of the input message
+        size_t bufsize = measureJson(payload) + 1;
         char *buf = static_cast<char*>(MO_MALLOC(getMemoryTag(), bufsize));
         if (buf) {
             auto written = serializeJson(payload, buf, bufsize);

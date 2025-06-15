@@ -307,8 +307,8 @@ bool Clock::toJsonString(const Timestamp& src, char *dst, size_t size) const {
 
     int year = 1970;
     int month = 0;
-    while (time - (noDays(year, month) * 24 * 3600) >= 0) {
-        time -= noDays(year, month) * 24 * 3600;
+    while (time - (noDays(month, year) * 24 * 3600) >= 0) {
+        time -= noDays(month, year) * 24 * 3600;
         month++;
         if (month >= 12) {
             year++;
@@ -533,6 +533,7 @@ bool Clock::parseString(const char *src, Timestamp& dst) const {
 
         time += day * 24 * 3600;
         time += hour * 3600;
+        time += minute * 60;
         time += second;
 
         if (time < MO_MIN_TIME || time > MO_MAX_TIME) {

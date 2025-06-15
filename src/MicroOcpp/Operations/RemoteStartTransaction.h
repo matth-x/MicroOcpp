@@ -7,7 +7,6 @@
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Model/RemoteControl/RemoteControlDefs.h>
-#include <MicroOcpp/Operations/CiStrings.h>
 #include <MicroOcpp/Version.h>
 
 #if MO_ENABLE_V16

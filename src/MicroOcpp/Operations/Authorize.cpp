@@ -13,8 +13,8 @@ using namespace MicroOcpp;
 #if MO_ENABLE_V16
 
 Ocpp16::Authorize::Authorize(Model& model, const char *idTagIn) : MemoryManaged("v16.Operation.", "Authorize"), model(model) {
-    if (idTagIn && strnlen(idTagIn, IDTAG_LEN_MAX + 2) <= IDTAG_LEN_MAX) {
-        snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
+    if (idTagIn && strnlen(idTagIn, MO_IDTAG_LEN_MAX + 2) <= MO_IDTAG_LEN_MAX) {
+        snprintf(idTag, MO_IDTAG_LEN_MAX + 1, "%s", idTagIn);
     } else {
         MO_DBG_WARN("Format violation of idTag. Discard idTag");
     }
@@ -25,7 +25,7 @@ const char* Ocpp16::Authorize::getOperationType(){
 }
 
 std::unique_ptr<JsonDoc> Ocpp16::Authorize::createReq() {
-    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + (IDTAG_LEN_MAX + 1));
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + (MO_IDTAG_LEN_MAX + 1));
     JsonObject payload = doc->to<JsonObject>();
     payload["idTag"] = idTag;
     return doc;

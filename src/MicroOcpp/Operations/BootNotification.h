@@ -7,7 +7,6 @@
 
 #include <MicroOcpp/Model/Boot/BootNotificationData.h>
 #include <MicroOcpp/Core/Operation.h>
-#include <MicroOcpp/Operations/CiStrings.h>
 #include <MicroOcpp/Version.h>
 
 #if MO_ENABLE_V16 || MO_ENABLE_V201

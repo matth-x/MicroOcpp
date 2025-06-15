@@ -19,7 +19,6 @@ namespace MicroOcpp {
 
 class Context;
 class Operation;
-class Model;
 
 class Request : public MemoryManaged {
 private:

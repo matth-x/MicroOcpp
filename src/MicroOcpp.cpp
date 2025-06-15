@@ -511,6 +511,7 @@ bool mo_authorizeTransaction3(MO_Context *ctx, unsigned int evseId, const char *
 
     return success;
 }
+#endif //MO_ENABLE_V201
 
 //End the transaction process if idTag is authorized
 bool mo_endTransaction(const char *idTag, const char *reason) {
@@ -3041,6 +3042,3 @@ bool mo_setOnSendConf(MO_Context *ctx, const char *operationType,
     }
     return success;
 }
-
-#endif
-

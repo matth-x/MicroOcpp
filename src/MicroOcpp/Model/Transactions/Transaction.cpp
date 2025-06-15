@@ -25,23 +25,23 @@ Ocpp16::Transaction::~Transaction() {
 }
 
 bool Ocpp16::Transaction::setIdTag(const char *idTag) {
-    auto ret = snprintf(this->idTag, IDTAG_LEN_MAX + 1, "%s", idTag);
-    return ret >= 0 && ret < IDTAG_LEN_MAX + 1;
+    auto ret = snprintf(this->idTag, MO_IDTAG_LEN_MAX + 1, "%s", idTag);
+    return ret >= 0 && ret < MO_IDTAG_LEN_MAX + 1;
 }
 
 bool Ocpp16::Transaction::setParentIdTag(const char *idTag) {
-    auto ret = snprintf(this->parentIdTag, IDTAG_LEN_MAX + 1, "%s", idTag);
-    return ret >= 0 && ret < IDTAG_LEN_MAX + 1;
+    auto ret = snprintf(this->parentIdTag, MO_IDTAG_LEN_MAX + 1, "%s", idTag);
+    return ret >= 0 && ret < MO_IDTAG_LEN_MAX + 1;
 }
 
 bool Ocpp16::Transaction::setStopIdTag(const char *idTag) {
-    auto ret = snprintf(stop_idTag, IDTAG_LEN_MAX + 1, "%s", idTag);
-    return ret >= 0 && ret < IDTAG_LEN_MAX + 1;
+    auto ret = snprintf(stop_idTag, MO_IDTAG_LEN_MAX + 1, "%s", idTag);
+    return ret >= 0 && ret < MO_IDTAG_LEN_MAX + 1;
 }
 
 bool Ocpp16::Transaction::setStopReason(const char *reason) {
-    auto ret = snprintf(stop_reason, REASON_LEN_MAX + 1, "%s", reason);
-    return ret >= 0 && ret < REASON_LEN_MAX + 1;
+    auto ret = snprintf(stop_reason, sizeof(stop_reason) + 1, "%s", reason);
+    return ret >= 0 && (size_t)ret < sizeof(stop_reason) + 1;
 }
 
 #endif //MO_ENABLE_V16

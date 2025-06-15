@@ -6,7 +6,7 @@
 #define MO_AUTHORIZE_H
 
 #include <MicroOcpp/Core/Operation.h>
-#include <MicroOcpp/Operations/CiStrings.h>
+#include <MicroOcpp/Model/Authorization/IdToken.h>
 #include <MicroOcpp/Version.h>
 
 #if MO_ENABLE_V16
@@ -19,7 +19,7 @@ class Model;
 class Authorize : public Operation, public MemoryManaged {
 private:
     Model& model;
-    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
+    char idTag [MO_IDTAG_LEN_MAX + 1] = {'\0'};
 public:
     Authorize(Model& model, const char *idTag);
 

@@ -14,7 +14,7 @@ namespace MicroOcpp {
 std::unique_ptr<MicroOcpp::JsonDoc> makeDeserializedJson(const char *memoryTag, const char *jsonString) {
     std::unique_ptr<MicroOcpp::JsonDoc> doc;
 
-    size_t capacity = MO_MAX_JSON_CAPACITY / 4;
+    size_t capacity = MO_MAX_JSON_CAPACITY / 8;
     DeserializationError err = DeserializationError::NoMemory;
     
     while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
@@ -40,7 +40,7 @@ std::unique_ptr<MicroOcpp::JsonDoc> makeDeserializedJson(const char *memoryTag, 
 char *makeSerializedJsonString(const char *memoryTag, JsonObject json) {
     char *str = nullptr;
 
-    size_t capacity = MO_MAX_JSON_CAPACITY / 4;
+    size_t capacity = MO_MAX_JSON_CAPACITY / 8;
 
     while (!str && capacity <= MO_MAX_JSON_CAPACITY) {
         str = static_cast<char*>(MO_MALLOC(memoryTag, capacity));
@@ -162,7 +162,7 @@ std::unique_ptr<JsonDoc> CustomOperation::createConf() {
 
     char *str = nullptr;
 
-    size_t capacity = MO_MAX_JSON_CAPACITY / 4;
+    size_t capacity = MO_MAX_JSON_CAPACITY / 8;
 
     while (!str && capacity <= MO_MAX_JSON_CAPACITY) {
         str = static_cast<char*>(MO_MALLOC(getMemoryTag(), capacity));

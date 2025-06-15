@@ -36,8 +36,8 @@ void RemoteStartTransaction::processReq(JsonObject payload) {
     }
 
     const char *idTag = payload["idTag"] | "";
-    size_t len = strnlen(idTag, IDTAG_LEN_MAX + 1);
-    if (len == 0 || len > IDTAG_LEN_MAX) {
+    size_t len = strnlen(idTag, MO_IDTAG_LEN_MAX + 1);
+    if (len == 0 || len > MO_IDTAG_LEN_MAX) {
         errorCode = "PropertyConstraintViolation";
         errorDescription = "idTag empty or too long";
         return;

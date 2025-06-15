@@ -11,7 +11,6 @@
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Core/UuidUtils.h>
-#include <MicroOcpp/Operations/CiStrings.h>
 #include <MicroOcpp/Model/Authorization/IdToken.h>
 #include <MicroOcpp/Model/Common/EvseId.h>
 #include <MicroOcpp/Model/Metering/MeteringService.h>
@@ -20,6 +19,8 @@
 
 #define MO_TXNR_MAX 10000U //upper limit of txNr (internal usage). Must be at least 2*MO_TXRECORD_SIZE+1
 #define MO_TXNR_DIGITS 4   //digits needed to print MAX_INDEX-1 (=9999, i.e. 4 digits)
+
+#define MO_REASON_LEN_MAX 15
 
 #if MO_ENABLE_V16
 
@@ -65,8 +66,8 @@ private:
     /*
      * Attributes existing before StartTransaction
      */
-    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
-    char parentIdTag [IDTAG_LEN_MAX + 1] = {'\0'};
+    char idTag [MO_IDTAG_LEN_MAX + 1] = {'\0'};
+    char parentIdTag [MO_IDTAG_LEN_MAX + 1] = {'\0'};
     bool authorized = false;    //if the given idTag was authorized
     bool deauthorized = false;  //if the server revoked a local authorization
     Timestamp begin_timestamp;
@@ -85,10 +86,10 @@ private:
      * Attributes of StopTransaction
      */
     SendStatus stop_sync;
-    char stop_idTag [IDTAG_LEN_MAX + 1] = {'\0'};
+    char stop_idTag [MO_IDTAG_LEN_MAX + 1] = {'\0'};
     int32_t stop_meter = -1;
     Timestamp stop_timestamp;
-    char stop_reason [REASON_LEN_MAX + 1] = {'\0'};
+    char stop_reason [MO_REASON_LEN_MAX + 1] = {'\0'};
 
     /*
      * General attributes

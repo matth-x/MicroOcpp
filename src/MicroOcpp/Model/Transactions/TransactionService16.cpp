@@ -15,7 +15,6 @@
 #include <MicroOcpp/Operations/StatusNotification.h>
 #include <MicroOcpp/Operations/StartTransaction.h>
 #include <MicroOcpp/Operations/StopTransaction.h>
-#include <MicroOcpp/Operations/CiStrings.h>
 
 #include <MicroOcpp/Debug.h>
 

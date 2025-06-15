@@ -37,7 +37,7 @@ void generateAuthList(JsonArray out, size_t size, bool compact) {
             idTagInfo = authData["idTagInfo"].to<JsonObject>();
         }
 
-        char buf [IDTAG_LEN_MAX + 1];
+        char buf [MO_IDTAG_LEN_MAX + 1];
         sprintf(buf, "mIdTag%zu", i);
         authData[AUTHDATA_KEY_IDTAG(compact)] = buf;
         idTagInfo[AUTHDATA_KEY_STATUS(compact)] = "Accepted";
@@ -838,7 +838,7 @@ TEST_CASE( "LocalAuth" ) {
                         auto payload = doc->to<JsonObject>();
                         payload["listVersion"] = (int) i;
 
-                        char buf [IDTAG_LEN_MAX + 1];
+                        char buf [MO_IDTAG_LEN_MAX + 1];
                         sprintf(buf, "mIdTag%zu", i-1);
                         payload["localAuthorizationList"][0]["idTag"] = buf;
                         payload["localAuthorizationList"][0]["idTagInfo"]["status"] = "Accepted";
@@ -877,7 +877,7 @@ TEST_CASE( "LocalAuth" ) {
                     payload["listVersion"] = listVersionInvalid;
 
                     //update already existing entry
-                    char buf [IDTAG_LEN_MAX + 1];
+                    char buf [MO_IDTAG_LEN_MAX + 1];
                     sprintf(buf, "mIdTag%zu", 0UL);
                     payload["localAuthorizationList"][0]["idTag"] = buf;
                     payload["localAuthorizationList"][0]["idTagInfo"]["status"] = "Accepted";

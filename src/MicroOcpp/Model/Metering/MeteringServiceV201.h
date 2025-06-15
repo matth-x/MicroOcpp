@@ -22,10 +22,11 @@
 
 namespace MicroOcpp {
 
-class Model;
 class Variable;
 
 namespace Ocpp201 {
+
+class Model;
 
 class SampledValueProperties : public MemoryManaged {
 private:

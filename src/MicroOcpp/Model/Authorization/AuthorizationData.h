@@ -5,9 +5,9 @@
 #ifndef MO_AUTHORIZATIONDATA_H
 #define MO_AUTHORIZATIONDATA_H
 
-#include <MicroOcpp/Operations/CiStrings.h>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Model/Authorization/IdToken.h>
 #include <MicroOcpp/Version.h>
 
 #include <ArduinoJson.h>
@@ -41,7 +41,7 @@ private:
     char *parentIdTag = nullptr;
     Timestamp *expiryDate = nullptr; //has ownership
 
-    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
+    char idTag [MO_IDTAG_LEN_MAX + 1] = {'\0'};
 
     AuthorizationStatus status = AuthorizationStatus::UNDEFINED;
 public:

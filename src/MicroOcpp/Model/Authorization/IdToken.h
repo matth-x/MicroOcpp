@@ -10,6 +10,12 @@
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Version.h>
 
+#if MO_ENABLE_V16
+
+#define MO_IDTAG_LEN_MAX 20
+
+#endif //MO_ENABLE_V16
+
 #if MO_ENABLE_V201
 
 #ifdef __cplusplus

@@ -7,6 +7,8 @@
 #include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
+using namespace MicroOcpp;
+
 TEST_CASE( "Time" ) {
     printf("\nRun %s\n",  "Time");
 
@@ -16,7 +18,7 @@ TEST_CASE( "Time" ) {
     mtime = 0;
     mo_getContext()->setTicksCb(custom_timer_cb);
 
-    MicroOcpp::LoopbackConnection loopback;
+    LoopbackConnection loopback;
     mo_getContext()->setConnection(&loopback);
 
     mo_setup();
@@ -112,6 +114,23 @@ TEST_CASE( "Time" ) {
         REQUIRE( dt == 0 ); //value corrected to 0
         REQUIRE( clock.delta(uptimeRoll_0, uptimeRoll_min1, dt) );
         REQUIRE( dt == 0 );
+    }
+
+    SECTION("serialize and parse time strings") {
+
+        int32_t tRefInt = 1750000000;
+        const char *tRefString = "2025-06-15T15:06:40.123Z";
+
+        Timestamp t;
+        REQUIRE( clock.parseString(tRefString, t) );
+        int32_t tUnix;
+        REQUIRE( clock.toUnixTime(t, tUnix) );
+        REQUIRE( tUnix == tRefInt );
+
+        char buf [MO_JSONDATE_SIZE];
+        REQUIRE( clock.toJsonString(t, buf, sizeof(buf)) );
+        INFO(buf);
+        REQUIRE( !strcmp(buf, tRefString) );
     }
 
 

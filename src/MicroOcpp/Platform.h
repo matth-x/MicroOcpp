@@ -28,7 +28,7 @@ uint32_t (*getDefaultRngCb())();
 
 #ifndef MO_MAX_JSON_CAPACITY
 #if MO_PLATFORM == MO_PLATFORM_UNIX
-#define MO_MAX_JSON_CAPACITY 16384
+#define MO_MAX_JSON_CAPACITY 5120
 #else
 #define MO_MAX_JSON_CAPACITY 4096
 #endif
