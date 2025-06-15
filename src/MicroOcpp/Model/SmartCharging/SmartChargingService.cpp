@@ -37,6 +37,7 @@ using namespace::MicroOcpp;
 SmartChargingServiceEvse::SmartChargingServiceEvse(Context& context, SmartChargingService& scService, unsigned int evseId) :
         MemoryManaged("v16.SmartCharging.SmartChargingServiceEvse"), context(context), clock(context.getClock()), scService{scService}, evseId{evseId} {
     
+    mo_chargeRate_init(&trackLimitOutput);
 }
 
 SmartChargingServiceEvse::~SmartChargingServiceEvse() {
@@ -498,6 +499,7 @@ size_t SmartChargingServiceEvse::getChargingProfilesCount() {
 SmartChargingService::SmartChargingService(Context& context)
       : MemoryManaged("v16.SmartCharging.SmartChargingService"), context(context), clock(context.getClock()) {
 
+    mo_chargeRate_init(&trackLimitOutput);
 }
 
 SmartChargingService::~SmartChargingService() {

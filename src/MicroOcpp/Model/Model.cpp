@@ -42,8 +42,6 @@ Ocpp16::Model::~Model() {
     bootService = nullptr;
     delete heartbeatService;
     heartbeatService = nullptr;
-    delete configurationService;
-    configurationService = nullptr;
     delete transactionService;
     transactionService = nullptr;
     delete meteringService;
@@ -86,6 +84,9 @@ Ocpp16::Model::~Model() {
     delete secEventService;
     secEventService = nullptr;
 #endif //MO_ENABLE_SECURITY_EVENT
+
+    delete configurationService;
+    configurationService = nullptr;
 }
 
 void Ocpp16::Model::updateSupportedStandardProfiles() {
@@ -445,8 +446,6 @@ Ocpp201::Model::~Model() {
     bootService = nullptr;
     delete heartbeatService;
     heartbeatService = nullptr;
-    delete variableService;
-    variableService = nullptr;
     delete transactionService;
     transactionService = nullptr;
     delete meteringService;
@@ -472,6 +471,9 @@ Ocpp201::Model::~Model() {
     delete secEventService;
     secEventService = nullptr;
 #endif //MO_ENABLE_SECURITY_EVENT
+
+    delete variableService;
+    variableService = nullptr;
 }
 
 void Ocpp201::Model::setNumEvseId(unsigned int numEvseId) {

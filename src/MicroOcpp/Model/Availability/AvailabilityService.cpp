@@ -129,7 +129,7 @@ void Ocpp16::AvailabilityServiceEvse::loop() {
     }
 
     int32_t dtStatusTransition;
-    if (!clock.delta(clock.now(), t_statusTransition, dtStatusTransition)) {
+    if (!t_statusTransition.isDefined() || !clock.delta(clock.now(), t_statusTransition, dtStatusTransition)) {
         dtStatusTransition = 0;
     }
 

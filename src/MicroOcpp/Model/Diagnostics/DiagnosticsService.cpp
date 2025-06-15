@@ -249,7 +249,9 @@ void DiagnosticsService::loop() {
     auto& clock = context.getClock();
 
     int32_t dtNextTry;
-    clock.delta(clock.getUptime(), nextTry, dtNextTry);
+    if (!clock.delta(clock.getUptime(), nextTry, dtNextTry)) {
+        dtNextTry = -1;
+    }
 
     if (retries > 0 && dtNextTry >= 0) {
 

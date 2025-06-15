@@ -34,7 +34,7 @@ bool setupDefaultFwUpdater(FirmwareService *fwService);
 }
 #endif
 
-FirmwareService::FirmwareService(Context& context) : MemoryManaged("v16.Firmware.FirmwareService"), context(context), clock(context.getClock()), timestampTransition(clock.getUptime()) {
+FirmwareService::FirmwareService(Context& context) : MemoryManaged("v16.Firmware.FirmwareService"), context(context), clock(context.getClock()) {
 
 }
 
@@ -147,7 +147,7 @@ void FirmwareService::loop() {
 
     int32_t dtTransition;
     if (!clock.delta(clock.getUptime(), timestampTransition, dtTransition)) {
-        dtTransition = 0;
+        dtTransition = -1;
     }
 
     if (dtTransition < delayTransition) {

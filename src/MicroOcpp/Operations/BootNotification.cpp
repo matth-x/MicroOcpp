@@ -123,7 +123,7 @@ int BootNotification::writeMockConf(const char *operationType, char *buf, size_t
         (void)snprintf(timeStr, sizeof(timeStr), "2025-05-18T18:55:13Z");
     }
 
-    return snprintf(buf, size, "{\"currentTime\":\"%s\",\"interval\":86400,\"status\":\"Accepted\"}", timeStr);
+    return snprintf(buf, size, "{\"currentTime\":\"%s\",\"interval\":60,\"status\":\"Accepted\"}", timeStr);
 }
 #endif //MO_ENABLE_MOCK_SERVER
 
