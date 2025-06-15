@@ -96,7 +96,7 @@ FilesystemUtils::LoadStatus FilesystemUtils::loadJson(MO_FilesystemAdapter *file
         return FilesystemUtils::LoadStatus::ErrFileCorruption;
     }
 
-    MO_DBG_DEBUG("Loaded JSON file: %s", fn);
+    MO_DBG_DEBUG("Loaded JSON file: %s", fname);
 
     return FilesystemUtils::LoadStatus::Success;;
 }
@@ -142,7 +142,7 @@ FilesystemUtils::StoreStatus FilesystemUtils::storeJson(MO_FilesystemAdapter *fi
         return FilesystemUtils::StoreStatus::ErrFileWrite;
     }
 
-    MO_DBG_DEBUG("Wrote JSON file: %s", fn);
+    MO_DBG_DEBUG("Wrote JSON file: %s", fname);
 
     return FilesystemUtils::StoreStatus::Success;
 }

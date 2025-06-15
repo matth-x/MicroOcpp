@@ -182,7 +182,7 @@ target_include_directories(mo_unit_tests PUBLIC
 
 target_compile_definitions(mo_unit_tests PUBLIC
     MO_PLATFORM=MO_PLATFORM_UNIX
-    MO_NUMCONNECTORS=3
+    MO_NUM_EVSEID=3
     MO_CUSTOM_TIMER
     MO_DBG_LEVEL=MO_DL_INFO
     MO_TRAFFIC_OUT

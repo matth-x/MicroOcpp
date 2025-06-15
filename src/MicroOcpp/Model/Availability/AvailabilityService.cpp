@@ -56,6 +56,13 @@ bool Ocpp16::AvailabilityServiceEvse::setup() {
         return false;
     }
 
+    auto txSvc = context.getModel16().getTransactionService();
+    txServiceEvse = txSvc ? txSvc->getEvse(evseId) : nullptr;
+    if (!txServiceEvse) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
     return true;
 }
 
@@ -388,7 +395,7 @@ bool Ocpp16::AvailabilityService::setup() {
 
     numEvseId = context.getModel16().getNumEvseId();
     for (unsigned int i = 0; i < numEvseId; i++) {
-        if (!getEvse(i)) {
+        if (!getEvse(i) || !getEvse(i)->setup()) {
             MO_DBG_ERR("connector init failure");
             return false;
         }
@@ -404,7 +411,7 @@ void Ocpp16::AvailabilityService::loop() {
 }
 
 Ocpp16::AvailabilityServiceEvse *Ocpp16::AvailabilityService::getEvse(unsigned int evseId) {
-    if (evseId == 0 || evseId >= numEvseId) {
+    if (evseId >= numEvseId) {
         MO_DBG_ERR("evseId out of bound");
         return nullptr;
     }
@@ -623,7 +630,7 @@ void Ocpp201::AvailabilityService::loop() {
 }
 
 Ocpp201::AvailabilityServiceEvse *Ocpp201::AvailabilityService::getEvse(unsigned int evseId) {
-    if (evseId == 0 || evseId >= numEvseId) {
+    if (evseId >= numEvseId) {
         MO_DBG_ERR("evseId out of bound");
         return nullptr;
     }

@@ -70,7 +70,7 @@ FilesystemUtils::LoadStatus MeterStore::load(MO_FilesystemAdapter *filesystem, C
 
     //success
 
-    MO_DBG_DEBUG("Restored tx %u-%u with %zu meter values", evseId, txNr, txData.size(), txMeterValues.size());
+    MO_DBG_DEBUG("Restored tx %u-%u with %zu meter values", evseId, txNr, txMeterValues.size());
 
     if (txMeterValues.empty()) {
         return FilesystemUtils::LoadStatus::FileNotFound;

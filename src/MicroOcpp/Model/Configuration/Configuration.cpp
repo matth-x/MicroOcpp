@@ -72,9 +72,9 @@ private:
     uint16_t writeCount = 0;
 
     union {
-        int valueInt = 0;
+        int valueInt;
         bool valueBool;
-        char *valueString;
+        char *valueString = nullptr;
     };
     Type type = Type::Int;
 
@@ -116,7 +116,7 @@ public:
     void setInt(int val) override {
         #if MO_CONFIG_TYPECHECK
         if (type != Type::Int) {
-            MO_DBG_ERR("type err");
+            MO_DBG_ERR("type err: %s is not int", getKey());
             return;
         }
         #endif //MO_CONFIG_TYPECHECK
@@ -126,7 +126,7 @@ public:
     void setBool(bool val) override {
         #if MO_CONFIG_TYPECHECK
         if (type != Type::Bool) {
-            MO_DBG_ERR("type err");
+            MO_DBG_ERR("type err: %s is not bool", getKey());
             return;
         }
         #endif //MO_CONFIG_TYPECHECK
@@ -136,7 +136,7 @@ public:
     bool setString(const char *val) override {
         #if MO_CONFIG_TYPECHECK
         if (type != Type::String) {
-            MO_DBG_ERR("type err");
+            MO_DBG_ERR("type err: %s is not string", getKey());
             return false;
         }
         #endif //MO_CONFIG_TYPECHECK
@@ -151,7 +151,7 @@ public:
     int getInt() override {
         #if MO_CONFIG_TYPECHECK
         if (type != Type::Int) {
-            MO_DBG_ERR("type err");
+            MO_DBG_ERR("type err: %s is not int", getKey());
             return 0;
         }
         #endif //MO_CONFIG_TYPECHECK
@@ -160,7 +160,7 @@ public:
     bool getBool() override {
         #if MO_CONFIG_TYPECHECK
         if (type != Type::Bool) {
-            MO_DBG_ERR("type err");
+            MO_DBG_ERR("type err: %s is not bool", getKey());
             return false;
         }
         #endif //MO_CONFIG_TYPECHECK
@@ -169,7 +169,7 @@ public:
     const char *getString() override {
         #if MO_CONFIG_TYPECHECK
         if (type != Type::String) {
-            MO_DBG_ERR("type err");
+            MO_DBG_ERR("type err: %s is not string", getKey());
             return "";
         }
         #endif //MO_CONFIG_TYPECHECK

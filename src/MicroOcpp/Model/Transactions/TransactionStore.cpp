@@ -62,7 +62,7 @@ FilesystemUtils::LoadStatus Ocpp16::TransactionStore::load(MO_FilesystemAdapter 
 
     //success
 
-    MO_DBG_DEBUG("Restored tx %u-%u", evseId, txNr, txData.size());
+    MO_DBG_DEBUG("Restored tx %u-%u", evseId, txNr);
 
     return FilesystemUtils::LoadStatus::Success;
 }

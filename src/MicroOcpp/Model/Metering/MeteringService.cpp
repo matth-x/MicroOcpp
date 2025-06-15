@@ -292,8 +292,7 @@ using namespace MicroOcpp;
 
 Ocpp16::MeteringServiceEvse::MeteringServiceEvse(Context& context, MeteringService& mService, unsigned int connectorId)
         : MemoryManaged("v16.Metering.MeteringServiceEvse"), context(context), clock(context.getClock()), model(context.getModel16()), mService(mService), connectorId(connectorId), meterData(makeVector<MeterValue*>(getMemoryTag())), meterInputs(makeVector<MO_MeterInput>(getMemoryTag())) {
-    Timestamp lastSampleTime = context.getClock().getUptime();
-    Timestamp lastAlignedTime = context.getClock().now();
+
 }
 
 Ocpp16::MeteringServiceEvse::~MeteringServiceEvse() {
@@ -336,6 +335,8 @@ bool Ocpp16::MeteringServiceEvse::setTxEnergyMeterInput2(int32_t (*getInt2)(MO_R
 bool Ocpp16::MeteringServiceEvse::setup() {
 
     context.getMessageService().addSendQueue(this);
+
+    lastAlignedTime = context.getClock().now();
 
     filesystem = context.getFilesystem();
     if (!filesystem) {
@@ -398,7 +399,7 @@ void Ocpp16::MeteringServiceEvse::loop() {
     trackTxRunning = (transaction && transaction->isRunning());
 
     if (txBreak) {
-        lastSampleTime = clock.getUptime();
+        lastSampleTime = clock.getUptimeInt();
     }
 
     if (!transaction && connectorId != 0 && mService.meterValuesInTxOnlyBool->getBool()) {
@@ -485,11 +486,7 @@ void Ocpp16::MeteringServiceEvse::loop() {
     if (mService.meterValueSampleIntervalInt->getInt() >= 1) {
         //record periodic tx data
 
-        auto uptime = clock.getUptime();
-        int32_t dt;
-        clock.delta(uptime, lastSampleTime, dt);
-
-        if (dt >= mService.meterValueSampleIntervalInt->getInt()) {
+        if (clock.getUptimeInt() - lastSampleTime >= mService.meterValueSampleIntervalInt->getInt()) {
             if (auto sampledMeterValue = takeMeterValue(MO_ReadingContext_SamplePeriodic, MO_FLAG_MeterValuesSampledData)) {
                 if (meterData.size() >= MO_MVRECORD_SIZE) {
                     auto mv = meterData.begin();
@@ -509,7 +506,7 @@ void Ocpp16::MeteringServiceEvse::loop() {
                 }
             }
 
-            lastSampleTime = uptime;
+            lastSampleTime = clock.getUptimeInt();
         }
     }
 }

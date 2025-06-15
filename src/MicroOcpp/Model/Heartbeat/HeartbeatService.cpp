@@ -34,7 +34,7 @@ bool HeartbeatService::setup() {
         }
 
         //if transactions can start before the BootNotification succeeds
-        heartbeatIntervalIntV16 = configService->declareConfiguration<bool>("HeartbeatInterval", false);
+        heartbeatIntervalIntV16 = configService->declareConfiguration<int>("HeartbeatInterval", 86400);
         if (!heartbeatIntervalIntV16) {
             MO_DBG_ERR("initialization error");
             return false;
@@ -56,7 +56,7 @@ bool HeartbeatService::setup() {
         }
 
         //if transactions can start before the BootNotification succeeds
-        heartbeatIntervalIntV201 = varService->declareVariable<bool>("OCPPCommCtrlr", "HeartbeatInterval", false);
+        heartbeatIntervalIntV201 = varService->declareVariable<int>("OCPPCommCtrlr", "HeartbeatInterval", 86400);
         if (!heartbeatIntervalIntV201) {
             MO_DBG_ERR("initialization error");
             return false;

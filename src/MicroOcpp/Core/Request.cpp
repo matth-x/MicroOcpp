@@ -63,7 +63,7 @@ bool Request::setMessageID(const char *id){
     messageID = nullptr;
 
     if (id) {
-        size_t size = strlen(id);
+        size_t size = strlen(id) + 1;
         messageID = static_cast<char*>(MO_MALLOC(getMemoryTag(), size));
         if (!messageID) {
             MO_DBG_ERR("OOM");
@@ -143,7 +143,7 @@ Request::CreateRequestResult Request::createRequest(JsonDoc& requestJson) {
 bool Request::receiveResponse(JsonArray response){
 
     //check if messageIDs match
-    if (!messageID || !strcmp(messageID, response[1].as<const char*>())) {
+    if (!messageID || strcmp(messageID, response[1].as<const char*>())) {
         return false;
     }
 

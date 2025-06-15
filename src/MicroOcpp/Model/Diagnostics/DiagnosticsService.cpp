@@ -60,7 +60,7 @@ bool DiagnosticsService::setup() {
     filesystem = context.getFilesystem();
     ftpClient = context.getFtpClient();
 
-#if MO_USE_FW_UPDATER == MO_FW_UPDATER_CUSTOM
+#if MO_USE_DIAGNOSTICS == MO_DIAGNOSTICS_CUSTOM
     if (!onUpload || !onUploadStatusInput) {
         MO_DBG_ERR("need to set onUpload cb and onUploadStatusInput cb");
         return false;

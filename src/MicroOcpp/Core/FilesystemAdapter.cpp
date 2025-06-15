@@ -731,7 +731,7 @@ MO_File* open(const char *path, const char *mode) {
 }
 
 bool close(MO_File *file) {
-    return fclose(reinterpret_cast<FILE*>(file));
+    return fclose(reinterpret_cast<FILE*>(file)) == 0;
 }
 
 size_t read(MO_File *file, char *buf, size_t len) {
@@ -926,7 +926,7 @@ MO_File* open(const char *path, const char *mode) {
 }
 
 bool close(MO_File *file) {
-    return fclose(reinterpret_cast<FILE*>(file));
+    return fclose(reinterpret_cast<FILE*>(file)) == 0;
 }
 
 size_t read(MO_File *file, char *buf, size_t len) {

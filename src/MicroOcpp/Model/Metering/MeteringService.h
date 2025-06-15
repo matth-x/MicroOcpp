@@ -58,8 +58,8 @@ private:
 
     MeterValue *takeMeterValue(MO_ReadingContext readingContext, uint8_t inputSelectFlag);
 
-    Timestamp lastSampleTime;
-    Timestamp lastAlignedTime;
+    int32_t lastSampleTime = 0; //in secs since boot
+    Timestamp lastAlignedTime; //as unix time stamp
     bool trackTxRunning = false;
 
     bool addTxMeterData(Transaction& transaction, MeterValue *mv);

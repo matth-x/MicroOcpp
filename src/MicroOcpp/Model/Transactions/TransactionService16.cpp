@@ -925,7 +925,7 @@ bool TransactionServiceEvse::endTransaction(const char *idTag, const char *reaso
 
                 //check authorization status
                 if (localAuth && localAuth->getAuthorizationStatus() != AuthorizationStatus::Accepted) {
-                    MO_DBG_DEBUG("local auth denied (%s)", idTag);
+                    MO_DBG_DEBUG("local auth denied (%s)", idTag_capture.c_str());
                     localAuth = nullptr;
                 }
 

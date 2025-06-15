@@ -312,6 +312,8 @@ bool Context::setup() {
     }
     #endif
 
+    MO_DBG_INFO("MicroOCPP setup complete");
+
     return true;
 }
 
