@@ -498,7 +498,6 @@ void Ocpp201::AvailabilityServiceEvse::setAvailable(void *requesterId) {
             return;
         }
     }
-    MO_DBG_ERR("could not find unavailable requester");
 }
 
 ChangeAvailabilityStatus Ocpp201::AvailabilityServiceEvse::changeAvailability(bool operative) {

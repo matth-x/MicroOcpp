@@ -31,12 +31,12 @@
 #define MO_DIAG_PREAMBLE_SIZE 192U
 #define MO_DIAG_POSTAMBLE_SIZE 1024U
 
+namespace MicroOcpp {
+
 #if MO_USE_DIAGNOSTICS == MO_DIAGNOSTICS_BUILTIN_MBEDTLS_ESP32
 size_t defaultDiagnosticsReader(char *buf, size_t size, void *user_data);
 void defaultDiagnosticsOnClose(void *user_data);
 #endif
-
-using namespace MicroOcpp;
 
 DiagnosticsService::DiagnosticsService(Context& context) : MemoryManaged("v16/v201.Diagnostics.DiagnosticsService"), context(context), diagFileList(makeVector<String>(getMemoryTag())) {
 
@@ -586,14 +586,10 @@ bool DiagnosticsService::setOnUpload(
     return true;
 }
 
-namespace MicroOcpp {
 struct DiagnosticsReaderFtwData {
     DiagnosticsService *diagService;
     int ret;
 };
-} //namespace MicroOcpp
-
-using namespace MicroOcpp;
 
 bool DiagnosticsService::uploadDiagnostics() {
 
@@ -1045,6 +1041,8 @@ void DiagnosticsService::setFtpServerCert(const char *cert) {
     this->ftpServerCert = cert;
 }
 
+} //namespace MicroOcpp
+
 #endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_DIAGNOSTICS
 
 #if MO_USE_DIAGNOSTICS == MO_DIAGNOSTICS_BUILTIN_MBEDTLS_ESP32
@@ -1053,8 +1051,8 @@ void DiagnosticsService::setFtpServerCert(const char *cert) {
 #include <LittleFS.h>
 
 namespace MicroOcpp {
+
 bool g_diagsSent = false;
-}
 
 size_t defaultDiagnosticsReader(char *buf, size_t size, void*) {
     if (!g_diagsSent) {
@@ -1084,5 +1082,7 @@ size_t defaultDiagnosticsReader(char *buf, size_t size, void*) {
 void defaultDiagnosticsOnClose(void*) {
     g_diagsSent = false;
 };
+
+} //namespace MicroOcpp
 
 #endif //MO_USE_DIAGNOSTICS

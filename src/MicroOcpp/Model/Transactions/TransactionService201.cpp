@@ -1162,6 +1162,11 @@ bool TransactionService::setup() {
         return false;
     }
 
+    if (!txStore.setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
     auto varService = context.getModel201().getVariableService();
     if (!varService) {
         return false;

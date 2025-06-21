@@ -35,7 +35,7 @@ uint32_t (*getDefaultRngCb())();
 #endif
 
 #ifndef MO_ENABLE_MBEDTLS
-#define MO_ENABLE_MBEDTLS 1
+#define MO_ENABLE_MBEDTLS 0
 #endif
 
 #endif

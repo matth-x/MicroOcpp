@@ -11,11 +11,6 @@
 
 #if MO_ENABLE_V16 || MO_ENABLE_V201
 
-#define CP_MODEL_LEN_MAX        CiString20TypeLen
-#define CP_SERIALNUMBER_LEN_MAX CiString25TypeLen
-#define CP_VENDOR_LEN_MAX       CiString20TypeLen
-#define FW_VERSION_LEN_MAX      CiString50TypeLen
-
 namespace MicroOcpp {
 
 class Context;

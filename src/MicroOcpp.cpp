@@ -113,15 +113,15 @@ void mo_setDefaultFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const
 
 #if MO_WS_USE == MO_WS_ARDUINO
 //Setup MO with links2004/WebSockets library
-void mo_setWebsocketUrl(const char *backendUrl, const char *chargeBoxId, const char *authorizationKey, const char *CA_cert) {
+bool mo_setWebsocketUrl(const char *backendUrl, const char *chargeBoxId, const char *authorizationKey, const char *CA_cert) {
     if (!g_context) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
-        return;
+        return false;
     }
 
     if (!backendUrl) {
         MO_DBG_ERR("invalid args");
-        return;
+        return false;
     }
 
     MO_ConnectionConfig config;
@@ -132,6 +132,7 @@ void mo_setWebsocketUrl(const char *backendUrl, const char *chargeBoxId, const c
     config.CA_cert = CA_cert;
 
     g_context->setDefaultConnectionConfig(config);
+    return true;
 }
 #endif
 
@@ -1271,7 +1272,7 @@ bool mo_addMeterValueInputFloat2(MO_Context *ctx, unsigned int evseId, float (*m
     return mo_addMeterValueInput(ctx, evseId, mInput);
 }
 
-bool mo_addMeterValueInputString(int (*meterInput)(char *buf, size_t size), const char *measurand, const char *unit, const char *location, const char *phase, void *userData) {
+bool mo_addMeterValueInputString(int (*meterInput)(char *buf, size_t size), const char *measurand, const char *unit, const char *location, const char *phase) {
     MO_MeterInput mInput;
     mo_MeterInput_init(&mInput, MO_MeterInputType_String);
     mInput.getString = meterInput;

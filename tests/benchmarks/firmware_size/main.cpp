@@ -3,66 +3,53 @@
 // MIT License
 
 #include <MicroOcpp.h>
-#include <MicroOcpp_c.h>
-#include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
-#include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
-
-MicroOcpp::LoopbackConnection g_loopback;
 
 void setup() {
 
-    ocpp_deinitialize();
+    mo_deinitialize();
 
-#if MO_ENABLE_V201
-    mocpp_initialize(g_loopback, ChargerCredentials::v201(),MicroOcpp::makeDefaultFilesystemAdapter(MicroOcpp::FilesystemOpt::Use_Mount_FormatOnFail),true,MicroOcpp::ProtocolVersion(2,0,1));
-#else
-    mocpp_initialize(g_loopback, ChargerCredentials());
-#endif
+    mo_initialize();
 
-    ocpp_beginTransaction("");
-    ocpp_beginTransaction_authorized("","");
-    ocpp_endTransaction("","");
-    ocpp_endTransaction_authorized("","");
-    ocpp_isTransactionActive();
-    ocpp_isTransactionRunning();
-    ocpp_getTransactionIdTag();
-    ocpp_getTransaction();
-    ocpp_ocppPermitsCharge();
-    ocpp_getChargePointStatus();
-    ocpp_setConnectorPluggedInput([] () {return false;});
-    ocpp_setEnergyMeterInput([] () {return 0;});
-    ocpp_setPowerMeterInput([] () {return 0.f;});
-    ocpp_setSmartChargingPowerOutput([] (float) {});
-    ocpp_setSmartChargingCurrentOutput([] (float) {});
-    ocpp_setSmartChargingOutput([] (float,float,int) {});
-    ocpp_setEvReadyInput([] () {return false;});
-    ocpp_setEvseReadyInput([] () {return false;});
-    ocpp_addErrorCodeInput([] () {return (const char*)nullptr;});
-    addErrorDataInput([] () {return MicroOcpp::ErrorData("");});
-    ocpp_addMeterValueInputFloat([] () {return 0.f;},"","","","");
-    ocpp_setOccupiedInput([] () {return false;});
-    ocpp_setStartTxReadyInput([] () {return false;});
-    ocpp_setStopTxReadyInput([] () {return false;});
-    ocpp_setTxNotificationOutput([] (OCPP_Transaction*, TxNotification) {});
+    mo_setup();
+
+    mo_beginTransaction("");
+    mo_beginTransaction_authorized("","");
+    mo_endTransaction("","");
+    mo_endTransaction_authorized("","");
+    mo_isTransactionActive();
+    mo_isTransactionRunning();
+    mo_getTransactionIdTag();
+    mo_v16_getTransactionId();
+    mo_v201_getTransactionId();
+    mo_ocppPermitsCharge();
+    mo_getChargePointStatus();
+    mo_setConnectorPluggedInput([] () {return false;});
+    mo_setEnergyMeterInput([] () {return 0;});
+    mo_setPowerMeterInput([] () {return 0.f;});
+    mo_setSmartChargingPowerOutput([] (float) {});
+    mo_setSmartChargingCurrentOutput([] (float) {});
+    mo_setEvReadyInput([] () {return false;});
+    mo_setEvseReadyInput([] () {return false;});
+    mo_addErrorCodeInput([] () {return (const char*)nullptr;});
+    mo_v16_addErrorDataInput(mo_getApiContext(), 0, [] (unsigned int, void*) {return MO_ErrorData();}, NULL);
+    mo_addMeterValueInputFloat([] () {return 0.f;}, NULL, NULL, NULL, NULL);
+    mo_setOccupiedInput([] () {return false;});
+    mo_setStartTxReadyInput([] () {return false;});
+    mo_setStopTxReadyInput([] () {return false;});
+    mo_setTxNotificationOutput([] (MO_TxNotification) {});
 
 #if MO_ENABLE_CONNECTOR_LOCK
-    ocpp_setOnUnlockConnectorInOut([] () {return UnlockConnectorResult_UnlockFailed;});
+    mo_setOnUnlockConnector([] () {return MO_UnlockConnectorResult_UnlockFailed;});
 #endif
 
-    isOperative();
-    setOnResetNotify([] (bool) {return false;});
-    setOnResetExecute([] (bool) {return false;});
-    getFirmwareService()->getFirmwareStatus();
-    getDiagnosticsService()->getDiagnosticsStatus();
+    mo_isOperative();
+    mo_v16_setOnResetNotify([] (bool) {return false;});
+    mo_setOnResetExecute([] () {});
 
-#if MO_ENABLE_CERT_MGMT
-    setCertificateStore(nullptr);
-#endif
-
-    getOcppContext();
+    mo_getContext();
 
 }
 
 void loop() {
-    mocpp_loop();
+    mo_loop();
 }

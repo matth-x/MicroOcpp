@@ -45,14 +45,16 @@ std::unique_ptr<JsonDoc> BootNotification::createReq() {
     #endif //MO_ENABLE_V16
     #if MO_ENABLE_V201
     if (ocppVersion == MO_OCPP_V201) {
-        auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(2));
+        auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(2));
         JsonObject payload = doc->to<JsonObject>();
-        if (bnData.chargePointSerialNumber) {payload["serialNumber"] = bnData.chargePointSerialNumber;}
-        if (bnData.chargePointModel) {payload["model"] = bnData.chargePointModel;}
-        if (bnData.chargePointVendor) {payload["vendorName"] = bnData.chargePointVendor;}
-        if (bnData.firmwareVersion) {payload["firmwareVersion"] = bnData.firmwareVersion;}
+        payload["reason"] = "Unknown";
+        JsonObject chargingStation = payload.createNestedObject("chargingStation");
+        if (bnData.chargePointSerialNumber) {chargingStation["serialNumber"] = bnData.chargePointSerialNumber;}
+        if (bnData.chargePointModel) {chargingStation["model"] = bnData.chargePointModel;}
+        if (bnData.chargePointVendor) {chargingStation["vendorName"] = bnData.chargePointVendor;}
+        if (bnData.firmwareVersion) {chargingStation["firmwareVersion"] = bnData.firmwareVersion;}
         if (bnData.iccid || bnData.imsi) {
-            JsonObject modem = payload.createNestedObject("modem");
+            JsonObject modem = chargingStation.createNestedObject("modem");
             if (bnData.iccid) {modem["iccid"] = bnData.iccid;}
             if (bnData.imsi) {modem["imsi"] = bnData.imsi;}
         }

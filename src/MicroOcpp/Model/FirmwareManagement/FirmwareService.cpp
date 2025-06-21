@@ -25,13 +25,11 @@
 #define MO_IGNORE_FW_RETR_DATE 0
 #endif
 
-using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+namespace MicroOcpp {
+namespace Ocpp16 {
 
 #if MO_USE_FW_UPDATER != MO_FW_UPDATER_CUSTOM
-namespace MicroOcpp {
 bool setupDefaultFwUpdater(FirmwareService *fwService);
-}
 #endif
 
 FirmwareService::FirmwareService(Context& context) : MemoryManaged("v16.Firmware.FirmwareService"), context(context), clock(context.getClock()) {
@@ -484,11 +482,14 @@ void FirmwareService::setFtpServerCert(const char *cert) {
     this->ftpServerCert = cert;
 }
 
+} //namespace Ocpp16
+} //namespace MicroOcpp
+
 #if MO_USE_FW_UPDATER == MO_FW_UPDATER_BUILTIN_ESP32
 
 #include <Update.h>
 
-bool MicroOcpp::setupDefaultFwUpdater(FirmwareService *fwService) {
+bool MicroOcpp::Ocpp16::setupDefaultFwUpdater(MicroOcpp::Ocpp16::FirmwareService *fwService) {
     fwService->setDownloadFileWriter(
         [fwService] (const unsigned char *data, size_t size) -> size_t {
             if (!Update.isRunning()) {
@@ -557,11 +558,11 @@ bool MicroOcpp::setupDefaultFwUpdater(FirmwareService *fwService) {
     return true;
 }
 
-#elif MO_USE_FW_UPDATER == MO_FW_UPDATER_BUILTIN_ESP32
+#elif MO_USE_FW_UPDATER == MO_FW_UPDATER_BUILTIN_ESP8266
 
 #include <ESP8266httpUpdate.h>
 
-bool MicroOcpp::setupDefaultFwUpdater(FirmwareService *fwService) {
+bool MicroOcpp::Ocpp16::setupDefaultFwUpdater(MicroOcpp::Ocpp16::FirmwareService *fwService) {
 
     fwService->setOnInstall([fwService] (const char *location) {
         

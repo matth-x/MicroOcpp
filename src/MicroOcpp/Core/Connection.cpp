@@ -6,7 +6,7 @@
 #include <MicroOcpp/Context.h>
 #include <MicroOcpp/Debug.h>
 
-using namespace MicroOcpp;
+namespace MicroOcpp {
 
 Connection::Connection() {
 
@@ -51,6 +51,8 @@ bool LoopbackConnection::isConnected() {
     return connected;
 }
 
+} //namespace MicroOcpp
+
 #if MO_WS_USE == MO_WS_ARDUINO
 
 #include <WebSocketsClient.h>
@@ -64,7 +66,7 @@ private:
 public:
 
     ArduinoWSClient(WebSocketsClient *wsock, bool transferOwnership) : MemoryManaged("WebSocketsClient"), wsock(wsock), isWSockOwner(transferOwnership) {
-        wsock->onEvent([callback](WStype_t type, uint8_t * payload, size_t length) {
+        wsock->onEvent([this](WStype_t type, uint8_t * payload, size_t length) {
             switch (type) {
                 case WStype_DISCONNECTED:
                     MO_DBG_INFO("Disconnected");
@@ -104,7 +106,7 @@ public:
         }
     }
 
-    void loop() overide {
+    void loop() override {
         wsock->loop();
     }
 
@@ -132,13 +134,13 @@ Connection *makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion) {
 
     if (!config.backendUrl) {
         MO_DBG_ERR("invalid args");
-        goto fail;
+        return nullptr;
     }
 
     wsock = new WebSocketsClient();
     if (!wsock) {
         MO_DBG_ERR("OOM");
-        goto fail;
+        return nullptr;
     }
 
     /*
@@ -158,7 +160,7 @@ Connection *makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion) {
         isTLS = false;
     } else {
         MO_DBG_ERR("only ws:// and wss:// supported");
-        return;
+        return nullptr;
     }
 
     //parse host, port
@@ -168,7 +170,7 @@ Connection *makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion) {
     auto host = host_port.substr(0, host_port.find_first_of(':'));
     if (host.empty()) {
         MO_DBG_ERR("could not parse host: %s", url.c_str());
-        return;
+        return nullptr;
     }
     uint16_t port = 0;
     auto port_str = host_port.substr(host.length());
@@ -180,12 +182,12 @@ Connection *makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion) {
         for (auto c = port_str.begin(); c != port_str.end(); c++) {
             if (*c < '0' || *c > '9') {
                 MO_DBG_ERR("could not parse port: %s", url.c_str());
-                return; 
+                return nullptr; 
             }
             auto p = port * 10U + (*c - '0');
             if (p < port) {
                 MO_DBG_ERR("could not parse port (overflow): %s", url.c_str());
-                return;
+                return nullptr;
             }
             port = p;
         }
@@ -223,32 +225,35 @@ Connection *makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion) {
         goto fail;
     }
 
-    if (config.isTLS) {
+    if (isTLS) {
         // server address, port, path and TLS certificate
-        webSocket->beginSslWithCA(host.c_str(), port, path.c_str(), config.CA_cert, ocppVersionStr);
+        wsock->beginSslWithCA(host.c_str(), port, path.c_str(), config.CA_cert, ocppVersionStr);
     } else {
         // server address, port, path
-        webSocket->begin(host.c_str(), port, path.c_str(), ocppVersionStr);
+        wsock->begin(host.c_str(), port, path.c_str(), ocppVersionStr);
     }
 
     // try ever 5000 again if connection has failed
-    webSocket->setReconnectInterval(5000);
+    wsock->setReconnectInterval(5000);
 
     // start heartbeat (optional)
     // ping server every 15000 ms
     // expect pong from server within 3000 ms
     // consider connection disconnected if pong is not received 2 times
-    webSocket->enableHeartbeat(15000, 3000, 2); //comment this one out to for specific OCPP servers
+    wsock->enableHeartbeat(15000, 3000, 2); //comment this one out to for specific OCPP servers
 
-    size_t chargeBoxIdLen = config.chargeBoxId ? strlen(config.chargeBoxId) : 0;
-    size_t authorizationKeyLen = config.authorizationKey ? strlen(config.authorizationKey) : 0;
-
+    
     // add authentication data (optional)
-    if (config.authorizationKey && (authorizationKeyLen + chargeBoxIdLen >= 4)) {
-        webSocket->setAuthorization(config.chargeBoxId ? config.chargeBoxId : "", config.authorizationKey);
+    {
+        size_t chargeBoxIdLen = config.chargeBoxId ? strlen(config.chargeBoxId) : 0;
+        size_t authorizationKeyLen = config.authorizationKey ? strlen(config.authorizationKey) : 0;
+
+        if (config.authorizationKey && (authorizationKeyLen + chargeBoxIdLen >= 4)) {
+            wsock->setAuthorization(config.chargeBoxId ? config.chargeBoxId : "", config.authorizationKey);
+        }
     }
 
-    connection = new ArduinoWSClient(webSocket, true);
+    connection = new ArduinoWSClient(wsock, true);
     if (!connection) {
         MO_DBG_ERR("OOM");
         goto fail;
@@ -259,6 +264,7 @@ Connection *makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion) {
 fail:
     delete connection;
     delete wsock;
+    return nullptr;
 }
 
 void freeDefaultConnection(Connection *connection) {

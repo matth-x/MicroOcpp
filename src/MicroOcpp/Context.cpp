@@ -138,7 +138,7 @@ Connection *Context::getConnection() {
     #if MO_WS_USE != MO_WS_CUSTOM
     if (!connection) {
         // init default Connection implementation
-        connection = static_cast<Connection*>(makeDefaultConnection(connectionConfig));
+        connection = static_cast<Connection*>(makeDefaultConnection(connectionConfig, ocppVersion));
         if (!connection) {
             MO_DBG_ERR("OOM");
             return nullptr;

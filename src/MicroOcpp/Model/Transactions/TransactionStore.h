@@ -49,7 +49,7 @@ bool remove(MO_FilesystemAdapter *filesystem, unsigned int evseId, unsigned int 
 #endif
 
 #ifndef MO_TXEVENTRECORD_DIGITS
-#define MO_TXEVENTRECORD_DIGITS 10 //digits needed to print MO_TXEVENTRECORD_SIZE-1 (="9", i.e. 1 digit)
+#define MO_TXEVENTRECORD_DIGITS 1 //digits needed to print MO_TXEVENTRECORD_SIZE-1 (="9", i.e. 1 digit)
 #endif
 
 namespace MicroOcpp {

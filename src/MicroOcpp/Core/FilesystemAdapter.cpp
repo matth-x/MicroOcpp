@@ -449,7 +449,7 @@ int stat(const char *path, size_t *size) {
 } //end stat
 
 bool remove(const char *path) {
-    return USE_FS.remove(fn);
+    return USE_FS.remove(path);
 }
 
 int ftw(const char *path_prefix, int(*fn)(const char *fname, void *mo_user_data), void *mo_user_data) {
@@ -457,7 +457,7 @@ int ftw(const char *path_prefix, int(*fn)(const char *fname, void *mo_user_data)
 #if MO_USE_FILEAPI == MO_ARDUINO_LITTLEFS
     auto dir = USE_FS.open(prefix);
     if (!dir) {
-        MO_DBG_ERR("cannot open root directory: " prefix);
+        MO_DBG_ERR("cannot open root directory: %s", prefix);
         return -1;
     }
 
@@ -508,7 +508,7 @@ MO_File* open(const char *path, const char *mode) {
         MO_DBG_ERR("OOM");
         return nullptr;
     }
-    *file = USE_FS.open(fn, mode);
+    *file = USE_FS.open(path, mode);
     if (!*file) {
         MO_DBG_ERR("open file failure");
         goto fail;
@@ -517,7 +517,7 @@ MO_File* open(const char *path, const char *mode) {
         MO_DBG_ERR("file failure");
         goto fail;
     }
-    MO_DBG_DEBUG("File open successful: %s", fn);
+    MO_DBG_DEBUG("File open successful: %s", path);
     return reinterpret_cast<MO_File*>(file);
 fail:
     if (file) {
@@ -530,9 +530,9 @@ fail:
 
 bool close(MO_File *fileHandle) {
     auto file = reinterpret_cast<File*>(fileHandle);
-    bool success = file->close();
+    file->close();
     delete file;
-    return success;
+    return true;
 }
 
 size_t read(MO_File *fileHandle, char *buf, size_t len) {
@@ -552,7 +552,7 @@ size_t write(MO_File *fileHandle, const char *buf, size_t len) {
 
 int seek(MO_File *fileHandle, size_t fpos) {
     auto file = reinterpret_cast<File*>(fileHandle);
-    return file->seek(offset);
+    return file->seek(fpos);
 }
 
 int useCount;
@@ -562,14 +562,14 @@ MO_FilesystemOpt opt = MO_FS_OPT_DISABLE;
 } //namespace MicroOcpp
 
 MO_FilesystemAdapter *mo_makeDefaultFilesystemAdapter(MO_FilesystemConfig config) {
-
-    char *prefix_copy = nullptr;
-    MO_FilesystemAdapter *filesystem = nullptr;
     
     if (config.opt == MO_FS_OPT_DISABLE) {
         MO_DBG_DEBUG("Access to filesystem not allowed by opt");
-        goto fail;
+        return nullptr;
     }
+
+    char *prefix_copy = nullptr;
+    MO_FilesystemAdapter *filesystem = nullptr;
 
     const char *prefix = config.path_prefix;
     size_t prefix_len = prefix ? strlen(prefix) : 0;
@@ -583,7 +583,7 @@ MO_FilesystemAdapter *mo_makeDefaultFilesystemAdapter(MO_FilesystemConfig config
         (void)snprintf(prefix_copy, prefix_size, "%s", prefix);
     }
 
-    auto filesystem = static_cast<MO_Filesystem*>(MO_MALLOC("Filesystem", sizeof(MO_FilesystemAdapter)));
+    filesystem = static_cast<MO_FilesystemAdapter*>(MO_MALLOC("Filesystem", sizeof(MO_FilesystemAdapter)));
     if (!filesystem) {
         MO_DBG_ERR("OOM");
         goto fail;
@@ -663,7 +663,11 @@ void mo_freeDefaultFilesystemAdapter(MO_FilesystemAdapter *filesystem) {
         USE_FS.end();
         MicroOcpp::ArduinoFS::opt = MO_FS_OPT_DISABLE;
     }
-    MO_FREE(filesystem->path_prefix);
+
+    //the default FS adapter owns the path_prefix buf and needs to free it
+    char *path_prefix_buf = const_cast<char*>(filesystem->path_prefix);
+    MO_FREE(path_prefix_buf);
+
     MO_FREE(filesystem);
 }
 

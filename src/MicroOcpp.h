@@ -353,12 +353,12 @@ bool mo_addMeterValueInputInt(int32_t (*meterInput)(), const char *measurand, co
 bool mo_addMeterValueInputInt2(MO_Context *ctx, unsigned int evseId, int32_t (*meterInput)(MO_ReadingContext, unsigned int, void*), const char *measurand, const char *unit, const char *location, const char *phase, void *userData);
 
 //Input for further float MeterValue types
-bool mo_addMeterValueInputFloat(float (*meterInput)(), const char *measurand, const char *unit, const char *location, const char *phase, void *userData);
+bool mo_addMeterValueInputFloat(float (*meterInput)(), const char *measurand, const char *unit, const char *location, const char *phase);
 bool mo_addMeterValueInputFloat2(MO_Context *ctx, unsigned int evseId, float (*meterInput)(MO_ReadingContext, unsigned int, void*), const char *measurand, const char *unit, const char *location, const char *phase, void *userData);
 
 //Input for further string MeterValue types. `meterInput` shall write the value into `buf` (which is `size` large) and return the number
 //of characters written (not including the terminating 0). See "MeterValue.h" for a full description
-bool mo_addMeterValueInputString(int (*meterInput)(char *buf, size_t size), const char *measurand, const char *unit, const char *location, const char *phase, void *userData);
+bool mo_addMeterValueInputString(int (*meterInput)(char *buf, size_t size), const char *measurand, const char *unit, const char *location, const char *phase);
 bool mo_addMeterValueInputString2(MO_Context *ctx, unsigned int evseId, int (*meterInput)(char *buf, size_t size, MO_ReadingContext, unsigned int, void*), const char *measurand, const char *unit, const char *location, const char *phase, void *userData);
 
 //Input for further MeterValue types with more options. See "MeterValue.h" for how to use it

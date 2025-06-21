@@ -106,9 +106,10 @@ typedef struct {
 #ifdef __cplusplus
 } //extern "C"
 
+class WebSocketsClient;
+
 namespace MicroOcpp {
 
-class WebSocketsClient;
 Connection *makeArduinoWSClient(WebSocketsClient& arduinoWebsockets); //does not take ownership of arduinoWebsockets
 void freeArduinoWSClient(Connection *connection);
 
