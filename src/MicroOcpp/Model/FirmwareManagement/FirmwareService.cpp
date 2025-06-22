@@ -78,7 +78,7 @@ bool FirmwareService::setup() {
         return new Ocpp16::UpdateFirmware(context, *context.getModel16().getFirmwareService());});
 
     #if MO_ENABLE_MOCK_SERVER
-    context.getMessageService().registerOperation("FirmwareStatusNotification", nullptr, nullptr);
+    context.getMessageService().registerOperation("FirmwareStatusNotification", nullptr, nullptr, nullptr);
     #endif //MO_ENABLE_MOCK_SERVER
 
     auto rcService = context.getModel16().getRemoteControlService();

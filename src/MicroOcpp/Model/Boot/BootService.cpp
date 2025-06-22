@@ -153,7 +153,7 @@ bool BootService::setup() {
     #endif //MO_ENABLE_V201
 
     #if MO_ENABLE_MOCK_SERVER
-    context.getMessageService().registerOperation("BootNotification", nullptr, BootNotification::writeMockConf, reinterpret_cast<void*>(&context));
+    context.getMessageService().registerOperation("BootNotification", nullptr, BootNotification::writeMockConf, nullptr, reinterpret_cast<void*>(&context));
     #endif //MO_ENABLE_MOCK_SERVER
 
     return true;

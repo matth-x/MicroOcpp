@@ -224,7 +224,7 @@ bool MessageService::registerOperation(const char *operationType, Operation* (*c
     return appendEntry(operationRegistry, entry);
 }
 
-bool MessageService::registerOperation(const char *operationType, void (*onRequest)(const char *operationType, const char *payloadJson, int *userStatus, void *userData), int (*writeResponse)(const char *operationType, char *buf, size_t size, int userStatus, void *userData), void *userData) {
+bool MessageService::registerOperation(const char *operationType, void (*onRequest)(const char *operationType, const char *payloadJson, void **userStatus, void *userData), int (*writeResponse)(const char *operationType, char *buf, size_t size, void *userStatus, void *userData), void (*finally)(const char *operationType, void *userStatus, void *userData), void *userData) {
 
     bool exists = false;
 
@@ -241,6 +241,7 @@ bool MessageService::registerOperation(const char *operationType, void (*onReque
     entry.userData = userData;
     entry.onRequest = onRequest;
     entry.writeResponse = writeResponse;
+    entry.finally = finally;
 
     MO_DBG_DEBUG("registered operation %s", operationType);
     return appendEntry(operationRegistry2, entry);
@@ -297,6 +298,7 @@ std::unique_ptr<Request> MessageService::createRequest(const char *operationType
                         entry->operationType,
                         entry->onRequest,
                         entry->writeResponse,
+                        entry->finally,
                         entry->userData)) {
                 MO_DBG_ERR("create operation failure");
                 delete customOperation;

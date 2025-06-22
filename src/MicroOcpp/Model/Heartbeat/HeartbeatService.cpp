@@ -72,7 +72,7 @@ bool HeartbeatService::setup() {
     lastHeartbeat = context.getClock().getUptime();
 
     #if MO_ENABLE_MOCK_SERVER
-    context.getMessageService().registerOperation("Heartbeat", nullptr, Heartbeat::writeMockConf, reinterpret_cast<void*>(&context));
+    context.getMessageService().registerOperation("Heartbeat", nullptr, Heartbeat::writeMockConf, nullptr, reinterpret_cast<void*>(&context));
     #endif //MO_ENABLE_MOCK_SERVER
 
     auto rcService = context.getModel16().getRemoteControlService();

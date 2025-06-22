@@ -87,7 +87,7 @@ void StartTransaction::processConf(JsonObject payload) {
 }
 
 #if MO_ENABLE_MOCK_SERVER
-int StartTransaction::writeMockConf(const char *operationType, char *buf, size_t size, int userStatus, void *userData) {
+int StartTransaction::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
     (void)userStatus;
     (void)userData;
     static int uniqueTxId = 1000;

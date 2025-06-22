@@ -643,8 +643,9 @@ bool mo_sendRequest(MO_Context *ctx,
 
 //Set custom operation handler for incoming reqeusts and bypass MO business logic
 bool mo_setRequestHandler(MO_Context *ctx, const char *operationType,
-        void (*onRequest)(const char *operationType, const char *payloadJson, int *userStatus, void *userData),
-        int (*writeResponse)(const char *operationType, char *buf, size_t size, int userStatus, void *userData),
+        void (*onRequest)(const char *operationType, const char *payloadJson, void **userStatus, void *userData),
+        int (*writeResponse)(const char *operationType, char *buf, size_t size, void *userStatus, void *userData),
+        void (*finally)(const char *operationType, void *userStatus, void *userData),
         void *userData);
 
 //Sniff incoming requests without control over the response

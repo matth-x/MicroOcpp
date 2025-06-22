@@ -135,22 +135,22 @@ void TransactionEvent::processConf(JsonObject payload) {
 }
 
 #if MO_ENABLE_MOCK_SERVER
-void TransactionEvent::onRequestMock(const char *operationType, const char *payloadJson, int *userStatus, void *userData) {
+void TransactionEvent::onRequestMock(const char *operationType, const char *payloadJson, void **userStatus, void *userData) {
     //if request contains `"idToken"`, then send response with `"idTokenInfo"`. Instead of building the
     //full JSON DOM, just search for the substring
     if (strstr(payloadJson, "\"idToken\"")) {
         //found, pass status to `writeMockConf`
-        *userStatus = 1;
+        *userStatus = reinterpret_cast<void*>(1);
     } else {
         //not found, pass status to `writeMockConf`
-        *userStatus = 0;
+        *userStatus = reinterpret_cast<void*>(0);
     }
 }
 
-int TransactionEvent::writeMockConf(const char *operationType, char *buf, size_t size, int userStatus, void *userData) {
+int TransactionEvent::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
     (void)userData;
 
-    if (userStatus == 1) {
+    if (userStatus == reinterpret_cast<void*>(1)) {
         return snprintf(buf, size, "{\"idTokenInfo\":{\"status\":\"Accepted\"}}");
     } else {
         return snprintf(buf, size, "{}");

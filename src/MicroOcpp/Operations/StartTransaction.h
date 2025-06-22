@@ -36,7 +36,7 @@ public:
     void processConf(JsonObject payload) override;
 
 #if MO_ENABLE_MOCK_SERVER
-    static int writeMockConf(const char *operationType, char *buf, size_t size, int userStatus, void *userData);
+    static int writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData);
 #endif
 };
 

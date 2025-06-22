@@ -112,7 +112,7 @@ void BootNotification::processConf(JsonObject payload) {
 }
 
 #if MO_ENABLE_MOCK_SERVER
-int BootNotification::writeMockConf(const char *operationType, char *buf, size_t size, int userStatus, void *userData) {
+int BootNotification::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
     (void)userStatus;
 
     auto& context = *reinterpret_cast<Context*>(userData);

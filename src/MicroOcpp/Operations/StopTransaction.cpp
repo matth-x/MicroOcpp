@@ -100,7 +100,7 @@ void StopTransaction::processConf(JsonObject payload) {
 }
 
 #if MO_ENABLE_MOCK_SERVER
-int StopTransaction::writeMockConf(const char *operationType, char *buf, size_t size, int userStatus, void *userData) {
+int StopTransaction::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
     (void)userStatus;
     (void)userData;
     return snprintf(buf, size, "{\"idTagInfo\":{\"status\":\"Accepted\"}}");

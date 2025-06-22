@@ -13,15 +13,16 @@ class CustomOperation : public Operation, public MemoryManaged {
 private:
     const char *operationType = nullptr;
     void *userData = nullptr;
-    int userStatus = 0; //`onRequest` cb can write this number and pass status from `onRequest` to `writeResponse`
+    void *userStatus = nullptr; //`onRequest` cb can write this number and pass status from `onRequest` to `writeResponse`
 
     //Operation initiated on this EVSE
     char *request = nullptr;
     void (*onResponse)(const char *payloadJson, void *userData) = nullptr;
 
     //Operation initiated by server
-    void (*onRequest)(const char *operationType, const char *payloadJson, int *userStatus, void *userData) = nullptr;
-    int (*writeResponse)(const char *operationType, char *buf, size_t size, int userStatus, void *userData) = nullptr;
+    void (*onRequest)(const char *operationType, const char *payloadJson, void **userStatus, void *userData) = nullptr;
+    int (*writeResponse)(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) = nullptr;
+    void (*finally)(const char *operationType, void *userStatus, void *userData) = nullptr;
 public:
 
     CustomOperation();
@@ -36,8 +37,9 @@ public:
 
     //for operations receied from remote
     bool setupCsmsInitiated(const char *operationType,
-        void (*onRequest)(const char *operationType, const char *payloadJson, int *userStatus, void *userData),
-        int (*writeResponse)(const char *operationType, char *buf, size_t size, int userStatus, void *userData),
+        void (*onRequest)(const char *operationType, const char *payloadJson, void **userStatus, void *userData),
+        int (*writeResponse)(const char *operationType, char *buf, size_t size, void *userStatus, void *userData),
+        void (*finally)(const char *operationType, void *userStatus, void *userData),
         void *userData);
 
     const char* getOperationType() override;

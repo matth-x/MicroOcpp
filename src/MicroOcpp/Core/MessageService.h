@@ -32,8 +32,9 @@ struct OperationCreator {
 struct CustomOperationCreator {
     const char *operationType = nullptr;
     void *userData = nullptr;
-    void (*onRequest)(const char *operationType, const char *payloadJson, int *userStatus, void *userData) = nullptr;
-    int (*writeResponse)(const char *operationType, char *buf, size_t size, int userStatus, void *userData) = nullptr;
+    void (*onRequest)(const char *operationType, const char *payloadJson, void **userStatus, void *userData) = nullptr;
+    int (*writeResponse)(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) = nullptr;
+    void (*finally)(const char *operationType, void *userStatus, void *userData) = nullptr;
 };
 
 struct OperationListener {
@@ -81,7 +82,7 @@ public:
     
     // handle Requests from the OCPP Server
     bool registerOperation(const char *operationType, Operation* (*createOperationCb)(Context& context));
-    bool registerOperation(const char *operationType, void (*onRequest)(const char *operationType, const char *payloadJson, int *userStatus, void *userData), int (*writeResponse)(const char *operationType, char *buf, size_t size, int userStatus, void *userData), void *userData = nullptr);
+    bool registerOperation(const char *operationType, void (*onRequest)(const char *operationType, const char *payloadJson, void **userStatus, void *userData), int (*writeResponse)(const char *operationType, char *buf, size_t size, void *userStatus, void *userData), void (*finally)(const char *operationType, void *userStatus, void *userData) = nullptr, void *userData = nullptr);
     bool setOnReceiveRequest(const char *operationType, void (*onRequest)(const char *operationType, const char *payloadJson, void *userData), void *userData = nullptr);
     bool setOnSendConf(const char *operationType, void (*onConfirmation)(const char *operationType, const char *payloadJson, void *userData), void *userData = nullptr);
 

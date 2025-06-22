@@ -48,7 +48,7 @@ void Ocpp16::Authorize::processConf(JsonObject payload){
 }
 
 #if MO_ENABLE_MOCK_SERVER
-int Ocpp16::Authorize::writeMockConf(const char *operationType, char *buf, size_t size, int userStatus, void *userData) {
+int Ocpp16::Authorize::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
     (void)userStatus;
     (void)userData;
     return snprintf(buf, size, "{\"idTagInfo\":{\"status\":\"Accepted\"}}");
@@ -92,7 +92,7 @@ void Ocpp201::Authorize::processConf(JsonObject payload){
 }
 
 #if MO_ENABLE_MOCK_SERVER
-int Ocpp201::Authorize::writeMockConf(const char *operationType, char *buf, size_t size, int userStatus, void *userData) {
+int Ocpp201::Authorize::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
     (void)userStatus;
     (void)userData;
     return snprintf(buf, size, "{\"idTokenInfo\":{\"status\":\"Accepted\"}}");

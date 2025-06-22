@@ -82,6 +82,10 @@ CustomOperation::CustomOperation() : MemoryManaged("v16/v201.CustomOperation") {
 }
 
 CustomOperation::~CustomOperation() {
+    if (finally) {
+        finally(operationType, userStatus, userData);
+        finally = nullptr;
+    }
     MO_FREE(request);
     request = nullptr;
 }
@@ -111,11 +115,12 @@ bool CustomOperation::setupEvseInitiated(const char *operationType, const char *
 }
 
 //for operations receied from remote
-bool CustomOperation::setupCsmsInitiated(const char *operationType, void (*onRequest)(const char *operationType, const char *payloadJson, int *userStatus, void *userData), int (*writeResponse)(const char *operationType, char *buf, size_t size, int userStatus, void *userData), void *userData) {
+bool CustomOperation::setupCsmsInitiated(const char *operationType, void (*onRequest)(const char *operationType, const char *payloadJson, void **userStatus, void *userData), int (*writeResponse)(const char *operationType, char *buf, size_t size, void *userStatus, void *userData), void (*finally)(const char *operationType, void *userStatus, void *userData), void *userData) {
     this->operationType = operationType;
     this->onRequest = onRequest;
     this->writeResponse = writeResponse;
     this->userData = userData;
+    this->finally = finally;
     return true;
 }
 
