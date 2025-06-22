@@ -287,7 +287,7 @@ void TransactionServiceEvse::loop() {
                 dtTxBegin = txService.evConnectionTimeOutInt->getInt();
             }
 
-            if (transaction->active &&
+            if (transaction->active && !transaction->started &&
                     transaction->evConnectionTimeoutListen &&
                     transaction->beginTimestamp.isDefined() &&
                     txService.evConnectionTimeOutInt->getInt() > 0 &&

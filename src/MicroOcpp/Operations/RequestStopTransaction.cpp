@@ -23,7 +23,7 @@ void RequestStopTransaction::processReq(JsonObject payload) {
 
     if (!payload.containsKey("transactionId") || 
             !payload["transactionId"].is<const char*>() ||
-            strlen(payload["transactionId"].as<const char*>()) + 1 >= MO_TXID_SIZE) {
+            strlen(payload["transactionId"].as<const char*>()) + 1 > MO_TXID_SIZE) {
         errorCode = "FormationViolation";
         return;
     }
