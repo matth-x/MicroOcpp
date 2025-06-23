@@ -101,7 +101,15 @@ typedef struct {
     const char *chargeBoxId;      //e.g. "charger001". Can be NULL
     const char *authorizationKey; //authorizationKey present in the websocket message header. Can be NULL. Set this to enable OCPP Security Profile 2
     const char *CA_cert;          //TLS certificate. Can be NULL. Set this to enable OCPP Security Profile 2
+
+    char *internalBuf; //used by MO internally
 } MO_ConnectionConfig;
+
+void mo_connectionConfig_init(MO_ConnectionConfig *config);
+
+bool mo_connectionConfig_copy(MO_ConnectionConfig *dst, MO_ConnectionConfig *src);
+
+void mo_connectionConfig_deinit(MO_ConnectionConfig *config);
 
 #ifdef __cplusplus
 } //extern "C"

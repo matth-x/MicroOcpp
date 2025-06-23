@@ -38,8 +38,8 @@ MO_Context *mo_getApiContext();
 
 #if MO_USE_FILEAPI != MO_CUSTOM_FS
 //Set if MO can use the filesystem and if it needs to mount it. See "FilesystemAdapter.h" for all options
-void mo_setDefaultFilesystemConfig(MO_FilesystemOpt opt);
-void mo_setDefaultFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *pathPrefix);
+void mo_setFilesystemConfig(MO_FilesystemOpt opt);
+void mo_setFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *pathPrefix);
 #endif //#if MO_USE_FILEAPI != MO_CUSTOM_FS
 
 #if MO_WS_USE == MO_WS_ARDUINO
@@ -469,7 +469,7 @@ void mo_setRngCb(uint32_t (*rngCb)());
 void mo_setRngCb2(MO_Context *ctx, uint32_t (*rngCb)());
 
 //Returns the internal filesystem adapter or NULL if the initialization failed. Need to set configs using
-//via `mo_setDefaultFilesystemConfig` before accessing the FS adpater. The FS adapter can be passed to other
+//via `mo_setFilesystemConfig` before accessing the FS adpater. The FS adapter can be passed to other
 //MO utils functions or be used for other purposes than OCPP, as a file abstraction layer
 MO_FilesystemAdapter *mo_getFilesystem();
 MO_FilesystemAdapter *mo_getFilesystem2(MO_Context *ctx);

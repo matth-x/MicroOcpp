@@ -38,18 +38,21 @@ private:
 
 #if MO_USE_FILEAPI != MO_CUSTOM_FS
     MO_FilesystemConfig filesystemConfig;
+    bool filesystemConfigDefined = false;
     bool isFilesystemOwner = false;
 #endif //MO_USE_FILEAPI != MO_CUSTOM_FS
     MO_FilesystemAdapter *filesystem = nullptr;
 
 #if MO_WS_USE != MO_WS_CUSTOM
     MO_ConnectionConfig connectionConfig;
+    bool connectionConfigDefined = false;
     bool isConnectionOwner = false;
 #endif //MO_WS_USE != MO_WS_CUSTOM
     Connection *connection = nullptr;
 
 #if MO_ENABLE_MBEDTLS
     MO_FTPConfig ftpConfig;
+    bool ftpConfigDefined = false;
     bool isFtpClientOwner = false;
 #endif //MO_ENABLE_MBEDTLS
     FtpClient *ftpClient = nullptr;
@@ -82,19 +85,19 @@ public:
     uint32_t (*getRngCb())();
 
 #if MO_USE_FILEAPI != MO_CUSTOM_FS
-    void setDefaultFilesystemConfig(MO_FilesystemConfig filesystemConfig);
+    void setFilesystemConfig(MO_FilesystemConfig filesystemConfig);
 #endif //MO_USE_FILEAPI != MO_CUSTOM_FS
     void setFilesystem(MO_FilesystemAdapter *filesystem);
     MO_FilesystemAdapter *getFilesystem();
 
 #if MO_WS_USE != MO_WS_CUSTOM
-    void setDefaultConnectionConfig(MO_ConnectionConfig connectionConfig);
+    bool setConnectionConfig(MO_ConnectionConfig connectionConfig);
 #endif //MO_WS_USE != MO_WS_CUSTOM
     void setConnection(Connection *connection);
     Connection *getConnection();
 
 #if MO_ENABLE_MBEDTLS
-    void setDefaultFtpConfig(MO_FTPConfig ftpConfig);
+    void setFtpConfig(MO_FTPConfig ftpConfig);
 #endif //MO_ENABLE_MBEDTLS
     void setFtpClient(FtpClient *ftpClient);
     FtpClient *getFtpClient();

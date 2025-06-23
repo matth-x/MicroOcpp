@@ -19,12 +19,10 @@ Context::Context() : MemoryManaged("Context") {
 
 #if MO_USE_FILEAPI != MO_CUSTOM_FS
     memset(&filesystemConfig, 0, sizeof(filesystemConfig));
-    filesystemConfig.opt = MO_FS_OPT_USE_MOUNT;
-    filesystemConfig.path_prefix = MO_FILENAME_PREFIX;
 #endif //MO_USE_FILEAPI != MO_CUSTOM_FS
 
 #if MO_WS_USE != MO_WS_CUSTOM
-    memset(&connectionConfig, 0, sizeof(connectionConfig));
+    mo_connectionConfig_init(&connectionConfig);
 #endif //MO_WS_USE != MO_WS_CUSTOM
 
 #if MO_ENABLE_MBEDTLS
@@ -38,6 +36,10 @@ Context::~Context() {
     setConnection(nullptr);
     setFtpClient(nullptr);
     setCertificateStore(nullptr);
+
+#if MO_WS_USE != MO_WS_CUSTOM
+    mo_connectionConfig_deinit(&connectionConfig);
+#endif //MO_WS_USE != MO_WS_CUSTOM
 }
 
 void Context::setDebugCb(void (*debugCb)(const char *msg)) {
@@ -73,11 +75,9 @@ uint32_t (*Context::getRngCb())() {
 }
 
 #if MO_USE_FILEAPI != MO_CUSTOM_FS
-void Context::setDefaultFilesystemConfig(MO_FilesystemConfig filesystemConfig) {
-    if (filesystem) {
-        MO_DBG_ERR("need to set filesystem config before first filesystem usage");
-    }
+void Context::setFilesystemConfig(MO_FilesystemConfig filesystemConfig) {
     this->filesystemConfig = filesystemConfig;
+    filesystemConfigDefined = true;
 }
 #endif //MO_USE_FILEAPI != MO_CUSTOM_FS
 
@@ -94,7 +94,7 @@ void Context::setFilesystem(MO_FilesystemAdapter *filesystem) {
 
 MO_FilesystemAdapter *Context::getFilesystem() {
     #if MO_USE_FILEAPI != MO_CUSTOM_FS
-    if (!filesystem && filesystemConfig.opt != MO_FS_OPT_DISABLE) {
+    if (!filesystem && filesystemConfigDefined) {
         // init default FS implementaiton
         filesystem = mo_makeDefaultFilesystemAdapter(filesystemConfig);
         if (!filesystem) {
@@ -109,11 +109,13 @@ MO_FilesystemAdapter *Context::getFilesystem() {
 }
 
 #if MO_WS_USE != MO_WS_CUSTOM
-void Context::setDefaultConnectionConfig(MO_ConnectionConfig connectionConfig) {
-    if (connection) {
-        MO_DBG_ERR("need to set connection config before first connection usage");
+bool Context::setConnectionConfig(MO_ConnectionConfig connectionConfig) {
+    if (!mo_connectionConfig_copy(&this->connectionConfig, &connectionConfig)) {
+        MO_DBG_ERR("OOM");
+        return false;
     }
-    this->connectionConfig = connectionConfig;
+    connectionConfigDefined = true;
+    return true;
 }
 #endif //MO_WS_USE != MO_WS_CUSTOM
 
@@ -136,7 +138,7 @@ void Context::setConnection(Connection *connection) {
 
 Connection *Context::getConnection() {
     #if MO_WS_USE != MO_WS_CUSTOM
-    if (!connection) {
+    if (!connection && connectionConfigDefined) {
         // init default Connection implementation
         connection = static_cast<Connection*>(makeDefaultConnection(connectionConfig, ocppVersion));
         if (!connection) {
@@ -144,17 +146,16 @@ Connection *Context::getConnection() {
             return nullptr;
         }
         isConnectionOwner = true;
+        mo_connectionConfig_deinit(&connectionConfig);
     }
     #endif //MO_WS_USE != MO_WS_CUSTOM
     return connection;
 }
 
 #if MO_ENABLE_MBEDTLS
-void Context::setDefaultFtpConfig(MO_FTPConfig ftpConfig) {
-    if (ftpClient) {
-        MO_DBG_ERR("need to set FTP config before first FTP usage");
-    }
+void Context::setFtpConfig(MO_FTPConfig ftpConfig) {
     this->ftpConfig = ftpConfig;
+    ftpConfigDefined = true;
 }
 #endif //MO_ENABLE_MBEDTLS
 
@@ -171,7 +172,7 @@ void Context::setFtpClient(FtpClient *ftpClient) {
 
 FtpClient *Context::getFtpClient() {
     #if MO_ENABLE_MBEDTLS
-    if (!ftpClient) {
+    if (!ftpClient && ftpConfigDefined) {
         ftpClient = makeFtpClientMbedTLS(ftpConfig).release();
         if (!ftpClient) {
             MO_DBG_ERR("OOM");
@@ -194,7 +195,7 @@ void Context::setCertificateStore(CertificateStore *certStore) {
 
 CertificateStore *Context::getCertificateStore() {
     #if MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
-    if (!certStore) {
+    if (!certStore && filesystem) {
         certStore = makeCertificateStoreMbedTLS(filesystem);
         if (!certStore) {
             MO_DBG_ERR("OOM");
@@ -274,6 +275,15 @@ bool Context::setup() {
         return false;
     }
 
+    #if MO_USE_FILEAPI != MO_CUSTOM_FS
+    if (!filesystemConfigDefined) {
+        //set defaults
+        filesystemConfig.opt = MO_FS_OPT_USE_MOUNT;
+        filesystemConfig.path_prefix = MO_FILENAME_PREFIX;
+        filesystemConfigDefined = true;
+    }
+    #endif //MO_USE_FILEAPI != MO_CUSTOM_FS
+
     if (!getFilesystem()) {
         MO_DBG_DEBUG("initialize MO without filesystem access");
     }
@@ -282,6 +292,13 @@ bool Context::setup() {
         MO_DBG_ERR("must set WebSocket connection before setup. See the examples in this repository");
         return false;
     }
+
+    #if MO_ENABLE_MBEDTLS
+    if (!ftpConfigDefined) {
+        //set defaults
+        ftpConfigDefined = true;
+    }
+    #endif //MO_ENABLE_MBEDTLS
 
     if (!getFtpClient()) {
         MO_DBG_DEBUG("initialize MO without FTP client");

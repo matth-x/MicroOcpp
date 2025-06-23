@@ -91,11 +91,11 @@ MO_Context *mo_getApiContext() {
 
 #if MO_USE_FILEAPI != MO_CUSTOM_FS
 //Set if MO can use the filesystem and if it needs to mount it
-void mo_setDefaultFilesystemConfig(MO_FilesystemOpt opt) {
-    mo_setDefaultFilesystemConfig2(mo_getApiContext(), opt, MO_FILENAME_PREFIX);
+void mo_setFilesystemConfig(MO_FilesystemOpt opt) {
+    mo_setFilesystemConfig2(mo_getApiContext(), opt, MO_FILENAME_PREFIX);
 }
 
-void mo_setDefaultFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *pathPrefix) {
+void mo_setFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *pathPrefix) {
     if (!ctx) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
@@ -107,7 +107,7 @@ void mo_setDefaultFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const
     filesystemConfig.opt = opt;
     filesystemConfig.path_prefix = pathPrefix;
 
-    context->setDefaultFilesystemConfig(filesystemConfig);
+    context->setFilesystemConfig(filesystemConfig);
 }
 #endif // MO_USE_FILEAPI != MO_CUSTOM_FS
 
@@ -125,13 +125,13 @@ bool mo_setWebsocketUrl(const char *backendUrl, const char *chargeBoxId, const c
     }
 
     MO_ConnectionConfig config;
-    memset(&config, 0, sizeof(config));
+    mo_connectionConfig_init(&config);
     config.backendUrl = backendUrl;
     config.chargeBoxId = chargeBoxId;
     config.authorizationKey = authorizationKey;
     config.CA_cert = CA_cert;
 
-    g_context->setDefaultConnectionConfig(config);
+    g_context->setConnectionConfig(config);
     return true;
 }
 #endif
@@ -1918,7 +1918,7 @@ void mo_setFtpConfig(MO_Context *ctx, MO_FTPConfig ftpConfig) {
     }
     auto context = mo_getContext2(ctx);
 
-    context->setDefaultFtpConfig(ftpConfig);
+    context->setFtpConfig(ftpConfig);
 }
 
 #if MO_ENABLE_DIAGNOSTICS

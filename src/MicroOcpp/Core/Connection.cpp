@@ -55,6 +55,71 @@ bool LoopbackConnection::isConnected() {
 
 #if MO_WS_USE == MO_WS_ARDUINO
 
+void mo_connectionConfig_init(MO_ConnectionConfig *config) {
+    memset(config, 0, sizeof(*config));
+}
+
+bool mo_connectionConfig_copy(MO_ConnectionConfig *dst, MO_ConnectionConfig *src) {
+
+    size_t size = 0;
+    size += src->backendUrl ? strlen(src->backendUrl) + 1 : 0;
+    size += src->chargeBoxId ? strlen(src->chargeBoxId) + 1 : 0;
+    size += src->authorizationKey ? strlen(src->authorizationKey) + 1 : 0;
+    
+    char *buf = static_cast<char*>(MO_MALLOC("WebSocketsClient", size));
+    if (!buf) {
+        MO_DBG_ERR("OOM");
+        return false;
+    }
+
+    mo_connectionConfig_init(dst);
+
+    size_t written = 0;
+    if (src->backendUrl) {
+        dst->backendUrl = buf + written;
+        auto ret = snprintf(buf + written, size - written, "%s", src->backendUrl);
+        if (ret < 0 || (size_t)ret >= size - written) {
+            goto fail;
+        }
+        written += ret + 1;
+    }
+    
+    if (src->chargeBoxId) {
+        dst->chargeBoxId = buf + written;
+        auto ret = snprintf(buf + written, size - written, "%s", src->chargeBoxId);
+        if (ret < 0 || (size_t)ret >= size - written) {
+            goto fail;
+        }
+        written += ret + 1;
+    }
+    
+    if (src->authorizationKey) {
+        dst->authorizationKey = buf + written;
+        auto ret = snprintf(buf + written, size - written, "%s", src->authorizationKey);
+        if (ret < 0 || (size_t)ret >= size - written) {
+            goto fail;
+        }
+        written += ret + 1;
+    }
+
+    if (written != size) {
+        MO_DBG_ERR("internal error");
+        goto fail;
+    }
+
+    dst->internalBuf = buf;
+    return true;
+fail:
+    MO_DBG_ERR("copy failed");
+    MO_FREE(buf);
+    return false;
+}
+
+void mo_connectionConfig_deinit(MO_ConnectionConfig *config) {
+    MO_FREE(config->internalBuf);
+    memset(config, 0, sizeof(*config));
+}
+
 #include <WebSocketsClient.h>
 
 namespace MicroOcpp {
