@@ -1166,7 +1166,7 @@ bool Ocpp201::TransactionStoreEvse::remove(Transaction& tx, unsigned int seqNo) 
         //information is commited into tx201 file at seqNoEnd, then delete file at seqNo
 
         char fn [MO_MAX_PATH_SIZE];
-        if (!printTxEventFname(fn, sizeof(fn), evseId, tx.txNr, seqNo)) {
+        if (!printTxEventFname(fn, sizeof(fn), evseId, tx.txNr, tx.seqNoEnd)) {
             MO_DBG_ERR("fn error");
             return false;
         }
@@ -1186,7 +1186,7 @@ bool Ocpp201::TransactionStoreEvse::remove(Transaction& tx, unsigned int seqNo) 
                 MO_DBG_ERR("failed to load %s", fn);
                 break;
         }
-        
+
         if (ret != FilesystemUtils::LoadStatus::Success || !doc.containsKey("tx")) {
             //no valid tx201 file at seqNoEnd. Commit tx into file seqNoEnd, then remove file at seqNo
 
@@ -1203,6 +1203,7 @@ bool Ocpp201::TransactionStoreEvse::remove(Transaction& tx, unsigned int seqNo) 
     for (size_t i = 0; i < tx.seqNos.size(); i++) {
         if (tx.seqNos[i] == seqNo) {
             found = true;
+            break;
         }
     }
     if (!found) {

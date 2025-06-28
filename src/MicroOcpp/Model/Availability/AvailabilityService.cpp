@@ -11,6 +11,7 @@
 #include <MicroOcpp/Model/Reservation/ReservationService.h>
 #include <MicroOcpp/Model/Transactions/TransactionService16.h>
 #include <MicroOcpp/Model/Transactions/TransactionService201.h>
+#include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Operations/ChangeAvailability.h>
 #include <MicroOcpp/Operations/StatusNotification.h>
 
@@ -592,6 +593,18 @@ Ocpp201::AvailabilityService::~AvailabilityService() {
 
 bool Ocpp201::AvailabilityService::setup() {
 
+    auto varSvc = context.getModel201().getVariableService();
+    if (!varSvc) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    offlineThreshold = varSvc->declareVariable<int>("OCPPCommCtrlr", "OfflineThreshold", 600);
+    if (!offlineThreshold) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
     context.getMessageService().registerOperation("ChangeAvailability", [] (Context& context) -> Operation* {
         return new ChangeAvailability(*context.getModel201().getAvailabilityService());});
 
@@ -599,7 +612,7 @@ bool Ocpp201::AvailabilityService::setup() {
     context.getMessageService().registerOperation("StatusNotification", nullptr, nullptr);
     #endif //MO_ENABLE_MOCK_SERVER
 
-    auto rcService = context.getModel16().getRemoteControlService();
+    auto rcService = context.getModel201().getRemoteControlService();
     if (!rcService) {
         MO_DBG_ERR("initialization error");
         return false;

@@ -855,6 +855,7 @@ bool TransactionServiceEvse::ocppPermitsCharge() {
            transaction->active &&
            transaction->isAuthorizationActive &&
            transaction->isAuthorized &&
+           (!connectorPluggedInput || connectorPluggedInput(evseId, connectorPluggedInputUserData)) &&
            !transaction->isDeauthorized;
 }
 

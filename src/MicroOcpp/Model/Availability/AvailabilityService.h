@@ -143,6 +143,7 @@ class Context;
 namespace Ocpp201 {
 
 class AvailabilityService;
+class Variable;
 
 struct FaultedInput {
     bool (*isFaulted)(unsigned int connectorId, void *userData) = nullptr;
@@ -193,6 +194,8 @@ private:
 
     AvailabilityServiceEvse* evses [MO_NUM_EVSEID] = {nullptr};
     unsigned int numEvseId = MO_NUM_EVSEID;
+
+    Variable *offlineThreshold = nullptr;
 
 public:
     AvailabilityService(Context& context);

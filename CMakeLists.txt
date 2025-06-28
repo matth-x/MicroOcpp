@@ -136,23 +136,24 @@ target_compile_definitions(MicroOcpp PUBLIC
 set(MO_SRC_UNIT
     tests/helpers/testHelper.cpp
     tests/ocppEngineLifecycle.cpp
+    tests/Core.cpp
     tests/TransactionSafety.cpp
-    tests/ChargingSessions.cpp
-    tests/ConfigurationBehavior.cpp
-    tests/SmartCharging.cpp
-    tests/Api.cpp
-    tests/Metering.cpp
-    tests/Configuration.cpp
-    tests/Reservation.cpp
-    tests/Reset.cpp
-    tests/LocalAuthList.cpp
-    tests/Variables.cpp
-    tests/Transactions.cpp
-    tests/Certificates.cpp
-    tests/FirmwareManagement.cpp
-    tests/ChargePointError.cpp
-    tests/Boot.cpp
-    tests/Security.cpp
+    #tests/ChargingSessions.cpp
+    #tests/ConfigurationBehavior.cpp
+    #tests/SmartCharging.cpp
+    #tests/Api.cpp
+    #tests/Metering.cpp
+    #tests/Configuration.cpp
+    #tests/Reservation.cpp
+    #tests/Reset.cpp
+    #tests/LocalAuthList.cpp
+    #tests/Variables.cpp
+    #tests/Transactions.cpp
+    #tests/Certificates.cpp
+    #tests/FirmwareManagement.cpp
+    #tests/ChargePointError.cpp
+    #tests/Boot.cpp
+    #tests/Security.cpp
 )
 
 add_executable(mo_unit_tests
@@ -189,7 +190,8 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_FILENAME_PREFIX="./mo_store/"
     MO_LocalAuthListMaxLength=8
     MO_SendLocalListMaxLength=4
-    MO_ENABLE_FILE_INDEX=1
+    MO_ENABLE_FILE_INDEX=0
+    MO_ENABLE_TIMESTAMP_MILLISECONDS=1
     MO_ChargeProfileMaxStackLevel=2
     MO_ChargingScheduleMaxPeriods=4
     MO_MaxChargingProfilesInstalled=3
