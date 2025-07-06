@@ -225,7 +225,7 @@ void BootService::loop() {
     if (!clock.delta(clock.getUptime(), lastBootNotification, dtLastBootNotification)) {
         dtLastBootNotification = 0;
     }
-    
+
     if (lastBootNotification.isDefined() && dtLastBootNotification < interval_s) {
         return;
     }

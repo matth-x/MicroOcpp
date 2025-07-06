@@ -48,7 +48,7 @@ v16::ResetService::ResetService(Context& context)
 v16::ResetService::~ResetService() {
 
 }
-    
+
 bool v16::ResetService::setup() {
 
     auto configService = context.getModel16().getConfigurationService();
@@ -77,7 +77,7 @@ bool v16::ResetService::setup() {
 
     context.getMessageService().registerOperation("Reset", [] (Context& context) -> Operation* {
         return new Reset(*context.getModel16().getResetService());});
-    
+
     return true;
 }
 
@@ -87,7 +87,7 @@ void v16::ResetService::loop() {
 
     int32_t dtLastResetAttempt;
     if (!clock.delta(clock.getUptime(), lastResetAttempt, dtLastResetAttempt)) {
-        dtLastResetAttempt = MO_RESET_DELAY; 
+        dtLastResetAttempt = MO_RESET_DELAY;
     }
 
     if (outstandingResetRetries > 0 && dtLastResetAttempt >= MO_RESET_DELAY) {
@@ -218,7 +218,7 @@ bool v201::ResetService::setup() {
 
     context.getMessageService().registerOperation("Reset", [] (Context& context) -> Operation* {
         return new Reset(*context.getModel201().getResetService());});
-    
+
     return true;
 }
 
@@ -263,7 +263,7 @@ void v201::ResetService::Evse::loop() {
 
     int32_t dtLastResetAttempt;
     if (!clock.delta(clock.getUptime(), lastResetAttempt, dtLastResetAttempt)) {
-        dtLastResetAttempt = MO_RESET_DELAY; 
+        dtLastResetAttempt = MO_RESET_DELAY;
     }
 
     if (outstandingResetRetries && dtLastResetAttempt >= MO_RESET_DELAY) {

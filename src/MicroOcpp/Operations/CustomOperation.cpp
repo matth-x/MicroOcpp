@@ -16,7 +16,7 @@ std::unique_ptr<MicroOcpp::JsonDoc> makeDeserializedJson(const char *memoryTag, 
 
     size_t capacity = MO_MAX_JSON_CAPACITY / 8;
     DeserializationError err = DeserializationError::NoMemory;
-    
+
     while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
 
         doc = makeJsonDoc(memoryTag, capacity);

@@ -79,7 +79,7 @@ public:
     // send a Request to the OCPP server
     bool sendRequest(std::unique_ptr<Request> request); //send an OCPP operation request to the server; adds request to default queue
     bool sendRequestPreBoot(std::unique_ptr<Request> request); //send an OCPP operation request to the server; adds request to preBootQueue
-    
+
     // handle Requests from the OCPP Server
     bool registerOperation(const char *operationType, Operation* (*createOperationCb)(Context& context));
     bool registerOperation(const char *operationType, void (*onRequest)(const char *operationType, const char *payloadJson, void **userStatus, void *userData), int (*writeResponse)(const char *operationType, char *buf, size_t size, void *userStatus, void *userData), void (*finally)(const char *operationType, void *userStatus, void *userData) = nullptr, void *userData = nullptr);

@@ -24,7 +24,7 @@ IdToken::IdToken(const char *token, MO_IdTokenType type, const char *memoryTag) 
     }
 }
 
-IdToken::IdToken(const IdToken& other, const char *memoryTag) : IdToken(other.idToken, other.type, memoryTag ? memoryTag : other.getMemoryTag()) { 
+IdToken::IdToken(const IdToken& other, const char *memoryTag) : IdToken(other.idToken, other.type, memoryTag ? memoryTag : other.getMemoryTag()) {
 
 }
 

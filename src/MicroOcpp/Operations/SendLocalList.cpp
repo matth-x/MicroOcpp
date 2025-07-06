@@ -12,11 +12,11 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::v16;
 
 SendLocalList::SendLocalList(AuthorizationService& authService) : MemoryManaged("v16.Operation.", "SendLocalList"), authService(authService) {
-  
+
 }
 
 SendLocalList::~SendLocalList() {
-  
+
 }
 
 const char* SendLocalList::getOperationType(){
@@ -65,7 +65,7 @@ std::unique_ptr<JsonDoc> SendLocalList::createConf(){
     } else {
         payload["status"] = "Accepted";
     }
-    
+
     return doc;
 }
 

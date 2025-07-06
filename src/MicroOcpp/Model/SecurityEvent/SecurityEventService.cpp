@@ -31,7 +31,7 @@
  * section. The first element of the historic section is the "begin", the first of the outstanding is the "front",
  * and the outstanding section is delimited by the "end" index which is one address higher than the last element.
  * This results in the following arithmetics:
- * 
+ *
  * front - begin: number of historic elements
  * front == begin: true if no historic elements exist
  * end - front: number of outstanding elements to be sent
@@ -142,7 +142,7 @@ bool SecurityEventService::setup() {
             }
 
             if (status != FilesystemUtils::LoadStatus::Success) {
-                continue; 
+                continue;
             }
 
             unsigned int nextEntryNrFront = (unsigned int)logFile.size();
@@ -188,7 +188,7 @@ void SecurityEventService::loop() {
 
     if (unixTime.isUnixTime() && trackUnixTime.isUnixTime()) {
         // Got initial time - check if clock drift exceeds timeAdjustmentReportingThreshold
-        
+
         int32_t deltaUnixTime = 0; //unix time jumps over clock adjustments
         clock.delta(unixTime, trackUnixTime, deltaUnixTime);
 
@@ -427,12 +427,12 @@ bool SecurityEventService::advanceSecurityEventFront() {
         if (status != FilesystemUtils::LoadStatus::Success) {
             continue;
         }
-    
+
         if (logFile.size() == 0) {
             MO_DBG_ERR("invalid state: %s. Skpping logfile", fn);
             continue;
         }
-    
+
         unsigned int nextEntryNrFront = (unsigned int)logFile.size();
         unsigned int nextEntryNrEnd = (unsigned int)logFile.size();
 
@@ -444,7 +444,7 @@ bool SecurityEventService::advanceSecurityEventFront() {
                 break;
             }
         }
-    
+
         if (nextEntryNrFront == nextEntryNrEnd) {
             MO_DBG_ERR("invalid state: %s. Skpping logfile", fn);
             continue;
@@ -526,7 +526,7 @@ bool SecurityEventService::triggerSecurityEvent(const char *eventType) {
     unsigned int historicFiles = (fileNrFront + MO_SECLOG_INDEX_MAX - fileNrBegin) % MO_SECLOG_INDEX_MAX;
     if (historicFiles + outstandingFiles > MO_SECLOG_MAX_FILES) {
         MO_DBG_ERR("Cleaning historic logfile");
-        
+
         char fn [MO_MAX_PATH_SIZE];
         auto ret = snprintf(fn, sizeof(fn), MO_SECLOG_FN_PREFIX "%u.jsn", fileNrBegin);
         if (ret < 0 || (size_t)ret >= sizeof(fn)) {
@@ -607,7 +607,7 @@ bool SecurityEventService::triggerSecurityEvent(const char *eventType) {
 
     // Successfully updated end of queue on flash. Update fileNrEnd (remains unchanged when SecurityEvent was appended to existing file)
     fileNrEnd = (fileNrBack + 1) % MO_SECLOG_INDEX_MAX;
-    
+
     // If current front logfile was updated, then need to update cached SecurityEvent counter
     if (fileNrBack == fileNrFront) {
         entryNrEnd++;

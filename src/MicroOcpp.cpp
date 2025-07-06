@@ -1936,7 +1936,7 @@ void mo_setDiagnosticsReader(MO_Context *ctx, size_t (*readBytes)(char*, size_t,
         return;
     }
     auto context = mo_getContext2(ctx);
-    
+
     MicroOcpp::DiagnosticsService *diagSvc = nullptr;
 
     #if MO_ENABLE_V16
@@ -2477,7 +2477,7 @@ bool mo_declareVarConfigInt(MO_Context *ctx, const char *component201, const cha
             MO_DBG_ERR("setup failure");
             return false;
         }
-    
+
         success = varSvc->declareVariable<int>(component201, name201, factoryDefault, convertMutability(mutability), persistent, MicroOcpp::v201::Variable::AttributeTypeSet(), rebootRequired);
     }
     #endif
@@ -2520,7 +2520,7 @@ bool mo_declareVarConfigBool(MO_Context *ctx, const char *component201, const ch
             MO_DBG_ERR("setup failure");
             return false;
         }
-    
+
         success = varSvc->declareVariable<bool>(component201, name201, factoryDefault, convertMutability(mutability), persistent, MicroOcpp::v201::Variable::AttributeTypeSet(), rebootRequired);
     }
     #endif
@@ -2563,7 +2563,7 @@ bool mo_declareVarConfigString(MO_Context *ctx, const char *component201, const 
             MO_DBG_ERR("setup failure");
             return false;
         }
-    
+
         success = varSvc->declareVariable<const char*>(component201, name201, factoryDefault, convertMutability(mutability), persistent, MicroOcpp::v201::Variable::AttributeTypeSet(), rebootRequired);
     }
     #endif
@@ -2919,7 +2919,7 @@ bool mo_setup2(MO_Context *ctx) {
         return false;
     }
     auto context = mo_getContext2(ctx);
-    
+
     return context->setup();
 }
 
@@ -2952,7 +2952,7 @@ bool mo_sendRequest(MO_Context *ctx, const char *operationType,
 
     MicroOcpp::Operation *operation = nullptr;
     std::unique_ptr<MicroOcpp::Request> request;
-    
+
     MicroOcpp::Context *context = nullptr;
     if (!ctx) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
@@ -2961,7 +2961,7 @@ bool mo_sendRequest(MO_Context *ctx, const char *operationType,
     context = mo_getContext2(ctx);
 
     if (auto customOperation = new MicroOcpp::CustomOperation()) {
-        
+
         if (!customOperation->setupEvseInitiated(operationType, payloadJson, onResponse, userData)) {
             MO_DBG_ERR("create operation failure");
             delete customOperation;

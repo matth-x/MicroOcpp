@@ -96,10 +96,10 @@ bool AuthorizationData::readJson(Clock& clock, JsonObject entry, bool internalFo
 
 size_t AuthorizationData::getJsonCapacity(bool internalFormat) const {
     return JSON_OBJECT_SIZE(2) +
-            (idTag[0] != '\0' ? 
+            (idTag[0] != '\0' ?
                 JSON_OBJECT_SIZE(1) : 0) +
             (expiryDate ?
-                JSON_OBJECT_SIZE(1) + 
+                JSON_OBJECT_SIZE(1) +
                 (internalFormat ?
                     MO_INTERNALTIME_SIZE : MO_JSONDATE_SIZE)
                 : 0) +

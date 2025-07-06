@@ -22,7 +22,7 @@ typedef struct mo_cert_chain_hash {
 
     enum GetCertificateIdType certType;
     mo_cert_hash certHashData;
-    //mo_cert_hash *childCertificateHashData; 
+    //mo_cert_hash *childCertificateHashData;
 
     struct mo_cert_chain_hash *next; //link to next list element if result of getCertificateIds
 

@@ -76,7 +76,7 @@ public:
     bool init();
 
     //Get Variable. If not existent, create Variable owned by MO and return
-    template <class T> 
+    template <class T>
     Variable *declareVariable(const ComponentId& component, const char *name, T factoryDefault, Mutability mutability = Mutability::ReadWrite, bool persistent = true, Variable::AttributeTypeSet attributes = Variable::AttributeTypeSet(), bool rebootRequired = false);
 
     bool addVariable(Variable *variable); //Add Variable without transferring ownership

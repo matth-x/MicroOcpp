@@ -45,7 +45,7 @@ public:
     void setExecuteReset(bool (*executeReset)(bool isHard, void *userData), void *userData);
 
     bool setup();
-    
+
     void loop();
 
     bool isPreResetDefined();
@@ -109,7 +109,7 @@ public:
     void setExecuteReset(unsigned int evseId, bool (*executeReset)(unsigned int evseId, void *userData), void *userData);
 
     bool setup();
-    
+
     void loop();
 
     ResetStatus initiateReset(MO_ResetType type, unsigned int evseId = 0);

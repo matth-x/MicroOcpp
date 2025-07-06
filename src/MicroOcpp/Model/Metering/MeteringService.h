@@ -152,7 +152,7 @@ private:
     Context& context;
     MeteringService& mService;
     const unsigned int evseId;
-    
+
     Vector<MO_MeterInput> meterInputs;
 
     uint16_t trackSelectInputs = -1;

@@ -33,7 +33,7 @@ int noDays(int month, int year) {
 using namespace MicroOcpp;
 
 Timestamp::Timestamp() : MemoryManaged("Timestamp") {
-    
+
 }
 
 Timestamp::Timestamp(const Timestamp& other) : MemoryManaged("Timestamp") {
@@ -478,7 +478,7 @@ bool Clock::parseString(const char *src, Timestamp& dst) const {
                                             //ignore subsequent characters
             return false;
         }
-        
+
         int year  =  (src[0] - '0') * 1000 +
                     (src[1] - '0') * 100 +
                     (src[2] - '0') * 10 +
@@ -500,7 +500,7 @@ bool Clock::parseString(const char *src, Timestamp& dst) const {
             if (isdigit(src[20]) ||   //1
                 isdigit(src[21]) ||   //2
                 isdigit(src[22])) {
-                
+
                 ms  =  (src[20] - '0') * 100 +
                         (src[21] - '0') * 10 +
                         (src[22] - '0');
@@ -594,7 +594,7 @@ bool Clock::toUnixTime(const Timestamp& src, int32_t& dst) const {
 }
 
 bool Clock::fromUnixTime(Timestamp& dst, int32_t unixTimeInt) const {
-    
+
     Timestamp t = unixTime;
     t.time = unixTimeInt;
 

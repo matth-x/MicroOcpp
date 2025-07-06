@@ -10,9 +10,9 @@
 
 using namespace MicroOcpp;
 
-v16::Transaction::Transaction(unsigned int connectorId, unsigned int txNr, bool silent) : 
+v16::Transaction::Transaction(unsigned int connectorId, unsigned int txNr, bool silent) :
                 MemoryManaged("v16.Transactions.Transaction"),
-                connectorId(connectorId), 
+                connectorId(connectorId),
                 txNr(txNr),
                 silent(silent),
                 meterValues(makeVector<MeterValue*>("v16.Transactions.TransactionMeterData")) { }

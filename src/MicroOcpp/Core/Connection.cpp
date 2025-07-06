@@ -65,7 +65,7 @@ bool mo_connectionConfig_copy(MO_ConnectionConfig *dst, MO_ConnectionConfig *src
     size += src->backendUrl ? strlen(src->backendUrl) + 1 : 0;
     size += src->chargeBoxId ? strlen(src->chargeBoxId) + 1 : 0;
     size += src->authorizationKey ? strlen(src->authorizationKey) + 1 : 0;
-    
+
     char *buf = static_cast<char*>(MO_MALLOC("WebSocketsClient", size));
     if (!buf) {
         MO_DBG_ERR("OOM");
@@ -83,7 +83,7 @@ bool mo_connectionConfig_copy(MO_ConnectionConfig *dst, MO_ConnectionConfig *src
         }
         written += ret + 1;
     }
-    
+
     if (src->chargeBoxId) {
         dst->chargeBoxId = buf + written;
         auto ret = snprintf(buf + written, size - written, "%s", src->chargeBoxId);
@@ -92,7 +92,7 @@ bool mo_connectionConfig_copy(MO_ConnectionConfig *dst, MO_ConnectionConfig *src
         }
         written += ret + 1;
     }
-    
+
     if (src->authorizationKey) {
         dst->authorizationKey = buf + written;
         auto ret = snprintf(buf + written, size - written, "%s", src->authorizationKey);
@@ -247,7 +247,7 @@ Connection *makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion) {
         for (auto c = port_str.begin(); c != port_str.end(); c++) {
             if (*c < '0' || *c > '9') {
                 MO_DBG_ERR("could not parse port: %s", url.c_str());
-                return nullptr; 
+                return nullptr;
             }
             auto p = port * 10U + (*c - '0');
             if (p < port) {
@@ -307,7 +307,7 @@ Connection *makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion) {
     // consider connection disconnected if pong is not received 2 times
     wsock->enableHeartbeat(15000, 3000, 2); //comment this one out to for specific OCPP servers
 
-    
+
     // add authentication data (optional)
     {
         size_t chargeBoxIdLen = config.chargeBoxId ? strlen(config.chargeBoxId) : 0;

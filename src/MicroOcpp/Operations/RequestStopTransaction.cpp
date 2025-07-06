@@ -12,7 +12,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::v201;
 
 RequestStopTransaction::RequestStopTransaction(RemoteControlService& rcService) : MemoryManaged("v201.Operation.", "RequestStopTransaction"), rcService(rcService) {
-  
+
 }
 
 const char* RequestStopTransaction::getOperationType(){
@@ -21,7 +21,7 @@ const char* RequestStopTransaction::getOperationType(){
 
 void RequestStopTransaction::processReq(JsonObject payload) {
 
-    if (!payload.containsKey("transactionId") || 
+    if (!payload.containsKey("transactionId") ||
             !payload["transactionId"].is<const char*>() ||
             strlen(payload["transactionId"].as<const char*>()) + 1 > MO_TXID_SIZE) {
         errorCode = "FormationViolation";

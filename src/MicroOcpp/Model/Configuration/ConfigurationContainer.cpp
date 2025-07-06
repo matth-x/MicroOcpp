@@ -111,13 +111,13 @@ bool ConfigurationContainerOwning::setFilename(const char *filename) {
 
     if (filename && *filename) {
         size_t fnsize = strlen(filename) + 1;
-    
+
         this->filename = static_cast<char*>(MO_MALLOC(getMemoryTag(), fnsize));
         if (!this->filename) {
             MO_DBG_ERR("OOM");
             return false;
         }
-    
+
         snprintf(this->filename, fnsize, "%s", filename);
     }
 
@@ -175,7 +175,7 @@ bool ConfigurationContainerOwning::load() {
             MO_DBG_ERR("loaded configuration does not exist: %s, %s", filename, key);
             continue;
         }
-        
+
         auto& configuration = *configurationPtr;
 
         switch (configuration.getType()) {
@@ -229,7 +229,7 @@ bool ConfigurationContainerOwning::commit() {
         auto stored = configurationsJson.createNestedObject();
 
         stored["key"] = configuration.getKey();
-        
+
         switch (configuration.getType()) {
             case Configuration::Type::Int:
                 stored["value"] = configuration.getInt();

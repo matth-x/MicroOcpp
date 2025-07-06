@@ -80,7 +80,7 @@ typedef struct {
 
         #if MO_ENABLE_V201
         //if signed value exists, fills `val` with the signature data and returns true. If no signed
-        //data exists, returns false. 
+        //data exists, returns false.
         bool (*getSignedValue2)(MO_SignedMeterValue201* val, MO_ReadingContext readingContext, unsigned int evseId, void *user_data);
         #endif //MO_ENABLE_V201
     };

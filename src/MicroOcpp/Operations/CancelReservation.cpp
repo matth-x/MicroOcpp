@@ -14,7 +14,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::v16;
 
 CancelReservation::CancelReservation(ReservationService& reservationService) : MemoryManaged("v16.Operation.", "CancelReservation"), reservationService(reservationService) {
-  
+
 }
 
 const char* CancelReservation::getOperationType() {

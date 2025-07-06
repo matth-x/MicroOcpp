@@ -124,7 +124,7 @@ public:
     /**
      * limit: output parameter
      * nextChange: output parameter
-     * 
+     *
      * returns if charging profile defines a limit at time t
      *       if true, limit and nextChange will be set according to this Schedule
      *       if false, only nextChange will be set
@@ -163,7 +163,7 @@ public:
     /**
      * limit: output parameter
      * nextChange: output parameter
-     * 
+     *
      * returns if charging profile defines a limit at time t
      *       if true, limit and nextChange will be set according to this Schedule
      *       if false, only nextChange will be set

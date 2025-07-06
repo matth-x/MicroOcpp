@@ -366,7 +366,7 @@ bool v16::MeteringServiceEvse::setup() {
                     (!mInput.location || !strcmp(mInput.location, "Outlet")) &&
                     (!mInput.unit || !strcmp(mInput.unit, "Wh")) &&
                     (mInput.type == MO_MeterInputType_Int || mInput.type == MO_MeterInputType_IntWithArgs)) {
-                
+
                 if (mInput.type == MO_MeterInputType_Int) {
                     txEnergyMeterInput = mInput.getInt;
                 } else {

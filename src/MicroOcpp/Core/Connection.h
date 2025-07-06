@@ -16,7 +16,7 @@
 #ifndef MO_WS_USE
 #if MO_PLATFORM == MO_PLATFORM_ARDUINO
 #define MO_WS_USE MO_WS_ARDUINO
-#else 
+#else
 #define MO_WS_USE MO_WS_CUSTOM
 #endif
 #endif //MO_WS_USE
@@ -58,11 +58,11 @@ public:
      * NEW IN v1.1
      *
      * Returns true if the connection is open; false if the charger is known to be offline.
-     * 
+     *
      * This function determines if MO is in "offline mode". In offline mode, MO doesn't wait for Authorize responses
      * before performing fully local authorization. If the connection is disrupted but isConnected is still true, then
      * MO will first wait for a timeout to expire (20 seconds) before going into offline mode.
-     * 
+     *
      * Returning true will have no further effects other than  using the timeout-then-offline mechanism. If the
      * connection status is uncertain, it's best to return true by default.
      */

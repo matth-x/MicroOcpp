@@ -16,7 +16,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::v201;
 
 RequestStartTransaction::RequestStartTransaction(Context& context, RemoteControlService& rcService) : MemoryManaged("v201.Operation.", "RequestStartTransaction"), context(context), rcService(rcService) {
-  
+
 }
 
 const char* RequestStartTransaction::getOperationType(){

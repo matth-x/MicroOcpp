@@ -156,7 +156,7 @@ bool TransactionServiceEvse::ocppPermitsCharge() {
     }
 
     bool suspendDeAuthorizedIdTag = transaction && transaction->isIdTagDeauthorized(); //if idTag status is "DeAuthorized" and if charging should stop
-    
+
     //check special case for DeAuthorized idTags: FreeVend mode
     if (suspendDeAuthorizedIdTag && cService.freeVendActiveBool->getBool()) {
         suspendDeAuthorizedIdTag = false;
@@ -230,7 +230,7 @@ void TransactionServiceEvse::loop() {
     }
 
     if (transaction) { //begin exclusively transaction-related operations
-            
+
         if (connectorPluggedInput) {
             if (transaction->isRunning() && transaction->isActive() && !connectorPluggedInput(evseId, connectorPluggedInputUserData)) {
                 if (cService.stopTransactionOnEVSideDisconnectBool->getBool()) {
@@ -264,7 +264,7 @@ void TransactionServiceEvse::loop() {
                 transaction->isIdTagDeauthorized() && ( //transaction has been deAuthorized
                     !transaction->isRunning() ||        //if transaction hasn't started yet, always end
                     cService.stopTransactionOnInvalidIdBool->getBool())) { //if transaction is running, behavior depends on StopTransactionOnInvalidId
-            
+
             MO_DBG_DEBUG("DeAuthorize session");
             transaction->setStopReason("DeAuthorized");
             transaction->setInactive();
@@ -322,7 +322,7 @@ void TransactionServiceEvse::loop() {
                 //stop transaction
 
                 MO_DBG_INFO("Session mngt: trigger StopTransaction");
-                
+
                 if (transaction->getMeterStop() < 0) {
                     auto meterStop = meteringServiceEvse->readTxEnergyMeter(MO_ReadingContext_TransactionEnd);
                     transaction->setMeterStop(meterStop);
@@ -368,7 +368,7 @@ void TransactionServiceEvse::loop() {
         freeVendTrackPlugged = connectorPluggedInput(evseId, connectorPluggedInputUserData);
     }
 
-    
+
     return;
 }
 
@@ -554,7 +554,7 @@ bool TransactionServiceEvse::beginTransaction(const char *idTag) {
     }
 
     MO_DBG_DEBUG("Begin transaction process (%s), prepare", idTag != nullptr ? idTag : "");
-    
+
     bool localAuthFound = false;
     const char *parentIdTag = nullptr; //locally stored parentIdTag
     bool offlineBlockedAuth = false; //if offline authorization will be blocked by local auth list entry
@@ -731,8 +731,8 @@ bool TransactionServiceEvse::beginTransaction(const char *idTag) {
 
     //capture local auth and reservation check in for timeout handler
     authorize->setOnTimeout([this, txNr_capture, beginTimestamp_capture,
-                offlineBlockedAuth, 
-                offlineBlockedResv, 
+                offlineBlockedAuth,
+                offlineBlockedResv,
                 localAuthFound,
                 reservationId] () {
 
@@ -799,7 +799,7 @@ bool TransactionServiceEvse::beginTransaction(const char *idTag) {
 }
 
 bool TransactionServiceEvse::beginTransaction_authorized(const char *idTag, const char *parentIdTag) {
-    
+
     if (transaction) {
         MO_DBG_WARN("tx process still running. Please call endTransaction(...) before");
         return false;
@@ -824,7 +824,7 @@ bool TransactionServiceEvse::beginTransaction_authorized(const char *idTag, cons
     }
 
     transaction->setBeginTimestamp(clock.now());
-    
+
     MO_DBG_DEBUG("Begin transaction process (%s), already authorized", idTag != nullptr ? idTag : "");
 
     transaction->setAuthorized();
@@ -864,7 +864,7 @@ bool TransactionServiceEvse::endTransaction(const char *idTag, const char *reaso
         // We have a parent ID tag, so we need to check if this new card also has one
         auto authorize = makeRequest(context, new Authorize(model, idTag));
         authorize->setTimeout(cService.authorizationTimeoutInt->getInt() > 0 ? cService.authorizationTimeoutInt->getInt(): 20);
-    
+
         if (!connection->isConnected()) {
             //WebSockt unconnected. Enter offline mode immediately
             authorize->setTimeout(1);
@@ -954,7 +954,7 @@ bool TransactionServiceEvse::endTransaction(const char *idTag, const char *reaso
         MO_DBG_INFO("endTransaction: idTag doesn't match");
         return false;
     }
-    
+
     return false;
 }
 
@@ -967,11 +967,11 @@ bool TransactionServiceEvse::endTransaction_authorized(const char *idTag, const 
 
     MO_DBG_DEBUG("End session started by idTag %s",
                             transaction->getIdTag());
-    
+
     if (idTag && *idTag != '\0') {
         transaction->setStopIdTag(idTag);
     }
-    
+
     if (reason) {
         transaction->setStopReason(reason);
     }

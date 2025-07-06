@@ -12,7 +12,7 @@
 using namespace MicroOcpp;
 
 v16::Reset::Reset(ResetService& resetService) : MemoryManaged("v16.Operation.", "Reset"), resetService(resetService) {
-  
+
 }
 
 const char* v16::Reset::getOperationType(){
@@ -51,7 +51,7 @@ std::unique_ptr<JsonDoc> v16::Reset::createConf() {
 using namespace MicroOcpp;
 
 v201::Reset::Reset(ResetService& resetService) : MemoryManaged("v201.Operation.", "Reset"), resetService(resetService) {
-  
+
 }
 
 const char* v201::Reset::getOperationType(){
@@ -62,7 +62,7 @@ void v201::Reset::processReq(JsonObject payload) {
 
     MO_ResetType type;
     const char *typeCstr = payload["type"] | "_Undefined";
-    
+
     if (!strcmp(typeCstr, "Immediate")) {
         type = MO_ResetType_Immediate;
     } else if (!strcmp(typeCstr, "OnIdle")) {

@@ -21,11 +21,11 @@ extern "C" {
  * // init
  * MO_BootNotificationData bnData;
  * mo_BootNotificationData_init(&bnData);
- * 
+ *
  * // set payload
  * bnData.chargePointVendor = "My Company Ltd.";
  * bnData.chargePointModel = "Demo Charger";
- * 
+ *
  * // pass data to MO
  * mo_setBootNotificationData2(bnData); //copies data, i.e. bnData can be invalidated now
  */
@@ -45,7 +45,7 @@ typedef struct {
 void mo_BootNotificationData_init(MO_BootNotificationData *bnData);
 
 #ifdef __cplusplus
-} //extern "C" 
+} //extern "C"
 #endif
 
 #endif //MO_ENABLE_V16 || MO_ENABLE_V201

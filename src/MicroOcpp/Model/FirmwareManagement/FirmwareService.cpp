@@ -363,7 +363,7 @@ FirmwareStatus FirmwareService::getFirmwareStatus() {
     if (stage == UpdateStage::Installed) {
         return FirmwareStatus::Installed;
     } else if (stage == UpdateStage::InternalError) {
-        return FirmwareStatus::InstallationFailed; 
+        return FirmwareStatus::InstallationFailed;
     }
 
     if (installationIssued) {
@@ -377,7 +377,7 @@ FirmwareStatus FirmwareService::getFirmwareStatus() {
         if (onInstall != nullptr)
             return FirmwareStatus::Installing;
     }
-    
+
     if (downloadIssued) {
         if (downloadStatusInput != nullptr) {
             if (downloadStatusInput() == DownloadStatus::Downloaded) {
@@ -565,7 +565,7 @@ bool MicroOcpp::v16::setupDefaultFwUpdater(MicroOcpp::v16::FirmwareService *fwSe
 bool MicroOcpp::v16::setupDefaultFwUpdater(MicroOcpp::v16::FirmwareService *fwService) {
 
     fwService->setOnInstall([fwService] (const char *location) {
-        
+
         MO_DBG_WARN("Built-in updater for ESP8266 is only intended for demonstration purposes. HTTP support only");
 
         WiFiClient client;

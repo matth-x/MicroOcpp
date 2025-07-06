@@ -130,9 +130,9 @@ typedef struct {
  *     - Arduino SPIFFS
  *     - ESP-IDF SPIFFS
  *     - POSIX-like API (tested on Ubuntu 20.04)
- * 
+ *
  * You can add support for other file systems by passing a custom adapter to mocpp_initialize(...)
- * 
+ *
  * Returns null if platform is not supported or Filesystem is disabled
  */
 

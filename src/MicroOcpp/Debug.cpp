@@ -22,7 +22,7 @@ Debug debug;
 } //namespace MicroOcpp
 
 using namespace MicroOcpp;
-    
+
 void Debug::setDebugCb(void (*debugCb)(const char *msg)) {
     this->debugCb = debugCb;
 }

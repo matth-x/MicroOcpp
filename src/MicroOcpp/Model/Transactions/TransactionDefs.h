@@ -91,6 +91,6 @@ typedef enum {
 
 #ifdef __cplusplus
 } //extern "C"
-#endif 
+#endif
 
 #endif

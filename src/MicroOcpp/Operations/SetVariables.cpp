@@ -16,7 +16,7 @@ SetVariableData::SetVariableData(const char *memory_tag) : componentName{makeStr
 }
 
 SetVariables::SetVariables(VariableService& variableService) : MemoryManaged("v201.Operation.", "SetVariables"), variableService(variableService), queries(makeVector<SetVariableData>(getMemoryTag())) {
-  
+
 }
 
 const char* SetVariables::getOperationType(){
@@ -84,7 +84,7 @@ void SetVariables::processReq(JsonObject payload) {
         query.attributeStatus = variableService.setVariable(
                 query.attributeType,
                 query.attributeValue,
-                ComponentId(query.componentName.c_str(), 
+                ComponentId(query.componentName.c_str(),
                     EvseId(query.componentEvseId, query.componentEvseConnectorId)),
                 query.variableName.c_str());
     }
@@ -99,7 +99,7 @@ void SetVariables::processReq(JsonObject payload) {
 std::unique_ptr<JsonDoc> SetVariables::createConf(){
     size_t capacity = JSON_ARRAY_SIZE(queries.size());
     for (const auto& data : queries) {
-        capacity += 
+        capacity +=
             JSON_OBJECT_SIZE(5) + // setVariableResult
                 JSON_OBJECT_SIZE(2) + // component
                     data.componentName.length() + 1 +

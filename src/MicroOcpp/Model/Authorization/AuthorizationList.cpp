@@ -22,11 +22,11 @@ AuthorizationList::~AuthorizationList() {
 }
 
 MicroOcpp::v16::AuthorizationData *AuthorizationList::get(const char *idTag) {
-    
+
     if (!idTag) {
         return nullptr;
     }
-    
+
     //binary search
     int l = 0;
     int r = ((int) localAuthorizationListSize) - 1;
@@ -97,7 +97,7 @@ bool AuthorizationList::readJson(Clock& clock, JsonArray authlistJson, int listV
         return false;
     }
 
-    
+
     AuthorizationData **updateList = nullptr; //list of newly allocated entries
     AuthorizationData **resList = nullptr; //resulting list after list update. Contains pointers to old auth list and updateList
 
@@ -208,16 +208,16 @@ bool AuthorizationList::readJson(Clock& clock, JsonArray authlistJson, int listV
             resWritten++;
         }
     }
-    
+
     qsort(resList, resListSize, sizeof(resList[0]),
         [] (const void* a,const void* b) -> int {
             return strcmp(
                 reinterpret_cast<const AuthorizationData*>(a)->getIdTag(),
                 reinterpret_cast<const AuthorizationData*>(b)->getIdTag());
         });
-    
+
     // success
-        
+
     this->listVersion = listVersion;
 
     if (resListSize == 0) {

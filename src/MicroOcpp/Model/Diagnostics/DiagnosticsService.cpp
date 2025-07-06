@@ -93,7 +93,7 @@ bool DiagnosticsService::setup() {
         MO_FREE(customProtocols);
         customProtocols = nullptr;
     }
-    
+
 
     ocppVersion = context.getOcppVersion();
     #if MO_ENABLE_V16
@@ -340,9 +340,9 @@ void DiagnosticsService::loop() {
 
 #if MO_ENABLE_V16
 bool DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime, char filenameOut[MO_GETLOG_FNAME_SIZE]) {
-    
+
     bool success = false;
-    
+
     auto ret = getLog(MO_LogType_DiagnosticsLog, -1, retries, retryInterval, location, startTime, stopTime, filenameOut);
     switch (ret) {
         case MO_GetLogStatus_Accepted:
@@ -952,7 +952,7 @@ bool DiagnosticsService::startFtpUpload() {
                         }
                         if (writeLen + written > size || //heading doesn't fit anymore, return with a bit unused buffer space and print heading the next time
                                 writeLen + written == size) { //filling the buffer up exactly would mean that no file payload is written and this head gets printed again
-                            
+
                             MO_DBG_DEBUG("upload diag chunk (%zuB)", written);
                             filesystem->close(file);
                             return written;

@@ -10,7 +10,7 @@ bool generateUUID(uint32_t (*rng)(), char *uuidBuffer, size_t size) {
   if (!rng) {
     return false;
   }
-  
+
   if (size < MO_UUID_STR_SIZE)
   {
     return false;

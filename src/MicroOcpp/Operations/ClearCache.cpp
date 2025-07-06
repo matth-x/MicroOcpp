@@ -12,7 +12,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::v16;
 
 ClearCache::ClearCache(MO_FilesystemAdapter *filesystem) : MemoryManaged("v16.Operation.", "ClearCache"), filesystem(filesystem) {
-  
+
 }
 
 const char* ClearCache::getOperationType(){

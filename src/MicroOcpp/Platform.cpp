@@ -28,7 +28,7 @@ uint32_t defaultTickCbImpl() {
 #include "freertos/task.h"
 
 namespace MicroOcpp {
-    
+
 void defaultDebugCbImpl(const char *msg) {
     printf("%s", msg);
 }
@@ -49,7 +49,7 @@ uint32_t defaultTickCbImpl() {
 #include <chrono>
 
 namespace MicroOcpp {
-    
+
 void defaultDebugCbImpl(const char *msg) {
     printf("%s", msg);
 }

@@ -16,7 +16,7 @@ using namespace MicroOcpp;
 
 v16::StatusNotification::StatusNotification(Context& context, int connectorId, MO_ChargePointStatus currentStatus, const Timestamp &timestamp, MO_ErrorData errorData)
         : MemoryManaged("v16.Operation.", "StatusNotification"), context(context), connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
-    
+
     if (currentStatus != MO_ChargePointStatus_UNDEFINED) {
         MO_DBG_INFO("New status: %s (connectorId %d)", mo_serializeChargePointStatus(currentStatus), connectorId);
     }

@@ -91,7 +91,7 @@ std::unique_ptr<JsonDoc> GetConfiguration::createConf(){
     }
 
     jcapacity += JSON_ARRAY_SIZE(unknownKeys.size());
-    
+
     MO_DBG_DEBUG("GetConfiguration capacity: %zu", jcapacity);
 
     std::unique_ptr<JsonDoc> doc;
@@ -111,7 +111,7 @@ std::unique_ptr<JsonDoc> GetConfiguration::createConf(){
     }
 
     JsonObject payload = doc->to<JsonObject>();
-    
+
     JsonArray jsonConfigurationKey = payload.createNestedArray("configurationKey");
     for (size_t i = 0; i < configurations.size(); i++) {
         auto config = configurations[i];

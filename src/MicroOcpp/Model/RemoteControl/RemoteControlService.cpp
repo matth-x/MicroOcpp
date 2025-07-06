@@ -172,15 +172,15 @@ bool RemoteControlService::setup() {
             MO_DBG_ERR("setup failure");
             return false;
         }
-    
+
         configService->declareConfiguration<bool>("AuthorizeRemoteTxRequests", false);
-    
+
     #if MO_ENABLE_CONNECTOR_LOCK
         configService->declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", true); //read-write
     #else
         configService->declareConfiguration<bool>("UnlockConnectorOnEVSideDisconnect", false, MO_CONFIGURATION_VOLATILE, Mutability::ReadOnly); //read-only because there is no connector lock
     #endif //MO_ENABLE_CONNECTOR_LOCK
-    
+
         txService16 = context.getModel16().getTransactionService();
         if (!txService16) {
             MO_DBG_ERR("setup failure");
@@ -359,7 +359,7 @@ v16::RemoteStartStopStatus RemoteControlService::remoteStartTransaction(int conn
         if (success) {
             if (auto transaction = selectEvse->getTransaction()) {
                 selectEvse->updateTxNotification(MO_TxNotification_RemoteStart);
-    
+
                 if (chargingProfileId >= 0) {
                     transaction->setTxProfileId(chargingProfileId);
                 }
@@ -411,7 +411,7 @@ v16::RemoteStartStopStatus RemoteControlService::remoteStopTransaction(int trans
 #if MO_ENABLE_V201
 
 v201::RequestStartStopStatus RemoteControlService::requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, v201::IdToken idToken, std::unique_ptr<ChargingProfile> chargingProfile, char *transactionIdOut, size_t transactionIdBufSize) {
-    
+
     if (!txService201) {
         MO_DBG_ERR("TxService uninitialized");
         return v201::RequestStartStopStatus::Rejected;

@@ -316,7 +316,7 @@ bool v16::Model::setup() {
         MO_DBG_ERR("setup failure");
         return false;
     }
-    
+
     if (!getResetService() || !getResetService()->setup()) {
         MO_DBG_ERR("setup failure");
         return false;
@@ -392,7 +392,7 @@ bool v16::Model::setup() {
     // Register remainder of operations which don't have dedicated service
     context.getMessageService().registerOperation("DataTransfer", [] (Context&) -> Operation* {
         return new v16::DataTransfer();});
-    
+
     return true;
 }
 

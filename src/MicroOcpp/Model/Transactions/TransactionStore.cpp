@@ -68,7 +68,7 @@ FilesystemUtils::LoadStatus v16::TransactionStore::load(MO_FilesystemAdapter *fi
 }
 
 FilesystemUtils::StoreStatus v16::TransactionStore::store(MO_FilesystemAdapter *filesystem, Context& context, Transaction& transaction) {
-    
+
     char fname [MO_MAX_PATH_SIZE];
     if (!printTxFname(fname, sizeof(fname), transaction.getConnectorId(), transaction.getTxNr())) {
         MO_DBG_ERR("fname error %u %u", transaction.getConnectorId(), transaction.getTxNr());
@@ -531,7 +531,7 @@ bool v201::TransactionStoreEvse::deserializeTransaction(Transaction& tx, JsonObj
     if (txJson.containsKey("idToken")) {
         IdToken idToken;
         if (!idToken.parseCstr(
-                    txJson["idToken"]["idToken"] | (const char*)nullptr, 
+                    txJson["idToken"]["idToken"] | (const char*)nullptr,
                     txJson["idToken"]["type"]    | (const char*)nullptr)) {
             return false;
         }
@@ -590,7 +590,7 @@ bool v201::TransactionStoreEvse::deserializeTransaction(Transaction& tx, JsonObj
             return false;
         }
         if (!stopIdToken->parseCstr(
-                    txJson["stopIdToken"]["idToken"] | (const char*)nullptr, 
+                    txJson["stopIdToken"]["idToken"] | (const char*)nullptr,
                     txJson["stopIdToken"]["type"]    | (const char*)nullptr)) {
             return false;
         }
@@ -617,7 +617,7 @@ bool v201::TransactionStoreEvse::deserializeTransaction(Transaction& tx, JsonObj
 }
 
 bool v201::TransactionStoreEvse::serializeTransactionEvent(TransactionEventData& txEvent, JsonObject txEventJson) {
-    
+
     if (txEvent.eventType != TransactionEventData::Type::Updated) {
         txEventJson["eventType"] = serializeTransactionEventType(txEvent.eventType);
     }
@@ -633,7 +633,7 @@ bool v201::TransactionStoreEvse::serializeTransactionEvent(TransactionEventData&
     if (serializeTxEventTriggerReason(txEvent.triggerReason)) {
         txEventJson["triggerReason"] = serializeTxEventTriggerReason(txEvent.triggerReason);
     }
-    
+
     if (txEvent.offline) {
         txEventJson["offline"] = true;
     }
@@ -676,7 +676,7 @@ bool v201::TransactionStoreEvse::serializeTransactionEvent(TransactionEventData&
 
     txEventJson["opNr"] = txEvent.opNr;
     txEventJson["attemptNr"] = txEvent.attemptNr;
-    
+
     if (txEvent.attemptTime.isDefined()) {
         char timeStr [MO_JSONDATE_SIZE] = {'\0'};
         if (!context.getClock().toInternalString(txEvent.attemptTime, timeStr, sizeof(timeStr))) {
@@ -707,7 +707,7 @@ bool v201::TransactionStoreEvse::deserializeTransactionEvent(TransactionEventDat
         return false;
     }
     txEvent.triggerReason = triggerReason;
-    
+
     if (txEventJson.containsKey("offline") && !txEventJson["offline"].is<bool>()) {
         return false;
     }
@@ -758,7 +758,7 @@ bool v201::TransactionStoreEvse::deserializeTransactionEvent(TransactionEventDat
             return false;
         }
         if (!idToken->parseCstr(
-                    txEventJson["idToken"]["idToken"] | (const char*)nullptr, 
+                    txEventJson["idToken"]["idToken"] | (const char*)nullptr,
                     txEventJson["idToken"]["type"]    | (const char*)nullptr)) {
             return false;
         }

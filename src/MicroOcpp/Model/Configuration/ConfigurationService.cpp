@@ -348,7 +348,7 @@ ConfigurationService::~ConfigurationService() {
         delete containersInternal[i];
     }
 }
-            
+
 bool ConfigurationService::init() {
     containers.reserve(1);
     if (containers.capacity() < 1) {

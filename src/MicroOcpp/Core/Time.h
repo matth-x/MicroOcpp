@@ -79,14 +79,14 @@ public:
     /**
      * Expects a date string like
      * 2020-10-01T20:53:32.486Z
-     * 
+     *
      * as generated in JavaScript by calling toJSON() on a Date object
-     * 
+     *
      * Only processes the first 23 characters. The subsequent are ignored
-     * 
+     *
      * Has a semi-sophisticated type check included. Will return true on successful time set and false if
      * the given string is not a JSON Date string.
-     * 
+     *
      * jsonDateString: 0-terminated string
      */
     bool setTime(const char* jsonDateString);
@@ -136,7 +136,7 @@ public:
      */
     bool parseString(const char *src, Timestamp& dst) const;
 
-    /* Converts src into a unix time and writes result to dst. dst will equal to src if src is already 
+    /* Converts src into a unix time and writes result to dst. dst will equal to src if src is already
      * a unix time. Returns true if successful and false if the unix time cannot be determined */
     bool toUnixTime(const Timestamp& src, Timestamp& dst) const;
     bool toUnixTime(const Timestamp& src, int32_t& dstInt) const;

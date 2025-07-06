@@ -53,7 +53,7 @@ void TriggerMessage::processReq(JsonObject payload) {
         }
     }
     #endif //MO_ENABLE_V201
-        
+
     if (evseId >= 0 && (unsigned int)evseId >= numEvseId) {
         errorCode = "PropertyConstraintViolation";
         return;

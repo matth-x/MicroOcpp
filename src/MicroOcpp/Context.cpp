@@ -265,7 +265,7 @@ bool Context::setup() {
 
     if (!ticksCb) {
         ticksCb = getDefaultTickCb();
-        
+
         if (!ticksCb) {
             MO_DBG_ERR("must set TicksCb connection before setup. See the examples in this repository");
             return false;

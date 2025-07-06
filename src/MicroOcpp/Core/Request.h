@@ -38,7 +38,7 @@ private:
     Timestamp timeoutStart;
     int32_t timeoutPeriod = 40; //in seconds
     bool timedOut = false;
-    
+
     Timestamp debugRequestTime;
 
     bool requestSent = false;
@@ -57,9 +57,9 @@ public:
 
     /**
      * Sends the message(s) that belong to the OCPP Operation. This function puts a JSON message on the lower protocol layer.
-     * 
+     *
      * For instance operation Authorize: sends Authorize.req(idTag)
-     * 
+     *
      * This function is usually called multiple times by the Arduino loop(). On first call, the request is initially sent. In the
      * succeeding calls, the implementers decide to either resend the request, or do nothing as the operation is still pending.
      */
@@ -76,7 +76,7 @@ public:
 
     /**
      * Processes the request in the JSON document. Returns true on success, false on error.
-     * 
+     *
      * Returns false if the request doesn't belong to the corresponding operation instance
      */
     bool receiveRequest(JsonArray json);
@@ -104,11 +104,11 @@ public:
      * The listener onAbort will be called whenever the engine stops trying to execute an operation normally which were initiated
      * on this device. This includes timeouts or if the ocpp counterpart sends an error (then it will be called in addition to
      * onTimeout or onReceiveError, respectively). Causes for onAbort:
-     * 
+     *
      *    - Cannot create OCPP payload
      *    - Timeout
      *    - Receives error msg instead of confirmation msg
-     * 
+     *
      * The engine uses this listener in both modes: EVSE mode and Central system mode
      */
     void setOnAbort(AbortListener onAbort);

@@ -48,8 +48,8 @@ void mo_setFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *
  * WebSockets adapter (see examples folder). `backendUrl`, `chargeBoxId`, `authorizationKey` and
  * `CA_cert` are zero-copy and must remain valid until `mo_setup()`. `CA_cert` is zero-copy and must
  * outlive the MO lifecycle.
- * 
- * If the connections fails, please refer to 
+ *
+ * If the connections fails, please refer to
  * https://github.com/matth-x/MicroOcpp/issues/36#issuecomment-989716573 for recommendations on
  * how to track down the issue with the connection.
  */
@@ -66,7 +66,7 @@ bool mo_setWebsocketUrl(
  * of the passed `connection` object, i.e. it must be destroyed after `mo_deinitialize()` Please
  * refer to https://github.com/matth-x/MicroOcpp/tree/main/examples/ESP-TLS for an example how to
  * use it.
- * 
+ *
  * This GitHub project also delivers an Connection implementation based on links2004/WebSockets. If
  * you need another WebSockets implementation, you can subclass the Connection class and pass it to
  * this initialize() function. Please refer to
@@ -93,10 +93,10 @@ bool mo_setBootNotificationData2(MO_Context *ctx, MO_BootNotificationData bnData
 
 /*
  * Define the Inputs and Outputs of this library.
- * 
+ *
  * This library interacts with the hardware of your charger by Inputs and Outputs. Inputs and Outputs
  * are callbacks which read information from the EVSE or control the behavior of the EVSE.
- * 
+ *
  * An Input is a function which returns the current state of a variable of the EVSE. For example, if
  * the energy meter stores the energy register in the global variable `e_reg`, then you can allow
  * this library to read it by defining the following Input and passing it to the library.
@@ -105,7 +105,7 @@ bool mo_setBootNotificationData2(MO_Context *ctx, MO_BootNotificationData bnData
  *         return e_reg;
  *     });
  * ```
- * 
+ *
  * An Output is a callback which gets state value from the OCPP library and applies it to the EVSE.
  * For example, to let Smart Charging control the PWM signal of the Control Pilot, define the
  * following Output and pass it to the library.
@@ -114,7 +114,7 @@ bool mo_setBootNotificationData2(MO_Context *ctx, MO_BootNotificationData bnData
  *         pwm = p_max / PWM_FACTOR; //(simplified example)
  *     });
  * ```
- * 
+ *
  * Configure the library with Inputs and Outputs after mo_initialize() and before mo_setup().
  */
 
@@ -156,7 +156,7 @@ void mo_loop();
 
 /*
  * Transaction management.
- * 
+ *
  * OCPP 1.6 (2.0.1 see below):
  * Begin the transaction process and prepare it. When all conditions for the transaction are true,
  * eventually send a StartTransaction request to the OCPP server.
@@ -168,12 +168,12 @@ void mo_loop();
  *        rules will apply as in the specification.
  *     4) the vehicle is already plugged or will be plugged soon (only applicable if the
  *        ConnectorPlugged Input is set)
- * 
+ *
  * See beginTransaction_authorized for skipping steps 1) to 3)
- * 
+ *
  * Returns true if it was possible to create the transaction process. Returns
  * false if either another transaction process is still active or you need to try it again later.
- * 
+ *
  * OCPP 2.0.1:
  * Authorize a transaction. Like the OCPP 1.6 behavior, this should be called when the user swipes the
  * card to start charging, but the semantic is slightly different. This function begins the authorized
@@ -213,32 +213,32 @@ bool mo_setTransactionAuthorized2(MO_Context *ctx, unsigned int evseId, const ch
  *           matches with the parentIdTag of beginTransaction.
  *         - [Planned, not released yet] If none of step 2) applies, then the OCPP lib will check
  *           the authorization status via an Authorize request
- * 
+ *
  * See endTransaction_authorized for skipping the authorization check, i.e. step 2)
- * 
+ *
  * If the transaction is ended by swiping an RFID card, then idTag should contain its identifier. If
  * charging stops for a different reason than swiping the card, idTag should be null or empty.
- * 
+ *
  * Please refer to OCPP 1.6 Specification - Edition 2 p. 90 for a list of valid reasons. `reason`
  * can also be nullptr.
- * 
+ *
  * It is safe to call this function at any time, i.e. when no transaction runs or when the transaction
  * has already been ended. For example you can place
  *     `endTransaction(nullptr, "Reboot");`
  * in the beginning of the program just to ensure that there is no transaction from a previous run.
- * 
+ *
  * If called with idTag=nullptr, this is functionally equivalent to
  *     `endTransaction_authorized(nullptr, reason);`
- * 
+ *
  * Returns true if there is a transaction which could eventually be ended by this action
- * 
+ *
  * OCPP 2.0.1:
  * End the user authorization. Like when running with OCPP 1.6, this should be called when the user
  * swipes the card to stop charging. The difference between the 1.6/2.0.1 behavior is that in 1.6,
  * endTransaction always sets the transaction inactive so that it wants to stop. In 2.0.1, this only
  * revokes the user authorization which may terminate the transaction but doesn't have to if the
  * transaction stop point is set to EvConnected.
- * 
+ *
  * Note: the stop reason parameter is ignored when running with OCPP 2.0.1. It's always Local
  */
 bool mo_endTransaction(const char *idTag, const char *reason); //idTag and reason can be NULL
@@ -262,7 +262,7 @@ bool mo_abortTransaction(MO_TxStoppedReason stoppedReason, MO_TxEventTriggerReas
 bool mo_abortTransaction2(MO_Context *ctx, unsigned int evseId, MO_TxStoppedReason stoppedReason, MO_TxEventTriggerReason stopTrigger);
 #endif //MO_ENABLE_V201
 
-/* 
+/*
  * Returns if according to OCPP, the EVSE is allowed to close provide charge now.
  *
  * If you integrate it into a J1772 charger, true means that the Control Pilot can send the PWM signal
@@ -280,9 +280,9 @@ bool mo_ocppPermitsCharge2(MO_Context *ctx, unsigned int evseId);
  *     - Running: transaction started and running
  *     - Running/StopTxAwait: transaction still running but will end at the next possible time
  *     - Finished: transaction stopped
- * 
+ *
  * isTransactionActive() and isTransactionRunning() give the status by combining them:
- * 
+ *
  *     State               | isTransactionActive() | isTransactionRunning()
  *     --------------------+-----------------------+-----------------------
  *     Preparing           | true                  | false
@@ -328,7 +328,7 @@ MO_ChargePointStatus mo_getChargePointStatus2(MO_Context *ctx, unsigned int evse
 
 /*
  * Define the Inputs and Outputs of this library. (Advanced)
- * 
+ *
  * These Inputs and Outputs are optional depending on the use case of your charger. Set before `mo_setup()`
  */
 
@@ -561,7 +561,7 @@ void mo_setTransactionMeterStop2(MO_Context *ctx, unsigned int evseId, int32_t m
 //Add new Config. `key` is zero-copy, i.e. must outlive the MO lifecycle. Add before `mo_setup()`.
 //At first boot, MO uses `factoryDefault`. At subsequent boots, it loads the values from flash
 //during `mo_setup()`
-bool mo_declareConfigurationInt(const char *key, int factoryDefault, MO_Mutability mutability, bool persistent, bool rebootRequired); 
+bool mo_declareConfigurationInt(const char *key, int factoryDefault, MO_Mutability mutability, bool persistent, bool rebootRequired);
 bool mo_declareConfigurationBool(const char *key, bool factoryDefault, MO_Mutability mutability, bool persistent, bool rebootRequired);
 bool mo_declareConfigurationString(const char *key, const char *factoryDefault, MO_Mutability mutability, bool persistent, bool rebootRequired);
 

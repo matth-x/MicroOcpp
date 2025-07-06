@@ -26,7 +26,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
         errorCode = "FormationViolation";
         return;
     }
-    
+
     int retries = payload["retries"] | 1;
     int retryInterval = payload["retryInterval"] | 180;
     if (retries < 0 || retryInterval < 0) {

@@ -47,7 +47,7 @@ extern "C" {
 #endif //__cplusplus
 
 typedef enum MO_ChargePointStatus {
-    MO_ChargePointStatus_UNDEFINED, //internal use only - no OCPP standard value 
+    MO_ChargePointStatus_UNDEFINED, //internal use only - no OCPP standard value
     MO_ChargePointStatus_Available,
     MO_ChargePointStatus_Preparing,
     MO_ChargePointStatus_Charging,

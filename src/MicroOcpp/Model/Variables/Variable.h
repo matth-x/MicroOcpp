@@ -215,7 +215,7 @@ public:
     bool isConstant();
 
     //bool addMonitor(int id, bool transaction, float value, VariableMonitor::Type type, int severity);
-    
+
     virtual uint16_t getWriteCount() = 0; //get write count (use this as a pre-check if the value changed)
 };
 

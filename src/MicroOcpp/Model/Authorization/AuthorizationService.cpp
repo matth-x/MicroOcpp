@@ -76,7 +76,7 @@ bool AuthorizationService::loadLists() {
     }
 
     int listVersion = doc["listVersion"] | 0;
-    
+
     if (!localAuthorizationList.readJson(context.getClock(), doc["localAuthorizationList"].as<JsonArray>(), listVersion, /*differential*/ false, /*internalFormat*/ true)) {
         MO_DBG_ERR("list read failure");
         return false;

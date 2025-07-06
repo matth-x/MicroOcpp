@@ -59,7 +59,7 @@ bool Reservation::setup() {
         return false;
     }
     expiryDateRawString = configService->declareConfiguration<const char*>(expiryDateRawKey, "", RESERVATION_FN, Mutability::None);
-    
+
     ret = snprintf(idTagKey, sizeof(idTagKey), MO_RESERVATION_IDTAG_KEY "%u", slot);
     if (ret < 0 || (size_t)ret >= sizeof(idTagKey)) {
         return false;
@@ -160,7 +160,7 @@ const char *Reservation::getParentIdTag() {
 
 bool Reservation::update(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag) {
     bool success = true;
-    
+
     reservationIdInt->setInt(reservationId);
     connectorIdInt->setInt((int) connectorId);
     this->expiryDate = expiryDate;

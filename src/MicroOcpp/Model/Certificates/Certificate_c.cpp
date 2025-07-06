@@ -37,7 +37,7 @@ public:
         }
 
         bool err = false;
-        
+
         for (mo_cert_chain_hash *it = cch; it && !err; it = it->next) {
             out.emplace_back();
             auto &chd_el = out.back();

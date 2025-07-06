@@ -110,7 +110,7 @@ public:
      * next chunk of FW data and `size` being the chunk size. `firmwareWriter` must return the number of bytes written, whereas
      * the result can be between 1 and `size`, and 0 aborts the download. MO executes `onClose` with the reason why the connection
      * has been closed. If the download hasn't been successful, MO will abort the update routine in any case.
-     * 
+     *
      * Note that this function only works if MO_ENABLE_MBEDTLS=1, or MO has been configured with a custom FTP client
      */
     void setDownloadFileWriter(std::function<size_t(const unsigned char *buf, size_t size)> firmwareWriter, std::function<void(MO_FtpCloseReason)> onClose);

@@ -12,7 +12,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::v201;
 
 GetBaseReport::GetBaseReport(VariableService& variableService) : MemoryManaged("v201.Operation.", "GetBaseReport"), variableService(variableService) {
-  
+
 }
 
 const char* GetBaseReport::getOperationType(){

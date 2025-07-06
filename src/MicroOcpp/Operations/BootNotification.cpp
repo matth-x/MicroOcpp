@@ -18,7 +18,7 @@
 using namespace MicroOcpp;
 
 BootNotification::BootNotification(Context& context, BootService& bootService, HeartbeatService *heartbeatService, const MO_BootNotificationData& bnData) : MemoryManaged("v16/v201.Operation.", "BootNotification"), context(context), bootService(bootService), heartbeatService(heartbeatService), bnData(bnData), ocppVersion(context.getOcppVersion()) {
-    
+
 }
 
 const char* BootNotification::getOperationType(){
@@ -81,7 +81,7 @@ void BootNotification::processConf(JsonObject payload) {
         errorCode = "FormationViolation";
         return;
     }
-    
+
     int interval = payload["interval"] | -1;
     if (interval < 0) {
         errorCode = "FormationViolation";
@@ -89,7 +89,7 @@ void BootNotification::processConf(JsonObject payload) {
     }
 
     RegistrationStatus status = deserializeRegistrationStatus(payload["status"] | "Invalid");
-    
+
     if (status == RegistrationStatus::UNDEFINED) {
         errorCode = "FormationViolation";
         return;

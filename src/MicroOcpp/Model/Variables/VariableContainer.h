@@ -65,7 +65,7 @@ public:
 
     bool add(std::unique_ptr<Variable> variable);
 
-    bool enablePersistency(MO_FilesystemAdapter *filesystem, const char *filename); 
+    bool enablePersistency(MO_FilesystemAdapter *filesystem, const char *filename);
     bool load(); //load variables from flash
     bool commit() override;
 };

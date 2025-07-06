@@ -12,7 +12,7 @@
 
 #if MO_ENABLE_V201
 
-namespace MicroOcpp {    
+namespace MicroOcpp {
 namespace v201 {
 
 class VariableService;

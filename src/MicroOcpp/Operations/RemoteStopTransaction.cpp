@@ -14,7 +14,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::v16;
 
 RemoteStopTransaction::RemoteStopTransaction(Context& context, RemoteControlService& rcService) : MemoryManaged("v16.Operation.", "RemoteStopTransaction"), context(context), rcService(rcService) {
-  
+
 }
 
 const char* RemoteStopTransaction::getOperationType() {

@@ -13,7 +13,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::v16;
 
 Heartbeat::Heartbeat(Context& context) : MemoryManaged("v16.Operation.", "Heartbeat"), context(context) {
-  
+
 }
 
 const char* Heartbeat::getOperationType(){
@@ -25,7 +25,7 @@ std::unique_ptr<JsonDoc> Heartbeat::createReq() {
 }
 
 void Heartbeat::processConf(JsonObject payload) {
-  
+
     const char* currentTime = payload["currentTime"] | "Invalid";
     if (strcmp(currentTime, "Invalid")) {
         if (context.getClock().setTime(currentTime)) {

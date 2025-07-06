@@ -25,7 +25,7 @@ private:
     RemoteControlService& rcService;
 
     RemoteStartStopStatus status = RemoteStartStopStatus::Rejected;
-    
+
     const char *errorCode {nullptr};
     const char *errorDescription = "";
 public:

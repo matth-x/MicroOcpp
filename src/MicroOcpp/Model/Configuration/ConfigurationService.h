@@ -80,7 +80,7 @@ public:
 
     bool commit();
 };
-    
+
 } //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16

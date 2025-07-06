@@ -86,7 +86,7 @@ public:
     void loop();
 
     bool setup();
-    
+
     MO_ChargePointStatus getStatus();
 
     void setAvailability(bool available);

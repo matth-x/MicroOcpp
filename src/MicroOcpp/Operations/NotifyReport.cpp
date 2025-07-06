@@ -34,7 +34,7 @@ std::unique_ptr<JsonDoc> NotifyReport::createReq() {
         Variable::AttributeType::MaxSet
     };
 
-    size_t capacity = 
+    size_t capacity =
             JSON_OBJECT_SIZE(5) + //total of 5 fields
             MO_JSONDATE_SIZE; //timestamp string
 
@@ -228,7 +228,7 @@ std::unique_ptr<JsonDoc> NotifyReport::createReq() {
                 break;
             default:
                 MO_DBG_ERR("internal error");
-                break; 
+                break;
         }
         variableCharacteristics["dataType"] = dataTypeCstr;
 

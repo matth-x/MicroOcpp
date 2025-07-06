@@ -99,7 +99,7 @@ void ReservationService::loop() {
             auto transaction = txSvcEvse ? txSvcEvse->getTransaction() : nullptr;
             if (transaction && transaction->isAuthorized()) {
                 const char *idTag = transaction->getIdTag();
-                if (transaction->getReservationId() == reservations[i]->getReservationId() || 
+                if (transaction->getReservationId() == reservations[i]->getReservationId() ||
                         (idTag && !strcmp(idTag, reservations[i]->getIdTag()))) {
 
                     reservations[i]->clear();
@@ -121,7 +121,7 @@ Reservation *ReservationService::getReservation(unsigned int connectorId) {
             return reservations[i];
         }
     }
-    
+
     return nullptr;
 }
 
@@ -229,7 +229,7 @@ bool ReservationService::updateReservation(int reservationId, unsigned int conne
     }
 
 // Alternative condition: avoids that one idTag can make two reservations at a time. The specification doesn't
-// mention that double-reservations should be possible but it seems to mean it. 
+// mention that double-reservations should be possible but it seems to mean it.
     if (auto reservation = getReservation(connectorId, nullptr, nullptr)) {
 //                payload["idTag"],
 //                payload.containsKey("parentIdTag") ? payload["parentIdTag"] : nullptr)) {

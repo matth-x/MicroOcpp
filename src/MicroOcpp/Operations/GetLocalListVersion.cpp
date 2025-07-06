@@ -13,7 +13,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::v16;
 
 GetLocalListVersion::GetLocalListVersion(Model& model) : MemoryManaged("v16.Operation.", "GetLocalListVersion"), model(model) {
-  
+
 }
 
 const char* GetLocalListVersion::getOperationType(){

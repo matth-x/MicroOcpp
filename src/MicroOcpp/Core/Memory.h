@@ -389,7 +389,7 @@ namespace MicroOcpp {
 class MemoryManaged {
 protected:
     const char *getMemoryTag() const {return nullptr;}
-    void updateMemoryTag(const char*,const char*) { } 
+    void updateMemoryTag(const char*,const char*) { }
 public:
     MemoryManaged() { }
     MemoryManaged(const char*) { }

@@ -133,7 +133,7 @@ VariableService::VariableService(Context& context) :
             getBaseReportVars(makeVector<Variable*>(getMemoryTag())) {
 
 }
-            
+
 bool VariableService::init() {
     containers.reserve(MO_VARIABLESTORE_BUCKETS + 1);
     if (containers.capacity() < MO_VARIABLESTORE_BUCKETS + 1) {
@@ -206,13 +206,13 @@ void VariableService::loop() {
     }
 
     auto notifyReport = makeRequest(context, new NotifyReport(
-            context, 
+            context,
             getBaseReportRequestId,
             context.getClock().now(),
             !getBaseReportVars.empty(), // tbc: to be continued
             getBaseReportSeqNo,
             variablesChunk));
-    
+
     if (!notifyReport) {
         MO_DBG_ERR("OOM");
         getBaseReportVars.clear();
@@ -374,7 +374,7 @@ SetVariableStatus VariableService::setVariable(Variable::AttributeType attrType,
         if (foundComponent) {
             return SetVariableStatus::UnknownVariable;
         } else {
-            return SetVariableStatus::UnknownComponent; 
+            return SetVariableStatus::UnknownComponent;
         }
     }
 
@@ -512,7 +512,7 @@ GetVariableStatus VariableService::getVariable(Variable::AttributeType attrType,
     if (foundComponent) {
         return GetVariableStatus::UnknownVariable;
     } else {
-        return GetVariableStatus::UnknownComponent; 
+        return GetVariableStatus::UnknownComponent;
     }
 }
 

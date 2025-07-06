@@ -29,14 +29,14 @@ namespace SmartChargingServiceUtils {
 bool printProfileFileName(char *out, size_t bufsize, unsigned int evseId, ChargingProfilePurposeType purpose, unsigned int stackLevel);
 bool storeProfile(MO_FilesystemAdapter *filesystem, Clock& clock, int ocppVersion, unsigned int evseId, ChargingProfile *chargingProfile);
 bool removeProfile(MO_FilesystemAdapter *filesystem, unsigned int evseId, ChargingProfilePurposeType purpose, unsigned int stackLevel);
-} //namespace SmartChargingServiceUtils 
+} //namespace SmartChargingServiceUtils
 } //namespace MicroOcpp
 
 using namespace::MicroOcpp;
 
 SmartChargingServiceEvse::SmartChargingServiceEvse(Context& context, SmartChargingService& scService, unsigned int evseId) :
         MemoryManaged("v16/v201.SmartCharging.SmartChargingServiceEvse"), context(context), clock(context.getClock()), scService(scService), evseId(evseId) {
-    
+
     mo_chargeRate_init(&trackLimitOutput);
 }
 
@@ -330,7 +330,7 @@ void SmartChargingServiceEvse::setSmartChargingOutput(void (*limitOutput)(MO_Cha
 }
 
 bool SmartChargingServiceEvse::updateProfile(std::unique_ptr<ChargingProfile> chargingProfile, bool updateFile) {
-    
+
     ChargingProfile **stack = nullptr;
 
     switch (chargingProfile->chargingProfilePurpose) {
@@ -348,14 +348,14 @@ bool SmartChargingServiceEvse::updateProfile(std::unique_ptr<ChargingProfile> ch
         MO_DBG_ERR("invalid args");
         return false;
     }
-    
+
     if (updateFile && scService.filesystem) {
         if (!SmartChargingServiceUtils::storeProfile(scService.filesystem, clock, scService.ocppVersion, evseId, chargingProfile.get())) {
             MO_DBG_ERR("fs error");
             return false;
         }
     }
-    
+
 
     int stackLevel = chargingProfile->stackLevel; //already validated
 
@@ -391,7 +391,7 @@ bool SmartChargingServiceEvse::clearChargingProfile(int chargingProfileId, Charg
             if (stackLevel >= 0 && (size_t)stackLevel != sLvl) {
                 continue;
             }
-            
+
             if (!stack[sLvl]) {
                 // no profile installed at this stack and stackLevel
                 continue;
@@ -415,7 +415,7 @@ bool SmartChargingServiceEvse::clearChargingProfile(int chargingProfileId, Charg
 }
 
 std::unique_ptr<ChargingSchedule> SmartChargingServiceEvse::getCompositeSchedule(int duration, ChargingRateUnitType unit) {
-    
+
     int32_t nowUnixTime;
     if (!clock.toUnixTime(clock.now(), nowUnixTime)) {
         MO_DBG_ERR("internal error");
@@ -845,7 +845,7 @@ size_t SmartChargingService::getChargingProfilesCount() {
  * validToOut: The begin of the next SmartCharging restriction after time t
  */
 void SmartChargingService::calculateLimit(int32_t unixTime, MO_ChargeRate& limitOut, int32_t& nextChangeSecsOut){
-    
+
     //initialize output parameters with the default values
     mo_chargeRate_init(&limitOut);
     nextChangeSecsOut = 365 * 24 * 3600;
@@ -995,12 +995,12 @@ bool SmartChargingService::clearChargingProfile(int chargingProfileId, int evseI
                 } else if (purpose == ChargingProfilePurposeType::TxDefaultProfile) {
                     stack = chargePointTxDefaultProfile;
                 }
-    
+
                 for (size_t sLvl = 0; sLvl < MO_CHARGEPROFILESTACK_SIZE; sLvl++) {
                     if (stackLevel >= 0 && (size_t)stackLevel != sLvl) {
                         continue;
                     }
-                    
+
                     if (!stack[sLvl]) {
                         // no profile installed at this stack and stackLevel
                         continue;

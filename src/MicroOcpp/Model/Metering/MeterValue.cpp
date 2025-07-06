@@ -73,7 +73,7 @@ SampledValue::Type SampledValue::getType() {
 }
 
 MeterValue::MeterValue() :
-        MemoryManaged("v16.Metering.MeterValue"), 
+        MemoryManaged("v16.Metering.MeterValue"),
         sampledValue(makeVector<SampledValue*>(getMemoryTag())) {
 
 }
@@ -100,7 +100,7 @@ bool loadSignedValue(MO_SignedMeterValue201* signedValue, const char *signedMete
             signingMethodSize +
             encodingMethodSize +
             publicKeySize;
-    
+
     char *buf = static_cast<char*>(MO_MALLOC(memoryTag, bufsize));
     if (!buf) {
         MO_DBG_ERR("OOM");
@@ -116,7 +116,7 @@ bool loadSignedValue(MO_SignedMeterValue201* signedValue, const char *signedMete
             MO_DBG_ERR("snprintf: %i", ret);
             goto fail;
         }
-        
+
         written += (size_t)ret + 1;
     }
 
@@ -325,7 +325,7 @@ bool MeterValue::parseJson(Clock& clock, Vector<MO_MeterInput>& meterInputs, Jso
 }
 
 int MeterValue::getJsonCapacity(int ocppVersion, bool internalFormat) {
-    
+
     size_t capacity = 0;
 
     capacity += JSON_OBJECT_SIZE(2); //timestamp, sampledValue
@@ -566,7 +566,7 @@ bool MeterValue::toJson(Clock& clock, int ocppVersion, bool internalFormat, Json
                 } else {
                     unitJson = svJson.createNestedObject("unitOfMeasure");
                 }
-                
+
                 if (meterDevice.unit && strcmp(meterDevice.unit, "Wh")) {
                     unitJson["unit"] = meterDevice.unit;
                 }

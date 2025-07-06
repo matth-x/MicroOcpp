@@ -84,7 +84,7 @@ std::unique_ptr<JsonDoc> GetVariables::createConf(){
     for (auto& query : queries) {
         query.attributeStatus = variableService.getVariable(
                 query.attributeType,
-                ComponentId(query.componentName.c_str(), 
+                ComponentId(query.componentName.c_str(),
                     EvseId(query.componentEvseId, query.componentEvseConnectorId)),
                 query.variableName.c_str(),
                 &query.variable);
@@ -120,7 +120,7 @@ std::unique_ptr<JsonDoc> GetVariables::createConf(){
             }
         }
 
-        capacity += 
+        capacity +=
             JSON_OBJECT_SIZE(5) + // getVariableResult
                 valueCapacity + // capacity needed for storing the value
                 JSON_OBJECT_SIZE(2) + // component

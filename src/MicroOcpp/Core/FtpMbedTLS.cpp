@@ -61,7 +61,7 @@ private:
 
     bool read_url_ctrl(const char *ftp_url);
     bool read_url_data(const char *data_url);
-    
+
     std::function<size_t(unsigned char *data, size_t len)> fileWriter;
     std::function<size_t(unsigned char *out, size_t bufsize)> fileReader;
     std::function<void(MO_FtpCloseReason)> onClose;
@@ -97,7 +97,7 @@ public:
     ~FtpTransferMbedTLS();
 
     void loop() override;
-    
+
     bool isActive() override;
 
     bool getFile(const char *ftp_url, // ftp[s]://[user[:pass]@]host[:port][/directory]/filename
@@ -144,7 +144,7 @@ void mo_mbedtls_log(void *user, int level, const char *file, int line, const cha
      *     - 2 State change
      *     - 3 Informational
      *     - 4 Verbose
-     * 
+     *
      * To change the debug level, use the build flag MO_DBG_LEVEL_MBEDTLS accordingly
      */
 
@@ -169,7 +169,7 @@ void mo_mbedtls_log(void *user, int level, const char *file, int line, const cha
  * FTP implementation
  */
 
-FtpTransferMbedTLS::FtpTransferMbedTLS(bool tls_only, const char *client_cert, const char *client_key) : 
+FtpTransferMbedTLS::FtpTransferMbedTLS(bool tls_only, const char *client_cert, const char *client_key) :
         MemoryManaged("FTP.TransferMbedTLS"),
         client_cert(client_cert),
         client_key(client_key),
@@ -327,7 +327,7 @@ int FtpTransferMbedTLS::connect_data() {
     if (isSecure) {
         //reuse SSL session of ctrl conn
 
-        if (auto ret = mbedtls_ssl_set_session(&data_ssl, 
+        if (auto ret = mbedtls_ssl_set_session(&data_ssl,
                     mbedtls_ssl_get_session_pointer(&ctrl_ssl))) {
             MO_DBG_ERR("session reuse failure: %i", ret);
             return ret;
@@ -421,7 +421,7 @@ void FtpTransferMbedTLS::send_cmd(const char *cmd, const char *arg, bool disable
     const size_t MSG_SIZE = 128;
     unsigned char msg [MSG_SIZE];
 
-    auto len = snprintf((char*) msg, MSG_SIZE, "%s%s%s\r\n", 
+    auto len = snprintf((char*) msg, MSG_SIZE, "%s%s%s\r\n",
             cmd,               //cmd mandatory (e.g. "USER")
             arg ? " " : "",    //line spacing if arg is provided
             arg ? arg : "");   //arg optional (e.g. "anonymous")
@@ -430,7 +430,7 @@ void FtpTransferMbedTLS::send_cmd(const char *cmd, const char *arg, bool disable
         len = sprintf((char*) msg, "QUIT\r\n");
     } else {
         //show outgoing traffic for debug, but shadow PASS
-        MO_DBG_DEBUG("SEND: %s %s", 
+        MO_DBG_DEBUG("SEND: %s %s",
                 cmd,
                 !strncmp((char*) cmd, "PASS", strlen("PASS")) ? "***" : arg ? (char*) arg : "");
     }
@@ -464,7 +464,7 @@ bool FtpTransferMbedTLS::getFile(const char *ftp_url_raw, std::function<size_t(u
         MO_DBG_ERR("FTP Client reuse not supported");
         return false;
     }
-    
+
     if (!ftp_url_raw || !fileWriter) {
         MO_DBG_ERR("invalid args");
         return false;
@@ -496,7 +496,7 @@ bool FtpTransferMbedTLS::getFile(const char *ftp_url_raw, std::function<size_t(u
 }
 
 bool FtpTransferMbedTLS::postFile(const char *ftp_url_raw, std::function<size_t(unsigned char *out, size_t buffsize)> fileReader, std::function<void(MO_FtpCloseReason)> onClose, const char *ca_cert) {
-    
+
     if (method != Method::UNDEFINED) {
         MO_DBG_ERR("FTP Client reuse not supported");
         return false;
@@ -607,7 +607,7 @@ void FtpTransferMbedTLS::process_ctrl() {
         }
 
         //security policy met
-                
+
         if (!strncmp("530", line, 3)            // Not logged in
                 || !strncmp("220", line, 3)     // Service ready for new user
                 || !strncmp("234", line, 3)) {  // Just completed AUTH TLS handshake
@@ -941,7 +941,7 @@ std::unique_ptr<FtpDownload> FtpClientMbedTLS::getFile(const char *ftp_url_raw, 
 }
 
 std::unique_ptr<FtpUpload> FtpClientMbedTLS::postFile(const char *ftp_url_raw, std::function<size_t(unsigned char *out, size_t buffsize)> fileReader, std::function<void(MO_FtpCloseReason)> onClose, const char *ca_cert) {
-    
+
     auto ftp_handle = std::unique_ptr<FtpTransferMbedTLS>(new FtpTransferMbedTLS(tls_only, client_cert, client_key));
     if (!ftp_handle) {
         MO_DBG_ERR("OOM");

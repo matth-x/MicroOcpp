@@ -21,7 +21,7 @@ using namespace MicroOcpp;
 MessageService::MessageService(Context& context) :
             MemoryManaged("MessageService"),
             context(context),
-            operationRegistry(makeVector<OperationCreator>(getMemoryTag())), 
+            operationRegistry(makeVector<OperationCreator>(getMemoryTag())),
             operationRegistry2(makeVector<CustomOperationCreator>(getMemoryTag())),
             receiveRequestListeners(makeVector<OperationListener>(getMemoryTag())),
             sendConfListeners(makeVector<OperationListener>(getMemoryTag())) {
@@ -63,7 +63,7 @@ void MessageService::loop() {
 
     /**
      * Send and dequeue a pending confirmation message, if existing
-     * 
+     *
      * If a message has been sent, terminate this loop() function.
      */
 
@@ -79,7 +79,7 @@ void MessageService::loop() {
         if (ret == Request::CreateResponseResult::Success) {
             auto out = makeString(getMemoryTag());
             serializeJson(response, out);
-    
+
             bool success = connection->sendTXT(out.c_str(), out.length());
 
             if (success) {
@@ -359,7 +359,7 @@ bool MessageService::receiveMessage(const char* payload, size_t length) {
     if (capacity > MO_MAX_JSON_CAPACITY) {
         capacity = MO_MAX_JSON_CAPACITY;
     }
-    
+
     auto doc = initJsonDoc(getMemoryTag());
     DeserializationError err = DeserializationError::NoMemory;
 
@@ -378,7 +378,7 @@ bool MessageService::receiveMessage(const char* payload, size_t length) {
             int messageTypeId = doc[0] | -1;
 
             if (messageTypeId == MESSAGE_TYPE_CALL) {
-                receiveRequest(doc.as<JsonArray>());      
+                receiveRequest(doc.as<JsonArray>());
                 success = true;
             } else if (messageTypeId == MESSAGE_TYPE_CALLRESULT ||
                     messageTypeId == MESSAGE_TYPE_CALLERROR) {
@@ -387,7 +387,7 @@ bool MessageService::receiveMessage(const char* payload, size_t length) {
             } else {
                 MO_DBG_WARN("Invalid OCPP message! (though JSON has successfully been deserialized)");
             }
-            break; 
+            break;
         }
         case DeserializationError::InvalidInput:
             MO_DBG_WARN("Invalid input! Not a JSON");
@@ -431,7 +431,7 @@ bool MessageService::receiveMessage(const char* payload, size_t length) {
 /**
  * call conf() on each element of the queue. Start with first element. On successful message delivery,
  * delete the element from the list. Try all the pending OCPP Operations until the right one is found.
- * 
+ *
  * This function could result in improper behavior in Charging Stations, because messages are not
  * guaranteed to be received and therefore processed in the right order.
  */
@@ -464,13 +464,13 @@ void MessageService::receiveRequest(JsonArray json, std::unique_ptr<Request> req
 
 /*
  * Tries to recover the Ocpp-Operation header from a broken message.
- * 
- * Example input: 
+ *
+ * Example input:
  * [2, "75705e50-682d-404e-b400-1bca33d41e19", "ChangeConfiguration", {"key":"now the message breaks...
- * 
+ *
  * The Json library returns an error code when trying to deserialize that broken message. This
  * function searches for the first occurence of the character '{' and writes "}]" after it.
- * 
+ *
  * Example output:
  * [2, "75705e50-682d-404e-b400-1bca33d41e19", "ChangeConfiguration", {}]
  *

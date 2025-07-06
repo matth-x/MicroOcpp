@@ -134,7 +134,7 @@ std::unique_ptr<JsonDoc> ReserveNow::createConf(){
         MO_DBG_ERR("didn't set reservationStatus");
         payload["status"] = "Rejected";
     }
-    
+
     return doc;
 }
 

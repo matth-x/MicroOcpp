@@ -90,7 +90,7 @@ public:
     /*
      * beginTransaction begins the transaction process which eventually leads to a StartTransaction
      * request in the normal case.
-     * 
+     *
      * Returns true if the transaction process begins successfully
      * Returns false if no transaction process begins due to this call (e.g. other transaction still running)
      */
@@ -107,7 +107,7 @@ public:
 
     Transaction *getTransaction();
 
-    Transaction *allocateTransaction(); 
+    Transaction *allocateTransaction();
 
     void setConnectorPluggedInput(bool (*connectorPlugged)(unsigned int, void*), void *userData);
     void setEvReadyInput(bool (*evReady)(unsigned int, void*), void *userData);

@@ -201,15 +201,15 @@ bool Request::receiveRequest(JsonArray request) {
         MO_DBG_ERR("malformatted msgId");
         return false;
     }
-  
+
     setMessageID(request[1].as<const char*>());
-    
+
     /*
      * Hand the payload over to the Request object
      */
     JsonObject payload = request[3];
     operation->processReq(payload);
-    
+
     /*
      * Hand the payload over to the first Callback. It is a callback that notifies the client that request has been processed in the OCPP-library
      */

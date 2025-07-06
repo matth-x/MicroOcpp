@@ -146,7 +146,7 @@ bool VariableContainerOwning::load() {
             MO_DBG_ERR("failed to load %s", filename);
             return false;
     }
-    
+
     JsonArray variablesJson = doc["variables"];
 
     for (JsonObject stored : variablesJson) {
@@ -259,7 +259,7 @@ bool VariableContainerOwning::commit() {
             stored["evseId"] = variable.getComponentId().evse.id;
         }
         stored["name"] = variable.getName();
-        
+
         switch (variable.getInternalDataType()) {
             case Variable::InternalDataType::Int:
                 if (variable.hasAttribute(Variable::AttributeType::Actual)) stored["valActual"] = variable.getInt(Variable::AttributeType::Actual);

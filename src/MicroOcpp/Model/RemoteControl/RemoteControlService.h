@@ -108,7 +108,7 @@ public:
     bool setup();
 
     #if MO_ENABLE_V16
-    v16::RemoteStartStopStatus remoteStartTransaction(int connectorId, const char *idTag, std::unique_ptr<ChargingProfile> chargingProfile); 
+    v16::RemoteStartStopStatus remoteStartTransaction(int connectorId, const char *idTag, std::unique_ptr<ChargingProfile> chargingProfile);
 
     v16::RemoteStartStopStatus remoteStopTransaction(int transactionId);
     #endif //MO_ENABLE_V16

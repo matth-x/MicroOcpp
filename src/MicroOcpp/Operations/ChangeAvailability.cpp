@@ -79,7 +79,7 @@ std::unique_ptr<JsonDoc> v16::ChangeAvailability::createConf(){
     } else {
         payload["status"] = "Accepted";
     }
-        
+
     return doc;
 }
 
@@ -98,7 +98,7 @@ const char* v201::ChangeAvailability::getOperationType(){
 void v201::ChangeAvailability::processReq(JsonObject payload) {
 
     unsigned int evseId = 0;
-    
+
     if (payload.containsKey("evse")) {
         int evseIdRaw = payload["evse"]["id"] | -1;
         if (evseIdRaw < 0) {

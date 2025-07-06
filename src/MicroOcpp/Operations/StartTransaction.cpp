@@ -18,11 +18,11 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::v16;
 
 StartTransaction::StartTransaction(Context& context, Transaction *transaction) : MemoryManaged("v16.Operation.", "StartTransaction"), context(context), transaction(transaction) {
-    
+
 }
 
 StartTransaction::~StartTransaction() {
-    
+
 }
 
 const char* StartTransaction::getOperationType() {
@@ -32,9 +32,9 @@ const char* StartTransaction::getOperationType() {
 std::unique_ptr<JsonDoc> StartTransaction::createReq() {
 
     auto doc = makeJsonDoc(getMemoryTag(),
-                JSON_OBJECT_SIZE(6) + 
+                JSON_OBJECT_SIZE(6) +
                 MO_JSONDATE_SIZE);
-                
+
     JsonObject payload = doc->to<JsonObject>();
 
     payload["connectorId"] = transaction->getConnectorId();

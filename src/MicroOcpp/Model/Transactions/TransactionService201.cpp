@@ -244,7 +244,7 @@ TransactionEventData::ChargingState TransactionServiceEvse::getChargingState() {
         res = TransactionEventData::ChargingState::Idle;
     } else if (!transaction || !transaction->isAuthorizationActive || !transaction->isAuthorized) {
         res = TransactionEventData::ChargingState::EVConnected;
-    } else if (evseReadyInput && !evseReadyInput(evseId, evseReadyInputUserData)) { 
+    } else if (evseReadyInput && !evseReadyInput(evseId, evseReadyInputUserData)) {
         res = TransactionEventData::ChargingState::SuspendedEVSE;
     } else if (evReadyInput && !evReadyInput(evseId, evReadyInputUserData)) {
         res = TransactionEventData::ChargingState::SuspendedEV;
@@ -305,7 +305,7 @@ void TransactionServiceEvse::loop() {
                     !transaction->started &&
                     (txService.isTxStartPoint(TxStartStopPoint::Authorized) || txService.isTxStartPoint(TxStartStopPoint::PowerPathClosed) ||
                      txService.isTxStopPoint(TxStartStopPoint::Authorized)  || txService.isTxStopPoint(TxStartStopPoint::PowerPathClosed))) {
-                
+
                 MO_DBG_INFO("Session mngt: Deauthorized before start");
                 endTransaction(MO_TxStoppedReason_DeAuthorized, MO_TxEventTriggerReason_Deauthorized);
             }
@@ -386,8 +386,8 @@ void TransactionServiceEvse::loop() {
             txEvent->eventType = TransactionEventData::Type::Ended;
             txEvent->triggerReason = triggerReason;
         }
-    } 
-    
+    }
+
     if (!txStopCondition) {
         // start tx?
 
@@ -774,7 +774,7 @@ bool TransactionServiceEvse::endAuthorization(IdToken idToken, bool validateIdTo
 
     MO_DBG_DEBUG("End session started by idTag %s",
                             transaction->idToken.get());
-    
+
     if (transaction->idToken.equals(idToken)) {
         // use same idToken like tx start
         transaction->isAuthorizationActive = false;
@@ -1250,7 +1250,7 @@ bool TransactionService::setup() {
             if (!txSvcEvse) {
                 return TriggerMessageStatus::ERR_INTERNAL;
             }
-            
+
             auto ret = txSvcEvse->triggerTransactionEvent();
 
             bool abortLoop = false;
@@ -1292,7 +1292,7 @@ bool TransactionService::setup() {
         evses[0]->evReadyInput = disabledInput;
         evses[0]->evseReadyInput = disabledInput;
     }
-    
+
     return true;
 }
 
@@ -1314,7 +1314,7 @@ void TransactionService::loop() {
         //pending tx on evseId 0
         if (evses[0]->transaction->active) {
             for (unsigned int evseId = 1; evseId < MO_NUM_EVSEID && evses[evseId]; evseId++) {
-                if (!evses[evseId]->getTransaction() && 
+                if (!evses[evseId]->getTransaction() &&
                         (!evses[evseId]->connectorPluggedInput || evses[evseId]->connectorPluggedInput(evseId, evses[evseId]->connectorPluggedInputUserData))) {
                     MO_DBG_INFO("assign tx to evse %u", evseId);
                     evses[0]->transaction->notifyEvseId = true;

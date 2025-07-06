@@ -16,7 +16,7 @@ using namespace MicroOcpp::v16;
 
 //can only be used for echo server debugging
 MeterValues::MeterValues(Context& context) : MemoryManaged("v16.Operation.", "MeterValues"), context(context) {
-    
+
 }
 
 MeterValues::MeterValues(Context& context, unsigned int connectorId, int transactionId, MeterValue *meterValue, bool transferOwnership) :
@@ -26,7 +26,7 @@ MeterValues::MeterValues(Context& context, unsigned int connectorId, int transac
         isMeterValueOwner(transferOwnership),
         connectorId(connectorId),
         transactionId(transactionId) {
-    
+
 }
 
 MeterValues::~MeterValues(){

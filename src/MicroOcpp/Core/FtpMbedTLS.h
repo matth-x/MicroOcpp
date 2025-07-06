@@ -9,16 +9,16 @@
  * Built-in FTP client (depends on MbedTLS)
  *
  * Moved from https://github.com/matth-x/MicroFtp
- * 
+ *
  * Currently, the compatibility with the following FTP servers has been tested:
- * 
+ *
  * | Server                                                                | FTP | FTPS |
  * | --------------------------------------------------------------------- | --- | ---- |
  * | [vsftp](https://security.appspot.com/vsftpd.html)                     |     |  x   |
  * | [Rebex](https://www.rebex.net/)                                       |  x  |  x   |
  * | [Windows Server 2022](https://www.microsoft.com/en-us/windows-server) |  x  |  x   |
  * | [SFTPGo](https://github.com/drakkan/sftpgo)                           |  x  |      |
- * 
+ *
  */
 
 #include <MicroOcpp/Platform.h>

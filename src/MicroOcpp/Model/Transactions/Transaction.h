@@ -31,8 +31,8 @@ namespace v16 {
  * A transaction is initiated by the client (charging station) and processed by the server (central system).
  * The client side of a transaction is all data that is generated or collected at the charging station. The
  * server side is all transaction data that is assigned by the central system.
- * 
- * See OCPP 1.6 Specification - Edition 2, sections 3.6, 4.8, 4.10 and 5.11. 
+ *
+ * See OCPP 1.6 Specification - Edition 2, sections 3.6, 4.8, 4.10 and 5.11.
  */
 
 class TransactionStoreEvse;
@@ -41,7 +41,7 @@ class SendStatus {
 private:
     bool requested = false;
     bool confirmed = false;
-    
+
     unsigned int opNr = 0;
     unsigned int attemptNr = 0;
     Timestamp attemptTime;
@@ -345,7 +345,7 @@ public:
     std::unique_ptr<IdToken> idToken;
     EvseId evse = -1;
     Vector<std::unique_ptr<MeterValue>> meterValue;
-    
+
     unsigned int opNr = 0;
     unsigned int attemptNr = 0;
     Timestamp attemptTime;

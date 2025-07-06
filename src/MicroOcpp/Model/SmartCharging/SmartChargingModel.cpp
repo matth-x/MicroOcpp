@@ -147,7 +147,7 @@ bool ChargingSchedule::calculateLimit(int32_t unixTime, int32_t sessionDurationS
     switch (chargingProfileKind) {
         case ChargingProfileKindType::Absolute:
             if (unixTime == 0) {
-                //cannot use Absolute profiles when 
+                //cannot use Absolute profiles when
                 MO_DBG_WARN("Need to set clock before using absolute profiles");
                 return false;
             }
@@ -500,7 +500,7 @@ bool ChargingProfile::parseJson(Clock& clock, int ocppVersion, JsonObject json) 
         chargingProfileId = json["id"] | -1;
     }
     #endif //MO_ENABLE_V201
-    
+
     if (chargingProfileId < 0) {
         MO_DBG_WARN("format violation");
         return false;

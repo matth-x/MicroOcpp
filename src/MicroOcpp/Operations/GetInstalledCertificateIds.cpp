@@ -117,7 +117,7 @@ std::unique_ptr<JsonDoc> GetInstalledCertificateIds::createConf() {
 
         mo_cert_print_serialNumber(&chainElem.certificateHashData, buf, sizeof(buf));
         certHashJson["certificateHashData"]["serialNumber"] = buf;
-        
+
         if (!chainElem.childCertificateHashData.empty()) {
             MO_DBG_ERR("only sole root certs supported");
         }

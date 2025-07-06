@@ -37,7 +37,7 @@ private:
     bool activatedPostBootCommunication = false;
 public:
     unsigned int getFrontRequestOpNr() override; //override FrontRequestOpNr behavior: in PreBoot mode, always return 0 to avoid other RequestQueues from sending msgs
-    
+
     void activatePostBootCommunication(); //end PreBoot mode, now send Requests normally
 };
 
@@ -73,7 +73,7 @@ private:
     char *bnDataBuf = nullptr;
 
     int ocppVersion = -1;
-    
+
     #if MO_ENABLE_V16
     v16::Configuration *preBootTransactionsBoolV16 = nullptr;
     #endif

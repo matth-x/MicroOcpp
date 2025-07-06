@@ -233,7 +233,7 @@ MO_ChargePointStatus v16::AvailabilityServiceEvse::getStatus() {
         if (connectorPluggedInput && !connectorPluggedInput(evseId, connectorPluggedInputUserData)) { //special case when StopTransactionOnEVSideDisconnect is false
             res = MO_ChargePointStatus_SuspendedEV;
         } else if (!txServiceEvse->ocppPermitsCharge() ||
-                (evseReadyInput && !evseReadyInput(evseId, evseReadyInputUserData))) { 
+                (evseReadyInput && !evseReadyInput(evseId, evseReadyInputUserData))) {
             res = MO_ChargePointStatus_SuspendedEVSE;
         } else if (evReadyInput && !evReadyInput(evseId, evReadyInputUserData)) {
             res = MO_ChargePointStatus_SuspendedEV;
@@ -245,7 +245,7 @@ MO_ChargePointStatus v16::AvailabilityServiceEvse::getStatus() {
     else if (model.getReservationService() && model.getReservationService()->getReservation(evseId)) {
         res = MO_ChargePointStatus_Reserved;
     }
-    #endif 
+    #endif
     else if ((!transaction) &&                                           //no transaction process occupying the connector
                (!connectorPluggedInput || !connectorPluggedInput(evseId, connectorPluggedInputUserData)) &&   //no vehicle plugged
                (!occupiedInput || !occupiedInput(evseId, occupiedInputUserData))) {                       //occupied override clear
@@ -351,7 +351,7 @@ Operation *v16::AvailabilityServiceEvse::createTriggeredStatusNotification() {
 }
 
 v16::AvailabilityService::AvailabilityService(Context& context) : MemoryManaged("v16.Availability.AvailabilityService"), context(context) {
-    
+
 }
 
 v16::AvailabilityService::~AvailabilityService() {
@@ -597,7 +597,7 @@ bool v201::AvailabilityServiceEvse::addFaultedInput(FaultedInput faultedInput) {
 }
 
 v201::AvailabilityService::AvailabilityService(Context& context) : MemoryManaged("v201.Availability.AvailabilityService"), context(context) {
-    
+
 }
 
 v201::AvailabilityService::~AvailabilityService() {

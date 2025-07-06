@@ -29,7 +29,7 @@ public:
     void processReq(JsonObject payload) override;
 
     std::unique_ptr<JsonDoc> createConf() override;
-    
+
     const char *getErrorCode() override {return errorCode;}
 };
 

@@ -37,7 +37,7 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
         numEvseId = context.getModel201().getNumEvseId();
     }
     #endif //MO_ENABLE_V201
-    
+
     duration = payload["duration"] | -1;
 
     if (evseId < 0 || duration < 0) {

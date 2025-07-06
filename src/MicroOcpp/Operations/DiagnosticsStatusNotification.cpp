@@ -13,7 +13,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::v16;
 
 DiagnosticsStatusNotification::DiagnosticsStatusNotification(DiagnosticsStatus status) : MemoryManaged("v16.Operation.", "DiagnosticsStatusNotification"), status(status) {
-    
+
 }
 
 std::unique_ptr<JsonDoc> DiagnosticsStatusNotification::createReq() {

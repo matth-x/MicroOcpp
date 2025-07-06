@@ -13,7 +13,7 @@
 using namespace MicroOcpp;
 
 v16::UnlockConnector::UnlockConnector(Context& context, RemoteControlService& rcService) : MemoryManaged("v16.Operation.", "UnlockConnector"), context(context), rcService(rcService) {
-  
+
 }
 
 const char* v16::UnlockConnector::getOperationType(){
@@ -45,10 +45,10 @@ std::unique_ptr<JsonDoc> v16::UnlockConnector::createConf() {
     {
         int32_t dtTimerStart;
         context.getClock().delta(context.getClock().getUptime(), timerStart, dtTimerStart);
-    
+
         if (rcEvse && status == UnlockStatus::PENDING && dtTimerStart < MO_UNLOCK_TIMEOUT) {
             status = rcEvse->unlockConnector16();
-    
+
             if (status == UnlockStatus::PENDING) {
                 return nullptr; //no result yet - delay confirmation response
             }

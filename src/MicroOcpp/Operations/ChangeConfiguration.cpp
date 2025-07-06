@@ -14,7 +14,7 @@ using namespace MicroOcpp;
 using namespace MicroOcpp::v16;
 
 ChangeConfiguration::ChangeConfiguration(ConfigurationService& configService) : MemoryManaged("v16.Operation.", "ChangeConfiguration"), configService(configService) {
-  
+
 }
 
 const char* ChangeConfiguration::getOperationType(){
