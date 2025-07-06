@@ -107,12 +107,58 @@ df.index.names = ['TC_ID']
 max_memory_total = 0
 min_memory_base = 1000 * 1000 * 1000
 
+# Ensure Simulator is still running despite Reset requests via OCPP or the rmt_ctrl interface
+run_simulator = False
+exit_run_simulator_process = False
+
+def run_simulator_process():
+
+    global run_simulator
+    global exit_run_simulator_process
+
+    track_run_simulator = run_simulator
+    iterations_since_last_check = 0
+
+    while not exit_run_simulator_process:
+
+        time.sleep(0.001)
+        iterations_since_last_check += 1
+
+        if track_run_simulator == run_simulator and iterations_since_last_check <= 1000:            
+            continue
+
+        iterations_since_last_check = 0
+        
+        if not track_run_simulator and run_simulator:
+            print('Starting simulator')
+            os.system(os.path.join('MicroOcppSimulator', 'build', 'mo_simulator') + ' &')
+            track_run_simulator = True
+        
+        if track_run_simulator and not run_simulator:
+            print('Shutdown simulator')
+            os.system('killall -s SIGINT mo_simulator')
+            track_run_simulator = False
+
+        if track_run_simulator == run_simulator:
+            # Check if mo_simulator process can be found
+            try:
+                subprocess.check_output(['pgrep', '-f', 'mo_simulator'])
+                # Found, still running
+                track_run_simulator = True
+            except subprocess.CalledProcessError:
+                # Exited, restart
+                track_run_simulator = False
+
+    print('Stopped run_simulator_process')
+
 def cleanup_simulator():
+    global run_simulator
 
     print('Clean up Simulator')
 
     print('   - stop Simulator, if still running')
-    os.system('killall -s SIGINT mo_simulator')
+    run_simulator = False
+    time.sleep(1)
 
     print('   - clean state')
     os.system('rm -rf ' + os.path.join('MicroOcppSimulator', 'mo_store', '*'))
@@ -120,6 +166,7 @@ def cleanup_simulator():
     print('   - done')
 
 def setup_simulator():
+    global run_simulator
 
     cleanup_simulator()
 
@@ -138,32 +185,16 @@ def setup_simulator():
 
     print('   - start Simulator')
 
-    os.system(os.path.join('MicroOcppSimulator', 'build', 'mo_simulator') + ' &')
+    run_simulator = True
+    time.sleep(1)
 
     print('   - done')
-
-# Ensure Simulator is still running despite Reset requests via OCPP or the rmt_ctrl interface
-keepalive_simulator = False
-
-def keepalive_simulator_thread():
-
-    while keepalive_simulator:
-        # Check if mo_simulator process can be found
-        try:
-            subprocess.check_output(['pgrep', '-f', 'mo_simulator'])
-            # Found, still running
-        except subprocess.CalledProcessError:
-            # Exited, restart
-            print('Keepalive: restart Simulator')
-            os.system(os.path.join('MicroOcppSimulator', 'build', 'mo_simulator') + ' &')
-
-        time.sleep(1)
 
 def run_measurements():
     
     global max_memory_total
     global min_memory_base
-    global keepalive_simulator
+    global run_simulator
     
     print("Fetch TCs from Test Driver")
 
@@ -241,11 +272,6 @@ def run_measurements():
         
         response = requests.post('http://localhost:8000/api/memory/reset')
         print(f'Simulator API /memory/reset:\n > {response.status_code}')
-
-        # Keepalive Simulator while running the test cases (tests may triger Reset commands)
-        keepalive_simulator = True
-        keepalive_thread = threading.Thread(target=keepalive_simulator_thread, daemon=True)
-        keepalive_thread.start()
         
         test_response = requests.post(os.environ['TEST_DRIVER_URL'] + '/testcases/' + testcase['testcase_name'] + '/execute', 
                                  headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']})
@@ -254,9 +280,6 @@ def run_measurements():
         #    print(json.dumps(test_response.json(), indent=4))
         #except:
         #    print(' > No JSON')
-
-        keepalive_simulator = False
-        keepalive_thread.join()
 
         sim_response = requests.get('http://localhost:8000/api/memory/info')
         print(f'Simulator API /memory/info:\n > {sim_response.status_code}, current heap={sim_response.json()["total_current"]}, max heap={sim_response.json()["total_max"]}')
@@ -312,6 +335,8 @@ def run_measurements():
 
 def run_measurements_and_retry():
 
+    global exit_run_simulator_process
+
     if (    'TEST_DRIVER_URL'        not in os.environ or
             'TEST_DRIVER_CONFIG'     not in os.environ or
             'TEST_DRIVER_KEY'        not in os.environ or
@@ -325,7 +350,15 @@ def run_measurements_and_retry():
 
     for i in range(n_tries):
 
+        run_simulator_thread = None
+
         try:
+            # Keepalive Simulator while running the test cases (tests may triger Reset commands)
+            
+            exit_run_simulator_process = False
+            run_simulator_thread = threading.Thread(target=run_simulator_process, daemon=True)
+            run_simulator_thread.start()
+
             run_measurements()
             print('\n **Test cases executed successfully**')
             break
@@ -334,13 +367,20 @@ def run_measurements_and_retry():
 
             traceback.print_exc()
 
-            print("Stop Test Driver")    
-            response = requests.post(os.environ['TEST_DRIVER_URL'] + '/session/stop', 
-                                    headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']})
-            print(f'Test Driver /session/stop:\n > {response.status_code}')
-            #print(json.dumps(response.json(), indent=4))
+            try:
+                print("Stop Test Driver")    
+                response = requests.post(os.environ['TEST_DRIVER_URL'] + '/session/stop', 
+                                        headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']})
+                print(f'Test Driver /session/stop:\n > {response.status_code}')
+                #print(json.dumps(response.json(), indent=4))
+            except:
+                print('Error stopping Test Driver')
+                traceback.print_exc()
 
             cleanup_simulator()
+
+            exit_run_simulator_process = True
+            run_simulator_thread.join()
 
             if i + 1 < n_tries:
                 print('Retry test cases')
