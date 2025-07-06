@@ -185,7 +185,7 @@ bool Ocpp16::AvailabilityServiceEvse::addErrorDataInput(MO_ErrorDataInput errorD
     size_t capacity = errorDataInputs.size() + 1;
     errorDataInputs.reserve(capacity);
     trackErrorDataInputs.reserve(capacity);
-    if (errorDataInputs.capacity() != capacity || trackErrorDataInputs.capacity() != capacity) {
+    if (errorDataInputs.capacity() < capacity || trackErrorDataInputs.capacity() < capacity) {
         MO_DBG_ERR("OOM");
         return false;
     }
