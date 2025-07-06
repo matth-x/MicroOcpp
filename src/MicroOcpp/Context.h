@@ -119,6 +119,10 @@ public:
     v201::Model& getModel201();
 #endif
 
+#if MO_ENABLE_V16 || MO_ENABLE_V201
+    ModelCommon& getModelCommon(); //subset of Model16 / Model201 with modules which are shared between v16 and v201 implementation
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201
+
     // eliminate OCPP version specifiers if charger supports just one version anyway
 #if MO_ENABLE_V16 && !MO_ENABLE_V201
     Model& getModel();

@@ -39,12 +39,6 @@ void SetChargingProfile::processReq(JsonObject payload) {
             errorCode = "FormationViolation";
             return;
         }
-
-        if ((unsigned int) evseId >= context.getModel16().getNumEvseId()) {
-            errorCode = "PropertyConstraintViolation";
-            return;
-        }
-
         chargingProfileJson = payload["csChargingProfiles"];
     }
     #endif //MO_ENABLE_V16
@@ -55,15 +49,14 @@ void SetChargingProfile::processReq(JsonObject payload) {
             errorCode = "FormationViolation";
             return;
         }
-
-        if ((unsigned int) evseId >= context.getModel201().getNumEvseId()) {
-            errorCode = "PropertyConstraintViolation";
-            return;
-        }
-
         chargingProfileJson = payload["chargingProfile"];
     }
     #endif //MO_ENABLE_V201
+
+    if ((unsigned int) evseId >= context.getModelCommon().getNumEvseId()) {
+        errorCode = "PropertyConstraintViolation";
+        return;
+    }
 
     auto chargingProfile = std::unique_ptr<ChargingProfile>(new ChargingProfile());
     if (!chargingProfile) {

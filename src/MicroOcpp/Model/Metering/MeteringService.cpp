@@ -198,19 +198,6 @@ void updateInputSelectFlag(const char *selectString, uint8_t flag, Vector<MO_Met
 bool validateSelectString(const char *selectString, void *user_data) {
     auto& context = *reinterpret_cast<Context*>(user_data);
 
-    unsigned int numEvseId = 0;
-
-    #if MO_ENABLE_V16
-    if (context.getOcppVersion() == MO_OCPP_V16) {
-        numEvseId = context.getModel16().getNumEvseId();
-    }
-    #endif //MO_ENABLE_V16
-    #if MO_ENABLE_V201
-    if (context.getOcppVersion() == MO_OCPP_V201) {
-        numEvseId = context.getModel201().getNumEvseId();
-    }
-    #endif //MO_ENABLE_V201
-
     bool isValid = true;
     const char *l = selectString; //the beginning of an entry of the comma-separated list
     const char *r = l; //one place after the last character of the entry beginning with l
@@ -229,7 +216,7 @@ bool validateSelectString(const char *selectString, void *user_data) {
 
         //check if measurand exists in MeterInputs. Search through all EVSEs
         bool found = false;
-        for (unsigned int evseId = 0; evseId < numEvseId; evseId++) {
+        for (unsigned int evseId = 0; evseId < context.getModelCommon().getNumEvseId(); evseId++) {
 
             Vector<MO_MeterInput> *meterInputsPtr = nullptr;
 

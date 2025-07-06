@@ -246,6 +246,29 @@ v201::Model& Context::getModel201() {
 }
 #endif
 
+#if MO_ENABLE_V16 || MO_ENABLE_V201
+ModelCommon& Context::getModelCommon() {
+    #if MO_ENABLE_V16 && MO_ENABLE_V201
+    if (ocppVersion == MO_OCPP_V16) {
+        return static_cast<ModelCommon&>(modelV16);
+    } else if (ocppVersion == MO_OCPP_V201) {
+        return static_cast<ModelCommon&>(modelV201);
+    } else {
+        MO_DBG_ERR("OCPP version undefined");
+        return static_cast<ModelCommon&>(modelV16);
+    }
+    #elif MO_ENABLE_V16
+    {
+        return static_cast<ModelCommon&>(modelV16);
+    }
+    #elif MO_ENABLE_V201
+    {
+        return static_cast<ModelCommon&>(modelV201);
+    }
+    #endif
+}
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201
+
 #if MO_ENABLE_V16 && !MO_ENABLE_V201
 Model& Context::getModel() {
     return getModel16();

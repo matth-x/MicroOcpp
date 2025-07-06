@@ -84,8 +84,6 @@ bool BootService::setup() {
             return false;
         }
 
-        heartbeatService = context.getModel16().getHeartbeatService(); //optional
-
         RemoteControlService *rcService = context.getModel16().getRemoteControlService();
         if (!rcService) {
             MO_DBG_ERR("initialization error");
@@ -115,9 +113,7 @@ bool BootService::setup() {
             return false;
         }
 
-        heartbeatService = context.getModel201().getHeartbeatService(); //optional
-
-        RemoteControlService *rcService = context.getModel16().getRemoteControlService();
+        RemoteControlService *rcService = context.getModel201().getRemoteControlService();
         if (!rcService) {
             MO_DBG_ERR("initialization error");
             return false;
@@ -202,18 +198,7 @@ void BootService::loop() {
     #endif //MO_ENABLE_V201
 
     if (!activatedModel && (status == RegistrationStatus::Accepted || preBootTransactions)) {
-
-        #if MO_ENABLE_V16
-        if (ocppVersion == MO_OCPP_V16) {
-            context.getModel16().activateTasks();
-        }
-        #endif //MO_ENABLE_V16
-        #if MO_ENABLE_V201
-        if (ocppVersion == MO_OCPP_V201) {
-            context.getModel201().activateTasks();
-        }
-        #endif //MO_ENABLE_V201
-
+        context.getModelCommon().activateTasks();
         activatedModel = true;
     }
 
@@ -234,7 +219,7 @@ void BootService::loop() {
      * Create BootNotification. The BootNotifaction object will fetch its paremeters from
      * this class and notify this class about the response
      */
-    auto bootNotification = makeRequest(context, new BootNotification(context, *this, heartbeatService, getBootNotificationData()));
+    auto bootNotification = makeRequest(context, new BootNotification(context, *this, context.getModelCommon().getHeartbeatService(), getBootNotificationData()));
     bootNotification->setTimeout(interval_s);
     context.getMessageService().sendRequestPreBoot(std::move(bootNotification));
 

@@ -196,19 +196,7 @@ bool mo_setBootNotificationData2(MO_Context *ctx, MO_BootNotificationData bnData
     }
     #endif
 
-    MicroOcpp::BootService *bootService = nullptr;
-
-    #if MO_ENABLE_V16
-    if (context->getOcppVersion() == MO_OCPP_V16) {
-        bootService = context->getModel16().getBootService();
-    }
-    #endif
-    #if MO_ENABLE_V201
-    if (context->getOcppVersion() == MO_OCPP_V201) {
-        bootService = context->getModel201().getBootService();
-    }
-    #endif
-
+    MicroOcpp::BootService *bootService = context->getModelCommon().getBootService();
     if (!bootService) {
         MO_DBG_ERR("OOM");
         return false;
@@ -338,19 +326,7 @@ bool mo_setSmartChargingOutput(MO_Context *ctx, unsigned int evseId, void (*char
     }
     auto context = mo_getContext2(ctx);
 
-    MicroOcpp::SmartChargingService *scService = nullptr;
-
-    #if MO_ENABLE_V16
-    if (context->getOcppVersion() == MO_OCPP_V16) {
-        scService = context->getModel16().getSmartChargingService();
-    }
-    #endif
-    #if MO_ENABLE_V201
-    if (context->getOcppVersion() == MO_OCPP_V201) {
-        scService = context->getModel201().getSmartChargingService();
-    }
-    #endif
-
+    MicroOcpp::SmartChargingService *scService = context->getModelCommon().getSmartChargingService();
     if (!scService) {
         MO_DBG_ERR("OOM");
         return false;
@@ -1513,28 +1489,13 @@ void mo_setOnUnlockConnector2(MO_Context *ctx, unsigned int evseId, MO_UnlockCon
     }
     auto context = mo_getContext2(ctx);
 
-    #if MO_ENABLE_V16
-    if (context->getOcppVersion() == MO_OCPP_V16) {
-        auto rmtSvc = context->getModel16().getRemoteControlService();
-        auto rmtSvcEvse = rmtSvc ? rmtSvc->getEvse(evseId) : nullptr;
-        if (!rmtSvcEvse) {
-            MO_DBG_ERR("init failure");
-            return;
-        }
-        rmtSvcEvse->setOnUnlockConnector(onUnlockConnector2, userData);
+    auto rmtSvc = context->getModelCommon().getRemoteControlService();
+    auto rmtSvcEvse = rmtSvc ? rmtSvc->getEvse(evseId) : nullptr;
+    if (!rmtSvcEvse) {
+        MO_DBG_ERR("init failure");
+        return;
     }
-    #endif
-    #if MO_ENABLE_V201
-    if (context->getOcppVersion() == MO_OCPP_V201) {
-        auto rmtSvc = context->getModel201().getRemoteControlService();
-        auto rmtSvcEvse = rmtSvc ? rmtSvc->getEvse(evseId) : nullptr;
-        if (!rmtSvcEvse) {
-            MO_DBG_ERR("init failure");
-            return;
-        }
-        rmtSvcEvse->setOnUnlockConnector(onUnlockConnector2, userData);
-    }
-    #endif
+    rmtSvcEvse->setOnUnlockConnector(onUnlockConnector2, userData);
 }
 #endif //MO_ENABLE_CONNECTOR_LOCK
 
@@ -1606,19 +1567,7 @@ bool mo_isAcceptedByCsms2(MO_Context *ctx) {
     }
     auto context = mo_getContext2(ctx);
 
-    MicroOcpp::BootService *bootService = nullptr;
-
-    #if MO_ENABLE_V16
-    if (context->getOcppVersion() == MO_OCPP_V16) {
-        bootService = context->getModel16().getBootService();
-    }
-    #endif
-    #if MO_ENABLE_V201
-    if (context->getOcppVersion() == MO_OCPP_V201) {
-        bootService = context->getModel201().getBootService();
-    }
-    #endif
-
+    MicroOcpp::BootService *bootService = context->getModelCommon().getBootService();
     if (!bootService) {
         MO_DBG_ERR("OOM");
         return false;
@@ -1937,19 +1886,7 @@ void mo_setDiagnosticsReader(MO_Context *ctx, size_t (*readBytes)(char*, size_t,
     }
     auto context = mo_getContext2(ctx);
 
-    MicroOcpp::DiagnosticsService *diagSvc = nullptr;
-
-    #if MO_ENABLE_V16
-    if (context->getOcppVersion() == MO_OCPP_V16) {
-        diagSvc = context->getModel16().getDiagnosticsService();
-    }
-    #endif
-    #if MO_ENABLE_V201
-    if (context->getOcppVersion() == MO_OCPP_V201) {
-        diagSvc = context->getModel201().getDiagnosticsService();
-    }
-    #endif
-
+    MicroOcpp::DiagnosticsService *diagSvc = context->getModelCommon().getDiagnosticsService();
     if (!diagSvc) {
         MO_DBG_ERR("init failure");
         return;
@@ -1965,19 +1902,7 @@ void mo_setDiagnosticsFtpServerCert(MO_Context *ctx, const char *cert) {
     }
     auto context = mo_getContext2(ctx);
 
-    MicroOcpp::DiagnosticsService *diagSvc = nullptr;
-
-    #if MO_ENABLE_V16
-    if (context->getOcppVersion() == MO_OCPP_V16) {
-        diagSvc = context->getModel16().getDiagnosticsService();
-    }
-    #endif
-    #if MO_ENABLE_V201
-    if (context->getOcppVersion() == MO_OCPP_V201) {
-        diagSvc = context->getModel201().getDiagnosticsService();
-    }
-    #endif
-
+    MicroOcpp::DiagnosticsService *diagSvc = context->getModelCommon().getDiagnosticsService();
     if (!diagSvc) {
         MO_DBG_ERR("init failure");
         return;

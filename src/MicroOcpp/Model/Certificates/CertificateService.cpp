@@ -26,26 +26,12 @@ bool CertificateService::setup() {
         return true; // not a critical failure
     }
 
-    #if MO_ENABLE_V16
-    if (context.getOcppVersion() == MO_OCPP_V16) {
-        context.getMessageService().registerOperation("DeleteCertificate", [] (Context& context) -> Operation* {
-            return new DeleteCertificate(*context.getModel16().getCertificateService());});
-        context.getMessageService().registerOperation("GetInstalledCertificateIds", [] (Context& context) -> Operation* {
-            return new GetInstalledCertificateIds(*context.getModel16().getCertificateService());});
-        context.getMessageService().registerOperation("InstallCertificate", [] (Context& context) -> Operation* {
-            return new InstallCertificate(*context.getModel16().getCertificateService());});
-    }
-    #endif
-    #if MO_ENABLE_V201
-    if (context.getOcppVersion() == MO_OCPP_V201) {
-        context.getMessageService().registerOperation("DeleteCertificate", [] (Context& context) -> Operation* {
-            return new DeleteCertificate(*context.getModel201().getCertificateService());});
-        context.getMessageService().registerOperation("GetInstalledCertificateIds", [] (Context& context) -> Operation* {
-            return new GetInstalledCertificateIds(*context.getModel201().getCertificateService());});
-        context.getMessageService().registerOperation("InstallCertificate", [] (Context& context) -> Operation* {
-            return new InstallCertificate(*context.getModel201().getCertificateService());});
-    }
-    #endif
+    context.getMessageService().registerOperation("DeleteCertificate", [] (Context& context) -> Operation* {
+        return new DeleteCertificate(*context.getModelCommon().getCertificateService());});
+    context.getMessageService().registerOperation("GetInstalledCertificateIds", [] (Context& context) -> Operation* {
+        return new GetInstalledCertificateIds(*context.getModelCommon().getCertificateService());});
+    context.getMessageService().registerOperation("InstallCertificate", [] (Context& context) -> Operation* {
+        return new InstallCertificate(*context.getModelCommon().getCertificateService());});
 
     return true;
 }

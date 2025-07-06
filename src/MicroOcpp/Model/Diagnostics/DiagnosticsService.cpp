@@ -94,6 +94,11 @@ bool DiagnosticsService::setup() {
         customProtocols = nullptr;
     }
 
+    auto rcService = context.getModelCommon().getRemoteControlService();
+    if (!rcService) {
+        MO_DBG_ERR("initialization error");
+        return false;
+    }
 
     ocppVersion = context.getOcppVersion();
     #if MO_ENABLE_V16
@@ -119,28 +124,14 @@ bool DiagnosticsService::setup() {
         context.getMessageService().registerOperation("GetDiagnostics", [] (Context& context) -> Operation* {
             return new v16::GetDiagnostics(context, *context.getModel16().getDiagnosticsService());});
 
-        context.getMessageService().registerOperation("GetLog", [] (Context& context) -> Operation* {
-            return new GetLog(context, *context.getModel16().getDiagnosticsService());});
-
         #if MO_ENABLE_MOCK_SERVER
         context.getMessageService().registerOperation("DiagnosticsStatusNotification", nullptr, nullptr);
-        context.getMessageService().registerOperation("LogStatusNotification", nullptr, nullptr);
         #endif //MO_ENABLE_MOCK_SERVER
-
-        auto rcService = context.getModel16().getRemoteControlService();
-        if (!rcService) {
-            MO_DBG_ERR("initialization error");
-            return false;
-        }
 
         rcService->addTriggerMessageHandler("DiagnosticsStatusNotification", [] (Context& context) -> Operation* {
             auto diagSvc = context.getModel16().getDiagnosticsService();
             return new v16::DiagnosticsStatusNotification(diagSvc->getUploadStatus16());
         });
-
-        rcService->addTriggerMessageHandler("LogStatusNotification", [] (Context& context) -> Operation* {
-            auto diagService = context.getModel16().getDiagnosticsService();
-            return new LogStatusNotification(diagService->getUploadStatus(), diagService->getRequestId());});
     }
     #endif //MO_ENABLE_V16
     #if MO_ENABLE_V201
@@ -163,25 +154,19 @@ bool DiagnosticsService::setup() {
         } else if (ftpClient) {
             fileTransferProtocols->setString("FTP,FTPS");
         }
-
-        context.getMessageService().registerOperation("GetLog", [] (Context& context) -> Operation* {
-            return new GetLog(context, *context.getModel201().getDiagnosticsService());});
-
-        #if MO_ENABLE_MOCK_SERVER
-        context.getMessageService().registerOperation("LogStatusNotification", nullptr, nullptr);
-        #endif //MO_ENABLE_MOCK_SERVER
-
-        auto rcService = context.getModel16().getRemoteControlService();
-        if (!rcService) {
-            MO_DBG_ERR("initialization error");
-            return false;
-        }
-
-        rcService->addTriggerMessageHandler("LogStatusNotification", [] (Context& context) -> Operation* {
-            auto diagService = context.getModel201().getDiagnosticsService();
-            return new LogStatusNotification(diagService->getUploadStatus(), diagService->getRequestId());});
     }
     #endif //MO_ENABLE_V201
+
+    context.getMessageService().registerOperation("GetLog", [] (Context& context) -> Operation* {
+        return new GetLog(context, *context.getModelCommon().getDiagnosticsService());});
+
+    rcService->addTriggerMessageHandler("LogStatusNotification", [] (Context& context) -> Operation* {
+        auto diagService = context.getModelCommon().getDiagnosticsService();
+        return new LogStatusNotification(diagService->getUploadStatus(), diagService->getRequestId());});
+
+    #if MO_ENABLE_MOCK_SERVER
+    context.getMessageService().registerOperation("LogStatusNotification", nullptr, nullptr);
+    #endif //MO_ENABLE_MOCK_SERVER
 
     MO_FREE(customProtocols); //not needed anymore
     customProtocols = nullptr;
@@ -619,22 +604,10 @@ bool DiagnosticsService::uploadDiagnostics() {
     diagPostambleLen = 0;
     diagPostambleTransferred = 0;
 
-    BootService *bootService = nullptr;
-    #if MO_ENABLE_V16
-    if (ocppVersion == MO_OCPP_V16) {
-        bootService = context.getModel16().getBootService();
-    }
-    #endif //MO_ENABLE_V16
-    #if MO_ENABLE_V201
-    if (ocppVersion == MO_OCPP_V201) {
-        bootService = context.getModel201().getBootService();
-    }
-    #endif //MO_ENABLE_V201
-
     const char *cpModel = nullptr;
     const char *fwVersion = nullptr;
 
-    if (bootService) {
+    if (auto bootService = context.getModelCommon().getBootService()) {
         auto bnData = bootService->getBootNotificationData();
         cpModel = bnData.chargePointModel;
         fwVersion = bnData.firmwareVersion;
@@ -798,22 +771,10 @@ bool DiagnosticsService::uploadSecurityLog() {
 
     diagReaderHasData = false;
 
-    BootService *bootService = nullptr;
-    #if MO_ENABLE_V16
-    if (ocppVersion == MO_OCPP_V16) {
-        bootService = context.getModel16().getBootService();
-    }
-    #endif //MO_ENABLE_V16
-    #if MO_ENABLE_V201
-    if (ocppVersion == MO_OCPP_V201) {
-        bootService = context.getModel201().getBootService();
-    }
-    #endif //MO_ENABLE_V201
-
     auto cpModel = makeString(getMemoryTag());
     auto fwVersion = makeString(getMemoryTag());
 
-    if (bootService) {
+    if (auto bootService = context.getModelCommon().getBootService()) {
         auto bnData = bootService->getBootNotificationData();
         cpModel = bnData.chargePointModel;
         fwVersion = bnData.firmwareVersion;

@@ -552,8 +552,6 @@ bool SmartChargingService::setup() {
         if (phases3to1Supported) {
             configService->declareConfiguration<bool>("ConnectorSwitch3to1PhaseSupported", phases3to1Supported, MO_CONFIGURATION_VOLATILE, Mutability::ReadOnly);
         }
-
-        numEvseId = context.getModel16().getNumEvseId();
     }
     #endif //MO_ENABLE_V16
     #if MO_ENABLE_V201
@@ -592,32 +590,17 @@ bool SmartChargingService::setup() {
             varService->declareVariable<bool>("SmartChargingCtrlr", "Phases3to1", phases3to1Supported, Mutability::ReadOnly, false);
         }
         varService->declareVariable<bool>("SmartChargingCtrlr", "SmartChargingAvailable", true, Mutability::ReadOnly, false);
-
-        numEvseId = context.getModel201().getNumEvseId();
     }
     #endif //MO_ENABLE_V201
 
-    #if MO_ENABLE_V16
-    if (ocppVersion == MO_OCPP_V16) {
-        context.getMessageService().registerOperation("ClearChargingProfile", [] (Context& context) -> Operation* {
-            return new ClearChargingProfile(*context.getModel16().getSmartChargingService(), MO_OCPP_V16);});
-        context.getMessageService().registerOperation("GetCompositeSchedule", [] (Context& context) -> Operation* {
-            return new GetCompositeSchedule(context, *context.getModel16().getSmartChargingService());});
-        context.getMessageService().registerOperation("SetChargingProfile", [] (Context& context) -> Operation* {
-            return new SetChargingProfile(context, *context.getModel16().getSmartChargingService());});
-    }
-    #endif //MO_ENABLE_V16
-    #if MO_ENABLE_V201
-    if (ocppVersion == MO_OCPP_V201) {
-        context.getMessageService().registerOperation("ClearChargingProfile", [] (Context& context) -> Operation* {
-            return new ClearChargingProfile(*context.getModel201().getSmartChargingService(), MO_OCPP_V201);});
-        context.getMessageService().registerOperation("GetCompositeSchedule", [] (Context& context) -> Operation* {
-            return new GetCompositeSchedule(context, *context.getModel201().getSmartChargingService());});
-        context.getMessageService().registerOperation("SetChargingProfile", [] (Context& context) -> Operation* {
-            return new SetChargingProfile(context, *context.getModel201().getSmartChargingService());});
-    }
-    #endif //MO_ENABLE_V201
+    context.getMessageService().registerOperation("ClearChargingProfile", [] (Context& context) -> Operation* {
+        return new ClearChargingProfile(*context.getModelCommon().getSmartChargingService(), MO_OCPP_V16);});
+    context.getMessageService().registerOperation("GetCompositeSchedule", [] (Context& context) -> Operation* {
+        return new GetCompositeSchedule(context, *context.getModelCommon().getSmartChargingService());});
+    context.getMessageService().registerOperation("SetChargingProfile", [] (Context& context) -> Operation* {
+        return new SetChargingProfile(context, *context.getModelCommon().getSmartChargingService());});
 
+    numEvseId = context.getModelCommon().getNumEvseId();
     for (unsigned int i = 1; i < numEvseId; i++) { //evseId 0 won't be populated
         if (!getEvse(i)) {
             MO_DBG_ERR("OOM");

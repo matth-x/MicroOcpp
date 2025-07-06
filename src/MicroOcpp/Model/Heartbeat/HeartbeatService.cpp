@@ -75,7 +75,7 @@ bool HeartbeatService::setup() {
     context.getMessageService().registerOperation("Heartbeat", nullptr, Heartbeat::writeMockConf, nullptr, reinterpret_cast<void*>(&context));
     #endif //MO_ENABLE_MOCK_SERVER
 
-    auto rcService = context.getModel16().getRemoteControlService();
+    auto rcService = context.getModelCommon().getRemoteControlService();
     if (!rcService) {
         MO_DBG_ERR("initialization error");
         return false;

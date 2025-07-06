@@ -105,12 +105,7 @@ TEST_CASE( "SmartCharging" ) {
 
     loop();
 
-    MicroOcpp::SmartChargingService *scService = nullptr;
-    if (ocppVersion == MO_OCPP_V16) {
-        scService = mo_getContext()->getModel16().getSmartChargingService();
-    } else if (ocppVersion == MO_OCPP_V201) {
-        scService = mo_getContext()->getModel201().getSmartChargingService();
-    }
+    MicroOcpp::SmartChargingService *scService = mo_getContext()->getModelCommon().getSmartChargingService();
     REQUIRE(scService != nullptr);
 
     SECTION("Clean up files") {
@@ -151,11 +146,7 @@ TEST_CASE( "SmartCharging" ) {
         mo_getContext()->setConnection(&loopback);
         mo_setOcppVersion(ocppVersion);
         mo_setup();
-        if (ocppVersion == MO_OCPP_V16) {
-            scService = mo_getContext()->getModel16().getSmartChargingService();
-        } else if (ocppVersion == MO_OCPP_V201) {
-            scService = mo_getContext()->getModel201().getSmartChargingService();
-        }
+        scService = mo_getContext()->getModelCommon().getSmartChargingService();
 
         REQUIRE(scService->getChargingProfilesCount() == 1);
         REQUIRE(scService->clearChargingProfile(-1, -1, MicroOcpp::ChargingProfilePurposeType::UNDEFINED, -1));

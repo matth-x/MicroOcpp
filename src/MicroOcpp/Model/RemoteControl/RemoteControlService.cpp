@@ -162,8 +162,6 @@ RemoteControlServiceEvse *RemoteControlService::getEvse(unsigned int evseId) {
 
 bool RemoteControlService::setup() {
 
-    unsigned int numEvseId = MO_NUM_EVSEID;
-
     #if MO_ENABLE_V16
     if (context.getOcppVersion() == MO_OCPP_V16) {
 
@@ -186,8 +184,6 @@ bool RemoteControlService::setup() {
             MO_DBG_ERR("setup failure");
             return false;
         }
-
-        numEvseId = context.getModel16().getNumEvseId();
 
         context.getMessageService().registerOperation("RemoteStartTransaction", [] (Context& context) -> Operation* {
             return new v16::RemoteStartTransaction(context, *context.getModel16().getRemoteControlService());});
@@ -217,8 +213,6 @@ bool RemoteControlService::setup() {
             return false;
         }
 
-        numEvseId = context.getModel201().getNumEvseId();
-
         context.getMessageService().registerOperation("RequestStartTransaction", [] (Context& context) -> Operation* {
             return new v201::RequestStartTransaction(context, *context.getModel201().getRemoteControlService());});
         context.getMessageService().registerOperation("RequestStopTransaction", [] (Context& context) -> Operation* {
@@ -232,19 +226,9 @@ bool RemoteControlService::setup() {
     #endif
 
     context.getMessageService().registerOperation("TriggerMessage", [] (Context& context) -> Operation* {
-        RemoteControlService *rcSvc = nullptr;
-        #if MO_ENABLE_V16
-        if (context.getOcppVersion() == MO_OCPP_V16) {
-            rcSvc = context.getModel16().getRemoteControlService();
-        }
-        #endif //MO_ENABLE_V16
-        #if MO_ENABLE_V201
-        if (context.getOcppVersion() == MO_OCPP_V201) {
-            rcSvc = context.getModel201().getRemoteControlService();
-        }
-        #endif //MO_ENABLE_V201
-        return new TriggerMessage(context, *rcSvc);});
+        return new TriggerMessage(context, *context.getModelCommon().getRemoteControlService());});
 
+    numEvseId = context.getModelCommon().getNumEvseId();
     for (unsigned int i = 0; i < numEvseId; i++) {
         if (!getEvse(i) || !getEvse(i)->setup()) {
             MO_DBG_ERR("setup failure");

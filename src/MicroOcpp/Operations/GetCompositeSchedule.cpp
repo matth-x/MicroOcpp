@@ -23,18 +23,14 @@ const char* GetCompositeSchedule::getOperationType() {
 
 void GetCompositeSchedule::processReq(JsonObject payload) {
 
-    unsigned int numEvseId = MO_NUM_EVSEID;
-
     #if MO_ENABLE_V16
     if (ocppVersion == MO_OCPP_V16) {
         evseId = payload["connectorId"] | -1;
-        numEvseId = context.getModel16().getNumEvseId();
     }
     #endif //MO_ENABLE_V16
     #if MO_ENABLE_V201
     if (ocppVersion == MO_OCPP_V201) {
         evseId = payload["evseId"] | -1;
-        numEvseId = context.getModel201().getNumEvseId();
     }
     #endif //MO_ENABLE_V201
 
@@ -45,7 +41,7 @@ void GetCompositeSchedule::processReq(JsonObject payload) {
         return;
     }
 
-    if ((unsigned int) evseId >= numEvseId) {
+    if ((unsigned int) evseId >= context.getModelCommon().getNumEvseId()) {
         errorCode = "PropertyConstraintViolation";
     }
 

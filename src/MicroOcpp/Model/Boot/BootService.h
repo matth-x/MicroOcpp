@@ -42,7 +42,6 @@ public:
 };
 
 class Context;
-class HeartbeatService;
 
 #if MO_ENABLE_V16
 namespace v16 {
@@ -61,8 +60,6 @@ private:
     MO_FilesystemAdapter *filesystem = nullptr;;
 
     PreBootQueue preBootQueue;
-
-    HeartbeatService *heartbeatService = nullptr;
 
     int32_t interval_s = MO_BOOT_INTERVAL_DEFAULT;
     Timestamp lastBootNotification;

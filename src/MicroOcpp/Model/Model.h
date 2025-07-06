@@ -12,6 +12,13 @@
 namespace MicroOcpp {
 
 class Context;
+
+} //namespace MicroOcpp
+
+#if MO_ENABLE_V16 || MO_ENABLE_V201
+
+namespace MicroOcpp {
+
 class BootService;
 class HeartbeatService;
 class RemoteControlService;
@@ -32,7 +39,75 @@ class CertificateService;
 class SecurityEventService;
 #endif //MO_ENABLE_SECURITY_EVENT
 
+//For Model modules which can be used with OCPP 1.6 and OCPP 2.0.1
+class ModelCommon {
+private:
+    Context& context;
+
+    BootService *bootService = nullptr;
+    HeartbeatService *heartbeatService = nullptr;
+    RemoteControlService *remoteControlService = nullptr;
+
+#if MO_ENABLE_DIAGNOSTICS
+    DiagnosticsService *diagnosticsService = nullptr;
+#endif //MO_ENABLE_DIAGNOSTICS
+
+#if MO_ENABLE_SMARTCHARGING
+    SmartChargingService *smartChargingService = nullptr;
+#endif //MO_ENABLE_SMARTCHARGING
+
+#if MO_ENABLE_CERT_MGMT
+    CertificateService *certService = nullptr;
+#endif //MO_ENABLE_CERT_MGMT
+
+#if MO_ENABLE_SECURITY_EVENT
+    SecurityEventService *secEventService = nullptr;
+#endif //MO_ENABLE_SECURITY_EVENT
+
+protected:
+
+    unsigned int numEvseId = MO_NUM_EVSEID;
+    bool runTasks = false;
+
+    ModelCommon(Context& context);
+    ~ModelCommon();
+
+    bool setupCommon();
+    void loopCommon();
+
+public:
+
+    // Set number of EVSE IDs (including 0). On a charger with one physical connector, numEvseId is 2. Default value is MO_NUM_EVSEID
+    void setNumEvseId(unsigned int numEvseId);
+    unsigned int getNumEvseId();
+
+    BootService *getBootService();
+    HeartbeatService *getHeartbeatService();
+    RemoteControlService *getRemoteControlService();
+
+#if MO_ENABLE_DIAGNOSTICS
+    DiagnosticsService *getDiagnosticsService();
+#endif //MO_ENABLE_DIAGNOSTICS
+
+#if MO_ENABLE_SMARTCHARGING
+    SmartChargingService *getSmartChargingService();
+#endif //MO_ENABLE_SMARTCHARGING
+
+#if MO_ENABLE_CERT_MGMT
+    CertificateService *getCertificateService();
+#endif //MO_ENABLE_CERT_MGMT
+
+#if MO_ENABLE_SECURITY_EVENT
+    SecurityEventService *getSecurityEventService();
+#endif //MO_ENABLE_SECURITY_EVENT
+
+    void activateTasks() {runTasks = true;}
+
+};
+
 } //namespace MicroOcpp
+
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201
 
 #if MO_ENABLE_V16
 
@@ -57,26 +132,19 @@ class AuthorizationService;
 class ReservationService;
 #endif //MO_ENABLE_RESERVATION
 
-class Model : public MemoryManaged {
+class Model : public MemoryManaged, public ModelCommon {
 private:
     Context& context;
 
-    BootService *bootService = nullptr;
-    HeartbeatService *heartbeatService = nullptr;
     ConfigurationService *configurationService = nullptr;
     TransactionService *transactionService = nullptr;
     MeteringService *meteringService = nullptr;
     ResetService *resetService = nullptr;
     AvailabilityService *availabilityService = nullptr;
-    RemoteControlService *remoteControlService = nullptr;
 
 #if MO_ENABLE_FIRMWAREMANAGEMENT
     FirmwareService *firmwareService = nullptr;
 #endif //MO_ENABLE_FIRMWAREMANAGEMENT
-
-#if MO_ENABLE_DIAGNOSTICS
-    DiagnosticsService *diagnosticsService = nullptr;
-#endif //MO_ENABLE_DIAGNOSTICS
 
 #if MO_ENABLE_LOCAL_AUTH
     AuthorizationService *authorizationService = nullptr;
@@ -86,47 +154,21 @@ private:
     ReservationService *reservationService = nullptr;
 #endif //MO_ENABLE_RESERVATION
 
-#if MO_ENABLE_SMARTCHARGING
-    SmartChargingService *smartChargingService = nullptr;
-#endif //MO_ENABLE_SMARTCHARGING
-
-#if MO_ENABLE_CERT_MGMT
-    CertificateService *certService = nullptr;
-#endif //MO_ENABLE_CERT_MGMT
-
-#if MO_ENABLE_SECURITY_EVENT
-    SecurityEventService *secEventService = nullptr;
-#endif //MO_ENABLE_SECURITY_EVENT
-
-    unsigned int numEvseId = MO_NUM_EVSEID;
-    bool runTasks = false;
-
     void updateSupportedStandardProfiles();
 
 public:
     Model(Context& context);
     ~Model();
 
-    // Set number of EVSE IDs (including 0). On a charger with one physical connector, numEvseId is 2. Default value is MO_NUM_EVSEID
-    void setNumEvseId(unsigned int numEvseId);
-    unsigned int getNumEvseId();
-
-    BootService *getBootService();
-    HeartbeatService *getHeartbeatService();
     ConfigurationService *getConfigurationService();
     TransactionService *getTransactionService();
     MeteringService *getMeteringService();
     ResetService *getResetService();
     AvailabilityService *getAvailabilityService();
-    RemoteControlService *getRemoteControlService();
 
 #if MO_ENABLE_FIRMWAREMANAGEMENT
     FirmwareService *getFirmwareService();
 #endif //MO_ENABLE_FIRMWAREMANAGEMENT
-
-#if MO_ENABLE_DIAGNOSTICS
-    DiagnosticsService *getDiagnosticsService();
-#endif //MO_ENABLE_DIAGNOSTICS
 
 #if MO_ENABLE_LOCAL_AUTH
     AuthorizationService *getAuthorizationService();
@@ -136,21 +178,8 @@ public:
     ReservationService *getReservationService();
 #endif //MO_ENABLE_RESERVATION
 
-#if MO_ENABLE_SMARTCHARGING
-    SmartChargingService *getSmartChargingService();
-#endif //MO_ENABLE_SMARTCHARGING
-
-#if MO_ENABLE_CERT_MGMT
-    CertificateService *getCertificateService();
-#endif //MO_ENABLE_CERT_MGMT
-
-#if MO_ENABLE_SECURITY_EVENT
-    SecurityEventService *getSecurityEventService();
-#endif //MO_ENABLE_SECURITY_EVENT
-
     bool setup();
     void loop();
-    void activateTasks() {runTasks = true;}
 };
 
 } //namespace v16
@@ -168,74 +197,28 @@ class MeteringService;
 class ResetService;
 class AvailabilityService;
 
-class Model : public MemoryManaged {
+class Model : public MemoryManaged, public ModelCommon {
 private:
     Context& context;
 
-    BootService *bootService = nullptr;
-    HeartbeatService *heartbeatService = nullptr;
     VariableService *variableService = nullptr;
     TransactionService *transactionService = nullptr;
     MeteringService *meteringService = nullptr;
     ResetService *resetService = nullptr;
     AvailabilityService *availabilityService = nullptr;
-    RemoteControlService *remoteControlService = nullptr;
-
-#if MO_ENABLE_DIAGNOSTICS
-    DiagnosticsService *diagnosticsService = nullptr;
-#endif //MO_ENABLE_DIAGNOSTICS
-
-#if MO_ENABLE_SMARTCHARGING
-    SmartChargingService *smartChargingService = nullptr;
-#endif //MO_ENABLE_SMARTCHARGING
-
-#if MO_ENABLE_CERT_MGMT
-    CertificateService *certService = nullptr;
-#endif //MO_ENABLE_CERT_MGMT
-
-#if MO_ENABLE_SECURITY_EVENT
-    SecurityEventService *secEventService = nullptr;
-#endif //MO_ENABLE_SECURITY_EVENT
-
-    unsigned int numEvseId = MO_NUM_EVSEID;
-    bool runTasks = false;
 
 public:
     Model(Context& context);
     ~Model();
 
-    // Set number of EVSE IDs (including 0). On a charger with one physical connector, numEvseId is 2. Default value is MO_NUM_EVSEID
-    void setNumEvseId(unsigned int numEvseId);
-    unsigned int getNumEvseId();
-
-    BootService *getBootService();
-    HeartbeatService *getHeartbeatService();
     VariableService *getVariableService();
     TransactionService *getTransactionService();
     MeteringService *getMeteringService();
     ResetService *getResetService();
     AvailabilityService *getAvailabilityService();
-    RemoteControlService *getRemoteControlService();
-
-#if MO_ENABLE_DIAGNOSTICS
-    DiagnosticsService *getDiagnosticsService();
-#endif //MO_ENABLE_DIAGNOSTICS
-
-#if MO_ENABLE_SMARTCHARGING
-    SmartChargingService *getSmartChargingService();
-#endif //MO_ENABLE_SMARTCHARGING
-
-#if MO_ENABLE_CERT_MGMT
-    CertificateService *getCertificateService();
-#endif //MO_ENABLE_CERT_MGMT
-
-#if MO_ENABLE_SECURITY_EVENT
-    SecurityEventService *getSecurityEventService();
-#endif //MO_ENABLE_SECURITY_EVENT
 
     bool setup();
     void loop();
-    void activateTasks() {runTasks = true;}
 };
 
 } //namespace v201

@@ -34,17 +34,13 @@ void TriggerMessage::processReq(JsonObject payload) {
     const char *requestedMessage = payload["requestedMessage"];
     int evseId = -1;
 
-    unsigned int numEvseId = MO_NUM_EVSEID;
-
     #if MO_ENABLE_V16
     if (context.getOcppVersion() == MO_OCPP_V16) {
-        numEvseId = context.getModel16().getNumEvseId();
         evseId = payload["connectorId"] | -1;
     }
     #endif //MO_ENABLE_V16
     #if MO_ENABLE_V201
     if (context.getOcppVersion() == MO_OCPP_V201) {
-        numEvseId = context.getModel201().getNumEvseId();
         evseId = payload["evse"]["id"] | -1;
 
         if ((payload["evse"]["connectorId"] | 1) != 1) {
@@ -54,7 +50,7 @@ void TriggerMessage::processReq(JsonObject payload) {
     }
     #endif //MO_ENABLE_V201
 
-    if (evseId >= 0 && (unsigned int)evseId >= numEvseId) {
+    if (evseId >= 0 && (unsigned int)evseId >= context.getModelCommon().getNumEvseId()) {
         errorCode = "PropertyConstraintViolation";
         return;
     }
