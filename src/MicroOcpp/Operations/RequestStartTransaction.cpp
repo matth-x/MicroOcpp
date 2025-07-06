@@ -3,7 +3,11 @@
 // MIT License
 
 #include <MicroOcpp/Operations/RequestStartTransaction.h>
+
+#include <MicroOcpp/Context.h>
+#include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
+#include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <MicroOcpp/Debug.h>
 
 #if MO_ENABLE_V201
@@ -11,7 +15,7 @@
 using namespace MicroOcpp;
 using namespace MicroOcpp::Ocpp201;
 
-RequestStartTransaction::RequestStartTransaction(RemoteControlService& rcService) : MemoryManaged("v201.Operation.", "RequestStartTransaction"), rcService(rcService) {
+RequestStartTransaction::RequestStartTransaction(Context& context, RemoteControlService& rcService) : MemoryManaged("v201.Operation.", "RequestStartTransaction"), context(context), rcService(rcService) {
   
 }
 
@@ -41,7 +45,31 @@ void RequestStartTransaction::processReq(JsonObject payload) {
         return;
     }
 
-    status = rcService.requestStartTransaction(evseId, remoteStartId, idToken, transactionId, sizeof(transactionId));
+    std::unique_ptr<ChargingProfile> chargingProfile;
+    if (payload.containsKey("chargingProfile")) {
+        #if MO_ENABLE_SMARTCHARGING
+        if (context.getModel201().getSmartChargingService()) {
+            JsonObject chargingProfileJson = payload["chargingProfile"];
+            chargingProfile = std::unique_ptr<ChargingProfile>(new ChargingProfile());
+            if (!chargingProfile) {
+                MO_DBG_ERR("OOM");
+                errorCode = "InternalError";
+                return;
+            }
+
+            bool valid = chargingProfile->parseJson(context.getClock(), MO_OCPP_V201, chargingProfileJson);
+            if (!valid) {
+                errorCode = "FormationViolation";
+                return;
+            }
+        } else
+        #endif
+        {
+            MO_DBG_INFO("ignore ChargingProfile"); //see F01.FR.12
+        }
+    }
+
+    status = rcService.requestStartTransaction(evseId, remoteStartId, idToken, std::move(chargingProfile), transactionId, sizeof(transactionId));
 }
 
 std::unique_ptr<JsonDoc> RequestStartTransaction::createConf(){

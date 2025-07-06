@@ -165,6 +165,8 @@ private:
     Vector<FaultedInput> faultedInputs;
 
     MO_ChargePointStatus reportedStatus = MO_ChargePointStatus_UNDEFINED;
+
+    bool trackLoopExecute = false; //if loop has been executed once
 public:
     AvailabilityServiceEvse(Context& context, AvailabilityService& availService, unsigned int evseId);
 
@@ -185,6 +187,7 @@ public:
     Operation *createTriggeredStatusNotification();
 
     bool isAvailable();
+    bool isOperative();
     bool isFaulted();
 };
 

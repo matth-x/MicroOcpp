@@ -40,6 +40,8 @@ Context::~Context() {
 #if MO_WS_USE != MO_WS_CUSTOM
     mo_connectionConfig_deinit(&connectionConfig);
 #endif //MO_WS_USE != MO_WS_CUSTOM
+
+    MO_DBG_INFO("MicroOCPP deinitialized\n");
 }
 
 void Context::setDebugCb(void (*debugCb)(const char *msg)) {
@@ -320,16 +322,24 @@ bool Context::setup() {
 
     #if MO_ENABLE_V16
     if (ocppVersion == MO_OCPP_V16) {
-        modelV16.setup();
+        if (!modelV16.setup()) {
+            MO_DBG_ERR("setup failure");
+            return false;
+        }
     }
     #endif
     #if MO_ENABLE_V201
     if (ocppVersion == MO_OCPP_V201) {
-        modelV201.setup();
+        if (!modelV201.setup()) {
+            MO_DBG_ERR("setup failure");
+            return false;
+        }
     }
     #endif
 
-    MO_DBG_INFO("MicroOCPP setup complete");
+    MO_DBG_INFO("MicroOCPP setup complete. Run %s (MO version %s)",
+        ocppVersion == MO_OCPP_V16 ? "OCPP 1.6" : ocppVersion == MO_OCPP_V201 ? "OCPP 2.0.1" : "(OCPP version error)",
+        MO_VERSION);
 
     return true;
 }

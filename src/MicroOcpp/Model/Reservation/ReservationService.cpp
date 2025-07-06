@@ -60,7 +60,7 @@ bool ReservationService::setup() {
     context.getMessageService().registerOperation("ReserveNow", [] (Context& context) -> Operation* {
         return new ReserveNow(context, *context.getModel16().getReservationService());});
 
-    return false;
+    return true;
 }
 
 void ReservationService::loop() {

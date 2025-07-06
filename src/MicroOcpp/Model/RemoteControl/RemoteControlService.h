@@ -114,7 +114,7 @@ public:
     #endif //MO_ENABLE_V16
 
     #if MO_ENABLE_V201
-    Ocpp201::RequestStartStopStatus requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, Ocpp201::IdToken idToken, char *transactionIdOut, size_t transactionIdBufSize); //ChargingProfile, GroupIdToken not supported yet
+    Ocpp201::RequestStartStopStatus requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, Ocpp201::IdToken idToken, std::unique_ptr<ChargingProfile> chargingProfile, char *transactionIdOut, size_t transactionIdBufSize); //ChargingProfile, GroupIdToken not supported yet
 
     Ocpp201::RequestStartStopStatus requestStopTransaction(const char *transactionId);
     #endif //MO_ENABLE_V201

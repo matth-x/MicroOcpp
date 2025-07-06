@@ -220,7 +220,7 @@ bool RemoteControlService::setup() {
         numEvseId = context.getModel201().getNumEvseId();
 
         context.getMessageService().registerOperation("RequestStartTransaction", [] (Context& context) -> Operation* {
-            return new Ocpp201::RequestStartTransaction(*context.getModel201().getRemoteControlService());});
+            return new Ocpp201::RequestStartTransaction(context, *context.getModel201().getRemoteControlService());});
         context.getMessageService().registerOperation("RequestStopTransaction", [] (Context& context) -> Operation* {
             return new Ocpp201::RequestStopTransaction(*context.getModel201().getRemoteControlService());});
 
@@ -410,7 +410,7 @@ Ocpp16::RemoteStartStopStatus RemoteControlService::remoteStopTransaction(int tr
 
 #if MO_ENABLE_V201
 
-Ocpp201::RequestStartStopStatus RemoteControlService::requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, Ocpp201::IdToken idToken, char *transactionIdOut, size_t transactionIdBufSize) {
+Ocpp201::RequestStartStopStatus RemoteControlService::requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, Ocpp201::IdToken idToken, std::unique_ptr<ChargingProfile> chargingProfile, char *transactionIdOut, size_t transactionIdBufSize) {
     
     if (!txService201) {
         MO_DBG_ERR("TxService uninitialized");
@@ -423,7 +423,7 @@ Ocpp201::RequestStartStopStatus RemoteControlService::requestStartTransaction(un
         return Ocpp201::RequestStartStopStatus::Rejected;
     }
 
-    if (!evse->beginAuthorization(idToken, authorizeRemoteStart->getBool())) {
+    if (!evse->beginAuthorization(idToken, authorizeRemoteStart->getBool(), nullptr, /*commit*/ false)) { //only commit after storing the ChargingProfile
         MO_DBG_INFO("EVSE still occupied with pending tx");
         if (auto tx = evse->getTransaction()) {
             auto ret = snprintf(transactionIdOut, transactionIdBufSize, "%s", tx->transactionId);
@@ -435,22 +435,57 @@ Ocpp201::RequestStartStopStatus RemoteControlService::requestStartTransaction(un
         return Ocpp201::RequestStartStopStatus::Rejected;
     }
 
-    auto tx = evse->getTransaction();
+    int ret = -1;
+
+    Ocpp201::Transaction *tx = evse->getTransaction();
     if (!tx) {
-        MO_DBG_ERR("internal error");
-        return Ocpp201::RequestStartStopStatus::Rejected;
+        goto fail;
     }
 
-    auto ret = snprintf(transactionIdOut, transactionIdBufSize, "%s", tx->transactionId);
+    #if MO_ENABLE_SMARTCHARGING
+    if (chargingProfile && context.getModel201().getSmartChargingService()) {
+        auto scService = context.getModel201().getSmartChargingService();
+
+        auto ret = snprintf(chargingProfile->transactionId201, sizeof(chargingProfile->transactionId201), "%s", tx->transactionId);
+        if (ret < 0 || (size_t)ret >= transactionIdBufSize) {
+            MO_DBG_ERR("internal error");
+            goto fail;
+        }
+
+        bool success = scService->setChargingProfile(evseId, std::move(chargingProfile));
+        if (!success) {
+            MO_DBG_ERR("setChargingProfile");
+            goto fail;
+        }
+
+    }
+    #endif //MO_ENABLE_SMARTCHARGING
+
+    ret = snprintf(transactionIdOut, transactionIdBufSize, "%s", tx->transactionId);
     if (ret < 0 || (size_t)ret >= transactionIdBufSize) {
         MO_DBG_ERR("internal error");
-        return Ocpp201::RequestStartStopStatus::Rejected;
+        goto fail;
     }
 
     tx->remoteStartId = remoteStartId;
     tx->notifyRemoteStartId = true;
 
+    if (!evse->commitTransaction()) {
+        MO_DBG_ERR("internal error");
+        goto fail;
+
+    }
+
     return Ocpp201::RequestStartStopStatus::Accepted;
+fail:
+    evse->abortTransaction();
+    #if MO_ENABLE_SMARTCHARGING
+    if (chargingProfile && context.getModel201().getSmartChargingService()) {
+        auto scService = context.getModel201().getSmartChargingService();
+        scService->clearChargingProfile(chargingProfile->chargingProfileId,evseId,MicroOcpp::ChargingProfilePurposeType::UNDEFINED, -1);
+    }
+    #endif //MO_ENABLE_SMARTCHARGING
+    return Ocpp201::RequestStartStopStatus::Rejected;
 }
 
 Ocpp201::RequestStartStopStatus RemoteControlService::requestStopTransaction(const char *transactionId) {

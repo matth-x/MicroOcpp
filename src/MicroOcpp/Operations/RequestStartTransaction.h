@@ -15,12 +15,14 @@
 
 namespace MicroOcpp {
 
+class Context;
 class RemoteControlService;
 
 namespace Ocpp201 {
 
 class RequestStartTransaction : public Operation, public MemoryManaged {
 private:
+    Context& context;
     RemoteControlService& rcService;
 
     RequestStartStopStatus status;
@@ -29,7 +31,7 @@ private:
 
     const char *errorCode = nullptr;
 public:
-    RequestStartTransaction(RemoteControlService& rcService);
+    RequestStartTransaction(Context& context, RemoteControlService& rcService);
 
     const char* getOperationType() override;
 

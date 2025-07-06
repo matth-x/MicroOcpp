@@ -667,7 +667,7 @@ void TransactionServiceEvse::updateTxNotification(MO_TxNotification event) {
     }
 }
 
-bool TransactionServiceEvse::beginAuthorization(IdToken idToken, bool validateIdToken, IdToken groupIdToken) {
+bool TransactionServiceEvse::beginAuthorization(IdToken idToken, bool validateIdToken, IdToken groupIdToken, bool commit) {
     MO_DBG_DEBUG("begin auth: %s", idToken.get());
 
     if (transaction && transaction->isAuthorizationActive) {
@@ -693,6 +693,13 @@ bool TransactionServiceEvse::beginAuthorization(IdToken idToken, bool validateId
     transaction->isAuthorizationActive = true;
     transaction->idToken = idToken;
     transaction->beginTimestamp = clock.now();
+
+    if (commit) {
+        if (!txStore.commit(transaction.get())) {
+            MO_DBG_ERR("fs error");
+            return false;
+        }
+    }
 
     if (validateIdToken) {
         auto authorize = makeRequest(context, new Authorize(context.getModel201(), idToken));
@@ -848,6 +855,14 @@ bool TransactionServiceEvse::abortTransaction(MO_TxStoppedReason stoppedReason, 
 
 Transaction *TransactionServiceEvse::getTransaction() {
     return transaction.get();
+}
+
+bool TransactionServiceEvse::commitTransaction() {
+    if (!transaction) {
+        MO_DBG_ERR("no tx to commit");
+        return false;
+    }
+    return txStore.commit(transaction.get());
 }
 
 bool TransactionServiceEvse::ocppPermitsCharge() {

@@ -138,9 +138,9 @@ set(MO_SRC_UNIT
     tests/ocppEngineLifecycle.cpp
     tests/Core.cpp
     tests/TransactionSafety.cpp
-    #tests/ChargingSessions.cpp
+    tests/ChargingSessions.cpp
     #tests/ConfigurationBehavior.cpp
-    #tests/SmartCharging.cpp
+    tests/SmartCharging.cpp
     #tests/Api.cpp
     #tests/Metering.cpp
     #tests/Configuration.cpp

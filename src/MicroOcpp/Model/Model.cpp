@@ -298,77 +298,92 @@ SecurityEventService *Ocpp16::Model::getSecurityEventService() {
 
 bool Ocpp16::Model::setup() {
     if (!getBootService() || !getBootService()->setup()) {
-        return false; //OOM
+        MO_DBG_ERR("setup failure");
+        return false;
     }
 
     if (!getHeartbeatService() || !getHeartbeatService()->setup()) {
-        return false; //OOM
+        MO_DBG_ERR("setup failure");
+        return false;
     }
 
     if (!getTransactionService() || !getTransactionService()->setup()) {
-        return false; //OOM
+        MO_DBG_ERR("setup failure");
+        return false;
     }
 
     if (!getMeteringService() || !getMeteringService()->setup()) {
-        return false; //OOM
+        MO_DBG_ERR("setup failure");
+        return false;
     }
     
     if (!getResetService() || !getResetService()->setup()) {
-        return false; //OOM
+        MO_DBG_ERR("setup failure");
+        return false;
     }
 
     if (!getAvailabilityService() || !getAvailabilityService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 
     if (!getRemoteControlService() || !getRemoteControlService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 
 #if MO_ENABLE_FIRMWAREMANAGEMENT
     if (!getFirmwareService() || !getFirmwareService()->setup()) {
-        return false; //OOM
+        MO_DBG_ERR("setup failure");
+        return false;
     }
 #endif //MO_ENABLE_FIRMWAREMANAGEMENT
 
 #if MO_ENABLE_DIAGNOSTICS
     if (!getDiagnosticsService() || !getDiagnosticsService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 #endif //MO_ENABLE_DIAGNOSTICS
 
 #if MO_ENABLE_LOCAL_AUTH
     if (!getAuthorizationService() || !getAuthorizationService()->setup()) {
-        return false; //OOM or memory corruption
+        MO_DBG_ERR("setup failure");
+        return false;
     }
 #endif //MO_ENABLE_LOCAL_AUTH
 
 #if MO_ENABLE_RESERVATION
     if (!getReservationService() || !getReservationService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 #endif //MO_ENABLE_RESERVATION
 
 #if MO_ENABLE_SMARTCHARGING
     if (!getSmartChargingService() || !getSmartChargingService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 #endif //MO_ENABLE_SMARTCHARGING
 
 #if MO_ENABLE_CERT_MGMT
     if (!getCertificateService() || !getCertificateService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 #endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_SECURITY_EVENT
     if (!getSecurityEventService() || !getSecurityEventService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 #endif //MO_ENABLE_SECURITY_EVENT
 
     // Ensure this is set up last. ConfigurationService::setup() loads the persistent config values from flash
     if (!getConfigurationService() || !getConfigurationService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 
@@ -599,58 +614,70 @@ SecurityEventService *Ocpp201::Model::getSecurityEventService() {
 
 bool Ocpp201::Model::setup() {
     if (!getBootService() || !getBootService()->setup()) {
-        return false; //OOM
+        MO_DBG_ERR("setup failure");
+        return false;
     }
 
     if (!getHeartbeatService() || !getHeartbeatService()->setup()) {
-        return false; //OOM
+        MO_DBG_ERR("setup failure");
+        return false;
     }
 
     if (!getTransactionService() || !getTransactionService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 
     if (!getMeteringService() || !getMeteringService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
     if (!getAvailabilityService() || !getAvailabilityService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 
     if (!getRemoteControlService() || !getRemoteControlService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 
     if (!getResetService() || !getResetService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 
 #if MO_ENABLE_DIAGNOSTICS
     if (!getDiagnosticsService() || !getDiagnosticsService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 #endif //MO_ENABLE_DIAGNOSTICS
 
 #if MO_ENABLE_SMARTCHARGING
     if (!getSmartChargingService() || !getSmartChargingService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 #endif //MO_ENABLE_SMARTCHARGING
 
 #if MO_ENABLE_CERT_MGMT
     if (!getCertificateService() || !getCertificateService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 #endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_SECURITY_EVENT
     if (!getSecurityEventService() || !getSecurityEventService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 #endif //MO_ENABLE_SECURITY_EVENT
 
     // Ensure this is set up last. VariableService::setup() loads the persistent variable values from flash
     if (!getVariableService() || !getVariableService()->setup()) {
+        MO_DBG_ERR("setup failure");
         return false;
     }
 

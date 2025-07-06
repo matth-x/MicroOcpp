@@ -440,6 +440,10 @@ Ocpp201::AvailabilityServiceEvse::AvailabilityServiceEvse(Context& context, Avai
 
 void Ocpp201::AvailabilityServiceEvse::loop() {
 
+    if (!trackLoopExecute) {
+        trackLoopExecute = true;
+    }
+
     if (evseId >= 1) {
         auto status = getStatus();
 
@@ -557,6 +561,18 @@ bool Ocpp201::AvailabilityServiceEvse::isAvailable() {
         }
     }
     return true;
+}
+
+bool Ocpp201::AvailabilityServiceEvse::isOperative() {
+    if (isFaulted()) {
+        return false;
+    }
+
+    if (!trackLoopExecute) {
+        return false;
+    }
+
+    return isAvailable();
 }
 
 bool Ocpp201::AvailabilityServiceEvse::isFaulted() {

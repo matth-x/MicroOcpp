@@ -602,6 +602,10 @@ bool Clock::fromUnixTime(Timestamp& dst, int32_t unixTimeInt) const {
         return false;
     }
 
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
+    t.ms = 0;
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
+
     dst = t;
     return true;
 }

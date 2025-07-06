@@ -890,6 +890,51 @@ const char *mo_getTransactionIdTag2(MO_Context *ctx, unsigned int evseId) {
     return res && *res ? res : nullptr;
 }
 
+#if MO_ENABLE_V201
+const char *mo_getTransactionId() {
+    return mo_getTransactionId2(mo_getApiContext(), EVSE_ID_1);
+}
+
+const char *mo_getTransactionId2(MO_Context *ctx, unsigned int evseId) {
+    if (!ctx) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return nullptr;
+    }
+    auto context = mo_getContext2(ctx);
+
+    const char *res = nullptr;
+
+    #if MO_ENABLE_V16
+    if (context->getOcppVersion() == MO_OCPP_V16) {
+        auto txSvc = context->getModel16().getTransactionService();
+        auto txSvcEvse = txSvc ? txSvc->getEvse(evseId) : nullptr;
+        if (!txSvcEvse) {
+            MO_DBG_ERR("init failure");
+            return nullptr;
+        }
+        if (auto tx = txSvcEvse->getTransaction()) {
+            res = tx->getTransactionIdCompat();
+        }
+    }
+    #endif
+    #if MO_ENABLE_V201
+    if (context->getOcppVersion() == MO_OCPP_V201) {
+        auto txSvc = context->getModel201().getTransactionService();
+        auto txSvcEvse = txSvc ? txSvc->getEvse(evseId) : nullptr;
+        if (!txSvcEvse) {
+            MO_DBG_ERR("init failure");
+            return nullptr;
+        }
+        if (auto tx = txSvcEvse->getTransaction()) {
+            res = tx->transactionId;
+        }
+    }
+    #endif
+
+    return res && *res ? res : nullptr;
+}
+#endif //MO_ENABLE_V201
+
 #if MO_ENABLE_V16
 int mo_v16_getTransactionId() {
     return mo_v16_getTransactionId2(mo_getApiContext(), EVSE_ID_1);
@@ -926,43 +971,6 @@ int mo_v16_getTransactionId2(MO_Context *ctx, unsigned int evseId) {
     return res;
 }
 #endif //MO_ENABLE_V16
-
-#if MO_ENABLE_V201
-const char *mo_v201_getTransactionId() {
-    return mo_v201_getTransactionId2(mo_getApiContext(), EVSE_ID_1);
-}
-
-const char *mo_v201_getTransactionId2(MO_Context *ctx, unsigned int evseId) {
-    if (!ctx) {
-        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
-        return nullptr;
-    }
-    auto context = mo_getContext2(ctx);
-
-    const char *res = nullptr;
-
-    #if MO_ENABLE_V16
-    if (context->getOcppVersion() == MO_OCPP_V16) {
-        MO_DBG_ERR("mo_v201_getTransactionId not supported with OCPP 2.0.1");
-    }
-    #endif
-    #if MO_ENABLE_V201
-    if (context->getOcppVersion() == MO_OCPP_V201) {
-        auto txSvc = context->getModel201().getTransactionService();
-        auto txSvcEvse = txSvc ? txSvc->getEvse(evseId) : nullptr;
-        if (!txSvcEvse) {
-            MO_DBG_ERR("init failure");
-            return nullptr;
-        }
-        if (auto tx = txSvcEvse->getTransaction()) {
-            res = tx->transactionId;
-        }
-    }
-    #endif
-
-    return res;
-}
-#endif //MO_ENABLE_V201
 
 MO_ChargePointStatus mo_getChargePointStatus() {
     return mo_getChargePointStatus2(mo_getApiContext(), EVSE_ID_1);
@@ -1562,7 +1570,7 @@ bool mo_isOperative2(MO_Context *ctx, unsigned int evseId) {
             MO_DBG_ERR("init failure");
             return false;
         }
-        result = availSvcEvse->isAvailable();
+        result = availSvcEvse->isOperative();
     }
     #endif
 

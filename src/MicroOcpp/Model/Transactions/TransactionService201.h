@@ -108,13 +108,14 @@ public:
     void setTxNotificationOutput(void (*txNotificationOutput)(MO_TxNotification, unsigned int, void*), void *userData);
     void updateTxNotification(MO_TxNotification event);
 
-    bool beginAuthorization(IdToken idToken, bool validateIdToken = true, IdToken groupIdToken = nullptr); // authorize by swipe RFID, groupIdToken ignored if validateIdToken = true
+    bool beginAuthorization(IdToken idToken, bool validateIdToken = true, IdToken groupIdToken = nullptr, bool commit = true); // authorize by swipe RFID, groupIdToken ignored if validateIdToken = true, tx not stored on flash if commit = false
     bool endAuthorization(IdToken idToken = IdToken(), bool validateIdToken = false, IdToken groupIdToken = nullptr); // stop authorization by swipe RFID, groupIdToken ignored if validateIdToken = true
 
     // stop transaction, but neither upon user request nor OCPP server request (e.g. after PowerLoss)
     bool abortTransaction(MO_TxStoppedReason stoppedReason = MO_TxStoppedReason_Other, MO_TxEventTriggerReason stopTrigger = MO_TxEventTriggerReason_AbnormalCondition);
 
     Transaction *getTransaction();
+    bool commitTransaction();
 
     bool ocppPermitsCharge();
 

@@ -24,6 +24,17 @@ Ocpp16::Transaction::~Transaction() {
     meterValues.clear();
 }
 
+void Ocpp16::Transaction::setTransactionId(int transactionId) {
+    this->transactionId = transactionId;
+    #if MO_ENABLE_V201
+    if (transactionId > 0) {
+        snprintf(transactionIdCompat, sizeof(transactionIdCompat), "%d", transactionId);
+    } else {
+        transactionIdCompat[0] = '\0';
+    }
+    #endif //MO_ENABLE_V201
+}
+
 bool Ocpp16::Transaction::setIdTag(const char *idTag) {
     auto ret = snprintf(this->idTag, MO_IDTAG_LEN_MAX + 1, "%s", idTag);
     return ret >= 0 && ret < MO_IDTAG_LEN_MAX + 1;

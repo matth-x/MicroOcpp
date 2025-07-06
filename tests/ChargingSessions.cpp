@@ -3,249 +3,373 @@
 // MIT License
 
 #include <MicroOcpp.h>
-#include <MicroOcpp/Core/Connection.h>
-#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Context.h>
+#include <MicroOcpp/Core/FilesystemUtils.h>
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Core/Configuration.h>
-#include <MicroOcpp/Core/Request.h>
-#include <MicroOcpp/Operations/BootNotification.h>
-#include <MicroOcpp/Operations/StatusNotification.h>
-#include <MicroOcpp/Operations/CustomOperation.h>
-#include <MicroOcpp/Model/Transactions/TransactionStore.h>
+#include <MicroOcpp/Model/Configuration/ConfigurationDefs.h>
 #include <MicroOcpp/Debug.h>
 #include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
-#include <array>
+#include <vector>
 
-#define BASE_TIME "2023-01-01T00:00:00.000Z"
+#define BASE_TIME_UNIX 1750000000
+#define BASE_TIME_STRING "2025-06-15T15:06:40Z"
 
 using namespace MicroOcpp;
 
+std::vector<std::pair<std::string, DynamicJsonDocument>> sentOperations;
+
+void addSentOperation(const char *operationType, const char *payloadJson, void*) {
+    DynamicJsonDocument doc (1024);
+    auto err = deserializeJson(doc, payloadJson);
+    if (err) {
+        char buf [100];
+        snprintf(buf, sizeof(buf), "JSON deserialization error: %s", err.c_str());
+        FAIL(buf);
+    }
+    sentOperations.emplace_back(operationType, std::move(doc));
+}
+
+std::string getLastSentStatus(int ocppVersion, int evseId = 1) {
+    for (auto operation = sentOperations.rbegin(); operation != sentOperations.rend(); operation++) {
+        if (operation->first == "StatusNotification") {
+            if (ocppVersion == MO_OCPP_V16) {
+                if ((operation->second["connectorId"] | -1) != evseId) {
+                    continue;
+                }
+                //found
+                return operation->second["status"] | "_Invalid";
+            } else if (ocppVersion == MO_OCPP_V201) {
+                if ((operation->second["evseId"] | -1) != evseId) {
+                    continue;
+                }
+                //found
+                return operation->second["connectorStatus"] | "_Invalid";
+            }
+        }
+    }
+    return "";
+}
 
 TEST_CASE( "Charging sessions" ) {
     printf("\nRun %s\n",  "Charging sessions");
 
-    //initialize Context with dummy socket
+    sentOperations.clear();
+
+    //initialize Context without any configs
+    mo_initialize();
+
+    mo_getContext()->setTicksCb(custom_timer_cb);
+
     LoopbackConnection loopback;
-    mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
+    mo_getContext()->setConnection(&loopback);
 
-    auto engine = getOcppContext();
-    auto& checkMsg = engine->getOperationRegistry();
+    auto ocppVersion = GENERATE(MO_OCPP_V16, MO_OCPP_V201);
+    mo_setOcppVersion(ocppVersion);
 
-    mocpp_set_timer(custom_timer_cb);
+    mo_setBootNotificationData("TestModel", "TestVendor");
 
-    auto connectionTimeOutInt = declareConfiguration<int>("ConnectionTimeOut", 30, CONFIGURATION_FN);
-    connectionTimeOutInt->setInt(30);
-    auto minimumStatusDurationInt = declareConfiguration<int>("MinimumStatusDuration", 0, CONFIGURATION_FN);
-    minimumStatusDurationInt->setInt(0);
-    
-    std::array<const char*, 2> expectedSN {"Available", "Available"};
-    std::array<bool, 2> checkedSN {false, false};
-    checkMsg.registerOperation("StatusNotification", [] () -> Operation* {return new Ocpp16::StatusNotification(0, ChargePointStatus_UNDEFINED, MIN_TIME);});
-    checkMsg.setOnRequest("StatusNotification",
-        [&checkedSN, &expectedSN] (JsonObject request) {
-            int connectorId = request["connectorId"] | -1;
-            if (connectorId == 0 || connectorId == 1) { //only test single connector case here
-                checkedSN[connectorId] = !strcmp(request["status"] | "Invalid", expectedSN[connectorId]);
-            }
-        });
+    mo_setup();
 
-    SECTION("Check idle state"){
+    mo_setOnReceiveRequest(mo_getApiContext(), "BootNotification", addSentOperation, nullptr);
+    mo_setOnReceiveRequest(mo_getApiContext(), "StatusNotification", addSentOperation, nullptr);
+    mo_setOnReceiveRequest(mo_getApiContext(), "StartTransaction", addSentOperation, nullptr);
+    mo_setOnReceiveRequest(mo_getApiContext(), "StopTransaction", addSentOperation, nullptr);
+    mo_setOnReceiveRequest(mo_getApiContext(), "TransactionEvent", addSentOperation, nullptr);
 
-        bool checkedBN = false;
-        checkMsg.registerOperation("BootNotification", [engine] () -> Operation* {return new Ocpp16::BootNotification(engine->getModel(), makeJsonDoc("UnitTests"));});
-        checkMsg.setOnRequest("BootNotification",
-            [&checkedBN] (JsonObject request) {
-                checkedBN = !strcmp(request["chargePointModel"] | "Invalid", "test-runner1234");
-            });
-        
-        REQUIRE( !isOperative() ); //not operative before reaching loop stage
+    mo_setVarConfigInt(mo_getApiContext(), "TxCtrlr", "EVConnectionTimeOut", "ConnectionTimeOut", 30);
 
-        loop();
-        loop();
-        REQUIRE( checkedBN );
-        REQUIRE( checkedSN[0] );
-        REQUIRE( checkedSN[1] );
-        REQUIRE( isOperative() );
-        REQUIRE( !getTransaction() );
-        REQUIRE( !ocppPermitsCharge() );
+    if (ocppVersion == MO_OCPP_V16) {
+        mo_setConfigurationInt("MinimumStatusDuration", 0);
+    } else if (ocppVersion == MO_OCPP_V201) {
+        mo_setVarConfigString(mo_getApiContext(), "TxCtrlr", "TxStartPoint", NULL, "PowerPathClosed");
+        mo_setVarConfigString(mo_getApiContext(), "TxCtrlr", "TxStopPoint", NULL, "PowerPathClosed");
     }
 
-    loop();
+    SECTION("Clean up files") {
+        auto filesystem = mo_getFilesystem();
+        FilesystemUtils::removeByPrefix(filesystem, "");
+    }
+
+    SECTION("Check idle state"){
+        
+        REQUIRE( !mo_isOperative() ); //not operative before reaching loop stage
+
+        loop();
+        loop();
+
+        size_t bootNotificationCount = 0;
+
+        for (size_t i = 0; i < sentOperations.size(); i++) {
+            if (sentOperations[i].first == "BootNotification") {
+                if (ocppVersion == MO_OCPP_V16) {
+                    REQUIRE(sentOperations[i].second["chargePointModel"].as<std::string>() == "TestModel");
+                    REQUIRE(sentOperations[i].second["chargePointVendor"].as<std::string>() == "TestVendor");
+                } else if (ocppVersion == MO_OCPP_V201) {
+                    REQUIRE(sentOperations[i].second["chargingStation"]["model"].as<std::string>() == "TestModel");
+                    REQUIRE(sentOperations[i].second["chargingStation"]["vendorName"].as<std::string>() == "TestVendor");
+                }
+                bootNotificationCount++;
+            }
+        }
+        REQUIRE( bootNotificationCount == 1 );
+        REQUIRE( mo_isOperative() );
+        REQUIRE( !mo_isTransactionActive() );
+        REQUIRE( !mo_isTransactionRunning() );
+        REQUIRE( !mo_ocppPermitsCharge() );
+    }
 
     SECTION("StartTx") {
-        SECTION("StartTx directly"){
-            startTransaction("mIdTag");
-            loop();
-            REQUIRE(ocppPermitsCharge());
-        }
+
+        loop();
 
         SECTION("StartTx via session management - plug in first") {
-            expectedSN[1] = "Preparing";
-            setConnectorPluggedInput([] () {return true;});
-            loop();
-            REQUIRE(checkedSN[1]);
 
-            checkedSN[1] = false;
-            expectedSN[1] = "Charging";
-            beginTransaction("mIdTag");
+            sentOperations.clear();
+            mo_setConnectorPluggedInput([] () {return true;});
             loop();
-            REQUIRE(checkedSN[1]);
-            REQUIRE(ocppPermitsCharge());
+            if (ocppVersion == MO_OCPP_V16) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "Preparing");
+            } else if (ocppVersion == MO_OCPP_V201) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "Occupied");
+            }
+
+            sentOperations.clear();
+            mo_beginTransaction("mIdTag");
+            loop();
+            if (ocppVersion == MO_OCPP_V16) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "Charging");
+            } else if (ocppVersion == MO_OCPP_V201) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "");
+            }
         }
 
         SECTION("StartTx via session management - authorization first") {
 
-            expectedSN[1] = "Preparing";
-            setConnectorPluggedInput([] () {return false;});
-            beginTransaction("mIdTag");
+            sentOperations.clear();
+            mo_setConnectorPluggedInput([] () {return false;});
+            mo_beginTransaction("mIdTag");
             loop();
-            REQUIRE(checkedSN[1]);
+            if (ocppVersion == MO_OCPP_V16) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "Preparing");
+            } else if (ocppVersion == MO_OCPP_V201) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "");
+            }
 
-            checkedSN[1] = false;
-            expectedSN[1] = "Charging";
-            setConnectorPluggedInput([] () {return true;});
+            REQUIRE(mo_getTransactionIdTag() != nullptr);
+            REQUIRE(std::string(mo_getTransactionIdTag()) == "mIdTag");
+
+            sentOperations.clear();
+            mo_setConnectorPluggedInput([] () {return true;});
             loop();
-            REQUIRE(checkedSN[1]);
-            REQUIRE(ocppPermitsCharge());
+            if (ocppVersion == MO_OCPP_V16) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "Charging");
+            } else if (ocppVersion == MO_OCPP_V201) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "Occupied");
+            }
         }
 
         SECTION("StartTx via session management - no plug") {
-            expectedSN[1] = "Charging";
-            beginTransaction("mIdTag");
+            sentOperations.clear();
+            mo_beginTransaction("mIdTag");
             loop();
-            REQUIRE(checkedSN[1]);
+            if (ocppVersion == MO_OCPP_V16) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "Charging");
+            } else if (ocppVersion == MO_OCPP_V201) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "");
+            }
         }
 
-        SECTION("StartTx via session management - ConnectionTimeOut") {
-            expectedSN[1] = "Preparing";
-            setConnectorPluggedInput([] () {return false;});
-            beginTransaction("mIdTag");
-            loop();
-            REQUIRE(checkedSN[1]);
+        REQUIRE(mo_ocppPermitsCharge());
+        REQUIRE(mo_getTransactionId() != nullptr);
+        REQUIRE(!std::string(mo_getTransactionId()).empty());
+        REQUIRE(mo_isTransactionActive());
+        REQUIRE(mo_isTransactionRunning());
 
-            checkedSN[1] = false;
-            expectedSN[1] = "Available";
-            mtime += connectionTimeOutInt->getInt() * 1000;
-            loop();
-            REQUIRE(checkedSN[1]);
+        bool startTxSent = false;
+        for (auto& operation : sentOperations) {
+            if (operation.first == "StartTransaction") {
+                startTxSent = true;
+                break;
+            } else if (operation.first == "TransactionEvent") {
+                if (operation.second["eventType"].as<std::string>() == "Started") {
+                    startTxSent = true;
+                    break;
+                }
+            }
         }
+        REQUIRE(startTxSent);
+
+        mo_endTransaction(nullptr, nullptr);
+        loop();
+    }
+
+    SECTION("StartTx - ConnectionTimeOut") {
 
         loop();
-        if (ocppPermitsCharge()) {
-            stopTransaction();
-        }
+
+        sentOperations.clear();
+        mo_setConnectorPluggedInput([] () {return false;});
+        mo_beginTransaction("mIdTag");
         loop();
+        if (ocppVersion == MO_OCPP_V16) {
+            REQUIRE(getLastSentStatus(ocppVersion) == "Preparing");
+        } else if (ocppVersion == MO_OCPP_V201) {
+            REQUIRE(getLastSentStatus(ocppVersion) == "");
+        }
+
+        REQUIRE(mo_getTransactionIdTag() != nullptr);
+        REQUIRE(std::string(mo_getTransactionIdTag()) == "mIdTag");
+        if (ocppVersion == MO_OCPP_V16) {
+            REQUIRE(mo_getTransactionId() == nullptr);
+        } else if (ocppVersion == MO_OCPP_V201) {
+            REQUIRE(mo_getTransactionId() != nullptr);
+            REQUIRE(!std::string(mo_getTransactionId()).empty());
+        }
+
+        sentOperations.clear();
+        int connectionTimeOut = 0;
+        mo_getVarConfigInt(mo_getApiContext(), "TxCtrlr", "EVConnectionTimeOut", "ConnectionTimeOut", &connectionTimeOut);
+        mtime += connectionTimeOut * 1000;
+        loop();
+        if (ocppVersion == MO_OCPP_V16) {
+            REQUIRE(getLastSentStatus(ocppVersion) == "Available");
+        } else if (ocppVersion == MO_OCPP_V201) {
+            REQUIRE(getLastSentStatus(ocppVersion) == "");
+        }
+        REQUIRE(mo_getTransactionIdTag() == nullptr);
+        REQUIRE(!mo_isTransactionActive());
     }
 
     SECTION("StopTx") {
-        startTransaction("mIdTag");
-        loop();
-        expectedSN[1] = "Available";
 
-        SECTION("directly") {
-            stopTransaction();
-            loop();
-            REQUIRE(checkedSN[1]);
-            REQUIRE(!ocppPermitsCharge());
-        }
+        loop();
+
+        mo_beginTransaction("mIdTag");
+        loop();
+        
+        REQUIRE(mo_ocppPermitsCharge());
+        REQUIRE(mo_getTransactionId() != nullptr);
+        REQUIRE(!std::string(mo_getTransactionId()).empty());
+
+        sentOperations.clear();
 
         SECTION("via session management - deauthorize") {
-            endTransaction();
+            mo_endTransaction("mIdTag", nullptr);
             loop();
-            REQUIRE(checkedSN[1]);
-            REQUIRE(!ocppPermitsCharge());
+            if (ocppVersion == MO_OCPP_V16) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "Available");
+            } else if (ocppVersion == MO_OCPP_V201) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "");
+            }
         }
 
         SECTION("via session management - deauthorize first") {
-            expectedSN[1] = "Finishing";
-            setConnectorPluggedInput([] () {return true;});
-            endTransaction();
+            mo_setConnectorPluggedInput([] () {return true;});
             loop();
-            REQUIRE(checkedSN[1]);
-            REQUIRE(!ocppPermitsCharge());
+            
+            sentOperations.clear();
+            mo_endTransaction("mIdTag", nullptr);
+            loop();
+            if (ocppVersion == MO_OCPP_V16) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "Finishing");
+            } else if (ocppVersion == MO_OCPP_V201) {
+                REQUIRE(getLastSentStatus(ocppVersion) == "");
+            }
+            REQUIRE(!mo_isTransactionActive());
+            REQUIRE(!mo_isTransactionRunning());
 
-            checkedSN[1] = false;
-            expectedSN[1] = "Available";
-            setConnectorPluggedInput([] () {return false;});
+            sentOperations.clear();
+            mo_setConnectorPluggedInput([] () {return false;});
             loop();
-            REQUIRE(checkedSN[1]);
-            REQUIRE(!ocppPermitsCharge());
+            REQUIRE(getLastSentStatus(ocppVersion) == "Available");
         }
 
         SECTION("via session management - plug out") {
-            setConnectorPluggedInput([] () {return false;});
+            mo_setConnectorPluggedInput([] () {return true;});
             loop();
-            REQUIRE(checkedSN[1]);
-            REQUIRE(!ocppPermitsCharge());
+            
+            sentOperations.clear();
+            mo_setConnectorPluggedInput([] () {return false;});
+            loop();
+            REQUIRE(getLastSentStatus(ocppVersion) == "Available");
         }
 
-        if (ocppPermitsCharge()) {
-            stopTransaction();
-        }
         loop();
+
+        REQUIRE(!mo_ocppPermitsCharge());
+        REQUIRE(mo_getTransactionId() == nullptr);
+        REQUIRE(!mo_isTransactionActive());
+        REQUIRE(!mo_isTransactionRunning());
     }
 
     SECTION("Preboot transactions - tx before BootNotification") {
-        mocpp_deinitialize();
 
         loopback.setOnline(false);
-        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
-        declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
-        configuration_save();
+        mo_setVarConfigBool(mo_getApiContext(), "CustomizationCtrlr", "PreBootTransactions", MO_CONFIG_EXT_PREFIX "PreBootTransactions", true);
 
         loop();
 
-        beginTransaction_authorized("mIdTag");
+        mo_beginTransaction_authorized("mIdTag", nullptr);
 
         loop();
 
-        REQUIRE(isTransactionRunning());
+        REQUIRE(mo_isTransactionRunning());
 
         mtime += 3600 * 1000; //transaction duration ~1h
 
-        endTransaction();
+        mo_endTransaction("mIdTag", nullptr);
 
         loop();
 
         mtime += 3600 * 1000; //set base time one hour later
 
-        bool checkStartProcessed = false;
+        loop();
 
-        getOcppContext()->getModel().getClock().setTime(BASE_TIME);
-        Timestamp basetime = Timestamp();
-        basetime.setTime(BASE_TIME);
+        mo_setUnixTime(BASE_TIME_UNIX);
 
-        getOcppContext()->getOperationRegistry().setOnRequest("StartTransaction", 
-            [&checkStartProcessed, basetime] (JsonObject payload) {
-                checkStartProcessed = true;
-                Timestamp timestamp;
-                timestamp.setTime(payload["timestamp"].as<const char*>());                
-
-                auto adjustmentDelay = basetime - timestamp;
-                REQUIRE((adjustmentDelay > 2 * 3600 - 10 && adjustmentDelay < 2 * 3600 + 10));
-            });
-        
-        bool checkStopProcessed = false;
-
-        getOcppContext()->getOperationRegistry().setOnRequest("StopTransaction", 
-            [&checkStopProcessed, basetime] (JsonObject payload) {
-                checkStopProcessed = true;
-                Timestamp timestamp;
-                timestamp.setTime(payload["timestamp"].as<const char*>());                
-
-                auto adjustmentDelay = basetime - timestamp;
-                REQUIRE((adjustmentDelay > 3600 - 10 && adjustmentDelay < 3600 + 10));
-            });
-        
         loopback.setOnline(true);
         loop();
 
-        REQUIRE(checkStartProcessed);
-        REQUIRE(checkStopProcessed);
+        const char *startTimeStr = nullptr;
+        const char *stopTimeStr = nullptr;
+
+        for (auto& operation : sentOperations) {
+            if (operation.first == "StartTransaction") {
+                startTimeStr = operation.second["timestamp"] | "_Invalid";
+            } else if (operation.first == "StopTransaction") {
+                stopTimeStr = operation.second["timestamp"] | "_Invalid";
+            } else if (operation.first == "TransactionEvent") {
+                if (operation.second["eventType"].as<std::string>() == "Started") {
+                    startTimeStr = operation.second["timestamp"] | "_Invalid";
+                } else if (operation.second["eventType"].as<std::string>() == "Ended") {
+                    stopTimeStr = operation.second["timestamp"] | "_Invalid";
+                }
+            }
+        }
+
+        REQUIRE(startTimeStr != nullptr);
+        REQUIRE(stopTimeStr != nullptr);
+
+        MicroOcpp::Timestamp baseTime, startTime, stopTime;
+        auto& clock = mo_getContext()->getClock();
+        clock.fromUnixTime(baseTime, BASE_TIME_UNIX);
+        clock.parseString(startTimeStr, startTime);
+        clock.parseString(stopTimeStr, stopTime);
+
+        int32_t dtStart = -1, dtStop = -1;
+        clock.delta(baseTime, startTime, dtStart);
+        clock.delta(baseTime, stopTime, dtStop);
+
+        REQUIRE(dtStart >= 2 * 3600 - 30);
+        REQUIRE(dtStart <= 2 * 3600 + 30);
+        REQUIRE(dtStop >= 3600 - 30);
+        REQUIRE(dtStop <= 3600 + 30);
     }
+
+    #if 0 //remaining tests need migration to MO v2
 
     SECTION("Preboot transactions - lose StartTx timestamp") {
 
@@ -1279,5 +1403,7 @@ TEST_CASE( "Charging sessions" ) {
         //Note: queueing offline transactions without FS is currently not implemented
     }
 
-    mocpp_deinitialize();
+#endif
+
+    mo_deinitialize();
 }

@@ -179,7 +179,7 @@ void SmartChargingServiceEvse::trackTransaction() {
                 trackTxRmtProfileId = tx->getTxProfileId();
             }
             int32_t dtTxStart;
-            if (tx->getStartSync().isRequested() && clock.delta(tx->getStartTimestamp(), trackTxStart, dtTxStart) && dtTxStart != 0) {
+            if (tx->getStartSync().isRequested() && (!trackTxStart.isDefined() || (clock.delta(tx->getStartTimestamp(), trackTxStart, dtTxStart) && dtTxStart != 0))) {
                 update = true;
                 trackTxStart = tx->getStartTimestamp();
             }
@@ -359,6 +359,8 @@ bool SmartChargingServiceEvse::updateProfile(std::unique_ptr<ChargingProfile> ch
 
     int stackLevel = chargingProfile->stackLevel; //already validated
 
+    delete stack[stackLevel];
+    stack[stackLevel] = nullptr;
     stack[stackLevel] = chargingProfile.release();
 
     return true;
@@ -518,18 +520,12 @@ SmartChargingService::~SmartChargingService() {
 
 bool SmartChargingService::setup() {
 
+    filesystem = context.getFilesystem();
+    if (!filesystem) {
+        MO_DBG_DEBUG("volatile mode");
+    }
+
     ocppVersion = context.getOcppVersion();
-
-    #if MO_ENABLE_V16
-    if (ocppVersion == MO_OCPP_V16) {
-
-    }
-    #endif //MO_ENABLE_V16
-    #if MO_ENABLE_V201
-    if (ocppVersion == MO_OCPP_V201) {
-
-    }
-    #endif //MO_ENABLE_V201
 
     #if MO_ENABLE_V16
     if (ocppVersion == MO_OCPP_V16) {
@@ -556,6 +552,8 @@ bool SmartChargingService::setup() {
         if (phases3to1Supported) {
             configService->declareConfiguration<bool>("ConnectorSwitch3to1PhaseSupported", phases3to1Supported, MO_CONFIGURATION_VOLATILE, Mutability::ReadOnly);
         }
+
+        numEvseId = context.getModel16().getNumEvseId();
     }
     #endif //MO_ENABLE_V16
     #if MO_ENABLE_V201
@@ -594,6 +592,8 @@ bool SmartChargingService::setup() {
             varService->declareVariable<bool>("SmartChargingCtrlr", "Phases3to1", phases3to1Supported, Mutability::ReadOnly, false);
         }
         varService->declareVariable<bool>("SmartChargingCtrlr", "SmartChargingAvailable", true, Mutability::ReadOnly, false);
+
+        numEvseId = context.getModel201().getNumEvseId();
     }
     #endif //MO_ENABLE_V201
 
@@ -618,7 +618,6 @@ bool SmartChargingService::setup() {
     }
     #endif //MO_ENABLE_V201
 
-    numEvseId = context.getModel16().getNumEvseId();
     for (unsigned int i = 1; i < numEvseId; i++) { //evseId 0 won't be populated
         if (!getEvse(i)) {
             MO_DBG_ERR("OOM");
@@ -1158,7 +1157,7 @@ bool SmartChargingServiceUtils::storeProfile(MO_FilesystemAdapter *filesystem, C
 
     auto capacity = chargingProfile->getJsonCapacity(ocppVersion);
     auto chargingProfileJson = initJsonDoc("v16.SmartCharging.ChargingProfile", capacity);
-    if (!chargingProfile->toJson(clock, ocppVersion, chargingProfileJson.as<JsonObject>())) {
+    if (!chargingProfile->toJson(clock, ocppVersion, chargingProfileJson.to<JsonObject>())) {
         return false;
     }
 

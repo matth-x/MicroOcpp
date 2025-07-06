@@ -964,11 +964,6 @@ std::unique_ptr<Ocpp201::Transaction> Ocpp201::TransactionStoreEvse::createTrans
         return nullptr;
     }
 
-    if (!commit(transaction.get())) {
-        MO_DBG_ERR("FS error");
-        return nullptr;
-    }
-
     return transaction;
 }
 

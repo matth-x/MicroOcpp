@@ -83,7 +83,9 @@ void MessageService::loop() {
             bool success = connection->sendTXT(out.c_str(), out.length());
 
             if (success) {
-                MO_DBG_DEBUG("Send %s", out.c_str());
+                #ifdef MO_TRAFFIC_OUT
+                MO_DBG_INFO("Send %s", out.c_str());
+                #endif
                 recvReqFront.reset();
             }
 
@@ -342,7 +344,9 @@ std::unique_ptr<Request> MessageService::createRequest(const char *operationType
 
 bool MessageService::receiveMessage(const char* payload, size_t length) {
 
-    MO_DBG_DEBUG("Recv %.*s", (int)length, payload);
+    #ifdef MO_TRAFFIC_OUT
+    MO_DBG_INFO("Recv %.*s", (int)length, payload);
+    #endif
 
     size_t capacity_init = (3 * length) / 2;
 

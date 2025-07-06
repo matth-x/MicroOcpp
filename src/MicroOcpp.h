@@ -303,19 +303,21 @@ bool mo_isTransactionRunning2(MO_Context *ctx, unsigned int evseId);
 const char *mo_getTransactionIdTag();
 const char *mo_getTransactionIdTag2(MO_Context *ctx, unsigned int evseId);
 
+#if MO_ENABLE_V201
+//Get the transactionId of the currently pending transaction, formatted as c-string. Returns NULL
+//if no transaction is running. The returned string must be copied into own buffer, as it may be
+//invalidated after call.
+//Backwards-compatible: if initialized with OCPP 1.6, returns txId formatted as c-string
+const char *mo_getTransactionId();
+const char *mo_getTransactionId2(MO_Context *ctx, unsigned int evseId);
+#endif //MO_ENABLE_V201
+
 #if MO_ENABLE_V16
 //Get the transactionId once the StartTransaction.conf from the server has arrived. Otherwise,
 //returns -1
 int mo_v16_getTransactionId();
 int mo_v16_getTransactionId2(MO_Context *ctx, unsigned int evseId);
 #endif //MO_ENABLE_V16
-
-#if MO_ENABLE_V201
-//Get the transactionId of the currently pending transaction. Returns NULL if no transaction is
-//running. The returned string must be copied into own buffer, as it may be invalidated after call.
-const char *mo_v201_getTransactionId();
-const char *mo_v201_getTransactionId2(MO_Context *ctx, unsigned int evseId);
-#endif //MO_ENABLE_V201
 
 /*
  * Returns the latest MO_ChargePointStatus as reported via StatusNotification (standard OCPP data type)

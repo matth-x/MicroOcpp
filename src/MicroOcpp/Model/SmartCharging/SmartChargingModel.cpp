@@ -310,14 +310,14 @@ bool ChargingSchedule::parseJson(Clock& clock, int ocppVersion, JsonObject json)
             return false;
         }
 
-        period.limit = json["limit"] | -1.f;
+        period.limit = periodJson["limit"] | -1.f;
         if (period.limit < 0.f) {
             MO_DBG_WARN("format violation");
             return false;
         }
 
         if (json.containsKey("numberPhases")) {
-            period.numberPhases = json["numberPhases"] | -1;
+            period.numberPhases = periodJson["numberPhases"] | -1;
             if (period.numberPhases < 0 || period.numberPhases > 3) {
                 MO_DBG_WARN("format violation");
                 return false;
@@ -387,7 +387,6 @@ bool ChargingSchedule::toJson(Clock& clock, int ocppVersion, bool compositeSched
             MO_DBG_ERR("serialization error");
             return false;
         }
-        char startScheduleStr [MO_JSONDATE_SIZE] = {'\0'};
         if (!clock.toJsonString(startSchedule2, startScheduleStr, sizeof(startScheduleStr))) {
             MO_DBG_ERR("serialization error");
             return false;
@@ -491,7 +490,17 @@ bool ChargingProfile::calculateLimit(int32_t unixTime, int32_t sessionDurationSe
 
 bool ChargingProfile::parseJson(Clock& clock, int ocppVersion, JsonObject json) {
 
-    chargingProfileId = json["chargingProfileId"] | -1;
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+        chargingProfileId = json["chargingProfileId"] | -1;
+    }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (ocppVersion == MO_OCPP_V201) {
+        chargingProfileId = json["id"] | -1;
+    }
+    #endif //MO_ENABLE_V201
+    
     if (chargingProfileId < 0) {
         MO_DBG_WARN("format violation");
         return false;
@@ -606,10 +615,9 @@ size_t ChargingProfile::getJsonCapacity(int ocppVersion) {
 
 bool ChargingProfile::toJson(Clock& clock, int ocppVersion, JsonObject out) {
 
-    out["chargingProfileId"] = chargingProfileId;
-
     #if MO_ENABLE_V16
     if (ocppVersion == MO_OCPP_V16) {
+        out["chargingProfileId"] = chargingProfileId;
         if (transactionId16 >= 0) {
             out["transactionId"] = transactionId16;
         }
@@ -617,6 +625,7 @@ bool ChargingProfile::toJson(Clock& clock, int ocppVersion, JsonObject out) {
     #endif //MO_ENABLE_V16
     #if MO_ENABLE_V201
     if (ocppVersion == MO_OCPP_V201) {
+        out["id"] = chargingProfileId;
         if (*transactionId201) {
             out["transactionId"] = (const char*)transactionId201; //force zero-copy
         }

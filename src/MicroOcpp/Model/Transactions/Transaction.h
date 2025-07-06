@@ -82,6 +82,10 @@ private:
     Timestamp start_timestamp;      //timestamp of StartTx; can be set before actually initiating
     int transactionId = -1; //only valid if confirmed = true
 
+    #if MO_ENABLE_V201
+    char transactionIdCompat [12] = {'\0'}; //v201 compat: provide txId as string too. Buffer dimensioned to hold max int value
+    #endif //MO_ENABLE_V201
+
     /*
      * Attributes of StopTransaction
      */
@@ -110,6 +114,9 @@ public:
      * data assigned by OCPP server
      */
     int getTransactionId() {return transactionId;}
+    #if MO_ENABLE_V201
+    const char *getTransactionIdCompat() {return transactionIdCompat;}
+    #endif //MO_ENABLE_V201
     bool isAuthorized() {return authorized;} //Authorize has been accepted
     bool isIdTagDeauthorized() {return deauthorized;} //StartTransaction has been rejected
 
@@ -153,7 +160,7 @@ public:
     void setStartTimestamp(Timestamp timestamp) {start_timestamp = timestamp;}
     const Timestamp& getStartTimestamp() {return start_timestamp;}
 
-    void setTransactionId(int transactionId) {this->transactionId = transactionId;}
+    void setTransactionId(int transactionId);
 
     SendStatus& getStopSync() {return stop_sync;}
 

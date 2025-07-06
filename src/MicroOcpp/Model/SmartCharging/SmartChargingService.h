@@ -111,8 +111,6 @@ private:
     bool updateProfile(unsigned int evseId, std::unique_ptr<ChargingProfile> chargingProfile, bool updateFile);
     bool loadProfiles();
 
-    size_t getChargingProfilesCount();
-
     void calculateLimit(int32_t unixTime, MO_ChargeRate& limit, int32_t& nextChangeSecs);
 
 public:
@@ -130,6 +128,8 @@ public:
     bool clearChargingProfile(int chargingProfileId, int evseId, ChargingProfilePurposeType chargingProfilePurpose, int stackLevel);
 
     std::unique_ptr<ChargingSchedule> getCompositeSchedule(unsigned int evseId, int duration, ChargingRateUnitType unit = ChargingRateUnitType::UNDEFINED);
+
+    size_t getChargingProfilesCount();
 
 friend class SmartChargingServiceEvse;
 };
