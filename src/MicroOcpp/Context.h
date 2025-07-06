@@ -85,7 +85,7 @@ public:
     uint32_t (*getRngCb())();
 
 #if MO_USE_FILEAPI != MO_CUSTOM_FS
-    void setFilesystemConfig(MO_FilesystemConfig filesystemConfig);
+    bool setFilesystemConfig(MO_FilesystemConfig filesystemConfig);
 #endif //MO_USE_FILEAPI != MO_CUSTOM_FS
     void setFilesystem(MO_FilesystemAdapter *filesystem);
     MO_FilesystemAdapter *getFilesystem();

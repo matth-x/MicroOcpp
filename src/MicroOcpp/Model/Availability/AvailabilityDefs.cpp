@@ -8,12 +8,12 @@
 
 #if MO_ENABLE_V16
 
-void mo_ErrorData_init(MO_ErrorData *errorData) {
+void mo_errorData_init(MO_ErrorData *errorData) {
     memset(errorData, 0, sizeof(*errorData));
     errorData->severity = 1;
 }
 
-void mo_ErrorData_setErrorCode(MO_ErrorData *errorData, const char *errorCode) {
+void mo_errorData_setErrorCode(MO_ErrorData *errorData, const char *errorCode) {
     errorData->errorCode = errorCode;
     if (errorCode) {
         errorData->isError = true;
@@ -21,7 +21,7 @@ void mo_ErrorData_setErrorCode(MO_ErrorData *errorData, const char *errorCode) {
     }
 }
 
-void mo_ErrorDataInput_init(MO_ErrorDataInput *errorDataInput) {
+void mo_errorDataInput_init(MO_ErrorDataInput *errorDataInput) {
     memset(errorDataInput, 0, sizeof(*errorDataInput));
 }
 

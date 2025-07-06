@@ -152,7 +152,14 @@ typedef struct {
      * a filename to the end of path_prefix. Can be empty if the filesystem implementation accepts the MO filenames as
      * path directly. MO doesn't use sub-directories. */
     const char *path_prefix;
+
+    char *internalBuf; //used by MO internally
 } MO_FilesystemConfig;
+
+void mo_filesystemConfig_init(MO_FilesystemConfig *config);
+bool mo_filesystemConfig_copy(MO_FilesystemConfig *dst, MO_FilesystemConfig *src);
+void mo_filesystemConfig_deinit(MO_FilesystemConfig *config);
+
 MO_FilesystemAdapter *mo_makeDefaultFilesystemAdapter(MO_FilesystemConfig config);
 void mo_freeDefaultFilesystemAdapter(MO_FilesystemAdapter *filesystem);
 

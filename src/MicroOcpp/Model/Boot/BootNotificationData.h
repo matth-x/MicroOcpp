@@ -20,7 +20,7 @@ extern "C" {
  * ```
  * // init
  * MO_BootNotificationData bnData;
- * mo_BootNotificationData_init(&bnData);
+ * mo_bootNotificationData_init(&bnData);
  *
  * // set payload
  * bnData.chargePointVendor = "My Company Ltd.";
@@ -42,7 +42,7 @@ typedef struct {
     const char *imsi;
 } MO_BootNotificationData;
 
-void mo_BootNotificationData_init(MO_BootNotificationData *bnData);
+void mo_bootNotificationData_init(MO_BootNotificationData *bnData);
 
 #ifdef __cplusplus
 } //extern "C"

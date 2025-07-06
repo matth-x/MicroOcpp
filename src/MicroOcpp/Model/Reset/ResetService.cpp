@@ -110,8 +110,8 @@ void v16::ResetService::loop() {
             auto cpStatus = availSvcCp ? availSvcCp->getStatus() : MO_ChargePointStatus_UNDEFINED;
 
             MO_ErrorData errorCode;
-            mo_ErrorData_init(&errorCode);
-            mo_ErrorData_setErrorCode(&errorCode, "ResetFailure");
+            mo_errorData_init(&errorCode);
+            mo_errorData_setErrorCode(&errorCode, "ResetFailure");
 
             auto statusNotification = makeRequest(context, new StatusNotification(
                         context,

@@ -45,9 +45,7 @@ void mo_setFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *
 #if MO_WS_USE == MO_WS_ARDUINO
 /*
  * Setup MO with links2004/WebSockets library. Only available on Arduino, for other platforms set custom
- * WebSockets adapter (see examples folder). `backendUrl`, `chargeBoxId`, `authorizationKey` and
- * `CA_cert` are zero-copy and must remain valid until `mo_setup()`. `CA_cert` is zero-copy and must
- * outlive the MO lifecycle.
+ * WebSockets adapter (see examples folder). `CA_cert` is zero-copy and must outlive the MO lifecycle.
  *
  * If the connections fails, please refer to
  * https://github.com/matth-x/MicroOcpp/issues/36#issuecomment-989716573 for recommendations on
@@ -57,7 +55,7 @@ bool mo_setWebsocketUrl(
         const char *backendUrl,       //e.g. "wss://example.com:8443/steve/websocket/CentralSystemService". Must be defined
         const char *chargeBoxId,      //e.g. "charger001". Can be NULL
         const char *authorizationKey, //authorizationKey present in the websocket message header. Can be NULL. Set this to enable OCPP Security Profile 2
-        const char *CA_cert);         //TLS certificate. Can be NULL. Set this to enable OCPP Security Profile 2
+        const char *CA_cert);         //TLS certificate. Can be NULL. Zero-copy, must outlive MO. Set this to enable OCPP Security Profile 2
 #endif
 
 #if __cplusplus
@@ -101,7 +99,7 @@ bool mo_setBootNotificationData2(MO_Context *ctx, MO_BootNotificationData bnData
  * the energy meter stores the energy register in the global variable `e_reg`, then you can allow
  * this library to read it by defining the following Input and passing it to the library.
  * ```
- *     setEnergyMeterInput([] () {
+ *     mo_setEnergyMeterInput([] () {
  *         return e_reg;
  *     });
  * ```
@@ -110,7 +108,7 @@ bool mo_setBootNotificationData2(MO_Context *ctx, MO_BootNotificationData bnData
  * For example, to let Smart Charging control the PWM signal of the Control Pilot, define the
  * following Output and pass it to the library.
  * ```
- *     setSmartChargingPowerOutput([] (float p_max) {
+ *     mo_setSmartChargingPowerOutput([] (float p_max) {
  *         pwm = p_max / PWM_FACTOR; //(simplified example)
  *     });
  * ```

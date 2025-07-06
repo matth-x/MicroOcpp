@@ -201,8 +201,8 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
         auto cpStatus = availSvcCp ? availSvcCp->getStatus() : MO_ChargePointStatus_UNDEFINED;
 
         MO_ErrorData errorCode;
-        mo_ErrorData_init(&errorCode);
-        mo_ErrorData_setErrorCode(&errorCode, "LocalListConflict");
+        mo_errorData_init(&errorCode);
+        mo_errorData_setErrorCode(&errorCode, "LocalListConflict");
 
         auto statusNotification = makeRequest(context, new StatusNotification(
                     context,

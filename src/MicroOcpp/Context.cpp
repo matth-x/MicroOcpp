@@ -37,6 +37,11 @@ Context::~Context() {
     setFtpClient(nullptr);
     setCertificateStore(nullptr);
 
+#if MO_USE_FILEAPI != MO_CUSTOM_FS
+    mo_filesystemConfig_deinit(&filesystemConfig);
+    filesystemConfigDefined = false;
+#endif //MO_USE_FILEAPI != MO_CUSTOM_FS
+
 #if MO_WS_USE != MO_WS_CUSTOM
     mo_connectionConfig_deinit(&connectionConfig);
 #endif //MO_WS_USE != MO_WS_CUSTOM
@@ -77,9 +82,13 @@ uint32_t (*Context::getRngCb())() {
 }
 
 #if MO_USE_FILEAPI != MO_CUSTOM_FS
-void Context::setFilesystemConfig(MO_FilesystemConfig filesystemConfig) {
-    this->filesystemConfig = filesystemConfig;
+bool Context::setFilesystemConfig(MO_FilesystemConfig filesystemConfig) {
+    if (!mo_filesystemConfig_copy(&this->filesystemConfig, &filesystemConfig)) {
+        MO_DBG_ERR("OOM");
+        return false;
+    }
     filesystemConfigDefined = true;
+    return true;
 }
 #endif //MO_USE_FILEAPI != MO_CUSTOM_FS
 
@@ -104,6 +113,8 @@ MO_FilesystemAdapter *Context::getFilesystem() {
             return nullptr;
         }
         isFilesystemOwner = true;
+        mo_filesystemConfig_deinit(&filesystemConfig);
+        filesystemConfigDefined = false;
     }
     #endif //MO_USE_FILEAPI != MO_CUSTOM_FS
 
@@ -303,6 +314,7 @@ bool Context::setup() {
     #if MO_USE_FILEAPI != MO_CUSTOM_FS
     if (!filesystemConfigDefined) {
         //set defaults
+        mo_filesystemConfig_init(&filesystemConfig);
         filesystemConfig.opt = MO_FS_OPT_USE_MOUNT;
         filesystemConfig.path_prefix = MO_FILENAME_PREFIX;
         filesystemConfigDefined = true;

@@ -74,7 +74,7 @@ void v16::AvailabilityServiceEvse::loop() {
     }
 
     MO_ErrorData errorData;
-    mo_ErrorData_init(&errorData);
+    mo_errorData_init(&errorData);
     errorData.severity = 0;
     int errorDataIndex = -1;
 
@@ -326,7 +326,7 @@ bool v16::AvailabilityServiceEvse::isOperative() {
 Operation *v16::AvailabilityServiceEvse::createTriggeredStatusNotification() {
 
     MO_ErrorData errorData;
-    mo_ErrorData_init(&errorData);
+    mo_errorData_init(&errorData);
     errorData.severity = 0;
 
     if (reportedErrorIndex >= 0) {

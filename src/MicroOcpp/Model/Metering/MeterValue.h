@@ -85,7 +85,7 @@ typedef struct {
         #endif //MO_ENABLE_V201
     };
 
-    uint8_t type; //MO_MeterInputType in dense representation. Use `mo_MeterInput_setType()` to define
+    uint8_t type; //MO_MeterInputType in dense representation. Use `mo_meterInput_setType()` to define
     uint8_t mo_flags; //flags which MO uses internally
 
     #if MO_ENABLE_V201
@@ -100,9 +100,9 @@ typedef struct {
     const char *unit;
 } MO_MeterInput;
 
-void mo_MeterInput_init(MO_MeterInput *mInput, MO_MeterInputType type);
-MO_MeterInputType mo_MeterInput_getType(MO_MeterInput *mInput);
-void mo_MeterInput_setType(MO_MeterInput *mInput, MO_MeterInputType type);
+void mo_meterInput_init(MO_MeterInput *mInput, MO_MeterInputType type);
+MO_MeterInputType mo_meterInput_getType(MO_MeterInput *mInput);
+void mo_meterInput_setType(MO_MeterInput *mInput, MO_MeterInputType type);
 
 #ifdef __cplusplus
 } //extern "C"

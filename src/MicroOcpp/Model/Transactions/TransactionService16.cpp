@@ -994,21 +994,6 @@ void TransactionServiceEvse::setEvReadyInput(bool (*evReady)(unsigned int, void*
     this->evReadyInputUserData = userData;
 }
 
-/*
-void TransactionServiceEvse::addErrorCodeInput(const char* (*errorCodeInput)(unsigned int)) {
-    addErrorDataInput([] (unsigned int evseId, void *userData) -> MO_ErrorData {
-        auto errorCodeInput = reinterpret_cast<const char*(*)(unsigned int, void*)>(userData);
-
-        MO_ErrorData res;
-        mo_ErrorData_init(&res);
-        mo_ErrorData_setErrorCode(&res, errorCodeInput(evseId));
-        return res;
-    }, reinterpret_cast<void*>(errorCodeInput));
-    addErrorDataInput([connectorErrorCode] () -> ErrorData {
-        return ErrorData(connectorErrorCode());
-    });
-}*/
-
 void TransactionServiceEvse::setStartTxReadyInput(bool (*startTxReady)(unsigned int, void*), void *userData) {
     this->startTxReadyInput = startTxReady;
     this->startTxReadyInputUserData = userData;

@@ -25,15 +25,15 @@ typedef struct {
     const char *vendorErrorCode; //vendor-specific error code
 } MO_ErrorData;
 
-void mo_ErrorData_init(MO_ErrorData *errorData);
-void mo_ErrorData_setErrorCode(MO_ErrorData *errorData, const char *errorCode);
+void mo_errorData_init(MO_ErrorData *errorData);
+void mo_errorData_setErrorCode(MO_ErrorData *errorData, const char *errorCode);
 
 typedef struct {
     MO_ErrorData (*getErrorData)(unsigned int evseId, void *userData);
     void *userData;
 } MO_ErrorDataInput;
 
-void mo_ErrorDataInput_init(MO_ErrorDataInput *errorDataInput);
+void mo_errorDataInput_init(MO_ErrorDataInput *errorDataInput);
 
 #ifdef __cplusplus
 } //extern "C"

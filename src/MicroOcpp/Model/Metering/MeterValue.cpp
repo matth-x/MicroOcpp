@@ -8,15 +8,15 @@
 
 #if MO_ENABLE_V16 || MO_ENABLE_V201
 
-void mo_MeterInput_init(MO_MeterInput *mInput, MO_MeterInputType type) {
+void mo_meterInput_init(MO_MeterInput *mInput, MO_MeterInputType type) {
     memset(mInput, 0, sizeof(*mInput));
-    mo_MeterInput_setType(mInput, type);
+    mo_meterInput_setType(mInput, type);
 }
 
-MO_MeterInputType mo_MeterInput_getType(MO_MeterInput *mInput) {
+MO_MeterInputType mo_meterInput_getType(MO_MeterInput *mInput) {
     return static_cast<MO_MeterInputType>(mInput->type);
 }
-void mo_MeterInput_setType(MO_MeterInput *mInput, MO_MeterInputType type) {
+void mo_meterInput_setType(MO_MeterInput *mInput, MO_MeterInputType type) {
     mInput->type = static_cast<decltype(mInput->type)>(type);
 }
 

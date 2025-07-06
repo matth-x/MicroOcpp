@@ -48,7 +48,7 @@
 
 using namespace MicroOcpp;
 
-SecurityEventService::SecurityEventService(Context& context) : MemoryManaged("v201.Security.SecurityEventService"), context(context) {
+SecurityEventService::SecurityEventService(Context& context) : MemoryManaged("v16/v201.Security.SecurityEventService"), context(context) {
 
 }
 

@@ -22,7 +22,7 @@
 
 using namespace MicroOcpp;
 
-void mo_BootNotificationData_init(MO_BootNotificationData *bnData) {
+void mo_bootNotificationData_init(MO_BootNotificationData *bnData) {
     memset(bnData, 0, sizeof(*bnData));
 }
 

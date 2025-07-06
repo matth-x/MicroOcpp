@@ -398,6 +398,41 @@ MO_FilesystemAdapter *resetIndex(MO_FilesystemAdapter *decorator) {
 
 #endif //MO_ENABLE_FILE_INDEX
 
+#if MO_USE_FILEAPI != MO_CUSTOM_FS
+
+void mo_filesystemConfig_init(MO_FilesystemConfig *config) {
+    memset(config, 0, sizeof(*config));
+}
+
+bool mo_filesystemConfig_copy(MO_FilesystemConfig *dst, MO_FilesystemConfig *src) {
+
+    char *prefix_copy = nullptr;
+
+    const char *prefix = src->path_prefix;
+    size_t prefix_len = prefix ? strlen(prefix) : 0;
+    if (prefix_len > 0) {
+        size_t prefix_size = prefix_len + 1;
+        prefix_copy = static_cast<char*>(MO_MALLOC("Filesystem", prefix_size));
+        if (!prefix_copy) {
+            MO_DBG_ERR("OOM");
+            return false;
+        }
+        (void)snprintf(prefix_copy, prefix_size, "%s", prefix);
+    }
+
+    dst->internalBuf = prefix_copy;
+    dst->path_prefix = dst->internalBuf;
+    dst->opt = src->opt;
+    return true;
+}
+
+void mo_filesystemConfig_deinit(MO_FilesystemConfig *config) {
+    MO_FREE(config->internalBuf);
+    memset(config, 0, sizeof(*config));
+}
+
+#endif //MO_USE_FILEAPI != MO_CUSTOM_FS
+
 #if MO_USE_FILEAPI == MO_ARDUINO_LITTLEFS || MO_USE_FILEAPI == MO_ARDUINO_SPIFFS
 
 #if MO_USE_FILEAPI == MO_ARDUINO_LITTLEFS

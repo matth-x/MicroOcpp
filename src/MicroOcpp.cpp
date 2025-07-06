@@ -103,7 +103,7 @@ void mo_setFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *
     auto context = mo_getContext2(ctx);
 
     MO_FilesystemConfig filesystemConfig;
-    memset(&filesystemConfig, 0, sizeof(filesystemConfig));
+    mo_filesystemConfig_init(&filesystemConfig);
     filesystemConfig.opt = opt;
     filesystemConfig.path_prefix = pathPrefix;
 
@@ -171,7 +171,7 @@ void mo_setOcppVersion2(MO_Context *ctx, int ocppVersion) {
 //Set BootNotification fields
 bool mo_setBootNotificationData(const char *chargePointModel, const char *chargePointVendor) {
     MO_BootNotificationData bnData;
-    mo_BootNotificationData_init(&bnData);
+    mo_bootNotificationData_init(&bnData);
     bnData.chargePointModel = chargePointModel;
     bnData.chargePointVendor = chargePointVendor;
 
@@ -264,7 +264,7 @@ void mo_setConnectorPluggedInput2(MO_Context *ctx, unsigned int evseId, bool (*c
 //Input of the electricity meter register in Wh
 bool mo_setEnergyMeterInput(int32_t (*energyInput)()) {
     MO_MeterInput mInput;
-    mo_MeterInput_init(&mInput, MO_MeterInputType_Int);
+    mo_meterInput_init(&mInput, MO_MeterInputType_Int);
     mInput.getInt = energyInput;
     mInput.measurand = "Energy.Active.Import.Register";
     mInput.unit = "Wh";
@@ -273,7 +273,7 @@ bool mo_setEnergyMeterInput(int32_t (*energyInput)()) {
 
 bool mo_setEnergyMeterInput2(MO_Context *ctx, unsigned int evseId, int32_t (*energyInput2)(MO_ReadingContext, unsigned int, void*), void *userData) {
     MO_MeterInput mInput;
-    mo_MeterInput_init(&mInput, MO_MeterInputType_IntWithArgs);
+    mo_meterInput_init(&mInput, MO_MeterInputType_IntWithArgs);
     mInput.getInt2 = energyInput2;
     mInput.measurand = "Energy.Active.Import.Register";
     mInput.unit = "Wh";
@@ -284,7 +284,7 @@ bool mo_setEnergyMeterInput2(MO_Context *ctx, unsigned int evseId, int32_t (*ene
 //Input of the power meter reading in W
 bool mo_setPowerMeterInput(float (*powerInput)()) {
     MO_MeterInput mInput;
-    mo_MeterInput_init(&mInput, MO_MeterInputType_Float);
+    mo_meterInput_init(&mInput, MO_MeterInputType_Float);
     mInput.getFloat = powerInput;
     mInput.measurand = "Power.Active.Import";
     mInput.unit = "W";
@@ -293,7 +293,7 @@ bool mo_setPowerMeterInput(float (*powerInput)()) {
 
 bool mo_setPowerMeterInput2(MO_Context *ctx, unsigned int evseId, float (*powerInput2)(MO_ReadingContext, unsigned int, void*), void *userData) {
     MO_MeterInput mInput;
-    mo_MeterInput_init(&mInput, MO_MeterInputType_Float);
+    mo_meterInput_init(&mInput, MO_MeterInputType_Float);
     mInput.getFloat2 = powerInput2;
     mInput.measurand = "Power.Active.Import";
     mInput.unit = "W";
@@ -1095,14 +1095,14 @@ bool mo_addErrorCodeInput(const char* (*errorCodeInput)()) {
         }
 
         MO_ErrorDataInput errorDataInput;
-        mo_ErrorDataInput_init(&errorDataInput);
+        mo_errorDataInput_init(&errorDataInput);
         errorDataInput.userData = reinterpret_cast<void*>(errorCodeInput);
         errorDataInput.getErrorData = [] (unsigned int, void *userData) {
             auto errorCodeInput = reinterpret_cast<const char* (*)()>(userData);
 
             MO_ErrorData errorData;
-            mo_ErrorData_init(&errorData);
-            mo_ErrorData_setErrorCode(&errorData, errorCodeInput());
+            mo_errorData_init(&errorData);
+            mo_errorData_setErrorCode(&errorData, errorCodeInput());
             return errorData;
         };
 
@@ -1155,7 +1155,7 @@ bool mo_v16_addErrorDataInput(MO_Context *ctx, unsigned int evseId, MO_ErrorData
         }
 
         MO_ErrorDataInput errorDataInput;
-        mo_ErrorDataInput_init(&errorDataInput);
+        mo_errorDataInput_init(&errorDataInput);
         errorDataInput.getErrorData = errorData;
         errorDataInput.userData = userData;
 
@@ -1212,7 +1212,7 @@ bool mo_v201_addFaultedInput(MO_Context *ctx, unsigned int evseId, bool (*faulte
 
 bool mo_addMeterValueInputInt(int32_t (*meterInput)(), const char *measurand, const char *unit, const char *location, const char *phase) {
     MO_MeterInput mInput;
-    mo_MeterInput_init(&mInput, MO_MeterInputType_Int);
+    mo_meterInput_init(&mInput, MO_MeterInputType_Int);
     mInput.getInt = meterInput;
     mInput.measurand = measurand;
     mInput.unit = unit;
@@ -1223,7 +1223,7 @@ bool mo_addMeterValueInputInt(int32_t (*meterInput)(), const char *measurand, co
 
 bool mo_addMeterValueInputInt2(MO_Context *ctx, unsigned int evseId, int32_t (*meterInput)(MO_ReadingContext, unsigned int, void*), const char *measurand, const char *unit, const char *location, const char *phase, void *userData) {
     MO_MeterInput mInput;
-    mo_MeterInput_init(&mInput, MO_MeterInputType_IntWithArgs);
+    mo_meterInput_init(&mInput, MO_MeterInputType_IntWithArgs);
     mInput.getInt2 = meterInput;
     mInput.measurand = measurand;
     mInput.unit = unit;
@@ -1235,7 +1235,7 @@ bool mo_addMeterValueInputInt2(MO_Context *ctx, unsigned int evseId, int32_t (*m
 
 bool mo_addMeterValueInputFloat(float (*meterInput)(), const char *measurand, const char *unit, const char *location, const char *phase) {
     MO_MeterInput mInput;
-    mo_MeterInput_init(&mInput, MO_MeterInputType_Float);
+    mo_meterInput_init(&mInput, MO_MeterInputType_Float);
     mInput.getFloat = meterInput;
     mInput.measurand = measurand;
     mInput.unit = unit;
@@ -1246,7 +1246,7 @@ bool mo_addMeterValueInputFloat(float (*meterInput)(), const char *measurand, co
 
 bool mo_addMeterValueInputFloat2(MO_Context *ctx, unsigned int evseId, float (*meterInput)(MO_ReadingContext, unsigned int, void*), const char *measurand, const char *unit, const char *location, const char *phase, void *userData) {
     MO_MeterInput mInput;
-    mo_MeterInput_init(&mInput, MO_MeterInputType_FloatWithArgs);
+    mo_meterInput_init(&mInput, MO_MeterInputType_FloatWithArgs);
     mInput.getFloat2 = meterInput;
     mInput.measurand = measurand;
     mInput.unit = unit;
@@ -1258,7 +1258,7 @@ bool mo_addMeterValueInputFloat2(MO_Context *ctx, unsigned int evseId, float (*m
 
 bool mo_addMeterValueInputString(int (*meterInput)(char *buf, size_t size), const char *measurand, const char *unit, const char *location, const char *phase) {
     MO_MeterInput mInput;
-    mo_MeterInput_init(&mInput, MO_MeterInputType_String);
+    mo_meterInput_init(&mInput, MO_MeterInputType_String);
     mInput.getString = meterInput;
     mInput.measurand = measurand;
     mInput.unit = unit;
@@ -1268,7 +1268,7 @@ bool mo_addMeterValueInputString(int (*meterInput)(char *buf, size_t size), cons
 }
 bool mo_addMeterValueInputString2(MO_Context *ctx, unsigned int evseId, int (*meterInput)(char *buf, size_t size, MO_ReadingContext, unsigned int, void*), const char *measurand, const char *unit, const char *location, const char *phase, void *userData) {
     MO_MeterInput mInput;
-    mo_MeterInput_init(&mInput, MO_MeterInputType_StringWithArgs);
+    mo_meterInput_init(&mInput, MO_MeterInputType_StringWithArgs);
     mInput.getString2 = meterInput;
     mInput.measurand = measurand;
     mInput.unit = unit;
