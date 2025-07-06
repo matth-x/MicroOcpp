@@ -13,7 +13,7 @@
 #if MO_ENABLE_V201
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp201;
+using namespace MicroOcpp::v201;
 
 RequestStartTransaction::RequestStartTransaction(Context& context, RemoteControlService& rcService) : MemoryManaged("v201.Operation.", "RequestStartTransaction"), context(context), rcService(rcService) {
   

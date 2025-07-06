@@ -12,7 +12,7 @@
 #if MO_ENABLE_V201
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp201;
+using namespace MicroOcpp::v201;
 
 NotifyReport::NotifyReport(Context& context, int requestId, const Timestamp& generatedAt, bool tbc, unsigned int seqNo, const Vector<Variable*>& reportData)
         : MemoryManaged("v201.Operation.", "NotifyReport"), context(context), requestId(requestId), generatedAt(generatedAt), tbc(tbc), seqNo(seqNo), reportData(reportData) {

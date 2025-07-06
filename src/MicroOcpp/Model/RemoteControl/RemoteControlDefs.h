@@ -50,7 +50,7 @@ enum class TriggerMessageStatus : uint8_t {
 #ifdef __cplusplus
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 enum class RemoteStartStopStatus : uint8_t {
     ERR_INTERNAL,
@@ -65,7 +65,7 @@ enum class UnlockStatus : uint8_t {
     PENDING //MO-internal: unlock action not finished yet, result still unknown. Check later
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 
 #endif //__cplusplus
@@ -75,7 +75,7 @@ enum class UnlockStatus : uint8_t {
 #ifdef __cplusplus
 
 namespace MicroOcpp {
-namespace Ocpp201 {
+namespace v201 {
 
 enum class RequestStartStopStatus : uint8_t {
     Accepted,
@@ -90,7 +90,7 @@ enum class UnlockStatus : uint8_t {
     PENDING //MO-internal: unlock action not finished yet, result still unknown. Check later
 };
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 #endif //__cplusplus
 #endif //MO_ENABLE_V201

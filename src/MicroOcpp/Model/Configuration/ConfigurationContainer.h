@@ -18,7 +18,7 @@
 #define MO_KEYVALUE_FN "client-state.jsn"
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 class ConfigurationContainer {
 public:
@@ -72,7 +72,7 @@ public:
     bool commit() override;
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 #endif

@@ -14,7 +14,7 @@
 #if MO_ENABLE_V16
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 bool MeterStore::printTxMeterValueFName(char *fname, size_t size, unsigned int evseId, unsigned int txNr, unsigned int mvIndex) {
     auto ret = snprintf(fname, MO_MAX_PATH_SIZE, "sd-%.*u-%.*u-%.*u.jsn",

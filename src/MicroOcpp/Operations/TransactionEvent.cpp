@@ -12,7 +12,7 @@
 #if MO_ENABLE_V201
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp201;
+using namespace MicroOcpp::v201;
 
 TransactionEvent::TransactionEvent(Context& context, TransactionEventData *txEvent)
         : MemoryManaged("v201.Operation.", "TransactionEvent"), context(context), txEvent(txEvent) {

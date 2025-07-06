@@ -12,7 +12,7 @@
 #if MO_ENABLE_V16 && MO_ENABLE_DIAGNOSTICS
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 class DiagnosticsStatusNotification : public Operation, public MemoryManaged {
 private:
@@ -27,7 +27,7 @@ public:
     void processConf(JsonObject payload) override;
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_DIAGNOSTICS
 #endif

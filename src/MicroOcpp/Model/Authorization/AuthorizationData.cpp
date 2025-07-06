@@ -8,7 +8,7 @@
 #if MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 AuthorizationData::AuthorizationData() : MemoryManaged("v16.Authorization.AuthorizationData") {
 
@@ -168,7 +168,7 @@ void AuthorizationData::reset() {
 }
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 const char *serializeAuthorizationStatus(AuthorizationStatus status) {
     switch (status) {
@@ -207,6 +207,6 @@ AuthorizationStatus deserializeAuthorizationStatus(const char *cstr) {
     }
 }
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH

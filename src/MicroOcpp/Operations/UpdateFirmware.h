@@ -15,7 +15,7 @@ namespace MicroOcpp {
 
 class Context;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class FirmwareService;
 
@@ -37,7 +37,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 #endif

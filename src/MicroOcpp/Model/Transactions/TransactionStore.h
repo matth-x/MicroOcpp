@@ -25,7 +25,7 @@ namespace MicroOcpp {
 
 class Context;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class Transaction;
 
@@ -38,7 +38,7 @@ FilesystemUtils::StoreStatus store(MO_FilesystemAdapter *filesystem, Context& co
 bool remove(MO_FilesystemAdapter *filesystem, unsigned int evseId, unsigned int txNr);
 
 } //namespace TransactionStore
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_OCPP_V16
 
@@ -56,7 +56,7 @@ namespace MicroOcpp {
 
 class Context;
 
-namespace Ocpp201 {
+namespace v201 {
 
 class Transaction;
 class TransactionEventData;
@@ -111,7 +111,7 @@ public:
     TransactionStoreEvse *getEvse(unsigned int evseId);
 };
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V201
 

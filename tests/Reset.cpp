@@ -40,7 +40,7 @@ TEST_CASE( "Reset" ) {
     mocpp_set_timer(custom_timer_cb);
 
     getOcppContext()->getMessageService().registerOperation("Authorize", [] () {
-        return new Ocpp16::CustomOperation("Authorize",
+        return new v16::CustomOperation("Authorize",
             [] (JsonObject) {}, //ignore req
             [] () {
                 //create conf
@@ -51,7 +51,7 @@ TEST_CASE( "Reset" ) {
             });});
 
     getOcppContext()->getMessageService().registerOperation("TransactionEvent", [] () {
-        return new Ocpp16::CustomOperation("TransactionEvent",
+        return new v16::CustomOperation("TransactionEvent",
             [] (JsonObject) {}, //ignore req
             [] () {
                 //create conf
@@ -97,7 +97,7 @@ TEST_CASE( "Reset" ) {
 
         bool checkProcessed = false;
 
-        auto resetRequest = makeRequest(new Ocpp16::CustomOperation(
+        auto resetRequest = makeRequest(new v16::CustomOperation(
                 "Reset",
                 [] () {
                     //create req
@@ -150,7 +150,7 @@ TEST_CASE( "Reset" ) {
 
         bool checkProcessed = false;
 
-        auto resetRequest = makeRequest(new Ocpp16::CustomOperation(
+        auto resetRequest = makeRequest(new v16::CustomOperation(
                 "Reset",
                 [] () {
                     //create req
@@ -235,7 +235,7 @@ TEST_CASE( "Reset" ) {
         bool checkProcessedTx = false;
 
         getOcppContext()->getMessageService().registerOperation("TransactionEvent", [&checkProcessedTx] () {
-            return new Ocpp16::CustomOperation("TransactionEvent",
+            return new v16::CustomOperation("TransactionEvent",
                 [&checkProcessedTx] (JsonObject payload) {
                     //process req
                     checkProcessedTx = true;
@@ -251,7 +251,7 @@ TEST_CASE( "Reset" ) {
 
         bool checkProcessed = false;
 
-        auto resetRequest = makeRequest(new Ocpp16::CustomOperation(
+        auto resetRequest = makeRequest(new v16::CustomOperation(
                 "Reset",
                 [] () {
                     //create req
@@ -305,7 +305,7 @@ TEST_CASE( "Reset" ) {
 
         bool checkProcessed = false;
 
-        auto resetRequest = makeRequest(new Ocpp16::CustomOperation(
+        auto resetRequest = makeRequest(new v16::CustomOperation(
                 "Reset",
                 [] () {
                     //create req
@@ -337,7 +337,7 @@ TEST_CASE( "Reset" ) {
 
         bool checkProcessed = false;
 
-        auto resetRequest = makeRequest(new Ocpp16::CustomOperation(
+        auto resetRequest = makeRequest(new v16::CustomOperation(
                 "Reset",
                 [] () {
                     //create req

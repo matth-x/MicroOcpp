@@ -11,7 +11,7 @@
 #if MO_ENABLE_V16
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 class Model;
 
@@ -34,7 +34,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 
 #endif //MO_ENABLE_V16
@@ -45,7 +45,7 @@ public:
 #include <MicroOcpp/Model/Authorization/IdToken.h>
 
 namespace MicroOcpp {
-namespace Ocpp201 {
+namespace v201 {
 
 class AvailabilityService;
 
@@ -67,7 +67,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 
 #endif //MO_ENABLE_V201

@@ -14,7 +14,7 @@ namespace MicroOcpp {
 
 class Context;
 
-namespace Ocpp201 {
+namespace v201 {
 
 class TransactionEventData;
 
@@ -42,7 +42,7 @@ public:
 #endif
 };
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V201
 #endif

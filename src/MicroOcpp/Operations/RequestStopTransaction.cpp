@@ -9,7 +9,7 @@
 #if MO_ENABLE_V201
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp201;
+using namespace MicroOcpp::v201;
 
 RequestStopTransaction::RequestStopTransaction(RemoteControlService& rcService) : MemoryManaged("v201.Operation.", "RequestStopTransaction"), rcService(rcService) {
   

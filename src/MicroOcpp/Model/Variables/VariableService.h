@@ -37,7 +37,7 @@ namespace MicroOcpp {
 
 class Context;
 
-namespace Ocpp201 {
+namespace v201 {
 
 template <class T>
 struct VariableValidator {
@@ -104,6 +104,6 @@ public:
 };
 
 } //namespace MicroOcpp
-} //namespace Ocpp201
+} //namespace v201
 #endif //MO_ENABLE_V201
 #endif

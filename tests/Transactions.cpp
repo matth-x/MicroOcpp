@@ -39,7 +39,7 @@ TEST_CASE( "Transactions" ) {
     mocpp_set_timer(custom_timer_cb);
 
     getOcppContext()->getMessageService().registerOperation("Authorize", [] () {
-        return new Ocpp16::CustomOperation("Authorize",
+        return new v16::CustomOperation("Authorize",
             [] (JsonObject) {}, //ignore req
             [] () {
                 //create conf
@@ -50,7 +50,7 @@ TEST_CASE( "Transactions" ) {
             });});
     
     getOcppContext()->getMessageService().registerOperation("TransactionEvent", [] () {
-        return new Ocpp16::CustomOperation("TransactionEvent",
+        return new v16::CustomOperation("TransactionEvent",
             [] (JsonObject) {}, //ignore req
             [] () {
                 //create conf
@@ -293,7 +293,7 @@ TEST_CASE( "Transactions" ) {
         bool checkReceivedStarted = false, checkReceivedEnded = false;
 
         getOcppContext()->getMessageService().registerOperation("TransactionEvent", [&checkReceivedStarted, &checkReceivedEnded] () {
-            return new Ocpp16::CustomOperation("TransactionEvent",
+            return new v16::CustomOperation("TransactionEvent",
                 [&checkReceivedStarted, &checkReceivedEnded] (JsonObject request) {
                     //process req
                     const char *eventType = request["eventType"] | (const char*)nullptr;
@@ -344,7 +344,7 @@ TEST_CASE( "Transactions" ) {
         size_t checkSeqNosSize = 0;
 
         getOcppContext()->getMessageService().registerOperation("TransactionEvent", [&checkReceivedStarted, &checkReceivedEnded, &checkSeqNosSize] () {
-            return new Ocpp16::CustomOperation("TransactionEvent",
+            return new v16::CustomOperation("TransactionEvent",
                 [&checkReceivedStarted, &checkReceivedEnded, &checkSeqNosSize] (JsonObject request) {
                     //process req
                     const char *eventType = request["eventType"] | (const char*)nullptr;
@@ -417,7 +417,7 @@ TEST_CASE( "Transactions" ) {
         std::map<std::string,std::tuple<bool,bool>> txEventRequests;
 
         getOcppContext()->getMessageService().registerOperation("TransactionEvent", [&txEventRequests] () {
-            return new Ocpp16::CustomOperation("TransactionEvent",
+            return new v16::CustomOperation("TransactionEvent",
                 [&txEventRequests] (JsonObject request) {
                     //process req
                     const char *eventType = request["eventType"] | (const char*)nullptr;
@@ -522,7 +522,7 @@ TEST_CASE( "Transactions" ) {
         bool checkProcessed = false;
 
         getOcppContext()->getMessageService().registerOperation("TransactionEvent", [&checkProcessed, txId] () {
-            return new Ocpp16::CustomOperation("TransactionEvent",
+            return new v16::CustomOperation("TransactionEvent",
                 [&checkProcessed, txId] (JsonObject request) {
                     //process req
                     const char *eventType = request["eventType"] | (const char*)nullptr;
@@ -608,7 +608,7 @@ TEST_CASE( "Transactions" ) {
         bool checkReceivedStarted = false, checkReceivedEnded = false;
 
         getOcppContext()->getMessageService().registerOperation("TransactionEvent", [&checkReceivedStarted, &checkReceivedEnded, txId, &checkSeqNosSize] () {
-            return new Ocpp16::CustomOperation("TransactionEvent",
+            return new v16::CustomOperation("TransactionEvent",
                 [&checkReceivedStarted, &checkReceivedEnded, txId, &checkSeqNosSize] (JsonObject request) {
                     //process req
                     const char *eventType = request["eventType"] | (const char*)nullptr;
@@ -699,7 +699,7 @@ TEST_CASE( "Transactions" ) {
         getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStopPoint", "")->setString("Authorized");
 
         getOcppContext()->getMessageService().registerOperation("TransactionEvent", [&txEventRequests] () {
-            return new Ocpp16::CustomOperation("TransactionEvent",
+            return new v16::CustomOperation("TransactionEvent",
                 [&txEventRequests] (JsonObject request) {
                     //process req
                     const char *eventType = request["eventType"] | (const char*)nullptr;

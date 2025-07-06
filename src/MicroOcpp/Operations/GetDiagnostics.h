@@ -16,7 +16,7 @@ namespace MicroOcpp {
 class Context;
 class DiagnosticsService;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class GetDiagnostics : public Operation, public MemoryManaged {
 private:
@@ -37,7 +37,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_DIAGNOSTICS
 #endif

@@ -17,7 +17,7 @@ namespace MicroOcpp {
 class Context;
 struct MeterValue;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class MeterValues : public Operation, public MemoryManaged {
 private:
@@ -46,7 +46,7 @@ public:
     std::unique_ptr<JsonDoc> createConf() override;
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 #endif

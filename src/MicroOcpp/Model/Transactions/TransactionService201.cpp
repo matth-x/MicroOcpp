@@ -26,7 +26,7 @@
 #endif
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp201;
+using namespace MicroOcpp::v201;
 
 TransactionServiceEvse::TransactionServiceEvse(Context& context, TransactionService& txService, TransactionStoreEvse& txStore, unsigned int evseId) :
         MemoryManaged("v201.Transactions.TransactionServiceEvse"),

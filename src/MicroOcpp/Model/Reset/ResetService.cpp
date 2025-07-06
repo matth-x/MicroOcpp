@@ -40,16 +40,16 @@ void (*defaultExecuteResetImpl)() = nullptr;
 
 using namespace MicroOcpp;
 
-Ocpp16::ResetService::ResetService(Context& context)
+v16::ResetService::ResetService(Context& context)
       : MemoryManaged("v16.Reset.ResetService"), context(context) {
 
 }
 
-Ocpp16::ResetService::~ResetService() {
+v16::ResetService::~ResetService() {
 
 }
     
-bool Ocpp16::ResetService::setup() {
+bool v16::ResetService::setup() {
 
     auto configService = context.getModel16().getConfigurationService();
     if (!configService) {
@@ -81,7 +81,7 @@ bool Ocpp16::ResetService::setup() {
     return true;
 }
 
-void Ocpp16::ResetService::loop() {
+void v16::ResetService::loop() {
 
     auto& clock = context.getClock();
 
@@ -125,29 +125,29 @@ void Ocpp16::ResetService::loop() {
     }
 }
 
-void Ocpp16::ResetService::setNotifyReset(bool (*notifyResetCb)(bool isHard, void *userData), void *userData) {
+void v16::ResetService::setNotifyReset(bool (*notifyResetCb)(bool isHard, void *userData), void *userData) {
     this->notifyResetCb = notifyResetCb;
     this->notifyResetUserData = userData;
 }
 
-bool Ocpp16::ResetService::isPreResetDefined() {
+bool v16::ResetService::isPreResetDefined() {
     return notifyResetCb != nullptr;
 }
 
-bool Ocpp16::ResetService::notifyReset(bool isHard) {
+bool v16::ResetService::notifyReset(bool isHard) {
     return notifyResetCb(isHard, notifyResetUserData);
 }
 
-void Ocpp16::ResetService::setExecuteReset(bool (*executeReset)(bool isHard, void *userData), void *userData) {
+void v16::ResetService::setExecuteReset(bool (*executeReset)(bool isHard, void *userData), void *userData) {
     this->executeResetCb = executeReset;
     this->executeResetUserData = userData;
 }
 
-bool Ocpp16::ResetService::isExecuteResetDefined() {
+bool v16::ResetService::isExecuteResetDefined() {
     return executeResetCb != nullptr;
 }
 
-void Ocpp16::ResetService::initiateReset(bool isHard) {
+void v16::ResetService::initiateReset(bool isHard) {
 
     for (unsigned int eId = 0; eId < context.getModel16().getNumEvseId(); eId++) {
         auto txSvc = context.getModel16().getTransactionService();
@@ -171,19 +171,19 @@ void Ocpp16::ResetService::initiateReset(bool isHard) {
 #if MO_ENABLE_V201
 namespace MicroOcpp {
 
-Ocpp201::ResetService::ResetService(Context& context)
+v201::ResetService::ResetService(Context& context)
       : MemoryManaged("v201.Reset.ResetService"), context(context) {
 
 }
 
-Ocpp201::ResetService::~ResetService() {
+v201::ResetService::~ResetService() {
     for (unsigned int i = 0; i < numEvseId; i++) {
         delete evses[i];
         evses[i] = 0;
     }
 }
 
-bool Ocpp201::ResetService::setup() {
+bool v201::ResetService::setup() {
     auto varService = context.getModel201().getVariableService();
     if (!varService) {
         return false;
@@ -222,11 +222,11 @@ bool Ocpp201::ResetService::setup() {
     return true;
 }
 
-Ocpp201::ResetService::Evse::Evse(Context& context, ResetService& resetService, unsigned int evseId) : MemoryManaged("v201.Reset.ResetService"), context(context), resetService(resetService), evseId(evseId) {
+v201::ResetService::Evse::Evse(Context& context, ResetService& resetService, unsigned int evseId) : MemoryManaged("v201.Reset.ResetService"), context(context), resetService(resetService), evseId(evseId) {
 
 }
 
-bool Ocpp201::ResetService::Evse::setup() {
+bool v201::ResetService::Evse::setup() {
     auto varService = context.getModel201().getVariableService();
     if (!varService) {
         return false;
@@ -235,7 +235,7 @@ bool Ocpp201::ResetService::Evse::setup() {
     return true;
 }
 
-void Ocpp201::ResetService::Evse::loop() {
+void v201::ResetService::Evse::loop() {
 
     auto& clock = context.getClock();
 
@@ -310,7 +310,7 @@ void Ocpp201::ResetService::Evse::loop() {
     }
 }
 
-Ocpp201::ResetService::Evse *Ocpp201::ResetService::getEvse(unsigned int evseId) {
+v201::ResetService::Evse *v201::ResetService::getEvse(unsigned int evseId) {
     if (evseId >= numEvseId) {
         MO_DBG_ERR("evseId out of bound");
         return nullptr;
@@ -327,7 +327,7 @@ Ocpp201::ResetService::Evse *Ocpp201::ResetService::getEvse(unsigned int evseId)
     return evses[evseId];
 }
 
-void Ocpp201::ResetService::loop() {
+void v201::ResetService::loop() {
     for (unsigned i = 0; i < numEvseId; i++) {
         if (evses[i]) {
             evses[i]->loop();
@@ -335,7 +335,7 @@ void Ocpp201::ResetService::loop() {
     }
 }
 
-void Ocpp201::ResetService::setNotifyReset(unsigned int evseId, bool (*notifyReset)(MO_ResetType, unsigned int evseId, void *userData), void *userData) {
+void v201::ResetService::setNotifyReset(unsigned int evseId, bool (*notifyReset)(MO_ResetType, unsigned int evseId, void *userData), void *userData) {
     Evse *evse = getEvse(evseId);
     if (!evse) {
         MO_DBG_ERR("evseId not found");
@@ -345,7 +345,7 @@ void Ocpp201::ResetService::setNotifyReset(unsigned int evseId, bool (*notifyRes
     evse->notifyResetUserData = userData;
 }
 
-void Ocpp201::ResetService::setExecuteReset(unsigned int evseId, bool (*executeReset)(unsigned int evseId, void *userData), void *userData) {
+void v201::ResetService::setExecuteReset(unsigned int evseId, bool (*executeReset)(unsigned int evseId, void *userData), void *userData) {
     Evse *evse = getEvse(evseId);
     if (!evse) {
         MO_DBG_ERR("evseId not found");
@@ -355,7 +355,7 @@ void Ocpp201::ResetService::setExecuteReset(unsigned int evseId, bool (*executeR
     evse->executeResetUserData = userData;
 }
 
-ResetStatus Ocpp201::ResetService::initiateReset(MO_ResetType type, unsigned int evseId) {
+ResetStatus v201::ResetService::initiateReset(MO_ResetType type, unsigned int evseId) {
     auto evse = getEvse(evseId);
     if (!evse) {
         MO_DBG_ERR("evseId not found");

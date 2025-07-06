@@ -52,7 +52,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
-                return new Ocpp16::CustomOperation("FirmwareStatusNotification",
+                return new v16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
                         //process req
                         checkProcessed = true;
@@ -67,7 +67,7 @@ TEST_CASE( "FirmwareManagement" ) {
                     });
             });
         
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "UpdateFirmware",
                 [] () {
                     //create req
@@ -92,7 +92,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
-                return new Ocpp16::CustomOperation("FirmwareStatusNotification",
+                return new v16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
                         //process req
                         if (checkProcessed == 0) {
@@ -131,7 +131,7 @@ TEST_CASE( "FirmwareManagement" ) {
             }
         });
 
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "UpdateFirmware",
                 [] () {
                     //create req
@@ -161,7 +161,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
-                return new Ocpp16::CustomOperation("FirmwareStatusNotification",
+                return new v16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
                         //process req
                         if (checkProcessed == 0) {
@@ -198,7 +198,7 @@ TEST_CASE( "FirmwareManagement" ) {
             }
         });
         
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "UpdateFirmware",
                 [] () {
                     //create req
@@ -228,7 +228,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
-                return new Ocpp16::CustomOperation("FirmwareStatusNotification",
+                return new v16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
                         //process req
                         if (checkProcessed == 0) {
@@ -285,7 +285,7 @@ TEST_CASE( "FirmwareManagement" ) {
             }
         });
         
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "UpdateFirmware",
                 [] () {
                     //create req
@@ -317,7 +317,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
-                return new Ocpp16::CustomOperation("FirmwareStatusNotification",
+                return new v16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
                         //process req
                         if (checkProcessed == 0) {
@@ -369,7 +369,7 @@ TEST_CASE( "FirmwareManagement" ) {
             return true;
         });
 
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "UpdateFirmware",
                 [] () {
                     //create req
@@ -400,7 +400,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
-                return new Ocpp16::CustomOperation("FirmwareStatusNotification",
+                return new v16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
                         //process req
                         if (checkProcessed == 0) {
@@ -448,7 +448,7 @@ TEST_CASE( "FirmwareManagement" ) {
             }
         });
         
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "UpdateFirmware",
                 [] () {
                     //create req
@@ -480,7 +480,7 @@ TEST_CASE( "FirmwareManagement" ) {
 
         getOcppContext()->getMessageService().registerOperation("FirmwareStatusNotification",
             [&checkProcessed] () {
-                return new Ocpp16::CustomOperation("FirmwareStatusNotification",
+                return new v16::CustomOperation("FirmwareStatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
                         //process req
                         if (checkProcessed == 0) {
@@ -537,7 +537,7 @@ TEST_CASE( "FirmwareManagement" ) {
             }
         });
         
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "UpdateFirmware",
                 [] () {
                     //create req

@@ -11,7 +11,7 @@
 #if MO_ENABLE_V16
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 ChangeConfiguration::ChangeConfiguration(ConfigurationService& configService) : MemoryManaged("v16.Operation.", "ChangeConfiguration"), configService(configService) {
   

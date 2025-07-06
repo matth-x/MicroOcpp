@@ -26,7 +26,7 @@
 #endif
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 template <class T>
 ConfigurationValidator<T>::ConfigurationValidator(const char *key, bool (*validateFn)(T, void*), void *user_data) :
@@ -491,7 +491,7 @@ bool ConfigurationService::commit() {
     return success;
 }
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 
 #endif //MO_ENABLE_V16

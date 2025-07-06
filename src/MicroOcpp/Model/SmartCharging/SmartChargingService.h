@@ -24,7 +24,7 @@ class Context;
 class SmartChargingService;
 
 #if MO_ENABLE_V201
-namespace Ocpp201 {
+namespace v201 {
 class Variable;
 }
 #endif //MO_ENABLE_V201
@@ -104,7 +104,7 @@ private:
     int ocppVersion = -1;
 
     #if MO_ENABLE_V201
-    Ocpp201::Variable *chargingProfileEntriesInt201 = nullptr;
+    v201::Variable *chargingProfileEntriesInt201 = nullptr;
     #endif //MO_ENABLE_V201
 
     SmartChargingServiceEvse *getEvse(unsigned int evseId);

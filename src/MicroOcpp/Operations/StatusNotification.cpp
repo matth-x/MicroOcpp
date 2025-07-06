@@ -14,7 +14,7 @@
 
 using namespace MicroOcpp;
 
-Ocpp16::StatusNotification::StatusNotification(Context& context, int connectorId, MO_ChargePointStatus currentStatus, const Timestamp &timestamp, MO_ErrorData errorData)
+v16::StatusNotification::StatusNotification(Context& context, int connectorId, MO_ChargePointStatus currentStatus, const Timestamp &timestamp, MO_ErrorData errorData)
         : MemoryManaged("v16.Operation.", "StatusNotification"), context(context), connectorId(connectorId), currentStatus(currentStatus), timestamp(timestamp), errorData(errorData) {
     
     if (currentStatus != MO_ChargePointStatus_UNDEFINED) {
@@ -22,11 +22,11 @@ Ocpp16::StatusNotification::StatusNotification(Context& context, int connectorId
     }
 }
 
-const char* Ocpp16::StatusNotification::getOperationType(){
+const char* v16::StatusNotification::getOperationType(){
     return "StatusNotification";
 }
 
-std::unique_ptr<JsonDoc> Ocpp16::StatusNotification::createReq() {
+std::unique_ptr<JsonDoc> v16::StatusNotification::createReq() {
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(7) + MO_JSONDATE_SIZE);
     JsonObject payload = doc->to<JsonObject>();
 
@@ -63,7 +63,7 @@ std::unique_ptr<JsonDoc> Ocpp16::StatusNotification::createReq() {
     return doc;
 }
 
-void Ocpp16::StatusNotification::processConf(JsonObject payload) {
+void v16::StatusNotification::processConf(JsonObject payload) {
     /*
     * Empty payload
     */
@@ -72,14 +72,14 @@ void Ocpp16::StatusNotification::processConf(JsonObject payload) {
 /*
  * For debugging only
  */
-void Ocpp16::StatusNotification::processReq(JsonObject payload) {
+void v16::StatusNotification::processReq(JsonObject payload) {
 
 }
 
 /*
  * For debugging only
  */
-std::unique_ptr<JsonDoc> Ocpp16::StatusNotification::createConf(){
+std::unique_ptr<JsonDoc> v16::StatusNotification::createConf(){
     return createEmptyDocument();
 }
 
@@ -89,16 +89,16 @@ std::unique_ptr<JsonDoc> Ocpp16::StatusNotification::createConf(){
 
 using namespace MicroOcpp;
 
-Ocpp201::StatusNotification::StatusNotification(Context& context, EvseId evseId, MO_ChargePointStatus currentStatus, const Timestamp &timestamp)
+v201::StatusNotification::StatusNotification(Context& context, EvseId evseId, MO_ChargePointStatus currentStatus, const Timestamp &timestamp)
         : MemoryManaged("v201.Operation.", "StatusNotification"), context(context), evseId(evseId), timestamp(timestamp), currentStatus(currentStatus) {
 
 }
 
-const char* Ocpp201::StatusNotification::getOperationType(){
+const char* v201::StatusNotification::getOperationType(){
     return "StatusNotification";
 }
 
-std::unique_ptr<JsonDoc> Ocpp201::StatusNotification::createReq() {
+std::unique_ptr<JsonDoc> v201::StatusNotification::createReq() {
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(4) + MO_JSONDATE_SIZE);
     JsonObject payload = doc->to<JsonObject>();
 
@@ -116,7 +116,7 @@ std::unique_ptr<JsonDoc> Ocpp201::StatusNotification::createReq() {
 }
 
 
-void Ocpp201::StatusNotification::processConf(JsonObject payload) {
+void v201::StatusNotification::processConf(JsonObject payload) {
     /*
     * Empty payload
     */
@@ -125,14 +125,14 @@ void Ocpp201::StatusNotification::processConf(JsonObject payload) {
 /*
  * For debugging only
  */
-void Ocpp201::StatusNotification::processReq(JsonObject payload) {
+void v201::StatusNotification::processReq(JsonObject payload) {
 
 }
 
 /*
  * For debugging only
  */
-std::unique_ptr<JsonDoc> Ocpp201::StatusNotification::createConf(){
+std::unique_ptr<JsonDoc> v201::StatusNotification::createConf(){
     return createEmptyDocument();
 }
 

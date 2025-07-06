@@ -17,7 +17,7 @@ namespace MicroOcpp {
 
 class Context;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class Configuration;
 
@@ -56,7 +56,7 @@ public:
     void initiateReset(bool isHard);
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 
@@ -64,7 +64,7 @@ public:
 
 namespace MicroOcpp {
 
-namespace Ocpp201 {
+namespace v201 {
 
 class Variable;
 
@@ -115,7 +115,7 @@ public:
     ResetStatus initiateReset(MO_ResetType type, unsigned int evseId = 0);
 };
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V201
 

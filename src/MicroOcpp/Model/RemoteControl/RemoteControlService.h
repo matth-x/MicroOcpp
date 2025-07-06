@@ -20,19 +20,19 @@ class Context;
 class RemoteControlService;
 
 #if MO_ENABLE_V16
-namespace Ocpp16 {
+namespace v16 {
 class Configuration;
 class TransactionService;
 class TransactionServiceEvse;
-} //namespace Ocpp16
+} //namespace v16
 #endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
-namespace Ocpp201 {
+namespace v201 {
 class Variable;
 class TransactionService;
 class TransactionServiceEvse;
-} //namespace Ocpp201
+} //namespace v201
 #endif //MO_ENABLE_V201
 
 class RemoteControlServiceEvse : public MemoryManaged {
@@ -42,10 +42,10 @@ private:
     const unsigned int evseId;
 
     #if MO_ENABLE_V16
-    Ocpp16::TransactionServiceEvse *txServiceEvse16 = nullptr;
+    v16::TransactionServiceEvse *txServiceEvse16 = nullptr;
     #endif
     #if MO_ENABLE_V201
-    Ocpp201::TransactionServiceEvse *txServiceEvse201 = nullptr;
+    v201::TransactionServiceEvse *txServiceEvse201 = nullptr;
     #endif
 
 #if MO_ENABLE_CONNECTOR_LOCK
@@ -64,10 +64,10 @@ public:
 
 #if MO_ENABLE_CONNECTOR_LOCK
     #if MO_ENABLE_V16
-    Ocpp16::UnlockStatus unlockConnector16();
+    v16::UnlockStatus unlockConnector16();
     #endif
     #if MO_ENABLE_V201
-    Ocpp201::UnlockStatus unlockConnector201();
+    v201::UnlockStatus unlockConnector201();
     #endif
 #endif //MO_ENABLE_CONNECTOR_LOCK
 };
@@ -79,12 +79,12 @@ private:
     unsigned int numEvseId = MO_NUM_EVSEID;
 
     #if MO_ENABLE_V16
-    Ocpp16::TransactionService *txService16 = nullptr;
-    Ocpp16::Configuration *authorizeRemoteTxRequests = nullptr;
+    v16::TransactionService *txService16 = nullptr;
+    v16::Configuration *authorizeRemoteTxRequests = nullptr;
     #endif
     #if MO_ENABLE_V201
-    Ocpp201::TransactionService *txService201 = nullptr;
-    Ocpp201::Variable *authorizeRemoteStart = nullptr;
+    v201::TransactionService *txService201 = nullptr;
+    v201::Variable *authorizeRemoteStart = nullptr;
     #endif
 
     struct OperationCreator {
@@ -108,15 +108,15 @@ public:
     bool setup();
 
     #if MO_ENABLE_V16
-    Ocpp16::RemoteStartStopStatus remoteStartTransaction(int connectorId, const char *idTag, std::unique_ptr<ChargingProfile> chargingProfile); 
+    v16::RemoteStartStopStatus remoteStartTransaction(int connectorId, const char *idTag, std::unique_ptr<ChargingProfile> chargingProfile); 
 
-    Ocpp16::RemoteStartStopStatus remoteStopTransaction(int transactionId);
+    v16::RemoteStartStopStatus remoteStopTransaction(int transactionId);
     #endif //MO_ENABLE_V16
 
     #if MO_ENABLE_V201
-    Ocpp201::RequestStartStopStatus requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, Ocpp201::IdToken idToken, std::unique_ptr<ChargingProfile> chargingProfile, char *transactionIdOut, size_t transactionIdBufSize); //ChargingProfile, GroupIdToken not supported yet
+    v201::RequestStartStopStatus requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, v201::IdToken idToken, std::unique_ptr<ChargingProfile> chargingProfile, char *transactionIdOut, size_t transactionIdBufSize); //ChargingProfile, GroupIdToken not supported yet
 
-    Ocpp201::RequestStartStopStatus requestStopTransaction(const char *transactionId);
+    v201::RequestStartStopStatus requestStopTransaction(const char *transactionId);
     #endif //MO_ENABLE_V201
 
     TriggerMessageStatus triggerMessage(const char *requestedMessage, int evseId = -1);

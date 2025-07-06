@@ -10,21 +10,21 @@
 
 using namespace MicroOcpp;
 
-Ocpp16::Transaction::Transaction(unsigned int connectorId, unsigned int txNr, bool silent) : 
+v16::Transaction::Transaction(unsigned int connectorId, unsigned int txNr, bool silent) : 
                 MemoryManaged("v16.Transactions.Transaction"),
                 connectorId(connectorId), 
                 txNr(txNr),
                 silent(silent),
                 meterValues(makeVector<MeterValue*>("v16.Transactions.TransactionMeterData")) { }
 
-Ocpp16::Transaction::~Transaction() {
+v16::Transaction::~Transaction() {
     for (size_t i = 0; i < meterValues.size(); i++) {
         delete meterValues[i];
     }
     meterValues.clear();
 }
 
-void Ocpp16::Transaction::setTransactionId(int transactionId) {
+void v16::Transaction::setTransactionId(int transactionId) {
     this->transactionId = transactionId;
     #if MO_ENABLE_V201
     if (transactionId > 0) {
@@ -35,22 +35,22 @@ void Ocpp16::Transaction::setTransactionId(int transactionId) {
     #endif //MO_ENABLE_V201
 }
 
-bool Ocpp16::Transaction::setIdTag(const char *idTag) {
+bool v16::Transaction::setIdTag(const char *idTag) {
     auto ret = snprintf(this->idTag, MO_IDTAG_LEN_MAX + 1, "%s", idTag);
     return ret >= 0 && ret < MO_IDTAG_LEN_MAX + 1;
 }
 
-bool Ocpp16::Transaction::setParentIdTag(const char *idTag) {
+bool v16::Transaction::setParentIdTag(const char *idTag) {
     auto ret = snprintf(this->parentIdTag, MO_IDTAG_LEN_MAX + 1, "%s", idTag);
     return ret >= 0 && ret < MO_IDTAG_LEN_MAX + 1;
 }
 
-bool Ocpp16::Transaction::setStopIdTag(const char *idTag) {
+bool v16::Transaction::setStopIdTag(const char *idTag) {
     auto ret = snprintf(stop_idTag, MO_IDTAG_LEN_MAX + 1, "%s", idTag);
     return ret >= 0 && ret < MO_IDTAG_LEN_MAX + 1;
 }
 
-bool Ocpp16::Transaction::setStopReason(const char *reason) {
+bool v16::Transaction::setStopReason(const char *reason) {
     auto ret = snprintf(stop_reason, sizeof(stop_reason) + 1, "%s", reason);
     return ret >= 0 && (size_t)ret < sizeof(stop_reason) + 1;
 }
@@ -60,7 +60,7 @@ bool Ocpp16::Transaction::setStopReason(const char *reason) {
 #if MO_ENABLE_V201
 
 namespace MicroOcpp {
-namespace Ocpp201 {
+namespace v201 {
 
 const char *serializeTransactionStoppedReason(MO_TxStoppedReason stoppedReason) {
     const char *stoppedReasonCstr = nullptr;
@@ -375,7 +375,7 @@ bool deserializeTransactionEventChargingState(const char *chargingStateCstr, Tra
     return true;
 }
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 
 #endif //MO_ENABLE_V201

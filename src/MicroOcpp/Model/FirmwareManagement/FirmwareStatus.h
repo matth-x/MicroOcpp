@@ -10,7 +10,7 @@
 #if MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 enum class FirmwareStatus {
     Downloaded,
@@ -22,7 +22,7 @@ enum class FirmwareStatus {
     Installed
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 #endif

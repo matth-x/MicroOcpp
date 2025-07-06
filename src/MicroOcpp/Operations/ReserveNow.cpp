@@ -15,7 +15,7 @@
 #if MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 ReserveNow::ReserveNow(Context& context, ReservationService& rService) : MemoryManaged("v16.Operation.", "ReserveNow"), context(context), rService(rService) {
 

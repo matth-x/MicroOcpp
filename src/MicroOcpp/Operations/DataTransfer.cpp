@@ -8,7 +8,7 @@
 #if MO_ENABLE_V16
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 DataTransfer::DataTransfer(const char *msg) : MemoryManaged("v16.Operation.", "DataTransfer") {
     if (msg) {

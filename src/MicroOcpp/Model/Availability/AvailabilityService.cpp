@@ -19,18 +19,18 @@
 
 using namespace MicroOcpp;
 
-Ocpp16::AvailabilityServiceEvse::AvailabilityServiceEvse(Context& context, AvailabilityService& availService, unsigned int evseId) : MemoryManaged("v16.Availability.AvailabilityServiceEvse"), context(context), clock(context.getClock()), model(context.getModel16()), availService(availService), evseId(evseId) {
+v16::AvailabilityServiceEvse::AvailabilityServiceEvse(Context& context, AvailabilityService& availService, unsigned int evseId) : MemoryManaged("v16.Availability.AvailabilityServiceEvse"), context(context), clock(context.getClock()), model(context.getModel16()), availService(availService), evseId(evseId) {
 
 }
 
-Ocpp16::AvailabilityServiceEvse::~AvailabilityServiceEvse() {
+v16::AvailabilityServiceEvse::~AvailabilityServiceEvse() {
     if (availabilityBool->getKey() == availabilityBoolKey) {
         availabilityBool->setKey(nullptr);
     }
 }
 
 
-bool Ocpp16::AvailabilityServiceEvse::setup() {
+bool v16::AvailabilityServiceEvse::setup() {
 
     connection = context.getConnection();
     if (!connection) {
@@ -67,7 +67,7 @@ bool Ocpp16::AvailabilityServiceEvse::setup() {
     return true;
 }
 
-void Ocpp16::AvailabilityServiceEvse::loop() {
+void v16::AvailabilityServiceEvse::loop() {
 
     if (!trackLoopExecute) {
         trackLoopExecute = true;
@@ -161,27 +161,27 @@ void Ocpp16::AvailabilityServiceEvse::loop() {
     }
 }
 
-void Ocpp16::AvailabilityServiceEvse::setConnectorPluggedInput(bool (*connectorPlugged)(unsigned int, void*), void *userData) {
+void v16::AvailabilityServiceEvse::setConnectorPluggedInput(bool (*connectorPlugged)(unsigned int, void*), void *userData) {
     this->connectorPluggedInput = connectorPlugged;
     this->connectorPluggedInputUserData = userData;
 }
 
-void Ocpp16::AvailabilityServiceEvse::setEvReadyInput(bool (*evReady)(unsigned int, void*), void *userData) {
+void v16::AvailabilityServiceEvse::setEvReadyInput(bool (*evReady)(unsigned int, void*), void *userData) {
     this->evReadyInput = evReady;
     this->evReadyInputUserData = userData;
 }
 
-void Ocpp16::AvailabilityServiceEvse::setEvseReadyInput(bool (*evseReady)(unsigned int, void*), void *userData) {
+void v16::AvailabilityServiceEvse::setEvseReadyInput(bool (*evseReady)(unsigned int, void*), void *userData) {
     this->evseReadyInput = evseReady;
     this->evseReadyInputUserData = userData;
 }
 
-void Ocpp16::AvailabilityServiceEvse::setOccupiedInput(bool (*occupied)(unsigned int, void*), void *userData) {
+void v16::AvailabilityServiceEvse::setOccupiedInput(bool (*occupied)(unsigned int, void*), void *userData) {
     this->occupiedInput = occupied;
     this->occupiedInputUserData = userData;
 }
 
-bool Ocpp16::AvailabilityServiceEvse::addErrorDataInput(MO_ErrorDataInput errorDataInput) {
+bool v16::AvailabilityServiceEvse::addErrorDataInput(MO_ErrorDataInput errorDataInput) {
     size_t capacity = errorDataInputs.size() + 1;
     errorDataInputs.reserve(capacity);
     trackErrorDataInputs.reserve(capacity);
@@ -195,16 +195,16 @@ bool Ocpp16::AvailabilityServiceEvse::addErrorDataInput(MO_ErrorDataInput errorD
     return true;
 }
 
-void Ocpp16::AvailabilityServiceEvse::setAvailability(bool available) {
+void v16::AvailabilityServiceEvse::setAvailability(bool available) {
     availabilityBool->setBool(available);
     availabilityContainer->commit();
 }
 
-void Ocpp16::AvailabilityServiceEvse::setAvailabilityVolatile(bool available) {
+void v16::AvailabilityServiceEvse::setAvailabilityVolatile(bool available) {
     availabilityVolatile = available;
 }
 
-MO_ChargePointStatus Ocpp16::AvailabilityServiceEvse::getStatus() {
+MO_ChargePointStatus v16::AvailabilityServiceEvse::getStatus() {
 
     MO_ChargePointStatus res = MO_ChargePointStatus_UNDEFINED;
 
@@ -274,7 +274,7 @@ MO_ChargePointStatus Ocpp16::AvailabilityServiceEvse::getStatus() {
     return res;
 }
 
-bool Ocpp16::AvailabilityServiceEvse::isFaulted() {
+bool v16::AvailabilityServiceEvse::isFaulted() {
     //for (auto i = errorDataInputs.begin(); i != errorDataInputs.end(); ++i) {
     for (size_t i = 0; i < errorDataInputs.size(); i++) {
         if (errorDataInputs[i].getErrorData(evseId, errorDataInputs[i].userData).isFaulted) {
@@ -284,7 +284,7 @@ bool Ocpp16::AvailabilityServiceEvse::isFaulted() {
     return false;
 }
 
-const char *Ocpp16::AvailabilityServiceEvse::getErrorCode() {
+const char *v16::AvailabilityServiceEvse::getErrorCode() {
     if (reportedErrorIndex >= 0) {
         auto error = errorDataInputs[reportedErrorIndex].getErrorData(evseId, errorDataInputs[reportedErrorIndex].userData);
         if (error.isError && error.errorCode) {
@@ -294,7 +294,7 @@ const char *Ocpp16::AvailabilityServiceEvse::getErrorCode() {
     return nullptr;
 }
 
-bool Ocpp16::AvailabilityServiceEvse::isOperative() {
+bool v16::AvailabilityServiceEvse::isOperative() {
     if (isFaulted()) {
         return false;
     }
@@ -323,7 +323,7 @@ bool Ocpp16::AvailabilityServiceEvse::isOperative() {
     return availabilityVolatile && availabilityBool->getBool();
 }
 
-Operation *Ocpp16::AvailabilityServiceEvse::createTriggeredStatusNotification() {
+Operation *v16::AvailabilityServiceEvse::createTriggeredStatusNotification() {
 
     MO_ErrorData errorData;
     mo_ErrorData_init(&errorData);
@@ -350,18 +350,18 @@ Operation *Ocpp16::AvailabilityServiceEvse::createTriggeredStatusNotification() 
                 errorData);
 }
 
-Ocpp16::AvailabilityService::AvailabilityService(Context& context) : MemoryManaged("v16.Availability.AvailabilityService"), context(context) {
+v16::AvailabilityService::AvailabilityService(Context& context) : MemoryManaged("v16.Availability.AvailabilityService"), context(context) {
     
 }
 
-Ocpp16::AvailabilityService::~AvailabilityService() {
+v16::AvailabilityService::~AvailabilityService() {
     for (size_t i = 0; i < MO_NUM_EVSEID && evses[i]; i++) {
         delete evses[i];
         evses[i] = nullptr;
     }
 }
 
-bool Ocpp16::AvailabilityService::setup() {
+bool v16::AvailabilityService::setup() {
 
     auto configService = context.getModel16().getConfigurationService();
     if (!configService) {
@@ -405,13 +405,13 @@ bool Ocpp16::AvailabilityService::setup() {
     return true;
 }
 
-void Ocpp16::AvailabilityService::loop() {
+void v16::AvailabilityService::loop() {
     for (size_t i = 0; i < numEvseId && evses[i]; i++) {
         evses[i]->loop();
     }
 }
 
-Ocpp16::AvailabilityServiceEvse *Ocpp16::AvailabilityService::getEvse(unsigned int evseId) {
+v16::AvailabilityServiceEvse *v16::AvailabilityService::getEvse(unsigned int evseId) {
     if (evseId >= numEvseId) {
         MO_DBG_ERR("evseId out of bound");
         return nullptr;
@@ -434,11 +434,11 @@ Ocpp16::AvailabilityServiceEvse *Ocpp16::AvailabilityService::getEvse(unsigned i
 
 using namespace MicroOcpp;
 
-Ocpp201::AvailabilityServiceEvse::AvailabilityServiceEvse(Context& context, AvailabilityService& availService, unsigned int evseId) : MemoryManaged("v201.Availability.AvailabilityServiceEvse"), context(context), availService(availService), evseId(evseId), faultedInputs(makeVector<FaultedInput>(getMemoryTag())) {
+v201::AvailabilityServiceEvse::AvailabilityServiceEvse(Context& context, AvailabilityService& availService, unsigned int evseId) : MemoryManaged("v201.Availability.AvailabilityServiceEvse"), context(context), availService(availService), evseId(evseId), faultedInputs(makeVector<FaultedInput>(getMemoryTag())) {
 
 }
 
-void Ocpp201::AvailabilityServiceEvse::loop() {
+void v201::AvailabilityServiceEvse::loop() {
 
     if (!trackLoopExecute) {
         trackLoopExecute = true;
@@ -459,17 +459,17 @@ void Ocpp201::AvailabilityServiceEvse::loop() {
     }
 }
 
-void Ocpp201::AvailabilityServiceEvse::setConnectorPluggedInput(bool (*connectorPlugged)(unsigned int, void*), void *userData) {
+void v201::AvailabilityServiceEvse::setConnectorPluggedInput(bool (*connectorPlugged)(unsigned int, void*), void *userData) {
     this->connectorPluggedInput = connectorPlugged;
     this->connectorPluggedInputUserData = userData;
 }
 
-void Ocpp201::AvailabilityServiceEvse::setOccupiedInput(bool (*occupied)(unsigned int, void*), void *userData) {
+void v201::AvailabilityServiceEvse::setOccupiedInput(bool (*occupied)(unsigned int, void*), void *userData) {
     this->occupiedInput = occupied;
     this->occupiedInputUserData = userData;
 }
 
-MO_ChargePointStatus Ocpp201::AvailabilityServiceEvse::getStatus() {
+MO_ChargePointStatus v201::AvailabilityServiceEvse::getStatus() {
     MO_ChargePointStatus res = MO_ChargePointStatus_UNDEFINED;
 
     if (isFaulted()) {
@@ -486,7 +486,7 @@ MO_ChargePointStatus Ocpp201::AvailabilityServiceEvse::getStatus() {
     return res;
 }
 
-void Ocpp201::AvailabilityServiceEvse::setUnavailable(void *requesterId) {
+void v201::AvailabilityServiceEvse::setUnavailable(void *requesterId) {
     for (size_t i = 0; i < MO_INOPERATIVE_REQUESTERS_MAX; i++) {
         if (!unavailableRequesters[i]) {
             unavailableRequesters[i] = requesterId;
@@ -496,7 +496,7 @@ void Ocpp201::AvailabilityServiceEvse::setUnavailable(void *requesterId) {
     MO_DBG_ERR("exceeded max. unavailable requesters");
 }
 
-void Ocpp201::AvailabilityServiceEvse::setAvailable(void *requesterId) {
+void v201::AvailabilityServiceEvse::setAvailable(void *requesterId) {
     for (size_t i = 0; i < MO_INOPERATIVE_REQUESTERS_MAX; i++) {
         if (unavailableRequesters[i] == requesterId) {
             unavailableRequesters[i] = nullptr;
@@ -505,7 +505,7 @@ void Ocpp201::AvailabilityServiceEvse::setAvailable(void *requesterId) {
     }
 }
 
-ChangeAvailabilityStatus Ocpp201::AvailabilityServiceEvse::changeAvailability(bool operative) {
+ChangeAvailabilityStatus v201::AvailabilityServiceEvse::changeAvailability(bool operative) {
     if (operative) {
         setAvailable(this);
     } else {
@@ -529,7 +529,7 @@ ChangeAvailabilityStatus Ocpp201::AvailabilityServiceEvse::changeAvailability(bo
     return ChangeAvailabilityStatus::Accepted;
 }
 
-Operation *Ocpp201::AvailabilityServiceEvse::createTriggeredStatusNotification() {
+Operation *v201::AvailabilityServiceEvse::createTriggeredStatusNotification() {
     return new StatusNotification(
                 context,
                 evseId,
@@ -537,7 +537,7 @@ Operation *Ocpp201::AvailabilityServiceEvse::createTriggeredStatusNotification()
                 context.getClock().now());
 }
 
-bool Ocpp201::AvailabilityServiceEvse::isAvailable() {
+bool v201::AvailabilityServiceEvse::isAvailable() {
 
     auto txService = context.getModel201().getTransactionService();
     auto txEvse = txService ? txService->getEvse(evseId) : nullptr;
@@ -563,7 +563,7 @@ bool Ocpp201::AvailabilityServiceEvse::isAvailable() {
     return true;
 }
 
-bool Ocpp201::AvailabilityServiceEvse::isOperative() {
+bool v201::AvailabilityServiceEvse::isOperative() {
     if (isFaulted()) {
         return false;
     }
@@ -575,7 +575,7 @@ bool Ocpp201::AvailabilityServiceEvse::isOperative() {
     return isAvailable();
 }
 
-bool Ocpp201::AvailabilityServiceEvse::isFaulted() {
+bool v201::AvailabilityServiceEvse::isFaulted() {
     //for (auto i = errorDataInputs.begin(); i != errorDataInputs.end(); ++i) {
     for (size_t i = 0; i < faultedInputs.size(); i++) {
         if (faultedInputs[i].isFaulted(evseId, faultedInputs[i].userData)) {
@@ -585,7 +585,7 @@ bool Ocpp201::AvailabilityServiceEvse::isFaulted() {
     return false;
 }
 
-bool Ocpp201::AvailabilityServiceEvse::addFaultedInput(FaultedInput faultedInput) {
+bool v201::AvailabilityServiceEvse::addFaultedInput(FaultedInput faultedInput) {
     size_t capacity = faultedInputs.size() + 1;
     faultedInputs.reserve(capacity);
     if (faultedInputs.capacity() < capacity) {
@@ -596,18 +596,18 @@ bool Ocpp201::AvailabilityServiceEvse::addFaultedInput(FaultedInput faultedInput
     return true;
 }
 
-Ocpp201::AvailabilityService::AvailabilityService(Context& context) : MemoryManaged("v201.Availability.AvailabilityService"), context(context) {
+v201::AvailabilityService::AvailabilityService(Context& context) : MemoryManaged("v201.Availability.AvailabilityService"), context(context) {
     
 }
 
-Ocpp201::AvailabilityService::~AvailabilityService() {
+v201::AvailabilityService::~AvailabilityService() {
     for (size_t i = 0; i < MO_NUM_EVSEID && evses[i]; i++) {
         delete evses[i];
         evses[i] = nullptr;
     }
 }
 
-bool Ocpp201::AvailabilityService::setup() {
+bool v201::AvailabilityService::setup() {
 
     auto varSvc = context.getModel201().getVariableService();
     if (!varSvc) {
@@ -651,13 +651,13 @@ bool Ocpp201::AvailabilityService::setup() {
     return true;
 }
 
-void Ocpp201::AvailabilityService::loop() {
+void v201::AvailabilityService::loop() {
     for (size_t i = 0; i < numEvseId && evses[i]; i++) {
         evses[i]->loop();
     }
 }
 
-Ocpp201::AvailabilityServiceEvse *Ocpp201::AvailabilityService::getEvse(unsigned int evseId) {
+v201::AvailabilityServiceEvse *v201::AvailabilityService::getEvse(unsigned int evseId) {
     if (evseId >= numEvseId) {
         MO_DBG_ERR("evseId out of bound");
         return nullptr;

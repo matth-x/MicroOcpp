@@ -17,7 +17,7 @@ namespace MicroOcpp {
 
 class Context;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class StatusNotification : public Operation, public MemoryManaged {
 private:
@@ -40,14 +40,14 @@ public:
     std::unique_ptr<JsonDoc> createConf() override;
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
 
 namespace MicroOcpp {
-namespace Ocpp201 {
+namespace v201 {
 
 class StatusNotification : public Operation, public MemoryManaged {
 private:
@@ -69,7 +69,7 @@ public:
     std::unique_ptr<JsonDoc> createConf() override;
 };
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V201
 #endif

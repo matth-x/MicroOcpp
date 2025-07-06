@@ -12,7 +12,7 @@
 #if MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 UpdateFirmware::UpdateFirmware(Context& context, FirmwareService& fwService) : MemoryManaged("v16.Operation.", "UpdateFirmware"), context(context), fwService(fwService) {
 

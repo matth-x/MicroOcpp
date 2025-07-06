@@ -252,7 +252,7 @@ TEST_CASE( "Variable" ) {
 
         bool checkProcessed = false;
 
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "GetVariables",
                 [] () {
                     //create req
@@ -289,7 +289,7 @@ TEST_CASE( "Variable" ) {
 
         checkProcessed = false;
 
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "GetVariable",
                 [] () {
                     //create req
@@ -343,7 +343,7 @@ TEST_CASE( "Variable" ) {
 
         //update existing config
         bool checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ChangeVariable",
                 [] () {
                     //create req
@@ -365,7 +365,7 @@ TEST_CASE( "Variable" ) {
 
         //try to update not existing key
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ChangeVariable",
                 [] () {
                     //create req
@@ -386,7 +386,7 @@ TEST_CASE( "Variable" ) {
 
         //try to update config with malformatted value
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ChangeVariable",
                 [] () {
                     //create req
@@ -413,7 +413,7 @@ TEST_CASE( "Variable" ) {
 
         //validation success
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ChangeVariable",
                 [] () {
                     //create req
@@ -435,7 +435,7 @@ TEST_CASE( "Variable" ) {
 
         //validation failure
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ChangeVariable",
                 [] () {
                     //create req
@@ -504,7 +504,7 @@ TEST_CASE( "Variable" ) {
         bool checkProcessed = false;
 
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("GetVariables",
+            new v16::CustomOperation("GetVariables",
                 [] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests",
@@ -553,7 +553,7 @@ TEST_CASE( "Variable" ) {
         bool checkProcessed = false;
 
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SetVariables",
+            new v16::CustomOperation("SetVariables",
                 [] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests",
@@ -603,7 +603,7 @@ TEST_CASE( "Variable" ) {
 
         getOcppContext()->getMessageService().registerOperation("NotifyReport",
             [&checkProcessedNotification, &checkTimestamp] () {
-                return new Ocpp16::CustomOperation("NotifyReport",
+                return new v16::CustomOperation("NotifyReport",
                     [ &checkProcessedNotification, &checkTimestamp] (JsonObject payload) {
                         //process req
                         checkProcessedNotification = true;
@@ -629,7 +629,7 @@ TEST_CASE( "Variable" ) {
         bool checkProcessed = false;
 
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("GetBaseReport",
+            new v16::CustomOperation("GetBaseReport",
                 [] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests",

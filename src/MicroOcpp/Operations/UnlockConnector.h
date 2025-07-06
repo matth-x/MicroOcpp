@@ -20,7 +20,7 @@ class Context;
 class RemoteControlService;
 class RemoteControlServiceEvse;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class UnlockConnector : public Operation, public MemoryManaged {
 private:
@@ -44,7 +44,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 
@@ -58,7 +58,7 @@ class Context;
 class RemoteControlService;
 class RemoteControlServiceEvse;
 
-namespace Ocpp201 {
+namespace v201 {
 
 class UnlockConnector : public Operation, public MemoryManaged {
 private:
@@ -82,7 +82,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V201 && MO_ENABLE_CONNECTOR_LOCK
 #endif

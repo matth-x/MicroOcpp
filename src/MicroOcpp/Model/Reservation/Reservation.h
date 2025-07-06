@@ -25,7 +25,7 @@ namespace MicroOcpp {
 
 class Context;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class Configuration;
 class ConfigurationContainer;
@@ -75,7 +75,7 @@ public:
     bool clear();
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 #endif

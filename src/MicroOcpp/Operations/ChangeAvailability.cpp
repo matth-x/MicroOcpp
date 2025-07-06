@@ -11,15 +11,15 @@ using namespace MicroOcpp;
 
 #if MO_ENABLE_V16
 
-Ocpp16::ChangeAvailability::ChangeAvailability(Model& model) : MemoryManaged("v16.Operation.", "ChangeAvailability"), model(model) {
+v16::ChangeAvailability::ChangeAvailability(Model& model) : MemoryManaged("v16.Operation.", "ChangeAvailability"), model(model) {
 
 }
 
-const char* Ocpp16::ChangeAvailability::getOperationType(){
+const char* v16::ChangeAvailability::getOperationType(){
     return "ChangeAvailability";
 }
 
-void Ocpp16::ChangeAvailability::processReq(JsonObject payload) {
+void v16::ChangeAvailability::processReq(JsonObject payload) {
     int connectorIdRaw = payload["connectorId"] | -1;
     if (connectorIdRaw < 0) {
         errorCode = "FormationViolation";
@@ -69,7 +69,7 @@ void Ocpp16::ChangeAvailability::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<JsonDoc> Ocpp16::ChangeAvailability::createConf(){
+std::unique_ptr<JsonDoc> v16::ChangeAvailability::createConf(){
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     if (!accepted) {
@@ -87,15 +87,15 @@ std::unique_ptr<JsonDoc> Ocpp16::ChangeAvailability::createConf(){
 
 #if MO_ENABLE_V201
 
-Ocpp201::ChangeAvailability::ChangeAvailability(AvailabilityService& availabilityService) : MemoryManaged("v201.Operation.", "ChangeAvailability"), availabilityService(availabilityService) {
+v201::ChangeAvailability::ChangeAvailability(AvailabilityService& availabilityService) : MemoryManaged("v201.Operation.", "ChangeAvailability"), availabilityService(availabilityService) {
 
 }
 
-const char* Ocpp201::ChangeAvailability::getOperationType(){
+const char* v201::ChangeAvailability::getOperationType(){
     return "ChangeAvailability";
 }
 
-void Ocpp201::ChangeAvailability::processReq(JsonObject payload) {
+void v201::ChangeAvailability::processReq(JsonObject payload) {
 
     unsigned int evseId = 0;
     
@@ -135,7 +135,7 @@ void Ocpp201::ChangeAvailability::processReq(JsonObject payload) {
     status = availabilityEvse->changeAvailability(operative);
 }
 
-std::unique_ptr<JsonDoc> Ocpp201::ChangeAvailability::createConf(){
+std::unique_ptr<JsonDoc> v201::ChangeAvailability::createConf(){
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 

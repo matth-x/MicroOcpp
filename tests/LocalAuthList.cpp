@@ -403,7 +403,7 @@ TEST_CASE( "LocalAuth" ) {
 
         //patch Authorize so it will reject all idTags
         getOcppContext()->getMessageService().registerOperation("Authorize", [] () {
-            return new Ocpp16::CustomOperation("Authorize",
+            return new v16::CustomOperation("Authorize",
                 [] (JsonObject) {}, //ignore req
                 [] () {
                     //create conf
@@ -446,7 +446,7 @@ TEST_CASE( "LocalAuth" ) {
         //patch Authorize so it will reject all idTags
         bool checkAuthorize = false;
         getOcppContext()->getMessageService().registerOperation("Authorize", [&checkAuthorize] () {
-            return new Ocpp16::CustomOperation("Authorize",
+            return new v16::CustomOperation("Authorize",
                 [&checkAuthorize] (JsonObject) {
                     checkAuthorize = true;
                 },
@@ -461,7 +461,7 @@ TEST_CASE( "LocalAuth" ) {
         //patch StartTransaction so it will DeAuthorize all txs
         bool checkStartTx = false;
         getOcppContext()->getMessageService().registerOperation("StartTransaction", [&checkStartTx] () {
-            return new Ocpp16::CustomOperation("StartTransaction",
+            return new v16::CustomOperation("StartTransaction",
                 [&checkStartTx] (JsonObject) {
                     checkStartTx = true;
                 },
@@ -478,7 +478,7 @@ TEST_CASE( "LocalAuth" ) {
         //check resulting StatusNotification message
         bool checkLocalListConflict = false;
         getOcppContext()->getMessageService().registerOperation("StatusNotification", [&checkLocalListConflict] () {
-            return new Ocpp16::CustomOperation("StatusNotification",
+            return new v16::CustomOperation("StatusNotification",
                 [&checkLocalListConflict] (JsonObject payload) {
                     if (payload["connectorId"] == 0 &&
                             !strcmp(payload["errorCode"] | "_Undefined", "LocalListConflict")) {
@@ -645,7 +645,7 @@ TEST_CASE( "LocalAuth" ) {
         //Full update - happy path
         bool checkAccepted = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersion, &listSize, &populatedEntryIdTag] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -688,7 +688,7 @@ TEST_CASE( "LocalAuth" ) {
 
         checkAccepted = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersion, &listSize] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -714,7 +714,7 @@ TEST_CASE( "LocalAuth" ) {
 
         bool checkVersionMismatch = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersion, &listSizeInvalid] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -741,7 +741,7 @@ TEST_CASE( "LocalAuth" ) {
 
         checkAccepted = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersion, &listSize] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -767,7 +767,7 @@ TEST_CASE( "LocalAuth" ) {
 
         checkAccepted = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersion, &listSize] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -794,7 +794,7 @@ TEST_CASE( "LocalAuth" ) {
 
         bool errOccurence = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersionInvalid, &listSizeInvalid] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -830,7 +830,7 @@ TEST_CASE( "LocalAuth" ) {
             //Full update - happy path
             bool checkAccepted = false;
             getOcppContext()->initiateRequest(makeRequest(
-                new Ocpp16::CustomOperation("SendLocalList",
+                new v16::CustomOperation("SendLocalList",
                     [&i] () {
                         //create req
                         auto doc = makeJsonDoc("UnitTests", 
@@ -868,7 +868,7 @@ TEST_CASE( "LocalAuth" ) {
 
         bool checkFailed = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersionInvalid] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -909,7 +909,7 @@ TEST_CASE( "LocalAuth" ) {
 
         int checkListVerion = -1;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("GetLocalListVersion",
+            new v16::CustomOperation("GetLocalListVersion",
                 [] () {
                     //create req
                     return createEmptyDocument();

@@ -49,7 +49,7 @@ enum class InstallationStatus {
     InstallationFailed
 };
 
-namespace Ocpp16 {
+namespace v16 {
 
 class FirmwareService : public MemoryManaged {
 private:
@@ -137,7 +137,7 @@ public:
     FirmwareStatus getFirmwareStatus();
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 #endif

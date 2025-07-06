@@ -14,7 +14,7 @@
 #if MO_ENABLE_V16
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 namespace TransactionStore {
 
 bool serializeSendStatus(Clock& clock, SendStatus& status, JsonObject out);
@@ -24,12 +24,12 @@ bool serializeTransaction(Clock& clock, Transaction& tx, JsonDoc& out);
 bool deserializeTransaction(Clock& clock, Transaction& tx, JsonObject in);
 
 } //namespace TransactionStore
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 
 using namespace MicroOcpp;
 
-bool Ocpp16::TransactionStore::printTxFname(char *fname, size_t size, unsigned int evseId, unsigned int txNr) {
+bool v16::TransactionStore::printTxFname(char *fname, size_t size, unsigned int evseId, unsigned int txNr) {
     auto ret = snprintf(fname, size, "tx-%.*u-%.*u.json",
             MO_NUM_EVSEID_DIGITS, evseId, MO_TXNR_DIGITS, txNr);
     if (ret < 0 || (size_t)ret >= size) {
@@ -39,7 +39,7 @@ bool Ocpp16::TransactionStore::printTxFname(char *fname, size_t size, unsigned i
     return true;
 }
 
-FilesystemUtils::LoadStatus Ocpp16::TransactionStore::load(MO_FilesystemAdapter *filesystem, Context& context, unsigned int evseId, unsigned int txNr, Transaction& transaction) {
+FilesystemUtils::LoadStatus v16::TransactionStore::load(MO_FilesystemAdapter *filesystem, Context& context, unsigned int evseId, unsigned int txNr, Transaction& transaction) {
 
     char fname [MO_MAX_PATH_SIZE];
     if (!printTxFname(fname, sizeof(fname), evseId, txNr)) {
@@ -67,7 +67,7 @@ FilesystemUtils::LoadStatus Ocpp16::TransactionStore::load(MO_FilesystemAdapter 
     return FilesystemUtils::LoadStatus::Success;
 }
 
-FilesystemUtils::StoreStatus Ocpp16::TransactionStore::store(MO_FilesystemAdapter *filesystem, Context& context, Transaction& transaction) {
+FilesystemUtils::StoreStatus v16::TransactionStore::store(MO_FilesystemAdapter *filesystem, Context& context, Transaction& transaction) {
     
     char fname [MO_MAX_PATH_SIZE];
     if (!printTxFname(fname, sizeof(fname), transaction.getConnectorId(), transaction.getTxNr())) {
@@ -91,7 +91,7 @@ FilesystemUtils::StoreStatus Ocpp16::TransactionStore::store(MO_FilesystemAdapte
     return ret;
 }
 
-bool Ocpp16::TransactionStore::remove(MO_FilesystemAdapter *filesystem, unsigned int evseId, unsigned int txNr) {
+bool v16::TransactionStore::remove(MO_FilesystemAdapter *filesystem, unsigned int evseId, unsigned int txNr) {
 
     char fname [MO_MAX_PATH_SIZE];
     if (!printTxFname(fname, sizeof(fname), evseId, txNr)) {
@@ -108,7 +108,7 @@ bool Ocpp16::TransactionStore::remove(MO_FilesystemAdapter *filesystem, unsigned
     return filesystem->remove(path);
 }
 
-bool Ocpp16::TransactionStore::serializeSendStatus(Clock& clock, SendStatus& status, JsonObject out) {
+bool v16::TransactionStore::serializeSendStatus(Clock& clock, SendStatus& status, JsonObject out) {
     if (status.isRequested()) {
         out["requested"] = true;
     }
@@ -130,7 +130,7 @@ bool Ocpp16::TransactionStore::serializeSendStatus(Clock& clock, SendStatus& sta
     return true;
 }
 
-bool Ocpp16::TransactionStore::deserializeSendStatus(Clock& clock, SendStatus& status, JsonObject in) {
+bool v16::TransactionStore::deserializeSendStatus(Clock& clock, SendStatus& status, JsonObject in) {
     if (in["requested"] | false) {
         status.setRequested();
     }
@@ -153,7 +153,7 @@ bool Ocpp16::TransactionStore::deserializeSendStatus(Clock& clock, SendStatus& s
     return true;
 }
 
-bool Ocpp16::TransactionStore::serializeTransaction(Clock& clock, Transaction& tx, JsonDoc& out) {
+bool v16::TransactionStore::serializeTransaction(Clock& clock, Transaction& tx, JsonDoc& out) {
     out = initJsonDoc("v16.Transactions.TransactionDeserialize", 1024);
     JsonObject state = out.to<JsonObject>();
 
@@ -247,7 +247,7 @@ bool Ocpp16::TransactionStore::serializeTransaction(Clock& clock, Transaction& t
     return true;
 }
 
-bool Ocpp16::TransactionStore::deserializeTransaction(Clock& clock, Transaction& tx, JsonObject state) {
+bool v16::TransactionStore::deserializeTransaction(Clock& clock, Transaction& tx, JsonObject state) {
 
     JsonObject sessionState = state["session"];
 
@@ -371,7 +371,7 @@ bool Ocpp16::TransactionStore::deserializeTransaction(Clock& clock, Transaction&
 
 using namespace MicroOcpp;
 
-bool Ocpp201::TransactionStoreEvse::serializeTransaction(Transaction& tx, JsonObject txJson) {
+bool v201::TransactionStoreEvse::serializeTransaction(Transaction& tx, JsonObject txJson) {
 
     if (tx.trackEvConnected) {
         txJson["trackEvConnected"] = tx.trackEvConnected;
@@ -473,7 +473,7 @@ bool Ocpp201::TransactionStoreEvse::serializeTransaction(Transaction& tx, JsonOb
     return true;
 }
 
-bool Ocpp201::TransactionStoreEvse::deserializeTransaction(Transaction& tx, JsonObject txJson) {
+bool v201::TransactionStoreEvse::deserializeTransaction(Transaction& tx, JsonObject txJson) {
 
     if (txJson.containsKey("trackEvConnected") && !txJson["trackEvConnected"].is<bool>()) {
         return false;
@@ -616,7 +616,7 @@ bool Ocpp201::TransactionStoreEvse::deserializeTransaction(Transaction& tx, Json
     return true;
 }
 
-bool Ocpp201::TransactionStoreEvse::serializeTransactionEvent(TransactionEventData& txEvent, JsonObject txEventJson) {
+bool v201::TransactionStoreEvse::serializeTransactionEvent(TransactionEventData& txEvent, JsonObject txEventJson) {
     
     if (txEvent.eventType != TransactionEventData::Type::Updated) {
         txEventJson["eventType"] = serializeTransactionEventType(txEvent.eventType);
@@ -688,7 +688,7 @@ bool Ocpp201::TransactionStoreEvse::serializeTransactionEvent(TransactionEventDa
     return true;
 }
 
-bool Ocpp201::TransactionStoreEvse::deserializeTransactionEvent(TransactionEventData& txEvent, JsonObject txEventJson) {
+bool v201::TransactionStoreEvse::deserializeTransactionEvent(TransactionEventData& txEvent, JsonObject txEventJson) {
 
     TransactionEventData::Type eventType;
     if (!deserializeTransactionEventType(txEventJson["eventType"] | "Updated", eventType)) {
@@ -806,14 +806,14 @@ bool Ocpp201::TransactionStoreEvse::deserializeTransactionEvent(TransactionEvent
     return true;
 }
 
-Ocpp201::TransactionStoreEvse::TransactionStoreEvse(Context& context, unsigned int evseId) :
+v201::TransactionStoreEvse::TransactionStoreEvse(Context& context, unsigned int evseId) :
         MemoryManaged("v201.Transactions.TransactionStore"),
         context(context),
         evseId(evseId) {
 
 }
 
-bool Ocpp201::TransactionStoreEvse::setup() {
+bool v201::TransactionStoreEvse::setup() {
     filesystem = context.getFilesystem();
     if (!filesystem) {
         MO_DBG_DEBUG("volatile mode");
@@ -821,7 +821,7 @@ bool Ocpp201::TransactionStoreEvse::setup() {
     return true;
 }
 
-bool Ocpp201::TransactionStoreEvse::printTxEventFname(char *fname, size_t size, unsigned int evseId, unsigned int txNr, unsigned int seqNo) {
+bool v201::TransactionStoreEvse::printTxEventFname(char *fname, size_t size, unsigned int evseId, unsigned int txNr, unsigned int seqNo) {
     auto ret = snprintf(fname, size, "tx201-%.*u-%.*u-%.*u.json",
             MO_NUM_EVSEID_DIGITS, evseId, MO_TXNR_DIGITS, txNr, MO_TXEVENTRECORD_DIGITS, seqNo);
     if (ret < 0 || (size_t)ret >= size) {
@@ -854,7 +854,7 @@ int loadSeqNoEntry(const char *fname, void* user_data) {
 }
 } //namespace MicroOcpp
 
-std::unique_ptr<Ocpp201::Transaction> Ocpp201::TransactionStoreEvse::loadTransaction(unsigned int txNr) {
+std::unique_ptr<v201::Transaction> v201::TransactionStoreEvse::loadTransaction(unsigned int txNr) {
 
     if (!filesystem) {
         MO_DBG_DEBUG("no FS adapter");
@@ -941,7 +941,7 @@ std::unique_ptr<Ocpp201::Transaction> Ocpp201::TransactionStoreEvse::loadTransac
     return transaction;
 }
 
-std::unique_ptr<Ocpp201::Transaction> Ocpp201::TransactionStoreEvse::createTransaction(unsigned int txNr, const char *txId) {
+std::unique_ptr<v201::Transaction> v201::TransactionStoreEvse::createTransaction(unsigned int txNr, const char *txId) {
 
     //clean data which could still be here from a rolled-back transaction
     if (!remove(txNr)) {
@@ -967,7 +967,7 @@ std::unique_ptr<Ocpp201::Transaction> Ocpp201::TransactionStoreEvse::createTrans
     return transaction;
 }
 
-std::unique_ptr<Ocpp201::TransactionEventData> Ocpp201::TransactionStoreEvse::createTransactionEvent(Transaction& tx) {
+std::unique_ptr<v201::TransactionEventData> v201::TransactionStoreEvse::createTransactionEvent(Transaction& tx) {
 
     auto txEvent = std::unique_ptr<TransactionEventData>(new TransactionEventData(&tx, tx.seqNoEnd));
     if (!txEvent) {
@@ -979,7 +979,7 @@ std::unique_ptr<Ocpp201::TransactionEventData> Ocpp201::TransactionStoreEvse::cr
     return txEvent;
 }
 
-std::unique_ptr<Ocpp201::TransactionEventData> Ocpp201::TransactionStoreEvse::loadTransactionEvent(Transaction& tx, unsigned int seqNo) {
+std::unique_ptr<v201::TransactionEventData> v201::TransactionStoreEvse::loadTransactionEvent(Transaction& tx, unsigned int seqNo) {
 
     if (!filesystem) {
         MO_DBG_DEBUG("no FS adapter");
@@ -1039,7 +1039,7 @@ std::unique_ptr<Ocpp201::TransactionEventData> Ocpp201::TransactionStoreEvse::lo
     return txEvent;
 }
 
-bool Ocpp201::TransactionStoreEvse::commit(Transaction& tx, TransactionEventData *txEvent) {
+bool v201::TransactionStoreEvse::commit(Transaction& tx, TransactionEventData *txEvent) {
 
     if (!filesystem) {
         MO_DBG_DEBUG("no FS: nothing to commit");
@@ -1123,15 +1123,15 @@ bool Ocpp201::TransactionStoreEvse::commit(Transaction& tx, TransactionEventData
     return true;
 }
 
-bool Ocpp201::TransactionStoreEvse::commit(Transaction *transaction) {
+bool v201::TransactionStoreEvse::commit(Transaction *transaction) {
     return commit(*transaction, nullptr);
 }
 
-bool Ocpp201::TransactionStoreEvse::commit(TransactionEventData *txEvent) {
+bool v201::TransactionStoreEvse::commit(TransactionEventData *txEvent) {
     return commit(*txEvent->transaction, txEvent);
 }
 
-bool Ocpp201::TransactionStoreEvse::remove(unsigned int txNr) {
+bool v201::TransactionStoreEvse::remove(unsigned int txNr) {
 
     if (!filesystem) {
         MO_DBG_DEBUG("no FS: nothing to remove");
@@ -1149,7 +1149,7 @@ bool Ocpp201::TransactionStoreEvse::remove(unsigned int txNr) {
     return FilesystemUtils::removeByPrefix(filesystem, fnPrefix);
 }
 
-bool Ocpp201::TransactionStoreEvse::remove(Transaction& tx, unsigned int seqNo) {
+bool v201::TransactionStoreEvse::remove(Transaction& tx, unsigned int seqNo) {
 
     if (tx.seqNos.empty()) {
         //nothing to do
@@ -1244,18 +1244,18 @@ bool Ocpp201::TransactionStoreEvse::remove(Transaction& tx, unsigned int seqNo) 
     return success;
 }
 
-Ocpp201::TransactionStore::TransactionStore(Context& context) :
+v201::TransactionStore::TransactionStore(Context& context) :
         MemoryManaged{"v201.Transactions.TransactionStore"}, context(context) {
 
 }
 
-Ocpp201::TransactionStore::~TransactionStore() {
+v201::TransactionStore::~TransactionStore() {
     for (unsigned int evseId = 0; evseId < numEvseId; evseId++) {
         delete evses[evseId];
     }
 }
 
-bool Ocpp201::TransactionStore::setup() {
+bool v201::TransactionStore::setup() {
 
     numEvseId = context.getModel201().getNumEvseId();
     for (unsigned int i = 0; i < numEvseId; i++) {
@@ -1268,7 +1268,7 @@ bool Ocpp201::TransactionStore::setup() {
     return true;
 }
 
-Ocpp201::TransactionStoreEvse *Ocpp201::TransactionStore::getEvse(unsigned int evseId) {
+v201::TransactionStoreEvse *v201::TransactionStore::getEvse(unsigned int evseId) {
     if (evseId >= numEvseId) {
         MO_DBG_ERR("evseId out of bound");
         return nullptr;

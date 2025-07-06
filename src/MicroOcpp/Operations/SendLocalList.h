@@ -11,7 +11,7 @@
 #if MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 class AuthorizationService;
 
@@ -35,7 +35,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 #endif

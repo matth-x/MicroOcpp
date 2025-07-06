@@ -19,7 +19,7 @@
 #define MO_LOCALAUTHORIZATIONLIST_FN "localauth.jsn"
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 AuthorizationService::AuthorizationService(Context& context) : MemoryManaged("v16.Authorization.AuthorizationService"), context(context) {
 

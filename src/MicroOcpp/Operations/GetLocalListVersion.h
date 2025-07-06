@@ -11,7 +11,7 @@
 #if MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 class Model;
 
@@ -28,7 +28,7 @@ public:
     std::unique_ptr<JsonDoc> createConf() override;
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 #endif

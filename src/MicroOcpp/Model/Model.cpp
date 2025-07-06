@@ -33,11 +33,11 @@
 
 using namespace MicroOcpp;
 
-Ocpp16::Model::Model(Context& context) : MemoryManaged("v16.Model"), context(context) {
+v16::Model::Model(Context& context) : MemoryManaged("v16.Model"), context(context) {
 
 }
 
-Ocpp16::Model::~Model() {
+v16::Model::~Model() {
     delete bootService;
     bootService = nullptr;
     delete heartbeatService;
@@ -92,7 +92,7 @@ Ocpp16::Model::~Model() {
     configurationService = nullptr;
 }
 
-void Ocpp16::Model::updateSupportedStandardProfiles() {
+void v16::Model::updateSupportedStandardProfiles() {
 
     auto supportedFeatureProfilesString =
         configurationService->declareConfiguration<const char*>("SupportedFeatureProfiles", "", MO_CONFIGURATION_VOLATILE, Mutability::ReadOnly);
@@ -158,7 +158,7 @@ void Ocpp16::Model::updateSupportedStandardProfiles() {
     MO_DBG_DEBUG("supported feature profiles: %s", buf.c_str());
 }
 
-void Ocpp16::Model::setNumEvseId(unsigned int numEvseId) {
+void v16::Model::setNumEvseId(unsigned int numEvseId) {
     if (numEvseId >= MO_NUM_EVSEID) {
         MO_DBG_ERR("invalid arg");
         return;
@@ -166,27 +166,27 @@ void Ocpp16::Model::setNumEvseId(unsigned int numEvseId) {
     this->numEvseId = numEvseId;
 }
 
-unsigned int Ocpp16::Model::getNumEvseId() {
+unsigned int v16::Model::getNumEvseId() {
     return numEvseId;
 }
 
-BootService *Ocpp16::Model::getBootService() {
+BootService *v16::Model::getBootService() {
     if (!bootService) {
         bootService = new BootService(context);
     }
     return bootService;
 }
 
-HeartbeatService *Ocpp16::Model::getHeartbeatService() {
+HeartbeatService *v16::Model::getHeartbeatService() {
     if (!heartbeatService) {
         heartbeatService = new HeartbeatService(context);
     }
     return heartbeatService;
 }
 
-Ocpp16::ConfigurationService *Ocpp16::Model::getConfigurationService() {
+v16::ConfigurationService *v16::Model::getConfigurationService() {
     if (!configurationService) {
-        configurationService = new Ocpp16::ConfigurationService(context);
+        configurationService = new v16::ConfigurationService(context);
 
         // need extra init step so that other modules can declare configs before setup()
         if (configurationService && !configurationService->init()) {
@@ -198,35 +198,35 @@ Ocpp16::ConfigurationService *Ocpp16::Model::getConfigurationService() {
     return configurationService;
 }
 
-Ocpp16::TransactionService *Ocpp16::Model::getTransactionService() {
+v16::TransactionService *v16::Model::getTransactionService() {
     if (!transactionService) {
         transactionService = new TransactionService(context);
     }
     return transactionService;
 }
 
-Ocpp16::MeteringService* Ocpp16::Model::getMeteringService() {
+v16::MeteringService* v16::Model::getMeteringService() {
     if (!meteringService) {
         meteringService = new MeteringService(context);
     }
     return meteringService;
 }
 
-Ocpp16::ResetService *Ocpp16::Model::getResetService() {
+v16::ResetService *v16::Model::getResetService() {
     if (!resetService) {
         resetService = new ResetService(context);
     }
     return resetService;
 }
 
-Ocpp16::AvailabilityService *Ocpp16::Model::getAvailabilityService() {
+v16::AvailabilityService *v16::Model::getAvailabilityService() {
     if (!availabilityService) {
-        availabilityService = new Ocpp16::AvailabilityService(context);
+        availabilityService = new v16::AvailabilityService(context);
     }
     return availabilityService;
 }
 
-RemoteControlService *Ocpp16::Model::getRemoteControlService() {
+RemoteControlService *v16::Model::getRemoteControlService() {
     if (!remoteControlService) {
         remoteControlService = new RemoteControlService(context);
     }
@@ -234,7 +234,7 @@ RemoteControlService *Ocpp16::Model::getRemoteControlService() {
 }
 
 #if MO_ENABLE_FIRMWAREMANAGEMENT
-Ocpp16::FirmwareService *Ocpp16::Model::getFirmwareService() {
+v16::FirmwareService *v16::Model::getFirmwareService() {
     if (!firmwareService) {
         firmwareService = new FirmwareService(context);
     }
@@ -243,7 +243,7 @@ Ocpp16::FirmwareService *Ocpp16::Model::getFirmwareService() {
 #endif //MO_ENABLE_FIRMWAREMANAGEMENT
 
 #if MO_ENABLE_DIAGNOSTICS
-DiagnosticsService *Ocpp16::Model::getDiagnosticsService() {
+DiagnosticsService *v16::Model::getDiagnosticsService() {
     if (!diagnosticsService) {
         diagnosticsService = new DiagnosticsService(context);
     }
@@ -252,7 +252,7 @@ DiagnosticsService *Ocpp16::Model::getDiagnosticsService() {
 #endif //MO_ENABLE_DIAGNOSTICS
 
 #if MO_ENABLE_LOCAL_AUTH
-Ocpp16::AuthorizationService *Ocpp16::Model::getAuthorizationService() {
+v16::AuthorizationService *v16::Model::getAuthorizationService() {
     if (!authorizationService) {
         authorizationService = new AuthorizationService(context);
     }
@@ -261,7 +261,7 @@ Ocpp16::AuthorizationService *Ocpp16::Model::getAuthorizationService() {
 #endif //MO_ENABLE_LOCAL_AUTH
 
 #if MO_ENABLE_RESERVATION
-Ocpp16::ReservationService *Ocpp16::Model::getReservationService() {
+v16::ReservationService *v16::Model::getReservationService() {
     if (!reservationService) {
         reservationService = new ReservationService(context);
     }
@@ -270,7 +270,7 @@ Ocpp16::ReservationService *Ocpp16::Model::getReservationService() {
 #endif //MO_ENABLE_RESERVATION
 
 #if MO_ENABLE_SMARTCHARGING
-SmartChargingService* Ocpp16::Model::getSmartChargingService() {
+SmartChargingService* v16::Model::getSmartChargingService() {
     if (!smartChargingService) {
         smartChargingService = new SmartChargingService(context);
     }
@@ -279,7 +279,7 @@ SmartChargingService* Ocpp16::Model::getSmartChargingService() {
 #endif //MO_ENABLE_SMARTCHARGING
 
 #if MO_ENABLE_CERT_MGMT
-CertificateService *Ocpp16::Model::getCertificateService() {
+CertificateService *v16::Model::getCertificateService() {
     if (!certService) {
         certService = new CertificateService(context);
     }
@@ -288,7 +288,7 @@ CertificateService *Ocpp16::Model::getCertificateService() {
 #endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_SECURITY_EVENT
-SecurityEventService *Ocpp16::Model::getSecurityEventService() {
+SecurityEventService *v16::Model::getSecurityEventService() {
     if (!secEventService) {
         secEventService = new SecurityEventService(context);
     }
@@ -296,7 +296,7 @@ SecurityEventService *Ocpp16::Model::getSecurityEventService() {
 }
 #endif //MO_ENABLE_SECURITY_EVENT
 
-bool Ocpp16::Model::setup() {
+bool v16::Model::setup() {
     if (!getBootService() || !getBootService()->setup()) {
         MO_DBG_ERR("setup failure");
         return false;
@@ -391,12 +391,12 @@ bool Ocpp16::Model::setup() {
 
     // Register remainder of operations which don't have dedicated service
     context.getMessageService().registerOperation("DataTransfer", [] (Context&) -> Operation* {
-        return new Ocpp16::DataTransfer();});
+        return new v16::DataTransfer();});
     
     return true;
 }
 
-void Ocpp16::Model::loop() {
+void v16::Model::loop() {
 
     if (bootService) {
         bootService->loop();
@@ -457,11 +457,11 @@ void Ocpp16::Model::loop() {
 
 using namespace MicroOcpp;
 
-Ocpp201::Model::Model(Context& context) : MemoryManaged("v201.Model"), context(context) {
+v201::Model::Model(Context& context) : MemoryManaged("v201.Model"), context(context) {
 
 }
 
-Ocpp201::Model::~Model() {
+v201::Model::~Model() {
     delete bootService;
     bootService = nullptr;
     delete heartbeatService;
@@ -501,7 +501,7 @@ Ocpp201::Model::~Model() {
     variableService = nullptr;
 }
 
-void Ocpp201::Model::setNumEvseId(unsigned int numEvseId) {
+void v201::Model::setNumEvseId(unsigned int numEvseId) {
     if (numEvseId >= MO_NUM_EVSEID) {
         MO_DBG_ERR("invalid arg");
         return;
@@ -509,27 +509,27 @@ void Ocpp201::Model::setNumEvseId(unsigned int numEvseId) {
     this->numEvseId = numEvseId;
 }
 
-unsigned int Ocpp201::Model::getNumEvseId() {
+unsigned int v201::Model::getNumEvseId() {
     return numEvseId;
 }
 
-BootService *Ocpp201::Model::getBootService() {
+BootService *v201::Model::getBootService() {
     if (!bootService) {
         bootService = new BootService(context);
     }
     return bootService;
 }
 
-HeartbeatService *Ocpp201::Model::getHeartbeatService() {
+HeartbeatService *v201::Model::getHeartbeatService() {
     if (!heartbeatService) {
         heartbeatService = new HeartbeatService(context);
     }
     return heartbeatService;
 }
 
-Ocpp201::VariableService *Ocpp201::Model::getVariableService() {
+v201::VariableService *v201::Model::getVariableService() {
     if (!variableService) {
-        variableService = new Ocpp201::VariableService(context);
+        variableService = new v201::VariableService(context);
 
         // need extra init step so that other modules can declare variables before setup()
         if (variableService && !variableService->init()) {
@@ -541,35 +541,35 @@ Ocpp201::VariableService *Ocpp201::Model::getVariableService() {
     return variableService;
 }
 
-Ocpp201::TransactionService *Ocpp201::Model::getTransactionService() {
+v201::TransactionService *v201::Model::getTransactionService() {
     if (!transactionService) {
         transactionService = new TransactionService(context);
     }
     return transactionService;
 }
 
-Ocpp201::MeteringService *Ocpp201::Model::getMeteringService() {
+v201::MeteringService *v201::Model::getMeteringService() {
     if (!meteringService) {
-        meteringService = new Ocpp201::MeteringService(context);
+        meteringService = new v201::MeteringService(context);
     }
     return meteringService;
 }
 
-Ocpp201::ResetService *Ocpp201::Model::getResetService() {
+v201::ResetService *v201::Model::getResetService() {
     if (!resetService) {
-        resetService = new Ocpp201::ResetService(context);
+        resetService = new v201::ResetService(context);
     }
     return resetService;
 }
 
-Ocpp201::AvailabilityService *Ocpp201::Model::getAvailabilityService() {
+v201::AvailabilityService *v201::Model::getAvailabilityService() {
     if (!availabilityService) {
-        availabilityService = new Ocpp201::AvailabilityService(context);
+        availabilityService = new v201::AvailabilityService(context);
     }
     return availabilityService;
 }
 
-RemoteControlService *Ocpp201::Model::getRemoteControlService() {
+RemoteControlService *v201::Model::getRemoteControlService() {
     if (!remoteControlService) {
         remoteControlService = new RemoteControlService(context);
     }
@@ -577,7 +577,7 @@ RemoteControlService *Ocpp201::Model::getRemoteControlService() {
 }
 
 #if MO_ENABLE_DIAGNOSTICS
-DiagnosticsService *Ocpp201::Model::getDiagnosticsService() {
+DiagnosticsService *v201::Model::getDiagnosticsService() {
     if (!diagnosticsService) {
         diagnosticsService = new DiagnosticsService(context);
     }
@@ -586,7 +586,7 @@ DiagnosticsService *Ocpp201::Model::getDiagnosticsService() {
 #endif //MO_ENABLE_DIAGNOSTICS
 
 #if MO_ENABLE_SMARTCHARGING
-SmartChargingService* Ocpp201::Model::getSmartChargingService() {
+SmartChargingService* v201::Model::getSmartChargingService() {
     if (!smartChargingService) {
         smartChargingService = new SmartChargingService(context);
     }
@@ -595,7 +595,7 @@ SmartChargingService* Ocpp201::Model::getSmartChargingService() {
 #endif //MO_ENABLE_SMARTCHARGING
 
 #if MO_ENABLE_CERT_MGMT
-CertificateService *Ocpp201::Model::getCertificateService() {
+CertificateService *v201::Model::getCertificateService() {
     if (!certService) {
         certService = new CertificateService(context);
     }
@@ -604,7 +604,7 @@ CertificateService *Ocpp201::Model::getCertificateService() {
 #endif //MO_ENABLE_CERT_MGMT
 
 #if MO_ENABLE_SECURITY_EVENT
-SecurityEventService *Ocpp201::Model::getSecurityEventService() {
+SecurityEventService *v201::Model::getSecurityEventService() {
     if (!secEventService) {
         secEventService = new SecurityEventService(context);
     }
@@ -612,7 +612,7 @@ SecurityEventService *Ocpp201::Model::getSecurityEventService() {
 }
 #endif //MO_ENABLE_SECURITY_EVENT
 
-bool Ocpp201::Model::setup() {
+bool v201::Model::setup() {
     if (!getBootService() || !getBootService()->setup()) {
         MO_DBG_ERR("setup failure");
         return false;
@@ -684,7 +684,7 @@ bool Ocpp201::Model::setup() {
     return true;
 }
 
-void Ocpp201::Model::loop() {
+void v201::Model::loop() {
 
     if (bootService) {
         bootService->loop();

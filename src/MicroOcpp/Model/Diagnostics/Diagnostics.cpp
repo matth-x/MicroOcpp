@@ -80,7 +80,7 @@ MO_LogType mo_deserializeLogType(const char *v) {
 
 #if MO_ENABLE_V16 && MO_ENABLE_DIAGNOSTICS
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 const char *serializeDiagnosticsStatus(DiagnosticsStatus status) {
     const char *statusCstr = "";
@@ -101,6 +101,6 @@ const char *serializeDiagnosticsStatus(DiagnosticsStatus status) {
     return statusCstr;
 }
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_DIAGNOSTICS

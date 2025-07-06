@@ -60,7 +60,7 @@ MO_LogType mo_deserializeLogType(const char *v);
 #if MO_ENABLE_V16 && MO_ENABLE_DIAGNOSTICS
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 enum class DiagnosticsStatus {
     Idle,
@@ -70,7 +70,7 @@ enum class DiagnosticsStatus {
 };
 const char *serializeDiagnosticsStatus(DiagnosticsStatus status);
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_DIAGNOSTICS
 

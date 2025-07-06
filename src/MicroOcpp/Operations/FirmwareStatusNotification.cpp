@@ -10,7 +10,7 @@
 #if MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 FirmwareStatusNotification::FirmwareStatusNotification(FirmwareStatus status) : MemoryManaged("v16.Operation.", "FirmwareStatusNotification"), status{status} {
 

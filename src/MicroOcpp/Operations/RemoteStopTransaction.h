@@ -16,7 +16,7 @@ namespace MicroOcpp {
 class Context;
 class RemoteControlService;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class RemoteStopTransaction : public Operation, public MemoryManaged {
 private:
@@ -38,7 +38,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 #endif

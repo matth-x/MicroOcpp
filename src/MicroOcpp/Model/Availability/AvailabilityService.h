@@ -27,7 +27,7 @@ class Context;
 class Clock;
 class Connection;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class Model;
 class Configuration;
@@ -123,7 +123,7 @@ friend class AvailabilityServiceEvse;
 };
 
 } //namespace MicroOcpp
-} //namespace Ocpp16
+} //namespace v16
 #endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
@@ -140,7 +140,7 @@ namespace MicroOcpp {
 
 class Context;
 
-namespace Ocpp201 {
+namespace v201 {
 
 class AvailabilityService;
 class Variable;
@@ -212,6 +212,6 @@ public:
 };
 
 } //namespace MicroOcpp
-} //namespace Ocpp201
+} //namespace v201
 #endif //MO_ENABLE_V201
 #endif

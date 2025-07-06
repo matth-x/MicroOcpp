@@ -13,7 +13,7 @@
 #if MO_ENABLE_V201
 
 namespace MicroOcpp {    
-namespace Ocpp201 {
+namespace v201 {
 
 class VariableService;
 
@@ -52,7 +52,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V201
 

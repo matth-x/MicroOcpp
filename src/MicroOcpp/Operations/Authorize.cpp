@@ -12,7 +12,7 @@ using namespace MicroOcpp;
 
 #if MO_ENABLE_V16
 
-Ocpp16::Authorize::Authorize(Model& model, const char *idTagIn) : MemoryManaged("v16.Operation.", "Authorize"), model(model) {
+v16::Authorize::Authorize(Model& model, const char *idTagIn) : MemoryManaged("v16.Operation.", "Authorize"), model(model) {
     if (idTagIn && strnlen(idTagIn, MO_IDTAG_LEN_MAX + 2) <= MO_IDTAG_LEN_MAX) {
         snprintf(idTag, MO_IDTAG_LEN_MAX + 1, "%s", idTagIn);
     } else {
@@ -20,18 +20,18 @@ Ocpp16::Authorize::Authorize(Model& model, const char *idTagIn) : MemoryManaged(
     }
 }
 
-const char* Ocpp16::Authorize::getOperationType(){
+const char* v16::Authorize::getOperationType(){
     return "Authorize";
 }
 
-std::unique_ptr<JsonDoc> Ocpp16::Authorize::createReq() {
+std::unique_ptr<JsonDoc> v16::Authorize::createReq() {
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + (MO_IDTAG_LEN_MAX + 1));
     JsonObject payload = doc->to<JsonObject>();
     payload["idTag"] = idTag;
     return doc;
 }
 
-void Ocpp16::Authorize::processConf(JsonObject payload){
+void v16::Authorize::processConf(JsonObject payload){
     const char *idTagInfo = payload["idTagInfo"]["status"] | "not specified";
 
     if (!strcmp(idTagInfo, "Accepted")) {
@@ -48,7 +48,7 @@ void Ocpp16::Authorize::processConf(JsonObject payload){
 }
 
 #if MO_ENABLE_MOCK_SERVER
-int Ocpp16::Authorize::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
+int v16::Authorize::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
     (void)userStatus;
     (void)userData;
     return snprintf(buf, size, "{\"idTagInfo\":{\"status\":\"Accepted\"}}");
@@ -59,15 +59,15 @@ int Ocpp16::Authorize::writeMockConf(const char *operationType, char *buf, size_
 
 #if MO_ENABLE_V201
 
-Ocpp201::Authorize::Authorize(Model& model, const IdToken& idToken) : MemoryManaged("v201.Operation.Authorize"), model(model) {
+v201::Authorize::Authorize(Model& model, const IdToken& idToken) : MemoryManaged("v201.Operation.Authorize"), model(model) {
     this->idToken = idToken;
 }
 
-const char* Ocpp201::Authorize::getOperationType(){
+const char* v201::Authorize::getOperationType(){
     return "Authorize";
 }
 
-std::unique_ptr<JsonDoc> Ocpp201::Authorize::createReq() {
+std::unique_ptr<JsonDoc> v201::Authorize::createReq() {
     auto doc = makeJsonDoc(getMemoryTag(),
             JSON_OBJECT_SIZE(1) +
             JSON_OBJECT_SIZE(2));
@@ -77,7 +77,7 @@ std::unique_ptr<JsonDoc> Ocpp201::Authorize::createReq() {
     return doc;
 }
 
-void Ocpp201::Authorize::processConf(JsonObject payload){
+void v201::Authorize::processConf(JsonObject payload){
     const char *idTagInfo = payload["idTokenInfo"]["status"] | "_Undefined";
 
     if (!strcmp(idTagInfo, "Accepted")) {
@@ -92,7 +92,7 @@ void Ocpp201::Authorize::processConf(JsonObject payload){
 }
 
 #if MO_ENABLE_MOCK_SERVER
-int Ocpp201::Authorize::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
+int v201::Authorize::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
     (void)userStatus;
     (void)userData;
     return snprintf(buf, size, "{\"idTokenInfo\":{\"status\":\"Accepted\"}}");

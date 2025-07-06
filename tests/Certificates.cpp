@@ -163,7 +163,7 @@ TEST_CASE( "M - Certificates" ) {
     SECTION("M05 InstallCertificate operation") {
 
         bool checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "InstallCertificate",
                 [] () {
                     //create req
@@ -195,7 +195,7 @@ TEST_CASE( "M - Certificates" ) {
         REQUIRE(ret == InstallCertificateStatus_Accepted);
 
         bool checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "DeleteCertificate",
                 [] () {
                     //create req
@@ -223,7 +223,7 @@ TEST_CASE( "M - Certificates" ) {
         REQUIRE(ret == InstallCertificateStatus_Accepted);
 
         bool checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "GetInstalledCertificateIds",
                 [] () {
                     //create req

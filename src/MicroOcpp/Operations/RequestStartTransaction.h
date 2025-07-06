@@ -18,7 +18,7 @@ namespace MicroOcpp {
 class Context;
 class RemoteControlService;
 
-namespace Ocpp201 {
+namespace v201 {
 
 class RequestStartTransaction : public Operation, public MemoryManaged {
 private:
@@ -26,7 +26,7 @@ private:
     RemoteControlService& rcService;
 
     RequestStartStopStatus status;
-    std::shared_ptr<Ocpp201::Transaction> transaction;
+    std::shared_ptr<v201::Transaction> transaction;
     char transactionId [MO_TXID_SIZE] = {'\0'};
 
     const char *errorCode = nullptr;
@@ -43,7 +43,7 @@ public:
 
 };
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V201
 #endif

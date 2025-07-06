@@ -26,7 +26,7 @@ namespace MicroOcpp {
 
 class Context;
 
-namespace Ocpp16 {
+namespace v16 {
 namespace MeterStore {
 
 bool printTxMeterValueFName(char *fname, size_t size, unsigned int evseId, unsigned int txNr, unsigned int mvIndex);
@@ -36,7 +36,7 @@ FilesystemUtils::StoreStatus store(MO_FilesystemAdapter *filesystem, Context& co
 bool remove(MO_FilesystemAdapter *filesystem, unsigned int evseId, unsigned int txNr); //removes tx meter values only
 
 } //namespace MeterStore
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 #endif

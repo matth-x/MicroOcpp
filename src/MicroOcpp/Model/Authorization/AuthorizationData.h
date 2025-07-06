@@ -16,7 +16,7 @@
 #if MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 enum class AuthorizationStatus : uint8_t {
     Accepted,
@@ -64,7 +64,7 @@ public:
     void reset();
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 #endif

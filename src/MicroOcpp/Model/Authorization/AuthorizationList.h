@@ -23,7 +23,7 @@ namespace MicroOcpp {
 
 class Clock;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class AuthorizationList : public MemoryManaged {
 private:
@@ -47,7 +47,7 @@ public:
 
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 #endif

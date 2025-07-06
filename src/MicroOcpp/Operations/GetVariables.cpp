@@ -11,7 +11,7 @@
 #if MO_ENABLE_V201
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp201;
+using namespace MicroOcpp::v201;
 
 GetVariableData::GetVariableData(const char *memory_tag) : componentName{makeString(memory_tag)}, variableName{makeString(memory_tag)} {
 

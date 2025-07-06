@@ -11,7 +11,7 @@
 #if MO_ENABLE_V16
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 RemoteStopTransaction::RemoteStopTransaction(Context& context, RemoteControlService& rcService) : MemoryManaged("v16.Operation.", "RemoteStopTransaction"), context(context), rcService(rcService) {
   
@@ -29,7 +29,7 @@ void RemoteStopTransaction::processReq(JsonObject payload) {
     int transactionId = payload["transactionId"];
 
     status = rcService.remoteStopTransaction(transactionId);
-    if (status == Ocpp16::RemoteStartStopStatus::ERR_INTERNAL) {
+    if (status == v16::RemoteStartStopStatus::ERR_INTERNAL) {
         errorCode = "InternalError";
         return;
     }
@@ -38,7 +38,7 @@ void RemoteStopTransaction::processReq(JsonObject payload) {
 std::unique_ptr<JsonDoc> RemoteStopTransaction::createConf() {
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
-    if (status == Ocpp16::RemoteStartStopStatus::Accepted) {
+    if (status == v16::RemoteStartStopStatus::Accepted) {
         payload["status"] = "Accepted";
     } else {
         payload["status"] = "Rejected";

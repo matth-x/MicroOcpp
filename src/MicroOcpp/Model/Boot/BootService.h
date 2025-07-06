@@ -45,12 +45,12 @@ class Context;
 class HeartbeatService;
 
 #if MO_ENABLE_V16
-namespace Ocpp16 {
+namespace v16 {
 class Configuration;
 }
 #endif
 #if MO_ENABLE_V201
-namespace Ocpp201 {
+namespace v201 {
 class Variable;
 }
 #endif
@@ -75,10 +75,10 @@ private:
     int ocppVersion = -1;
     
     #if MO_ENABLE_V16
-    Ocpp16::Configuration *preBootTransactionsBoolV16 = nullptr;
+    v16::Configuration *preBootTransactionsBoolV16 = nullptr;
     #endif
     #if MO_ENABLE_V201
-    Ocpp201::Variable *preBootTransactionsBoolV201 = nullptr;
+    v201::Variable *preBootTransactionsBoolV201 = nullptr;
     #endif
 
     bool activatedModel = false;

@@ -97,7 +97,7 @@ private:
 
     MO_UploadLogStatus lastReportedUploadStatus = MO_UploadLogStatus_Idle;
     #if MO_ENABLE_V16
-    Ocpp16::DiagnosticsStatus lastReportedUploadStatus16 = Ocpp16::DiagnosticsStatus::Idle;
+    v16::DiagnosticsStatus lastReportedUploadStatus16 = v16::DiagnosticsStatus::Idle;
     #endif //MO_ENABLE_V16
 
     bool uploadDiagnostics(); //prepare diags and start FTP upload
@@ -163,7 +163,7 @@ public:
     int getRequestId();
     MO_UploadLogStatus getUploadStatus();
     #if MO_ENABLE_V16
-    Ocpp16::DiagnosticsStatus getUploadStatus16();
+    v16::DiagnosticsStatus getUploadStatus16();
     #endif //MO_ENABLE_V16
 };
 

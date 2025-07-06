@@ -16,7 +16,7 @@ namespace MicroOcpp {
 
 class Context;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class Configuration;
 
@@ -46,6 +46,6 @@ public:
 };
 
 } //namespace MicroOcpp
-} //namespace Ocpp16
+} //namespace v16
 #endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 #endif

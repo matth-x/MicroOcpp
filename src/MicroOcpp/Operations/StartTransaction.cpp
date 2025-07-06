@@ -15,7 +15,7 @@
 #if MO_ENABLE_V16
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 StartTransaction::StartTransaction(Context& context, Transaction *transaction) : MemoryManaged("v16.Operation.", "StartTransaction"), context(context), transaction(transaction) {
     

@@ -82,8 +82,8 @@ bool VolatileRequestQueue::pushRequestBack(std::unique_ptr<Request> request) {
                 i++;
                 continue;
             }
-            auto new_status_notification = static_cast<Ocpp16::StatusNotification*>(request->getOperation());
-            auto old_status_notification = static_cast<Ocpp16::StatusNotification*>(requests[index]->getOperation());
+            auto new_status_notification = static_cast<v16::StatusNotification*>(request->getOperation());
+            auto old_status_notification = static_cast<v16::StatusNotification*>(requests[index]->getOperation());
             if (old_status_notification->getConnectorId() == new_status_notification->getConnectorId()) {
                 requests[index].reset();
                 for (size_t i = (index + MO_REQUEST_CACHE_MAXSIZE - front) % MO_REQUEST_CACHE_MAXSIZE; i < len - 1; i++) {

@@ -73,10 +73,10 @@ void RemoteControlServiceEvse::setOnUnlockConnector(MO_UnlockConnectorResult (*o
 }
 
 #if MO_ENABLE_V16
-Ocpp16::UnlockStatus RemoteControlServiceEvse::unlockConnector16() {
+v16::UnlockStatus RemoteControlServiceEvse::unlockConnector16() {
 
     if (!onUnlockConnector) {
-        return Ocpp16::UnlockStatus::UnlockFailed;
+        return v16::UnlockStatus::UnlockFailed;
     }
 
     auto tx = txServiceEvse16->getTransaction();
@@ -88,28 +88,28 @@ Ocpp16::UnlockStatus RemoteControlServiceEvse::unlockConnector16() {
     auto status = onUnlockConnector(evseId, onUnlockConnectorUserData);
     switch (status) {
         case MO_UnlockConnectorResult_Pending:
-            return Ocpp16::UnlockStatus::PENDING;
+            return v16::UnlockStatus::PENDING;
         case MO_UnlockConnectorResult_Unlocked:
-            return Ocpp16::UnlockStatus::Unlocked;
+            return v16::UnlockStatus::Unlocked;
         case MO_UnlockConnectorResult_UnlockFailed:
-            return Ocpp16::UnlockStatus::UnlockFailed;
+            return v16::UnlockStatus::UnlockFailed;
     }
 
     MO_DBG_ERR("invalid onUnlockConnector result code");
-    return Ocpp16::UnlockStatus::UnlockFailed;
+    return v16::UnlockStatus::UnlockFailed;
 }
 #endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
-Ocpp201::UnlockStatus RemoteControlServiceEvse::unlockConnector201() {
+v201::UnlockStatus RemoteControlServiceEvse::unlockConnector201() {
 
     if (!onUnlockConnector) {
-        return Ocpp201::UnlockStatus::UnlockFailed;
+        return v201::UnlockStatus::UnlockFailed;
     }
 
     if (auto tx = txServiceEvse201->getTransaction()) {
         if (tx->started && !tx->stopped && tx->isAuthorized) {
-            return Ocpp201::UnlockStatus::OngoingAuthorizedTransaction;
+            return v201::UnlockStatus::OngoingAuthorizedTransaction;
         } else {
             txServiceEvse201->abortTransaction(MO_TxStoppedReason_Other,MO_TxEventTriggerReason_UnlockCommand);
         }
@@ -118,15 +118,15 @@ Ocpp201::UnlockStatus RemoteControlServiceEvse::unlockConnector201() {
     auto status = onUnlockConnector(evseId, onUnlockConnectorUserData);
     switch (status) {
         case MO_UnlockConnectorResult_Pending:
-            return Ocpp201::UnlockStatus::PENDING;
+            return v201::UnlockStatus::PENDING;
         case MO_UnlockConnectorResult_Unlocked:
-            return Ocpp201::UnlockStatus::Unlocked;
+            return v201::UnlockStatus::Unlocked;
         case MO_UnlockConnectorResult_UnlockFailed:
-            return Ocpp201::UnlockStatus::UnlockFailed;
+            return v201::UnlockStatus::UnlockFailed;
     }
 
     MO_DBG_ERR("invalid onUnlockConnector result code");
-    return Ocpp201::UnlockStatus::UnlockFailed;
+    return v201::UnlockStatus::UnlockFailed;
 }
 #endif //MO_ENABLE_V201
 
@@ -190,11 +190,11 @@ bool RemoteControlService::setup() {
         numEvseId = context.getModel16().getNumEvseId();
 
         context.getMessageService().registerOperation("RemoteStartTransaction", [] (Context& context) -> Operation* {
-            return new Ocpp16::RemoteStartTransaction(context, *context.getModel16().getRemoteControlService());});
+            return new v16::RemoteStartTransaction(context, *context.getModel16().getRemoteControlService());});
         context.getMessageService().registerOperation("RemoteStopTransaction", [] (Context& context) -> Operation* {
-            return new Ocpp16::RemoteStopTransaction(context, *context.getModel16().getRemoteControlService());});
+            return new v16::RemoteStopTransaction(context, *context.getModel16().getRemoteControlService());});
         context.getMessageService().registerOperation("UnlockConnector", [] (Context& context) -> Operation* {
-            return new Ocpp16::UnlockConnector(context, *context.getModel16().getRemoteControlService());});
+            return new v16::UnlockConnector(context, *context.getModel16().getRemoteControlService());});
     }
     #endif
     #if MO_ENABLE_V201
@@ -220,13 +220,13 @@ bool RemoteControlService::setup() {
         numEvseId = context.getModel201().getNumEvseId();
 
         context.getMessageService().registerOperation("RequestStartTransaction", [] (Context& context) -> Operation* {
-            return new Ocpp201::RequestStartTransaction(context, *context.getModel201().getRemoteControlService());});
+            return new v201::RequestStartTransaction(context, *context.getModel201().getRemoteControlService());});
         context.getMessageService().registerOperation("RequestStopTransaction", [] (Context& context) -> Operation* {
-            return new Ocpp201::RequestStopTransaction(*context.getModel201().getRemoteControlService());});
+            return new v201::RequestStopTransaction(*context.getModel201().getRemoteControlService());});
 
         #if MO_ENABLE_CONNECTOR_LOCK
         context.getMessageService().registerOperation("UnlockConnector", [] (Context& context) -> Operation* {
-            return new Ocpp201::UnlockConnector(context, *context.getModel201().getRemoteControlService());});
+            return new v201::UnlockConnector(context, *context.getModel201().getRemoteControlService());});
         #endif
     }
     #endif
@@ -298,18 +298,18 @@ bool RemoteControlService::addTriggerMessageHandler(const char *operationType, T
 }
 
 #if MO_ENABLE_V16
-Ocpp16::RemoteStartStopStatus RemoteControlService::remoteStartTransaction(int connectorId, const char *idTag, std::unique_ptr<ChargingProfile> chargingProfile) {
+v16::RemoteStartStopStatus RemoteControlService::remoteStartTransaction(int connectorId, const char *idTag, std::unique_ptr<ChargingProfile> chargingProfile) {
 
     auto configService = context.getModel16().getConfigurationService();
     auto authorizeRemoteTxRequests = configService ? configService->declareConfiguration<bool>("AuthorizeRemoteTxRequests", false) : nullptr;
     if (!authorizeRemoteTxRequests) {
         MO_DBG_ERR("internal error");
-        return Ocpp16::RemoteStartStopStatus::ERR_INTERNAL;
+        return v16::RemoteStartStopStatus::ERR_INTERNAL;
     }
 
-    auto status = Ocpp16::RemoteStartStopStatus::Rejected;
+    auto status = v16::RemoteStartStopStatus::Rejected;
 
-    Ocpp16::TransactionServiceEvse *selectEvse = nullptr;
+    v16::TransactionServiceEvse *selectEvse = nullptr;
     if (connectorId >= 1) {
         //connectorId specified for given connector, try to start Transaction here
         auto txSvcEvse = txService16->getEvse(connectorId);
@@ -365,7 +365,7 @@ Ocpp16::RemoteStartStopStatus RemoteControlService::remoteStartTransaction(int c
                 }
             } else {
                 MO_DBG_ERR("internal error");
-                status = Ocpp16::RemoteStartStopStatus::ERR_INTERNAL;
+                status = v16::RemoteStartStopStatus::ERR_INTERNAL;
                 success = false;
             }
         }
@@ -375,21 +375,21 @@ Ocpp16::RemoteStartStopStatus RemoteControlService::remoteStartTransaction(int c
         }
 
         if (success) {
-            status = Ocpp16::RemoteStartStopStatus::Accepted;
+            status = v16::RemoteStartStopStatus::Accepted;
         } else {
-            status = Ocpp16::RemoteStartStopStatus::Rejected;
+            status = v16::RemoteStartStopStatus::Rejected;
         }
     } else {
         MO_DBG_INFO("No connector to start transaction");
-        status = Ocpp16::RemoteStartStopStatus::Rejected;
+        status = v16::RemoteStartStopStatus::Rejected;
     }
 
     return status;
 }
 
-Ocpp16::RemoteStartStopStatus RemoteControlService::remoteStopTransaction(int transactionId) {
+v16::RemoteStartStopStatus RemoteControlService::remoteStopTransaction(int transactionId) {
 
-    auto status = Ocpp16::RemoteStartStopStatus::Rejected;
+    auto status = v16::RemoteStartStopStatus::Rejected;
 
     for (unsigned int eId = 0; eId < numEvseId; eId++) {
         auto txSvcEvse = txService16->getEvse(eId);
@@ -400,7 +400,7 @@ Ocpp16::RemoteStartStopStatus RemoteControlService::remoteStopTransaction(int tr
                 txSvcEvse->updateTxNotification(MO_TxNotification_RemoteStop);
             }
             txSvcEvse->endTransaction(nullptr, "Remote");
-            status = Ocpp16::RemoteStartStopStatus::Accepted;
+            status = v16::RemoteStartStopStatus::Accepted;
         }
     }
 
@@ -410,17 +410,17 @@ Ocpp16::RemoteStartStopStatus RemoteControlService::remoteStopTransaction(int tr
 
 #if MO_ENABLE_V201
 
-Ocpp201::RequestStartStopStatus RemoteControlService::requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, Ocpp201::IdToken idToken, std::unique_ptr<ChargingProfile> chargingProfile, char *transactionIdOut, size_t transactionIdBufSize) {
+v201::RequestStartStopStatus RemoteControlService::requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, v201::IdToken idToken, std::unique_ptr<ChargingProfile> chargingProfile, char *transactionIdOut, size_t transactionIdBufSize) {
     
     if (!txService201) {
         MO_DBG_ERR("TxService uninitialized");
-        return Ocpp201::RequestStartStopStatus::Rejected;
+        return v201::RequestStartStopStatus::Rejected;
     }
 
     auto evse = txService201->getEvse(evseId);
     if (!evse) {
         MO_DBG_ERR("EVSE not found");
-        return Ocpp201::RequestStartStopStatus::Rejected;
+        return v201::RequestStartStopStatus::Rejected;
     }
 
     if (!evse->beginAuthorization(idToken, authorizeRemoteStart->getBool(), nullptr, /*commit*/ false)) { //only commit after storing the ChargingProfile
@@ -429,15 +429,15 @@ Ocpp201::RequestStartStopStatus RemoteControlService::requestStartTransaction(un
             auto ret = snprintf(transactionIdOut, transactionIdBufSize, "%s", tx->transactionId);
             if (ret < 0 || (size_t)ret >= transactionIdBufSize) {
                 MO_DBG_ERR("internal error");
-                return Ocpp201::RequestStartStopStatus::Rejected;
+                return v201::RequestStartStopStatus::Rejected;
             }
         }
-        return Ocpp201::RequestStartStopStatus::Rejected;
+        return v201::RequestStartStopStatus::Rejected;
     }
 
     int ret = -1;
 
-    Ocpp201::Transaction *tx = evse->getTransaction();
+    v201::Transaction *tx = evse->getTransaction();
     if (!tx) {
         goto fail;
     }
@@ -476,7 +476,7 @@ Ocpp201::RequestStartStopStatus RemoteControlService::requestStartTransaction(un
 
     }
 
-    return Ocpp201::RequestStartStopStatus::Accepted;
+    return v201::RequestStartStopStatus::Accepted;
 fail:
     evse->abortTransaction();
     #if MO_ENABLE_SMARTCHARGING
@@ -485,14 +485,14 @@ fail:
         scService->clearChargingProfile(chargingProfile->chargingProfileId,evseId,MicroOcpp::ChargingProfilePurposeType::UNDEFINED, -1);
     }
     #endif //MO_ENABLE_SMARTCHARGING
-    return Ocpp201::RequestStartStopStatus::Rejected;
+    return v201::RequestStartStopStatus::Rejected;
 }
 
-Ocpp201::RequestStartStopStatus RemoteControlService::requestStopTransaction(const char *transactionId) {
+v201::RequestStartStopStatus RemoteControlService::requestStopTransaction(const char *transactionId) {
 
     if (!txService201) {
         MO_DBG_ERR("TxService uninitialized");
-        return Ocpp201::RequestStartStopStatus::Rejected;
+        return v201::RequestStartStopStatus::Rejected;
     }
 
     bool success = false;
@@ -507,8 +507,8 @@ Ocpp201::RequestStartStopStatus RemoteControlService::requestStopTransaction(con
     }
 
     return success ?
-            Ocpp201::RequestStartStopStatus::Accepted :
-            Ocpp201::RequestStartStopStatus::Rejected;
+            v201::RequestStartStopStatus::Accepted :
+            v201::RequestStartStopStatus::Rejected;
 }
 
 #endif //MO_ENABLE_V201

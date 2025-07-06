@@ -235,13 +235,13 @@ int Context::getOcppVersion() {
 }
 
 #if MO_ENABLE_V16
-Ocpp16::Model& Context::getModel16() {
+v16::Model& Context::getModel16() {
     return modelV16;
 }
 #endif
 
 #if MO_ENABLE_V201
-Ocpp201::Model& Context::getModel201() {
+v201::Model& Context::getModel201() {
     return modelV201;
 }
 #endif

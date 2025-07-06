@@ -12,7 +12,7 @@
 #if MO_ENABLE_V16
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 class ConfigurationService;
 
@@ -35,7 +35,7 @@ public:
 
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 #endif

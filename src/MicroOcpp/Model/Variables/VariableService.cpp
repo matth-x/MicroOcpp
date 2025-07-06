@@ -25,7 +25,7 @@
 #endif
 
 namespace MicroOcpp {
-namespace Ocpp201 {
+namespace v201 {
 
 template <class T>
 VariableValidator<T>::VariableValidator(const ComponentId& component, const char *name, bool (*validateFn)(T, void*), void *userPtr) :
@@ -551,6 +551,6 @@ GenericDeviceModelStatus VariableService::getBaseReport(int requestId, ReportBas
     return GenericDeviceModelStatus_Accepted;
 }
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V201

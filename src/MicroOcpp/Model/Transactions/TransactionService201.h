@@ -33,7 +33,7 @@ namespace MicroOcpp {
 class Context;
 class Clock;
 
-namespace Ocpp201 {
+namespace v201 {
 
 // TxStartStopPoint (2.6.4.1)
 enum class TxStartStopPoint : uint8_t {
@@ -168,7 +168,7 @@ public:
 friend class TransactionServiceEvse;
 };
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V201
 #endif

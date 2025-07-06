@@ -14,7 +14,7 @@
 #if MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 Reservation::Reservation(Context& context, unsigned int slot) : MemoryManaged("v16.Reservation.Reservation"), context(context), slot(slot) {
 

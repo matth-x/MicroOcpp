@@ -16,7 +16,7 @@
 #if MO_ENABLE_V16
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 StopTransaction::StopTransaction(Context& context, Transaction *transaction)
         : MemoryManaged("v16.Operation.", "StopTransaction"), context(context), transaction(transaction) {

@@ -505,7 +505,7 @@ TEST_CASE( "SmartCharging" ) {
 
         bool checkProcessed = false;
 
-        auto getCompositeSchedule = makeRequest(new Ocpp16::CustomOperation(
+        auto getCompositeSchedule = makeRequest(new v16::CustomOperation(
                 "GetCompositeSchedule",
                 [] () {
                     //create req
@@ -581,7 +581,7 @@ TEST_CASE( "SmartCharging" ) {
         loop();
 
         bool checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "SetChargingProfile",
                 [] () {
                     //create req
@@ -599,7 +599,7 @@ TEST_CASE( "SmartCharging" ) {
         REQUIRE( checkProcessed );
 
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "SetChargingProfile",
                 [] () {
                     //create req
@@ -618,7 +618,7 @@ TEST_CASE( "SmartCharging" ) {
         REQUIRE( checkProcessed );
 
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "SetChargingProfile",
                 [] () {
                     //create req
@@ -641,7 +641,7 @@ TEST_CASE( "SmartCharging" ) {
             // replace existing profile - OK
 
             checkProcessed = false;
-            getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+            getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                     "SetChargingProfile",
                     [] () {
                         //create req
@@ -663,7 +663,7 @@ TEST_CASE( "SmartCharging" ) {
             // try to install additional profile - not okay
 
             checkProcessed = false;
-            getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+            getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                     "SetChargingProfile",
                     [] () {
                         //create req
@@ -687,7 +687,7 @@ TEST_CASE( "SmartCharging" ) {
         loop();
 
         bool checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "SetChargingProfile",
                 [] () {
                     //create req
@@ -706,7 +706,7 @@ TEST_CASE( "SmartCharging" ) {
         REQUIRE( checkProcessed );
 
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "SetChargingProfile",
                 [] () {
                     //create req
@@ -732,7 +732,7 @@ TEST_CASE( "SmartCharging" ) {
         loop();
 
         bool checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "SetChargingProfile",
                 [] () {
                     //create req
@@ -757,7 +757,7 @@ TEST_CASE( "SmartCharging" ) {
         REQUIRE( checkProcessed );
 
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "SetChargingProfile",
                 [] () {
                     //create req
@@ -793,7 +793,7 @@ TEST_CASE( "SmartCharging" ) {
         setSmartChargingPowerOutput([] (float) { });
 
         bool checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "SetChargingProfile",
                 [] () {
                     //create req
@@ -811,7 +811,7 @@ TEST_CASE( "SmartCharging" ) {
         REQUIRE( checkProcessed );
 
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "SetChargingProfile",
                 [] () {
                     //create req
@@ -833,7 +833,7 @@ TEST_CASE( "SmartCharging" ) {
         setSmartChargingCurrentOutput([] (float) { });
 
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "SetChargingProfile",
                 [] () {
                     //create req
@@ -851,7 +851,7 @@ TEST_CASE( "SmartCharging" ) {
         REQUIRE( checkProcessed );
 
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "SetChargingProfile",
                 [] () {
                     //create req

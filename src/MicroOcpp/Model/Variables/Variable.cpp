@@ -14,7 +14,7 @@
 #if MO_ENABLE_V201
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp201;
+using namespace MicroOcpp::v201;
 
 ComponentId::ComponentId(const char *name) : name(name) { }
 ComponentId::ComponentId(const char *name, EvseId evse) : name(name), evse(evse) { }
@@ -367,7 +367,7 @@ public:
     }
 };
 
-std::unique_ptr<Variable> MicroOcpp::Ocpp201::makeVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet supportAttributes) {
+std::unique_ptr<Variable> MicroOcpp::v201::makeVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet supportAttributes) {
     switch(dtype) {
         case Variable::InternalDataType::Int:
             if (supportAttributes.count() > 1) {

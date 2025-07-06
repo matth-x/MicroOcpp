@@ -37,7 +37,7 @@ class SecurityEventService;
 #if MO_ENABLE_V16
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 class ConfigurationService;
 class TransactionService;
@@ -153,14 +153,14 @@ public:
     void activateTasks() {runTasks = true;}
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
 
 namespace MicroOcpp {
-namespace Ocpp201 {
+namespace v201 {
 
 class VariableService;
 class TransactionService;
@@ -238,17 +238,17 @@ public:
     void activateTasks() {runTasks = true;}
 };
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V201
 
 #if MO_ENABLE_V16 && !MO_ENABLE_V201
 namespace MicroOcpp {
-using Model = Ocpp16::Model;
+using Model = v16::Model;
 }
 #elif !MO_ENABLE_V16 && MO_ENABLE_V201
 namespace MicroOcpp {
-using Model = Ocpp201::Model;
+using Model = v201::Model;
 }
 #endif
 

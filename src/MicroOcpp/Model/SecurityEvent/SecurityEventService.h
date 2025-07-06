@@ -50,12 +50,12 @@ class Context;
 class Connection;
 
 #if MO_ENABLE_V16
-namespace Ocpp16 {
+namespace v16 {
 class Configuration;
 }
 #endif
 #if MO_ENABLE_V201
-namespace Ocpp201 {
+namespace v201 {
 class Variable;
 }
 #endif
@@ -69,10 +69,10 @@ private:
     int ocppVersion = -1;
 
     #if MO_ENABLE_V16
-    Ocpp16::Configuration *timeAdjustmentReportingThresholdIntV16 = nullptr;
+    v16::Configuration *timeAdjustmentReportingThresholdIntV16 = nullptr;
     #endif
     #if MO_ENABLE_V201
-    Ocpp201::Variable *timeAdjustmentReportingThresholdIntV201 = nullptr;
+    v201::Variable *timeAdjustmentReportingThresholdIntV201 = nullptr;
     #endif
 
     Timestamp trackUptime;

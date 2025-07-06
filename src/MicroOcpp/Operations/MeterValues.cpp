@@ -12,7 +12,7 @@
 #if MO_ENABLE_V16
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 //can only be used for echo server debugging
 MeterValues::MeterValues(Context& context) : MemoryManaged("v16.Operation.", "MeterValues"), context(context) {

@@ -12,15 +12,15 @@
 
 using namespace MicroOcpp;
 
-Ocpp16::UnlockConnector::UnlockConnector(Context& context, RemoteControlService& rcService) : MemoryManaged("v16.Operation.", "UnlockConnector"), context(context), rcService(rcService) {
+v16::UnlockConnector::UnlockConnector(Context& context, RemoteControlService& rcService) : MemoryManaged("v16.Operation.", "UnlockConnector"), context(context), rcService(rcService) {
   
 }
 
-const char* Ocpp16::UnlockConnector::getOperationType(){
+const char* v16::UnlockConnector::getOperationType(){
     return "UnlockConnector";
 }
 
-void Ocpp16::UnlockConnector::processReq(JsonObject payload) {
+void v16::UnlockConnector::processReq(JsonObject payload) {
 
 #if MO_ENABLE_CONNECTOR_LOCK
     {
@@ -39,7 +39,7 @@ void Ocpp16::UnlockConnector::processReq(JsonObject payload) {
 #endif //MO_ENABLE_CONNECTOR_LOCK
 }
 
-std::unique_ptr<JsonDoc> Ocpp16::UnlockConnector::createConf() {
+std::unique_ptr<JsonDoc> v16::UnlockConnector::createConf() {
 
 #if MO_ENABLE_CONNECTOR_LOCK
     {
@@ -87,15 +87,15 @@ std::unique_ptr<JsonDoc> Ocpp16::UnlockConnector::createConf() {
 
 using namespace MicroOcpp;
 
-Ocpp201::UnlockConnector::UnlockConnector(Context& context, RemoteControlService& rcService) : MemoryManaged("v201.Operation.UnlockConnector"), context(context), rcService(rcService) {
+v201::UnlockConnector::UnlockConnector(Context& context, RemoteControlService& rcService) : MemoryManaged("v201.Operation.UnlockConnector"), context(context), rcService(rcService) {
 
 }
 
-const char* Ocpp201::UnlockConnector::getOperationType(){
+const char* v201::UnlockConnector::getOperationType(){
     return "UnlockConnector";
 }
 
-void Ocpp201::UnlockConnector::processReq(JsonObject payload) {
+void v201::UnlockConnector::processReq(JsonObject payload) {
 
     int evseId = payload["evseId"] | -1;
     int connectorId = payload["connectorId"] | -1;
@@ -120,7 +120,7 @@ void Ocpp201::UnlockConnector::processReq(JsonObject payload) {
     timerStart = context.getClock().getUptime();
 }
 
-std::unique_ptr<JsonDoc> Ocpp201::UnlockConnector::createConf() {
+std::unique_ptr<JsonDoc> v201::UnlockConnector::createConf() {
 
     int32_t dtTimerStart;
     context.getClock().delta(context.getClock().getUptime(), timerStart, dtTimerStart);

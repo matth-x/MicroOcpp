@@ -20,7 +20,7 @@
 
 namespace MicroOcpp {
 
-namespace Ocpp16 {
+namespace v16 {
 
 // ConfigurationStatus (7.22)
 enum class ConfigurationStatus : uint8_t {
@@ -76,7 +76,7 @@ public:
 
 std::unique_ptr<Configuration> makeConfiguration(Configuration::Type dtype);
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 #endif

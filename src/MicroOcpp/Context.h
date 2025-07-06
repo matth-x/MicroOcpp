@@ -64,10 +64,10 @@ private:
     MessageService msgService {*this};
 
 #if MO_ENABLE_V16
-    Ocpp16::Model modelV16 {*this};
+    v16::Model modelV16 {*this};
 #endif
 #if MO_ENABLE_V201
-    Ocpp201::Model modelV201 {*this};
+    v201::Model modelV201 {*this};
 #endif
     int ocppVersion = MO_ENABLE_V16 ? MO_OCPP_V16 : MO_ENABLE_V201 ? MO_OCPP_V201 : -1;
 
@@ -112,11 +112,11 @@ public:
     int getOcppVersion();
 
 #if MO_ENABLE_V16
-    Ocpp16::Model& getModel16();
+    v16::Model& getModel16();
 #endif
 
 #if MO_ENABLE_V201
-    Ocpp201::Model& getModel201();
+    v201::Model& getModel201();
 #endif
 
     // eliminate OCPP version specifiers if charger supports just one version anyway

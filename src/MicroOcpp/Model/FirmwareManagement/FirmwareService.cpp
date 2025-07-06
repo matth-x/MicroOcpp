@@ -26,7 +26,7 @@
 #endif
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 #if MO_USE_FW_UPDATER != MO_FW_UPDATER_CUSTOM
 bool setupDefaultFwUpdater(FirmwareService *fwService);
@@ -75,7 +75,7 @@ bool FirmwareService::setup() {
     buildNumber = nullptr;
 
     context.getMessageService().registerOperation("UpdateFirmware", [] (Context& context) -> Operation* {
-        return new Ocpp16::UpdateFirmware(context, *context.getModel16().getFirmwareService());});
+        return new v16::UpdateFirmware(context, *context.getModel16().getFirmwareService());});
 
     #if MO_ENABLE_MOCK_SERVER
     context.getMessageService().registerOperation("FirmwareStatusNotification", nullptr, nullptr, nullptr);
@@ -88,7 +88,7 @@ bool FirmwareService::setup() {
     }
 
     rcService->addTriggerMessageHandler("FirmwareStatusNotification", [] (Context& context) -> Operation* {
-        return new Ocpp16::FirmwareStatusNotification(context.getModel16().getFirmwareService()->getFirmwareStatus());});
+        return new v16::FirmwareStatusNotification(context.getModel16().getFirmwareService()->getFirmwareStatus());});
 
 #if MO_USE_FW_UPDATER != MO_FW_UPDATER_CUSTOM
     if (!setupDefaultFwUpdater(this)) {
@@ -401,7 +401,7 @@ std::unique_ptr<Request> FirmwareService::getFirmwareStatusNotification() {
         notifyFirmwareUpdate = false;
 
         lastReportedStatus = FirmwareStatus::Installed;
-        auto fwNotificationMsg = new Ocpp16::FirmwareStatusNotification(lastReportedStatus);
+        auto fwNotificationMsg = new v16::FirmwareStatusNotification(lastReportedStatus);
         auto fwNotification = makeRequest(context, fwNotificationMsg);
         return fwNotification;
     }
@@ -409,7 +409,7 @@ std::unique_ptr<Request> FirmwareService::getFirmwareStatusNotification() {
     if (getFirmwareStatus() != lastReportedStatus) {
         lastReportedStatus = getFirmwareStatus();
         if (lastReportedStatus != FirmwareStatus::Idle) {
-            auto fwNotificationMsg = new Ocpp16::FirmwareStatusNotification(lastReportedStatus);
+            auto fwNotificationMsg = new v16::FirmwareStatusNotification(lastReportedStatus);
             auto fwNotification = makeRequest(context, fwNotificationMsg);
             return fwNotification;
         }
@@ -482,14 +482,14 @@ void FirmwareService::setFtpServerCert(const char *cert) {
     this->ftpServerCert = cert;
 }
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 
 #if MO_USE_FW_UPDATER == MO_FW_UPDATER_BUILTIN_ESP32
 
 #include <Update.h>
 
-bool MicroOcpp::Ocpp16::setupDefaultFwUpdater(MicroOcpp::Ocpp16::FirmwareService *fwService) {
+bool MicroOcpp::v16::setupDefaultFwUpdater(MicroOcpp::v16::FirmwareService *fwService) {
     fwService->setDownloadFileWriter(
         [fwService] (const unsigned char *data, size_t size) -> size_t {
             if (!Update.isRunning()) {
@@ -562,7 +562,7 @@ bool MicroOcpp::Ocpp16::setupDefaultFwUpdater(MicroOcpp::Ocpp16::FirmwareService
 
 #include <ESP8266httpUpdate.h>
 
-bool MicroOcpp::Ocpp16::setupDefaultFwUpdater(MicroOcpp::Ocpp16::FirmwareService *fwService) {
+bool MicroOcpp::v16::setupDefaultFwUpdater(MicroOcpp::v16::FirmwareService *fwService) {
 
     fwService->setOnInstall([fwService] (const char *location) {
         

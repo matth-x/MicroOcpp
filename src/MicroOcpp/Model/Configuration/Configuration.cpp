@@ -10,7 +10,7 @@
 #if MO_ENABLE_V16
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 Configuration::~Configuration() {
 
@@ -185,7 +185,7 @@ public:
     }
 };
 
-std::unique_ptr<Configuration> MicroOcpp::Ocpp16::makeConfiguration(Configuration::Type type) {
+std::unique_ptr<Configuration> MicroOcpp::v16::makeConfiguration(Configuration::Type type) {
     return std::unique_ptr<Configuration>(new ConfigurationConcrete(type));
 }
 

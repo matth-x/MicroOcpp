@@ -514,7 +514,7 @@ TEST_CASE( "Charging sessions" ) {
         int txId_confirm = txId_base;
 
         getOcppContext()->getMessageService().registerOperation("StartTransaction", [&txId_generate] () {
-            return new Ocpp16::CustomOperation("StartTransaction",
+            return new v16::CustomOperation("StartTransaction",
                 [] (JsonObject payload) {}, //ignore req
                 [&txId_generate] () {
                     //create conf
@@ -529,7 +529,7 @@ TEST_CASE( "Charging sessions" ) {
                 });});
 
         getOcppContext()->getMessageService().registerOperation("StopTransaction", [&txId_generate, &txId_confirm] () {
-            return new Ocpp16::CustomOperation("StopTransaction",
+            return new v16::CustomOperation("StopTransaction",
                 [&txId_generate, &txId_confirm] (JsonObject payload) {
                     //receive req
                     REQUIRE( payload["transactionId"].as<int>() == txId_generate );
@@ -594,7 +594,7 @@ TEST_CASE( "Charging sessions" ) {
         int txId_confirm = txId_base;
 
         getOcppContext()->getMessageService().registerOperation("StartTransaction", [&txId_generate] () {
-            return new Ocpp16::CustomOperation("StartTransaction",
+            return new v16::CustomOperation("StartTransaction",
                 [] (JsonObject payload) {}, //ignore req
                 [&txId_generate] () {
                     //create conf
@@ -609,7 +609,7 @@ TEST_CASE( "Charging sessions" ) {
                 });});
 
         getOcppContext()->getMessageService().registerOperation("StopTransaction", [&txId_generate, &txId_confirm] () {
-            return new Ocpp16::CustomOperation("StopTransaction",
+            return new v16::CustomOperation("StopTransaction",
                 [&txId_generate, &txId_confirm] (JsonObject payload) {
                     //receive req
                     REQUIRE( payload["transactionId"].as<int>() == txId_generate );
@@ -698,7 +698,7 @@ TEST_CASE( "Charging sessions" ) {
         getOcppContext()->getMessageService().registerOperation("StartTransaction", 
                 [&check_1, &check_2, &check_3, &check_4,
                         tx1_idTag, tx2_idTag, tx3_idTag, tx4_idTag] () {
-            return new Ocpp16::CustomOperation("StartTransaction",
+            return new v16::CustomOperation("StartTransaction",
                 [&check_1, &check_2, &check_3, &check_4,
                         tx1_idTag, tx2_idTag, tx3_idTag, tx4_idTag] (JsonObject payload) {
                     //process req
@@ -757,7 +757,7 @@ TEST_CASE( "Charging sessions" ) {
 
         bool checkProcessed = false;
 
-        auto changeAvailability = makeRequest(new Ocpp16::CustomOperation(
+        auto changeAvailability = makeRequest(new v16::CustomOperation(
                 "ChangeAvailability",
                 [] () {
                     //create req
@@ -813,7 +813,7 @@ TEST_CASE( "Charging sessions" ) {
 
         bool checkProcessed = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
+            new MicroOcpp::v16::CustomOperation("UnlockConnector",
                 [] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
@@ -840,7 +840,7 @@ TEST_CASE( "Charging sessions" ) {
 
         checkProcessed = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
+            new MicroOcpp::v16::CustomOperation("UnlockConnector",
                 [] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
@@ -865,7 +865,7 @@ TEST_CASE( "Charging sessions" ) {
 
         checkProcessed = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new MicroOcpp::Ocpp16::CustomOperation("UnlockConnector",
+            new MicroOcpp::v16::CustomOperation("UnlockConnector",
                 [] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", JSON_OBJECT_SIZE(1));
@@ -953,7 +953,7 @@ TEST_CASE( "Charging sessions" ) {
          */
 
         getOcppContext()->getMessageService().registerOperation("StartTransaction", [&checkProcessedStartTx, &txId] () {
-            return new Ocpp16::CustomOperation("StartTransaction",
+            return new v16::CustomOperation("StartTransaction",
                 [&checkProcessedStartTx] (JsonObject payload) {
                     //receive req
                     checkProcessedStartTx = true;
@@ -970,7 +970,7 @@ TEST_CASE( "Charging sessions" ) {
                 });});
 
         getOcppContext()->getMessageService().registerOperation("StopTransaction", [&checkProcessedStopTx] () {
-            return new Ocpp16::CustomOperation("StopTransaction",
+            return new v16::CustomOperation("StopTransaction",
                 [&checkProcessedStopTx] (JsonObject payload) {
                     //receive req
                     checkProcessedStopTx = true;
@@ -1082,7 +1082,7 @@ TEST_CASE( "Charging sessions" ) {
         unsigned int attemptNr = 0;
 
         getOcppContext()->getMessageService().registerOperation("StartTransaction", [&checkProcessedStartTx, &txId, &attemptNr] () {
-            return new Ocpp16::CustomOperation("StartTransaction",
+            return new v16::CustomOperation("StartTransaction",
                 [&attemptNr] (JsonObject payload) {
                     //receive req
                     attemptNr++;
@@ -1150,7 +1150,7 @@ TEST_CASE( "Charging sessions" ) {
         getOcppContext()->getModel().getClock().setTime(BASE_TIME);
 
         getOcppContext()->getMessageService().registerOperation("StartTransaction", [&checkProcessedStartTx, &txId, &attemptNr] () {
-            return new Ocpp16::CustomOperation("StartTransaction",
+            return new v16::CustomOperation("StartTransaction",
                 [&attemptNr] (JsonObject payload) {
                     //receive req
                     attemptNr++;
@@ -1171,7 +1171,7 @@ TEST_CASE( "Charging sessions" ) {
                 });});
 
         getOcppContext()->getMessageService().registerOperation("StopTransaction", [&checkProcessedStopTx] () {
-            return new Ocpp16::CustomOperation("StopTransaction",
+            return new v16::CustomOperation("StopTransaction",
                 [&checkProcessedStopTx] (JsonObject payload) {
                     //receive req
                     checkProcessedStopTx = true;

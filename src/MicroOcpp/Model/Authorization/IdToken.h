@@ -41,7 +41,7 @@ typedef enum {
 #define MO_IDTOKEN_LEN_MAX 36
 
 namespace MicroOcpp {
-namespace Ocpp201 {
+namespace v201 {
 
 // IdTokenType (2.28)
 class IdToken : public MemoryManaged {
@@ -63,7 +63,7 @@ public:
 };
 
 } //namespace MicroOcpp
-} //namespace Ocpp201
+} //namespace v201
 #endif //__cplusplus
 #endif //MO_ENABLE_V201
 #endif

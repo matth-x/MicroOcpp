@@ -32,7 +32,7 @@ class Clock;
 class Connection;
 class Operation;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class Model;
 class Configuration;
@@ -170,7 +170,7 @@ public:
 friend class TransactionServiceEvse;
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 #endif

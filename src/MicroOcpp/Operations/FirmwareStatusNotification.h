@@ -12,7 +12,7 @@
 #if MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 class FirmwareStatusNotification : public Operation, public MemoryManaged {
 private:
@@ -28,7 +28,7 @@ public:
     void processConf(JsonObject payload) override;
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 #endif

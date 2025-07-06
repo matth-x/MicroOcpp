@@ -15,7 +15,7 @@ namespace MicroOcpp {
 
 class RemoteControlService;
 
-namespace Ocpp201 {
+namespace v201 {
 
 class RequestStopTransaction : public Operation, public MemoryManaged {
 private:
@@ -37,7 +37,7 @@ public:
 
 };
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V201
 #endif

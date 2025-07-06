@@ -11,15 +11,15 @@
 
 using namespace MicroOcpp;
 
-Ocpp16::Reset::Reset(ResetService& resetService) : MemoryManaged("v16.Operation.", "Reset"), resetService(resetService) {
+v16::Reset::Reset(ResetService& resetService) : MemoryManaged("v16.Operation.", "Reset"), resetService(resetService) {
   
 }
 
-const char* Ocpp16::Reset::getOperationType(){
+const char* v16::Reset::getOperationType(){
     return "Reset";
 }
 
-void Ocpp16::Reset::processReq(JsonObject payload) {
+void v16::Reset::processReq(JsonObject payload) {
     /*
      * Process the application data here. Note: you have to implement the device reset procedure in your client code. You have to set
      * a onSendConfListener in which you initiate a reset (e.g. calling ESP.reset() )
@@ -37,7 +37,7 @@ void Ocpp16::Reset::processReq(JsonObject payload) {
     }
 }
 
-std::unique_ptr<JsonDoc> Ocpp16::Reset::createConf() {
+std::unique_ptr<JsonDoc> v16::Reset::createConf() {
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = resetAccepted ? "Accepted" : "Rejected";
@@ -50,15 +50,15 @@ std::unique_ptr<JsonDoc> Ocpp16::Reset::createConf() {
 
 using namespace MicroOcpp;
 
-Ocpp201::Reset::Reset(ResetService& resetService) : MemoryManaged("v201.Operation.", "Reset"), resetService(resetService) {
+v201::Reset::Reset(ResetService& resetService) : MemoryManaged("v201.Operation.", "Reset"), resetService(resetService) {
   
 }
 
-const char* Ocpp201::Reset::getOperationType(){
+const char* v201::Reset::getOperationType(){
     return "Reset";
 }
 
-void Ocpp201::Reset::processReq(JsonObject payload) {
+void v201::Reset::processReq(JsonObject payload) {
 
     MO_ResetType type;
     const char *typeCstr = payload["type"] | "_Undefined";
@@ -84,7 +84,7 @@ void Ocpp201::Reset::processReq(JsonObject payload) {
     status = resetService.initiateReset(type, evseId);
 }
 
-std::unique_ptr<JsonDoc> Ocpp201::Reset::createConf() {
+std::unique_ptr<JsonDoc> v201::Reset::createConf() {
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
     JsonObject payload = doc->to<JsonObject>();
 

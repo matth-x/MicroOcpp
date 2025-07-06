@@ -33,7 +33,7 @@
 #endif
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 TransactionServiceEvse::TransactionServiceEvse(Context& context, TransactionService& cService, unsigned int evseId)
         : MemoryManaged("v16.Transactions.TransactionServiceEvse"), context(context), clock(context.getClock()), model(context.getModel16()), cService(cService), evseId(evseId) {

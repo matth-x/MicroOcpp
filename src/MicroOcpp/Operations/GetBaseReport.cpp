@@ -9,7 +9,7 @@
 #if MO_ENABLE_V201
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp201;
+using namespace MicroOcpp::v201;
 
 GetBaseReport::GetBaseReport(VariableService& variableService) : MemoryManaged("v201.Operation.", "GetBaseReport"), variableService(variableService) {
   

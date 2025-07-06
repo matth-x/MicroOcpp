@@ -17,7 +17,7 @@ namespace MicroOcpp {
 
 class Context;
 
-namespace Ocpp16 {
+namespace v16 {
 
 template <class T>
 struct ConfigurationValidator {
@@ -81,7 +81,7 @@ public:
     bool commit();
 };
     
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 #endif

@@ -290,12 +290,12 @@ bool validateSelectString(const char *selectString, void *user_data) {
 
 using namespace MicroOcpp;
 
-Ocpp16::MeteringServiceEvse::MeteringServiceEvse(Context& context, MeteringService& mService, unsigned int connectorId)
+v16::MeteringServiceEvse::MeteringServiceEvse(Context& context, MeteringService& mService, unsigned int connectorId)
         : MemoryManaged("v16.Metering.MeteringServiceEvse"), context(context), clock(context.getClock()), model(context.getModel16()), mService(mService), connectorId(connectorId), meterData(makeVector<MeterValue*>(getMemoryTag())), meterInputs(makeVector<MO_MeterInput>(getMemoryTag())) {
 
 }
 
-Ocpp16::MeteringServiceEvse::~MeteringServiceEvse() {
+v16::MeteringServiceEvse::~MeteringServiceEvse() {
     for (size_t i = 0; i < meterData.size(); i++) {
         delete meterData[i];
     }
@@ -304,7 +304,7 @@ Ocpp16::MeteringServiceEvse::~MeteringServiceEvse() {
     meterDataFront = nullptr;
 }
 
-bool Ocpp16::MeteringServiceEvse::addMeterInput(MO_MeterInput meterInput) {
+bool v16::MeteringServiceEvse::addMeterInput(MO_MeterInput meterInput) {
     auto capacity = meterInputs.size() + 1;
     meterInputs.resize(capacity);
     if (meterInputs.capacity() < capacity) {
@@ -317,22 +317,22 @@ bool Ocpp16::MeteringServiceEvse::addMeterInput(MO_MeterInput meterInput) {
     return true;
 }
 
-Vector<MO_MeterInput>& Ocpp16::MeteringServiceEvse::getMeterInputs() {
+Vector<MO_MeterInput>& v16::MeteringServiceEvse::getMeterInputs() {
     return meterInputs;
 }
 
-bool Ocpp16::MeteringServiceEvse::setTxEnergyMeterInput(int32_t (*getInt)()) {
+bool v16::MeteringServiceEvse::setTxEnergyMeterInput(int32_t (*getInt)()) {
     txEnergyMeterInput = getInt;
     return true;
 }
 
-bool Ocpp16::MeteringServiceEvse::setTxEnergyMeterInput2(int32_t (*getInt2)(MO_ReadingContext readingContext, unsigned int evseId, void *user_data), void *user_data) {
+bool v16::MeteringServiceEvse::setTxEnergyMeterInput2(int32_t (*getInt2)(MO_ReadingContext readingContext, unsigned int evseId, void *user_data), void *user_data) {
     txEnergyMeterInput2 = getInt2;
     txEnergyMeterInput2_user_data = user_data;
     return true;
 }
 
-bool Ocpp16::MeteringServiceEvse::setup() {
+bool v16::MeteringServiceEvse::setup() {
 
     context.getMessageService().addSendQueue(this);
 
@@ -387,11 +387,11 @@ bool Ocpp16::MeteringServiceEvse::setup() {
     return true;
 }
 
-MicroOcpp::MeterValue *Ocpp16::MeteringServiceEvse::takeMeterValue(MO_ReadingContext readingContext, uint8_t inputSelectFlag) {
+MicroOcpp::MeterValue *v16::MeteringServiceEvse::takeMeterValue(MO_ReadingContext readingContext, uint8_t inputSelectFlag) {
     return MicroOcpp::takeMeterValue(context.getClock(), meterInputs, connectorId, readingContext, inputSelectFlag, getMemoryTag());
 }
 
-void Ocpp16::MeteringServiceEvse::loop() {
+void v16::MeteringServiceEvse::loop() {
 
     bool txBreak = false;
     auto transaction = txSvcEvse->getTransaction();
@@ -511,7 +511,7 @@ void Ocpp16::MeteringServiceEvse::loop() {
     }
 }
 
-Operation *Ocpp16::MeteringServiceEvse::createTriggeredMeterValues() {
+Operation *v16::MeteringServiceEvse::createTriggeredMeterValues() {
 
     auto meterValue = takeMeterValue(MO_ReadingContext_Trigger, MO_FLAG_MeterValuesSampledData);
     if (!meterValue) {
@@ -534,7 +534,7 @@ Operation *Ocpp16::MeteringServiceEvse::createTriggeredMeterValues() {
     return operation;
 }
 
-int32_t Ocpp16::MeteringServiceEvse::readTxEnergyMeter(MO_ReadingContext readingContext) {
+int32_t v16::MeteringServiceEvse::readTxEnergyMeter(MO_ReadingContext readingContext) {
     if (txEnergyMeterInput) {
         return txEnergyMeterInput();
     } else if (txEnergyMeterInput2) {
@@ -544,7 +544,7 @@ int32_t Ocpp16::MeteringServiceEvse::readTxEnergyMeter(MO_ReadingContext reading
     }
 }
 
-bool Ocpp16::MeteringServiceEvse::addTxMeterData(Transaction& transaction, MeterValue *mv) {
+bool v16::MeteringServiceEvse::addTxMeterData(Transaction& transaction, MeterValue *mv) {
 
     auto& txMeterValues = transaction.getTxMeterValues();
 
@@ -588,7 +588,7 @@ fail:
     return false;
 }
 
-bool Ocpp16::MeteringServiceEvse::beginTxMeterData(Transaction *transaction) {
+bool v16::MeteringServiceEvse::beginTxMeterData(Transaction *transaction) {
 
     auto& txMeterValues = transaction->getTxMeterValues();
 
@@ -605,7 +605,7 @@ bool Ocpp16::MeteringServiceEvse::beginTxMeterData(Transaction *transaction) {
     return addTxMeterData(*transaction, sampleTxBegin);
 }
 
-bool Ocpp16::MeteringServiceEvse::endTxMeterData(Transaction *transaction) {
+bool v16::MeteringServiceEvse::endTxMeterData(Transaction *transaction) {
 
     auto& txMeterValues = transaction->getTxMeterValues();
 
@@ -622,7 +622,7 @@ bool Ocpp16::MeteringServiceEvse::endTxMeterData(Transaction *transaction) {
     return addTxMeterData(*transaction, sampleTxEnd);
 }
 
-void Ocpp16::MeteringServiceEvse::updateInputSelectFlags() {
+void v16::MeteringServiceEvse::updateInputSelectFlags() {
     uint16_t selectInputsWriteCount = 0;
     selectInputsWriteCount += mService.meterValuesSampledDataString->getWriteCount();
     selectInputsWriteCount += mService.stopTxnSampledDataString->getWriteCount();
@@ -639,7 +639,7 @@ void Ocpp16::MeteringServiceEvse::updateInputSelectFlags() {
     }
 }
 
-unsigned int Ocpp16::MeteringServiceEvse::getFrontRequestOpNr() {
+unsigned int v16::MeteringServiceEvse::getFrontRequestOpNr() {
     if (!meterDataFront && !meterData.empty()) {
         MO_DBG_DEBUG("advance MV front");
         meterDataFront = meterData.front(); //transfer ownership
@@ -651,7 +651,7 @@ unsigned int Ocpp16::MeteringServiceEvse::getFrontRequestOpNr() {
     return NoOperation;
 }
 
-std::unique_ptr<Request> Ocpp16::MeteringServiceEvse::fetchFrontRequest() {
+std::unique_ptr<Request> v16::MeteringServiceEvse::fetchFrontRequest() {
 
     if (!mService.connection->isConnected()) {
         //offline behavior: pause sending messages and do not increment attempt counters
@@ -725,19 +725,19 @@ std::unique_ptr<Request> Ocpp16::MeteringServiceEvse::fetchFrontRequest() {
     return meterValues;
 }
 
-Ocpp16::MeteringService::MeteringService(Context& context)
+v16::MeteringService::MeteringService(Context& context)
       : MemoryManaged("v16.Metering.MeteringService"), context(context) {
 
 }
 
-Ocpp16::MeteringService::~MeteringService() {
+v16::MeteringService::~MeteringService() {
     for (unsigned int i = 0; i < MO_NUM_EVSEID; i++) {
         delete evses[i];
         evses[i] = nullptr;
     }
 }
 
-bool Ocpp16::MeteringService::setup() {
+bool v16::MeteringService::setup() {
 
     connection = context.getConnection();
     if (!connection) {
@@ -814,13 +814,13 @@ bool Ocpp16::MeteringService::setup() {
     return true;
 }
 
-void Ocpp16::MeteringService::loop(){
+void v16::MeteringService::loop(){
     for (unsigned int i = 0; i < numEvseId; i++){
         evses[i]->loop();
     }
 }
 
-Ocpp16::MeteringServiceEvse *Ocpp16::MeteringService::getEvse(unsigned int evseId) {
+v16::MeteringServiceEvse *v16::MeteringService::getEvse(unsigned int evseId) {
     if (evseId >= numEvseId) {
         MO_DBG_ERR("evseId out of bound");
         return nullptr;
@@ -848,16 +848,16 @@ Ocpp16::MeteringServiceEvse *Ocpp16::MeteringService::getEvse(unsigned int evseI
 
 using namespace MicroOcpp;
 
-Ocpp201::MeteringServiceEvse::MeteringServiceEvse(Context& context, MeteringService& mService, unsigned int evseId)
+v201::MeteringServiceEvse::MeteringServiceEvse(Context& context, MeteringService& mService, unsigned int evseId)
         : MemoryManaged("v201.MeterValues.MeteringServiceEvse"), context(context), mService(mService), evseId(evseId), meterInputs(makeVector<MO_MeterInput>(getMemoryTag())) {
 
 }
 
-bool Ocpp201::MeteringServiceEvse::setup() {
+bool v201::MeteringServiceEvse::setup() {
     return true; //nothing to be done here
 }
 
-bool Ocpp201::MeteringServiceEvse::addMeterInput(MO_MeterInput meterInput) {
+bool v201::MeteringServiceEvse::addMeterInput(MO_MeterInput meterInput) {
     auto capacity = meterInputs.size() + 1;
     meterInputs.resize(capacity);
     if (meterInputs.capacity() < capacity) {
@@ -870,11 +870,11 @@ bool Ocpp201::MeteringServiceEvse::addMeterInput(MO_MeterInput meterInput) {
     return true;
 }
 
-Vector<MO_MeterInput>& Ocpp201::MeteringServiceEvse::getMeterInputs() {
+Vector<MO_MeterInput>& v201::MeteringServiceEvse::getMeterInputs() {
     return meterInputs;
 }
 
-void Ocpp201::MeteringServiceEvse::updateInputSelectFlags() {
+void v201::MeteringServiceEvse::updateInputSelectFlags() {
     uint16_t selectInputsWriteCount = 0;
     selectInputsWriteCount += mService.sampledDataTxStartedMeasurands->getWriteCount();
     selectInputsWriteCount += mService.sampledDataTxUpdatedMeasurands->getWriteCount();
@@ -891,35 +891,35 @@ void Ocpp201::MeteringServiceEvse::updateInputSelectFlags() {
     }
 }
 
-std::unique_ptr<MeterValue> Ocpp201::MeteringServiceEvse::takeTxStartedMeterValue(MO_ReadingContext readingContext) {
+std::unique_ptr<MeterValue> v201::MeteringServiceEvse::takeTxStartedMeterValue(MO_ReadingContext readingContext) {
     updateInputSelectFlags();
     return std::unique_ptr<MeterValue>(MicroOcpp::takeMeterValue(context.getClock(), meterInputs, evseId, readingContext, MO_FLAG_SampledDataTxStarted, getMemoryTag()));
 }
-std::unique_ptr<MeterValue> Ocpp201::MeteringServiceEvse::takeTxUpdatedMeterValue(MO_ReadingContext readingContext) {
+std::unique_ptr<MeterValue> v201::MeteringServiceEvse::takeTxUpdatedMeterValue(MO_ReadingContext readingContext) {
     updateInputSelectFlags();
     return std::unique_ptr<MeterValue>(MicroOcpp::takeMeterValue(context.getClock(), meterInputs, evseId, readingContext, MO_FLAG_SampledDataTxUpdated, getMemoryTag()));
 }
-std::unique_ptr<MeterValue> Ocpp201::MeteringServiceEvse::takeTxEndedMeterValue(MO_ReadingContext readingContext) {
+std::unique_ptr<MeterValue> v201::MeteringServiceEvse::takeTxEndedMeterValue(MO_ReadingContext readingContext) {
     updateInputSelectFlags();
     return std::unique_ptr<MeterValue>(MicroOcpp::takeMeterValue(context.getClock(), meterInputs, evseId, readingContext, MO_FLAG_SampledDataTxEnded, getMemoryTag()));
 }
-std::unique_ptr<MeterValue> Ocpp201::MeteringServiceEvse::takeTriggeredMeterValues() {
+std::unique_ptr<MeterValue> v201::MeteringServiceEvse::takeTriggeredMeterValues() {
     updateInputSelectFlags();
     return std::unique_ptr<MeterValue>(MicroOcpp::takeMeterValue(context.getClock(), meterInputs, evseId, MO_ReadingContext_Trigger, MO_FLAG_AlignedData, getMemoryTag()));
 }
 
-Ocpp201::MeteringService::MeteringService(Context& context) : MemoryManaged("v201.Metering.MeteringService"), context(context) {
+v201::MeteringService::MeteringService(Context& context) : MemoryManaged("v201.Metering.MeteringService"), context(context) {
 
 }
 
-Ocpp201::MeteringService::~MeteringService() {
+v201::MeteringService::~MeteringService() {
     for (size_t i = 0; i < MO_NUM_EVSEID; i++) {
         delete evses[i];
         evses[i] = nullptr;
     }
 }
 
-Ocpp201::MeteringServiceEvse *Ocpp201::MeteringService::getEvse(unsigned int evseId) {
+v201::MeteringServiceEvse *v201::MeteringService::getEvse(unsigned int evseId) {
     if (evseId >= numEvseId) {
         MO_DBG_ERR("evseId out of bound");
         return nullptr;
@@ -936,7 +936,7 @@ Ocpp201::MeteringServiceEvse *Ocpp201::MeteringService::getEvse(unsigned int evs
     return evses[evseId];
 }
 
-bool Ocpp201::MeteringService::setup() {
+bool v201::MeteringService::setup() {
 
     auto varService = context.getModel201().getVariableService();
     if (!varService) {

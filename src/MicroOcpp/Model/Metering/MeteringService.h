@@ -29,7 +29,7 @@ class Clock;
 class Operation;
 class Request;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class Model;
 class MeteringService;
@@ -132,7 +132,7 @@ public:
 friend class MeteringServiceEvse;
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 
@@ -142,7 +142,7 @@ namespace MicroOcpp {
 
 class Context;
 
-namespace Ocpp201 {
+namespace v201 {
 
 class MeteringService;
 class Variable;
@@ -192,7 +192,7 @@ public:
 friend class MeteringServiceEvse;
 };
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 
 #endif //MO_ENABLE_V201

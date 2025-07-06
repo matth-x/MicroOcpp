@@ -117,7 +117,7 @@ bool DiagnosticsService::setup() {
         }
 
         context.getMessageService().registerOperation("GetDiagnostics", [] (Context& context) -> Operation* {
-            return new Ocpp16::GetDiagnostics(context, *context.getModel16().getDiagnosticsService());});
+            return new v16::GetDiagnostics(context, *context.getModel16().getDiagnosticsService());});
 
         context.getMessageService().registerOperation("GetLog", [] (Context& context) -> Operation* {
             return new GetLog(context, *context.getModel16().getDiagnosticsService());});
@@ -135,7 +135,7 @@ bool DiagnosticsService::setup() {
 
         rcService->addTriggerMessageHandler("DiagnosticsStatusNotification", [] (Context& context) -> Operation* {
             auto diagSvc = context.getModel16().getDiagnosticsService();
-            return new Ocpp16::DiagnosticsStatusNotification(diagSvc->getUploadStatus16());
+            return new v16::DiagnosticsStatusNotification(diagSvc->getUploadStatus16());
         });
 
         rcService->addTriggerMessageHandler("LogStatusNotification", [] (Context& context) -> Operation* {
@@ -206,8 +206,8 @@ void DiagnosticsService::loop() {
     if (use16impl) {
         if (getUploadStatus16() != lastReportedUploadStatus16) {
             lastReportedUploadStatus16 = getUploadStatus16();
-            if (lastReportedUploadStatus16 != Ocpp16::DiagnosticsStatus::Idle) {
-                uploadStatusNotification = new Ocpp16::DiagnosticsStatusNotification(lastReportedUploadStatus16);
+            if (lastReportedUploadStatus16 != v16::DiagnosticsStatus::Idle) {
+                uploadStatusNotification = new v16::DiagnosticsStatusNotification(lastReportedUploadStatus16);
                 if (!uploadStatusNotification) {
                     MO_DBG_ERR("OOM");
                 }
@@ -524,28 +524,28 @@ MO_UploadLogStatus DiagnosticsService::getUploadStatus() {
     return status;
 }
 
-Ocpp16::DiagnosticsStatus DiagnosticsService::getUploadStatus16() {
+v16::DiagnosticsStatus DiagnosticsService::getUploadStatus16() {
 
     MO_UploadLogStatus status = getUploadStatus();
 
-    auto res = Ocpp16::DiagnosticsStatus::Idle;
+    auto res = v16::DiagnosticsStatus::Idle;
 
     switch(status) {
         case MO_UploadLogStatus_Idle:
-            res = Ocpp16::DiagnosticsStatus::Idle;
+            res = v16::DiagnosticsStatus::Idle;
             break;
         case MO_UploadLogStatus_Uploaded:
         case MO_UploadLogStatus_AcceptedCanceled:
-            res = Ocpp16::DiagnosticsStatus::Uploaded;
+            res = v16::DiagnosticsStatus::Uploaded;
             break;
         case MO_UploadLogStatus_BadMessage:
         case MO_UploadLogStatus_NotSupportedOperation:
         case MO_UploadLogStatus_PermissionDenied:
         case MO_UploadLogStatus_UploadFailure:
-            res = Ocpp16::DiagnosticsStatus::UploadFailed;
+            res = v16::DiagnosticsStatus::UploadFailed;
             break;
         case MO_UploadLogStatus_Uploading:
-            res = Ocpp16::DiagnosticsStatus::Uploading;
+            res = v16::DiagnosticsStatus::Uploading;
             break;
     }
     return res;

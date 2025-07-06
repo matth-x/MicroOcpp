@@ -473,7 +473,7 @@ bool mo_authorizeTransaction2(MO_Context *ctx, unsigned int evseId, const char *
             MO_DBG_ERR("OOM");
             return false;
         }
-        success = txSvcEvse->beginAuthorization(MicroOcpp::Ocpp201::IdToken(idToken, type), /*validateIdToken*/ true);
+        success = txSvcEvse->beginAuthorization(MicroOcpp::v201::IdToken(idToken, type), /*validateIdToken*/ true);
     }
     #endif
 
@@ -506,7 +506,7 @@ bool mo_authorizeTransaction3(MO_Context *ctx, unsigned int evseId, const char *
             MO_DBG_ERR("OOM");
             return false;
         }
-        success = txSvcEvse->beginAuthorization(MicroOcpp::Ocpp201::IdToken(idToken, type), validateIdToken, groupIdToken);
+        success = txSvcEvse->beginAuthorization(MicroOcpp::v201::IdToken(idToken, type), validateIdToken, groupIdToken);
     }
     #endif
 
@@ -630,7 +630,7 @@ bool mo_deauthorizeTransaction2(MO_Context *ctx, unsigned int evseId, const char
             MO_DBG_ERR("OOM");
             return false;
         }
-        success = txSvcEvse->endAuthorization(MicroOcpp::Ocpp201::IdToken(idToken, type), /*validateIdToken*/ true, nullptr);
+        success = txSvcEvse->endAuthorization(MicroOcpp::v201::IdToken(idToken, type), /*validateIdToken*/ true, nullptr);
     }
     #endif
 
@@ -663,7 +663,7 @@ bool mo_deauthorizeTransaction3(MO_Context *ctx, unsigned int evseId, const char
             MO_DBG_ERR("OOM");
             return false;
         }
-        success = txSvcEvse->endAuthorization(MicroOcpp::Ocpp201::IdToken(idToken, type), validateIdToken, groupIdToken);
+        success = txSvcEvse->endAuthorization(MicroOcpp::v201::IdToken(idToken, type), validateIdToken, groupIdToken);
     }
     #endif
 
@@ -1143,7 +1143,7 @@ bool mo_addErrorCodeInput(const char* (*errorCodeInput)()) {
         }
 
         //error codes not really supported in OCPP 2.0.1, just Faulted status
-        MicroOcpp::Ocpp201::FaultedInput faultedInput;
+        MicroOcpp::v201::FaultedInput faultedInput;
         faultedInput.userData = reinterpret_cast<void*>(errorCodeInput);
         faultedInput.isFaulted = [] (unsigned int evseId, void *userData) {
             auto errorCodeInput = reinterpret_cast<const char* (*)()>(userData);
@@ -1222,7 +1222,7 @@ bool mo_v201_addFaultedInput(MO_Context *ctx, unsigned int evseId, bool (*faulte
         }
 
         //error codes not really supported in OCPP 2.0.1, just Faulted status
-        MicroOcpp::Ocpp201::FaultedInput faultedInput;
+        MicroOcpp::v201::FaultedInput faultedInput;
         faultedInput.isFaulted = faulted;
         faultedInput.userData = userData;
 
@@ -2478,7 +2478,7 @@ bool mo_declareVarConfigInt(MO_Context *ctx, const char *component201, const cha
             return false;
         }
     
-        success = varSvc->declareVariable<int>(component201, name201, factoryDefault, convertMutability(mutability), persistent, MicroOcpp::Ocpp201::Variable::AttributeTypeSet(), rebootRequired);
+        success = varSvc->declareVariable<int>(component201, name201, factoryDefault, convertMutability(mutability), persistent, MicroOcpp::v201::Variable::AttributeTypeSet(), rebootRequired);
     }
     #endif
 
@@ -2521,7 +2521,7 @@ bool mo_declareVarConfigBool(MO_Context *ctx, const char *component201, const ch
             return false;
         }
     
-        success = varSvc->declareVariable<bool>(component201, name201, factoryDefault, convertMutability(mutability), persistent, MicroOcpp::Ocpp201::Variable::AttributeTypeSet(), rebootRequired);
+        success = varSvc->declareVariable<bool>(component201, name201, factoryDefault, convertMutability(mutability), persistent, MicroOcpp::v201::Variable::AttributeTypeSet(), rebootRequired);
     }
     #endif
 
@@ -2564,7 +2564,7 @@ bool mo_declareVarConfigString(MO_Context *ctx, const char *component201, const 
             return false;
         }
     
-        success = varSvc->declareVariable<const char*>(component201, name201, factoryDefault, convertMutability(mutability), persistent, MicroOcpp::Ocpp201::Variable::AttributeTypeSet(), rebootRequired);
+        success = varSvc->declareVariable<const char*>(component201, name201, factoryDefault, convertMutability(mutability), persistent, MicroOcpp::v201::Variable::AttributeTypeSet(), rebootRequired);
     }
     #endif
 

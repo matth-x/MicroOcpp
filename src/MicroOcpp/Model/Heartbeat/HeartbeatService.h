@@ -16,13 +16,13 @@ namespace MicroOcpp {
 class Context;
 
 #if MO_ENABLE_V16
-namespace Ocpp16 {
+namespace v16 {
 class ConfigurationService;
 class Configuration;
 }
 #endif
 #if MO_ENABLE_V201
-namespace Ocpp201 {
+namespace v201 {
 class VariableService;
 class Variable;
 }
@@ -35,12 +35,12 @@ private:
     int ocppVersion = -1;
 
     #if MO_ENABLE_V16
-    Ocpp16::ConfigurationService *configService = nullptr;
-    Ocpp16::Configuration *heartbeatIntervalIntV16 = nullptr;
+    v16::ConfigurationService *configService = nullptr;
+    v16::Configuration *heartbeatIntervalIntV16 = nullptr;
     #endif
     #if MO_ENABLE_V201
-    Ocpp201::VariableService *varService = nullptr;
-    Ocpp201::Variable *heartbeatIntervalIntV201 = nullptr;
+    v201::VariableService *varService = nullptr;
+    v201::Variable *heartbeatIntervalIntV201 = nullptr;
     #endif
 
     Timestamp lastHeartbeat;

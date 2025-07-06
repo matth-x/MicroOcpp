@@ -26,7 +26,7 @@
 
 namespace MicroOcpp {
 
-namespace Ocpp201 {
+namespace v201 {
 
 // VariableCharacteristicsType (2.51)
 struct VariableCharacteristics : public MemoryManaged {
@@ -221,7 +221,7 @@ public:
 
 std::unique_ptr<Variable> makeVariable(Variable::InternalDataType dtype, Variable::AttributeTypeSet supportAttributes);
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V201
 #endif

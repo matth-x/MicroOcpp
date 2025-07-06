@@ -25,7 +25,7 @@
 #if MO_ENABLE_V16
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 /*
  * A transaction is initiated by the client (charging station) and processed by the server (central system).
@@ -189,7 +189,7 @@ public:
     Vector<MeterValue*>& getTxMeterValues() {return meterValues;}
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 
@@ -205,7 +205,7 @@ namespace MicroOcpp {
 
 class Clock;
 
-namespace Ocpp201 {
+namespace v201 {
 
 class Transaction : public MemoryManaged {
 private:
@@ -366,7 +366,7 @@ const char *serializeTransactionEventChargingState(TransactionEventData::Chargin
 bool deserializeTransactionEventChargingState(const char *chargingStateCstr, TransactionEventData::ChargingState& chargingStateOut);
 
 
-} //namespace Ocpp201
+} //namespace v201
 } //namespace MicroOcpp
 
 #endif //MO_ENABLE_V201

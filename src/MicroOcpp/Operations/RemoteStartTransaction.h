@@ -17,7 +17,7 @@ class Context;
 class RemoteControlService;
 class ChargingProfile;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class RemoteStartTransaction : public Operation, public MemoryManaged {
 private:
@@ -41,7 +41,7 @@ public:
     const char *getErrorDescription() override {return errorDescription;}
 };
 
-} //namespace Ocpp16
+} //namespace v16
 } //namespace MicroOcpp
 #endif //MO_ENABLE_V16
 #endif

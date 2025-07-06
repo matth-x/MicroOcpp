@@ -10,7 +10,7 @@
 #if MO_ENABLE_V16 || MO_ENABLE_V201
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::Ocpp16;
+using namespace MicroOcpp::v16;
 
 Heartbeat::Heartbeat(Context& context) : MemoryManaged("v16.Operation.", "Heartbeat"), context(context) {
   
