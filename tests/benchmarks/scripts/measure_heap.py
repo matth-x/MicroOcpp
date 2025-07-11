@@ -107,6 +107,10 @@ df.index.names = ['TC_ID']
 max_memory_total = 0
 min_memory_base = 1000 * 1000 * 1000
 
+watchdog_timer = 0
+exit_watchdog = False
+watchdog_triggered = False
+
 # Ensure Simulator is still running despite Reset requests via OCPP or the rmt_ctrl interface
 run_simulator = False
 exit_run_simulator_process = False
@@ -115,6 +119,7 @@ def run_simulator_process():
 
     global run_simulator
     global exit_run_simulator_process
+    global watchdog_triggered
 
     track_run_simulator = run_simulator
     iterations_since_last_check = 0
@@ -129,7 +134,7 @@ def run_simulator_process():
 
         iterations_since_last_check = 0
         
-        if not track_run_simulator and run_simulator:
+        if not track_run_simulator and run_simulator and not watchdog_triggered:
             print('Starting simulator')
             os.system(os.path.join('MicroOcppSimulator', 'build', 'mo_simulator') + ' &')
             track_run_simulator = True
@@ -190,11 +195,44 @@ def setup_simulator():
 
     print('   - done')
 
+def cleanup_test_driver():
+    try:
+        print("Stop Test Driver")    
+        response = requests.post(os.environ['TEST_DRIVER_URL'] + '/session/stop', 
+                                headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']})
+        print(f'Test Driver /session/stop:\n > {response.status_code}')
+        #print(json.dumps(response.json(), indent=4))
+    except:
+        print('Error stopping Test Driver')
+        traceback.print_exc()
+
+def watchdog_thread():
+
+    global watchdog_timer
+    global exit_watchdog
+    global watchdog_triggered
+
+    while not exit_watchdog and watchdog_timer < 120:
+        watchdog_timer += 1
+        time.sleep(1)
+    
+    if exit_watchdog:
+        # watchdog has been exited gracefully
+        return
+
+    watchdog_triggered = True
+    cleanup_test_driver()
+    cleanup_simulator()
+    print("\nTest execution timeout - terminate")
+    os._exit(1)
+
 def run_measurements():
     
     global max_memory_total
     global min_memory_base
     global run_simulator
+    global watchdog_timer
+    global watchdog_triggered
     
     print("Fetch TCs from Test Driver")
 
@@ -249,6 +287,11 @@ def run_measurements():
             print('Test case already executed - skip')
             continue
 
+        if watchdog_triggered:
+            break
+        
+        watchdog_timer = 0
+
         setup_simulator()
         time.sleep(1)
 
@@ -293,13 +336,7 @@ def run_measurements():
         #    print('Test failure, abort')
         #    break
 
-    print("Stop Test Driver")
-    
-    response = requests.post(os.environ['TEST_DRIVER_URL'] + '/session/stop', 
-                             headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']})
-    print(f'Test Driver /session/stop:\n > {response.status_code}')
-    #print(json.dumps(response.json(), indent=4))
-
+    cleanup_test_driver()
     cleanup_simulator()
 
     print('Store test results')
@@ -336,6 +373,7 @@ def run_measurements():
 def run_measurements_and_retry():
 
     global exit_run_simulator_process
+    global exit_watchdog
 
     if (    'TEST_DRIVER_URL'        not in os.environ or
             'TEST_DRIVER_CONFIG'     not in os.environ or
@@ -345,6 +383,9 @@ def run_measurements_and_retry():
             'MO_SIM_RMT_CTRL_CONFIG' not in os.environ or
             'MO_SIM_RMT_CTRL_CERT'   not in os.environ):
         sys.exit('\nCould not read environment variables')
+
+    m_watchdog_thread = threading.Thread(target=watchdog_thread)
+    m_watchdog_thread.start()
 
     n_tries = 3
 
@@ -367,25 +408,18 @@ def run_measurements_and_retry():
 
             traceback.print_exc()
 
-            try:
-                print("Stop Test Driver")    
-                response = requests.post(os.environ['TEST_DRIVER_URL'] + '/session/stop', 
-                                        headers={'Authorization': 'Bearer ' + os.environ['TEST_DRIVER_KEY']})
-                print(f'Test Driver /session/stop:\n > {response.status_code}')
-                #print(json.dumps(response.json(), indent=4))
-            except:
-                print('Error stopping Test Driver')
-                traceback.print_exc()
+        cleanup_test_driver()
+        cleanup_simulator()
 
-            cleanup_simulator()
+        exit_run_simulator_process = True
+        run_simulator_thread.join()
 
-            exit_run_simulator_process = True
-            run_simulator_thread.join()
+        if i + 1 < n_tries:
+            print('Retry test cases')
+        else:
+            print('\n **Test case execution aborted**')
 
-            if i + 1 < n_tries:
-                print('Retry test cases')
-            else:
-                print('\n **Test case execution aborted**')
-                sys.exit('\nError running test cases')
+    exit_watchdog = True # terminate watchdog thread
+    m_watchdog_thread.join()
 
 run_measurements_and_retry()

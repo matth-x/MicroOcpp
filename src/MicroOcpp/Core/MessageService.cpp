@@ -128,7 +128,9 @@ void MessageService::loop() {
             bool success = connection->sendTXT(out.c_str(), out.length());
 
             if (success) {
-                MO_DBG_DEBUG("Send %s", out.c_str());
+                #ifdef MO_TRAFFIC_OUT
+                MO_DBG_INFO("Send %s", out.c_str());
+                #endif
                 sendReqFront->setRequestSent(); //mask as sent and wait for response / timeout
             }
 
