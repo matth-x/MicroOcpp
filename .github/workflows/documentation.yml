@@ -177,7 +177,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: Google bloaty
-        path: tools/bloaty/build/bloaty
+        path: tools/bloaty/build
     - name: Run bloaty
       run: |
         mkdir -p docs/assets/tables
