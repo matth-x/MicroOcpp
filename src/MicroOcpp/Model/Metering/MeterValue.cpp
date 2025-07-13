@@ -35,6 +35,7 @@ SampledValue::~SampledValue() {
         case Type::String:
             MO_FREE(valueString);
             valueString = nullptr;
+            break;
         #if MO_ENABLE_V201
         case Type::SignedValue:
             valueSigned->onDestroy(valueSigned->user_data);

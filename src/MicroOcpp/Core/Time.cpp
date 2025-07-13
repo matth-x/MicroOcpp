@@ -36,10 +36,6 @@ Timestamp::Timestamp() : MemoryManaged("Timestamp") {
 
 }
 
-Timestamp::Timestamp(const Timestamp& other) : MemoryManaged("Timestamp") {
-    *this = other;
-}
-
 bool Timestamp::isUnixTime() const {
     return time >= MO_MIN_TIME && time <= MO_MAX_TIME;
 }

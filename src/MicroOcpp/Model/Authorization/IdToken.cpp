@@ -28,6 +28,13 @@ IdToken::IdToken(const IdToken& other, const char *memoryTag) : IdToken(other.id
 
 }
 
+IdToken& IdToken::operator=(const IdToken& other) {
+    snprintf(this->idToken, sizeof(this->idToken), "%s", other.idToken);
+    this->type = other.type;
+    updateMemoryTag(other.getMemoryTag(), nullptr);
+    return *this;
+}
+
 bool IdToken::parseCstr(const char *token, const char *typeCstr) {
     if (!token || !typeCstr) {
         return false;

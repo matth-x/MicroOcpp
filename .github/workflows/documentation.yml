@@ -179,7 +179,7 @@ jobs:
         name: Google bloaty
         path: tools/bloaty/build
     - name: Debug
-      run: ls docs/assets/tables
+      run: ls firmware
     - name: Run bloaty
       run: |
         mkdir -p docs/assets/tables

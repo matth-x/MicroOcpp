@@ -52,7 +52,7 @@ RegistrationStatus MicroOcpp::deserializeRegistrationStatus(const char *serializ
 }
 
 BootService::BootService(Context& context) : MemoryManaged("v16/v201.Boot.BootService"), context(context) {
-
+    mo_bootNotificationData_init(&bnData);
 }
 
 BootService::~BootService() {

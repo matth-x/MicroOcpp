@@ -66,7 +66,7 @@ private:
 
     RegistrationStatus status = RegistrationStatus::Pending;
 
-    MO_BootNotificationData bnData {0};
+    MO_BootNotificationData bnData;
     char *bnDataBuf = nullptr;
 
     int ocppVersion = -1;

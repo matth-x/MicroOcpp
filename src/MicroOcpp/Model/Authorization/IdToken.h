@@ -53,6 +53,8 @@ public:
 
     IdToken(const IdToken& other, const char *memoryTag = nullptr);
 
+    IdToken& operator=(const IdToken& other);
+
     bool parseCstr(const char *token, const char *typeCstr);
 
     const char *get() const;

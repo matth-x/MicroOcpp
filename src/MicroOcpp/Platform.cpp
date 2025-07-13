@@ -70,7 +70,7 @@ uint32_t defaultTickCbImpl() {
 } //namespace MicroOcpp
 #else
 namespace MicroOcpp {
-void (*defaultDebugCbImpl)(const char*) = nullptr
+void (*defaultDebugCbImpl)(const char*) = nullptr;
 uint32_t (*defaultTickCbImpl)() = nullptr;
 } //namespace MicroOcpp
 #endif
