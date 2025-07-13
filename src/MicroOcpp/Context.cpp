@@ -8,6 +8,7 @@
 #include <MicroOcpp/Core/Ftp.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Certificates/Certificate.h>
+#include <MicroOcpp/Model/Certificates/CertificateMbedTLS.h>
 
 #include <MicroOcpp/Debug.h>
 
@@ -209,7 +210,7 @@ void Context::setCertificateStore(CertificateStore *certStore) {
 CertificateStore *Context::getCertificateStore() {
     #if MO_ENABLE_CERT_MGMT && MO_ENABLE_CERT_STORE_MBEDTLS
     if (!certStore && filesystem) {
-        certStore = makeCertificateStoreMbedTLS(filesystem);
+        certStore = makeCertificateStoreMbedTLS(filesystem).release();
         if (!certStore) {
             MO_DBG_ERR("OOM");
             return nullptr;

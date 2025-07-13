@@ -18,6 +18,7 @@ jobs:
     strategy:
       matrix:
         example: [examples/ESP/main.cpp, examples/ESP-TLS/main.cpp]
+        pio_platform: [nodemcuv2, esp32-development-board]
 
     steps:
     - uses: actions/checkout@v2
@@ -42,6 +43,6 @@ jobs:
     - name: Install library dependencies
       run: pio pkg install
     - name: Run PlatformIO
-      run: pio ci --lib="." --project-conf=platformio.ini ${{ matrix.dashboard-extra }}
+      run: pio ci --lib="." --project-conf=platformio.ini -e ${{ matrix.pio_platform }} ${{ matrix.dashboard-extra }}
       env:
         PLATFORMIO_CI_SRC: ${{ matrix.example }}
