@@ -74,7 +74,6 @@ set(MO_SRC
     src/MicroOcpp/Model/Reservation/Reservation.cpp
     src/MicroOcpp/Model/SecurityEvent/SecurityEventService.cpp
     src/MicroOcpp/Model/Certificates/CertificateMbedTLS.cpp
-    src/MicroOcpp/Model/Certificates/Certificate_c.cpp
     src/MicroOcpp/Model/Certificates/Certificate.cpp
     src/MicroOcpp/Model/Certificates/CertificateService.cpp
     src/MicroOcpp/Model/FirmwareManagement/FirmwareService.cpp

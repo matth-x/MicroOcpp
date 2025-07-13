@@ -86,7 +86,6 @@ def categorize_table(df):
     df.at['Model/Certificates/Certificate.cpp', 'Module'] = MODULE_CERTS
     df.at['Model/Certificates/CertificateMbedTLS.cpp', 'Module'] = MODULE_CERTS
     df.at['Model/Certificates/CertificateService.cpp', 'Module'] = MODULE_CERTS
-    df.at['Model/Certificates/Certificate_c.cpp', 'Module'] = MODULE_CERTS
     df.at['Model/Configuration/Configuration.cpp', 'Module'] = MODULE_PROVISIONING_CONF
     df.at['Model/Configuration/ConfigurationContainer.cpp', 'Module'] = MODULE_PROVISIONING_CONF
     df.at['Model/Configuration/ConfigurationService.cpp', 'Module'] = MODULE_PROVISIONING_CONF
