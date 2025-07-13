@@ -147,6 +147,7 @@ jobs:
   evaluate_firmware:
     needs: [build_firmware, build_bloaty]
     name: Static firmware analysis
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - uses: actions/cache@v4
