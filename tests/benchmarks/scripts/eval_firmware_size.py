@@ -28,6 +28,15 @@ cunits_v16_v201.rename(columns={'vmsize': COLUMN_SIZE_V16_V201}, inplace=True)
 cunits = pd.merge(cunits_v16, cunits_v201, on=COLUMN_CUNITS, how='outer')
 cunits = pd.merge(cunits, cunits_v16_v201, on=COLUMN_CUNITS, how='outer')
 
+print("cunits_v16")
+print(cunits_v16)
+print("cunits_v201")
+print(cunits_v201)
+print("cunits_v16_v201")
+print(cunits_v16_v201)
+print("cunits")
+print(cunits)
+
 # categorize data
 
 def categorize_table(df):
