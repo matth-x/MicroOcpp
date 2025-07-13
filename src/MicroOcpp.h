@@ -186,16 +186,12 @@ bool mo_beginTransaction_authorized2(MO_Context *ctx, unsigned int evseId, const
 
 #if MO_ENABLE_V201
 //Same as mo_beginTransaction, but function name fits better for OCPP 2.0.1 and more options for 2.0.1.
-//Attempt to authorize a pending transaction, or create new transactino to authorize. If local
+//Attempt to authorize a pending transaction, or create new transaction to authorize. If local
 //authorization is enabled, will search the local whitelist if server response takes too long.
 //Backwards-compatible: if MO is initialized with 1.6, then this is the same as `mo_beginTransaction()`
 bool mo_authorizeTransaction(const char *idToken); //idTokenType ISO14443 is assumed
 bool mo_authorizeTransaction2(MO_Context *ctx, unsigned int evseId, const char *idToken, MO_IdTokenType type);
 bool mo_authorizeTransaction3(MO_Context *ctx, unsigned int evseId, const char *idToken, MO_IdTokenType type, bool validateIdToken, const char *groupIdToken);
-
-//Same as `mo_beginAuthorization()`, but skip authorization. `groupIdToken` can be NULL
-bool mo_setTransactionAuthorized(const char *idToken, const char *groupIdToken); //idTokenType ISO14443 is assumed
-bool mo_setTransactionAuthorized2(MO_Context *ctx, unsigned int evseId, const char *idToken, MO_IdTokenType type, const char *groupIdToken);
 #endif //MO_ENABLE_V201
 
 /*

@@ -232,7 +232,7 @@ void SmartChargingServiceEvse::trackTransaction() {
             }
         } else {
             //check if transaction has just been completed
-            if (trackTxRmtProfileId >= 0 || trackTxStart.isDefined() || trackTransactionId16 >= 0) {
+            if (trackTxRmtProfileId >= 0 || trackTxStart.isDefined() || *trackTransactionId201) {
                 //yes, clear data
                 update = true;
                 trackTxRmtProfileId = -1;

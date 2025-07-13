@@ -509,6 +509,7 @@ MO_UploadLogStatus DiagnosticsService::getUploadStatus() {
     return status;
 }
 
+#if MO_ENABLE_V16
 v16::DiagnosticsStatus DiagnosticsService::getUploadStatus16() {
 
     MO_UploadLogStatus status = getUploadStatus();
@@ -535,6 +536,7 @@ v16::DiagnosticsStatus DiagnosticsService::getUploadStatus16() {
     }
     return res;
 }
+#endif //MO_ENABLE_V16
 
 void DiagnosticsService::setDiagnosticsReader(size_t (*diagnosticsReader)(char *buf, size_t size, void *user_data), void(*onClose)(void *user_data), void *user_data) {
     this->diagnosticsReader = diagnosticsReader;

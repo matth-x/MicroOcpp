@@ -28,6 +28,8 @@
 #include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Core/Connection.h>
 
+#if MO_ENABLE_V16
+
 #ifndef MO_TX_CLEAN_ABORTED
 #define MO_TX_CLEAN_ABORTED 1
 #endif
@@ -1499,3 +1501,5 @@ TransactionServiceEvse* TransactionService::getEvse(unsigned int evseId) {
 
     return evses[evseId];
 }
+
+#endif //MO_ENABLE_V16

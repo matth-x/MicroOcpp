@@ -15,7 +15,7 @@
 #include <MicroOcpp/Model/Transactions/TransactionService201.h>
 #include <MicroOcpp/Debug.h>
 
-#if MO_ENABLE_V16
+#if MO_ENABLE_V16 || MO_ENABLE_V201
 
 #ifndef MO_RESET_DELAY
 #define MO_RESET_DELAY 10
@@ -37,6 +37,10 @@ void (*defaultExecuteResetImpl)() = nullptr;
 } //namespace MicroOcpp
 
 #endif //MO_PLATFORM
+
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201
+
+#if MO_ENABLE_V16
 
 using namespace MicroOcpp;
 

@@ -13,8 +13,8 @@ permissions:
   contents: write
 
 jobs:
-  build_simulator:
-    name: Build Simulator
+  measure_heap:
+    name: Heap measurements
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -34,7 +34,7 @@ jobs:
       with:
         repository: matth-x/MicroOcppSimulator
         path: MicroOcppSimulator
-        ref: 2cb07cdbe53954a694a29336ab31eac2d2b48673
+        ref: 65b1c2e9c8a3f40907a823a0bc2f657423ebef65
         submodules: 'recursive'
     - name: Clean MicroOcpp submodule
       run: |
@@ -47,32 +47,8 @@ jobs:
       run: cmake -S ./MicroOcppSimulator -B ./MicroOcppSimulator/build -DCMAKE_CXX_FLAGS="-DMO_OVERRIDE_ALLOCATION=1 -DMO_ENABLE_HEAP_PROFILER=1"
     - name: Compile
       run: cmake --build ./MicroOcppSimulator/build -j 32 --target mo_simulator
-    - name: Upload Simulator executable
-      uses: actions/upload-artifact@v4
-      with:
-        name: Simulator executable
-        path: |
-          MicroOcppSimulator/build/mo_simulator
-          MicroOcppSimulator/public/bundle.html.gz
-        if-no-files-found: error
-        retention-days: 1
-
-  measure_heap:
-    needs: build_simulator
-    name: Heap measurements
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.x
     - name: Install Python dependencies
       run: pip install requests paramiko pandas
-    - name: Get Simulator
-      uses: actions/download-artifact@v4
-      with:
-        name: Simulator executable
-        path: MicroOcppSimulator
     - name: Measure heap and create reports
       run: |
         mkdir -p docs/assets/tables
@@ -81,13 +57,12 @@ jobs:
         TEST_DRIVER_URL: ${{ secrets.TEST_DRIVER_URL }}
         TEST_DRIVER_CONFIG: ${{ secrets.TEST_DRIVER_CONFIG }}
         TEST_DRIVER_KEY: ${{ secrets.TEST_DRIVER_KEY }}
+        TEST_DRIVER_CERT: ${{ secrets.TEST_DRIVER_CERT }}
         MO_SIM_CONFIG: ${{ secrets.MO_SIM_CONFIG }}
         MO_SIM_OCPP_SERVER: ${{ secrets.MO_SIM_OCPP_SERVER }}
-        MO_SIM_API_CERT: ${{ secrets.MO_SIM_API_CERT }}
-        MO_SIM_API_KEY: ${{ secrets.MO_SIM_API_KEY }}
-        MO_SIM_API_CONFIG: ${{ secrets.MO_SIM_API_CONFIG }}
-        SSH_LOCAL_PRIV: ${{ secrets.SSH_LOCAL_PRIV }}
-        SSH_HOST_PUB: ${{ secrets.SSH_HOST_PUB }}
+        MO_SIM_OCPP_CERT: ${{ secrets.MO_SIM_OCPP_CERT }}
+        MO_SIM_RMT_CTRL_CONFIG: ${{ secrets.MO_SIM_RMT_CTRL_CONFIG }}
+        MO_SIM_RMT_CTRL_CERT: ${{ secrets.MO_SIM_RMT_CTRL_CERT }}
     - name: Upload reports
       uses: actions/upload-artifact@v4
       with:
@@ -95,9 +70,12 @@ jobs:
         path: docs/assets/tables
         if-no-files-found: error
 
-  build_firmware_size:
+  build_firmware:
     name: Build firmware
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        part: [v16, v201, v16_v201]
     steps:
     - uses: actions/checkout@v3
     - name: Cache pip
@@ -119,35 +97,28 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade platformio
     - name: Run PlatformIO
-      run: pio ci --lib="." --build-dir="${{ github.workspace }}/../build" --keep-build-dir --project-conf="./tests/benchmarks/firmware_size/platformio.ini" ./tests/benchmarks/firmware_size/main.cpp
-    - name: Move firmware files # change path to location without parent dir ('..') statement (to make upload-artifact happy)
+      run: pio ci --lib="." --build-dir="${{ github.workspace }}/../build" --keep-build-dir --project-conf="./tests/benchmarks/firmware_size/platformio.ini" -e ${{ matrix.part }} ./tests/benchmarks/firmware_size/main.cpp
+    - name: Move firmware file # change path to location without parent dir ('..') statement (to make upload-artifact happy)
       run: |
         mkdir firmware
-        mv "${{ github.workspace }}/../build/.pio/build/v16/firmware.elf"  firmware/firmware_v16.elf
-        mv "${{ github.workspace }}/../build/.pio/build/v201/firmware.elf" firmware/firmware_v201.elf
-    - name: Upload firmware linker files
+        mv "${{ github.workspace }}/../build/.pio/build/${{ matrix.part }}/firmware.elf"  "firmware/firmware_${{ matrix.part }}.elf"
+    - name: Upload firmware linker file
       uses: actions/upload-artifact@v4
       with:
-        name: Firmware linker files
+        name: Firmware linker file ${{ matrix.part }}
         path: firmware
         if-no-files-found: error
         retention-days: 1
 
-  evaluate_firmware:
-    needs: build_firmware_size
-    name: Static firmware analysis
+  build_bloaty:
+    name: Build Google bloaty
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.x
     - uses: actions/cache@v2
       with:
         key: ${{ github.ref }}
         path: .cache
-    - name: Install Python dependencies
-      run: pip install pandas 
     - name: Get build tools
       run: |
         sudo apt update
@@ -165,16 +136,53 @@ jobs:
       run: |
         cmake -B tools/bloaty/build -G Ninja -S tools/bloaty
         cmake --build tools/bloaty/build -j 32
-    - name: Get firmware linker files
+    - name: Upload bloaty executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: Google bloaty
+        path: tools/bloaty/build/bloaty
+        if-no-files-found: error
+        retention-days: 1
+
+  evaluate_firmware:
+    needs: [build_firmware, build_bloaty]
+    name: Static firmware analysis
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/cache@v2
+      with:
+        key: ${{ github.ref }}
+        path: .cache
+    - name: Set up Python
+      uses: actions/setup-python@v4
+    - name: Install Python dependencies
+      run: pip install pandas
+    - name: Get firmware linker file
       uses: actions/download-artifact@v4
       with:
-        name: Firmware linker files
+        name: Firmware linker file v16
         path: firmware
+    - name: Get firmware linker file
+      uses: actions/download-artifact@v4
+      with:
+        name: Firmware linker file v201
+        path: firmware
+    - name: Get firmware linker file
+      uses: actions/download-artifact@v4
+      with:
+        name: Firmware linker file v16_v201
+        path: firmware
+    - name: Get bloaty executable
+      uses: actions/download-artifact@v4
+      with:
+        name: Google bloaty
+        path: tools/bloaty/build/bloaty
     - name: Run bloaty
       run: |
         mkdir -p docs/assets/tables
         tools/bloaty/build/bloaty firmware/firmware_v16.elf  -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v16.csv
         tools/bloaty/build/bloaty firmware/firmware_v201.elf -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v201.csv
+        tools/bloaty/build/bloaty firmware/firmware_v16_v201.elf -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v16_v201.csv
     - name: Evaluate and create reports
       run: python tests/benchmarks/scripts/eval_firmware_size.py
     - name: Upload reports

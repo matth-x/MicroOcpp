@@ -5,6 +5,7 @@
 #ifndef MO_REMOTECONTROLSERVICE_H
 #define MO_REMOTECONTROLSERVICE_H
 
+#include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Model/RemoteControl/RemoteControlDefs.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingModel.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
