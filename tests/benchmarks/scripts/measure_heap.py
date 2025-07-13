@@ -166,7 +166,8 @@ def cleanup_simulator():
     time.sleep(1)
 
     print('   - clean state')
-    os.system('rm -rf ' + os.path.join('MicroOcppSimulator', 'mo_store', '*'))
+    os.system('rm -rf ' + os.path.join('mo_store'))
+    os.system('mkdir ' + os.path.join('mo_store'))
 
     print('   - done')
 
@@ -179,13 +180,13 @@ def setup_simulator():
 
     print('   - set credentials')
 
-    with open(os.path.join('MicroOcppSimulator', 'mo_store', 'simulator.jsn'), 'w') as f:
+    with open(os.path.join('mo_store', 'simulator.jsn'), 'w') as f:
         f.write(os.environ['MO_SIM_CONFIG'])
-    with open(os.path.join('MicroOcppSimulator', 'mo_store', 'ws-conn-v201.jsn'), 'w') as f:
+    with open(os.path.join('mo_store', 'ws-conn-v201.jsn'), 'w') as f:
         f.write(os.environ['MO_SIM_OCPP_SERVER'])
-    with open(os.path.join('MicroOcppSimulator', 'mo_store', 'rmt_ctrl.jsn'), 'w') as f:
+    with open(os.path.join('mo_store', 'rmt_ctrl.jsn'), 'w') as f:
         f.write(os.environ['MO_SIM_RMT_CTRL_CONFIG'])
-    with open(os.path.join('MicroOcppSimulator', 'mo_store', 'rmt_ctrl.pem'), 'w') as f:
+    with open(os.path.join('mo_store', 'rmt_ctrl.pem'), 'w') as f:
         f.write(os.environ['MO_SIM_RMT_CTRL_CERT'])
 
     print('   - start Simulator')
@@ -370,10 +371,13 @@ def run_measurements():
 
     print('Stored test results to CSV')
 
+run_measurements_success = False
+
 def run_measurements_and_retry():
 
     global exit_run_simulator_process
     global exit_watchdog
+    global run_measurements_success
 
     if (    'TEST_DRIVER_URL'        not in os.environ or
             'TEST_DRIVER_CONFIG'     not in os.environ or
@@ -402,6 +406,7 @@ def run_measurements_and_retry():
 
             run_measurements()
             print('\n **Test cases executed successfully**')
+            run_measurements_success = True
             break
         except:
             print(f'Error detected ({i+1})')
@@ -418,8 +423,14 @@ def run_measurements_and_retry():
             print('Retry test cases')
         else:
             print('\n **Test case execution aborted**')
+            run_measurements_success = False
 
     exit_watchdog = True # terminate watchdog thread
     m_watchdog_thread.join()
 
 run_measurements_and_retry()
+
+if run_measurements_success:
+    sys.exit(0)
+else:
+    sys.exit(1)
