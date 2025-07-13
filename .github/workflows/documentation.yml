@@ -181,6 +181,7 @@ jobs:
     - name: Run bloaty
       run: |
         mkdir -p docs/assets/tables
+        chmod +x tools/bloaty/build/bloaty
         tools/bloaty/build/bloaty firmware/firmware_v16.elf  -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v16.csv
         tools/bloaty/build/bloaty firmware/firmware_v201.elf -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v201.csv
         tools/bloaty/build/bloaty firmware/firmware_v16_v201.elf -d compileunits --csv -n 0 > docs/assets/tables/bloaty_v16_v201.csv
