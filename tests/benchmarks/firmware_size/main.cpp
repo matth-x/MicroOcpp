@@ -116,7 +116,9 @@ void setup() {
     mo_setOnUnlockConnector([] () {return MO_UnlockConnectorResult_UnlockFailed;});
 
     mo_isOperative();
+#if MO_ENABLE_V16
     mo_v16_setOnResetNotify([] (bool) {return false;});
+#endif
     mo_setOnResetExecute([] () {});
 
     mo_getContext();
