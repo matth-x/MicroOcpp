@@ -121,6 +121,11 @@ void setup() {
 #endif
     mo_setOnResetExecute([] () {});
 
+    mo_sendRequest(ctx, "", "", [] (const char*,void*) {}, [] (void*) {}, nullptr);
+    mo_setRequestHandler(ctx, "", [] (const char*,const char*,void**,void*) {}, [] (const char*,char*,size_t,void*,void*) {return 0;}, [] (const char*,void*,void*) {}, nullptr);
+    mo_setOnReceiveRequest(ctx, "", [] (const char*,const char*,void*) {}, nullptr);
+    mo_setOnSendConf(ctx, "", [] (const char*, const char*, void*) {}, nullptr);
+
     mo_getContext();
 
 }
