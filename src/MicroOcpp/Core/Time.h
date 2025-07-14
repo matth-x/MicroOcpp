@@ -45,7 +45,7 @@ private:
 public:
 
     Timestamp();
-    Timestamp(const Timestamp& other) = default;
+    Timestamp(const Timestamp& other);
     MicroOcpp::Timestamp& operator=(const Timestamp& other) = default;
 
     bool isUnixTime() const;
