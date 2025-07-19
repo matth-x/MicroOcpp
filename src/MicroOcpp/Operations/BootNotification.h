@@ -23,10 +23,11 @@ private:
     BootService& bootService;
     HeartbeatService *heartbeatService = nullptr;
     const MO_BootNotificationData& bnData;
+    const char *reason201 = nullptr;
     int ocppVersion = -1;
     const char *errorCode = nullptr;
 public:
-    BootNotification(Context& context, BootService& bootService, HeartbeatService *heartbeatService, const MO_BootNotificationData& bnData);
+    BootNotification(Context& context, BootService& bootService, HeartbeatService *heartbeatService, const MO_BootNotificationData& bnData, const char *reason201);
 
     ~BootNotification() = default;
 

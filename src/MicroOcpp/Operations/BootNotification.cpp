@@ -17,7 +17,7 @@
 
 using namespace MicroOcpp;
 
-BootNotification::BootNotification(Context& context, BootService& bootService, HeartbeatService *heartbeatService, const MO_BootNotificationData& bnData) : MemoryManaged("v16/v201.Operation.", "BootNotification"), context(context), bootService(bootService), heartbeatService(heartbeatService), bnData(bnData), ocppVersion(context.getOcppVersion()) {
+BootNotification::BootNotification(Context& context, BootService& bootService, HeartbeatService *heartbeatService, const MO_BootNotificationData& bnData, const char *reason201) : MemoryManaged("v16/v201.Operation.", "BootNotification"), context(context), bootService(bootService), heartbeatService(heartbeatService), bnData(bnData), reason201(reason201), ocppVersion(context.getOcppVersion()) {
 
 }
 
@@ -47,7 +47,7 @@ std::unique_ptr<JsonDoc> BootNotification::createReq() {
     if (ocppVersion == MO_OCPP_V201) {
         auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(2));
         JsonObject payload = doc->to<JsonObject>();
-        payload["reason"] = "Unknown";
+        payload["reason"] = reason201 ? reason201 : "Unknown";
         JsonObject chargingStation = payload.createNestedObject("chargingStation");
         if (bnData.chargePointSerialNumber) {chargingStation["serialNumber"] = bnData.chargePointSerialNumber;}
         if (bnData.chargePointModel) {chargingStation["model"] = bnData.chargePointModel;}

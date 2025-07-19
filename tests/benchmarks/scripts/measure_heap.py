@@ -16,6 +16,9 @@ requests.packages.urllib3.disable_warnings() # avoid the URL to be printed to co
 
 # Test case selection (commented out a few to simplify testing for now)
 testcase_name_list = [
+    'TC_B_01_CS',
+    'TC_B_02_CS',
+    'TC_B_03_CS',
     'TC_B_06_CS',
     'TC_B_07_CS',
     'TC_B_09_CS',

@@ -93,7 +93,7 @@ bool BootService::setup() {
         rcService->addTriggerMessageHandler("BootNotification", [] (Context& context) -> Operation* {
             auto& model = context.getModel16();
             auto& bootSvc = *model.getBootService();
-            return new BootNotification(context, bootSvc, model.getHeartbeatService(), bootSvc.getBootNotificationData());
+            return new BootNotification(context, bootSvc, model.getHeartbeatService(), bootSvc.getBootNotificationData(), nullptr);
         });
     }
     #endif //MO_ENABLE_V16
@@ -128,7 +128,7 @@ bool BootService::setup() {
                 //F06.FR.17: if previous BootNotification was accepted, don't allow triggering a new one
                 return TriggerMessageStatus::Rejected;
             } else {
-                auto operation = new BootNotification(context, bootSvc, model.getHeartbeatService(), bootSvc.getBootNotificationData());
+                auto operation = new BootNotification(context, bootSvc, model.getHeartbeatService(), bootSvc.getBootNotificationData(), "Triggered");
                 if (!operation) {
                     MO_DBG_ERR("OOM");
                     return TriggerMessageStatus::ERR_INTERNAL;
@@ -219,7 +219,7 @@ void BootService::loop() {
      * Create BootNotification. The BootNotifaction object will fetch its paremeters from
      * this class and notify this class about the response
      */
-    auto bootNotification = makeRequest(context, new BootNotification(context, *this, context.getModelCommon().getHeartbeatService(), getBootNotificationData()));
+    auto bootNotification = makeRequest(context, new BootNotification(context, *this, context.getModelCommon().getHeartbeatService(), getBootNotificationData(), nullptr));
     bootNotification->setTimeout(interval_s);
     context.getMessageService().sendRequestPreBoot(std::move(bootNotification));
 
@@ -313,6 +313,7 @@ void BootService::setRetryInterval(int interval_s) {
         this->interval_s = MO_BOOT_INTERVAL_DEFAULT;
     } else {
         this->interval_s = interval_s;
+        this->interval_s += 1; //TC_B_03_CS expects retry after at least interval_s secs and doesn't tolerate network jitter
     }
     lastBootNotification = context.getClock().getUptime();
 }

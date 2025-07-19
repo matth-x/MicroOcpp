@@ -230,7 +230,7 @@ void VariableService::loop() {
 
     notifyReportInProgress = true;
 
-    context.getMessageService().sendRequest(std::move(notifyReport));
+    context.getMessageService().sendRequestPreBoot(std::move(notifyReport));
 }
 
 template<class T>

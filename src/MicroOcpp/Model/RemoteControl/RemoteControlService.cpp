@@ -284,6 +284,13 @@ bool RemoteControlService::addTriggerMessageHandler(const char *operationType, T
 #if MO_ENABLE_V16
 v16::RemoteStartStopStatus RemoteControlService::remoteStartTransaction(int connectorId, const char *idTag, std::unique_ptr<ChargingProfile> chargingProfile) {
 
+    if (auto bSvc = context.getModel16().getBootService()) {
+        if (bSvc->getRegistrationStatus() != RegistrationStatus::Accepted) {
+            MO_DBG_WARN("BootNotofication not accepted");
+            return v16::RemoteStartStopStatus::Rejected;
+        }
+    }
+    
     auto configService = context.getModel16().getConfigurationService();
     auto authorizeRemoteTxRequests = configService ? configService->declareConfiguration<bool>("AuthorizeRemoteTxRequests", false) : nullptr;
     if (!authorizeRemoteTxRequests) {
@@ -395,6 +402,13 @@ v16::RemoteStartStopStatus RemoteControlService::remoteStopTransaction(int trans
 #if MO_ENABLE_V201
 
 v201::RequestStartStopStatus RemoteControlService::requestStartTransaction(unsigned int evseId, unsigned int remoteStartId, v201::IdToken idToken, std::unique_ptr<ChargingProfile> chargingProfile, char *transactionIdOut, size_t transactionIdBufSize) {
+
+    if (auto bSvc = context.getModel201().getBootService()) {
+        if (bSvc->getRegistrationStatus() != RegistrationStatus::Accepted) {
+            MO_DBG_WARN("BootNotofication not accepted");
+            return v201::RequestStartStopStatus::Rejected;
+        }
+    }
 
     if (!txService201) {
         MO_DBG_ERR("TxService uninitialized");
