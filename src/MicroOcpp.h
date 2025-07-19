@@ -473,7 +473,7 @@ MO_FilesystemAdapter *mo_getFilesystem2(MO_Context *ctx);
 #if MO_ENABLE_MBEDTLS
 //Set FTP security parameters (e.g. client cert). See "FtpMbedTLS.h" for all options
 //To use a custom FTP client, subclass `FtpClient` (see "Ftp.h") and pass to C++ `Context` object
-void mo_setFtpConfig(MO_Context *ctx, MO_FTPConfig ftpConfig);
+void mo_setFtpConfig2(MO_Context *ctx, MO_FTPConfig ftpConfig);
 
 #if MO_ENABLE_DIAGNOSTICS
 //Provide MO with diagnostics data for the "GetDiagnostics" operation. Should contain human-readable text which

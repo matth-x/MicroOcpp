@@ -70,7 +70,7 @@ std::unique_ptr<JsonDoc> GetLog::createConf(){
     auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2));
     JsonObject payload = doc->to<JsonObject>();
     payload["status"] = mo_serializeGetLogStatus(status);
-    payload["fileName"] = (const char*)filename; //force zero-copy
+    payload["filename"] = (const char*)filename; //force zero-copy
     return doc;
 }
 

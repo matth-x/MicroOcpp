@@ -1868,7 +1868,7 @@ MO_FilesystemAdapter *mo_getFilesystem2(MO_Context *ctx) {
 }
 
 #if MO_ENABLE_MBEDTLS
-void mo_setFtpConfig(MO_Context *ctx, MO_FTPConfig ftpConfig) {
+void mo_setFtpConfig2(MO_Context *ctx, MO_FTPConfig ftpConfig) {
     if (!ctx) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;

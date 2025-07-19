@@ -347,7 +347,7 @@ bool DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned
 }
 #endif //MO_ENABLE_V16
 
-MO_GetLogStatus DiagnosticsService::getLog(MO_LogType type, int requestId, int retries, unsigned int retryInterval, const char *remoteLocation, Timestamp oldestTimestamp, Timestamp latestTimestamp, char filenameOut[MO_GETLOG_FNAME_SIZE]) {
+MO_GetLogStatus DiagnosticsService::getLog(MO_LogType type, int requestId, int retries, unsigned int retryInterval, const char *location, Timestamp oldestTimestamp, Timestamp latestTimestamp, char filenameOut[MO_GETLOG_FNAME_SIZE]) {
 
     if (runCustomUpload || this->retries > 0) {
         MO_DBG_INFO("upload still running");
@@ -405,11 +405,19 @@ MO_GetLogStatus DiagnosticsService::getLog(MO_LogType type, int requestId, int r
 
     MO_FREE(this->location);
     this->location = nullptr;
-    size_t locationSize = strlen(location);
+    size_t locationSize = strlen(location) + 1;
     this->location = static_cast<char*>(MO_MALLOC(getMemoryTag(), locationSize));
     if (!this->location) {
         MO_DBG_ERR("OOM");
         goto fail;
+    }
+
+    {
+        int ret = snprintf(this->location, locationSize, "%s", location);
+        if (ret < 0 || (size_t)ret >= locationSize) {
+            MO_DBG_ERR("snprintf: %i", ret);
+            goto fail;
+        }
     }
 
     MO_FREE(this->filename);
@@ -636,6 +644,7 @@ bool DiagnosticsService::uploadDiagnostics() {
     }
 
     diagPreambleLen += (size_t)ret;
+    ret = 0;
 
     #if MO_ENABLE_V16
     if (ocppVersion == MO_OCPP_V16) {
@@ -653,8 +662,6 @@ bool DiagnosticsService::uploadDiagnostics() {
         auto availSvcEvse0 = availSvc ? availSvc->getEvse(0) : nullptr;
         auto availSvcEvse1 = availSvc ? availSvc->getEvse(1) : nullptr;
         auto availSvcEvse2 = availSvc ? availSvc->getEvse(2) : nullptr;
-
-        ret = 0;
 
         if (ret >= 0 && (size_t)ret + diagPostambleLen < MO_DIAG_POSTAMBLE_SIZE) {
             diagPostambleLen += (size_t)ret;
@@ -923,7 +930,6 @@ bool DiagnosticsService::startFtpUpload() {
 
                         memcpy(buf + written, fileHeading, (size_t)writeLen);
                         written += (size_t)writeLen;
-                        filesystem->close(file);
                     }
 
                     filesystem->seek(file, diagFilesBackTransferred);
