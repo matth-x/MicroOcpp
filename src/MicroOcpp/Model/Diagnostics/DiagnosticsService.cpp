@@ -626,7 +626,7 @@ bool DiagnosticsService::uploadDiagnostics() {
     int ret;
 
     ret = snprintf(diagPreamble, MO_DIAG_PREAMBLE_SIZE,
-            "### %s Security Log%s%s\n%s\n",
+            "### %s Hardware Diagnostics%s%s\n%s\n",
             cpModel ? cpModel : "Charger",
             fwVersion ? " - v. " : "", fwVersion ? fwVersion : "",
             jsonDate);
@@ -774,8 +774,8 @@ bool DiagnosticsService::uploadSecurityLog() {
 
     diagReaderHasData = false;
 
-    auto cpModel = makeString(getMemoryTag());
-    auto fwVersion = makeString(getMemoryTag());
+    const char *cpModel = nullptr;
+    const char *fwVersion = nullptr;
 
     if (auto bootService = context.getModelCommon().getBootService()) {
         auto bnData = bootService->getBootNotificationData();
@@ -792,9 +792,9 @@ bool DiagnosticsService::uploadSecurityLog() {
     int ret;
 
     ret = snprintf(diagPreamble, MO_DIAG_PREAMBLE_SIZE,
-            "### %s Hardware Diagnostics%s%s\n%s\n",
-            cpModel.c_str(),
-            fwVersion.empty() ? "" : " - v. ", fwVersion.c_str(),
+            "### %s Security Log%s%s\n%s\n",
+            cpModel ? cpModel : "Charger",
+            fwVersion ? " - v. " : "", fwVersion ? fwVersion : "",
             jsonDate);
 
     if (ret < 0 || (size_t)ret >= MO_DIAG_PREAMBLE_SIZE) {

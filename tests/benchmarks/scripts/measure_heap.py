@@ -100,6 +100,7 @@ testcase_name_list = [
     'TC_J_10_CS',
     'TC_N_25_CS',
     'TC_N_26_CS',
+    'TC_N_35_CS',
 ]
 
 # Result data set
