@@ -27,7 +27,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
         return;
     }
 
-    int retries = payload["retries"] | 1;
+    int retries = payload["retries"] | 0;
     int retryInterval = payload["retryInterval"] | 180;
     if (retries < 0 || retryInterval < 0) {
         errorCode = "PropertyConstraintViolation";

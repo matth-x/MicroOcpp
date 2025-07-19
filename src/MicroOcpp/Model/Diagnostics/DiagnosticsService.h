@@ -67,7 +67,7 @@ private:
     int requestId = -1;
     char *location = nullptr;
     char *filename = nullptr;
-    int retries = 0;
+    int retries = -1;
     int retryInterval = 0;
     Timestamp oldestTimestamp;
     Timestamp latestTimestamp;

@@ -238,7 +238,7 @@ void DiagnosticsService::loop() {
         dtNextTry = -1;
     }
 
-    if (retries > 0 && dtNextTry >= 0) {
+    if (retries >= 0 && dtNextTry >= 0) {
 
         if (!uploadIssued) {
 
@@ -261,7 +261,7 @@ void DiagnosticsService::loop() {
                 uploadFailure = false;
             } else {
                 MO_DBG_ERR("cannot upload via FTP. Abort");
-                retries = 0;
+                retries = -1;
                 uploadIssued = false;
                 uploadFailure = true;
                 cleanUploadData();
@@ -274,7 +274,7 @@ void DiagnosticsService::loop() {
                 //success!
                 MO_DBG_DEBUG("end upload routine (by status)");
                 uploadIssued = false;
-                retries = 0;
+                retries = -1;
                 cleanUploadData();
                 cleanGetLogData();
             }
@@ -303,17 +303,12 @@ void DiagnosticsService::loop() {
                 //either we have UploadFailed status or (NotUploaded + timeout) here
                 MO_DBG_WARN("Upload timeout or failed");
                 cleanUploadData();
+                uploadIssued = false;
 
-                const int TRANSITION_DELAY = 10;
-                if (retryInterval <= UPLOAD_TIMEOUT + TRANSITION_DELAY) {
-                    nextTry = clock.getUptime();
-                    clock.add(nextTry, TRANSITION_DELAY); //wait for another 10 seconds
-                } else {
-                    clock.add(nextTry, retryInterval);
-                }
+                clock.add(nextTry, retryInterval);
                 retries--;
 
-                if (retries == 0) {
+                if (retries < 0) {
                     MO_DBG_DEBUG("end upload routine (no more retry)");
                     uploadFailure = true;
                     cleanGetLogData();
@@ -349,7 +344,7 @@ bool DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned
 
 MO_GetLogStatus DiagnosticsService::getLog(MO_LogType type, int requestId, int retries, unsigned int retryInterval, const char *location, Timestamp oldestTimestamp, Timestamp latestTimestamp, char filenameOut[MO_GETLOG_FNAME_SIZE]) {
 
-    if (runCustomUpload || this->retries > 0) {
+    if (runCustomUpload || this->retries >= 0) {
         MO_DBG_INFO("upload still running");
         return MO_GetLogStatus_Rejected;
     }
@@ -444,8 +439,8 @@ MO_GetLogStatus DiagnosticsService::getLog(MO_LogType type, int requestId, int r
     snprintf(this->filename, filenameSize, "%s", filenameOut);
 
     this->logType = type;
-    this->retries = retries > 0 ? retries : 1;
-    this->retryInterval = retryInterval > 30 ? retryInterval : 30;
+    this->retries = retries >= 0 ? retries : 0;
+    this->retryInterval = retryInterval >= 0 ? retryInterval : 30;
     this->oldestTimestamp = oldestTimestamp;
     this->latestTimestamp = latestTimestamp;
 
@@ -475,7 +470,6 @@ MO_GetLogStatus DiagnosticsService::getLog(MO_LogType type, int requestId, int r
 #endif
 
     nextTry = clock.now();
-    clock.add(nextTry, 5); //wait for 5s before upload
     uploadIssued = false;
     uploadFailure = false;
 
@@ -496,7 +490,7 @@ fail:
 }
 
 int DiagnosticsService::getRequestId() {
-    if (runCustomUpload || this->retries > 0) {
+    if (runCustomUpload || this->retries >= 0) {
         return requestId;
     } else {
         return -1;
@@ -1000,7 +994,7 @@ void DiagnosticsService::cleanGetLogData() {
     location = nullptr;
     MO_FREE(filename);
     filename = nullptr;
-    retries = 0;
+    retries = -1;
     retryInterval = 0;
     oldestTimestamp = Timestamp();
     latestTimestamp = Timestamp();
