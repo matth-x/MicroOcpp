@@ -661,10 +661,10 @@ std::unique_ptr<Request> v16::MeteringServiceEvse::fetchFrontRequest() {
         return nullptr;
     }
 
-    int32_t dtLastAttempt;
-    if (!clock.delta(clock.getUptime(), meterDataFront->attemptTime, dtLastAttempt)) {
+    int32_t dtLastAttempt = MO_MAX_TIME;
+    if (meterDataFront->attemptTime.isDefined() &&
+            !clock.delta(clock.getUptime(), meterDataFront->attemptTime, dtLastAttempt)) {
         MO_DBG_ERR("internal error");
-        dtLastAttempt = 0;
     }
 
     if (dtLastAttempt < (int)meterDataFront->attemptNr * std::max(0, mService.transactionMessageRetryIntervalInt->getInt())) {

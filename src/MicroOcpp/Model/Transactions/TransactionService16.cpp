@@ -1191,10 +1191,10 @@ std::unique_ptr<Request> TransactionServiceEvse::fetchFrontRequest() {
                 return nullptr;
             }
 
-            int32_t dtLastAttempt;
-            if (!clock.delta(clock.now(), transactionFront->getStartSync().getAttemptTime(), dtLastAttempt)) {
+            int32_t dtLastAttempt = MO_MAX_TIME;
+            if (transactionFront->getStartSync().getAttemptTime().isDefined() &&
+                    !clock.delta(clock.now(), transactionFront->getStartSync().getAttemptTime(), dtLastAttempt)) {
                 MO_DBG_ERR("internal error");
-                dtLastAttempt = 0;
             }
 
             if (dtLastAttempt < (int)transactionFront->getStartSync().getAttemptNr() * std::max(0, cService.transactionMessageRetryIntervalInt->getInt())) {
@@ -1318,10 +1318,10 @@ std::unique_ptr<Request> TransactionServiceEvse::fetchFrontRequest() {
                 }
             }
 
-            int32_t dtLastAttempt;
-            if (!clock.delta(clock.now(), transactionFront->getStopSync().getAttemptTime(), dtLastAttempt)) {
+            int32_t dtLastAttempt = MO_MAX_TIME;
+            if (transactionFront->getStopSync().getAttemptTime().isDefined() &&
+                    !clock.delta(clock.now(), transactionFront->getStopSync().getAttemptTime(), dtLastAttempt)) {
                 MO_DBG_ERR("internal error");
-                dtLastAttempt = 0;
             }
 
             if (dtLastAttempt < (int)transactionFront->getStopSync().getAttemptNr() * std::max(0, cService.transactionMessageRetryIntervalInt->getInt())) {

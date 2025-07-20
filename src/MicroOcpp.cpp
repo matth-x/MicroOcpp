@@ -278,7 +278,7 @@ bool mo_setEnergyMeterInput2(MO_Context *ctx, unsigned int evseId, int32_t (*ene
     mInput.measurand = "Energy.Active.Import.Register";
     mInput.unit = "Wh";
     mInput.user_data = userData;
-    return mo_addMeterValueInput(ctx, EVSE_ID_1, mInput);
+    return mo_addMeterValueInput(ctx, evseId, mInput);
 }
 
 //Input of the power meter reading in W
@@ -297,7 +297,8 @@ bool mo_setPowerMeterInput2(MO_Context *ctx, unsigned int evseId, float (*powerI
     mInput.getFloat2 = powerInput2;
     mInput.measurand = "Power.Active.Import";
     mInput.unit = "W";
-    return mo_addMeterValueInput(ctx, EVSE_ID_1, mInput);
+    mInput.user_data = userData;
+    return mo_addMeterValueInput(ctx, evseId, mInput);
 }
 
 //Smart Charging Output
