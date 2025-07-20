@@ -8,7 +8,7 @@ In general, microcontrollers have three relevant hardware constraints:
 - Limited memory size
 - Limited flash size
 
-For OCPP, the relevant bottlenecks are especially the memory and flash size. The processing speed is no concern, since OCPP is not computationally complex and does not include any extensive planning algorithms on the charger size. A previous [benchmark on the ESP-IDF](https://github.com/matth-x/MicroOcpp-benchmark) showed that the processing times are in the lower milliseconds range and are probably outweighed by IO times and network round trip times.
+For OCPP, the relevant bottlenecks are especially the memory and flash size. The processing speed is no concern, since OCPP is not computationally complex and does not include any extensive planning algorithms on the charger side. A previous [benchmark on the ESP-IDF](https://github.com/matth-x/MicroOcpp-benchmark) showed that the processing times are in the lower milliseconds range and are probably outweighed by IO times and network round trip times.
 
 However, the memory and flash requirements are important figures, because the device model of OCPP has a significant size. The microcontroller needs to keep the model data in the heap memory for the largest part and the firmware which covers the corresponding processing routines needs to have sufficient space on flash.
 
@@ -20,19 +20,11 @@ When compiling a firmware with MicroOCPP, the resulting binary will contain func
 
 For the flash benchmark, the profiler compiles a [dummy OCPP firmware](https://github.com/matth-x/MicroOcpp/tree/main/tests/benchmarks/firmware_size/main.cpp), analyzes the size of the compilation units using [bloaty](https://github.com/google/bloaty) and evaluates the bloaty report using a [Python script](https://github.com/matth-x/MicroOcpp/tree/main/tests/benchmarks/scripts/eval_firmware_size.py). To give realistic results, the firwmare is compiled with `-Os`, no RTTI or exceptions and newlib as the standard C library. The following tables show the results.
 
-### OCPP 1.6
-
-The following table shows the cumulated size of the objects files per module. The Module category consists of the OCPP 2.0.1 functional blocks, OCPP 1.6 feature profiles and general functionality which is shared accross the library. If a feature of the implementation falls under both an OCPP 2.0.1 functional block and OCPP 1.6 feature profile definition, it is preferrably assigned to the OCPP 2.0.1 category. This allows for better comparability between both OCPP versions.
+The following table shows the firmware size of each functional block. Their scope is defined in OCPP 2.0.1 and the 1.6 implementation follows the same scope. Since some code is reused between 1.6 and 2.0.1, the firmware size was taken in three configurations, one to only support 1.6, one for 2.0.1 only and one to enable both OCPP versions (the firmware can select the OCPP version during runtime). These configurations are shown per separate columns.
 
 **Table 1: Firmware size per Module**
 
-{{ read_csv('modules_v16.csv') }}
-
-### OCPP 2.0.1
-
-**Table 2: Firmware size per Module**
-
-{{ read_csv('modules_v201.csv') }}
+{{ read_csv('modules.csv') }}
 
 ## Memory usage
 
@@ -42,7 +34,7 @@ Another important figure is the base level which is much closer to the average h
 
 The following table shows the dynamic heap usage for a variety of test cases, followed by the base level and resulting maximum memory occupation of MicroOCPP. At the time being, the measurements are limited to only OCPP 2.0.1 and a narrow set of test cases. They will be gradually extended over time.
 
-**Table 3: Memory usage per use case and total**
+**Table 2: Memory usage per use case and total**
 
 {{ read_csv('heap_v201.csv') }}
 
@@ -50,10 +42,6 @@ The following table shows the dynamic heap usage for a variety of test cases, fo
 
 This section contains the raw data which is the basis for the evaluations above.
 
-**Table 4: All compilation units for OCPP 1.6 firmware**
+**Table 3: All compilation units for OCPP 1.6 firmware**
 
-{{ read_csv('compile_units_v16.csv') }}
-
-**Table 5: All compilation units for OCPP 2.0.1 firmware**
-
-{{ read_csv('compile_units_v201.csv') }}
+{{ read_csv('compile_units.csv') }}
