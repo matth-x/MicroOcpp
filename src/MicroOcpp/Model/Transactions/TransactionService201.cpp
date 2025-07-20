@@ -1032,10 +1032,9 @@ std::unique_ptr<Request> TransactionServiceEvse::fetchFrontRequest() {
         return nullptr;
     }
 
-    int32_t dtLastAttempt;
-    if (!clock.delta(clock.now(), txEventFront->attemptTime, dtLastAttempt)) {
+    int32_t dtLastAttempt = MO_MAX_TIME;
+    if (txEventFront->attemptTime.isDefined() && !clock.delta(clock.now(), txEventFront->attemptTime, dtLastAttempt)) {
         MO_DBG_ERR("internal error");
-        dtLastAttempt = MO_MAX_TIME;
     }
 
     if (dtLastAttempt < (int)txEventFront->attemptNr * std::max(0, txService.messageAttemptIntervalTransactionEventInt->getInt())) {

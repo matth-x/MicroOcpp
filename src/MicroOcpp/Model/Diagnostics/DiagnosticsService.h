@@ -154,10 +154,10 @@ public:
     //timestamps before year 2021 will be treated as "undefined"
     //returns empty std::string if onUpload is missing or upload cannot be scheduled for another reason
     //returns fileName of diagnostics file to be uploaded if upload has been scheduled
-    bool requestDiagnosticsUpload(const char *location, unsigned int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime, char filenameOut[MO_GETLOG_FNAME_SIZE]);
+    bool requestDiagnosticsUpload(const char *location, unsigned int retries, int retryInterval, Timestamp startTime, Timestamp stopTime, char filenameOut[MO_GETLOG_FNAME_SIZE]);
 #endif //MO_ENABLE_V16
 
-    MO_GetLogStatus getLog(MO_LogType type, int requestId, int retries, unsigned int retryInterval, const char *remoteLocation, Timestamp oldestTimestamp, Timestamp latestTimestamp, char filenameOut[MO_GETLOG_FNAME_SIZE]);
+    MO_GetLogStatus getLog(MO_LogType type, int requestId, int retries, int retryInterval, const char *remoteLocation, Timestamp oldestTimestamp, Timestamp latestTimestamp, char filenameOut[MO_GETLOG_FNAME_SIZE]);
 
     //for TriggerMessage
     int getRequestId();

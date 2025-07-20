@@ -36,9 +36,8 @@ Timestamp::Timestamp() : MemoryManaged("Timestamp") {
 
 }
 
-Timestamp::Timestamp(const Timestamp& other) {
+Timestamp::Timestamp(const Timestamp& other) :  MemoryManaged(other.getMemoryTag()) {
     *this = other;
-    updateMemoryTag(other.getMemoryTag(), nullptr);
 }
 
 bool Timestamp::isUnixTime() const {

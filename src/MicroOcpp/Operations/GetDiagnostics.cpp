@@ -52,7 +52,7 @@ void GetDiagnostics::processReq(JsonObject payload) {
         }
     }
 
-    (void)diagService.requestDiagnosticsUpload(location, (unsigned int) retries, (unsigned int) retryInterval, startTime, stopTime, filename);
+    (void)diagService.requestDiagnosticsUpload(location, (unsigned int) retries, retryInterval, startTime, stopTime, filename);
 }
 
 std::unique_ptr<JsonDoc> GetDiagnostics::createConf(){

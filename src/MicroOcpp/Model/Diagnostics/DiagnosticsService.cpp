@@ -319,7 +319,7 @@ void DiagnosticsService::loop() {
 }
 
 #if MO_ENABLE_V16
-bool DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime, char filenameOut[MO_GETLOG_FNAME_SIZE]) {
+bool DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned int retries, int retryInterval, Timestamp startTime, Timestamp stopTime, char filenameOut[MO_GETLOG_FNAME_SIZE]) {
 
     bool success = false;
 
@@ -342,7 +342,7 @@ bool DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned
 }
 #endif //MO_ENABLE_V16
 
-MO_GetLogStatus DiagnosticsService::getLog(MO_LogType type, int requestId, int retries, unsigned int retryInterval, const char *location, Timestamp oldestTimestamp, Timestamp latestTimestamp, char filenameOut[MO_GETLOG_FNAME_SIZE]) {
+MO_GetLogStatus DiagnosticsService::getLog(MO_LogType type, int requestId, int retries, int retryInterval, const char *location, Timestamp oldestTimestamp, Timestamp latestTimestamp, char filenameOut[MO_GETLOG_FNAME_SIZE]) {
 
     if (runCustomUpload || this->retries >= 0) {
         MO_DBG_INFO("upload still running");
