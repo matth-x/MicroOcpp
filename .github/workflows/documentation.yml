@@ -34,7 +34,7 @@ jobs:
       with:
         repository: matth-x/MicroOcppSimulator
         path: MicroOcppSimulator
-        ref: 65b1c2e9c8a3f40907a823a0bc2f657423ebef65
+        ref: 491ff2f3b48d5b668a327b21cf5080e818f42a22
         submodules: 'recursive'
     - name: Clean MicroOcpp submodule
       run: |
