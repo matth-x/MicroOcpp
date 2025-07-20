@@ -174,7 +174,7 @@ bool AuthorizationList::readJson(Clock& clock, JsonArray authlistJson, int listV
     // Insert new entries
     for (size_t i = 0; i < authlistJson.size(); i++) {
 
-        if (!authlistJson[i].containsKey(AUTHDATA_KEY_IDTAGINFO)) {
+        if (!internalFormat && !authlistJson[i].containsKey(AUTHDATA_KEY_IDTAGINFO)) {
             // remove already handled above
             continue;
         }
@@ -206,6 +206,20 @@ bool AuthorizationList::readJson(Clock& clock, JsonArray authlistJson, int listV
             resList[resWritten] = updateList[updateWritten];
             updateWritten++;
             resWritten++;
+        }
+    }
+
+    // sanity check 1
+    if (resWritten != resListSize) {
+        MO_DBG_ERR("internal error");
+        goto fail;
+    }
+
+    // sanity check 2
+    for (size_t i = 0; i < resListSize; i++) {
+        if (!resList[i]) {
+            MO_DBG_ERR("internal error");
+            goto fail;
         }
     }
 
