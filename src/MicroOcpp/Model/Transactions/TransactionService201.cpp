@@ -402,6 +402,8 @@ void TransactionServiceEvse::loop() {
             txStartCondition = true;
             if (transaction->remoteStartId >= 0) {
                 triggerReason = MO_TxEventTriggerReason_RemoteStart;
+            } else if (!transaction->trackAuthorized) {
+                triggerReason = MO_TxEventTriggerReason_Authorized;
             } else {
                 triggerReason = MO_TxEventTriggerReason_CablePluggedIn;
             }
