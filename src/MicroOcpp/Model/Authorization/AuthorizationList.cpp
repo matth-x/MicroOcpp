@@ -226,8 +226,8 @@ bool AuthorizationList::readJson(Clock& clock, JsonArray authlistJson, int listV
     qsort(resList, resListSize, sizeof(resList[0]),
         [] (const void* a,const void* b) -> int {
             return strcmp(
-                reinterpret_cast<const AuthorizationData*>(a)->getIdTag(),
-                reinterpret_cast<const AuthorizationData*>(b)->getIdTag());
+                (*reinterpret_cast<const AuthorizationData* const *>(a))->getIdTag(),
+                (*reinterpret_cast<const AuthorizationData* const *>(b))->getIdTag());
         });
 
     // success
