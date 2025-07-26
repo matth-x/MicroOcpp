@@ -117,8 +117,30 @@ Connector::Connector(Context& context, std::shared_ptr<FilesystemAdapter> filesy
     txNrFront = txNrBegin;
 
     if (model.getTransactionStore()) {
-        unsigned int txNrLatest = (txNrEnd + MAX_TX_CNT - 1) % MAX_TX_CNT; //txNr of the most recent tx on flash
-        transaction = model.getTransactionStore()->getTransaction(connectorId, txNrLatest); //returns nullptr if txNrLatest does not exist on flash
+
+        //find and preload front transaction
+        unsigned int txSize = (txNrEnd + MAX_TX_CNT - txNrFront) % MAX_TX_CNT;
+        for (unsigned int i = 0; i < txSize; i++) {
+
+            transactionFront = model.getTransactionStore()->getTransaction(connectorId, txNrFront);
+
+            if (!transactionFront || (transactionFront->isAborted() || transactionFront->isCompleted() || transactionFront->isSilent())) {
+                //advance front
+                transactionFront = nullptr;
+                txNrFront = (txNrFront + 1) % MAX_TX_CNT;
+                MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
+            } else {
+                //front is accurate. Done here
+                break;
+            }
+        }
+
+        //preload back transaction
+        if (txNrEnd != txNrBegin) {
+            //there exists at least 1 transaction. Take most recent
+            unsigned int txNrLatest = (txNrEnd + MAX_TX_CNT - 1) % MAX_TX_CNT; //txNr of the most recent tx on flash
+            transaction = model.getTransactionStore()->getTransaction(connectorId, txNrLatest); //returns nullptr if txNrLatest does not exist on flash
+        }
     } else {
         MO_DBG_ERR("must initialize TxStore before Connector");
     }
@@ -249,9 +271,11 @@ void Connector::loop() {
         }
     }
 
-    if (transaction && ((transaction->isAborted() && MO_TX_CLEAN_ABORTED) || (transaction->isSilent() && transaction->getStopSync().isRequested()))) {
+    if (transaction && ((transaction->isAborted() && MO_TX_CLEAN_ABORTED) || (transaction->isSilent() && transaction->getStopSync().isRequested())) &&
+            transaction->getTxNr() != txNrFront) {
         //If the transaction is aborted (invalidated before started) or is silent and has stopped. Delete all artifacts from flash
         //This is an optimization. The memory management will attempt to remove those files again later
+        //Don't do this if tx is at front. Then, `getFrontRequestOpNr()` has responsibility for object lifecycle
         bool removed = true;
         if (auto mService = model.getMeteringService()) {
             mService->abortTxMeterData(connectorId);
@@ -263,9 +287,6 @@ void Connector::loop() {
         }
 
         if (removed) {
-            if (txNrFront == txNrEnd) {
-                txNrFront = transaction->getTxNr();
-            }
             txNrEnd = transaction->getTxNr(); //roll back creation of last tx entry
         }
 
@@ -549,10 +570,10 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
 
     std::shared_ptr<Transaction> tx;
 
-    //clean possible aborted tx
+    //clean possible aborted tx. Go from one after front to end (all unsent messages, but skip front)
     unsigned int txr = txNrEnd;
-    unsigned int txSize = (txNrEnd + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT;
-    for (unsigned int i = 0; i < txSize; i++) {
+    unsigned int txSize = (txNrEnd + MAX_TX_CNT - txNrFront) % MAX_TX_CNT;
+    for (unsigned int i = 0; i + 1 < txSize; i++) {
         txr = (txr + MAX_TX_CNT - 1) % MAX_TX_CNT; //decrement by 1
 
         auto tx = model.getTransactionStore()->getTransaction(connectorId, txr);
@@ -567,9 +588,6 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
                 removed &= model.getTransactionStore()->remove(connectorId, txr);
             }
             if (removed) {
-                if (txNrFront == txNrEnd) {
-                    txNrFront = txr;
-                }
                 txNrEnd = txr;
                 MO_DBG_WARN("deleted dangling silent or aborted tx for new transaction");
             } else {
@@ -593,7 +611,7 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
         //could not create transaction - now, try to replace tx history entry
 
         unsigned int txl = txNrBegin;
-        txSize = (txNrEnd + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT;
+        txSize = (txNrFront + MAX_TX_CNT - txNrBegin) % MAX_TX_CNT; //range from oldest history tx to one tx before front
 
         for (unsigned int i = 0; i < txSize; i++) {
 
@@ -617,9 +635,6 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
                 }
                 if (removed) {
                     txNrBegin = (txl + 1) % MAX_TX_CNT;
-                    if (txNrFront == txl) {
-                        txNrFront = txNrBegin;
-                    }
                     MO_DBG_DEBUG("deleted tx history entry for new transaction");
                     MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
 
@@ -1085,13 +1100,6 @@ unsigned int Connector::getFrontRequestOpNr() {
 
     unsigned int txSize = (txNrEnd + MAX_TX_CNT - txNrFront) % MAX_TX_CNT;
 
-    if (transactionFront && txSize == 0) {
-        //catch edge case where txBack has been rolled back and txFront was equal to txBack
-        MO_DBG_DEBUG("collect front transaction %u-%u after tx rollback", connectorId, transactionFront->getTxNr());
-        MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
-        transactionFront = nullptr;
-    }
-
     for (unsigned int i = 0; i < txSize; i++) {
 
         if (!transactionFront) {
@@ -1105,9 +1113,14 @@ unsigned int Connector::getFrontRequestOpNr() {
             #endif
         }
 
-        if (transactionFront && (transactionFront->isAborted() || transactionFront->isCompleted() || transactionFront->isSilent())) {
+        if (transactionFront && transactionFront == transaction) {
+            // Don't advance front tx beyond back tx
+            break;
+        }
+
+        if (!transactionFront || (transactionFront->isAborted() || transactionFront->isCompleted() || transactionFront->isSilent())) {
             //advance front
-            MO_DBG_DEBUG("collect front transaction %u-%u", connectorId, transactionFront->getTxNr());
+            MO_DBG_DEBUG("collect front transaction %u-%u", connectorId, txNrFront);
             transactionFront = nullptr;
             txNrFront = (txNrFront + 1) % MAX_TX_CNT;
             MO_DBG_VERBOSE("txNrBegin=%u, txNrFront=%u, txNrEnd=%u", txNrBegin, txNrFront, txNrEnd);
