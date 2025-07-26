@@ -245,7 +245,7 @@ bool VariableContainerOwning::commit() {
 
     JsonArray variablesJson = doc.createNestedArray("variables");
 
-    for (size_t i = 0; i < variableCapacity; i++) {
+    for (size_t i = 0; i < variables.size(); i++) {
         auto& variable = *variables[i];
 
         if (!variable.isPersistent()) {

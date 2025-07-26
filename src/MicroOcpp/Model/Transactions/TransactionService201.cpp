@@ -242,14 +242,15 @@ TransactionEventData::ChargingState TransactionServiceEvse::getChargingState() {
     auto res = TransactionEventData::ChargingState::Idle;
     if (connectorPluggedInput && !connectorPluggedInput(evseId, connectorPluggedInputUserData)) {
         res = TransactionEventData::ChargingState::Idle;
-    } else if (!transaction || !transaction->isAuthorizationActive || !transaction->isAuthorized) {
+    } else if (!transaction || !transaction->isAuthorizationActive || !transaction->isAuthorized ||
+            (evseReadyInput && !evseReadyInput(evseId, evseReadyInputUserData))) {
         res = TransactionEventData::ChargingState::EVConnected;
-    } else if (evseReadyInput && !evseReadyInput(evseId, evseReadyInputUserData)) {
-        res = TransactionEventData::ChargingState::SuspendedEVSE;
     } else if (evReadyInput && !evReadyInput(evseId, evReadyInputUserData)) {
         res = TransactionEventData::ChargingState::SuspendedEV;
     } else if (ocppPermitsCharge()) {
         res = TransactionEventData::ChargingState::Charging;
+    } else {
+        res = TransactionEventData::ChargingState::SuspendedEVSE;
     }
     return res;
 }
