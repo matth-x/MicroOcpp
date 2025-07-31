@@ -538,7 +538,6 @@ void Connector::loop() {
                 makeRequest(
                     new Ocpp16::StatusNotification(connectorId, reportedStatus, reportedTimestamp, errorData));
 
-        statusNotification->setTimeout(0);
         context.initiateRequest(std::move(statusNotification));
         return;
     }
