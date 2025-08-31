@@ -279,6 +279,13 @@ bool MessageService::setOnSendConf(const char *operationType, void (*onConfirmat
     return appendEntry(sendConfListeners, listener);
 }
 
+void MessageService::clearRegisteredOperation(const char *operationType) {
+    removeEntry(operationRegistry, operationType);
+    removeEntry(operationRegistry2, operationType);
+    removeEntry(receiveRequestListeners, operationType);
+    removeEntry(sendConfListeners, operationType);
+}
+
 std::unique_ptr<Request> MessageService::createRequest(const char *operationType) {
 
     Operation *operation = nullptr;

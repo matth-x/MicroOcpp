@@ -60,7 +60,9 @@ enum class StoreStatus : uint8_t {
 StoreStatus storeJson(MO_FilesystemAdapter *filesystem, const char *fname, const JsonDoc& doc);
 
 /*
- * Removes files in the MO folder whose file names start with `fnamePrefix`.
+ * Removes files in the MO folder whose file names start with `fnamePrefix`. Returns false if there
+ * was an error deleting a file. Returns true if the files were deleted successfully, or there was
+ * no file to delete
  */
 bool removeByPrefix(MO_FilesystemAdapter *filesystem, const char *fnamePrefix);
 

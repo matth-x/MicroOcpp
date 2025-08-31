@@ -155,7 +155,6 @@ void v16::AvailabilityServiceEvse::loop() {
             MO_DBG_ERR("OOM");
             return;
         }
-        statusNotification->setTimeout(0);
         context.getMessageService().sendRequest(std::move(statusNotification));
         return;
     }
@@ -451,7 +450,6 @@ void v201::AvailabilityServiceEvse::loop() {
                 context.getClock().now().isUnixTime()) {
 
             auto statusNotification = makeRequest(context, new StatusNotification(context, evseId, status, context.getClock().now()));
-            statusNotification->setTimeout(0);
             context.getMessageService().sendRequest(std::move(statusNotification));
             reportedStatus = status;
             return;

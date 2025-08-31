@@ -271,6 +271,7 @@ void v16::Model::updateSupportedStandardProfiles() {
         }
     }
 
+#if MO_ENABLE_FIRMWAREMANAGEMENT && MO_ENABLE_DIAGNOSTICS
     if (firmwareService ||
             getDiagnosticsService()) {
         if (!strstr(supportedFeatureProfilesString->getString(), "FirmwareManagement")) {
@@ -278,6 +279,7 @@ void v16::Model::updateSupportedStandardProfiles() {
             buf += "FirmwareManagement";
         }
     }
+#endif //MO_ENABLE_FIRMWAREMANAGEMENT && MO_ENABLE_DIAGNOSTICS
 
 #if MO_ENABLE_LOCAL_AUTH
     if (authorizationService) {

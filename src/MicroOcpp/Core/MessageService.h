@@ -72,6 +72,12 @@ private:
 public:
     MessageService(Context& context);
 
+    // handle Requests from the OCPP Server
+    bool registerOperation(const char *operationType, Operation* (*createOperationCb)(Context& context));
+    bool registerOperation(const char *operationType, void (*onRequest)(const char *operationType, const char *payloadJson, void **userStatus, void *userData), int (*writeResponse)(const char *operationType, char *buf, size_t size, void *userStatus, void *userData), void (*finally)(const char *operationType, void *userStatus, void *userData) = nullptr, void *userData = nullptr);
+    bool setOnReceiveRequest(const char *operationType, void (*onRequest)(const char *operationType, const char *payloadJson, void *userData), void *userData = nullptr);
+    bool setOnSendConf(const char *operationType, void (*onConfirmation)(const char *operationType, const char *payloadJson, void *userData), void *userData = nullptr);
+
     bool setup();
 
     void loop(); //polls all reqQueues and decides which request to send (if any)
@@ -80,14 +86,13 @@ public:
     bool sendRequest(std::unique_ptr<Request> request); //send an OCPP operation request to the server; adds request to default queue
     bool sendRequestPreBoot(std::unique_ptr<Request> request); //send an OCPP operation request to the server; adds request to preBootQueue
 
-    // handle Requests from the OCPP Server
-    bool registerOperation(const char *operationType, Operation* (*createOperationCb)(Context& context));
-    bool registerOperation(const char *operationType, void (*onRequest)(const char *operationType, const char *payloadJson, void **userStatus, void *userData), int (*writeResponse)(const char *operationType, char *buf, size_t size, void *userStatus, void *userData), void (*finally)(const char *operationType, void *userStatus, void *userData) = nullptr, void *userData = nullptr);
-    bool setOnReceiveRequest(const char *operationType, void (*onRequest)(const char *operationType, const char *payloadJson, void *userData), void *userData = nullptr);
-    bool setOnSendConf(const char *operationType, void (*onConfirmation)(const char *operationType, const char *payloadJson, void *userData), void *userData = nullptr);
-
     // process message from server ("message" = serialized Request or Confirmation)
     bool receiveMessage(const char* payload, size_t length);
+
+    // Undo `registerOperation()`, `setOnReceiveRequest()` and `setOnSendConf()` for specific operation type.
+    // Necessary to re-register different operation handler after `mo_setup()`. MO will clear all registered
+    // handlers during `mo_deinitialize()` automatically.
+    void clearRegisteredOperation(const char *operationType);
 
     // Outgoing Requests are handled in separate queues.
     void addSendQueue(RequestQueue* sendQueue);

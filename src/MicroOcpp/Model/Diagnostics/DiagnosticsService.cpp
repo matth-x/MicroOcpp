@@ -1006,8 +1006,6 @@ void DiagnosticsService::setFtpServerCert(const char *cert) {
 
 } //namespace MicroOcpp
 
-#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_DIAGNOSTICS
-
 #if MO_USE_DIAGNOSTICS == MO_DIAGNOSTICS_BUILTIN_MBEDTLS_ESP32
 
 #include "esp_heap_caps.h"
@@ -1049,3 +1047,5 @@ void defaultDiagnosticsOnClose(void*) {
 } //namespace MicroOcpp
 
 #endif //MO_USE_DIAGNOSTICS
+
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_DIAGNOSTICS

@@ -145,10 +145,10 @@ set(MO_SRC_UNIT
     #tests/Configuration.cpp
     #tests/Reservation.cpp
     #tests/Reset.cpp
-    #tests/LocalAuthList.cpp
+    tests/LocalAuthList.cpp
     #tests/Variables.cpp
     #tests/Transactions.cpp
-    #tests/Certificates.cpp
+    tests/Certificates.cpp
     #tests/FirmwareManagement.cpp
     #tests/ChargePointError.cpp
     #tests/Boot.cpp
@@ -196,6 +196,7 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_MaxChargingProfilesInstalled=3
     MO_ENABLE_CERT_MGMT=1
     MO_ENABLE_CONNECTOR_LOCK=1
+    MO_ENABLE_DIAGNOSTICS=0
     MO_REPORT_NOERROR=1
     MO_ENABLE_V201=1
     MO_OVERRIDE_ALLOCATION=1
