@@ -477,7 +477,7 @@ bool SecurityEventService::triggerSecurityEvent(const char *eventType) {
 
     if (fileNrBegin != fileNrEnd) {
 
-        unsigned int fileNrBack = (fileNrEnd + MO_SECLOG_INDEX_MAX - 1) % MO_SECLOG_INDEX_MAX;
+        fileNrBack = (fileNrEnd + MO_SECLOG_INDEX_MAX - 1) % MO_SECLOG_INDEX_MAX;
 
         char fn [MO_MAX_PATH_SIZE] = {'\0'};
         auto ret = snprintf(fn, sizeof(fn), MO_SECLOG_FN_PREFIX "%u.jsn", fileNrBack);
@@ -536,7 +536,7 @@ bool SecurityEventService::triggerSecurityEvent(const char *eventType) {
 
         char path [MO_MAX_PATH_SIZE];
         if (!FilesystemUtils::printPath(filesystem, path, sizeof(path), fn)) {
-            MO_DBG_ERR("fn error: %i", ret);
+            MO_DBG_ERR("fn error: %s", fn);
             return false;
         }
 
