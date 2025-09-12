@@ -152,7 +152,7 @@ set(MO_SRC_UNIT
     #tests/FirmwareManagement.cpp
     #tests/ChargePointError.cpp
     #tests/Boot.cpp
-    #tests/Security.cpp
+    tests/Security.cpp
 )
 
 add_executable(mo_unit_tests

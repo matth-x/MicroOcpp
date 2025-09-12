@@ -12,6 +12,7 @@
 #include <MicroOcpp/Model/Availability/AvailabilityDefs.h>
 #include <MicroOcpp/Model/Boot/BootNotificationData.h>
 #include <MicroOcpp/Model/Common/Mutability.h>
+#include <MicroOcpp/Model/Configuration/ConfigurationDefs.h>
 #include <MicroOcpp/Model/Metering/MeterValue.h>
 #include <MicroOcpp/Model/RemoteControl/RemoteControlDefs.h>
 #include <MicroOcpp/Model/Reset/ResetDefs.h>

@@ -140,6 +140,12 @@ void ModelCommon::loopCommon() {
         smartChargingService->loop();
     }
 #endif //MO_ENABLE_SMARTCHARGING
+
+#if MO_ENABLE_SECURITY_EVENT
+    if (secEventService) {
+        secEventService->loop();
+    }
+#endif //MO_ENABLE_SECURITY_EVENT
 }
 
 void ModelCommon::setNumEvseId(unsigned int numEvseId) {
