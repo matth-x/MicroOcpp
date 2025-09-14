@@ -2896,9 +2896,11 @@ bool mo_sendRequest(MO_Context *ctx, const char *operationType,
         goto fail;
     }
 
-    request->setOnAbort([onAbort, userData] () {
-        onAbort(userData);
-    });
+    if (onAbort) {
+        request->setOnAbort([onAbort, userData] () {
+            onAbort(userData);
+        });
+    }
 
     request->setTimeout(20);
 

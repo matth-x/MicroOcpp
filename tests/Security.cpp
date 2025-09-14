@@ -71,7 +71,7 @@ TEST_CASE("SecurityEventService") {
                         handleSecurityEventRequest, writeSecurityEventResponse, nullptr, nullptr);
 
     // Set base time for consistent testing
-    mo_getContext()->getClock().setTime(BASE_TIME_UNIX);
+    mo_setUnixTime(BASE_TIME_UNIX);
 
     SECTION("Clean up files") {
         auto filesystem = mo_getFilesystem();

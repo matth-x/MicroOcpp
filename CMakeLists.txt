@@ -141,7 +141,7 @@ set(MO_SRC_UNIT
     #tests/ConfigurationBehavior.cpp
     tests/SmartCharging.cpp
     #tests/Api.cpp
-    #tests/Metering.cpp
+    tests/Metering.cpp
     #tests/Configuration.cpp
     #tests/Reservation.cpp
     #tests/Reset.cpp

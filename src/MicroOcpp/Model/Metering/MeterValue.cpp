@@ -191,7 +191,7 @@ bool MeterValue::parseJson(Clock& clock, Vector<MO_MeterInput>& meterInputs, Jso
     }
 
     JsonArray sampledValueJson = in["sampledValue"];
-    sampledValue.resize(sampledValueJson.size());
+    sampledValue.reserve(sampledValueJson.size());
     if (sampledValue.capacity() < sampledValueJson.size()) {
         MO_DBG_ERR("OOM");
         return false;
