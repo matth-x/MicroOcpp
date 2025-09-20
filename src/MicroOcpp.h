@@ -20,6 +20,10 @@
 #include <MicroOcpp/Model/Transactions/TransactionDefs.h>
 #include <MicroOcpp/Version.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
+
 /*
  * Basic integration
  */
@@ -59,7 +63,7 @@ bool mo_setWebsocketUrl(
         const char *CA_cert);         //TLS certificate. Can be NULL. Zero-copy, must outlive MO. Set this to enable OCPP Security Profile 2
 #endif
 
-#if __cplusplus
+#ifdef __cplusplus
 /* Set a WebSocket Client. Required if ArduinoWebsockets is not supported. This library requires
  * that you handle establishing the connection and keeping it alive. MO does not take ownership
  * of the passed `connection` object, i.e. it must be destroyed after `mo_deinitialize()` Please
@@ -608,7 +612,7 @@ bool mo_getVarConfigString(MO_Context *ctx, const char *component201, const char
  * Add features and customize the behavior of the OCPP client
  */
 
-#if __cplusplus
+#ifdef __cplusplus
 namespace MicroOcpp {
 class Context;
 }
@@ -654,5 +658,9 @@ bool mo_setOnReceiveRequest(MO_Context *ctx, const char *operationType,
 bool mo_setOnSendConf(MO_Context *ctx, const char *operationType,
         void (*onSendConf)(const char *operationType, const char *payloadJson, void *userData),
         void *userData);
+
+#ifdef __cplusplus
+} //extern "C"
+#endif //__cplusplus
 
 #endif

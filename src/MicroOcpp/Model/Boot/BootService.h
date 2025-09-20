@@ -5,13 +5,16 @@
 #ifndef MO_BOOTSERVICE_H
 #define MO_BOOTSERVICE_H
 
+#ifdef __cplusplus
+#include <memory>
+#endif //__cplusplus
+
 #include <MicroOcpp/Model/Boot/BootNotificationData.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Version.h>
-#include <memory>
 
 #if MO_ENABLE_V16 || MO_ENABLE_V201
 
@@ -20,6 +23,8 @@
 #ifndef MO_BOOTSTATS_LONGTIME_MS
 #define MO_BOOTSTATS_LONGTIME_MS 180 * 1000
 #endif
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -104,5 +109,6 @@ public:
 
 }
 
+#endif //__cplusplus
 #endif //MO_ENABLE_V16 || MO_ENABLE_V201
 #endif

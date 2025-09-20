@@ -10,8 +10,11 @@
 #define MO_VARIABLESERVICE_H
 
 #include <stdint.h>
+
+#ifdef __cplusplus
 #include <memory>
 #include <limits>
+#endif //__cplusplus
 
 #include <MicroOcpp/Model/Variables/Variable.h>
 #include <MicroOcpp/Model/Variables/VariableContainer.h>
@@ -32,6 +35,8 @@
 #ifndef MO_VARIABLESTORE_BUCKETS
 #define MO_VARIABLESTORE_BUCKETS 8
 #endif
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -105,5 +110,6 @@ public:
 
 } //namespace MicroOcpp
 } //namespace v201
+#endif //__cplusplus
 #endif //MO_ENABLE_V201
 #endif

@@ -45,7 +45,7 @@ class ResetService;
 class Reset : public Operation, public MemoryManaged {
 private:
     ResetService& resetService;
-    ResetStatus status;
+    MO_ResetStatus status;
     const char *errorCode = nullptr;
 public:
     Reset(ResetService& resetService);

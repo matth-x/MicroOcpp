@@ -136,7 +136,7 @@ bool mo_setWebsocketUrl(const char *backendUrl, const char *chargeBoxId, const c
 }
 #endif
 
-#if __cplusplus
+#ifdef __cplusplus
 // Set a WebSocket Client
 void mo_setConnection(MicroOcpp::Connection *connection) {
     mo_setConnection2(mo_getApiContext(), connection);

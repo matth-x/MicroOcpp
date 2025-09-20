@@ -359,16 +359,16 @@ void v201::ResetService::setExecuteReset(unsigned int evseId, bool (*executeRese
     evse->executeResetUserData = userData;
 }
 
-ResetStatus v201::ResetService::initiateReset(MO_ResetType type, unsigned int evseId) {
+MO_ResetStatus v201::ResetService::initiateReset(MO_ResetType type, unsigned int evseId) {
     auto evse = getEvse(evseId);
     if (!evse) {
         MO_DBG_ERR("evseId not found");
-        return ResetStatus_Rejected;
+        return MO_ResetStatus_Rejected;
     }
 
     if (!evse->executeReset) {
         MO_DBG_INFO("EVSE %u does not support Reset", evseId);
-        return ResetStatus_Rejected;
+        return MO_ResetStatus_Rejected;
     }
 
     //Check if EVSEs are ready for Reset
@@ -378,7 +378,7 @@ ResetStatus v201::ResetService::initiateReset(MO_ResetType type, unsigned int ev
         if (auto it = getEvse(eId)) {
             if (it->notifyReset && !it->notifyReset(type, eId, it->notifyResetUserData)) {
                 MO_DBG_INFO("EVSE %u not able to Reset", evseId);
-                return ResetStatus_Rejected;
+                return MO_ResetStatus_Rejected;
             }
         }
     }
@@ -434,7 +434,7 @@ ResetStatus v201::ResetService::initiateReset(MO_ResetType type, unsigned int ev
     evse->lastResetAttempt = context.getClock().getUptime();
     evse->awaitTxStop = scheduled;
 
-    return scheduled ? ResetStatus_Scheduled : ResetStatus_Accepted;
+    return scheduled ? MO_ResetStatus_Scheduled : MO_ResetStatus_Accepted;
 }
 
 } //namespace MicroOcpp

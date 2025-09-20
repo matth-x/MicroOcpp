@@ -13,6 +13,8 @@
 
 #if MO_ENABLE_V16
 
+#ifdef __cplusplus
+
 namespace MicroOcpp {
 
 class Context;
@@ -83,5 +85,6 @@ public:
 
 } //namespace v16
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V16
 #endif

@@ -5,11 +5,13 @@
 #ifndef MO_MESSAGESERVICE_H
 #define MO_MESSAGESERVICE_H
 
+#ifdef __cplusplus
+#include <ArduinoJson.h>
+#endif //__cplusplus
+
 #include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/Memory.h>
-
-#include <ArduinoJson.h>
 
 #ifndef MO_REQUEST_CACHE_MAXSIZE
 #define MO_REQUEST_CACHE_MAXSIZE 10
@@ -18,6 +20,8 @@
 #ifndef MO_NUM_REQUEST_QUEUES
 #define MO_NUM_REQUEST_QUEUES 10
 #endif
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -97,4 +101,5 @@ public:
 };
 
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif

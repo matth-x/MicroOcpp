@@ -18,11 +18,15 @@
 
 #if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT
 
+#ifdef __cplusplus
 #include <functional>
 #include <memory>
+#endif //__cplusplus
 
 #include <MicroOcpp/Model/Certificates/Certificate.h>
 #include <MicroOcpp/Core/Memory.h>
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -42,5 +46,6 @@ public:
 
 }
 
+#endif //__cplusplus
 #endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT
 #endif

@@ -21,6 +21,8 @@
 
 #if MO_ENABLE_V16
 
+#ifdef __cplusplus
+
 namespace MicroOcpp {
 
 class Context;
@@ -124,6 +126,7 @@ friend class AvailabilityServiceEvse;
 
 } //namespace MicroOcpp
 } //namespace v16
+#endif //__cplusplus
 #endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
@@ -135,6 +138,8 @@ friend class AvailabilityServiceEvse;
 #ifndef MO_FAULTED_REQUESTERS_MAX
 #define MO_FAULTED_REQUESTERS_MAX 3
 #endif
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -213,5 +218,6 @@ public:
 
 } //namespace MicroOcpp
 } //namespace v201
+#endif //__cplusplus
 #endif //MO_ENABLE_V201
 #endif

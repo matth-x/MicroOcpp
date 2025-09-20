@@ -90,13 +90,13 @@ std::unique_ptr<JsonDoc> v201::Reset::createConf() {
 
     const char *statusCstr = "";
     switch (status) {
-        case ResetStatus_Accepted:
+        case MO_ResetStatus_Accepted:
             statusCstr = "Accepted";
             break;
-        case ResetStatus_Rejected:
+        case MO_ResetStatus_Rejected:
             statusCstr = "Rejected";
             break;
-        case ResetStatus_Scheduled:
+        case MO_ResetStatus_Scheduled:
             statusCstr = "Scheduled";
             break;
         default:

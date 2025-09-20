@@ -12,6 +12,8 @@
 
 #if MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 
+#ifdef __cplusplus
+
 namespace MicroOcpp {
 
 class Context;
@@ -47,5 +49,6 @@ public:
 
 } //namespace MicroOcpp
 } //namespace v16
+#endif //__cplusplus
 #endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 #endif

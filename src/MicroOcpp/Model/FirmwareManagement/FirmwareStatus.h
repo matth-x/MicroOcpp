@@ -9,6 +9,8 @@
 
 #if MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 
+#ifdef __cplusplus
+
 namespace MicroOcpp {
 namespace v16 {
 
@@ -24,5 +26,6 @@ enum class FirmwareStatus {
 
 } //namespace v16
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 #endif

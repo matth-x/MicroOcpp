@@ -5,9 +5,14 @@
 #ifndef MO_FILESYSTEMUTILS_H
 #define MO_FILESYSTEMUTILS_H
 
+#ifdef __cplusplus
+#include <ArduinoJson.h>
+#endif //__cplusplus
+
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/Memory.h>
-#include <ArduinoJson.h>
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -83,5 +88,5 @@ bool loadRingIndex(MO_FilesystemAdapter *filesystem, const char *fnamePrefix, un
 
 } //namespace FilesystemUtils
 } //namespace MicroOcpp
-
+#endif //__cplusplus
 #endif

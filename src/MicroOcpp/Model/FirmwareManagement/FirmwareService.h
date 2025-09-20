@@ -5,8 +5,10 @@
 #ifndef FIRMWARESERVICE_H
 #define FIRMWARESERVICE_H
 
+#ifdef __cplusplus
 #include <functional>
 #include <memory>
+#endif //__cplusplus
 
 #include <MicroOcpp/Model/Configuration/Configuration.h>
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareStatus.h>
@@ -30,6 +32,8 @@
 #endif //MO_USE_FW_UPDATER
 
 #if MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -139,5 +143,6 @@ public:
 
 } //namespace v16
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 #endif

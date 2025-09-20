@@ -9,7 +9,9 @@
 #ifndef MO_VARIABLECONTAINER_H
 #define MO_VARIABLECONTAINER_H
 
+#ifdef __cplusplus
 #include <memory>
+#endif //__cplusplus
 
 #include <MicroOcpp/Model/Variables/Variable.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -17,6 +19,8 @@
 #include <MicroOcpp/Version.h>
 
 #if MO_ENABLE_V201
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 namespace v201 {
@@ -72,5 +76,6 @@ public:
 
 } //namespace v201
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V201
 #endif

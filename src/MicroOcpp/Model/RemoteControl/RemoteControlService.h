@@ -15,6 +15,8 @@
 
 #if MO_ENABLE_V16 || MO_ENABLE_V201
 
+#ifdef __cplusplus
+
 namespace MicroOcpp {
 
 class Context;
@@ -126,5 +128,6 @@ friend RemoteControlServiceEvse;
 };
 
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V16 || MO_ENABLE_V201
 #endif

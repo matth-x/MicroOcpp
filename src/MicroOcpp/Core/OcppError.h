@@ -8,6 +8,8 @@
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Memory.h>
 
+#ifdef __cplusplus
+
 namespace MicroOcpp {
 
 class NotImplemented : public Operation, public MemoryManaged {
@@ -41,4 +43,5 @@ public:
 };
 
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif

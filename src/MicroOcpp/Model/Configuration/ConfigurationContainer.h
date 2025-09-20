@@ -5,7 +5,9 @@
 #ifndef MO_CONFIGURATIONCONTAINER_H
 #define MO_CONFIGURATIONCONTAINER_H
 
+#ifdef __cplusplus
 #include <memory>
+#endif //__cplusplus
 
 #include <MicroOcpp/Model/Configuration/Configuration.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -17,6 +19,7 @@
 #define MO_CONFIGURATION_VOLATILE "/volatile"
 #define MO_KEYVALUE_FN "client-state.jsn"
 
+#ifdef __cplusplus
 namespace MicroOcpp {
 namespace v16 {
 
@@ -74,5 +77,6 @@ public:
 
 } //namespace v16
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V16
 #endif

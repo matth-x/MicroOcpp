@@ -31,7 +31,6 @@ typedef enum {
 
 #ifdef __cplusplus
 }
-#endif // __cplusplus
 
 namespace MicroOcpp {
 
@@ -44,6 +43,7 @@ enum class TriggerMessageStatus : uint8_t {
 
 } //namespace MicroOcpp
 
+#endif // __cplusplus
 #endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CONNECTOR_LOCK
 
 #if MO_ENABLE_V16

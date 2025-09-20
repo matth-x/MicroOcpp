@@ -5,7 +5,9 @@
 #ifndef MO_RESERVATIONSERVICE_H
 #define MO_RESERVATIONSERVICE_H
 
+#ifdef __cplusplus
 #include <memory>
+#endif //__cplusplus
 
 #include <MicroOcpp/Model/Reservation/Reservation.h>
 #include <MicroOcpp/Model/Common/EvseId.h>
@@ -13,6 +15,8 @@
 #include <MicroOcpp/Version.h>
 
 #if MO_ENABLE_V16 && MO_ENABLE_RESERVATION
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -56,5 +60,6 @@ public:
 
 } //namespace v16
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V16 && MO_ENABLE_RESERVATION
 #endif

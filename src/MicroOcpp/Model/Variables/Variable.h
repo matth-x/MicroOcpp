@@ -10,8 +10,11 @@
 #define MO_VARIABLE_H
 
 #include <stdint.h>
+
+#ifdef __cplusplus
 #include <memory>
 #include <limits>
+#endif //__cplusplus
 
 #include <MicroOcpp/Model/Common/EvseId.h>
 #include <MicroOcpp/Model/Common/Mutability.h>
@@ -23,6 +26,8 @@
 #ifndef MO_VARIABLE_TYPECHECK
 #define MO_VARIABLE_TYPECHECK 1
 #endif
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -223,5 +228,6 @@ std::unique_ptr<Variable> makeVariable(Variable::InternalDataType dtype, Variabl
 
 } //namespace v201
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V201
 #endif

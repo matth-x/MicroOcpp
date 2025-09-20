@@ -15,12 +15,18 @@
  * OCPP operation.
  */
 
- #ifndef MO_OPERATION_H
- #define MO_OPERATION_H
+#ifndef MO_OPERATION_H
+#define MO_OPERATION_H
 
+#ifdef __cplusplus
 #include <memory>
+
 #include <ArduinoJson.h>
+#endif //__cplusplus
+
 #include <MicroOcpp/Core/Memory.h>
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -66,4 +72,5 @@ public:
 };
 
 } //namespace MicroOcpp
- #endif
+#endif //__cplusplus
+#endif
