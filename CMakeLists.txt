@@ -146,7 +146,7 @@ set(MO_SRC_UNIT
     #tests/Reservation.cpp
     #tests/Reset.cpp
     #tests/LocalAuthList.cpp
-    #tests/Variables.cpp
+    tests/Variables.cpp
     #tests/Transactions.cpp
     #tests/Certificates.cpp
     #tests/FirmwareManagement.cpp
