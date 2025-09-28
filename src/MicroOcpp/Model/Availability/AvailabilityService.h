@@ -14,6 +14,7 @@
 #include <MicroOcpp/Model/Availability/AvailabilityDefs.h>
 #include <MicroOcpp/Model/Common/EvseId.h>
 #include <MicroOcpp/Model/Configuration/ConfigurationDefs.h>
+#include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Core/Time.h>
@@ -27,7 +28,6 @@ namespace MicroOcpp {
 
 class Context;
 class Clock;
-class Connection;
 
 namespace v16 {
 
@@ -45,7 +45,7 @@ private:
     AvailabilityService& availService;
     const unsigned int evseId;
 
-    Connection *connection = nullptr;
+    MO_Connection *connection = nullptr;
     TransactionServiceEvse *txServiceEvse = nullptr;
 
     bool (*connectorPluggedInput)(unsigned int evseId, void *userData) = nullptr;

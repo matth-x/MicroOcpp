@@ -12,6 +12,7 @@
 
 #include <MicroOcpp/Model/Metering/MeterValue.h>
 #include <MicroOcpp/Model/Common/EvseId.h>
+#include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/Memory.h>
@@ -105,7 +106,7 @@ public:
 class MeteringService : public MemoryManaged {
 private:
     Context& context;
-    Connection *connection = nullptr;
+    MO_Connection *connection = nullptr;
 
     MeteringServiceEvse* evses [MO_NUM_EVSEID] = {nullptr};
     unsigned int numEvseId = MO_NUM_EVSEID;

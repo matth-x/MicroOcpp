@@ -42,13 +42,16 @@ private:
     bool isFilesystemOwner = false;
 #endif //MO_USE_FILEAPI != MO_CUSTOM_FS
     MO_FilesystemAdapter *filesystem = nullptr;
-
+    
+#if MO_ENABLE_MOCK_SERVER
+    bool useMockConnection = false;
+#endif //MO_ENABLE_MOCK_SERVER
 #if MO_WS_USE != MO_WS_CUSTOM
     MO_ConnectionConfig connectionConfig;
     bool connectionConfigDefined = false;
-    bool isConnectionOwner = false;
+    bool useDefaultConnection = false;
 #endif //MO_WS_USE != MO_WS_CUSTOM
-    Connection *connection = nullptr;
+    MO_Connection *connection = nullptr;
 
 #if MO_ENABLE_MBEDTLS
     MO_FTPConfig ftpConfig;
@@ -93,8 +96,12 @@ public:
 #if MO_WS_USE != MO_WS_CUSTOM
     bool setConnectionConfig(MO_ConnectionConfig connectionConfig);
 #endif //MO_WS_USE != MO_WS_CUSTOM
-    void setConnection(Connection *connection);
-    Connection *getConnection();
+    void setConnection(MO_Connection *connection);
+    MO_Connection *getConnection();
+
+#if MO_ENABLE_MOCK_SERVER
+    void useMockServer();
+#endif //MO_ENABLE_MOCK_SERVER
 
 #if MO_ENABLE_MBEDTLS
     void setFtpConfig(MO_FTPConfig ftpConfig);

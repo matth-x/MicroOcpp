@@ -135,7 +135,7 @@ void v16::AvailabilityServiceEvse::loop() {
     }
 
     if (reportedStatus != currentStatus &&
-            connection->isConnected() &&
+            (!connection->isConnected || connection->isConnected(connection)) && // Connection is connected (or status unknown)
             clock.now().isUnixTime() &&
             (availService.minimumStatusDurationInt->getInt() <= 0 || //MinimumStatusDuration disabled
             dtStatusTransition >= availService.minimumStatusDurationInt->getInt())) {

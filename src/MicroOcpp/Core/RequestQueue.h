@@ -26,7 +26,6 @@
 
 namespace MicroOcpp {
 
-class Connection;
 class OperationRegistry;
 class Request;
 

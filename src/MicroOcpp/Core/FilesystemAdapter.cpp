@@ -8,6 +8,160 @@
 
 #include <string.h>
 
+namespace MicroOcpp {
+namespace CppFilesystemAdapter {
+
+FilesystemAdapter *fsCpp;
+MO_FilesystemAdapter *fsC;
+
+int stat(const char *path, size_t *size) {
+    return fsCpp->stat(path, size);
+}
+
+bool remove(const char *path) {
+    return fsCpp->remove(path);
+}
+
+int ftw(const char *path_prefix, int(*fn)(const char *fname, void *mo_user_data), void *mo_user_data) {
+    if (fsC->path_prefix && strcmp(fsC->path_prefix, path_prefix)) {
+        MO_DBG_ERR("different path_prefix not allowed: %s (should be %s)", path_prefix, fsC->path_prefix);
+        return -1;
+    }
+    return fsCpp->ftw_root([fn, mo_user_data] (const char *fname)  {
+        return fn(fname, mo_user_data);
+    });
+}
+
+// Wrap unique_ptr into subclass of MemoryManaged so that it can track its memory footprint
+struct CppFileAdapterWrapper : public MemoryManaged {
+    std::unique_ptr<FileAdapter> uniquePtr;
+    CppFileAdapterWrapper() : MemoryManaged("Filesystem") { }
+};
+
+MO_File* open(const char *path, const char *mode) {
+    auto fileWrapper = new CppFileAdapterWrapper();
+    if (fileWrapper == nullptr) {
+        MO_DBG_ERR("OOM");
+        return nullptr;
+    }
+    fileWrapper->uniquePtr = fsCpp->open(path, mode);
+    if (!fileWrapper->uniquePtr) {
+        // fsCpp already printed error
+        delete fileWrapper;
+    }
+    return reinterpret_cast<MO_File*>(fileWrapper);
+}
+
+bool close(MO_File *file) {
+    auto fileWrapper = reinterpret_cast<CppFileAdapterWrapper*>(file);
+    delete fileWrapper;
+    return true; // MO v1 File adapter does not return success code
+}
+
+size_t read(MO_File *file, char *buf, size_t len) {
+    FileAdapter *fileCpp = reinterpret_cast<CppFileAdapterWrapper*>(file)->uniquePtr.get();
+    return fileCpp->read(buf, len);
+}
+
+int getc(MO_File *file) {
+    FileAdapter *fileCpp = reinterpret_cast<CppFileAdapterWrapper*>(file)->uniquePtr.get();
+    return fileCpp->read();
+}
+
+size_t write(MO_File *file, const char *buf, size_t len) {
+    FileAdapter *fileCpp = reinterpret_cast<CppFileAdapterWrapper*>(file)->uniquePtr.get();
+    return fileCpp->write(buf, len);
+}
+
+int seek(MO_File *file, size_t fpos) {
+    FileAdapter *fileCpp = reinterpret_cast<CppFileAdapterWrapper*>(file)->uniquePtr.get();
+    return fileCpp->seek(fpos);
+}
+
+} //namespace CppFilesystemAdapter
+
+MO_FilesystemAdapter *getCppFilesystemAdapterSingleton(FilesystemAdapter *cppFilesystem, const char *path_prefix) {
+    if (!cppFilesystem) {
+        MO_DBG_ERR("invalid args");
+        return nullptr;
+    }
+    
+    if (CppFilesystemAdapter::fsC) {
+        if (cppFilesystem != CppFilesystemAdapter::fsCpp) {
+            MO_DBG_ERR("FS Cpp adapter only allows one instance at a time");
+            return nullptr;
+        }
+
+        if (!(path_prefix && CppFilesystemAdapter::fsC->path_prefix && !strcmp(path_prefix, CppFilesystemAdapter::fsC->path_prefix)) &&
+                !(!path_prefix && !CppFilesystemAdapter::fsC->path_prefix)) {
+            MO_DBG_ERR("FS Cpp adapter only allows one instance at a time");
+            return nullptr;
+        }
+
+        return CppFilesystemAdapter::fsC;
+    }
+
+    // Create Singleton object
+
+    char *prefix_copy = nullptr;
+    MO_FilesystemAdapter *filesystem = nullptr;
+
+    size_t prefix_len = path_prefix ? strlen(path_prefix) : 0;
+    if (prefix_len > 0) {
+        size_t prefix_size = prefix_len + 1;
+        prefix_copy = static_cast<char*>(MO_MALLOC("Filesystem", prefix_size));
+        if (!prefix_copy) {
+            MO_DBG_ERR("OOM");
+            goto fail;
+        }
+        (void)snprintf(prefix_copy, prefix_size, "%s", path_prefix);
+    }
+
+    filesystem = static_cast<MO_FilesystemAdapter*>(MO_MALLOC("Filesystem", sizeof(MO_FilesystemAdapter)));
+    if (!filesystem) {
+        MO_DBG_ERR("OOM");
+        goto fail;
+    }
+    memset(filesystem, 0, sizeof(MO_FilesystemAdapter));
+
+    filesystem->path_prefix = prefix_copy;
+    filesystem->stat = CppFilesystemAdapter::stat;
+    filesystem->remove = CppFilesystemAdapter::remove;
+    filesystem->ftw = CppFilesystemAdapter::ftw;
+    filesystem->open = CppFilesystemAdapter::open;
+    filesystem->close = CppFilesystemAdapter::close;
+    filesystem->read = CppFilesystemAdapter::read;
+    filesystem->getc = CppFilesystemAdapter::getc;
+    filesystem->write = CppFilesystemAdapter::write;
+    filesystem->seek = CppFilesystemAdapter::seek;
+
+    CppFilesystemAdapter::fsC = filesystem;
+    CppFilesystemAdapter::fsCpp = cppFilesystem;
+
+    return filesystem;
+fail:
+    MO_FREE(prefix_copy);
+    MO_FREE(filesystem);
+    return nullptr;
+}
+
+void resetCppFilesystemAdapterSingleton() {
+    if (CppFilesystemAdapter::fsC) {
+        MO_FilesystemAdapter *filesystem = CppFilesystemAdapter::fsC;
+
+        //the Cpp FS adapter owns the path_prefix buf and needs to free it
+        char *path_prefix_buf = const_cast<char*>(filesystem->path_prefix);
+        MO_FREE(path_prefix_buf);
+
+        MO_FREE(CppFilesystemAdapter::fsC);
+        CppFilesystemAdapter::fsC = nullptr;
+    }
+
+    CppFilesystemAdapter::fsCpp = nullptr; // Didn't take ownership
+}
+
+} //namespace MicroOcpp
+
 /*
  * Platform specific implementations. Currently supported:
  *     - Arduino LittleFs

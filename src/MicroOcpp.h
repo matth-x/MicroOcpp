@@ -63,22 +63,58 @@ bool mo_setWebsocketUrl(
         const char *CA_cert);         //TLS certificate. Can be NULL. Zero-copy, must outlive MO. Set this to enable OCPP Security Profile 2
 #endif
 
-#ifdef __cplusplus
 /* Set a WebSocket Client. Required if ArduinoWebsockets is not supported. This library requires
  * that you handle establishing the connection and keeping it alive. MO does not take ownership
  * of the passed `connection` object, i.e. it must be destroyed after `mo_deinitialize()` Please
  * refer to https://github.com/matth-x/MicroOcpp/tree/main/examples/ESP-TLS for an example how to
  * use it.
  *
- * This GitHub project also delivers an Connection implementation based on links2004/WebSockets. If
- * you need another WebSockets implementation, you can subclass the Connection class and pass it to
- * this initialize() function. Please refer to
+ * This GitHub project also delivers an MO_Connection implementation based on links2004/WebSockets.
+ * If you need another WebSockets implementation, you can implement the MO_Connection driver and
+ * pass it to`mo_setConnection()` function. Please refer to
  * https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/MongooseConnectionClient.cpp for
- * an example.
+ * an example. Need to set MO_Connection after `mo_initialize()` and before `mo_setup()`.
+ * 
+ * If migrating from MO v1, use `makeCppConnectionAdapter()` to adapt the C++ `Connection`
+ * class to the C-style `MO_Connection` handle:
+ * ```
+ *     mo_initialize();
+ *     MyConnectionClass *cppConnection = <legacy MO v1 WebSocket implementation>;
+ *     MO_Connection *connection = MicroOcpp::makeCppConnectionAdapter(cppConnection); //Does not take ownership of `cppConnection`
+ *     mo_setConnection(connection);
+ *     mo_setup();
+ * 
+ *     // ...
+ * 
+ *     mo_deinitialize();
+ *     MicroOcpp::freeCppConnectionAdapter(connection);
+ *     delete cppConnection;
+ * ```
+ * 
+ * Note: MO v2 does not reset the `Context` pointer in the C++ `Connection` anymore during
+ * `mo_deinitialize()`. It's recommended to check `ctx` in `MO_Connection`, or `mo_getContext()`.
  */
-void mo_setConnection(MicroOcpp::Connection *connection);
-void mo_setConnection2(MO_Context *ctx, MicroOcpp::Connection *connection);
+void mo_setConnection(MO_Connection *connection);
+void mo_setConnection2(MO_Context *ctx, MO_Connection *connection);
+
+#ifdef __cplusplus
+/* Same as `mo_setConnection()`, but accepts the C++ `Connection` class from MO v1. Does not
+ * transfer ownership of `cppConnection`. */
+bool mo_setCppConnection(MicroOcpp::Connection *cppConnection);
 #endif
+
+#if MO_ENABLE_MOCK_SERVER
+/* Setup MicroOCPP with a mock OCPP server and don't connect to a real server. The mock server is
+ * a minimal server-side implementation of the OCPP operations. If enabled, MO will reply to its
+ * own OCPP messages. It's an alternative to providing MO with an OCPP URL or setting a Connection
+ * handle.
+ * 
+ * Tip: when integrating MO into a new platform, it is more convenient to first use the mock server,
+ * and then switch to a real WebSocket connection. Also, it can be useful to narrow down connection
+ * issues, or to develop offline, with no OCPP server in reach. 
+*/
+void mo_useMockServer();
+#endif //MO_ENABLE_MOCK_SERVER
 
 //Set the OCPP version `MO_OCPP_V16` or `MO_OCPP_V201`. Works only if build flags `MO_ENABLE_V16` or
 //`MO_ENABLE_V201` are set to 1

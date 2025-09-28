@@ -124,6 +124,46 @@ typedef struct {
     void *mo_data; //reserved for MO internal usage
 } MO_FilesystemAdapter;
 
+/* 
+ * Adapter for the MO v1.x Filesystem CPP interface
+ */
+
+#ifdef __cplusplus
+} //extern "C"
+
+#include <functional>
+#include <memory>
+
+namespace MicroOcpp {
+
+//Alternative CPP Filesystem interface (from MO v1.x)
+class FileAdapter {
+public:
+    virtual ~FileAdapter() = default;
+    virtual size_t read(char *buf, size_t len) = 0;
+    virtual size_t write(const char *buf, size_t len) = 0;
+    virtual size_t seek(size_t offset) = 0;
+
+    virtual int read() = 0;
+};
+
+class FilesystemAdapter {
+public:
+    virtual ~FilesystemAdapter() = default;
+    virtual int stat(const char *path, size_t *size) = 0;
+    virtual std::unique_ptr<FileAdapter> open(const char *fn, const char *mode) = 0;
+    virtual bool remove(const char *fn) = 0;
+    virtual int ftw_root(std::function<int(const char *fpath)> fn) = 0; //enumerate the files in the mo_store root folder
+};
+
+MO_FilesystemAdapter *getCppFilesystemAdapterSingleton(FilesystemAdapter *cppFilesystem, const char *path_prefix); //Does not take ownership of `cppFilesystem`
+void resetCppFilesystemAdapterSingleton(); //Only frees `MO_FilesystemAdapter`, not `MicroOcpp::FilesystemAdapter`
+
+} //namespace MicroOcpp
+
+extern "C" {
+#endif //__cplusplus
+
 /*
  * Platform specific implementation. Currently supported:
  *     - Arduino LittleFs

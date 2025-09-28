@@ -227,7 +227,7 @@ void SecurityEventService::loop() {
         return;
     }
 
-    if (!connection->isConnected()) {
+    if (connection->isConnected && !connection->isConnected(connection)) {
         //don't use up attempts while offline
         return;
     }

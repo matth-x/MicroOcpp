@@ -136,13 +136,12 @@ bool mo_setWebsocketUrl(const char *backendUrl, const char *chargeBoxId, const c
 }
 #endif
 
-#ifdef __cplusplus
 // Set a WebSocket Client
-void mo_setConnection(MicroOcpp::Connection *connection) {
+void mo_setConnection(MO_Connection *connection) {
     mo_setConnection2(mo_getApiContext(), connection);
 }
 
-void mo_setConnection2(MO_Context *ctx, MicroOcpp::Connection *connection) {
+void mo_setConnection2(MO_Context *ctx, MO_Connection *connection) {
     if (!ctx) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
@@ -151,7 +150,17 @@ void mo_setConnection2(MO_Context *ctx, MicroOcpp::Connection *connection) {
 
     context->setConnection(connection);
 }
-#endif
+
+#if MO_ENABLE_MOCK_SERVER
+void mo_useMockServer() {
+    if (!g_context) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return;
+    }
+    auto context = g_context;
+    context->useMockServer();
+}
+#endif //MO_ENABLE_MOCK_SERVER
 
 //Set the OCPP version
 void mo_setOcppVersion(int ocppVersion) {
@@ -1539,7 +1548,12 @@ bool mo_isConnected2(MO_Context *ctx) {
     auto context = mo_getContext2(ctx);
 
     if (auto connection = context->getConnection()) {
-        return connection->isConnected();
+        if (connection->isConnected) {
+            return connection->isConnected(connection);
+        } else {
+            // MO_Connection driver does not implement `isConnected()`. Default to true
+            return true;
+        }
     } else {
         MO_DBG_ERR("WebSocket not set up");
         return false;

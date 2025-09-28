@@ -662,7 +662,7 @@ bool TransactionServiceEvse::beginTransaction(const char *idTag) {
     auto authorize = makeRequest(context, new Authorize(model, idTag));
     authorize->setTimeout(cService.authorizationTimeoutInt->getInt() > 0 ? cService.authorizationTimeoutInt->getInt(): 20);
 
-    if (!connection->isConnected()) {
+    if (connection->isConnected && !connection->isConnected(connection)) {
         //WebSockt unconnected. Enter offline mode immediately
         authorize->setTimeout(1);
     }
@@ -867,7 +867,7 @@ bool TransactionServiceEvse::endTransaction(const char *idTag, const char *reaso
         auto authorize = makeRequest(context, new Authorize(model, idTag));
         authorize->setTimeout(cService.authorizationTimeoutInt->getInt() > 0 ? cService.authorizationTimeoutInt->getInt(): 20);
 
-        if (!connection->isConnected()) {
+        if (connection->isConnected && !connection->isConnected(connection)) {
             //WebSockt unconnected. Enter offline mode immediately
             authorize->setTimeout(1);
         }
@@ -1141,7 +1141,7 @@ unsigned int TransactionServiceEvse::getFrontRequestOpNr() {
 
 std::unique_ptr<Request> TransactionServiceEvse::fetchFrontRequest() {
 
-    if (!connection->isConnected()) {
+    if (connection->isConnected && !connection->isConnected(connection)) {
         //offline behavior: pause sending messages and do not increment attempt counters
         return nullptr;
     }

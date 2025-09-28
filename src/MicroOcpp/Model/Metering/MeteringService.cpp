@@ -640,7 +640,7 @@ unsigned int v16::MeteringServiceEvse::getFrontRequestOpNr() {
 
 std::unique_ptr<Request> v16::MeteringServiceEvse::fetchFrontRequest() {
 
-    if (!mService.connection->isConnected()) {
+    if (mService.connection->isConnected && !mService.connection->isConnected(mService.connection)) {
         //offline behavior: pause sending messages and do not increment attempt counters
         return nullptr;
     }

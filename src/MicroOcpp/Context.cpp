@@ -133,38 +133,72 @@ bool Context::setConnectionConfig(MO_ConnectionConfig connectionConfig) {
 }
 #endif //MO_WS_USE != MO_WS_CUSTOM
 
-void Context::setConnection(Connection *connection) {
-    if (this->connection) {
-        this->connection->setContext(nullptr);
+void Context::setConnection(MO_Connection *connection) {
+    if (this->connection != nullptr && connection != nullptr) {
+        MO_DBG_ERR("switching connection during runtime not supported");
+        return;
     }
-#if MO_WS_USE != MO_WS_CUSTOM
-    if (this->connection && isConnectionOwner) {
-        freeDefaultConnection(this->connection);
+
+    if (this->connection) {
+        this->connection->ctx = nullptr;
+    }
+#if MO_ENABLE_MOCK_SERVER
+    if (this->connection && useMockConnection) {
+        mo_loopback_free(this->connection);
         this->connection = nullptr;
-        isConnectionOwner = false;
+        useMockConnection = false;
+    }
+#endif //MO_ENABLE_MOCK_SERVER
+#if MO_WS_USE != MO_WS_CUSTOM
+    if (this->connection && useDefaultConnection) {
+        mo_freeDefaultConnection(this->connection);
+        this->connection = nullptr;
+        useDefaultConnection = false;
     }
 #endif //MO_WS_USE != MO_WS_CUSTOM
     this->connection = connection;
     if (this->connection) {
-        this->connection->setContext(this);
+        this->connection->ctx = reinterpret_cast<MO_Context*>(this);
     }
 }
 
-Connection *Context::getConnection() {
+MO_Connection *Context::getConnection() {
+    #if MO_ENABLE_MOCK_SERVER
+    if (!connection && useMockConnection) {
+        auto loopback = mo_loopback_make();
+        if (!loopback) {
+            MO_DBG_ERR("OOM");
+            return nullptr;;
+        }
+        setConnection(loopback);
+    }
+    #endif //MO_ENABLE_MOCK_SERVER
     #if MO_WS_USE != MO_WS_CUSTOM
     if (!connection && connectionConfigDefined) {
         // init default Connection implementation
-        connection = static_cast<Connection*>(makeDefaultConnection(connectionConfig, ocppVersion));
-        if (!connection) {
+        auto defaultConnection = mo_makeDefaultConnection(connectionConfig, ocppVersion);
+        if (!defaultConnection) {
             MO_DBG_ERR("OOM");
             return nullptr;
         }
-        isConnectionOwner = true;
+        setConnection(defaultConnection);
+        useDefaultConnection = true;
         mo_connectionConfig_deinit(&connectionConfig);
+        connectionConfigDefined = false;
     }
     #endif //MO_WS_USE != MO_WS_CUSTOM
     return connection;
 }
+
+#if MO_ENABLE_MOCK_SERVER
+void Context::useMockServer() {
+    if (connection) {
+        MO_DBG_ERR("switching to mock server mode after setting connection not supported");
+        return;
+    }
+    useMockConnection = true;
+}
+#endif //MO_ENABLE_MOCK_SERVER
 
 #if MO_ENABLE_MBEDTLS
 void Context::setFtpConfig(MO_FTPConfig ftpConfig) {
@@ -381,8 +415,8 @@ bool Context::setup() {
 }
 
 void Context::loop() {
-    if (connection) {
-        connection->loop();
+    if (connection && connection->loop) {
+        connection->loop(connection);
     }
     clock.loop();
     msgService.loop();

@@ -9,6 +9,7 @@
 #include <ArduinoJson.h>
 #endif //__cplusplus
 
+#include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/Memory.h>
@@ -47,12 +48,10 @@ struct OperationListener {
     void (*onEvent)(const char *operationType, const char *payloadJson, void *userData) = nullptr;
 };
 
-class Connection;
-
 class MessageService : public MemoryManaged {
 private:
     Context& context;
-    Connection *connection = nullptr;
+    MO_Connection *connection = nullptr;
 
     RequestQueue* sendQueues [MO_NUM_REQUEST_QUEUES] {nullptr};
     VolatileRequestQueue defaultSendQueue;
