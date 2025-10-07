@@ -167,9 +167,11 @@ fail:
 }
 
 void mo_loopback_free(MO_Connection *connection) {
-    auto data = reinterpret_cast<MicroOcpp::LoopbackConnection::LoopbackData*>(connection->userData);
-    delete data;
-    MO_FREE(connection);
+    if (connection) {
+        auto data = reinterpret_cast<MicroOcpp::LoopbackConnection::LoopbackData*>(connection->userData);
+        delete data;
+        MO_FREE(connection);
+    }
 }
 
 void mo_loopback_setConnected(MO_Connection *connection, bool connected) {

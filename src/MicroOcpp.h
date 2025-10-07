@@ -47,6 +47,9 @@ void mo_setFilesystemConfig(MO_FilesystemOpt opt);
 void mo_setFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *pathPrefix);
 #endif //#if MO_USE_FILEAPI != MO_CUSTOM_FS
 
+void mo_setFilesystem(MO_FilesystemAdapter *filesystem);
+void mo_setFilesystem2(MO_Context *ctx, MO_FilesystemAdapter *filesystem);
+
 #if MO_WS_USE == MO_WS_ARDUINO
 /*
  * Setup MO with links2004/WebSockets library. Only available on Arduino, for other platforms set custom
@@ -98,9 +101,13 @@ void mo_setConnection(MO_Connection *connection);
 void mo_setConnection2(MO_Context *ctx, MO_Connection *connection);
 
 #ifdef __cplusplus
+} // extern "C"
+
 /* Same as `mo_setConnection()`, but accepts the C++ `Connection` class from MO v1. Does not
  * transfer ownership of `cppConnection`. */
 bool mo_setCppConnection(MicroOcpp::Connection *cppConnection);
+
+extern "C" {
 #endif
 
 #if MO_ENABLE_MOCK_SERVER
@@ -649,6 +656,8 @@ bool mo_getVarConfigString(MO_Context *ctx, const char *component201, const char
  */
 
 #ifdef __cplusplus
+} // extern "C"
+
 namespace MicroOcpp {
 class Context;
 }
@@ -658,6 +667,8 @@ class Context;
 //To use, add `#include <MicroOcpp/Context.h>`
 MicroOcpp::Context *mo_getContext();
 MicroOcpp::Context *mo_getContext2(MO_Context *ctx);
+
+extern "C" {
 #endif //__cplusplus
 
 /*

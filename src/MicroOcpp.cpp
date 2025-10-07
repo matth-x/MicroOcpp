@@ -111,6 +111,20 @@ void mo_setFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *
 }
 #endif // MO_USE_FILEAPI != MO_CUSTOM_FS
 
+void mo_setFilesystem(MO_FilesystemAdapter *filesystem) {
+    return mo_setFilesystem2(mo_getApiContext(), filesystem);
+}
+
+void mo_setFilesystem2(MO_Context *ctx, MO_FilesystemAdapter *filesystem) {
+    if (!ctx) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return;
+    }
+    auto context = mo_getContext2(ctx);
+
+    context->setFilesystem(filesystem);
+}
+
 #if MO_WS_USE == MO_WS_ARDUINO
 //Setup MO with links2004/WebSockets library
 bool mo_setWebsocketUrl(const char *backendUrl, const char *chargeBoxId, const char *authorizationKey, const char *CA_cert) {

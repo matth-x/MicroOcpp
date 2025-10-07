@@ -590,10 +590,22 @@ bool ChargingProfile::parseJson(Clock& clock, int ocppVersion, JsonObject json) 
         }
     }
 
-    auto success = chargingSchedule.parseJson(clock, ocppVersion, json["chargingSchedule"]);
-    if (!success) {
-        return false;
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+        auto success = chargingSchedule.parseJson(clock, ocppVersion, json["chargingSchedule"]);
+        if (!success) {
+            return false;
+        }
     }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (ocppVersion == MO_OCPP_V201) {
+        auto success = chargingSchedule.parseJson(clock, ocppVersion, json["chargingSchedule"][0]);
+        if (!success) {
+            return false;
+        }
+    }
+    #endif //MO_ENABLE_V201
 
     //duplicate some fields to chargingSchedule to simplify the max charge rate calculation
     chargingSchedule.chargingProfileKind = chargingProfileKind;
