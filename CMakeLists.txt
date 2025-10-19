@@ -150,6 +150,7 @@ set(MO_SRC_UNIT
     tests/LocalAuthList.cpp
     tests/Variables.cpp
     tests/Transactions.cpp
+    tests/RemoteStartTransaction.cpp
     tests/Certificates.cpp
     tests/FirmwareManagement.cpp
     tests/ChargePointError.cpp

@@ -1,4 +1,5 @@
 .pio
+.vscode
 build
 lib
 mo_store
