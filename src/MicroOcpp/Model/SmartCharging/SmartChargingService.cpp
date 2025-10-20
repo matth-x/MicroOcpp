@@ -53,7 +53,7 @@ void SmartChargingConnector::calculateLimit(const Timestamp &t, ChargeRate& limi
     }
 
     //if no TxProfile limits charging, check the TxDefaultProfiles for this connector
-    if (!txLimitDefined && trackTxStart < MAX_TIME) {
+    if (!txLimitDefined) {
         for (int i = MO_ChargeProfileMaxStackLevel; i >= 0; i--) {
             if (TxDefaultProfile[i]) {
                 ChargeRate crOut;
@@ -68,7 +68,7 @@ void SmartChargingConnector::calculateLimit(const Timestamp &t, ChargeRate& limi
     }
 
     //if no appropriate TxDefaultProfile is set for this connector, search in the general TxDefaultProfiles
-    if (!txLimitDefined && trackTxStart < MAX_TIME) {
+    if (!txLimitDefined) {
         for (int i = MO_ChargeProfileMaxStackLevel; i >= 0; i--) {
             if (ChargePointTxDefaultProfile[i]) {
                 ChargeRate crOut;
