@@ -252,6 +252,9 @@ std::unique_ptr<ChargingSchedule> SmartChargingConnector::getCompositeSchedule(i
     Timestamp periodBegin = Timestamp(startSchedule);
     Timestamp periodStop = Timestamp(startSchedule);
 
+    //remember last effective limit we actually *emitted*
+    ChargeRate lastLimit;
+
     while (periodBegin - startSchedule < duration && periods.size() < MO_ChargingScheduleMaxPeriods) {
 
         //calculate limit
@@ -267,11 +270,17 @@ std::unique_ptr<ChargingSchedule> SmartChargingConnector::getCompositeSchedule(i
             }
         }
 
-        periods.emplace_back();
-        float limit_opt = unit == ChargingRateUnitType_Optional::Watt ? limit.power : limit.current;
-        periods.back().limit = limit_opt != std::numeric_limits<float>::max() ? limit_opt : -1.f,
-        periods.back().numberPhases = limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1;
-        periods.back().startPeriod = periodBegin - startSchedule;
+        //coalesce: only push when the effective limit actually *changes*
+        if (periods.empty() || limit != lastLimit) {
+            periods.emplace_back();
+            float limit_opt = unit == ChargingRateUnitType_Optional::Watt ? limit.power : limit.current;
+            // Per OCPP 1.6 schema, limit must be > 0. Use a sane fallback (e.g. 32A or 22kW-equivalent) instead of -1 when undefined.
+            // For numberPhases, the field is optional; if unknown we can default to 3 (typical three-phase) instead of -1.
+            periods.back().limit = limit_opt != std::numeric_limits<float>::max() ? limit_opt : 32.f;
+            periods.back().numberPhases = limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : 3;
+            periods.back().startPeriod = periodBegin - startSchedule;
+            lastLimit = limit;
+        }
         
         periodBegin = periodStop;
     }
@@ -763,6 +772,8 @@ bool SmartChargingServiceUtils::removeProfile(std::shared_ptr<FilesystemAdapter>
     if (!printProfileFileName(fn, MO_MAX_PATH_SIZE, connectorId, purpose, stackLevel)) {
         return false;
     }
+
+    MO_DBG_DEBUG("Removing chargingProfile for connector %d, purpose %d, stack level %d, file %s", connectorId, (int) purpose, (int) stackLevel, fn);
 
     return filesystem->remove(fn);
 }

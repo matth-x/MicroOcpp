@@ -96,8 +96,8 @@ bool ChargingSchedule::calculateLimit(const Timestamp &t, const Timestamp &start
     for (auto period = chargingSchedulePeriod.begin(); period != chargingSchedulePeriod.end(); period++) {
         if (period->startPeriod > t_toBasis) {
             // found the first period that comes after t_toBasis.
-            nextChange = basis + period->startPeriod;
-            nextChange = std::min(nextChange, basis + period->startPeriod);
+            const Timestamp candidate = basis + period->startPeriod;
+            nextChange = std::min(nextChange, candidate);
             break; //The currently valid limit was set the iteration before
         }
         limit_res = period->limit;
