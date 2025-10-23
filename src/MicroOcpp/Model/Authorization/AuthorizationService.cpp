@@ -75,7 +75,7 @@ bool AuthorizationService::loadLists() {
 }
 
 AuthorizationData *AuthorizationService::getLocalAuthorization(const char *idTag) {
-    if (!localAuthListEnabledBool->getBool()) {
+    if (!localAuthListEnabled()) {
         return nullptr; //auth cache will follow
     }
 
@@ -99,6 +99,10 @@ int AuthorizationService::getLocalListVersion() {
 
 size_t AuthorizationService::getLocalListSize() {
     return localAuthorizationList.size();
+}
+
+bool AuthorizationService::localAuthListEnabled() const {
+    return localAuthListEnabledBool && localAuthListEnabledBool->getBool();
 }
 
 bool AuthorizationService::updateLocalList(JsonArray localAuthorizationListJson, int listVersion, bool differential) {
@@ -127,7 +131,7 @@ bool AuthorizationService::updateLocalList(JsonArray localAuthorizationListJson,
 void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idTagInfo) {
     //check local list conflicts. In future: also update authorization cache
 
-    if (!localAuthListEnabledBool->getBool()) {
+    if (!localAuthListEnabled()) {
         return; //auth cache will follow
     }
 
