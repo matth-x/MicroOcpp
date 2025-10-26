@@ -14,6 +14,14 @@ OCPP 1.6 / 2.0.1 client for microcontrollers. Portable C/C++. Compatible with Es
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp) | Technical introduction: [Docs](https://matth-x.github.io/MicroOcpp/intro-tech) | Website: [www.micro-ocpp.com](https://www.micro-ocpp.com)
 
+## AI-friendly code
+
+AI models perform extremely well with the MicroOCPP codebase. The upcoming new release of MO (v2.0) will further optimize the code for more reliable results with AI models (preview to be found in the `develop/remodel-api` branch). The hope is to allow integrating MO into an existing EV charger project with only a few queries.
+
+Currently, the `develop/remodel-api` branch is not stable yet, but recommended for new developments. To get started, load `MicroOcpp.h` (now unified for C and C++) into the context window and ask what the AI model needs to know to integrate it into your codebase.
+
+If your tools have issues with something in MicroOCPP, please open an issue on GitHub. Any feedback on how to further optimize the codebase is also highly appreciated.
+
 ## Tester / Demo App
 
 *Main repository: [MicroOcppSimulator](https://github.com/matth-x/MicroOcppSimulator)*
@@ -97,6 +105,6 @@ ISO 15118 defines some use cases which include a message exchange between the ch
 
 ## Contact
 
-If you have further questions, feel free to reach out!
+If you have any questions, or found a potential bug, feel free to open an issue. This type of interaction is highly appreciated, because it shows problems in the codebase and helps improve the project for clarity. For further questions which shouldn't stand in public, you can reach me via LinkedIn or the following email address:
 
 :envelope: : matthias [A⊤] micro-ocpp [DО⊤] com
