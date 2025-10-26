@@ -1,12 +1,11 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #include <MicroOcpp.h>
 #include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Context.h>
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Model/Metering/MeteringConnector.h>
 #include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Operations/CustomOperation.h>
 #include <catch2/catch.hpp>
@@ -635,8 +634,8 @@ TEST_CASE("Metering") {
 
         unsigned int attemptNr = 0;
 
-        getOcppContext()->getOperationRegistry().registerOperation("MeterValues", [&attemptNr] () {
-            return new Ocpp16::CustomOperation("MeterValues",
+        getOcppContext()->getMessageService().registerOperation("MeterValues", [&attemptNr] () {
+            return new v16::CustomOperation("MeterValues",
                 [&attemptNr] (JsonObject payload) {
                     //receive req
                     attemptNr++;

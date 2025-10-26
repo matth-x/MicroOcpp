@@ -3,15 +3,16 @@
 // MIT License
 
 #include <MicroOcpp/Operations/Heartbeat.h>
-#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Debug.h>
 #include <string.h>
 
-using MicroOcpp::Ocpp16::Heartbeat;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16 || MO_ENABLE_V201
 
-Heartbeat::Heartbeat(Model& model) : MemoryManaged("v16.Operation.", "Heartbeat"), model(model) {
-  
+using namespace MicroOcpp;
+
+Heartbeat::Heartbeat(Context& context) : MemoryManaged("v16.Operation.", "Heartbeat"), context(context) {
+
 }
 
 const char* Heartbeat::getOperationType(){
@@ -23,10 +24,10 @@ std::unique_ptr<JsonDoc> Heartbeat::createReq() {
 }
 
 void Heartbeat::processConf(JsonObject payload) {
-  
+
     const char* currentTime = payload["currentTime"] | "Invalid";
     if (strcmp(currentTime, "Invalid")) {
-        if (model.getClock().setTime(currentTime)) {
+        if (context.getClock().setTime(currentTime)) {
             //success
             MO_DBG_DEBUG("Request has been accepted");
         } else {
@@ -37,30 +38,22 @@ void Heartbeat::processConf(JsonObject payload) {
     }
 }
 
-void Heartbeat::processReq(JsonObject payload) {
+#if MO_ENABLE_MOCK_SERVER
+int Heartbeat::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
+    (void)userStatus;
 
-    /**
-     * Ignore Contents of this Req-message, because this is for debug purposes only
-     */
+    auto& context = *reinterpret_cast<Context*>(userData);
 
-}
+    char timeStr [MO_JSONDATE_SIZE];
 
-std::unique_ptr<JsonDoc> Heartbeat::createConf(){
-    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + (JSONDATE_LENGTH + 1));
-    JsonObject payload = doc->to<JsonObject>();
-
-    //safety mechanism; in some test setups the library could have to answer Heartbeats without valid system time
-    Timestamp ocppTimeReference = Timestamp(2019,10,0,11,59,55); 
-    Timestamp ocppSelect = ocppTimeReference;
-    auto& ocppNow = model.getClock().now();
-    if (ocppNow > ocppTimeReference) {
-        //time has already been set
-        ocppSelect = ocppNow;
+    if (context.getClock().now().isUnixTime()) {
+        context.getClock().toJsonString(context.getClock().now(), timeStr, sizeof(timeStr));
+    } else {
+        (void)snprintf(timeStr, sizeof(timeStr), "2025-05-18T18:55:13Z");
     }
 
-    char ocppNowJson [JSONDATE_LENGTH + 1] = {'\0'};
-    ocppSelect.toJsonString(ocppNowJson, JSONDATE_LENGTH + 1);
-    payload["currentTime"] = ocppNowJson;
-
-    return doc;
+    return snprintf(buf, size, "{\"currentTime\":\"%s\"}", timeStr);
 }
+#endif //MO_ENABLE_MOCK_SERVER
+
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201

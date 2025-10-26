@@ -3,15 +3,19 @@
 // MIT License
 
 #include <MicroOcpp/Operations/SetChargingProfile.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Model/Transactions/TransactionService16.h>
+#include <MicroOcpp/Model/Transactions/TransactionService201.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp16::SetChargingProfile;
-using MicroOcpp::JsonDoc;
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SMARTCHARGING
 
-SetChargingProfile::SetChargingProfile(Model& model, SmartChargingService& scService) : MemoryManaged("v16.Operation.", "SetChargingProfile"), model(model), scService(scService) {
+using namespace MicroOcpp;
+
+SetChargingProfile::SetChargingProfile(Context& context, SmartChargingService& scService) : MemoryManaged("v16.Operation.", "SetChargingProfile"), context(context), scService(scService), ocppVersion(context.getOcppVersion()) {
 
 }
 
@@ -25,64 +29,117 @@ const char* SetChargingProfile::getOperationType(){
 
 void SetChargingProfile::processReq(JsonObject payload) {
 
-    int connectorId = payload["connectorId"] | -1;
-    if (connectorId < 0 || !payload.containsKey("csChargingProfiles")) {
-        errorCode = "FormationViolation";
-        return;
-    }
+    int evseId = -1;
+    JsonObject chargingProfileJson;
 
-    if ((unsigned int) connectorId >= model.getNumConnectors()) {
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+        evseId = payload["connectorId"] | -1;
+        if (evseId < 0 || !payload.containsKey("csChargingProfiles")) {
+            errorCode = "FormationViolation";
+            return;
+        }
+        chargingProfileJson = payload["csChargingProfiles"];
+    }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (ocppVersion == MO_OCPP_V201) {
+        evseId = payload["evseId"] | -1;
+        if (evseId < 0 || !payload.containsKey("chargingProfile")) {
+            errorCode = "FormationViolation";
+            return;
+        }
+        chargingProfileJson = payload["chargingProfile"];
+    }
+    #endif //MO_ENABLE_V201
+
+    if ((unsigned int) evseId >= context.getModelCommon().getNumEvseId()) {
         errorCode = "PropertyConstraintViolation";
         return;
     }
 
-    JsonObject csChargingProfiles = payload["csChargingProfiles"];
-
-    auto chargingProfile = loadChargingProfile(csChargingProfiles);
+    auto chargingProfile = std::unique_ptr<ChargingProfile>(new ChargingProfile());
     if (!chargingProfile) {
-        errorCode = "PropertyConstraintViolation";
-        errorDescription = "csChargingProfiles validation failed";
+        MO_DBG_ERR("OOM");
+        errorCode = "InternalError";
         return;
     }
 
-    if (chargingProfile->getChargingProfilePurpose() == ChargingProfilePurposeType::TxProfile) {
+    bool valid = chargingProfile->parseJson(context.getClock(), ocppVersion, chargingProfileJson);
+    if (!valid) {
+        errorCode = "FormationViolation";
+        errorDescription = "chargingProfile validation failed";
+        return;
+    }
+
+    if (chargingProfile->chargingProfilePurpose == ChargingProfilePurposeType::TxProfile) {
         // if TxProfile, check if a transaction is running
 
-        if (connectorId == 0) {
+        if (evseId == 0) {
             errorCode = "PropertyConstraintViolation";
             errorDescription = "Cannot set TxProfile at connectorId 0";
             return;
         }
-        Connector *connector = model.getConnector(connectorId);
-        if (!connector) {
-            errorCode = "PropertyConstraintViolation";
-            return;
-        }
 
-        auto& transaction = connector->getTransaction();
-        if (!transaction || !connector->getTransaction()->isRunning()) {
-            //no transaction running, reject profile
-            accepted = false;
-            return;
-        }
+        #if MO_ENABLE_V16
+        if (ocppVersion == MO_OCPP_V16) {
+            auto txService = context.getModel16().getTransactionService();
+            auto txServiceEvse = txService ? txService->getEvse(evseId) : nullptr;
+            if (!txServiceEvse) {
+                errorCode = "InternalError";
+                return;
+            }
 
-        if (chargingProfile->getTransactionId() >= 0 &&
-                chargingProfile->getTransactionId() != transaction->getTransactionId()) {
-            //transactionId undefined / mismatch
-            accepted = false;
-            return;
+            auto transaction = txServiceEvse->getTransaction();
+            if (!transaction || !transaction->isRunning()) {
+                //no transaction running, reject profile
+                accepted = false;
+                return;
+            }
+
+            if (chargingProfile->transactionId16 >= 0 &&
+                    chargingProfile->transactionId16 != transaction->getTransactionId()) {
+                //transactionId undefined / mismatch
+                accepted = false;
+                return;
+            }
         }
+        #endif //MO_ENABLE_V16
+        #if MO_ENABLE_V201
+        if (ocppVersion == MO_OCPP_V201) {
+            auto txService = context.getModel201().getTransactionService();
+            auto txServiceEvse = txService ? txService->getEvse(evseId) : nullptr;
+            if (!txServiceEvse) {
+                errorCode = "InternalError";
+                return;
+            }
+
+            auto transaction = txServiceEvse->getTransaction();
+            if (!transaction || !(transaction->started && !transaction->stopped)) {
+                //no transaction running, reject profile
+                accepted = false;
+                return;
+            }
+
+            if (*chargingProfile->transactionId201 >= 0 &&
+                    strcmp(chargingProfile->transactionId201, transaction->transactionId)) {
+                //transactionId undefined / mismatch
+                accepted = false;
+                return;
+            }
+        }
+        #endif //MO_ENABLE_V201
 
         //seems good
-    } else if (chargingProfile->getChargingProfilePurpose() == ChargingProfilePurposeType::ChargePointMaxProfile) {
-        if (connectorId > 0) {
+    } else if (chargingProfile->chargingProfilePurpose == ChargingProfilePurposeType::ChargePointMaxProfile) {
+        if (evseId > 0) {
             errorCode = "PropertyConstraintViolation";
             errorDescription = "Cannot set ChargePointMaxProfile at connectorId > 0";
             return;
         }
     }
 
-    accepted = scService.setChargingProfile(connectorId, std::move(chargingProfile));
+    accepted = scService.setChargingProfile(evseId, std::move(chargingProfile));
 }
 
 std::unique_ptr<JsonDoc> SetChargingProfile::createConf(){
@@ -95,3 +152,5 @@ std::unique_ptr<JsonDoc> SetChargingProfile::createConf(){
     }
     return doc;
 }
+
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SMARTCHARGING

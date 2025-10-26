@@ -5,27 +5,29 @@
 #ifndef MO_BOOTNOTIFICATION_H
 #define MO_BOOTNOTIFICATION_H
 
+#include <MicroOcpp/Model/Boot/BootNotificationData.h>
 #include <MicroOcpp/Core/Operation.h>
-#include <MicroOcpp/Operations/CiStrings.h>
+#include <MicroOcpp/Version.h>
 
-#define CP_MODEL_LEN_MAX        CiString20TypeLen
-#define CP_SERIALNUMBER_LEN_MAX CiString25TypeLen
-#define CP_VENDOR_LEN_MAX       CiString20TypeLen
-#define FW_VERSION_LEN_MAX      CiString50TypeLen
+#if MO_ENABLE_V16 || MO_ENABLE_V201
 
 namespace MicroOcpp {
 
-class Model;
-
-namespace Ocpp16 {
+class Context;
+class BootService;
+class HeartbeatService;
 
 class BootNotification : public Operation, public MemoryManaged {
 private:
-    Model& model;
-    std::unique_ptr<JsonDoc> credentials;
+    Context& context;
+    BootService& bootService;
+    HeartbeatService *heartbeatService = nullptr;
+    const MO_BootNotificationData& bnData;
+    const char *reason201 = nullptr;
+    int ocppVersion = -1;
     const char *errorCode = nullptr;
 public:
-    BootNotification(Model& model, std::unique_ptr<JsonDoc> payload);
+    BootNotification(Context& context, BootService& bootService, HeartbeatService *heartbeatService, const MO_BootNotificationData& bnData, const char *reason201);
 
     ~BootNotification() = default;
 
@@ -35,14 +37,14 @@ public:
 
     void processConf(JsonObject payload) override;
 
-    void processReq(JsonObject payload) override;
-
-    std::unique_ptr<JsonDoc> createConf() override;
-
     const char *getErrorCode() override {return errorCode;}
+
+#if MO_ENABLE_MOCK_SERVER
+    static int writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData);
+#endif
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace MicroOcpp
 
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201
 #endif

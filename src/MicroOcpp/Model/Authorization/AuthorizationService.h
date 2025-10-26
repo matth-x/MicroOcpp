@@ -5,30 +5,33 @@
 #ifndef MO_AUTHORIZATIONSERVICE_H
 #define MO_AUTHORIZATIONSERVICE_H
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_LOCAL_AUTH
-
 #include <MicroOcpp/Model/Authorization/AuthorizationList.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
-#include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 
 namespace MicroOcpp {
 
 class Context;
 
+namespace v16 {
+
+class Configuration;
+
 class AuthorizationService : public MemoryManaged {
 private:
     Context& context;
-    std::shared_ptr<FilesystemAdapter> filesystem;
+    MO_FilesystemAdapter *filesystem = nullptr;
     AuthorizationList localAuthorizationList;
 
-    std::shared_ptr<Configuration> localAuthListEnabledBool;
+    Configuration *localAuthListEnabledBool = nullptr;
 
 public:
-    AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem);
-    ~AuthorizationService();
+    AuthorizationService(Context& context);
+
+    bool setup();
 
     bool loadLists();
 
@@ -42,7 +45,7 @@ public:
     void notifyAuthorization(const char *idTag, JsonObject idTagInfo);
 };
 
-}
-
-#endif //MO_ENABLE_LOCAL_AUTH
+} //namespace MicroOcpp
+} //namespace v16
+#endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 #endif

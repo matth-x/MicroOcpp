@@ -284,7 +284,7 @@ TEST_CASE( "Configuration" ) {
 
         bool checkProcessed = false;
 
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "GetConfiguration",
                 [] () {
                     //create req
@@ -321,7 +321,7 @@ TEST_CASE( "Configuration" ) {
 
         checkProcessed = false;
 
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "GetConfiguration",
                 [] () {
                     //create req
@@ -375,7 +375,7 @@ TEST_CASE( "Configuration" ) {
 
         //update existing config
         bool checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ChangeConfiguration",
                 [] () {
                     //create req
@@ -397,7 +397,7 @@ TEST_CASE( "Configuration" ) {
 
         //try to update not existing key
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ChangeConfiguration",
                 [] () {
                     //create req
@@ -418,7 +418,7 @@ TEST_CASE( "Configuration" ) {
 
         //try to update config with malformatted value
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ChangeConfiguration",
                 [] () {
                     //create req
@@ -445,7 +445,7 @@ TEST_CASE( "Configuration" ) {
 
         //validation success
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ChangeConfiguration",
                 [] () {
                     //create req
@@ -467,7 +467,7 @@ TEST_CASE( "Configuration" ) {
 
         //validation failure
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ChangeConfiguration",
                 [] () {
                     //create req

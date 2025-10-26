@@ -2,19 +2,21 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
+#include <MicroOcpp/Operations/RequestStartTransaction.h>
+
+#include <MicroOcpp/Context.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
+#include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
+#include <MicroOcpp/Debug.h>
 
 #if MO_ENABLE_V201
 
-#include <MicroOcpp/Operations/RequestStartTransaction.h>
-#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
-#include <MicroOcpp/Debug.h>
+using namespace MicroOcpp;
+using namespace MicroOcpp::v201;
 
-using MicroOcpp::Ocpp201::RequestStartTransaction;
-using MicroOcpp::JsonDoc;
+RequestStartTransaction::RequestStartTransaction(Context& context, RemoteControlService& rcService) : MemoryManaged("v201.Operation.", "RequestStartTransaction"), context(context), rcService(rcService) {
 
-RequestStartTransaction::RequestStartTransaction(RemoteControlService& rcService) : MemoryManaged("v201.Operation.", "RequestStartTransaction"), rcService(rcService) {
-  
 }
 
 const char* RequestStartTransaction::getOperationType(){
@@ -43,7 +45,31 @@ void RequestStartTransaction::processReq(JsonObject payload) {
         return;
     }
 
-    status = rcService.requestStartTransaction(evseId, remoteStartId, idToken, transactionId, sizeof(transactionId));
+    std::unique_ptr<ChargingProfile> chargingProfile;
+    if (payload.containsKey("chargingProfile")) {
+        #if MO_ENABLE_SMARTCHARGING
+        if (context.getModel201().getSmartChargingService()) {
+            JsonObject chargingProfileJson = payload["chargingProfile"];
+            chargingProfile = std::unique_ptr<ChargingProfile>(new ChargingProfile());
+            if (!chargingProfile) {
+                MO_DBG_ERR("OOM");
+                errorCode = "InternalError";
+                return;
+            }
+
+            bool valid = chargingProfile->parseJson(context.getClock(), MO_OCPP_V201, chargingProfileJson);
+            if (!valid) {
+                errorCode = "FormationViolation";
+                return;
+            }
+        } else
+        #endif
+        {
+            MO_DBG_INFO("ignore ChargingProfile"); //see F01.FR.12
+        }
+    }
+
+    status = rcService.requestStartTransaction(evseId, remoteStartId, idToken, std::move(chargingProfile), transactionId, sizeof(transactionId));
 }
 
 std::unique_ptr<JsonDoc> RequestStartTransaction::createConf(){
@@ -54,10 +80,10 @@ std::unique_ptr<JsonDoc> RequestStartTransaction::createConf(){
     const char *statusCstr = "";
 
     switch (status) {
-        case RequestStartStopStatus_Accepted:
+        case RequestStartStopStatus::Accepted:
             statusCstr = "Accepted";
             break;
-        case RequestStartStopStatus_Rejected:
+        case RequestStartStopStatus::Rejected:
             statusCstr = "Rejected";
             break;
         default:
@@ -74,4 +100,4 @@ std::unique_ptr<JsonDoc> RequestStartTransaction::createConf(){
     return doc;
 }
 
-#endif // MO_ENABLE_V201
+#endif //MO_ENABLE_V201

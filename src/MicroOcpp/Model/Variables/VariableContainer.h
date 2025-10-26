@@ -9,17 +9,17 @@
 #ifndef MO_VARIABLECONTAINER_H
 #define MO_VARIABLECONTAINER_H
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <memory>
 
 #include <MicroOcpp/Model/Variables/Variable.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V201
 
 namespace MicroOcpp {
+namespace v201 {
 
 class VariableContainer {
 public:
@@ -47,7 +47,7 @@ public:
 class VariableContainerOwning : public VariableContainer, public MemoryManaged {
 private:
     Vector<std::unique_ptr<Variable>> variables;
-    std::shared_ptr<FilesystemAdapter> filesystem;
+    MO_FilesystemAdapter *filesystem = nullptr;
     char *filename = nullptr;
 
     uint16_t trackWriteCount = 0;
@@ -65,12 +65,12 @@ public:
 
     bool add(std::unique_ptr<Variable> variable);
 
-    bool enablePersistency(std::shared_ptr<FilesystemAdapter> filesystem, const char *filename); 
+    bool enablePersistency(MO_FilesystemAdapter *filesystem, const char *filename);
     bool load(); //load variables from flash
     bool commit() override;
 };
 
-} //end namespace MicroOcpp
-
+} //namespace v201
+} //namespace MicroOcpp
 #endif //MO_ENABLE_V201
 #endif

@@ -1,20 +1,30 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
+
+#include <MicroOcpp/Model/Boot/BootService.h>
 
 #include <limits>
 
-#include <MicroOcpp/Model/Boot/BootService.h>
-#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Model/Configuration/ConfigurationService.h>
+#include <MicroOcpp/Model/Variables/VariableService.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 #include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Core/PersistencyUtils.h>
 #include <MicroOcpp/Operations/BootNotification.h>
 #include <MicroOcpp/Platform.h>
 #include <MicroOcpp/Debug.h>
 
+#if MO_ENABLE_V16 || MO_ENABLE_V201
+
 using namespace MicroOcpp;
+
+void mo_bootNotificationData_init(MO_BootNotificationData *bnData) {
+    memset(bnData, 0, sizeof(*bnData));
+}
 
 unsigned int PreBootQueue::getFrontRequestOpNr() {
     if (!activatedPostBootCommunication) {
@@ -41,39 +51,131 @@ RegistrationStatus MicroOcpp::deserializeRegistrationStatus(const char *serializ
     }
 }
 
-BootService::BootService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : MemoryManaged("v16.Boot.BootService"), context(context), filesystem(filesystem), cpCredentials{makeString(getMemoryTag())} {
-    
-    context.getRequestQueue().setPreBootSendQueue(&preBootQueue); //register PreBootQueue in RequestQueue module
-    
-    //if transactions can start before the BootNotification succeeds
-    preBootTransactionsBool = declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", false);
-    
-    if (!preBootTransactionsBool) {
-        MO_DBG_ERR("initialization error");
-    }
+BootService::BootService(Context& context) : MemoryManaged("v16/v201.Boot.BootService"), context(context) {
+    mo_bootNotificationData_init(&bnData);
+}
 
-    //Register message handler for TriggerMessage operation
-    context.getOperationRegistry().registerOperation("BootNotification", [this] () {
-        return new Ocpp16::BootNotification(this->context.getModel(), getChargePointCredentials());});
+BootService::~BootService() {
+    MO_FREE(bnDataBuf);
+    bnDataBuf = nullptr;
+}
+
+bool BootService::setup() {
+
+    context.getMessageService().setPreBootSendQueue(&preBootQueue); //register PreBootQueue in RequestQueue module
+
+    filesystem = context.getFilesystem();
+
+    ocppVersion = context.getOcppVersion();
+
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+
+        auto configService = context.getModel16().getConfigurationService();
+        if (!configService) {
+            MO_DBG_ERR("initialization error");
+            return false;
+        }
+
+        //if transactions can start before the BootNotification succeeds
+        preBootTransactionsBoolV16 = configService->declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", false);
+        if (!preBootTransactionsBoolV16) {
+            MO_DBG_ERR("initialization error");
+            return false;
+        }
+
+        RemoteControlService *rcService = context.getModel16().getRemoteControlService();
+        if (!rcService) {
+            MO_DBG_ERR("initialization error");
+            return false;
+        }
+
+        rcService->addTriggerMessageHandler("BootNotification", [] (Context& context) -> Operation* {
+            auto& model = context.getModel16();
+            auto& bootSvc = *model.getBootService();
+            return new BootNotification(context, bootSvc, model.getHeartbeatService(), bootSvc.getBootNotificationData(), nullptr);
+        });
+    }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (ocppVersion == MO_OCPP_V201) {
+
+        auto varService = context.getModel201().getVariableService();
+        if (!varService) {
+            MO_DBG_ERR("initialization error");
+            return false;
+        }
+
+        //if transactions can start before the BootNotification succeeds
+        preBootTransactionsBoolV201 = varService->declareVariable<bool>("CustomizationCtrlr", "PreBootTransactions", false);
+        if (!preBootTransactionsBoolV201) {
+            MO_DBG_ERR("initialization error");
+            return false;
+        }
+
+        RemoteControlService *rcService = context.getModel201().getRemoteControlService();
+        if (!rcService) {
+            MO_DBG_ERR("initialization error");
+            return false;
+        }
+
+        rcService->addTriggerMessageHandler("BootNotification", [] (Context& context, int evseId) -> TriggerMessageStatus {
+            (void)evseId;
+            auto& model = context.getModel201();
+            auto& bootSvc = *model.getBootService();
+
+            if (bootSvc.getRegistrationStatus() == RegistrationStatus::Accepted) {
+                //F06.FR.17: if previous BootNotification was accepted, don't allow triggering a new one
+                return TriggerMessageStatus::Rejected;
+            } else {
+                auto operation = new BootNotification(context, bootSvc, model.getHeartbeatService(), bootSvc.getBootNotificationData(), "Triggered");
+                if (!operation) {
+                    MO_DBG_ERR("OOM");
+                    return TriggerMessageStatus::ERR_INTERNAL;
+                }
+                auto request = makeRequest(context, operation);
+                if (!request) {
+                    MO_DBG_ERR("OOM");
+                    return TriggerMessageStatus::ERR_INTERNAL;
+                }
+                if (!context.getMessageService().sendRequestPreBoot(std::move(request))) {
+                    MO_DBG_ERR("OOM");
+                    return TriggerMessageStatus::ERR_INTERNAL;
+                }
+                return TriggerMessageStatus::Accepted;
+            }
+        });
+    }
+    #endif //MO_ENABLE_V201
+
+    #if MO_ENABLE_MOCK_SERVER
+    context.getMessageService().registerOperation("BootNotification", nullptr, BootNotification::writeMockConf, nullptr, reinterpret_cast<void*>(&context));
+    #endif //MO_ENABLE_MOCK_SERVER
+
+    return true;
 }
 
 void BootService::loop() {
 
+    auto& clock = context.getClock();
+
     if (!executedFirstTime) {
         executedFirstTime = true;
-        firstExecutionTimestamp = mocpp_tick_ms();
+        firstExecutionTimestamp = clock.getUptime();
     }
 
-    if (!executedLongTime && mocpp_tick_ms() - firstExecutionTimestamp >= MO_BOOTSTATS_LONGTIME_MS) {
+    int32_t dtFirstExecution;
+    if (!clock.delta(clock.getUptime(), firstExecutionTimestamp, dtFirstExecution)) {
+        dtFirstExecution = 0;
+    }
+
+    if (!executedLongTime && dtFirstExecution >= MO_BOOTSTATS_LONGTIME_MS) {
         executedLongTime = true;
         MO_DBG_DEBUG("boot success timer reached");
 
-        configuration_clean_unused();
-
-        BootStats bootstats;
-        loadBootStats(filesystem, bootstats);
-        bootstats.lastBootSuccess = bootstats.bootNr;
-        storeBootStats(filesystem, bootstats);
+        if (filesystem) {
+            PersistencyUtils::setBootSuccess(filesystem);
+        }
     }
 
     preBootQueue.loop();
@@ -83,16 +185,33 @@ void BootService::loop() {
         activatedPostBootCommunication = true;
     }
 
-    if (!activatedModel && (status == RegistrationStatus::Accepted || preBootTransactionsBool->getBool())) {
-        context.getModel().activateTasks();
+    bool preBootTransactions = false;
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+        preBootTransactions = preBootTransactionsBoolV16->getBool();
+    }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (ocppVersion == MO_OCPP_V201) {
+        preBootTransactions = preBootTransactionsBoolV201->getBool();
+    }
+    #endif //MO_ENABLE_V201
+
+    if (!activatedModel && (status == RegistrationStatus::Accepted || preBootTransactions)) {
+        context.getModelCommon().activateTasks();
         activatedModel = true;
     }
 
     if (status == RegistrationStatus::Accepted) {
         return;
     }
-    
-    if (mocpp_tick_ms() - lastBootNotification < (interval_s * 1000UL)) {
+
+    int32_t dtLastBootNotification;
+    if (!clock.delta(clock.getUptime(), lastBootNotification, dtLastBootNotification)) {
+        dtLastBootNotification = 0;
+    }
+
+    if (lastBootNotification.isDefined() && dtLastBootNotification < interval_s) {
         return;
     }
 
@@ -100,166 +219,103 @@ void BootService::loop() {
      * Create BootNotification. The BootNotifaction object will fetch its paremeters from
      * this class and notify this class about the response
      */
-    auto bootNotification = makeRequest(new Ocpp16::BootNotification(context.getModel(), getChargePointCredentials()));
-    bootNotification->setTimeout(interval_s * 1000UL);
-    context.getRequestQueue().sendRequestPreBoot(std::move(bootNotification));
+    auto bootNotification = makeRequest(context, new BootNotification(context, *this, context.getModelCommon().getHeartbeatService(), getBootNotificationData(), nullptr));
+    bootNotification->setTimeout(interval_s);
+    context.getMessageService().sendRequestPreBoot(std::move(bootNotification));
 
-    lastBootNotification = mocpp_tick_ms();
+    lastBootNotification = clock.getUptime();
 }
 
-void BootService::setChargePointCredentials(JsonObject credentials) {
-    auto written = serializeJson(credentials, cpCredentials);
-    if (written < 2) {
-        MO_DBG_ERR("serialization error");
-        cpCredentials = "{}";
-    }
+namespace MicroOcpp {
+size_t measureDataEntry(const char *bnDataEntry) {
+    return bnDataEntry ? strlen(bnDataEntry) + 1 : 0;
 }
 
-void BootService::setChargePointCredentials(const char *credentials) {
-    cpCredentials = credentials;
-    if (cpCredentials.size() < 2) {
-        cpCredentials = "{}";
+bool setDataEntry(char *bnDataBuf, size_t bufsize, size_t& written, const char **bnDataEntryDest, const char *bnDataEntrySrc) {
+    if (!bnDataEntrySrc) {
+        bnDataEntryDest = nullptr;
+        return true;
     }
+    *bnDataEntryDest = bnDataBuf + written;
+    int ret = snprintf(bnDataBuf + written, bufsize - written, "%s", bnDataEntrySrc);
+    if (ret < 0 || (size_t)ret >= bufsize - written) {
+        return false;
+    }
+    written += (size_t)ret + 1;
+    return true;
+}
 }
 
-std::unique_ptr<JsonDoc> BootService::getChargePointCredentials() {
-    if (cpCredentials.size() <= 2) {
-        return createEmptyDocument();
+bool BootService::setBootNotificationData(MO_BootNotificationData bnData) {
+    size_t bufsize = 0;
+    bufsize += measureDataEntry(bnData.chargePointModel);
+    bufsize += measureDataEntry(bnData.chargePointVendor);
+    bufsize += measureDataEntry(bnData.firmwareVersion);
+    bufsize += measureDataEntry(bnData.chargePointSerialNumber);
+    bufsize += measureDataEntry(bnData.meterSerialNumber);
+    bufsize += measureDataEntry(bnData.meterType);
+    bufsize += measureDataEntry(bnData.chargeBoxSerialNumber);
+    bufsize += measureDataEntry(bnData.iccid);
+    bufsize += measureDataEntry(bnData.imsi);
+
+    bnDataBuf = static_cast<char*>(MO_MALLOC(getMemoryTag(), bufsize));
+    if (!bnDataBuf) {
+        MO_DBG_ERR("OOM");
+        return false;
     }
 
-    std::unique_ptr<JsonDoc> doc;
-    size_t capacity = JSON_OBJECT_SIZE(9) + cpCredentials.size();
-    DeserializationError err = DeserializationError::NoMemory;
-    while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
-        doc = makeJsonDoc(getMemoryTag(), capacity);
-        err = deserializeJson(*doc, cpCredentials);
+    memset(&this->bnData, 0, sizeof(this->bnData));
 
-        capacity *= 2;
+    size_t written = 0;
+    bool success = true;
+    if (success) {success &= setDataEntry(bnDataBuf, bufsize, written, &this->bnData.chargePointModel, bnData.chargePointModel);}
+    if (success) {success &= setDataEntry(bnDataBuf, bufsize, written, &this->bnData.chargePointVendor, bnData.chargePointVendor);}
+    if (success) {success &= setDataEntry(bnDataBuf, bufsize, written, &this->bnData.firmwareVersion, bnData.firmwareVersion);}
+    if (success) {success &= setDataEntry(bnDataBuf, bufsize, written, &this->bnData.chargePointSerialNumber, bnData.chargePointSerialNumber);}
+    if (success) {success &= setDataEntry(bnDataBuf, bufsize, written, &this->bnData.meterSerialNumber, bnData.meterSerialNumber);}
+    if (success) {success &= setDataEntry(bnDataBuf, bufsize, written, &this->bnData.meterType, bnData.meterType);}
+    if (success) {success &= setDataEntry(bnDataBuf, bufsize, written, &this->bnData.chargeBoxSerialNumber, bnData.chargeBoxSerialNumber);}
+    if (success) {success &= setDataEntry(bnDataBuf, bufsize, written, &this->bnData.iccid, bnData.iccid);}
+    if (success) {success &= setDataEntry(bnDataBuf, bufsize, written, &this->bnData.imsi, bnData.imsi);}
+
+    if (!success) {
+        MO_DBG_ERR("failure to set BootNotification data");
+        goto fail;
     }
 
-    if (!err) {
-        return doc;
-    } else {
-        MO_DBG_ERR("could not parse stored credentials: %s", err.c_str());
-        return nullptr;
+    if (written != bufsize) {
+        MO_DBG_ERR("internal error");
+        goto fail;
     }
+
+    return true;
+fail:
+    MO_FREE(bnDataBuf);
+    memset(&this->bnData, 0, sizeof(this->bnData));
+    return false;
+}
+
+const MO_BootNotificationData& BootService::getBootNotificationData() {
+    return bnData;
 }
 
 void BootService::notifyRegistrationStatus(RegistrationStatus status) {
     this->status = status;
-    lastBootNotification = mocpp_tick_ms();
+    lastBootNotification = context.getClock().getUptime();
 }
 
-void BootService::setRetryInterval(unsigned long interval_s) {
-    if (interval_s == 0) {
+RegistrationStatus BootService::getRegistrationStatus() {
+    return status;
+}
+
+void BootService::setRetryInterval(int interval_s) {
+    if (interval_s <= 0) {
         this->interval_s = MO_BOOT_INTERVAL_DEFAULT;
     } else {
         this->interval_s = interval_s;
+        this->interval_s += 1; //TC_B_03_CS expects retry after at least interval_s secs and doesn't tolerate network jitter
     }
-    lastBootNotification = mocpp_tick_ms();
+    lastBootNotification = context.getClock().getUptime();
 }
 
-bool BootService::loadBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats) {
-    if (!filesystem) {
-        return false;
-    }
-
-    size_t msize = 0;
-    if (filesystem->stat(MO_FILENAME_PREFIX "bootstats.jsn", &msize) == 0) {
-        
-        bool success = true;
-
-        auto json = FilesystemUtils::loadJson(filesystem, MO_FILENAME_PREFIX "bootstats.jsn", "v16.Boot.BootService");
-        if (json) {
-            int bootNrIn = (*json)["bootNr"] | -1;
-            if (bootNrIn >= 0 && bootNrIn <= std::numeric_limits<uint16_t>::max()) {
-                bstats.bootNr = (uint16_t) bootNrIn;
-            } else {
-                success = false;
-            }
-
-            int lastSuccessIn = (*json)["lastSuccess"] | -1;
-            if (lastSuccessIn >= 0 && lastSuccessIn <= std::numeric_limits<uint16_t>::max()) {
-                bstats.lastBootSuccess = (uint16_t) lastSuccessIn;
-            } else {
-                success = false;
-            }
-
-            const char *microOcppVersionIn = (*json)["MicroOcppVersion"] | (const char*)nullptr;
-            if (microOcppVersionIn) {
-                auto ret = snprintf(bstats.microOcppVersion, sizeof(bstats.microOcppVersion), "%s", microOcppVersionIn);
-                if (ret < 0 || (size_t)ret >= sizeof(bstats.microOcppVersion)) {
-                    success = false;
-                }
-            } //else: version specifier can be missing after upgrade from pre 1.2.0 version
-        } else {
-            success = false;
-        }
-
-        if (!success) {
-            MO_DBG_ERR("bootstats corrupted");
-            filesystem->remove(MO_FILENAME_PREFIX "bootstats.jsn");
-            bstats = BootStats();
-        }
-
-        return success;
-    } else {
-        return false;
-    }
-}
-
-bool BootService::storeBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats) {
-    if (!filesystem) {
-        return false;
-    }
-
-    auto json = initJsonDoc("v16.Boot.BootService", JSON_OBJECT_SIZE(3));
-
-    json["bootNr"] = bstats.bootNr;
-    json["lastSuccess"] = bstats.lastBootSuccess;
-    json["MicroOcppVersion"] = (const char*)bstats.microOcppVersion;
-
-    return FilesystemUtils::storeJson(filesystem, MO_FILENAME_PREFIX "bootstats.jsn", json);
-}
-
-bool BootService::recover(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats) {
-    if (!filesystem) {
-        return false;
-    }
-
-    bool success = FilesystemUtils::remove_if(filesystem, [] (const char *fname) -> bool {
-        return !strncmp(fname, "sd", strlen("sd")) ||
-                !strncmp(fname, "tx", strlen("tx")) ||
-                !strncmp(fname, "sc-", strlen("sc-")) ||
-                !strncmp(fname, "reservation", strlen("reservation")) ||
-                !strncmp(fname, "client-state", strlen("client-state"));
-    });
-    MO_DBG_ERR("clear local state files (recovery): %s", success ? "success" : "not completed");
-
-    return success;
-}
-
-bool BootService::migrate(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats) {
-    if (!filesystem) {
-        return false;
-    }
-
-    bool success = true;
-
-    if (strcmp(bstats.microOcppVersion, MO_VERSION)) {
-        MO_DBG_INFO("migrate persistent storage to MO v" MO_VERSION);
-        success = FilesystemUtils::remove_if(filesystem, [] (const char *fname) -> bool {
-            return !strncmp(fname, "sd", strlen("sd")) ||
-                    !strncmp(fname, "tx", strlen("tx")) ||
-                    !strncmp(fname, "op", strlen("op")) ||
-                    !strncmp(fname, "sc-", strlen("sc-")) ||
-                    !strcmp(fname, "client-state.cnf") ||
-                    !strcmp(fname, "arduino-ocpp.cnf") ||
-                    !strcmp(fname, "ocpp-creds.jsn");
-        });
-
-        snprintf(bstats.microOcppVersion, sizeof(bstats.microOcppVersion), "%s", MO_VERSION);
-        MO_DBG_DEBUG("clear local state files (migration): %s", success ? "success" : "not completed");
-    }
-    return success;
-}
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201

@@ -5,17 +5,18 @@
 #ifndef MO_AUTHORIZATIONDATA_H
 #define MO_AUTHORIZATIONDATA_H
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_LOCAL_AUTH
-
-#include <MicroOcpp/Operations/CiStrings.h>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Model/Authorization/IdToken.h>
+#include <MicroOcpp/Version.h>
+
 #include <ArduinoJson.h>
 #include <memory>
 
+#if MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
+
 namespace MicroOcpp {
+namespace v16 {
 
 enum class AuthorizationStatus : uint8_t {
     Accepted,
@@ -26,25 +27,21 @@ enum class AuthorizationStatus : uint8_t {
     UNDEFINED //not part of OCPP 1.6
 };
 
-#define AUTHDATA_KEY_IDTAG(COMPACT)       (COMPACT ? "it" : "idTag")
-#define AUTHDATA_KEY_IDTAGINFO            "idTagInfo"
-#define AUTHDATA_KEY_EXPIRYDATE(COMPACT)  (COMPACT ? "ed" : "expiryDate")
-#define AUTHDATA_KEY_PARENTIDTAG(COMPACT) (COMPACT ? "pi" : "parentIdTag")
-#define AUTHDATA_KEY_STATUS(COMPACT)      (COMPACT ? "st" : "status")
-
-#define AUTHORIZATIONSTATUS_LEN_MAX (sizeof("ConcurrentTx") - 1) //max length of serialized AuthStatus
+#define AUTHDATA_KEY_IDTAG(INTERNAL_FORMAT)       (INTERNAL_FORMAT ? "it" : "idTag")
+#define AUTHDATA_KEY_IDTAGINFO                    "idTagInfo"
+#define AUTHDATA_KEY_EXPIRYDATE(INTERNAL_FORMAT)  (INTERNAL_FORMAT ? "ed" : "expiryDate")
+#define AUTHDATA_KEY_PARENTIDTAG(INTERNAL_FORMAT) (INTERNAL_FORMAT ? "pi" : "parentIdTag")
+#define AUTHDATA_KEY_STATUS(INTERNAL_FORMAT)      (INTERNAL_FORMAT ? "st" : "status")
 
 const char *serializeAuthorizationStatus(AuthorizationStatus status);
 AuthorizationStatus deserializeAuthorizationStatus(const char *cstr);
 
 class AuthorizationData : public MemoryManaged {
 private:
-    //data structure optimized for memory consumption
-
     char *parentIdTag = nullptr;
-    std::unique_ptr<Timestamp> expiryDate;
+    Timestamp *expiryDate = nullptr; //has ownership
 
-    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
+    char idTag [MO_IDTAG_LEN_MAX + 1] = {'\0'};
 
     AuthorizationStatus status = AuthorizationStatus::UNDEFINED;
 public:
@@ -54,10 +51,10 @@ public:
 
     AuthorizationData& operator=(AuthorizationData&& other);
 
-    void readJson(JsonObject entry, bool compact = false); //compact: compressed representation for flash storage
+    bool readJson(Clock& clock, JsonObject entry, bool internalFormat); //internalFormat: compressed representation for flash storage
 
-    size_t getJsonCapacity() const;
-    void writeJson(JsonObject& entry, bool compact = false); //compact: compressed representation for flash storage
+    size_t getJsonCapacity(bool internalFormat) const;
+    void writeJson(Clock& clock, JsonObject& entry, bool internalFormat); //internalFormat: compressed representation for flash storage
 
     const char *getIdTag() const;
     Timestamp *getExpiryDate() const;
@@ -67,7 +64,7 @@ public:
     void reset();
 };
 
-}
-
-#endif //MO_ENABLE_LOCAL_AUTH
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 #endif

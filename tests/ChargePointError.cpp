@@ -82,9 +82,9 @@ TEST_CASE( "ChargePointError" ) {
 
         bool checkProcessed = false;
 
-        getOcppContext()->getOperationRegistry().registerOperation("StatusNotification",
+        getOcppContext()->getMessageService().registerOperation("StatusNotification",
             [&checkProcessed] () {
-                return new Ocpp16::CustomOperation("StatusNotification",
+                return new v16::CustomOperation("StatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
                         //process req
                         checkProcessed = true;
@@ -110,9 +110,9 @@ TEST_CASE( "ChargePointError" ) {
 
 #if MO_REPORT_NOERROR
         checkProcessed = false;
-        getOcppContext()->getOperationRegistry().registerOperation("StatusNotification",
+        getOcppContext()->getMessageService().registerOperation("StatusNotification",
             [&checkProcessed] () {
-                return new Ocpp16::CustomOperation("StatusNotification",
+                return new v16::CustomOperation("StatusNotification",
                     [ &checkProcessed] (JsonObject payload) {
                         //process req
                         checkProcessed = true;
@@ -208,9 +208,9 @@ TEST_CASE( "ChargePointError" ) {
         const char *errorInfo = "*";
         bool checkErrorInfo = false;
 
-        getOcppContext()->getOperationRegistry().registerOperation("StatusNotification",
+        getOcppContext()->getMessageService().registerOperation("StatusNotification",
             [&checkErrorCode, &checkErrorInfo, &errorInfo, &errorCode] () {
-                return new Ocpp16::CustomOperation("StatusNotification",
+                return new v16::CustomOperation("StatusNotification",
                     [&checkErrorCode, &checkErrorInfo, &errorInfo, &errorCode] (JsonObject payload) {
                         //process req
                         if (strcmp(errorInfo, "*")) {

@@ -3,24 +3,26 @@
 // MIT License
 
 #include <MicroOcpp/Operations/StartTransaction.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
 #include <MicroOcpp/Model/Metering/MeteringService.h>
 #include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Debug.h>
-#include <MicroOcpp/Version.h>
 
-using MicroOcpp::Ocpp16::StartTransaction;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16
 
+using namespace MicroOcpp;
+using namespace MicroOcpp::v16;
 
-StartTransaction::StartTransaction(Model& model, std::shared_ptr<Transaction> transaction) : MemoryManaged("v16.Operation.", "StartTransaction"), model(model), transaction(transaction) {
-    
+StartTransaction::StartTransaction(Context& context, Transaction *transaction) : MemoryManaged("v16.Operation.", "StartTransaction"), context(context), transaction(transaction) {
+
 }
 
 StartTransaction::~StartTransaction() {
-    
+
 }
 
 const char* StartTransaction::getOperationType() {
@@ -30,29 +32,24 @@ const char* StartTransaction::getOperationType() {
 std::unique_ptr<JsonDoc> StartTransaction::createReq() {
 
     auto doc = makeJsonDoc(getMemoryTag(),
-                JSON_OBJECT_SIZE(6) + 
-                (IDTAG_LEN_MAX + 1) +
-                (JSONDATE_LENGTH + 1));
-                
+                JSON_OBJECT_SIZE(6) +
+                MO_JSONDATE_SIZE);
+
     JsonObject payload = doc->to<JsonObject>();
 
     payload["connectorId"] = transaction->getConnectorId();
-    payload["idTag"] = (char*) transaction->getIdTag();
+    payload["idTag"] = transaction->getIdTag();
     payload["meterStart"] = transaction->getMeterStart();
 
     if (transaction->getReservationId() >= 0) {
         payload["reservationId"] = transaction->getReservationId();
     }
 
-    if (transaction->getStartTimestamp() < MIN_TIME &&
-            transaction->getStartBootNr() == model.getBootNr()) {
-        MO_DBG_DEBUG("adjust preboot StartTx timestamp");
-        Timestamp adjusted = model.getClock().adjustPrebootTimestamp(transaction->getStartTimestamp());
-        transaction->setStartTimestamp(adjusted);
+    char timestamp[MO_JSONDATE_SIZE] = {'\0'};
+    if (!context.getClock().toJsonString(transaction->getStartTimestamp(), timestamp, sizeof(timestamp))) {
+        MO_DBG_ERR("internal error");
+        timestamp[0] = '\0';
     }
-
-    char timestamp[JSONDATE_LENGTH + 1] = {'\0'};
-    transaction->getStartTimestamp().toJsonString(timestamp, JSONDATE_LENGTH + 1);
     payload["timestamp"] = timestamp;
 
     return doc;
@@ -77,31 +74,25 @@ void StartTransaction::processConf(JsonObject payload) {
     }
 
     transaction->getStartSync().confirm();
-    transaction->commit();
+
+    if (auto filesystem = context.getFilesystem()) {
+        TransactionStore::store(filesystem, context, *transaction);
+    }
 
 #if MO_ENABLE_LOCAL_AUTH
-    if (auto authService = model.getAuthorizationService()) {
+    if (auto authService = context.getModel16().getAuthorizationService()) {
         authService->notifyAuthorization(transaction->getIdTag(), payload["idTagInfo"]);
     }
 #endif //MO_ENABLE_LOCAL_AUTH
 }
 
-void StartTransaction::processReq(JsonObject payload) {
-
-  /**
-   * Ignore Contents of this Req-message, because this is for debug purposes only
-   */
-
-}
-
-std::unique_ptr<JsonDoc> StartTransaction::createConf() {
-    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2));
-    JsonObject payload = doc->to<JsonObject>();
-
-    JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
-    idTagInfo["status"] = "Accepted";
+#if MO_ENABLE_MOCK_SERVER
+int StartTransaction::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
+    (void)userStatus;
+    (void)userData;
     static int uniqueTxId = 1000;
-    payload["transactionId"] = uniqueTxId++; //sample data for debug purpose
-
-    return doc;
+    return snprintf(buf, size, "{\"idTagInfo\":{\"status\":\"Accepted\"}, \"transactionId\":%i}", uniqueTxId++);
 }
+#endif //MO_ENABLE_MOCK_SERVER
+
+#endif //MO_ENABLE_V16

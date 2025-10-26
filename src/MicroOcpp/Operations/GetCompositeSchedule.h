@@ -6,26 +6,28 @@
 #define MO_GETCOMPOSITESCHEDULE_H
 
 #include <MicroOcpp/Core/Operation.h>
-#include <MicroOcpp/Core/Time.h>
-#include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
+#include <MicroOcpp/Model/SmartCharging/SmartChargingModel.h>
+#include <MicroOcpp/Version.h>
+
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SMARTCHARGING
 
 namespace MicroOcpp {
 
-class Model;
-
-namespace Ocpp16 {
+class Context;
+class SmartChargingService;
 
 class GetCompositeSchedule : public Operation, public MemoryManaged {
 private:
-    Model& model;
+    Context& context;
     SmartChargingService& scService;
-    int connectorId = -1;
+    int ocppVersion = -1;
+    int evseId = -1;
     int duration = -1;
-    ChargingRateUnitType_Optional chargingRateUnit = ChargingRateUnitType_Optional::None;
+    ChargingRateUnitType chargingRateUnit = ChargingRateUnitType::UNDEFINED;
 
     const char *errorCode {nullptr};
 public:
-    GetCompositeSchedule(Model& model, SmartChargingService& scService);
+    GetCompositeSchedule(Context& context, SmartChargingService& scService);
 
     const char* getOperationType() override;
 
@@ -36,6 +38,6 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace MicroOcpp
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SMARTCHARGING
 #endif

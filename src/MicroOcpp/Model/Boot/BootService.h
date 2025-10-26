@@ -1,15 +1,19 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #ifndef MO_BOOTSERVICE_H
 #define MO_BOOTSERVICE_H
 
-#include <MicroOcpp/Core/ConfigurationKeyValue.h>
+#include <MicroOcpp/Model/Boot/BootNotificationData.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Version.h>
 #include <memory>
+
+#if MO_ENABLE_V16 || MO_ENABLE_V201
 
 #define MO_BOOT_INTERVAL_DEFAULT 60
 
@@ -18,19 +22,6 @@
 #endif
 
 namespace MicroOcpp {
-
-#define MO_BOOTSTATS_VERSION_SIZE 10
-
-struct BootStats {
-    uint16_t bootNr = 0;
-    uint16_t lastBootSuccess = 0;
-
-    uint16_t getBootFailureCount() {
-        return bootNr - lastBootSuccess;
-    }
-
-    char microOcppVersion [MO_BOOTSTATS_VERSION_SIZE] = {'\0'};
-};
 
 enum class RegistrationStatus {
     Accepted,
@@ -45,56 +36,73 @@ class PreBootQueue : public VolatileRequestQueue {
 private:
     bool activatedPostBootCommunication = false;
 public:
-    unsigned int getFrontRequestOpNr() override; //override FrontRequestOpNr behavior: in PreBoot mode, always return 0 to avoid other RequestEmitters from sending msgs
-    
+    unsigned int getFrontRequestOpNr() override; //override FrontRequestOpNr behavior: in PreBoot mode, always return 0 to avoid other RequestQueues from sending msgs
+
     void activatePostBootCommunication(); //end PreBoot mode, now send Requests normally
 };
 
 class Context;
 
+#if MO_ENABLE_V16
+namespace v16 {
+class Configuration;
+}
+#endif
+#if MO_ENABLE_V201
+namespace v201 {
+class Variable;
+}
+#endif
+
 class BootService : public MemoryManaged {
 private:
     Context& context;
-    std::shared_ptr<FilesystemAdapter> filesystem;
+    MO_FilesystemAdapter *filesystem = nullptr;;
 
     PreBootQueue preBootQueue;
 
-    unsigned long interval_s = MO_BOOT_INTERVAL_DEFAULT;
-    unsigned long lastBootNotification = -1UL / 2;
+    int32_t interval_s = MO_BOOT_INTERVAL_DEFAULT;
+    Timestamp lastBootNotification;
 
     RegistrationStatus status = RegistrationStatus::Pending;
-    
-    String cpCredentials;
 
-    std::shared_ptr<Configuration> preBootTransactionsBool;
+    MO_BootNotificationData bnData;
+    char *bnDataBuf = nullptr;
+
+    int ocppVersion = -1;
+
+    #if MO_ENABLE_V16
+    v16::Configuration *preBootTransactionsBoolV16 = nullptr;
+    #endif
+    #if MO_ENABLE_V201
+    v201::Variable *preBootTransactionsBoolV201 = nullptr;
+    #endif
 
     bool activatedModel = false;
     bool activatedPostBootCommunication = false;
 
-    unsigned long firstExecutionTimestamp = 0;
+    Timestamp firstExecutionTimestamp;
     bool executedFirstTime = false;
     bool executedLongTime = false;
 
 public:
-    BootService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem);
+    BootService(Context& context);
+    ~BootService();
+
+    bool setup();
 
     void loop();
 
-    void setChargePointCredentials(JsonObject credentials);
-    void setChargePointCredentials(const char *credentials); //credentials: serialized BootNotification payload
-    std::unique_ptr<JsonDoc> getChargePointCredentials();
+    bool setBootNotificationData(MO_BootNotificationData bnData);
+    const MO_BootNotificationData& getBootNotificationData();
 
     void notifyRegistrationStatus(RegistrationStatus status);
-    void setRetryInterval(unsigned long interval);
+    RegistrationStatus getRegistrationStatus();
 
-    static bool loadBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats);
-    static bool storeBootStats(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats);
-
-    static bool recover(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats); //delete all persistent files which could lead to a crash
-
-    static bool migrate(std::shared_ptr<FilesystemAdapter> filesystem, BootStats& bstats); //migrate persistent storage if running on a new MO version
+    void setRetryInterval(int interval);
 };
 
 }
 
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201
 #endif

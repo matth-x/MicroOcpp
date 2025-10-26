@@ -10,15 +10,15 @@
 
 using namespace MicroOcpp;
 
-unsigned long mtime = 10000;
-unsigned long custom_timer_cb() {
+uint32_t mtime = 10000;
+uint32_t custom_timer_cb() {
     return mtime;
 }
 
 void loop() {
     for (int i = 0; i < 30; i++) {
         mtime += 100;
-        mocpp_loop();
+        mo_loop();
     }
 }
 

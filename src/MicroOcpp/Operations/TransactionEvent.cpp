@@ -2,20 +2,20 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <MicroOcpp/Operations/TransactionEvent.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Debug.h>
 
-using namespace MicroOcpp::Ocpp201;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V201
 
-TransactionEvent::TransactionEvent(Model& model, TransactionEventData *txEvent)
-        : MemoryManaged("v201.Operation.", "TransactionEvent"), model(model), txEvent(txEvent) {
+using namespace MicroOcpp;
+using namespace MicroOcpp::v201;
+
+TransactionEvent::TransactionEvent(Context& context, TransactionEventData *txEvent)
+        : MemoryManaged("v201.Operation.", "TransactionEvent"), context(context), txEvent(txEvent) {
 
 }
 
@@ -29,36 +29,33 @@ std::unique_ptr<JsonDoc> TransactionEvent::createReq() {
 
     if (txEvent->eventType == TransactionEventData::Type::Ended) {
         for (size_t i = 0; i < txEvent->transaction->sampledDataTxEnded.size(); i++) {
-            JsonDoc meterValueJson = initJsonDoc(getMemoryTag()); //just measure, create again for serialization later
-            txEvent->transaction->sampledDataTxEnded[i]->toJson(meterValueJson);
-            capacity += meterValueJson.capacity();
+            capacity += txEvent->transaction->sampledDataTxEnded[i]->getJsonCapacity(MO_OCPP_V201, /* internalFormat */ false);
         }
     }
 
     for (size_t i = 0; i < txEvent->meterValue.size(); i++) {
-        JsonDoc meterValueJson = initJsonDoc(getMemoryTag()); //just measure, create again for serialization later
-        txEvent->meterValue[i]->toJson(meterValueJson);
-        capacity += meterValueJson.capacity();
+        capacity += txEvent->meterValue[i]->getJsonCapacity(MO_OCPP_V201, /* internalFormat */ false);
     }
 
     capacity +=
             JSON_OBJECT_SIZE(12) + //total of 12 fields
-            JSONDATE_LENGTH + 1 + //timestamp string
-            JSON_OBJECT_SIZE(5) + //transactionInfo
-                MO_TXID_LEN_MAX + 1 + //transactionId
-            MO_IDTOKEN_LEN_MAX + 1; //idToken
+            MO_JSONDATE_SIZE +     //timestamp string
+            JSON_OBJECT_SIZE(5);   //transactionInfo
 
     auto doc = makeJsonDoc(getMemoryTag(), capacity);
     JsonObject payload = doc->to<JsonObject>();
 
     payload["eventType"] = serializeTransactionEventType(txEvent->eventType);
 
-    char timestamp [JSONDATE_LENGTH + 1];
-    txEvent->timestamp.toJsonString(timestamp, JSONDATE_LENGTH + 1);
+    char timestamp [MO_JSONDATE_SIZE];
+    if (!context.getClock().toJsonString(txEvent->timestamp, timestamp, sizeof(timestamp))) {
+        MO_DBG_ERR("internal error");
+        timestamp[0] = '\0';
+    }
     payload["timestamp"] = timestamp;
 
-    if (serializeTransactionEventTriggerReason(txEvent->triggerReason)) {
-        payload["triggerReason"] = serializeTransactionEventTriggerReason(txEvent->triggerReason);
+    if (serializeTxEventTriggerReason(txEvent->triggerReason)) {
+        payload["triggerReason"] = serializeTxEventTriggerReason(txEvent->triggerReason);
     } else {
         MO_DBG_ERR("serialization error");
     }
@@ -82,13 +79,13 @@ std::unique_ptr<JsonDoc> TransactionEvent::createReq() {
     }
 
     JsonObject transactionInfo = payload.createNestedObject("transactionInfo");
-    transactionInfo["transactionId"] = txEvent->transaction->transactionId;
+    transactionInfo["transactionId"] = (const char*)txEvent->transaction->transactionId; //force zero-copy
 
     if (serializeTransactionEventChargingState(txEvent->chargingState)) { // optional
         transactionInfo["chargingState"] = serializeTransactionEventChargingState(txEvent->chargingState);
     }
 
-    if (txEvent->transaction->stoppedReason != Transaction::StoppedReason::Local &&
+    if (txEvent->transaction->stoppedReason != MO_TxStoppedReason_Local &&
             serializeTransactionStoppedReason(txEvent->transaction->stoppedReason)) { // optional
         transactionInfo["stoppedReason"] = serializeTransactionStoppedReason(txEvent->transaction->stoppedReason);
     }
@@ -113,16 +110,14 @@ std::unique_ptr<JsonDoc> TransactionEvent::createReq() {
 
     if (txEvent->eventType == TransactionEventData::Type::Ended) {
         for (size_t i = 0; i < txEvent->transaction->sampledDataTxEnded.size(); i++) {
-            JsonDoc meterValueJson = initJsonDoc(getMemoryTag());
-            txEvent->transaction->sampledDataTxEnded[i]->toJson(meterValueJson);
-            payload["meterValue"].add(meterValueJson);
+            JsonObject meterValueJson = payload["meterValue"].createNestedObject();
+            txEvent->transaction->sampledDataTxEnded[i]->toJson(context.getClock(), MO_OCPP_V201, /*internal format*/ false, meterValueJson);
         }
     }
 
     for (size_t i = 0; i < txEvent->meterValue.size(); i++) {
-        JsonDoc meterValueJson = initJsonDoc(getMemoryTag());
-        txEvent->meterValue[i]->toJson(meterValueJson);
-        payload["meterValue"].add(meterValueJson);
+        JsonObject meterValueJson = payload["meterValue"].createNestedObject();
+        txEvent->meterValue[i]->toJson(context.getClock(), MO_OCPP_V201, /*internal format*/ false, meterValueJson);
     }
 
     return doc;
@@ -139,14 +134,28 @@ void TransactionEvent::processConf(JsonObject payload) {
     }
 }
 
-void TransactionEvent::processReq(JsonObject payload) {
-    /**
-     * Ignore Contents of this Req-message, because this is for debug purposes only
-     */
+#if MO_ENABLE_MOCK_SERVER
+void TransactionEvent::onRequestMock(const char *operationType, const char *payloadJson, void **userStatus, void *userData) {
+    //if request contains `"idToken"`, then send response with `"idTokenInfo"`. Instead of building the
+    //full JSON DOM, just search for the substring
+    if (strstr(payloadJson, "\"idToken\"")) {
+        //found, pass status to `writeMockConf`
+        *userStatus = reinterpret_cast<void*>(1);
+    } else {
+        //not found, pass status to `writeMockConf`
+        *userStatus = reinterpret_cast<void*>(0);
+    }
 }
 
-std::unique_ptr<JsonDoc> TransactionEvent::createConf() {
-    return createEmptyDocument();
-}
+int TransactionEvent::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
+    (void)userData;
 
-#endif // MO_ENABLE_V201
+    if (userStatus == reinterpret_cast<void*>(1)) {
+        return snprintf(buf, size, "{\"idTokenInfo\":{\"status\":\"Accepted\"}}");
+    } else {
+        return snprintf(buf, size, "{}");
+    }
+}
+#endif //MO_ENABLE_MOCK_SERVER
+
+#endif //MO_ENABLE_V201

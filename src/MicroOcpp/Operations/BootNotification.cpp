@@ -3,19 +3,22 @@
 // MIT License
 
 #include <MicroOcpp/Operations/BootNotification.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Boot/BootService.h>
-#include <MicroOcpp/Core/Configuration.h>
+#include <MicroOcpp/Model/Heartbeat/HeartbeatService.h>
 #include <MicroOcpp/Version.h>
 #include <MicroOcpp/Debug.h>
 
 #include <string.h>
 
-using MicroOcpp::Ocpp16::BootNotification;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16 || MO_ENABLE_V201
 
-BootNotification::BootNotification(Model& model, std::unique_ptr<JsonDoc> payload) : MemoryManaged("v16.Operation.", "BootNotification"), model(model), credentials(std::move(payload)) {
-    
+using namespace MicroOcpp;
+
+BootNotification::BootNotification(Context& context, BootService& bootService, HeartbeatService *heartbeatService, const MO_BootNotificationData& bnData, const char *reason201) : MemoryManaged("v16/v201.Operation.", "BootNotification"), context(context), bootService(bootService), heartbeatService(heartbeatService), bnData(bnData), reason201(reason201), ocppVersion(context.getOcppVersion()) {
+
 }
 
 const char* BootNotification::getOperationType(){
@@ -23,27 +26,50 @@ const char* BootNotification::getOperationType(){
 }
 
 std::unique_ptr<JsonDoc> BootNotification::createReq() {
-    if (credentials) {
-#if MO_ENABLE_V201
-        if (model.getVersion().major == 2) {
-            auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2) + credentials->memoryUsage());
-            JsonObject payload = doc->to<JsonObject>();
-            payload["reason"] = "PowerUp";
-            payload["chargingStation"] = *credentials;
-            return doc;
-        }
-#endif
-        return std::unique_ptr<JsonDoc>(new JsonDoc(*credentials));
-    } else {
-        MO_DBG_ERR("payload undefined");
-        return createEmptyDocument();
+
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+        auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(9));
+        JsonObject payload = doc->to<JsonObject>();
+        if (bnData.chargePointModel) {payload["chargePointModel"] = bnData.chargePointModel;}
+        if (bnData.chargePointVendor) {payload["chargePointVendor"] = bnData.chargePointVendor;}
+        if (bnData.firmwareVersion) {payload["firmwareVersion"] = bnData.firmwareVersion;}
+        if (bnData.chargePointSerialNumber) {payload["chargePointSerialNumber"] = bnData.chargePointSerialNumber;}
+        if (bnData.meterSerialNumber) {payload["meterSerialNumber"] = bnData.meterSerialNumber;}
+        if (bnData.meterType) {payload["meterType"] = bnData.meterType;}
+        if (bnData.chargeBoxSerialNumber) {payload["chargeBoxSerialNumber"] = bnData.chargeBoxSerialNumber;}
+        if (bnData.iccid) {payload["iccid"] = bnData.iccid;}
+        if (bnData.imsi) {payload["imsi"] = bnData.imsi;}
+        return doc;
     }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (ocppVersion == MO_OCPP_V201) {
+        auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(2));
+        JsonObject payload = doc->to<JsonObject>();
+        payload["reason"] = reason201 ? reason201 : "Unknown";
+        JsonObject chargingStation = payload.createNestedObject("chargingStation");
+        if (bnData.chargePointSerialNumber) {chargingStation["serialNumber"] = bnData.chargePointSerialNumber;}
+        if (bnData.chargePointModel) {chargingStation["model"] = bnData.chargePointModel;}
+        if (bnData.chargePointVendor) {chargingStation["vendorName"] = bnData.chargePointVendor;}
+        if (bnData.firmwareVersion) {chargingStation["firmwareVersion"] = bnData.firmwareVersion;}
+        if (bnData.iccid || bnData.imsi) {
+            JsonObject modem = chargingStation.createNestedObject("modem");
+            if (bnData.iccid) {modem["iccid"] = bnData.iccid;}
+            if (bnData.imsi) {modem["imsi"] = bnData.imsi;}
+        }
+        return doc;
+    }
+    #endif //MO_ENABLE_V201
+
+    MO_DBG_ERR("internal error");
+    return createEmptyDocument();
 }
 
 void BootNotification::processConf(JsonObject payload) {
     const char* currentTime = payload["currentTime"] | "Invalid";
     if (strcmp(currentTime, "Invalid")) {
-        if (model.getClock().setTime(currentTime)) {
+        if (context.getClock().setTime(currentTime)) {
             //success
         } else {
             MO_DBG_ERR("Time string format violation. Expect format like 2022-02-01T20:53:32.486Z");
@@ -55,7 +81,7 @@ void BootNotification::processConf(JsonObject payload) {
         errorCode = "FormationViolation";
         return;
     }
-    
+
     int interval = payload["interval"] | -1;
     if (interval < 0) {
         errorCode = "FormationViolation";
@@ -63,62 +89,44 @@ void BootNotification::processConf(JsonObject payload) {
     }
 
     RegistrationStatus status = deserializeRegistrationStatus(payload["status"] | "Invalid");
-    
+
     if (status == RegistrationStatus::UNDEFINED) {
         errorCode = "FormationViolation";
         return;
     }
 
     if (status == RegistrationStatus::Accepted) {
-        //only write if in valid range
-        if (interval >= 1) {
-            auto heartbeatIntervalInt = declareConfiguration<int>("HeartbeatInterval", 86400);
-            if (heartbeatIntervalInt && interval != heartbeatIntervalInt->getInt()) {
-                heartbeatIntervalInt->setInt(interval);
-                configuration_save();
-            }
+        if (heartbeatService) {
+            heartbeatService->setHeartbeatInterval(interval);
         }
     }
 
-    if (auto bootService = model.getBootService()) {
-
-        if (status != RegistrationStatus::Accepted) {
-            bootService->setRetryInterval(interval);
-        }
-
-        bootService->notifyRegistrationStatus(status);
+    if (status != RegistrationStatus::Accepted) {
+        bootService.setRetryInterval(interval);
     }
+    bootService.notifyRegistrationStatus(status);
 
     MO_DBG_INFO("request has been %s", status == RegistrationStatus::Accepted ? "Accepted" :
                                        status == RegistrationStatus::Pending ? "replied with Pending" :
                                        "Rejected");
 }
 
-void BootNotification::processReq(JsonObject payload){
-    /*
-     * Ignore Contents of this Req-message, because this is for debug purposes only
-     */
-}
+#if MO_ENABLE_MOCK_SERVER
+int BootNotification::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
+    (void)userStatus;
 
-std::unique_ptr<JsonDoc> BootNotification::createConf(){
-    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(3) + (JSONDATE_LENGTH + 1));
-    JsonObject payload = doc->to<JsonObject>();
+    auto& context = *reinterpret_cast<Context*>(userData);
 
-    //safety mechanism; in some test setups the library has to answer BootNotifications without valid system time
-    Timestamp ocppTimeReference = Timestamp(2022,0,27,11,59,55); 
-    Timestamp ocppSelect = ocppTimeReference;
-    auto& ocppTime = model.getClock();
-    Timestamp ocppNow = ocppTime.now();
-    if (ocppNow > ocppTimeReference) {
-        //time has already been set
-        ocppSelect = ocppNow;
+    char timeStr [MO_JSONDATE_SIZE];
+
+    if (context.getClock().now().isUnixTime()) {
+        context.getClock().toJsonString(context.getClock().now(), timeStr, sizeof(timeStr));
+    } else {
+        (void)snprintf(timeStr, sizeof(timeStr), "2025-05-18T18:55:13Z");
     }
 
-    char ocppNowJson [JSONDATE_LENGTH + 1] = {'\0'};
-    ocppSelect.toJsonString(ocppNowJson, JSONDATE_LENGTH + 1);
-    payload["currentTime"] = ocppNowJson;
-
-    payload["interval"] = 86400; //heartbeat send interval - not relevant for JSON variant of OCPP so send dummy value that likely won't break
-    payload["status"] = "Accepted";
-    return doc;
+    return snprintf(buf, size, "{\"currentTime\":\"%s\",\"interval\":60,\"status\":\"Accepted\"}", timeStr);
 }
+#endif //MO_ENABLE_MOCK_SERVER
+
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201

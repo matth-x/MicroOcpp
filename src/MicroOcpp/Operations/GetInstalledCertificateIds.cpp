@@ -3,17 +3,15 @@
 // MIT License
 
 #include <MicroOcpp/Operations/GetInstalledCertificateIds.h>
-
-#if MO_ENABLE_CERT_MGMT
-
 #include <MicroOcpp/Model/Certificates/Certificate.h>
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp201::GetInstalledCertificateIds;
-using MicroOcpp::JsonDoc;
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT
 
-GetInstalledCertificateIds::GetInstalledCertificateIds(CertificateService& certService) : MemoryManaged("v201.Operation.", "GetInstalledCertificateIds"), certService(certService), certificateHashDataChain(makeVector<CertificateChainHash>(getMemoryTag())) {
+using namespace MicroOcpp;
+
+GetInstalledCertificateIds::GetInstalledCertificateIds(CertificateService& certService) : MemoryManaged("v16/v201.Operation.", "GetInstalledCertificateIds"), certService(certService), certificateHashDataChain(makeVector<CertificateChainHash>(getMemoryTag())) {
 
 }
 
@@ -111,15 +109,15 @@ std::unique_ptr<JsonDoc> GetInstalledCertificateIds::createConf() {
 
         char buf [MO_CERT_HASH_ISSUER_NAME_KEY_SIZE];
 
-        ocpp_cert_print_issuerNameHash(&chainElem.certificateHashData, buf, sizeof(buf));
+        mo_cert_print_issuerNameHash(&chainElem.certificateHashData, buf, sizeof(buf));
         certHashJson["certificateHashData"]["issuerNameHash"] = buf;
 
-        ocpp_cert_print_issuerKeyHash(&chainElem.certificateHashData, buf, sizeof(buf));
+        mo_cert_print_issuerKeyHash(&chainElem.certificateHashData, buf, sizeof(buf));
         certHashJson["certificateHashData"]["issuerKeyHash"] = buf;
 
-        ocpp_cert_print_serialNumber(&chainElem.certificateHashData, buf, sizeof(buf));
+        mo_cert_print_serialNumber(&chainElem.certificateHashData, buf, sizeof(buf));
         certHashJson["certificateHashData"]["serialNumber"] = buf;
-        
+
         if (!chainElem.childCertificateHashData.empty()) {
             MO_DBG_ERR("only sole root certs supported");
         }
@@ -128,4 +126,4 @@ std::unique_ptr<JsonDoc> GetInstalledCertificateIds::createConf() {
     return doc;
 }
 
-#endif //MO_ENABLE_CERT_MGMT
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT

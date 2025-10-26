@@ -9,16 +9,16 @@
  * Built-in FTP client (depends on MbedTLS)
  *
  * Moved from https://github.com/matth-x/MicroFtp
- * 
+ *
  * Currently, the compatibility with the following FTP servers has been tested:
- * 
+ *
  * | Server                                                                | FTP | FTPS |
  * | --------------------------------------------------------------------- | --- | ---- |
  * | [vsftp](https://security.appspot.com/vsftpd.html)                     |     |  x   |
  * | [Rebex](https://www.rebex.net/)                                       |  x  |  x   |
  * | [Windows Server 2022](https://www.microsoft.com/en-us/windows-server) |  x  |  x   |
  * | [SFTPGo](https://github.com/drakkan/sftpgo)                           |  x  |      |
- * 
+ *
  */
 
 #include <MicroOcpp/Platform.h>
@@ -29,9 +29,19 @@
 
 #include <MicroOcpp/Core/Ftp.h>
 
+extern "C" {
+
+typedef struct {
+    bool tls_only;
+    const char *client_cert; //zero-copy. client_cert must outlive MO lifecycle. Can be NULL
+    const char *client_key; //zero-copy. client_key must outlive MO lifecycle. Can be NULL
+} MO_FTPConfig;
+
+} //extern "C"
+
 namespace MicroOcpp {
 
-std::unique_ptr<FtpClient> makeFtpClientMbedTLS(bool tls_only = false, const char *client_cert = nullptr, const char *client_key = nullptr);
+std::unique_ptr<FtpClient> makeFtpClientMbedTLS(MO_FTPConfig config);
 
 } //namespace MicroOcpp
 

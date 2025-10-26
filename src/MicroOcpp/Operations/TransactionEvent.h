@@ -5,29 +5,28 @@
 #ifndef MO_TRANSACTIONEVENT_H
 #define MO_TRANSACTIONEVENT_H
 
+#include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Version.h>
 
 #if MO_ENABLE_V201
 
-#include <MicroOcpp/Core/Operation.h>
-
 namespace MicroOcpp {
 
-class Model;
+class Context;
 
-namespace Ocpp201 {
+namespace v201 {
 
 class TransactionEventData;
 
 class TransactionEvent : public Operation, public MemoryManaged {
 private:
-    Model& model;
-    TransactionEventData *txEvent;
+    Context& context;
+    TransactionEventData *txEvent; //does not take ownership
 
     const char *errorCode = nullptr;
 public:
 
-    TransactionEvent(Model& model, TransactionEventData *txEvent);
+    TransactionEvent(Context& context, TransactionEventData *txEvent);
 
     const char* getOperationType() override;
 
@@ -37,12 +36,13 @@ public:
 
     const char *getErrorCode() override {return errorCode;}
 
-    void processReq(JsonObject payload) override;
-
-    std::unique_ptr<JsonDoc> createConf() override;
+#if MO_ENABLE_MOCK_SERVER
+    static void onRequestMock(const char *operationType, const char *payloadJson, void **userStatus, void *userData);
+    static int writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData);
+#endif
 };
 
-} //end namespace Ocpp201
-} //end namespace MicroOcpp
-#endif // MO_ENABLE_V201
+} //namespace v201
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V201
 #endif

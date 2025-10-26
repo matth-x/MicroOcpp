@@ -6,28 +6,30 @@
  * Implementation of the UCs B05 - B06
  */
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
+#include <string.h>
+#include <ctype.h>
 
 #include <MicroOcpp/Model/Variables/VariableService.h>
-#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Operations/SetVariables.h>
 #include <MicroOcpp/Operations/GetVariables.h>
 #include <MicroOcpp/Operations/GetBaseReport.h>
 #include <MicroOcpp/Operations/NotifyReport.h>
 #include <MicroOcpp/Core/Request.h>
-
-#include <cstring>
-#include <cctype>
-
 #include <MicroOcpp/Debug.h>
 
+#if MO_ENABLE_V201
+
+#ifndef MO_GETBASEREPORT_CHUNKSIZE
+#define MO_GETBASEREPORT_CHUNKSIZE 4
+#endif
+
 namespace MicroOcpp {
+namespace v201 {
 
 template <class T>
 VariableValidator<T>::VariableValidator(const ComponentId& component, const char *name, bool (*validateFn)(T, void*), void *userPtr) :
-        MemoryManaged("v201.Variables.VariableValidator.", name), component(component), name(name), userPtr(userPtr), validateFn(validateFn) {
+        component(component), name(name), userPtr(userPtr), validateFn(validateFn) {
 
 }
 
@@ -121,34 +123,114 @@ Variable *VariableService::getVariable(const ComponentId& component, const char 
     return nullptr;
 }
 
-VariableService::VariableService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) :
+VariableService::VariableService(Context& context) :
             MemoryManaged("v201.Variables.VariableService"),
-            context(context), filesystem(filesystem),
+            context(context),
             containers(makeVector<VariableContainer*>(getMemoryTag())),
             validatorInt(makeVector<VariableValidator<int>>(getMemoryTag())),
             validatorBool(makeVector<VariableValidator<bool>>(getMemoryTag())),
-            validatorString(makeVector<VariableValidator<const char*>>(getMemoryTag())) {
-    
+            validatorString(makeVector<VariableValidator<const char*>>(getMemoryTag())),
+            getBaseReportVars(makeVector<Variable*>(getMemoryTag())) {
+
+}
+
+bool VariableService::init() {
     containers.reserve(MO_VARIABLESTORE_BUCKETS + 1);
+    if (containers.capacity() < MO_VARIABLESTORE_BUCKETS + 1) {
+        MO_DBG_ERR("OOM");
+        return false;
+    }
+
+    for (unsigned int i = 0; i < MO_VARIABLESTORE_BUCKETS; i++) {
+        containers.push_back(&containersInternal[i]);
+    }
+    containers.push_back(&containerExternal);
+
+    return true;
+}
+
+bool VariableService::setup() {
+
+    filesystem = context.getFilesystem();
+    if (!filesystem) {
+        MO_DBG_DEBUG("no fs access");
+    }
 
     for (unsigned int i = 0; i < MO_VARIABLESTORE_BUCKETS; i++) {
         char fn [MO_MAX_PATH_SIZE];
         auto ret = snprintf(fn, sizeof(fn), "%s%02x%s", MO_VARIABLESTORE_FN_PREFIX, i, MO_VARIABLESTORE_FN_SUFFIX);
         if (ret < 0 || (size_t)ret >= sizeof(fn)) {
             MO_DBG_ERR("fn error");
-            continue;
+            return false;
         }
         containersInternal[i].enablePersistency(filesystem, fn);
-        containers.push_back(&containersInternal[i]);
-    }
-    containers.push_back(&containerExternal);
 
-    context.getOperationRegistry().registerOperation("SetVariables", [this] () {
-        return new Ocpp201::SetVariables(*this);});
-    context.getOperationRegistry().registerOperation("GetVariables", [this] () {
-        return new Ocpp201::GetVariables(*this);});
-    context.getOperationRegistry().registerOperation("GetBaseReport", [this] () {
-        return new Ocpp201::GetBaseReport(*this);});
+        if (!containersInternal[i].load()) {
+            MO_DBG_ERR("failure to load %");
+            return false;
+        }
+    }
+
+    context.getMessageService().registerOperation("SetVariables", [] (Context& context) -> Operation* {
+        return new SetVariables(*context.getModel201().getVariableService());});
+    context.getMessageService().registerOperation("GetVariables", [] (Context& context) -> Operation* {
+        return new GetVariables(*context.getModel201().getVariableService());});
+    context.getMessageService().registerOperation("GetBaseReport", [] (Context& context) -> Operation* {
+        return new GetBaseReport(*context.getModel201().getVariableService());});
+
+    return true;
+}
+
+void VariableService::loop() {
+
+    if (notifyReportInProgress) {
+        return;
+    }
+
+    if (getBaseReportVars.empty()) {
+        // all done
+        return;
+    }
+
+    auto variablesChunk = makeVector<Variable*>(getMemoryTag());
+    variablesChunk.reserve(MO_GETBASEREPORT_CHUNKSIZE);
+    if (variablesChunk.capacity() < MO_GETBASEREPORT_CHUNKSIZE) {
+        MO_DBG_ERR("OOM");
+        getBaseReportVars.clear();
+        return;
+    }
+
+    for (size_t i = 0; i < MO_GETBASEREPORT_CHUNKSIZE && !getBaseReportVars.empty(); i++) {
+        variablesChunk.push_back(getBaseReportVars.back());
+        getBaseReportVars.pop_back();
+    }
+
+    auto notifyReport = makeRequest(context, new NotifyReport(
+            context,
+            getBaseReportRequestId,
+            context.getClock().now(),
+            !getBaseReportVars.empty(), // tbc: to be continued
+            getBaseReportSeqNo,
+            variablesChunk));
+
+    if (!notifyReport) {
+        MO_DBG_ERR("OOM");
+        getBaseReportVars.clear();
+        return;
+    }
+
+    getBaseReportSeqNo++;
+
+    notifyReport->setOnReceiveConf([this] (JsonObject) {
+        notifyReportInProgress = false;
+    });
+    notifyReport->setOnAbort([this] () {
+        notifyReportInProgress = false;
+    });
+
+    notifyReportInProgress = true;
+
+    context.getMessageService().sendRequestPreBoot(std::move(notifyReport));
 }
 
 template<class T>
@@ -171,8 +253,8 @@ bool loadVariableFactoryDefault<const char*>(Variable& variable, const char *fac
     return variable.setString(factoryDef);
 }
 
-void loadVariableCharacteristics(Variable& variable, Variable::Mutability mutability, bool persistent, bool rebootRequired, Variable::InternalDataType defaultDataType) {
-    if (variable.getMutability() == Variable::Mutability::ReadWrite) {
+void loadVariableCharacteristics(Variable& variable, Mutability mutability, bool persistent, bool rebootRequired, Variable::InternalDataType defaultDataType) {
+    if (variable.getMutability() == Mutability::ReadWrite) {
         variable.setMutability(mutability);
     }
 
@@ -186,13 +268,13 @@ void loadVariableCharacteristics(Variable& variable, Variable::Mutability mutabi
 
     switch (defaultDataType) {
         case Variable::InternalDataType::Int:
-            variable.setVariableDataType(MicroOcpp::VariableCharacteristics::DataType::integer);
+            variable.setVariableDataType(VariableCharacteristics::DataType::integer);
             break;
         case Variable::InternalDataType::Bool:
-            variable.setVariableDataType(MicroOcpp::VariableCharacteristics::DataType::boolean);
+            variable.setVariableDataType(VariableCharacteristics::DataType::boolean);
             break;
         case Variable::InternalDataType::String:
-            variable.setVariableDataType(MicroOcpp::VariableCharacteristics::DataType::string);
+            variable.setVariableDataType(VariableCharacteristics::DataType::string);
             break;
         default:
             MO_DBG_ERR("internal error");
@@ -208,7 +290,7 @@ template<> Variable::InternalDataType getInternalDataType<bool>() {return Variab
 template<> Variable::InternalDataType getInternalDataType<const char*>() {return Variable::InternalDataType::String;}
 
 template<class T>
-Variable *VariableService::declareVariable(const ComponentId& component, const char *name, T factoryDefault, Variable::Mutability mutability, bool persistent, Variable::AttributeTypeSet attributes, bool rebootRequired) {
+Variable *VariableService::declareVariable(const ComponentId& component, const char *name, T factoryDefault, Mutability mutability, bool persistent, Variable::AttributeTypeSet attributes, bool rebootRequired) {
 
     auto res = getVariable(component, name);
     if (!res) {
@@ -236,9 +318,9 @@ Variable *VariableService::declareVariable(const ComponentId& component, const c
     return res;
 }
 
-template Variable *VariableService::declareVariable<int>(        const ComponentId&, const char*, int,         Variable::Mutability, bool, Variable::AttributeTypeSet, bool);
-template Variable *VariableService::declareVariable<bool>(       const ComponentId&, const char*, bool,        Variable::Mutability, bool, Variable::AttributeTypeSet, bool);
-template Variable *VariableService::declareVariable<const char*>(const ComponentId&, const char*, const char*, Variable::Mutability, bool, Variable::AttributeTypeSet, bool);
+template Variable *VariableService::declareVariable<int>(        const ComponentId&, const char*, int,         Mutability, bool, Variable::AttributeTypeSet, bool);
+template Variable *VariableService::declareVariable<bool>(       const ComponentId&, const char*, bool,        Mutability, bool, Variable::AttributeTypeSet, bool);
+template Variable *VariableService::declareVariable<const char*>(const ComponentId&, const char*, const char*, Mutability, bool, Variable::AttributeTypeSet, bool);
 
 bool VariableService::addVariable(Variable *variable) {
     return containerExternal.add(variable);
@@ -246,18 +328,6 @@ bool VariableService::addVariable(Variable *variable) {
 
 bool VariableService::addVariable(std::unique_ptr<Variable> variable) {
     return getContainerInternalByVariable(variable->getComponentId(), variable->getName()).add(std::move(variable));
-}
-
-bool VariableService::load() {
-    bool success = true;
-
-    for (size_t i = 0; i < MO_VARIABLESTORE_BUCKETS; i++) {
-        if (!containersInternal[i].load()) {
-            success = false;
-        }
-    }
-
-    return success;
 }
 
 bool VariableService::commit() {
@@ -304,11 +374,11 @@ SetVariableStatus VariableService::setVariable(Variable::AttributeType attrType,
         if (foundComponent) {
             return SetVariableStatus::UnknownVariable;
         } else {
-            return SetVariableStatus::UnknownComponent; 
+            return SetVariableStatus::UnknownComponent;
         }
     }
 
-    if (variable->getMutability() == Variable::Mutability::ReadOnly) {
+    if (variable->getMutability() == Mutability::ReadOnly) {
         return SetVariableStatus::Rejected;
     }
 
@@ -424,7 +494,7 @@ GetVariableStatus VariableService::getVariable(Variable::AttributeType attrType,
                 if (!strcmp(variable->getName(), variableName)) {
                     // found variable. Search terminated in this block
 
-                    if (variable->getMutability() == Variable::Mutability::WriteOnly) {
+                    if (variable->getMutability() == Mutability::WriteOnly) {
                         return GetVariableStatus::Rejected;
                     }
 
@@ -442,7 +512,7 @@ GetVariableStatus VariableService::getVariable(Variable::AttributeType attrType,
     if (foundComponent) {
         return GetVariableStatus::UnknownVariable;
     } else {
-        return GetVariableStatus::UnknownComponent; 
+        return GetVariableStatus::UnknownComponent;
     }
 }
 
@@ -452,7 +522,10 @@ GenericDeviceModelStatus VariableService::getBaseReport(int requestId, ReportBas
         return GenericDeviceModelStatus_NotSupported;
     }
 
-    Vector<Variable*> variables = makeVector<Variable*>(getMemoryTag());
+    if (!getBaseReportVars.empty()) {
+        MO_DBG_ERR("request new base report while old is still pending");
+        return GenericDeviceModelStatus_Rejected;
+    }
 
     for (size_t i = 0; i < containers.size(); i++) {
         auto container = containers[i];
@@ -460,31 +533,24 @@ GenericDeviceModelStatus VariableService::getBaseReport(int requestId, ReportBas
         for (size_t i = 0; i < container->size(); i++) {
             auto variable = container->getVariable(i);
 
-            if (reportBase == ReportBase_ConfigurationInventory && variable->getMutability() == Variable::Mutability::ReadOnly) {
+            if (reportBase == ReportBase_ConfigurationInventory && variable->getMutability() == Mutability::ReadOnly) {
                 continue;
             }
 
-            variables.push_back(variable);
+            getBaseReportVars.push_back(variable);
         }
     }
 
-    if (variables.empty()) {
+    if (getBaseReportVars.empty()) {
         return GenericDeviceModelStatus_EmptyResultSet;
     }
 
-    auto notifyReport = makeRequest(new Ocpp201::NotifyReport(
-            context.getModel(), 
-            requestId,
-            context.getModel().getClock().now(),
-            false,
-            0,
-            variables));
-
-    context.initiateRequest(std::move(notifyReport));
+    getBaseReportRequestId = requestId;
+    getBaseReportSeqNo = 0;
 
     return GenericDeviceModelStatus_Accepted;
 }
 
-} // namespace MicroOcpp
-
-#endif // MO_ENABLE_V201
+} //namespace v201
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V201

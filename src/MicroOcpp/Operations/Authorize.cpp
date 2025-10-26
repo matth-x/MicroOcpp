@@ -10,29 +10,28 @@
 
 using namespace MicroOcpp;
 
-namespace MicroOcpp {
-namespace Ocpp16 {
+#if MO_ENABLE_V16
 
-Authorize::Authorize(Model& model, const char *idTagIn) : MemoryManaged("v16.Operation.", "Authorize"), model(model) {
-    if (idTagIn && strnlen(idTagIn, IDTAG_LEN_MAX + 2) <= IDTAG_LEN_MAX) {
-        snprintf(idTag, IDTAG_LEN_MAX + 1, "%s", idTagIn);
+v16::Authorize::Authorize(Model& model, const char *idTagIn) : MemoryManaged("v16.Operation.", "Authorize"), model(model) {
+    if (idTagIn && strnlen(idTagIn, MO_IDTAG_LEN_MAX + 2) <= MO_IDTAG_LEN_MAX) {
+        snprintf(idTag, MO_IDTAG_LEN_MAX + 1, "%s", idTagIn);
     } else {
         MO_DBG_WARN("Format violation of idTag. Discard idTag");
     }
 }
 
-const char* Authorize::getOperationType(){
+const char* v16::Authorize::getOperationType(){
     return "Authorize";
 }
 
-std::unique_ptr<JsonDoc> Authorize::createReq() {
-    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + (IDTAG_LEN_MAX + 1));
+std::unique_ptr<JsonDoc> v16::Authorize::createReq() {
+    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1) + (MO_IDTAG_LEN_MAX + 1));
     JsonObject payload = doc->to<JsonObject>();
     payload["idTag"] = idTag;
     return doc;
 }
 
-void Authorize::processConf(JsonObject payload){
+void v16::Authorize::processConf(JsonObject payload){
     const char *idTagInfo = payload["idTagInfo"]["status"] | "not specified";
 
     if (!strcmp(idTagInfo, "Accepted")) {
@@ -48,37 +47,27 @@ void Authorize::processConf(JsonObject payload){
 #endif //MO_ENABLE_LOCAL_AUTH
 }
 
-void Authorize::processReq(JsonObject payload){
-    /*
-     * Ignore Contents of this Req-message, because this is for debug purposes only
-     */
+#if MO_ENABLE_MOCK_SERVER
+int v16::Authorize::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
+    (void)userStatus;
+    (void)userData;
+    return snprintf(buf, size, "{\"idTagInfo\":{\"status\":\"Accepted\"}}");
 }
+#endif //MO_ENABLE_MOCK_SERVER
 
-std::unique_ptr<JsonDoc> Authorize::createConf(){
-    auto doc = makeJsonDoc(getMemoryTag(), 2 * JSON_OBJECT_SIZE(1));
-    JsonObject payload = doc->to<JsonObject>();
-    JsonObject idTagInfo = payload.createNestedObject("idTagInfo");
-    idTagInfo["status"] = "Accepted";
-    return doc;
-}
-
-} // namespace Ocpp16
-} // namespace MicroOcpp
+#endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
 
-namespace MicroOcpp {
-namespace Ocpp201 {
-
-Authorize::Authorize(Model& model, const IdToken& idToken) : MemoryManaged("v201.Operation.Authorize"), model(model) {
+v201::Authorize::Authorize(Model& model, const IdToken& idToken) : MemoryManaged("v201.Operation.Authorize"), model(model) {
     this->idToken = idToken;
 }
 
-const char* Authorize::getOperationType(){
+const char* v201::Authorize::getOperationType(){
     return "Authorize";
 }
 
-std::unique_ptr<JsonDoc> Authorize::createReq() {
+std::unique_ptr<JsonDoc> v201::Authorize::createReq() {
     auto doc = makeJsonDoc(getMemoryTag(),
             JSON_OBJECT_SIZE(1) +
             JSON_OBJECT_SIZE(2));
@@ -88,7 +77,7 @@ std::unique_ptr<JsonDoc> Authorize::createReq() {
     return doc;
 }
 
-void Authorize::processConf(JsonObject payload){
+void v201::Authorize::processConf(JsonObject payload){
     const char *idTagInfo = payload["idTokenInfo"]["status"] | "_Undefined";
 
     if (!strcmp(idTagInfo, "Accepted")) {
@@ -102,21 +91,12 @@ void Authorize::processConf(JsonObject payload){
     //}
 }
 
-void Authorize::processReq(JsonObject payload){
-    /*
-     * Ignore Contents of this Req-message, because this is for debug purposes only
-     */
+#if MO_ENABLE_MOCK_SERVER
+int v201::Authorize::writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
+    (void)userStatus;
+    (void)userData;
+    return snprintf(buf, size, "{\"idTokenInfo\":{\"status\":\"Accepted\"}}");
 }
-
-std::unique_ptr<JsonDoc> Authorize::createConf(){
-    auto doc = makeJsonDoc(getMemoryTag(), 2 * JSON_OBJECT_SIZE(1));
-    JsonObject payload = doc->to<JsonObject>();
-    JsonObject idTagInfo = payload.createNestedObject("idTokenInfo");
-    idTagInfo["status"] = "Accepted";
-    return doc;
-}
-
-} // namespace Ocpp201
-} // namespace MicroOcpp
+#endif //MO_ENABLE_MOCK_SERVER
 
 #endif //MO_ENABLE_V201

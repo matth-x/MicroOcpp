@@ -5,31 +5,35 @@
 #ifndef UNLOCKCONNECTOR_H
 #define UNLOCKCONNECTOR_H
 
-#include <MicroOcpp/Version.h>
+#include <functional>
 
 #include <MicroOcpp/Core/Operation.h>
-#include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
-#include <functional>
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlDefs.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16
 
 namespace MicroOcpp {
 
-class Model;
+class Context;
+class RemoteControlService;
+class RemoteControlServiceEvse;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class UnlockConnector : public Operation, public MemoryManaged {
 private:
-    Model& model;
+    Context& context;
+    RemoteControlService& rcService;
+    RemoteControlServiceEvse *rcEvse = nullptr;
 
-#if MO_ENABLE_CONNECTOR_LOCK
-    std::function<UnlockConnectorResult ()> unlockConnector;
-    UnlockConnectorResult cbUnlockResult;
-    unsigned long timerStart = 0; //for timeout
-#endif //MO_ENABLE_CONNECTOR_LOCK
+    UnlockStatus status;
+    Timestamp timerStart; //for timeout
 
     const char *errorCode = nullptr;
 public:
-    UnlockConnector(Model& model);
+    UnlockConnector(Context& context, RemoteControlService& rcService);
 
     const char* getOperationType() override;
 
@@ -40,32 +44,34 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16
 
-#if MO_ENABLE_V201
-#if MO_ENABLE_CONNECTOR_LOCK
+#if MO_ENABLE_V201 && MO_ENABLE_CONNECTOR_LOCK
 
 #include <MicroOcpp/Model/RemoteControl/RemoteControlDefs.h>
 
 namespace MicroOcpp {
 
+class Context;
 class RemoteControlService;
 class RemoteControlServiceEvse;
 
-namespace Ocpp201 {
+namespace v201 {
 
 class UnlockConnector : public Operation, public MemoryManaged {
 private:
+    Context& context;
     RemoteControlService& rcService;
     RemoteControlServiceEvse *rcEvse = nullptr;
 
     UnlockStatus status;
-    unsigned long timerStart = 0; //for timeout
+    Timestamp timerStart; //for timeout
 
     const char *errorCode = nullptr;
 public:
-    UnlockConnector(RemoteControlService& rcService);
+    UnlockConnector(Context& context, RemoteControlService& rcService);
 
     const char* getOperationType() override;
 
@@ -76,10 +82,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //end namespace Ocpp201
-} //end namespace MicroOcpp
-
-#endif //MO_ENABLE_CONNECTOR_LOCK
-#endif //MO_ENABLE_V201
-
+} //namespace v201
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V201 && MO_ENABLE_CONNECTOR_LOCK
 #endif

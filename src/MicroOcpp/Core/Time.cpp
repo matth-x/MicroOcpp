@@ -1,382 +1,615 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #include <MicroOcpp/Core/Time.h>
+
 #include <string.h>
-#include <ctype.h>	
+#include <ctype.h>
+
+#include <MicroOcpp/Context.h>
+#include <MicroOcpp/Core/PersistencyUtils.h>
+#include <MicroOcpp/Debug.h>
+
+#define MO_MAX_UPTIME (MO_MIN_TIME - 1)
+
+// It's a common mistake to roll-over the mocpp_tick_ms callback too early which breaks
+// the unsigned integer arithmetics in this library. The ms counter should use the full
+// value range up to (32^2 - 1) ms before resetting to 0. Clock checks for this issue
+// and skips one time increment if it is detected. This can be disabled by defining
+// MO_CLOCK_ROLLOVER_PROTECTION=0 in the build system
+#ifndef MO_CLOCK_ROLLOVER_PROTECTION
+#define MO_CLOCK_ROLLOVER_PROTECTION 1
+#endif
 
 namespace MicroOcpp {
-
-const Timestamp MIN_TIME = Timestamp(2010, 0, 0, 0, 0, 0);
-const Timestamp MAX_TIME = Timestamp(2037, 0, 0, 0, 0, 0);
-
-Timestamp::Timestamp() : MemoryManaged("Timestamp") {
-    
-}
-
-Timestamp::Timestamp(const Timestamp& other) : MemoryManaged("Timestamp") {
-    *this = other;
-}
-
-#if MO_ENABLE_TIMESTAMP_MILLISECONDS
-    Timestamp::Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second, int32_t ms) :
-                MemoryManaged("Timestamp"), year(year), month(month), day(day), hour(hour), minute(minute), second(second), ms(ms) { }
-#else 
-    Timestamp::Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second) :
-                MemoryManaged("Timestamp"), year(year), month(month), day(day), hour(hour), minute(minute), second(second) { }
-#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
-
 int noDays(int month, int year) {
     return (month == 0 || month == 2 || month == 4 || month == 6 || month == 7 || month == 9 || month == 11) ? 31 :
             ((month == 3 || month == 5 || month == 8 || month == 10) ? 30 :
             ((year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 29 : 28));
 }
+} //namespace MicroOcpp
 
-bool Timestamp::setTime(const char *jsonDateString) {
+using namespace MicroOcpp;
 
-    const int JSONDATE_MINLENGTH = 19;
+Timestamp::Timestamp() : MemoryManaged("Timestamp") {
 
-    if (strlen(jsonDateString) < JSONDATE_MINLENGTH){
-        return false;
-    }
+}
 
-    if (!isdigit(jsonDateString[0]) ||  //2
-        !isdigit(jsonDateString[1]) ||    //0
-        !isdigit(jsonDateString[2]) ||    //1
-        !isdigit(jsonDateString[3]) ||    //3
-        jsonDateString[4] != '-' ||       //-
-        !isdigit(jsonDateString[5]) ||    //0
-        !isdigit(jsonDateString[6]) ||    //2
-        jsonDateString[7] != '-' ||       //-
-        !isdigit(jsonDateString[8]) ||    //0
-        !isdigit(jsonDateString[9]) ||    //1
-        jsonDateString[10] != 'T' ||      //T
-        !isdigit(jsonDateString[11]) ||   //2
-        !isdigit(jsonDateString[12]) ||   //0
-        jsonDateString[13] != ':' ||      //:
-        !isdigit(jsonDateString[14]) ||   //5
-        !isdigit(jsonDateString[15]) ||   //3
-        jsonDateString[16] != ':' ||      //:
-        !isdigit(jsonDateString[17]) ||   //3
-        !isdigit(jsonDateString[18])) {   //2
-                                        //ignore subsequent characters
-        return false;
-    }
-    
-    int year  =  (jsonDateString[0] - '0') * 1000 +
-                (jsonDateString[1] - '0') * 100 +
-                (jsonDateString[2] - '0') * 10 +
-                (jsonDateString[3] - '0');
-    int month =  (jsonDateString[5] - '0') * 10 +
-                (jsonDateString[6] - '0') - 1;
-    int day   =  (jsonDateString[8] - '0') * 10 +
-                (jsonDateString[9] - '0') - 1;
-    int hour  =  (jsonDateString[11] - '0') * 10 +
-                (jsonDateString[12] - '0');
-    int minute = (jsonDateString[14] - '0') * 10 +
-                (jsonDateString[15] - '0');
-    int second = (jsonDateString[17] - '0') * 10 +
-                (jsonDateString[18] - '0');
+Timestamp::Timestamp(const Timestamp& other) :  MemoryManaged(other.getMemoryTag()) {
+    *this = other;
+}
 
-    //optional fractals
-    int ms = 0;
-    if (jsonDateString[19] == '.') {
-        if (isdigit(jsonDateString[20]) ||   //1
-            isdigit(jsonDateString[21]) ||   //2
-            isdigit(jsonDateString[22])) {
-            
-            ms  =  (jsonDateString[20] - '0') * 100 +
-                    (jsonDateString[21] - '0') * 10 +
-                    (jsonDateString[22] - '0');
-        } else {
+bool Timestamp::isUnixTime() const {
+    return time >= MO_MIN_TIME && time <= MO_MAX_TIME;
+}
+
+bool Timestamp::isUptime() const {
+    return time <= MO_MAX_UPTIME;
+}
+
+bool Timestamp::isDefined() const {
+    return bootNr != 0;
+}
+
+Clock::Clock(Context& context) : context(context) {
+
+}
+
+bool Clock::setup() {
+
+    uint16_t bootNr = 1; //0 is reserved for undefined
+
+    if (auto filesystem = context.getFilesystem()) {
+        // restore bootNr from bootstats
+
+        PersistencyUtils::BootStats bootstats;
+        if (!PersistencyUtils::loadBootStats(filesystem, bootstats)) {
+            MO_DBG_ERR("cannot load bootstats");
+            return false;
+        }
+
+        bootstats.bootNr++; //assign new boot number to this run
+        if (bootstats.bootNr == 0) { //handle roll-over
+            bootstats.bootNr = 1;
+        }
+
+        bootNr = bootstats.bootNr;
+
+        if (!PersistencyUtils::storeBootStats(filesystem, bootstats)) {
+            MO_DBG_ERR("cannot update bootstats");
             return false;
         }
     }
 
-    if (year < 1970 || year >= 2038 ||
-        month < 0 || month >= 12 ||
-        day < 0 || day >= noDays(month, year) ||
-        hour < 0 || hour >= 24 ||
-        minute < 0 || minute >= 60 ||
-        second < 0 || second > 60 || //tolerate leap seconds -- (23:59:60) can be a valid time
-        ms < 0 || ms >= 1000) {
-        return false;
-    }
+    uptime.bootNr = bootNr;
+    unixTime.bootNr = bootNr;
 
-    this->year = year;
-    this->month = month;
-    this->day = day;
-    this->hour = hour;
-    this->minute = minute;
-    this->second = second;
-#if MO_ENABLE_TIMESTAMP_MILLISECONDS
-    this->ms = ms;
-#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
-    
     return true;
 }
 
-bool Timestamp::toJsonString(char *jsonDateString, size_t buffsize) const {
-    if (buffsize < JSONDATE_LENGTH + 1) return false;
+void Clock::loop() {
 
-    jsonDateString[0] = ((char) ((year / 1000) % 10)) + '0';
-    jsonDateString[1] = ((char) ((year / 100) % 10)) + '0';
-    jsonDateString[2] = ((char) ((year / 10) % 10))  + '0';
-    jsonDateString[3] = ((char) ((year / 1) % 10))  + '0';
-    jsonDateString[4] = '-';
-    jsonDateString[5] = ((char) (((month + 1) / 10) % 10))  + '0';
-    jsonDateString[6] = ((char) (((month + 1) / 1) % 10))  + '0';
-    jsonDateString[7] = '-';
-    jsonDateString[8] = ((char) (((day + 1) / 10) % 10))  + '0';
-    jsonDateString[9] = ((char) (((day + 1) / 1) % 10))  + '0';
-    jsonDateString[10] = 'T';
-    jsonDateString[11] = ((char) ((hour / 10) % 10))  + '0';
-    jsonDateString[12] = ((char) ((hour / 1) % 10))  + '0';
-    jsonDateString[13] = ':';
-    jsonDateString[14] = ((char) ((minute / 10) % 10))  + '0';
-    jsonDateString[15] = ((char) ((minute / 1) % 10))  + '0';
-    jsonDateString[16] = ':';
-    jsonDateString[17] = ((char) ((second / 10) % 10))  + '0';
-    jsonDateString[18] = ((char) ((second / 1) % 10))  + '0';
+    auto platformTimeMs = context.getTicksMs();
+    auto platformDeltaMs = platformTimeMs - lastIncrement;
+
+    /* Roll-over protection: if the platform implementation of mocpp_tick_ms does not
+     * fill up the full 32 bits before rolling over, the unsigned integer arithmetics
+     * would break. Handle this case here, because it is a common mistake */
+    if (MO_CLOCK_ROLLOVER_PROTECTION && platformTimeMs < lastIncrement) {
+        // rolled over
+        if (platformDeltaMs > 3600 * 1000) {
+            // timer rolled over and delta is above 1 hour - that's suspicious
+            MO_DBG_ERR("getTickMs roll-over error. Must increment milliseconds up to (32^2 - 1) before resetting to 0");
+            platformDeltaMs = 0;
+        }
+    }
+
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
-    jsonDateString[19] = '.';
-    jsonDateString[20] = ((char) ((ms / 100) % 10))  + '0';
-    jsonDateString[21] = ((char) ((ms / 10) % 10))  + '0';
-    jsonDateString[22] = ((char) ((ms / 1) % 10))  + '0';
-    jsonDateString[23] = 'Z';
-    jsonDateString[24] = '\0';
+    {
+        if (platformDeltaMs > (uint32_t)std::numeric_limits<int32_t>::max()) {
+            MO_DBG_ERR("integer overflow");
+            platformDeltaMs = 0;
+        }
+        addMs(unixTime, (int32_t)platformDeltaMs);
+        addMs(uptime, (int32_t)platformDeltaMs);
+        lastIncrement = platformTimeMs;
+    }
 #else
-    jsonDateString[19] = 'Z';
-    jsonDateString[20] = '\0';
+    {
+        auto platformDeltaS = platformDeltaMs / (uint32_t)1000;
+        add(unixTime, platformDeltaS);
+        add(uptime, platformDeltaS);
+        lastIncrement += platformDeltaS * 1000;
+    }
 #endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
-
-    return true;
 }
 
-Timestamp &Timestamp::operator+=(int secs) {
-
-    second += secs;
-
-    if (second >= 0 && second < 60) return *this;
-
-    minute += second / 60;
-    second %= 60;
-    if (second < 0) {
-        minute--;
-        second += 60;
-    }
-
-    if (minute >= 0 && minute < 60) return *this;
-
-    hour += minute / 60;
-    minute %= 60;
-    if (minute < 0) {
-        hour--;
-        minute += 60;
-    }
-
-    if (hour >= 0 && hour < 24) return *this;
-
-    day += hour / 24;
-    hour %= 24;
-    if (hour < 0) {
-        day--;
-        hour += 24;
-    }
-
-    while (day >= noDays(month, year)) {
-        day -= noDays(month, year);
-        month++;
-        
-        if (month >= 12) {
-            month -= 12;
-            year++;
-        }
-    }
-
-    while (day < 0) {
-        month--;
-        if (month < 0) {
-            month += 12;
-            year--;
-        }
-        day += noDays(month, year);
-    }
-
-    return *this;
-}
-
-#if MO_ENABLE_TIMESTAMP_MILLISECONDS
-Timestamp &Timestamp::addMilliseconds(int val) {
-
-    ms += val;
-
-    if (ms >= 0 && ms < 1000) return *this;
-    
-    auto dsecond = ms / 1000;
-    ms %= 1000;
-    if (ms < 0) {
-        dsecond--;
-        ms += 1000;
-    }
-    return this->operator+=(dsecond);
-}
-#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
-
-Timestamp &Timestamp::operator-=(int secs) {
-    return operator+=(-secs);
-}
-
-int Timestamp::operator-(const Timestamp &rhs) const {
-    //dt = rhs - mocpp_base
-    
-    int16_t year_base, year_end;
-    if (year <= rhs.year) {
-        year_base = year;
-        year_end = rhs.year;
+const Timestamp &Clock::now() {
+    if (unixTime.isUnixTime()) {
+        return unixTime;
     } else {
-        year_base = rhs.year;
-        year_end = year;
+        return uptime;
     }
-
-    int16_t lhsDays = day;
-    int16_t rhsDays = rhs.day;
-
-    for (int16_t iy = year_base; iy <= year_end; iy++) {
-        for (int16_t im = 0; im < 12; im++) {
-            if (year > iy || (year == iy && month > im)) {
-                lhsDays += noDays(im, iy);
-            }
-            if (rhs.year > iy || (rhs.year == iy && rhs.month > im)) {
-                rhsDays += noDays(im, iy);
-            }
-        }
-    }
-
-    int dt = (lhsDays - rhsDays) * (24 * 3600) + (hour - rhs.hour) * 3600 + (minute - rhs.minute) * 60 + second - rhs.second;
-
-#if MO_ENABLE_TIMESTAMP_MILLISECONDS
-    // Make it so that we round the difference to the nearest second, instead of being up to almost a whole second off
-    if ((ms - rhs.ms) > 500) dt++;
-    if ((ms - rhs.ms) < -500) dt--;
-#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
-
-    return dt;
 }
 
-Timestamp &Timestamp::operator=(const Timestamp &rhs) {
-    year = rhs.year;
-    month = rhs.month;
-    day = rhs.day;
-    hour = rhs.hour;
-    minute = rhs.minute;
-    second = rhs.second;
-#if MO_ENABLE_TIMESTAMP_MILLISECONDS
-    ms = rhs.ms;
-#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
-
-    return *this;
+const Timestamp &Clock::getUptime() {
+    return uptime;
 }
 
-Timestamp operator+(const Timestamp &lhs, int secs) {
-    Timestamp res = lhs;
-    res += secs;
-    return res;
-}
-
-Timestamp operator-(const Timestamp &lhs, int secs) {
-    return operator+(lhs, -secs);
-}
-
-bool operator==(const Timestamp &lhs, const Timestamp &rhs) {
-    return lhs.year == rhs.year && lhs.month == rhs.month && lhs.day == rhs.day && lhs.hour == rhs.hour && lhs.minute == rhs.minute && lhs.second == rhs.second
-#if MO_ENABLE_TIMESTAMP_MILLISECONDS
-    && lhs.ms == rhs.ms
-#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
-    ;
-}
-
-bool operator!=(const Timestamp &lhs, const Timestamp &rhs) {
-    return !(lhs == rhs);
-}
-
-bool operator<(const Timestamp &lhs, const Timestamp &rhs) {
-    if (lhs.year != rhs.year)
-        return lhs.year < rhs.year;
-    if (lhs.month != rhs.month)
-        return lhs.month < rhs.month;
-    if (lhs.day != rhs.day)
-        return lhs.day < rhs.day;
-    if (lhs.hour != rhs.hour)
-        return lhs.hour < rhs.hour;
-    if (lhs.minute != rhs.minute)
-        return lhs.minute < rhs.minute;
-    if (lhs.second != rhs.second)
-        return lhs.second < rhs.second;
-#if MO_ENABLE_TIMESTAMP_MILLISECONDS
-    if (lhs.ms != rhs.ms)
-        return lhs.ms < rhs.ms;
-#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
-    return false;  
-}
-
-bool operator<=(const Timestamp &lhs, const Timestamp &rhs) {
-    return lhs < rhs || lhs == rhs;
-}
-
-bool operator>(const Timestamp &lhs, const Timestamp &rhs) {
-    return rhs < lhs;
-}
-
-bool operator>=(const Timestamp &lhs, const Timestamp &rhs) {
-    return rhs <= lhs;
-}
-
-
-Clock::Clock() {
-
+int32_t Clock::getUptimeInt() {
+    return uptime.time;
 }
 
 bool Clock::setTime(const char* jsonDateString) {
 
-    Timestamp timestamp = Timestamp();
-    
-    if (!timestamp.setTime(jsonDateString)) {
+    Timestamp t;
+    if (!parseString(jsonDateString, t)) {
         return false;
     }
 
-    system_basetime = mocpp_tick_ms();
-    mocpp_basetime = timestamp;
+    unixTime = t;
+    return true;
+}
 
-    currentTime = mocpp_basetime;
-    lastUpdate = system_basetime;
+bool Clock::setTime(int32_t unixTimeInt) {
+
+    Timestamp t;
+    if (!fromUnixTime(t, unixTimeInt)) {
+        return false;
+    }
+
+    unixTime = t;
+    return true;
+}
+
+bool Clock::delta(const Timestamp& t2, const Timestamp& t1, int32_t& dt) const {
+    //dt = t2 - t1
+    if (!t1.isDefined() || !t2.isDefined()) {
+        return false;
+    }
+
+    if (t1.isUnixTime() && t2.isUnixTime()) {
+        dt = t2.time - t1.time;
+        return true;
+    } else if (t1.isUptime() && t2.isUptime() && t1.bootNr == t2.bootNr) {
+
+        if ((t1.time > 0 && t2.time - t1.time > t2.time) ||
+                (t1.time < 0 && t2.time - t1.time < t2.time)) {
+            MO_DBG_ERR("integer overflow");
+            return false;
+        }
+
+        dt = t2.time - t1.time;
+        return true;
+    } else {
+        Timestamp t1Unix, t2Unix;
+        if (toUnixTime(t1, t1Unix) && toUnixTime(t2, t2Unix)) {
+            dt = t2Unix.time - t1Unix.time;
+            return true;
+        } else {
+            MO_DBG_ERR("cannot get delta: time captured before initial clock sync");
+            return false;
+        }
+    }
+}
+
+bool Clock::add(Timestamp& t, int32_t secs) const {
+
+    if (!t.isDefined()) {
+        return false;
+    }
+
+    if ((secs > 0 && t.time + secs < t.time) ||
+            (secs < 0 && t.time + secs > t.time)) {
+        MO_DBG_ERR("integer overflow");
+        return false;
+    }
+
+    if (t.isUnixTime() && (t.time + secs < MO_MIN_TIME || t.time + secs > MO_MAX_TIME)) {
+        MO_DBG_ERR("exceed valid unix time range");
+        return false;
+    }
+
+    if (t.isUptime() && (t.time + secs > MO_MAX_UPTIME)) {
+        MO_DBG_ERR("exceed valid uptime time range");
+        return false;
+    }
+
+    t.time += secs;
 
     return true;
 }
 
-const Timestamp &Clock::now() {
-    auto tReading = mocpp_tick_ms();
-    auto delta = tReading - lastUpdate;
-
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
-    currentTime.addMilliseconds(delta);
-    lastUpdate = tReading;
-#else
-    auto deltaSecs = delta / 1000;
-    currentTime += deltaSecs;
-    lastUpdate += deltaSecs * 1000;
+bool Clock::deltaMs(const Timestamp& t2, const Timestamp& t1, int32_t& dtMs) const {
+
+    if (t1.ms < 0 || t1.ms >= 1000 || t2.ms < 0 || t2.ms >= 1000) {
+        MO_DBG_ERR("invalid timestamp");
+        return false;
+    }
+
+    auto fullSec2 = t2;
+    fullSec2.ms = 0;
+
+    auto fullSec1 = t1;
+    fullSec1.ms = 0;
+
+    int32_t dtS;
+    if (!delta(fullSec2, fullSec1, dtS)) {
+        return false;
+    }
+
+    if ((dtS > 0 && dtS * 1000 + 1000 < dtS) ||
+            (dtS < 0 && dtS * 1000 - 1000 > dtS)) {
+        MO_DBG_ERR("integer overflow");
+        return false;
+    }
+
+    dtMs = dtS * 1000 + (int32_t)(t2.ms - t1.ms);
+    return true;
+}
+
+bool Clock::addMs(Timestamp& t, int32_t ms) const {
+
+    if (t.ms < 0 || t.ms >= 1000) {
+        MO_DBG_ERR("invalid timestamp");
+        return false;
+    }
+
+    if (ms + t.ms < ms) {
+        MO_DBG_ERR("integer overflow");
+        return false;
+    }
+    ms += t.ms;
+
+    int32_t s = 0;
+    if (ms >= 0) {
+        //positive, addition
+        s = ms / 1000;
+        ms %= 1000;
+    } else {
+        //negative, substraction
+        s = ms / 1000;
+        ms -= s * 1000;
+        if (ms != 0) {
+            s -= 1;
+            ms += 1000;
+        }
+    }
+
+    if (!add(t, s)) {
+        return false;
+    }
+
+    t.ms = ms;
+    return true;
+}
 #endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
 
-    return currentTime;
-}
+bool Clock::toJsonString(const Timestamp& src, char *dst, size_t size) const {
 
-Timestamp Clock::adjustPrebootTimestamp(const Timestamp& t) {
-    auto systemtime_in = t - Timestamp();
-    if (systemtime_in > (int) system_basetime / 1000) {
-        return mocpp_basetime;
+    if (!src.isDefined()) {
+        return false;
     }
-    return mocpp_basetime - ((int) (system_basetime / 1000) - systemtime_in);
+
+    if (size < MO_JSONDATE_SIZE) {
+        return false;
+    }
+
+    Timestamp t;
+    if (!toUnixTime(src, t)) {
+        MO_DBG_ERR("timestamp not a unix time");
+        return false;
+    }
+
+    int32_t time = t.time;
+
+    int year = 1970;
+    int month = 0;
+    while (time - (noDays(month, year) * 24 * 3600) >= 0) {
+        time -= noDays(month, year) * 24 * 3600;
+        month++;
+        if (month >= 12) {
+            year++;
+            month = 0;
+        }
+    }
+
+    int day = time / (24 * 3600);
+    time %= 24 * 3600;
+    int hour = time / 3600;
+    time %= 3600;
+    int minute = time / 60;
+    time %= 60;
+    int second = time;
+
+    // first month of the year is '1' and first day of the month is '1'
+    month++;
+    day++;
+
+    int ret;
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
+    ret = snprintf(dst, size, "%04i-%02i-%02iT%02i:%02i:%02i.%03uZ",
+            year, month, day, hour, minute, second, (int)(t.ms >= 0 && t.ms <= 999 ? t.ms : 0));
+#else
+    ret = snprintf(dst, size, "%04i-%02i-%02iT%02i:%02i:%02iZ",
+            year, month, day, hour, minute, second);
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
+
+    if (ret < 0 || (size_t)ret >= size) {
+        return false;
+    }
+
+    //success
+    return true;
 }
 
+bool Clock::toInternalString(const Timestamp& t, char *dst, size_t size) const {
+
+    if (!t.isDefined()) {
+        return false;
+    }
+
+    if (size < MO_INTERNALTIME_SIZE) {
+        return false;
+    }
+
+    int ret;
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
+    ret = snprintf(dst, size, "i%ut%lim%u", (unsigned int)t.bootNr, (long int)t.time, (int)(t.ms >= 0 && t.ms <= 999 ? t.ms : 0));
+#else
+    ret = snprintf(dst, size, "i%ut%li", (unsigned int)t.bootNr, (long int)t.time);
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
+
+    if (ret < 0 || (size_t)ret >= size) {
+        return false;
+    }
+
+    return true;
+}
+
+bool Clock::parseString(const char *src, Timestamp& dst) const {
+
+    if (src[0] == 'i') { //this is the internal representation, consisting of an optional bootNr and a time value
+        size_t i = 1;
+        uint16_t bootNr = 0, bootNr2 = 0;
+        for (; isdigit(src[i]); i++) {
+            bootNr *= 10;
+            bootNr += src[i] - '0';
+            if (bootNr < bootNr2) {
+                //overflow
+                MO_DBG_ERR("invalid bootNr");
+                return false;
+            }
+            bootNr2 = bootNr;
+        }
+
+        if (src[i++] != 't') {
+            MO_DBG_ERR("invalid time string");
+            return false;
+        }
+
+        bool positive = true;
+        if (src[i] == '-') {
+            positive = false;
+            i++;
+        }
+
+        int32_t time = 0, time2 = 0;
+        for (; isdigit(src[i]); i++) {
+            time *= 10;
+            if (positive) {
+                time += src[i] - '0';
+            } else {
+                time -= src[i] - '0';
+            }
+            if ((positive && time < time2) || (!positive && time > time2)) {
+                //overflow
+                MO_DBG_ERR("invalid time");
+                return false;
+            }
+            if (time >= MO_MAX_TIME) {
+                //exceed numeric limit
+                MO_DBG_ERR("invalid time");
+                return false;
+            }
+            if (time < MO_MIN_TIME && time > MO_MAX_UPTIME) {
+                MO_DBG_ERR("invalid time");
+                return false;
+            }
+            time2 = time;
+        }
+
+        // Optional ms
+        int16_t ms = 0;
+        if (src[i] == 'm') {
+            i++;
+            for (; isdigit(src[i]); i++) {
+                ms *= 10;
+                ms += src[i] - '0';
+                if (ms >= 1000) {
+                    //overflow
+                    MO_DBG_ERR("invalid ms");
+                    return false;
+                }
+            }
+        }
+
+        if (src[i] != '\0') {
+            MO_DBG_ERR("invalid time");
+            return false;
+        }
+
+        //success
+        dst.time = time;
+        dst.bootNr = bootNr;
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
+        dst.ms = ms;
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
+        return true;
+    } else { // this is a JSON time string
+
+        const int JSONDATE_MINLENGTH = 19;
+
+        if (strlen(src) < JSONDATE_MINLENGTH){
+            return false;
+        }
+
+        if (!isdigit(src[0]) ||  //2
+            !isdigit(src[1]) ||    //0
+            !isdigit(src[2]) ||    //1
+            !isdigit(src[3]) ||    //3
+            src[4] != '-' ||       //-
+            !isdigit(src[5]) ||    //0
+            !isdigit(src[6]) ||    //2
+            src[7] != '-' ||       //-
+            !isdigit(src[8]) ||    //0
+            !isdigit(src[9]) ||    //1
+            src[10] != 'T' ||      //T
+            !isdigit(src[11]) ||   //2
+            !isdigit(src[12]) ||   //0
+            src[13] != ':' ||      //:
+            !isdigit(src[14]) ||   //5
+            !isdigit(src[15]) ||   //3
+            src[16] != ':' ||      //:
+            !isdigit(src[17]) ||   //3
+            !isdigit(src[18])) {   //2
+                                            //ignore subsequent characters
+            return false;
+        }
+
+        int year  =  (src[0] - '0') * 1000 +
+                    (src[1] - '0') * 100 +
+                    (src[2] - '0') * 10 +
+                    (src[3] - '0');
+        int month =  (src[5] - '0') * 10 +
+                    (src[6] - '0') - 1;
+        int day   =  (src[8] - '0') * 10 +
+                    (src[9] - '0') - 1;
+        int hour  =  (src[11] - '0') * 10 +
+                    (src[12] - '0');
+        int minute = (src[14] - '0') * 10 +
+                    (src[15] - '0');
+        int second = (src[17] - '0') * 10 +
+                    (src[18] - '0');
+
+        //optional fractals
+        int16_t ms = 0;
+        if (src[19] == '.') {
+            if (isdigit(src[20]) ||   //1
+                isdigit(src[21]) ||   //2
+                isdigit(src[22])) {
+
+                ms  =  (src[20] - '0') * 100 +
+                        (src[21] - '0') * 10 +
+                        (src[22] - '0');
+            } else {
+                return false;
+            }
+        }
+
+        if (year < 1970 || year >= 2038 ||
+            month < 0 || month >= 12 ||
+            day < 0 || day >= noDays(month, year) ||
+            hour < 0 || hour >= 24 ||
+            minute < 0 || minute >= 60 ||
+            second < 0 || second > 60 || //tolerate leap seconds -- (23:59:60) can be a valid time
+            ms < 0 || ms >= 1000) {
+            return false;
+        }
+
+        int32_t time = 0;
+
+        for (int y = 1970; y < year; y++) {
+            for (int m = 0; m < 12; m++) {
+                time += noDays(m, y) * 24 * 3600;
+            }
+        }
+
+        for (int m = 0; m < month; m++) {
+            time += noDays(m, year) * 24 * 3600;
+        }
+
+        time += day * 24 * 3600;
+        time += hour * 3600;
+        time += minute * 60;
+        time += second;
+
+        if (time < MO_MIN_TIME || time > MO_MAX_TIME) {
+            MO_DBG_ERR("only accept time range from year 2010 to 2037");
+            return false;
+        }
+
+        //success
+        dst.time = time;
+        dst.bootNr = unixTime.bootNr; //set bootNr to a defined value
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
+        dst.ms = ms;
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
+        return true;
+    }
+}
+
+bool Clock::toUnixTime(const Timestamp& src, Timestamp& dst) const {
+    if (src.isUnixTime()) {
+        dst = src;
+        return true;
+    }
+    if (!src.isUptime() || !src.isDefined()) {
+        return false;
+    }
+
+    if (!unixTime.isUnixTime()) {
+        //clock doesn't know unix time yet - no conversion is possible
+        return false;
+    }
+
+    if (src.bootNr != uptime.bootNr) {
+        //src is from a previous power cycle - don't have a record of previous boot-time-unix-time offsets
+        return false;
+    }
+
+    int32_t deltaUptime;
+    if (!delta(src, uptime, deltaUptime)) {
+        return false;
+    }
+
+    dst = unixTime;
+    if (!add(dst, deltaUptime)) {
+        return false;
+    }
+
+    //success
+    return true;
+}
+
+bool Clock::toUnixTime(const Timestamp& src, int32_t& dst) const {
+    Timestamp t;
+    if (!toUnixTime(src, t)) {
+        return false;
+    }
+    dst = t.time;
+    return true;
+}
+
+bool Clock::fromUnixTime(Timestamp& dst, int32_t unixTimeInt) const {
+
+    Timestamp t = unixTime;
+    t.time = unixTimeInt;
+
+    if (!t.isUnixTime()) {
+        return false;
+    }
+
+#if MO_ENABLE_TIMESTAMP_MILLISECONDS
+    t.ms = 0;
+#endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
+
+    dst = t;
+    return true;
+}
+
+uint16_t Clock::getBootNr() const {
+    return uptime.bootNr;
 }

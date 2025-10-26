@@ -1,5 +1,5 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #ifndef MO_VERSION_H
@@ -8,35 +8,47 @@
 /*
  * Version specification of MicroOcpp library (not related with the OCPP version)
  */
-#define MO_VERSION "1.2.0"
+#define MO_VERSION "2.0.0"
 
 /*
- * Enable OCPP 2.0.1 support. If enabled, library can be initialized with both v1.6 and v2.0.1. The choice
- * of the protocol is done dynamically during initialization
+ * OCPP version identifiers
  */
-#ifndef MO_ENABLE_V201
-#define MO_ENABLE_V201 0
+#define MO_OCPP_V16  160 // OCPP 1.6
+#define MO_OCPP_V201 201 // OCPP 2.0.1
+
+/*
+ * Enable OCPP 1.6 support. If multiple OCPP versions are enabled, the final choice
+ * of the protocol can be done dynamically during setup
+ */
+#ifndef MO_ENABLE_V16
+#define MO_ENABLE_V16 1
 #endif
 
-#ifdef __cplusplus
-
-namespace MicroOcpp {
+/*
+ * Enable OCPP 2.0.1 support. If multiple OCPP versions are enabled, the final choice
+ * of the protocol can be done dynamically during setup
+ */
+#ifndef MO_ENABLE_V201
+#define MO_ENABLE_V201 1
+#endif
 
 /*
- * OCPP version type, defined in Model
+ * Enable internal mock server. When MO uses the Loopback connection, or is connected
+ * to an echo WS server, then MO can respond to its own requests and mock real OCPP
+ * communication. This is useful for development and testing.
  */
-struct ProtocolVersion {
-    const int major, minor, patch;
-    ProtocolVersion(int major = 1, int minor = 6, int patch = 0) : major(major), minor(minor), patch(patch) { }
-};
-
-}
-
-#endif //__cplusplus
+#ifndef MO_ENABLE_MOCK_SERVER
+#define MO_ENABLE_MOCK_SERVER 1
+#endif
 
 // Certificate Management (UCs M03 - M05). Works with OCPP 1.6 and 2.0.1
 #ifndef MO_ENABLE_CERT_MGMT
 #define MO_ENABLE_CERT_MGMT MO_ENABLE_V201
+#endif
+
+// Security Event log (UC A04). Works with OCPP 1.6 and 2.0.1
+#ifndef MO_ENABLE_SECURITY_EVENT
+#define MO_ENABLE_SECURITY_EVENT MO_ENABLE_V201
 #endif
 
 // Reservations
@@ -47,6 +59,18 @@ struct ProtocolVersion {
 // Local Authorization, i.e. feature profile LocalAuthListManagement
 #ifndef MO_ENABLE_LOCAL_AUTH
 #define MO_ENABLE_LOCAL_AUTH 1
+#endif
+
+#ifndef MO_ENABLE_SMARTCHARGING
+#define MO_ENABLE_SMARTCHARGING 1
+#endif
+
+#ifndef MO_ENABLE_FIRMWAREMANAGEMENT
+#define MO_ENABLE_FIRMWAREMANAGEMENT 1
+#endif
+
+#ifndef MO_ENABLE_DIAGNOSTICS
+#define MO_ENABLE_DIAGNOSTICS 1
 #endif
 
 #endif

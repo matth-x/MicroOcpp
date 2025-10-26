@@ -3,14 +3,17 @@
 // MIT License
 
 #include <MicroOcpp/Operations/GetCompositeSchedule.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp16::GetCompositeSchedule;
-using MicroOcpp::JsonDoc;
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SMARTCHARGING
 
-GetCompositeSchedule::GetCompositeSchedule(Model& model, SmartChargingService& scService) : MemoryManaged("v16.Operation.", "GetCompositeSchedule"), model(model), scService(scService) {
+using namespace MicroOcpp;
+
+GetCompositeSchedule::GetCompositeSchedule(Context& context, SmartChargingService& scService) : MemoryManaged("v16.Operation.", "GetCompositeSchedule"), context(context), scService(scService), ocppVersion(context.getOcppVersion()) {
 
 }
 
@@ -20,24 +23,34 @@ const char* GetCompositeSchedule::getOperationType() {
 
 void GetCompositeSchedule::processReq(JsonObject payload) {
 
-    connectorId = payload["connectorId"] | -1;
-    duration = payload["duration"] | 0;
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+        evseId = payload["connectorId"] | -1;
+    }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (ocppVersion == MO_OCPP_V201) {
+        evseId = payload["evseId"] | -1;
+    }
+    #endif //MO_ENABLE_V201
 
-    if (connectorId < 0 || !payload.containsKey("duration")) {
+    duration = payload["duration"] | -1;
+
+    if (evseId < 0 || duration < 0) {
         errorCode = "FormationViolation";
         return;
     }
 
-    if ((unsigned int) connectorId >= model.getNumConnectors()) {
+    if ((unsigned int) evseId >= context.getModelCommon().getNumEvseId()) {
         errorCode = "PropertyConstraintViolation";
     }
 
-    const char *unitStr =  payload["chargingRateUnit"] | "_Undefined";
-
-    if (unitStr[0] == 'A' || unitStr[0] == 'a') {
-        chargingRateUnit = ChargingRateUnitType_Optional::Amp;
-    } else if (unitStr[0] == 'W' || unitStr[0] == 'w') {
-        chargingRateUnit = ChargingRateUnitType_Optional::Watt;
+    if (payload.containsKey("chargingRateUnit")) {
+        chargingRateUnit = deserializeChargingRateUnitType(payload["chargingRateUnit"] | "_Invalid");
+        if (chargingRateUnit == ChargingRateUnitType::UNDEFINED) {
+            errorCode = "FormationViolation";
+            return;
+        }
     }
 }
 
@@ -45,27 +58,46 @@ std::unique_ptr<JsonDoc> GetCompositeSchedule::createConf(){
 
     bool success = false;
 
-    auto chargingSchedule = scService.getCompositeSchedule((unsigned int) connectorId, duration, chargingRateUnit);
-    JsonDoc chargingScheduleDoc {0};
+    auto chargingSchedule = scService.getCompositeSchedule((unsigned int) evseId, duration, chargingRateUnit);
+    JsonDoc chargingScheduleDoc (0);
 
     if (chargingSchedule) {
-        success = chargingSchedule->toJson(chargingScheduleDoc);
+        auto capacity = chargingSchedule->getJsonCapacity(ocppVersion, /* compositeSchedule */ true);
+        chargingScheduleDoc = initJsonDoc(getMemoryTag(), capacity);
+        success = chargingSchedule->toJson(context.getClock(), ocppVersion, /* compositeSchedule */ true, chargingScheduleDoc.to<JsonObject>());
     }
 
-    char scheduleStart_str [JSONDATE_LENGTH + 1] = {'\0'};
+    char scheduleStartStr [MO_JSONDATE_SIZE] = {'\0'};
 
-    if (success && chargingSchedule) {
-        success = chargingSchedule->startSchedule.toJsonString(scheduleStart_str, JSONDATE_LENGTH + 1);
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+        if (success && chargingSchedule) {
+            Timestamp scheduleStart;
+            if (context.getClock().fromUnixTime(scheduleStart, chargingSchedule->startSchedule)) {
+                success = context.getClock().toJsonString(scheduleStart,  scheduleStartStr, sizeof(scheduleStartStr));
+            } else {
+                success = false;
+            }
+        }
     }
+    #endif //MO_ENABLE_V16
 
     if (success && chargingSchedule) {
         auto doc = makeJsonDoc(getMemoryTag(),
-                        JSON_OBJECT_SIZE(4) +
+                        (ocppVersion == MO_OCPP_V16 ?
+                            JSON_OBJECT_SIZE(4) + MO_JSONDATE_SIZE :
+                            JSON_OBJECT_SIZE(2)) +
                         chargingScheduleDoc.memoryUsage());
         JsonObject payload = doc->to<JsonObject>();
         payload["status"] = "Accepted";
-        payload["connectorId"] = connectorId;
-        payload["scheduleStart"] = scheduleStart_str;
+        #if MO_ENABLE_V16
+        if (ocppVersion == MO_OCPP_V16) {
+            payload["connectorId"] = evseId;
+            if (ocppVersion == MO_OCPP_V16) {
+                payload["scheduleStart"] = scheduleStartStr;
+            }
+        }
+        #endif //MO_ENABLE_V16
         payload["chargingSchedule"] = chargingScheduleDoc;
         return doc;
     } else {
@@ -75,3 +107,5 @@ std::unique_ptr<JsonDoc> GetCompositeSchedule::createConf(){
         return doc;
     }
 }
+
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SMARTCHARGING

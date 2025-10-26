@@ -4,88 +4,195 @@
 
 #include <MicroOcpp/Operations/CustomOperation.h>
 
-using MicroOcpp::Ocpp16::CustomOperation;
-using MicroOcpp::JsonDoc;
+#include <MicroOcpp/Platform.h>
+#include <MicroOcpp/Debug.h>
 
-CustomOperation::CustomOperation(const char *operationType,
-            std::function<std::unique_ptr<JsonDoc> ()> fn_createReq,
-            std::function<void (JsonObject)> fn_processConf,
-            std::function<bool (const char*, const char*, JsonObject)> fn_processErr) :
-        MemoryManaged("Operation.Custom.", operationType),
-        operationType{makeString(getMemoryTag(), operationType)},
-        fn_createReq{fn_createReq},
-        fn_processConf{fn_processConf},
-        fn_processErr{fn_processErr} {
-    
+using namespace MicroOcpp;
+
+namespace MicroOcpp {
+
+std::unique_ptr<MicroOcpp::JsonDoc> makeDeserializedJson(const char *memoryTag, const char *jsonString) {
+    std::unique_ptr<MicroOcpp::JsonDoc> doc;
+
+    size_t capacity = MO_MAX_JSON_CAPACITY / 8;
+    DeserializationError err = DeserializationError::NoMemory;
+
+    while (err == DeserializationError::NoMemory && capacity <= MO_MAX_JSON_CAPACITY) {
+
+        doc = makeJsonDoc(memoryTag, capacity);
+        if (!doc) {
+            MO_DBG_ERR("OOM");
+            return nullptr;
+        }
+        err = deserializeJson(*doc, jsonString);
+
+        capacity *= 2;
+    }
+
+    if (err) {
+        MO_DBG_ERR("JSON deserialization error: %s", err.c_str());
+        return nullptr;
+    }
+
+    return doc;
 }
 
-CustomOperation::CustomOperation(const char *operationType,
-            std::function<void (JsonObject)> fn_processReq,
-            std::function<std::unique_ptr<JsonDoc> ()> fn_createConf,
-            std::function<const char* ()> fn_getErrorCode,
-            std::function<const char* ()> fn_getErrorDescription,
-            std::function<std::unique_ptr<JsonDoc> ()> fn_getErrorDetails) :
-        MemoryManaged("Operation.Custom.", operationType),
-        operationType{makeString(getMemoryTag(), operationType)},
-        fn_processReq{fn_processReq},
-        fn_createConf{fn_createConf},
-        fn_getErrorCode{fn_getErrorCode},
-        fn_getErrorDescription{fn_getErrorDescription},
-        fn_getErrorDetails{fn_getErrorDetails} {
-    
+char *makeSerializedJsonString(const char *memoryTag, JsonObject json) {
+    char *str = nullptr;
+
+    size_t capacity = MO_MAX_JSON_CAPACITY / 8;
+
+    while (!str && capacity <= MO_MAX_JSON_CAPACITY) {
+        str = static_cast<char*>(MO_MALLOC(memoryTag, capacity));
+        if (!str) {
+            MO_DBG_ERR("OOM");
+            break;
+        }
+        auto written = serializeJson(json, str, capacity);
+
+        if (written >= 2 && written < capacity) {
+            //success
+            break;
+        }
+
+        MO_FREE(str);
+        capacity *= 2;
+
+        if (written <= 1) {
+            MO_DBG_ERR("serialization error");
+            break; //don't retry
+        }
+    }
+
+    if (!str) {
+        MO_DBG_ERR("could not serialize JSON");
+    }
+
+    return str;
+}
+
+void freeSerializedJsonString(char *str) {
+    MO_FREE(str);
+}
+
+} //namespace MicroOcpp
+
+CustomOperation::CustomOperation() : MemoryManaged("v16/v201.CustomOperation") {
+
 }
 
 CustomOperation::~CustomOperation() {
-
-}
-
-const char* CustomOperation::getOperationType() {
-    return operationType.c_str();
-}
-
-std::unique_ptr<JsonDoc> CustomOperation::createReq() {
-    return fn_createReq();
-}
-
-void CustomOperation::processConf(JsonObject payload) {
-    return fn_processConf(payload);
-}
-
-bool CustomOperation::processErr(const char *code, const char *description, JsonObject details) {
-    if (fn_processErr) {
-        return fn_processErr(code, description, details);
+    if (finally) {
+        finally(operationType, userStatus, userData);
+        finally = nullptr;
     }
+    MO_FREE(request);
+    request = nullptr;
+}
+
+bool CustomOperation::setupEvseInitiated(const char *operationType, const char *request, void (*onResponse)(const char *payloadJson, void *userData), void *userData) {
+    this->operationType = operationType;
+    MO_FREE(this->request);
+    this->request = nullptr;
+    if (request) {
+        size_t size = strlen(request) + 1;
+        this->request = static_cast<char*>(MO_MALLOC(getMemoryTag(), size));
+        if (!this->request) {
+            MO_DBG_ERR("OOM");
+            return false;
+        }
+        int ret = snprintf(this->request, size, "%s", request);
+        if (ret < 0 || (size_t)ret >= size) {
+            MO_DBG_ERR("snprintf: %i", ret);
+            MO_FREE(this->request);
+            return false;
+        }
+    }
+    this->onResponse = onResponse;
+    this->userData = userData;
+
     return true;
 }
 
+//for operations receied from remote
+bool CustomOperation::setupCsmsInitiated(const char *operationType, void (*onRequest)(const char *operationType, const char *payloadJson, void **userStatus, void *userData), int (*writeResponse)(const char *operationType, char *buf, size_t size, void *userStatus, void *userData), void (*finally)(const char *operationType, void *userStatus, void *userData), void *userData) {
+    this->operationType = operationType;
+    this->onRequest = onRequest;
+    this->writeResponse = writeResponse;
+    this->userData = userData;
+    this->finally = finally;
+    return true;
+}
+
+const char *CustomOperation::getOperationType() {
+    return operationType;
+}
+
+std::unique_ptr<MicroOcpp::JsonDoc> CustomOperation::createReq() {
+    return makeDeserializedJson(getMemoryTag(), request ? request : "{}");
+}
+
+void CustomOperation::processConf(JsonObject payload) {
+    if (!onResponse) {
+        return;
+    }
+    char *jsonString = makeSerializedJsonString(getMemoryTag(), payload);
+    if (!jsonString) {
+        MO_DBG_ERR("serialization error");
+        return;
+    }
+    onResponse(jsonString, userData);
+
+    freeSerializedJsonString(jsonString);
+}
+
 void CustomOperation::processReq(JsonObject payload) {
-    return fn_processReq(payload);
+    if (!onRequest) {
+        return;
+    }
+    char *jsonString = makeSerializedJsonString(getMemoryTag(), payload);
+    if (!jsonString) {
+        MO_DBG_ERR("serialization error");
+        return;
+    }
+    onRequest(operationType, jsonString, &userStatus, userData);
+
+    freeSerializedJsonString(jsonString);
 }
 
 std::unique_ptr<JsonDoc> CustomOperation::createConf() {
-    return fn_createConf();
-}
-
-const char *CustomOperation::getErrorCode() {
-    if (fn_getErrorCode) {
-        return fn_getErrorCode();
-    } else {
-        return nullptr;
-    }
-}
-
-const char *CustomOperation::getErrorDescription() {
-    if (fn_getErrorDescription) {
-        return fn_getErrorDescription();
-    } else {
-        return "";
-    }
-}
-
-std::unique_ptr<JsonDoc> CustomOperation::getErrorDetails() {
-    if (fn_getErrorDetails) {
-        return fn_getErrorDetails();
-    } else {
+    if (!writeResponse) {
         return createEmptyDocument();
     }
+
+    char *str = nullptr;
+
+    size_t capacity = MO_MAX_JSON_CAPACITY / 8;
+
+    while (!str && capacity <= MO_MAX_JSON_CAPACITY) {
+        str = static_cast<char*>(MO_MALLOC(getMemoryTag(), capacity));
+        if (!str) {
+            MO_DBG_ERR("OOM");
+            break;
+        }
+
+        auto ret = writeResponse(operationType, str, capacity, userStatus, userData);
+        if (ret >= 0 && ret < 1) {
+            MO_DBG_ERR("cannot process empty string");
+        } else if (ret >= 0 && (size_t)ret < capacity) {
+            //success
+            break;
+        }
+
+        MO_FREE(str);
+        capacity *= 2;
+    }
+
+    if (!str) {
+        MO_DBG_ERR("failure to create conf");
+    }
+
+    auto ret = makeDeserializedJson(getMemoryTag(), str);
+    freeSerializedJsonString(str);
+    return ret;
 }

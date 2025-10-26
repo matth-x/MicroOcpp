@@ -2,29 +2,32 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef STATUSNOTIFICATION_H
-#define STATUSNOTIFICATION_H
+#ifndef MO_STATUSNOTIFICATION_H
+#define MO_STATUSNOTIFICATION_H
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Time.h>
-#include <MicroOcpp/Model/ConnectorBase/ChargePointStatus.h>
-#include <MicroOcpp/Model/ConnectorBase/ChargePointErrorData.h>
+#include <MicroOcpp/Model/Availability/AvailabilityDefs.h>
+#include <MicroOcpp/Model/Common/EvseId.h>
 #include <MicroOcpp/Version.h>
 
-namespace MicroOcpp {
-    
-const char *cstrFromOcppEveState(ChargePointStatus state);
+#if MO_ENABLE_V16
 
-namespace Ocpp16 {
+namespace MicroOcpp {
+
+class Context;
+
+namespace v16 {
 
 class StatusNotification : public Operation, public MemoryManaged {
 private:
+    Context& context;
     int connectorId = 1;
-    ChargePointStatus currentStatus = ChargePointStatus_UNDEFINED;
+    MO_ChargePointStatus currentStatus = MO_ChargePointStatus_UNDEFINED;
     Timestamp timestamp;
-    ErrorData errorData;
+    MO_ErrorData errorData;
 public:
-    StatusNotification(int connectorId, ChargePointStatus currentStatus, const Timestamp &timestamp, ErrorData errorData = nullptr);
+    StatusNotification(Context& context, int connectorId, MO_ChargePointStatus currentStatus, const Timestamp &timestamp, MO_ErrorData errorData);
 
     const char* getOperationType() override;
 
@@ -35,40 +38,38 @@ public:
     void processReq(JsonObject payload) override;
 
     std::unique_ptr<JsonDoc> createConf() override;
-
-    int getConnectorId() {
-        return connectorId;
-    }
 };
 
-} // namespace Ocpp16
-} // namespace MicroOcpp
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
 
-#include <MicroOcpp/Model/ConnectorBase/EvseId.h>
-
 namespace MicroOcpp {
-namespace Ocpp201 {
+namespace v201 {
 
 class StatusNotification : public Operation, public MemoryManaged {
 private:
+    Context& context;
     EvseId evseId;
     Timestamp timestamp;
-    ChargePointStatus currentStatus = ChargePointStatus_UNDEFINED;
+    MO_ChargePointStatus currentStatus = MO_ChargePointStatus_UNDEFINED;
 public:
-    StatusNotification(EvseId evseId, ChargePointStatus currentStatus, const Timestamp &timestamp);
+    StatusNotification(Context& context, EvseId evseId, MO_ChargePointStatus currentStatus, const Timestamp &timestamp);
 
     const char* getOperationType() override;
 
     std::unique_ptr<JsonDoc> createReq() override;
 
     void processConf(JsonObject payload) override;
+
+    void processReq(JsonObject payload) override;
+
+    std::unique_ptr<JsonDoc> createConf() override;
 };
 
-} // namespace Ocpp201
-} // namespace MicroOcpp
-
+} //namespace v201
+} //namespace MicroOcpp
 #endif //MO_ENABLE_V201
-
 #endif

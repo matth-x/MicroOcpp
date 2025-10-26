@@ -2,24 +2,21 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <MicroOcpp/Operations/SetVariables.h>
 #include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp201::SetVariableData;
-using MicroOcpp::Ocpp201::SetVariables;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V201
+
+using namespace MicroOcpp;
+using namespace MicroOcpp::v201;
 
 SetVariableData::SetVariableData(const char *memory_tag) : componentName{makeString(memory_tag)}, variableName{makeString(memory_tag)} {
 
 }
 
 SetVariables::SetVariables(VariableService& variableService) : MemoryManaged("v201.Operation.", "SetVariables"), variableService(variableService), queries(makeVector<SetVariableData>(getMemoryTag())) {
-  
+
 }
 
 const char* SetVariables::getOperationType(){
@@ -87,7 +84,7 @@ void SetVariables::processReq(JsonObject payload) {
         query.attributeStatus = variableService.setVariable(
                 query.attributeType,
                 query.attributeValue,
-                ComponentId(query.componentName.c_str(), 
+                ComponentId(query.componentName.c_str(),
                     EvseId(query.componentEvseId, query.componentEvseConnectorId)),
                 query.variableName.c_str());
     }
@@ -102,7 +99,7 @@ void SetVariables::processReq(JsonObject payload) {
 std::unique_ptr<JsonDoc> SetVariables::createConf(){
     size_t capacity = JSON_ARRAY_SIZE(queries.size());
     for (const auto& data : queries) {
-        capacity += 
+        capacity +=
             JSON_OBJECT_SIZE(5) + // setVariableResult
                 JSON_OBJECT_SIZE(2) + // component
                     data.componentName.length() + 1 +
@@ -182,4 +179,4 @@ std::unique_ptr<JsonDoc> SetVariables::createConf(){
     return doc;
 }
 
-#endif // MO_ENABLE_V201
+#endif //MO_ENABLE_V201

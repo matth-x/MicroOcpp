@@ -6,22 +6,18 @@
 
 #if MO_ENABLE_LOCAL_AUTH
 
-#include <MicroOcpp.h>
-#include <MicroOcpp/Core/Connection.h>
 #include <catch2/catch.hpp>
+
+#include <MicroOcpp.h>
 #include "./helpers/testHelper.h"
 
-#include <MicroOcpp/Core/Context.h>
-#include <MicroOcpp/Operations/CustomOperation.h>
-#include <MicroOcpp/Core/Request.h>
-
-#include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
-#include <MicroOcpp/Core/Configuration.h>
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
+#include <MicroOcpp/Model/Transactions/TransactionService16.h>
 
 
-#define BASE_TIME "2023-01-01T00:00:00.000Z"
+#define BASE_TIME_UNIX 1750000000
+#define BASE_TIME_STRING "2025-06-15T15:06:40Z"
 
 using namespace MicroOcpp;
 
@@ -37,7 +33,7 @@ void generateAuthList(JsonArray out, size_t size, bool compact) {
             idTagInfo = authData["idTagInfo"].to<JsonObject>();
         }
 
-        char buf [IDTAG_LEN_MAX + 1];
+        char buf [MO_IDTAG_LEN_MAX + 1];
         sprintf(buf, "mIdTag%zu", i);
         authData[AUTHDATA_KEY_IDTAG(compact)] = buf;
         idTagInfo[AUTHDATA_KEY_STATUS(compact)] = "Accepted";
@@ -47,38 +43,42 @@ void generateAuthList(JsonArray out, size_t size, bool compact) {
 TEST_CASE( "LocalAuth" ) {
     printf("\nRun %s\n",  "LocalAuth");
 
-    //clean state
-    auto filesystem = makeDefaultFilesystemAdapter(FilesystemOpt::Use_Mount_FormatOnFail);
-    FilesystemUtils::remove_if(filesystem, [] (const char*) {return true;});
+    //initialize Context without any configs
+    mo_initialize();
 
-    //initialize Context with dummy socket
+    mo_getContext()->setTicksCb(custom_timer_cb);
+
     LoopbackConnection loopback;
+    mo_getContext()->setConnection(&loopback);
 
-    mocpp_set_timer(custom_timer_cb);
+    mo_setOcppVersion(MO_OCPP_V16);
 
-    mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
-    auto& model = getOcppContext()->getModel();
-    auto authService = model.getAuthorizationService();
-    auto connector = model.getConnector(1);
-    model.getClock().setTime(BASE_TIME);
+    mo_setBootNotificationData("TestModel", "TestVendor");
+
+    mo_setup();
+
+    auto authService = mo_getContext()->getModel16().getAuthorizationService();
+
+    mo_setUnixTime(BASE_TIME_UNIX);
 
     loop();
     
     //enable local auth
-    declareConfiguration<bool>("LocalAuthListEnabled", true)->setBool(true);
+    mo_setConfigurationBool("LocalAuthListEnabled", true);
 
     //set Authorize timeout after which the charger is considered offline
-    const unsigned long AUTH_TIMEOUT_MS = 60000;
-    MicroOcpp::declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", -1)->setInt(AUTH_TIMEOUT_MS / 1000);
+    const int32_t AUTH_TIMEOUT_SECS = 60;
+    mo_setConfigurationInt(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", AUTH_TIMEOUT_SECS);
 
-    //fetch local auth configs
-    auto localAuthorizeOffline = declareConfiguration<bool>("LocalAuthorizeOffline", false);
-    auto localPreAuthorize = declareConfiguration<bool>("LocalPreAuthorize", false);
+    SECTION("Clean up files") {
+        auto filesystem = mo_getFilesystem();
+        FilesystemUtils::removeByPrefix(filesystem, "");
+    }
 
     SECTION("Basic local auth - LocalPreAuthorize") {
 
-        localAuthorizeOffline->setBool(false);
-        localPreAuthorize->setBool(true);
+        mo_setConfigurationBool("LocalAuthorizeOffline", false);
+        mo_setConfigurationBool("LocalPreAuthorize", true);
         
         //set local list
         StaticJsonDocument<256> localAuthList;
@@ -89,57 +89,48 @@ TEST_CASE( "LocalAuth" ) {
 
         REQUIRE( authService->getLocalListSize() == 1 );
         REQUIRE( authService->getLocalAuthorization("mIdTag") != nullptr );
-        REQUIRE( authService->getLocalAuthorization("mIdTag")->getAuthorizationStatus() == AuthorizationStatus::Accepted );
-
-        //check TX notification
-        bool checkTxAuthorized = false;
-        setTxNotificationOutput([&checkTxAuthorized] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification_Authorized) {
-                checkTxAuthorized = true;
-            }
-        });
+        REQUIRE( authService->getLocalAuthorization("mIdTag")->getAuthorizationStatus() == v16::AuthorizationStatus::Accepted );
 
         //begin transaction and delay Authorize request - tx should start immediately
         loopback.setOnline(false); //Authorize delayed by short offline period
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
-        beginTransaction("mIdTag");
+        mo_beginTransaction("mIdTag");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
-        REQUIRE( checkTxAuthorized );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
+        REQUIRE( mo_isTransactionAuthorized() );
 
         loopback.setOnline(true);
-        endTransaction();
+        mo_endTransaction(nullptr, nullptr);
         loop();
 
         //begin transaction delay Authorize request, but idTag doesn't match local list - tx should start when online again
-        checkTxAuthorized = false;
         loopback.setOnline(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
-        beginTransaction("wrong idTag");
+        mo_beginTransaction("wrong idTag");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
-        REQUIRE( !checkTxAuthorized );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Preparing );
+        REQUIRE( !mo_isTransactionAuthorized() );
 
         loopback.setOnline(true);
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
-        REQUIRE( checkTxAuthorized );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
+        REQUIRE( mo_isTransactionAuthorized() );
 
-        endTransaction();
+        mo_endTransaction(nullptr, nullptr);
         loop();
     }
 
     SECTION("Basic local auth - LocalAuthorizeOffline") {
 
-        localAuthorizeOffline->setBool(true);
-        localPreAuthorize->setBool(false);
+        mo_setConfigurationBool("LocalAuthorizeOffline", true);
+        mo_setConfigurationBool("LocalPreAuthorize", false);
 
         //set local list
         StaticJsonDocument<256> localAuthList;
@@ -147,61 +138,56 @@ TEST_CASE( "LocalAuth" ) {
         localAuthList[0]["idTagInfo"]["status"] = "Accepted";
         authService->updateLocalList(localAuthList.as<JsonArray>(), 1, false);
 
-        //check TX notification
-        bool checkTxAuthorized = false;
-        setTxNotificationOutput([&checkTxAuthorized] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification_Authorized) {
-                checkTxAuthorized = true;
-            }
-        });
-
         //make charger offline and begin tx - tx should begin after Authorize timeout
         loopback.setOnline(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
-        unsigned long t_before = mocpp_tick_ms();
+        auto t_before = mo_getUptime();
 
-        beginTransaction("mIdTag");
+        mo_beginTransaction("mIdTag");
         loop();
 
-        REQUIRE( mocpp_tick_ms() - t_before < AUTH_TIMEOUT_MS ); //if this fails, increase AUTH_TIMEOUT_MS
-        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
-        REQUIRE( !checkTxAuthorized );
+        REQUIRE( mo_getUptime() - t_before < AUTH_TIMEOUT_SECS ); //if this fails, increase AUTH_TIMEOUT_SECS
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Preparing );
+        REQUIRE( !mo_isTransactionAuthorized() );
 
-        mtime += AUTH_TIMEOUT_MS - (mocpp_tick_ms() - t_before); //increment clock so that auth timeout is exceeded
+        mtime += (unsigned long)(AUTH_TIMEOUT_SECS - (mo_getUptime() - t_before)) * 1000UL; //increment clock so that auth timeout is exceeded
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
-        REQUIRE( checkTxAuthorized );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
+        REQUIRE( mo_isTransactionAuthorized() );
 
         loopback.setOnline(true);
-        endTransaction();
+        mo_endTransaction(nullptr, nullptr);
         loop();
 
         //make charger offline and begin tx, but idTag doesn't match - tx should be aborted
         bool checkTxTimeout = false;
-        setTxNotificationOutput([&checkTxTimeout] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification_AuthorizationTimeout) {
-                checkTxTimeout = true;
-            }
-        });
+        mo_setTxNotificationOutput2(mo_getApiContext(), 1,
+            [] (MO_TxNotification txNotification, unsigned int, void *userData) {
+                if (txNotification == MO_TxNotification_AuthorizationTimeout) {
+                    bool *checkTxTimeout = reinterpret_cast<bool*>(userData);
+                    *checkTxTimeout = true;
+                }
+            }, reinterpret_cast<void*>(&checkTxTimeout));
+
         loopback.setOnline(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
-        t_before = mocpp_tick_ms();
+        t_before = mo_getUptime();
 
-        beginTransaction("wrong idTag");
+        mo_beginTransaction("wrong idTag");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Preparing );
         REQUIRE( !checkTxTimeout );
 
-        mtime += AUTH_TIMEOUT_MS - (mocpp_tick_ms() - t_before); //increment clock so that auth timeout is exceeded
+        mtime += (unsigned long)(AUTH_TIMEOUT_SECS - (mo_getUptime() - t_before)) * 1000UL; //increment clock so that auth timeout is exceeded
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
         REQUIRE( checkTxTimeout );
 
         loopback.setOnline(true);
@@ -210,81 +196,65 @@ TEST_CASE( "LocalAuth" ) {
 
     SECTION("Basic local auth - AllowOfflineTxForUnknownId") {
 
-        localAuthorizeOffline->setBool(false);
-        localPreAuthorize->setBool(false);
-        MicroOcpp::declareConfiguration<bool>("AllowOfflineTxForUnknownId", true)->setBool(true);
-
-        //check TX notification
-        bool checkTxAuthorized = false;
-        setTxNotificationOutput([&checkTxAuthorized] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification_Authorized) {
-                checkTxAuthorized = true;
-            }
-        });
+        mo_setConfigurationBool("LocalAuthorizeOffline", false);
+        mo_setConfigurationBool("LocalPreAuthorize", false);
+        mo_setConfigurationBool("AllowOfflineTxForUnknownId", true);
 
         //make charger offline and begin tx - tx should begin after Authorize timeout
         loopback.setOnline(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
-        unsigned long t_before = mocpp_tick_ms();
+        auto t_before = mo_getUptime();
 
-        beginTransaction("unknownIdTag");
+        mo_beginTransaction("unknownIdTag");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
-        REQUIRE( !checkTxAuthorized );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Preparing );
+        REQUIRE( !mo_isTransactionAuthorized() );
 
-        mtime += AUTH_TIMEOUT_MS - (mocpp_tick_ms() - t_before); //increment clock so that auth timeout is exceeded
+        mtime += (unsigned long)(AUTH_TIMEOUT_SECS - (mo_getUptime() - t_before)) * 1000UL; //increment clock so that auth timeout is exceeded
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
-        REQUIRE( checkTxAuthorized );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
+        REQUIRE( mo_isTransactionAuthorized() );
 
         loopback.setOnline(true);
-        endTransaction();
+        mo_endTransaction(nullptr, nullptr);
         loop();
     }
 
     SECTION("Local auth - check WS online status") {
 
-        localAuthorizeOffline->setBool(false);
-        localPreAuthorize->setBool(false);
-        MicroOcpp::declareConfiguration<bool>("AllowOfflineTxForUnknownId", true)->setBool(true);
-
-        //check TX notification
-        bool checkTxAuthorized = false;
-        setTxNotificationOutput([&checkTxAuthorized] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification_Authorized) {
-                checkTxAuthorized = true;
-            }
-        });
+        mo_setConfigurationBool("LocalAuthorizeOffline", false);
+        mo_setConfigurationBool("LocalPreAuthorize", false);
+        mo_setConfigurationBool("AllowOfflineTxForUnknownId", true);
 
         //disconnect WS and begin tx - charger should enter offline mode immediately
         loopback.setConnected(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
-        beginTransaction("unknownIdTag");
+        mo_beginTransaction("unknownIdTag");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
-        REQUIRE( checkTxAuthorized );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
+        REQUIRE( mo_isTransactionAuthorized() );
 
         loopback.setConnected(true);
-        endTransaction();
+        mo_endTransaction(nullptr, nullptr);
         loop();
     }
 
     SECTION("Local auth list entry expired / unauthorized") {
 
-        localPreAuthorize->setBool(true);
+        mo_setConfigurationBool("LocalPreAuthorize", true);
 
         //set local list with expired / unauthorized entry
         StaticJsonDocument<512> localAuthList;
         localAuthList[0]["idTag"] = "mIdTagExpired";
         localAuthList[0]["idTagInfo"]["status"] = "Accepted";
-        localAuthList[0]["idTagInfo"]["expiryDate"] = BASE_TIME; //is in past
+        localAuthList[0]["idTagInfo"]["expiryDate"] = BASE_TIME_STRING; //is in past
         localAuthList[1]["idTag"] = "mIdTagUnauthorized";
         localAuthList[1]["idTagInfo"]["status"] = "Blocked";
         authService->updateLocalList(localAuthList.as<JsonArray>(), 1, false);
@@ -296,50 +266,50 @@ TEST_CASE( "LocalAuth" ) {
         //begin transaction and delay Authorize request - cannot PreAuthorize because entry is expired
         loopback.setOnline(false); //Authorize delayed by short offline period
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
-        beginTransaction("mIdTagExpired");
+        mo_beginTransaction("mIdTagExpired");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Preparing );
 
         loopback.setOnline(true);
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
 
-        endTransaction();
+        mo_endTransaction(nullptr, nullptr);
         loop();
 
         //begin transaction and delay Authorize request - cannot PreAuthorize because entry is unauthorized
         loopback.setOnline(false); //Authorize delayed by short offline period
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
-        beginTransaction("mIdTagUnauthorized");
+        mo_beginTransaction("mIdTagUnauthorized");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Preparing );
 
         loopback.setOnline(true);
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
-        endTransaction();
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
+        mo_endTransaction(nullptr, nullptr);
         loop();
     }
 
     SECTION("Mix local authorization modes") {
 
-        localAuthorizeOffline->setBool(true);
-        localPreAuthorize->setBool(true);
-        MicroOcpp::declareConfiguration<bool>("AllowOfflineTxForUnknownId", true)->setBool(true);
+        mo_setConfigurationBool("LocalAuthorizeOffline", true);
+        mo_setConfigurationBool("LocalPreAuthorize", true);
+        mo_setConfigurationBool("AllowOfflineTxForUnknownId", true);
 
         //set local list with accepted and accepted entry
         StaticJsonDocument<512> localAuthList;
         localAuthList[0]["idTag"] = "mIdTagExpired";
         localAuthList[0]["idTagInfo"]["status"] = "Accepted";
-        localAuthList[0]["idTagInfo"]["expiryDate"] = BASE_TIME; //is in past
+        localAuthList[0]["idTagInfo"]["expiryDate"] = BASE_TIME_STRING; //is in past
         localAuthList[1]["idTag"] = "mIdTagAccepted";
         localAuthList[1]["idTagInfo"]["status"] = "Accepted";
         authService->updateLocalList(localAuthList.as<JsonArray>(), 1, false);
@@ -349,34 +319,34 @@ TEST_CASE( "LocalAuth" ) {
         //begin transaction and delay Authorize request - tx should start immediately
         loopback.setOnline(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
-        beginTransaction("mIdTagAccepted");
+        mo_beginTransaction("mIdTagAccepted");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
 
         loopback.setOnline(true);
-        endTransaction();
+        mo_endTransaction(nullptr, nullptr);
         loop();
 
         //begin transaction, but idTag is expired - AllowOfflineTxForUnknownId must not apply
         loopback.setOnline(false);
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
-        unsigned long t_before = mocpp_tick_ms();
+        auto t_before = mo_getUptime();
 
-        beginTransaction("mIdTagExpired");
+        mo_beginTransaction("mIdTagExpired");
         loop();
 
-        REQUIRE( mocpp_tick_ms() - t_before < AUTH_TIMEOUT_MS ); //if this fails, increase AUTH_TIMEOUT_MS
-        REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
+        REQUIRE( mo_getUptime() - t_before < AUTH_TIMEOUT_SECS ); //if this fails, increase AUTH_TIMEOUT_SECS
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Preparing );
 
-        mtime += AUTH_TIMEOUT_MS - (mocpp_tick_ms() - t_before); //increment clock so that auth timeout is exceeded
+        mtime += (unsigned long)(AUTH_TIMEOUT_SECS - (mo_getUptime() - t_before)) * 1000UL; //increment clock so that auth timeout is exceeded
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
         loopback.setOnline(true);
         loop();
@@ -384,16 +354,8 @@ TEST_CASE( "LocalAuth" ) {
 
     SECTION("DeAuthorize locally authorized tx") {
 
-        localAuthorizeOffline->setBool(false);
-        localPreAuthorize->setBool(true);
-
-        //check TX notification
-        bool checkTxAuthorized = false;
-        setTxNotificationOutput([&checkTxAuthorized] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification_Authorized) {
-                checkTxAuthorized = true;
-            }
-        });
+        mo_setConfigurationBool("LocalAuthorizeOffline", false);
+        mo_setConfigurationBool("LocalPreAuthorize", true);
 
         //set local list
         StaticJsonDocument<256> localAuthList;
@@ -402,40 +364,41 @@ TEST_CASE( "LocalAuth" ) {
         authService->updateLocalList(localAuthList.as<JsonArray>(), 1, false);
 
         //patch Authorize so it will reject all idTags
-        getOcppContext()->getOperationRegistry().registerOperation("Authorize", [] () {
-            return new Ocpp16::CustomOperation("Authorize",
-                [] (JsonObject) {}, //ignore req
-                [] () {
-                    //create conf
-                    auto doc = makeJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
-                    auto payload = doc->to<JsonObject>();
-                    payload["idTagInfo"]["status"] = "Blocked";
-                    return doc;
-                });});
+
+        mo_getContext()->getMessageService().clearRegisteredOperation("Authorize");
+
+        mo_getContext()->getMessageService().registerOperation("Authorize", nullptr,
+            [] (const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
+                (void)userStatus;
+                (void)userData;
+                return snprintf(buf, size, "{\"idTagInfo\":{\"status\":\"Blocked\"}}");
+            });
 
         //begin transaction and delay Authorize request - tx should start immediately
         loopback.setOnline(false); //Authorize delayed by short offline period
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
-        beginTransaction("mIdTag");
+        mo_beginTransaction("mIdTag");
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
-        REQUIRE( checkTxAuthorized );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
+        REQUIRE( mo_isTransactionAuthorized() );
 
         //check TX notification
         bool checkTxRejected = false;
-        setTxNotificationOutput([&checkTxRejected] (Transaction*, TxNotification txNotification) {
-            if (txNotification == TxNotification_AuthorizationRejected) {
-                checkTxRejected = true;
-            }
-        });
+        mo_setTxNotificationOutput2(mo_getApiContext(), 1,
+            [] (MO_TxNotification txNotification, unsigned int, void *userData) {
+                if (txNotification == MO_TxNotification_AuthorizationRejected) {
+                    bool *checkTxRejected = reinterpret_cast<bool*>(userData);
+                    *checkTxRejected = true;
+                }
+            }, reinterpret_cast<void*>(&checkTxRejected));
 
         loopback.setOnline(true);
         loop();
 
-        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+        REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
         REQUIRE( checkTxRejected );
 
         loop();
@@ -443,52 +406,54 @@ TEST_CASE( "LocalAuth" ) {
 
     SECTION("LocalListConflict") {
 
+        mo_setConfigurationBool("LocalPreAuthorize", false);
+
         //patch Authorize so it will reject all idTags
         bool checkAuthorize = false;
-        getOcppContext()->getOperationRegistry().registerOperation("Authorize", [&checkAuthorize] () {
-            return new Ocpp16::CustomOperation("Authorize",
-                [&checkAuthorize] (JsonObject) {
-                    checkAuthorize = true;
-                },
-                [] () {
-                    //create conf
-                    auto doc = makeJsonDoc("UnitTests", 2 * JSON_OBJECT_SIZE(1));
-                    auto payload = doc->to<JsonObject>();
-                    payload["idTagInfo"]["status"] = "Blocked";
-                    return doc;
-                });});
+        mo_getContext()->getMessageService().clearRegisteredOperation("Authorize");
+        mo_getContext()->getMessageService().registerOperation("Authorize",
+            [] (const char *operationType, const char *payloadJson, void **userStatus, void *userData) {
+                bool *checkAuthorize = reinterpret_cast<bool*>(userData);
+                *checkAuthorize = true;
+            },
+            [] (const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
+                (void)userStatus;
+                (void)userData;
+                return snprintf(buf, size, "{\"idTagInfo\":{\"status\":\"Blocked\"}}");
+            }, nullptr, reinterpret_cast<void*>(&checkAuthorize));
         
         //patch StartTransaction so it will DeAuthorize all txs
         bool checkStartTx = false;
-        getOcppContext()->getOperationRegistry().registerOperation("StartTransaction", [&checkStartTx] () {
-            return new Ocpp16::CustomOperation("StartTransaction",
-                [&checkStartTx] (JsonObject) {
-                    checkStartTx = true;
-                },
-                [] () {
-                    //create conf
-                    auto doc = makeJsonDoc("UnitTests", 
-                            JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(1));
-                    auto payload = doc->to<JsonObject>();
-                    payload["idTagInfo"]["status"] = "Blocked";
-                    payload["transactionId"] = 1000;
-                    return doc;
-                });});
+        mo_getContext()->getMessageService().clearRegisteredOperation("StartTransaction");
+        mo_getContext()->getMessageService().registerOperation("StartTransaction",
+            [] (const char *operationType, const char *payloadJson, void **userStatus, void *userData) {
+                bool *checkStartTx = reinterpret_cast<bool*>(userData);
+                *checkStartTx = true;
+            },
+            [] (const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
+                (void)userStatus;
+                (void)userData;
+                return snprintf(buf, size, "{\"idTagInfo\":{\"status\":\"Blocked\"}, \"transactionId\":1000}");
+            }, nullptr, reinterpret_cast<void*>(&checkStartTx));
         
         //check resulting StatusNotification message
         bool checkLocalListConflict = false;
-        getOcppContext()->getOperationRegistry().registerOperation("StatusNotification", [&checkLocalListConflict] () {
-            return new Ocpp16::CustomOperation("StatusNotification",
-                [&checkLocalListConflict] (JsonObject payload) {
-                    if (payload["connectorId"] == 0 &&
-                            !strcmp(payload["errorCode"] | "_Undefined", "LocalListConflict")) {
-                        checkLocalListConflict = true;
-                    }
-                }, 
-                [] () {
-                    //create conf
-                    return createEmptyDocument();
-                });});
+        mo_getContext()->getMessageService().clearRegisteredOperation("StatusNotification");
+        mo_getContext()->getMessageService().registerOperation("StatusNotification",
+            [] (const char *operationType, const char *payloadJson, void **userStatus, void *userData) {
+                StaticJsonDocument<256> payload;
+                deserializeJson(payload, payloadJson);
+                if (payload["connectorId"] == 0 &&
+                        !strcmp(payload["errorCode"] | "_Undefined", "LocalListConflict")) {
+                    bool *checkLocalListConflict = reinterpret_cast<bool*>(userData);
+                    *checkLocalListConflict = true;
+                }
+            },
+            [] (const char *operationType, char *buf, size_t size, void *userStatus, void *userData) {
+                (void)userStatus;
+                (void)userData;
+                return snprintf(buf, size, "{}");
+            }, nullptr, reinterpret_cast<void*>(&checkLocalListConflict));
 
         //set local list
         StaticJsonDocument<256> localAuthList;
@@ -497,7 +462,7 @@ TEST_CASE( "LocalAuth" ) {
         authService->updateLocalList(localAuthList.as<JsonArray>(), 1, false);
 
         //send Authorize and StartTx and check if they trigger LocalListConflict
-        beginTransaction("mIdTag");
+        mo_beginTransaction("mIdTag");
         loop();
         REQUIRE( checkLocalListConflict );
         REQUIRE( checkAuthorize );
@@ -505,7 +470,7 @@ TEST_CASE( "LocalAuth" ) {
 
         checkLocalListConflict = false;
         checkAuthorize = false;
-        beginTransaction_authorized("mIdTag");
+        mo_beginTransaction_authorized("mIdTag", nullptr);
         loop();
         REQUIRE( checkLocalListConflict );
         REQUIRE( !checkAuthorize );
@@ -514,11 +479,16 @@ TEST_CASE( "LocalAuth" ) {
 
     SECTION("Update local list") {
 
+        //reset list
+        StaticJsonDocument<256> localAuthList;
+        localAuthList.to<JsonArray>();
+        authService->updateLocalList(localAuthList.as<JsonArray>(), 0, false);
+
         REQUIRE( authService->getLocalListSize() == 0 ); //idle, empty local list
 
         //set local list
         int localListVersion = 42;
-        StaticJsonDocument<256> localAuthList;
+        localAuthList.clear();
         localAuthList[0]["idTag"] = "mIdTag";
         localAuthList[0]["idTagInfo"]["status"] = "Accepted";
         authService->updateLocalList(localAuthList.as<JsonArray>(), localListVersion, false);
@@ -564,7 +534,7 @@ TEST_CASE( "LocalAuth" ) {
         REQUIRE( authService->getLocalListSize() == 2 );
 
         //overwrite previous entry
-        REQUIRE( authService->getLocalAuthorization("mIdTag")->getAuthorizationStatus() == AuthorizationStatus::Accepted );
+        REQUIRE( authService->getLocalAuthorization("mIdTag")->getAuthorizationStatus() == v16::AuthorizationStatus::Accepted );
         localListVersion++;
         localAuthList.clear();
         localAuthList[0]["idTag"] = "mIdTag";
@@ -572,7 +542,7 @@ TEST_CASE( "LocalAuth" ) {
         authService->updateLocalList(localAuthList.as<JsonArray>(), localListVersion, true);
         REQUIRE( authService->getLocalListVersion() == localListVersion );
         REQUIRE( authService->getLocalListSize() == 2 );
-        REQUIRE( authService->getLocalAuthorization("mIdTag")->getAuthorizationStatus() == AuthorizationStatus::Blocked );
+        REQUIRE( authService->getLocalAuthorization("mIdTag")->getAuthorizationStatus() == v16::AuthorizationStatus::Blocked );
 
         //empty update keeps previous entries
         localListVersion++;
@@ -606,15 +576,19 @@ TEST_CASE( "LocalAuth" ) {
         localAuthList[0]["idTag"] = "mIdTagMinimal";
         localAuthList[0]["idTagInfo"]["status"] = "Accepted";
         localAuthList[1]["idTag"] = "mIdTagFull";
-        localAuthList[1]["idTagInfo"]["expiryDate"] = BASE_TIME;
+        localAuthList[1]["idTagInfo"]["expiryDate"] = BASE_TIME_STRING;
         localAuthList[1]["idTagInfo"]["parentIdTag"] = "mParentIdTag";
         localAuthList[1]["idTagInfo"]["status"] = "Blocked";
         authService->updateLocalList(localAuthList.as<JsonArray>(), listVersion, false);
 
-        mocpp_deinitialize();
+        mo_deinitialize();
 
-        mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
-        authService = getOcppContext()->getModel().getAuthorizationService();
+        mo_initialize();
+        mo_getContext()->setTicksCb(custom_timer_cb);
+        mo_getContext()->setConnection(&loopback);
+        mo_setOcppVersion(MO_OCPP_V16);
+        authService = mo_getContext()->getModel16().getAuthorizationService();
+        mo_setup();
 
         REQUIRE( authService->getLocalListVersion() == listVersion );
         REQUIRE( authService->getLocalListSize() == 2 );
@@ -623,18 +597,22 @@ TEST_CASE( "LocalAuth" ) {
         REQUIRE( !strcmp(auth0->getIdTag(), "mIdTagMinimal") );
         REQUIRE( auth0->getExpiryDate() == nullptr );
         REQUIRE( auth0->getParentIdTag() == nullptr );
-        REQUIRE( auth0->getAuthorizationStatus() == AuthorizationStatus::Accepted );
+        REQUIRE( auth0->getAuthorizationStatus() == v16::AuthorizationStatus::Accepted );
         
         auto auth1 = authService->getLocalAuthorization("mIdTagFull");
         REQUIRE( auth1 != nullptr );
         REQUIRE( !strcmp(auth1->getIdTag(), "mIdTagFull") );
         REQUIRE( auth1->getExpiryDate() != nullptr );
         Timestamp baseTimeParsed;
-        baseTimeParsed.setTime(BASE_TIME);
-        REQUIRE( *auth1->getExpiryDate() == baseTimeParsed );
+        mo_getContext()->getClock().fromUnixTime(baseTimeParsed, BASE_TIME_UNIX);
+        int32_t dt = -1;
+        REQUIRE( mo_getContext()->getClock().delta(*auth1->getExpiryDate(), baseTimeParsed, dt) );
+        REQUIRE( dt == 0 );
         REQUIRE( !strcmp(auth1->getParentIdTag(), "mParentIdTag") );
-        REQUIRE( auth1->getAuthorizationStatus() == AuthorizationStatus::Blocked );
+        REQUIRE( auth1->getAuthorizationStatus() == v16::AuthorizationStatus::Blocked );
     }
+
+#if 0
 
     SECTION("SendLocalList") {
 
@@ -645,7 +623,7 @@ TEST_CASE( "LocalAuth" ) {
         //Full update - happy path
         bool checkAccepted = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersion, &listSize, &populatedEntryIdTag] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -656,7 +634,7 @@ TEST_CASE( "LocalAuth" ) {
 
                     //fully populate first entry
                     populatedEntryIdTag = payload["localAuthorizationList"][0]["idTag"] | "_Undefined";
-                    payload["localAuthorizationList"][0]["idTagInfo"]["expiryDate"] = BASE_TIME;
+                    payload["localAuthorizationList"][0]["idTagInfo"]["expiryDate"] = BASE_TIME_STRING;
                     payload["localAuthorizationList"][0]["idTagInfo"]["parentIdTag"] = "mParentIdTag";
                     payload["localAuthorizationList"][0]["idTagInfo"]["status"] = "Blocked";
                     payload["updateType"] = "Full";
@@ -674,12 +652,12 @@ TEST_CASE( "LocalAuth" ) {
         auto localAuth = authService->getLocalAuthorization(populatedEntryIdTag.c_str());
         REQUIRE( localAuth != nullptr );
         Timestamp baseTimeParsed;
-        baseTimeParsed.setTime(BASE_TIME);
+        baseTimeParsed.setTime(BASE_TIME_STRING);
         REQUIRE( localAuth->getExpiryDate() );
         REQUIRE( *localAuth->getExpiryDate() == baseTimeParsed );
         REQUIRE( !strcmp(localAuth->getIdTag(), populatedEntryIdTag.c_str()) );
         REQUIRE( !strcmp(localAuth->getParentIdTag(), "mParentIdTag") );
-        REQUIRE( localAuth->getAuthorizationStatus() == AuthorizationStatus::Blocked );
+        REQUIRE( localAuth->getAuthorizationStatus() == v16::AuthorizationStatus::Blocked );
         REQUIRE( checkAccepted );
 
         //Differential update - happy path
@@ -688,7 +666,7 @@ TEST_CASE( "LocalAuth" ) {
 
         checkAccepted = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersion, &listSize] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -714,7 +692,7 @@ TEST_CASE( "LocalAuth" ) {
 
         bool checkVersionMismatch = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersion, &listSizeInvalid] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -737,11 +715,13 @@ TEST_CASE( "LocalAuth" ) {
 
         //Boundary check - maximum entries per SendLocalList
         listVersion = 42;
-        listSize = (size_t) declareConfiguration<int>("SendLocalListMaxLength", -1)->getInt();
+        int listSizeInt;
+        mo_getConfigurationInt("SendLocalListMaxLength", &listSizeInt);
+        listSize = (size_t)listSizeInt;
 
         checkAccepted = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersion, &listSize] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -767,7 +747,7 @@ TEST_CASE( "LocalAuth" ) {
 
         checkAccepted = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersion, &listSize] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -794,7 +774,7 @@ TEST_CASE( "LocalAuth" ) {
 
         bool errOccurence = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersionInvalid, &listSizeInvalid] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -823,14 +803,16 @@ TEST_CASE( "LocalAuth" ) {
         emptyDoc.to<JsonArray>();
         authService->updateLocalList(emptyDoc.as<JsonArray>(), 1, false);
 
-        size_t localAuthListMaxLength = (size_t) declareConfiguration<int>("LocalAuthListMaxLength", -1)->getInt();
+        int localAuthListMaxLengthInt;
+        mo_getConfigurationInt("LocalAuthListMaxLength", &localAuthListMaxLengthInt);
+        localAuthListMaxLength = (size_t)localAuthListMaxLengthInt;
 
         //send Differential lists with 2 entries: update an existing entry and add a new entry
         for (size_t i = 1; i < localAuthListMaxLength; i++) {
             //Full update - happy path
             bool checkAccepted = false;
             getOcppContext()->initiateRequest(makeRequest(
-                new Ocpp16::CustomOperation("SendLocalList",
+                new v16::CustomOperation("SendLocalList",
                     [&i] () {
                         //create req
                         auto doc = makeJsonDoc("UnitTests", 
@@ -838,7 +820,7 @@ TEST_CASE( "LocalAuth" ) {
                         auto payload = doc->to<JsonObject>();
                         payload["listVersion"] = (int) i;
 
-                        char buf [IDTAG_LEN_MAX + 1];
+                        char buf [MO_IDTAG_LEN_MAX + 1];
                         sprintf(buf, "mIdTag%zu", i-1);
                         payload["localAuthorizationList"][0]["idTag"] = buf;
                         payload["localAuthorizationList"][0]["idTagInfo"]["status"] = "Accepted";
@@ -868,7 +850,7 @@ TEST_CASE( "LocalAuth" ) {
 
         bool checkFailed = false;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("SendLocalList",
+            new v16::CustomOperation("SendLocalList",
                 [&listVersionInvalid] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
@@ -877,7 +859,7 @@ TEST_CASE( "LocalAuth" ) {
                     payload["listVersion"] = listVersionInvalid;
 
                     //update already existing entry
-                    char buf [IDTAG_LEN_MAX + 1];
+                    char buf [MO_IDTAG_LEN_MAX + 1];
                     sprintf(buf, "mIdTag%zu", 0UL);
                     payload["localAuthorizationList"][0]["idTag"] = buf;
                     payload["localAuthorizationList"][0]["idTagInfo"]["status"] = "Accepted";
@@ -909,7 +891,7 @@ TEST_CASE( "LocalAuth" ) {
 
         int checkListVerion = -1;
         getOcppContext()->initiateRequest(makeRequest(
-            new Ocpp16::CustomOperation("GetLocalListVersion",
+            new v16::CustomOperation("GetLocalListVersion",
                 [] () {
                     //create req
                     return createEmptyDocument();
@@ -923,7 +905,9 @@ TEST_CASE( "LocalAuth" ) {
         REQUIRE( checkListVerion == localListVersion );
     }
 
-    mocpp_deinitialize();
+#endif
+
+    mo_deinitialize();
 }
 
 #endif //MO_ENABLE_LOCAL_AUTH

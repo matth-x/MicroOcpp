@@ -6,31 +6,32 @@
 #define MO_REMOTESTARTTRANSACTION_H
 
 #include <MicroOcpp/Core/Operation.h>
-#include <MicroOcpp/Operations/CiStrings.h>
+#include <MicroOcpp/Model/RemoteControl/RemoteControlDefs.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16
 
 namespace MicroOcpp {
 
-class Model;
+class Context;
+class RemoteControlService;
 class ChargingProfile;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class RemoteStartTransaction : public Operation, public MemoryManaged {
 private:
-    Model& model;
+    Context& context;
+    RemoteControlService& rcService;
 
-    bool accepted = false;
-    
+    RemoteStartStopStatus status = RemoteStartStopStatus::Rejected;
+
     const char *errorCode {nullptr};
     const char *errorDescription = "";
 public:
-    RemoteStartTransaction(Model& model);
+    RemoteStartTransaction(Context& context, RemoteControlService& rcService);
 
     const char* getOperationType() override;
-
-    std::unique_ptr<JsonDoc> createReq() override;
-
-    void processConf(JsonObject payload) override;
 
     void processReq(JsonObject payload) override;
 
@@ -40,6 +41,7 @@ public:
     const char *getErrorDescription() override {return errorDescription;}
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16
 #endif

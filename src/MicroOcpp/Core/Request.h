@@ -12,51 +12,54 @@
 #include <memory>
 
 #include <MicroOcpp/Core/RequestCallbacks.h>
-
+#include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Memory.h>
 
 namespace MicroOcpp {
 
+class Context;
 class Operation;
-class Model;
 
 class Request : public MemoryManaged {
 private:
-    String messageID;
+    Context& context;
+    char *messageID = nullptr;
     std::unique_ptr<Operation> operation;
-    void setMessageID(const char *id);
-    OnReceiveConfListener onReceiveConfListener = [] (JsonObject payload) {};
-    OnReceiveReqListener onReceiveReqListener = [] (JsonObject payload) {};
-    OnSendConfListener onSendConfListener = [] (JsonObject payload) {};
-    OnTimeoutListener onTimeoutListener = [] () {};
-    OnReceiveErrorListener onReceiveErrorListener = [] (const char *code, const char *description, JsonObject details) {};
-    OnAbortListener onAbortListener = [] () {};
+    bool setMessageID(const char *id);
+    ReceiveConfListener onReceiveConfListener;
+    void (*onReceiveReqListener)(const char *operationType, const char *payloadJson, void *userData) = nullptr;
+    void *onReceiveReqListenerUserData = nullptr;
+    void (*onSendConfListener)(const char *operationType, const char *payloadJson, void *userData) = nullptr;
+    void *onSendConfListenerUserData = nullptr;
+    TimeoutListener onTimeoutListener;
+    ReceiveErrorListener onReceiveErrorListener;
+    AbortListener onAbortListener;
 
-    unsigned long timeout_start = 0;
-    unsigned long timeout_period = 40000;
-    bool timed_out = false;
-    
-    unsigned long debugRequest_start = 0;
+    Timestamp timeoutStart;
+    int32_t timeoutPeriod = 40; //in seconds
+    bool timedOut = false;
+
+    Timestamp debugRequestTime;
 
     bool requestSent = false;
 public:
 
-    Request(std::unique_ptr<Operation> msg);
+    Request(Context& context, std::unique_ptr<Operation> msg);
 
     ~Request();
 
     Operation *getOperation();
 
-    void setTimeout(unsigned long timeout); //0 = disable timeout
+    void setTimeout(int32_t timeout); //if positive, sets timeout period in secs. If 0 or negative value, disables timeout
     bool isTimeoutExceeded();
     void executeTimeout(); //call Timeout Listener
-    void setOnTimeoutListener(OnTimeoutListener onTimeout);
+    void setOnTimeout(TimeoutListener onTimeout);
 
     /**
      * Sends the message(s) that belong to the OCPP Operation. This function puts a JSON message on the lower protocol layer.
-     * 
+     *
      * For instance operation Authorize: sends Authorize.req(idTag)
-     * 
+     *
      * This function is usually called multiple times by the Arduino loop(). On first call, the request is initially sent. In the
      * succeeding calls, the implementers decide to either resend the request, or do nothing as the operation is still pending.
      */
@@ -67,15 +70,13 @@ public:
     CreateRequestResult createRequest(JsonDoc& out);
 
    /**
-    * Decides if message belongs to this operation instance and if yes, proccesses it. Receives both Confirmations and Errors
-    * 
-    * Returns true if JSON object has been consumed, false otherwise.
+    * Processes Server response (=Confirmations and Errors). Returns true on success, false otherwise
     */
     bool receiveResponse(JsonArray json);
 
     /**
      * Processes the request in the JSON document. Returns true on success, false on error.
-     * 
+     *
      * Returns false if the request doesn't belong to the corresponding operation instance
      */
     bool receiveRequest(JsonArray json);
@@ -93,24 +94,24 @@ public:
 
     CreateResponseResult createResponse(JsonDoc& out);
 
-    void setOnReceiveConfListener(OnReceiveConfListener onReceiveConf); //listener executed when we received the .conf() to a .req() we sent
-    void setOnReceiveReqListener(OnReceiveReqListener onReceiveReq); //listener executed when we receive a .req()
-    void setOnSendConfListener(OnSendConfListener onSendConf); //listener executed when we send a .conf() to a .req() we received
+    void setOnReceiveConf(ReceiveConfListener onReceiveConf); //listener executed when we received the .conf() to a .req() we sent
+    void setOnReceiveRequest(void (*onReceiveReq)(const char *operationType, const char *payloadJson, void *userData), void *userData); //listener executed when we receive a .req()
+    void setOnSendConf(void (*onSendConf)(const char *operationType, const char *payloadJson, void *userData), void *userData); //listener executed when we send a .conf() to a .req() we received
 
-    void setOnReceiveErrorListener(OnReceiveErrorListener onReceiveError);
+    void setReceiveErrorListener(ReceiveErrorListener onReceiveError);
 
     /**
      * The listener onAbort will be called whenever the engine stops trying to execute an operation normally which were initiated
      * on this device. This includes timeouts or if the ocpp counterpart sends an error (then it will be called in addition to
      * onTimeout or onReceiveError, respectively). Causes for onAbort:
-     * 
+     *
      *    - Cannot create OCPP payload
      *    - Timeout
      *    - Receives error msg instead of confirmation msg
-     * 
+     *
      * The engine uses this listener in both modes: EVSE mode and Central system mode
      */
-    void setOnAbortListener(OnAbortListener onAbort);
+    void setOnAbort(AbortListener onAbort);
 
     const char *getOperationType();
 
@@ -121,9 +122,9 @@ public:
 /*
  * Simple factory functions
  */
-std::unique_ptr<Request> makeRequest(std::unique_ptr<Operation> op);
-std::unique_ptr<Request> makeRequest(Operation *op); //takes ownership of op
+std::unique_ptr<Request> makeRequest(Context& context, std::unique_ptr<Operation> op);
+std::unique_ptr<Request> makeRequest(Context& context, Operation *op); //takes ownership of op
 
-} //end namespace MicroOcpp
+} //namespace MicroOcpp
 
  #endif

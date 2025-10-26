@@ -7,18 +7,28 @@
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
+
+class Configuration;
+class ConfigurationService;
 
 class GetConfiguration : public Operation, public MemoryManaged {
 private:
-    Vector<String> keys;
+    ConfigurationService& configService;
+
+    Vector<Configuration*> configurations;
+    Vector<char*> unknownKeys;
 
     const char *errorCode {nullptr};
     const char *errorDescription = "";
 public:
-    GetConfiguration();
+    GetConfiguration(ConfigurationService& configService);
+    ~GetConfiguration();
 
     const char* getOperationType() override;
 
@@ -31,6 +41,7 @@ public:
 
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16
 #endif

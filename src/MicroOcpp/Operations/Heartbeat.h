@@ -1,23 +1,24 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #ifndef MO_HEARTBEAT_H
 #define MO_HEARTBEAT_H
 
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16 || MO_ENABLE_V201
 
 namespace MicroOcpp {
 
-class Model;
-
-namespace Ocpp16 {
+class Context;
 
 class Heartbeat : public Operation, public MemoryManaged {
 private:
-    Model& model;
+    Context& context;
 public:
-    Heartbeat(Model& model);
+    Heartbeat(Context& context);
 
     const char* getOperationType() override;
 
@@ -25,11 +26,12 @@ public:
 
     void processConf(JsonObject payload) override;
 
-    void processReq(JsonObject payload) override;
-
-    std::unique_ptr<JsonDoc> createConf() override;
+#if MO_ENABLE_MOCK_SERVER
+    static int writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData);
+#endif
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace MicroOcpp
+
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201
 #endif

@@ -2,23 +2,24 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef AUTHORIZE_H
-#define AUTHORIZE_H
+#ifndef MO_AUTHORIZE_H
+#define MO_AUTHORIZE_H
 
 #include <MicroOcpp/Core/Operation.h>
-#include <MicroOcpp/Operations/CiStrings.h>
+#include <MicroOcpp/Model/Authorization/IdToken.h>
 #include <MicroOcpp/Version.h>
 
+#if MO_ENABLE_V16
+
 namespace MicroOcpp {
+namespace v16 {
 
 class Model;
-
-namespace Ocpp16 {
 
 class Authorize : public Operation, public MemoryManaged {
 private:
     Model& model;
-    char idTag [IDTAG_LEN_MAX + 1] = {'\0'};
+    char idTag [MO_IDTAG_LEN_MAX + 1] = {'\0'};
 public:
     Authorize(Model& model, const char *idTag);
 
@@ -28,21 +29,25 @@ public:
 
     void processConf(JsonObject payload) override;
 
-    void processReq(JsonObject payload) override;
-
-    std::unique_ptr<JsonDoc> createConf() override;
+#if MO_ENABLE_MOCK_SERVER
+    static int writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData);
+#endif
 
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace v16
+} //namespace MicroOcpp
+
+#endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
 
 #include <MicroOcpp/Model/Authorization/IdToken.h>
 
 namespace MicroOcpp {
-namespace Ocpp201 {
+namespace v201 {
+
+class Model;
 
 class Authorize : public Operation, public MemoryManaged {
 private:
@@ -57,14 +62,14 @@ public:
 
     void processConf(JsonObject payload) override;
 
-    void processReq(JsonObject payload) override;
-
-    std::unique_ptr<JsonDoc> createConf() override;
+#if MO_ENABLE_MOCK_SERVER
+    static int writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData);
+#endif
 
 };
 
-} //end namespace Ocpp201
-} //end namespace MicroOcpp
+} //namespace v201
+} //namespace MicroOcpp
 
 #endif //MO_ENABLE_V201
 

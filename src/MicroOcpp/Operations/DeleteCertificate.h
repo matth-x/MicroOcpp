@@ -5,17 +5,14 @@
 #ifndef MO_DELETECERTIFICATE_H
 #define MO_DELETECERTIFICATE_H
 
+#include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Version.h>
 
-#if MO_ENABLE_CERT_MGMT
-
-#include <MicroOcpp/Core/Operation.h>
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT
 
 namespace MicroOcpp {
 
 class CertificateService;
-
-namespace Ocpp201 {
 
 class DeleteCertificate : public Operation, public MemoryManaged {
 private:
@@ -34,8 +31,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //end namespace Ocpp201
-} //end namespace MicroOcpp
+} //namespace MicroOcpp
 
-#endif //MO_ENABLE_CERT_MGMT
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT
 #endif

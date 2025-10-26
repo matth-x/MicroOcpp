@@ -6,22 +6,27 @@
 #define MO_GETDIAGNOSTICS_H
 
 #include <MicroOcpp/Core/Operation.h>
-#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Model/Diagnostics/Diagnostics.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16 && MO_ENABLE_DIAGNOSTICS
 
 namespace MicroOcpp {
 
+class Context;
 class DiagnosticsService;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class GetDiagnostics : public Operation, public MemoryManaged {
 private:
+    Context& context;
     DiagnosticsService& diagService;
-    String fileName;
+    char filename [MO_GETLOG_FNAME_SIZE] = {'\0'};
 
     const char *errorCode = nullptr;
 public:
-    GetDiagnostics(DiagnosticsService& diagService);
+    GetDiagnostics(Context& context, DiagnosticsService& diagService);
 
     const char* getOperationType() override {return "GetDiagnostics";}
 
@@ -32,7 +37,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
-
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16 && MO_ENABLE_DIAGNOSTICS
 #endif

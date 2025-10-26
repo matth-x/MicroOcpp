@@ -2,19 +2,17 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <MicroOcpp/Operations/RequestStopTransaction.h>
 #include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp201::RequestStopTransaction;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V201
+
+using namespace MicroOcpp;
+using namespace MicroOcpp::v201;
 
 RequestStopTransaction::RequestStopTransaction(RemoteControlService& rcService) : MemoryManaged("v201.Operation.", "RequestStopTransaction"), rcService(rcService) {
-  
+
 }
 
 const char* RequestStopTransaction::getOperationType(){
@@ -23,9 +21,9 @@ const char* RequestStopTransaction::getOperationType(){
 
 void RequestStopTransaction::processReq(JsonObject payload) {
 
-    if (!payload.containsKey("transactionId") || 
+    if (!payload.containsKey("transactionId") ||
             !payload["transactionId"].is<const char*>() ||
-            strlen(payload["transactionId"].as<const char*>()) > MO_TXID_LEN_MAX) {
+            strlen(payload["transactionId"].as<const char*>()) + 1 > MO_TXID_SIZE) {
         errorCode = "FormationViolation";
         return;
     }
@@ -41,10 +39,10 @@ std::unique_ptr<JsonDoc> RequestStopTransaction::createConf(){
     const char *statusCstr = "";
 
     switch (status) {
-        case RequestStartStopStatus_Accepted:
+        case RequestStartStopStatus::Accepted:
             statusCstr = "Accepted";
             break;
-        case RequestStartStopStatus_Rejected:
+        case RequestStartStopStatus::Rejected:
             statusCstr = "Rejected";
             break;
         default:
@@ -57,4 +55,4 @@ std::unique_ptr<JsonDoc> RequestStopTransaction::createConf(){
     return doc;
 }
 
-#endif // MO_ENABLE_V201
+#endif //MO_ENABLE_V201

@@ -1,14 +1,15 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #include <MicroOcpp/Model/Model.h>
 
+#include <MicroOcpp/Context.h>
+#include <MicroOcpp/Model/Configuration/ConfigurationService.h>
 #include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingService.h>
-#include <MicroOcpp/Model/ConnectorBase/ConnectorsCommon.h>
 #include <MicroOcpp/Model/Metering/MeteringService.h>
-#include <MicroOcpp/Model/Metering/MeterValuesV201.h>
+#include <MicroOcpp/Model/Metering/MeteringService.h>
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
 #include <MicroOcpp/Model/Diagnostics/DiagnosticsService.h>
 #include <MicroOcpp/Model/Heartbeat/HeartbeatService.h>
@@ -17,281 +18,241 @@
 #include <MicroOcpp/Model/Boot/BootService.h>
 #include <MicroOcpp/Model/Reset/ResetService.h>
 #include <MicroOcpp/Model/Variables/VariableService.h>
-#include <MicroOcpp/Model/Transactions/TransactionService.h>
+#include <MicroOcpp/Model/Transactions/TransactionService16.h>
+#include <MicroOcpp/Model/Transactions/TransactionService201.h>
+#include <MicroOcpp/Model/Transactions/TransactionStore.h>
 #include <MicroOcpp/Model/Certificates/CertificateService.h>
 #include <MicroOcpp/Model/Availability/AvailabilityService.h>
 #include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
-
-#include <MicroOcpp/Core/Configuration.h>
-
+#include <MicroOcpp/Model/SecurityEvent/SecurityEventService.h>
+#include <MicroOcpp/Operations/DataTransfer.h>
+#include <MicroOcpp/Operations/TriggerMessage.h>
 #include <MicroOcpp/Debug.h>
+
+#if MO_ENABLE_V16 || MO_ENABLE_V201
 
 using namespace MicroOcpp;
 
-Model::Model(ProtocolVersion version, uint16_t bootNr) : MemoryManaged("Model"), connectors(makeVector<std::unique_ptr<Connector>>(getMemoryTag())), version(version), bootNr(bootNr) {
+ModelCommon::ModelCommon(Context& context) : context(context) {
 
 }
 
-Model::~Model() = default;
+ModelCommon::~ModelCommon() {
+    delete bootService;
+    bootService = nullptr;
+    delete heartbeatService;
+    heartbeatService = nullptr;
+    delete remoteControlService;
+    remoteControlService = nullptr;
 
-void Model::loop() {
+#if MO_ENABLE_DIAGNOSTICS
+    delete diagnosticsService;
+    diagnosticsService = nullptr;
+#endif //MO_ENABLE_DIAGNOSTICS
+
+#if MO_ENABLE_SMARTCHARGING
+    delete smartChargingService;
+    smartChargingService = nullptr;
+#endif //MO_ENABLE_SMARTCHARGING
+
+#if MO_ENABLE_CERT_MGMT
+    delete certService;
+    certService = nullptr;
+#endif //MO_ENABLE_CERT_MGMT
+
+#if MO_ENABLE_SECURITY_EVENT
+    delete secEventService;
+    secEventService = nullptr;
+#endif //MO_ENABLE_SECURITY_EVENT
+
+}
+
+bool ModelCommon::setupCommon() {
+
+    if (!getBootService() || !getBootService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    if (!getHeartbeatService() || !getHeartbeatService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    if (!getRemoteControlService() || !getRemoteControlService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+#if MO_ENABLE_DIAGNOSTICS
+    if (!getDiagnosticsService() || !getDiagnosticsService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+#endif //MO_ENABLE_DIAGNOSTICS
+
+#if MO_ENABLE_SMARTCHARGING
+    if (!getSmartChargingService() || !getSmartChargingService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+#endif //MO_ENABLE_SMARTCHARGING
+
+#if MO_ENABLE_CERT_MGMT
+    if (!getCertificateService() || !getCertificateService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+#endif //MO_ENABLE_CERT_MGMT
+
+#if MO_ENABLE_SECURITY_EVENT
+    if (!getSecurityEventService() || !getSecurityEventService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+#endif //MO_ENABLE_SECURITY_EVENT
+
+    return true;
+}
+
+void ModelCommon::loopCommon() {
 
     if (bootService) {
         bootService->loop();
-    }
-
-    if (capabilitiesUpdated) {
-        updateSupportedStandardProfiles();
-        capabilitiesUpdated = false;
     }
 
     if (!runTasks) {
         return;
     }
 
-    for (auto& connector : connectors) {
-        connector->loop();
-    }
-
-    if (chargeControlCommon)
-        chargeControlCommon->loop();
-
-    if (smartChargingService)
-        smartChargingService->loop();
-
-    if (heartbeatService)
+    if (heartbeatService) {
         heartbeatService->loop();
-
-    if (meteringService)
-        meteringService->loop();
-
-    if (diagnosticsService)
-        diagnosticsService->loop();
-
-    if (firmwareService)
-        firmwareService->loop();
-
-#if MO_ENABLE_RESERVATION
-    if (reservationService)
-        reservationService->loop();
-#endif //MO_ENABLE_RESERVATION
-
-    if (resetService)
-        resetService->loop();
-
-#if MO_ENABLE_V201
-    if (availabilityService)
-        availabilityService->loop();
-
-    if (transactionService)
-        transactionService->loop();
-    
-    if (resetServiceV201)
-        resetServiceV201->loop();
-#endif
-}
-
-void Model::setTransactionStore(std::unique_ptr<TransactionStore> ts) {
-    transactionStore = std::move(ts);
-    capabilitiesUpdated = true;
-}
-
-TransactionStore *Model::getTransactionStore() {
-    return transactionStore.get();
-}
-
-void Model::setSmartChargingService(std::unique_ptr<SmartChargingService> scs) {
-    smartChargingService = std::move(scs);
-    capabilitiesUpdated = true;
-}
-
-SmartChargingService* Model::getSmartChargingService() const {
-    return smartChargingService.get();
-}
-
-void Model::setConnectorsCommon(std::unique_ptr<ConnectorsCommon> ccs) {
-    chargeControlCommon = std::move(ccs);
-    capabilitiesUpdated = true;
-}
-
-ConnectorsCommon *Model::getConnectorsCommon() {
-    return chargeControlCommon.get();
-}
-
-void Model::setConnectors(Vector<std::unique_ptr<Connector>>&& connectors) {
-    this->connectors = std::move(connectors);
-    capabilitiesUpdated = true;
-}
-
-unsigned int Model::getNumConnectors() const {
-    return connectors.size();
-}
-
-Connector *Model::getConnector(unsigned int connectorId) {
-    if (connectorId >= connectors.size()) {
-        MO_DBG_ERR("connector with connectorId %u does not exist", connectorId);
-        return nullptr;
     }
 
-    return connectors[connectorId].get();
+#if MO_ENABLE_DIAGNOSTICS
+    if (diagnosticsService) {
+        diagnosticsService->loop();
+    }
+#endif //MO_ENABLE_DIAGNOSTICS
+
+#if MO_ENABLE_SMARTCHARGING
+    if (smartChargingService) {
+        smartChargingService->loop();
+    }
+#endif //MO_ENABLE_SMARTCHARGING
 }
 
-void Model::setMeteringSerivce(std::unique_ptr<MeteringService> ms) {
-    meteringService = std::move(ms);
-    capabilitiesUpdated = true;
+void ModelCommon::setNumEvseId(unsigned int numEvseId) {
+    if (numEvseId >= MO_NUM_EVSEID) {
+        MO_DBG_ERR("invalid arg");
+        return;
+    }
+    this->numEvseId = numEvseId;
 }
 
-MeteringService* Model::getMeteringService() const {
-    return meteringService.get();
+unsigned int ModelCommon::getNumEvseId() {
+    return numEvseId;
 }
 
-void Model::setFirmwareService(std::unique_ptr<FirmwareService> fws) {
-    firmwareService = std::move(fws);
-    capabilitiesUpdated = true;
+BootService *ModelCommon::getBootService() {
+    if (!bootService) {
+        bootService = new BootService(context);
+    }
+    return bootService;
 }
 
-FirmwareService *Model::getFirmwareService() const {
-    return firmwareService.get();
+HeartbeatService *ModelCommon::getHeartbeatService() {
+    if (!heartbeatService) {
+        heartbeatService = new HeartbeatService(context);
+    }
+    return heartbeatService;
 }
 
-void Model::setDiagnosticsService(std::unique_ptr<DiagnosticsService> ds) {
-    diagnosticsService = std::move(ds);
-    capabilitiesUpdated = true;
+RemoteControlService *ModelCommon::getRemoteControlService() {
+    if (!remoteControlService) {
+        remoteControlService = new RemoteControlService(context);
+    }
+    return remoteControlService;
 }
 
-DiagnosticsService *Model::getDiagnosticsService() const {
-    return diagnosticsService.get();
+#if MO_ENABLE_DIAGNOSTICS
+DiagnosticsService *ModelCommon::getDiagnosticsService() {
+    if (!diagnosticsService) {
+        diagnosticsService = new DiagnosticsService(context);
+    }
+    return diagnosticsService;
 }
+#endif //MO_ENABLE_DIAGNOSTICS
 
-void Model::setHeartbeatService(std::unique_ptr<HeartbeatService> hs) {
-    heartbeatService = std::move(hs);
-    capabilitiesUpdated = true;
+#if MO_ENABLE_SMARTCHARGING
+SmartChargingService* ModelCommon::getSmartChargingService() {
+    if (!smartChargingService) {
+        smartChargingService = new SmartChargingService(context);
+    }
+    return smartChargingService;
 }
-
-#if MO_ENABLE_LOCAL_AUTH
-void Model::setAuthorizationService(std::unique_ptr<AuthorizationService> as) {
-    authorizationService = std::move(as);
-    capabilitiesUpdated = true;
-}
-
-AuthorizationService *Model::getAuthorizationService() {
-    return authorizationService.get();
-}
-#endif //MO_ENABLE_LOCAL_AUTH
-
-#if MO_ENABLE_RESERVATION
-void Model::setReservationService(std::unique_ptr<ReservationService> rs) {
-    reservationService = std::move(rs);
-    capabilitiesUpdated = true;
-}
-
-ReservationService *Model::getReservationService() {
-    return reservationService.get();
-}
-#endif //MO_ENABLE_RESERVATION
-
-void Model::setBootService(std::unique_ptr<BootService> bs){
-    bootService = std::move(bs);
-    capabilitiesUpdated = true;
-}
-
-BootService *Model::getBootService() const {
-    return bootService.get();
-}
-
-void Model::setResetService(std::unique_ptr<ResetService> rs) {
-    this->resetService = std::move(rs);
-    capabilitiesUpdated = true;
-}
-
-ResetService *Model::getResetService() const {
-    return resetService.get();
-}
+#endif //MO_ENABLE_SMARTCHARGING
 
 #if MO_ENABLE_CERT_MGMT
-void Model::setCertificateService(std::unique_ptr<CertificateService> cs) {
-    this->certService = std::move(cs);
-    capabilitiesUpdated = true;
-}
-
-CertificateService *Model::getCertificateService() const {
-    return certService.get();
+CertificateService *ModelCommon::getCertificateService() {
+    if (!certService) {
+        certService = new CertificateService(context);
+    }
+    return certService;
 }
 #endif //MO_ENABLE_CERT_MGMT
 
-#if MO_ENABLE_V201
-void Model::setAvailabilityService(std::unique_ptr<AvailabilityService> as) {
-    this->availabilityService = std::move(as);
-    capabilitiesUpdated = true;
+#if MO_ENABLE_SECURITY_EVENT
+SecurityEventService *ModelCommon::getSecurityEventService() {
+    if (!secEventService) {
+        secEventService = new SecurityEventService(context);
+    }
+    return secEventService;
+}
+#endif //MO_ENABLE_SECURITY_EVENT
+
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201
+
+#if MO_ENABLE_V16
+
+v16::Model::Model(Context& context) : MemoryManaged("v16.Model"), ModelCommon(context), context(context) {
+
 }
 
-AvailabilityService *Model::getAvailabilityService() const {
-    return availabilityService.get();
+v16::Model::~Model() {
+    delete transactionService;
+    transactionService = nullptr;
+    delete meteringService;
+    meteringService = nullptr;
+    delete resetService;
+    resetService = nullptr;
+    delete availabilityService;
+    availabilityService = nullptr;
+
+#if MO_ENABLE_FIRMWAREMANAGEMENT
+    delete firmwareService;
+    firmwareService = nullptr;
+#endif //MO_ENABLE_FIRMWAREMANAGEMENT
+
+#if MO_ENABLE_LOCAL_AUTH
+    delete authorizationService;
+    authorizationService = nullptr;
+#endif //MO_ENABLE_LOCAL_AUTH
+
+#if MO_ENABLE_RESERVATION
+    delete reservationService;
+    reservationService = nullptr;
+#endif //MO_ENABLE_RESERVATION
+
+    delete configurationService;
+    configurationService = nullptr;
 }
 
-void Model::setVariableService(std::unique_ptr<VariableService> vs) {
-    this->variableService = std::move(vs);
-    capabilitiesUpdated = true;
-}
-
-VariableService *Model::getVariableService() const {
-    return variableService.get();
-}
-
-void Model::setTransactionService(std::unique_ptr<TransactionService> ts) {
-    this->transactionService = std::move(ts);
-    capabilitiesUpdated = true;
-}
-
-TransactionService *Model::getTransactionService() const {
-    return transactionService.get();
-}
-
-void Model::setResetServiceV201(std::unique_ptr<Ocpp201::ResetService> rs) {
-    this->resetServiceV201 = std::move(rs);
-    capabilitiesUpdated = true;
-}
-
-Ocpp201::ResetService *Model::getResetServiceV201() const {
-    return resetServiceV201.get();
-}
-
-void Model::setMeteringServiceV201(std::unique_ptr<Ocpp201::MeteringService> rs) {
-    this->meteringServiceV201 = std::move(rs);
-    capabilitiesUpdated = true;
-}
-
-Ocpp201::MeteringService *Model::getMeteringServiceV201() const {
-    return meteringServiceV201.get();
-}
-
-void Model::setRemoteControlService(std::unique_ptr<RemoteControlService> rs) {
-    remoteControlService = std::move(rs);
-    capabilitiesUpdated = true;
-}
-
-RemoteControlService *Model::getRemoteControlService() const {
-    return remoteControlService.get();
-}
-#endif
-
-Clock& Model::getClock() {
-    return clock;
-}
-
-const ProtocolVersion& Model::getVersion() const {
-    return version;
-}
-
-uint16_t Model::getBootNr() {
-    return bootNr;
-}
-
-void Model::updateSupportedStandardProfiles() {
+void v16::Model::updateSupportedStandardProfiles() {
 
     auto supportedFeatureProfilesString =
-        declareConfiguration<const char*>("SupportedFeatureProfiles", "", CONFIGURATION_VOLATILE, true);
-    
+        configurationService->declareConfiguration<const char*>("SupportedFeatureProfiles", "", MO_CONFIGURATION_VOLATILE, Mutability::ReadOnly);
+
     if (!supportedFeatureProfilesString) {
         MO_DBG_ERR("OOM");
         return;
@@ -299,22 +260,26 @@ void Model::updateSupportedStandardProfiles() {
 
     auto buf = makeString(getMemoryTag(), supportedFeatureProfilesString->getString());
 
-    if (chargeControlCommon &&
-            heartbeatService &&
-            bootService) {
+    if (transactionService &&
+            availabilityService &&
+            getRemoteControlService() &&
+            getHeartbeatService() &&
+            getBootService()) {
         if (!strstr(supportedFeatureProfilesString->getString(), "Core")) {
             if (!buf.empty()) buf += ',';
             buf += "Core";
         }
     }
 
+#if MO_ENABLE_FIRMWAREMANAGEMENT && MO_ENABLE_DIAGNOSTICS
     if (firmwareService ||
-            diagnosticsService) {
+            getDiagnosticsService()) {
         if (!strstr(supportedFeatureProfilesString->getString(), "FirmwareManagement")) {
             if (!buf.empty()) buf += ',';
             buf += "FirmwareManagement";
         }
     }
+#endif //MO_ENABLE_FIRMWAREMANAGEMENT && MO_ENABLE_DIAGNOSTICS
 
 #if MO_ENABLE_LOCAL_AUTH
     if (authorizationService) {
@@ -334,7 +299,7 @@ void Model::updateSupportedStandardProfiles() {
     }
 #endif //MO_ENABLE_RESERVATION
 
-    if (smartChargingService) {
+    if (getSmartChargingService()) {
         if (!strstr(supportedFeatureProfilesString->getString(), "SmartCharging")) {
             if (!buf.empty()) buf += ',';
             buf += "SmartCharging";
@@ -350,3 +315,299 @@ void Model::updateSupportedStandardProfiles() {
 
     MO_DBG_DEBUG("supported feature profiles: %s", buf.c_str());
 }
+
+v16::ConfigurationService *v16::Model::getConfigurationService() {
+    if (!configurationService) {
+        configurationService = new v16::ConfigurationService(context);
+
+        // need extra init step so that other modules can declare configs before setup()
+        if (configurationService && !configurationService->init()) {
+            // configurationService cannot be inited
+            delete configurationService;
+            configurationService = nullptr;
+        }
+    }
+    return configurationService;
+}
+
+v16::TransactionService *v16::Model::getTransactionService() {
+    if (!transactionService) {
+        transactionService = new TransactionService(context);
+    }
+    return transactionService;
+}
+
+v16::MeteringService* v16::Model::getMeteringService() {
+    if (!meteringService) {
+        meteringService = new MeteringService(context);
+    }
+    return meteringService;
+}
+
+v16::ResetService *v16::Model::getResetService() {
+    if (!resetService) {
+        resetService = new ResetService(context);
+    }
+    return resetService;
+}
+
+v16::AvailabilityService *v16::Model::getAvailabilityService() {
+    if (!availabilityService) {
+        availabilityService = new v16::AvailabilityService(context);
+    }
+    return availabilityService;
+}
+
+#if MO_ENABLE_FIRMWAREMANAGEMENT
+v16::FirmwareService *v16::Model::getFirmwareService() {
+    if (!firmwareService) {
+        firmwareService = new FirmwareService(context);
+    }
+    return firmwareService;
+}
+#endif //MO_ENABLE_FIRMWAREMANAGEMENT
+
+#if MO_ENABLE_LOCAL_AUTH
+v16::AuthorizationService *v16::Model::getAuthorizationService() {
+    if (!authorizationService) {
+        authorizationService = new AuthorizationService(context);
+    }
+    return authorizationService;
+}
+#endif //MO_ENABLE_LOCAL_AUTH
+
+#if MO_ENABLE_RESERVATION
+v16::ReservationService *v16::Model::getReservationService() {
+    if (!reservationService) {
+        reservationService = new ReservationService(context);
+    }
+    return reservationService;
+}
+#endif //MO_ENABLE_RESERVATION
+
+bool v16::Model::setup() {
+
+    if (!setupCommon()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    if (!getTransactionService() || !getTransactionService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    if (!getMeteringService() || !getMeteringService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    if (!getResetService() || !getResetService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    if (!getAvailabilityService() || !getAvailabilityService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+#if MO_ENABLE_FIRMWAREMANAGEMENT
+    if (!getFirmwareService() || !getFirmwareService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+#endif //MO_ENABLE_FIRMWAREMANAGEMENT
+
+#if MO_ENABLE_LOCAL_AUTH
+    if (!getAuthorizationService() || !getAuthorizationService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+#endif //MO_ENABLE_LOCAL_AUTH
+
+#if MO_ENABLE_RESERVATION
+    if (!getReservationService() || !getReservationService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+#endif //MO_ENABLE_RESERVATION
+
+    // Ensure this is set up last. ConfigurationService::setup() loads the persistent config values from flash
+    if (!getConfigurationService() || !getConfigurationService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    updateSupportedStandardProfiles();
+
+    // Register remainder of operations which don't have dedicated service
+    context.getMessageService().registerOperation("DataTransfer", [] (Context&) -> Operation* {
+        return new v16::DataTransfer();});
+
+    return true;
+}
+
+void v16::Model::loop() {
+
+    loopCommon();
+
+    if (!runTasks) {
+        return;
+    }
+
+    if (transactionService) {
+        transactionService->loop();
+    }
+
+    if (meteringService) {
+        meteringService->loop();
+    }
+
+    if (resetService) {
+        resetService->loop();
+    }
+
+    if (availabilityService) {
+        availabilityService->loop();
+    }
+
+#if MO_ENABLE_FIRMWAREMANAGEMENT
+    if (firmwareService) {
+        firmwareService->loop();
+    }
+#endif //MO_ENABLE_FIRMWAREMANAGEMENT
+
+#if MO_ENABLE_RESERVATION
+    if (reservationService) {
+        reservationService->loop();
+    }
+#endif //MO_ENABLE_RESERVATION
+}
+
+#endif //MO_ENABLE_V16
+
+#if MO_ENABLE_V201
+
+using namespace MicroOcpp;
+
+v201::Model::Model(Context& context) : MemoryManaged("v201.Model"), ModelCommon(context), context(context) {
+
+}
+
+v201::Model::~Model() {
+    delete transactionService;
+    transactionService = nullptr;
+    delete meteringService;
+    meteringService = nullptr;
+    delete resetService;
+    resetService = nullptr;
+    delete availabilityService;
+    availabilityService = nullptr;
+    delete variableService;
+    variableService = nullptr;
+}
+
+v201::VariableService *v201::Model::getVariableService() {
+    if (!variableService) {
+        variableService = new v201::VariableService(context);
+
+        // need extra init step so that other modules can declare variables before setup()
+        if (variableService && !variableService->init()) {
+            // variableService cannot be inited
+            delete variableService;
+            variableService = nullptr;
+        }
+    }
+    return variableService;
+}
+
+v201::TransactionService *v201::Model::getTransactionService() {
+    if (!transactionService) {
+        transactionService = new TransactionService(context);
+    }
+    return transactionService;
+}
+
+v201::MeteringService *v201::Model::getMeteringService() {
+    if (!meteringService) {
+        meteringService = new v201::MeteringService(context);
+    }
+    return meteringService;
+}
+
+v201::ResetService *v201::Model::getResetService() {
+    if (!resetService) {
+        resetService = new v201::ResetService(context);
+    }
+    return resetService;
+}
+
+v201::AvailabilityService *v201::Model::getAvailabilityService() {
+    if (!availabilityService) {
+        availabilityService = new v201::AvailabilityService(context);
+    }
+    return availabilityService;
+}
+
+bool v201::Model::setup() {
+
+    if (!setupCommon()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    if (!getTransactionService() || !getTransactionService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    if (!getMeteringService() || !getMeteringService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+    if (!getAvailabilityService() || !getAvailabilityService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    if (!getResetService() || !getResetService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    // Ensure this is set up last. VariableService::setup() loads the persistent variable values from flash
+    if (!getVariableService() || !getVariableService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+
+    return true;
+}
+
+void v201::Model::loop() {
+
+    loopCommon();
+
+    if (variableService) {
+        variableService->loop();
+    }
+
+    if (!runTasks) {
+        return;
+    }
+
+    if (transactionService) {
+        transactionService->loop();
+    }
+
+    if (resetService) {
+        resetService->loop();
+    }
+
+    if (availabilityService) {
+        availabilityService->loop();
+    }
+}
+
+#endif //MO_ENABLE_V201

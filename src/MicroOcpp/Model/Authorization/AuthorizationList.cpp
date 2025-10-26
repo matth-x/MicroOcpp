@@ -1,10 +1,6 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
-
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_LOCAL_AUTH
 
 #include <MicroOcpp/Model/Authorization/AuthorizationList.h>
 #include <MicroOcpp/Debug.h>
@@ -12,191 +8,308 @@
 #include <algorithm>
 #include <numeric>
 
-using namespace MicroOcpp;
+#if MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 
-AuthorizationList::AuthorizationList() : MemoryManaged("v16.Authorization.AuthorizationList"), localAuthorizationList(makeVector<AuthorizationData>(getMemoryTag())) {
+using namespace MicroOcpp;
+using namespace MicroOcpp::v16;
+
+AuthorizationList::AuthorizationList() : MemoryManaged("v16.Authorization.AuthorizationList") {
 
 }
 
 AuthorizationList::~AuthorizationList() {
-    
+    clear();
 }
 
-MicroOcpp::AuthorizationData *AuthorizationList::get(const char *idTag) {
-    //binary search
+MicroOcpp::v16::AuthorizationData *AuthorizationList::get(const char *idTag) {
 
     if (!idTag) {
         return nullptr;
     }
 
+    //binary search
     int l = 0;
-    int r = ((int) localAuthorizationList.size()) - 1;
+    int r = ((int) localAuthorizationListSize) - 1;
     while (l <= r) {
         auto m = (r + l) / 2;
-        auto diff = strcmp(localAuthorizationList[m].getIdTag(), idTag);
+        auto diff = strcmp(localAuthorizationList[m]->getIdTag(), idTag);
         if (diff < 0) {
             l = m + 1;
         } else if (diff > 0) {
             r = m - 1;
         } else {
-            return &localAuthorizationList[m];
+            return localAuthorizationList[m];
         }
     }
     return nullptr;
 }
 
-bool AuthorizationList::readJson(JsonArray authlistJson, int listVersion, bool differential, bool compact) {
+bool AuthorizationList::readJson(Clock& clock, JsonArray authlistJson, int listVersion, bool differential, bool internalFormat) {
 
-    if (compact) {
+    if (internalFormat) {
         //compact representations don't contain remove commands
         differential = false;
     }
 
-    for (size_t i = 0; i < authlistJson.size(); i++) {
-
-        //check if JSON object is valid
-        if (!authlistJson[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAG(compact))) {
-            return false;
-        }
-    }
-
-    auto authlist_index = makeVector<int>(getMemoryTag());
-    auto remove_list = makeVector<int>(getMemoryTag());
-
-    unsigned int resultingListLength = 0;
+    size_t resListSize = 0;
+    size_t updateSize = 0;
 
     if (!differential) {
         //every entry will insert an idTag
-        resultingListLength = authlistJson.size();
+        resListSize = authlistJson.size();
+        updateSize = authlistJson.size();
     } else {
         //update type is differential; only unkown entries will insert an idTag
 
-        resultingListLength = localAuthorizationList.size();
-
-        //also, build index here
-        authlist_index.resize(authlistJson.size(), -1);
+        resListSize = localAuthorizationListSize;
 
         for (size_t i = 0; i < authlistJson.size(); i++) {
 
             //check if locally stored auth info is present; if yes, apply it to the index
-            AuthorizationData *found = get(authlistJson[i][AUTHDATA_KEY_IDTAG(compact)]);
+            AuthorizationData *found = get(authlistJson[i][AUTHDATA_KEY_IDTAG(internalFormat)]);
 
             if (found) {
-
-                authlist_index[i] = (int) (found - localAuthorizationList.data());
 
                 //remove or update?
                 if (!authlistJson[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
                     //this entry should be removed
-                    found->reset(); //mark for deletion
-                    remove_list.push_back((int) (found - localAuthorizationList.data()));
-                    resultingListLength--;
-                } //else: this entry should be updated
+                    resListSize--;
+                } else {
+                    //this entry should be updated
+                    updateSize++;
+                }
             } else {
                 //insert or ignore?
                 if (authlistJson[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
                     //add
-                    resultingListLength++;
-                } //else: ignore
+                    resListSize++;
+                    updateSize++;
+                } else {
+                    // invalid record
+                    return false;
+                }
             }
         }
     }
 
-    if (resultingListLength > MO_LocalAuthListMaxLength) {
+    if (resListSize > MO_LocalAuthListMaxLength) {
         MO_DBG_WARN("localAuthList capacity exceeded");
         return false;
     }
 
-    //apply new list
 
-    if (compact) {
-        localAuthorizationList.clear();
+    AuthorizationData **updateList = nullptr; //list of newly allocated entries
+    AuthorizationData **resList = nullptr; //resulting list after list update. Contains pointers to old auth list and updateList
 
-        for (size_t i = 0; i < authlistJson.size(); i++) {
-            localAuthorizationList.emplace_back();
-            localAuthorizationList.back().readJson(authlistJson[i], compact);
+    size_t updateWritten = 0;
+    size_t resWritten = 0;
+
+    if (updateSize > 0) {
+        updateList = static_cast<AuthorizationData**>(MO_MALLOC(getMemoryTag(), sizeof(AuthorizationData*) * updateSize));
+        if (!updateList) {
+            MO_DBG_ERR("OOM");
+            goto fail;
         }
-    } else if (differential) {
+        memset(updateList, 0, sizeof(AuthorizationData*) * updateSize);
+    }
 
-        for (size_t i = 0; i < authlistJson.size(); i++) {
+    if (resListSize > 0) {
+        resList = static_cast<AuthorizationData**>(MO_MALLOC(getMemoryTag(), sizeof(AuthorizationData*) * resListSize));
+        if (!resList) {
+            MO_DBG_ERR("OOM");
+            goto fail;
+        }
+        memset(resList, 0, sizeof(AuthorizationData*) * resListSize);
+    }
 
-            //is entry a remove command?
-            if (!authlistJson[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
-                continue; //yes, remove command, will be deleted afterwards
-            }
+    // Keep, update, or remove old entries
+    if (differential) {
+        for (size_t i = 0; i < localAuthorizationListSize; i++) {
 
-            //update, or insert
+            bool remove = false;
+            bool update = false;
 
-            if (authlist_index[i] < 0) {
-                //auth list does not contain idTag yet -> insert new entry
-
-                //reuse removed AuthData object?
-                if (!remove_list.empty()) {
-                    //yes, reuse
-                    authlist_index[i] = remove_list.back();
-                    remove_list.pop_back();
+            for (size_t j = 0; j < authlistJson.size(); j++) {
+                //remove or update?
+                const char *key_i = localAuthorizationList[i]->getIdTag();
+                const char *key_j = authlistJson[j][AUTHDATA_KEY_IDTAG(false)] | "";
+                if (!*key_i || !*key_j || strcmp(key_i, key_j)) {
+                    // Keys don't match
+                    continue;
+                }
+                if (authlistJson[j].containsKey(AUTHDATA_KEY_IDTAGINFO)) {
+                    //this entry should be updated
+                    update = true;
+                    break;
                 } else {
-                    //no, create new
-                    authlist_index[i] = localAuthorizationList.size();
-                    localAuthorizationList.emplace_back();
+                    //this entry should be removed
+                    remove = true;
+                    break;
                 }
             }
 
-            localAuthorizationList[authlist_index[i]].readJson(authlistJson[i], compact);
-        }
-
-    } else {
-        localAuthorizationList.clear();
-
-        for (size_t i = 0; i < authlistJson.size(); i++) {
-            if (authlistJson[i].as<JsonObject>().containsKey(AUTHDATA_KEY_IDTAGINFO)) {
-                localAuthorizationList.emplace_back();
-                localAuthorizationList.back().readJson(authlistJson[i], compact);
+            if (remove) {
+                // resList won't include this entry
+                (void)0;
+            } else if (update) {
+                updateList[updateWritten] = new AuthorizationData();
+                if (!updateList[updateWritten]) {
+                    MO_DBG_ERR("OOM");
+                    goto fail;
+                }
+                if (!updateList[updateWritten]->readJson(clock, authlistJson[i], internalFormat)) {
+                    MO_DBG_ERR("format error");
+                    goto fail;
+                }
+                resList[resWritten] = updateList[updateWritten];
+                updateWritten++;
+                resWritten++;
+            } else {
+                resList[resWritten] = localAuthorizationList[i];
+                resWritten++;
             }
         }
     }
 
-    localAuthorizationList.erase(std::remove_if(localAuthorizationList.begin(), localAuthorizationList.end(),
-            [] (const AuthorizationData& elem) {
-                return elem.getIdTag()[0] == '\0'; //"" means no idTag --> marked for removal
-            }), localAuthorizationList.end());
+    // Insert new entries
+    for (size_t i = 0; i < authlistJson.size(); i++) {
 
-    std::sort(localAuthorizationList.begin(), localAuthorizationList.end(),
-            [] (const AuthorizationData& lhs, const AuthorizationData& rhs) {
-                return strcmp(lhs.getIdTag(), rhs.getIdTag()) < 0;
-            });
-    
+        if (!internalFormat && !authlistJson[i].containsKey(AUTHDATA_KEY_IDTAGINFO)) {
+            // remove already handled above
+            continue;
+        }
+
+        bool insert = true;
+
+        const char *key_i = authlistJson[i][AUTHDATA_KEY_IDTAG(false)] | "";
+
+        for (size_t j = 0; j < resWritten; j++) {
+            //insert?
+            const char *key_j = resList[j]->getIdTag();
+            if (*key_i && key_j && !strcmp(key_i, key_j)) {
+                // Keys match, this entry was updated above, and should not be inserted
+                insert = false;
+                break;
+            }
+        }
+
+        if (insert) {
+            updateList[updateWritten] = new AuthorizationData();
+            if (!updateList[updateWritten]) {
+                MO_DBG_ERR("OOM");
+                goto fail;
+            }
+            if (!updateList[updateWritten]->readJson(clock, authlistJson[i], internalFormat)) {
+                MO_DBG_ERR("format error");
+                goto fail;
+            }
+            resList[resWritten] = updateList[updateWritten];
+            updateWritten++;
+            resWritten++;
+        }
+    }
+
+    // sanity check 1
+    if (resWritten != resListSize) {
+        MO_DBG_ERR("internal error");
+        goto fail;
+    }
+
+    // sanity check 2
+    for (size_t i = 0; i < resListSize; i++) {
+        if (!resList[i]) {
+            MO_DBG_ERR("internal error");
+            goto fail;
+        }
+    }
+
+    qsort(resList, resListSize, sizeof(resList[0]),
+        [] (const void* a,const void* b) -> int {
+            return strcmp(
+                (*reinterpret_cast<const AuthorizationData* const *>(a))->getIdTag(),
+                (*reinterpret_cast<const AuthorizationData* const *>(b))->getIdTag());
+        });
+
+    // success
+
     this->listVersion = listVersion;
 
-    if (localAuthorizationList.empty()) {
+    if (resListSize == 0) {
         this->listVersion = 0;
     }
 
+    for (size_t i = 0; i < localAuthorizationListSize; i++) {
+        bool found = false;
+        for (size_t j = 0; j < resListSize; j++) {
+            if (localAuthorizationList[i] == resList[j]) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            //entry not used anymore
+            delete localAuthorizationList[i];
+            localAuthorizationList[i] = nullptr;
+        }
+    }
+    MO_FREE(localAuthorizationList);
+    localAuthorizationList = nullptr;
+    localAuthorizationListSize = 0;
+
+    localAuthorizationList = resList;
+    localAuthorizationListSize = resListSize;
+
+    MO_FREE(updateList);
+    updateList = nullptr;
+    updateSize = 0;
+
     return true;
+fail:
+    if (updateList) {
+        for (size_t i = 0; i < updateSize; i++) {
+            delete updateList[i];
+            updateList[i] = nullptr;
+        }
+    }
+    MO_FREE(updateList);
+    updateList = nullptr;
+
+    MO_FREE(resList);
+    resList = nullptr;
+    resListSize = 0;
+
+    return false;
 }
 
 void AuthorizationList::clear() {
-    localAuthorizationList.clear();
+    for (size_t i = 0; i < localAuthorizationListSize; i++) {
+        delete localAuthorizationList[i];
+        localAuthorizationList[i] = nullptr;
+    }
+    MO_FREE(localAuthorizationList);
+    localAuthorizationList = nullptr;
+    localAuthorizationListSize = 0;
     listVersion = 0;
 }
 
-size_t AuthorizationList::getJsonCapacity() {
-    size_t res = JSON_ARRAY_SIZE(localAuthorizationList.size());
-    for (auto& entry : localAuthorizationList) {
-        res += entry.getJsonCapacity();
+size_t AuthorizationList::getJsonCapacity(bool internalFormat) {
+    size_t res = JSON_ARRAY_SIZE(localAuthorizationListSize);
+    for (size_t i = 0; i < localAuthorizationListSize; i++) {
+        res += localAuthorizationList[i]->getJsonCapacity(internalFormat);
     }
     return res;
 }
 
-void AuthorizationList::writeJson(JsonArray authListOut, bool compact) {
-    for (auto& entry : localAuthorizationList) {
+void AuthorizationList::writeJson(Clock& clock, JsonArray authListOut, bool internalFormat) {
+    for (size_t i = 0; i < localAuthorizationListSize; i++) {
         JsonObject entryJson = authListOut.createNestedObject();
-        entry.writeJson(entryJson, compact);
+        localAuthorizationList[i]->writeJson(clock, entryJson, internalFormat);
     }
 }
 
 size_t AuthorizationList::size() {
-    return localAuthorizationList.size();
+    return localAuthorizationListSize;
 }
 
-#endif //MO_ENABLE_LOCAL_AUTH
+#endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH

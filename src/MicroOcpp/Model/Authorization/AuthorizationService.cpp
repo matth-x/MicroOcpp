@@ -2,46 +2,54 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_LOCAL_AUTH
-
 #include <MicroOcpp/Model/Authorization/AuthorizationService.h>
-#include <MicroOcpp/Model/ConnectorBase/Connector.h>
+#include <MicroOcpp/Model/Availability/AvailabilityService.h>
+#include <MicroOcpp/Model/Configuration/ConfigurationService.h>
 #include <MicroOcpp/Core/FilesystemUtils.h>
-#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
-#include <MicroOcpp/Core/OperationRegistry.h>
 #include <MicroOcpp/Core/Request.h>
 #include <MicroOcpp/Operations/GetLocalListVersion.h>
 #include <MicroOcpp/Operations/SendLocalList.h>
 #include <MicroOcpp/Operations/StatusNotification.h>
 #include <MicroOcpp/Debug.h>
 
-#define MO_LOCALAUTHORIZATIONLIST_FN (MO_FILENAME_PREFIX "localauth.jsn")
+#if MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
+
+#define MO_LOCALAUTHORIZATIONLIST_FN "localauth.jsn"
 
 using namespace MicroOcpp;
+using namespace MicroOcpp::v16;
 
-AuthorizationService::AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : MemoryManaged("v16.Authorization.AuthorizationService"), context(context), filesystem(filesystem) {
+AuthorizationService::AuthorizationService(Context& context) : MemoryManaged("v16.Authorization.AuthorizationService"), context(context) {
 
-    localAuthListEnabledBool = declareConfiguration<bool>("LocalAuthListEnabled", true);
-    declareConfiguration<int>("LocalAuthListMaxLength", MO_LocalAuthListMaxLength, CONFIGURATION_VOLATILE, true);
-    declareConfiguration<int>("SendLocalListMaxLength", MO_SendLocalListMaxLength, CONFIGURATION_VOLATILE, true);
-
-    if (!localAuthListEnabledBool) {
-        MO_DBG_ERR("initialization error");
-    }
-    
-    context.getOperationRegistry().registerOperation("GetLocalListVersion", [&context] () {
-        return new Ocpp16::GetLocalListVersion(context.getModel());});
-    context.getOperationRegistry().registerOperation("SendLocalList", [this] () {
-        return new Ocpp16::SendLocalList(*this);});
-
-    loadLists();
 }
 
-AuthorizationService::~AuthorizationService() {
-    
+bool AuthorizationService::setup() {
+
+    filesystem = context.getFilesystem();
+
+    auto configService = context.getModel16().getConfigurationService();
+    if (!configService) {
+        MO_DBG_ERR("initialization error");
+        return false;
+    }
+
+    localAuthListEnabledBool = configService->declareConfiguration<bool>("LocalAuthListEnabled", true);
+    if (!localAuthListEnabledBool) {
+        MO_DBG_ERR("initialization error");
+        return false;
+    }
+
+    configService->declareConfiguration<int>("LocalAuthListMaxLength", MO_LocalAuthListMaxLength, MO_CONFIGURATION_VOLATILE, Mutability::ReadOnly);
+    configService->declareConfiguration<int>("SendLocalListMaxLength", MO_SendLocalListMaxLength, MO_CONFIGURATION_VOLATILE, Mutability::ReadOnly);
+
+    context.getMessageService().registerOperation("GetLocalListVersion", [] (Context& context) -> Operation* {
+        return new GetLocalListVersion(context.getModel16());});
+    context.getMessageService().registerOperation("SendLocalList", [] (Context& context) -> Operation* {
+        return new SendLocalList(*context.getModel16().getAuthorizationService());});
+
+    return loadLists();
 }
 
 bool AuthorizationService::loadLists() {
@@ -50,23 +58,26 @@ bool AuthorizationService::loadLists() {
         return true;
     }
 
-    size_t msize = 0;
-    if (filesystem->stat(MO_LOCALAUTHORIZATIONLIST_FN, &msize) != 0) {
-        MO_DBG_DEBUG("no local authorization list stored already");
-        return true;
-    }
-    
-    auto doc = FilesystemUtils::loadJson(filesystem, MO_LOCALAUTHORIZATIONLIST_FN, getMemoryTag());
-    if (!doc) {
-        MO_DBG_ERR("failed to load %s", MO_LOCALAUTHORIZATIONLIST_FN);
-        return false;
+    JsonDoc doc (0);
+    auto ret = FilesystemUtils::loadJson(filesystem, MO_LOCALAUTHORIZATIONLIST_FN, doc, getMemoryTag());
+    switch (ret) {
+        case FilesystemUtils::LoadStatus::Success:
+            break; //continue loading JSON
+        case FilesystemUtils::LoadStatus::FileNotFound:
+            MO_DBG_DEBUG("no local authorization list stored already");
+            return true;
+        case FilesystemUtils::LoadStatus::ErrOOM:
+            MO_DBG_ERR("OOM");
+            return false;
+        case FilesystemUtils::LoadStatus::ErrFileCorruption:
+        case FilesystemUtils::LoadStatus::ErrOther:
+            MO_DBG_ERR("failed to load %s", MO_LOCALAUTHORIZATIONLIST_FN);
+            return false;
     }
 
-    JsonObject root = doc->as<JsonObject>();
+    int listVersion = doc["listVersion"] | 0;
 
-    int listVersion = root["listVersion"] | 0;
-    
-    if (!localAuthorizationList.readJson(root["localAuthorizationList"].as<JsonArray>(), listVersion, false, true)) {
+    if (!localAuthorizationList.readJson(context.getClock(), doc["localAuthorizationList"].as<JsonArray>(), listVersion, /*differential*/ false, /*internalFormat*/ true)) {
         MO_DBG_ERR("list read failure");
         return false;
     }
@@ -102,19 +113,19 @@ size_t AuthorizationService::getLocalListSize() {
 }
 
 bool AuthorizationService::updateLocalList(JsonArray localAuthorizationListJson, int listVersion, bool differential) {
-    bool success = localAuthorizationList.readJson(localAuthorizationListJson, listVersion, differential, false);
+    bool success = localAuthorizationList.readJson(context.getClock(), localAuthorizationListJson, listVersion, differential, /*internalFormat*/ false);
 
-    if (success) {
-        
+    if (success && filesystem) {
+
         auto doc = initJsonDoc(getMemoryTag(),
                 JSON_OBJECT_SIZE(3) +
-                localAuthorizationList.getJsonCapacity());
+                localAuthorizationList.getJsonCapacity(/*internalFormat*/ true));
 
         JsonObject root = doc.to<JsonObject>();
         root["listVersion"] = listVersion;
         JsonArray authListCompact = root.createNestedArray("localAuthorizationList");
-        localAuthorizationList.writeJson(authListCompact, true);
-        success = FilesystemUtils::storeJson(filesystem, MO_LOCALAUTHORIZATIONLIST_FN, doc);
+        localAuthorizationList.writeJson(context.getClock(), authListCompact, /*internalFormat*/ true);
+        success = (FilesystemUtils::storeJson(filesystem, MO_LOCALAUTHORIZATIONLIST_FN, doc) == FilesystemUtils::StoreStatus::Success);
 
         if (!success) {
             loadLists();
@@ -154,10 +165,15 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
     }
 
     if (localStatus == AuthorizationStatus::Accepted && localInfo->getExpiryDate()) { //check for expiry
-        auto& t_now = context.getModel().getClock().now();
-        if (t_now > *localInfo->getExpiryDate()) {
-            MO_DBG_DEBUG("local auth expired");
-            localStatus = AuthorizationStatus::Expired;
+        int32_t dtExpiryDate;
+        if (context.getClock().delta(context.getClock().now(), *localInfo->getExpiryDate(), dtExpiryDate)) {
+            if (dtExpiryDate > 0) {
+                //now is past expiryDate
+                MO_DBG_DEBUG("local auth expired");
+                localStatus = AuthorizationStatus::Expired;
+            }
+        } else {
+            MO_DBG_ERR("cannot determine local auth expiry");
         }
     }
 
@@ -180,21 +196,25 @@ void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idT
     if (!equivalent) {
         //send error code "LocalListConflict" to server
 
-        ChargePointStatus cpStatus = ChargePointStatus_UNDEFINED;
-        if (context.getModel().getNumConnectors() > 0) {
-            cpStatus = context.getModel().getConnector(0)->getStatus();
-        }
+        auto availSvc = context.getModel16().getAvailabilityService();
+        auto availSvcCp = availSvc ? availSvc->getEvse(0) : nullptr;
+        auto cpStatus = availSvcCp ? availSvcCp->getStatus() : MO_ChargePointStatus_UNDEFINED;
 
-        auto statusNotification = makeRequest(new Ocpp16::StatusNotification(
+        MO_ErrorData errorCode;
+        mo_errorData_init(&errorCode);
+        mo_errorData_setErrorCode(&errorCode, "LocalListConflict");
+
+        auto statusNotification = makeRequest(context, new StatusNotification(
+                    context,
                     0,
-                    cpStatus, //will be determined in StatusNotification::initiate
-                    context.getModel().getClock().now(),
-                    "LocalListConflict"));
+                    cpStatus,
+                    context.getClock().now(),
+                    errorCode));
 
-        statusNotification->setTimeout(60000);
+        statusNotification->setTimeout(60);
 
-        context.initiateRequest(std::move(statusNotification));
+        context.getMessageService().sendRequest(std::move(statusNotification));
     }
 }
 
-#endif //MO_ENABLE_LOCAL_AUTH
+#endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH

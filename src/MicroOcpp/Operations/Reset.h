@@ -2,25 +2,27 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#ifndef RESET_H
-#define RESET_H
+#ifndef MO_RESET_H
+#define MO_RESET_H
 
 #include <MicroOcpp/Version.h>
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Model/Reset/ResetDefs.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16
 
 namespace MicroOcpp {
+namespace v16 {
 
-class Model;
-
-namespace Ocpp16 {
+class ResetService;
 
 class Reset : public Operation, public MemoryManaged {
 private:
-    Model& model;
+    ResetService& resetService;
     bool resetAccepted {false};
 public:
-    Reset(Model& model);
+    Reset(ResetService& resetService);
 
     const char* getOperationType() override;
 
@@ -29,13 +31,14 @@ public:
     std::unique_ptr<JsonDoc> createConf() override;
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
 
 namespace MicroOcpp {
-namespace Ocpp201 {
+namespace v201 {
 
 class ResetService;
 
@@ -56,8 +59,7 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //end namespace Ocpp201
-} //end namespace MicroOcpp
-
+} //namespace v201
+} //namespace MicroOcpp
 #endif //MO_ENABLE_V201
 #endif

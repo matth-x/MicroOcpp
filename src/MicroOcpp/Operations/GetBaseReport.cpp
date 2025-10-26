@@ -2,19 +2,17 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_V201
-
 #include <MicroOcpp/Operations/GetBaseReport.h>
 #include <MicroOcpp/Model/Variables/VariableService.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp201::GetBaseReport;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V201
+
+using namespace MicroOcpp;
+using namespace MicroOcpp::v201;
 
 GetBaseReport::GetBaseReport(VariableService& variableService) : MemoryManaged("v201.Operation.", "GetBaseReport"), variableService(variableService) {
-  
+
 }
 
 const char* GetBaseReport::getOperationType(){
@@ -78,4 +76,4 @@ std::unique_ptr<JsonDoc> GetBaseReport::createConf(){
     return doc;
 }
 
-#endif // MO_ENABLE_V201
+#endif //MO_ENABLE_V201

@@ -3,12 +3,14 @@
 // MIT License
 
 #include <MicroOcpp/Operations/FirmwareStatusNotification.h>
-#include <MicroOcpp/Core/Context.h>
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/FirmwareManagement/FirmwareService.h>
 
-using MicroOcpp::Ocpp16::FirmwareStatusNotification;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
+
+using namespace MicroOcpp;
+using namespace MicroOcpp::v16;
 
 FirmwareStatusNotification::FirmwareStatusNotification(FirmwareStatus status) : MemoryManaged("v16.Operation.", "FirmwareStatusNotification"), status{status} {
 
@@ -51,3 +53,5 @@ std::unique_ptr<JsonDoc> FirmwareStatusNotification::createReq() {
 void FirmwareStatusNotification::processConf(JsonObject payload){
     // no payload, nothing to do
 }
+
+#endif //MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT

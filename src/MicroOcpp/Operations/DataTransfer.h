@@ -6,16 +6,19 @@
 #define MO_DATATRANSFER_H
 
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 class DataTransfer : public Operation, public MemoryManaged {
 private:
-    String msg;
+    char *msg = nullptr;
 public:
-    DataTransfer();
-    DataTransfer(const String &msg);
+    DataTransfer(const char *msg = nullptr);
+    ~DataTransfer();
 
     const char* getOperationType() override;
 
@@ -26,9 +29,10 @@ public:
     void processReq(JsonObject payload) override;
 
     std::unique_ptr<JsonDoc> createConf() override;
-    
+
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16
 #endif

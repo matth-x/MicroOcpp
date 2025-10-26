@@ -14,6 +14,19 @@ OCPP 1.6 / 2.0.1 client for microcontrollers. Portable C/C++. Compatible with Es
 
 Reference usage: [OpenEVSE](https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/ocpp.cpp) | Technical introduction: [Docs](https://matth-x.github.io/MicroOcpp/intro-tech) | Website: [www.micro-ocpp.com](https://www.micro-ocpp.com)
 
+## AI-friendly code
+
+In 2025, the code base was largely restructured to work better with AI models. Chat bots can explain large parts of the code, write code snippets and help with the integration into the main charger firmware. Use your favorite AI tools with MicroOCPP and save hours of development time.
+
+The best practices for AI-friendly code are not fully clear yet. The following was considered a good start:
+
+- Consistency in architecture, variable names, algorithmic approaches
+- More granular functions to make complexities explicit on the caller end
+- Break down complexity and prefer duplicate code over deep abstraction
+- Strictly define resource ownership in comments
+
+If your tools have issues working with something in MicroOCPP, please open an issue. Any ideas how to further optimize the code base are also highly appreciated.
+
 ## Tester / Demo App
 
 *Main repository: [MicroOcppSimulator](https://github.com/matth-x/MicroOcppSimulator)*

@@ -5,8 +5,12 @@
 #ifndef MO_FIRMWARE_STATUS
 #define MO_FIRMWARE_STATUS
 
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
+
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
 
 enum class FirmwareStatus {
     Downloaded,
@@ -18,6 +22,7 @@ enum class FirmwareStatus {
     Installed
 };
 
-}
-} //end namespace MicroOcpp
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 #endif

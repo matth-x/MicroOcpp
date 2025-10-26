@@ -7,31 +7,37 @@
 
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 
 namespace MicroOcpp {
 
-class FirmwareService;
+class Context;
 
-namespace Ocpp16 {
+namespace v16 {
+
+class FirmwareService;
 
 class UpdateFirmware : public Operation, public MemoryManaged {
 private:
-  FirmwareService& fwService;
+    Context& context;
+    FirmwareService& fwService;
 
-  const char *errorCode = nullptr;
+    const char *errorCode = nullptr;
 public:
-  UpdateFirmware(FirmwareService& fwService);
+    UpdateFirmware(Context& context, FirmwareService& fwService);
 
-  const char* getOperationType() override {return "UpdateFirmware";}
+    const char* getOperationType() override {return "UpdateFirmware";}
 
-  void processReq(JsonObject payload) override;
+    void processReq(JsonObject payload) override;
 
-  std::unique_ptr<JsonDoc> createConf() override;
+    std::unique_ptr<JsonDoc> createConf() override;
 
-  const char *getErrorCode() override {return errorCode;}
+    const char *getErrorCode() override {return errorCode;}
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
-
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16 && MO_ENABLE_FIRMWAREMANAGEMENT
 #endif

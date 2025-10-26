@@ -6,24 +6,26 @@
 #define MO_SETCHARGINGPROFILE_H
 
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Version.h>
+
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SMARTCHARGING
 
 namespace MicroOcpp {
 
-class Model;
+class Context;
 class SmartChargingService;
-
-namespace Ocpp16 {
 
 class SetChargingProfile : public Operation, public MemoryManaged {
 private:
-    Model& model;
+    Context& context;
     SmartChargingService& scService;
+    int ocppVersion = -1;
 
     bool accepted = false;
     const char *errorCode = nullptr;
     const char *errorDescription = "";
 public:
-    SetChargingProfile(Model& model, SmartChargingService& scService);
+    SetChargingProfile(Context& context, SmartChargingService& scService);
 
     ~SetChargingProfile();
 
@@ -37,6 +39,6 @@ public:
     const char *getErrorDescription() override {return errorDescription;}
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace MicroOcpp
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SMARTCHARGING
 #endif

@@ -8,29 +8,25 @@
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Core/Time.h>
-#include <MicroOcpp/Operations/CiStrings.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16
 
 namespace MicroOcpp {
 
-class Model;
+class Context;
 
-class SampledValue;
-class MeterValue;
+namespace v16 {
 
 class Transaction;
 
-namespace Ocpp16 {
-
 class StopTransaction : public Operation, public MemoryManaged {
 private:
-    Model& model;
-    std::shared_ptr<Transaction> transaction;
-    Vector<std::unique_ptr<MeterValue>> transactionData;
+    Context& context;
+    Transaction *transaction = nullptr;
 public:
 
-    StopTransaction(Model& model, std::shared_ptr<Transaction> transaction);
-
-    StopTransaction(Model& model, std::shared_ptr<Transaction> transaction, Vector<std::unique_ptr<MicroOcpp::MeterValue>> transactionData);
+    StopTransaction(Context& context, Transaction *transaction);
 
     const char* getOperationType() override;
 
@@ -38,13 +34,12 @@ public:
 
     void processConf(JsonObject payload) override;
 
-    bool processErr(const char *code, const char *description, JsonObject details) override;
-
-    void processReq(JsonObject payload) override;
-
-    std::unique_ptr<JsonDoc> createConf() override;
+#if MO_ENABLE_MOCK_SERVER
+    static int writeMockConf(const char *operationType, char *buf, size_t size, void *userStatus, void *userData);
+#endif
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16
 #endif

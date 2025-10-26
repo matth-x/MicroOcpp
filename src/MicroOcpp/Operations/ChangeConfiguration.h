@@ -6,20 +6,24 @@
 #define MO_CHANGECONFIGURATION_H
 
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Model/Configuration/Configuration.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16
 
 namespace MicroOcpp {
-namespace Ocpp16 {
+namespace v16 {
+
+class ConfigurationService;
 
 class ChangeConfiguration : public Operation, public MemoryManaged {
 private:
-    bool reject = false;
-    bool rebootRequired = false;
-    bool readOnly = false;
-    bool notSupported = false;
+    ConfigurationService& configService;
+    ConfigurationStatus status = ConfigurationStatus::Rejected;
 
     const char *errorCode = nullptr;
 public:
-    ChangeConfiguration();
+    ChangeConfiguration(ConfigurationService& configService);
 
     const char* getOperationType() override;
 
@@ -31,6 +35,7 @@ public:
 
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16
 #endif

@@ -40,5 +40,5 @@ public:
     }
 };
 
-} //end namespace MicroOcpp
+} //namespace MicroOcpp
 #endif

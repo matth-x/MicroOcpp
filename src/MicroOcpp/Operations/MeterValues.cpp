@@ -3,31 +3,38 @@
 // MIT License
 
 #include <MicroOcpp/Operations/MeterValues.h>
+
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Model/Model.h>
 #include <MicroOcpp/Model/Metering/MeterValue.h>
-#include <MicroOcpp/Model/Transactions/Transaction.h>
 #include <MicroOcpp/Debug.h>
 
-using MicroOcpp::Ocpp16::MeterValues;
-using MicroOcpp::JsonDoc;
+#if MO_ENABLE_V16
+
+using namespace MicroOcpp;
+using namespace MicroOcpp::v16;
 
 //can only be used for echo server debugging
-MeterValues::MeterValues(Model& model) : MemoryManaged("v16.Operation.", "MeterValues"), model(model) {
-    
+MeterValues::MeterValues(Context& context) : MemoryManaged("v16.Operation.", "MeterValues"), context(context) {
+
 }
 
-MeterValues::MeterValues(Model& model, MeterValue *meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction) 
-      : MemoryManaged("v16.Operation.", "MeterValues"), model(model), meterValue{meterValue}, connectorId{connectorId}, transaction{transaction} {
-    
-}
+MeterValues::MeterValues(Context& context, unsigned int connectorId, int transactionId, MeterValue *meterValue, bool transferOwnership) :
+        MemoryManaged("v16.Operation.", "MeterValues"),
+        context(context),
+        meterValue(meterValue),
+        isMeterValueOwner(transferOwnership),
+        connectorId(connectorId),
+        transactionId(transactionId) {
 
-MeterValues::MeterValues(Model& model, std::unique_ptr<MeterValue> meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction)
-      : MeterValues(model, meterValue.get(), connectorId, transaction) {
-    this->meterValueOwnership = std::move(meterValue);
 }
 
 MeterValues::~MeterValues(){
-
+    if (isMeterValueOwner) {
+        delete meterValue;
+        meterValue = nullptr;
+        isMeterValueOwner = false;
+    }
 }
 
 const char* MeterValues::getOperationType(){
@@ -37,39 +44,28 @@ const char* MeterValues::getOperationType(){
 std::unique_ptr<JsonDoc> MeterValues::createReq() {
 
     size_t capacity = 0;
-
-    std::unique_ptr<JsonDoc> meterValueJson;
-
-    if (meterValue) {
-
-        if (meterValue->getTimestamp() < MIN_TIME) {
-            MO_DBG_DEBUG("adjust preboot MeterValue timestamp");
-            Timestamp adjusted = model.getClock().adjustPrebootTimestamp(meterValue->getTimestamp());
-            meterValue->setTimestamp(adjusted);
-        }
-
-        meterValueJson = meterValue->toJson();
-        if (meterValueJson) {
-            capacity += meterValueJson->capacity();
-        } else {
-            MO_DBG_ERR("Energy meter reading not convertible to JSON");
-        }
-    }
-
     capacity += JSON_OBJECT_SIZE(3);
     capacity += JSON_ARRAY_SIZE(1);
+
+    int ret = meterValue->getJsonCapacity(MO_OCPP_V16, /*internalFormat*/ false);
+    if (ret >= 0) {
+        capacity += (size_t)ret;
+    } else {
+        MO_DBG_ERR("serialization error");
+    }
 
     auto doc = makeJsonDoc(getMemoryTag(), capacity);
     auto payload = doc->to<JsonObject>();
     payload["connectorId"] = connectorId;
 
-    if (transaction && transaction->getTransactionId() > 0) { //add txId if MVs are assigned to a tx with txId
-        payload["transactionId"] = transaction->getTransactionId();
+    if (transactionId >= 0) {
+        payload["transactionId"] = transactionId;
     }
 
     auto meterValueArray = payload.createNestedArray("meterValue");
-    if (meterValueJson) {
-        meterValueArray.add(*meterValueJson);
+    auto meterValueJson = meterValueArray.createNestedObject();
+    if (!meterValue->toJson(context.getClock(), MO_OCPP_V16, /*internalFormat*/ false, meterValueJson)) {
+        MO_DBG_ERR("serialization error");
     }
 
     return doc;
@@ -91,3 +87,5 @@ void MeterValues::processReq(JsonObject payload) {
 std::unique_ptr<JsonDoc> MeterValues::createConf(){
     return createEmptyDocument();
 }
+
+#endif //MO_ENABLE_V16

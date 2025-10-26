@@ -88,7 +88,7 @@ TEST_CASE( "Reservation" ) {
         rService->updateReservation(reservationId, connectorId, expiryDate, idTag, parentIdTag);
         REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
 
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "RemoteStartTransaction",
                 [] () {
                     //create req
@@ -111,7 +111,7 @@ TEST_CASE( "Reservation" ) {
         rService->updateReservation(reservationId, connectorId, expiryDate, idTag, parentIdTag);
         REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
 
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "RemoteStartTransaction",
                 [idTag] () {
                     //create req
@@ -170,9 +170,9 @@ TEST_CASE( "Reservation" ) {
         REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
 
         bool checkProcessed = false;
-        getOcppContext()->getOperationRegistry().registerOperation("Authorize",
+        getOcppContext()->getMessageService().registerOperation("Authorize",
             [parentIdTag, &checkProcessed] () {
-                return new Ocpp16::CustomOperation("Authorize",
+                return new v16::CustomOperation("Authorize",
                     [] (JsonObject) {}, //ignore req payload
                     [parentIdTag, &checkProcessed] () {
                         //create conf
@@ -255,8 +255,8 @@ TEST_CASE( "Reservation" ) {
         REQUIRE( connector->getStatus() == ChargePointStatus_Reserved );
 
         Timestamp expired = expiryDate + 1;
-        char expired_cstr [JSONDATE_LENGTH + 1];
-        expired.toJsonString(expired_cstr, JSONDATE_LENGTH + 1);
+        char expired_cstr [MO_JSONDATE_SIZE];
+        expired.toJsonString(expired_cstr, MO_JSONDATE_SIZE);
         model.getClock().setTime(expired_cstr);
 
         REQUIRE( connector->getStatus() == ChargePointStatus_Available );
@@ -315,17 +315,17 @@ TEST_CASE( "Reservation" ) {
 
         //simple reservation
         bool checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ReserveNow",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
-                            JSONDATE_LENGTH + 1);
+                            MO_JSONDATE_SIZE);
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = connectorId;
-                    char expiryDate_cstr [JSONDATE_LENGTH + 1];
-                    expiryDate.toJsonString(expiryDate_cstr, JSONDATE_LENGTH + 1);
+                    char expiryDate_cstr [MO_JSONDATE_SIZE];
+                    expiryDate.toJsonString(expiryDate_cstr, MO_JSONDATE_SIZE);
                     payload["expiryDate"] = expiryDate_cstr;
                     payload["idTag"] = idTag;
                     payload["parentIdTag"] = parentIdTag;
@@ -351,17 +351,17 @@ TEST_CASE( "Reservation" ) {
         REQUIRE( connector->getStatus() == ChargePointStatus_Faulted );
 
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ReserveNow",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
-                            JSONDATE_LENGTH + 1);
+                            MO_JSONDATE_SIZE);
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = connectorId;
-                    char expiryDate_cstr [JSONDATE_LENGTH + 1];
-                    expiryDate.toJsonString(expiryDate_cstr, JSONDATE_LENGTH + 1);
+                    char expiryDate_cstr [MO_JSONDATE_SIZE];
+                    expiryDate.toJsonString(expiryDate_cstr, MO_JSONDATE_SIZE);
                     payload["expiryDate"] = expiryDate_cstr;
                     payload["idTag"] = idTag;
                     payload["parentIdTag"] = parentIdTag;
@@ -386,17 +386,17 @@ TEST_CASE( "Reservation" ) {
         REQUIRE( connector->getStatus() == ChargePointStatus_Preparing );
 
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ReserveNow",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
-                            JSONDATE_LENGTH + 1);
+                            MO_JSONDATE_SIZE);
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = connectorId;
-                    char expiryDate_cstr [JSONDATE_LENGTH + 1];
-                    expiryDate.toJsonString(expiryDate_cstr, JSONDATE_LENGTH + 1);
+                    char expiryDate_cstr [MO_JSONDATE_SIZE];
+                    expiryDate.toJsonString(expiryDate_cstr, MO_JSONDATE_SIZE);
                     payload["expiryDate"] = expiryDate_cstr;
                     payload["idTag"] = idTag;
                     payload["parentIdTag"] = parentIdTag;
@@ -423,17 +423,17 @@ TEST_CASE( "Reservation" ) {
         REQUIRE( connector->getStatus() == ChargePointStatus_Unavailable );
 
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "ReserveNow",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
                     auto doc = makeJsonDoc("UnitTests", 
                             JSON_OBJECT_SIZE(5) + 
-                            JSONDATE_LENGTH + 1);
+                            MO_JSONDATE_SIZE);
                     auto payload = doc->to<JsonObject>();
                     payload["connectorId"] = connectorId;
-                    char expiryDate_cstr [JSONDATE_LENGTH + 1];
-                    expiryDate.toJsonString(expiryDate_cstr, JSONDATE_LENGTH + 1);
+                    char expiryDate_cstr [MO_JSONDATE_SIZE];
+                    expiryDate.toJsonString(expiryDate_cstr, MO_JSONDATE_SIZE);
                     payload["expiryDate"] = expiryDate_cstr;
                     payload["idTag"] = idTag;
                     payload["parentIdTag"] = parentIdTag;
@@ -469,7 +469,7 @@ TEST_CASE( "Reservation" ) {
 
         //CancelReservation successfully
         bool checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "CancelReservation",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req
@@ -490,7 +490,7 @@ TEST_CASE( "Reservation" ) {
 
         //CancelReservation while no reservation exists
         checkProcessed = false;
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+        getOcppContext()->initiateRequest(makeRequest(new v16::CustomOperation(
                 "CancelReservation",
                 [reservationId, connectorId, expiryDate, idTag, parentIdTag] () {
                     //create req

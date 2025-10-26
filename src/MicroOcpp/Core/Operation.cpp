@@ -11,7 +11,7 @@ using namespace MicroOcpp;
 Operation::Operation() {}
 
 Operation::~Operation() {}
-  
+
 const char* Operation::getOperationType(){
     MO_DBG_ERR("Unsupported operation: getOperationType() is not implemented");
     return "CustomOperation";

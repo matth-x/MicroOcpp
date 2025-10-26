@@ -43,7 +43,7 @@ TEST_CASE( "Security" ) {
 
         MO_MEM_RESET();
 
-        getOcppContext()->initiateRequest(makeRequest(new Ocpp201::SecurityEventNotification(
+        getOcppContext()->initiateRequest(makeRequest(new v201::SecurityEventNotification(
                 "ReconfigurationOfSecurityParameters",
                 getOcppContext()->getModel().getClock().now())));
         
@@ -55,4 +55,4 @@ TEST_CASE( "Security" ) {
     mocpp_deinitialize();
 }
 
-#endif // MO_ENABLE_V201
+#endif //MO_ENABLE_V201

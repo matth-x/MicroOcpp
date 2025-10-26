@@ -9,10 +9,10 @@
 
 #if MO_ENABLE_V201
 
-typedef enum ResetType {
-    ResetType_Immediate,
-    ResetType_OnIdle
-}   ResetType;
+typedef enum MO_ResetType {
+    MO_ResetType_Immediate,
+    MO_ResetType_OnIdle
+}   MO_ResetType;
 
 typedef enum ResetStatus {
     ResetStatus_Accepted,
@@ -21,4 +21,4 @@ typedef enum ResetStatus {
 }   ResetStatus;
 
 #endif //MO_ENABLE_V201
-#endif 
+#endif

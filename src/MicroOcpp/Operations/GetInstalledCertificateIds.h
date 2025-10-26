@@ -5,18 +5,15 @@
 #ifndef MO_GETINSTALLEDCERTIFICATEIDS_H
 #define MO_GETINSTALLEDCERTIFICATEIDS_H
 
-#include <MicroOcpp/Version.h>
-
-#if MO_ENABLE_CERT_MGMT
-
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Model/Certificates/Certificate.h>
+#include <MicroOcpp/Version.h>
+
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT
 
 namespace MicroOcpp {
 
 class CertificateService;
-
-namespace Ocpp201 {
 
 class GetInstalledCertificateIds : public Operation, public MemoryManaged {
 private:
@@ -36,8 +33,6 @@ public:
     const char *getErrorCode() override {return errorCode;}
 };
 
-} //end namespace Ocpp201
-} //end namespace MicroOcpp
-
-#endif //MO_ENABLE_CERT_MGMT
+} //namespace MicroOcpp
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT
 #endif

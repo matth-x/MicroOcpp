@@ -5,30 +5,94 @@
 #ifndef MO_UNLOCKCONNECTOR_H
 #define MO_UNLOCKCONNECTOR_H
 
+#include <stdint.h>
 #include <MicroOcpp/Version.h>
 
+// Connector-lock related behavior (i.e. if UnlockConnectorOnEVSideDisconnect is RW; enable HW binding for UnlockConnector)
+#ifndef MO_ENABLE_CONNECTOR_LOCK
+#define MO_ENABLE_CONNECTOR_LOCK 1
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CONNECTOR_LOCK
+
+#ifndef MO_UNLOCK_TIMEOUT
+#define MO_UNLOCK_TIMEOUT 10 // if Result is Pending, wait at most this period (in ms) until sending UnlockFailed
+#endif
+
+typedef enum {
+    MO_UnlockConnectorResult_UnlockFailed,
+    MO_UnlockConnectorResult_Unlocked,
+    MO_UnlockConnectorResult_Pending // unlock action not finished yet, result still unknown (MO will check again later)
+} MO_UnlockConnectorResult;
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+
+namespace MicroOcpp {
+
+enum class TriggerMessageStatus : uint8_t {
+    ERR_INTERNAL,
+    Accepted,
+    Rejected,
+    NotImplemented,
+};
+
+} //namespace MicroOcpp
+
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CONNECTOR_LOCK
+
+#if MO_ENABLE_V16
+#ifdef __cplusplus
+
+namespace MicroOcpp {
+namespace v16 {
+
+enum class RemoteStartStopStatus : uint8_t {
+    ERR_INTERNAL,
+    Accepted,
+    Rejected
+};
+
+enum class UnlockStatus : uint8_t {
+    Unlocked,
+    UnlockFailed,
+    NotSupported,
+    PENDING //MO-internal: unlock action not finished yet, result still unknown. Check later
+};
+
+} //namespace v16
+} //namespace MicroOcpp
+
+#endif //__cplusplus
+#endif //MO_ENABLE_V16
+
 #if MO_ENABLE_V201
+#ifdef __cplusplus
 
-#include <stdint.h>
+namespace MicroOcpp {
+namespace v201 {
 
-#include <MicroOcpp/Model/ConnectorBase/UnlockConnectorResult.h>
+enum class RequestStartStopStatus : uint8_t {
+    Accepted,
+    Rejected
+};
 
-typedef enum {
-    RequestStartStopStatus_Accepted,
-    RequestStartStopStatus_Rejected
-}   RequestStartStopStatus;
+enum class UnlockStatus : uint8_t {
+    Unlocked,
+    UnlockFailed,
+    OngoingAuthorizedTransaction,
+    UnknownConnector,
+    PENDING //MO-internal: unlock action not finished yet, result still unknown. Check later
+};
 
-#if MO_ENABLE_CONNECTOR_LOCK
+} //namespace v201
+} //namespace MicroOcpp
+#endif //__cplusplus
+#endif //MO_ENABLE_V201
 
-typedef enum {
-    UnlockStatus_Unlocked,
-    UnlockStatus_UnlockFailed,
-    UnlockStatus_OngoingAuthorizedTransaction,
-    UnlockStatus_UnknownConnector,
-    UnlockStatus_PENDING // unlock action not finished yet, result still unknown (MO will check again later)
-}   UnlockStatus;
-
-#endif // MO_ENABLE_CONNECTOR_LOCK
-
-#endif // MO_ENABLE_V201
-#endif // MO_UNLOCKCONNECTOR_H
+#endif //MO_UNLOCKCONNECTOR_H

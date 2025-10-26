@@ -18,18 +18,19 @@ jobs:
     strategy:
       matrix:
         example: [examples/ESP/main.cpp, examples/ESP-TLS/main.cpp]
+        pio_platform: [nodemcuv2, esp32-development-board]
 
     steps:
     - uses: actions/checkout@v2
     - name: Cache pip
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
     - name: Cache PlatformIO
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.platformio
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
@@ -42,6 +43,6 @@ jobs:
     - name: Install library dependencies
       run: pio pkg install
     - name: Run PlatformIO
-      run: pio ci --lib="." --project-conf=platformio.ini ${{ matrix.dashboard-extra }}
+      run: pio ci --lib="." --project-conf=platformio.ini -e ${{ matrix.pio_platform }} ${{ matrix.dashboard-extra }}
       env:
         PLATFORMIO_CI_SRC: ${{ matrix.example }}

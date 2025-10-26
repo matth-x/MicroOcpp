@@ -4,19 +4,19 @@
 
 #include <MicroOcpp/Model/Certificates/Certificate.h>
 
-#if MO_ENABLE_CERT_MGMT
+#if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT
 
 #include <string.h>
 #include <stdio.h>
 
-bool ocpp_cert_equals(const ocpp_cert_hash *h1, const ocpp_cert_hash *h2) {
+bool mo_cert_equals(const mo_cert_hash *h1, const mo_cert_hash *h2) {
     return h1->hashAlgorithm == h2->hashAlgorithm &&
             h1->serialNumberLen == h2->serialNumberLen && !memcmp(h1->serialNumber, h2->serialNumber, h1->serialNumberLen) &&
             !memcmp(h1->issuerNameHash, h2->issuerNameHash, HashAlgorithmSize(h1->hashAlgorithm)) &&
             !memcmp(h1->issuerKeyHash, h2->issuerKeyHash, HashAlgorithmSize(h1->hashAlgorithm));
 }
 
-int ocpp_cert_bytes_to_hex(char *dst, size_t dst_size, const unsigned char *src, size_t src_len) {
+int mo_cert_bytes_to_hex(char *dst, size_t dst_size, const unsigned char *src, size_t src_len) {
     if (!dst || !dst_size || !src) {
         return -1;
     }
@@ -37,15 +37,15 @@ int ocpp_cert_bytes_to_hex(char *dst, size_t dst_size, const unsigned char *src,
     return (int)hexLen;
 }
 
-int ocpp_cert_print_issuerNameHash(const ocpp_cert_hash *src, char *buf, size_t size) {
-    return ocpp_cert_bytes_to_hex(buf, size, src->issuerNameHash, HashAlgorithmSize(src->hashAlgorithm));
+int mo_cert_print_issuerNameHash(const mo_cert_hash *src, char *buf, size_t size) {
+    return mo_cert_bytes_to_hex(buf, size, src->issuerNameHash, HashAlgorithmSize(src->hashAlgorithm));
 }
 
-int ocpp_cert_print_issuerKeyHash(const ocpp_cert_hash *src, char *buf, size_t size) {
-    return ocpp_cert_bytes_to_hex(buf, size, src->issuerKeyHash, HashAlgorithmSize(src->hashAlgorithm));
+int mo_cert_print_issuerKeyHash(const mo_cert_hash *src, char *buf, size_t size) {
+    return mo_cert_bytes_to_hex(buf, size, src->issuerKeyHash, HashAlgorithmSize(src->hashAlgorithm));
 }
 
-int ocpp_cert_print_serialNumber(const ocpp_cert_hash *src, char *buf, size_t size) {
+int mo_cert_print_serialNumber(const mo_cert_hash *src, char *buf, size_t size) {
 
     if (!buf || !size) {
         return -1;
@@ -63,7 +63,7 @@ int ocpp_cert_print_serialNumber(const ocpp_cert_hash *src, char *buf, size_t si
     }
 
     if (src->serialNumberLen > 1) {
-        auto ret = ocpp_cert_bytes_to_hex(buf + (size_t)hexLen, size - (size_t)hexLen, src->serialNumber + 1, src->serialNumberLen - 1);
+        auto ret = mo_cert_bytes_to_hex(buf + (size_t)hexLen, size - (size_t)hexLen, src->serialNumber + 1, src->serialNumberLen - 1);
         if (ret < 0) {
             return -1;
         }
@@ -73,7 +73,7 @@ int ocpp_cert_print_serialNumber(const ocpp_cert_hash *src, char *buf, size_t si
     return hexLen;
 }
 
-int ocpp_cert_hex_to_bytes(unsigned char *dst, size_t dst_size, const char *hex_src) {
+int mo_cert_hex_to_bytes(unsigned char *dst, size_t dst_size, const char *hex_src) {
     if (!dst || !dst_size || !hex_src) {
         return -1;
     }
@@ -124,8 +124,8 @@ int ocpp_cert_hex_to_bytes(unsigned char *dst, size_t dst_size, const char *hex_
     return (int)write_len;
 }
 
-int ocpp_cert_set_issuerNameHash(ocpp_cert_hash *dst, const char *hex_src, HashAlgorithmType hash_algorithm) {
-    auto ret = ocpp_cert_hex_to_bytes(dst->issuerNameHash, sizeof(dst->issuerNameHash), hex_src);
+int mo_cert_set_issuerNameHash(mo_cert_hash *dst, const char *hex_src, HashAlgorithmType hash_algorithm) {
+    auto ret = mo_cert_hex_to_bytes(dst->issuerNameHash, sizeof(dst->issuerNameHash), hex_src);
 
     if (ret < 0) {
         return ret;
@@ -138,8 +138,8 @@ int ocpp_cert_set_issuerNameHash(ocpp_cert_hash *dst, const char *hex_src, HashA
     return ret;
 }
 
-int ocpp_cert_set_issuerKeyHash(ocpp_cert_hash *dst, const char *hex_src, HashAlgorithmType hash_algorithm) {
-    auto ret = ocpp_cert_hex_to_bytes(dst->issuerKeyHash, sizeof(dst->issuerNameHash), hex_src);
+int mo_cert_set_issuerKeyHash(mo_cert_hash *dst, const char *hex_src, HashAlgorithmType hash_algorithm) {
+    auto ret = mo_cert_hex_to_bytes(dst->issuerKeyHash, sizeof(dst->issuerNameHash), hex_src);
 
     if (ret < 0) {
         return ret;
@@ -152,8 +152,8 @@ int ocpp_cert_set_issuerKeyHash(ocpp_cert_hash *dst, const char *hex_src, HashAl
     return ret;
 }
 
-int ocpp_cert_set_serialNumber(ocpp_cert_hash *dst, const char *hex_src) {
-    auto ret = ocpp_cert_hex_to_bytes(dst->serialNumber, sizeof(dst->serialNumber), hex_src);
+int mo_cert_set_serialNumber(mo_cert_hash *dst, const char *hex_src) {
+    auto ret = mo_cert_hex_to_bytes(dst->serialNumber, sizeof(dst->serialNumber), hex_src);
 
     if (ret < 0) {
         return ret;
@@ -164,4 +164,4 @@ int ocpp_cert_set_serialNumber(ocpp_cert_hash *dst, const char *hex_src) {
     return ret;
 }
 
-#endif //MO_ENABLE_CERT_MGMT
+#endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_CERT_MGMT

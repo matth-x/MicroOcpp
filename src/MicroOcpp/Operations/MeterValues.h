@@ -8,30 +8,30 @@
 #include <MicroOcpp/Core/Operation.h>
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Version.h>
+
+#if MO_ENABLE_V16
 
 namespace MicroOcpp {
 
-class Model;
-class MeterValue;
-class Transaction;
+class Context;
+struct MeterValue;
 
-namespace Ocpp16 {
+namespace v16 {
 
 class MeterValues : public Operation, public MemoryManaged {
 private:
-    Model& model; //for adjusting the timestamp if MeterValue has been created before BootNotification
+    Context& context; //for adjusting the timestamp if MeterValue has been created before BootNotification
     MeterValue *meterValue = nullptr;
-    std::unique_ptr<MeterValue> meterValueOwnership;
+    bool isMeterValueOwner = false;
 
     unsigned int connectorId = 0;
-
-    std::shared_ptr<Transaction> transaction;
+    int transactionId = -1;
 
 public:
-    MeterValues(Model& model, MeterValue *meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction = nullptr);
-    MeterValues(Model& model, std::unique_ptr<MeterValue> meterValue, unsigned int connectorId, std::shared_ptr<Transaction> transaction = nullptr);
+    MeterValues(Context& context, unsigned int connectorId, int transactionId, MeterValue *meterValue, bool transferOwnership); //`transferOwnership`: if this object should take ownership of the passed `meterValue`
 
-    MeterValues(Model& model); //for debugging only. Make this for the server pendant
+    MeterValues(Context& context); //for debugging only. Make this for the server pendant
 
     ~MeterValues();
 
@@ -46,6 +46,7 @@ public:
     std::unique_ptr<JsonDoc> createConf() override;
 };
 
-} //end namespace Ocpp16
-} //end namespace MicroOcpp
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16
 #endif

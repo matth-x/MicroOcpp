@@ -5,33 +5,33 @@
 #ifndef MO_TRANSACTIONEVENT_H
 #define MO_TRANSACTIONEVENT_H
 
+#include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Version.h>
 
 #if MO_ENABLE_V201
 
-#include <MicroOcpp/Core/Operation.h>
-#include <MicroOcpp/Core/Time.h>
-#include <MicroOcpp/Core/Memory.h>
-
 namespace MicroOcpp {
 
-class Model;
-class Variable;
+class Context;
 
-namespace Ocpp201 {
+namespace v201 {
+
+class Variable;
 
 class NotifyReport : public Operation, public MemoryManaged {
 private:
-    Model& model;
+    Context& context;
 
     int requestId;
     Timestamp generatedAt;
     bool tbc;
-    int seqNo;
+    unsigned int seqNo;
     Vector<Variable*> reportData;
 public:
 
-    NotifyReport(Model& model, int requestId, const Timestamp& generatedAt, bool tbc, int seqNo, const Vector<Variable*>& reportData);
+    NotifyReport(Context& context, int requestId, const Timestamp& generatedAt, bool tbc, unsigned int seqNo, const Vector<Variable*>& reportData);
 
     const char* getOperationType() override;
 
@@ -40,7 +40,7 @@ public:
     void processConf(JsonObject payload) override;
 };
 
-} //end namespace Ocpp201
-} //end namespace MicroOcpp
-#endif // MO_ENABLE_V201
+} //namespace v201
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V201
 #endif

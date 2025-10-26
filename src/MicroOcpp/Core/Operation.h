@@ -6,10 +6,10 @@
  * This framework considers OCPP operations to be a combination of two things: first, ensure that the message reaches its
  * destination properly (the "Remote procedure call" header, e.g. message Id). Second, transmit the application data
  * as specified in the OCPP 1.6 document.
- * 
+ *
  * The remote procedure call (RPC) part is implemented by the class Request. The application data part is implemented by
  * the respective Operation subclasses, e.g. BootNotification, StartTransaction, ect.
- * 
+ *
  * The resulting structure is that the RPC header (=instance of Request) holds a reference to the payload
  * message creator (=instance of BootNotification, StartTransaction, ...). Both objects working together give the complete
  * OCPP operation.
@@ -31,14 +31,14 @@ public:
     Operation();
 
     virtual ~Operation();
-    
+
     virtual const char* getOperationType();
 
     /**
      * Create the payload for the respective OCPP message
-     * 
+     *
      * For instance operation Authorize: creates Authorize.req(idTag)
-     * 
+     *
      * This function is usually called multiple times by the Arduino loop(). On first call, the request is initially sent. In the
      * succeeding calls, the implementers decide to either recreate the request, or do nothing as the operation is still pending.
      */
@@ -46,14 +46,11 @@ public:
 
 
     virtual void processConf(JsonObject payload);
-    
-    /*
-     * returns if the operation must be aborted
-     */
-    virtual bool processErr(const char *code, const char *description, JsonObject details) { return true;}
+
+    virtual void processErr(const char *code, const char *description, JsonObject details) {}
 
     /**
-     * Processes the request in the JSON document. 
+     * Processes the request in the JSON document.
      */
     virtual void processReq(JsonObject payload);
 
@@ -68,5 +65,5 @@ public:
     virtual std::unique_ptr<JsonDoc> getErrorDetails() {return createEmptyDocument();}
 };
 
-} //end namespace MicroOcpp
+} //namespace MicroOcpp
  #endif

@@ -1,28 +1,128 @@
 // matth-x/MicroOcpp
-// Copyright Matthias Akstaller 2019 - 2024
+// Copyright Matthias Akstaller 2019 - 2025
 // MIT License
 
 #ifndef MO_MODEL_H
 #define MO_MODEL_H
 
-#include <memory>
-
-#include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Model/Common/EvseId.h>
 #include <MicroOcpp/Version.h>
-#include <MicroOcpp/Model/ConnectorBase/Connector.h>
 
 namespace MicroOcpp {
 
-class TransactionStore;
-class SmartChargingService;
-class ConnectorsCommon;
-class MeteringService;
-class FirmwareService;
-class DiagnosticsService;
-class HeartbeatService;
+class Context;
+
+} //namespace MicroOcpp
+
+#if MO_ENABLE_V16 || MO_ENABLE_V201
+
+namespace MicroOcpp {
+
 class BootService;
+class HeartbeatService;
+class RemoteControlService;
+
+#if MO_ENABLE_DIAGNOSTICS
+class DiagnosticsService;
+#endif //MO_ENABLE_DIAGNOSTICS
+
+#if MO_ENABLE_SMARTCHARGING
+class SmartChargingService;
+#endif //MO_ENABLE_SMARTCHARGING
+
+#if MO_ENABLE_CERT_MGMT
+class CertificateService;
+#endif //MO_ENABLE_CERT_MGMT
+
+#if MO_ENABLE_SECURITY_EVENT
+class SecurityEventService;
+#endif //MO_ENABLE_SECURITY_EVENT
+
+//For Model modules which can be used with OCPP 1.6 and OCPP 2.0.1
+class ModelCommon {
+private:
+    Context& context;
+
+    BootService *bootService = nullptr;
+    HeartbeatService *heartbeatService = nullptr;
+    RemoteControlService *remoteControlService = nullptr;
+
+#if MO_ENABLE_DIAGNOSTICS
+    DiagnosticsService *diagnosticsService = nullptr;
+#endif //MO_ENABLE_DIAGNOSTICS
+
+#if MO_ENABLE_SMARTCHARGING
+    SmartChargingService *smartChargingService = nullptr;
+#endif //MO_ENABLE_SMARTCHARGING
+
+#if MO_ENABLE_CERT_MGMT
+    CertificateService *certService = nullptr;
+#endif //MO_ENABLE_CERT_MGMT
+
+#if MO_ENABLE_SECURITY_EVENT
+    SecurityEventService *secEventService = nullptr;
+#endif //MO_ENABLE_SECURITY_EVENT
+
+protected:
+
+    unsigned int numEvseId = MO_NUM_EVSEID;
+    bool runTasks = false;
+
+    ModelCommon(Context& context);
+    ~ModelCommon();
+
+    bool setupCommon();
+    void loopCommon();
+
+public:
+
+    // Set number of EVSE IDs (including 0). On a charger with one physical connector, numEvseId is 2. Default value is MO_NUM_EVSEID
+    void setNumEvseId(unsigned int numEvseId);
+    unsigned int getNumEvseId();
+
+    BootService *getBootService();
+    HeartbeatService *getHeartbeatService();
+    RemoteControlService *getRemoteControlService();
+
+#if MO_ENABLE_DIAGNOSTICS
+    DiagnosticsService *getDiagnosticsService();
+#endif //MO_ENABLE_DIAGNOSTICS
+
+#if MO_ENABLE_SMARTCHARGING
+    SmartChargingService *getSmartChargingService();
+#endif //MO_ENABLE_SMARTCHARGING
+
+#if MO_ENABLE_CERT_MGMT
+    CertificateService *getCertificateService();
+#endif //MO_ENABLE_CERT_MGMT
+
+#if MO_ENABLE_SECURITY_EVENT
+    SecurityEventService *getSecurityEventService();
+#endif //MO_ENABLE_SECURITY_EVENT
+
+    void activateTasks() {runTasks = true;}
+
+};
+
+} //namespace MicroOcpp
+
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201
+
+#if MO_ENABLE_V16
+
+namespace MicroOcpp {
+namespace v16 {
+
+class ConfigurationService;
+class TransactionService;
+class MeteringService;
 class ResetService;
+class AvailabilityService;
+
+#if MO_ENABLE_FIRMWAREMANAGEMENT
+class FirmwareService;
+#endif //MO_ENABLE_FIRMWAREMANAGEMENT
 
 #if MO_ENABLE_LOCAL_AUTH
 class AuthorizationService;
@@ -32,148 +132,107 @@ class AuthorizationService;
 class ReservationService;
 #endif //MO_ENABLE_RESERVATION
 
-#if MO_ENABLE_CERT_MGMT
-class CertificateService;
-#endif //MO_ENABLE_CERT_MGMT
-
-#if MO_ENABLE_V201
-class AvailabilityService;
-class VariableService;
-class TransactionService;
-class RemoteControlService;
-
-namespace Ocpp201 {
-class ResetService;
-class MeteringService;
-}
-#endif //MO_ENABLE_V201
-
-class Model : public MemoryManaged {
+class Model : public MemoryManaged, public ModelCommon {
 private:
-    Vector<std::unique_ptr<Connector>> connectors;
-    std::unique_ptr<TransactionStore> transactionStore;
-    std::unique_ptr<SmartChargingService> smartChargingService;
-    std::unique_ptr<ConnectorsCommon> chargeControlCommon;
-    std::unique_ptr<MeteringService> meteringService;
-    std::unique_ptr<FirmwareService> firmwareService;
-    std::unique_ptr<DiagnosticsService> diagnosticsService;
-    std::unique_ptr<HeartbeatService> heartbeatService;
-    std::unique_ptr<BootService> bootService;
-    std::unique_ptr<ResetService> resetService;
+    Context& context;
+
+    ConfigurationService *configurationService = nullptr;
+    TransactionService *transactionService = nullptr;
+    MeteringService *meteringService = nullptr;
+    ResetService *resetService = nullptr;
+    AvailabilityService *availabilityService = nullptr;
+
+#if MO_ENABLE_FIRMWAREMANAGEMENT
+    FirmwareService *firmwareService = nullptr;
+#endif //MO_ENABLE_FIRMWAREMANAGEMENT
 
 #if MO_ENABLE_LOCAL_AUTH
-    std::unique_ptr<AuthorizationService> authorizationService;
+    AuthorizationService *authorizationService = nullptr;
 #endif //MO_ENABLE_LOCAL_AUTH
 
 #if MO_ENABLE_RESERVATION
-    std::unique_ptr<ReservationService> reservationService;
+    ReservationService *reservationService = nullptr;
 #endif //MO_ENABLE_RESERVATION
 
-#if MO_ENABLE_CERT_MGMT
-    std::unique_ptr<CertificateService> certService;
-#endif //MO_ENABLE_CERT_MGMT
-
-#if MO_ENABLE_V201
-    std::unique_ptr<AvailabilityService> availabilityService;
-    std::unique_ptr<VariableService> variableService;
-    std::unique_ptr<TransactionService> transactionService;
-    std::unique_ptr<Ocpp201::ResetService> resetServiceV201;
-    std::unique_ptr<Ocpp201::MeteringService> meteringServiceV201;
-    std::unique_ptr<RemoteControlService> remoteControlService;
-#endif
-
-    Clock clock;
-
-    ProtocolVersion version;
-
-    bool capabilitiesUpdated = true;
     void updateSupportedStandardProfiles();
 
-    bool runTasks = false;
-
-    const uint16_t bootNr = 0; //each boot of this lib has a unique number
-
 public:
-    Model(ProtocolVersion version = ProtocolVersion(1,6), uint16_t bootNr = 0);
-    Model(const Model& rhs) = delete;
+    Model(Context& context);
     ~Model();
 
-    void loop();
+    ConfigurationService *getConfigurationService();
+    TransactionService *getTransactionService();
+    MeteringService *getMeteringService();
+    ResetService *getResetService();
+    AvailabilityService *getAvailabilityService();
 
-    void activateTasks() {runTasks = true;}
-
-    void setTransactionStore(std::unique_ptr<TransactionStore> transactionStore);
-    TransactionStore *getTransactionStore();
-
-    void setSmartChargingService(std::unique_ptr<SmartChargingService> scs);
-    SmartChargingService* getSmartChargingService() const;
-
-    void setConnectorsCommon(std::unique_ptr<ConnectorsCommon> ccs);
-    ConnectorsCommon *getConnectorsCommon();
-
-    void setConnectors(Vector<std::unique_ptr<Connector>>&& connectors);
-    unsigned int getNumConnectors() const;
-    Connector *getConnector(unsigned int connectorId);
-
-    void setMeteringSerivce(std::unique_ptr<MeteringService> meteringService);
-    MeteringService* getMeteringService() const;
-
-    void setFirmwareService(std::unique_ptr<FirmwareService> firmwareService);
-    FirmwareService *getFirmwareService() const;
-
-    void setDiagnosticsService(std::unique_ptr<DiagnosticsService> diagnosticsService);
-    DiagnosticsService *getDiagnosticsService() const;
-
-    void setHeartbeatService(std::unique_ptr<HeartbeatService> heartbeatService);
+#if MO_ENABLE_FIRMWAREMANAGEMENT
+    FirmwareService *getFirmwareService();
+#endif //MO_ENABLE_FIRMWAREMANAGEMENT
 
 #if MO_ENABLE_LOCAL_AUTH
-    void setAuthorizationService(std::unique_ptr<AuthorizationService> authorizationService);
     AuthorizationService *getAuthorizationService();
 #endif //MO_ENABLE_LOCAL_AUTH
 
 #if MO_ENABLE_RESERVATION
-    void setReservationService(std::unique_ptr<ReservationService> reservationService);
     ReservationService *getReservationService();
 #endif //MO_ENABLE_RESERVATION
 
-    void setBootService(std::unique_ptr<BootService> bs);
-    BootService *getBootService() const;
-
-    void setResetService(std::unique_ptr<ResetService> rs);
-    ResetService *getResetService() const;
-
-#if MO_ENABLE_CERT_MGMT
-    void setCertificateService(std::unique_ptr<CertificateService> cs);
-    CertificateService *getCertificateService() const;
-#endif //MO_ENABLE_CERT_MGMT
-
-#if MO_ENABLE_V201
-    void setAvailabilityService(std::unique_ptr<AvailabilityService> as);
-    AvailabilityService *getAvailabilityService() const;
-
-    void setVariableService(std::unique_ptr<VariableService> vs);
-    VariableService *getVariableService() const;
-
-    void setTransactionService(std::unique_ptr<TransactionService> ts);
-    TransactionService *getTransactionService() const;
-
-    void setResetServiceV201(std::unique_ptr<Ocpp201::ResetService> rs);
-    Ocpp201::ResetService *getResetServiceV201() const;
-
-    void setMeteringServiceV201(std::unique_ptr<Ocpp201::MeteringService> ms);
-    Ocpp201::MeteringService *getMeteringServiceV201() const;
-
-    void setRemoteControlService(std::unique_ptr<RemoteControlService> rs);
-    RemoteControlService *getRemoteControlService() const;
-#endif
-
-    Clock &getClock();
-
-    const ProtocolVersion& getVersion() const;
-
-    uint16_t getBootNr();
+    bool setup();
+    void loop();
 };
 
-} //end namespace MicroOcpp
+} //namespace v16
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V16
+
+#if MO_ENABLE_V201
+
+namespace MicroOcpp {
+namespace v201 {
+
+class VariableService;
+class TransactionService;
+class MeteringService;
+class ResetService;
+class AvailabilityService;
+
+class Model : public MemoryManaged, public ModelCommon {
+private:
+    Context& context;
+
+    VariableService *variableService = nullptr;
+    TransactionService *transactionService = nullptr;
+    MeteringService *meteringService = nullptr;
+    ResetService *resetService = nullptr;
+    AvailabilityService *availabilityService = nullptr;
+
+public:
+    Model(Context& context);
+    ~Model();
+
+    VariableService *getVariableService();
+    TransactionService *getTransactionService();
+    MeteringService *getMeteringService();
+    ResetService *getResetService();
+    AvailabilityService *getAvailabilityService();
+
+    bool setup();
+    void loop();
+};
+
+} //namespace v201
+} //namespace MicroOcpp
+#endif //MO_ENABLE_V201
+
+#if MO_ENABLE_V16 && !MO_ENABLE_V201
+namespace MicroOcpp {
+using Model = v16::Model;
+}
+#elif !MO_ENABLE_V16 && MO_ENABLE_V201
+namespace MicroOcpp {
+using Model = v201::Model;
+}
+#endif
 
 #endif

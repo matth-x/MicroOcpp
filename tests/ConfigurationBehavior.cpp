@@ -239,7 +239,7 @@ TEST_CASE( "Configuration Behavior" ) {
         SECTION("set true") {
             configBool->setBool(true);
 
-            context->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+            context->initiateRequest(makeRequest(new v16::CustomOperation(
                     "RemoteStartTransaction",
                     [] () {
                         //create req
@@ -261,7 +261,7 @@ TEST_CASE( "Configuration Behavior" ) {
         SECTION("set false") {
             configBool->setBool(false);
 
-            context->initiateRequest(makeRequest(new Ocpp16::CustomOperation(
+            context->initiateRequest(makeRequest(new v16::CustomOperation(
                     "RemoteStartTransaction",
                     [] () {
                         //create req
