@@ -153,10 +153,10 @@ void mocpp_initialize(const char *backendUrl, const char *chargeBoxId, const cha
 
     if (isTLS) {
         // server address, port, path and TLS certificate
-        webSocket->beginSslWithCA(host.c_str(), port, path.c_str(), CA_cert, "ocpp1.6");
+        webSocket->beginSslWithCA(host.c_str(), port, path.c_str(), CA_cert, "ocpp-1.6");
     } else {
         // server address, port, path
-        webSocket->begin(host.c_str(), port, path.c_str(), "ocpp1.6");
+        webSocket->begin(host.c_str(), port, path.c_str(), "ocpp-1.6");
     }
 
     // try ever 5000 again if connection has failed
