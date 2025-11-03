@@ -529,9 +529,9 @@ void SmartChargingService::loop(){
             MO_DBG_INFO("New limit for connector %u, scheduled at = %s, nextChange = %s, limit = {%.1f, %.1f, %i}",
                                 0,
                                 timestamp1, timestamp2,
-                                limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
-                                limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
-                                limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
+                                limit.power != std::numeric_limits<float>::max() ? limit.power : MO_MaxChargingLimitPower,
+                                limit.current != std::numeric_limits<float>::max() ? limit.current : MO_MaxChargingLimitCurrent,
+                                limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : MO_MaxChargingLimitNumberPhases);
         }
 #endif
 
@@ -539,9 +539,9 @@ void SmartChargingService::loop(){
             if (limitOutput) {
 
                 limitOutput(
-                    limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
-                    limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
-                    limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
+                    limit.power != std::numeric_limits<float>::max() ? limit.power : MO_MaxChargingLimitPower,
+                    limit.current != std::numeric_limits<float>::max() ? limit.current : MO_MaxChargingLimitCurrent,
+                    limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : MO_MaxChargingLimitNumberPhases);
                 trackLimitOutput = limit;
             }
         }
