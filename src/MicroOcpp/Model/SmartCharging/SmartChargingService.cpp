@@ -168,9 +168,9 @@ void SmartChargingConnector::loop(){
             MO_DBG_INFO("New limit for connector %u, scheduled at = %s, nextChange = %s, limit = {%.1f, %.1f, %i}",
                                 connectorId,
                                 timestamp1, timestamp2,
-                                limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
-                                limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
-                                limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
+                                limit.power != std::numeric_limits<float>::max() ? limit.power : MO_MaxChargingLimitPower,
+                                limit.current != std::numeric_limits<float>::max() ? limit.current : MO_MaxChargingLimitCurrent,
+                                limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : MO_MaxChargingLimitNumberPhases);
         }
 #endif
 
@@ -178,9 +178,9 @@ void SmartChargingConnector::loop(){
             if (limitOutput) {
 
                 limitOutput(
-                    limit.power != std::numeric_limits<float>::max() ? limit.power : -1.f,
-                    limit.current != std::numeric_limits<float>::max() ? limit.current : -1.f,
-                    limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1);
+                    limit.power != std::numeric_limits<float>::max() ? limit.power : MO_MaxChargingLimitPower,
+                    limit.current != std::numeric_limits<float>::max() ? limit.current : MO_MaxChargingLimitCurrent,
+                    limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : MO_MaxChargingLimitNumberPhases);
                 trackLimitOutput = limit;
             }
         }
@@ -274,10 +274,9 @@ std::unique_ptr<ChargingSchedule> SmartChargingConnector::getCompositeSchedule(i
         if (periods.empty() || limit != lastLimit) {
             periods.emplace_back();
             float limit_opt = unit == ChargingRateUnitType_Optional::Watt ? limit.power : limit.current;
-            // Per OCPP 1.6 schema, limit must be > 0. Use a sane fallback (e.g. 32A or 22kW-equivalent) instead of -1 when undefined.
-            // For numberPhases, the field is optional; if unknown we can default to 3 (typical three-phase) instead of -1.
-            periods.back().limit = limit_opt != std::numeric_limits<float>::max() ? limit_opt : 32.f;
-            periods.back().numberPhases = limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : 3;
+            float fallback_limit = unit == ChargingRateUnitType_Optional::Watt ? MO_MaxChargingLimitPower : MO_MaxChargingLimitCurrent;
+            periods.back().limit = limit_opt != std::numeric_limits<float>::max() ? limit_opt : fallback_limit;
+            periods.back().numberPhases = limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : MO_MaxChargingLimitNumberPhases;
             periods.back().startPeriod = periodBegin - startSchedule;
             lastLimit = limit;
         }
@@ -701,8 +700,9 @@ std::unique_ptr<ChargingSchedule> SmartChargingService::getCompositeSchedule(uns
 
         periods.push_back(ChargingSchedulePeriod());
         float limit_opt = unit == ChargingRateUnitType_Optional::Watt ? limit.power : limit.current;
-        periods.back().limit = limit_opt != std::numeric_limits<float>::max() ? limit_opt : -1.f;
-        periods.back().numberPhases = limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : -1;
+        float fallback_limit = unit == ChargingRateUnitType_Optional::Watt ? MO_MaxChargingLimitPower : MO_MaxChargingLimitCurrent;
+        periods.back().limit = limit_opt != std::numeric_limits<float>::max() ? limit_opt : fallback_limit;
+        periods.back().numberPhases = limit.nphases != std::numeric_limits<int>::max() ? limit.nphases : MO_MaxChargingLimitNumberPhases;
         periods.back().startPeriod = periodBegin - startSchedule;
 
         periodBegin = periodStop;
