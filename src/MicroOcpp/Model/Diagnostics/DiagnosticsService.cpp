@@ -269,14 +269,17 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
         }
         diagPostambleLen = 0;
         diagPostambleTransferred = 0;
+        diagFilesBackTransferred = 0;
 
         auto& model = context.getModel();
 
+        auto cpVendor = makeString(getMemoryTag());
         auto cpModel = makeString(getMemoryTag());
         auto fwVersion = makeString(getMemoryTag());
 
         if (auto bootService = model.getBootService()) {
             if (auto cpCreds = bootService->getChargePointCredentials()) {
+                cpVendor = (*cpCreds)["chargePointVendor"] | "Vendor";
                 cpModel = (*cpCreds)["chargePointModel"] | "Charger";
                 fwVersion = (*cpCreds)["firmwareVersion"] | "";
             }
@@ -288,7 +291,8 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
         int ret;
 
         ret = snprintf(diagPreamble, diagPreambleSize,
-                "### %s Hardware Diagnostics%s%s\n%s\n",
+                "### %s %s - Hardware Diagnostics%s%s\n%s\n",
+                cpVendor.c_str(),
                 cpModel.c_str(),
                 fwVersion.empty() ? "" : " - v. ", fwVersion.c_str(),
                 jsonDate);
@@ -418,6 +422,8 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                     if (ret < 0 || (size_t)ret >= sizeof(fpath)) {
                         MO_DBG_ERR("fn error: %i", ret);
                         diagFileList.pop_back();
+                        // next file starts from offset 0
+                        diagFilesBackTransferred = 0;
                         continue;
                     }
 
@@ -429,6 +435,7 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                             if (writeLen < 0 || (size_t)writeLen >= sizeof(fileHeading)) {
                                 MO_DBG_ERR("fn error: %i", ret);
                                 diagFileList.pop_back();
+                                diagFilesBackTransferred = 0;
                                 continue;
                             }
                             if (writeLen + written > size || //heading doesn't fit anymore, return with a bit unused buffer space and print heading the next time
@@ -444,14 +451,19 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
 
                         file->seek(diagFilesBackTransferred);
                         size_t writeLen = file->read((char*)buf + written, size - written);
-
+                        // advance per-file offset
+                        diagFilesBackTransferred += writeLen;
                         if (writeLen < size - written) {
+                            // EOF for this file; move to next and reset offset
+                            MO_DBG_DEBUG("upload diag chunk %zu (done)", diagFilesBackTransferred);
                             diagFileList.pop_back();
+                            diagFilesBackTransferred = 0;
                         }
                         written += writeLen;
                     } else {
                         MO_DBG_ERR("could not open file: %s", fpath);
                         diagFileList.pop_back();
+                        diagFilesBackTransferred = 0;
                     }
                 }
 
@@ -470,6 +482,7 @@ void DiagnosticsService::setDiagnosticsReader(std::function<size_t(char *buf, si
                 MO_FREE(diagPreamble);
                 MO_FREE(diagPostamble);
                 diagFileList.clear();
+                diagFilesBackTransferred = 0; //reset offset for future uploads
 
                 if (onClose) {
                     onClose();
