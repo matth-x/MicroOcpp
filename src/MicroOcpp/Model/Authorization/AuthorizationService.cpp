@@ -106,6 +106,9 @@ bool AuthorizationService::localAuthListEnabled() const {
 }
 
 bool AuthorizationService::updateLocalList(JsonArray localAuthorizationListJson, int listVersion, bool differential) {
+    //TC_043_3_CS-Send Local Authorization List - Failed
+    //return false;
+
     bool success = localAuthorizationList.readJson(localAuthorizationListJson, listVersion, differential, false);
 
     if (success) {
