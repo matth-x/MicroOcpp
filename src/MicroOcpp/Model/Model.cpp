@@ -317,7 +317,7 @@ void Model::updateSupportedStandardProfiles() {
     }
 
 #if MO_ENABLE_LOCAL_AUTH
-    if (authorizationService) {
+    if (authorizationService && authorizationService->localAuthListEnabled()) {
         if (!strstr(supportedFeatureProfilesString->getString(), "LocalAuthListManagement")) {
             if (!buf.empty()) buf += ',';
             buf += "LocalAuthListManagement";

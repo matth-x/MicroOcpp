@@ -24,7 +24,7 @@ using namespace MicroOcpp;
 
 AuthorizationService::AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : MemoryManaged("v16.Authorization.AuthorizationService"), context(context), filesystem(filesystem) {
 
-    localAuthListEnabledBool = declareConfiguration<bool>("LocalAuthListEnabled", true);
+    localAuthListEnabledBool = declareConfiguration<bool>("LocalAuthListEnabled", true, CONFIGURATION_FN, false, true);
     declareConfiguration<int>("LocalAuthListMaxLength", MO_LocalAuthListMaxLength, CONFIGURATION_VOLATILE, true);
     declareConfiguration<int>("SendLocalListMaxLength", MO_SendLocalListMaxLength, CONFIGURATION_VOLATILE, true);
 
@@ -75,7 +75,7 @@ bool AuthorizationService::loadLists() {
 }
 
 AuthorizationData *AuthorizationService::getLocalAuthorization(const char *idTag) {
-    if (!localAuthListEnabledBool->getBool()) {
+    if (!localAuthListEnabled()) {
         return nullptr; //auth cache will follow
     }
 
@@ -101,7 +101,14 @@ size_t AuthorizationService::getLocalListSize() {
     return localAuthorizationList.size();
 }
 
+bool AuthorizationService::localAuthListEnabled() const {
+    return localAuthListEnabledBool && localAuthListEnabledBool->getBool();
+}
+
 bool AuthorizationService::updateLocalList(JsonArray localAuthorizationListJson, int listVersion, bool differential) {
+    //TC_043_3_CS-Send Local Authorization List - Failed
+    //return false;
+
     bool success = localAuthorizationList.readJson(localAuthorizationListJson, listVersion, differential, false);
 
     if (success) {
@@ -127,7 +134,7 @@ bool AuthorizationService::updateLocalList(JsonArray localAuthorizationListJson,
 void AuthorizationService::notifyAuthorization(const char *idTag, JsonObject idTagInfo) {
     //check local list conflicts. In future: also update authorization cache
 
-    if (!localAuthListEnabledBool->getBool()) {
+    if (!localAuthListEnabled()) {
         return; //auth cache will follow
     }
 

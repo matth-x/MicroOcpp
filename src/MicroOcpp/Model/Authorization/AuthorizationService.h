@@ -35,6 +35,7 @@ public:
     AuthorizationData *getLocalAuthorization(const char *idTag);
 
     int getLocalListVersion();
+    bool localAuthListEnabled() const;
     size_t getLocalListSize(); //number of entries in current localAuthList; used in unit tests
 
     bool updateLocalList(JsonArray localAuthorizationListJson, int listVersion, bool differential);

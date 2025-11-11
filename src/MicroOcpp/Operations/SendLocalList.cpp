@@ -27,6 +27,12 @@ const char* SendLocalList::getOperationType(){
 
 void SendLocalList::processReq(JsonObject payload) {
 
+    //TC_043_1_CS Send Local Authorization List - NotSupported
+    if (!authService.localAuthListEnabled()) {
+        errorCode = "NotSupported";
+        return;
+    }
+
     if (!payload.containsKey("listVersion") || !payload.containsKey("updateType")) {
         errorCode = "FormationViolation";
         return;
