@@ -24,7 +24,7 @@ using namespace MicroOcpp;
 
 AuthorizationService::AuthorizationService(Context& context, std::shared_ptr<FilesystemAdapter> filesystem) : MemoryManaged("v16.Authorization.AuthorizationService"), context(context), filesystem(filesystem) {
 
-    localAuthListEnabledBool = declareConfiguration<bool>("LocalAuthListEnabled", true);
+    localAuthListEnabledBool = declareConfiguration<bool>("LocalAuthListEnabled", true, CONFIGURATION_FN, false, true);
     declareConfiguration<int>("LocalAuthListMaxLength", MO_LocalAuthListMaxLength, CONFIGURATION_VOLATILE, true);
     declareConfiguration<int>("SendLocalListMaxLength", MO_SendLocalListMaxLength, CONFIGURATION_VOLATILE, true);
 
