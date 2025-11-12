@@ -5,6 +5,21 @@
 #ifndef SMARTCHARGINGSERVICE_H
 #define SMARTCHARGINGSERVICE_H
 
+// Per OCPP `GetCompositeScheduleResponse` schema, limit must be > 0.
+// Please define a sane value in your implementation (e.g. 32A or 22kW-equivalent) instead of -1 to pass the OCTT tests.
+#ifndef MO_MaxChargingLimitPower
+#define MO_MaxChargingLimitPower -1.f
+#endif
+
+#ifndef MO_MaxChargingLimitCurrent
+#define MO_MaxChargingLimitCurrent -1.f
+#endif
+
+// For numberPhases, the field is optional; if unknown you can default to 3 (typical three-phase) instead of -1.
+#ifndef MO_MaxChargingLimitNumberPhases
+#define MO_MaxChargingLimitNumberPhases -1
+#endif
+
 #include <functional>
 #include <array>
 
