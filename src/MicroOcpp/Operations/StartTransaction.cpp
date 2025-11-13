@@ -73,7 +73,7 @@ void StartTransaction::processConf(JsonObject payload) {
 
     if (payload["idTagInfo"].containsKey("parentIdTag"))
     {
-        transaction->setParentIdTag(payload["idTagInfo"]["parentIdTag"]);
+        transaction->setParentIdTag(payload["idTagInfo"]["parentIdTag"] | "");
     }
 
     transaction->getStartSync().confirm();
