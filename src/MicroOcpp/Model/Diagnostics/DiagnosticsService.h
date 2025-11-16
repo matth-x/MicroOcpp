@@ -5,8 +5,11 @@
 #ifndef DIAGNOSTICSSERVICE_H
 #define DIAGNOSTICSSERVICE_H
 
+#ifdef __cplusplus
 #include <functional>
 #include <memory>
+#endif //__cplusplus
+
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Ftp.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -31,6 +34,8 @@
 #define MO_USE_DIAGNOSTICS MO_DIAGNOSTICS_CUSTOM
 #endif
 #endif //MO_USE_DIAGNOSTICS
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -168,5 +173,6 @@ public:
 };
 
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_DIAGNOSTICS
 #endif

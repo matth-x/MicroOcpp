@@ -141,18 +141,18 @@ set(MO_SRC_UNIT
     #tests/ConfigurationBehavior.cpp
     tests/SmartCharging.cpp
     #tests/Api.cpp
-    #tests/Metering.cpp
+    tests/Metering.cpp
     #tests/Configuration.cpp
     #tests/Reservation.cpp
     #tests/Reset.cpp
     tests/LocalAuthList.cpp
-    #tests/Variables.cpp
+    tests/Variables.cpp
     #tests/Transactions.cpp
     tests/Certificates.cpp
     #tests/FirmwareManagement.cpp
     #tests/ChargePointError.cpp
     #tests/Boot.cpp
-    #tests/Security.cpp
+    tests/Security.cpp
 )
 
 add_executable(mo_unit_tests

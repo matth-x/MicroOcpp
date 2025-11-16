@@ -5,15 +5,20 @@
 #ifndef MO_AUTHORIZATIONDATA_H
 #define MO_AUTHORIZATIONDATA_H
 
+#ifdef __cplusplus
+#include <memory>
+
+#include <ArduinoJson.h>
+#endif //__cplusplus
+
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Model/Authorization/IdToken.h>
 #include <MicroOcpp/Version.h>
 
-#include <ArduinoJson.h>
-#include <memory>
-
 #if MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 namespace v16 {
@@ -66,5 +71,6 @@ public:
 
 } //namespace v16
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V16 && MO_ENABLE_LOCAL_AUTH
 #endif

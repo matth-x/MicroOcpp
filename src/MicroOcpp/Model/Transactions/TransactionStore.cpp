@@ -121,7 +121,7 @@ bool v16::TransactionStore::serializeSendStatus(Clock& clock, SendStatus& status
     }
 
     if (status.getAttemptTime().isDefined()) {
-        char attemptTime [MO_JSONDATE_SIZE];
+        char attemptTime [MO_INTERNALTIME_SIZE];
         if (!clock.toInternalString(status.getAttemptTime(), attemptTime, sizeof(attemptTime))) {
             return false;
         }
@@ -174,7 +174,7 @@ bool v16::TransactionStore::serializeTransaction(Clock& clock, Transaction& tx, 
         sessionState["deauthorized"] = true;
     }
     if (tx.getBeginTimestamp().isDefined()) {
-        char timeStr [MO_JSONDATE_SIZE] = {'\0'};
+        char timeStr [MO_INTERNALTIME_SIZE] = {'\0'};
         if (!clock.toInternalString(tx.getBeginTimestamp(), timeStr, sizeof(timeStr))) {
             return false;
         }
@@ -198,7 +198,7 @@ bool v16::TransactionStore::serializeTransaction(Clock& clock, Transaction& tx, 
     }
 
     if (tx.getStartTimestamp().isDefined()) {
-        char startTimeStr [MO_JSONDATE_SIZE] = {'\0'};
+        char startTimeStr [MO_INTERNALTIME_SIZE] = {'\0'};
         if (!clock.toInternalString(tx.getStartTimestamp(), startTimeStr, sizeof(startTimeStr))) {
             return false;
         }
@@ -224,7 +224,7 @@ bool v16::TransactionStore::serializeTransaction(Clock& clock, Transaction& tx, 
     }
 
     if (tx.getStopTimestamp().isDefined()) {
-        char stopTimeStr [MO_JSONDATE_SIZE] = {'\0'};
+        char stopTimeStr [MO_INTERNALTIME_SIZE] = {'\0'};
         if (!clock.toInternalString(tx.getStopTimestamp(), stopTimeStr, sizeof(stopTimeStr))) {
             return false;
         }
@@ -419,7 +419,7 @@ bool v201::TransactionStoreEvse::serializeTransaction(Transaction& tx, JsonObjec
     }
 
     if (tx.beginTimestamp.isDefined()) {
-        char timeStr [MO_JSONDATE_SIZE] = {'\0'};
+        char timeStr [MO_INTERNALTIME_SIZE] = {'\0'};
         if (!context.getClock().toInternalString(tx.beginTimestamp, timeStr, sizeof(timeStr))) {
             MO_DBG_ERR("serialization error");
             return false;
@@ -428,7 +428,7 @@ bool v201::TransactionStoreEvse::serializeTransaction(Transaction& tx, JsonObjec
     }
 
     if (tx.startTimestamp.isDefined()) {
-        char timeStr [MO_JSONDATE_SIZE] = {'\0'};
+        char timeStr [MO_INTERNALTIME_SIZE] = {'\0'};
         if (!context.getClock().toInternalString(tx.startTimestamp, timeStr, sizeof(timeStr))) {
             MO_DBG_ERR("serialization error");
             return false;
@@ -623,7 +623,7 @@ bool v201::TransactionStoreEvse::serializeTransactionEvent(TransactionEventData&
     }
 
     if (txEvent.timestamp.isDefined()) {
-        char timeStr [MO_JSONDATE_SIZE] = {'\0'};
+        char timeStr [MO_INTERNALTIME_SIZE] = {'\0'};
         if (!context.getClock().toInternalString(txEvent.timestamp, timeStr, sizeof(timeStr))) {
             return false;
         }
@@ -678,7 +678,7 @@ bool v201::TransactionStoreEvse::serializeTransactionEvent(TransactionEventData&
     txEventJson["attemptNr"] = txEvent.attemptNr;
 
     if (txEvent.attemptTime.isDefined()) {
-        char timeStr [MO_JSONDATE_SIZE] = {'\0'};
+        char timeStr [MO_INTERNALTIME_SIZE] = {'\0'};
         if (!context.getClock().toInternalString(txEvent.attemptTime, timeStr, sizeof(timeStr))) {
             return false;
         }

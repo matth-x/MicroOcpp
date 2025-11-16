@@ -37,11 +37,10 @@
 
 #define SCPROFILE_10_ABSOLUTE_LIMIT_5KW        "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":10,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":5000,\"numberPhases\":3}]}}}]"
 
-char setChargingProfile [1024];
-void updateSetChargingProfile(const char *scprofile_raw, int ocppVersion) {
+void formatSetChargingProfile(const char *scprofile_raw, int ocppVersion, char *buffer) {
     if (ocppVersion == MO_OCPP_V16) {
-        auto ret = snprintf(setChargingProfile, sizeof(setChargingProfile), "%s", scprofile_raw);
-        if (ret < 0 || (size_t)ret >= sizeof(setChargingProfile)) {
+        auto ret = snprintf(buffer, 1024, "%s", scprofile_raw);
+        if (ret < 0 || (size_t)ret >= 1024) {
             FAIL("snprintf");
         }
         return;
@@ -66,9 +65,9 @@ void updateSetChargingProfile(const char *scprofile_raw, int ocppVersion) {
     chargingProfile.remove("chargingProfileId");
     chargingProfile["chargingSchedule"]["id"] = chargingProfile["id"];
 
-    auto ret = serializeJson(doc, setChargingProfile);
+    auto ret = serializeJson(doc, buffer);
 
-    if (doc.isNull() || doc.overflowed() || ret >= sizeof(setChargingProfile) - 1 || ret < 2) {
+    if (doc.isNull() || doc.overflowed() || ret >= 1024 - 1 || ret < 2) {
         FAIL("failure to convert JSON to OCPP 2.0.1");
     }
 }
@@ -122,7 +121,8 @@ TEST_CASE( "SmartCharging" ) {
         } else if (ocppVersion == MO_OCPP_V201) {
             loopback.sendTXT(SCPROFILE_0_V201, strlen(SCPROFILE_0_V201));
         }
-        updateSetChargingProfile(SCPROFILE_0, ocppVersion);
+        char setChargingProfile[1024];
+        formatSetChargingProfile(SCPROFILE_0, ocppVersion, setChargingProfile);
         loopback.sendTXT(setChargingProfile, strlen(setChargingProfile));
 
         loop();
@@ -136,7 +136,8 @@ TEST_CASE( "SmartCharging" ) {
 
     SECTION("Charging Profiles persistency over reboots") {
 
-        updateSetChargingProfile(SCPROFILE_0, ocppVersion);
+        char setChargingProfile[1024];
+        formatSetChargingProfile(SCPROFILE_0, ocppVersion, setChargingProfile);
         loopback.sendTXT(setChargingProfile, strlen(setChargingProfile));
         loop();
 
@@ -154,22 +155,23 @@ TEST_CASE( "SmartCharging" ) {
 
     SECTION("Set conflicting profile") {
 
-        updateSetChargingProfile(SCPROFILE_0, ocppVersion);
+        char setChargingProfile[1024];
+        formatSetChargingProfile(SCPROFILE_0, ocppVersion, setChargingProfile);
         loopback.sendTXT(setChargingProfile, strlen(setChargingProfile));
         loop();
 
-        updateSetChargingProfile(SCPROFILE_0_ALT_SAME_ID, ocppVersion);
+        formatSetChargingProfile(SCPROFILE_0_ALT_SAME_ID, ocppVersion, setChargingProfile);
         loopback.sendTXT(setChargingProfile, strlen(setChargingProfile));
         loop();
 
         REQUIRE(scService->getChargingProfilesCount() == 1);
         REQUIRE(scService->clearChargingProfile(-1, -1, MicroOcpp::ChargingProfilePurposeType::UNDEFINED, -1));
 
-        updateSetChargingProfile(SCPROFILE_0, ocppVersion);
+        formatSetChargingProfile(SCPROFILE_0, ocppVersion, setChargingProfile);
         loopback.sendTXT(setChargingProfile, strlen(setChargingProfile));
         loop();
 
-        updateSetChargingProfile(SCPROFILE_0_ALT_SAME_STACKEVEL_PURPOSE, ocppVersion);
+        formatSetChargingProfile(SCPROFILE_0_ALT_SAME_STACKEVEL_PURPOSE, ocppVersion, setChargingProfile);
         loopback.sendTXT(setChargingProfile, strlen(setChargingProfile));
         loop();
 

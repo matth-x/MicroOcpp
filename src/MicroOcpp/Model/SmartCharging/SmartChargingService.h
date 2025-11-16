@@ -17,6 +17,8 @@
 
 #define MO_CHARGEPROFILESTACK_SIZE (MO_ChargeProfileMaxStackLevel + 1)
 
+#ifdef __cplusplus
+
 namespace MicroOcpp {
 
 class Context;
@@ -135,5 +137,6 @@ friend class SmartChargingServiceEvse;
 };
 
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //(MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SMARTCHARGING
 #endif

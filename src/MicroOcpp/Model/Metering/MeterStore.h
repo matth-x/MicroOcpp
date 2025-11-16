@@ -22,6 +22,8 @@
 #define MO_STOPTXDATA_DIGITS 1 //digits needed to print MO_STOPTXDATA_MAX_SIZE-1 (="3", i.e. 1 digit)
 #endif
 
+#ifdef __cplusplus
+
 namespace MicroOcpp {
 
 class Context;
@@ -38,5 +40,6 @@ bool remove(MO_FilesystemAdapter *filesystem, unsigned int evseId, unsigned int 
 } //namespace MeterStore
 } //namespace v16
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V16
 #endif

@@ -10,6 +10,8 @@
 
 #define MO_BOOTSTATS_VERSION_SIZE 10
 
+#ifdef __cplusplus
+
 namespace MicroOcpp {
 namespace PersistencyUtils {
 
@@ -33,4 +35,5 @@ bool setBootSuccess(MO_FilesystemAdapter *filesystem); //reset boot failure coun
 
 } //namespace PersistencyUtils
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif

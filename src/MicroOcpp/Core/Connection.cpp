@@ -6,6 +6,19 @@
 #include <MicroOcpp/Context.h>
 #include <MicroOcpp/Debug.h>
 
+void mo_connection_init(MO_Connection *connection) {
+    memset(connection, 0, sizeof(MO_Connection));
+}
+
+bool mo_receiveTXT(MO_Context *ctx, const char *msg, size_t len) {
+    if (!ctx) {
+        MO_DBG_WARN("MO Context not assigned");
+        return false;
+    }
+    auto context = reinterpret_cast<MicroOcpp::Context*>(ctx);
+    return context->getMessageService().receiveMessage(msg, len);
+}
+
 namespace MicroOcpp {
 
 Connection::Connection() {
@@ -24,34 +37,152 @@ bool Connection::receiveTXT(const char *msg, size_t len) {
     return context->getMessageService().receiveMessage(msg, len);
 }
 
-LoopbackConnection::LoopbackConnection() : MemoryManaged("WebSocketLoopback") { }
+namespace CppConnectionAdapter {
 
-void LoopbackConnection::loop() { }
+struct CompatData : public MemoryManaged {
+    Connection *cppConnection = nullptr; //"Legacy" MO v1.x Connection class
+    MO_Context *trackCtx = nullptr; //MO Context
 
-bool LoopbackConnection::sendTXT(const char *msg, size_t length) {
-    if (!connected || !online) {
-        return false;
+    CompatData() : MemoryManaged("CppConnectionAdapter") { }
+};
+
+void loop(MO_Connection *conn) {
+    auto data = reinterpret_cast<CompatData*>(conn->userData);
+    if (conn->ctx != data->trackCtx) {
+        data->cppConnection->setContext(reinterpret_cast<Context*>(conn->ctx));
+        data->trackCtx = conn->ctx;
     }
-    return receiveTXT(msg, length); //`Connection::receiveTXT()` passes message back to MicroOcpp
+    data->cppConnection->loop();
 }
 
-void LoopbackConnection::setOnline(bool online) {
-    this->online = online;
+bool sendTXT(MO_Connection *conn, const char *msg, size_t length) {
+    auto data = reinterpret_cast<CompatData*>(conn->userData);
+    return data->cppConnection->sendTXT(msg, length);
 }
 
-bool LoopbackConnection::isOnline() {
-    return online;
+bool isConnected(MO_Connection *conn) {
+    auto data = reinterpret_cast<CompatData*>(conn->userData);
+    return data->cppConnection->isConnected();
 }
 
-void LoopbackConnection::setConnected(bool connected) {
-    this->connected = connected;
+} //namespace CppConnectionAdapter
+
+MO_Connection *makeCppConnectionAdapter(Connection *cppConnection) {
+
+    MO_Connection *connection = nullptr;
+    CppConnectionAdapter::CompatData *data = nullptr;
+
+    data = new CppConnectionAdapter::CompatData();
+    if (!data) {
+        MO_DBG_ERR("OOM");
+        goto fail;
+    }
+
+    data->cppConnection = cppConnection;
+
+    connection = reinterpret_cast<MO_Connection*>(MO_MALLOC("CppConnectionAdapter", sizeof(MO_Connection)));
+    if (!connection) {
+        MO_DBG_ERR("OOM");
+        goto fail;
+    }
+
+    connection->userData = reinterpret_cast<void*>(data);
+    connection->loop = CppConnectionAdapter::loop;
+    connection->sendTXT = CppConnectionAdapter::sendTXT;
+    connection->isConnected = CppConnectionAdapter::isConnected;
+
+    return connection;
+
+fail:
+    delete data;
+    MO_FREE(connection);
+    return nullptr;
 }
 
-bool LoopbackConnection::isConnected() {
-    return connected;
+void freeCppConnectionAdapter(MO_Connection *conn) {
+    auto data = reinterpret_cast<CppConnectionAdapter::CompatData*>(conn->userData);
+    if (conn->ctx != data->trackCtx) {
+        data->cppConnection->setContext(reinterpret_cast<Context*>(conn->ctx));
+        data->trackCtx = conn->ctx;
+    }
+    delete data;
+    MO_FREE(conn);
 }
 
 } //namespace MicroOcpp
+
+namespace MicroOcpp {
+namespace LoopbackConnection {
+
+struct LoopbackData : public MemoryManaged {
+    bool online = true;
+    bool connected = true;
+
+    LoopbackData() : MemoryManaged("WebSocketLoopback") { }
+};
+
+bool sendTXT(MO_Connection *conn, const char *msg, size_t length) {
+    auto data = reinterpret_cast<LoopbackData*>(conn->userData);
+    if (!data->connected || !data->online) {
+        return false;
+    }
+    return mo_receiveTXT(conn->ctx, msg, length);
+}
+
+bool isConnected(MO_Connection *conn) {
+    auto data = reinterpret_cast<LoopbackData*>(conn->userData);
+    return data->connected;
+}
+
+} //namespace LoopbackConnection
+} //namespace MicroOcpp
+
+MO_Connection *mo_loopback_make() {
+
+    MO_Connection *connection = nullptr;
+    MicroOcpp::LoopbackConnection::LoopbackData *data = nullptr;
+
+    data = new MicroOcpp::LoopbackConnection::LoopbackData();
+    if (!data) {
+        MO_DBG_ERR("OOM");
+        goto fail;
+    }
+
+    connection = reinterpret_cast<MO_Connection*>(MO_MALLOC("WebSocketLoopback", sizeof(MO_Connection)));
+    if (!connection) {
+        MO_DBG_ERR("OOM");
+        goto fail;
+    }
+
+    connection->userData = reinterpret_cast<void*>(data);
+    connection->sendTXT = MicroOcpp::LoopbackConnection::sendTXT;
+    connection->isConnected = MicroOcpp::LoopbackConnection::isConnected;
+
+    return connection;
+
+fail:
+    delete data;
+    MO_FREE(connection);
+    return nullptr;
+}
+
+void mo_loopback_free(MO_Connection *connection) {
+    if (connection) {
+        auto data = reinterpret_cast<MicroOcpp::LoopbackConnection::LoopbackData*>(connection->userData);
+        delete data;
+        MO_FREE(connection);
+    }
+}
+
+void mo_loopback_setConnected(MO_Connection *connection, bool connected) {
+    auto data = reinterpret_cast<MicroOcpp::LoopbackConnection::LoopbackData*>(connection->userData);
+    data->connected = connected;
+}
+
+void mo_loopback_setOnline(MO_Connection *connection, bool online) {
+    auto data = reinterpret_cast<MicroOcpp::LoopbackConnection::LoopbackData*>(connection->userData);
+    data->online = online;
+}
 
 #if MO_WS_USE == MO_WS_ARDUINO
 
@@ -123,78 +254,69 @@ void mo_connectionConfig_deinit(MO_ConnectionConfig *config) {
 #include <WebSocketsClient.h>
 
 namespace MicroOcpp {
+namespace ArduinoWS {
 
-class ArduinoWSClient : public Connection, public MemoryManaged {
-private:
+struct ArduinoWSClientData : public MemoryManaged {
     WebSocketsClient *wsock = nullptr;
     bool isWSockOwner = false;
-public:
 
-    ArduinoWSClient(WebSocketsClient *wsock, bool transferOwnership) : MemoryManaged("WebSocketsClient"), wsock(wsock), isWSockOwner(transferOwnership) {
-        wsock->onEvent([this](WStype_t type, uint8_t * payload, size_t length) {
-            switch (type) {
-                case WStype_DISCONNECTED:
-                    MO_DBG_INFO("Disconnected");
-                    break;
-                case WStype_CONNECTED:
-                    MO_DBG_INFO("Connected (path: %s)", payload);
-                    break;
-                case WStype_TEXT:
-                    if (!receiveTXT((const char *) payload, length)) { //`Connection::receiveTXT()` forwards message to MicroOcpp
-                        MO_DBG_WARN("Processing WebSocket input event failed");
-                    }
-                    break;
-                case WStype_BIN:
-                    MO_DBG_WARN("Binary data stream not supported");
-                    break;
-                case WStype_PING:
-                    // pong will be send automatically
-                    MO_DBG_VERBOSE("Recv WS ping");
-                    break;
-                case WStype_PONG:
-                    // answer to a ping we send
-                    MO_DBG_VERBOSE("Recv WS pong");
-                    break;
-                case WStype_FRAGMENT_TEXT_START: //fragments are not supported
-                default:
-                    MO_DBG_WARN("Unsupported WebSocket event type");
-                    break;
-            }
-        });
-    }
+    ArduinoWSClientData() : MemoryManaged("WebSocketsClient") {
 
-    ~ArduinoWSClient() {
-        if (isWSockOwner) {
-            delete wsock;
-            wsock = nullptr;
-            isWSockOwner = false;
-        }
-    }
-
-    void loop() override {
-        wsock->loop();
-    }
-
-    bool sendTXT(const char *msg, size_t length) override {
-        return wsock->sendTXT(msg, length);
-    }
-
-    bool isConnected() override {
-        return wsock->isConnected();
     }
 };
 
-Connection *makeArduinoWSClient(WebSocketsClient& arduinoWebsockets) {
-    return static_cast<Connection*>(new ArduinoWSClient(&arduinoWebsockets, false));
+void loop(MO_Connection *conn) {
+    auto data = reinterpret_cast<ArduinoWSClientData*>(conn->userData);
+    data->wsock->loop();
 }
 
-void freeArduinoWSClient(Connection *connection) {
-    delete connection;
+bool sendTXT(MO_Connection *conn, const char *msg, size_t length) {
+    auto data = reinterpret_cast<ArduinoWSClientData*>(conn->userData);
+    return data->wsock->sendTXT(msg, length)
 }
 
-Connection *makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion) {
+bool isConnected(MO_Connection *conn) {
+    auto data = reinterpret_cast<ArduinoWSClientData*>(conn->userData);
+    return data->wsock->isConnected();
+}
 
-    Connection *connection = nullptr;
+void handleWebSocketsClientEvent(MO_Connection *conn, WStype_t type, uint8_t * payload, size_t length) {
+    switch (type) {
+        case WStype_DISCONNECTED:
+            MO_DBG_INFO("Disconnected");
+            break;
+        case WStype_CONNECTED:
+            MO_DBG_INFO("Connected (path: %s)", payload);
+            break;
+        case WStype_TEXT:
+            if (!mo_receiveTXT(conn->ctx, (const char *)payload, length)) { //`mo_receiveTXT()` forwards message to MicroOcpp
+                MO_DBG_WARN("Processing WebSocket input event failed");
+            }
+            break;
+        case WStype_BIN:
+            MO_DBG_WARN("Binary data stream not supported");
+            break;
+        case WStype_PING:
+            // pong will be send automatically
+            MO_DBG_VERBOSE("Recv WS ping");
+            break;
+        case WStype_PONG:
+            // answer to a ping we send
+            MO_DBG_VERBOSE("Recv WS pong");
+            break;
+        case WStype_FRAGMENT_TEXT_START: //fragments are not supported
+        default:
+            MO_DBG_WARN("Unsupported WebSocket event type");
+            break;
+    }
+}
+
+} //namespace ArduinoWS
+} //namespace MicroOcpp
+
+MO_Connection *mo_makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion) {
+
+    MO_Connection *connection = nullptr;
     WebSocketsClient *wsock = nullptr;
 
     if (!config.backendUrl) {
@@ -318,22 +440,74 @@ Connection *makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion) {
         }
     }
 
-    connection = new ArduinoWSClient(wsock, true);
+    connection = MicroOcpp::ArduinoWS::makeArduinoWSClient(wsock, true);
     if (!connection) {
         MO_DBG_ERR("OOM");
         goto fail;
     }
 
     //success
-    return static_cast<Connection*>(connection);
+    return connection;
 fail:
     delete connection;
     delete wsock;
     return nullptr;
 }
 
-void freeDefaultConnection(Connection *connection) {
-    delete connection;
+void mo_freeDefaultConnection(MO_Connection *connection) {
+    freeArduinoWSClient(connection);
+}
+
+namespace MicroOcpp {
+
+MO_Connection *makeArduinoWSClient(WebSocketsClient *wsock, bool transferOwnership) {
+
+    MO_Connection *connection = nullptr;
+    ArduinoWSClientData *data = nullptr;
+
+    data = new ArduinoWSClientData();
+    if (!data) {
+        MO_DBG_ERR("OOM");
+        goto fail;
+    }
+
+    data->wsock = wsock;
+    data->isWSockOwner = transferOwnership; //only applies if this function returns successfully
+
+    connection = reinterpret_cast<MO_Connection*>(MO_MALLOC("WebSocketsClient", sizeof(MO_Connection)));
+    if (!connection) {
+        MO_DBG_ERR("OOM");
+        goto fail;
+    }
+
+    connection->userData = reinterpret_cast<void*>(data);
+    connection->loop = loop;
+    connection->sendTXT = sendTXT;
+    connection->isConnected = isConnected;
+
+    wsock->onEvent([connection](WStype_t type, uint8_t * payload, size_t length) {
+        handleWebSocketsClientEvent(connection, type, payload, length);
+    });
+
+    //success
+    return connection;
+fail:
+    MO_FREE(connection);
+    delete data;
+    return nullptr;
+}
+
+MO_Connection *makeArduinoWSClient(WebSocketsClient& arduinoWebsockets) {
+    return makeArduinoWSClient(&arduinoWebsockets, false);
+}
+
+void freeArduinoWSClient(MO_Connection *connection) {
+    auto data = reinterpret_cast<ArduinoWSClientData*>(connection->userData);
+    if (data->isWSockOwner) {
+        delete data->wsock;
+    }
+    delete data;
+    MO_FREE(connection);
 }
 
 } //namespace MicroOcpp

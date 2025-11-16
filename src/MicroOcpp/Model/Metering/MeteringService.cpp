@@ -42,7 +42,7 @@ MeterValue *takeMeterValue(Clock& clock, Vector<MO_MeterInput>& meterInputs, uns
         goto fail;
     }
 
-    meterValue->sampledValue.resize(samplesSize);
+    meterValue->sampledValue.reserve(samplesSize);
     if (meterValue->sampledValue.capacity() < samplesSize) {
         MO_DBG_ERR("OOM");
         goto fail;
@@ -166,10 +166,10 @@ fail:
 }
 
 void updateInputSelectFlag(const char *selectString, uint8_t flag, Vector<MO_MeterInput>& meterInputs) {
-    auto size = strlen(selectString) + 1;
+    auto len = strlen(selectString);
     size_t sl = 0, sr = 0;
-    while (selectString && sl < size) {
-        while (sr < size) {
+    while (selectString && sl < len) {
+        while (sr < len) {
             if (selectString[sr] == ',') {
                 break;
             }
@@ -293,7 +293,7 @@ v16::MeteringServiceEvse::~MeteringServiceEvse() {
 
 bool v16::MeteringServiceEvse::addMeterInput(MO_MeterInput meterInput) {
     auto capacity = meterInputs.size() + 1;
-    meterInputs.resize(capacity);
+    meterInputs.reserve(capacity);
     if (meterInputs.capacity() < capacity) {
         MO_DBG_ERR("OOM");
         return false;
@@ -640,7 +640,7 @@ unsigned int v16::MeteringServiceEvse::getFrontRequestOpNr() {
 
 std::unique_ptr<Request> v16::MeteringServiceEvse::fetchFrontRequest() {
 
-    if (!mService.connection->isConnected()) {
+    if (mService.connection->isConnected && !mService.connection->isConnected(mService.connection)) {
         //offline behavior: pause sending messages and do not increment attempt counters
         return nullptr;
     }
@@ -846,7 +846,7 @@ bool v201::MeteringServiceEvse::setup() {
 
 bool v201::MeteringServiceEvse::addMeterInput(MO_MeterInput meterInput) {
     auto capacity = meterInputs.size() + 1;
-    meterInputs.resize(capacity);
+    meterInputs.reserve(capacity);
     if (meterInputs.capacity() < capacity) {
         MO_DBG_ERR("OOM");
         return false;

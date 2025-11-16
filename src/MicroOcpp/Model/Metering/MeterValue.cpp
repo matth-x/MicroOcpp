@@ -2,6 +2,8 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#include <inttypes.h>
+
 #include <MicroOcpp/Model/Metering/MeterValue.h>
 #include <MicroOcpp/Model/Metering/MeteringService.h>
 #include <MicroOcpp/Debug.h>
@@ -191,7 +193,7 @@ bool MeterValue::parseJson(Clock& clock, Vector<MO_MeterInput>& meterInputs, Jso
     }
 
     JsonArray sampledValueJson = in["sampledValue"];
-    sampledValue.resize(sampledValueJson.size());
+    sampledValue.reserve(sampledValueJson.size());
     if (sampledValue.capacity() < sampledValueJson.size()) {
         MO_DBG_ERR("OOM");
         return false;
@@ -347,9 +349,15 @@ int MeterValue::getJsonCapacity(int ocppVersion, bool internalFormat) {
         int valueLen = -1;
         switch (sv->getType()) {
             case SampledValue::Type::Int:
-                valueLen = snprintf(nullptr, 0, "%i", sv->valueInt);
+                if (internalFormat || ocppVersion == MO_OCPP_V201) {
+                    valueLen = 0;
+                }
+                valueLen = snprintf(nullptr, 0, PRId32, sv->valueInt);
                 break;
             case SampledValue::Type::Float:
+                if (internalFormat || ocppVersion == MO_OCPP_V201) {
+                    valueLen = 0;
+                }
                 valueLen = snprintf(nullptr, 0, MO_SAMPLEDVALUE_FLOAT_FORMAT, sv->valueFloat);
                 break;
             case SampledValue::Type::String:
@@ -357,6 +365,9 @@ int MeterValue::getJsonCapacity(int ocppVersion, bool internalFormat) {
                 break;
             #if MO_ENABLE_V201
             case SampledValue::Type::SignedValue:
+                if (internalFormat || ocppVersion == MO_OCPP_V201) {
+                    valueLen = 0;
+                }
                 valueLen = snprintf(nullptr, 0, MO_SAMPLEDVALUE_FLOAT_FORMAT, sv->valueSigned->value);
                 break;
             #endif //MO_ENABLE_V201
@@ -471,10 +482,10 @@ bool MeterValue::toJson(Clock& clock, int ocppVersion, bool internalFormat, Json
 
         switch (sv->getType()) {
             case SampledValue::Type::Int:
-                if (internalFormat) {
+                if (internalFormat || ocppVersion == MO_OCPP_V201) {
                     svJson["value"] = sv->valueInt;
                 } else {
-                    int ret = snprintf(valueBuf, sizeof(valueBuf), "%i", sv->valueInt);
+                    int ret = snprintf(valueBuf, sizeof(valueBuf), PRId32, sv->valueInt);
                     if (ret < 0 || (size_t)ret >= sizeof(valueBuf)) {
                         MO_DBG_ERR("serialization error");
                         return false;
@@ -483,7 +494,7 @@ bool MeterValue::toJson(Clock& clock, int ocppVersion, bool internalFormat, Json
                 }
                 break;
             case SampledValue::Type::Float:
-                if (internalFormat) {
+                if (internalFormat || ocppVersion == MO_OCPP_V201) {
                     svJson["value"] = sv->valueFloat;
                 } else {
                     int ret = snprintf(valueBuf, sizeof(valueBuf), MO_SAMPLEDVALUE_FLOAT_FORMAT, sv->valueFloat);
@@ -500,11 +511,11 @@ bool MeterValue::toJson(Clock& clock, int ocppVersion, bool internalFormat, Json
             #if MO_ENABLE_V201
             case SampledValue::Type::SignedValue: {
                 JsonObject signedMeterValue;
-                if (internalFormat) {
+                if (internalFormat || ocppVersion == MO_OCPP_V201) {
                     svJson["value"] = sv->valueSigned->value;
                     signedMeterValue = svJson; //write signature data into same sv JSON object
                 } else {
-                    int ret = snprintf(valueBuf, sizeof(valueBuf), MO_SAMPLEDVALUE_FLOAT_FORMAT, sv->valueFloat);
+                    int ret = snprintf(valueBuf, sizeof(valueBuf), MO_SAMPLEDVALUE_FLOAT_FORMAT, sv->valueSigned->value);
                     if (ret < 0 || (size_t)ret >= sizeof(valueBuf)) {
                         MO_DBG_ERR("serialization error");
                         return false;

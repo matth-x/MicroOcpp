@@ -6,7 +6,10 @@
 #define MO_CONFIGURATION_H
 
 #include <stdint.h>
+
+#ifdef __cplusplus
 #include <memory>
+#endif //__cplusplus
 
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Model/Common/Mutability.h>
@@ -17,6 +20,8 @@
 #ifndef MO_CONFIG_TYPECHECK
 #define MO_CONFIG_TYPECHECK 1
 #endif
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -78,5 +83,6 @@ std::unique_ptr<Configuration> makeConfiguration(Configuration::Type dtype);
 
 } //namespace v16
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V16
 #endif

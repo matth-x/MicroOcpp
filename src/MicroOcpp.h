@@ -12,12 +12,17 @@
 #include <MicroOcpp/Model/Availability/AvailabilityDefs.h>
 #include <MicroOcpp/Model/Boot/BootNotificationData.h>
 #include <MicroOcpp/Model/Common/Mutability.h>
+#include <MicroOcpp/Model/Configuration/ConfigurationDefs.h>
 #include <MicroOcpp/Model/Metering/MeterValue.h>
 #include <MicroOcpp/Model/RemoteControl/RemoteControlDefs.h>
 #include <MicroOcpp/Model/Reset/ResetDefs.h>
 #include <MicroOcpp/Model/SmartCharging/SmartChargingModel.h>
 #include <MicroOcpp/Model/Transactions/TransactionDefs.h>
 #include <MicroOcpp/Version.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
 
 /*
  * Basic integration
@@ -27,7 +32,7 @@
 //call mo_setup() to finalize the setup
 bool mo_initialize();
 
-//End the lifecycle of MO and free all resources
+//End the lifecycle of MO and free all resources. Can be called any time
 void mo_deinitialize();
 
 //Returns if library is initialized
@@ -37,10 +42,14 @@ bool mo_isInitialized();
 MO_Context *mo_getApiContext();
 
 #if MO_USE_FILEAPI != MO_CUSTOM_FS
-//Set if MO can use the filesystem and if it needs to mount it. See "FilesystemAdapter.h" for all options
+//Set if MO can use the filesystem and if it needs to mount it. See "FilesystemAdapter.h" for all
+//options. Can only set before `mo_setup()`.
 void mo_setFilesystemConfig(MO_FilesystemOpt opt);
 void mo_setFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *pathPrefix);
 #endif //#if MO_USE_FILEAPI != MO_CUSTOM_FS
+
+void mo_setFilesystem(MO_FilesystemAdapter *filesystem);
+void mo_setFilesystem2(MO_Context *ctx, MO_FilesystemAdapter *filesystem);
 
 #if MO_WS_USE == MO_WS_ARDUINO
 /*
@@ -50,6 +59,8 @@ void mo_setFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *
  * If the connections fails, please refer to
  * https://github.com/matth-x/MicroOcpp/issues/36#issuecomment-989716573 for recommendations on
  * how to track down the issue with the connection.
+ * 
+ * Can only set before `mo_setup()`.
  */
 bool mo_setWebsocketUrl(
         const char *backendUrl,       //e.g. "wss://example.com:8443/steve/websocket/CentralSystemService". Must be defined
@@ -58,30 +69,72 @@ bool mo_setWebsocketUrl(
         const char *CA_cert);         //TLS certificate. Can be NULL. Zero-copy, must outlive MO. Set this to enable OCPP Security Profile 2
 #endif
 
-#if __cplusplus
 /* Set a WebSocket Client. Required if ArduinoWebsockets is not supported. This library requires
  * that you handle establishing the connection and keeping it alive. MO does not take ownership
  * of the passed `connection` object, i.e. it must be destroyed after `mo_deinitialize()` Please
  * refer to https://github.com/matth-x/MicroOcpp/tree/main/examples/ESP-TLS for an example how to
  * use it.
  *
- * This GitHub project also delivers an Connection implementation based on links2004/WebSockets. If
- * you need another WebSockets implementation, you can subclass the Connection class and pass it to
- * this initialize() function. Please refer to
+ * This GitHub project also delivers an MO_Connection implementation based on links2004/WebSockets.
+ * If you need another WebSockets implementation, you can implement the MO_Connection driver and
+ * pass it to`mo_setConnection()` function. Please refer to
  * https://github.com/OpenEVSE/ESP32_WiFi_V4.x/blob/master/src/MongooseConnectionClient.cpp for
- * an example.
+ * an example. Need to set MO_Connection after `mo_initialize()` and before `mo_setup()`.
+ * 
+ * If migrating from MO v1, use `makeCppConnectionAdapter()` to adapt the C++ `Connection`
+ * class to the C-style `MO_Connection` handle:
+ * ```
+ *     mo_initialize();
+ *     MyConnectionClass *cppConnection = <legacy MO v1 WebSocket implementation>;
+ *     MO_Connection *connection = MicroOcpp::makeCppConnectionAdapter(cppConnection); //Does not take ownership of `cppConnection`
+ *     mo_setConnection(connection);
+ *     mo_setup();
+ * 
+ *     // ...
+ * 
+ *     mo_deinitialize();
+ *     MicroOcpp::freeCppConnectionAdapter(connection);
+ *     delete cppConnection;
+ * ```
+ * 
+ * Note: MO v2 does not reset the `Context` pointer in the C++ `Connection` anymore during
+ * `mo_deinitialize()`. It's recommended to check `ctx` in `MO_Connection`, or `mo_getContext()`.
+ * 
+ * Can only set before `mo_setup()`.
  */
-void mo_setConnection(MicroOcpp::Connection *connection);
-void mo_setConnection2(MO_Context *ctx, MicroOcpp::Connection *connection);
+void mo_setConnection(MO_Connection *connection);
+void mo_setConnection2(MO_Context *ctx, MO_Connection *connection);
+
+#ifdef __cplusplus
+} // extern "C"
+
+/* Same as `mo_setConnection()`, but accepts the C++ `Connection` class from MO v1. Does not
+ * transfer ownership of `cppConnection`. */
+bool mo_setCppConnection(MicroOcpp::Connection *cppConnection);
+
+extern "C" {
 #endif
 
+#if MO_ENABLE_MOCK_SERVER
+/* Setup MicroOCPP with a mock OCPP server and don't connect to a real server. The mock server is
+ * a minimal server-side implementation of the OCPP operations. If enabled, MO will reply to its
+ * own OCPP messages. It's an alternative to providing MO with an OCPP URL or setting a Connection
+ * handle.
+ * 
+ * Tip: when integrating MO into a new platform, it is more convenient to first use the mock server,
+ * and then switch to a real WebSocket connection. Also, it can be useful to narrow down connection
+ * issues, or to develop offline, with no OCPP server in reach. 
+*/
+void mo_useMockServer();
+#endif //MO_ENABLE_MOCK_SERVER
+
 //Set the OCPP version `MO_OCPP_V16` or `MO_OCPP_V201`. Works only if build flags `MO_ENABLE_V16` or
-//`MO_ENABLE_V201` are set to 1
+//`MO_ENABLE_V201` are set to 1. Can only set before `mo_setup()`.
 void mo_setOcppVersion(int ocppVersion);
 void mo_setOcppVersion2(MO_Context *ctx, int ocppVersion);
 
 //Set BootNotification fields (for more options, use `mo_setBootNotificationData2()`). For a description of
-//the fields, refer to OCPP 1.6 or 2.0.1 specification
+//the fields, refer to OCPP 1.6 or 2.0.1 specification. Can only set before `mo_setup()`.
 bool mo_setBootNotificationData(
         const char *chargePointModel,   //model name of this charger, e.g. "Demo Charger"
         const char *chargePointVendor); //brand name, e.g. "My Company Ltd."
@@ -113,7 +166,7 @@ bool mo_setBootNotificationData2(MO_Context *ctx, MO_BootNotificationData bnData
  *     });
  * ```
  *
- * Configure the library with Inputs and Outputs after mo_initialize() and before mo_setup().
+ * Configure the library with Inputs and Outputs after mo_initialize() and before `mo_setup()`.
  */
 
 void mo_setConnectorPluggedInput(bool (*connectorPlugged)()); //Input about if an EV is plugged to this EVSE
@@ -171,6 +224,8 @@ void mo_loop();
  *
  * Returns true if it was possible to create the transaction process. Returns
  * false if either another transaction process is still active or you need to try it again later.
+ * 
+ * Transaction management functions can only be called after `mo_setup()`.
  *
  * OCPP 2.0.1:
  * Authorize a transaction. Like the OCPP 1.6 behavior, this should be called when the user swipes the
@@ -389,7 +444,8 @@ void mo_setOnUnlockConnector2(MO_Context *ctx, unsigned int evseId, MO_UnlockCon
 
 
 /*
- * Access further information about the internal state of the library
+ * Access further information about the internal state of the library. Can only be called
+ * after `mo_setup()`.
  */
 
 bool mo_isOperative(); //if the charge point is operative (see OCPP1.6 Edit2, p. 45) and ready for transactions
@@ -442,7 +498,7 @@ void mo_v201_setOnResetExecute2(MO_Context *ctx, unsigned int evseId, bool (*onR
 #endif //MO_ENABLE_V201
 
 /*
- * Further platform configurations (Advanced)
+ * Further platform configurations (Advanced). Can only set before `mo_setup()`.
  */
 
 //Set custom debug function
@@ -503,7 +559,7 @@ void mo_setDiagnosticsFtpServerCert(MO_Context *ctx, const char *cert); //zero-c
 #endif //MO_ENABLE_MBEDTLS
 
 /*
- * Transaction management (Advanced)
+ * Transaction management (Advanced). Can only be called after `mo_setup()`.
  */
 
 bool mo_isTransactionAuthorized();
@@ -577,18 +633,19 @@ bool mo_getConfigurationString(const char *key, const char **valueOut); //need t
 //Add new Variable or Config. If running OCPP 2.0.1, `key16` can be NULL. If running OCPP 1.6,
 //`component201` and `name201` can be NULL. `component201`, `name201` and `key16` are zero-copy,
 //i.e. must outlive the MO lifecycle. Add before `mo_setup()`. At first boot, MO uses `factoryDefault`.
-//At subsequent boots, it loads the values from flash during `mo_setup()`
+//At subsequent boots, it loads the values from flash during `mo_setup()`. Call before `mo_setup()`.
 bool mo_declareVarConfigInt(MO_Context *ctx, const char *component201, const char *name201, const char *key16, int factoryDefault, MO_Mutability mutability, bool persistent, bool rebootRequired);
 bool mo_declareVarConfigBool(MO_Context *ctx, const char *component201, const char *name201, const char *key16, bool factoryDefault, MO_Mutability mutability, bool persistent, bool rebootRequired);
 bool mo_declareVarConfigString(MO_Context *ctx, const char *component201, const char *name201, const char *key16, const char *factoryDefault, MO_Mutability mutability, bool persistent, bool rebootRequired);
 
-//Set Variable or Config value. Set after `mo_setup()`. If running OCPP 2.0.1, `key16` can be NULL
+//Set Variable or Config value. Set after `mo_setup()`. If running OCPP 2.0.1, `key16` can be NULL.
+//Call after `mo_setup()`.
 bool mo_setVarConfigInt(MO_Context *ctx, const char *component201, const char *name201, const char *key16, int value);
 bool mo_setVarConfigBool(MO_Context *ctx, const char *component201, const char *name201, const char *key16, bool value);
 bool mo_setVarConfigString(MO_Context *ctx, const char *component201, const char *name201, const char *key16, const char *value);
 
 //Get Config value. MO writes the value into `valueOut`. Call after `mo_setup()`. If running
-//OCPP 2.0.1, `key16` can be NULL
+//OCPP 2.0.1, `key16` can be NULL. Call after `mo_setup()`.
 bool mo_getVarConfigInt(MO_Context *ctx, const char *component201, const char *name201, const char *key16, int *valueOut);
 bool mo_getVarConfigBool(MO_Context *ctx, const char *component201, const char *name201, const char *key16, bool *valueOut);
 bool mo_getVarConfigString(MO_Context *ctx, const char *component201, const char *name201, const char *key16, const char **valueOut); //need to copy `valueOut` into own buffer. `valueOut` may be invalidated after call
@@ -607,7 +664,9 @@ bool mo_getVarConfigString(MO_Context *ctx, const char *component201, const char
  * Add features and customize the behavior of the OCPP client
  */
 
-#if __cplusplus
+#ifdef __cplusplus
+} // extern "C"
+
 namespace MicroOcpp {
 class Context;
 }
@@ -617,6 +676,8 @@ class Context;
 //To use, add `#include <MicroOcpp/Context.h>`
 MicroOcpp::Context *mo_getContext();
 MicroOcpp::Context *mo_getContext2(MO_Context *ctx);
+
+extern "C" {
 #endif //__cplusplus
 
 /*
@@ -629,7 +690,7 @@ bool mo_setup2(MO_Context *ctx);
 void mo_deinitialize2(MO_Context *ctx);
 void mo_loop2(MO_Context *ctx);
 
-//Send operation manually and bypass MO business logic
+//Send operation manually and bypass MO business logic. Call after `mo_setup()`.
 bool mo_sendRequest(MO_Context *ctx,
         const char *operationType, //zero-copy, i.e. must outlive MO
         const char *payloadJson, //copied, i.e. can be invalidated
@@ -637,21 +698,26 @@ bool mo_sendRequest(MO_Context *ctx,
         void (*onAbort)(void *userData),
         void *userData);
 
-//Set custom operation handler for incoming reqeusts and bypass MO business logic
+//Set custom operation handler for incoming reqeusts and bypass MO business logic. Call before
+//`mo_setup()`.
 bool mo_setRequestHandler(MO_Context *ctx, const char *operationType,
         void (*onRequest)(const char *operationType, const char *payloadJson, void **userStatus, void *userData),
         int (*writeResponse)(const char *operationType, char *buf, size_t size, void *userStatus, void *userData),
         void (*finally)(const char *operationType, void *userStatus, void *userData),
         void *userData);
 
-//Sniff incoming requests without control over the response
+//Sniff incoming requests without control over the response. Call before `mo_setup()`.
 bool mo_setOnReceiveRequest(MO_Context *ctx, const char *operationType,
         void (*onRequest)(const char *operationType, const char *payloadJson, void *userData),
         void *userData);
 
-//Sniff outgoing responses generated by MO
+//Sniff outgoing responses generated by MO. Call before `mo_setup()`.
 bool mo_setOnSendConf(MO_Context *ctx, const char *operationType,
         void (*onSendConf)(const char *operationType, const char *payloadJson, void *userData),
         void *userData);
+
+#ifdef __cplusplus
+} //extern "C"
+#endif //__cplusplus
 
 #endif

@@ -13,6 +13,8 @@
 
 #if MO_ENABLE_V16
 
+#ifdef __cplusplus
+
 namespace MicroOcpp {
 
 class Context;
@@ -58,9 +60,12 @@ public:
 
 } //namespace v16
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -112,11 +117,12 @@ public:
 
     void loop();
 
-    ResetStatus initiateReset(MO_ResetType type, unsigned int evseId = 0);
+    MO_ResetStatus initiateReset(MO_ResetType type, unsigned int evseId = 0);
 };
 
 } //namespace v201
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V201
 
 #endif

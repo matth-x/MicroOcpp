@@ -684,7 +684,7 @@ bool DiagnosticsService::uploadDiagnostics() {
                 availSvcEvse0 ? "\nocpp_status_cId0=" : "", availSvcEvse0 ? mo_serializeChargePointStatus(availSvcEvse0->getStatus()) : "",
                 availSvcEvse1 ? "\nocpp_status_cId1=" : "", availSvcEvse1 ? mo_serializeChargePointStatus(availSvcEvse1->getStatus()) : "",
                 availSvcEvse2 ? "\nocpp_status_cId2=" : "", availSvcEvse2 ? mo_serializeChargePointStatus(availSvcEvse2->getStatus()) : "",
-                context.getConnection() && context.getConnection()->isConnected() ? "connected" : "unconnected",
+                context.getConnection() && context.getConnection()->isConnected && context.getConnection()->isConnected(context.getConnection()) ? "connected" : "unconnected",
                 txSvcEvse1 ? "\ncId1_hasTx=" : "", txSvcEvse1 ? (txSvcEvse1Tx ? "1" : "0") : "",
                 txSvcEvse1Tx ? "\ncId1_txActive=" : "", txSvcEvse1Tx ? (txSvcEvse1Tx->isActive() ? "1" : "0") : "",
                 txSvcEvse1Tx ? "\ncId1_txHasStarted=" : "", txSvcEvse1Tx ? (txSvcEvse1Tx->getStartSync().isRequested() ? "1" : "0") : "",

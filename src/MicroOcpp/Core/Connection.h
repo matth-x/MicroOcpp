@@ -22,11 +22,44 @@
 #endif //MO_WS_USE
 
 #ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
+
+struct MO_Context;
+typedef struct MO_Context MO_Context;
+
+/* 
+ * MicroOCPP WebSocket Connection interface
+ */
+
+struct MO_Connection;
+typedef struct MO_Connection MO_Connection;
+
+struct MO_Connection {
+    MO_Context *ctx;
+    void *userData;
+
+    void (*loop)(MO_Connection *conn);
+    bool (*sendTXT)(MO_Connection *conn, const char *msg, size_t length);
+    bool (*isConnected)(MO_Connection *conn);
+};
+
+void mo_connection_init(MO_Connection *conn);
+
+bool mo_receiveTXT(MO_Context *ctx, const char *msg, size_t len);
+
+/* 
+ * Adapter for the MO v1.x Connection CPP interface
+ */
+
+#ifdef __cplusplus
+} //extern "C"
 
 namespace MicroOcpp {
 
 class Context;
 
+//Alternative CPP Connection interface (from MO v1.x)
 class Connection {
 protected:
     Context *context = nullptr;
@@ -69,32 +102,36 @@ public:
     virtual bool isConnected() {return true;} //MO ignores true. This default implementation keeps backwards-compatibility
 };
 
-class LoopbackConnection : public Connection, public MemoryManaged {
-private:
-    //for simulating connection losses
-    bool online = true;
-    bool connected = true;
-public:
-    LoopbackConnection();
-
-    void loop() override;
-    bool sendTXT(const char *msg, size_t length) override;
-
-    void setOnline(bool online); //"online": sent messages are going through
-    bool isOnline();
-    void setConnected(bool connected); //"connected": connection has been established, but messages may not go through (e.g. weak connection)
-    bool isConnected() override;
-};
+MO_Connection *makeCppConnectionAdapter(Connection *cppConnection); //Does not take ownership of `cppConnection`
+void freeCppConnectionAdapter(MO_Connection *connection); //Only frees `MO_Connection`, not `MicroOcpp::Connection`
 
 } //namespace MicroOcpp
 
+extern "C" {
+#endif //__cplusplus
+
+/* 
+ * Loopback connection
+ */
+
+MO_Connection *mo_loopback_make();
+void mo_loopback_free(MO_Connection *connection);
+void mo_loopback_setConnected(MO_Connection *connection, bool connected);
+void mo_loopback_setOnline(MO_Connection *connection, bool online);
+
+#ifdef __cplusplus
+} //extern "C"
 #endif //__cplusplus
 
 #if MO_WS_USE == MO_WS_ARDUINO
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif //__cplusplus
+
+/*
+ * Built-in WebSocket Client for Arduino
+ */
 
 typedef struct {
     const char *backendUrl;       //e.g. "wss://example.com:8443/steve/websocket/CentralSystemService". Must be defined
@@ -111,6 +148,9 @@ bool mo_connectionConfig_copy(MO_ConnectionConfig *dst, MO_ConnectionConfig *src
 
 void mo_connectionConfig_deinit(MO_ConnectionConfig *config);
 
+MO_Connection *mo_makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion);
+void mo_freeDefaultConnection(MO_Connection *connection);
+
 #ifdef __cplusplus
 } //extern "C"
 
@@ -118,11 +158,8 @@ class WebSocketsClient;
 
 namespace MicroOcpp {
 
-Connection *makeArduinoWSClient(WebSocketsClient& arduinoWebsockets); //does not take ownership of arduinoWebsockets
-void freeArduinoWSClient(Connection *connection);
-
-Connection *makeDefaultConnection(MO_ConnectionConfig config, int ocppVersion);
-void freeDefaultConnection(Connection *connection);
+MO_Connection *makeArduinoWSClient(WebSocketsClient& arduinoWebsockets); //does not take ownership of arduinoWebsockets
+void freeArduinoWSClient(MO_Connection *connection);
 
 } //namespace MicroOcpp
 #endif //__cplusplus

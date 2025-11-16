@@ -9,16 +9,24 @@
 
 #if MO_ENABLE_V201
 
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
+
 typedef enum MO_ResetType {
     MO_ResetType_Immediate,
     MO_ResetType_OnIdle
 }   MO_ResetType;
 
-typedef enum ResetStatus {
-    ResetStatus_Accepted,
-    ResetStatus_Rejected,
-    ResetStatus_Scheduled
-}   ResetStatus;
+typedef enum MO_ResetStatus {
+    MO_ResetStatus_Accepted,
+    MO_ResetStatus_Rejected,
+    MO_ResetStatus_Scheduled
+}   MO_ResetStatus;
+
+#ifdef __cplusplus
+} //extern "C"
+#endif //__cplusplus
 
 #endif //MO_ENABLE_V201
 #endif

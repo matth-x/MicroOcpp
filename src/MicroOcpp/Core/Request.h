@@ -5,17 +5,28 @@
 #ifndef MO_REQUEST_H
 #define MO_REQUEST_H
 
+#ifdef __cplusplus
+#include <functional>
+#include <memory>
+
+#include <ArduinoJson.h>
+#endif //__cplusplus
+
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Memory.h>
+
 #define MESSAGE_TYPE_CALL 2
 #define MESSAGE_TYPE_CALLRESULT 3
 #define MESSAGE_TYPE_CALLERROR 4
 
-#include <memory>
-
-#include <MicroOcpp/Core/RequestCallbacks.h>
-#include <MicroOcpp/Core/Time.h>
-#include <MicroOcpp/Core/Memory.h>
+#ifdef __cplusplus
 
 namespace MicroOcpp {
+
+using ReceiveConfListener = std::function<void(JsonObject payload)>;
+using TimeoutListener = std::function<void()>;
+using ReceiveErrorListener = std::function<void(const char *code, const char *description, JsonObject details)>; //will be called if OCPP communication partner returns error code
+using AbortListener = std::function<void()>; //will be called whenever the engine will stop trying to execute the operation normallythere is a timeout or error (onAbort = onTimeout || onReceiveError)
 
 class Context;
 class Operation;
@@ -127,4 +138,5 @@ std::unique_ptr<Request> makeRequest(Context& context, Operation *op); //takes o
 
 } //namespace MicroOcpp
 
- #endif
+#endif //__cplusplus
+#endif

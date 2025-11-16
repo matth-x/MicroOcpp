@@ -210,6 +210,7 @@ void SecurityEventService::loop() {
         #endif //MO_ENABLE_V201
 
         if (abs(timeAdjustment) >= timeAdjustmentReportingThreshold && timeAdjustmentReportingThreshold > 0) {
+            MO_DBG_DEBUG("timeAdjustment: %i, timeAdjustmentReportingThreshold: %i", timeAdjustment, timeAdjustmentReportingThreshold);
             triggerSecurityEvent("SettingSystemTime");
         }
     }
@@ -226,7 +227,7 @@ void SecurityEventService::loop() {
         return;
     }
 
-    if (!connection->isConnected()) {
+    if (connection->isConnected && !connection->isConnected(connection)) {
         //don't use up attempts while offline
         return;
     }
@@ -387,7 +388,17 @@ bool SecurityEventService::advanceSecurityEventFront() {
         return true;
     }
 
-    // Current front file done. Advance front file
+    // Advance front file if we don't expect any more entries to be sent from it. That is either if the file is full
+    // and no more entries can be appended to it. Or if the back file index is already past the front file. In both
+    // cases, new queue entries are appended to a file with a higher index
+
+    if (entryNrFront < MO_SECLOG_MAX_FILE_ENTRIES && // File has capacity for more entries
+            fileNrFront == (fileNrEnd + MO_SECLOG_INDEX_MAX - 1) % MO_SECLOG_INDEX_MAX) { // This is back file
+        // This file is still being written to. Do not advance, done here
+        return true;
+    }
+
+    // Current front file all sent. Advance front file
     fileNrFront = (fileNrFront + 1) % MO_SECLOG_INDEX_MAX;
     entryNrFront = 0;
     entryNrEnd = 0;
@@ -462,6 +473,8 @@ bool SecurityEventService::advanceSecurityEventFront() {
 
 bool SecurityEventService::triggerSecurityEvent(const char *eventType) {
 
+    MO_DBG_DEBUG("trigger SecurityEvent %s", eventType);
+
     if (!filesystem) {
         // Volatile mode. Just enqueue SecurityEventNotification to OCPP message queue and return
         auto securityEventNotification = makeRequest(context, new SecurityEventNotification(context, eventType, context.getClock().now()));
@@ -477,7 +490,7 @@ bool SecurityEventService::triggerSecurityEvent(const char *eventType) {
 
     if (fileNrBegin != fileNrEnd) {
 
-        unsigned int fileNrBack = (fileNrEnd + MO_SECLOG_INDEX_MAX - 1) % MO_SECLOG_INDEX_MAX;
+        fileNrBack = (fileNrEnd + MO_SECLOG_INDEX_MAX - 1) % MO_SECLOG_INDEX_MAX;
 
         char fn [MO_MAX_PATH_SIZE] = {'\0'};
         auto ret = snprintf(fn, sizeof(fn), MO_SECLOG_FN_PREFIX "%u.jsn", fileNrBack);
@@ -517,7 +530,7 @@ bool SecurityEventService::triggerSecurityEvent(const char *eventType) {
 
     // Is security log full?
     unsigned int outstandingFiles = (fileNrBack + MO_SECLOG_INDEX_MAX - fileNrFront) % MO_SECLOG_INDEX_MAX;
-    if (outstandingFiles > MO_SECLOG_MAX_FILES) {
+    if (outstandingFiles >= MO_SECLOG_MAX_FILES) {
         MO_DBG_ERR("SecurityLog capacity exceeded");
         return false;
     }
@@ -525,7 +538,7 @@ bool SecurityEventService::triggerSecurityEvent(const char *eventType) {
     // Are there historic logfiles which should be deleted?
     unsigned int historicFiles = (fileNrFront + MO_SECLOG_INDEX_MAX - fileNrBegin) % MO_SECLOG_INDEX_MAX;
     if (historicFiles + outstandingFiles > MO_SECLOG_MAX_FILES) {
-        MO_DBG_ERR("Cleaning historic logfile");
+        MO_DBG_DEBUG("Cleaning historic logfile");
 
         char fn [MO_MAX_PATH_SIZE];
         auto ret = snprintf(fn, sizeof(fn), MO_SECLOG_FN_PREFIX "%u.jsn", fileNrBegin);
@@ -536,7 +549,7 @@ bool SecurityEventService::triggerSecurityEvent(const char *eventType) {
 
         char path [MO_MAX_PATH_SIZE];
         if (!FilesystemUtils::printPath(filesystem, path, sizeof(path), fn)) {
-            MO_DBG_ERR("fn error: %i", ret);
+            MO_DBG_ERR("fn error: %s", fn);
             return false;
         }
 
@@ -569,8 +582,16 @@ bool SecurityEventService::triggerSecurityEvent(const char *eventType) {
     JsonDoc nextLogBack = initJsonDoc(getMemoryTag(), capacity);
 
     if (logBackLoaded) {
-        // Copy old Json object to new
-        nextLogBack = logBack;
+        // Shallow copy old Json object to new, reuse existing strings from old Json
+        for (size_t entryNr = 0; entryNr < logBack.size(); entryNr++) {
+            auto securityEvent = logBack[entryNr].as<JsonObject>();
+            auto securityEventCopy = nextLogBack.createNestedObject();
+            securityEventCopy["type"] = securityEvent["type"].as<const char*>();
+            securityEventCopy["time"] = securityEvent["time"].as<const char*>();
+            if (securityEvent.containsKey("atnr")) {
+                securityEventCopy["atnr"] = securityEvent["atnr"];
+            }
+        }
     }
 
     // Append SecurityEvent
@@ -612,6 +633,8 @@ bool SecurityEventService::triggerSecurityEvent(const char *eventType) {
     if (fileNrBack == fileNrFront) {
         entryNrEnd++;
     }
+
+    MO_DBG_VERBOSE("fileNrFront: %u, fileNrBack: %u, fileNrEnd: %u, entryNrFront: %u, entryNrEnd: %u", fileNrFront, fileNrBack, fileNrEnd, entryNrFront, entryNrEnd);
 
     return true;
 }

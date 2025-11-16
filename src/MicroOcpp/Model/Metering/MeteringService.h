@@ -5,11 +5,14 @@
 #ifndef MO_METERINGSERVICE_H
 #define MO_METERINGSERVICE_H
 
+#ifdef __cplusplus
 #include <functional>
 #include <memory>
+#endif //__cplusplus
 
 #include <MicroOcpp/Model/Metering/MeterValue.h>
 #include <MicroOcpp/Model/Common/EvseId.h>
+#include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/Memory.h>
@@ -21,6 +24,8 @@
 #ifndef MO_MVRECORD_SIZE
 #define MO_MVRECORD_SIZE 10
 #endif
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -101,7 +106,7 @@ public:
 class MeteringService : public MemoryManaged {
 private:
     Context& context;
-    Connection *connection = nullptr;
+    MO_Connection *connection = nullptr;
 
     MeteringServiceEvse* evses [MO_NUM_EVSEID] = {nullptr};
     unsigned int numEvseId = MO_NUM_EVSEID;
@@ -134,9 +139,12 @@ friend class MeteringServiceEvse;
 
 } //namespace v16
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif //MO_ENABLE_V16
 
 #if MO_ENABLE_V201
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -194,6 +202,6 @@ friend class MeteringServiceEvse;
 
 } //namespace v201
 } //namespace MicroOcpp
-
+#endif //__cplusplus
 #endif //MO_ENABLE_V201
 #endif

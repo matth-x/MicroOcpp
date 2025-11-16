@@ -5,7 +5,6 @@
 #ifndef MO_TIME_H
 #define MO_TIME_H
 
-#include <functional>
 #include <stdint.h>
 #include <stddef.h>
 
@@ -27,6 +26,8 @@
 
 #define MO_MIN_TIME (((2010 - 1970) * 365 + 10) * 24 * 3600) // unix time for 2010-01-01Z00:00:00T (= 40 years + 10 leap days, in seconds)
 #define MO_MAX_TIME (((2037 - 1970) * 365 + 17) * 24 * 3600) // unix time for 2037-01-01Z00:00:00T (= 67 years + 17 leap days, in seconds)
+
+#ifdef __cplusplus
 
 namespace MicroOcpp {
 
@@ -149,4 +150,5 @@ public:
 
 } //namespace MicroOcpp
 
+#endif // __cplusplus
 #endif

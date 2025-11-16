@@ -9,6 +9,8 @@
 #include <MicroOcpp/Model/Common/EvseId.h>
 #include <MicroOcpp/Version.h>
 
+#ifdef __cplusplus
+
 namespace MicroOcpp {
 
 class Context;
@@ -235,4 +237,5 @@ using Model = v201::Model;
 }
 #endif
 
+#endif //__cplusplus
 #endif

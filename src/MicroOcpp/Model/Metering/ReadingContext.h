@@ -9,6 +9,10 @@
 
 #if MO_ENABLE_V16 || MO_ENABLE_V201
 
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
+
 typedef enum {
     MO_ReadingContext_UNDEFINED,
     MO_ReadingContext_InterruptionBegin,
@@ -22,6 +26,7 @@ typedef enum {
 }   MO_ReadingContext;
 
 #ifdef __cplusplus
+} //extern "C"
 
 namespace MicroOcpp {
 const char *serializeReadingContext(MO_ReadingContext context);

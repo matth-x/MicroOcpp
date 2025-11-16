@@ -6,6 +6,8 @@
 
 #define MO_UUID_STR_SIZE (36 + 1)
 
+#ifdef __cplusplus
+
 namespace MicroOcpp {
 namespace UuidUtils {
 
@@ -16,4 +18,5 @@ bool generateUUID(uint32_t (*rng)(), char *uuidBuffer, size_t size);
 
 } //namespace UuidUtils
 } //namespace MicroOcpp
+#endif //__cplusplus
 #endif

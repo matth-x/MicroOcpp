@@ -7,212 +7,253 @@
 #if MO_ENABLE_V201
 
 #include <MicroOcpp.h>
-#include <MicroOcpp/Core/Connection.h>
+#include <MicroOcpp/Context.h>
+#include <MicroOcpp/Core/FilesystemUtils.h>
+#include <MicroOcpp/Model/Model.h>
+#include <MicroOcpp/Model/Variables/VariableService.h>
+#include <MicroOcpp/Core/Request.h>
+#include <MicroOcpp/Operations/CustomOperation.h>
 #include <catch2/catch.hpp>
 #include "./helpers/testHelper.h"
 
-#include <MicroOcpp/Core/FilesystemAdapter.h>
-#include <MicroOcpp/Core/FilesystemUtils.h>
-#include <MicroOcpp/Model/Variables/VariableService.h>
-
-#include <MicroOcpp/Core/Context.h>
-#include <MicroOcpp/Core/Request.h>
-#include <MicroOcpp/Operations/CustomOperation.h>
+#include <vector>
 
 using namespace MicroOcpp;
+using namespace MicroOcpp::v201;
 
-#define GET_CONFIG_ALL "[2,\"test-msg\",\"GetVariable\",{}]"
 #define KNOWN_KEY "__ExistingKey"
 #define UNKOWN_KEY "__UnknownKey"
-#define GET_CONFIG_KNOWN_UNKOWN "[2,\"test-mst\",\"GetVariable\",{\"key\":[\"" KNOWN_KEY "\",\"" UNKOWN_KEY "\"]}]"
 
-TEST_CASE( "Variable" ) {
-    printf("\nRun %s\n",  "Variable");
+// Storage for captured operation responses
+std::vector<std::pair<std::string, DynamicJsonDocument>> capturedOperations;
 
-    //clean state
-    auto filesystem = makeDefaultFilesystemAdapter(FilesystemOpt::Use_Mount_FormatOnFail);
-    FilesystemUtils::remove_if(filesystem, [] (const char*) {return true;});
+void handleVariableRequest(const char *operationType, const char *payloadJson, void*) {
+    DynamicJsonDocument doc(2048);
+    auto err = deserializeJson(doc, payloadJson);
+    if (err) {
+        char buf[100];
+        snprintf(buf, sizeof(buf), "JSON deserialization error: %s", err.c_str());
+        FAIL(buf);
+    }
+    capturedOperations.emplace_back(operationType, std::move(doc));
+}
 
-    SECTION("Basic container operations"){
-        auto container = std::unique_ptr<VariableContainerOwning>(new VariableContainerOwning());
+// Global variables for NotifyReport test
+bool *g_checkProcessedNotification = nullptr;
+Timestamp *g_checkTimestamp = nullptr;
+int *g_checkSeqNo = nullptr;
+bool *g_checkFoundVar = nullptr;
 
-        //check emptyness
-        REQUIRE( container->size() == 0 );
+void handleNotifyReportRequest(const char *operationType, const char *payloadJson, void **userStatus, void*) {
+    if (strcmp(operationType, "NotifyReport") == 0) {
+        DynamicJsonDocument doc(8192);
+        auto err = deserializeJson(doc, payloadJson);
+        if (err) {
+            char buf[100];
+            snprintf(buf, sizeof(buf), "JSON deserialization error: %s", err.c_str());
+            FAIL(buf);
+        }
 
-        //add first config, fetch by index
-        Variable::AttributeTypeSet attrs = Variable::AttributeType::Actual;
-        auto configFirst = makeVariable(Variable::InternalDataType::Int, attrs);
-        configFirst->setName("cFirst");
-        configFirst->setComponentId("mComponent");
-        auto configFirstRaw = configFirst.get();
-        REQUIRE( container->size() == 0 );
-        REQUIRE( container->add(std::move(configFirst)) );
-        REQUIRE( container->size() == 1 );
-        REQUIRE( container->getVariable((size_t) 0) == configFirstRaw);
+        // Process NotifyReport request
+        if (g_checkProcessedNotification) {
+            *g_checkProcessedNotification = true;
+        }
+        REQUIRE((doc["requestId"] | -1) == 1);
+        if (g_checkTimestamp) {
+            mo_getContext()->getClock().parseString(doc["generatedAt"] | "_Undefined", *g_checkTimestamp);
+        }
+        if (g_checkSeqNo) {
+            REQUIRE((doc["seqNo"] | -1) == *g_checkSeqNo + 1); // Check sequentiality
+            *g_checkSeqNo = doc["seqNo"] | -1;
+        }
 
-        //add one config of each type
-        auto cInt = makeVariable(Variable::InternalDataType::Int, attrs);
-        cInt->setName("cInt");
-        cInt->setComponentId("mComponent");
-        auto cBool = makeVariable(Variable::InternalDataType::Bool, attrs);
-        cBool->setName("cBool");
-        cBool->setComponentId("mComponent");
-        auto cBoolRaw = cBool.get();
-        auto cString = makeVariable(Variable::InternalDataType::String, attrs);
-        cString->setName("cString");
-        cString->setComponentId("mComponent");
+        for (auto reportData : doc["reportData"].as<JsonArray>()) {
+            if (!strcmp(reportData["component"]["name"] | "_Undefined", "mComponent") &&
+                    !strcmp(reportData["variable"]["name"] | "_Undefined", "mString")) {
+                if (g_checkFoundVar) {
+                    *g_checkFoundVar = true;
+                }
+            }
+        }
+    }
+}
 
-        container->add(std::move(cInt));
-        container->add(std::move(cBool));
-        container->add(std::move(cString));
+int writeNotifyReportResponse(const char *operationType, char *buf, size_t size, void*, void*) {
+    return snprintf(buf, size, "{}");
+}
 
-        REQUIRE( container->size() == 4 );
+TEST_CASE("Variable") {
+    printf("\nRun %s\n", "Variable");
 
-        //fetch config by key
-        REQUIRE( container->getVariable(cBoolRaw->getComponentId(), cBoolRaw->getName()) == cBoolRaw);
+    capturedOperations.clear();
+
+    // Initialize Context
+    mo_initialize();
+
+    // Set platform configurations (before mo_setup)
+    mo_setTicksCb(custom_timer_cb);
+
+    LoopbackConnection loopback;
+    mo_setConnection(&loopback);
+
+    mo_setOcppVersion(MO_OCPP_V201);
+    mo_setBootNotificationData("TestModel", "TestVendor");
+
+    // Capture variable operation messages (before mo_setup)
+    mo_setOnReceiveRequest(mo_getApiContext(), "GetVariables",
+                        handleVariableRequest, nullptr);
+    mo_setOnReceiveRequest(mo_getApiContext(), "SetVariables",
+                        handleVariableRequest, nullptr);
+    mo_setOnReceiveRequest(mo_getApiContext(), "GetBaseReport",
+                        handleVariableRequest, nullptr);
+    mo_setRequestHandler(mo_getApiContext(), "NotifyReport",
+                        handleNotifyReportRequest, writeNotifyReportResponse, nullptr, nullptr);
+
+    // Finalize setup
+    mo_setup();
+
+    SECTION("Clean up files") {
+        auto filesystem = mo_getFilesystem();
+        if (filesystem) {
+            FilesystemUtils::removeByPrefix(filesystem, "");
+        }
+    }
+
+    SECTION("Basic container operations") {
+        auto vs = mo_getContext()->getModel201().getVariableService();
+        REQUIRE(vs != nullptr);
+
+        // Test variable declaration and retrieval
+        auto varInt = vs->declareVariable<int>("mComponent", "cInt", 42);
+        REQUIRE(varInt != nullptr);
+        REQUIRE(varInt->getInt() == 42);
+
+        auto varBool = vs->declareVariable<bool>("mComponent", "cBool", true);
+        REQUIRE(varBool != nullptr);
+        REQUIRE(varBool->getBool() == true);
+
+        auto varString = vs->declareVariable<const char*>("mComponent", "cString", "mValue");
+        REQUIRE(varString != nullptr);
+        REQUIRE(strcmp(varString->getString(), "mValue") == 0);
+
+        // Test variable retrieval by component and name
+        auto retrievedInt = vs->getVariable("mComponent", "cInt");
+        REQUIRE(retrievedInt == varInt);
+
+        auto retrievedBool = vs->getVariable("mComponent", "cBool");
+        REQUIRE(retrievedBool == varBool);
+
+        auto retrievedString = vs->getVariable("mComponent", "cString");
+        REQUIRE(retrievedString == varString);
+
+        // Test non-existent variable
+        auto nonExistent = vs->getVariable("mComponent", "nonExistent");
+        REQUIRE(nonExistent == nullptr);
     }
 
     SECTION("Persistency on filesystem") {
+        auto filesystem = mo_getFilesystem();
+        REQUIRE(filesystem != nullptr);
 
-        auto container = std::unique_ptr<VariableContainerOwning>(new VariableContainerOwning());
-        container->enablePersistency(filesystem, MO_FILENAME_PREFIX "persistent1.jsn");
+        // Clean up any existing files
+        FilesystemUtils::removeByPrefix(filesystem, "");
 
-        //trivial load call
-        REQUIRE( container->load() );
-        REQUIRE( container->size() == 0 );
+        auto vs = mo_getContext()->getModel201().getVariableService();
+        REQUIRE(vs != nullptr);
 
-        //add config, store, load again
-        auto cString = makeVariable(Variable::InternalDataType::String, Variable::AttributeType::Actual);
-        cString->setName("cString");
-        cString->setComponentId("mComponent");
-        cString->setString("mValue");
-        container->add(std::move(cString));
-        REQUIRE( container->size() == 1 );
+        // Declare a persistent variable
+        auto varString = vs->declareVariable<const char*>("mComponent", "persistentString", "initialValue",
+                                                         Mutability::ReadWrite, true); // persistent = true
+        REQUIRE(varString != nullptr);
+        REQUIRE(strcmp(varString->getString(), "initialValue") == 0);
 
-        REQUIRE( container->commit() ); //store
+        // Modify the variable value
+        varString->setString("modifiedValue");
+        REQUIRE(strcmp(varString->getString(), "modifiedValue") == 0);
+        REQUIRE(vs->commit());
 
-        container.reset(); //destroy
+        // Simulate restart by deinitializing and reinitializing
+        mo_deinitialize();
 
-        //...load again
-        auto container2 = std::unique_ptr<VariableContainerOwning>(new VariableContainerOwning());
-        container2->enablePersistency(filesystem, MO_FILENAME_PREFIX "persistent1.jsn");
-        REQUIRE( container2->size() == 0 );
+        // Reinitialize with correct order
+        mo_initialize();
 
-        auto cString2 = makeVariable(Variable::InternalDataType::String, Variable::AttributeType::Actual);
-        cString2->setName("cString");
-        cString2->setComponentId("mComponent");
-        cString2->setString("mValue");
-        container2->add(std::move(cString2));
-        REQUIRE( container2->size() == 1 );
+        // Set platform configurations (before mo_setup)
+        mo_setTicksCb(custom_timer_cb);
+        mo_setConnection(&loopback);
+        mo_setOcppVersion(MO_OCPP_V201);
+        mo_setBootNotificationData("TestModel", "TestVendor");
 
-        REQUIRE( container2->load() );
-        REQUIRE( container2->size() == 1 );
+        // Re-declare the same variable - should load persisted value
+        auto vs2 = mo_getContext()->getModel201().getVariableService();
+        auto varString2 = vs2->declareVariable<const char*>("mComponent", "persistentString", "defaultValue",
+                                                           Mutability::ReadWrite, true);
+        REQUIRE(varString2 != nullptr);
 
-        auto cString3 = container2->getVariable("mComponent", "cString");
-        REQUIRE( cString3 != nullptr );
-        REQUIRE( !strcmp(cString3->getString(), "mValue") );
+        // Finalize setup
+        mo_setup();
+
+        // Should have loaded the persisted value, not the default
+        REQUIRE(strcmp(varString2->getString(), "modifiedValue") == 0);
     }
 
-    LoopbackConnection loopback; //initialize Context with dummy socket
-    mocpp_set_timer(custom_timer_cb);
-
     SECTION("Variable API") {
+        auto vs = mo_getContext()->getModel201().getVariableService();
+        REQUIRE(vs != nullptr);
 
-        //declare configs
-        mocpp_initialize(loopback, ChargerCredentials(), filesystem, false, ProtocolVersion(2,0,1));
-        auto vs = getOcppContext()->getModel().getVariableService();
+        // Declare variables
         auto cInt = vs->declareVariable<int>("mComponent", "cInt", 42);
-        REQUIRE( cInt != nullptr );
-        vs->declareVariable<bool>("mComponent", "cBool", true);
-        vs->declareVariable<const char*>("mComponent", "cString", "mValue");
+        REQUIRE(cInt != nullptr);
+        REQUIRE(cInt->getInt() == 42);
 
-        //fetch config
-        REQUIRE( vs->declareVariable("mComponent", "cInt", -1)->getInt() == 42 );
+        auto cBool = vs->declareVariable<bool>("mComponent", "cBool", true);
+        REQUIRE(cBool != nullptr);
+        REQUIRE(cBool->getBool() == true);
 
-#if 0
-        //store, destroy, reload
-        REQUIRE( configuration_save() );
-        cInt.reset();
-        configuration_deinit();
-        REQUIRE( getVariablePublic("cInt") == nullptr);
+        auto cString = vs->declareVariable<const char*>("mComponent", "cString", "mValue");
+        REQUIRE(cString != nullptr);
+        REQUIRE(strcmp(cString->getString(), "mValue") == 0);
 
-        REQUIRE( configuration_init(filesystem) ); //reload
+        // Fetch variable by re-declaring (should return same instance)
+        auto cInt2 = vs->declareVariable<int>("mComponent", "cInt", -1);
+        REQUIRE(cInt2 == cInt);
+        REQUIRE(cInt2->getInt() == 42); // Should keep original value, not default
 
-        //fetch configs (declare with different factory default - should remain at original value)
-        auto cInt2 = vs->declareVariable<int>("cInt", -1);
-        auto cBool2 = vs->declareVariable<bool>("cBool", false);
-        auto cString2 = vs->declareVariable<const char*>("cString", "no effect");
-        REQUIRE( configuration_load() ); //load config objects with stored values
-
-        //check load result
-        REQUIRE( cInt2->getInt() == 42 );
-        REQUIRE( cBool2->getBool() == true );
-        REQUIRE( !strcmp(cString2->getString(), "mValue") );
-#else
-        auto cInt2 = cInt;
-#endif
-
-        //declare config twice
+        // Declare variable twice - should return same instance
         auto cInt3 = vs->declareVariable<int>("mComponent", "cInt", -1);
-        REQUIRE( cInt3 == cInt2 );
+        REQUIRE(cInt3 == cInt2);
 
-#if 0
-        //store, destroy, reload
-        REQUIRE( configuration_save() );
-        configuration_deinit();
-        REQUIRE( getVariablePublic("cInt") == nullptr);
-        REQUIRE( configuration_init(filesystem) ); //reload
-        auto cNewType2 = vs->declareVariable<const char*>("cInt", "no effect");
-        REQUIRE( configuration_load() );
-        REQUIRE( !strcmp(cNewType2->getString(), "mValue2") );
-
-        //get config before declared (container needs to be declared already at this point)
-        auto cString3 = getVariablePublic("cString");
-        REQUIRE( !strcmp(cString3->getString(), "mValue") );
-        configuration_deinit();
-
-        //value needs to outlive container
-        configuration_init(filesystem);
-        auto cString4 = vs->declareVariable<const char *>("cString2", "mValue3");
-        configuration_deinit();
-        REQUIRE( !strcmp(cString4->getString(), "mValue3") );
-
-        FilesystemUtils::remove_if(filesystem, [] (const char*) {return true;});
-#else
-        mocpp_deinitialize();
-
-        mocpp_initialize(loopback, ChargerCredentials(), filesystem, false, ProtocolVersion(2,0,1));
-#endif
-
-        //config accessibility / permissions
-        vs = getOcppContext()->getModel().getVariableService();
-        Variable::Mutability mutability = Variable::Mutability::ReadWrite;
+        // Test variable accessibility and permissions
+        Mutability mutability = Mutability::ReadWrite;
         bool persistent = false;
         Variable::AttributeTypeSet attrs = Variable::AttributeType::Actual;
         bool rebootRequired = false;
-        auto cInt6 = vs->declareVariable<int>("mComponent", "cInt", 42, mutability, persistent, attrs, rebootRequired);
-        REQUIRE( cInt6->getMutability() == Variable::Mutability::ReadWrite );
-        REQUIRE( !cInt6->isPersistent() );
-        REQUIRE( !cInt6->isRebootRequired() );
-        REQUIRE( vs->declareVariable<int>("mComponent", "cInt", 42) );
 
-        //revoke permissions
-        mutability = Variable::Mutability::ReadOnly;
+        auto cInt6 = vs->declareVariable<int>("mComponent", "cIntPerms", 42, mutability, persistent, attrs, rebootRequired);
+        REQUIRE(cInt6 != nullptr);
+        REQUIRE(cInt6->getMutability() == Mutability::ReadWrite);
+        REQUIRE(!cInt6->isPersistent());
+        REQUIRE(!cInt6->isRebootRequired());
+
+        // Revoke permissions - make it read-only, persistent, and reboot required
+        mutability = Mutability::ReadOnly;
         persistent = true;
         rebootRequired = true;
-        vs->declareVariable<int>("mComponent", "cInt", 42, mutability, persistent, attrs, rebootRequired);
-        REQUIRE( cInt6->getMutability() == mutability );
-        REQUIRE( cInt6->isPersistent() );
-        REQUIRE( cInt6->isRebootRequired() );
+        auto cInt7 = vs->declareVariable<int>("mComponent", "cIntPerms", 42, mutability, persistent, attrs, rebootRequired);
+        REQUIRE(cInt7 == cInt6); // Should be same instance
+        REQUIRE(cInt6->getMutability() == Mutability::ReadOnly);
+        REQUIRE(cInt6->isPersistent());
+        REQUIRE(cInt6->isRebootRequired());
 
-        //revoked permissions cannot be reverted
-        mutability = Variable::Mutability::ReadWrite;
+        // Try to revert permissions - should not be possible (once restricted, always restricted)
+        mutability = Mutability::ReadWrite;
         persistent = false;
         rebootRequired = false;
-        auto cInt7 = vs->declareVariable<int>("mComponent", "cInt", 42, mutability, persistent, attrs, rebootRequired);
-        REQUIRE( cInt7->getMutability() == Variable::Mutability::ReadOnly );
-        REQUIRE( cInt6->isPersistent() );
-        REQUIRE( cInt7->isRebootRequired() );
+        auto cInt8 = vs->declareVariable<int>("mComponent", "cIntPerms", 42, mutability, persistent, attrs, rebootRequired);
+        REQUIRE(cInt8 == cInt6); // Should be same instance
+        REQUIRE(cInt8->getMutability() == Mutability::ReadOnly); // Should remain read-only
+        REQUIRE(cInt8->isPersistent()); // Should remain persistent
+        REQUIRE(cInt8->isRebootRequired()); // Should remain reboot required
     }
 
 #if 0
@@ -489,173 +530,149 @@ TEST_CASE( "Variable" ) {
 #endif
 
     SECTION("GetVariables request") {
+        auto vs = mo_getContext()->getModel201().getVariableService();
+        REQUIRE(vs != nullptr);
 
-        mocpp_initialize(loopback, ChargerCredentials(), filesystem, false, ProtocolVersion(2,0,1));
-
-        auto vs = getOcppContext()->getModel().getVariableService();
+        // Declare a test variable
         auto varString = vs->declareVariable<const char*>("mComponent", "mString", "mValue");
-        REQUIRE( varString != nullptr );
-        REQUIRE( !strcmp(varString->getString(), "mValue") );
+        REQUIRE(varString != nullptr);
+        REQUIRE(strcmp(varString->getString(), "mValue") == 0);
 
         loop();
 
-        MO_MEM_RESET();
-
+        capturedOperations.clear();
         bool checkProcessed = false;
 
-        getOcppContext()->initiateRequest(makeRequest(
-            new v16::CustomOperation("GetVariables",
-                [] () {
-                    //create req
-                    auto doc = makeJsonDoc("UnitTests",
-                            JSON_OBJECT_SIZE(1) +
-                            JSON_ARRAY_SIZE(1) +
-                            JSON_OBJECT_SIZE(2) +
-                            JSON_OBJECT_SIZE(1) +
-                            JSON_OBJECT_SIZE(1));
-                    auto payload = doc->to<JsonObject>();
-                    auto getVariableData = payload.createNestedArray("getVariableData");
-                    getVariableData[0]["component"]["name"] = "mComponent";
-                    getVariableData[0]["variable"]["name"] = "mString";
-                    return doc;
-                },
-                [&checkProcessed] (JsonObject payload) {
-                    //process conf
-                    JsonArray getVariableResult = payload["getVariableResult"];
-                    REQUIRE( !strcmp(getVariableResult[0]["attributeStatus"] | "_Undefined", "Accepted") );
-                    REQUIRE( !strcmp(getVariableResult[0]["component"]["name"] | "_Undefined", "mComponent") );
-                    REQUIRE( !strcmp(getVariableResult[0]["variable"]["name"] | "_Undefined", "mString") );
-                    REQUIRE( !strcmp(getVariableResult[0]["attributeValue"] | "_Undefined", "mValue") );
-                    checkProcessed = true;
-                })));
-        
+        // Create and send GetVariables request
+        mo_sendRequest(mo_getApiContext(),
+            "GetVariables",
+            "{"
+                "\"getVariableData\": ["
+                    "{"
+                        "\"component\": {\"name\": \"mComponent\"}, "
+                        "\"variable\": {\"name\": \"mString\"}"
+                    "}"
+                "]"
+            "}",
+            [] (const char *payloadJson, void *userData) {
+                auto checkProcessed = static_cast<bool*>(userData);
+                *checkProcessed = true;
+                StaticJsonDocument<512> doc;
+                deserializeJson(doc, payloadJson);
+                JsonArray getVariableResult = doc["getVariableResult"];
+                REQUIRE(!strcmp(getVariableResult[0]["attributeStatus"] | "_Undefined", "Accepted"));
+                REQUIRE(!strcmp(getVariableResult[0]["component"]["name"] | "_Undefined", "mComponent"));
+                REQUIRE(!strcmp(getVariableResult[0]["variable"]["name"] | "_Undefined", "mString"));
+                REQUIRE(!strcmp(getVariableResult[0]["attributeValue"] | "_Undefined", "mValue"));
+            }, nullptr, static_cast<void*>(&checkProcessed));
+
         loop();
 
-        REQUIRE( checkProcessed );
-
-        MO_MEM_PRINT_STATS();
-
+        REQUIRE(checkProcessed);
     }
 
     SECTION("SetVariables request") {
+        auto vs = mo_getContext()->getModel201().getVariableService();
+        REQUIRE(vs != nullptr);
 
-        mocpp_initialize(loopback, ChargerCredentials(), filesystem, false, ProtocolVersion(2,0,1));
-
-        auto vs = getOcppContext()->getModel().getVariableService();
+        // Declare a test variable with empty initial value
         auto varString = vs->declareVariable<const char*>("mComponent", "mString", "");
-        REQUIRE( varString != nullptr );
-        REQUIRE( !strcmp(varString->getString(), "") );
+        REQUIRE(varString != nullptr);
+        REQUIRE(strcmp(varString->getString(), "") == 0);
 
         loop();
 
-        MO_MEM_RESET();
-
+        capturedOperations.clear();
         bool checkProcessed = false;
 
-        getOcppContext()->initiateRequest(makeRequest(
-            new v16::CustomOperation("SetVariables",
-                [] () {
-                    //create req
-                    auto doc = makeJsonDoc("UnitTests",
-                            JSON_OBJECT_SIZE(1) +
-                            JSON_ARRAY_SIZE(1) +
-                            JSON_OBJECT_SIZE(3) +
-                            JSON_OBJECT_SIZE(1) +
-                            JSON_OBJECT_SIZE(1));
-                    auto payload = doc->to<JsonObject>();
-                    auto setVariableData = payload.createNestedArray("setVariableData");
-                    setVariableData[0]["component"]["name"] = "mComponent";
-                    setVariableData[0]["variable"]["name"] = "mString";
-                    setVariableData[0]["attributeValue"] = "mValue";
-                    return doc;
-                },
-                [&checkProcessed] (JsonObject payload) {
-                    //process conf
-                    JsonArray setVariableResult = payload["setVariableResult"];
-                    REQUIRE( !strcmp(setVariableResult[0]["attributeStatus"] | "_Undefined", "Accepted") );
-                    REQUIRE( !strcmp(setVariableResult[0]["component"]["name"] | "_Undefined", "mComponent") );
-                    REQUIRE( !strcmp(setVariableResult[0]["variable"]["name"] | "_Undefined", "mString") );
-                    checkProcessed = true;
-                })));
-        
+        // Create and send SetVariables request
+        mo_sendRequest(mo_getApiContext(),
+            "SetVariables",
+            "{"
+                "\"setVariableData\": ["
+                    "{"
+                        "\"component\": {\"name\": \"mComponent\"}, "
+                        "\"variable\": {\"name\": \"mString\"}, "
+                        "\"attributeValue\": \"mValue\""
+                    "}"
+                "]"
+            "}",
+            [] (const char *payloadJson, void *userData) {
+                auto checkProcessed = static_cast<bool*>(userData);
+                *checkProcessed = true;
+                StaticJsonDocument<512> doc;
+                deserializeJson(doc, payloadJson);
+                JsonArray setVariableResult = doc["setVariableResult"];
+                REQUIRE(!strcmp(setVariableResult[0]["attributeStatus"] | "_Undefined", "Accepted"));
+                REQUIRE(!strcmp(setVariableResult[0]["component"]["name"] | "_Undefined", "mComponent"));
+                REQUIRE(!strcmp(setVariableResult[0]["variable"]["name"] | "_Undefined", "mString"));
+            }, nullptr, static_cast<void*>(&checkProcessed));
+
         loop();
 
-        REQUIRE( checkProcessed );
+        REQUIRE(checkProcessed);
 
-        MO_MEM_PRINT_STATS();
+        // Verify the variable value was actually changed
+        REQUIRE(strcmp(varString->getString(), "mValue") == 0);
     }
 
     SECTION("GetBaseReport request") {
+        auto vs = mo_getContext()->getModel201().getVariableService();
+        REQUIRE(vs != nullptr);
 
-        mocpp_initialize(loopback, ChargerCredentials(), filesystem, false, ProtocolVersion(2,0,1));
-
-        auto vs = getOcppContext()->getModel().getVariableService();
-        auto varString = vs->declareVariable<const char*>("mComponent", "mString", "");
-        REQUIRE( varString != nullptr );
-        REQUIRE( !strcmp(varString->getString(), "") );
+        // Declare a test variable
+        auto varString = vs->declareVariable<const char*>("mComponent", "mString", "testValue");
+        REQUIRE(varString != nullptr);
+        REQUIRE(strcmp(varString->getString(), "testValue") == 0);
 
         loop();
 
-        MO_MEM_RESET();
-
+        capturedOperations.clear();
         bool checkProcessedNotification = false;
-        Timestamp checkTimestamp;
-
-        getOcppContext()->getMessageService().registerOperation("NotifyReport",
-            [&checkProcessedNotification, &checkTimestamp] () {
-                return new v16::CustomOperation("NotifyReport",
-                    [ &checkProcessedNotification, &checkTimestamp] (JsonObject payload) {
-                        //process req
-                        checkProcessedNotification = true;
-                        REQUIRE( (payload["requestId"] | -1) == 1);
-                        checkTimestamp.setTime(payload["generatedAt"] | "_Undefined");
-                        REQUIRE( (payload["seqNo"] | -1) == 0);
-
-                        bool foundVar = false;
-                        for (auto reportData : payload["reportData"].as<JsonArray>()) {
-                            if (!strcmp(reportData["component"]["name"] | "_Undefined", "mComponent") &&
-                                    !strcmp(reportData["variable"]["name"] | "_Undefined", "mString")) {
-                                foundVar = true;
-                            }
-                        }
-                        REQUIRE( foundVar );
-                    },
-                    [] () {
-                        //create conf
-                        return createEmptyDocument();
-                    });
-            });
-
         bool checkProcessed = false;
+        Timestamp checkTimestamp;
+        int checkSeqNo = -1;
+        bool checkFoundVar = false;
 
-        getOcppContext()->initiateRequest(makeRequest(
-            new v16::CustomOperation("GetBaseReport",
-                [] () {
-                    //create req
-                    auto doc = makeJsonDoc("UnitTests",
-                            JSON_OBJECT_SIZE(2));
-                    auto payload = doc->to<JsonObject>();
-                    payload["requestId"] = 1;
-                    payload["reportBase"] = "FullInventory";
-                    return doc;
-                },
-                [&checkProcessed] (JsonObject payload) {
-                    //process conf
-                    REQUIRE( !strcmp(payload["status"] | "_Undefined", "Accepted") );
-                    checkProcessed = true;
-                })));
+        // Set up global variables for NotifyReport handler
+        g_checkProcessedNotification = &checkProcessedNotification;
+        g_checkTimestamp = &checkTimestamp;
+        g_checkSeqNo = &checkSeqNo;
+        g_checkFoundVar = &checkFoundVar;
+
+        // Create and send GetBaseReport request
+        mo_sendRequest(mo_getApiContext(),
+            "GetBaseReport",
+            "{"
+                "\"requestId\": 1,"
+                "\"reportBase\": \"FullInventory\""
+            "}",
+            [] (const char *payloadJson, void *userData) {
+                auto checkProcessed = static_cast<bool*>(userData);
+                *checkProcessed = true;
+                StaticJsonDocument<256> doc;
+                deserializeJson(doc, payloadJson);
+                REQUIRE(!strcmp(doc["status"] | "_Undefined", "Accepted"));
+            }, nullptr, static_cast<void*>(&checkProcessed));
 
         loop();
 
-        REQUIRE( checkProcessed );
-        REQUIRE( checkProcessedNotification );
-        REQUIRE( std::abs(getOcppContext()->getModel().getClock().now() - checkTimestamp) <= 10 );
+        REQUIRE(checkProcessed);
+        REQUIRE(checkProcessedNotification);
+        REQUIRE(checkSeqNo >= 0);
+        REQUIRE(checkFoundVar);
+        int32_t dt = 0;
+        mo_getContext()->getClock().delta(mo_getContext()->getClock().now(), checkTimestamp, dt);
+        REQUIRE(std::abs(dt) <= 10);
 
-        MO_MEM_PRINT_STATS();
-
+        // Clean up global variables
+        g_checkProcessedNotification = nullptr;
+        g_checkTimestamp = nullptr;
+        g_checkSeqNo = nullptr;
+        g_checkFoundVar = nullptr;
     }
 
-    mocpp_deinitialize();
+    mo_deinitialize();
 }
 
 #endif //MO_ENABLE_V201

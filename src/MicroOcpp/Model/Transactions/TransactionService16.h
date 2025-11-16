@@ -5,6 +5,7 @@
 #ifndef MO_CONNECTOR_H
 #define MO_CONNECTOR_H
 
+#include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/RequestQueue.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
 #include <MicroOcpp/Core/Memory.h>
@@ -29,7 +30,6 @@ namespace MicroOcpp {
 
 class Context;
 class Clock;
-class Connection;
 class Operation;
 
 namespace v16 {
@@ -48,7 +48,7 @@ private:
     TransactionService& cService;
     const unsigned int evseId;
 
-    Connection *connection = nullptr;
+    MO_Connection *connection = nullptr;
     MO_FilesystemAdapter *filesystem = nullptr;
     MeteringServiceEvse *meteringServiceEvse = nullptr;
     AvailabilityServiceEvse *availServiceEvse = nullptr;

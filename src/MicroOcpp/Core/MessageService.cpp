@@ -57,7 +57,7 @@ void MessageService::loop() {
 
     defaultSendQueue.loop();
 
-    if (!connection->isConnected()) {
+    if (connection->isConnected && !connection->isConnected(connection)) {
         return;
     }
 
@@ -80,7 +80,7 @@ void MessageService::loop() {
             auto out = makeString(getMemoryTag());
             serializeJson(response, out);
 
-            bool success = connection->sendTXT(out.c_str(), out.length());
+            bool success = connection->sendTXT(connection, out.c_str(), out.length());
 
             if (success) {
                 #ifdef MO_TRAFFIC_OUT
@@ -125,7 +125,7 @@ void MessageService::loop() {
             auto out = makeString(getMemoryTag());
             serializeJson(request, out);
 
-            bool success = connection->sendTXT(out.c_str(), out.length());
+            bool success = connection->sendTXT(connection, out.c_str(), out.length());
 
             if (success) {
                 #ifdef MO_TRAFFIC_OUT

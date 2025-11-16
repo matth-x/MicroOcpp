@@ -5,8 +5,10 @@
 #ifndef MO_TRANSACTION_H
 #define MO_TRANSACTION_H
 
+#ifdef __cplusplus
 #include <memory>
 #include <limits>
+#endif //__cplusplus
 
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Memory.h>
@@ -21,6 +23,8 @@
 #define MO_TXNR_DIGITS 4   //digits needed to print MAX_INDEX-1 (=9999, i.e. 4 digits)
 
 #define MO_REASON_LEN_MAX 15
+
+#ifdef __cplusplus
 
 #if MO_ENABLE_V16
 
@@ -370,4 +374,5 @@ bool deserializeTransactionEventChargingState(const char *chargingStateCstr, Tra
 } //namespace MicroOcpp
 
 #endif //MO_ENABLE_V201
+#endif //__cplusplus
 #endif

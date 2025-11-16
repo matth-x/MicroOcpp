@@ -6,6 +6,7 @@
 #define MO_SECURITYEVENTSERVICE_H
 
 #include <MicroOcpp/Model/SecurityEvent/SecurityEvent.h>
+#include <MicroOcpp/Core/Connection.h>
 #include <MicroOcpp/Core/Time.h>
 #include <MicroOcpp/Core/Memory.h>
 #include <MicroOcpp/Core/FilesystemAdapter.h>
@@ -47,7 +48,6 @@
 namespace MicroOcpp {
 
 class Context;
-class Connection;
 
 #if MO_ENABLE_V16
 namespace v16 {
@@ -63,7 +63,7 @@ class Variable;
 class SecurityEventService : public MemoryManaged {
 private:
     Context& context;
-    Connection *connection = nullptr;
+    MO_Connection *connection = nullptr;
     MO_FilesystemAdapter *filesystem = nullptr;
 
     int ocppVersion = -1;

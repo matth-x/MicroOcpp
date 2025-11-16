@@ -2,6 +2,15 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
+#ifdef __cplusplus
+#include <ArduinoJson.h>
+#endif //__cplusplus
+
+#include <MicroOcpp/Core/Time.h>
+#include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Model/Transactions/Transaction.h>
+#include <MicroOcpp/Version.h>
+
 #ifndef MO_SMARTCHARGINGMODEL_H
 #define MO_SMARTCHARGINGMODEL_H
 
@@ -24,16 +33,6 @@
 #ifndef MO_MaxChargingProfilesInstalled
 #define MO_MaxChargingProfilesInstalled 10
 #endif
-
-#include <memory>
-#include <limits>
-
-#include <ArduinoJson.h>
-
-#include <MicroOcpp/Core/Time.h>
-#include <MicroOcpp/Core/Memory.h>
-#include <MicroOcpp/Model/Transactions/Transaction.h>
-#include <MicroOcpp/Version.h>
 
 #if (MO_ENABLE_V16 || MO_ENABLE_V201) && MO_ENABLE_SMARTCHARGING
 

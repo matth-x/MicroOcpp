@@ -111,6 +111,20 @@ void mo_setFilesystemConfig2(MO_Context *ctx, MO_FilesystemOpt opt, const char *
 }
 #endif // MO_USE_FILEAPI != MO_CUSTOM_FS
 
+void mo_setFilesystem(MO_FilesystemAdapter *filesystem) {
+    return mo_setFilesystem2(mo_getApiContext(), filesystem);
+}
+
+void mo_setFilesystem2(MO_Context *ctx, MO_FilesystemAdapter *filesystem) {
+    if (!ctx) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return;
+    }
+    auto context = mo_getContext2(ctx);
+
+    context->setFilesystem(filesystem);
+}
+
 #if MO_WS_USE == MO_WS_ARDUINO
 //Setup MO with links2004/WebSockets library
 bool mo_setWebsocketUrl(const char *backendUrl, const char *chargeBoxId, const char *authorizationKey, const char *CA_cert) {
@@ -136,13 +150,12 @@ bool mo_setWebsocketUrl(const char *backendUrl, const char *chargeBoxId, const c
 }
 #endif
 
-#if __cplusplus
 // Set a WebSocket Client
-void mo_setConnection(MicroOcpp::Connection *connection) {
+void mo_setConnection(MO_Connection *connection) {
     mo_setConnection2(mo_getApiContext(), connection);
 }
 
-void mo_setConnection2(MO_Context *ctx, MicroOcpp::Connection *connection) {
+void mo_setConnection2(MO_Context *ctx, MO_Connection *connection) {
     if (!ctx) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
         return;
@@ -151,7 +164,17 @@ void mo_setConnection2(MO_Context *ctx, MicroOcpp::Connection *connection) {
 
     context->setConnection(connection);
 }
-#endif
+
+#if MO_ENABLE_MOCK_SERVER
+void mo_useMockServer() {
+    if (!g_context) {
+        MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
+        return;
+    }
+    auto context = g_context;
+    context->useMockServer();
+}
+#endif //MO_ENABLE_MOCK_SERVER
 
 //Set the OCPP version
 void mo_setOcppVersion(int ocppVersion) {
@@ -184,17 +207,6 @@ bool mo_setBootNotificationData2(MO_Context *ctx, MO_BootNotificationData bnData
         return false;
     }
     auto context = mo_getContext2(ctx);
-
-    #if MO_ENABLE_V16
-    if (context->getOcppVersion() == MO_OCPP_V16) {
-
-    }
-    #endif
-    #if MO_ENABLE_V201
-    if (context->getOcppVersion() == MO_OCPP_V201) {
-
-    }
-    #endif
 
     MicroOcpp::BootService *bootService = context->getModelCommon().getBootService();
     if (!bootService) {
@@ -1550,7 +1562,12 @@ bool mo_isConnected2(MO_Context *ctx) {
     auto context = mo_getContext2(ctx);
 
     if (auto connection = context->getConnection()) {
-        return connection->isConnected();
+        if (connection->isConnected) {
+            return connection->isConnected(connection);
+        } else {
+            // MO_Connection driver does not implement `isConnected()`. Default to true
+            return true;
+        }
     } else {
         MO_DBG_ERR("WebSocket not set up");
         return false;
@@ -1618,7 +1635,7 @@ int32_t mo_getUptime() {
 int32_t mo_getUptime2(MO_Context *ctx) {
     if (!ctx) {
         MO_DBG_ERR("OCPP uninitialized"); //need to call mocpp_initialize before
-        return false;
+        return 0;
     }
     auto context = mo_getContext2(ctx);
 
@@ -1710,8 +1727,9 @@ void mo_v16_setOnResetNotify2(MO_Context *ctx, bool (*onResetNotify2)(bool, void
 
 void mo_v16_setOnResetExecute(void (*onResetExecute)(bool)) {
     mo_v16_setOnResetExecute2(mo_getApiContext(), [] (bool isHard, void *userData) {
-        auto onResetExecute = reinterpret_cast<bool (*)(bool)>(userData);
-        return onResetExecute(isHard);
+        auto onResetExecute = reinterpret_cast<void (*)(bool)>(userData);
+        onResetExecute(isHard);
+        return true;
     }, reinterpret_cast<void*>(onResetExecute));
 }
 void mo_v16_setOnResetExecute2(MO_Context *ctx, bool (*onResetExecute2)(bool, void*), void *userData) {
@@ -1733,7 +1751,7 @@ void mo_v16_setOnResetExecute2(MO_Context *ctx, bool (*onResetExecute2)(bool, vo
     #endif
     #if MO_ENABLE_V201
     if (context->getOcppVersion() == MO_OCPP_V201) {
-        MO_DBG_ERR("mo_v16_setOnResetNotify not supported with OCPP 2.0.1");
+        MO_DBG_ERR("mo_v16_setOnResetExecute not supported with OCPP 2.0.1");
     }
     #endif
 }
@@ -2906,9 +2924,11 @@ bool mo_sendRequest(MO_Context *ctx, const char *operationType,
         goto fail;
     }
 
-    request->setOnAbort([onAbort, userData] () {
-        onAbort(userData);
-    });
+    if (onAbort) {
+        request->setOnAbort([onAbort, userData] () {
+            onAbort(userData);
+        });
+    }
 
     request->setTimeout(20);
 

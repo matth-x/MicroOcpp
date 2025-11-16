@@ -30,7 +30,7 @@ extern "C" {
  * data and keep it ready until MO queries it using the `getSignedValue` callback. Then, the firmware
  * can fill this struct provided by MO. Probably the signature data needs to be duplicated into the
  * heap per malloc. The firmware can set the `onDestroy` callback to free the memory again. */
-struct MO_SignedMeterValue201 {
+typedef struct {
     double value;
 
     /* Signed data. If not null, MO will dereference these strings and send them to the server. When
@@ -44,7 +44,7 @@ struct MO_SignedMeterValue201 {
     //set this as needed
     void* user_data; //MO will forward this pointer to onDestroy
     void (*onDestroy)(void *user_data); //MO calls it shortly before destruction of this struct
-};
+} MO_SignedMeterValue201;
 
 #endif //MO_ENABLE_V201
 
