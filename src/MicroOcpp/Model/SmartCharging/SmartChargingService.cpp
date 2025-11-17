@@ -789,9 +789,9 @@ bool SmartChargingService::loadProfiles() {
                 }
 
                 if (!valid) {
-                    success = false;
                     MO_DBG_ERR("profile corrupt: %s, remove", fname);
                     filesystem->remove(path);
+                    // restored valid state - continue
                 }
             }
         }

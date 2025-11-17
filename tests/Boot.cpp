@@ -97,7 +97,7 @@ TEST_CASE( "Boot Behavior" ) {
 
         REQUIRE( isOperative() ); //normal BN succeeded
 
-        loopback.setConnected( false );
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         beginTransaction_authorized("mIdTag");
 
@@ -107,7 +107,7 @@ TEST_CASE( "Boot Behavior" ) {
 
         mocpp_deinitialize();
 
-        loopback.setConnected( true );
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
 
         MO_DBG_INFO("Start charger again with queued transaction messages, also init non-tx-related msg, but now delay BN procedure");
 
@@ -240,7 +240,7 @@ TEST_CASE( "Boot Behavior" ) {
 
         //start one transaction in full offline mode
 
-        loopback.setConnected( false );
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
         loop();
         REQUIRE( getChargePointStatus() == ChargePointStatus_Available );
 
@@ -270,7 +270,7 @@ TEST_CASE( "Boot Behavior" ) {
                     });
             });
 
-        loopback.setConnected( true );
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
         loop();
         REQUIRE( startTxCount == 0 );
 

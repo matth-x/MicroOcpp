@@ -352,7 +352,7 @@ int MeterValue::getJsonCapacity(int ocppVersion, bool internalFormat) {
                 if (internalFormat || ocppVersion == MO_OCPP_V201) {
                     valueLen = 0;
                 }
-                valueLen = snprintf(nullptr, 0, PRId32, sv->valueInt);
+                valueLen = snprintf(nullptr, 0, "%" PRId32, sv->valueInt);
                 break;
             case SampledValue::Type::Float:
                 if (internalFormat || ocppVersion == MO_OCPP_V201) {
@@ -485,7 +485,7 @@ bool MeterValue::toJson(Clock& clock, int ocppVersion, bool internalFormat, Json
                 if (internalFormat || ocppVersion == MO_OCPP_V201) {
                     svJson["value"] = sv->valueInt;
                 } else {
-                    int ret = snprintf(valueBuf, sizeof(valueBuf), PRId32, sv->valueInt);
+                    int ret = snprintf(valueBuf, sizeof(valueBuf), "%" PRId32, sv->valueInt);
                     if (ret < 0 || (size_t)ret >= sizeof(valueBuf)) {
                         MO_DBG_ERR("serialization error");
                         return false;

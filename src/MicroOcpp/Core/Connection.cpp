@@ -153,6 +153,7 @@ MO_Connection *mo_loopback_make() {
         MO_DBG_ERR("OOM");
         goto fail;
     }
+    memset(connection, 0, sizeof(*connection));
 
     connection->userData = reinterpret_cast<void*>(data);
     connection->sendTXT = MicroOcpp::LoopbackConnection::sendTXT;

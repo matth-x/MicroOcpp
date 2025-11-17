@@ -21,10 +21,8 @@ TEST_CASE("Metering") {
 
     // Initialize Context
     mo_initialize();
+    mo_useMockServer();
     mo_setTicksCb(custom_timer_cb);
-
-    LoopbackConnection loopback;
-    mo_setConnection(&loopback);
 
     mo_setOcppVersion(ocppVersion);
     mo_setBootNotificationData("TestModel", "TestVendor");
@@ -76,8 +74,6 @@ TEST_CASE("Metering") {
                     REQUIRE(!strcmp(doc["status"], "Rejected"));
                 }, nullptr, static_cast<void*>(&checkProcessed));
         } else if (ocppVersion == MO_OCPP_V201) {
-
-        printf("TRACE %i\n", __LINE__);
             mo_sendRequest(mo_getApiContext(),
                 "SetVariables",
                 "{"
@@ -96,25 +92,9 @@ TEST_CASE("Metering") {
                     deserializeJson(doc, payloadJson);
                     REQUIRE( !strcmp(doc["setVariableResult"][0]["attributeStatus"] | "_Undefined", "Rejected") );
                 }, nullptr, static_cast<void*>(&checkProcessed));
-
-        printf("TRACE %i\n", __LINE__);
         }
 
-        mo_loop();
-
-        printf("TRACE %i\n", __LINE__);
-
-        mo_loop();
-
-        printf("TRACE %i\n", __LINE__);
-
-        mo_loop();
-
-        printf("TRACE %i\n", __LINE__);
-
         loop();
-
-        printf("TRACE %i\n", __LINE__);
 
         REQUIRE(checkProcessed);
 
@@ -198,8 +178,6 @@ TEST_CASE("Metering") {
                     REQUIRE(t0Int - BASE_TIME_UNIX >= 10); // allow small delta
                     REQUIRE(t0Int - BASE_TIME_UNIX <= 11);
 
-                    printf("TRACE %s\n", doc["meterValue"][0]["sampledValue"][0]["value"] | "");
-
                     REQUIRE(!strcmp(doc["meterValue"][0]["sampledValue"][0]["value"] | "", "10"));
                 },
                 static_cast<void*>(&checkProcessed));
@@ -229,9 +207,11 @@ TEST_CASE("Metering") {
                     REQUIRE(t0Int - BASE_TIME_UNIX >= 10); // allow small delta
                     REQUIRE(t0Int - BASE_TIME_UNIX <= 11);
 
-                    printf("TRACE %s\n", doc["meterValue"][0]["timestamp"] | "_Undefined");
-                    printf("TRACE %s\n", doc["meterValue"][0]["sampledValue"][0]["value"] | "_Undefined");
-                    REQUIRE(!strcmp(doc["meterValue"][0]["sampledValue"][0]["value"] | "_Undefined", "10"));
+                    if (mo_getOcppVersion() == MO_OCPP_V16) {
+                        REQUIRE(!strcmp(doc["meterValue"][0]["sampledValue"][0]["value"] | "_Undefined", "10"));
+                    } else if (mo_getOcppVersion() == MO_OCPP_V201) {
+                        REQUIRE((doc["meterValue"][0]["sampledValue"][0]["value"] | -1) == 10);
+                    }
                 },
                 static_cast<void*>(&checkProcessed));
         }
@@ -473,7 +453,7 @@ TEST_CASE("Metering") {
 
     SECTION("Preserve order of tx-related msgs") {
 
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true)->setBool(true);
 
@@ -536,7 +516,7 @@ TEST_CASE("Metering") {
 
         loop();
 
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
 
         loop();
 
@@ -554,7 +534,7 @@ TEST_CASE("Metering") {
 
         mocpp_deinitialize();
 
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         mocpp_initialize(loopback, ChargerCredentials());
         getOcppContext()->getModel().getClock().setTime(BASE_TIME);
@@ -592,7 +572,7 @@ TEST_CASE("Metering") {
 
         loop();
 
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
 
         loop();
 
@@ -638,7 +618,7 @@ TEST_CASE("Metering") {
 
         loop();
 
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         //initiate 10 more MeterValues than can be cached
         for (unsigned long i = 1; i <= 10 + MO_METERVALUES_CACHE_MAXSIZE; i++) {
@@ -648,7 +628,7 @@ TEST_CASE("Metering") {
             nrInitiated++;
         }
 
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
 
         loop();
 
@@ -662,7 +642,7 @@ TEST_CASE("Metering") {
 
     SECTION("Drop MeterValues for silent tx") {
 
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true)->setBool(true);
 
@@ -724,7 +704,7 @@ TEST_CASE("Metering") {
         tx->setSilent();
         tx->commit();
 
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
 
         loop();
 
@@ -841,7 +821,7 @@ TEST_CASE("Metering") {
 
         base = model.getClock().now();
 
-        loopback.sendTXT(TRIGGER_METERVALUES, sizeof(TRIGGER_METERVALUES) - 1);
+        mo_receiveTXT(mo_getApiContext(), TRIGGER_METERVALUES, sizeof(TRIGGER_METERVALUES) - 1);
         loop();
 
         REQUIRE(checkProcessed);

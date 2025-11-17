@@ -56,10 +56,8 @@ TEST_CASE("SecurityEventService") {
 
     // Initialize Context
     mo_initialize();
+    mo_useMockServer();
     mo_setTicksCb(custom_timer_cb);
-
-    LoopbackConnection loopback;
-    mo_setConnection(&loopback);
 
     mo_setOcppVersion(ocppVersion);
     mo_setBootNotificationData("TestModel", "TestVendor");
@@ -85,8 +83,8 @@ TEST_CASE("SecurityEventService") {
         // Re-initialize without filesystem to test volatile mode
         mo_deinitialize();
         mo_initialize();
+        mo_useMockServer();
         mo_setTicksCb(custom_timer_cb);
-        mo_setConnection(&loopback);
         mo_setOcppVersion(ocppVersion);
         mo_setBootNotificationData("TestModel", "TestVendor");
 
@@ -221,7 +219,7 @@ TEST_CASE("SecurityEventService") {
         loop();
 
         // Loose connection
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         for (size_t i = 0; i < 40; i++) {
             char buf [100];
@@ -233,7 +231,7 @@ TEST_CASE("SecurityEventService") {
         REQUIRE(sentSecurityEvents.size() == 0); // No event sent while offline
 
         // Re-establish connection
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
 
         // Give some processor time
         for (size_t i = 0; i < 40; i++) {
@@ -247,7 +245,7 @@ TEST_CASE("SecurityEventService") {
         sentSecurityEvents.clear();
 
         // Loose connection
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         // First 40 elements
         for (size_t i = 0; i < 40; i++) {
@@ -260,7 +258,7 @@ TEST_CASE("SecurityEventService") {
         REQUIRE(sentSecurityEvents.size() == 0); // No event sent while offline
 
         // Re-establish connection
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
 
         // Give MO some time to send some elements. 10 iterations should be enough for 5 to 10 elements
         for (size_t i = 0; i < 10; i++) {
@@ -290,7 +288,7 @@ TEST_CASE("SecurityEventService") {
         sentSecurityEvents.clear();
 
         // Loose connection
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         // A SecurityEvent file can hold up to 20 entries. If all outstanding entries are sent, it could
         // be that the latest file contains 19 historic entries and 1 free spot. For calculating the max
@@ -327,7 +325,7 @@ TEST_CASE("SecurityEventService") {
         MO_DBG_INFO("enqued %zu SecurityEvents", enqueuedSize);
 
         // Now see if all enqueued elements are actually sent
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
 
         // Give some processor time
         for (size_t i = 0; i < enqueuedSize; i++) {

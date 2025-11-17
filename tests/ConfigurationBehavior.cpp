@@ -150,7 +150,7 @@ TEST_CASE( "Configuration Behavior" ) {
         auto authorizationTimeoutInt = declareConfiguration<int>(MO_CONFIG_EXT_PREFIX "AuthorizationTimeout", 1);
         authorizationTimeoutInt->setInt(1); //try normal Authorize for 1s, then enter offline mode
 
-        loopback.setOnline(false); //connection loss
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false); //connection loss
 
         SECTION("set true") {
             configBool->setBool(true);
@@ -178,7 +178,7 @@ TEST_CASE( "Configuration Behavior" ) {
         }
 
         endTransaction();
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
     }
 
 #if MO_ENABLE_LOCAL_AUTH
@@ -195,7 +195,7 @@ TEST_CASE( "Configuration Behavior" ) {
         loopback.sendTXT(localListMsg, strlen(localListMsg));
         loop();
 
-        loopback.setOnline(false); //connection loss
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false); //connection loss
 
         SECTION("set true - accepted idtag") {
             configBool->setBool(true);
@@ -214,7 +214,7 @@ TEST_CASE( "Configuration Behavior" ) {
 
             REQUIRE(connector->getStatus() == ChargePointStatus_Preparing);
 
-            loopback.setOnline(true);
+            mo_loopback_setOnline(mo_getContext()->getConnection(), true);
             mtime += 20000; //Authorize will be retried after a few seconds
             loop();
 
@@ -222,7 +222,7 @@ TEST_CASE( "Configuration Behavior" ) {
         }
 
         endTransaction();
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
     }
 #endif //MO_ENABLE_LOCAL_AUTH
 

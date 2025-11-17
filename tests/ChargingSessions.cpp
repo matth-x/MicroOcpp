@@ -57,13 +57,11 @@ TEST_CASE( "Charging sessions" ) {
 
     sentOperations.clear();
 
-    //initialize Context without any configs
+    // Initialize Context without any configs and enable mock server
     mo_initialize();
+    mo_useMockServer();
 
-    mo_getContext()->setTicksCb(custom_timer_cb);
-
-    LoopbackConnection loopback;
-    mo_getContext()->setConnection(&loopback);
+    mo_setTicksCb(custom_timer_cb);
 
     auto ocppVersion = GENERATE(MO_OCPP_V16, MO_OCPP_V201);
     mo_setOcppVersion(ocppVersion);
@@ -306,7 +304,7 @@ TEST_CASE( "Charging sessions" ) {
 
     SECTION("Preboot transactions - tx before BootNotification") {
 
-        loopback.setOnline(false);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false);
 
         mo_setVarConfigBool(mo_getApiContext(), "CustomizationCtrlr", "PreBootTransactions", MO_CONFIG_EXT_PREFIX "PreBootTransactions", true);
 
@@ -330,7 +328,7 @@ TEST_CASE( "Charging sessions" ) {
 
         mo_setUnixTime(BASE_TIME_UNIX);
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         loop();
 
         const char *startTimeStr = nullptr;
@@ -375,7 +373,7 @@ TEST_CASE( "Charging sessions" ) {
 
         mocpp_deinitialize();
 
-        loopback.setOnline(false);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
@@ -405,7 +403,7 @@ TEST_CASE( "Charging sessions" ) {
             checkProcessed = true;
         });
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
 
         loop();
 
@@ -426,7 +424,7 @@ TEST_CASE( "Charging sessions" ) {
 
         mocpp_deinitialize();
 
-        loopback.setOnline(false);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
@@ -464,7 +462,7 @@ TEST_CASE( "Charging sessions" ) {
                 REQUIRE(adjustmentDelay == 1);
             });
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
 
         loop();
 
@@ -474,7 +472,7 @@ TEST_CASE( "Charging sessions" ) {
     SECTION("Preboot transactions - reject tx if limit exceeded") {
         mocpp_deinitialize();
 
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
@@ -541,7 +539,7 @@ TEST_CASE( "Charging sessions" ) {
                     return createEmptyDocument();
                 });});
 
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
         loop();
 
         REQUIRE( txId_confirm == txId_base + MO_TXRECORD_SIZE );
@@ -550,7 +548,7 @@ TEST_CASE( "Charging sessions" ) {
     SECTION("Preboot transactions - charge without tx if limit exceeded") {
         mocpp_deinitialize();
 
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
         mocpp_initialize(loopback, ChargerCredentials("test-runner1234"));
 
         declareConfiguration<bool>(MO_CONFIG_EXT_PREFIX "PreBootTransactions", true, CONFIGURATION_FN)->setBool(true);
@@ -621,7 +619,7 @@ TEST_CASE( "Charging sessions" ) {
                     return createEmptyDocument();
                 });});
 
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
         loop();
 
         REQUIRE( txId_confirm == txId_base + MO_TXRECORD_SIZE );
@@ -652,7 +650,7 @@ TEST_CASE( "Charging sessions" ) {
         loop();
 
         // start Tx #1 (offline tx)
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         MO_DBG_DEBUG("begin tx (%s)", tx1_idTag);
         beginTransaction(tx1_idTag);
@@ -726,7 +724,7 @@ TEST_CASE( "Charging sessions" ) {
                 });});
         
         // get online
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
         loop();
 
         // start Tx #4
@@ -980,7 +978,7 @@ TEST_CASE( "Charging sessions" ) {
                     return createEmptyDocument();
                 });});
 
-        loopback.setOnline(false);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false);
 
         REQUIRE( !ocppPermitsCharge() );
 
@@ -994,7 +992,7 @@ TEST_CASE( "Charging sessions" ) {
 
         mtime += 10 * 60 * 1000; //jump 10 minutes into future
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         loop();
 
         REQUIRE( !checkProcessedStartTx );
@@ -1024,7 +1022,7 @@ TEST_CASE( "Charging sessions" ) {
         checkProcessedStartTx = false;
         checkProcessedStopTx = false;
         
-        loopback.setOnline(false);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false);
 
         REQUIRE( !ocppPermitsCharge() );
 
@@ -1036,7 +1034,7 @@ TEST_CASE( "Charging sessions" ) {
         loop();
         REQUIRE( !ocppPermitsCharge() );
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         loop();
 
         REQUIRE( !checkProcessedStartTx );
@@ -1054,13 +1052,13 @@ TEST_CASE( "Charging sessions" ) {
         REQUIRE( ocppPermitsCharge() );
         REQUIRE( checkProcessedStartTx );
 
-        loopback.setOnline(false);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false);
 
         endTransaction();
         loop();
         mtime += 10 * 60 * 1000; //jump 10 minutes into future
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         loop();
         REQUIRE( !checkProcessedStopTx );
 

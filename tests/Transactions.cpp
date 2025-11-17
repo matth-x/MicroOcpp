@@ -313,7 +313,7 @@ TEST_CASE( "Transactions" ) {
 
         REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
 
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         context->getModel().getTransactionService()->getEvse(1)->beginAuthorization("mIdToken", false);
 
@@ -328,7 +328,7 @@ TEST_CASE( "Transactions" ) {
 
         REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
 
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
         loop();
 
         REQUIRE( checkReceivedStarted );
@@ -365,7 +365,7 @@ TEST_CASE( "Transactions" ) {
     
         REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
 
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         context->getModel().getTransactionService()->getEvse(1)->beginAuthorization("mIdToken", false);
 
@@ -401,7 +401,7 @@ TEST_CASE( "Transactions" ) {
 
         REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
 
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
         loop();
 
         REQUIRE( checkReceivedStarted );
@@ -437,7 +437,7 @@ TEST_CASE( "Transactions" ) {
 
         REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
 
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         for (size_t i = 0; i < MO_TXRECORD_SIZE_V201; i++) {
 
@@ -464,7 +464,7 @@ TEST_CASE( "Transactions" ) {
         REQUIRE( !context->getModel().getTransactionService()->getEvse(1)->beginAuthorization("mIdToken", false) );
         REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
 
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
         loop();
 
         for (const auto& txReq : txEventRequests) {
@@ -565,7 +565,7 @@ TEST_CASE( "Transactions" ) {
 
         REQUIRE( getOcppContext()->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
 
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         const char *idTag = "example123";
 
@@ -600,7 +600,7 @@ TEST_CASE( "Transactions" ) {
             ProtocolVersion(2,0,1));
         mocpp_set_timer(custom_timer_cb);
 
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
 
         getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "")->setString("Authorized");
         getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStopPoint", "")->setString("Authorized");
@@ -658,7 +658,7 @@ TEST_CASE( "Transactions" ) {
 
         REQUIRE( context->getModel().getTransactionService()->getEvse(1)->getTransaction() == nullptr );
 
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         for (size_t i = 0; i < MO_TXRECORD_SIZE_V201; i++) {
 
@@ -693,7 +693,7 @@ TEST_CASE( "Transactions" ) {
             ProtocolVersion(2,0,1));
         mocpp_set_timer(custom_timer_cb);
 
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
 
         getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStartPoint", "")->setString("Authorized");
         getOcppContext()->getModel().getVariableService()->declareVariable<const char*>("TxCtrlr", "TxStopPoint", "")->setString("Authorized");
@@ -717,7 +717,7 @@ TEST_CASE( "Transactions" ) {
                     return doc;
                 });});
 
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
         loop();
 
         for (const auto& txReq : txEventRequests) {

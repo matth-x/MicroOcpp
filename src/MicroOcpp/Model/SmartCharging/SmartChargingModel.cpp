@@ -699,7 +699,20 @@ bool ChargingProfile::toJson(Clock& clock, int ocppVersion, JsonObject out) {
         out["validTo"] = validToStr;
     }
 
-    JsonObject chargingScheduleJson = out.createNestedObject("chargingSchedule");
+    JsonObject chargingScheduleJson;
+
+    #if MO_ENABLE_V16
+    if (ocppVersion == MO_OCPP_V16) {
+        chargingScheduleJson = out.createNestedObject("chargingSchedule");
+    }
+    #endif //MO_ENABLE_V16
+    #if MO_ENABLE_V201
+    if (ocppVersion == MO_OCPP_V201) {
+        JsonArray chargingScheduleArray = out.createNestedArray("chargingSchedule");
+        chargingScheduleJson = chargingScheduleArray.createNestedObject();
+    }
+    #endif //MO_ENABLE_V201
+
     if (!chargingSchedule.toJson(clock, ocppVersion, /*compositeSchedule*/ false, chargingScheduleJson)) {
         return false;
     }

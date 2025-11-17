@@ -14,12 +14,10 @@ TEST_CASE( "Time" ) {
 
     //initialize Context without any configs
     mo_initialize();
+    mo_useMockServer();
 
     mtime = 0;
     mo_getContext()->setTicksCb(custom_timer_cb);
-
-    LoopbackConnection loopback;
-    mo_getContext()->setConnection(&loopback);
 
     mo_setup();
 

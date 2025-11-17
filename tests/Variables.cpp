@@ -89,12 +89,10 @@ TEST_CASE("Variable") {
 
     // Initialize Context
     mo_initialize();
+    mo_useMockServer();
 
     // Set platform configurations (before mo_setup)
     mo_setTicksCb(custom_timer_cb);
-
-    LoopbackConnection loopback;
-    mo_setConnection(&loopback);
 
     mo_setOcppVersion(MO_OCPP_V201);
     mo_setBootNotificationData("TestModel", "TestVendor");
@@ -177,10 +175,10 @@ TEST_CASE("Variable") {
 
         // Reinitialize with correct order
         mo_initialize();
+        mo_useMockServer();
 
         // Set platform configurations (before mo_setup)
         mo_setTicksCb(custom_timer_cb);
-        mo_setConnection(&loopback);
         mo_setOcppVersion(MO_OCPP_V201);
         mo_setBootNotificationData("TestModel", "TestVendor");
 

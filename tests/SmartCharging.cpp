@@ -32,15 +32,15 @@
 #define SCPROFILE_7_RECURRING_DAY_2H_16A_20A   "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":7,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Recurring\",\"recurrencyKind\":\"Daily\", \"chargingSchedule\":{\"duration\":7200,\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":16,\"numberPhases\":3},{\"startPeriod\":3600,\"limit\":20,\"numberPhases\":3}]}}}]"
 #define SCPROFILE_8_RECURRING_WEEK_2H_10A_12A  "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":8,\"stackLevel\":1,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Recurring\",\"recurrencyKind\":\"Weekly\",\"chargingSchedule\":{\"duration\":7200,\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":10,\"numberPhases\":3},{\"startPeriod\":3600,\"limit\":12,\"numberPhases\":3}]}}}]"
 
-#define SCPROFILE_9_VIA_RMTSTARTTX_20A         "[2,\"testmsg\",\"RemoteStartTransaction\", {\"connectorId\":1,\"idTag\":               \"mIdTag\",                       \"chargingProfile\":{\"chargingProfileId\":9,\"stackLevel\":0,\"chargingProfilePurpose\":\"TxProfile\",\"chargingProfileKind\":\"Relative\",\"chargingSchedule\":{         \"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":20,\"numberPhases\":1}]}}}]"
-#define SCPROFILE_9_VIA_REQSTARTTX_20A         "[2,\"testmsg\",\"RequestStartTransaction\",{\"evseId\":1,     \"idToken\":{\"idToken\":\"mIdTag\",\"type\":\"ISO14443\"},\"chargingProfile\":{\"id\":9,               \"stackLevel\":0,\"chargingProfilePurpose\":\"TxProfile\",\"chargingProfileKind\":\"Relative\",\"chargingSchedule\":{\"id\":9,\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":20,\"numberPhases\":1}]}}}]"
+#define SCPROFILE_9_VIA_RMTSTARTTX_20A         "[2,\"testmsg\",\"RemoteStartTransaction\", {\"connectorId\":1,\"idTag\":               \"mIdTag\",                       \"chargingProfile\":{\"chargingProfileId\":9,\"stackLevel\":0,\"chargingProfilePurpose\":\"TxProfile\",\"chargingProfileKind\":\"Relative\",\"chargingSchedule\": {         \"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":20,\"numberPhases\":1}]} }}]"
+#define SCPROFILE_9_VIA_REQSTARTTX_20A         "[2,\"testmsg\",\"RequestStartTransaction\",{\"evseId\":1,     \"idToken\":{\"idToken\":\"mIdTag\",\"type\":\"ISO14443\"},\"chargingProfile\":{\"id\":9,               \"stackLevel\":0,\"chargingProfilePurpose\":\"TxProfile\",\"chargingProfileKind\":\"Relative\",\"chargingSchedule\":[{\"id\":9,\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":20,\"numberPhases\":1}]}]}}]"
 
 #define SCPROFILE_10_ABSOLUTE_LIMIT_5KW        "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":10,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":5000,\"numberPhases\":3}]}}}]"
 
-void formatSetChargingProfile(const char *scprofile_raw, int ocppVersion, char *buffer) {
+void formatSetChargingProfile(const char *scprofile_raw, int ocppVersion, char *buffer, size_t bufsize) {
     if (ocppVersion == MO_OCPP_V16) {
-        auto ret = snprintf(buffer, 1024, "%s", scprofile_raw);
-        if (ret < 0 || (size_t)ret >= 1024) {
+        auto ret = snprintf(buffer, bufsize, "%s", scprofile_raw);
+        if (ret < 0 || (size_t)ret >= bufsize) {
             FAIL("snprintf");
         }
         return;
@@ -63,11 +63,14 @@ void formatSetChargingProfile(const char *scprofile_raw, int ocppVersion, char *
     JsonObject chargingProfile = payload["chargingProfile"];
     chargingProfile["id"] = chargingProfile["chargingProfileId"];
     chargingProfile.remove("chargingProfileId");
-    chargingProfile["chargingSchedule"]["id"] = chargingProfile["id"];
+    JsonObject chargingSchedule = chargingProfile["chargingSchedule"];
+    chargingProfile.remove("chargingSchedule");
+    chargingProfile["chargingSchedule"][0] = chargingSchedule;
+    chargingProfile["chargingSchedule"][0]["id"] = chargingProfile["id"];
 
-    auto ret = serializeJson(doc, buffer);
+    auto ret = serializeJson(doc, buffer, bufsize);
 
-    if (doc.isNull() || doc.overflowed() || ret >= 1024 - 1 || ret < 2) {
+    if (doc.isNull() || doc.overflowed() || ret >= bufsize - 1 || ret < 2) {
         FAIL("failure to convert JSON to OCPP 2.0.1");
     }
 }
@@ -87,11 +90,9 @@ TEST_CASE( "SmartCharging" ) {
 
     //initialize Context without any configs
     mo_initialize();
+    mo_useMockServer();
 
     mo_getContext()->setTicksCb(custom_timer_cb);
-
-    LoopbackConnection loopback;
-    mo_getContext()->setConnection(&loopback);
 
     auto ocppVersion = GENERATE(MO_OCPP_V16, MO_OCPP_V201);
     mo_setOcppVersion(ocppVersion);
@@ -116,14 +117,9 @@ TEST_CASE( "SmartCharging" ) {
 
         REQUIRE(scService->getChargingProfilesCount() == 0);
 
-        if (ocppVersion == MO_OCPP_V16) {
-            loopback.sendTXT(SCPROFILE_0, strlen(SCPROFILE_0));
-        } else if (ocppVersion == MO_OCPP_V201) {
-            loopback.sendTXT(SCPROFILE_0_V201, strlen(SCPROFILE_0_V201));
-        }
         char setChargingProfile[1024];
-        formatSetChargingProfile(SCPROFILE_0, ocppVersion, setChargingProfile);
-        loopback.sendTXT(setChargingProfile, strlen(setChargingProfile));
+        formatSetChargingProfile(SCPROFILE_0, ocppVersion, setChargingProfile, sizeof(setChargingProfile));
+        mo_receiveTXT(mo_getApiContext(), setChargingProfile, strlen(setChargingProfile));
 
         loop();
 
@@ -137,14 +133,14 @@ TEST_CASE( "SmartCharging" ) {
     SECTION("Charging Profiles persistency over reboots") {
 
         char setChargingProfile[1024];
-        formatSetChargingProfile(SCPROFILE_0, ocppVersion, setChargingProfile);
-        loopback.sendTXT(setChargingProfile, strlen(setChargingProfile));
+        formatSetChargingProfile(SCPROFILE_0, ocppVersion, setChargingProfile, sizeof(setChargingProfile));
+        mo_receiveTXT(mo_getApiContext(), setChargingProfile, strlen(setChargingProfile));
         loop();
 
         mo_deinitialize();
 
         mo_initialize();
-        mo_getContext()->setConnection(&loopback);
+        mo_useMockServer();
         mo_setOcppVersion(ocppVersion);
         mo_setup();
         scService = mo_getContext()->getModelCommon().getSmartChargingService();
@@ -156,23 +152,23 @@ TEST_CASE( "SmartCharging" ) {
     SECTION("Set conflicting profile") {
 
         char setChargingProfile[1024];
-        formatSetChargingProfile(SCPROFILE_0, ocppVersion, setChargingProfile);
-        loopback.sendTXT(setChargingProfile, strlen(setChargingProfile));
+        formatSetChargingProfile(SCPROFILE_0, ocppVersion, setChargingProfile, sizeof(setChargingProfile));
+        mo_receiveTXT(mo_getApiContext(), setChargingProfile, strlen(setChargingProfile));
         loop();
 
-        formatSetChargingProfile(SCPROFILE_0_ALT_SAME_ID, ocppVersion, setChargingProfile);
-        loopback.sendTXT(setChargingProfile, strlen(setChargingProfile));
+        formatSetChargingProfile(SCPROFILE_0_ALT_SAME_ID, ocppVersion, setChargingProfile, sizeof(setChargingProfile));
+        mo_receiveTXT(mo_getApiContext(), setChargingProfile, strlen(setChargingProfile));
         loop();
 
         REQUIRE(scService->getChargingProfilesCount() == 1);
         REQUIRE(scService->clearChargingProfile(-1, -1, MicroOcpp::ChargingProfilePurposeType::UNDEFINED, -1));
 
-        formatSetChargingProfile(SCPROFILE_0, ocppVersion, setChargingProfile);
-        loopback.sendTXT(setChargingProfile, strlen(setChargingProfile));
+        formatSetChargingProfile(SCPROFILE_0, ocppVersion, setChargingProfile, sizeof(setChargingProfile));
+        mo_receiveTXT(mo_getApiContext(), setChargingProfile, strlen(setChargingProfile));
         loop();
 
-        formatSetChargingProfile(SCPROFILE_0_ALT_SAME_STACKEVEL_PURPOSE, ocppVersion, setChargingProfile);
-        loopback.sendTXT(setChargingProfile, strlen(setChargingProfile));
+        formatSetChargingProfile(SCPROFILE_0_ALT_SAME_STACKEVEL_PURPOSE, ocppVersion, setChargingProfile, sizeof(setChargingProfile));
+        mo_receiveTXT(mo_getApiContext(), setChargingProfile, strlen(setChargingProfile));
         loop();
 
         REQUIRE(scService->getChargingProfilesCount() == 1);
@@ -187,9 +183,9 @@ TEST_CASE( "SmartCharging" ) {
         loop();
 
         if (ocppVersion == MO_OCPP_V16) {
-            loopback.sendTXT(SCPROFILE_9_VIA_RMTSTARTTX_20A, strlen(SCPROFILE_9_VIA_RMTSTARTTX_20A));
+            mo_receiveTXT(mo_getApiContext(), SCPROFILE_9_VIA_RMTSTARTTX_20A, strlen(SCPROFILE_9_VIA_RMTSTARTTX_20A));
         } else if (ocppVersion == MO_OCPP_V201) {
-            loopback.sendTXT(SCPROFILE_9_VIA_REQSTARTTX_20A, strlen(SCPROFILE_9_VIA_REQSTARTTX_20A));
+            mo_receiveTXT(mo_getApiContext(), SCPROFILE_9_VIA_REQSTARTTX_20A, strlen(SCPROFILE_9_VIA_REQSTARTTX_20A));
         }
 
         loop();
@@ -211,7 +207,7 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
 
-        loopback.sendTXT(SCPROFILE_1_ABSOLUTE_LIMIT_16A, strlen(SCPROFILE_1_ABSOLUTE_LIMIT_16A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_1_ABSOLUTE_LIMIT_16A, strlen(SCPROFILE_1_ABSOLUTE_LIMIT_16A));
 
         loop();
 
@@ -225,7 +221,7 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
         
-        loopback.sendTXT(SCPROFILE_2_RELATIVE_TXDEF_24A, strlen(SCPROFILE_2_RELATIVE_TXDEF_24A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_2_RELATIVE_TXDEF_24A, strlen(SCPROFILE_2_RELATIVE_TXDEF_24A));
 
         loop();
 
@@ -252,7 +248,7 @@ TEST_CASE( "SmartCharging" ) {
         });
         
         //send before transaction - expect rejection
-        loopback.sendTXT(SCPROFILE_3_TXPROF_TXID123_20A, strlen(SCPROFILE_3_TXPROF_TXID123_20A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_3_TXPROF_TXID123_20A, strlen(SCPROFILE_3_TXPROF_TXID123_20A));
 
         unsigned int count = 0;
         scService->clearChargingProfile([&count] (int, int, ChargingProfilePurposeType, int) {
@@ -266,7 +262,7 @@ TEST_CASE( "SmartCharging" ) {
         beginTransaction_authorized("mIdTag");
 
         //send during transaction but wrong txId - expect rejection
-        loopback.sendTXT(SCPROFILE_3_TXPROF_TXID123_20A, strlen(SCPROFILE_3_TXPROF_TXID123_20A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_3_TXPROF_TXID123_20A, strlen(SCPROFILE_3_TXPROF_TXID123_20A));
 
         loop();
 
@@ -281,7 +277,7 @@ TEST_CASE( "SmartCharging" ) {
         getTransaction()->setTransactionId(123);
 
         //send during tx with matchin txId - accept
-        loopback.sendTXT(SCPROFILE_3_TXPROF_TXID123_20A, strlen(SCPROFILE_3_TXPROF_TXID123_20A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_3_TXPROF_TXID123_20A, strlen(SCPROFILE_3_TXPROF_TXID123_20A));
 
         loop();
 
@@ -308,9 +304,9 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
         
-        loopback.sendTXT(SCPROFILE_4_VALID_FROM_2024_16A, strlen(SCPROFILE_4_VALID_FROM_2024_16A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_4_VALID_FROM_2024_16A, strlen(SCPROFILE_4_VALID_FROM_2024_16A));
 
-        loopback.sendTXT(SCPROFILE_5_VALID_UNTIL_2022_16A, strlen(SCPROFILE_5_VALID_UNTIL_2022_16A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_5_VALID_UNTIL_2022_16A, strlen(SCPROFILE_5_VALID_UNTIL_2022_16A));
 
         loop();
 
@@ -331,7 +327,7 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
 
-        loopback.sendTXT(SCPROFILE_6_MULTIPLE_PERIODS_16A_20A, strlen(SCPROFILE_6_MULTIPLE_PERIODS_16A_20A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_6_MULTIPLE_PERIODS_16A_20A, strlen(SCPROFILE_6_MULTIPLE_PERIODS_16A_20A));
 
         loop();
 
@@ -352,7 +348,7 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
 
-        loopback.sendTXT(SCPROFILE_7_RECURRING_DAY_2H_16A_20A, strlen(SCPROFILE_7_RECURRING_DAY_2H_16A_20A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_7_RECURRING_DAY_2H_16A_20A, strlen(SCPROFILE_7_RECURRING_DAY_2H_16A_20A));
 
         loop();
 
@@ -380,7 +376,7 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
 
-        loopback.sendTXT(SCPROFILE_8_RECURRING_WEEK_2H_10A_12A, strlen(SCPROFILE_8_RECURRING_WEEK_2H_10A_12A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_8_RECURRING_WEEK_2H_10A_12A, strlen(SCPROFILE_8_RECURRING_WEEK_2H_10A_12A));
 
         loop();
 
@@ -408,9 +404,9 @@ TEST_CASE( "SmartCharging" ) {
             current = limit_current;
         });
 
-        loopback.sendTXT(SCPROFILE_7_RECURRING_DAY_2H_16A_20A, strlen(SCPROFILE_7_RECURRING_DAY_2H_16A_20A)); //stackLevel: 0
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_7_RECURRING_DAY_2H_16A_20A, strlen(SCPROFILE_7_RECURRING_DAY_2H_16A_20A)); //stackLevel: 0
 
-        loopback.sendTXT(SCPROFILE_8_RECURRING_WEEK_2H_10A_12A, strlen(SCPROFILE_8_RECURRING_WEEK_2H_10A_12A)); //stackLevel: 1
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_8_RECURRING_WEEK_2H_10A_12A, strlen(SCPROFILE_8_RECURRING_WEEK_2H_10A_12A)); //stackLevel: 1
 
         loop();
 
@@ -449,11 +445,11 @@ TEST_CASE( "SmartCharging" ) {
 
         loop();
 
-        loopback.sendTXT(SCPROFILE_9_VIA_RMTSTARTTX_20A, strlen(SCPROFILE_9_VIA_RMTSTARTTX_20A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_9_VIA_RMTSTARTTX_20A, strlen(SCPROFILE_9_VIA_RMTSTARTTX_20A));
 
         loop();
 
-        loopback.sendTXT(SCPROFILE_1_ABSOLUTE_LIMIT_16A, strlen(SCPROFILE_1_ABSOLUTE_LIMIT_16A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_1_ABSOLUTE_LIMIT_16A, strlen(SCPROFILE_1_ABSOLUTE_LIMIT_16A));
 
         loop();
 
@@ -476,11 +472,11 @@ TEST_CASE( "SmartCharging" ) {
 
         loop();
 
-        loopback.sendTXT(SCPROFILE_9_VIA_RMTSTARTTX_20A, strlen(SCPROFILE_9_VIA_RMTSTARTTX_20A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_9_VIA_RMTSTARTTX_20A, strlen(SCPROFILE_9_VIA_RMTSTARTTX_20A));
 
         loop();
 
-        loopback.sendTXT(SCPROFILE_10_ABSOLUTE_LIMIT_5KW, strlen(SCPROFILE_10_ABSOLUTE_LIMIT_5KW));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_10_ABSOLUTE_LIMIT_5KW, strlen(SCPROFILE_10_ABSOLUTE_LIMIT_5KW));
 
         loop();
 
@@ -494,7 +490,7 @@ TEST_CASE( "SmartCharging" ) {
 
     SECTION("Get composite schedule") {
 
-        loopback.sendTXT(SCPROFILE_6_MULTIPLE_PERIODS_16A_20A, strlen(SCPROFILE_6_MULTIPLE_PERIODS_16A_20A));
+        mo_receiveTXT(mo_getApiContext(), SCPROFILE_6_MULTIPLE_PERIODS_16A_20A, strlen(SCPROFILE_6_MULTIPLE_PERIODS_16A_20A));
 
         bool checkProcessed = false;
 

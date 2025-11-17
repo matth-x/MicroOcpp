@@ -69,9 +69,7 @@ TEST_CASE( "M - Certificates" ) {
 
     //initialize Context with dummy socket
     mo_initialize();
-
-    LoopbackConnection loopback;
-    mo_getContext()->setConnection(&loopback);
+    mo_useMockServer();
 
     auto ocppVersion = GENERATE(MO_OCPP_V16, MO_OCPP_V201);
     mo_setOcppVersion(ocppVersion);

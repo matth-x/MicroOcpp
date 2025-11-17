@@ -45,11 +45,9 @@ TEST_CASE( "LocalAuth" ) {
 
     //initialize Context without any configs
     mo_initialize();
+    mo_useMockServer();
 
     mo_getContext()->setTicksCb(custom_timer_cb);
-
-    LoopbackConnection loopback;
-    mo_getContext()->setConnection(&loopback);
 
     mo_setOcppVersion(MO_OCPP_V16);
 
@@ -92,7 +90,7 @@ TEST_CASE( "LocalAuth" ) {
         REQUIRE( authService->getLocalAuthorization("mIdTag")->getAuthorizationStatus() == v16::AuthorizationStatus::Accepted );
 
         //begin transaction and delay Authorize request - tx should start immediately
-        loopback.setOnline(false); //Authorize delayed by short offline period
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false); //Authorize delayed by short offline period
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
@@ -102,12 +100,12 @@ TEST_CASE( "LocalAuth" ) {
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
         REQUIRE( mo_isTransactionAuthorized() );
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         mo_endTransaction(nullptr, nullptr);
         loop();
 
         //begin transaction delay Authorize request, but idTag doesn't match local list - tx should start when online again
-        loopback.setOnline(false);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false);
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
@@ -117,7 +115,7 @@ TEST_CASE( "LocalAuth" ) {
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Preparing );
         REQUIRE( !mo_isTransactionAuthorized() );
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         loop();
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
@@ -139,7 +137,7 @@ TEST_CASE( "LocalAuth" ) {
         authService->updateLocalList(localAuthList.as<JsonArray>(), 1, false);
 
         //make charger offline and begin tx - tx should begin after Authorize timeout
-        loopback.setOnline(false);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false);
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
@@ -158,7 +156,7 @@ TEST_CASE( "LocalAuth" ) {
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
         REQUIRE( mo_isTransactionAuthorized() );
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         mo_endTransaction(nullptr, nullptr);
         loop();
 
@@ -172,7 +170,7 @@ TEST_CASE( "LocalAuth" ) {
                 }
             }, reinterpret_cast<void*>(&checkTxTimeout));
 
-        loopback.setOnline(false);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false);
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
@@ -190,7 +188,7 @@ TEST_CASE( "LocalAuth" ) {
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
         REQUIRE( checkTxTimeout );
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         loop();
     }
 
@@ -201,7 +199,7 @@ TEST_CASE( "LocalAuth" ) {
         mo_setConfigurationBool("AllowOfflineTxForUnknownId", true);
 
         //make charger offline and begin tx - tx should begin after Authorize timeout
-        loopback.setOnline(false);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false);
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
@@ -219,7 +217,7 @@ TEST_CASE( "LocalAuth" ) {
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
         REQUIRE( mo_isTransactionAuthorized() );
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         mo_endTransaction(nullptr, nullptr);
         loop();
     }
@@ -231,7 +229,7 @@ TEST_CASE( "LocalAuth" ) {
         mo_setConfigurationBool("AllowOfflineTxForUnknownId", true);
 
         //disconnect WS and begin tx - charger should enter offline mode immediately
-        loopback.setConnected(false);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), false);
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
@@ -241,7 +239,7 @@ TEST_CASE( "LocalAuth" ) {
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
         REQUIRE( mo_isTransactionAuthorized() );
 
-        loopback.setConnected(true);
+        mo_loopback_setConnected(mo_getContext()->getConnection(), true);
         mo_endTransaction(nullptr, nullptr);
         loop();
     }
@@ -264,7 +262,7 @@ TEST_CASE( "LocalAuth" ) {
         REQUIRE( authService->getLocalAuthorization("mIdTagExpired") );
 
         //begin transaction and delay Authorize request - cannot PreAuthorize because entry is expired
-        loopback.setOnline(false); //Authorize delayed by short offline period
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false); //Authorize delayed by short offline period
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
@@ -273,7 +271,7 @@ TEST_CASE( "LocalAuth" ) {
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Preparing );
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         loop();
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
@@ -282,7 +280,7 @@ TEST_CASE( "LocalAuth" ) {
         loop();
 
         //begin transaction and delay Authorize request - cannot PreAuthorize because entry is unauthorized
-        loopback.setOnline(false); //Authorize delayed by short offline period
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false); //Authorize delayed by short offline period
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
@@ -291,7 +289,7 @@ TEST_CASE( "LocalAuth" ) {
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Preparing );
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         loop();
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
@@ -317,7 +315,7 @@ TEST_CASE( "LocalAuth" ) {
         REQUIRE( authService->getLocalAuthorization("mIdTagAccepted") );
 
         //begin transaction and delay Authorize request - tx should start immediately
-        loopback.setOnline(false);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false);
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
@@ -326,12 +324,12 @@ TEST_CASE( "LocalAuth" ) {
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Charging );
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         mo_endTransaction(nullptr, nullptr);
         loop();
 
         //begin transaction, but idTag is expired - AllowOfflineTxForUnknownId must not apply
-        loopback.setOnline(false);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false);
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
@@ -348,7 +346,7 @@ TEST_CASE( "LocalAuth" ) {
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         loop();
     }
 
@@ -375,7 +373,7 @@ TEST_CASE( "LocalAuth" ) {
             });
 
         //begin transaction and delay Authorize request - tx should start immediately
-        loopback.setOnline(false); //Authorize delayed by short offline period
+        mo_loopback_setOnline(mo_getContext()->getConnection(), false); //Authorize delayed by short offline period
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
 
@@ -395,7 +393,7 @@ TEST_CASE( "LocalAuth" ) {
                 }
             }, reinterpret_cast<void*>(&checkTxRejected));
 
-        loopback.setOnline(true);
+        mo_loopback_setOnline(mo_getContext()->getConnection(), true);
         loop();
 
         REQUIRE( mo_getChargePointStatus() == MO_ChargePointStatus_Available );
@@ -584,8 +582,8 @@ TEST_CASE( "LocalAuth" ) {
         mo_deinitialize();
 
         mo_initialize();
+        mo_useMockServer();
         mo_getContext()->setTicksCb(custom_timer_cb);
-        mo_getContext()->setConnection(&loopback);
         mo_setOcppVersion(MO_OCPP_V16);
         authService = mo_getContext()->getModel16().getAuthorizationService();
         mo_setup();

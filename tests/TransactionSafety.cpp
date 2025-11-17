@@ -18,11 +18,9 @@ TEST_CASE( "Transaction safety" ) {
 
     //initialize Context without any configs
     mo_initialize();
+    mo_useMockServer();
 
     mo_getContext()->setTicksCb(custom_timer_cb);
-
-    LoopbackConnection loopback;
-    mo_getContext()->setConnection(&loopback);
 
     auto ocppVersion = GENERATE(MO_OCPP_V16, MO_OCPP_V201);
     mo_setOcppVersion(ocppVersion);
