@@ -736,7 +736,18 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
                     parentIdTag)) {
             //reservation blocks connector
             offlineBlockedResv = true; //when offline, tx is always blocked
-
+            
+            //if Reservation doesn't have ParentID.  And idTag of try to start transaction are unmatch of Reservation.
+            if (reservation->getParentIdTag() != nullptr)
+            {
+                if (strlen(reservation->getParentIdTag()) == 0)
+                {
+                    // Reservation doesn't have ParentID.
+                    MO_DBG_INFO("connector %u reserved - abort transaction", connectorId);
+                    updateTxNotification(TxNotification_ReservationConflict);
+                    return nullptr;
+                }
+            }
             //if parentIdTag is known, abort this tx immediately, otherwise wait for Authorize.conf to decide
             if (parentIdTag) {
                 //parentIdTag known
