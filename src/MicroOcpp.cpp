@@ -547,7 +547,7 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
                         }
                         return;
                     }
-                    if (idTagInfo.containsKey("parentIdTag") && !strcmp(idTagInfo["parenIdTag"], tx->getParentIdTag()))
+                    if (idTagInfo.containsKey("parentIdTag") && !strcmp(idTagInfo["parentIdTag"], tx->getParentIdTag()))
                     {
                         endTransaction_authorized(idTag_capture.c_str(), reason_capture.empty() ? (const char*)nullptr : reason_capture.c_str(), connectorId);
                     }
