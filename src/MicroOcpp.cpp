@@ -547,7 +547,7 @@ bool endTransaction(const char *idTag, const char *reason, unsigned int connecto
                         }
                         return;
                     }
-                    if (idTagInfo.containsKey("parentIdTag") && !strcmp(idTagInfo["parenIdTag"], tx->getParentIdTag()))
+                    if (idTagInfo.containsKey("parentIdTag") && !strcmp(idTagInfo["parentIdTag"], tx->getParentIdTag()))
                     {
                         endTransaction_authorized(idTag_capture.c_str(), reason_capture.empty() ? (const char*)nullptr : reason_capture.c_str(), connectorId);
                     }
@@ -1397,6 +1397,18 @@ void authorize(const char *idTag, OnReceiveConfListener onConf, OnAbortListener 
         MO_DBG_ERR("idTag format violation. Expect c-style string with at most %u characters", IDTAG_LEN_MAX);
         return;
     }
+
+    //check for active transactions
+    for (unsigned int cId = 1; cId < context->getModel().getNumConnectors(); cId++) {
+        if (isTransactionActive(cId)) {
+            //this will check both parentIdTag and idTag
+            if (endTransaction(idTag, "Local", cId)) {
+                MO_DBG_INFO("ended active transaction on connector %d for idTag '%s'", cId, idTag);
+                return;
+            }
+        }
+    }
+
     auto authorize = makeRequest(
         new Authorize(context->getModel(), idTag));
     if (onConf)
