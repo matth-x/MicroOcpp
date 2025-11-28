@@ -103,35 +103,14 @@ void loop() {
     if (/* RFID chip detected? */ false) {
         String idTag = "0123456789ABCD"; //e.g. idTag = RFID.readIdTag();
 
-        if (!getTransaction()) {
-            //no transaction running or preparing. Begin a new transaction
-            Serial.printf("[main] Begin Transaction with idTag %s\n", idTag.c_str());
-
-            /*
-             * Begin Transaction. The OCPP lib will prepare transaction by checking the Authorization
-             * and listen to the ConnectorPlugged Input. When the Authorization succeeds and an EV
-             * is plugged, the OCPP lib will send the StartTransaction
-             */
-            auto ret = beginTransaction(idTag.c_str());
-
-            if (ret) {
-                Serial.println(F("[main] Transaction initiated. OCPP lib will send a StartTransaction when" \
-                                 "ConnectorPlugged Input becomes true and if the Authorization succeeds"));
-            } else {
-                Serial.println(F("[main] No transaction initiated"));
-            }
-
-        } else {
-            //Transaction already initiated. Check if to stop current Tx by RFID card
-            if (idTag.equals(getTransactionIdTag())) {
-                //card matches -> user can stop Tx
-                Serial.println(F("[main] End transaction by RFID card"));
-
-                endTransaction(idTag.c_str());
-            } else {
-                Serial.println(F("[main] Cannot end transaction by RFID card (different card?)"));
-            }
-        }
+        /*
+         * Begin Transaction. The OCPP lib will prepare transaction by checking the Authorization
+         * and listen to the ConnectorPlugged Input. When the Authorization succeeds and an EV
+         * is plugged, the OCPP lib will send the StartTransaction
+         * 
+         * If transaction already exists, stop by RFID card (if idTag or parentIdTag match)
+         */
+        authorize(idTag.c_str());
     }
 
     //... see MicroOcpp.h for more possibilities
