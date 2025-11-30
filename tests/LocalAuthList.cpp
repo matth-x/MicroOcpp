@@ -923,6 +923,44 @@ TEST_CASE( "LocalAuth" ) {
         REQUIRE( checkListVerion == localListVersion );
     }
 
+    SECTION("Id in Local Authorization List should not send Authorize.req (TC_008_1_CS & TC_008_2_CS)") {
+
+        localAuthorizeOffline->setBool(true);
+        localPreAuthorize->setBool(true);
+
+        //set local list
+        StaticJsonDocument<256> localAuthList;
+        localAuthList[0]["idTag"] = "mIdTag";
+        localAuthList[0]["idTagInfo"]["status"] = "Accepted";
+        authService->updateLocalList(localAuthList.as<JsonArray>(), 1, false);
+
+        //patch Authorize so we can check if it is called
+        bool checkAuthorize = false;
+        getOcppContext()->getOperationRegistry().registerOperation("Authorize", [&checkAuthorize] () {
+            return new Ocpp16::CustomOperation("Authorize",
+                [&checkAuthorize] (JsonObject) {
+                    checkAuthorize = true;
+                },
+                [] () {
+                    return createEmptyDocument();
+                });});
+
+        //begin transaction
+        //Authorize should be skipped because of LocalPreAuthorize & LocalAuthorizeOffline
+        loopback.setOnline(true);
+
+        REQUIRE( connector->getStatus() == ChargePointStatus_Available );
+
+        beginTransaction("mIdTag");
+        loop();
+
+        REQUIRE( !checkAuthorize ); // Ensure Authorize.req was NOT sent
+        REQUIRE( connector->getStatus() == ChargePointStatus_Charging );
+
+        endTransaction();
+        loop();
+    }
+
     mocpp_deinitialize();
 }
 
