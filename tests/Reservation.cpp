@@ -207,37 +207,60 @@ TEST_CASE( "Reservation" ) {
 
         //if connector 0 is reserved, accept at most one further reservation
         REQUIRE( rService->updateReservation(1000, 0, expiryDate, idTag, parentIdTag) );
-        REQUIRE( rService->updateReservation(1001, 1, expiryDate, idTag, parentIdTag) );
-        REQUIRE( !rService->updateReservation(1002, 2, expiryDate, idTag, parentIdTag) );
-        REQUIRE( model.getConnector(2)->getStatus() == ChargePointStatus_Available );
+        //first available connector reserved by connector 0 reservation
+        REQUIRE( !rService->updateReservation(1001, 1, expiryDate, idTag, parentIdTag) );
+        REQUIRE( rService->updateReservation(1002, 2, expiryDate, idTag, parentIdTag) );
+
+        loop();
+        REQUIRE( model.getConnector(1)->getStatus() == ChargePointStatus_Reserved );
+        REQUIRE( model.getConnector(2)->getStatus() == ChargePointStatus_Reserved );
 
         //reset reservations
         rService->getReservationById(1000)->clear();
-        rService->getReservationById(1001)->clear();
+        rService->getReservationById(1002)->clear();
         REQUIRE( model.getConnector(1)->getStatus() == ChargePointStatus_Available );
+        REQUIRE( model.getConnector(2)->getStatus() == ChargePointStatus_Available );
 
         //if connector 0 is reserved, ensure that at least one physical connector remains available for the idTag of the reservation
         REQUIRE( rService->updateReservation(1000, 0, expiryDate, idTag, parentIdTag) );
 
-        beginTransaction("other idTag", 1);
+        beginTransaction("other idTag", 2);
         loop();
-        REQUIRE( model.getConnector(1)->getStatus() == ChargePointStatus_Charging );
+        REQUIRE( model.getConnector(2)->getStatus() == ChargePointStatus_Charging );
+
+        endTransaction(nullptr, nullptr, 2);
+        loop();
+
+        REQUIRE( model.getConnector(2)->getStatus() == ChargePointStatus_Available );
 
         bool checkTxRejected = false;
         setTxNotificationOutput([&checkTxRejected] (Transaction*, TxNotification txNotification) {
             if (txNotification == TxNotification_ReservationConflict) {
                 checkTxRejected = true;
             }
-        }, 2);
+        }, 1);
 
-        beginTransaction("other idTag 2", 2);
+        beginTransaction("other idTag 2", 1);
         loop();
         REQUIRE( checkTxRejected );
-        REQUIRE( model.getConnector(2)->getStatus() == ChargePointStatus_Available );
+        REQUIRE( model.getConnector(1)->getStatus() == ChargePointStatus_Reserved );
+
+        beginTransaction("mIdTag", 1);
+        loop();
         
+        REQUIRE( model.getConnector(1)->getStatus() == ChargePointStatus_Charging );
 
         endTransaction(nullptr, nullptr, 1);
         loop();
+
+        //check if we skip connector 1 when unavailable
+        model.getConnector(1)->setAvailabilityVolatile(false);
+        REQUIRE( rService->updateReservation(1003, 0, expiryDate, idTag, parentIdTag) );
+        loop();
+        REQUIRE( model.getConnector(1)->getStatus() == ChargePointStatus_Unavailable );
+        REQUIRE( model.getConnector(2)->getStatus() == ChargePointStatus_Reserved );
+        //@TODO: can we reserve Unavailable connectors?
+        // REQUIRE( !rService->updateReservation(1004, 1, expiryDate, "other idTag 3", nullptr) );
     }
 
     SECTION("Expiry date") {
