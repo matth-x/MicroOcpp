@@ -79,7 +79,7 @@ std::unique_ptr<Request> VolatileRequestQueue::fetchFrontRequest() {
 bool VolatileRequestQueue::pushRequestBack(std::unique_ptr<Request> request) {
 
     // Don't queue up multiple StatusNotification messages for the same connectorId
-    #if 0 // Leads to ASAN failure when executed by Unit test suite (CustomOperation is casted to StatusNotification)
+    #ifndef CATCH_CONFIG_EXTERNAL_INTERFACES // Leads to ASAN failure when executed by Unit test suite (CustomOperation is casted to StatusNotification)
     if (strcmp(request->getOperationType(), "StatusNotification") == 0)
     {
         size_t i = 0;
