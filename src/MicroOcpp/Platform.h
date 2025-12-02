@@ -72,7 +72,7 @@ MO_EXTERN_C void mocpp_set_console_out(void (*console_out)(const char *msg));
 #elif MO_PLATFORM == MO_PLATFORM_ESPIDF
 #include "esp_log.h"
 
-#define MO_CONSOLE_PRINTF(X, ...) ESP_LOGI("MicroOcpp", X, ##__VA_ARGS__)
+#define MO_CONSOLE_PRINTF(X, ...) esp_log_write(ESP_LOG_INFO, "MicroOcpp", X, ##__VA_ARGS__)
 #elif MO_PLATFORM == MO_PLATFORM_UNIX
 #include <stdio.h>
 
