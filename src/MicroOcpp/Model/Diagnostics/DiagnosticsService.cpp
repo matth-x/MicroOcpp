@@ -59,7 +59,7 @@ void DiagnosticsService::loop() {
     }
 
     const auto& timestampNow = context.getModel().getClock().now();
-    if (retries > 0 && timestampNow >= nextTry) {
+    if (retries >= 0 && timestampNow >= nextTry) {
 
         if (!uploadIssued) {
             if (onUpload != nullptr) {
@@ -69,7 +69,7 @@ void DiagnosticsService::loop() {
                 uploadFailure = false;
             } else {
                 MO_DBG_ERR("onUpload must be set! (see setOnUpload). Will abort");
-                retries = 0;
+                retries = -1;
                 uploadIssued = false;
                 uploadFailure = true;
             }
@@ -80,7 +80,7 @@ void DiagnosticsService::loop() {
                 //success!
                 MO_DBG_DEBUG("end upload routine (by status)");
                 uploadIssued = false;
-                retries = 0;
+                retries = -1;
             }
 
             //check if maximum time elapsed or failed
@@ -93,7 +93,7 @@ void DiagnosticsService::loop() {
                     //No way to find out if failed. But maximum time has elapsed. Assume success
                     MO_DBG_DEBUG("end upload routine (by timer)");
                     uploadIssued = false;
-                    retries = 0;
+                    retries = -1;
                 } else {
                     //either we have UploadFailed status or (NotUploaded + timeout) here
                     MO_DBG_WARN("Upload timeout or failed");
@@ -108,7 +108,7 @@ void DiagnosticsService::loop() {
                     }
                     retries--;
 
-                    if (retries == 0) {
+                    if (retries == -1) {
                         MO_DBG_DEBUG("end upload routine (no more retry)");
                         uploadFailure = true;
                     }
@@ -119,7 +119,7 @@ void DiagnosticsService::loop() {
 }
 
 //timestamps before year 2021 will be treated as "undefined"
-MicroOcpp::String DiagnosticsService::requestDiagnosticsUpload(const char *location, unsigned int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime) {
+MicroOcpp::String DiagnosticsService::requestDiagnosticsUpload(const char *location, int retries, unsigned int retryInterval, Timestamp startTime, Timestamp stopTime) {
     if (onUpload == nullptr) {
         return makeString(getMemoryTag());
     }
@@ -177,6 +177,7 @@ MicroOcpp::String DiagnosticsService::requestDiagnosticsUpload(const char *locat
     nextTry = context.getModel().getClock().now();
     nextTry += 5; //wait for 5s before upload
     uploadIssued = false;
+    uploadFailure = false;
 
 #if MO_DBG_LEVEL >= MO_DL_DEBUG
     {
@@ -191,6 +192,11 @@ MicroOcpp::String DiagnosticsService::requestDiagnosticsUpload(const char *locat
 
 DiagnosticsStatus DiagnosticsService::getDiagnosticsStatus() {
     if (uploadFailure) {
+        if (lastReportedStatus != DiagnosticsStatus::Uploading && 
+            lastReportedStatus != DiagnosticsStatus::UploadFailed) {
+            //TC_045_2_CS Ensure Uploading is reported at least once before UploadFailed
+            return DiagnosticsStatus::Uploading;
+        }
         return DiagnosticsStatus::UploadFailed;
     }
 

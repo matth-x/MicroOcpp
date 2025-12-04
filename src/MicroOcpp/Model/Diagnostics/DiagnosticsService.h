@@ -29,7 +29,7 @@ private:
     Context& context;
     
     String location;
-    unsigned int retries = 0;
+    int retries = -1;
     unsigned int retryInterval = 0;
     Timestamp startTime;
     Timestamp stopTime;
@@ -68,7 +68,7 @@ public:
     //timestamps before year 2021 will be treated as "undefined"
     //returns empty std::string if onUpload is missing or upload cannot be scheduled for another reason
     //returns fileName of diagnostics file to be uploaded if upload has been scheduled
-    String requestDiagnosticsUpload(const char *location, unsigned int retries = 1, unsigned int retryInterval = 0, Timestamp startTime = Timestamp(), Timestamp stopTime = Timestamp());
+    String requestDiagnosticsUpload(const char *location, int retries = 1, unsigned int retryInterval = 0, Timestamp startTime = Timestamp(), Timestamp stopTime = Timestamp());
 
     Ocpp16::DiagnosticsStatus getDiagnosticsStatus();
 
