@@ -782,6 +782,12 @@ std::shared_ptr<Transaction> Connector::beginTransaction(const char *idTag) {
         transaction->setAuthorized();
 
         updateTxNotification(TxNotification_Authorized);
+
+        //TC_008_1_CS & TC_008_2_CS / The Charge Point does NOT send a Authorize.req
+        if (localAuthorizeOfflineBool && localAuthorizeOfflineBool->getBool()) {
+            transaction->commit();
+            return transaction;
+        }
     }
 
     transaction->commit();
