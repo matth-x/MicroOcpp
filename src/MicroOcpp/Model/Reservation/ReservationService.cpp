@@ -183,6 +183,22 @@ Reservation *ReservationService::getReservationById(int reservationId) {
 }
 
 bool ReservationService::updateReservation(int reservationId, unsigned int connectorId, Timestamp expiryDate, const char *idTag, const char *parentIdTag) {
+    //TC_049_CS / 2.21.2 / Reservation of a Charge Point - Transaction
+    if (connectorId == 0) {
+        //find the first available connector for this reservation
+        for (unsigned int cId = 1; cId < context.getModel().getNumConnectors(); cId++) {
+            auto connector = context.getModel().getConnector(cId);
+            if (connector && connector->getStatus() == ChargePointStatus_Available && !getReservation(cId)) {
+                connectorId = cId;
+                break;
+            }
+        }
+        if (connectorId == 0) {
+            MO_DBG_DEBUG("no available connector for connectorId 0 reservation");
+            return false;
+        }
+    }
+
     if (auto reservation = getReservationById(reservationId)) {
         if (getReservation(connectorId) && getReservation(connectorId) != reservation && getReservation(connectorId)->isActive()) {
             MO_DBG_DEBUG("found blocking reservation at connectorId %u", connectorId);
