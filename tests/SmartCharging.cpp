@@ -37,6 +37,8 @@
 
 #define SCPROFILE_10_ABSOLUTE_LIMIT_5KW        "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":0,\"csChargingProfiles\":{\"chargingProfileId\":10,\"stackLevel\":0,\"chargingProfilePurpose\":\"ChargePointMaxProfile\",\"chargingProfileKind\":\"Absolute\",\"chargingSchedule\":{\"startSchedule\":\"2023-01-01T00:00:00.000Z\",\"chargingRateUnit\":\"W\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":5000,\"numberPhases\":3}]}}}]"
 
+#define TC_056_CS_TXDEFPROFILE_ABSOLUTE_6A     "[2,\"testmsg\",\"SetChargingProfile\",{\"connectorId\":1,\"csChargingProfiles\":{\"chargingProfileId\":41,\"stackLevel\":0,\"chargingProfilePurpose\":\"TxDefaultProfile\",\"chargingProfileKind\":\"Absolute\",\"validFrom\":\"2023-01-01T00:00:00Z\",\"validTo\":\"2023-01-01T00:06:00Z\",\"chargingSchedule\":{\"duration\":304,\"startSchedule\":\"2023-01-01T00:00:00Z\",\"chargingRateUnit\":\"A\",\"chargingSchedulePeriod\":[{\"startPeriod\":0,\"limit\":6.000000,\"numberPhases\":1}]}}}]"
+
 
 using namespace MicroOcpp;
 
@@ -834,6 +836,26 @@ TEST_CASE( "SmartCharging" ) {
         )));
         loop();
         REQUIRE( checkProcessed );
+    }
+
+    SECTION("TC_056_CS - Ensures that TxDefaultProfile appears in composite schedule even without active transaction") {
+        
+        loop();
+        // Ensure no active transaction
+        REQUIRE(getTransaction() == nullptr);
+
+        // Set the TxDefaultProfile as per OCTT TC_056_CS specification
+        loopback.sendTXT(TC_056_CS_TXDEFPROFILE_ABSOLUTE_6A, strlen(TC_056_CS_TXDEFPROFILE_ABSOLUTE_6A));
+        loop();
+
+        // Get composite schedule and verify the limit is 6A (not -1 indicating no limit)
+        auto schedule = scService->getCompositeSchedule(1, 300, ChargingRateUnitType_Optional::Amp);
+        REQUIRE(schedule);
+        REQUIRE(schedule->chargingSchedulePeriod.size() > 0);
+        
+        // "Limit 1 should be 6.000000" as per OCTT test case
+        REQUIRE(schedule->chargingSchedulePeriod[0].limit == Approx(6.0f));
+        REQUIRE(schedule->chargingSchedulePeriod[0].numberPhases == 1);
     }
 
     scService->clearChargingProfile([] (int, int, ChargingProfilePurposeType, int) {
