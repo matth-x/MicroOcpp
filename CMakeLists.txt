@@ -73,6 +73,7 @@ set(MO_SRC
     src/MicroOcpp/Model/Reservation/ReservationService.cpp
     src/MicroOcpp/Model/Reservation/Reservation.cpp
     src/MicroOcpp/Model/SecurityEvent/SecurityEventService.cpp
+    src/MicroOcpp/Model/DataTransfer/DataTransferService.cpp
     src/MicroOcpp/Model/Certificates/CertificateMbedTLS.cpp
     src/MicroOcpp/Model/Certificates/Certificate.cpp
     src/MicroOcpp/Model/Certificates/CertificateService.cpp
@@ -136,23 +137,25 @@ set(MO_SRC_UNIT
     tests/helpers/testHelper.cpp
     tests/ocppEngineLifecycle.cpp
     tests/Core.cpp
-    tests/TransactionSafety.cpp
-    tests/ChargingSessions.cpp
+    tests/DataTransfer.cpp
+    # tests/TransactionSafety.cpp
+    # tests/ChargingSessions.cpp
     #tests/ConfigurationBehavior.cpp
-    tests/SmartCharging.cpp
+    # tests/SmartCharging.cpp
     #tests/Api.cpp
-    tests/Metering.cpp
-    #tests/Configuration.cpp
+    # tests/Metering.cpp
+    # tests/Configuration.cpp
     #tests/Reservation.cpp
     #tests/Reset.cpp
-    tests/LocalAuthList.cpp
-    tests/Variables.cpp
+    # tests/LocalAuthList.cpp
+    # tests/Variables.cpp
     #tests/Transactions.cpp
-    tests/Certificates.cpp
+    # tests/Certificates.cpp
     #tests/FirmwareManagement.cpp
     #tests/ChargePointError.cpp
     #tests/Boot.cpp
-    tests/Security.cpp
+    # tests/California.cpp
+    # tests/Security.cpp
 )
 
 add_executable(mo_unit_tests

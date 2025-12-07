@@ -2,15 +2,21 @@
 // Copyright Matthias Akstaller 2019 - 2024
 // MIT License
 
-#include <MicroOcpp/Operations/DataTransfer.h>
-#include <MicroOcpp/Debug.h>
 
-#if MO_ENABLE_V16
+#include <MicroOcpp/Model/DataTransfer/DataTransferService.h>
+#include <MicroOcpp/Operations/DataTransfer.h>
+#include <MicroOcpp/Context.h>
+#include <MicroOcpp/Debug.h>
+#include <cstring>
+#include <memory>
+
+#if MO_ENABLE_V16 || MO_ENABLE_V201
 
 using namespace MicroOcpp;
-using namespace MicroOcpp::v16;
 
-DataTransfer::DataTransfer(const char *msg) : MemoryManaged("v16.Operation.", "DataTransfer") {
+DataTransfer::DataTransfer(Context& context, const char *msg) 
+    : MemoryManaged("v16/v201.Operation.", "DataTransfer"), context(context)
+{
     if (msg) {
         size_t size = strlen(msg);
         this->msg = static_cast<char*>(MO_MALLOC(getMemoryTag(), size));
@@ -34,6 +40,11 @@ DataTransfer::DataTransfer(const char *msg) : MemoryManaged("v16.Operation.", "D
 DataTransfer::~DataTransfer() {
     MO_FREE(msg);
     msg = nullptr;
+    if (op)
+    {
+        delete op;
+        op = nullptr;
+    }
 }
 
 const char* DataTransfer::getOperationType(){
@@ -59,14 +70,38 @@ void DataTransfer::processConf(JsonObject payload){
 }
 
 void DataTransfer::processReq(JsonObject payload) {
-    // Do nothing - we're just required to reject these DataTransfer requests
+    if (payload.containsKey("vendorId") && payload.containsKey("messageId") && payload.containsKey("data"))
+    {
+        auto dataTransferService = context.getModel().getDataTransferService();
+        if (dataTransferService) {
+            op = dataTransferService->getRegisteredOperation(payload["vendorId"], payload["messageId"]);
+            if (op) {
+                op->processReq(payload["data"]);
+            }
+            else {
+                MO_DBG_DEBUG("Failed to find DataTransfer operation for vendorId: %s and messageId: %s", 
+                    payload["vendorId"].as<const char*>(), payload["messageId"].as<const char*>());
+            }
+        }
+    }
+    else {
+        // Op set to nullptr if no operation was found
+        op = nullptr;
+    }
 }
 
-std::unique_ptr<JsonDoc> DataTransfer::createConf(){
-    auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
-    JsonObject payload = doc->to<JsonObject>();
-    payload["status"] = "Rejected";
-    return doc;
+std::unique_ptr<JsonDoc> DataTransfer::createConf() {
+    // processReq() should have been called before createConf()
+    // if op is not nullptr, it will have itself createConf
+    if (op) {
+        return op->createConf();
+    }
+    else {
+        auto doc = makeJsonDoc(getMemoryTag(), JSON_OBJECT_SIZE(1));
+        JsonObject payload = doc->to<JsonObject>();
+        payload["status"] = "Rejected";
+        return doc;
+    }
 }
 
-#endif //MO_ENABLE_V16
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201

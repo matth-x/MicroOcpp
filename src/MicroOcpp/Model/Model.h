@@ -24,6 +24,7 @@ namespace MicroOcpp {
 class BootService;
 class HeartbeatService;
 class RemoteControlService;
+class DataTransferService;
 
 #if MO_ENABLE_DIAGNOSTICS
 class DiagnosticsService;
@@ -49,6 +50,7 @@ private:
     BootService *bootService = nullptr;
     HeartbeatService *heartbeatService = nullptr;
     RemoteControlService *remoteControlService = nullptr;
+    DataTransferService *dataTransferService = nullptr;
 
 #if MO_ENABLE_DIAGNOSTICS
     DiagnosticsService *diagnosticsService = nullptr;
@@ -86,6 +88,7 @@ public:
     BootService *getBootService();
     HeartbeatService *getHeartbeatService();
     RemoteControlService *getRemoteControlService();
+    DataTransferService *getDataTransferService();
 
 #if MO_ENABLE_DIAGNOSTICS
     DiagnosticsService *getDiagnosticsService();

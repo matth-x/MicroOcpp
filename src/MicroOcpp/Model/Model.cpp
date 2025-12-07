@@ -25,7 +25,7 @@
 #include <MicroOcpp/Model/Availability/AvailabilityService.h>
 #include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 #include <MicroOcpp/Model/SecurityEvent/SecurityEventService.h>
-#include <MicroOcpp/Operations/DataTransfer.h>
+#include <MicroOcpp/Model/DataTransfer/DataTransferService.h>
 #include <MicroOcpp/Operations/TriggerMessage.h>
 #include <MicroOcpp/Debug.h>
 
@@ -179,6 +179,13 @@ RemoteControlService *ModelCommon::getRemoteControlService() {
         remoteControlService = new RemoteControlService(context);
     }
     return remoteControlService;
+}
+
+DataTransferService *ModelCommon::getDataTransferService() {
+    if (!dataTransferService) {
+        dataTransferService = new DataTransferService(context);
+    }
+    return dataTransferService;
 }
 
 #if MO_ENABLE_DIAGNOSTICS
@@ -439,17 +446,18 @@ bool v16::Model::setup() {
     }
 #endif //MO_ENABLE_RESERVATION
 
+    if (!getDataTransferService() || !getDataTransferService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
     // Ensure this is set up last. ConfigurationService::setup() loads the persistent config values from flash
     if (!getConfigurationService() || !getConfigurationService()->setup()) {
         MO_DBG_ERR("setup failure");
         return false;
     }
 
-    updateSupportedStandardProfiles();
 
-    // Register remainder of operations which don't have dedicated service
-    context.getMessageService().registerOperation("DataTransfer", [] (Context&) -> Operation* {
-        return new v16::DataTransfer();});
+    updateSupportedStandardProfiles();
 
     return true;
 }

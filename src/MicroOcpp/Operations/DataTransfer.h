@@ -6,18 +6,21 @@
 #define MO_DATATRANSFER_H
 
 #include <MicroOcpp/Core/Operation.h>
+#include <MicroOcpp/Context.h>
 #include <MicroOcpp/Version.h>
+#include <memory>
 
-#if MO_ENABLE_V16
+#if MO_ENABLE_V16 || MO_ENABLE_V201
 
 namespace MicroOcpp {
-namespace v16 {
 
 class DataTransfer : public Operation, public MemoryManaged {
 private:
-    char *msg = nullptr;
+    Operation* op = nullptr;
+    Context& context;
+    char* msg = nullptr;
 public:
-    DataTransfer(const char *msg = nullptr);
+    DataTransfer(Context& context, const char *msg = nullptr);
     ~DataTransfer();
 
     const char* getOperationType() override;
@@ -32,7 +35,6 @@ public:
 
 };
 
-} //namespace v16
 } //namespace MicroOcpp
-#endif //MO_ENABLE_V16
+#endif //MO_ENABLE_V16 || MO_ENABLE_V201
 #endif
