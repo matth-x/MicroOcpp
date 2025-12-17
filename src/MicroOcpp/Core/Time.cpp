@@ -82,14 +82,19 @@ bool Timestamp::setTime(const char *jsonDateString) {
     //optional fractals
     int ms = 0;
     if (jsonDateString[19] == '.') {
-        if (isdigit(jsonDateString[20]) ||   //1
-            isdigit(jsonDateString[21]) ||   //2
-            isdigit(jsonDateString[22])) {
-            
-            ms  =  (jsonDateString[20] - '0') * 100 +
-                    (jsonDateString[21] - '0') * 10 +
-                    (jsonDateString[22] - '0');
+        // Check and parse each fractional digit individually to prevent OOB reads
+        if (jsonDateString[20] != '\0' && isdigit(jsonDateString[20])) {
+            ms = (jsonDateString[20] - '0') * 100;
+
+            if (jsonDateString[21] != '\0' && isdigit(jsonDateString[21])) {
+                ms += (jsonDateString[21] - '0') * 10;
+
+                if (jsonDateString[22] != '\0' && isdigit(jsonDateString[22])) {
+                    ms += (jsonDateString[22] - '0');
+                }
+            }
         } else {
+            // Decimal point present but no valid fractional digits
             return false;
         }
     }

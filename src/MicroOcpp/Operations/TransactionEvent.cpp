@@ -131,7 +131,8 @@ std::unique_ptr<JsonDoc> TransactionEvent::createReq() {
 void TransactionEvent::processConf(JsonObject payload) {
 
     if (payload.containsKey("idTokenInfo")) {
-        if (strcmp(payload["idTokenInfo"]["status"], "Accepted")) {
+        const char *status = payload["idTokenInfo"]["status"] | "_Undefined";
+        if (strcmp(status, "Accepted")) {
             MO_DBG_INFO("transaction deAuthorized");
             txEvent->transaction->active = false;
             txEvent->transaction->isDeauthorized = true;

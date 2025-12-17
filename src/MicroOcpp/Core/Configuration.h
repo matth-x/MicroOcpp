@@ -41,5 +41,8 @@ bool configuration_clean_unused(); //remove configs which haven't been accessed
 //default implementation for common validator
 bool VALIDATE_UNSIGNED_INT(const char*);
 
+//safely convert string to int with overflow protection; returns false on null, invalid format, or overflow
+bool safeStringToInt(const char *str, int *result);
+
 } //end namespace MicroOcpp
 #endif

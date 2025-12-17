@@ -115,16 +115,31 @@ Request::CreateRequestResult Request::createRequest(JsonDoc& requestJson) {
 }
 
 bool Request::receiveResponse(JsonArray response){
+
+    /*
+     * Validate array size to prevent NULL pointer dereference
+     */
+    if (response.size() < 2) {
+        MO_DBG_ERR("malformed response: insufficient elements (size=%zu, expected>=2)", response.size());
+        return false;
+    }
+
     /*
      * check if messageIDs match. If yes, continue with this function. If not, return false for message not consumed
      */
-    if (messageID.compare(response[1].as<const char*>())){
+    if (!response[1].is<const char*>() || messageID.compare(response[1].as<const char*>())) {
         return false;
     }
 
     int messageTypeId = response[0] | -1;
 
     if (messageTypeId == MESSAGE_TYPE_CALLRESULT) {
+
+        // CALLRESULT format: [3, messageId, payload] - requires 3 elements
+        if (response.size() < 3) {
+            MO_DBG_ERR("malformed CALLRESULT: insufficient elements (size=%zu, expected>=3)", response.size());
+            return false;
+        }
 
         /*
         * Hand the payload over to the Operation object
@@ -142,6 +157,12 @@ bool Request::receiveResponse(JsonArray response){
         */
         return true;
     } else if (messageTypeId == MESSAGE_TYPE_CALLERROR) {
+
+        // CALLERROR format: [4, messageId, errorCode, errorDescription, errorDetails] - requires 5 elements
+        if (response.size() < 5) {
+            MO_DBG_ERR("malformed CALLERROR: insufficient elements (size=%zu, expected>=5)", response.size());
+            return false;
+        }
 
         /*
         * Hand the error over to the Operation object
@@ -165,6 +186,12 @@ bool Request::receiveResponse(JsonArray response){
 }
 
 bool Request::receiveRequest(JsonArray request) {
+
+    // CALL format: [2, messageId, action, payload] - requires 4 elements
+    if (request.size() < 4) {
+        MO_DBG_ERR("malformed request: insufficient elements (size=%zu, expected>=4)", request.size());
+        return false;
+    }
 
     if (!request[1].is<const char*>()) {
         MO_DBG_ERR("malformatted msgId");
