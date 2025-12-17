@@ -892,6 +892,12 @@ bool FtpTransferMbedTLS::read_url_data(const char *data_url_raw) {
         return false;
     }
 
+    // Validate that all values are valid octets (0-255)
+    if (h1 > 255 || h2 > 255 || h3 > 255 || h4 > 255 || p1 > 255 || p2 > 255) {
+        MO_DBG_ERR("PASV response contains invalid octet value");
+        return false;
+    }
+
     unsigned int port = 256U * p1 + p2;
 
     char buf [64] = {'\0'};

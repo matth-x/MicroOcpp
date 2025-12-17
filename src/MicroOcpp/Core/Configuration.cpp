@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <algorithm>
+#include <climits>
 #include <ArduinoJson.h>
 
 namespace MicroOcpp {
@@ -252,6 +253,99 @@ bool VALIDATE_UNSIGNED_INT(const char *value) {
             return false;
         }
     }
+    return true;
+}
+
+bool safeStringToInt(const char* str, int* result) {
+    if (!str || !result) {
+        return false;
+    }
+
+    // Skip leading whitespace
+    while (*str == ' ' || *str == '\t') {
+        str++;
+    }
+
+    // Check for empty string
+    if (*str == '\0') {
+        return false;
+    }
+
+    // Handle sign
+    bool negative = false;
+    if (*str == '-') {
+        negative = true;
+        str++;
+    } else if (*str == '+') {
+        str++;
+    }
+
+    // Check if there are digits after sign
+    if (*str < '0' || *str > '9') {
+        return false;
+    }
+
+    // Count digits and validate characters BEFORE parsing
+    int nDigits = 0;
+    const char* p = str;
+    while (*p >= '0' && *p <= '9') {
+        nDigits++;
+        p++;
+    }
+
+    // Check for trailing non-digit characters (allow decimal point for compatibility)
+    if (*p != '\0' && *p != '.') {
+        return false;
+    }
+
+    // Determine maximum safe digit count based on int size
+    int INT_MAXDIGITS;
+    if (sizeof(int) >= 4UL) {
+        INT_MAXDIGITS = 10;  // Safe range: allows valid 10-digit integers within INT_MAX
+    } else {
+        INT_MAXDIGITS = 4;  // Safe range: -9,999 to 9,999
+    }
+
+    // Reject if too many digits (prevents overflow)
+    if (nDigits > INT_MAXDIGITS) {
+        return false;
+    }
+
+    // Now perform the actual conversion with overflow checking
+    int value = 0;
+    const int INT_MAX_DIV_10 = INT_MAX / 10;
+    const int INT_MIN_DIV_10 = INT_MIN / 10;
+
+    while (*str >= '0' && *str <= '9') {
+        int digit = *str - '0';
+
+        if (negative) {
+            // Check for overflow before multiplication
+            if (value < INT_MIN_DIV_10) {
+                return false;
+            }
+            value *= 10;
+            // Check for overflow before subtraction
+            if (value < INT_MIN + digit) {
+                return false;
+            }
+            value -= digit;
+        } else {
+            // Check for overflow before multiplication
+            if (value > INT_MAX_DIV_10) {
+                return false;
+            }
+            value *= 10;
+            // Check for overflow before addition
+            if (value > INT_MAX - digit) {
+                return false;
+            }
+            value += digit;
+        }
+        str++;
+    }
+
+    *result = value;
     return true;
 }
 

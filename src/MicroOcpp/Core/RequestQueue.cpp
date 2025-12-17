@@ -294,16 +294,27 @@ bool RequestQueue::receiveMessage(const char* payload, size_t length) {
             int messageTypeId = doc[0] | -1;
 
             if (messageTypeId == MESSAGE_TYPE_CALL) {
-                receiveRequest(doc.as<JsonArray>());      
+                // Validate minimum array size for CALL messages
+                if (doc.as<JsonArray>().size() < 4) {
+                    MO_DBG_WARN("Invalid OCPP CALL message: insufficient elements");
+                    break;
+                }
+                receiveRequest(doc.as<JsonArray>());
                 success = true;
             } else if (messageTypeId == MESSAGE_TYPE_CALLRESULT ||
                     messageTypeId == MESSAGE_TYPE_CALLERROR) {
+                // Validate minimum array size for response messages
+                size_t minSize = (messageTypeId == MESSAGE_TYPE_CALLRESULT) ? 3 : 5;
+                if (doc.as<JsonArray>().size() < minSize) {
+                    MO_DBG_WARN("Invalid OCPP response message: insufficient elements");
+                    break;
+                }
                 receiveResponse(doc.as<JsonArray>());
                 success = true;
             } else {
                 MO_DBG_WARN("Invalid OCPP message! (though JSON has successfully been deserialized)");
             }
-            break; 
+            break;
         }
         case DeserializationError::InvalidInput:
             MO_DBG_WARN("Invalid input! Not a JSON");
@@ -324,11 +335,22 @@ bool RequestQueue::receiveMessage(const char* payload, size_t length) {
             if (err2.code() == DeserializationError::Ok) {
                 int messageTypeId = doc[0] | -1;
                 if (messageTypeId == MESSAGE_TYPE_CALL) {
+                    // Validate minimum array size
+                    if (doc.as<JsonArray>().size() < 4) {
+                        MO_DBG_WARN("Invalid OCPP CALL message: insufficient elements");
+                        break;
+                    }
                     success = true;
                     auto op = makeRequest(new MsgBufferExceeded(MO_MAX_JSON_CAPACITY, length));
                     receiveRequest(doc.as<JsonArray>(), std::move(op));
                 } else if (messageTypeId == MESSAGE_TYPE_CALLRESULT ||
                             messageTypeId == MESSAGE_TYPE_CALLERROR) {
+                    // Validate minimum array size
+                    size_t minSize = (messageTypeId == MESSAGE_TYPE_CALLRESULT) ? 3 : 5;
+                    if (doc.as<JsonArray>().size() < minSize) {
+                        MO_DBG_WARN("Invalid OCPP response message: insufficient elements");
+                        break;
+                    }
                     success = true;
                     MO_DBG_WARN("crop incoming response");
                     receiveResponse(doc.as<JsonArray>());
@@ -361,6 +383,11 @@ void RequestQueue::receiveResponse(JsonArray json) {
 }
 
 void RequestQueue::receiveRequest(JsonArray json) {
+    // Validate minimum array size before accessing json[2]
+    if (json.size() < 3) {
+        MO_DBG_WARN("malformed request: insufficient elements for action field");
+        return;
+    }
     auto op = operationRegistry.deserializeOperation(json[2] | "UNDEFINED");
     if (op == nullptr) {
         MO_DBG_WARN("OOM");

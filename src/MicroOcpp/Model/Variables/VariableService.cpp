@@ -17,6 +17,7 @@
 #include <MicroOcpp/Operations/GetBaseReport.h>
 #include <MicroOcpp/Operations/NotifyReport.h>
 #include <MicroOcpp/Core/Request.h>
+#include <MicroOcpp/Core/Configuration.h>
 
 #include <cstring>
 #include <cctype>
@@ -327,40 +328,8 @@ SetVariableStatus VariableService::setVariable(Variable::AttributeType attrType,
     bool convertibleBool = true;
     bool numBool = false;
 
-    int nDigits = 0, nNonDigits = 0, nDots = 0, nSign = 0; //"-1.234" has 4 digits, 0 nonDigits, 1 dot and 1 sign. Don't allow comma as seperator. Don't allow e-expressions (e.g. 1.23e-7)
-    for (const char *c = value; *c; ++c) {
-        if (*c >= '0' && *c <= '9') {
-            //int interpretation
-            if (nDots == 0) { //only append number if before floating point
-                nDigits++;
-                numInt *= 10;
-                numInt += *c - '0';
-            }
-        } else if (*c == '.') {
-            nDots++;
-        } else if (c == value && *c == '-') {
-            nSign++;
-        } else {
-            nNonDigits++;
-        }
-    }
-
-    if (nSign == 1) {
-        numInt = -numInt;
-    }
-
-    int INT_MAXDIGITS; //plausibility check: this allows a numerical range of (-999,999,999 to 999,999,999), or (-9,999 to 9,999) respectively
-    if (sizeof(int) >= 4UL)
-        INT_MAXDIGITS = 9;
-    else
-        INT_MAXDIGITS = 4;
-
-    if (nNonDigits > 0 || nDigits == 0 || nSign > 1 || nDots > 1) {
-        convertibleInt = false;
-    }
-
-    if (nDigits > INT_MAXDIGITS) {
-        MO_DBG_DEBUG("Possible integer overflow: key = %s, value = %s", variableName, value);
+    // Use safe string-to-int conversion with overflow protection
+    if (!safeStringToInt(value, &numInt)) {
         convertibleInt = false;
     }
 

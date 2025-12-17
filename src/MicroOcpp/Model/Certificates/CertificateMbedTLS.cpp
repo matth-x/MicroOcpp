@@ -99,6 +99,11 @@ bool ocpp_get_cert_hash(mbedtls_x509_crt& cacert, HashAlgorithmType hashAlg, ocp
         return false;
     }
 
+    if (cacert.serial.len == 0) {
+        MO_DBG_ERR("invalid certificate: zero-length serial number");
+        return false;
+    }
+
     size_t serial_begin = 0; //trunicate leftmost 0x00 bytes
     for (; serial_begin < cacert.serial.len - 1; serial_begin++) { //keep at least 1 byte, even if 0x00
         if (cacert.serial.p[serial_begin] != 0) {
