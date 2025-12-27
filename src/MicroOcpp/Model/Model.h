@@ -137,6 +137,10 @@ class AuthorizationService;
 class ReservationService;
 #endif //MO_ENABLE_RESERVATION
 
+#if MO_ENABLE_CALIFORNIA
+class CaliforniaService;
+#endif // MO_ENABLE_CALIFORNIA
+
 class Model : public MemoryManaged, public ModelCommon {
 private:
     Context& context;
@@ -158,6 +162,10 @@ private:
 #if MO_ENABLE_RESERVATION
     ReservationService *reservationService = nullptr;
 #endif //MO_ENABLE_RESERVATION
+
+#if MO_ENABLE_CALIFORNIA
+    CaliforniaService *californiaService = nullptr;
+#endif // MO_ENABLE_CALIFORNIA
 
     void updateSupportedStandardProfiles();
 
@@ -182,6 +190,10 @@ public:
 #if MO_ENABLE_RESERVATION
     ReservationService *getReservationService();
 #endif //MO_ENABLE_RESERVATION
+
+#if MO_ENABLE_CALIFORNIA
+    CaliforniaService *getCaliforniaService();
+#endif //MO_ENABLE_CALIFORNIA
 
     bool setup();
     void loop();

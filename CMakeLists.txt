@@ -26,6 +26,9 @@ set(MO_SRC
     src/MicroOcpp/Operations/UpdateFirmware.cpp
     src/MicroOcpp/Operations/MeterValues.cpp
     src/MicroOcpp/Operations/DataTransfer.cpp
+    src/MicroOcpp/Operations/DataTransferFinalCost.cpp
+    src/MicroOcpp/Operations/DataTransferRunningCost.cpp
+    src/MicroOcpp/Operations/DataTransferSetUserPrice.cpp
     src/MicroOcpp/Operations/GetCompositeSchedule.cpp
     src/MicroOcpp/Operations/RemoteStartTransaction.cpp
     src/MicroOcpp/Operations/CustomOperation.cpp
@@ -73,6 +76,8 @@ set(MO_SRC
     src/MicroOcpp/Model/Reservation/ReservationService.cpp
     src/MicroOcpp/Model/Reservation/Reservation.cpp
     src/MicroOcpp/Model/SecurityEvent/SecurityEventService.cpp
+    src/MicroOcpp/Model/California/CaliforniaService.cpp
+    src/MicroOcpp/Model/California/CaliforniaUtils.cpp
     src/MicroOcpp/Model/DataTransfer/DataTransferService.cpp
     src/MicroOcpp/Model/Certificates/CertificateMbedTLS.cpp
     src/MicroOcpp/Model/Certificates/Certificate.cpp
@@ -154,7 +159,7 @@ set(MO_SRC_UNIT
     #tests/FirmwareManagement.cpp
     #tests/ChargePointError.cpp
     #tests/Boot.cpp
-    # tests/California.cpp
+    tests/California.cpp
     # tests/Security.cpp
 )
 
@@ -206,6 +211,7 @@ target_compile_definitions(mo_unit_tests PUBLIC
     MO_ENABLE_HEAP_PROFILER=1
     MO_HEAP_PROFILER_EXTERNAL_CONTROL=1
     MO_ENABLE_MOCK_SERVER=1
+    MO_ENABLE_CALIFORNIA=1
     CATCH_CONFIG_EXTERNAL_INTERFACES
 )
 

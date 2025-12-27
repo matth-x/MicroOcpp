@@ -473,7 +473,7 @@ void v16::MeteringServiceEvse::loop() {
     if (mService.meterValueSampleIntervalInt->getInt() >= 1) {
         //record periodic tx data
 
-        if (clock.getUptimeInt() - lastSampleTime >= mService.meterValueSampleIntervalInt->getInt()) {
+        if (clock.getUptimeInt() - lastSampleTime >= mService.meterValueSampleIntervalInt->getInt() || trigger) {
             if (auto sampledMeterValue = takeMeterValue(MO_ReadingContext_SamplePeriodic, MO_FLAG_MeterValuesSampledData)) {
                 if (meterData.size() >= MO_MVRECORD_SIZE) {
                     auto mv = meterData.begin();
@@ -494,8 +494,20 @@ void v16::MeteringServiceEvse::loop() {
             }
 
             lastSampleTime = clock.getUptimeInt();
+            trigger = false;
         }
     }
+}
+
+void v16::MeteringServiceEvse::triggerMeterValues()
+{
+    auto transaction = txSvcEvse->getTransaction();
+    if (!transaction && connectorId != 0 && mService.meterValuesInTxOnlyBool->getBool()) {
+        //don't take any MeterValues outside of transactions on connectorIds other than 0
+        return;
+    }
+
+    trigger = true;
 }
 
 Operation *v16::MeteringServiceEvse::createTriggeredMeterValues() {

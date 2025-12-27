@@ -26,6 +26,7 @@
 #include <MicroOcpp/Model/RemoteControl/RemoteControlService.h>
 #include <MicroOcpp/Model/SecurityEvent/SecurityEventService.h>
 #include <MicroOcpp/Model/DataTransfer/DataTransferService.h>
+#include <MicroOcpp/Model/California/CaliforniaService.h>
 #include <MicroOcpp/Operations/TriggerMessage.h>
 #include <MicroOcpp/Debug.h>
 
@@ -127,6 +128,10 @@ void ModelCommon::loopCommon() {
 
     if (heartbeatService) {
         heartbeatService->loop();
+    }
+
+    if (dataTransferService) {
+        dataTransferService->loop();
     }
 
 #if MO_ENABLE_DIAGNOSTICS
@@ -256,6 +261,11 @@ v16::Model::~Model() {
     delete reservationService;
     reservationService = nullptr;
 #endif //MO_ENABLE_RESERVATION
+
+#if MO_ENABLE_CALIFORNIA
+    delete californiaService;
+    californiaService = nullptr;
+#endif // MO_ENABLE_CALIFORNIA
 
     delete configurationService;
     configurationService = nullptr;
@@ -398,6 +408,15 @@ v16::ReservationService *v16::Model::getReservationService() {
 }
 #endif //MO_ENABLE_RESERVATION
 
+#if MO_ENABLE_CALIFORNIA
+v16::CaliforniaService *v16::Model::getCaliforniaService() {
+    if (!californiaService) {
+        californiaService = new CaliforniaService(context);
+    }
+    return californiaService;
+}
+#endif // MO_ENABLE_CALIFORNIA
+
 bool v16::Model::setup() {
 
     if (!setupCommon()) {
@@ -450,12 +469,19 @@ bool v16::Model::setup() {
         MO_DBG_ERR("setup failure");
         return false;
     }
+
     // Ensure this is set up last. ConfigurationService::setup() loads the persistent config values from flash
     if (!getConfigurationService() || !getConfigurationService()->setup()) {
         MO_DBG_ERR("setup failure");
         return false;
     }
 
+#if MO_ENABLE_CALIFORNIA
+    if (!getCaliforniaService() || !getCaliforniaService()->setup()) {
+        MO_DBG_ERR("setup failure");
+        return false;
+    }
+#endif // MO_ENABLE_CALIFORNIA
 
     updateSupportedStandardProfiles();
 
@@ -497,6 +523,12 @@ void v16::Model::loop() {
         reservationService->loop();
     }
 #endif //MO_ENABLE_RESERVATION
+
+#if MO_ENABLE_CALIFORNIA
+    if (californiaService) {
+        californiaService->loop();
+    }
+#endif // MO_ENABLE_CALIFORNIA
 }
 
 #endif //MO_ENABLE_V16

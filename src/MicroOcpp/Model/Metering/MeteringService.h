@@ -66,6 +66,7 @@ private:
     int32_t lastSampleTime = 0; //in secs since boot
     Timestamp lastAlignedTime; //as unix time stamp
     bool trackTxRunning = false;
+    bool trigger = false; //trigger meterValues by external event if true
 
     bool addTxMeterData(Transaction& transaction, MeterValue *mv);
 
@@ -91,6 +92,11 @@ public:
     void loop();
 
     int32_t readTxEnergyMeter(MO_ReadingContext readingContext);
+
+    /* Trigger MeterValues by outside condition
+     * e.g. OCPP & California Pricing Requirements §3.1.4 RunningCost Message
+     */
+    void triggerMeterValues();
 
     Operation *createTriggeredMeterValues();
 

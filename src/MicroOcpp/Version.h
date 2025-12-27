@@ -73,4 +73,8 @@
 #define MO_ENABLE_DIAGNOSTICS 1
 #endif
 
+#ifndef MO_ENABLE_CALIFORNIA
+#define MO_ENABLE_CALIFORNIA 0
+#endif
+
 #endif
