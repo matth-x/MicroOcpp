@@ -3,12 +3,13 @@
 // MIT License
 
 
+#include <ArduinoJson.hpp>
 #include <MicroOcpp/Model/DataTransfer/DataTransferService.h>
 #include <MicroOcpp/Operations/DataTransfer.h>
+#include <MicroOcpp/Core/Memory.h>
+#include <MicroOcpp/Platform.h>
 #include <MicroOcpp/Context.h>
 #include <MicroOcpp/Debug.h>
-#include <cstring>
-#include <memory>
 
 #if MO_ENABLE_V16 || MO_ENABLE_V201
 
@@ -76,17 +77,23 @@ void DataTransfer::processReq(JsonObject payload) {
         if (dataTransferService) {
             op = dataTransferService->getRegisteredOperation(payload["vendorId"], payload["messageId"]);
             if (op) {
-                op->processReq(payload["data"]);
+                // in ocppv16, data is text
+                // in ocppv201, data is anyType
+                // for more flexibility, we just pass the whole payload to the registered operation
+                op->processReq(payload);
+                errorCode = op->getErrorCode();
             }
             else {
                 MO_DBG_DEBUG("Failed to find DataTransfer operation for vendorId: %s and messageId: %s", 
                     payload["vendorId"].as<const char*>(), payload["messageId"].as<const char*>());
+                errorCode = "NotImplemented";
             }
         }
     }
     else {
         // Op set to nullptr if no operation was found
         op = nullptr;
+        errorCode = "FormationViolation";
     }
 }
 

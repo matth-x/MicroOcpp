@@ -75,11 +75,10 @@ Operation* DataTransferService::getRegisteredOperation(const char *venderId, con
 
 void DataTransferService::clearRegisteredOperation(const char *venderId, const char *messageId)
 {
-    for (auto it = operationRegistry.begin(); it != operationRegistry.end();) {
+    for (auto it = operationRegistry.begin(); it != operationRegistry.end(); ++it) {
         if (std::strcmp(venderId, it->venderId) == 0 && std::strcmp(messageId, it->messageId) == 0) {
             it = operationRegistry.erase(it);
-        } else {
-            it++;
+            break;
         }
     }
 }

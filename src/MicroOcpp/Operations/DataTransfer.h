@@ -19,6 +19,7 @@ private:
     Operation* op = nullptr;
     Context& context;
     char* msg = nullptr;
+    const char* errorCode = nullptr;
 public:
     DataTransfer(Context& context, const char *msg = nullptr);
     ~DataTransfer();
@@ -33,6 +34,7 @@ public:
 
     std::unique_ptr<JsonDoc> createConf() override;
 
+    const char *getErrorCode() override { return errorCode;} 
 };
 
 } //namespace MicroOcpp

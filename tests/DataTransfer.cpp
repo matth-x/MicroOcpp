@@ -98,16 +98,14 @@ int DataTransferMockOperation::receivedConfCount = 0;
 TEST_CASE( "DataTransfer" ) {
     printf("\nRun %s\n",  "DataTransfer");
 
-    auto ocppVersion = GENERATE(MO_OCPP_V16, MO_OCPP_V201);
-
     mo_initialize();
     mo_useMockServer();
 
-    mtime = 0;
+    mo_getContext()->setTicksCb(custom_timer_cb);
+
+    auto ocppVersion = GENERATE(MO_OCPP_V16, MO_OCPP_V201);
     mo_setOcppVersion(ocppVersion);
     mo_setBootNotificationData("TestModel", "TestVendor");
-
-    mo_getContext()->setTicksCb(custom_timer_cb);
 
     SECTION("Register and retrieve operation") {
         mo_setup();
@@ -117,19 +115,19 @@ TEST_CASE( "DataTransfer" ) {
         REQUIRE( dataTransferService != nullptr );
 
         // register operation
-        REQUIRE( dataTransferService->registerOperation("org.mircoocpp.test", "test0", [](Context& context) -> Operation* {
+        REQUIRE( dataTransferService->registerOperation("org.microocpp.test", "test0", [](Context& context) -> Operation* {
             return new DataTransferMockOperation(); }) );
-        REQUIRE( dataTransferService->registerOperation("org.mircoocpp.test", "test1", [](Context& context) -> Operation* {
+        REQUIRE( dataTransferService->registerOperation("org.microocpp.test", "test1", [](Context& context) -> Operation* {
             return new DataTransferMockOperation(); }) );
-        REQUIRE( dataTransferService->registerOperation("org.mircoocpp.test", "test2", [](Context& context) -> Operation* {
+        REQUIRE( dataTransferService->registerOperation("org.microocpp.test", "test2", [](Context& context) -> Operation* {
             return new DataTransferMockOperation(); }) );
 
         // retrieve registered operation
-        auto op = dataTransferService->getRegisteredOperation("org.mircoocpp.test", "test0");
+        auto op = dataTransferService->getRegisteredOperation("org.microocpp.test", "test0");
         REQUIRE( op != nullptr );
-        op = dataTransferService->getRegisteredOperation("org.mircoocpp.test", "test1");
+        op = dataTransferService->getRegisteredOperation("org.microocpp.test", "test1");
         REQUIRE( op != nullptr );
-        op = dataTransferService->getRegisteredOperation("org.mircoocpp.test", "test2");
+        op = dataTransferService->getRegisteredOperation("org.microocpp.test", "test2");
         REQUIRE( op != nullptr );
 
         // retrieve non-registered operation
@@ -138,6 +136,7 @@ TEST_CASE( "DataTransfer" ) {
         REQUIRE( op == nullptr );
         delete op;
     }
+    
 
 
     SECTION("Dispatch registered operation") {
@@ -150,7 +149,7 @@ TEST_CASE( "DataTransfer" ) {
         REQUIRE( dataTransferService->registerOperation("org.microocpp.mock", "mock", [](Context &context) -> Operation* {
             return new DataTransferMockOperation(); }) );
 
-        // dispatch error message id
+        // dispatch error message id 
         mo_getContext()->getMessageService().receiveMessage("[2,\"testmsg\",\"DataTransfer\",{\"vendorId\":\"org.microocpp.mock\",\"messageId\":\"error\",\"data\":\"{\\\"text\\\":\\\"Hello MO\\\"}\"}]", 115);
         loop();
 
@@ -160,8 +159,14 @@ TEST_CASE( "DataTransfer" ) {
 
         REQUIRE( DataTransferMockOperation::receivedReqAndClear() == 0 );
 
-        // dispatch correct message
+        // dispatch correct message ocpp v16
         mo_getContext()->getMessageService().receiveMessage("[2,\"testmsg\",\"DataTransfer\",{\"vendorId\":\"org.microocpp.mock\",\"messageId\":\"mock\",\"data\":\"{\\\"text\\\":\\\"Hello MO\\\"}\"}]", 114);
+        loop();
+
+        REQUIRE( DataTransferMockOperation::receivedReqAndClear() == 1 );
+
+        // dispatch correct message ocpp v201
+        mo_getContext()->getMessageService().receiveMessage("[2,\"testmsg\",\"DataTransfer\",{\"vendorId\":\"org.microocpp.mock\",\"messageId\":\"mock\",\"data\": {\"text\":\"Hello MO\"}}]", 110);
         loop();
 
         REQUIRE( DataTransferMockOperation::receivedReqAndClear() == 1 );
