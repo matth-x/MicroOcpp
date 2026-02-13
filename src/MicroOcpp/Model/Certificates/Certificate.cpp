@@ -88,15 +88,20 @@ int ocpp_cert_hex_to_bytes(unsigned char *dst, size_t dst_size, const char *hex_
         return -1;
     }
 
+    size_t odd_offset = hex_len % 2; // 1 if odd-length, 0 if even
+
     for (size_t i = 0; i < write_len; i++) {
         char octet [2];
 
-        if (i == 0 && hex_len % 2) {
+        if (i == 0 && odd_offset) {
+            // odd-length: first byte uses a single hex char, zero-padded
             octet[0] = '0';
-            octet[1] = hex_src[2*i];
+            octet[1] = hex_src[0];
         } else {
-            octet[0] = hex_src[2*i];
-            octet[1] = hex_src[2*i + 1];
+            // index into hex_src accounting for the odd first nibble
+            size_t src_idx = 2 * i - odd_offset;
+            octet[0] = hex_src[src_idx];
+            octet[1] = hex_src[src_idx + 1];
         }
 
         unsigned char val = 0;

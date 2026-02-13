@@ -258,3 +258,83 @@ TEST_CASE( "M - Certificates" ) {
 #else
 #warning Certificates unit tests depend on MbedTLS
 #endif //MO_ENABLE_MBEDTLS
+
+// Unit tests for hex conversion utilities (no MbedTLS dependency)
+#if MO_ENABLE_CERT_MGMT
+
+#include <MicroOcpp/Model/Certificates/Certificate.h>
+#include <catch2/catch.hpp>
+#include <cstring>
+
+TEST_CASE("ocpp_cert_hex_to_bytes", "[Certificates]") {
+    unsigned char dst[64];
+
+    SECTION("Even-length hex string") {
+        // "ABCD" -> {0xAB, 0xCD}
+        int ret = ocpp_cert_hex_to_bytes(dst, sizeof(dst), "ABCD");
+        REQUIRE(ret == 2);
+        REQUIRE(dst[0] == 0xAB);
+        REQUIRE(dst[1] == 0xCD);
+    }
+
+    SECTION("Odd-length hex string") {
+        // "ABC" -> {0x0A, 0xBC}
+        int ret = ocpp_cert_hex_to_bytes(dst, sizeof(dst), "ABC");
+        REQUIRE(ret == 2);
+        REQUIRE(dst[0] == 0x0A);
+        REQUIRE(dst[1] == 0xBC);
+    }
+
+    SECTION("Single character hex string") {
+        // "F" -> {0x0F}
+        int ret = ocpp_cert_hex_to_bytes(dst, sizeof(dst), "F");
+        REQUIRE(ret == 1);
+        REQUIRE(dst[0] == 0x0F);
+    }
+
+    SECTION("Longer odd-length hex string") {
+        // "1ABCD" -> {0x01, 0xAB, 0xCD}
+        int ret = ocpp_cert_hex_to_bytes(dst, sizeof(dst), "1ABCD");
+        REQUIRE(ret == 3);
+        REQUIRE(dst[0] == 0x01);
+        REQUIRE(dst[1] == 0xAB);
+        REQUIRE(dst[2] == 0xCD);
+    }
+
+    SECTION("Lowercase hex string") {
+        int ret = ocpp_cert_hex_to_bytes(dst, sizeof(dst), "abcdef");
+        REQUIRE(ret == 3);
+        REQUIRE(dst[0] == 0xAB);
+        REQUIRE(dst[1] == 0xCD);
+        REQUIRE(dst[2] == 0xEF);
+    }
+
+    SECTION("Null and empty inputs") {
+        REQUIRE(ocpp_cert_hex_to_bytes(nullptr, sizeof(dst), "AB") == -1);
+        REQUIRE(ocpp_cert_hex_to_bytes(dst, 0, "AB") == -1);
+        REQUIRE(ocpp_cert_hex_to_bytes(dst, sizeof(dst), nullptr) == -1);
+    }
+
+    SECTION("Destination too small") {
+        REQUIRE(ocpp_cert_hex_to_bytes(dst, 1, "ABCD") == -1);
+    }
+
+    SECTION("Invalid hex characters") {
+        REQUIRE(ocpp_cert_hex_to_bytes(dst, sizeof(dst), "GH") == -1);
+        REQUIRE(ocpp_cert_hex_to_bytes(dst, sizeof(dst), "ZZ") == -1);
+    }
+
+    SECTION("Roundtrip: bytes -> hex -> bytes") {
+        unsigned char original[] = {0x01, 0xAB, 0xCD, 0xEF};
+        char hex_buf[9]; // 4 bytes * 2 + null terminator
+        int hex_ret = ocpp_cert_bytes_to_hex(hex_buf, sizeof(hex_buf), original, 4);
+        REQUIRE(hex_ret == 8);
+
+        unsigned char roundtrip[4];
+        int byte_ret = ocpp_cert_hex_to_bytes(roundtrip, sizeof(roundtrip), hex_buf);
+        REQUIRE(byte_ret == 4);
+        REQUIRE(memcmp(original, roundtrip, 4) == 0);
+    }
+}
+
+#endif //MO_ENABLE_CERT_MGMT
