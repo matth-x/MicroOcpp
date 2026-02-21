@@ -361,11 +361,14 @@ const Timestamp &Clock::now() {
 
     // Guard against implausible time jumps caused by overflow or
     // concurrency issues (see https://github.com/matth-x/MicroOcpp/issues/421).
-    // Cap delta to 1 hour; if the real elapsed time exceeds this, the clock
-    // will catch up incrementally on subsequent calls.
-    const decltype(delta) MAX_DELTA_MS = 3600UL * 1000UL; // 1 hour
-    if (delta > MAX_DELTA_MS) {
-        delta = MAX_DELTA_MS;
+    // If the delta exceeds a plausible threshold, skip the update entirely
+    // rather than applying a large time jump. The clock will resync on the
+    // next setTime() call from the CSMS.
+    const decltype(delta) MAX_PLAUSIBLE_DELTA_MS = 3600UL * 1000UL; // 1 hour
+    if (delta > MAX_PLAUSIBLE_DELTA_MS) {
+        // Reset lastUpdate so the next call starts fresh from here
+        lastUpdate = tReading;
+        return currentTime;
     }
 
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
