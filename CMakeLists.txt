@@ -156,6 +156,7 @@ set(MO_SRC_UNIT
     tests/ChargePointError.cpp
     tests/Boot.cpp
     tests/Security.cpp
+    tests/TickOverflow.cpp
 )
 
 add_executable(mo_unit_tests
@@ -181,6 +182,7 @@ target_include_directories(mo_unit_tests PUBLIC
     "./tests"
     "./tests/helpers"
     "./src"
+    "../ArduinoJson/src"
 )
 
 target_compile_definitions(mo_unit_tests PUBLIC
