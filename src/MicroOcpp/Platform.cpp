@@ -56,7 +56,10 @@ unsigned long mocpp_millis_count = 0;
 
 unsigned long mocpp_tick_ms_espidf() {
     auto ticks_now = xTaskGetTickCount();
-    MicroOcpp::mocpp_millis_count += ((ticks_now - MicroOcpp::mocpp_ticks_count) * 1000UL) / configTICK_RATE_HZ;
+    auto tick_delta = ticks_now - MicroOcpp::mocpp_ticks_count;
+    // Use 64-bit intermediate to prevent overflow when tick_delta * 1000
+    // exceeds ULONG_MAX (~4.3M ticks at 1000 Hz = ~72 min between calls)
+    MicroOcpp::mocpp_millis_count += (unsigned long)(((unsigned long long)tick_delta * 1000ULL) / configTICK_RATE_HZ);
     MicroOcpp::mocpp_ticks_count = ticks_now;
     return MicroOcpp::mocpp_millis_count;
 }

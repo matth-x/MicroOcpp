@@ -4,7 +4,7 @@
 
 #include <MicroOcpp/Core/Time.h>
 #include <string.h>
-#include <ctype.h>	
+#include <ctype.h>
 
 namespace MicroOcpp {
 
@@ -12,7 +12,7 @@ const Timestamp MIN_TIME = Timestamp(2010, 0, 0, 0, 0, 0);
 const Timestamp MAX_TIME = Timestamp(2037, 0, 0, 0, 0, 0);
 
 Timestamp::Timestamp() : MemoryManaged("Timestamp") {
-    
+
 }
 
 Timestamp::Timestamp(const Timestamp& other) : MemoryManaged("Timestamp") {
@@ -22,7 +22,7 @@ Timestamp::Timestamp(const Timestamp& other) : MemoryManaged("Timestamp") {
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
     Timestamp::Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second, int32_t ms) :
                 MemoryManaged("Timestamp"), year(year), month(month), day(day), hour(hour), minute(minute), second(second), ms(ms) { }
-#else 
+#else
     Timestamp::Timestamp(int16_t year, int16_t month, int16_t day, int32_t hour, int32_t minute, int32_t second) :
                 MemoryManaged("Timestamp"), year(year), month(month), day(day), hour(hour), minute(minute), second(second) { }
 #endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
@@ -63,7 +63,7 @@ bool Timestamp::setTime(const char *jsonDateString) {
                                         //ignore subsequent characters
         return false;
     }
-    
+
     int year  =  (jsonDateString[0] - '0') * 1000 +
                 (jsonDateString[1] - '0') * 100 +
                 (jsonDateString[2] - '0') * 10 +
@@ -85,7 +85,7 @@ bool Timestamp::setTime(const char *jsonDateString) {
         if (isdigit(jsonDateString[20]) ||   //1
             isdigit(jsonDateString[21]) ||   //2
             isdigit(jsonDateString[22])) {
-            
+
             ms  =  (jsonDateString[20] - '0') * 100 +
                     (jsonDateString[21] - '0') * 10 +
                     (jsonDateString[22] - '0');
@@ -113,7 +113,7 @@ bool Timestamp::setTime(const char *jsonDateString) {
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
     this->ms = ms;
 #endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
-    
+
     return true;
 }
 
@@ -188,7 +188,7 @@ Timestamp &Timestamp::operator+=(int secs) {
     while (day >= noDays(month, year)) {
         day -= noDays(month, year);
         month++;
-        
+
         if (month >= 12) {
             month -= 12;
             year++;
@@ -213,7 +213,7 @@ Timestamp &Timestamp::addMilliseconds(int val) {
     ms += val;
 
     if (ms >= 0 && ms < 1000) return *this;
-    
+
     auto dsecond = ms / 1000;
     ms %= 1000;
     if (ms < 0) {
@@ -230,7 +230,7 @@ Timestamp &Timestamp::operator-=(int secs) {
 
 int Timestamp::operator-(const Timestamp &rhs) const {
     //dt = rhs - mocpp_base
-    
+
     int16_t year_base, year_end;
     if (year <= rhs.year) {
         year_base = year;
@@ -318,7 +318,7 @@ bool operator<(const Timestamp &lhs, const Timestamp &rhs) {
     if (lhs.ms != rhs.ms)
         return lhs.ms < rhs.ms;
 #endif //MO_ENABLE_TIMESTAMP_MILLISECONDS
-    return false;  
+    return false;
 }
 
 bool operator<=(const Timestamp &lhs, const Timestamp &rhs) {
@@ -341,7 +341,7 @@ Clock::Clock() {
 bool Clock::setTime(const char* jsonDateString) {
 
     Timestamp timestamp = Timestamp();
-    
+
     if (!timestamp.setTime(jsonDateString)) {
         return false;
     }
@@ -358,6 +358,18 @@ bool Clock::setTime(const char* jsonDateString) {
 const Timestamp &Clock::now() {
     auto tReading = mocpp_tick_ms();
     auto delta = tReading - lastUpdate;
+
+    // Guard against implausible time jumps caused by overflow or
+    // concurrency issues (see https://github.com/matth-x/MicroOcpp/issues/421).
+    // If the delta exceeds a plausible threshold, skip the update entirely
+    // rather than applying a large time jump. The clock will resync on the
+    // next setTime() call from the CSMS.
+    const decltype(delta) MAX_PLAUSIBLE_DELTA_MS = 3600UL * 1000UL; // 1 hour
+    if (delta > MAX_PLAUSIBLE_DELTA_MS) {
+        // Reset lastUpdate so the next call starts fresh from here
+        lastUpdate = tReading;
+        return currentTime;
+    }
 
 #if MO_ENABLE_TIMESTAMP_MILLISECONDS
     currentTime.addMilliseconds(delta);
