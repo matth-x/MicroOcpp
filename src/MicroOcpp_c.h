@@ -5,6 +5,7 @@
 #ifndef MO_MICROOCPP_C_H
 #define MO_MICROOCPP_C_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include <MicroOcpp/Core/ConfigurationOptions.h>
