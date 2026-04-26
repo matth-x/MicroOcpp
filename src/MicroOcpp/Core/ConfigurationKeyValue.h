@@ -8,7 +8,9 @@
 #include <ArduinoJson.h>
 #include <memory>
 
+#ifndef MO_CONFIG_MAX_VALSTRSIZE
 #define MO_CONFIG_MAX_VALSTRSIZE 128
+#endif
 
 #ifndef MO_CONFIG_EXT_PREFIX
 #define MO_CONFIG_EXT_PREFIX "Cst_"
