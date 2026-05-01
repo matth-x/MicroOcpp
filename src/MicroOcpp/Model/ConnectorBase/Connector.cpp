@@ -1184,6 +1184,7 @@ std::unique_ptr<Request> Connector::fetchFrontRequest() {
             transactionFront->commit();
 
             auto startTx = makeRequest(new Ocpp16::StartTransaction(model, transactionFront));
+            startTx->setTimeout((unsigned long)std::max(1, transactionMessageRetryIntervalInt->getInt()) * 1000UL);
             startTx->setOnReceiveConfListener([this] (JsonObject response) {
                 //fetch authorization status from StartTransaction.conf() for user notification
 
@@ -1253,6 +1254,7 @@ std::unique_ptr<Request> Connector::fetchFrontRequest() {
             } else {
                 stopTx = makeRequest(new Ocpp16::StopTransaction(model, transactionFront));
             }
+            stopTx->setTimeout((unsigned long)std::max(1, transactionMessageRetryIntervalInt->getInt()) * 1000UL);
             auto transactionFront_capture = transactionFront;
             stopTx->setOnAbortListener([this, transactionFront_capture] () {
                 //shortcut to the attemptNr check above. Relevant if other operations block the queue while this StopTx is timing out
