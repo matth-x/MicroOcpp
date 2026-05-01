@@ -294,6 +294,7 @@ std::unique_ptr<Request> MeteringConnector::fetchFrontRequest() {
     }
 
     auto meterValues = makeRequest(new MeterValues(model, meterDataFront.get(), connectorId, tx));
+    meterValues->setTimeout((unsigned long)std::max(1, transactionMessageRetryIntervalInt->getInt()) * 1000UL);
     meterValues->setOnReceiveConfListener([this] (JsonObject) {
         //operation success
         MO_DBG_DEBUG("drop MV front");
