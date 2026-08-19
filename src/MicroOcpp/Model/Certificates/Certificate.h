@@ -9,7 +9,9 @@
 
 #if MO_ENABLE_CERT_MGMT
 
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

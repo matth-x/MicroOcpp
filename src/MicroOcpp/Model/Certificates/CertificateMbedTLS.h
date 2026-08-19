@@ -9,6 +9,10 @@
  * Built-in implementation of the Certificate interface for MbedTLS
  */
 
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #include <MicroOcpp/Version.h>
 #include <MicroOcpp/Platform.h>
 
