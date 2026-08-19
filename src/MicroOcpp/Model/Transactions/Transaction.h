@@ -5,6 +5,10 @@
 #ifndef TRANSACTION_H
 #define TRANSACTION_H
 
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #include <MicroOcpp/Version.h>
 
 /* General Tx defs */
