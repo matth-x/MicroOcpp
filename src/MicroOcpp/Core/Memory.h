@@ -32,12 +32,18 @@ void *mo_mem_malloc(const char *tag, size_t size);
 
 void mo_mem_free(void* ptr);
 
+void mo_mem_set_realloc(void* (*realloc_override)(void*, size_t)); //pass custom realloc function to be used with the OCPP lib (needed because ArduinoJson >= v7 reallocates its JSON document buffer as it grows). If not set or NULL, defaults to standard realloc
+
+void *mo_mem_realloc(const char *tag, void *ptr, size_t size);
+
 #define MO_MALLOC mo_mem_malloc
 #define MO_FREE mo_mem_free
+#define MO_REALLOC mo_mem_realloc
 
 #else
 #define MO_MALLOC(TAG, SIZE) malloc(SIZE) //default malloc provided by host system
 #define MO_FREE(PTR) free(PTR)       //default free provided by host system
+#define MO_REALLOC(TAG, PTR, SIZE) realloc(PTR, SIZE) //default realloc provided by host system
 #endif //MO_OVERRIDE_ALLOCATION
 
 
@@ -357,6 +363,13 @@ public:
     }
     void deallocate(void *ptr) {
         MO_FREE(ptr);
+    }
+    void *reallocate(void *ptr, size_t new_size) {
+        #if MO_ENABLE_HEAP_PROFILER
+            return MO_REALLOC(tag, ptr, new_size);
+        #else
+            return MO_REALLOC(nullptr, ptr, new_size);
+        #endif
     }
 };
 

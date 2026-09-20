@@ -16,8 +16,12 @@ jobs:
 
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         example: [examples/ESP/main.cpp, examples/ESP-TLS/main.cpp]
+        # "pinned" keeps the ArduinoJson version pinned in platformio.ini (currently v6.20.1); "v7" overrides it to
+        # verify ArduinoJson v7 compatibility as well
+        arduinojson: [pinned, v7]
 
     steps:
     - uses: actions/checkout@v4
@@ -42,6 +46,11 @@ jobs:
     - name: Install library dependencies
       run: pio pkg install
     - name: Run PlatformIO
-      run: pio ci --lib="." --project-conf=platformio.ini ${{ matrix.dashboard-extra }}
+      run: |
+        if [ "${{ matrix.arduinojson }}" = "v7" ]; then
+          pio ci --lib="." --project-conf=platformio.ini -O "lib_deps=bblanchon/ArduinoJson@7.4.3" ${{ matrix.dashboard-extra }}
+        else
+          pio ci --lib="." --project-conf=platformio.ini ${{ matrix.dashboard-extra }}
+        fi
       env:
         PLATFORMIO_CI_SRC: ${{ matrix.example }}

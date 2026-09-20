@@ -14,8 +14,24 @@ on:
 jobs:
 
   compile-platform:
-    name: Compile (no linking)
+    name: Compile (no linking, ArduinoJson ${{ matrix.arduinojson-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arduinojson-version: v6.19.4
+            arduinojson-url: https://github.com/bblanchon/ArduinoJson/releases/download/v6.19.4/ArduinoJson-v6.19.4.h
+            # ArduinoJson v6 doesn't emit any deprecation warnings for the API used here, so keep treating warnings as errors
+            werror-flag: -Werror
+          - arduinojson-version: v7.4.3
+            arduinojson-url: https://github.com/bblanchon/ArduinoJson/releases/download/v7.4.3/ArduinoJson-v7.4.3.h
+            # ArduinoJson v7 deprecates containsKey()/DynamicJsonDocument/StaticJsonDocument (still fully functional, kept
+            # intentionally for now to preserve v6 presence-check semantics) and, worse, JSON_OBJECT_SIZE/JSON_ARRAY_SIZE
+            # unconditionally emit a "#pragma GCC warning" that cannot be suppressed via any -Wno-* flag. Since this codebase
+            # still calls those macros (harmlessly, as a buffer-size hint v7 no longer needs) in ~50 files, -Werror is dropped
+            # for this leg rather than doing an invasive, version-branched rewrite of every call site.
+            werror-flag: ""
     steps:
     - name: Check out repository code
       uses: actions/checkout@v3
@@ -27,6 +43,6 @@ jobs:
         g++ --version
         echo "g++ version must be 9.4.0"
     - name: Get ArduinoJson
-      run: wget -Uri https://github.com/bblanchon/ArduinoJson/releases/download/v6.19.4/ArduinoJson-v6.19.4.h -O ./src/ArduinoJson.h
+      run: wget -Uri ${{ matrix.arduinojson-url }} -O ./src/ArduinoJson.h
     - name: Compile
-      run: g++ -c -std=c++11 -I ./src $(find ./src -type f -iregex ".*\.cpp") -DMO_PLATFORM=MO_PLATFORM_NONE -Wall -Wextra -Wno-unused-parameter -Wno-redundant-move -Werror
+      run: g++ -c -std=c++11 -I ./src $(find ./src -type f -iregex ".*\.cpp") -DMO_PLATFORM=MO_PLATFORM_NONE -Wall -Wextra -Wno-unused-parameter -Wno-redundant-move ${{ matrix.werror-flag }}

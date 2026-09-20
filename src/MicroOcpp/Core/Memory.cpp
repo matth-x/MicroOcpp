@@ -92,6 +92,7 @@ namespace Memory {
 
 void* (*malloc_override)(size_t);
 void (*free_override)(void*);
+void* (*realloc_override)(void*, size_t);
 
 }
 }
@@ -101,6 +102,10 @@ using namespace MicroOcpp::Memory;
 void mo_mem_set_malloc_free(void* (*malloc_override)(size_t), void (*free_override)(void*)) {
     MicroOcpp::Memory::malloc_override = malloc_override;
     MicroOcpp::Memory::free_override = free_override;
+}
+
+void mo_mem_set_realloc(void* (*realloc_override)(void*, size_t)) {
+    MicroOcpp::Memory::realloc_override = realloc_override;
 }
 
 void *mo_mem_malloc(const char *tag, size_t size) {
@@ -150,6 +155,42 @@ void mo_mem_free(void* ptr) {
     } else {
         free(ptr);
     }
+}
+
+void *mo_mem_realloc(const char *tag, void *ptr, size_t size) {
+    MO_DBG_VERBOSE("realloc %zu B (%s)", size, tag ? tag : "unspecified");
+
+    #if MO_ENABLE_HEAP_PROFILER
+    if (ptr) {
+        auto blockInfo = memBlocks.find(ptr);
+        if (blockInfo != memBlocks.end()) {
+            auto tagInfo = memTags.find(blockInfo->second.tag);
+            if (tagInfo != memTags.end()) {
+                tagInfo->second -= blockInfo->second.size;
+            }
+            memTotal -= blockInfo->second.size;
+            memBlocks.erase(blockInfo);
+        }
+    }
+    #endif
+
+    void *new_ptr;
+    if (realloc_override) {
+        new_ptr = realloc_override(ptr, size);
+    } else {
+        new_ptr = realloc(ptr, size);
+    }
+
+    #if MO_ENABLE_HEAP_PROFILER
+    if (new_ptr) {
+        memBlocks.emplace(new_ptr, MemBlockInfo(new_ptr, tag, size));
+
+        memTotal += size;
+        memTotalMax = std::max(memTotalMax, memTotal);
+    }
+    #endif
+
+    return new_ptr;
 }
 
 #endif //MO_OVERRIDE_ALLOCATION
@@ -310,17 +351,21 @@ String makeString(const char *tag, const char *val) {
 }
 
 JsonDoc initJsonDoc(const char *tag, size_t capacity) {
-#if MO_OVERRIDE_ALLOCATION
+#if MO_OVERRIDE_ALLOCATION && ARDUINOJSON_VERSION_MAJOR < 7
     return JsonDoc(capacity, ArduinoJsonAllocator(tag));
 #else
+    //ArduinoJson >= v7 wraps TAllocator in a process-wide singleton (see AllocatorAdapter)
+    //and therefore doesn't support passing a per-call allocator instance (i.e. a memory tag) anymore
+    (void)tag;
     return JsonDoc(capacity);
 #endif
 }
 
 std::unique_ptr<JsonDoc> makeJsonDoc(const char *tag, size_t capacity) {
-#if MO_OVERRIDE_ALLOCATION
+#if MO_OVERRIDE_ALLOCATION && ARDUINOJSON_VERSION_MAJOR < 7
     return std::unique_ptr<JsonDoc>(new JsonDoc(capacity, ArduinoJsonAllocator(tag)));
 #else
+    (void)tag;
     return std::unique_ptr<JsonDoc>(new JsonDoc(capacity));
 #endif
 }

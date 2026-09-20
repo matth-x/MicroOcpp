@@ -30,7 +30,7 @@ const char* ReserveNow::getOperationType(){
 
 void ReserveNow::processReq(JsonObject payload) {
     if (!payload.containsKey("connectorId") ||
-            payload["connectorId"] < 0 ||
+            payload["connectorId"].as<int>() < 0 ||
             !payload.containsKey("expiryDate") ||
             !payload.containsKey("idTag") ||
             //parentIdTag is optional

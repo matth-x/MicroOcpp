@@ -14,8 +14,16 @@ on:
 jobs:
 
   compile-and-run:
-    name: Automated Tests
+    name: Automated Tests (ArduinoJson ${{ matrix.arduinojson-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arduinojson-version: v6.21.3
+            arduinojson-url: https://github.com/bblanchon/ArduinoJson/releases/download/v6.21.3/ArduinoJson-v6.21.3.h
+          - arduinojson-version: v7.4.3
+            arduinojson-url: https://github.com/bblanchon/ArduinoJson/releases/download/v7.4.3/ArduinoJson-v7.4.3.h
     steps:
     - name: Check out repository code
       uses: actions/checkout@v3
@@ -33,7 +41,7 @@ jobs:
         g++ --version
         echo "g++ version must be 9.4.0"
     - name: Get ArduinoJson
-      run: wget -Uri https://github.com/bblanchon/ArduinoJson/releases/download/v6.21.3/ArduinoJson-v6.21.3.h -O ./src/ArduinoJson.h
+      run: wget -Uri ${{ matrix.arduinojson-url }} -O ./src/ArduinoJson.h
     - name: Generate CMake build files
       run: cmake -S . -B ./build -DMO_BUILD_UNIT_MBEDTLS=True
     - name: Compile

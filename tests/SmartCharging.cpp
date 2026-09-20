@@ -555,7 +555,7 @@ TEST_CASE( "SmartCharging" ) {
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
                     auto doc = makeJsonDoc("UnitTests", 2048);
-                    *doc = raw[3];
+                    doc->set(raw[3]);
                     return doc;},
                 [&checkProcessed] (JsonObject response) {
                     checkProcessed = true;
@@ -573,7 +573,7 @@ TEST_CASE( "SmartCharging" ) {
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_0_ALT_SAME_ID);
                     auto doc = makeJsonDoc("UnitTests", 2048);
-                    *doc = raw[3];
+                    doc->set(raw[3]);
                     (*doc)["connectorId"] = 2;
                     return doc;},
                 [&checkProcessed] (JsonObject response) {
@@ -592,7 +592,7 @@ TEST_CASE( "SmartCharging" ) {
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_1_ABSOLUTE_LIMIT_16A);
                     auto doc = makeJsonDoc("UnitTests", 2048);
-                    *doc = raw[3];
+                    doc->set(raw[3]);
                     return doc;},
                 [&checkProcessed] (JsonObject response) {
                     checkProcessed = true;
@@ -615,7 +615,7 @@ TEST_CASE( "SmartCharging" ) {
                         StaticJsonDocument<2048> raw;
                         deserializeJson(raw, SCPROFILE_1_ABSOLUTE_LIMIT_16A);
                         auto doc = makeJsonDoc("UnitTests", 2048);
-                        *doc = raw[3];
+                        doc->set(raw[3]);
                         return doc;},
                     [&checkProcessed] (JsonObject response) {
                         checkProcessed = true;
@@ -637,7 +637,7 @@ TEST_CASE( "SmartCharging" ) {
                         StaticJsonDocument<2048> raw;
                         deserializeJson(raw, SCPROFILE_5_VALID_UNTIL_2022_16A);
                         auto doc = makeJsonDoc("UnitTests", 2048);
-                        *doc = raw[3];
+                        doc->set(raw[3]);
                         return doc;},
                     [&checkProcessed] (JsonObject response) {
                         checkProcessed = true;
@@ -661,7 +661,7 @@ TEST_CASE( "SmartCharging" ) {
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
                     auto doc = makeJsonDoc("UnitTests", 2048);
-                    *doc = raw[3];
+                    doc->set(raw[3]);
                     (*doc)["csChargingProfiles"]["stackLevel"] = MO_ChargeProfileMaxStackLevel;
                     return doc;},
                 [&checkProcessed] (JsonObject response) {
@@ -680,7 +680,7 @@ TEST_CASE( "SmartCharging" ) {
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
                     auto doc = makeJsonDoc("UnitTests", 2048);
-                    *doc = raw[3];
+                    doc->set(raw[3]);
                     (*doc)["csChargingProfiles"]["stackLevel"] = MO_ChargeProfileMaxStackLevel + 1;
                     return doc;},
                 [] (JsonObject) { }, //ignore conf
@@ -706,7 +706,7 @@ TEST_CASE( "SmartCharging" ) {
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
                     auto doc = makeJsonDoc("UnitTests", 2048);
-                    *doc = raw[3];
+                    doc->set(raw[3]);
                     JsonArray chargingSchedulePeriod = (*doc)["csChargingProfiles"]["chargingSchedule"]["chargingSchedulePeriod"];
                     chargingSchedulePeriod.clear();
                     for (size_t i = 0; i < MO_ChargingScheduleMaxPeriods; i++) {
@@ -731,7 +731,7 @@ TEST_CASE( "SmartCharging" ) {
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_2_RELATIVE_TXDEF_24A);
                     auto doc = makeJsonDoc("UnitTests", 2048);
-                    *doc = raw[3];
+                    doc->set(raw[3]);
                     JsonArray chargingSchedulePeriod = (*doc)["csChargingProfiles"]["chargingSchedule"]["chargingSchedulePeriod"];
                     chargingSchedulePeriod.clear();
                     for (size_t i = 0; i < MO_ChargingScheduleMaxPeriods + 1; i++) {
@@ -767,7 +767,7 @@ TEST_CASE( "SmartCharging" ) {
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_0);
                     auto doc = makeJsonDoc("UnitTests", 2048);
-                    *doc = raw[3];
+                    doc->set(raw[3]);
                     return doc;},
                 [&checkProcessed] (JsonObject response) {
                     checkProcessed = true;
@@ -785,7 +785,7 @@ TEST_CASE( "SmartCharging" ) {
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_1_ABSOLUTE_LIMIT_16A);
                     auto doc = makeJsonDoc("UnitTests", 2048);
-                    *doc = raw[3];
+                    doc->set(raw[3]);
                     return doc;},
                 [&checkProcessed] (JsonObject response) {
                     checkProcessed = true;
@@ -807,7 +807,7 @@ TEST_CASE( "SmartCharging" ) {
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_0);
                     auto doc = makeJsonDoc("UnitTests", 2048);
-                    *doc = raw[3];
+                    doc->set(raw[3]);
                     return doc;},
                 [&checkProcessed] (JsonObject response) {
                     checkProcessed = true;
@@ -825,7 +825,7 @@ TEST_CASE( "SmartCharging" ) {
                     StaticJsonDocument<2048> raw;
                     deserializeJson(raw, SCPROFILE_1_ABSOLUTE_LIMIT_16A);
                     auto doc = makeJsonDoc("UnitTests", 2048);
-                    *doc = raw[3];
+                    doc->set(raw[3]);
                     return doc;},
                 [&checkProcessed] (JsonObject response) {
                     checkProcessed = true;
