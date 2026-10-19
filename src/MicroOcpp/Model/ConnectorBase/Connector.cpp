@@ -563,8 +563,17 @@ std::shared_ptr<Transaction> Connector::allocateTransaction() {
         txr = (txr + MAX_TX_CNT - 1) % MAX_TX_CNT; //decrement by 1
 
         auto tx = model.getTransactionStore()->getTransaction(connectorId, txr);
-        //check if dangling silent tx, aborted tx, or corrupted entry (tx == null)
-        if (!tx || tx->isSilent() || (tx->isAborted() && MO_TX_CLEAN_ABORTED)) {
+        //check if dangling silent tx, aborted tx, corrupted entry (tx == null),
+        //or a blank placeholder: createTransaction() commits the empty tx object
+        //to flash before the caller fills it in (idTag, start opNr). A device
+        //reset in between leaves a tx that never starts and blocks the connector
+        //(issue #455). Such a tx has neither a start opNr nor an idTag; a real
+        //tx that was authorized before the reset does have an idTag.
+        bool isPlaceholder = tx
+                             && !tx->isSilent()
+                             && tx->getStartSync().getOpNr() == 0
+                             && tx->getIdTag()[0] == '\0';
+        if (!tx || tx->isSilent() || (tx->isAborted() && MO_TX_CLEAN_ABORTED) || isPlaceholder) {
             //yes, remove
             bool removed = true;
             if (auto mService = model.getMeteringService()) {
