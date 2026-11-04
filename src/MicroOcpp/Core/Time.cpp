@@ -82,8 +82,8 @@ bool Timestamp::setTime(const char *jsonDateString) {
     //optional fractals
     int ms = 0;
     if (jsonDateString[19] == '.') {
-        if (isdigit(jsonDateString[20]) ||   //1
-            isdigit(jsonDateString[21]) ||   //2
+        if (isdigit(jsonDateString[20]) &&   //1
+            isdigit(jsonDateString[21]) &&   //2
             isdigit(jsonDateString[22])) {
             
             ms  =  (jsonDateString[20] - '0') * 100 +
