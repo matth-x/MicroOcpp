@@ -68,7 +68,7 @@ void TriggerMessage::processReq(JsonObject payload) {
         }
     } else {
         auto msg = context.getOperationRegistry().deserializeOperation(requestedMessage);
-        if (msg) {
+        if (msg && !msg->getOperation()->getErrorCode()) {
             context.getRequestQueue().sendRequestPreBoot(std::move(msg));
             statusMessage = "Accepted";
         } else {
