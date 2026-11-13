@@ -345,6 +345,24 @@ void TransactionService::Evse::loop() {
                 return;
             }
 
+            // triggerReason is required by the 2.0.1 schema. Some stop paths
+            // reach here with it UNDEFINED - notably a CSMS deAuthorization
+            // (TransactionEvent::processConf clears `active` directly, without
+            // going through endTransaction, so no stopTrigger is recorded). An
+            // Ended with no triggerReason is rejected by the CSMS
+            // (FormatViolation) and retried forever, stalling the tx queue.
+            // Fill a valid reason before the event is built and committed.
+            if (triggerReason == TransactionEventTriggerReason::UNDEFINED) {
+                triggerReason = transaction->isDeauthorized
+                        ? TransactionEventTriggerReason::Deauthorized
+                        : TransactionEventTriggerReason::AbnormalCondition;
+            }
+            if (stoppedReason == Ocpp201::Transaction::StoppedReason::UNDEFINED) {
+                stoppedReason = transaction->isDeauthorized
+                        ? Ocpp201::Transaction::StoppedReason::DeAuthorized
+                        : Ocpp201::Transaction::StoppedReason::Other;
+            }
+
             transaction->stopTrigger = triggerReason;
             transaction->stoppedReason = stoppedReason;
 
