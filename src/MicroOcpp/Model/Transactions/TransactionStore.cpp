@@ -536,7 +536,7 @@ bool TransactionStoreEvse::deserializeTransactionEvent(TransactionEventData& txE
     }
 
     TransactionEventTriggerReason triggerReason;
-    if (!deserializeTransactionEventTriggerReason(txEventJson["triggerReason"] | "_Undefined", triggerReason)) {
+    if (!deserializeTransactionEventTriggerReason(txEventJson["triggerReason"] | (const char*)nullptr, triggerReason)) {
         return false;
     }
     txEvent.triggerReason = triggerReason;
